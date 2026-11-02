@@ -534,7 +534,9 @@
      the popups (below). Light on glass is a hairline glint over a soft sheen,
      never a lit border.
 
-     This block holds the tokens, those selected rows and one exception: the
+     This block holds the tokens, those selected rows (and the collapsed
+     sidebar's tabs and the model picker's open provider tab, both selected
+     items) and one exception: the
      sidebar's recent-project quick-start buttons, which keep their rim here
      by product choice (end of block). Nothing else belongs here; other
      surfaces wait for Full below.

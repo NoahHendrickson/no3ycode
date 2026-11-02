@@ -5076,8 +5076,9 @@
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
     (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows and the sidebar's recent-project
-    buttons (fork-sidebar-recent-projects). Off: the flat stage and
+    thread card, the active top sidebar rows, the sidebar's recent-project
+    buttons (fork-sidebar-recent-projects) and the model picker's selected
+    provider tab (fork-model-picker). Off: the flat stage and
     fills Glass had before #203. The lighter tint (#214) and everything else
     stays in every mode. The setting stamps data-fork-glass-3d="selection" or
     "off" on the root before first render (absent at Full). The sheets nest
