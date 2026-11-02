@@ -292,7 +292,8 @@ describe("fork guard: sidebar-v2-card-rows", () => {
 
   it("gives a card 16px corners, a shelf row 8px, and every row a pill when compact", () => {
     // --radius is 10px, so neither is a rounded-* token: the card's is the
-    // component set's literal (364:17299) and slim shelf rows keep --radius-md.
+    // component set's literal (364:17299) and slim shelf rows keep --radius-md;
+    // compact makes every row a pill.
     const at = (variant: "card" | "slim", compact: boolean) =>
       threadRowSurfaceClassName({
         isActive: false,

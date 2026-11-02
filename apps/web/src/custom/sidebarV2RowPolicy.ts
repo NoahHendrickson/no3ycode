@@ -84,14 +84,13 @@ export function threadCardTitleRecedes(input: {
  * Corners are a literal, not a radius step: the component set draws a card at
  * 16px (Figma 364:17299, "thread card v3") and `--radius` is 10px here, so no
  * `rounded-*` token lands on it — `rounded-xl` is 14 and `rounded-2xl` 20.
- * Slim shelf rows keep `rounded-md`. A compact card is a pill: fully round,
- * so one line in the card list reads as a card folded down rather than as a
- * shelf row. With compact cards on, shelf rows take the pill too, so the
- * settled shelf under a list of pills does not change corner. */
+ * Slim shelf rows keep `rounded-md`. Compact cards make the whole list one
+ * line tall, so every row, shelf rows included, is a pill: the list keeps
+ * one shape from the cards down through the settled shelf. */
 const THREAD_ROW_RADIUS = {
   card: "rounded-[16px]",
-  compactCard: "rounded-full",
-  shelfRow: "rounded-md",
+  shelf: "rounded-md",
+  pill: "rounded-full",
 } as const;
 
 export type ThreadRowShape = keyof typeof THREAD_ROW_RADIUS;
@@ -100,8 +99,8 @@ export function threadRowShape(input: {
   readonly variant: "card" | "slim";
   readonly compact: boolean;
 }): ThreadRowShape {
-  if (input.compact) return "compactCard";
-  return input.variant === "slim" ? "shelfRow" : "card";
+  if (input.compact) return "pill";
+  return input.variant === "slim" ? "shelf" : "card";
 }
 
 export function threadRowSurfaceClassName(input: {
