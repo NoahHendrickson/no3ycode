@@ -86,7 +86,8 @@ export function threadCardTitleRecedes(input: {
  * `rounded-*` token lands on it — `rounded-xl` is 14 and `rounded-2xl` 20.
  * Slim shelf rows keep `rounded-md`. A compact card is a pill: fully round,
  * so one line in the card list reads as a card folded down rather than as a
- * shelf row. */
+ * shelf row. With compact cards on, shelf rows take the pill too, so the
+ * settled shelf under a list of pills does not change corner. */
 const THREAD_ROW_RADIUS = {
   card: "rounded-[16px]",
   compactCard: "rounded-full",
@@ -99,8 +100,8 @@ export function threadRowShape(input: {
   readonly variant: "card" | "slim";
   readonly compact: boolean;
 }): ThreadRowShape {
-  if (input.variant === "slim") return "shelfRow";
-  return input.compact ? "compactCard" : "card";
+  if (input.compact) return "compactCard";
+  return input.variant === "slim" ? "shelfRow" : "card";
 }
 
 export function threadRowSurfaceClassName(input: {

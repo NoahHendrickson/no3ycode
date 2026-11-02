@@ -290,7 +290,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.metaLine).toBe(16);
   });
 
-  it("gives a card 16px corners, a shelf row 8px and a compact card a pill", () => {
+  it("gives a card 16px corners, a shelf row 8px, and every row a pill when compact", () => {
     // --radius is 10px, so neither is a rounded-* token: the card's is the
     // component set's literal (364:17299) and slim shelf rows keep --radius-md.
     const at = (variant: "card" | "slim", compact: boolean) =>
@@ -302,7 +302,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
       });
     expect(at("card", false)).toContain("rounded-[16px]");
     expect(at("slim", false)).toContain("rounded-md");
-    expect(at("slim", true)).toContain("rounded-md");
+    expect(at("slim", true)).toContain("rounded-full");
     expect(at("slim", false)).not.toContain("rounded-[16px]");
     expect(at("card", true)).toContain("rounded-full");
   });

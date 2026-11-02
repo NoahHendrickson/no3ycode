@@ -1231,7 +1231,8 @@
     is left off because the header already names it.
 
     Only card-variant rows (pinned, active, working) go compact. The snoozed and
-    settled slim rows are already one line and keep their own layout.
+    settled slim rows are already one line and keep their own layout, taking
+    only the pill so the shelf matches the cards above it.
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2ThreadCardCompactMarks.tsx
