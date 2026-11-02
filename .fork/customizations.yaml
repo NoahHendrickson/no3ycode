@@ -6169,11 +6169,11 @@
 
 - id: fork-file-link-ink
   intent: >
-    Inline file links in chat take the same color as every other chat link
-    (--info-foreground), not upstream's per-kind chip accent, so all links
-    in a message read as one color. Document icons keep their accent stroke.
-    Only file links: other chip kinds (PR state, skills) keep upstream's
-    accent ink, which carries meaning.
+    Inline file and thread links in chat take the same color as every other
+    chat link (--info-foreground), not upstream's per-kind chip accent, so all
+    links in a message read as one color. Document icons keep their accent
+    stroke. Only file and thread links: other chip kinds (PR state, skills)
+    keep upstream's accent ink, which carries meaning.
   tier: 3
   files:
     - apps/web/src/theme.custom.css
