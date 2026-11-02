@@ -747,6 +747,45 @@
     background-color: rgb(255 255 255 / 6%);
   }
   /* fork:end fork-collapsed-thread-tabs */
+
+  /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+     The model picker's rail tab for the open scope is a selected item, so it
+     wears the selected rows' glass at Selected items only too, its dark edge
+     1px proud of the tab's 4px corners. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"] {
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--fork-glass-selected-shadow);
+  }
+
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: var(--fork-glass-selected-glint);
+    pointer-events: none;
+  }
+
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"]::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: 1px;
+    border-radius: 5px;
+    background: var(--fork-glass-dark-edge);
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+  /* fork:end fork-model-picker */
 }
 
 :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
@@ -807,52 +846,47 @@
   }
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
-     The model picker's rail tab for the open scope wears the selected rows'
-     glass too, its dark edge 1px proud of the tab's 4px corners. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"] {
-    box-shadow:
-      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-      var(--fork-glass-selected-shadow);
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: var(--fork-glass-selected-glint);
-    pointer-events: none;
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    padding: 1px;
-    border-radius: 5px;
-    background: var(--fork-glass-dark-edge);
-    mask:
-      linear-gradient(#000 0 0) content-box exclude,
-      linear-gradient(#000 0 0);
-    pointer-events: none;
-  }
-
-  /* The traits panel's effort thumb and selected segments as the segmented
-     tabs' glass chips: a white wash under the soft halo and the glass light,
-     in place of the solid white thumb and the segment's flat raise. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-traits]
-    :is([data-fork-effort-thumb], button[aria-pressed="true"]) {
+     The traits panel's selected segments as the segmented tabs' glass chips:
+     a white wash under the soft halo and the glass light, in place of the
+     segment's flat raise. */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-model-traits] button[aria-pressed="true"] {
     background-color: rgb(255 255 255 / 16%);
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-halo-soft), var(--fork-glass-light);
+  }
+
+  /* The effort thumb as send's frosted glass: the wallpaper-hued face, its
+     streak and pool, and its tinted edge light (Figma 467:22121, above). */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-model-traits] [data-fork-effort-thumb] {
+    --fork-effort-thumb-streak: oklch(
+      from var(--fork-popup-glass-floor, rgb(22 22 22)) 0.85 calc(c * 3) calc(h - 50)
+    );
+    --fork-effort-thumb-pool: oklch(
+      from var(--fork-popup-glass-floor, rgb(22 22 22)) 0.72 calc(c * 3) calc(h + 50)
+    );
+    background-color: rgb(from var(--fork-composer-action-light) r g b / 18%);
+    background-image:
+      linear-gradient(150deg, rgb(255 255 255 / 20%), rgb(255 255 255 / 0%) 4%),
+      linear-gradient(
+        150deg,
+        rgb(from var(--fork-effort-thumb-streak) r g b / 90%),
+        rgb(from var(--fork-effort-thumb-streak) r g b / 0%) 10%
+      ),
+      radial-gradient(
+        90% 70% at 105% 150%,
+        rgb(from var(--fork-effort-thumb-pool) r g b / 90%),
+        rgb(from var(--fork-effort-thumb-pool) r g b / 0%)
+      );
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000),
+      var(--fork-glass-halo-soft),
+      inset 0 1px 1px -0.5px rgb(from var(--fork-composer-action-glint) r g b / 80%),
+      inset 0 -1px 1px -0.5px rgb(from var(--fork-composer-action-glint) r g b / 40%),
+      inset 2px 2px 2px rgb(from var(--fork-composer-action-light) r g b / 16%),
+      inset -2px -2px 2px rgb(from var(--fork-composer-action-shade) r g b / 24%),
+      inset 0 0 4px rgb(from var(--fork-composer-action-light) r g b / 25%);
   }
   /* fork:end fork-model-picker */
 }

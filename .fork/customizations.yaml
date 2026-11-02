@@ -4912,9 +4912,10 @@
     helpers of ModelPickerContent stay upstream's
     verbatim and both shadows keep upstream's relative imports. Reaches every
     entry point through ProviderModelPicker (composer and Settings). Under
-    Glass at Full 3D (theme.custom.glass-surfaces.css), the open scope's rail
-    tab wears the selected rows' glass, and the effort thumb and selected
-    trait segments are the segmented tabs' glass chips.
+    Glass (theme.custom.glass-surfaces.css), the open scope's rail tab wears
+    the selected rows' glass unless 3D is off, and at Full the effort thumb
+    wears the send button's glass and the selected trait segments are the
+    segmented tabs' glass chips.
   tier: 2
   files:
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx

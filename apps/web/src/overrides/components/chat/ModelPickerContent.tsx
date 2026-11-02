@@ -846,7 +846,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     <div
       role="group"
       aria-label="Providers"
-      className="flex max-h-92 shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain border-e border-border ps-2 pe-1 pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex max-h-92 shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain border-e border-border px-1 pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       data-fork-model-picker="providers"
     >
       {renderScopeTab({
