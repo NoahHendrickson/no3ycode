@@ -3571,6 +3571,7 @@ export default function ChatView(props: ChatViewProps) {
           <CollapsedThreadTabs
             reserveTrailingControls={!inlineRightPanelOwnsTitleBar && !splitPane.split}
             paneThreadKey={activeThreadKey}
+            headerHoldsPanelToggle={inlineRightPanelOwnsTitleBar}
           />
         ) : null}
         {/* fork:end fork-collapsed-thread-tabs */}

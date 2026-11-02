@@ -1,7 +1,7 @@
 /* The model picker's provider marks, see `.fork/customizations.yaml#fork-model-picker`.
-   Claude's is the Claude Code mascot; Codex's art is a one-colour cloud with the prompt cut
-   out, so it masks a solid purple (the app icon gradient's top stop, darkened) over a white
-   patch that fills the cutout. Every other provider keeps its instance icon. */
+   Codex's art is a one-colour cloud, so it masks a solid purple over a white patch that fills
+   the prompt cutout. Other providers keep their instance icon. Hosts restyle the two fork
+   marks only through --fork-mark-ink, --fork-mark-cutout and --fork-mark-size. */
 import { ProviderDriverKind } from "@t3tools/contracts";
 import type { CSSProperties, JSX } from "react";
 
@@ -9,17 +9,27 @@ import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import type { ProviderInstanceEntry } from "~/providerInstances";
 import codexMarkUrl from "../assets/codex-mark.png";
 
-const CODEX_MARK_STYLE: CSSProperties = {
+const CLAUDE_INK = "#D97757";
+const CODEX_INK = "#8680ff";
+const MARK_SIZE = "var(--fork-mark-size, 1rem)";
+
+const CLAUDE_MARK_STYLE: CSSProperties = {
+  width: MARK_SIZE,
+  fill: `var(--fork-mark-ink, ${CLAUDE_INK})`,
+};
+const CODEX_MARK_STYLE: CSSProperties = { width: MARK_SIZE, height: MARK_SIZE };
+const CODEX_PATCH_STYLE: CSSProperties = { backgroundColor: "var(--fork-mark-cutout, #fff)" };
+const CODEX_CLOUD_STYLE: CSSProperties = {
   maskImage: `url(${codexMarkUrl})`,
   maskSize: "contain",
   maskRepeat: "no-repeat",
   maskPosition: "center",
-  backgroundColor: "#8680ff",
+  backgroundColor: `var(--fork-mark-ink, ${CODEX_INK})`,
 };
 
 function ClaudeCodeMark() {
   return (
-    <svg viewBox="0 0 256 161" className="w-4 shrink-0" fill="#D97757" aria-hidden>
+    <svg viewBox="0 0 256 161" className="shrink-0" style={CLAUDE_MARK_STYLE} aria-hidden>
       <path d="M223.979 63.79H256v33.087h-32v32.299h-15.861v31.157H192v-31.157h-15.861v31.157H160v-31.157H96v31.157H79.872v-31.157H64v31.157H47.861v-31.157H32v-32.31H0V63.8h32V.333h191.979zM64 63.79h15.872V33.42H64zm112.107 0H192V33.42h-15.893z" />
     </svg>
   );
@@ -27,10 +37,10 @@ function ClaudeCodeMark() {
 
 function CodexMark() {
   return (
-    <span className="relative size-4 shrink-0" aria-hidden>
+    <span className="relative shrink-0" style={CODEX_MARK_STYLE} aria-hidden>
       {/* Inset a quarter, so it stays inside the cloud and shows only through the prompt. */}
-      <span className="absolute inset-1 bg-white" />
-      <span className="absolute inset-0" style={CODEX_MARK_STYLE} />
+      <span className="absolute inset-1/4" style={CODEX_PATCH_STYLE} />
+      <span className="absolute inset-0" style={CODEX_CLOUD_STYLE} />
     </span>
   );
 }
@@ -38,6 +48,12 @@ function CodexMark() {
 const FORK_MARK_BY_DRIVER: Partial<Record<ProviderDriverKind, () => JSX.Element>> = {
   [ProviderDriverKind.make("claudeAgent")]: ClaudeCodeMark,
   [ProviderDriverKind.make("codex")]: CodexMark,
+};
+
+/** The fork marks' brand colours, for a host that tints a surface behind them. */
+export const FORK_MARK_INK_BY_DRIVER: Partial<Record<ProviderDriverKind, string>> = {
+  [ProviderDriverKind.make("claudeAgent")]: CLAUDE_INK,
+  [ProviderDriverKind.make("codex")]: CODEX_INK,
 };
 
 export function ModelPickerProviderGlyph(props: {

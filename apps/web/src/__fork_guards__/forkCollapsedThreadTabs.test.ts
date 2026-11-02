@@ -53,6 +53,10 @@ describe("fork guard: fork-collapsed-thread-tabs", () => {
     expect(chatHeader).toContain('ariaLabel="Thread breadcrumb"');
     expect(strip).toContain('data-open-thread-tabbed={paneThreadTabbed ? "" : undefined}');
     expect(theme).not.toContain("--workspace-controls-top: calc(");
+    // The header row folds unless the inline panel's toggle sits in it.
+    expect(chatView).toContain("headerHoldsPanelToggle={inlineRightPanelOwnsTitleBar}");
+    expect(chatView).toContain("{inlineRightPanelOwnsTitleBar ? threadPanelHeaderControl : null}");
+    expect(theme).toContain("[data-open-thread-tabbed]:not([data-header-panel-toggle])");
     expect(strip).toContain('data-fork-thread-tabs=""');
   });
 

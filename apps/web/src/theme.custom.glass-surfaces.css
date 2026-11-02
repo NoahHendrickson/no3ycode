@@ -748,6 +748,43 @@
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
     background-color: rgb(255 255 255 / 6%);
   }
+
+  /* Every tab's provider mark sits on a glass disc, concentric with the tab's
+     left end: the disc's 20px in the 28px tab leaves 4px all round, so the
+     tab's start padding drops to 4px. The fork's own marks go white at 12px
+     (the mockup's proportion) on their brand colour; any other provider keeps
+     its icon on a neutral wash. */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-thread-tabs] {
+    & [data-fork-thread-tab]:has([data-fork-tab-provider-mark]) > [data-fork-tab-content] {
+      padding-inline-start: 4px;
+    }
+
+    & [data-fork-tab-provider-mark] {
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      background-color: rgb(255 255 255 / 12%);
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 14%),
+        rgb(255 255 255 / 0%) 55%,
+        rgb(0 0 0 / 8%)
+      );
+      box-shadow:
+        0 1px 3px rgb(0 0 0 / 35%),
+        0 0 0 0.5px rgb(0 0 0 / 30%),
+        inset 0 0.5px 0 rgb(255 255 255 / 40%),
+        inset 0 -0.5px 0 rgb(255 255 255 / 14%),
+        inset 0 0 3px rgb(255 255 255 / 10%);
+    }
+
+    & [data-fork-tab-provider-mark="branded"] {
+      --fork-mark-ink: #fff;
+      --fork-mark-cutout: rgb(0 0 0 / 0%);
+      --fork-mark-size: 12px;
+      background-color: rgb(from var(--fork-tab-mark-brand) r g b / 72%);
+    }
+  }
   /* fork:end fork-collapsed-thread-tabs */
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
