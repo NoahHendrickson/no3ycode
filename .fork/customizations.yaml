@@ -4911,7 +4911,10 @@
     tree) are gone. Settings keeps upstream's separate traits pickers. The exported
     helpers of ModelPickerContent stay upstream's
     verbatim and both shadows keep upstream's relative imports. Reaches every
-    entry point through ProviderModelPicker (composer and Settings).
+    entry point through ProviderModelPicker (composer and Settings). Under
+    Glass at Full 3D (theme.custom.glass-surfaces.css), the open scope's rail
+    tab wears the selected rows' glass, and the effort thumb and selected
+    trait segments are the segmented tabs' glass chips.
   tier: 2
   files:
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
@@ -4925,6 +4928,7 @@
     - apps/web/src/custom/icons/ModelPickerProviderGlyph.tsx
     - apps/web/src/custom/assets/codex-mark.png
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.glass-surfaces.css
   shadows:
     - apps/web/src/components/chat/ProviderModelPicker.tsx
     - apps/web/src/components/chat/ModelPickerContent.tsx

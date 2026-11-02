@@ -805,4 +805,54 @@
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-sort] [data-slot="menu-radio-item"] {
     border-radius: 12px;
   }
+
+  /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+     The model picker's rail tab for the open scope wears the selected rows'
+     glass too, its dark edge 1px proud of the tab's 4px corners. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"] {
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--fork-glass-selected-shadow);
+  }
+
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: var(--fork-glass-selected-glint);
+    pointer-events: none;
+  }
+
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-picker="providers"]
+    [data-model-picker-provider][aria-current="true"]::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: 1px;
+    border-radius: 5px;
+    background: var(--fork-glass-dark-edge);
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+
+  /* The traits panel's effort thumb and selected segments as the segmented
+     tabs' glass chips: a white wash under the soft halo and the glass light,
+     in place of the solid white thumb and the segment's flat raise. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-model-traits]
+    :is([data-fork-effort-thumb], button[aria-pressed="true"]) {
+    background-color: rgb(255 255 255 / 16%);
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--fork-glass-halo-soft), var(--fork-glass-light);
+  }
+  /* fork:end fork-model-picker */
 }

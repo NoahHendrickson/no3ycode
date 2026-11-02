@@ -147,6 +147,7 @@ function EffortSlider(props: {
             <Slider.Thumb
               aria-label={descriptor.label}
               getAriaValueText={() => option?.label ?? ""}
+              data-fork-effort-thumb
               className="h-6 w-5 rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </Slider.Track>

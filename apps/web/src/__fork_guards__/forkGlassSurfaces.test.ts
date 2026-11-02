@@ -175,6 +175,15 @@ describe("fork guard: glass surfaces", () => {
     // The stamps the selected states key on.
     expect(readSibling("../custom/SidebarV2ChromeRows.tsx")).toContain("data-fork-chrome-row");
     expect(readSibling("../custom/SidebarV2ChromeRows.tsx")).toContain("data-fork-thread-sort");
+    // The model picker's rail tab and traits panel stamps.
+    const pickerContent = readSibling("../overrides/components/chat/ModelPickerContent.tsx");
+    expect(pickerContent).toContain('data-fork-model-picker="providers"');
+    expect(pickerContent).toContain("data-model-picker-provider={input.target}");
+    expect(pickerContent).toContain('aria-current={isSelected ? "true" : undefined}');
+    const pickerTraits = readSibling("../custom/ComposerModelPicker.tsx");
+    expect(pickerTraits).toContain('data-fork-model-traits="true"');
+    expect(pickerTraits).toContain("data-fork-effort-thumb");
+    expect(pickerTraits).toContain("aria-pressed={selected}");
     // Send and stop stamps the button rules key on.
     const primaryActions = readSibling("../components/chat/ComposerPrimaryActions.tsx");
     expect(primaryActions).toMatch(
