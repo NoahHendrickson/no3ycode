@@ -1021,8 +1021,8 @@ type SidebarThreadRowProps = {
   projectTitleHidden?: boolean;
   /* fork:end sidebar-v2-project-grouping */
   /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-  // Card variant only: draw the title line alone, with the repo line reduced
-  // to marks on it. The hover card carries the names.
+  // Cards draw the title line alone, with the repo line reduced to marks on
+  // it; the hover card carries the names. Slim rows only take the pill.
   compact?: boolean;
   /* fork:end sidebar-v2-compact-cards */
   /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
@@ -4924,7 +4924,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           }
                           isPinned={thread.pinnedAt != null}
                           /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-                          compact={isCard && compactCards}
+                          compact={compactCards}
                           /* fork:end sidebar-v2-compact-cards */
                           /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
                           statusSection={statusSection}
