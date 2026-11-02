@@ -12,7 +12,7 @@ import { useRouter } from "@tanstack/react-router";
 import * as Schema from "effect/Schema";
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 
-import { ProjectFavicon } from "~/components/ProjectFavicon";
+import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import {
   filterSidebarV2VisibleThreads,
   resolveThreadLastVisitedAt,
@@ -190,6 +190,7 @@ type StripEntry =
       readonly draftId: DraftId;
       readonly threadKey: string;
       readonly environmentId: EnvironmentId;
+      readonly project: ProjectFaviconProject | null;
       readonly defaultModelSelection: ModelSelection;
     }
   | { readonly kind: "thread"; readonly tab: CollapsedThreadTab };
@@ -243,6 +244,11 @@ function CollapsedThreadTabsStrip(props: {
   const tabsIn = (key: string) =>
     key === ALL_PROJECTS ? tabs : tabs.filter((tab) => tab.projectKey === key);
   const shownTabs = tabsIn(projectKey);
+  // Under All, each tab carries its project's icon; a filtered row already names it.
+  const tabProjectOf = (key: string | null) =>
+    projectKey === ALL_PROJECTS
+      ? (projects.find((project) => project.projectKey === key) ?? null)
+      : null;
   // Filtered to a project, the plus starts in it through the sidebar's own in-project path.
   const filteredProject = projects.find((project) => project.projectKey === projectKey) ?? null;
   const newAgentLabel = filteredProject
@@ -267,6 +273,16 @@ function CollapsedThreadTabsStrip(props: {
           draftId: openDraftId,
           threadKey: draftThreadKey,
           environmentId: openDraft.environmentId,
+          project:
+            projectKey === ALL_PROJECTS
+              ? (projectGroups.find((group) =>
+                  group.memberProjectRefs.some(
+                    (ref) =>
+                      ref.environmentId === openDraft.environmentId &&
+                      ref.projectId === openDraft.projectId,
+                  ),
+                ) ?? null)
+              : null,
           // The sidebar's draft card falls back to the project's default model.
           defaultModelSelection:
             allProjects.find(
@@ -474,6 +490,7 @@ function CollapsedThreadTabsStrip(props: {
                 key={entry.threadKey}
                 draftId={entry.draftId}
                 defaultModelSelection={entry.defaultModelSelection}
+                project={entry.project}
                 providerOf={(instanceId) =>
                   providerEntries.get(entry.environmentId)?.get(instanceId) ?? null
                 }
@@ -489,6 +506,7 @@ function CollapsedThreadTabsStrip(props: {
               active={tab.threadKey === openThreadKey}
               status={statusOf(tab)}
               provider={providerOf(tab)}
+              project={tabProjectOf(tab.projectKey)}
               pullRequestsInRightPanel={openThreadKey !== null}
               canSettle={
                 serverConfigs.get(tab.thread.environmentId)?.environment.capabilities
@@ -584,6 +602,7 @@ function ThreadTab(props: {
   readonly active: boolean;
   readonly status: TabStatus;
   readonly provider: ProviderInstanceEntry | null;
+  readonly project: ProjectFaviconProject | null;
   /** As the sidebar card does: with a thread open, a PR opens in the right panel. */
   readonly pullRequestsInRightPanel: boolean;
   readonly canSettle: boolean;
@@ -651,15 +670,19 @@ function ThreadTab(props: {
       >
         <span className="sr-only">{thread.title}</span>
       </button>
-      <span className="pointer-events-none flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5">
+      <span
+        data-fork-tab-content=""
+        className="pointer-events-none flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5"
+      >
         {/* The hover actions cover the end of the mark and title, which fade under them
             rather than sliding them in, so no tab moves and the PR badge and status stay
             clickable. On a minimum-width tab they reach over the mark. */}
         <span className="relative flex h-full min-w-0 flex-1 items-center">
           <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]">
             {/* The model picker's marks: the Claude Code mascot, the Codex cloud. */}
-            {props.provider ? (
-              <ModelPickerProviderGlyph entry={props.provider} showBadge={false} />
+            {props.provider ? <TabProviderMark entry={props.provider} /> : null}
+            {props.project ? (
+              <ProjectFavicon project={props.project} className="size-3.5 shrink-0" />
             ) : null}
             <span aria-hidden className="min-w-0 flex-1 truncate text-start">
               {thread.title}
@@ -717,6 +740,7 @@ function ThreadTab(props: {
 function DraftTab(props: {
   readonly draftId: DraftId;
   readonly defaultModelSelection: ModelSelection;
+  readonly project: ProjectFaviconProject | null;
   readonly providerOf: (instanceId: string) => ProviderInstanceEntry | null;
   readonly onDiscard: () => void;
 }) {
@@ -735,8 +759,15 @@ function DraftTab(props: {
       className={cn(TAB_SHELL_CLASS, "bg-black/10 text-foreground dark:bg-white/16")}
       style={TAB_SHELL_STYLE}
     >
-      <span aria-current="page" className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5">
-        {provider ? <ModelPickerProviderGlyph entry={provider} showBadge={false} /> : null}
+      <span
+        data-fork-tab-content=""
+        aria-current="page"
+        className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5"
+      >
+        {provider ? <TabProviderMark entry={provider} /> : null}
+        {props.project ? (
+          <ProjectFavicon project={props.project} className="size-3.5 shrink-0" />
+        ) : null}
         {/* Fades out under the discard button rather than sliding it in, so no tab moves. */}
         <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]">
           <DraftTitle draftId={props.draftId} />
@@ -754,6 +785,18 @@ function DraftTab(props: {
         </button>
       </span>
     </div>
+  );
+}
+
+/** Glass seats the mark on a disc of its provider's colour (theme.custom.glass-surfaces.css). */
+function TabProviderMark(props: { readonly entry: ProviderInstanceEntry }) {
+  return (
+    <span
+      data-fork-tab-provider-mark={props.entry.driverKind}
+      className="flex shrink-0 items-center justify-center"
+    >
+      <ModelPickerProviderGlyph entry={props.entry} showBadge={false} />
+    </span>
   );
 }
 

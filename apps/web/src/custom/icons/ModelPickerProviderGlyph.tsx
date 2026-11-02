@@ -14,7 +14,6 @@ const CODEX_MARK_STYLE: CSSProperties = {
   maskSize: "contain",
   maskRepeat: "no-repeat",
   maskPosition: "center",
-  backgroundColor: "#8680ff",
 };
 
 function ClaudeCodeMark() {
@@ -29,8 +28,12 @@ function CodexMark() {
   return (
     <span className="relative size-4 shrink-0" aria-hidden>
       {/* Inset a quarter, so it stays inside the cloud and shows only through the prompt. */}
-      <span className="absolute inset-1 bg-white" />
-      <span className="absolute inset-0" style={CODEX_MARK_STYLE} />
+      <span data-fork-codex-patch="" className="absolute inset-1 bg-white" />
+      <span
+        data-fork-codex-cloud=""
+        className="absolute inset-0 bg-[#8680ff]"
+        style={CODEX_MARK_STYLE}
+      />
     </span>
   );
 }

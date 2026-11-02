@@ -2665,4 +2665,20 @@
   nav[aria-label="Thread breadcrumb"]:not(:has(input)) {
   display: none;
 }
+
+/* With only the hidden breadcrumb left, the header row folds away. Its window-fixed panel
+   controls stay put; it keeps its height for the inline panel's absolute toggle, the rename
+   input, or anything beside the breadcrumb (the Automations back button, the guest share). */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-column]:has(> [data-fork-thread-tabs][data-open-thread-tabbed])
+  > [data-chat-header]:not(
+    :has(
+      > .absolute[data-workspace-titlebar-controls],
+      nav[aria-label="Thread breadcrumb"] input,
+      > div > nav[aria-label="Thread breadcrumb"]:not(:only-child)
+    )
+  ) {
+  height: 0;
+  min-height: 0;
+}
 /* fork:end fork-collapsed-thread-tabs */

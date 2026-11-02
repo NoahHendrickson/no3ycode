@@ -12,6 +12,7 @@ function readSibling(relativePath: string): string {
 
 const chatView = readSibling("../components/ChatView.tsx");
 const chatHeader = readSibling("../components/chat/ChatHeader.tsx");
+const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const strip = readSibling("../custom/CollapsedThreadTabs.tsx");
 const theme = readSibling("../theme.custom.css");
 const glassSurfaces = readSibling("../theme.custom.glass-surfaces.css");
@@ -53,6 +54,14 @@ describe("fork guard: fork-collapsed-thread-tabs", () => {
     expect(chatHeader).toContain('ariaLabel="Thread breadcrumb"');
     expect(strip).toContain('data-open-thread-tabbed={paneThreadTabbed ? "" : undefined}');
     expect(theme).not.toContain("--workspace-controls-top: calc(");
+    // The folded header keeps the window-fixed controls and holds its row for the absolute one.
+    expect(theme).toContain("> .absolute[data-workspace-titlebar-controls],");
+    expect(panelControls).toMatch(
+      /function ThreadPanelHeaderControl[\s\S]*?className="absolute top-/,
+    );
+    expect(panelControls).toMatch(
+      /function WorkspaceTitlebarControls[\s\S]*?className="pointer-events-none fixed top-/,
+    );
     expect(strip).toContain('data-fork-thread-tabs=""');
   });
 
