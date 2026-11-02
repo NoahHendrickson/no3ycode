@@ -35,10 +35,11 @@ describe("fork guard: fork-glass-3d", () => {
     expect(selection.length).toBeGreaterThan(0);
     for (const rule of selection) {
       const isTokens = compact(rule.selector) === compact(`${NOT_OFF}${PALETTE}`);
-      // The collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the list laid sideways.
+      // The collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the list laid
+      // sideways; the model picker's open provider tab (fork-model-picker) is selected too.
       const isSelectedRow =
-        /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]/u.test(
-          rule.selector,
+        /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]|\[data-fork-model-picker="providers"\] \[data-model-picker-provider\]\[aria-current="true"\]/u.test(
+          rule.selector.replace(/\s+/gu, " "),
         );
       // The block's one named exception (fork-sidebar-recent-projects); a
       // new chip belongs under Full, not on this list.

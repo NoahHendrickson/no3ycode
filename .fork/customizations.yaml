@@ -4911,7 +4911,11 @@
     tree) are gone. Settings keeps upstream's separate traits pickers. The exported
     helpers of ModelPickerContent stay upstream's
     verbatim and both shadows keep upstream's relative imports. Reaches every
-    entry point through ProviderModelPicker (composer and Settings).
+    entry point through ProviderModelPicker (composer and Settings). Under
+    Glass (theme.custom.glass-surfaces.css), the open scope's rail tab wears
+    the selected rows' glass unless 3D is off, and at Full the effort thumb
+    wears the send button's glass and the selected trait segments are the
+    segmented tabs' glass chips.
   tier: 2
   files:
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
@@ -4925,6 +4929,7 @@
     - apps/web/src/custom/icons/ModelPickerProviderGlyph.tsx
     - apps/web/src/custom/assets/codex-mark.png
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.glass-surfaces.css
   shadows:
     - apps/web/src/components/chat/ProviderModelPicker.tsx
     - apps/web/src/components/chat/ModelPickerContent.tsx
@@ -5071,8 +5076,9 @@
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
     (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows and the sidebar's recent-project
-    buttons (fork-sidebar-recent-projects). Off: the flat stage and
+    thread card, the active top sidebar rows, the sidebar's recent-project
+    buttons (fork-sidebar-recent-projects) and the model picker's selected
+    provider tab (fork-model-picker). Off: the flat stage and
     fills Glass had before #203. The lighter tint (#214) and everything else
     stays in every mode. The setting stamps data-fork-glass-3d="selection" or
     "off" on the root before first render (absent at Full). The sheets nest

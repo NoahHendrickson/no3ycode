@@ -90,9 +90,14 @@ function EffortSlider(props: {
   // Dragging previews locally and writes once on release, so sweeping past
   // Ultrathink doesn't rewrite the prompt at every stop.
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  // Base UI marks a plain click as dragging too, so only the change reason
+  // tells a press or arrow key (glide to the stop) from a drag (follow the finger).
+  const [glide, setGlide] = useState(false);
   const index = dragIndex ?? committedIndex;
   const option = descriptor.options[index];
   const lastIndex = descriptor.options.length - 1;
+  const glideClass =
+    glide && "duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none";
 
   return (
     <div className="flex flex-col gap-1.5 px-2 pt-1.5 pb-2">
@@ -110,7 +115,10 @@ function EffortSlider(props: {
         step={1}
         thumbAlignment="edge"
         disabled={props.disabled}
-        onValueChange={(value) => setDragIndex(value)}
+        onValueChange={(value, details) => {
+          setGlide(details.reason !== "drag");
+          setDragIndex(value);
+        }}
         onValueCommitted={(value) => {
           setDragIndex(null);
           const next = descriptor.options[value];
@@ -119,13 +127,16 @@ function EffortSlider(props: {
       >
         <Slider.Control className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64">
           {/* A 24px bar with a block thumb of the same height. The fill runs
-              from the start to the thumb's centre; the stops are dots, and the
+              from the start under the whole thumb; the stops are dots, and the
               model's default level is a short bar. */}
           <Slider.Track className="relative h-6 w-full rounded-[6px] bg-foreground/8">
             <div
-              className="pointer-events-none absolute inset-y-0 left-0 rounded-s-[6px] bg-foreground/16"
+              className={cn(
+                "pointer-events-none absolute inset-y-0 left-0 rounded-[6px] bg-foreground/16",
+                glideClass && ["transition-[width]", glideClass],
+              )}
               style={{
-                width: `calc(${THUMB_WIDTH_PX / 2}px + ${index / lastIndex} * (100% - ${THUMB_WIDTH_PX}px))`,
+                width: `calc(${THUMB_WIDTH_PX}px + ${index / lastIndex} * (100% - ${THUMB_WIDTH_PX}px))`,
               }}
             />
             <div
@@ -139,6 +150,8 @@ function EffortSlider(props: {
                     "absolute top-1/2 -translate-1/2 rounded-full",
                     stop.isDefault ? "h-2.5 w-0.5" : "size-1",
                     stopIndex <= index ? "bg-foreground/50" : "bg-foreground/35",
+                    // Glass's thumb is see-through; the stop under it would show.
+                    stopIndex === index && "invisible",
                   )}
                   style={{ left: `${(stopIndex / lastIndex) * 100}%` }}
                 />
@@ -147,7 +160,11 @@ function EffortSlider(props: {
             <Slider.Thumb
               aria-label={descriptor.label}
               getAriaValueText={() => option?.label ?? ""}
-              className="h-6 w-5 rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              data-fork-effort-thumb
+              className={cn(
+                "h-6 w-5 rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                glideClass && ["transition-[inset-inline-start]", glideClass],
+              )}
             />
           </Slider.Track>
         </Slider.Control>
