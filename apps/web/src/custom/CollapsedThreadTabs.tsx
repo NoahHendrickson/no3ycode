@@ -10,7 +10,14 @@ import {
 } from "@t3tools/client-runtime/thread-pull-requests";
 import { useRouter } from "@tanstack/react-router";
 import * as Schema from "effect/Schema";
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+} from "react";
 
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import {
@@ -87,7 +94,10 @@ import {
   PlusIcon,
   XIcon,
 } from "./icons/lucide-phosphor";
-import { ModelPickerProviderGlyph } from "./icons/ModelPickerProviderGlyph";
+import {
+  FORK_MARK_INK_BY_DRIVER,
+  ModelPickerProviderGlyph,
+} from "./icons/ModelPickerProviderGlyph";
 import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
@@ -127,6 +137,8 @@ type TabStatus = ReturnType<typeof resolveSidebarV2CardStatus>["topStatus"];
 export function CollapsedThreadTabs(props: {
   /** The window's panel controls float over this row's right end. */
   readonly reserveTrailingControls: boolean;
+  /** The inline right panel's toggle sits in the chat header, so the header keeps its row. */
+  readonly headerHoldsPanelToggle: boolean;
   /** The thread (or draft thread) this pane shows, which in a split can differ from the
       route's. Its header's breadcrumb hides while it has a visible tab. */
   readonly paneThreadKey: string | null;
@@ -140,6 +152,7 @@ export function CollapsedThreadTabs(props: {
   return (
     <CollapsedThreadTabsStrip
       reserveTrailingControls={props.reserveTrailingControls}
+      headerHoldsPanelToggle={props.headerHoldsPanelToggle}
       paneThreadKey={props.paneThreadKey}
     />
   );
@@ -193,10 +206,15 @@ type StripEntry =
       readonly project: ProjectFaviconProject | null;
       readonly defaultModelSelection: ModelSelection;
     }
-  | { readonly kind: "thread"; readonly tab: CollapsedThreadTab };
+  | {
+      readonly kind: "thread";
+      readonly tab: CollapsedThreadTab;
+      readonly project: ProjectFaviconProject | null;
+    };
 
 function CollapsedThreadTabsStrip(props: {
   readonly reserveTrailingControls: boolean;
+  readonly headerHoldsPanelToggle: boolean;
   readonly paneThreadKey: string | null;
 }) {
   const router = useRouter();
@@ -245,10 +263,7 @@ function CollapsedThreadTabsStrip(props: {
     key === ALL_PROJECTS ? tabs : tabs.filter((tab) => tab.projectKey === key);
   const shownTabs = tabsIn(projectKey);
   // Under All, each tab carries its project's icon; a filtered row already names it.
-  const tabProjectOf = (key: string | null) =>
-    projectKey === ALL_PROJECTS
-      ? (projects.find((project) => project.projectKey === key) ?? null)
-      : null;
+  const showProjectIcons = projectKey === ALL_PROJECTS;
   // Filtered to a project, the plus starts in it through the sidebar's own in-project path.
   const filteredProject = projects.find((project) => project.projectKey === projectKey) ?? null;
   const newAgentLabel = filteredProject
@@ -273,16 +288,15 @@ function CollapsedThreadTabsStrip(props: {
           draftId: openDraftId,
           threadKey: draftThreadKey,
           environmentId: openDraft.environmentId,
-          project:
-            projectKey === ALL_PROJECTS
-              ? (projectGroups.find((group) =>
-                  group.memberProjectRefs.some(
-                    (ref) =>
-                      ref.environmentId === openDraft.environmentId &&
-                      ref.projectId === openDraft.projectId,
-                  ),
-                ) ?? null)
-              : null,
+          project: showProjectIcons
+            ? (projectGroups.find((group) =>
+                group.memberProjectRefs.some(
+                  (ref) =>
+                    ref.environmentId === openDraft.environmentId &&
+                    ref.projectId === openDraft.projectId,
+                ),
+              ) ?? null)
+            : null,
           // The sidebar's draft card falls back to the project's default model.
           defaultModelSelection:
             allProjects.find(
@@ -295,7 +309,13 @@ function CollapsedThreadTabsStrip(props: {
   // The draft leads the row; thread tabs follow it.
   const entries: StripEntry[] = [
     ...(draftEntry === null ? [] : [draftEntry]),
-    ...shownTabs.map((tab): StripEntry => ({ kind: "thread", tab })),
+    ...shownTabs.map((tab): StripEntry => ({
+      kind: "thread",
+      tab,
+      project: showProjectIcons
+        ? (projects.find((project) => project.projectKey === tab.projectKey) ?? null)
+        : null,
+    })),
   ];
   const entryKey = (entry: StripEntry) =>
     entry.kind === "draft" ? entry.threadKey : entry.tab.threadKey;
@@ -371,6 +391,7 @@ function CollapsedThreadTabsStrip(props: {
       data-fork-thread-tabs=""
       // The open thread's tab names it, so the chat header drops its breadcrumb (theme.custom.css).
       data-open-thread-tabbed={paneThreadTabbed ? "" : undefined}
+      data-header-panel-toggle={props.headerHoldsPanelToggle ? "" : undefined}
       // Shared by both panes of a split: a press here must not first focus the left one.
       data-split-pane-action=""
       className={cn(
@@ -498,7 +519,7 @@ function CollapsedThreadTabsStrip(props: {
               />
             );
           }
-          const { tab } = entry;
+          const { tab, project } = entry;
           return (
             <ThreadTab
               key={tab.threadKey}
@@ -506,7 +527,7 @@ function CollapsedThreadTabsStrip(props: {
               active={tab.threadKey === openThreadKey}
               status={statusOf(tab)}
               provider={providerOf(tab)}
-              project={tabProjectOf(tab.projectKey)}
+              project={project}
               pullRequestsInRightPanel={openThreadKey !== null}
               canSettle={
                 serverConfigs.get(tab.thread.environmentId)?.environment.capabilities
@@ -678,12 +699,12 @@ function ThreadTab(props: {
             rather than sliding them in, so no tab moves and the PR badge and status stay
             clickable. On a minimum-width tab they reach over the mark. */}
         <span className="relative flex h-full min-w-0 flex-1 items-center">
-          <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]">
+          {/* Stretched and pulled 4px into the padding so the hover mask, and the clip that
+              keeps the marks off the PR badge on a minimum-width tab, spare the disc's shadow. */}
+          <span className="-ml-1 flex min-w-0 flex-1 items-center gap-1.5 self-stretch overflow-hidden pl-1 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]">
             {/* The model picker's marks: the Claude Code mascot, the Codex cloud. */}
             {props.provider ? <TabProviderMark entry={props.provider} /> : null}
-            {props.project ? (
-              <ProjectFavicon project={props.project} className="size-3.5 shrink-0" />
-            ) : null}
+            {props.project ? <TabProjectMark project={props.project} /> : null}
             <span aria-hidden className="min-w-0 flex-1 truncate text-start">
               {thread.title}
             </span>
@@ -765,9 +786,7 @@ function DraftTab(props: {
         className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5"
       >
         {provider ? <TabProviderMark entry={provider} /> : null}
-        {props.project ? (
-          <ProjectFavicon project={props.project} className="size-3.5 shrink-0" />
-        ) : null}
+        {props.project ? <TabProjectMark project={props.project} /> : null}
         {/* Fades out under the discard button rather than sliding it in, so no tab moves. */}
         <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]">
           <DraftTitle draftId={props.draftId} />
@@ -790,14 +809,20 @@ function DraftTab(props: {
 
 /** Glass seats the mark on a disc of its provider's colour (theme.custom.glass-surfaces.css). */
 function TabProviderMark(props: { readonly entry: ProviderInstanceEntry }) {
+  const ink = FORK_MARK_INK_BY_DRIVER[props.entry.driverKind];
   return (
     <span
-      data-fork-tab-provider-mark={props.entry.driverKind}
+      data-fork-tab-provider-mark={ink ? "branded" : ""}
+      style={ink ? ({ "--fork-tab-mark-brand": ink } as CSSProperties) : undefined}
       className="flex shrink-0 items-center justify-center"
     >
       <ModelPickerProviderGlyph entry={props.entry} showBadge={false} />
     </span>
   );
+}
+
+function TabProjectMark(props: { readonly project: ProjectFaviconProject }) {
+  return <ProjectFavicon project={props.project} className="size-3.5 shrink-0" />;
 }
 
 /** The sidebar's draft label: the prompt with attachment chips read as their labels. */
