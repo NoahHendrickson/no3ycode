@@ -384,7 +384,7 @@ function CollapsedThreadTabsStrip(props: {
           if (target) openThread(target);
         }}
         // Scrolls sideways before it can squeeze out More.
-        className="min-w-0 shrink overflow-x-auto [scrollbar-width:none]"
+        className="min-w-0 shrink overflow-x-auto rounded-full [scrollbar-width:none]"
       >
         <ProjectTab value={ALL_PROJECTS} label="All projects">
           <LayersIcon className="size-3.5" />
@@ -778,7 +778,13 @@ function ProjectTab(props: {
   return (
     <Tooltip>
       <TooltipTrigger
-        render={<SegmentedTab value={props.value} aria-label={props.label} className="w-7 px-0" />}
+        render={
+          <SegmentedTab
+            value={props.value}
+            aria-label={props.label}
+            className="w-7 rounded-full px-0"
+          />
+        }
       >
         {props.children}
       </TooltipTrigger>
