@@ -1397,6 +1397,82 @@
   translate: 100% 0;
 }
 
+/* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek
+   Collapsed-sidebar peek. Hovering the floating toggle drops the real panel
+   down beneath it as a card (custom/sidebarPeek.ts stamps the wrapper). The
+   panel stays collapsed — the gap spacer is already zero — so only the
+   container moves: in from off-canvas, 8px off the window edges, its top 4px
+   under the toggle's glyph box. Opaque fill, no backdrop blur: a blur this
+   size over a streaming transcript would repaint every token.
+   "closed" drops the slide transition, so dismissing it vanishes like a menu
+   instead of sliding out at full height. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
+  [data-slot="sidebar-container"] {
+  top: calc(
+    var(--workspace-controls-top) +
+      (var(--workspace-topbar-height) + var(--workspace-titlebar-control-size)) / 2 + 4px
+  );
+  bottom: 8px;
+  left: 8px;
+  height: auto;
+  translate: 0 0;
+  z-index: 45;
+  overflow: hidden;
+  border: 1px solid var(--fork-popup-border, var(--sidebar-border));
+  border-radius: 12px;
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 0.32),
+    0 2px 8px rgb(0 0 0 / 0.2);
+  transition: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"][data-panel-animations="true"]
+  [data-slot="sidebar-container"] {
+  animation: fork-sidebar-peek-in 120ms ease-out;
+}
+
+@keyframes fork-sidebar-peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-slot="sidebar-wrapper"][data-fork-sidebar-peek]
+    [data-slot="sidebar-container"] {
+    animation: none;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="closed"]
+  [data-slot="sidebar-container"] {
+  transition: none;
+}
+
+/* The toggle above is the card's header; the panel's own (brand, inline
+   toggle, window-drag strip) would repeat it. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  [data-fork-sidebar-header] {
+  display: none;
+}
+
+/* The card's top edge overlaps the workspace title bar, whose later drag rect
+   would swallow presses there in Electron (same release as the overlay's). */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  [data-slot="sidebar-inset"]
+  .drag-region {
+  -webkit-app-region: no-drag;
+}
+/* fork:end fork-sidebar-peek */
+
 /* ---------------------------------------------------------------------------
    Project header actions reveal — see
    `.fork/customizations.yaml#sidebar-v2-project-grouping`.

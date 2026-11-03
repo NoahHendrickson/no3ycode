@@ -55,6 +55,8 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
         "@container/sidebar-header relative flex h-[var(--workspace-topbar-height)] shrink-0 flex-row items-center gap-2 px-0",
         isElectron && "drag-region",
       )}
+      // The collapsed-sidebar peek card hides this row (fork-sidebar-peek).
+      data-fork-sidebar-header=""
     >
       {/* The toggle sits inline here rather than floating over the workspace, so
           it reads as belonging to the panel it collapses. The mobile-only
