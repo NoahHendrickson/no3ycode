@@ -30,6 +30,20 @@ export interface CollapsedThreadTab {
   readonly projectKey: string | null;
 }
 
+function collapsedTabMaker(projectGroups: readonly SidebarV2GroupableProject[]) {
+  const projectKeyByRef = new Map<string, string>();
+  for (const group of projectGroups) {
+    for (const ref of group.memberProjectRefs) {
+      projectKeyByRef.set(`${ref.environmentId}:${ref.projectId}`, group.projectKey);
+    }
+  }
+  return (thread: EnvironmentThreadShell): CollapsedThreadTab => ({
+    thread,
+    threadKey: scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+    projectKey: projectKeyByRef.get(`${thread.environmentId}:${thread.projectId}`) ?? null,
+  });
+}
+
 export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProject>(input: {
   /** Already filtered to the threads the sidebar lists (filterSidebarV2VisibleThreads). */
   readonly threads: readonly EnvironmentThreadShell[];
@@ -39,19 +53,13 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
   /** A precise ISO time, as the sidebar's partition uses. */
   readonly now: string;
   readonly openThreadKey: string | null;
-  /** A split's threads, left (the one it was split from) then right: they show whatever their status. */
-  readonly paneThreadKeys: readonly string[];
   readonly holds: SidebarV2CompletedHoldTracker;
   /** The sidebar's capability gates: an environment without them never parks a thread. */
   readonly supports: (environmentId: EnvironmentThreadShell["environmentId"]) => {
     readonly settlement: boolean;
     readonly snooze: boolean;
   };
-}): {
-  readonly panes: CollapsedThreadTab[];
-  readonly tabs: CollapsedThreadTab[];
-  readonly projects: TProject[];
-} {
+}): { readonly tabs: CollapsedThreadTab[]; readonly projects: TProject[] } {
   const live = input.threads.filter((thread) => {
     const supports = input.supports(thread.environmentId);
     return !(
@@ -67,30 +75,13 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
     holds: input.holds,
     isDraft: () => false,
   });
-  const projectKeyByRef = new Map<string, string>();
-  for (const group of input.projectGroups) {
-    for (const ref of group.memberProjectRefs) {
-      projectKeyByRef.set(`${ref.environmentId}:${ref.projectId}`, group.projectKey);
-    }
-  }
-  const toTab = (thread: EnvironmentThreadShell): CollapsedThreadTab => ({
-    thread,
-    threadKey: scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
-    projectKey: projectKeyByRef.get(`${thread.environmentId}:${thread.projectId}`) ?? null,
-  });
-  const panes = input.paneThreadKeys.flatMap((key) => {
-    const thread = input.threads.find(
-      (candidate) => scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key,
-    );
-    return thread === undefined ? [] : [toTab(thread)];
-  });
+  const toTab = collapsedTabMaker(input.projectGroups);
   const tabs = sections
     .filter((section) => isCollapsedTabStatus(section.status) && input.statuses.has(section.status))
     .flatMap((section) => section.threads)
     .map(toTab);
   const projectKeys = new Set(tabs.map((tab) => tab.projectKey));
   return {
-    panes,
     tabs,
     projects: input.projectGroups.filter((group) => projectKeys.has(group.projectKey)),
   };
@@ -110,28 +101,34 @@ export function collapsedDraftTabKey(input: {
   return input.tabs.some((tab) => tab.threadKey === threadKey) ? null : threadKey;
 }
 
+export type CollapsedPaneTab =
+  | { readonly kind: "thread"; readonly tab: CollapsedThreadTab }
+  | { readonly kind: "draft"; readonly threadKey: string; readonly pane: number };
+
 /**
- * Each split pane's tab, left then right: its unsent draft whichever pane holds the route (the
- * route names only the focused pane's), else its thread.
+ * Each split pane's tab, left then right, whatever its status: its thread's once the server has
+ * the thread, else its draft (unsent, or sent and waiting for the shell), else none. Drafts are
+ * looked up per pane, since the route names only the focused pane's.
  */
-export function collapsedPaneTabs<
-  TDraft extends {
-    readonly session: Pick<DraftSessionState, "environmentId" | "threadId" | "promotedTo">;
-  },
->(input: {
+export function collapsedPaneTabs(input: {
+  /** Already filtered to the threads the sidebar lists. */
+  readonly threads: readonly EnvironmentThreadShell[];
+  readonly projectGroups: readonly SidebarV2GroupableProject[];
   readonly paneThreadKeys: readonly string[];
-  readonly paneDrafts: readonly (TDraft | null)[];
-  readonly panes: readonly CollapsedThreadTab[];
-}): (TDraft | CollapsedThreadTab)[] {
-  return input.paneThreadKeys.flatMap((key, index): (TDraft | CollapsedThreadTab)[] => {
-    const draft = input.paneDrafts[index] ?? null;
-    if (
-      draft !== null &&
-      collapsedDraftTabKey({ draft: draft.session, tabs: input.panes }) === key
-    ) {
-      return [draft];
-    }
-    return input.panes.filter((tab) => tab.threadKey === key);
+  readonly paneHasDraft: readonly boolean[];
+}): CollapsedPaneTab[] {
+  if (input.paneThreadKeys.length === 0) return [];
+  const toTab = collapsedTabMaker(input.projectGroups);
+  const tabByKey = new Map(
+    input.threads
+      .map(toTab)
+      .filter((tab) => input.paneThreadKeys.includes(tab.threadKey))
+      .map((tab) => [tab.threadKey, tab]),
+  );
+  return input.paneThreadKeys.flatMap((threadKey, pane): CollapsedPaneTab[] => {
+    const tab = tabByKey.get(threadKey);
+    if (tab !== undefined) return [{ kind: "thread", tab }];
+    return input.paneHasDraft[pane] === true ? [{ kind: "draft", threadKey, pane }] : [];
   });
 }
 
@@ -231,4 +228,58 @@ export function fitCollapsedThreadTabs(input: {
       : all.slice(0, fit);
   const shown = new Set(visible);
   return { visible, overflow: all.filter((index) => !shown.has(index)) };
+}
+
+export type CollapsedTabSlot<TEntry> =
+  | { readonly kind: "tab"; readonly entry: TEntry }
+  /** A split's pane tabs side by side in one capsule, both selected. */
+  | { readonly kind: "pair"; readonly entries: readonly TEntry[] };
+
+/**
+ * The strip's row: the leading draft, then the thread tabs with a split's panes in place of the
+ * first of them to hold a tab, fitted to the width. The open thread (or the split's panes) stays
+ * on screen as fitCollapsedThreadTabs allows; the rest go behind More.
+ */
+export function layoutCollapsedTabRow<TEntry extends { readonly threadKey: string }>(input: {
+  /** The route's draft, when it is not one of the panes. */
+  readonly leading: TEntry | null;
+  readonly tabs: readonly TEntry[];
+  /** A split's pane tabs, left then right; empty outside a split. */
+  readonly panes: readonly TEntry[];
+  /** The route's thread or draft, kept on screen outside a split. */
+  readonly openKey: string | null;
+  readonly width: number;
+}): { readonly slots: CollapsedTabSlot<TEntry>[]; readonly overflow: TEntry[] } {
+  const { leading, panes } = input;
+  const { before, after } = splitCollapsedTabsAroundPanes(
+    input.tabs,
+    panes.map((pane) => pane.threadKey),
+  );
+  const entries = [...(leading === null ? [] : [leading]), ...before, ...panes, ...after];
+  const panesStart = (leading === null ? 0 : 1) + before.length;
+  const [activeIndex, activeLength] =
+    panes.length > 0
+      ? [panesStart, panes.length]
+      : [entries.findIndex((entry) => entry.threadKey === input.openKey), 1];
+  const fit = fitCollapsedThreadTabs({
+    count: entries.length,
+    width: input.width,
+    activeIndex,
+    activeLength,
+  });
+  const slots: CollapsedTabSlot<TEntry>[] = [];
+  let pair: TEntry[] | null = null;
+  for (const index of fit.visible) {
+    const entry = entries[index];
+    if (entry === undefined) continue;
+    if (panes.length < 2 || index < panesStart || index >= panesStart + panes.length) {
+      slots.push({ kind: "tab", entry });
+    } else if (pair === null) {
+      pair = [entry];
+      slots.push({ kind: "pair", entries: pair });
+    } else {
+      pair.push(entry);
+    }
+  }
+  return { slots, overflow: fit.overflow.flatMap((index) => entries[index] ?? []) };
 }

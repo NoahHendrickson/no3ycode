@@ -121,12 +121,12 @@ export function useFloatWindow(active: boolean) {
     ) {
       return;
     }
-    cutFloatHoles(measureFloatBehind(parent), {
-      x: frameX,
-      y: frameY,
-      width: frameWidth,
-      height: frameHeight,
-    });
+    const frame = { x: frameX, y: frameY, width: frameWidth, height: frameHeight };
+    const cut = () => cutFloatHoles(measureFloatBehind(parent), frame);
+    cut();
+    // A pane behind can move without the parent resizing (the collapsed-sidebar tab strip
+    // mounting above it), and its own size changes when it does.
+    return observeResize([...parent.querySelectorAll("[data-fork-float-behind]")], cut);
   }, [element, frameX, frameY, frameWidth, frameHeight]);
 
   const beginGesture = (

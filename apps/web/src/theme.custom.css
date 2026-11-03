@@ -2727,7 +2727,9 @@
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-thread-tabs] + [data-fork-thread-panes] {
   --workspace-titlebar-content-left: var(--workspace-gutter-start);
+  /* The native window controls (Windows/Linux overlay) sit over the strip, not the panes. */
   --workspace-native-controls-inset: 0px;
+  --workspace-controls-right: calc(env(safe-area-inset-right) + 0.75rem);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -2744,8 +2746,7 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-thread-tabs]
   + [data-fork-thread-panes]
-  [data-chat-header]
-  > [data-workspace-titlebar-controls].absolute {
+  [data-fork-header-anchored-controls] {
   --workspace-controls-top: 0px;
 }
 /* fork:end fork-collapsed-thread-tabs */

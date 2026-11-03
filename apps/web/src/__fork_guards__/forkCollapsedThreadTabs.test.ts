@@ -15,6 +15,7 @@ const strip = readSibling("../custom/CollapsedThreadTabs.tsx");
 const theme = readSibling("../theme.custom.css");
 const glassSurfaces = readSibling("../theme.custom.glass-surfaces.css");
 const sidebar = readSibling("../components/Sidebar.tsx");
+const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 
 describe("fork guard: fork-collapsed-thread-tabs", () => {
   it("mounts the strip once, above every thread pane", () => {
@@ -53,6 +54,9 @@ describe("fork guard: fork-collapsed-thread-tabs", () => {
     expect(theme).toContain(
       "var(--workspace-topbar-height) - var(--fork-thread-tabs-overlap, 0px)",
     );
+    // The header's own thread panel toggle keeps its place, through an explicit stamp.
+    expect(panelControls).toContain('data-fork-header-anchored-controls=""');
+    expect(theme).toContain("+ [data-fork-thread-panes]\n  [data-fork-header-anchored-controls] {");
   });
 
   it("opens the sidebar's own thread menu and settles through its own path", () => {

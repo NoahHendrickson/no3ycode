@@ -6232,7 +6232,8 @@
     floating sidebar toggle, and under it the panes lay out as beside an open
     sidebar. Headers drop the collapsed-sidebar inset and keep their
     breadcrumb, and a lone pane's window-fixed panel controls move down to its
-    header row (split and floating panes contain their own). Under Glass's
+    header row (split and floating panes contain their own); the native window
+    controls' inset (Windows/Linux overlay) stays with the strip. Under Glass's
     stage cards the panes tuck the card's 8px top inset under the row's empty
     foot (--fork-thread-tabs-overlap), so a card sits as far below the tabs as
     they sit below the window's top. In a split, its two
@@ -6240,7 +6241,11 @@
     puts the thread it was made from on the left), in place of the first of
     them to hold a tab (else leading the row), under any project filter and
     whatever their status; More never splits the pair while two tabs fit
-    (splitCollapsedTabsAroundPanes, fitCollapsedThreadTabs). It renders only while the desktop sidebar is collapsed, never on
+    (layoutCollapsedTabRow). Pressing the other pane's tab, or its unsent
+    draft, focuses that pane in place (the route is replaced, as every pane
+    switch does), and only the focused pane's tab holds the route for the PR
+    actions and aria-current. A sent pane draft keeps its tab until its
+    thread's shell arrives. It renders only while the desktop sidebar is collapsed, never on
     mobile; under an open sidebar a render-nothing observer keeps feeding the
     Completed-hold tracker, so a thread that comes to rest there is still held
     when the sidebar collapses. Under Glass the open thread's tab and the chosen project wear the
@@ -6276,6 +6281,9 @@
   watch:
     # Fenced registration of the thread action menu and the in-project start, its lookup of threads the list hides, and rename opening the sidebar.
     - apps/web/src/components/Sidebar.tsx
+    # Fenced data-fork-header-anchored-controls on the header's thread panel toggle, which
+    # the lone pane's controls offset skips.
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
   verify:
     - apps/web/src/__fork_guards__/forkCollapsedThreadTabs.test.ts
     - apps/web/src/__fork_guards__/forkGlass3d.test.ts
