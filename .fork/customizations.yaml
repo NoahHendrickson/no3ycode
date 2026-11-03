@@ -5897,9 +5897,13 @@
     so mounting the new pane overlaps the press. Until it is sent, a split
     draft carries an X in its header that hands the route to the other pane
     and dissolves the pair; an empty draft is discarded, while one the user
-    has written in stays a draft of its own. Dragging one
-    sidebar card onto another pairs them: the card dropped on keeps the left
-    pane. Pairs are device-local (custom/splitThreads/splitThreadStore,
+    has written in stays a draft of its own. Dragging one sidebar card or
+    collapsed thread tab onto another pairs them, across the two surfaces too
+    (custom/splitThreads/splitThreadDrag owns the drag, the pair and the
+    open): the one dropped on keeps the left pane, and the dragged thread
+    opens unless the route shows one of the two. Pinned and shelved (settled,
+    snoozed) threads are neither sources nor targets; draft tabs never take
+    part. Pairs are device-local (custom/splitThreads/splitThreadStore,
     localStorage): no server, contract or migration change, so other clients
     and mobile show the two threads as ordinary cards. A thread belongs to at
     most one pair; pairing it again moves it. A pair whose partner is deleted
@@ -5997,7 +6001,7 @@
     - apps/web/src/custom/splitThreads/floatWindow.tsx
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
     - apps/web/src/custom/splitThreads/sidebarSplitRows.ts
-    - apps/web/src/custom/splitThreads/sidebarSplitDrag.ts
+    - apps/web/src/custom/splitThreads/splitThreadDrag.ts
     - apps/web/src/custom/splitThreads/SidebarSplitPairRow.tsx
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     # Registers only the focused pane's composer.
@@ -6244,8 +6248,9 @@
     (layoutCollapsedTabRow). Pressing the other pane's tab, or its unsent
     draft, focuses that pane in place (the route is replaced, as every pane
     switch does), and only the focused pane's tab holds the route for the PR
-    actions and aria-current. A sent pane draft keeps its tab until its
-    thread's shell arrives. It renders only while the desktop sidebar is collapsed, never on
+    actions and aria-current. Dragging one thread tab onto another splits
+    them, as a sidebar card drop does (fork-split-threads). A sent pane draft
+    keeps its tab until its thread's shell arrives. It renders only while the desktop sidebar is collapsed, never on
     mobile; under an open sidebar a render-nothing observer keeps feeding the
     Completed-hold tracker, so a thread that comes to rest there is still held
     when the sidebar collapses. Under Glass the open thread's tab and the chosen project wear the
