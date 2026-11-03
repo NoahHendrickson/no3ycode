@@ -3992,7 +3992,7 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
     packageManager: rootPackageJson.packageManager,
     description: "no3y Code desktop build (fork of T3 Code)",
     license: "MIT",
-    homepage: "https://github.com/NoahHendrickson/t3code",
+    homepage: "https://github.com/NoahHendrickson/no3ycode",
     author: "T3 Tools",
     // fork:end fork-app-identity
     main: "apps/desktop/dist-electron/boot.cjs",

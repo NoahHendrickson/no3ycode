@@ -127,7 +127,7 @@ describe("fork guard: fork-app-identity", () => {
   it("sends startup recovery to the fork's releases", () => {
     const recovery = read("apps/desktop/src/app/DesktopStartupRecovery.ts");
     expect(recovery).toContain(
-      'const RELEASES_URL = "https://github.com/NoahHendrickson/t3code/releases";',
+      'const RELEASES_URL = "https://github.com/NoahHendrickson/no3ycode/releases";',
     );
     expect(recovery).not.toContain("pingdotgg/t3code/releases");
   });

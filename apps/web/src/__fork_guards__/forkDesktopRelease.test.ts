@@ -60,7 +60,7 @@ describe("fork guard: fork-desktop-release", () => {
   });
 
   it("stays gated to the fork repository", () => {
-    expect(readForkRelease()).toContain("github.repository == 'NoahHendrickson/t3code'");
+    expect(readForkRelease()).toContain("github.repository_owner == 'NoahHendrickson'");
   });
 
   it("never publishes to a package registry", () => {

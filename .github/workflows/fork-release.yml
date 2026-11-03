@@ -50,8 +50,9 @@ jobs:
   release:
     name: Build and publish macOS arm64
     # This file is fork-owned, so upstream should never see it. Belt and braces
-    # in case it ever travels: the fork must be the only place it can run.
-    if: github.repository == 'NoahHendrickson/t3code'
+    # in case it ever travels: only repos owned by the fork's account can run it,
+    # so renaming the fork never silently disables releases.
+    if: github.repository_owner == 'NoahHendrickson'
     runs-on: macos-latest
     timeout-minutes: 60
     env:
@@ -253,7 +254,7 @@ jobs:
             by those versions are deleted on first launch. v0.1.6 moved the
             stash to a new storage key and unconditionally purges the old one,
             so copy anything you need out of the prompt stash before upgrading.
-            Details: the [v0.1.6 release notes](https://github.com/NoahHendrickson/t3code/releases/tag/v0.1.6).
+            Details: the [v0.1.6 release notes](https://github.com/NoahHendrickson/no3ycode/releases/tag/v0.1.6).
 
             T3 Connect (remote access and sign-in) is configured with the same
             public values as official T3 Code releases and uses upstream's

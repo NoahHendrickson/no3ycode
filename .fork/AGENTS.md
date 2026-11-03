@@ -1,6 +1,6 @@
 # Fork rules — read before changing anything
 
-This repository is `NoahHendrickson/t3code`, a fork of `pingdotgg/t3code` that carries permanent
+This repository is `NoahHendrickson/no3ycode`, a fork of `pingdotgg/t3code` that carries permanent
 frontend customizations while continuously absorbing upstream. Full rationale and architecture:
 `.fork/README.md`. These are the operating rules every agent (and human) must follow.
 
@@ -15,7 +15,7 @@ frontend customizations while continuously absorbing upstream. Full rationale an
 Base every working branch on `custom`. If a task description says "the default branch", that is
 `custom`, not `main`.
 
-Every pull request targets `NoahHendrickson/t3code` with base `custom`. GitHub's "New pull
+Every pull request targets `NoahHendrickson/no3ycode` with base `custom`. GitHub's "New pull
 request" UI on a fork defaults the base repository to `pingdotgg/t3code` — check it on every PR
 you open, from the UI or the API. A PR against upstream publishes fork code to a repository this
 fork only ever reads from; there is no valid reason to open one.
