@@ -426,6 +426,7 @@ import {
 } from "~/custom/splitThreads/splitThreadDrag";
 import { buildSidebarSplitModel } from "~/custom/splitThreads/sidebarSplitRows";
 import { useSplitThreadStore } from "~/custom/splitThreads/splitThreadStore";
+import { useStableCallback } from "~/hooks/useStableCallback";
 /* fork:end fork-split-threads */
 
 // The fields thread rows show. Provider status pushes refresh `checkedAt`,
@@ -3140,10 +3141,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     [clearSelection, isMobile, router, setOpenMobile, setSelectionAnchor],
   );
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  // Stable, so the handlers built in render never hold navigateToThread's ref reads.
+  const openDroppedThread = useStableCallback((threadRef: ScopedThreadRef) => {
+    void navigateToThread(threadRef);
+  });
   const splitDropHandlers = makeSplitDropHandlers({
     canPair: (threadKey) => splitModel.pairable.has(threadKey),
     openThreadKey: routeThreadKey,
-    openThread: (threadRef) => void navigateToThread(threadRef),
+    openThread: openDroppedThread,
   });
   /* fork:end fork-split-threads */
 
