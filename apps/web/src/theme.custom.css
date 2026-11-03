@@ -1413,10 +1413,11 @@
    down beneath it as a card (custom/sidebarPeek.ts stamps the wrapper). The
    panel stays collapsed — the gap spacer is already zero — so only the
    container moves: in from off-canvas, 14px in from the window's left so it
-   does not line up with the stage card's 8px edge, with a tail up to the
-   toggle's glyph. No backdrop blur: a blur this size over a streaming
-   transcript would repaint every token. Under Glass the stage is cut away
-   beneath it instead (below).
+   does not line up with the stage card's 8px edge, with a short tail up to
+   the toggle's glyph, and 60% of the run to 8px off the window's bottom.
+   No backdrop blur: a blur this size over a streaming transcript would
+   repaint every token. Under Glass the stage is cut away beneath it instead
+   (below).
    "dismissed" drops the slide transition, so dismissing it vanishes like a
    menu instead of sliding out at full height. Stacking and the title-bar drag
    release are the narrow overlay's rules above.
@@ -1429,12 +1430,11 @@
    cannot reach into url(); forkSidebarPeek.test.ts ties them to the sizes. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"] {
-  --fork-peek-bottom: 8px;
   --fork-peek-radius: 12px;
-  --fork-peek-tail-width: 18px;
-  --fork-peek-tail-height: 8px;
+  --fork-peek-tail-width: 14px;
+  --fork-peek-tail-height: 6px;
   --fork-peek-card-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' rx='12'/%3E%3C/svg%3E");
-  --fork-peek-tail-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='8'%3E%3Cpolygon points='0,8 9,0 18,8'/%3E%3C/svg%3E");
+  --fork-peek-tail-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='6'%3E%3Cpolygon points='0,6 7,0 14,6'/%3E%3C/svg%3E");
   --fork-peek-toggle-x: calc(
     var(--workspace-controls-left) + 1px + var(--workspace-titlebar-control-size) / 2
   );
@@ -1444,9 +1444,10 @@
   );
   --fork-peek-top: calc(
     var(--workspace-controls-top) +
-      (var(--workspace-topbar-height) + var(--workspace-titlebar-control-size)) / 2 + 3px +
+      (var(--workspace-topbar-height) + var(--workspace-titlebar-control-size)) / 2 + 1px +
       var(--fork-peek-tail-height)
   );
+  --fork-peek-height: calc((100dvh - var(--fork-peek-top) - 8px) * 0.6);
   --fork-peek-tail-left: calc(
     var(--fork-peek-toggle-x) - var(--fork-peek-tail-width) / 2 - var(--fork-peek-left)
   );
@@ -1462,9 +1463,9 @@
   [data-slot="sidebar-container"] {
   --fork-peek-edge: var(--fork-popup-border, var(--sidebar-border));
   top: var(--fork-peek-top);
-  bottom: var(--fork-peek-bottom);
+  bottom: auto;
   left: var(--fork-peek-left);
-  height: auto;
+  height: var(--fork-peek-height);
   translate: 0 0;
   overflow: visible;
   border-width: 0;
@@ -1478,6 +1479,8 @@
   > [data-slot="sidebar-inner"] {
   border-radius: inherit;
   overflow: hidden;
+  /* The hidden header held the rows off the top; match their 8px side inset. */
+  padding-top: 8px;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1556,7 +1559,7 @@
       calc(var(--fork-peek-top) - var(--fork-peek-tail-height));
   mask-size:
     100% 100%,
-    var(--sidebar-width) calc(100% - var(--fork-peek-top) - var(--fork-peek-bottom)),
+    var(--sidebar-width) var(--fork-peek-height),
     auto;
   mask-repeat: no-repeat;
   mask-composite: subtract, add, add;
