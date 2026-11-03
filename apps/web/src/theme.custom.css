@@ -1332,9 +1332,15 @@
 
    Accepted edge: a *hovered* stacked composer banner also reaches z-50 and can
    paint over the floating panel. Transient and cosmetic, where the lightbox
-   case was neither. */
+   case was neither.
+
+   The collapsed-sidebar peek card (fork-sidebar-peek) floats over the same
+   workspace, so it shares this and the drag-strip release below. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-sidebar-overlay="true"]
+  :is(
+    [data-fork-sidebar-overlay="true"],
+    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  )
   [data-slot="sidebar-container"] {
   z-index: 45;
 }
@@ -1350,7 +1356,10 @@
    panel takes over the title bar. Cost: the strip is not a window-drag handle
    in this state. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-sidebar-overlay="true"]
+  :is(
+    [data-fork-sidebar-overlay="true"],
+    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  )
   [data-slot="sidebar-inset"]
   .drag-region {
   -webkit-app-region: no-drag;
@@ -1404,8 +1413,9 @@
    container moves: in from off-canvas, 8px off the window edges, its top 4px
    under the toggle's glyph box. Opaque fill, no backdrop blur: a blur this
    size over a streaming transcript would repaint every token.
-   "closed" drops the slide transition, so dismissing it vanishes like a menu
-   instead of sliding out at full height. */
+   "dismissed" drops the slide transition, so dismissing it vanishes like a
+   menu instead of sliding out at full height. Stacking and the title-bar drag
+   release are the narrow overlay's rules above. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
@@ -1418,7 +1428,6 @@
   left: 8px;
   height: auto;
   translate: 0 0;
-  z-index: 45;
   overflow: hidden;
   border: 1px solid var(--fork-popup-border, var(--sidebar-border));
   border-radius: 12px;
@@ -1441,16 +1450,8 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"]
-    [data-slot="sidebar-wrapper"][data-fork-sidebar-peek]
-    [data-slot="sidebar-container"] {
-    animation: none;
-  }
-}
-
 :root[data-fork="noahhendrickson-t3code"]
-  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="closed"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="dismissed"]
   [data-slot="sidebar-container"] {
   transition: none;
 }
@@ -1461,15 +1462,6 @@
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-fork-sidebar-header] {
   display: none;
-}
-
-/* The card's top edge overlaps the workspace title bar, whose later drag rect
-   would swallow presses there in Electron (same release as the overlay's). */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
-  [data-slot="sidebar-inset"]
-  .drag-region {
-  -webkit-app-region: no-drag;
 }
 /* fork:end fork-sidebar-peek */
 

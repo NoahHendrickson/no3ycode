@@ -40,12 +40,7 @@ import {
 import { useSidebarOverlayOnNarrowChat } from "../custom/narrowChatOverlay";
 /* fork:end narrow-workspace-layout */
 /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
-import {
-  resetSidebarPeek,
-  sidebarPeekTriggerProps,
-  useSidebarPeekLifecycle,
-  useSidebarPeekState,
-} from "../custom/sidebarPeek";
+import { useSidebarPeekState, useSidebarPeekTrigger } from "../custom/sidebarPeek";
 /* fork:end fork-sidebar-peek */
 import { BackgroundThreadAnnouncer } from "./BackgroundThreadAnnouncer";
 import ThreadSidebar from "./Sidebar";
@@ -341,7 +336,10 @@ function SidebarControl() {
   });
   /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
   const pathname = useLocation({ select: (location) => location.pathname });
-  useSidebarPeekLifecycle({ enabled: !isMobile && !isSidebarVisible, pathname });
+  const peekTriggerProps = useSidebarPeekTrigger({
+    enabled: !isMobile && !isSidebarVisible,
+    pathname,
+  });
   /* fork:end fork-sidebar-peek */
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window keydown listener that toggles the sidebar on its shortcut
@@ -408,8 +406,7 @@ function SidebarControl() {
                 className="pointer-events-auto [&_svg]:size-4!"
                 aria-label="Toggle main sidebar"
                 /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
-                {...(isMobile ? {} : sidebarPeekTriggerProps)}
-                onClick={resetSidebarPeek}
+                {...peekTriggerProps}
                 /* fork:end fork-sidebar-peek */
               />
             }

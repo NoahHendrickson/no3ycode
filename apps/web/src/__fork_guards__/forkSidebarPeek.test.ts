@@ -26,13 +26,12 @@ describe("fork-sidebar-peek", () => {
 
   it("wires the store into the trigger, the panel and the wrapper", () => {
     const layout = readSibling("../components/AppSidebarLayout.tsx");
-    expect(layout).toContain("{...(isMobile ? {} : sidebarPeekTriggerProps)}");
-    expect(layout).toContain("onClick={resetSidebarPeek}");
+    expect(layout).toContain("{...peekTriggerProps}");
     expect(layout).toContain('peek={sidebarPeek === "open"}');
     expect(layout).toContain(
       'data-fork-sidebar-peek={sidebarPeek === "off" ? undefined : sidebarPeek}',
     );
-    expect(layout).toMatch(/useSidebarPeekLifecycle\(\{ enabled: !isMobile && !isSidebarVisible/u);
+    expect(layout).toMatch(/useSidebarPeekTrigger\(\{\s+enabled: !isMobile && !isSidebarVisible/u);
     expect(readSibling("../components/sidebar/SidebarChrome.tsx")).toContain(
       'data-fork-sidebar-header=""',
     );
@@ -47,13 +46,20 @@ describe("fork-sidebar-peek", () => {
         rule.body.includes("translate: 0 0"),
     );
     expect(card?.selector).toContain('[data-sidebar-state="collapsed"]');
-    expect(card?.body).toContain("z-index: 45");
+    expect(
+      rules.some(
+        (rule) =>
+          rule.selector.includes('[data-fork-sidebar-overlay="true"]') &&
+          rule.selector.includes('[data-fork-sidebar-peek="open"]') &&
+          rule.body.includes("z-index: 45"),
+      ),
+    ).toBe(true);
     expect(card?.body).not.toContain("backdrop-filter");
 
     expect(
       rules.some(
         (rule) =>
-          rule.selector.includes('[data-fork-sidebar-peek="closed"]') &&
+          rule.selector.includes('[data-fork-sidebar-peek="dismissed"]') &&
           rule.body.includes("transition: none"),
       ),
     ).toBe(true);

@@ -1,19 +1,14 @@
 /**
  * Collapsed-sidebar peek — see `.fork/customizations.yaml#fork-sidebar-peek`.
  * Module state: the trigger and the panel are siblings under the provider.
- * "closed" (just dismissed) drops the slide transition so the card vanishes.
+ * "dismissed" drops the slide transition so the card vanishes instead.
  */
 
-import {
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useSyncExternalStore, type PointerEvent as ReactPointerEvent } from "react";
 
 import { isContextMenuOpen } from "../contextMenuFallback";
 
-export type SidebarPeekState = "off" | "open" | "closed";
+type SidebarPeekState = "off" | "open" | "dismissed";
 
 const OPEN_DELAY_MS = 80;
 const CLOSE_DELAY_MS = 200;
@@ -22,6 +17,9 @@ const TRIGGER_SELECTOR = "[data-sidebar-peek-trigger]";
 
 let state: SidebarPeekState = "off";
 let openTimer: ReturnType<typeof setTimeout> | undefined;
+// A collapse can mount the trigger under the pointer, so hover only counts once
+// the pointer has been seen off it.
+let armed = false;
 const listeners = new Set<() => void>();
 
 function setState(next: SidebarPeekState) {
@@ -40,54 +38,47 @@ function cancelOpen() {
   openTimer = undefined;
 }
 
+function dismiss() {
+  cancelOpen();
+  if (state === "open") setState("dismissed");
+}
+
 export function useSidebarPeekState(): SidebarPeekState {
   return useSyncExternalStore(subscribe, () => state);
 }
 
-function closeSidebarPeek() {
-  cancelOpen();
-  if (state === "open") setState("closed");
-}
-
-/** Clicking the trigger pins the sidebar open, which ends any peek outright. */
-export function resetSidebarPeek() {
-  cancelOpen();
-  setState("off");
-}
-
-export const sidebarPeekTriggerProps = {
-  "data-sidebar-peek-trigger": "",
-  onPointerEnter: (event: ReactPointerEvent) => {
-    if (event.pointerType === "touch") return;
-    cancelOpen();
-    openTimer = setTimeout(() => setState("open"), OPEN_DELAY_MS);
-  },
-  onPointerLeave: () => {
-    if (state !== "open") cancelOpen();
-  },
-};
-
-// Menus the card opens render outside it: portaled popups, and the web build's
-// DOM thread context menu. Native Electron menus capture input while open.
-function cardMenuOpen(): boolean {
+function isOverCard(target: EventTarget | null): boolean {
   return (
-    isContextMenuOpen() || document.querySelector(`${PANEL_SELECTOR} [data-popup-open]`) !== null
+    target instanceof Element && target.closest(`${PANEL_SELECTOR}, ${TRIGGER_SELECTOR}`) !== null
   );
 }
 
-function keepsPeekOpen(target: EventTarget | null): boolean {
-  if (target instanceof Element && target.closest(`${PANEL_SELECTOR}, ${TRIGGER_SELECTOR}`)) {
-    return true;
-  }
-  return cardMenuOpen();
+// Menus the card opens render outside it: portaled popups, and the web build's
+// DOM thread context menu. Tooltip triggers carry data-popup-open but no
+// aria-haspopup. Native Electron menus capture input while open.
+function cardMenuOpen(): boolean {
+  return (
+    isContextMenuOpen() ||
+    document.querySelector(`${PANEL_SELECTOR} [data-popup-open][aria-haspopup]`) !== null
+  );
 }
 
+const triggerProps = {
+  "data-sidebar-peek-trigger": "",
+  onPointerEnter: (event: ReactPointerEvent) => {
+    if (event.pointerType === "touch" || !armed) return;
+    cancelOpen();
+    openTimer = setTimeout(() => setState("open"), OPEN_DELAY_MS);
+  },
+  onPointerLeave: cancelOpen,
+};
+
 /**
- * Dismisses the card when the pointer leaves it (after a short grace so the gap
- * under the trigger can be crossed), on Escape, on navigation, and when the
- * sidebar is opened for real.
+ * Hover props for the collapsed sidebar's floating toggle. The card closes when
+ * the pointer leaves it and its menus, on Escape, on navigation, and when the
+ * sidebar opens for real (`enabled` goes false).
  */
-export function useSidebarPeekLifecycle({
+export function useSidebarPeekTrigger({
   enabled,
   pathname,
 }: {
@@ -96,32 +87,44 @@ export function useSidebarPeekLifecycle({
 }) {
   const peek = useSidebarPeekState();
 
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- resets the module store when the sidebar opens or the peek host goes away
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- resets the module store on every open/collapse; arms on the first pointer move off the trigger
   useEffect(() => {
-    if (!enabled) resetSidebarPeek();
+    cancelOpen();
+    setState("off");
+    if (!enabled) return;
+    armed = false;
+    const arm = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest(TRIGGER_SELECTOR)) return;
+      armed = true;
+      document.removeEventListener("pointermove", arm);
+    };
+    document.addEventListener("pointermove", arm, { passive: true });
+    return () => document.removeEventListener("pointermove", arm);
   }, [enabled]);
 
-  const openedOn = useRef<string | null>(null);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- picking a thread in the card navigates; the card closes like a menu would
-  useEffect(() => {
-    if (peek !== "open") {
-      openedOn.current = null;
-      return;
-    }
-    openedOn.current ??= pathname;
-    if (openedOn.current !== pathname) closeSidebarPeek();
-  }, [peek, pathname]);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync, react/exhaustive-effect-dependencies -- the cleanup runs on each route change: picking a thread closes the card
+  useEffect(() => dismiss, [pathname]);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- document pointer and key listeners live only while the card is open
   useEffect(() => {
     if (peek !== "open") return;
     let closeTimer: ReturnType<typeof setTimeout> | undefined;
-    const scheduleClose = () => {
-      closeTimer ??= setTimeout(closeSidebarPeek, CLOSE_DELAY_MS);
-    };
+    let pointer: { x: number; y: number } | null = null;
+    // Re-reads the pointer when the grace ends: a menu closing under a still
+    // pointer fires no event, so this keeps checking while one is open.
+    function settle() {
+      closeTimer = undefined;
+      if (pointer && isOverCard(document.elementFromPoint(pointer.x, pointer.y))) return;
+      if (cardMenuOpen()) scheduleClose();
+      else dismiss();
+    }
+    function scheduleClose() {
+      if (closeTimer === undefined) closeTimer = setTimeout(settle, CLOSE_DELAY_MS);
+    }
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
-      if (!keepsPeekOpen(event.target)) {
+      pointer = { x: event.clientX, y: event.clientY };
+      if (!isOverCard(event.target)) {
         scheduleClose();
         return;
       }
@@ -130,12 +133,14 @@ export function useSidebarPeekLifecycle({
     };
     // relatedTarget is null when the pointer leaves the window.
     const onPointerOut = (event: PointerEvent) => {
-      if (event.relatedTarget === null && !cardMenuOpen()) scheduleClose();
+      if (event.relatedTarget !== null) return;
+      pointer = null;
+      scheduleClose();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
       // Escape belongs to a menu the card opened first.
-      if (!cardMenuOpen()) closeSidebarPeek();
+      if (!cardMenuOpen()) dismiss();
     };
     document.addEventListener("pointermove", onPointerMove, { passive: true });
     document.addEventListener("pointerout", onPointerOut, { passive: true });
@@ -147,4 +152,6 @@ export function useSidebarPeekLifecycle({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [peek]);
+
+  return enabled ? triggerProps : {};
 }
