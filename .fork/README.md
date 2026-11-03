@@ -1,6 +1,6 @@
 # Fork sync strategy — research findings
 
-Research into keeping `NoahHendrickson/t3code` current with `pingdotgg/t3code` while carrying
+Research into keeping `NoahHendrickson/no3ycode` current with `pingdotgg/t3code` while carrying
 a durable frontend delta that goes beyond design tokens.
 
 Everything in `.fork/` is fork-only. Upstream will never touch this path, so it never conflicts.
