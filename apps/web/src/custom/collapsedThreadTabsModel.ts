@@ -39,13 +39,19 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
   /** A precise ISO time, as the sidebar's partition uses. */
   readonly now: string;
   readonly openThreadKey: string | null;
+  /** A split's threads, left (the one it was split from) then right: they show whatever their status. */
+  readonly paneThreadKeys: readonly string[];
   readonly holds: SidebarV2CompletedHoldTracker;
   /** The sidebar's capability gates: an environment without them never parks a thread. */
   readonly supports: (environmentId: EnvironmentThreadShell["environmentId"]) => {
     readonly settlement: boolean;
     readonly snooze: boolean;
   };
-}): { readonly tabs: CollapsedThreadTab[]; readonly projects: TProject[] } {
+}): {
+  readonly panes: CollapsedThreadTab[];
+  readonly tabs: CollapsedThreadTab[];
+  readonly projects: TProject[];
+} {
   const live = input.threads.filter((thread) => {
     const supports = input.supports(thread.environmentId);
     return !(
@@ -67,16 +73,24 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
       projectKeyByRef.set(`${ref.environmentId}:${ref.projectId}`, group.projectKey);
     }
   }
+  const toTab = (thread: EnvironmentThreadShell): CollapsedThreadTab => ({
+    thread,
+    threadKey: scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+    projectKey: projectKeyByRef.get(`${thread.environmentId}:${thread.projectId}`) ?? null,
+  });
+  const panes = input.paneThreadKeys.flatMap((key) => {
+    const thread = input.threads.find(
+      (candidate) => scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key,
+    );
+    return thread === undefined ? [] : [toTab(thread)];
+  });
   const tabs = sections
     .filter((section) => isCollapsedTabStatus(section.status) && input.statuses.has(section.status))
     .flatMap((section) => section.threads)
-    .map((thread) => ({
-      thread,
-      threadKey: scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
-      projectKey: projectKeyByRef.get(`${thread.environmentId}:${thread.projectId}`) ?? null,
-    }));
+    .map(toTab);
   const projectKeys = new Set(tabs.map((tab) => tab.projectKey));
   return {
+    panes,
     tabs,
     projects: input.projectGroups.filter((group) => projectKeys.has(group.projectKey)),
   };
@@ -94,6 +108,31 @@ export function collapsedDraftTabKey(input: {
   if (draft === null || draft.promotedTo != null) return null;
   const threadKey = scopedThreadKey(scopeThreadRef(draft.environmentId, draft.threadId));
   return input.tabs.some((tab) => tab.threadKey === threadKey) ? null : threadKey;
+}
+
+/**
+ * Each split pane's tab, left then right: its unsent draft whichever pane holds the route (the
+ * route names only the focused pane's), else its thread.
+ */
+export function collapsedPaneTabs<
+  TDraft extends {
+    readonly session: Pick<DraftSessionState, "environmentId" | "threadId" | "promotedTo">;
+  },
+>(input: {
+  readonly paneThreadKeys: readonly string[];
+  readonly paneDrafts: readonly (TDraft | null)[];
+  readonly panes: readonly CollapsedThreadTab[];
+}): (TDraft | CollapsedThreadTab)[] {
+  return input.paneThreadKeys.flatMap((key, index): (TDraft | CollapsedThreadTab)[] => {
+    const draft = input.paneDrafts[index] ?? null;
+    if (
+      draft !== null &&
+      collapsedDraftTabKey({ draft: draft.session, tabs: input.panes }) === key
+    ) {
+      return [draft];
+    }
+    return input.panes.filter((tab) => tab.threadKey === key);
+  });
 }
 
 /** The project filter's value for every project. */
@@ -137,6 +176,23 @@ export function collapsedFilterSwitchTarget<TTab extends { readonly threadKey: s
 }
 
 /**
+ * The tabs either side of a split's group, which takes the place of the first of its threads to
+ * hold a tab, so the thread split from keeps its spot with the new one on its right. With
+ * neither holding one, the group leads the row.
+ */
+export function splitCollapsedTabsAroundPanes<TTab extends { readonly threadKey: string }>(
+  tabs: readonly TTab[],
+  paneThreadKeys: readonly string[],
+): { readonly before: TTab[]; readonly after: TTab[] } {
+  const isPane = (tab: TTab) => paneThreadKeys.includes(tab.threadKey);
+  const at = Math.max(0, tabs.findIndex(isPane));
+  return {
+    before: tabs.slice(0, at).filter((tab) => !isPane(tab)),
+    after: tabs.slice(at).filter((tab) => !isPane(tab)),
+  };
+}
+
+/**
  * The tab minimum both tab shells set inline, which holds the provider mark, a five-digit PR
  * badge, the status mark and the hover actions. The gap and More width match the strip's
  * gap-1.5 and w-[72px] classes.
@@ -147,7 +203,7 @@ const COLLAPSED_TAB_MORE_WIDTH = 72;
 
 /**
  * How many tabs fit at their minimum width, the rest going behind More. The open
- * thread takes the last visible slot when it would overflow; with no slot at all (narrower
+ * thread (a split's whole group) takes the last visible slots when it would overflow; with no slot at all (narrower
  * than one tab plus More), More keeps the room, and the header still names the thread.
  * An unmeasured row (width 0) shows every tab.
  */
@@ -155,6 +211,8 @@ export function fitCollapsedThreadTabs(input: {
   readonly count: number;
   readonly width: number;
   readonly activeIndex: number;
+  /** Tabs from activeIndex on that stay visible together. */
+  readonly activeLength: number;
 }): { readonly visible: number[]; readonly overflow: number[] } {
   const all = Array.from({ length: input.count }, (_, index) => index);
   const step = COLLAPSED_TAB_MIN_WIDTH + COLLAPSED_TAB_GAP;
@@ -163,8 +221,14 @@ export function fitCollapsedThreadTabs(input: {
     return { visible: all, overflow: [] };
   }
   const fit = Math.max(0, Math.floor((width - COLLAPSED_TAB_MORE_WIDTH) / step));
-  const visible = all.slice(0, fit);
-  if (fit > 0 && input.activeIndex >= fit) visible[fit - 1] = input.activeIndex;
+  const activeEnd = input.activeIndex + input.activeLength;
+  const visible =
+    input.activeIndex >= 0 && activeEnd > fit
+      ? [
+          ...all.slice(0, Math.max(0, fit - input.activeLength)),
+          ...all.slice(input.activeIndex, activeEnd).slice(0, fit),
+        ]
+      : all.slice(0, fit);
   const shown = new Set(visible);
   return { visible, overflow: all.filter((index) => !shown.has(index)) };
 }

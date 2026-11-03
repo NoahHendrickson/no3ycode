@@ -6,9 +6,11 @@ import {
   buildCollapsedThreadTabs,
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
+  collapsedPaneTabs,
   collapsedTabProjectForScope,
   DEFAULT_COLLAPSED_TAB_STATUSES,
   fitCollapsedThreadTabs,
+  splitCollapsedTabsAroundPanes,
   type CollapsedThreadTabStatus,
 } from "./collapsedThreadTabsModel";
 import { buildSidebarDraftShell } from "./sidebarV2DraftRows";
@@ -69,6 +71,7 @@ describe("buildCollapsedThreadTabs", () => {
   const build = (
     supported: boolean,
     statuses: readonly CollapsedThreadTabStatus[] = DEFAULT_COLLAPSED_TAB_STATUSES,
+    paneThreadKeys: readonly string[] = [],
   ) =>
     buildCollapsedThreadTabs({
       threads,
@@ -77,9 +80,11 @@ describe("buildCollapsedThreadTabs", () => {
       localLastVisitedAtById: {},
       now: NOW,
       openThreadKey: null,
+      paneThreadKeys,
       holds: createSidebarV2CompletedHoldTracker(),
       supports: () => ({ settlement: supported, snooze: supported }),
     });
+  const keyOf = (id: string) => scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make(id)));
 
   it("orders needs-input before working whatever their age, with only their projects", () => {
     const { tabs, projects } = build(true);
@@ -97,6 +102,14 @@ describe("buildCollapsedThreadTabs", () => {
       "idle",
     ]);
     expect(build(true, ["working"]).tabs.map((tab) => tab.thread.id)).toEqual(["working"]);
+  });
+
+  it("gives a split's threads in pane order, whatever their status", () => {
+    const { panes } = build(true, DEFAULT_COLLAPSED_TAB_STATUSES, [
+      keyOf("settled"),
+      keyOf("asking"),
+    ]);
+    expect(panes.map((tab) => tab.thread.id)).toEqual(["settled", "asking"]);
   });
 
   it("keeps parked threads where the environment cannot park them, as the sidebar does", () => {
@@ -124,6 +137,23 @@ describe("collapsedDraftTabKey", () => {
     ["defers to the thread tab of a draft mid-promotion", draft, [{ threadKey: key }], null],
   ] as const)("%s", (_label, open, tabs, expected) => {
     expect(collapsedDraftTabKey({ draft: open, tabs })).toBe(expected);
+  });
+});
+
+describe("collapsedPaneTabs", () => {
+  const left = { thread: shell("left", "p1", NOW), threadKey: "local:left", projectKey: "p1" };
+  const rightKey = scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make("right")));
+  const draft = {
+    session: { environmentId, threadId: ThreadId.make("right"), promotedTo: null },
+  };
+  it("keeps the unfocused pane's unsent draft beside the focused pane's thread", () => {
+    expect(
+      collapsedPaneTabs({
+        paneThreadKeys: [left.threadKey, rightKey],
+        paneDrafts: [null, draft],
+        panes: [left],
+      }),
+    ).toEqual([left, draft]);
   });
 });
 
@@ -162,19 +192,43 @@ describe("collapsedTabProjectForScope", () => {
   });
 });
 
+describe("splitCollapsedTabsAroundPanes", () => {
+  const tabs = ["a", "b", "c", "d"].map((threadKey) => ({ threadKey }));
+  const keys = (list: readonly { readonly threadKey: string }[]) =>
+    list.map((tab) => tab.threadKey);
+  it.each([
+    // [label, paneThreadKeys, before, after]
+    ["takes the place of the thread split from", ["b", "x"], ["a"], ["c", "d"]],
+    ["takes the first place either pane holds", ["d", "b"], ["a"], ["c"]],
+    ["leads the row when neither pane has a tab", ["x", "y"], [], ["a", "b", "c", "d"]],
+  ] as const)("%s", (_label, paneThreadKeys, before, after) => {
+    const placed = splitCollapsedTabsAroundPanes(tabs, paneThreadKeys);
+    expect([keys(placed.before), keys(placed.after)]).toEqual([before, after]);
+  });
+});
+
 describe("fitCollapsedThreadTabs", () => {
   it.each([
-    // [count, width, activeIndex, visible, overflow]
-    [3, 0, -1, [0, 1, 2], []],
+    // [count, width, activeIndex, activeLength, visible, overflow]
+    [3, 0, -1, 1, [0, 1, 2], []],
     // Three minimum tabs and their gaps fill the row exactly.
-    [3, 3 * 132 + 2 * 6, -1, [0, 1, 2], []],
+    [3, 3 * 132 + 2 * 6, -1, 1, [0, 1, 2], []],
     // A pixel short, the last tab goes behind More.
-    [3, 3 * 132 + 2 * 6 - 1, -1, [0, 1], [2]],
+    [3, 3 * 132 + 2 * 6 - 1, -1, 1, [0, 1], [2]],
     // 500px holds three 138px steps beside More.
-    [6, 500, -1, [0, 1, 2], [3, 4, 5]],
-    [6, 500, 4, [0, 1, 4], [2, 3, 5]],
-    [6, 60, 4, [], [0, 1, 2, 3, 4, 5]],
-  ])("%i tabs in %ipx with the open one at %i", (count, width, activeIndex, visible, overflow) => {
-    expect(fitCollapsedThreadTabs({ count, width, activeIndex })).toEqual({ visible, overflow });
-  });
+    [6, 500, -1, 1, [0, 1, 2], [3, 4, 5]],
+    [6, 500, 4, 1, [0, 1, 4], [2, 3, 5]],
+    // A split's group keeps both its tabs on screen.
+    [6, 500, 3, 2, [0, 3, 4], [1, 2, 5]],
+    [6, 500, 1, 2, [0, 1, 2], [3, 4, 5]],
+    [6, 60, 4, 1, [], [0, 1, 2, 3, 4, 5]],
+  ])(
+    "%i tabs in %ipx with the open one at %i (%i long)",
+    (count, width, activeIndex, activeLength, visible, overflow) => {
+      expect(fitCollapsedThreadTabs({ count, width, activeIndex, activeLength })).toEqual({
+        visible,
+        overflow,
+      });
+    },
+  );
 });

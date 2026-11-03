@@ -240,6 +240,19 @@
     }
   }
 
+  /* Under the collapsed sidebar's tab row (fork-collapsed-thread-tabs) the card's top inset
+     tucks under the row's empty foot, so the card sits as far below the tabs as they sit
+     below the window's top. */
+  &.dark[data-fork-theme="cool-darker"] {
+    --fork-thread-tabs-overlap: var(--fork-glass-card-inset);
+  }
+
+  /* A split's panes each sit on their own card, whose edges already part them, so the
+     line between the panes (fork-split-threads) goes. */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-split-divider] {
+    display: none;
+  }
+
   /* The Automations page scrolls inside the card, not across its gutter: its
      rows would pass under the card's foot and the scrollbar run down the
      window's edge outside it. Width auto, as the scroll area's full width
@@ -314,6 +327,20 @@
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is(:has(> [data-fork-chrome-row]), [data-fork-projects-row]) {
       padding-inline-end: 6px;
+    }
+  }
+
+  /* The cards in a split stand as far apart as each stands from the window. The right card
+     keeps 3px off its pane, the reach of its halo, which the pane would clip, and the pane
+     slides that far over the left one's empty gutter. Ties the docked-sidebar rule above and
+     follows it, so the gap holds with the sidebar open too. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-split-threads]
+    > [data-fork-split-pane][data-fork-split-side="right"] {
+    margin-inline-start: -3px;
+
+    & [data-chat-column-maximized-away] {
+      --fork-glass-card-inset-left: 3px;
     }
   }
 }

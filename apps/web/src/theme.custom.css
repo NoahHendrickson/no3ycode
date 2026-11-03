@@ -2716,43 +2716,36 @@
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
-   The tab strip takes the chat column's titlebar row and clears the window
-   controls itself, so the chat header under it drops the collapsed-sidebar inset
-   and the native window controls' inset (Windows/Linux overlay). */
-:root[data-fork="noahhendrickson-t3code"] [data-chat-column]:has(> [data-fork-thread-tabs]) {
-  --workspace-titlebar-content-left: var(--workspace-gutter-start);
+   The tab strip is the window's titlebar row, above the thread panes, and clears the window
+   controls itself. Under it the panes lay out as they do beside an open sidebar: headers drop
+   the collapsed-sidebar inset, and a lone pane's window-fixed panel controls move down to its
+   header row. Split and floating panes contain their own controls already. The panes can tuck
+   --fork-thread-tabs-overlap under the row's empty foot (Glass's stage cards do). */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-thread-tabs] {
+  margin-bottom: calc(-1 * var(--fork-thread-tabs-overlap, 0px));
 }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-column]:has(> [data-fork-thread-tabs])
-  > [data-chat-header] {
+:root[data-fork="noahhendrickson-t3code"] [data-fork-thread-tabs] + [data-fork-thread-panes] {
+  --workspace-titlebar-content-left: var(--workspace-gutter-start);
   --workspace-native-controls-inset: 0px;
 }
 
-/* A visible tab already names the open thread and its project. The breadcrumb stays while
-   renaming, since the title input lives inside it. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-column]:has(> [data-fork-thread-tabs][data-open-thread-tabbed])
-  > [data-chat-header]
-  nav[aria-label="Thread breadcrumb"]:not(:has(input)) {
-  display: none;
+  [data-fork-thread-tabs]
+  + [data-fork-thread-panes]:not([data-fork-split-threads])
+  > :not([data-fork-split-pane], [data-fork-float-behind]) {
+  --workspace-controls-top: calc(
+    var(--workspace-topbar-height) - var(--fork-thread-tabs-overlap, 0px)
+  );
 }
 
-/* With only the hidden breadcrumb left, the header row folds away; its window-fixed panel
-   controls stay put. It keeps its height for the inline panel's toggle (ChatView tells the
-   strip), the rename input, or anything rendered beside the breadcrumb (the Automations back
-   button, the guest share). */
+/* The thread panel toggle an inline right panel leaves in the chat header is placed in the
+   header, not the window, so it stays at the header's top. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-column]:has(
-    > [data-fork-thread-tabs][data-open-thread-tabbed]:not([data-header-panel-toggle])
-  )
-  > [data-chat-header]:not(
-    :has(
-      nav[aria-label="Thread breadcrumb"] input,
-      nav[aria-label="Thread breadcrumb"]:not(:only-child)
-    )
-  ) {
-  height: 0;
-  min-height: 0;
+  [data-fork-thread-tabs]
+  + [data-fork-thread-panes]
+  [data-chat-header]
+  > [data-workspace-titlebar-controls].absolute {
+  --workspace-controls-top: 0px;
 }
 /* fork:end fork-collapsed-thread-tabs */

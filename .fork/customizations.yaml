@@ -2314,7 +2314,10 @@
     wrapper) clear so the gutter shows; slotted form controls keep their
     fills. While a desktop tab floats over the chat the chat view gives up
     its stacking context, as the picture sheet does, so the tab's chrome
-    stays above the webview.
+    stays above the webview. A split's panes each sit on their own card, so
+    the line between them (fork-split-threads) is hidden, and the right card
+    keeps only 3px (its halo's reach) off its pane while the pane overlaps the
+    left one's gutter by 3px: the cards stand as far apart as from the window.
   tier: 2
   files:
     - apps/web/src/theme.custom.glass-stage.css
@@ -6185,16 +6188,13 @@
 
 - id: fork-collapsed-thread-tabs
   intent: >
-    While the desktop sidebar is collapsed, the top row of the leading chat
-    column (never the right panel, a split partner or the floating window)
-    shows the threads that are Working, Completed or Need input as tabs,
+    While the desktop sidebar is collapsed, a row above the thread panes
+    (SplitThreadPanes mounts it once, spanning a split and the right panel, so
+    every pane and stage card starts level under it) shows the threads that are Working, Completed or Need input as tabs,
     ordered Needs input, Completed, Working. A three-dot menu between the
     project switcher and the tabs checks which statuses show (Needs input,
     Completed, Working, Idle; the first three by default, persisted per
-    device); Idle tabs follow Working, and Settled is never offered. The right panel keeps its full
-    height and the panel controls stay where they are; when they float over the
-    row's end, the row measures them and stops 8px short, however many
-    buttons they hold (the header's pr-24 until measured). The buckets come
+    device); Idle tabs follow Working, and Settled is never offered. The buckets come
     from status grouping's own pipeline (buildSidebarV2StatusSections, with
     its own Completed-hold tracker), so a tab and its sidebar card agree;
     snoozed, settled, archived and subagent threads are left out, under the
@@ -6228,13 +6228,19 @@
     starts there instead, through the sidebar's own handleNewThreadInProject
     (the recent-project chips' path) via sidebarActionsBridge, so the new
     thread lands on the same environment.
-    The row clears the window controls and the floating
-    sidebar toggle, and the chat header under it drops its collapsed-sidebar
-    inset. While the pane's own thread has a visible tab, the header's project and
-    title breadcrumb is hidden (the tab names both) except while renaming,
-    whose input lives in it; with nothing else in it (no Automations back
-    button, guest share or inline panel toggle) the header row folds to zero height, and its
-    window-fixed panel controls stay where they are. It renders only while the desktop sidebar is collapsed, never on
+    The row is the window's titlebar: it clears the window controls and the
+    floating sidebar toggle, and under it the panes lay out as beside an open
+    sidebar. Headers drop the collapsed-sidebar inset and keep their
+    breadcrumb, and a lone pane's window-fixed panel controls move down to its
+    header row (split and floating panes contain their own). Under Glass's
+    stage cards the panes tuck the card's 8px top inset under the row's empty
+    foot (--fork-thread-tabs-overlap), so a card sits as far below the tabs as
+    they sit below the window's top. In a split, its two
+    threads share one capsule, both selected, left then right (every split
+    puts the thread it was made from on the left), in place of the first of
+    them to hold a tab (else leading the row), under any project filter and
+    whatever their status; More never splits the pair while two tabs fit
+    (splitCollapsedTabsAroundPanes, fitCollapsedThreadTabs). It renders only while the desktop sidebar is collapsed, never on
     mobile; under an open sidebar a render-nothing observer keeps feeding the
     Completed-hold tracker, so a thread that comes to rest there is still held
     when the sidebar collapses. Under Glass the open thread's tab and the chosen project wear the
@@ -6248,9 +6254,7 @@
     that opens the sidebar's own thread action menu through
     sidebarActionsBridge, so the items cannot drift from the card's. A
     tab's menu and navigation clear any sidebar multi-selection first, so a
-    bulk menu is never reached from a single tab. The row carries
-    data-split-pane-action, so a press in it never first focuses the left
-    pane of a split. The project switcher scrolls sideways before More can
+    bulk menu is never reached from a single tab. The project switcher scrolls sideways before More can
     be squeezed out. The
     offcanvas sidebar stays mounted while collapsed, so both handlers are
     live. Rename edits the title on the sidebar card, so a rename started
@@ -6270,8 +6274,6 @@
     - apps/web/src/theme.custom.glass-surfaces.css
   shadows: []
   watch:
-    # Fenced import and mount at the top of the leading chat column.
-    - apps/web/src/components/ChatView.tsx
     # Fenced registration of the thread action menu and the in-project start, its lookup of threads the list hides, and rename opening the sidebar.
     - apps/web/src/components/Sidebar.tsx
   verify:

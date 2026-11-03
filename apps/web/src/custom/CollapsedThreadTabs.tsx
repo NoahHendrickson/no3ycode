@@ -1,5 +1,5 @@
-/** Collapsed-sidebar thread tabs: Needs input, Completed and Working threads above the chat
- * column, filtered by project, the overflow behind More, New agent last. See
+/** Collapsed-sidebar thread tabs: Needs input, Completed and Working threads in a row above the
+ * thread panes, filtered by project, the overflow behind More, New agent last. See
  * `.fork/customizations.yaml#fork-collapsed-thread-tabs`. Renders only while collapsed. */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef, scopedThreadKey } from "@t3tools/client-runtime/environment";
@@ -10,14 +10,8 @@ import {
 } from "@t3tools/client-runtime/thread-pull-requests";
 import { useRouter } from "@tanstack/react-router";
 import * as Schema from "effect/Schema";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type MouseEvent,
-} from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useState, type CSSProperties, type MouseEvent } from "react";
 
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import {
@@ -48,7 +42,7 @@ import { useRightPanelStore } from "~/rightPanelStore";
 import { useSnoozeWakeClock } from "~/components/Sidebar.logic";
 import { useSidebarProjectGroups } from "~/hooks/useSidebarProjectGroups";
 import { useThreadRouteTarget } from "~/hooks/useThreadRouteTarget";
-import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
+import { useComposerDraftStore, type DraftId, type DraftSessionState } from "~/composerDraftStore";
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
 import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
 import { shortcutLabelForCommand } from "~/keybindings";
@@ -71,17 +65,19 @@ import { settleAndAdvance } from "~/settleAndAdvance";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 import { useThreadSelectionStore } from "~/threadSelectionStore";
-import type { EnvironmentId, ModelSelection } from "@t3tools/contracts";
+import type { EnvironmentId, ModelSelection, ScopedThreadRef } from "@t3tools/contracts";
 
 import {
   ALL_PROJECTS,
   buildCollapsedThreadTabs,
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
+  collapsedPaneTabs,
   COLLAPSED_TAB_MIN_WIDTH,
   COLLAPSED_TAB_STATUSES,
   DEFAULT_COLLAPSED_TAB_STATUSES,
   fitCollapsedThreadTabs,
+  splitCollapsedTabsAroundPanes,
   type CollapsedThreadTab,
   type CollapsedThreadTabStatus,
 } from "./collapsedThreadTabsModel";
@@ -114,7 +110,6 @@ import { useStartNewAgentDraft } from "./useNewAgentDraft";
 
 const STATUSES_STORAGE_KEY = "t3code:fork:collapsed-thread-tabs-statuses:v1";
 const StoredStatuses = Schema.Array(Schema.Literals(COLLAPSED_TAB_STATUSES));
-const TRAILING_CONTROLS_GAP = 8;
 // Shrinks from its title's width to the minimum fitCollapsedThreadTabs counts on.
 const TAB_SHELL_CLASS =
   "group/tab relative flex h-7 max-w-56 shrink items-center rounded-full text-xs font-medium";
@@ -126,6 +121,7 @@ const completedHolds = createSidebarV2CompletedHoldTracker();
 const NO_PROJECT_GROUPS: readonly SidebarV2GroupableProject[] = [];
 const DEFAULT_STATUS_SET = new Set(DEFAULT_COLLAPSED_TAB_STATUSES);
 const STATUS_MENU_LABEL = "Choose which threads show as tabs";
+const NO_PANE_KEYS: readonly string[] = [];
 
 const clearSidebarSelection = () => {
   const selection = useThreadSelectionStore.getState();
@@ -135,13 +131,8 @@ const clearSidebarSelection = () => {
 type TabStatus = ReturnType<typeof resolveSidebarV2CardStatus>["topStatus"];
 
 export function CollapsedThreadTabs(props: {
-  /** The window's panel controls float over this row's right end. */
-  readonly reserveTrailingControls: boolean;
-  /** The inline right panel's toggle sits in the chat header, so the header keeps its row. */
-  readonly headerHoldsPanelToggle: boolean;
-  /** The thread (or draft thread) this pane shows, which in a split can differ from the
-      route's. Its header's breadcrumb hides while it has a visible tab. */
-  readonly paneThreadKey: string | null;
+  /** A split's two threads, left then right, which share one capsule; empty outside a split. */
+  readonly paneThreadRefs: readonly ScopedThreadRef[];
 }) {
   const { isMobile } = useSidebar();
   const sidebarVisible = useSidebarVisibility();
@@ -149,13 +140,7 @@ export function CollapsedThreadTabs(props: {
   // The tracker keeps watching under an open sidebar, so a thread that comes to rest
   // there is still held in Completed when the sidebar collapses.
   if (sidebarVisible) return <CompletedHoldObserver />;
-  return (
-    <CollapsedThreadTabsStrip
-      reserveTrailingControls={props.reserveTrailingControls}
-      headerHoldsPanelToggle={props.headerHoldsPanelToggle}
-      paneThreadKey={props.paneThreadKey}
-    />
-  );
+  return <CollapsedThreadTabsStrip paneThreadRefs={props.paneThreadRefs} />;
 }
 
 /** The tab pipeline's inputs, shared by the strip and the observer that feeds its tracker. */
@@ -193,6 +178,7 @@ function CompletedHoldObserver() {
     ...useTabSource(),
     projectGroups: NO_PROJECT_GROUPS,
     statuses: DEFAULT_STATUS_SET,
+    paneThreadKeys: NO_PANE_KEYS,
   });
   return null;
 }
@@ -212,11 +198,17 @@ type StripEntry =
       readonly project: ProjectFaviconProject | null;
     };
 
-function CollapsedThreadTabsStrip(props: {
-  readonly reserveTrailingControls: boolean;
-  readonly headerHoldsPanelToggle: boolean;
-  readonly paneThreadKey: string | null;
-}) {
+function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly ScopedThreadRef[] }) {
+  const paneThreadKeys = props.paneThreadRefs.map(scopedThreadKey);
+  // Looked up by each pane's own thread: the route names only the focused pane's draft.
+  const paneDraftIds = useComposerDraftStore(
+    useShallow((store) => props.paneThreadRefs.map((ref) => store.getDraftIdByRef(ref))),
+  );
+  const paneDraftSessions = useComposerDraftStore(
+    useShallow((store) =>
+      paneDraftIds.map((draftId) => (draftId === null ? null : store.getDraftSession(draftId))),
+    ),
+  );
   const router = useRouter();
   const serverConfigs = useServerConfigs();
   const providersByEnvironment = useEnvironmentProviders();
@@ -243,8 +235,6 @@ function CollapsedThreadTabsStrip(props: {
     useAtomValue(primaryServerKeybindingsAtom),
     "chat.new",
   );
-  const [strip, setStrip] = useState<HTMLDivElement | null>(null);
-  const trailingInset = useTrailingControlsInset(props.reserveTrailingControls ? strip : null);
   const [navWidth, setNavWidth] = useState(0);
   // Created once so the ref never re-subscribes.
   const [measureNav] = useState(
@@ -254,7 +244,12 @@ function CollapsedThreadTabsStrip(props: {
         : observeResize(node, (entries) => setNavWidth(entries.at(-1)?.contentRect.width ?? 0)),
   );
 
-  const { tabs, projects } = buildCollapsedThreadTabs({ ...source, projectGroups, statuses });
+  const { panes, tabs, projects } = buildCollapsedThreadTabs({
+    ...source,
+    projectGroups,
+    statuses,
+    paneThreadKeys,
+  });
   // A project that drops out of the strip falls back to All without forgetting the choice.
   const projectKey = projects.some((project) => project.projectKey === storedProjectKey)
     ? storedProjectKey
@@ -280,57 +275,92 @@ function CollapsedThreadTabsStrip(props: {
   const openDraft = useComposerDraftStore((store) =>
     openDraftId === null ? null : store.getDraftSession(openDraftId),
   );
-  const draftThreadKey = collapsedDraftTabKey({ draft: openDraft, tabs });
-  const draftEntry: StripEntry | null =
+  const draftThreadKey = collapsedDraftTabKey({ draft: openDraft, tabs: [...panes, ...tabs] });
+  const draftEntryFor = (
+    draftId: DraftId,
+    draft: DraftSessionState,
+    threadKey: string,
+    inPane: boolean,
+  ): Extract<StripEntry, { readonly kind: "draft" }> => {
+    const group =
+      projectGroups.find((candidate) =>
+        candidate.memberProjectRefs.some(
+          (ref) => ref.environmentId === draft.environmentId && ref.projectId === draft.projectId,
+        ),
+      ) ?? null;
+    return {
+      kind: "draft",
+      draftId,
+      threadKey,
+      environmentId: draft.environmentId,
+      project: showProjectIcons || (inPane && group?.projectKey !== projectKey) ? group : null,
+      // The sidebar's draft card falls back to the project's default model.
+      defaultModelSelection:
+        allProjects.find(
+          (project) =>
+            project.environmentId === draft.environmentId && project.id === draft.projectId,
+        )?.defaultModelSelection ?? NO_PROVIDER_MODEL_SELECTION,
+    };
+  };
+  const draftEntry =
     openDraftId !== null && openDraft !== null && draftThreadKey !== null
-      ? {
-          kind: "draft",
-          draftId: openDraftId,
-          threadKey: draftThreadKey,
-          environmentId: openDraft.environmentId,
-          project: showProjectIcons
-            ? (projectGroups.find((group) =>
-                group.memberProjectRefs.some(
-                  (ref) =>
-                    ref.environmentId === openDraft.environmentId &&
-                    ref.projectId === openDraft.projectId,
-                ),
-              ) ?? null)
-            : null,
-          // The sidebar's draft card falls back to the project's default model.
-          defaultModelSelection:
-            allProjects.find(
-              (project) =>
-                project.environmentId === openDraft.environmentId &&
-                project.id === openDraft.projectId,
-            )?.defaultModelSelection ?? NO_PROVIDER_MODEL_SELECTION,
-        }
+      ? draftEntryFor(openDraftId, openDraft, draftThreadKey, false)
       : null;
-  // The draft leads the row; thread tabs follow it.
+  const threadEntry = (tab: CollapsedThreadTab, withProject: boolean): StripEntry => ({
+    kind: "thread",
+    tab,
+    project: withProject
+      ? (projectGroups.find((group) => group.projectKey === tab.projectKey) ?? null)
+      : null,
+  });
+  // A split's panes show under any filter, so one outside it names its project.
+  const paneEntries = collapsedPaneTabs({
+    paneThreadKeys,
+    paneDrafts: paneDraftIds.map((draftId, index) => {
+      const session = paneDraftSessions[index] ?? null;
+      return draftId === null || session === null ? null : { draftId, session };
+    }),
+    panes,
+  }).map((pane) =>
+    "session" in pane
+      ? draftEntryFor(
+          pane.draftId,
+          pane.session,
+          scopedThreadKey(scopeThreadRef(pane.session.environmentId, pane.session.threadId)),
+          true,
+        )
+      : threadEntry(pane, showProjectIcons || pane.projectKey !== projectKey),
+  );
+  const leadingDraft =
+    draftEntry !== null && !paneThreadKeys.includes(draftEntry.threadKey) ? draftEntry : null;
+  const { before, after } = splitCollapsedTabsAroundPanes(shownTabs, paneThreadKeys);
+  // The draft leads the row; thread tabs follow it, a split's group in place of its first tab.
   const entries: StripEntry[] = [
-    ...(draftEntry === null ? [] : [draftEntry]),
-    ...shownTabs.map((tab): StripEntry => ({
-      kind: "thread",
-      tab,
-      project: showProjectIcons
-        ? (projects.find((project) => project.projectKey === tab.projectKey) ?? null)
-        : null,
-    })),
+    ...(leadingDraft === null ? [] : [leadingDraft]),
+    ...before.map((tab) => threadEntry(tab, showProjectIcons)),
+    ...paneEntries,
+    ...after.map((tab) => threadEntry(tab, showProjectIcons)),
   ];
-  const entryKey = (entry: StripEntry) =>
-    entry.kind === "draft" ? entry.threadKey : entry.tab.threadKey;
+  const groupStart = (leadingDraft === null ? 0 : 1) + before.length;
+  const inGroup = (index: number) =>
+    paneEntries.length > 1 && index >= groupStart && index < groupStart + paneEntries.length;
+  const activeKeys = new Set(
+    paneEntries.length > 0 ? paneThreadKeys : openThreadKey === null ? [] : [openThreadKey],
+  );
   const fit = fitCollapsedThreadTabs({
     count: entries.length,
     width: navWidth,
-    activeIndex: entries.findIndex(
-      (entry) => entry.kind === "draft" || entry.tab.threadKey === openThreadKey,
-    ),
+    ...(paneEntries.length > 0
+      ? { activeIndex: groupStart, activeLength: paneEntries.length }
+      : {
+          activeIndex: entries.findIndex(
+            (entry) => entry.kind === "draft" || entry.tab.threadKey === openThreadKey,
+          ),
+          activeLength: 1,
+        }),
   });
-  const visibleEntries = fit.visible.flatMap((index) => entries[index] ?? []);
+  const visibleGroup = fit.visible.filter(inGroup);
   const overflowEntries = fit.overflow.flatMap((index) => entries[index] ?? []);
-  const paneThreadTabbed =
-    props.paneThreadKey !== null &&
-    visibleEntries.some((entry) => entryKey(entry) === props.paneThreadKey);
   const discardDraft = (draftId: DraftId) => {
     // Home would start a fresh draft, so fall back to the most recent thread.
     const next =
@@ -385,25 +415,50 @@ function CollapsedThreadTabsStrip(props: {
     });
   };
 
+  const renderEntry = (entry: StripEntry) => {
+    if (entry.kind === "draft") {
+      return (
+        <DraftTab
+          key={entry.threadKey}
+          draftId={entry.draftId}
+          defaultModelSelection={entry.defaultModelSelection}
+          project={entry.project}
+          providerOf={(instanceId) =>
+            providerEntries.get(entry.environmentId)?.get(instanceId) ?? null
+          }
+          // Discarding leaves the route, so only the route's draft offers it.
+          onDiscard={entry.draftId === openDraftId ? () => discardDraft(entry.draftId) : null}
+        />
+      );
+    }
+    const { tab, project } = entry;
+    return (
+      <ThreadTab
+        key={tab.threadKey}
+        tab={tab}
+        active={activeKeys.has(tab.threadKey)}
+        status={statusOf(tab)}
+        provider={providerOf(tab)}
+        project={project}
+        pullRequestsInRightPanel={openThreadKey !== null}
+        canSettle={
+          serverConfigs.get(tab.thread.environmentId)?.environment.capabilities.threadSettlement ===
+          true
+        }
+        onOpen={() => openThread(tab)}
+      />
+    );
+  };
+
   return (
     <div
-      ref={setStrip}
       data-fork-thread-tabs=""
-      // The open thread's tab names it, so the chat header drops its breadcrumb (theme.custom.css).
-      data-open-thread-tabbed={paneThreadTabbed ? "" : undefined}
-      data-header-panel-toggle={props.headerHoldsPanelToggle ? "" : undefined}
-      // Shared by both panes of a split: a press here must not first focus the left one.
-      data-split-pane-action=""
       className={cn(
         "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-3",
         // Clears the window controls and the floating sidebar toggle.
         "pl-[calc(var(--workspace-controls-left)+var(--workspace-titlebar-control-size)+var(--workspace-titlebar-control-gap))]",
-        // The chat header's pr-24 until the floating panel controls are measured.
-        props.reserveTrailingControls
-          ? "pr-[calc(var(--workspace-gutter-end)+6rem)] wco:pr-[calc(var(--workspace-native-controls-inset)+6rem)]"
-          : "pr-(--workspace-gutter-end)",
+        "pr-(--workspace-gutter-end) wco:pr-(--workspace-native-controls-inset)",
       )}
-      style={trailingInset === null ? undefined : { paddingRight: trailingInset }}
     >
       <SegmentedTabs
         aria-label="Filter threads by project"
@@ -416,7 +471,8 @@ function CollapsedThreadTabsStrip(props: {
             before: shownTabs,
             after: tabsIn(next),
             openThreadKey,
-            draftOpen: draftEntry !== null,
+            // The draft and a split's group show under every filter, so stay open.
+            draftOpen: draftEntry !== null || paneEntries.length > 0,
           });
           if (target) openThread(target);
         }}
@@ -504,37 +560,23 @@ function CollapsedThreadTabsStrip(props: {
             {statuses.size === 0 ? "No statuses selected" : "No active threads"}
           </span>
         ) : null}
-        {visibleEntries.map((entry) => {
-          if (entry.kind === "draft") {
-            return (
-              <DraftTab
-                key={entry.threadKey}
-                draftId={entry.draftId}
-                defaultModelSelection={entry.defaultModelSelection}
-                project={entry.project}
-                providerOf={(instanceId) =>
-                  providerEntries.get(entry.environmentId)?.get(instanceId) ?? null
-                }
-                onDiscard={() => discardDraft(entry.draftId)}
-              />
-            );
-          }
-          const { tab, project } = entry;
+        {fit.visible.map((index) => {
+          const entry = entries[index];
+          if (entry === undefined) return null;
+          if (!inGroup(index)) return renderEntry(entry);
+          if (index !== visibleGroup[0]) return null;
+          // The split's tabs side by side in one capsule, both selected.
           return (
-            <ThreadTab
-              key={tab.threadKey}
-              tab={tab}
-              active={tab.threadKey === openThreadKey}
-              status={statusOf(tab)}
-              provider={providerOf(tab)}
-              project={project}
-              pullRequestsInRightPanel={openThreadKey !== null}
-              canSettle={
-                serverConfigs.get(tab.thread.environmentId)?.environment.capabilities
-                  .threadSettlement === true
-              }
-              onOpen={() => openThread(tab)}
-            />
+            <span
+              key="split-group"
+              data-fork-split-tab-group=""
+              className="flex shrink items-center gap-0.5 rounded-full bg-black/4 p-0.5 dark:bg-white/5"
+            >
+              {visibleGroup.flatMap((member) => {
+                const memberEntry = entries[member];
+                return memberEntry === undefined ? [] : [renderEntry(memberEntry)];
+              })}
+            </span>
           );
         })}
         {overflowEntries.length === 0 ? null : (
@@ -576,46 +618,6 @@ function CollapsedThreadTabsStrip(props: {
       </nav>
     </div>
   );
-}
-
-/** How far the window's floating panel controls reach into the row from its right end, plus a
-    gap, so the tabs and New agent stop short of them however many buttons they hold. */
-function useTrailingControlsInset(strip: HTMLElement | null): number | null {
-  const [inset, setInset] = useState<number | null>(null);
-  const subscription = useRef<{
-    readonly strip: HTMLElement;
-    readonly controls: Element;
-    readonly dispose: () => void;
-  } | null>(null);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- holds a ResizeObserver on the floating controls, which ChatView remounts (root or header) outside this component, so each render re-finds them
-  useLayoutEffect(() => {
-    // This pane's own controls: they sit at its workspace root or in its chat header.
-    const controls =
-      strip
-        ?.closest("[data-chat-column]")
-        ?.parentElement?.querySelector("[data-workspace-titlebar-controls]") ?? null;
-    const current = subscription.current;
-    if (current?.strip === strip && current.controls === controls) return;
-    current?.dispose();
-    subscription.current = null;
-    if (strip === null || controls === null) {
-      if (current) setInset(null);
-      return;
-    }
-    const measure = () =>
-      setInset(
-        Math.max(
-          0,
-          Math.ceil(strip.getBoundingClientRect().right - controls.getBoundingClientRect().left),
-        ) + TRAILING_CONTROLS_GAP,
-      );
-    // Measured now as well: the observer reports a frame later, and never in a hidden window.
-    measure();
-    subscription.current = { strip, controls, dispose: observeResize([strip, controls], measure) };
-  });
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- releases that observer on unmount
-  useEffect(() => () => subscription.current?.dispose(), []);
-  return strip === null ? null : inset;
 }
 
 function ThreadTab(props: {
@@ -763,7 +765,7 @@ function DraftTab(props: {
   readonly defaultModelSelection: ModelSelection;
   readonly project: ProjectFaviconProject | null;
   readonly providerOf: (instanceId: string) => ProviderInstanceEntry | null;
-  readonly onDiscard: () => void;
+  readonly onDiscard: (() => void) | null;
 }) {
   const instanceId = useComposerDraftStore(
     (store) =>
@@ -793,16 +795,18 @@ function DraftTab(props: {
           <SidebarV2StatusMark status={null} seed={props.draftId} idle="draft" />
         </span>
       </span>
-      <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:pointer-events-auto [@media(any-hover:none)]:opacity-100">
-        <button
-          type="button"
-          aria-label="Discard draft"
-          className={TAB_ACTION_CLASS}
-          onClick={props.onDiscard}
-        >
-          <XIcon className="size-3" />
-        </button>
-      </span>
+      {props.onDiscard === null ? null : (
+        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:pointer-events-auto [@media(any-hover:none)]:opacity-100">
+          <button
+            type="button"
+            aria-label="Discard draft"
+            className={TAB_ACTION_CLASS}
+            onClick={props.onDiscard}
+          >
+            <XIcon className="size-3" />
+          </button>
+        </span>
+      )}
     </div>
   );
 }

@@ -33,6 +33,7 @@ import {
 
 import ChatView from "~/components/ChatView";
 import type { ChatComposerHandle } from "~/components/chat/ChatComposer";
+import { CollapsedThreadTabs } from "~/custom/CollapsedThreadTabs";
 import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandleContext";
 import { threadShellHasStarted } from "~/components/ChatView.logic";
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
@@ -123,6 +124,8 @@ function paneView(ref: ScopedThreadRef | null, route: PaneRoute | null): ReactNo
     ChatView across server threads is unchanged while a key can be latched. */
 const UNKEYED_VIEW = "chat-view";
 
+const NO_PANE_THREADS: readonly ScopedThreadRef[] = [];
+
 /** The slot is the pane's identity; see splitPaneSlots. */
 const PANE_SLOT_KEYS = ["slot-a", "slot-b", "slot-c"] as const;
 
@@ -191,6 +194,7 @@ function SplitPane(props: {
       // The floating window's look (Glass: theme.custom.palettes.css, the
       // rest: theme.custom.css) and its header's drag strip live in CSS.
       data-fork-float-behind={props.behindFloat || undefined}
+      data-fork-split-side={state.split ? (state.leading ? "left" : "right") : undefined}
       // Layout containment makes the pane the containing block for ChatView's
       // fixed-position pieces (the header's panel toggles, the Glass frost),
       // so each pane's sit on that pane rather than both on the window.
@@ -448,18 +452,25 @@ export function SplitThreadPanes(props: {
     );
   });
   return (
-    <div
-      data-fork-split-threads={split ? "" : undefined}
-      className={split ? "flex min-h-0 flex-1 flex-row" : "contents"}
-    >
-      {panes}
-      {split ? (
-        <div
-          aria-hidden
-          data-fork-float-behind={floatShown || undefined}
-          className="order-1 w-px shrink-0 bg-border"
-        />
-      ) : null}
-    </div>
+    <>
+      {/* Above every pane, so a split's panes and the stage cards start level under it. */}
+      <CollapsedThreadTabs paneThreadRefs={split ? [layout.left, layout.right] : NO_PANE_THREADS} />
+      <div
+        data-fork-thread-panes=""
+        data-fork-split-threads={split ? "" : undefined}
+        className={split ? "flex min-h-0 flex-1 flex-row" : "contents"}
+      >
+        {panes}
+        {split ? (
+          <div
+            aria-hidden
+            // Glass's stage cards frame each pane, so its sheet drops this line.
+            data-fork-split-divider=""
+            data-fork-float-behind={floatShown || undefined}
+            className="order-1 w-px shrink-0 bg-border"
+          />
+        ) : null}
+      </div>
+    </>
   );
 }
