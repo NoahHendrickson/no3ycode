@@ -76,6 +76,17 @@ describe("fork guard: fork-split-threads", () => {
     // Each slot owns its ChatView's composer ref; the palette reads the focused one.
     expect(panes).toMatch(/ComposerHandleContext value=\{props\.composerRef\}/u);
     expect(panes).toContain('Object.defineProperty(paletteComposerRef, "current"');
+    // Workspace focus recovery looks areas up by name. Without this, a dictation freezing the
+    // focused editor recovered into the other pane's composer, and the route followed it.
+    expect(panes).toContain('data-workspace-unavailable={state.focused ? undefined : "true"}');
+    // So docking a window that owns input hands it the route, or its panel never gets focus.
+    expect(panes).toMatch(
+      /pair\(focusedRef, floatingRef\);\s*if \(floatOwnsInput && floatRoute !== null\)\s*void navigateToPane\(navigate, floatingRef, floatRoute\);/u,
+    );
+    // The panel's focus request lands only because it retries when the docked pane's marker clears.
+    expect(readSibling("../lib/workspaceFocus.ts")).toContain(
+      'attributeFilter: ["inert", "aria-hidden", "data-workspace-unavailable"]',
+    );
     // Children with their own window listeners: the stash shortcut and the
     // pending question's digit answers.
     expect(composerStash).toMatch(

@@ -195,6 +195,9 @@ function SplitPane(props: {
       // rest: theme.custom.css) and its header's drag strip live in CSS.
       data-fork-float-behind={props.behindFloat || undefined}
       data-fork-split-side={state.split ? (state.leading ? "left" : "right") : undefined}
+      // Workspace focus finds areas by name, and every pane has a "composer". Focus that drops
+      // (a dictation freezing the editor) must not recover into a pane that would take the route.
+      data-workspace-unavailable={state.focused ? undefined : "true"}
       // Layout containment makes the pane the containing block for ChatView's
       // fixed-position pieces (the header's panel toggles, the Glass frost),
       // so each pane's sit on that pane rather than both on the window.
@@ -340,9 +343,16 @@ export function SplitThreadPanes(props: {
     floatingKey !== null &&
     floatInput?.floatKey === floatingKey &&
     floatInput.routeKey === focusedKey;
+  const floatRoute = floating.route;
+  // A window that owns input keeps it once docked: an unfocused pane is skipped by
+  // workspace focus, so its panel or composer would never get focus back.
   const dockFloat =
     floatShown && focusedRef !== null && floatingRef !== null
-      ? () => pair(focusedRef, floatingRef)
+      ? () => {
+          pair(focusedRef, floatingRef);
+          if (floatOwnsInput && floatRoute !== null)
+            void navigateToPane(navigate, floatingRef, floatRoute);
+        }
       : null;
   useDockOnPanelOpen(floatOwnsInput ? floatingRef : null, () => dockFloat?.());
 
