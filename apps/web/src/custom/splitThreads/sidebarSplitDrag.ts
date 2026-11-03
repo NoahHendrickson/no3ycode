@@ -1,12 +1,13 @@
 /**
- * Drag a sidebar card onto another to split them — see
- * `.fork/customizations.yaml#fork-split-threads`.
+ * Drag a sidebar card or a collapsed thread tab onto another to split them —
+ * see `.fork/customizations.yaml#fork-split-threads`.
  *
  * Native drag and drop, so it stays clear of the pinned block's dnd-kit
  * sorting (pinned cards are neither sources nor targets) and of the file
  * drop every row already takes (those handlers only answer `Files` drags).
  * The list listens once for every row; the target is the row under the
- * pointer, found by its `data-thread-item` key.
+ * pointer, found by its item attribute (`data-thread-item` for cards). The
+ * dragged key is shared, so a card drops on a tab and a tab on a card.
  */
 import type { DragEvent, PointerEvent } from "react";
 
@@ -16,7 +17,12 @@ const DROP_TARGET_ATTRIBUTE = "data-fork-split-drop-target";
 /** dataTransfer is unreadable during dragover, so the source rides here. */
 let draggedThreadKey: string | null = null;
 
-export function splitThreadDragSourceProps(threadKey: string, enabled: boolean) {
+export function splitThreadDragSourceProps(
+  threadKey: string,
+  enabled: boolean,
+  /** A press inside one of these never drags. */
+  noDragSelector = "button, a, input",
+) {
   return {
     // Decided per press, before the browser can start a drag: a press on the
     // row's hover actions begins the settle sweep, a pointer gesture a native
@@ -27,13 +33,15 @@ export function splitThreadDragSourceProps(threadKey: string, enabled: boolean) 
       event.currentTarget.draggable =
         enabled &&
         event.pointerType === "mouse" &&
-        !(event.target instanceof Element && event.target.closest("button, a, input") !== null);
+        !(event.target instanceof Element && event.target.closest(noDragSelector) !== null);
     },
     onDragStart: (event: DragEvent<HTMLElement>) => {
       if (!enabled) {
         event.preventDefault();
         return;
       }
+      // A link drags natively and its dragstart bubbles here; it is not a split.
+      if (event.target instanceof Element && event.target.closest(noDragSelector) !== null) return;
       draggedThreadKey = threadKey;
       event.dataTransfer.setData(SPLIT_THREAD_DRAG_TYPE, threadKey);
       event.dataTransfer.effectAllowed = "link";
@@ -41,9 +49,9 @@ export function splitThreadDragSourceProps(threadKey: string, enabled: boolean) 
   };
 }
 
-function rowUnder(event: DragEvent<HTMLElement>): HTMLElement | null {
+function rowUnder(event: DragEvent<HTMLElement>, itemAttribute: string): HTMLElement | null {
   return event.target instanceof Element
-    ? (event.target.closest<HTMLElement>("[data-thread-item]") ?? null)
+    ? (event.target.closest<HTMLElement>(`[${itemAttribute}]`) ?? null)
     : null;
 }
 
@@ -51,7 +59,10 @@ function rowUnder(event: DragEvent<HTMLElement>): HTMLElement | null {
 export function makeSidebarSplitDropHandlers(input: {
   readonly canPair: (threadKey: string) => boolean;
   readonly onPair: (draggedKey: string, targetKey: string) => void;
+  /** Names the row and carries its thread key. */
+  readonly itemAttribute?: string;
 }) {
+  const itemAttribute = input.itemAttribute ?? "data-thread-item";
   const clearTarget = (event: DragEvent<HTMLElement>) => {
     event.currentTarget
       .querySelectorAll(`[${DROP_TARGET_ATTRIBUTE}]`)
@@ -60,8 +71,8 @@ export function makeSidebarSplitDropHandlers(input: {
   const isSplitDrag = (event: DragEvent<HTMLElement>) =>
     draggedThreadKey !== null && event.dataTransfer.types.includes(SPLIT_THREAD_DRAG_TYPE);
   const targetFor = (event: DragEvent<HTMLElement>) => {
-    const row = rowUnder(event);
-    const targetKey = row?.getAttribute("data-thread-item") ?? null;
+    const row = rowUnder(event, itemAttribute);
+    const targetKey = row?.getAttribute(itemAttribute) ?? null;
     if (!row || targetKey === null || targetKey === draggedThreadKey) return null;
     return input.canPair(targetKey) ? { row, targetKey } : null;
   };

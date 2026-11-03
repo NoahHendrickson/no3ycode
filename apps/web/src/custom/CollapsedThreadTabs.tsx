@@ -2,7 +2,11 @@
  * thread panes, filtered by project, the overflow behind More, New agent last. See
  * `.fork/customizations.yaml#fork-collapsed-thread-tabs`. Renders only while collapsed. */
 import { useAtomValue } from "@effect/atom-react";
-import { scopeThreadRef, scopedThreadKey } from "@t3tools/client-runtime/environment";
+import {
+  parseScopedThreadKey,
+  scopeThreadRef,
+  scopedThreadKey,
+} from "@t3tools/client-runtime/environment";
 import { threadWokeAt } from "@t3tools/client-runtime/state/thread-settled";
 import {
   resolveThreadCurrentPullRequestLink,
@@ -97,6 +101,11 @@ import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
 import { SIDEBAR_V2_ICON_BUTTON_CLASS } from "./sidebarV2TrailingColumn";
+import {
+  makeSidebarSplitDropHandlers,
+  splitThreadDragSourceProps,
+} from "./splitThreads/sidebarSplitDrag";
+import { useSplitThreadStore } from "./splitThreads/splitThreadStore";
 import { resolveSidebarV2CardStatus } from "./sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
 import { sidebarDraftModelSelection, sidebarDraftTitleFromPrompt } from "./sidebarV2DraftRows";
@@ -386,6 +395,25 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       replace: paneThreadKeys.includes(threadKey),
     });
   };
+  // The sidebar card drop's rule: the tab dropped on keeps the left pane, and the dragged
+  // thread opens unless the route already shows one of the two.
+  const splitDropHandlers = makeSidebarSplitDropHandlers({
+    // Only thread tabs carry it, so a draft's tab never takes the drop.
+    itemAttribute: "data-fork-split-tab",
+    canPair: () => true,
+    onPair: (draggedKey, targetKey) => {
+      const dragged = parseScopedThreadKey(draggedKey);
+      const target = parseScopedThreadKey(targetKey);
+      if (!dragged || !target) return;
+      useSplitThreadStore.getState().pair(target, dragged);
+      if (openThreadKey === draggedKey || openThreadKey === targetKey) return;
+      clearSidebarSelection();
+      void router.navigate({
+        to: "/$environmentId/$threadId",
+        params: buildThreadRouteParams(dragged),
+      });
+    },
+  });
   // Only a split's unfocused pane can hold a draft that is not the route's.
   const focusDraft = (draftId: DraftId) => {
     clearSidebarSelection();
@@ -536,6 +564,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         aria-label="Active threads"
         // The min width keeps More (72px) and the halo padding on screen.
         className="-mx-1 -my-1 flex min-w-[80px] flex-1 items-center gap-1.5 overflow-hidden px-1 py-1"
+        {...splitDropHandlers}
       >
         {row.slots.length === 0 && row.overflow.length === 0 ? (
           <span className="px-1 text-xs text-muted-foreground">
@@ -655,6 +684,10 @@ function ThreadTab(props: {
     <div
       data-fork-thread-tab=""
       data-active={props.active ? "true" : undefined}
+      data-fork-split-tab={threadKey}
+      // Dragged onto another tab (or sidebar card), this thread opens beside it. The open
+      // button spans the tab, so only the badge and hover actions keep their press.
+      {...splitThreadDragSourceProps(threadKey, true, "[data-fork-tab-content] :is(button, a)")}
       className={cn(
         TAB_SHELL_CLASS,
         props.active

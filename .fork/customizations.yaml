@@ -5899,7 +5899,9 @@
     and dissolves the pair; an empty draft is discarded, while one the user
     has written in stays a draft of its own. Dragging one
     sidebar card onto another pairs them: the card dropped on keeps the left
-    pane. Pairs are device-local (custom/splitThreads/splitThreadStore,
+    pane. Collapsed thread tabs pair the same way (custom/splitThreads/
+    sidebarSplitDrag, keyed by data-fork-split-tab; draft tabs never take
+    part), and a card dropped on a tab, or a tab on a card, pairs too. Pairs are device-local (custom/splitThreads/splitThreadStore,
     localStorage): no server, contract or migration change, so other clients
     and mobile show the two threads as ordinary cards. A thread belongs to at
     most one pair; pairing it again moves it. A pair whose partner is deleted
@@ -6244,7 +6246,8 @@
     (layoutCollapsedTabRow). Pressing the other pane's tab, or its unsent
     draft, focuses that pane in place (the route is replaced, as every pane
     switch does), and only the focused pane's tab holds the route for the PR
-    actions and aria-current. A sent pane draft keeps its tab until its
+    actions and aria-current. Dragging one thread tab onto another splits them, as a
+    sidebar card drop does (fork-split-threads). A sent pane draft keeps its tab until its
     thread's shell arrives. It renders only while the desktop sidebar is collapsed, never on
     mobile; under an open sidebar a render-nothing observer keeps feeding the
     Completed-hold tracker, so a thread that comes to rest there is still held
