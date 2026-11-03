@@ -677,10 +677,16 @@
     background-color: var(--sidebar-row-active);
   }
 
-  /* Figma's 6% white, under the panel's real glass only. */
+  /* Figma's 6% white, under the panel's real glass only: the docked panel's
+     two arms in theme.custom.palettes.css. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
-      [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+    :is(
+      [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
+          [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+        ),
+      [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]:not(
+          :has([data-preview-mini-player] [data-browser-surface-slot])
+        )
     )
     [data-sidebar-version="v2"]
     :is([data-thread-item] > [aria-current="page"], [data-fork-chrome-row][data-active="true"]) {

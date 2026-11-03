@@ -1235,10 +1235,20 @@
    flag on the wrapper and `data-sidebar-version` sits on the sidebar below it,
    hence the ancestor form. While it floats the palette's opaque #181b1e applies,
    which is the correct read for a panel over content. The window keeps its
-   vibrancy either way; only this fill changes. */
+   vibrancy either way; only this fill changes. The collapsed sidebar's peek
+   card floats too but keeps the tint: theme.custom.css cuts the stage away
+   beneath it (fork-sidebar-peek), so the window is all that is behind it,
+   except while a desktop tab floats over the chat, when there is no cutout.
+   The peek has its own arm because narrowChatOverlay flags a collapsed
+   wrapper too; this block and the floating one below are exclusive. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
     [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  )
+  [data-sidebar-version="v2"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]:not(
+    :has([data-preview-mini-player] [data-browser-surface-slot])
   )
   [data-sidebar-version="v2"] {
   --background: var(--fork-glass-panel);
@@ -1318,6 +1328,10 @@
   [data-slot="sidebar-wrapper"]:is(
     [data-fork-sidebar-overlay="true"],
     [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  ):not(
+    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]:not(
+        :has([data-preview-mini-player] [data-browser-surface-slot])
+      )
   )
   [data-sidebar-version="v2"] {
   --background: #262626;

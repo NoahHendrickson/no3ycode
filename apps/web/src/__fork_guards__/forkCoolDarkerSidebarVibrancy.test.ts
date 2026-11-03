@@ -559,7 +559,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       (rule) =>
         rule.selector.includes('[data-sidebar-version="v2"]') &&
         rule.selector.includes('[data-fork-sidebar-overlay="true"]') &&
-        !rule.selector.includes(":not("),
+        !rule.selector.includes(':not([data-fork-sidebar-overlay="true"])'),
     );
     expect(floating, "the floating panel must state its own fill").toBeDefined();
 
@@ -748,7 +748,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       (rule) =>
         rule.selector.includes('[data-sidebar-version="v2"]') &&
         rule.selector.includes('[data-fork-sidebar-overlay="true"]') &&
-        !rule.selector.includes(":not("),
+        !rule.selector.includes(':not([data-fork-sidebar-overlay="true"])'),
     );
     expect(declared(floating?.body, "--accent"), "--accent in the floating panel").toMatch(wash);
   });

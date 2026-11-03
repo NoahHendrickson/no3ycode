@@ -73,12 +73,53 @@ describe("fork-sidebar-peek", () => {
     ).toBe(true);
   });
 
-  it("gives the card Glass's opaque floating fill, not the see-through docked tint", () => {
-    const rules = cssRules(readSibling("../theme.custom.palettes.css"));
+  it("gives the card the docked Glass tint over a hole cut in the stage", () => {
     const peekSelector = '[data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]';
-    const docked = rules.find((rule) => rule.body.includes("--sidebar: var(--fork-glass-panel)"));
-    expect(docked?.selector.replace(/\s+/gu, "")).toContain(`:not(${peekSelector})`);
-    const floating = rules.find((rule) => rule.body.includes("--sidebar: #262626"));
-    expect(floating?.selector.replace(/\s+/gu, "")).toContain(peekSelector);
+    // The peek wears the tint exactly where the inset is cut, so all four rules
+    // share one predicate: narrowChatOverlay flags a collapsed wrapper too, and a
+    // floating desktop tab drops the cutout.
+    const glassPeekState = `${peekSelector}:not(:has([data-preview-mini-player][data-browser-surface-slot]))`;
+    const glassPeek = `[data-slot="sidebar-wrapper"]${glassPeekState}`;
+    const flat = (selector: string | undefined) => selector?.replace(/\s+/gu, "");
+
+    const palettes = cssRules(readSibling("../theme.custom.palettes.css"));
+    const docked = palettes.find((rule) =>
+      rule.body.includes("--sidebar: var(--fork-glass-panel)"),
+    );
+    expect(flat(docked?.selector)).toContain(`${glassPeek}[data-sidebar-version="v2"]`);
+    expect(flat(docked?.selector)).toContain(`:not(${peekSelector})`);
+    const floating = palettes.find((rule) => rule.body.includes("--sidebar: #262626"));
+    expect(flat(floating?.selector)).toContain(`:not(${glassPeekState})`);
+
+    const rows = cssRules(readSibling("../theme.custom.glass-surfaces.css")).find((rule) =>
+      rule.body.includes("background-color: rgb(255 255 255 / 6%)"),
+    );
+    expect(flat(rows?.selector)).toContain(glassPeek);
+
+    const sheet = cssRules(readSibling("../theme.custom.css"));
+    const hole = sheet.find(
+      (rule) =>
+        rule.selector.includes('[data-fork-sidebar-vibrancy="true"]') &&
+        rule.selector.endsWith('[data-slot="sidebar-inset"]'),
+    );
+    expect(flat(hole?.selector)).toContain(glassPeek);
+    expect(hole?.body).toContain("mask-composite: subtract");
+  });
+
+  it("keeps the cutout shapes the size of the card and tail", () => {
+    // var() cannot reach into url(), so the SVGs restate the sizes.
+    const geometry = cssRules(readSibling("../theme.custom.css")).find((rule) =>
+      rule.body.includes("--fork-peek-tail-shape:"),
+    )?.body;
+    const px = (name: string) => new RegExp(`${name}: (\\d+)px;`, "u").exec(geometry ?? "")?.[1];
+    const [radius, width, height] = [
+      px("--fork-peek-radius"),
+      px("--fork-peek-tail-width"),
+      px("--fork-peek-tail-height"),
+    ];
+    expect(radius).toBeDefined();
+    expect(geometry).toContain(`rx='${radius}'`);
+    expect(geometry).toContain(`width='${width}' height='${height}'`);
+    expect(geometry).toContain(`points='0,${height} ${Number(width) / 2},0 ${width},${height}'`);
   });
 });
