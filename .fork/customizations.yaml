@@ -6278,3 +6278,47 @@
     - apps/web/src/__fork_guards__/forkCollapsedThreadTabs.test.ts
     - apps/web/src/__fork_guards__/forkGlass3d.test.ts
     - apps/web/src/custom/collapsedThreadTabsModel.test.ts
+
+- id: fork-sidebar-peek
+  intent: >
+    While the desktop sidebar is collapsed, hovering the floating toggle drops
+    the real sidebar down beneath it as a floating card, like a dropdown menu.
+    The panel stays collapsed throughout: no cookie write, no layout push, and
+    the floating toggle and collapsed thread tabs stay mounted. The card sits
+    8px off the window's left and bottom edges with its top 4px under the
+    toggle, floating over the workspace on the narrow overlay's own stacking
+    and title-bar drag release rules (one :is() each), with an opaque
+    fill and no backdrop blur, since a blur this size over a streaming
+    transcript would repaint on every token. The panel's own header row is
+    hidden inside it. Under Glass it takes the floating overlay's opaque fill,
+    never the docked see-through tint. It opens after a short hover intent
+    delay, and only once the pointer has been off the toggle since the
+    collapse (collapsing from the header toggle mounts it under the pointer).
+    It stays open while the pointer is on the toggle, the card or a menu the
+    card opened (an aria-haspopup trigger, never a tooltip), and closes after a
+    short grace once the pointer leaves (or leaves the window), on Escape when
+    no card menu is open, and on navigation, so picking a thread closes it.
+    The grace re-reads the pointer when it ends, so a menu closing under a
+    still pointer still dismisses. Dismissal is instant (the "dismissed" state
+    drops the panel's slide transition) rather than a full-height slide-out. Clicking the toggle still opens the sidebar for
+    real and ends the peek. Touch and the mobile sheet never peek. Upstream's
+    Sidebar turns a collapsed offcanvas panel inert, so a fenced peek prop
+    lifts that while the card is open.
+  tier: 4
+  files:
+    - apps/web/src/custom/sidebarPeek.ts
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/theme.custom.glass-surfaces.css
+  shadows: []
+  watch:
+    # Fenced: store subscription, the panel's peek prop, the wrapper attribute,
+    # and the floating trigger's hover props, click reset and tooltip side.
+    - apps/web/src/components/AppSidebarLayout.tsx
+    # Fenced: the peek prop that lifts the collapsed offcanvas panel's inert.
+    - apps/web/src/components/ui/sidebar.tsx
+    # data-fork-sidebar-header on the header row, inside fork-sidebar-chrome's fence.
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSidebarPeek.test.ts
+    - apps/web/src/custom/sidebarPeek.browser.test.tsx

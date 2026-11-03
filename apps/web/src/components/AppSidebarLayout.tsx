@@ -39,6 +39,9 @@ import {
 /* fork:begin narrow-workspace-layout — see .fork/customizations.yaml#narrow-workspace-layout */
 import { useSidebarOverlayOnNarrowChat } from "../custom/narrowChatOverlay";
 /* fork:end narrow-workspace-layout */
+/* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+import { useSidebarPeekState, useSidebarPeekTrigger } from "../custom/sidebarPeek";
+/* fork:end fork-sidebar-peek */
 import { BackgroundThreadAnnouncer } from "./BackgroundThreadAnnouncer";
 import ThreadSidebar from "./Sidebar";
 import { SidebarBrandWidthProbe } from "./sidebar/SidebarChrome";
@@ -331,6 +334,13 @@ function SidebarControl() {
   const shortcutLabel = shortcutLabelForCommand(keybindings, "sidebar.toggle", {
     context: { usagePageOpen },
   });
+  /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const peekTriggerProps = useSidebarPeekTrigger({
+    enabled: !isMobile && !isSidebarVisible,
+    pathname,
+  });
+  /* fork:end fork-sidebar-peek */
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- window keydown listener that toggles the sidebar on its shortcut
   useEffect(() => {
@@ -395,10 +405,16 @@ function SidebarControl() {
               <SidebarTrigger
                 className="pointer-events-auto [&_svg]:size-4!"
                 aria-label="Toggle main sidebar"
+                /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+                {...peekTriggerProps}
+                /* fork:end fork-sidebar-peek */
               />
             }
           />
-          <TooltipPopup side="bottom">
+          {/* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek
+              Beside the trigger: hovering it drops the sidebar card below. */}
+          <TooltipPopup side="right">
+            {/* fork:end fork-sidebar-peek */}
             Toggle main sidebar{shortcutLabel ? ` (${shortcutLabel})` : ""}
           </TooltipPopup>
         </Tooltip>
@@ -449,6 +465,9 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
      re-decides without re-rendering the workspace. */
   useSidebarOverlayOnNarrowChat(pathname);
   /* fork:end narrow-workspace-layout */
+  /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+  const sidebarPeek = useSidebarPeekState();
+  /* fork:end fork-sidebar-peek */
   const sidebarProviderStyle = {
     "--sidebar-width": `${clampThreadSidebarWidth(sidebarWidth, sidebarMinimumWidth, sidebarMaximumWidth)}px`,
     "--panel-animation-duration": `${panelAnimationDurationMs}ms`,
@@ -460,6 +479,9 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
       <SidebarProvider
         className="h-dvh! min-h-0!"
         data-panel-animations={routePanelAnimationsActive ? "true" : "false"}
+        /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+        data-fork-sidebar-peek={sidebarPeek === "off" ? undefined : sidebarPeek}
+        /* fork:end fork-sidebar-peek */
         defaultOpen
         style={sidebarProviderStyle}
       >
@@ -471,6 +493,9 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
           /* fork:begin fork-sidebar-type-size — see .fork/customizations.yaml#fork-sidebar-type-size */
           data-sidebar-version="v2"
           /* fork:end fork-sidebar-type-size */
+          /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+          peek={sidebarPeek === "open"}
+          /* fork:end fork-sidebar-peek */
           {...sidebarArea}
           role="navigation"
           aria-label="Threads"

@@ -268,15 +268,25 @@ function Sidebar({
   resizable = false,
   className,
   children,
+  /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+  peek = false,
+  /* fork:end fork-sidebar-peek */
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right";
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
   resizable?: boolean | SidebarResizableOptions;
+  /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+  /** The collapsed panel is floating as a card and must stay interactive. */
+  peek?: boolean;
+  /* fork:end fork-sidebar-peek */
 }) {
   const { isMobile, state, openMobile, setOpenMobile, setMobileSheetElement } = useSidebar();
-  const offcanvasCollapsed = !isMobile && collapsible === "offcanvas" && state === "collapsed";
+  /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
+  const offcanvasCollapsed =
+    !isMobile && collapsible === "offcanvas" && state === "collapsed" && !peek;
+  /* fork:end fork-sidebar-peek */
 
   const resolvedResizable = resolveSidebarResizable({ collapsible, isMobile, resizable });
   const instanceContextValue: SidebarInstanceContextProps = { side, resizable: resolvedResizable };
