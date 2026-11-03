@@ -343,16 +343,18 @@ export function SplitThreadPanes(props: {
     floatingKey !== null &&
     floatInput?.floatKey === floatingKey &&
     floatInput.routeKey === focusedKey;
+  const floatRoute = floating.route;
+  // A window that owns input keeps it once docked: an unfocused pane is skipped by
+  // workspace focus, so its panel or composer would never get focus back.
   const dockFloat =
     floatShown && focusedRef !== null && floatingRef !== null
-      ? () => pair(focusedRef, floatingRef)
+      ? () => {
+          pair(focusedRef, floatingRef);
+          if (floatOwnsInput && floatRoute !== null)
+            void navigateToPane(navigate, floatingRef, floatRoute);
+        }
       : null;
-  // The docked thread takes the route: its panel's focus request skips an unfocused pane.
-  useDockOnPanelOpen(floatOwnsInput ? floatingRef : null, () => {
-    dockFloat?.();
-    if (floatingRef !== null && floating.route !== null)
-      void navigateToPane(navigate, floatingRef, floating.route);
-  });
+  useDockOnPanelOpen(floatOwnsInput ? floatingRef : null, () => dockFloat?.());
 
   /** Floating a started pane's thread (a draft's promotion runs on its
       route, which the window never holds). The background pane of a split
