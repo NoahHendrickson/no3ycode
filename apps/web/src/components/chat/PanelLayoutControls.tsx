@@ -176,6 +176,10 @@ export function ThreadPanelHeaderControl(props: PanelLayoutControlsProps) {
     <div
       className="absolute top-[var(--workspace-controls-top)] right-[calc(env(safe-area-inset-right)+0.75rem)] z-50 flex h-[var(--workspace-topbar-height)] items-center [-webkit-app-region:no-drag]"
       data-workspace-titlebar-controls
+      /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
+         Placed in the header, not the window, so the tab strip's controls offset skips it. */
+      data-fork-header-anchored-controls=""
+      /* fork:end fork-collapsed-thread-tabs */
     >
       <PanelLayoutControls {...props} showTerminalControl={false} showRightPanelControl={false} />
     </div>

@@ -6,9 +6,12 @@ import {
   buildCollapsedThreadTabs,
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
+  collapsedPaneTabs,
   collapsedTabProjectForScope,
   DEFAULT_COLLAPSED_TAB_STATUSES,
   fitCollapsedThreadTabs,
+  layoutCollapsedTabRow,
+  splitCollapsedTabsAroundPanes,
   type CollapsedThreadTabStatus,
 } from "./collapsedThreadTabsModel";
 import { buildSidebarDraftShell } from "./sidebarV2DraftRows";
@@ -80,7 +83,6 @@ describe("buildCollapsedThreadTabs", () => {
       holds: createSidebarV2CompletedHoldTracker(),
       supports: () => ({ settlement: supported, snooze: supported }),
     });
-
   it("orders needs-input before working whatever their age, with only their projects", () => {
     const { tabs, projects } = build(true);
     expect(tabs.map((tab) => [tab.thread.id, tab.projectKey])).toEqual([
@@ -127,6 +129,49 @@ describe("collapsedDraftTabKey", () => {
   });
 });
 
+describe("collapsedPaneTabs", () => {
+  const keyOf = (id: string) => scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make(id)));
+  const threads = [
+    { ...shell("settled", "p1", NOW), settledOverride: "settled" as const },
+    shell("asking", "p2", NOW),
+  ];
+  it.each([
+    // [label, pane thread ids, panes with a draft, expected]
+    [
+      "gives the panes' threads in pane order, whatever their status",
+      ["settled", "asking"],
+      [false, false],
+      ["thread:settled", "thread:asking"],
+    ],
+    [
+      "keeps the unfocused pane's unsent draft beside the focused pane's thread",
+      ["asking", "new"],
+      [false, true],
+      ["thread:asking", "draft:1"],
+    ],
+    // A sent draft's shell arrives after its send: the pair must not drop to one tab meanwhile.
+    [
+      "prefers the thread once its shell arrives, a draft until then",
+      ["settled", "sent"],
+      [true, true],
+      ["thread:settled", "draft:1"],
+    ],
+    ["drops a pane with neither", ["asking", "gone"], [false, false], ["thread:asking"]],
+  ] as const)("%s", (_label, ids, paneHasDraft, expected) => {
+    const panes = collapsedPaneTabs({
+      threads,
+      projectGroups: [project("p1"), project("p2")],
+      paneThreadKeys: ids.map(keyOf),
+      paneHasDraft,
+    });
+    expect(
+      panes.map((pane) =>
+        pane.kind === "thread" ? `thread:${pane.tab.thread.id}` : `draft:${pane.pane}`,
+      ),
+    ).toEqual(expected);
+  });
+});
+
 describe("collapsedFilterSwitchTarget", () => {
   const tab = (threadKey: string) => ({ threadKey });
   const [a, b, c] = [tab("a"), tab("b"), tab("c")];
@@ -162,19 +207,103 @@ describe("collapsedTabProjectForScope", () => {
   });
 });
 
+describe("splitCollapsedTabsAroundPanes", () => {
+  const tabs = ["a", "b", "c", "d"].map((threadKey) => ({ threadKey }));
+  const keys = (list: readonly { readonly threadKey: string }[]) =>
+    list.map((tab) => tab.threadKey);
+  it.each([
+    // [label, paneThreadKeys, before, after]
+    ["takes the place of the thread split from", ["b", "x"], ["a"], ["c", "d"]],
+    ["takes the first place either pane holds", ["d", "b"], ["a"], ["c"]],
+    ["leads the row when neither pane has a tab", ["x", "y"], [], ["a", "b", "c", "d"]],
+  ] as const)("%s", (_label, paneThreadKeys, before, after) => {
+    const placed = splitCollapsedTabsAroundPanes(tabs, paneThreadKeys);
+    expect([keys(placed.before), keys(placed.after)]).toEqual([before, after]);
+  });
+});
+
 describe("fitCollapsedThreadTabs", () => {
   it.each([
-    // [count, width, activeIndex, visible, overflow]
-    [3, 0, -1, [0, 1, 2], []],
+    // [count, width, activeIndex, activeLength, visible, overflow]
+    [3, 0, -1, 1, [0, 1, 2], []],
     // Three minimum tabs and their gaps fill the row exactly.
-    [3, 3 * 132 + 2 * 6, -1, [0, 1, 2], []],
+    [3, 3 * 132 + 2 * 6, -1, 1, [0, 1, 2], []],
     // A pixel short, the last tab goes behind More.
-    [3, 3 * 132 + 2 * 6 - 1, -1, [0, 1], [2]],
+    [3, 3 * 132 + 2 * 6 - 1, -1, 1, [0, 1], [2]],
     // 500px holds three 138px steps beside More.
-    [6, 500, -1, [0, 1, 2], [3, 4, 5]],
-    [6, 500, 4, [0, 1, 4], [2, 3, 5]],
-    [6, 60, 4, [], [0, 1, 2, 3, 4, 5]],
-  ])("%i tabs in %ipx with the open one at %i", (count, width, activeIndex, visible, overflow) => {
-    expect(fitCollapsedThreadTabs({ count, width, activeIndex })).toEqual({ visible, overflow });
+    [6, 500, -1, 1, [0, 1, 2], [3, 4, 5]],
+    [6, 500, 4, 1, [0, 1, 4], [2, 3, 5]],
+    // A split's group keeps both its tabs on screen.
+    [6, 500, 3, 2, [0, 3, 4], [1, 2, 5]],
+    [6, 500, 1, 2, [0, 1, 2], [3, 4, 5]],
+    [6, 60, 4, 1, [], [0, 1, 2, 3, 4, 5]],
+  ])(
+    "%i tabs in %ipx with the open one at %i (%i long)",
+    (count, width, activeIndex, activeLength, visible, overflow) => {
+      expect(fitCollapsedThreadTabs({ count, width, activeIndex, activeLength })).toEqual({
+        visible,
+        overflow,
+      });
+    },
+  );
+});
+
+describe("layoutCollapsedTabRow", () => {
+  const entry = (threadKey: string) => ({ threadKey });
+  const layout = (input: {
+    readonly leading?: string;
+    readonly tabs: readonly string[];
+    readonly panes?: readonly string[];
+    readonly openKey?: string;
+    readonly width: number;
+  }) => {
+    const row = layoutCollapsedTabRow({
+      leading: input.leading === undefined ? null : entry(input.leading),
+      tabs: input.tabs.map(entry),
+      panes: (input.panes ?? []).map(entry),
+      openKey: input.openKey ?? null,
+      width: input.width,
+    });
+    return {
+      slots: row.slots.map((slot) =>
+        slot.kind === "tab" ? slot.entry.threadKey : slot.entries.map((e) => e.threadKey),
+      ),
+      overflow: row.overflow.map((e) => e.threadKey),
+    };
+  };
+  // 500px holds three 138px tab steps beside More; 210px holds one.
+  it.each([
+    [
+      "leads with the draft, then the tabs",
+      { leading: "draft", tabs: ["a", "b"], openKey: "draft", width: 0 },
+      { slots: ["draft", "a", "b"], overflow: [] },
+    ],
+    [
+      "keeps the open thread on screen",
+      { tabs: ["a", "b", "c", "d", "e"], openKey: "e", width: 500 },
+      { slots: ["a", "b", "e"], overflow: ["c", "d"] },
+    ],
+    [
+      "puts the pair where the thread split from had its tab",
+      { tabs: ["a", "b", "c"], panes: ["b", "x"], width: 0 },
+      { slots: ["a", ["b", "x"], "c"], overflow: [] },
+    ],
+    [
+      "keeps both of the pair on screen when two tabs fit",
+      { tabs: ["a", "b", "c", "d", "e"], panes: ["d", "x"], width: 500 },
+      { slots: ["a", ["d", "x"]], overflow: ["b", "c", "e"] },
+    ],
+    [
+      "cuts the pair short only when one tab fits",
+      { tabs: ["a", "b"], panes: ["b", "x"], width: 210 },
+      { slots: [["b"]], overflow: ["a", "x"] },
+    ],
+    [
+      "shows a lone pane as a plain tab",
+      { tabs: ["a"], panes: ["x"], width: 0 },
+      { slots: ["x", "a"], overflow: [] },
+    ],
+  ] as const)("%s", (_label, input, expected) => {
+    expect(layout(input)).toEqual(expected);
   });
 });

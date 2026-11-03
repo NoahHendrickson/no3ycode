@@ -10,21 +10,23 @@ function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 }
 
-const chatView = readSibling("../components/ChatView.tsx");
-const chatHeader = readSibling("../components/chat/ChatHeader.tsx");
+const panes = readSibling("../custom/splitThreads/SplitThreadPanes.tsx");
 const strip = readSibling("../custom/CollapsedThreadTabs.tsx");
 const theme = readSibling("../theme.custom.css");
 const glassSurfaces = readSibling("../theme.custom.glass-surfaces.css");
 const sidebar = readSibling("../components/Sidebar.tsx");
+const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 
 describe("fork guard: fork-collapsed-thread-tabs", () => {
-  it("mounts the strip in the leading chat column only, above its header", () => {
-    const columnAt = chatView.indexOf("data-chat-column\n");
-    const stripAt = chatView.indexOf("{splitPane.leading && !splitPane.floating ? (", columnAt);
-    const headerAt = chatView.indexOf("<header", columnAt);
-    expect(columnAt).toBeGreaterThan(-1);
-    expect(stripAt).toBeGreaterThan(columnAt);
-    expect(headerAt).toBeGreaterThan(stripAt);
+  it("mounts the strip once, above every thread pane", () => {
+    const stripAt = panes.indexOf("<CollapsedThreadTabs");
+    const panesAt = panes.indexOf('data-fork-thread-panes=""');
+    expect(stripAt).toBeGreaterThan(-1);
+    expect(panesAt).toBeGreaterThan(stripAt);
+    // A split hands its threads over, left then right, for the shared capsule.
+    expect(panes).toContain(
+      "paneThreadRefs={split ? [layout.left, layout.right] : NO_PANE_THREADS}",
+    );
   });
 
   it("starts a new agent through the sidebar's own paths, in the filtered project if any", () => {
@@ -43,21 +45,18 @@ describe("fork guard: fork-collapsed-thread-tabs", () => {
     expect(strip).toContain("if (sidebarVisible) return <CompletedHoldObserver />;");
   });
 
-  it("pulls the chat header under the strip back to the gutter", () => {
-    expect(theme).toContain("[data-chat-column]:has(> [data-fork-thread-tabs]) {");
-    // The breadcrumb hides only while the open thread has a visible tab.
-    expect(theme).toContain(
-      "[data-chat-column]:has(> [data-fork-thread-tabs][data-open-thread-tabbed])",
-    );
-    expect(theme).toContain('nav[aria-label="Thread breadcrumb"]:not(:has(input)) {');
-    expect(chatHeader).toContain('ariaLabel="Thread breadcrumb"');
-    expect(strip).toContain('data-open-thread-tabbed={paneThreadTabbed ? "" : undefined}');
-    expect(theme).not.toContain("--workspace-controls-top: calc(");
-    // The header row folds unless the inline panel's toggle sits in it.
-    expect(chatView).toContain("headerHoldsPanelToggle={inlineRightPanelOwnsTitleBar}");
-    expect(chatView).toContain("{inlineRightPanelOwnsTitleBar ? threadPanelHeaderControl : null}");
-    expect(theme).toContain("[data-open-thread-tabbed]:not([data-header-panel-toggle])");
+  it("lays the panes under the strip out as beside an open sidebar", () => {
     expect(strip).toContain('data-fork-thread-tabs=""');
+    expect(theme).toContain("[data-fork-thread-tabs] + [data-fork-thread-panes] {");
+    expect(theme).toContain("--workspace-titlebar-content-left: var(--workspace-gutter-start);");
+    // A lone pane's window-fixed controls drop to its header row; contained panes keep theirs.
+    expect(theme).toContain("> :not([data-fork-split-pane], [data-fork-float-behind]) {");
+    expect(theme).toContain(
+      "var(--workspace-topbar-height) - var(--fork-thread-tabs-overlap, 0px)",
+    );
+    // The header's own thread panel toggle keeps its place, through an explicit stamp.
+    expect(panelControls).toContain('data-fork-header-anchored-controls=""');
+    expect(theme).toContain("+ [data-fork-thread-panes]\n  [data-fork-header-anchored-controls] {");
   });
 
   it("opens the sidebar's own thread menu and settles through its own path", () => {
