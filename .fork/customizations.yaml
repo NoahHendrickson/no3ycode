@@ -6301,8 +6301,9 @@
     The panel stays collapsed throughout: no cookie write, no layout push, and
     the floating toggle and collapsed thread tabs stay mounted. The card sits
     14px off the window's left (clear of the stage card's 8px edge; nearer
-    the edge where the toggle is, so the tail clears the corner) and 8px off
-    its bottom, with a tail centred on the toggle's glyph, floating
+    the edge where the toggle is, so the tail clears the corner), just under
+    the toggle with a short tail centred on its glyph, and 60% of the run to
+    8px off the window's bottom, floating
     over the workspace on the narrow overlay's own stacking and title-bar drag
     release rules (one :is() each), with no backdrop blur, since a blur this
     size over a streaming transcript would repaint on every token. Its outline
