@@ -2,11 +2,7 @@
  * thread panes, filtered by project, the overflow behind More, New agent last. See
  * `.fork/customizations.yaml#fork-collapsed-thread-tabs`. Renders only while collapsed. */
 import { useAtomValue } from "@effect/atom-react";
-import {
-  parseScopedThreadKey,
-  scopeThreadRef,
-  scopedThreadKey,
-} from "@t3tools/client-runtime/environment";
+import { scopeThreadRef, scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { threadWokeAt } from "@t3tools/client-runtime/state/thread-settled";
 import {
   resolveThreadCurrentPullRequestLink,
@@ -77,6 +73,7 @@ import {
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
   collapsedPaneTabs,
+  collapsedThreadShelved,
   COLLAPSED_TAB_MIN_WIDTH,
   COLLAPSED_TAB_STATUSES,
   DEFAULT_COLLAPSED_TAB_STATUSES,
@@ -101,11 +98,7 @@ import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
 import { SIDEBAR_V2_ICON_BUTTON_CLASS } from "./sidebarV2TrailingColumn";
-import {
-  makeSidebarSplitDropHandlers,
-  splitThreadDragSourceProps,
-} from "./splitThreads/sidebarSplitDrag";
-import { useSplitThreadStore } from "./splitThreads/splitThreadStore";
+import { makeSplitDropHandlers, splitThreadDragSourceProps } from "./splitThreads/splitThreadDrag";
 import { resolveSidebarV2CardStatus } from "./sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
 import { sidebarDraftModelSelection, sidebarDraftTitleFromPrompt } from "./sidebarV2DraftRows";
@@ -395,22 +388,22 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       replace: paneThreadKeys.includes(threadKey),
     });
   };
-  // The sidebar card drop's rule: the tab dropped on keeps the left pane, and the dragged
-  // thread opens unless the route already shows one of the two.
-  const splitDropHandlers = makeSidebarSplitDropHandlers({
-    // Only thread tabs carry it, so a draft's tab never takes the drop.
-    itemAttribute: "data-fork-split-tab",
-    canPair: () => true,
-    onPair: (draggedKey, targetKey) => {
-      const dragged = parseScopedThreadKey(draggedKey);
-      const target = parseScopedThreadKey(targetKey);
-      if (!dragged || !target) return;
-      useSplitThreadStore.getState().pair(target, dragged);
-      if (openThreadKey === draggedKey || openThreadKey === targetKey) return;
+  // The sidebar's rule for cards, as source and target alike: never pinned or shelved.
+  const splitPairable = ({ thread }: CollapsedThreadTab) =>
+    thread.pinnedAt == null && !collapsedThreadShelved(thread, source);
+  const splitPairableKeys = new Set(
+    [...shownTabs, ...paneTabs.flatMap((pane) => (pane.kind === "thread" ? [pane.tab] : []))]
+      .filter(splitPairable)
+      .map((tab) => tab.threadKey),
+  );
+  const splitDropHandlers = makeSplitDropHandlers({
+    canPair: (threadKey) => splitPairableKeys.has(threadKey),
+    openThreadKey,
+    openThread: (threadRef) => {
       clearSidebarSelection();
       void router.navigate({
         to: "/$environmentId/$threadId",
-        params: buildThreadRouteParams(dragged),
+        params: buildThreadRouteParams(threadRef),
       });
     },
   });
@@ -455,6 +448,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           serverConfigs.get(tab.thread.environmentId)?.environment.capabilities.threadSettlement ===
           true
         }
+        splitDraggable={splitPairableKeys.has(tab.threadKey)}
         onOpen={() => openThread(tab)}
       />
     );
@@ -642,6 +636,7 @@ function ThreadTab(props: {
   /** As the sidebar card does: with a thread open, a PR opens in the right panel. */
   readonly pullRequestsInRightPanel: boolean;
   readonly canSettle: boolean;
+  readonly splitDraggable: boolean;
   readonly onOpen: () => void;
 }) {
   const { thread, threadKey } = props.tab;
@@ -684,10 +679,8 @@ function ThreadTab(props: {
     <div
       data-fork-thread-tab=""
       data-active={props.active ? "true" : undefined}
-      data-fork-split-tab={threadKey}
-      // Dragged onto another tab (or sidebar card), this thread opens beside it. The open
-      // button spans the tab, so only the badge and hover actions keep their press.
-      {...splitThreadDragSourceProps(threadKey, true, "[data-fork-tab-content] :is(button, a)")}
+      // Dragged onto another tab (or sidebar card), this thread opens beside it.
+      {...splitThreadDragSourceProps(threadKey, props.splitDraggable)}
       className={cn(
         TAB_SHELL_CLASS,
         props.active
@@ -704,6 +697,7 @@ function ThreadTab(props: {
           ignores the pointer, and every press but the badge's reaches this button. */}
       <button
         type="button"
+        data-fork-split-drag-surface=""
         aria-current={props.routed ? "page" : undefined}
         className="absolute inset-0 cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={props.onOpen}

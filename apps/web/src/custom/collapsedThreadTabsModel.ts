@@ -60,13 +60,7 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
     readonly snooze: boolean;
   };
 }): { readonly tabs: CollapsedThreadTab[]; readonly projects: TProject[] } {
-  const live = input.threads.filter((thread) => {
-    const supports = input.supports(thread.environmentId);
-    return !(
-      (supports.settlement && thread.settledOverride === "settled") ||
-      (supports.snooze && effectiveSnoozed(thread, { now: input.now }))
-    );
-  });
+  const live = input.threads.filter((thread) => !collapsedThreadShelved(thread, input));
   const sections = buildSidebarV2StatusSections({
     threads: live,
     localLastVisitedAtById: input.localLastVisitedAtById,
@@ -99,6 +93,19 @@ export function collapsedDraftTabKey(input: {
   if (draft === null || draft.promotedTo != null) return null;
   const threadKey = scopedThreadKey(scopeThreadRef(draft.environmentId, draft.threadId));
   return input.tabs.some((tab) => tab.threadKey === threadKey) ? null : threadKey;
+}
+
+/** Settled or snoozed, under the sidebar's capability gates: never a tab, and never split by a
+    drag, as the sidebar's shelf rows are not. */
+export function collapsedThreadShelved(
+  thread: EnvironmentThreadShell,
+  input: Pick<Parameters<typeof buildCollapsedThreadTabs>[0], "now" | "supports">,
+): boolean {
+  const supports = input.supports(thread.environmentId);
+  return (
+    (supports.settlement && thread.settledOverride === "settled") ||
+    (supports.snooze && effectiveSnoozed(thread, { now: input.now }))
+  );
 }
 
 export type CollapsedPaneTab =

@@ -421,12 +421,11 @@ import { useThreadRouteTarget } from "../hooks/useThreadRouteTarget";
 /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
 import { SidebarSplitPairRow } from "~/custom/splitThreads/SidebarSplitPairRow";
 import {
-  makeSidebarSplitDropHandlers,
+  makeSplitDropHandlers,
   splitThreadDragSourceProps,
-} from "~/custom/splitThreads/sidebarSplitDrag";
+} from "~/custom/splitThreads/splitThreadDrag";
 import { buildSidebarSplitModel } from "~/custom/splitThreads/sidebarSplitRows";
 import { useSplitThreadStore } from "~/custom/splitThreads/splitThreadStore";
-import { useStableCallback } from "~/hooks/useStableCallback";
 /* fork:end fork-split-threads */
 
 // The fields thread rows show. Provider status pushes refresh `checkedAt`,
@@ -3141,19 +3140,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     [clearSelection, isMobile, router, setOpenMobile, setSelectionAnchor],
   );
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-  const pairDroppedCard = useStableCallback((draggedKey: string, targetKey: string) => {
-    const dragged = parseScopedThreadKey(draggedKey);
-    const target = parseScopedThreadKey(targetKey);
-    if (!dragged || !target) return;
-    // The card dropped on keeps the left pane.
-    useSplitThreadStore.getState().pair(target, dragged);
-    if (routeThreadKey !== draggedKey && routeThreadKey !== targetKey) {
-      void navigateToThread(dragged);
-    }
-  });
-  const splitDropHandlers = makeSidebarSplitDropHandlers({
+  const splitDropHandlers = makeSplitDropHandlers({
     canPair: (threadKey) => splitModel.pairable.has(threadKey),
-    onPair: pairDroppedCard,
+    openThreadKey: routeThreadKey,
+    openThread: (threadRef) => void navigateToThread(threadRef),
   });
   /* fork:end fork-split-threads */
 
