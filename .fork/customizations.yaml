@@ -6285,8 +6285,9 @@
     the real sidebar down beneath it as a floating card, like a dropdown menu.
     The panel stays collapsed throughout: no cookie write, no layout push, and
     the floating toggle and collapsed thread tabs stay mounted. The card sits
-    14px off the window's left (clear of the stage card's 8px edge) and 8px
-    off its bottom, with a tail pointing up at the toggle's glyph, floating
+    14px off the window's left (clear of the stage card's 8px edge; nearer
+    the edge where the toggle is, so the tail clears the corner) and 8px off
+    its bottom, with a tail centred on the toggle's glyph, floating
     over the workspace on the narrow overlay's own stacking and title-bar drag
     release rules (one :is() each), with no backdrop blur, since a blur this
     size over a streaming transcript would repaint on every token. Its outline
@@ -6295,7 +6296,12 @@
     panel's own header row is hidden inside it. Under Glass it wears the
     docked panel's see-through tint, and a mask cuts the card and tail out of
     the sidebar inset beneath it, so only the window's material shows
-    through. It opens after a short hover intent
+    through, and it opens without the fade so the hole never shows ahead of
+    the card. While a desktop tab floats over the chat there is no cutout
+    (its stacking context would trap the tab's chrome under the webview) and
+    the card takes the opaque floating fill. The tint, the active-row wash
+    and the cutout share one predicate, exclusive with the floating fill,
+    since narrowChatOverlay also flags a collapsed wrapper. It opens after a short hover intent
     delay, and only once the pointer has been off the toggle since the
     collapse (collapsing from the header toggle mounts it under the pointer).
     It stays open while the pointer is on the toggle, the card or a menu the
@@ -6313,6 +6319,7 @@
     - apps/web/src/custom/sidebarPeek.ts
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/theme.custom.glass-surfaces.css
   shadows: []
   watch:
     # Fenced: store subscription, the panel's peek prop, the wrapper attribute,
