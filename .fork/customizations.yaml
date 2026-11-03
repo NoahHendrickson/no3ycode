@@ -6285,13 +6285,17 @@
     the real sidebar down beneath it as a floating card, like a dropdown menu.
     The panel stays collapsed throughout: no cookie write, no layout push, and
     the floating toggle and collapsed thread tabs stay mounted. The card sits
-    8px off the window's left and bottom edges with its top 4px under the
-    toggle, floating over the workspace on the narrow overlay's own stacking
-    and title-bar drag release rules (one :is() each), with an opaque
-    fill and no backdrop blur, since a blur this size over a streaming
-    transcript would repaint on every token. The panel's own header row is
-    hidden inside it. Under Glass it takes the floating overlay's opaque fill,
-    never the docked see-through tint. It opens after a short hover intent
+    14px off the window's left (clear of the stage card's 8px edge) and 8px
+    off its bottom, with a tail pointing up at the toggle's glyph, floating
+    over the workspace on the narrow overlay's own stacking and title-bar drag
+    release rules (one :is() each), with no backdrop blur, since a blur this
+    size over a streaming transcript would repaint on every token. Its outline
+    is a pseudo-element with a gap where the tail joins, and the tail lays the
+    edge over the fill, so the join stays seamless on a translucent fill. The
+    panel's own header row is hidden inside it. Under Glass it wears the
+    docked panel's see-through tint, and a mask cuts the card and tail out of
+    the sidebar inset beneath it, so only the window's material shows
+    through. It opens after a short hover intent
     delay, and only once the pointer has been off the toggle since the
     collapse (collapsing from the header toggle mounts it under the pointer).
     It stays open while the pointer is on the toggle, the card or a menu the
@@ -6309,7 +6313,6 @@
     - apps/web/src/custom/sidebarPeek.ts
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
-    - apps/web/src/theme.custom.glass-surfaces.css
   shadows: []
   watch:
     # Fenced: store subscription, the panel's peek prop, the wrapper attribute,

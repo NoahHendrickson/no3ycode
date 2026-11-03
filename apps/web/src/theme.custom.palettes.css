@@ -1235,11 +1235,16 @@
    flag on the wrapper and `data-sidebar-version` sits on the sidebar below it,
    hence the ancestor form. While it floats the palette's opaque #181b1e applies,
    which is the correct read for a panel over content. The window keeps its
-   vibrancy either way; only this fill changes. */
+   vibrancy either way; only this fill changes. The collapsed sidebar's peek
+   card floats too but keeps the tint: theme.custom.css cuts the stage away
+   beneath it (fork-sidebar-peek), so the window is all that is behind it.
+   narrowChatOverlay can flag a collapsed wrapper too, so the peek arm stands
+   apart, and its extra attributes outrank the floating fill below. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
-    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
-  )
+  [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"])
+  [data-sidebar-version="v2"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-sidebar-version="v2"] {
   --background: var(--fork-glass-panel);
   --card: var(--fork-glass-panel);
@@ -1315,10 +1320,7 @@
    Opaque on purpose, so the "keep alpha" rule the docked block follows does not
    apply here: alpha is exactly what this state gives up. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-wrapper"]:is(
-    [data-fork-sidebar-overlay="true"],
-    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
-  )
+  [data-slot="sidebar-wrapper"][data-fork-sidebar-overlay="true"]
   [data-sidebar-version="v2"] {
   --background: #262626;
   --card: #262626;

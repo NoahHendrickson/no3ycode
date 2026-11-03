@@ -679,9 +679,7 @@
 
   /* Figma's 6% white, under the panel's real glass only. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
-      [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
-    )
+    [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"])
     [data-sidebar-version="v2"]
     :is([data-thread-item] > [aria-current="page"], [data-fork-chrome-row][data-active="true"]) {
     background-color: rgb(255 255 255 / 6%);

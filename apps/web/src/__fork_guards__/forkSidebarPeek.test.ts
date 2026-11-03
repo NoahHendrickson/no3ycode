@@ -73,12 +73,26 @@ describe("fork-sidebar-peek", () => {
     ).toBe(true);
   });
 
-  it("gives the card Glass's opaque floating fill, not the see-through docked tint", () => {
-    const rules = cssRules(readSibling("../theme.custom.palettes.css"));
+  it("gives the card the docked Glass tint over a hole cut in the stage", () => {
     const peekSelector = '[data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]';
-    const docked = rules.find((rule) => rule.body.includes("--sidebar: var(--fork-glass-panel)"));
-    expect(docked?.selector.replace(/\s+/gu, "")).toContain(`:not(${peekSelector})`);
-    const floating = rules.find((rule) => rule.body.includes("--sidebar: #262626"));
-    expect(floating?.selector.replace(/\s+/gu, "")).toContain(peekSelector);
+    const palettes = cssRules(readSibling("../theme.custom.palettes.css"));
+    const docked = palettes.find((rule) =>
+      rule.body.includes("--sidebar: var(--fork-glass-panel)"),
+    );
+    // narrowChatOverlay flags a collapsed wrapper too, so the peek needs its own arm.
+    expect(docked?.selector.replace(/\s+/gu, "")).toContain(
+      `[data-slot="sidebar-wrapper"]${peekSelector}[data-sidebar-version="v2"]`,
+    );
+    const floating = palettes.find((rule) => rule.body.includes("--sidebar: #262626"));
+    expect(floating?.selector).not.toContain("data-fork-sidebar-peek");
+
+    // Without the hole the translucent card shows the transcript through its rows.
+    const hole = cssRules(readSibling("../theme.custom.css")).find(
+      (rule) =>
+        rule.selector.includes('[data-fork-sidebar-vibrancy="true"]') &&
+        rule.selector.includes(peekSelector) &&
+        rule.selector.endsWith('[data-slot="sidebar-inset"]'),
+    );
+    expect(hole?.body).toContain("mask-composite: subtract");
   });
 });
