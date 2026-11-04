@@ -100,7 +100,7 @@
         rgb(255 255 255 / 1.3%) calc(100% - 6px),
         rgb(255 255 255 / 2%)
       ),
-      linear-gradient(rgb(255 255 255 / 4%), rgb(255 255 255 / 4%));
+      linear-gradient(var(--fork-glass-card-wash), var(--fork-glass-card-wash));
     /* Dither for the stage ramp (below): a static tile of binary grey, 0 or
        110 at 2%, so ±1 level of 8-bit output. Its mean of 55 sits near the
        ramp's reading value, which follows the wallpaper under the material, so
@@ -245,6 +245,9 @@
      below the window's top. */
   &.dark[data-fork-theme="cool-darker"] {
     --fork-thread-tabs-overlap: var(--fork-glass-card-inset);
+    /* The white wash that lifts the card level with the panel; the right
+       panel beside the card takes it too. */
+    --fork-glass-card-wash: rgb(255 255 255 / 4%);
   }
 
   /* A split's panes each sit on their own card, whose edges already part them, so the
@@ -278,14 +281,15 @@
   /* The right panel sits in the gutter beside the card, not on it, so under
      the desktop glass it would read at the gutter's alpha: below the reading
      value text panels keep. It adds the card's alpha of the same tint and
-     composites back to the stage's. As an image, under the vibrancy block's clear of
+     composites back to the stage's, and the card's wash so it reads level
+     with the card beside it. As an image, under the vibrancy block's clear of
      its colour. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
     [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away])
     [data-preview-panel-mode="inline"] {
-    background-image: linear-gradient(
-      rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%
-    );
+    background-image:
+      linear-gradient(var(--fork-glass-card-wash) 0 100%),
+      linear-gradient(rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%);
   }
 
   /* Beside a docked sidebar the card stands 3px off it rather than 8px, and
