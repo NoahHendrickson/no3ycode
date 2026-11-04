@@ -278,14 +278,15 @@
   /* The right panel sits in the gutter beside the card, not on it, so under
      the desktop glass it would read at the gutter's alpha: below the reading
      value text panels keep. It adds the card's alpha of the same tint and
-     composites back to the stage's. As an image, under the vibrancy block's clear of
-     its colour. */
+     composites back to the stage's, plus the card's 4% white wash so it reads
+     level with the card beside it. As an image, under the vibrancy block's
+     clear of its colour. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
     [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away])
     [data-preview-panel-mode="inline"] {
-    background-image: linear-gradient(
-      rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%
-    );
+    background-image:
+      linear-gradient(rgb(255 255 255 / 4%) 0 100%),
+      linear-gradient(rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%);
   }
 
   /* Beside a docked sidebar the card stands 3px off it rather than 8px, and
