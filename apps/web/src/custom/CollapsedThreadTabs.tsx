@@ -273,7 +273,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     threads: source.threads,
     projectGroups,
     paneThreadKeys,
-    paneHasDraft: paneDraftSessions.map((session) => session !== null),
+    paneDrafts: paneDraftSessions,
   });
   const draftThreadKey = collapsedDraftTabKey({
     draft: openDraft,
@@ -282,18 +282,17 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   // One rule for every tab: it names its project unless the filter already does.
   const projectMarkFor = (key: string | null) =>
     key === projectKey ? null : (projectGroups.find((group) => group.projectKey === key) ?? null);
-  const draftGroupOf = (draft: DraftSessionState) =>
-    projectGroups.find((candidate) =>
-      candidate.memberProjectRefs.some(
-        (ref) => ref.environmentId === draft.environmentId && ref.projectId === draft.projectId,
-      ),
-    ) ?? null;
   const draftEntryFor = (
     draftId: DraftId,
     draft: DraftSessionState,
     threadKey: string,
   ): Extract<StripEntry, { readonly kind: "draft" }> => {
-    const group = draftGroupOf(draft);
+    const group =
+      projectGroups.find((candidate) =>
+        candidate.memberProjectRefs.some(
+          (ref) => ref.environmentId === draft.environmentId && ref.projectId === draft.projectId,
+        ),
+      ) ?? null;
     return {
       kind: "draft",
       draftId,
@@ -318,11 +317,6 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     openDraftId !== null && openDraft !== null && draftThreadKey !== null
       ? draftEntryFor(openDraftId, openDraft, draftThreadKey)
       : null;
-  const paneProjectKeys = paneTabs.map((pane) => {
-    if (pane.kind === "thread") return pane.tab.projectKey;
-    const session = paneDraftSessions[pane.pane];
-    return session ? (draftGroupOf(session)?.projectKey ?? null) : null;
-  });
   const paneEntries = paneTabs.flatMap((pane): StripEntry[] => {
     if (pane.kind === "thread") return [threadEntry(pane.tab)];
     const draftId = paneDraftIds[pane.pane] ?? null;
@@ -477,14 +471,18 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           const next = value[0];
           if (typeof next !== "string") return;
           setStoredProjectKey(next);
+          const openTab = shownTabs.find((tab) => tab.threadKey === openThreadKey);
           const target = collapsedFilterSwitchTarget({
-            before: shownTabs,
             after: tabsIn(next),
-            openThreadKey,
-            // The draft shows under every filter, so stays open.
-            draftOpen: draftEntry !== null,
             nextProjectKey: next,
-            paneProjectKeys,
+            openProjectKeys:
+              paneTabs.length > 0
+                ? paneTabs.map((pane) =>
+                    pane.kind === "thread" ? pane.tab.projectKey : pane.projectKey,
+                  )
+                : draftEntry !== null || openTab === undefined
+                  ? null
+                  : [openTab.projectKey],
           });
           if (target) openThread(target);
         }}
