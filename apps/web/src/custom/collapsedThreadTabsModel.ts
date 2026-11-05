@@ -30,17 +30,27 @@ export interface CollapsedThreadTab {
   readonly projectKey: string | null;
 }
 
-function collapsedTabMaker(projectGroups: readonly SidebarV2GroupableProject[]) {
+interface ProjectRef {
+  readonly environmentId: string;
+  readonly projectId: string;
+}
+
+function projectKeyLookup(projectGroups: readonly SidebarV2GroupableProject[]) {
   const projectKeyByRef = new Map<string, string>();
   for (const group of projectGroups) {
     for (const ref of group.memberProjectRefs) {
       projectKeyByRef.set(`${ref.environmentId}:${ref.projectId}`, group.projectKey);
     }
   }
+  return (ref: ProjectRef) => projectKeyByRef.get(`${ref.environmentId}:${ref.projectId}`) ?? null;
+}
+
+function collapsedTabMaker(projectGroups: readonly SidebarV2GroupableProject[]) {
+  const projectKeyOf = projectKeyLookup(projectGroups);
   return (thread: EnvironmentThreadShell): CollapsedThreadTab => ({
     thread,
     threadKey: scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
-    projectKey: projectKeyByRef.get(`${thread.environmentId}:${thread.projectId}`) ?? null,
+    projectKey: projectKeyOf(thread),
   });
 }
 
@@ -110,7 +120,12 @@ export function collapsedThreadShelved(
 
 export type CollapsedPaneTab =
   | { readonly kind: "thread"; readonly tab: CollapsedThreadTab }
-  | { readonly kind: "draft"; readonly threadKey: string; readonly pane: number };
+  | {
+      readonly kind: "draft";
+      readonly threadKey: string;
+      readonly pane: number;
+      readonly projectKey: string | null;
+    };
 
 /**
  * Each split pane's tab, left then right, whatever its status: its thread's once the server has
@@ -122,10 +137,12 @@ export function collapsedPaneTabs(input: {
   readonly threads: readonly EnvironmentThreadShell[];
   readonly projectGroups: readonly SidebarV2GroupableProject[];
   readonly paneThreadKeys: readonly string[];
-  readonly paneHasDraft: readonly boolean[];
+  /** Each pane's draft, or null. */
+  readonly paneDrafts: readonly (ProjectRef | null)[];
 }): CollapsedPaneTab[] {
   if (input.paneThreadKeys.length === 0) return [];
   const toTab = collapsedTabMaker(input.projectGroups);
+  const projectKeyOf = projectKeyLookup(input.projectGroups);
   const tabByKey = new Map(
     input.threads
       .map(toTab)
@@ -135,7 +152,10 @@ export function collapsedPaneTabs(input: {
   return input.paneThreadKeys.flatMap((threadKey, pane): CollapsedPaneTab[] => {
     const tab = tabByKey.get(threadKey);
     if (tab !== undefined) return [{ kind: "thread", tab }];
-    return input.paneHasDraft[pane] === true ? [{ kind: "draft", threadKey, pane }] : [];
+    const draft = input.paneDrafts[pane] ?? null;
+    return draft === null
+      ? []
+      : [{ kind: "draft", threadKey, pane, projectKey: projectKeyOf(draft) }];
   });
 }
 
@@ -164,18 +184,23 @@ export function collapsedTabProjectForScope<TProject extends SidebarV2GroupableP
 }
 
 /**
- * The tab to open when the project filter changes: the new filter's first tab, but only when
- * the open thread had a tab before and the new filter hides it. A thread that never had a tab
- * stays open, and so does a draft, whose tab shows under every filter.
+ * The tab to open when the project filter changes: the new filter's first tab, unless the new
+ * filter is All or holds the open view, a split's panes or the open tab.
  */
-export function collapsedFilterSwitchTarget<TTab extends { readonly threadKey: string }>(input: {
-  readonly before: readonly TTab[];
+export function collapsedFilterSwitchTarget<TTab>(input: {
   readonly after: readonly TTab[];
-  readonly openThreadKey: string | null;
-  readonly draftOpen: boolean;
+  readonly nextProjectKey: string;
+  /** Null when nothing pins the view: a draft, or a thread without a shown tab. */
+  readonly openProjectKeys: readonly (string | null)[] | null;
 }): TTab | null {
-  const isOpen = (tab: TTab) => tab.threadKey === input.openThreadKey;
-  if (input.draftOpen || !input.before.some(isOpen) || input.after.some(isOpen)) return null;
+  const { openProjectKeys, nextProjectKey } = input;
+  if (
+    openProjectKeys === null ||
+    nextProjectKey === ALL_PROJECTS ||
+    openProjectKeys.includes(nextProjectKey)
+  ) {
+    return null;
+  }
   return input.after[0] ?? null;
 }
 

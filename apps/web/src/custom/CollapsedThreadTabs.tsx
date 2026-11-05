@@ -273,7 +273,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     threads: source.threads,
     projectGroups,
     paneThreadKeys,
-    paneHasDraft: paneDraftSessions.map((session) => session !== null),
+    paneDrafts: paneDraftSessions,
   });
   const draftThreadKey = collapsedDraftTabKey({
     draft: openDraft,
@@ -471,12 +471,18 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           const next = value[0];
           if (typeof next !== "string") return;
           setStoredProjectKey(next);
+          const openTab = shownTabs.find((tab) => tab.threadKey === openThreadKey);
           const target = collapsedFilterSwitchTarget({
-            before: shownTabs,
             after: tabsIn(next),
-            openThreadKey,
-            // The draft and a split's group show under every filter, so stay open.
-            draftOpen: draftEntry !== null || paneEntries.length > 0,
+            nextProjectKey: next,
+            openProjectKeys:
+              paneTabs.length > 0
+                ? paneTabs.map((pane) =>
+                    pane.kind === "thread" ? pane.tab.projectKey : pane.projectKey,
+                  )
+                : draftEntry !== null || openTab === undefined
+                  ? null
+                  : [openTab.projectKey],
           });
           if (target) openThread(target);
         }}

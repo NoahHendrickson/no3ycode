@@ -144,17 +144,17 @@ describe("collapsedPaneTabs", () => {
       ["thread:settled", "thread:asking"],
     ],
     [
-      "keeps the unfocused pane's unsent draft beside the focused pane's thread",
+      "keeps the unfocused pane's unsent draft, in its project, beside the focused pane's thread",
       ["asking", "new"],
       [false, true],
-      ["thread:asking", "draft:1"],
+      ["thread:asking", "draft:1:p1"],
     ],
     // A sent draft's shell arrives after its send: the pair must not drop to one tab meanwhile.
     [
       "prefers the thread once its shell arrives, a draft until then",
       ["settled", "sent"],
       [true, true],
-      ["thread:settled", "draft:1"],
+      ["thread:settled", "draft:1:p1"],
     ],
     ["drops a pane with neither", ["asking", "gone"], [false, false], ["thread:asking"]],
   ] as const)("%s", (_label, ids, paneHasDraft, expected) => {
@@ -162,28 +162,31 @@ describe("collapsedPaneTabs", () => {
       threads,
       projectGroups: [project("p1"), project("p2")],
       paneThreadKeys: ids.map(keyOf),
-      paneHasDraft,
+      paneDrafts: paneHasDraft.map((has) => (has ? { environmentId, projectId: "p1" } : null)),
     });
     expect(
       panes.map((pane) =>
-        pane.kind === "thread" ? `thread:${pane.tab.thread.id}` : `draft:${pane.pane}`,
+        pane.kind === "thread"
+          ? `thread:${pane.tab.thread.id}`
+          : `draft:${pane.pane}:${pane.projectKey}`,
       ),
     ).toEqual(expected);
   });
 });
 
 describe("collapsedFilterSwitchTarget", () => {
-  const tab = (threadKey: string) => ({ threadKey });
-  const [a, b, c] = [tab("a"), tab("b"), tab("c")];
+  const [a, b, c] = ["a", "b", "c"];
   it.each([
-    // [label, before, after, open, draftOpen, expected]
-    ["opens the first tab when the filter hides the open tab", [a, b], [c], "a", false, c],
-    ["stays when the open tab is still shown", [a, b], [b, a], "a", false, null],
-    ["stays on a thread that never had a tab", [a, b], [c], "z", false, null],
-    ["stays on the draft", [a, b], [c], null, true, null],
-    ["has nowhere to go in an empty filter", [a], [], "a", false, null],
-  ] as const)("%s", (_label, before, after, openThreadKey, draftOpen, expected) => {
-    expect(collapsedFilterSwitchTarget({ before, after, openThreadKey, draftOpen })).toBe(expected);
+    // [label, after, next, open view's projects, expected]
+    ["opens the first tab when the filter hides the open tab", [c], "p2", ["p1"], c],
+    ["stays when the open tab is still shown", [b, a], "p1", ["p1"], null],
+    ["stays on a draft or a thread without a shown tab", [c], "p2", null, null],
+    ["has nowhere to go in an empty filter", [], "p2", ["p1"], null],
+    ["leaves a split for a project neither pane is in", [c], "p3", ["p1", "p2"], c],
+    ["stays in a split that holds a pane in the project", [c], "p2", ["p1", "p2"], null],
+    ["stays under All", [a, c], "all", ["p1", "p2"], null],
+  ] as const)("%s", (_label, after, nextProjectKey, openProjectKeys, expected) => {
+    expect(collapsedFilterSwitchTarget({ after, nextProjectKey, openProjectKeys })).toBe(expected);
   });
 });
 

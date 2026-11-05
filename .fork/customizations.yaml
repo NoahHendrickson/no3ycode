@@ -6210,7 +6210,8 @@
     switcher: its one project, else All, and All when that project doesn't hold the open
     thread; an unscoped sidebar leaves the switcher's choice. Picking a project that hides the open thread's tab
     opens that project's first tab (collapsedFilterSwitchTarget); a thread that
-    had no tab, or the open draft, stays open. Tabs shrink from their title's width to a
+    had no tab, or the open draft, stays open, and a split stays open only while the picked
+    project holds one of its panes. Tabs shrink from their title's width to a
     132px minimum with the title truncated (room for the provider mark, a five-digit PR
     badge, the status mark and the hover actions); past that, the rest go behind an
     "N more" menu (fitCollapsedThreadTabs), and the open thread keeps a visible tab
