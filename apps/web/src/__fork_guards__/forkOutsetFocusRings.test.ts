@@ -1,59 +1,62 @@
 // @effect-diagnostics nodeBuiltinImport:off
-/**
- * Fork guard — see `.fork/customizations.yaml#fork-outset-focus-rings`.
- *
- * The rules key off upstream's class strings (`focus-visible:ring-inset`,
- * `focus-visible:-outline-offset-2`). A sync that renames those utilities or
- * moves focus rings to another mechanism brings the inward ring back quietly.
- */
+// Fork guard — see `.fork/customizations.yaml#fork-outset-focus-rings`.
+// A renamed upstream class, slot or attribute silently brings an inward ring
+// back, so every hook in the sheet's selectors must still appear in source.
 
 import * as NodeFS from "node:fs";
+import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { cssRules } from "./cssRules";
 
-function readSibling(relativePath: string): string {
-  return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
+const SRC = NodeURL.fileURLToPath(new URL("..", import.meta.url));
+const SHEET = "theme.custom.focus-rings.css";
+const read = (relativePath: string) =>
+  NodeFS.readFileSync(NodePath.join(SRC, relativePath), "utf8");
+const rules = cssRules(read(SHEET));
+
+function upstreamSources(): string {
+  return NodeFS.readdirSync(SRC, { recursive: true, withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        /\.(tsx?|css)$/u.test(entry.name) &&
+        entry.name !== SHEET &&
+        !entry.parentPath.includes("__fork_guards__"),
+    )
+    .map((entry) => NodeFS.readFileSync(NodePath.join(entry.parentPath, entry.name), "utf8"))
+    .join("\n");
 }
 
-const MARKER = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
-const rules = cssRules(readSibling("../theme.custom.css"));
-
 describe("fork-outset-focus-rings", () => {
-  it("draws focus as a thin outline with a gap outside the control", () => {
-    const tokens = rules.find(
-      (rule) => rule.selector === MARKER && rule.body.includes("--fork-focus-ring-gap"),
-    );
-    expect(tokens?.body).toContain("--fork-focus-ring-width: 1.5px");
-    expect(tokens?.body).toContain("--fork-focus-ring-gap: 2px");
-
-    const ring = rules.find((rule) => rule.body.includes("--tw-ring-shadow: 0 0 #0000"));
-    expect(ring?.selector.startsWith(MARKER)).toBe(true);
-    expect(ring?.selector).toContain('[class*="focus-visible:ring-inset"]:focus-visible');
-    expect(ring?.selector).toContain('[data-slot="scroll-area-viewport"]');
-    expect(ring?.selector).toContain('[class*="focus-visible:ring-0"]');
-    expect(ring?.body).toContain("outline-offset: var(--fork-focus-ring-gap)");
-
-    const outline = rules.find(
-      (rule) =>
-        rule.body.includes("outline-offset: var(--fork-focus-ring-gap)") &&
-        rule.selector.includes('[class*="focus-visible:-outline-offset-2"]:focus-visible'),
-    );
-    expect(outline?.selector.startsWith(MARKER)).toBe(true);
+  it("loads the sheet with every rule scoped under the fork marker", () => {
+    expect(read("main.tsx")).toContain('import "./theme.custom.focus-rings.css"');
+    expect(rules.length).toBeGreaterThan(0);
+    for (const rule of rules) {
+      expect(rule.selector).toContain(`[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`);
+    }
+    expect(rules.some((rule) => rule.body.includes("--tw-ring-shadow: 0 0 #0000"))).toBe(true);
   });
 
-  it("still finds the upstream hooks the rules key off", () => {
-    expect(readSibling("../components/ui/button.tsx")).toContain(
-      "focus-visible:ring-2 focus-visible:ring-inset",
+  it("still finds every upstream hook the selectors key off", () => {
+    const hooks = new Set(
+      rules.flatMap((rule) =>
+        [
+          ...rule.selector.matchAll(
+            /\[class\*="([^"]+)"\]|\[data-slot="([^"]+)"\]|\[(data-[\w-]+)\]|\.([a-z][\w-]*)/gu,
+          ),
+        ].map((match) => match[1] ?? match[2] ?? match[3] ?? match[4] ?? ""),
+      ),
     );
-    expect(readSibling("../components/ui/checkbox.tsx")).toContain(
-      "focus-visible:-outline-offset-2",
+    hooks.delete("");
+    expect(hooks.size).toBeGreaterThan(10);
+    const sources = upstreamSources();
+    expect([...hooks].filter((hook) => !sources.includes(hook))).toEqual([]);
+    // The slider rules copy the thumb's resting shadow from upstream.
+    expect(read("index.css")).toContain(
+      "box-shadow: 0 1px 2px color-mix(in srgb, var(--contrast-foreground) 12%, transparent);",
     );
-    expect(readSibling("../components/ui/checkbox.tsx")).toContain(
-      'data-slot="checkbox-indicator"',
-    );
-    expect(readSibling("../index.css")).toContain("outline-offset: -2px;");
   });
 });

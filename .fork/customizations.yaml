@@ -6353,19 +6353,22 @@
   intent: >
     A focused control shows a thin outline (1.5px) with a see-through gap
     (2px) outside its edge, not a ring painted inside it as a thick border.
-    Upstream's inward rings (focus-state ring-inset box-shadows, the global
-    -2px outline offset, and the explicit -outline-offset-1/-2 focus utilities)
-    become that outline; fields drop their faint 3px halo and ring-coloured
-    border for it in full ring colour (destructive when invalid). A focus
-    variant that sets ring-0 keeps no ring. Checkbox and radio drop the inner
-    gap that only existed for the inward ring, and the settings slider thumb
-    takes the same outline. Whole regions (scroll-area viewports, F6 workspace areas) keep the
-    inward ring, since their outside is a clipping edge. Deliberate larger
-    offsets (theme picker circles) are left alone.
+    Upstream's focus-state ring-inset box-shadows become that outline in their
+    ring colour at full alpha; inward focus outlines that a component styles
+    itself (focus-visible:outline-*, the explicit -outline-offset-1/-2) move
+    out the same way. A focus variant that sets ring-0 keeps no ring. A valid
+    field keeps its resting border on focus; invalid fields keep upstream's
+    destructive one. Checkbox and radio drop the inner gap that only existed
+    for the inward ring, and the settings slider thumb takes the same outline.
+    Scroll-area viewports, F6 workspace areas, and controls with no focus
+    styling of their own keep upstream's inward ring, since their outside is
+    often a clipping edge.
   tier: 3
   files:
-    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.focus-rings.css
   shadows: []
-  watch: []
+  watch:
+    # Fenced: the sheet's import, after the other fork theme sheets.
+    - apps/web/src/main.tsx
   verify:
     - apps/web/src/__fork_guards__/forkOutsetFocusRings.test.ts

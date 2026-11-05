@@ -21,6 +21,9 @@ import "./theme.custom.glass-surfaces.css";
    After the palettes sheet, so its gutter wins ties against the stage ramp. */
 import "./theme.custom.glass-stage.css";
 /* fork:end fork-glass-stage-card */
+/* fork:begin fork-outset-focus-rings — see .fork/customizations.yaml#fork-outset-focus-rings */
+import "./theme.custom.focus-rings.css";
+/* fork:end fork-outset-focus-rings */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import { initializeForkTheme } from "./custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
