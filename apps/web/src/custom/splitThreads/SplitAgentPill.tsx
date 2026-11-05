@@ -2,7 +2,7 @@
  * The pill in the composer's context row — see `.fork/customizations.yaml#fork-split-threads`.
  *
  * Alone, "Split agent" opens a new draft on this thread's project, worktree
- * and branch in a pane beside it. In a split the same spot reads "Pop out",
+ * and branch in a pane beside it. In a split the same spot reads "Unsplit",
  * which dissolves the pair and leaves this thread on screen alone.
  */
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
@@ -57,7 +57,7 @@ export function SplitAgentPill(props: {
     return (
       <Button size="xs" variant="ghost" {...pressHandlers(() => unpair(threadRef))}>
         <ExternalLinkIcon className="size-3.5" />
-        Pop out
+        Unsplit
       </Button>
     );
   }
