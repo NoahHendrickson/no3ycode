@@ -2887,3 +2887,102 @@
   --workspace-controls-top: 0px;
 }
 /* fork:end fork-collapsed-thread-tabs */
+
+/* fork:begin fork-outset-focus-rings — see .fork/customizations.yaml#fork-outset-focus-rings
+   Upstream paints focus rings inside the control (ring-inset, and a global
+   outline-offset of -2px), which reads as a thick border. Here focus is a thin
+   outline with a see-through gap outside the control's edge; a box-shadow ring
+   can't leave a real gap, only one painted in the page colour. Whole regions
+   (a scroll viewport, an F6 workspace area) keep the inward ring: their
+   outside is a clipping edge. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-focus-ring-width: 1.5px;
+  --fork-focus-ring-gap: 2px;
+}
+
+/* Selectors sit in :where() so these three rules apply in source order. A
+   focus variant that sets ring-0 means upstream wants no ring there. */
+:root[data-fork="noahhendrickson-t3code"]
+  :where(
+    [class*="focus-visible:ring-inset"]:focus-visible,
+    [class*="focus-within:ring-inset"]:focus-within,
+    [class*="has-focus-visible:ring-inset"]:has(:focus-visible),
+    [class*="has-[:focus-visible]:ring-inset"]:has(:focus-visible),
+    [class*="has-[input:focus-visible,textarea:focus-visible]:ring-inset"]:has(
+      input:focus-visible,
+      textarea:focus-visible
+    ),
+    [class*="has-focus:ring-inset"]:has(:focus)
+  ):where(
+    :not(
+      [data-slot="scroll-area-viewport"],
+      [class*="focus-visible:ring-0"],
+      [class*="focus-visible]:ring-0"]
+    )
+  ) {
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  outline: var(--fork-focus-ring-width) solid var(--tw-ring-color, var(--ring));
+  outline-offset: var(--fork-focus-ring-gap);
+}
+
+/* Fields draw focus as a faint 3px halo (ring/24) beside a ring-coloured
+   border; as a thin outline that faintness would vanish, so it takes the full
+   ring colour and the border stays put. */
+:root[data-fork="noahhendrickson-t3code"]
+  :where(
+    [class*="focus-visible:ring-[3px]"]:focus-visible,
+    [class*="has-focus-visible:ring-[3px]"]:has(:focus-visible),
+    [class*="has-[input:focus-visible,textarea:focus-visible]:ring-[3px]"]:has(
+      input:focus-visible,
+      textarea:focus-visible
+    )
+  ) {
+  outline-color: var(--ring);
+  border-color: var(--input);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :where(
+    [class*="focus-visible:ring-[3px]"][aria-invalid="true"]:focus-visible,
+    [class*="has-focus-visible:ring-[3px]"]:has([aria-invalid="true"]):has(:focus-visible),
+    [class*="has-[input:focus-visible,textarea:focus-visible]:ring-[3px]"]:has(
+        input[aria-invalid],
+        textarea[aria-invalid]
+      ):has(input:focus-visible, textarea:focus-visible)
+  ) {
+  outline-color: var(--destructive);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :focus-visible:not([class*="outline-offset-"], [data-workspace-area]),
+:root[data-fork="noahhendrickson-t3code"] [class*="focus-visible:-outline-offset-1"]:focus-visible,
+:root[data-fork="noahhendrickson-t3code"] [class*="focus-visible:-outline-offset-2"]:focus-visible,
+:root[data-fork="noahhendrickson-t3code"] [class*="focus-within:-outline-offset-2"]:focus-within {
+  outline-width: var(--fork-focus-ring-width);
+  outline-offset: var(--fork-focus-ring-gap);
+}
+
+/* A checked box's fill sits over the root; its inner gap and outline existed
+   only to keep the inward ring visible against that fill. */
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-slot="checkbox"], [data-slot="radio"]):focus-visible
+  :is([data-slot="checkbox-indicator"], [data-slot="radio-indicator"]) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* The thumb is a pseudo-element, so its ring is an outline too; the drop
+   shadow upstream's inset ring replaced comes back. */
+:root[data-fork="noahhendrickson-t3code"] .settings-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--contrast-foreground) 12%, transparent);
+  outline: var(--fork-focus-ring-width) solid var(--ring);
+  outline-offset: var(--fork-focus-ring-gap);
+}
+
+:root[data-fork="noahhendrickson-t3code"] .settings-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--contrast-foreground) 12%, transparent);
+  outline: var(--fork-focus-ring-width) solid var(--ring);
+  outline-offset: var(--fork-focus-ring-gap);
+}
+/* fork:end fork-outset-focus-rings */

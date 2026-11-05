@@ -6348,3 +6348,24 @@
   verify:
     - apps/web/src/__fork_guards__/forkSidebarPeek.test.ts
     - apps/web/src/custom/sidebarPeek.browser.test.tsx
+
+- id: fork-outset-focus-rings
+  intent: >
+    A focused control shows a thin outline (1.5px) with a see-through gap
+    (2px) outside its edge, not a ring painted inside it as a thick border.
+    Upstream's inward rings (focus-state ring-inset box-shadows, the global
+    -2px outline offset, and the explicit -outline-offset-1/-2 focus utilities)
+    become that outline; fields drop their faint 3px halo and ring-coloured
+    border for it in full ring colour (destructive when invalid). A focus
+    variant that sets ring-0 keeps no ring. Checkbox and radio drop the inner
+    gap that only existed for the inward ring, and the settings slider thumb
+    takes the same outline. Whole regions (scroll-area viewports, F6 workspace areas) keep the
+    inward ring, since their outside is a clipping edge. Deliberate larger
+    offsets (theme picker circles) are left alone.
+  tier: 3
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch: []
+  verify:
+    - apps/web/src/__fork_guards__/forkOutsetFocusRings.test.ts
