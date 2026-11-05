@@ -5891,7 +5891,7 @@
     beside the project and branch chips in the composer's context row (on a
     started thread, wide windows only) opens a new draft on the same project,
     worktree and branch in a pane beside the current thread; in a split the
-    same chip reads "Pop out" and dissolves the pair, leaving that thread on
+    same chip reads "Unsplit" and dissolves the pair, leaving that thread on
     screen alone. Both act on a mouse press rather than its release (the
     click that follows is swallowed, since it lands on the other action),
     so mounting the new pane overlaps the press. Until it is sent, a split

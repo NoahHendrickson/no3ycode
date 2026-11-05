@@ -3459,7 +3459,7 @@ export default function ChatView(props: ChatViewProps) {
   // readout is null whenever upstream's strip is visible.
   const composerContextLeading = draftProjectPill ?? threadContextReadout;
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-  // "Split agent" alone, "Pop out" in a split, right after the project and
+  // "Split agent" alone, "Unsplit" in a split, right after the project and
   // branch chips. The draft hero's centred composer has no split to offer.
   const splitAgentPill =
     !isDraftHeroState &&
