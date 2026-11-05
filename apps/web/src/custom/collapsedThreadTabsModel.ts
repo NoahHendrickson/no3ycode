@@ -166,14 +166,23 @@ export function collapsedTabProjectForScope<TProject extends SidebarV2GroupableP
 /**
  * The tab to open when the project filter changes: the new filter's first tab, but only when
  * the open thread had a tab before and the new filter hides it. A thread that never had a tab
- * stays open, and so does a draft, whose tab shows under every filter.
+ * stays open, and so does a draft, whose tab shows under every filter. A split's group shows
+ * under every filter too, so it stays open only while the new filter holds one of its panes.
  */
 export function collapsedFilterSwitchTarget<TTab extends { readonly threadKey: string }>(input: {
   readonly before: readonly TTab[];
   readonly after: readonly TTab[];
   readonly openThreadKey: string | null;
   readonly draftOpen: boolean;
+  readonly nextProjectKey: string;
+  /** Each split pane's project, left then right; empty outside a split. */
+  readonly paneProjectKeys: readonly (string | null)[];
 }): TTab | null {
+  if (input.paneProjectKeys.length > 0) {
+    const holdsPane =
+      input.nextProjectKey === ALL_PROJECTS || input.paneProjectKeys.includes(input.nextProjectKey);
+    return holdsPane ? null : (input.after[0] ?? null);
+  }
   const isOpen = (tab: TTab) => tab.threadKey === input.openThreadKey;
   if (input.draftOpen || !input.before.some(isOpen) || input.after.some(isOpen)) return null;
   return input.after[0] ?? null;

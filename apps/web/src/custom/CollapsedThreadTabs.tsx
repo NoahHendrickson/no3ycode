@@ -282,17 +282,18 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   // One rule for every tab: it names its project unless the filter already does.
   const projectMarkFor = (key: string | null) =>
     key === projectKey ? null : (projectGroups.find((group) => group.projectKey === key) ?? null);
+  const draftGroupOf = (draft: DraftSessionState) =>
+    projectGroups.find((candidate) =>
+      candidate.memberProjectRefs.some(
+        (ref) => ref.environmentId === draft.environmentId && ref.projectId === draft.projectId,
+      ),
+    ) ?? null;
   const draftEntryFor = (
     draftId: DraftId,
     draft: DraftSessionState,
     threadKey: string,
   ): Extract<StripEntry, { readonly kind: "draft" }> => {
-    const group =
-      projectGroups.find((candidate) =>
-        candidate.memberProjectRefs.some(
-          (ref) => ref.environmentId === draft.environmentId && ref.projectId === draft.projectId,
-        ),
-      ) ?? null;
+    const group = draftGroupOf(draft);
     return {
       kind: "draft",
       draftId,
@@ -317,6 +318,11 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     openDraftId !== null && openDraft !== null && draftThreadKey !== null
       ? draftEntryFor(openDraftId, openDraft, draftThreadKey)
       : null;
+  const paneProjectKeys = paneTabs.map((pane) => {
+    if (pane.kind === "thread") return pane.tab.projectKey;
+    const session = paneDraftSessions[pane.pane];
+    return session ? (draftGroupOf(session)?.projectKey ?? null) : null;
+  });
   const paneEntries = paneTabs.flatMap((pane): StripEntry[] => {
     if (pane.kind === "thread") return [threadEntry(pane.tab)];
     const draftId = paneDraftIds[pane.pane] ?? null;
@@ -475,8 +481,10 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
             before: shownTabs,
             after: tabsIn(next),
             openThreadKey,
-            // The draft and a split's group show under every filter, so stay open.
-            draftOpen: draftEntry !== null || paneEntries.length > 0,
+            // The draft shows under every filter, so stays open.
+            draftOpen: draftEntry !== null,
+            nextProjectKey: next,
+            paneProjectKeys,
           });
           if (target) openThread(target);
         }}

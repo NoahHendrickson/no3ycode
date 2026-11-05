@@ -176,15 +176,67 @@ describe("collapsedFilterSwitchTarget", () => {
   const tab = (threadKey: string) => ({ threadKey });
   const [a, b, c] = [tab("a"), tab("b"), tab("c")];
   it.each([
-    // [label, before, after, open, draftOpen, expected]
-    ["opens the first tab when the filter hides the open tab", [a, b], [c], "a", false, c],
-    ["stays when the open tab is still shown", [a, b], [b, a], "a", false, null],
-    ["stays on a thread that never had a tab", [a, b], [c], "z", false, null],
-    ["stays on the draft", [a, b], [c], null, true, null],
-    ["has nowhere to go in an empty filter", [a], [], "a", false, null],
-  ] as const)("%s", (_label, before, after, openThreadKey, draftOpen, expected) => {
-    expect(collapsedFilterSwitchTarget({ before, after, openThreadKey, draftOpen })).toBe(expected);
-  });
+    // [label, before, after, open, draftOpen, next, paneProjects, expected]
+    [
+      "opens the first tab when the filter hides the open tab",
+      [a, b],
+      [c],
+      "a",
+      false,
+      "p2",
+      [],
+      c,
+    ],
+    ["stays when the open tab is still shown", [a, b], [b, a], "a", false, "p1", [], null],
+    ["stays on a thread that never had a tab", [a, b], [c], "z", false, "p2", [], null],
+    ["stays on the draft", [a, b], [c], null, true, "p2", [], null],
+    ["has nowhere to go in an empty filter", [a], [], "a", false, "p2", [], null],
+    [
+      "leaves a split for a project neither pane is in",
+      [a],
+      [c],
+      "a",
+      false,
+      "p3",
+      ["p1", "p2"],
+      c,
+    ],
+    [
+      "stays in a split that holds a pane in the project",
+      [a],
+      [c],
+      "a",
+      false,
+      "p2",
+      ["p1", "p2"],
+      null,
+    ],
+    ["stays in a split under All", [a], [a, c], "a", false, "all", ["p1", "p2"], null],
+    ["leaves a split whose route pane is a draft", [a], [c], null, true, "p3", ["p1", "p1"], c],
+  ] as const)(
+    "%s",
+    (
+      _label,
+      before,
+      after,
+      openThreadKey,
+      draftOpen,
+      nextProjectKey,
+      paneProjectKeys,
+      expected,
+    ) => {
+      expect(
+        collapsedFilterSwitchTarget({
+          before,
+          after,
+          openThreadKey,
+          draftOpen,
+          nextProjectKey,
+          paneProjectKeys,
+        }),
+      ).toBe(expected);
+    },
+  );
 });
 
 describe("collapsedTabProjectForScope", () => {
