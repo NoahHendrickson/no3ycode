@@ -6378,9 +6378,12 @@
   intent: >
     When an update is ready to act on (available to download, downloaded and
     ready to install, or an Update-everything run on offer), the sidebar's
-    round update icon becomes a pure white, fully rounded pill reading
-    "Update" in black. Checking, downloading (with its progress ring), and
-    idle keep upstream's icon button. Only the look changes: the click,
+    round update icon becomes a fully rounded pill reading "Update": pure
+    white with black text in dark mode (a fixed white, not --primary, which
+    palettes recolour), inverted foreground/background in light mode where
+    white would vanish on the sidebar. Checking, downloading (with its
+    progress ring), idle, and download/install errors (whose aria-label does
+    not contain "Update") keep upstream's icon button. Only the look changes: the click,
     tooltip, aria-label, and release-notes popover stay upstream's.
   tier: 4
   files: []

@@ -22,6 +22,6 @@ describe("fork guard: fork-sidebar-update-label", () => {
       'iconStatus === "available" || iconStatus === "downloaded" || iconStatus === "everything"',
     );
     expect(updatePill).toContain('{showUpdateLabel ? "Update" : statusIcon}');
-    expect(updatePill).toContain("bg-white px-3 py-2 font-medium text-black text-xs");
+    expect(updatePill).toContain("dark:bg-white dark:text-black");
   });
 });
