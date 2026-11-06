@@ -439,6 +439,13 @@ function SidebarUpdateControl() {
     );
   }
 
+  /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+  // Error states keep the icon: their aria-label ("Download failed…") would not contain "Update".
+  const showUpdateLabel =
+    state?.status !== "error" &&
+    (iconStatus === "available" || iconStatus === "downloaded" || iconStatus === "everything");
+  /* fork:end fork-sidebar-update-label */
+
   const updateButton = (
     <button
       type="button"
@@ -457,6 +464,13 @@ function SidebarUpdateControl() {
               !isInteractionDisabled && "hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
             ),
         disabled && !showUpdateIconState && "opacity-60",
+        /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+        showUpdateLabel &&
+          cn(
+            "size-auto bg-foreground px-3 py-2 font-medium text-background text-xs dark:bg-white dark:text-black",
+            !isInteractionDisabled && "hover:bg-foreground/85 dark:hover:bg-white/85",
+          ),
+        /* fork:end fork-sidebar-update-label */
       )}
       onClick={handleAction}
       onBlur={() => {
@@ -482,7 +496,9 @@ function SidebarUpdateControl() {
         );
       }}
     >
-      {statusIcon}
+      {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
+      {showUpdateLabel ? "Update" : statusIcon}
+      {/* fork:end fork-sidebar-update-label */}
     </button>
   );
 
