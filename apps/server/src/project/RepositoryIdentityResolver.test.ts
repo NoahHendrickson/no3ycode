@@ -351,8 +351,12 @@ it.layer(NodeServices.layer)("RepositoryIdentityResolverLive", (it) => {
     ).pipe(Layer.provide(processRunner));
 
     return Effect.gen(function* () {
+      // The resolver stats the folder before probing git, so it must exist.
+      const cwd = yield* (yield* FileSystem.FileSystem).makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-test-",
+      });
       const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
-      const identity = yield* resolver.resolve("/repo");
+      const identity = yield* resolver.resolve(cwd);
       expect(identity?.canonicalKey).toBe("github.com/t3tools/t3code");
       expect(calls.map((args) => args[2])).toEqual(["rev-parse", "remote"]);
     }).pipe(Effect.provide(resolverLayer));

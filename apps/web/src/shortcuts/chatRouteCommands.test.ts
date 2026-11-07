@@ -3,6 +3,9 @@ import type { AnyRouter } from "@tanstack/react-router";
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import * as commandPalette from "../commandPaletteBus";
+// fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+import * as newAgentDraft from "../custom/useNewAgentDraft";
+// fork:end fork-new-agent-draft
 import * as settings from "../hooks/useSettings";
 import * as threadActions from "../lib/chatThreadActions";
 import * as entities from "../state/entities";
@@ -43,6 +46,9 @@ describe("new thread commands", () => {
     using openPicker = vi.spyOn(commandPalette, "openCommandPalette").mockImplementation(() => {});
     using startLocal = vi.spyOn(threadActions, "startNewThreadFromContext").mockResolvedValue(true);
     using register = vi.spyOn(dispatcher, "registerCommands").mockReturnValue(() => {});
+    // fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+    using startDraft = vi.spyOn(newAgentDraft, "startNewAgentDraft").mockResolvedValue(null);
+    // fork:end fork-new-agent-draft
     const router = { state: { matches: [] } } as unknown as AnyRouter;
     using stack = new DisposableStack();
     stack.defer(installChatRouteCommands(router));
@@ -54,10 +60,14 @@ describe("new thread commands", () => {
 
     commands[scenario.command]!(event);
 
-    if (scenario.picker) {
-      expect(openPicker).toHaveBeenCalledWith({ open: "new-thread-in" });
+    // fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+    // chat.new opens the projectless New agent draft in every mode, never the palette.
+    if (scenario.command === "chat.new") {
+      expect(openPicker).not.toHaveBeenCalled();
       expect(startLocal).not.toHaveBeenCalled();
+      expect(startDraft).toHaveBeenCalledOnce();
     } else {
+      // fork:end fork-new-agent-draft
       expect(openPicker).not.toHaveBeenCalled();
       expect(startLocal).toHaveBeenCalledOnce();
     }

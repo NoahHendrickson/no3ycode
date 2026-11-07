@@ -5355,6 +5355,8 @@
   watch:
     # Upstream's header New thread test, fenced to the fork's New agent door.
     - apps/web/src/components/Sidebar.browser.test.tsx
+    # Upstream's chat.new picker test, fenced to the same door.
+    - apps/web/src/shortcuts/chatRouteCommands.test.ts
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/routes/_chat.tsx
     # Fenced `leading` slot: the project chip renders first in the strip.
