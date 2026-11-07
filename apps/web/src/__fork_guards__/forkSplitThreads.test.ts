@@ -58,6 +58,10 @@ describe("fork guard: fork-split-threads", () => {
     expect(chatView).toMatch(
       /const focusComposer = \(\) => \{\s*composerRef\.current\?\.focusAtEnd\(\);/u,
     );
+    // An embedded side chat inherits its parent's pane but is not in the pair.
+    expect(chatView).toMatch(
+      /const splitAgentPill =\s*!isDraftHeroState &&[\s\S]{0,120}!embedded &&/u,
+    );
     // Global singletons and broadcasts: the PR-link dialog and palette find.
     expect(chatView).toContain(
       "{splitPane.focused && !embedded ? <LinkPullRequestDialogHost /> : null}",

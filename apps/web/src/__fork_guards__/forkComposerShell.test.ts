@@ -272,7 +272,7 @@ describe("fork guard: fork-composer-shell", () => {
   it("shows a server thread's project and branch read-only once the strip retreats", () => {
     // While upstream's strip is hidden, the fallback strip must still lead
     // with the pinned project and branch chips.
-    expect(chatView).toMatch(/isServerThread && activeProject && !showComposerContextStrip/u);
+    expect(chatView).toMatch(/isServerThread &&\s*activeProject &&\s*!showComposerContextStrip/u);
     // One leading value feeds every site: the BranchToolbar spread, the
     // fallback strip and the Shell's contextRow predicate. (Upstream's hidden
     // measuring strip, and the second fallback beside it, went in #25869.)

@@ -3576,7 +3576,12 @@ export default function ChatView(props: ChatViewProps) {
   // bar unmounts the whole composer, strip included.
   const currentGitBranch = gitStatusQuery.data?.refName ?? null;
   const threadContextReadout =
-    isServerThread && activeProject && !showComposerContextStrip && !showProviderSubagentBar ? (
+    isServerThread &&
+    activeProject &&
+    !showComposerContextStrip &&
+    !showProviderSubagentBar &&
+    // A side chat shows no context, as upstream hides its strip there.
+    !embedded ? (
       <ThreadContextReadout
         project={activeProject}
         isGitRepo={isGitRepo}
@@ -3595,6 +3600,8 @@ export default function ChatView(props: ChatViewProps) {
   // branch chips. The draft hero's centred composer has no split to offer.
   const splitAgentPill =
     !isDraftHeroState &&
+    // A side chat inherits its parent's pane but is not in the pair.
+    !embedded &&
     activeThreadRef &&
     activeProjectRef &&
     splitAgentPillShown(splitPane, isServerThread) ? (

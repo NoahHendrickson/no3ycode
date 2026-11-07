@@ -2293,6 +2293,9 @@
     keeps only 3px (its halo's reach) off its pane while the pane overlaps the
     left one's gutter by 3px: the cards stand as far apart as from the window.
   tier: 2
+    Upstream's embedded side chat sits in the right panel, which supplies
+    the card's tint and wash, so under the desktop glass its own nested
+    card paints no fill.
   files:
     - apps/web/src/theme.custom.glass-stage.css
     # The Automations page's card host and its named title and body.
@@ -5975,6 +5978,8 @@
     mouse press and never from the card's hover actions (the settle sweep's
     pointer gesture) or touch; file drops on rows are untouched.
   tier: 4
+    Upstream's embedded side chat inherits its parent's pane context but is
+    not in the pair, so it shows no split pill and no context readout.
   files:
     - apps/web/src/custom/splitThreads/splitThreadPairs.ts
     - apps/web/src/custom/splitThreads/splitThreadStore.ts

@@ -157,6 +157,15 @@
       );
   }
 
+  /* Upstream's embedded side chat sits in the right panel, which already supplies the
+     card's tint and wash (below), so its own card paints no fill. After the ramp, which
+     it matches in weight. */
+  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+    [data-side-chat-pane]
+    [data-chat-column-maximized-away]::before {
+    background: none;
+  }
+
   /* The gutter: the inset round a chat view takes the panel's fill. Two rules
      because the two clients paint it differently — an opaque colour, or a
      gradient over the inset the vibrancy block has already cleared. Settings,
