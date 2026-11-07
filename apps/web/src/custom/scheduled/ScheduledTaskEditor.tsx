@@ -70,7 +70,7 @@ import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { Toggle, ToggleGroup } from "~/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { WorktreeBaseBranchPicker } from "~/components/WorktreeBaseBranchPicker";
-import { usePrimaryCloudLinkState } from "~/cloud/primaryCloudLinkState";
+import { usePrimaryCloudLinkState } from "~/cloud/cloudLinkState";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useEnvironmentSettings } from "~/hooks/useSettings";
@@ -783,8 +783,8 @@ function WebhookDeliveryMode(props: { readonly environmentId: EnvironmentId }) {
       {cloudLink.data.holdWebhooksWhileOffline
         ? "Held for up to 24 hours while this environment is offline. "
         : "Forwarded live. Requests fail while this environment is offline. "}
-      <Link to="/settings/connections" className="underline underline-offset-2">
-        Change in Connections
+      <Link to="/settings/access" className="underline underline-offset-2">
+        Change in Sharing & access
       </Link>
     </p>
   );
