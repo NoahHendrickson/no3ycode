@@ -28,7 +28,9 @@ describe("fork local dictation", () => {
     // through one adapter, and the composer registers it with the root hotkey.
     expect(composer).toContain("const speechInput = useEnvironmentSpeechInput({");
     expect(composer).toContain("const dictation = forkDictationFromSpeech(speechInput);");
-    expect(composer).toContain("useForkDictationHotkeyTarget(dictation, dictationDisabled);");
+    expect(composer).toContain(
+      "useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked);",
+    );
     expect(composer).toMatch(/activePendingIsResponding \|\|\s*speechInput\.freezesEditor\s*\}/u);
     expect(composer).toContain("<ForkDictationNotices dictation={dictation} />");
     // First use opens upstream's setup dialog, rendered beside the slot.
@@ -37,7 +39,7 @@ describe("fork local dictation", () => {
     expect(composer).not.toContain("<ComposerSpeechButton");
     expect(composer).not.toContain("<ComposerSpeechRecordingPill");
     expect(composer).toMatch(
-      /const dictationDisabled =[^;]*\(pendingUserInputs\.length > 0 && !dictationAnswersQuestion\)/u,
+      /const forkDictationStartBlocked =[^;]*\(pendingUserInputs\.length > 0 && !dictationAnswersQuestion\)/u,
     );
     expect(composer).toMatch(
       /const dictationAnswersQuestion =[^;]*allowCustomAnswer !== false[^;]*!activePendingIsResponding;/u,
@@ -69,7 +71,7 @@ describe("fork local dictation", () => {
       "pendingAction={dictationOwnsPrimaryAction ? null : pendingPrimaryAction}",
     );
     expect(composer).toContain(
-      "dictationOwnsPrimaryAction ? { dictation, disabled: dictationDisabled } : null",
+      "dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null",
     );
     // Since the orchestrator-V2 sync upstream renders stop alone (no send
     // beside it); the fork keeps the mic to stop's left on that branch and
@@ -106,7 +108,7 @@ describe("fork local dictation", () => {
     // a live session's X and check hold the send slot, and never rides the
     // primary cluster.
     expect(composer).toMatch(
-      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{dictationDisabled \|\| dictation\.blocksSubmission\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
+      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked \|\| dictation\.blocksSubmission\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
     );
     expect(composer).not.toMatch(
       /const composerPrimaryActionSlot = \([\s\S]{0,1500}?<ForkDictationGhostMic/u,
@@ -242,14 +244,21 @@ describe("fork local dictation", () => {
     expect(composer).not.toMatch(
       /const dictationControlsVisible =[^;]*showMobilePendingAnswerActions/u,
     );
-    expect(composer).toMatch(/const dictationDisabled =[^;]*showPlanFollowUpPrompt/u);
+    expect(composer).toMatch(/const forkDictationStartBlocked =[^;]*showPlanFollowUpPrompt/u);
+    // Fork start gates stay out of upstream's `disabled`, which also cancels a live recording.
+    expect(composer).not.toMatch(
+      /const dictationDisabled =[^;]*(?:isSendBusy|showPlanFollowUpPrompt)/u,
+    );
+    // A live session keeps stop beside the check while a turn runs.
+    expect(composer).toContain("hasSendableContent={composerSendState.hasSendableContent}");
     // The mic follows the editor's gate, not send's: an unassigned new-agent
     // draft (fork-new-agent-draft) blocks send until a project is chosen but
     // keeps the prompt editable, and dictation only writes into the prompt.
-    expect(composer).toMatch(/const dictationDisabled =[^;]*promptLockedForProject/u);
+    expect(composer).toMatch(/const forkDictationStartBlocked =[^;]*promptLockedForProject/u);
+    expect(composer).not.toMatch(/const dictationDisabled =[^;]*projectSelectionRequired/u);
     // A send in flight keeps the spinner in the slot; the ghost mic beside
     // typed text and the keyboard must not start a session over it.
-    expect(composer).toMatch(/const dictationDisabled =[^;]*isSendBusy/u);
+    expect(composer).toMatch(/const forkDictationStartBlocked =[^;]*isSendBusy/u);
     // The notices (the error popover) render beside the slot
     // whatever it shows, so a failed transcription is reported even after typed
     // text has put send back. The buttons render state only.

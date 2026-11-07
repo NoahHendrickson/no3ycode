@@ -46,10 +46,14 @@
     and a host mounted once above the router installs the listener. Using
     right Command as a modifier (a chord, click or scroll) or tapping left
     Command does nothing; Escape is upstream's. A tap with no composer that
-    can take it does nothing (the old toast fallback is gone). A recording
-    left running when its pane loses input, or when the send slot shows
-    something else (an approval, a choice-only question, the plan
-    follow-up's Implement), settles on the spot.
+    can take it does nothing (the old toast fallback is gone). The fork's
+    start gates (below) only block starting; upstream's `disabled` also
+    cancels a live recording, so they stay out of it. A recording outlived
+    by an approval or a new question is discarded, as upstream does; one
+    left running when its pane loses input or the plan follow-up's
+    Implement takes the slot settles on the spot. In a split, the pane
+    without window input binds upstream's mod+shift+d only while its form
+    has focus. A live session keeps stop beside the check while a turn runs.
     The mic is a filled-glyph ghost in the composer's control row, after
     attach and before the mode controls (Full access), at the row's 20px
     ghost size; the send slot always shows send while idle. Dictation is off
@@ -2889,7 +2893,8 @@
     upstream Settings → Scheduled tasks page is left as it is for links that
     still point there. Mobile keeps its own settings editor.
     Trigger choices use the compact rounded track and raised selected tab
-    from Figma node 521:5338, preserving all four trigger behaviors.
+    from Figma node 521:5338, preserving every trigger behavior (Once only where
+    the environment accepts one-time schedules, as upstream offers it).
     Under Glass the cards take the stage-card wash, and a card
     clips its table so a hovered row never paints past its corners.
     That composer wears the chat composer's own context-row, vessel,

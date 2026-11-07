@@ -160,6 +160,7 @@ import {
   forkDictationFromSpeech,
   useForkDictationHotkeyTarget,
 } from "~/custom/voice/forkDictation";
+import { useOwnsGlobalInput } from "~/custom/splitThreads/splitPaneContext";
 /* fork:end fork-local-dictation */
 /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
 import { ForkComposerDesignChanges } from "~/custom/designMode/ForkComposerDesignChanges";
@@ -1965,13 +1966,19 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const dictationDisabled =
     !canOperateThread ||
     environmentUnavailable !== null ||
-    projectSelectionRequired ||
+    /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+       An unassigned New agent draft keeps its prompt editable; promptLockedForProject below
+       blocks only the drafts whose editor is locked. */
+    /* fork:end fork-new-agent-draft */
     isComposerApprovalState ||
     activePendingIsResponding ||
-    activePendingProgress?.activeQuestion?.allowCustomAnswer === false ||
-    /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-       No mic or hotkey while a send is in flight, Implement/Refine holds the send slot, the
-       draft is locked to a project pick, or a question has no slot for the check and X. */
+    activePendingProgress?.activeQuestion?.allowCustomAnswer === false;
+  /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
+     Gates starting only: upstream's `disabled` also cancels a live recording, so these stay
+     out of it. No mic or hotkey while a send is in flight, Implement/Refine holds the send
+     slot, the draft is locked to a project pick, or a question has no slot for the check and X. */
+  const forkDictationStartBlocked =
+    dictationDisabled ||
     isSendBusy ||
     (pendingUserInputs.length === 0 && showPlanFollowUpPrompt) ||
     promptLockedForProject ||
@@ -2010,7 +2017,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
      The fork's mic, send-slot check and X and right Command tap draw upstream's session. */
   const dictation = forkDictationFromSpeech(speechInput);
-  useForkDictationHotkeyTarget(dictation, dictationDisabled);
+  useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked);
+  // In a split, the pane without window input binds mod+shift+d only while its form has focus.
+  const ownsGlobalInput = useOwnsGlobalInput();
   // Mirrors where ComposerPrimaryActions renders the send slot: when the check and X unmount
   // (approval, choice-only question, or plan follow-up takes it), a live recording is
   // transcribed rather than left running with nothing on screen to end it.
@@ -2035,10 +2044,14 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     /* fork:end fork-local-dictation */
     keybindings,
     speech: speechInput,
-    disabled: dictationDisabled,
+    /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
+    disabled: forkDictationStartBlocked,
+    /* fork:end fork-local-dictation */
     terminalOpen,
     modelPickerOpen: isComposerModelPickerOpen,
-    ...(backgroundThread ? { targetRef: composerFormRef } : {}),
+    /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+    ...(backgroundThread || !ownsGlobalInput ? { targetRef: composerFormRef } : {}),
+    /* fork:end fork-split-threads */
   });
 
   const resolveActiveComposerTrigger = (): {
@@ -3639,7 +3652,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           environmentUnavailable !== null || noProviderAvailable || projectSelectionRequired
         }
         isPreparingWorktree={isPreparingWorktree}
-        hasSendableContent={composerSendState.hasSendableContent || voiceInputActive}
+        /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
+           A live session takes the slot itself; counting it as sendable would drop stop. */
+        hasSendableContent={composerSendState.hasSendableContent}
+        /* fork:end fork-local-dictation */
         canResume={showResumeAction}
         preserveComposerFocusOnPointerDown={isMobileViewport}
         isEditingQueuedMessage={isEditingQueuedMessage}
@@ -3647,7 +3663,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         onResume={onResume}
         /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
         forkDictation={
-          dictationOwnsPrimaryAction ? { dictation, disabled: dictationDisabled } : null
+          dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null
         }
         /* fork:end fork-local-dictation */
         onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
@@ -3747,7 +3763,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 dictate into. */}
             <ForkDictationGhostMic
               dictation={dictation}
-              disabled={dictationDisabled || dictation.blocksSubmission}
+              disabled={forkDictationStartBlocked || dictation.blocksSubmission}
             />
             {/* fork:end fork-local-dictation */}
             {composerModeControls}
