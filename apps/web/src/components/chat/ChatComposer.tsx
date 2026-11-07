@@ -2017,7 +2017,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
      The fork's mic, send-slot check and X and right Command tap draw upstream's session. */
   const dictation = forkDictationFromSpeech(speechInput);
-  useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked);
+  useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked, composerFormRef);
   // In a split, the pane without window input binds mod+shift+d only while its form has focus.
   const ownsGlobalInput = useOwnsGlobalInput();
   // Mirrors where ComposerPrimaryActions renders the send slot: when the check and X unmount

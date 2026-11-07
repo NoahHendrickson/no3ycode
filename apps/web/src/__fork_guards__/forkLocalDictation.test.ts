@@ -29,7 +29,7 @@ describe("fork local dictation", () => {
     expect(composer).toContain("const speechInput = useEnvironmentSpeechInput({");
     expect(composer).toContain("const dictation = forkDictationFromSpeech(speechInput);");
     expect(composer).toContain(
-      "useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked);",
+      "useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked, composerFormRef);",
     );
     expect(composer).toMatch(/activePendingIsResponding \|\|\s*speechInput\.freezesEditor\s*\}/u);
     expect(composer).toContain("<ForkDictationNotices dictation={dictation} />");
@@ -142,7 +142,7 @@ describe("fork local dictation", () => {
     // The registration reads a layout-phase mirror: ChatComposer is memoized,
     // so an effect event would keep the first thread's closure.
     expect(dictationModule).toContain(
-      "useLayoutEffect(() => {\n    latest.current = { dictation, disabled };",
+      "useLayoutEffect(() => {\n    latest.current = { dictation, disabled, ownsInput };",
     );
     expect(dictationModule).toContain("useOwnsGlobalInput()");
     expect(dictationModule).not.toContain("useEffectEvent");

@@ -54,12 +54,20 @@ function setup(canStart = true) {
   start.mockClear();
   stop.mockClear();
   cleanups.push(installForkDictationHotkey());
-  cleanups.push(registerForkDictationTarget({ dictation, canStart: () => canStart }));
+  cleanups.push(
+    registerForkDictationTarget({
+      dictation,
+      canStart: () => canStart,
+      contains: () => false,
+      ownsInput: () => true,
+    }),
+  );
 }
 
 beforeEach(() => {
   cleanups = [];
   vi.stubGlobal("window", new EventTarget());
+  vi.stubGlobal("document", { activeElement: null });
   vi.stubGlobal(
     "KeyboardEvent",
     class extends Event {
@@ -113,12 +121,19 @@ describe("fork dictation hotkey", () => {
     expect(start).not.toHaveBeenCalled();
   });
 
-  it("leaves the latest registration in place when an older one cleans up", () => {
+  it("starts in the composer holding focus over the pane that owns window input", () => {
     setup();
-    const older = registerForkDictationTarget({ dictation, canStart: () => false });
-    cleanups.push(registerForkDictationTarget({ dictation, canStart: () => true }));
-    older();
+    const focusedStart = vi.fn();
+    cleanups.push(
+      registerForkDictationTarget({
+        dictation: () => ({ ...dictation(), start: focusedStart }),
+        canStart: () => true,
+        contains: () => true,
+        ownsInput: () => false,
+      }),
+    );
     tapRightCommand();
-    expect(start).toHaveBeenCalledTimes(1);
+    expect(focusedStart).toHaveBeenCalledTimes(1);
+    expect(start).not.toHaveBeenCalled();
   });
 });

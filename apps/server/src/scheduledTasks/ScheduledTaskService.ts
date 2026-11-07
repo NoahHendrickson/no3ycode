@@ -1412,7 +1412,16 @@ export const layer = Layer.effect(
       // keep their run history, and so real load failures propagate instead
       // of silently resetting an existing row.
       const existingTask = yield* findTask(id);
-      const threadMode = resolveThreadMode(input, existingTask);
+      /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation
+         Every PR delivery launches its own thread, so a GitHub task is never bound to one,
+         and the runtime-mode ceiling below applies to it. */
+      const githubTask =
+        input.schedule.type === "webhook" &&
+        (input.schedule.github === undefined
+          ? existingTask?.schedule.type === "webhook" && existingTask.schedule.github != null
+          : input.schedule.github != null);
+      const threadMode = githubTask ? "new_thread" : resolveThreadMode(input, existingTask);
+      /* fork:end fork-github-pr-automation */
       const keptThreadId = input.threadId ?? existingTask?.threadId ?? null;
       // A bound thread belongs to its project, so moving the task leaves it for a new one.
       const movedOffThread =

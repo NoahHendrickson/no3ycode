@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { useEnvironmentSpeechInput } from "~/speech/useEnvironmentSpeechInput";
 import { useOwnsGlobalInput } from "../splitThreads/splitPaneContext";
 
@@ -39,39 +39,56 @@ export type ForkDictation = ReturnType<typeof forkDictationFromSpeech>;
 export type ForkDictationTarget = {
   readonly dictation: () => ForkDictation;
   readonly canStart: () => boolean;
+  readonly contains: (node: Element | null) => boolean;
+  readonly ownsInput: () => boolean;
 };
 
-let target: ForkDictationTarget | null = null;
+const targets = new Set<ForkDictationTarget>();
 
-/** The latest registration wins; its cleanup only clears itself. */
-export function registerForkDictationTarget(next: ForkDictationTarget): () => void {
-  target = next;
+export function registerForkDictationTarget(target: ForkDictationTarget): () => void {
+  targets.add(target);
   return () => {
-    if (target === next) target = null;
+    targets.delete(target);
   };
 }
 
+/** Like upstream's shortcut: the live session, then the composer holding focus, then the pane that owns input. */
+function resolveTarget(): ForkDictationTarget | undefined {
+  const all = [...targets];
+  return (
+    all.find((target) => target.dictation().blocksSubmission) ??
+    all.find((target) => target.contains(document.activeElement)) ??
+    all.find((target) => target.ownsInput())
+  );
+}
+
 /**
- * Registers the composer on screen as the right Command tap's target while
- * its pane owns window input (focused in a split, not behind Settings or
- * Usage). Reads through a layout-phase mirror: ChatComposer is memoized, so
- * an effect event would keep its first render's closure.
+ * Registers a composer for the right Command tap, which it takes while holding focus or owning
+ * window input. Reads a layout-phase mirror: ChatComposer is memoized, so an effect event would
+ * keep its first render's closure.
  */
-export function useForkDictationHotkeyTarget(dictation: ForkDictation, disabled: boolean): void {
-  const latest = useRef({ dictation, disabled });
+export function useForkDictationHotkeyTarget(
+  dictation: ForkDictation,
+  disabled: boolean,
+  containerRef: RefObject<HTMLElement | null>,
+): void {
+  const ownsInput = useOwnsGlobalInput();
+  const latest = useRef({ dictation, disabled, ownsInput });
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- mirrors the live session for the window-level hotkey, which reads it outside render
   useLayoutEffect(() => {
-    latest.current = { dictation, disabled };
+    latest.current = { dictation, disabled, ownsInput };
   });
-  const ownsInput = useOwnsGlobalInput();
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- registers this composer with the window-level right Command hotkey
-  useEffect(() => {
-    if (!ownsInput) return;
-    return registerForkDictationTarget({
-      dictation: () => latest.current.dictation,
-      canStart: () => !latest.current.disabled,
-    });
-  }, [ownsInput]);
+  useEffect(
+    () =>
+      registerForkDictationTarget({
+        dictation: () => latest.current.dictation,
+        canStart: () => !latest.current.disabled,
+        contains: (node) => node !== null && containerRef.current?.contains(node) === true,
+        ownsInput: () => latest.current.ownsInput,
+      }),
+    [containerRef],
+  );
   // Losing input (another pane focused, or Settings or Usage over the thread) leaves no
   // hotkey to end a live recording, so it settles into its own draft.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- settles a live recording when this pane stops owning window input
@@ -104,7 +121,8 @@ export function installForkDictationHotkey(): () => void {
   const onKeyUp = (event: KeyboardEvent) => {
     const tapped = armed && isRightCommandTap(event) && !event.metaKey && !event.defaultPrevented;
     armed = false;
-    if (!tapped || !target) return;
+    const target = tapped ? resolveTarget() : undefined;
+    if (!target) return;
     const dictation = target.dictation();
     if (!dictation.isAvailable) return;
     if (dictation.blocksSubmission) {

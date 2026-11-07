@@ -40,10 +40,11 @@
     editor's dictation stay upstream's.
     A bare right Command tap starts dictation into the composer on screen
     wherever focus sits while the app is active, and a second tap finishes it:
-    the composer registers itself through useForkDictationHotkeyTarget while
-    its pane owns window input (focused in a split, not behind Settings or
-    Usage), reading a layout-phase mirror because ChatComposer is memoized,
-    and a host mounted once above the router installs the listener. Using
+    every composer registers through useForkDictationHotkeyTarget (reading a
+    layout-phase mirror because ChatComposer is memoized) and the tap goes, as
+    upstream's shortcut does, to the live session, then the composer holding
+    focus (a side chat, the other split pane), then the pane that owns window
+    input; a host mounted once above the router installs the listener. Using
     right Command as a modifier (a chord, click or scroll) or tapping left
     Command does nothing; Escape is upstream's. A tap with no composer that
     can take it does nothing (the old toast fallback is gone). The fork's

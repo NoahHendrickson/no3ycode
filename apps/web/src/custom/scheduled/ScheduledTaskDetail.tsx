@@ -19,7 +19,6 @@ import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AuthOrchestrationOperateScope,
-  MAX_WEBHOOK_DELIVERY_AGE_MINUTES,
   MIN_SCHEDULED_TASK_INTERVAL_MS,
   type EnvironmentId,
   type OrchestrationV2ThreadLaunchWorkspaceStrategy,
@@ -35,7 +34,10 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 
-import { WEBHOOK_SIGNATURE_DEFAULTS } from "~/components/settings/scheduledTasksSettings.logic";
+import {
+  scheduleDraftErrors,
+  WEBHOOK_SIGNATURE_DEFAULTS,
+} from "~/components/settings/scheduledTasksSettings.logic";
 import { useRelativeTimeTick } from "./useRelativeTimeTick";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -351,9 +353,18 @@ function TaskDetailForm(props: {
     }
     const schedule = scheduleFromDraft(draft);
     if (schedule === null) {
+      for (const error of scheduleDraftErrors(draft)) reportFailure(error.title, error.description);
+      return;
+    }
+    // Older servers reject one-time schedules; switching environments can leave Once picked.
+    if (
+      schedule.type === "once" &&
+      environment?.serverConfig?.environment.capabilities.oneTimeSchedules !== true &&
+      task?.schedule.type !== "once"
+    ) {
       reportFailure(
-        "Invalid age limit",
-        `Enter whole minutes from 1 to ${MAX_WEBHOOK_DELIVERY_AGE_MINUTES}, or leave it blank.`,
+        "Once is not available here",
+        "This environment runs an older T3 Code. Update it to schedule a one-time task, or pick another schedule.",
       );
       return;
     }

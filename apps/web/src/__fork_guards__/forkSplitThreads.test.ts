@@ -70,7 +70,8 @@ describe("fork guard: fork-split-threads", () => {
       "return useSplitPane().focused && !use(BackgroundThreadContext);",
     );
     expect(dictation).toContain("const ownsInput = useOwnsGlobalInput();");
-    expect(dictation).toMatch(/if \(!ownsInput\) return;\s*return registerForkDictationTarget\(/u);
+    // The tap goes to the live session, then the composer holding focus, then the input owner.
+    expect(dictation).toContain("all.find((target) => target.ownsInput())");
     // A recording left running in a pane that loses focus finishes there.
     expect(dictation).toContain(
       "if (!ownsInput) latest.current.dictation.settleWithoutControls();",

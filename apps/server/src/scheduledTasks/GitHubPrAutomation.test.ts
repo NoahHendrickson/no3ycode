@@ -294,6 +294,22 @@ it.effect(
     }),
 );
 
+it.effect("starts every PR review in a new thread when a bound task becomes a GitHub one", () =>
+  withService(({ service }) =>
+    Effect.gen(function* () {
+      yield* service.upsert(
+        input({
+          schedule: { type: "interval", everyMs: 60_000 },
+          threadId: "thread-bound",
+        }),
+      );
+      const { task } = yield* service.upsert(input());
+      assert.equal(task.threadId, null);
+      assert.equal(task.threadMode, "new_thread");
+    }),
+  ),
+);
+
 it.effect("routes a PR with its trigger when the task was stored with a dedupe", () =>
   withService(({ service, launches, hooks, sql }) =>
     Effect.gen(function* () {
