@@ -267,7 +267,6 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(chrome).not.toMatch(/sidebar-brand[^"]*\sshrink-0(?=[\s"])/u);
     expect(chrome).not.toContain("ml-[var(--workspace-titlebar-content-left)]");
     expect(chrome).toMatch(/sidebar-brand[^"]*text-sidebar-foreground/u);
-    expect(chrome).toContain("size-4 shrink-0");
     expect(chrome).toContain("<SidebarBrandWordmark");
     expect(chrome).not.toContain("text-[0.875rem] leading-4 font-medium");
     expect(chrome).not.toContain("{APP_BASE_NAME}");
@@ -284,7 +283,8 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // own colours ride along as the var() fallbacks; the outline is literal.
     const mark = readSibling("../custom/SidebarBrandMark.tsx");
     const lowDensityMark = readSibling("../custom/SidebarBrandMarkLowDensity.tsx");
-    expect(chrome).toContain('<SidebarBrandMark className="size-4 shrink-0" />');
+    expect(chrome).toContain("<SidebarBrandMark />");
+    expect(mark).toContain('className="size-4 shrink-0"');
     expect(chrome).not.toContain("sidebar-brand-mark.svg");
     expect(mark).toContain('viewBox="0 0 23 23"');
     expect(mark).toContain('shapeRendering="crispEdges"');
@@ -305,34 +305,84 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(mark).toContain('<g fill="#000000">');
     // Under 1.5x the 15-cell redraw replaces the 23-cell art. At 1x that is one
     // device pixel per cell, and three per cell for the wordmark.
-    expect(mark).toContain("[@media(max-resolution:1.49dppx)]:hidden");
+    const lowDensity =
+      /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(
+        readSibling("../theme.custom.css"),
+      )?.[1] ?? "";
+    expect(lowDensity).toMatch(/\[data-fork-brand-art="high"\] \{\s*display: none;/u);
+    expect(lowDensity).toMatch(/\[data-fork-brand-art="low"\] \{\s*display: block;/u);
+    expect(lowDensity).toMatch(/\[data-fork-brand-wordmark\] \{\s*width: 39px;\s*height: 10px;/u);
+    expect(mark).toContain('data-fork-brand-art="high"');
+    expect(lowDensityMark).toContain('data-fork-brand-art="low"');
     expect(lowDensityMark).toContain('viewBox="0 0 15 15"');
     // Even-height boxes inside the 16px clip, so centring lands on a whole pixel.
     expect(lowDensityMark).toContain("h-4 w-[15px]");
     expect(lowDensityMark).toContain('preserveAspectRatio="xMidYMin meet"');
-    expect(lowDensityMark).toContain("[@media(max-resolution:1.49dppx)]:block");
     expect(lowDensityMark).toContain('shapeRendering="crispEdges"');
-    for (const coord of lowDensityMark.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)) {
-      expect(coord[1]).toMatch(/^\d+$/u);
+    // Hand-drawn art, so the grid is pinned: # outline, t/l/r/b arms, capitals light.
+    const lowDensityCells = new Map<string, string>();
+    for (const [, fill = "", body = ""] of lowDensityMark.matchAll(
+      /<g fill="([^"]+)">([\s\S]*?)<\/g>/gu,
+    )) {
+      const slot = /--fork-brand-mark-([a-z-]+),/u.exec(fill)?.[1];
+      const letter = !slot
+        ? "#"
+        : slot.endsWith("-light")
+          ? slot.charAt(0).toUpperCase()
+          : slot.charAt(0);
+      for (const [, w, x, y] of body.matchAll(/width="(\d+)" x="(\d+)" y="(\d+)"/gu)) {
+        for (let dx = 0; dx < Number(w); dx += 1) {
+          lowDensityCells.set(`${Number(x) + dx},${y}`, letter);
+        }
+      }
     }
+    const lowDensityRows = [
+      "......###......",
+      ".....#t#T#.....",
+      "....#tt#tT#....",
+      "....#tt#tT#....",
+      "..####t#t####..",
+      ".#LLLl###rrrr#.",
+      "#Llllll#rrrrrr#",
+      "###############",
+      "#llllll#rrrrrR#",
+      ".#llll###rrRR#.",
+      "..####B#b####..",
+      "....#Bb#bb#....",
+      "....#Bb#bb#....",
+      ".....#B#b#.....",
+      "......###......",
+    ];
+    expect(lowDensityCells).toEqual(
+      new Map(
+        lowDensityRows.flatMap((row, y) =>
+          [...row].flatMap((cell, x): [string, string][] =>
+            cell === "." ? [] : [[`${x},${y}`, cell]],
+          ),
+        ),
+      ),
+    );
     // Every cell edge must land on the integer grid; a fractional coordinate is
     // the same smearing defect re-entering through the asset. The count keeps
     // the loop from passing vacuously, and the transform/<path> check pins the
     // geometry to plain rect attributes — an svgo pass or Figma re-export that
     // moves it into transforms or path data would otherwise hide fractional
     // coordinates from this guard entirely.
-    const coords = [...mark.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)];
-    expect(coords.length).toBeGreaterThan(100);
-    for (const coord of coords) {
-      expect(coord[1]).toMatch(/^\d+$/u);
+    for (const art of [mark, lowDensityMark]) {
+      const coords = [...art.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)];
+      expect(coords.length).toBeGreaterThan(100);
+      for (const coord of coords) {
+        expect(coord[1]).toMatch(/^\d+$/u);
+      }
+      expect(art).not.toMatch(/transform=|<path\b/u);
     }
-    expect(mark).not.toMatch(/transform=|<path\b/u);
 
     // The name is the 13×3 pixel wordmark (Figma Union 387:21624), not Geist
     // type, and currentColor at 40% so it tracks Light / Dark instead of the
     // design file's baked white.
     const wordmark = readSibling("../custom/SidebarBrandWordmark.tsx");
-    expect(wordmark).toContain("[@media(max-resolution:1.49dppx)]:h-[10px]");
+    expect(wordmark).toContain("data-fork-brand-wordmark");
+    expect(wordmark).toContain('preserveAspectRatio="xMidYMin meet"');
     expect(wordmark).toContain('viewBox="0 0 13 3"');
     expect(wordmark).toContain('shapeRendering="crispEdges"');
     expect(wordmark).toContain("text-sidebar-foreground/40");

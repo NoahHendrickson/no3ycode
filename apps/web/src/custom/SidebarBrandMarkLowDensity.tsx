@@ -7,7 +7,8 @@ export function SidebarBrandMarkLowDensity() {
   return (
     <svg
       aria-hidden
-      className="hidden h-4 w-[15px] shrink-0 [@media(max-resolution:1.49dppx)]:block"
+      className="hidden h-4 w-[15px] shrink-0"
+      data-fork-brand-art="low"
       preserveAspectRatio="xMidYMin meet"
       shapeRendering="crispEdges"
       viewBox="0 0 15 15"

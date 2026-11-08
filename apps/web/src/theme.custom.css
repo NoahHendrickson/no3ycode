@@ -2888,9 +2888,22 @@
 }
 /* fork:end fork-collapsed-thread-tabs */
 
-/* Under 1.5x a Phosphor outline is 1 device pixel and already anti-aliased; the
-   duotone wash beside it is what reads as blur. */
+/* Under 1.5x the brand swaps to art sized for whole device pixels at 1x, and icons lose
+   the duotone wash, which reads as blur beside a 1px anti-aliased outline. */
 @media (max-resolution: 1.49dppx) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-art="high"] {
+    display: none;
+  }
+
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-art="low"] {
+    display: block;
+  }
+
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-wordmark] {
+    width: 39px;
+    height: 10px;
+  }
+
   :root[data-fork="noahhendrickson-t3code"] svg.lucide [opacity="0.2"] {
     display: none;
   }

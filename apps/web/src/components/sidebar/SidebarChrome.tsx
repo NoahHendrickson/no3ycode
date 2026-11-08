@@ -120,7 +120,7 @@ export function SidebarBrandWidthProbe({
       <div className="flex items-center gap-2 pl-[var(--workspace-controls-left)]">
         <span className="size-[var(--workspace-titlebar-control-size)] shrink-0" />
         <span className="flex h-4 items-center gap-1 pr-4">
-          <SidebarBrandMark className="size-4 shrink-0" />
+          <SidebarBrandMark />
           <SidebarBrandWordmark />
         </span>
       </div>
@@ -148,7 +148,7 @@ function SidebarBrand() {
           foreground — not live APP_BASE_NAME type. The mark stays the 23-cell
           vector: a bitmap cannot resample that grid into 16px without smearing
           every cell. Inline so palettes can recolour its arms (Westworld). */}
-      <SidebarBrandMark className="size-4 shrink-0" />
+      <SidebarBrandMark />
       <SidebarBrandWordmark />
       {/* fork:end fork-app-identity */}
     </Link>

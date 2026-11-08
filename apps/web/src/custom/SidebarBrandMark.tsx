@@ -1,5 +1,3 @@
-import { cn } from "~/lib/utils";
-
 import { SidebarBrandMarkLowDensity } from "./SidebarBrandMarkLowDensity";
 
 /**
@@ -17,9 +15,15 @@ import { SidebarBrandMarkLowDensity } from "./SidebarBrandMarkLowDensity";
  * reason the guard spells out: a bitmap cannot land 23 cells on a 16px slot
  * without smearing every cell.
  */
-function SidebarBrandMarkHighDensity({ className }: { className?: string }) {
+function SidebarBrandMarkHighDensity() {
   return (
-    <svg aria-hidden className={className} shapeRendering="crispEdges" viewBox="0 0 23 23">
+    <svg
+      aria-hidden
+      className="size-4 shrink-0"
+      data-fork-brand-art="high"
+      shapeRendering="crispEdges"
+      viewBox="0 0 23 23"
+    >
       <g fill="#000000">
         <rect height="1" width="1" x="11" y="0" />
         <rect height="1" width="3" x="10" y="1" />
@@ -189,12 +193,10 @@ function SidebarBrandMarkHighDensity({ className }: { className?: string }) {
   );
 }
 
-export function SidebarBrandMark({ className }: { className?: string }) {
+export function SidebarBrandMark() {
   return (
     <>
-      <SidebarBrandMarkHighDensity
-        className={cn(className, "[@media(max-resolution:1.49dppx)]:hidden")}
-      />
+      <SidebarBrandMarkHighDensity />
       <SidebarBrandMarkLowDensity />
     </>
   );

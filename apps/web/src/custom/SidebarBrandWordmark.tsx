@@ -8,7 +8,8 @@ export function SidebarBrandWordmark() {
   return (
     <svg
       aria-hidden
-      className="h-2 w-[34.667px] shrink-0 text-sidebar-foreground/40 [@media(max-resolution:1.49dppx)]:h-[10px] [@media(max-resolution:1.49dppx)]:w-[39px]"
+      className="h-2 w-[34.667px] shrink-0 text-sidebar-foreground/40"
+      data-fork-brand-wordmark
       fill="currentColor"
       preserveAspectRatio="xMidYMin meet"
       shapeRendering="crispEdges"
