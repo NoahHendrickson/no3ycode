@@ -22,6 +22,7 @@ import { NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY, newAgentDraftProjectRef } from "./
 import {
   assignDraftProject,
   type DraftProjectTarget,
+  moveUnassignedDraft,
   readPendingDraftProjectKey,
 } from "./useNewAgentDraft";
 
@@ -270,5 +271,19 @@ describe("assignDraftProject", () => {
     release(null);
     await pick;
     expect(session()?.logicalProjectKey).toBe(NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY);
+  });
+});
+
+describe("moveUnassignedDraft", () => {
+  it("moves the draft to the chosen machine and keeps it unassigned", () => {
+    const remote = EnvironmentId.make("env-remote");
+    moveUnassignedDraft(draftId, remote);
+    expect(session()).toMatchObject({
+      environmentId: remote,
+      projectId: newAgentDraftProjectRef(remote).projectId,
+      logicalProjectKey: NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+      threadId: "thread-new-agent",
+      environmentSelection: "manual",
+    });
   });
 });

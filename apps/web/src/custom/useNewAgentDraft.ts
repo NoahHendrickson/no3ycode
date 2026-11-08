@@ -152,6 +152,21 @@ export async function startNewAgentDraft(
   }
 }
 
+/** Moves the unassigned draft to another machine. Its environment is where
+    "No project" opens and which copy of a multi-machine project a pick
+    resolves to, so choosing the machine first decides where the thread runs. */
+export function moveUnassignedDraft(draftId: DraftId, environmentId: EnvironmentId): void {
+  const { getDraftSession, setLogicalProjectDraftThreadId } = useComposerDraftStore.getState();
+  const session = getDraftSession(draftId);
+  if (!session || session.promotedTo != null) return;
+  setLogicalProjectDraftThreadId(
+    NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+    newAgentDraftProjectRef(environmentId),
+    draftId,
+    { environmentSelection: "manual", loadBalancedEnvironmentId: null },
+  );
+}
+
 /** What a pick needs to know about its target: the logical key the draft
     moves under and the member project whose defaults seed it. The pill
     passes a full `SidebarProjectPickerEntry`. */
