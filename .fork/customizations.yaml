@@ -284,7 +284,9 @@
     the build script makes passkey signing opt-in: it needs an Associated
     Domains profile and an RP domain whose
     apple-app-site-association lists the fork's team, and upstream's Clerk
-    domain only lists upstream's, so fork builds sign without it.
+    domain only lists upstream's, so fork builds sign without it. A second
+    fenced hunk drops binaries no packaged app loads, keeping the Windows
+    payload under upstream's file limit, which fails the release when exceeded.
   tier: 1
   files:
     - .github/workflows/fork-release.yml
@@ -295,10 +297,13 @@
     # ci.yml carries a fenced fork hunk: release_smoke lints both isolation
     # gate scripts on every PR, so a defect there costs a check, not a build.
     - .github/workflows/ci.yml
-    # Fenced: passkey signing only when a provisioning profile is configured.
+    # Fenced: passkey signing only when a provisioning profile is configured,
+    # and the dead binaries excluded from the packaged payload.
     - scripts/build-desktop-artifact.ts
+    - scripts/build-desktop-artifact.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkDesktopRelease.test.ts
+    - scripts/build-desktop-artifact.test.ts
 
 - id: fork-app-identity
   intent: >

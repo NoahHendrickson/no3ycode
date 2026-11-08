@@ -42,6 +42,9 @@ import {
   preflightWindowsDesktopBuild,
   renderMacPasskeyEntitlements,
   resolveMacFileExclusions,
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  createStageWorkspaceConfig,
+  // fork:end fork-desktop-release
   resolveMacWebAuthnEntitlements,
   resolveMacPasskeySigningConfiguration,
   resolveMergedStageDependencies,
@@ -757,6 +760,24 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       assert.isFalse(excludes("universal", file), file);
     }
   });
+
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  it("keeps binaries no packaged app loads out of the Windows payload", () => {
+    for (const file of [
+      "apps/desktop/prod-resources/resource-monitor/t3-resource-monitor.exe",
+      "apps/desktop/resources/resource-monitor/t3-resource-monitor.exe",
+    ]) {
+      assert.isTrue(
+        DESKTOP_FILE_EXCLUSIONS.some((glob) => NodePath.matchesGlob(file, glob.slice(1))),
+        file,
+      );
+    }
+    assert.deepStrictEqual(
+      createStageWorkspaceConfig({ platform: "win", arch: "x64" }).ignoredOptionalDependencies,
+      ["@yuuang/ffi-rs-win32-ia32-msvc"],
+    );
+  });
+  // fork:end fork-desktop-release
 
   it.effect("unpacks target Windows natives while excluding the other architecture", () =>
     Effect.scoped(

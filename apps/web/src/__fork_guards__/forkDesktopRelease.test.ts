@@ -126,6 +126,19 @@ describe("fork guard: fork-desktop-release", () => {
     expect(fence).toContain("T3CODE_MACOS_PROVISIONING_PROFILE?.trim()");
   });
 
+  it("keeps binaries no packaged app loads out of the Windows payload", () => {
+    // PR CI never packages Windows, so a sync dropping these fails the release, not a check.
+    const buildScript = NodeFS.readFileSync(
+      NodePath.join(repoRoot, "scripts/build-desktop-artifact.ts"),
+      "utf8",
+    );
+    expect(buildScript).toContain('"!apps/desktop/resources/resource-monitor/**/*"');
+    expect(buildScript).toContain('"!apps/desktop/prod-resources/resource-monitor/**/*"');
+    expect(buildScript).toContain(
+      'ignoredOptionalDependencies: ["@yuuang/ffi-rs-win32-ia32-msvc"]',
+    );
+  });
+
   it("publishes only after both platforms pass their gates", () => {
     // The gates are the only executable proof of the fork's data isolation —
     // v0.1.1 passed every static check while its server child opened the

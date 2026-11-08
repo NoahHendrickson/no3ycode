@@ -105,6 +105,9 @@ const StageWorkspaceConfig = Schema.Struct({
   allowBuilds: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)),
   patchedDependencies: Schema.optional(Schema.Record(Schema.String, Schema.String)),
   overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  ignoredOptionalDependencies: Schema.optional(Schema.Array(Schema.String)),
+  // fork:end fork-desktop-release
   packageExtensions: Schema.optional(
     Schema.Record(
       Schema.String,
@@ -1021,6 +1024,13 @@ export const DESKTOP_FILE_EXCLUSIONS = [
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz.sha256",
   "!apps/desktop/gnome-extension",
   "!apps/desktop/gnome-extension/**/*",
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  // Packaged apps run the monitor from extraResources; asar copies only spend Windows' file budget.
+  "!apps/desktop/resources/resource-monitor",
+  "!apps/desktop/resources/resource-monitor/**/*",
+  "!apps/desktop/prod-resources/resource-monitor",
+  "!apps/desktop/prod-resources/resource-monitor/**/*",
+  // fork:end fork-desktop-release
 ] as const;
 // Windows terminal helpers cannot run on macOS and slow signing and notarization.
 export const MAC_FILE_EXCLUSIONS = [
@@ -1649,6 +1659,12 @@ export function createStageWorkspaceConfig(input: {
       ? { patchedDependencies }
       : {}),
     ...(overrides && Object.keys(overrides).length > 0 ? { overrides } : {}),
+    // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+    // The package declares cpu [x64, ia32], so x64 installs get a binary only a 32-bit process loads.
+    ...(platform === "win"
+      ? { ignoredOptionalDependencies: ["@yuuang/ffi-rs-win32-ia32-msvc"] }
+      : {}),
+    // fork:end fork-desktop-release
     packageExtensions: STAGE_PACKAGE_EXTENSIONS,
   };
 }
