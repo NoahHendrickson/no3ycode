@@ -12,7 +12,8 @@
  *   2. It never publishes to a package registry. Fork builds carry upstream's
  *      package names, so an `npm publish` here would push fork artifacts to
  *      upstream's namespace.
- *   3. Every release is signed and notarized, so installs can update in place.
+ *   3. Every macOS build is signed and notarized, so installs can update in place.
+ *   4. Windows publishes into the same release, behind its own isolation gate.
  */
 
 import * as NodeFS from "node:fs";
@@ -140,6 +141,40 @@ describe("fork guard: fork-desktop-release", () => {
     expect(workflow.indexOf("Launch isolation check")).toBeLessThan(
       workflow.indexOf("Collect release assets"),
     );
+  });
+
+  it("publishes Windows into the same release, behind its own isolation gate", () => {
+    // Each platform's updater reads only the repository's latest release, so
+    // a release missing latest.yml strands every Windows install. Publishing
+    // must wait on both builds, and the Windows gate runs unconditionally.
+    const workflow = readForkRelease();
+    expect(workflow).toContain("--platform win");
+    expect(workflow).toContain("--target nsis");
+    expect(workflow).toContain("needs: [preflight, mac, windows]");
+    expect(readStepBlock(workflow, "Publish GitHub Release")).toContain("release-publish/*.exe");
+    const gate = readStepBlock(workflow, "Windows launch isolation check");
+    expect(gate).toContain(
+      ".github/scripts/launch-isolation-check-windows.ps1 -ReleaseDir release",
+    );
+    expect(gate).not.toMatch(/^\s+if:/mu);
+    expect(workflow.indexOf("Windows launch isolation check")).toBeLessThan(
+      workflow.indexOf("Upload Windows release assets"),
+    );
+    const ci = NodeFS.readFileSync(NodePath.join(repoRoot, ".github/workflows/ci.yml"), "utf8");
+    expect(ci).toContain(".github/scripts/launch-isolation-check-windows.ps1");
+    const script = NodeFS.readFileSync(
+      NodePath.join(repoRoot, ".github/scripts/launch-isolation-check-windows.ps1"),
+      "utf8",
+    );
+    expect(script).toContain('"/D=$installDir"');
+    expect(script).toContain("$env:USERPROFILE = $scratch");
+    expect(script).toContain("$env:APPDATA = $roaming");
+    expect(script).toContain('Join-Path $scratch ".t3-fork\\userdata\\statev2.sqlite"');
+    expect(script).toContain('Fail-Isolation "the build created ~/.t3"');
+    expect(script).toContain(
+      '$upstreamNames = @(".t3", "t3code", "t3code-v2", "com.t3tools.t3code")',
+    );
+    expect(script).toContain('Join-Path $roaming "t3code-fork-v2"');
   });
 
   it("keeps the isolation script's assertions intact", () => {
