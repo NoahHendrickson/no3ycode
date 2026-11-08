@@ -466,8 +466,8 @@
    `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
 
    Gated on the marker `custom/forkSidebarVibrancy.ts` stamps from what the main
-   process actually applied, never on the palette alone: only a macOS desktop
-   window that really took the vibrancy material may go transparent. A web or
+   process actually applied, never on the palette alone: only a desktop window
+   that really took the native material may go transparent. A web or
    Linux client on Glass never matches these rules and keeps the solid
    panel above.
 

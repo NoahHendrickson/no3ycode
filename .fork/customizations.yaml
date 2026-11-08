@@ -1801,7 +1801,12 @@
     glass is on. apps/desktop/src/fork/ForkSidebarVibrancy.ts registers a
     fork-only IPC method on the channel fork:set-sidebar-vibrancy that calls
     setVibrancy + setBackgroundColor on the window that asked, and returns what it
-    actually applied — false on any non-darwin platform.
+    actually applied — false anywhere with no material.
+
+    Windows 11 22H2 and up get the acrylic system backdrop through
+    setBackgroundMaterial, applied at runtime only. "none" is not a no-op: it
+    resets the DWM frame and caption and paints the window white, so a window
+    that never had Glass is never touched.
 
     The payload carries only `enabled`. The restore colour is resolved in the
     main process from nativeTheme, never sent by the renderer: the renderer
