@@ -1021,6 +1021,15 @@ export const DESKTOP_FILE_EXCLUSIONS = [
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz.sha256",
   "!apps/desktop/gnome-extension",
   "!apps/desktop/gnome-extension/**/*",
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  // Packaged apps run the monitor from extraResources; asar copies only spend Windows' file budget.
+  "!apps/desktop/resources/resource-monitor",
+  "!apps/desktop/resources/resource-monitor/**/*",
+  "!apps/desktop/prod-resources/resource-monitor",
+  "!apps/desktop/prod-resources/resource-monitor/**/*",
+  // The package declares cpu [x64, ia32], so x64 installs get a binary only a 32-bit process loads.
+  "!**/node_modules/@yuuang/ffi-rs-win32-ia32-msvc/**/*",
+  // fork:end fork-desktop-release
 ] as const;
 // Windows terminal helpers cannot run on macOS and slow signing and notarization.
 export const MAC_FILE_EXCLUSIONS = [
@@ -1064,6 +1073,10 @@ export const WINDOWS_SERVER_ASAR_IGNORE_GLOBS = [
   "**/node_modules/.bin",
   "**/node_modules/.bin/**",
   "**/*.map",
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  "**/node_modules/@yuuang/ffi-rs-win32-ia32-msvc",
+  "**/node_modules/@yuuang/ffi-rs-win32-ia32-msvc/**",
+  // fork:end fork-desktop-release
 ] as const;
 
 export function resolveWindowsServerAsarIgnoreGlobs(arch: typeof BuildArch.Type) {

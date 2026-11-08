@@ -758,6 +758,28 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
     }
   });
 
+  // fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+  it("keeps binaries no packaged app loads out of the Windows payload", () => {
+    const excludedFromApp = (file: string) =>
+      DESKTOP_FILE_EXCLUSIONS.some((glob) => NodePath.matchesGlob(file, glob.slice(1)));
+    const excludedFromSidecar = (file: string) =>
+      WINDOWS_SERVER_ASAR_IGNORE_GLOBS.some((glob) => NodePath.matchesGlob(file, glob));
+    const ia32Addon = "node_modules/@yuuang/ffi-rs-win32-ia32-msvc/ffi-rs.win32-ia32-msvc.node";
+    const x64Addon = "node_modules/@yuuang/ffi-rs-win32-x64-msvc/ffi-rs.win32-x64-msvc.node";
+
+    for (const file of [
+      ia32Addon,
+      "apps/desktop/prod-resources/resource-monitor/t3-resource-monitor.exe",
+      "apps/desktop/resources/resource-monitor/t3-resource-monitor.exe",
+    ]) {
+      assert.isTrue(excludedFromApp(file), file);
+    }
+    assert.isTrue(excludedFromSidecar(ia32Addon));
+    assert.isFalse(excludedFromApp(x64Addon));
+    assert.isFalse(excludedFromSidecar(x64Addon));
+  });
+  // fork:end fork-desktop-release
+
   it.effect("unpacks target Windows natives while excluding the other architecture", () =>
     Effect.scoped(
       Effect.gen(function* () {
