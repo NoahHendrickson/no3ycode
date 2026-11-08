@@ -65,7 +65,7 @@
        property substitutes var() where it is declared, so a copy here would
        freeze send's hues onto stop. The halo they share is --fork-glass-halo.
        The floor is only defined under desktop vibrancy; without the fallback,
-       web and non-macOS Glass would void send's whole box-shadow. The neutral
+       web and Linux Glass would void send's whole box-shadow. The neutral
        fallback has no hue, so its highlights read white. */
     --fork-composer-action-glint: oklch(from var(--fork-popup-glass-floor, rgb(22 22 22)) 0.9 c h);
     --fork-composer-action-light: oklch(

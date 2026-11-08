@@ -1,9 +1,9 @@
 /**
  * Fork sidebar glass — see `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
  *
- * Asks the desktop shell for native macOS vibrancy and records what it actually
- * got. The renderer never assumes the glass turned on: the main process resolves
- * `false` off macOS and with no bridge present, and only that resolved value
+ * Asks the desktop shell for the native window material and records what it
+ * actually got. The renderer never assumes the glass turned on: the main process
+ * resolves `false` where no material exists, as does a missing bridge, and only that resolved value
  * stamps the DOM marker. The CSS gate hangs off the marker rather than off the
  * palette, so a Linux or web client keeps solid fills instead of painting holes
  * into an opaque window.
