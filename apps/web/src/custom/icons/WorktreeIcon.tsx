@@ -25,8 +25,9 @@ export function WorktreeIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      // The lucide class contract the Phosphor shim also keeps: nothing styles
-      // off it, but tests identify a rendered icon by it.
+      // The lucide class contract the Phosphor shim also keeps: theme.custom.css's
+      // low-density rule hides the duotone wash through it, and tests identify a
+      // rendered icon by it.
       {...props}
       className={
         props.className ? `lucide lucide-worktree ${props.className}` : "lucide lucide-worktree"

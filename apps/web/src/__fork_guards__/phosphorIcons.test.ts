@@ -16,7 +16,7 @@ import * as NodeURL from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
-import { XIcon } from "~/custom/icons/lucide-phosphor";
+import { SearchIcon, XIcon } from "~/custom/icons/lucide-phosphor";
 
 const webRoot = NodePath.resolve(NodeURL.fileURLToPath(new URL(".", import.meta.url)), "../..");
 const repoRoot = NodePath.resolve(webRoot, "../..");
@@ -122,6 +122,10 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const shim = read(SHIM_PATH);
     expect(shim).toContain('from "@phosphor-icons/react"');
     expect(shim).toContain('"duotone"');
+    const lowDensity = /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(
+      read("src/theme.custom.css"),
+    );
+    expect(lowDensity?.[1]).toMatch(/svg\.lucide \[opacity="0\.2"\] \{\s*display: none;/u);
     // The shim must not re-import the package it stands in for — that would
     // alias lucide-react to itself and recurse.
     expect(shim).not.toMatch(/^\s*(?:import|export)\b[^\n]*from "lucide-react"/m);
@@ -201,6 +205,8 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const html = renderToStaticMarkup(createElement(XIcon));
     expect(html).toContain("<svg");
     expect(html).toContain("lucide lucide-x");
+    // The low-density rule in theme.custom.css keys on this attribute.
+    expect(renderToStaticMarkup(createElement(SearchIcon))).toContain('opacity="0.2"');
     // A caller's own className must not displace the contract classes.
     expect(renderToStaticMarkup(createElement(XIcon, { className: "size-4" }))).toContain(
       "lucide lucide-x size-4",
