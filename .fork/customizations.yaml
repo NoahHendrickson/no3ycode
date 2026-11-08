@@ -496,6 +496,7 @@
     # packaged Linux fork release.
     - apps/desktop/src/app/DesktopLinuxUrlHandler.ts
     - apps/desktop/src/backend/DesktopBackendConfiguration.ts
+    - apps/desktop/src/backend/DesktopBackendConfiguration.test.ts
     # The packaged V8 compile cache lives outside $HOME on macOS/Windows, so
     # launch-isolation-check.sh cannot see it sharing upstream's directory.
     - apps/desktop/src/compileCache.ts
