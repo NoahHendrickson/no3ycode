@@ -41,6 +41,11 @@ const ALIAS_PREFIX = "~/";
 /** Name of the shadow tree directory, relative to `src`. */
 export const SHADOW_DIR = "overrides";
 
+/** Vite ids use forward slashes; a Windows backslash id would bundle the same module twice. */
+function toModuleId(path: string): string {
+  return path.split(NodePath.sep).join("/");
+}
+
 /** Splits `./foo.css?inline` into its path and the `?…`/`#…` suffix Vite appends. */
 function splitSuffix(specifier: string): { path: string; suffix: string } {
   const index = specifier.search(/[#?]/);
@@ -132,7 +137,7 @@ export function resolveForkOverride(
       NodePath.join(options.srcDir, specifierPath.slice(UPSTREAM_PREFIX.length)),
       options.fileExists,
     );
-    return upstream === null ? null : upstream + suffix;
+    return upstream === null ? null : toModuleId(upstream) + suffix;
   }
 
   const srcRelative = toSrcRelativePath(specifierPath, importer, options.srcDir);
@@ -166,7 +171,7 @@ export function resolveForkOverride(
     override === NodePath.resolve(splitSuffix(importer).path);
 
   if (override !== null && !isSelfImport) {
-    return override + suffix;
+    return toModuleId(override) + suffix;
   }
 
   // Fall back to upstream explicitly rather than returning null, in the cases
@@ -183,7 +188,7 @@ export function resolveForkOverride(
       NodePath.join(options.srcDir, logicalPath),
       options.fileExists,
     );
-    return upstream === null ? null : upstream + suffix;
+    return upstream === null ? null : toModuleId(upstream) + suffix;
   }
 
   return null;
