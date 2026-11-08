@@ -56,3 +56,23 @@ export function isUnassignedDraft(
 ): boolean {
   return session?.logicalProjectKey === NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY;
 }
+
+/** Where "No project" opens. A New agent draft runs on the machine chosen for
+    it (custom/DraftMachineChip) when that machine has a scratch folder;
+    otherwise upstream's rule applies, which prefers the primary machine. */
+export function resolveNoProjectEnvironmentId(input: {
+  readonly draftIsUnassigned: boolean;
+  readonly draftEnvironmentId: EnvironmentId | null;
+  readonly primaryEnvironmentId: EnvironmentId | null;
+  readonly scratchWorkspaceRootFor: (environmentId: EnvironmentId | null) => string | null;
+  readonly scratchEnvironmentId: (fallback: EnvironmentId | null) => EnvironmentId | null;
+}): EnvironmentId | null {
+  if (
+    input.draftIsUnassigned &&
+    input.draftEnvironmentId !== null &&
+    input.scratchWorkspaceRootFor(input.draftEnvironmentId) !== null
+  ) {
+    return input.draftEnvironmentId;
+  }
+  return input.scratchEnvironmentId(input.draftEnvironmentId ?? input.primaryEnvironmentId);
+}
