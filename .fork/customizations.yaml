@@ -634,10 +634,14 @@
     lucide's 2px stroke. The shim also reproduces lucide's `lucide lucide-<name>`
     SVG classes, because upstream tests assert them to identify which icon
     rendered — honouring the contract keeps those tests passing unmodified
-    instead of forcing Tier 4 edits into upstream test files.
+    instead of forcing Tier 4 edits into upstream test files. Under 1.5x
+    device pixels theme.custom.css hides the duotone wash, which reads as blur
+    beside a 1px anti-aliased outline.
   tier: 1
   files:
     - apps/web/src/custom/icons/lucide-phosphor.tsx
+    # Shared; this entry owns only the low-density duotone rule.
+    - apps/web/src/theme.custom.css
     # Project icons by name (upstream #9137) resolve from the shim's own
     # `icons` table, so the picker only offers names that render.
     - apps/web/src/overrides/lib/lucideIconByName.ts
@@ -2545,7 +2549,10 @@
     t3-fork 364:11245: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
     inline SVG whose arm colours are --fork-brand-mark-* variables with the
     design's colours as fallbacks, so a palette can recolour it), a 4px gap, then
-    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. The link
+    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. Under 1.5x
+    device pixels the 23 cells cannot land on 16 pixels, so
+    SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
+    wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
     carries its own display gate, hidden below 48rem and a flex row above,
     because upstream 9885a845c deleted the .sidebar-brand stylesheet rule that
     used to supply it; without the inline flex the block-level mark pushed the
@@ -2620,6 +2627,7 @@
     - apps/web/src/custom/useScrollGutterWidth.ts
     - apps/web/src/custom/SidebarStageDitherArt.tsx
     - apps/web/src/custom/SidebarBrandMark.tsx
+    - apps/web/src/custom/SidebarBrandMarkLowDensity.tsx
     - apps/web/src/custom/SidebarBrandWordmark.tsx
     - apps/web/src/custom/assets/sidebar-stage-dither-dev.png
     - apps/web/src/theme.custom.css

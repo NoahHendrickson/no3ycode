@@ -2887,3 +2887,11 @@
   --workspace-controls-top: 0px;
 }
 /* fork:end fork-collapsed-thread-tabs */
+
+/* Under 1.5x a Phosphor outline is 1 device pixel and already anti-aliased; the
+   duotone wash beside it is what reads as blur. */
+@media (max-resolution: 1.49dppx) {
+  :root[data-fork="noahhendrickson-t3code"] svg.lucide [opacity="0.2"] {
+    display: none;
+  }
+}

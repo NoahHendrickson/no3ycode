@@ -283,6 +283,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // through the --fork-brand-mark-* variables (Westworld does). The design's
     // own colours ride along as the var() fallbacks; the outline is literal.
     const mark = readSibling("../custom/SidebarBrandMark.tsx");
+    const lowDensityMark = readSibling("../custom/SidebarBrandMarkLowDensity.tsx");
     expect(chrome).toContain('<SidebarBrandMark className="size-4 shrink-0" />');
     expect(chrome).not.toContain("sidebar-brand-mark.svg");
     expect(mark).toContain('viewBox="0 0 23 23"');
@@ -299,8 +300,21 @@ describe("fork guard: fork-sidebar-chrome", () => {
       ["bottom-light", "#ffd233"],
     ]) {
       expect(mark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
+      expect(lowDensityMark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
     }
     expect(mark).toContain('<g fill="#000000">');
+    // Under 1.5x the 15-cell redraw replaces the 23-cell art. At 1x that is one
+    // device pixel per cell, and three per cell for the wordmark.
+    expect(mark).toContain("[@media(max-resolution:1.49dppx)]:hidden");
+    expect(lowDensityMark).toContain('viewBox="0 0 15 15"');
+    // Even-height boxes inside the 16px clip, so centring lands on a whole pixel.
+    expect(lowDensityMark).toContain("h-4 w-[15px]");
+    expect(lowDensityMark).toContain('preserveAspectRatio="xMidYMin meet"');
+    expect(lowDensityMark).toContain("[@media(max-resolution:1.49dppx)]:block");
+    expect(lowDensityMark).toContain('shapeRendering="crispEdges"');
+    for (const coord of lowDensityMark.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)) {
+      expect(coord[1]).toMatch(/^\d+$/u);
+    }
     // Every cell edge must land on the integer grid; a fractional coordinate is
     // the same smearing defect re-entering through the asset. The count keeps
     // the loop from passing vacuously, and the transform/<path> check pins the
@@ -318,6 +332,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // type, and currentColor at 40% so it tracks Light / Dark instead of the
     // design file's baked white.
     const wordmark = readSibling("../custom/SidebarBrandWordmark.tsx");
+    expect(wordmark).toContain("[@media(max-resolution:1.49dppx)]:h-[10px]");
     expect(wordmark).toContain('viewBox="0 0 13 3"');
     expect(wordmark).toContain('shapeRendering="crispEdges"');
     expect(wordmark).toContain("text-sidebar-foreground/40");

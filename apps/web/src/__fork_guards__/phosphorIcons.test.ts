@@ -122,6 +122,9 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const shim = read(SHIM_PATH);
     expect(shim).toContain('from "@phosphor-icons/react"');
     expect(shim).toContain('"duotone"');
+    expect(read("src/theme.custom.css")).toMatch(
+      /@media \(max-resolution: 1\.49dppx\) \{\s*:root\[data-fork="noahhendrickson-t3code"\] svg\.lucide \[opacity="0\.2"\] \{\s*display: none;/u,
+    );
     // The shim must not re-import the package it stands in for — that would
     // alias lucide-react to itself and recurse.
     expect(shim).not.toMatch(/^\s*(?:import|export)\b[^\n]*from "lucide-react"/m);

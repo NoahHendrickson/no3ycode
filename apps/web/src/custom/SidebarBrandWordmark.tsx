@@ -1,15 +1,16 @@
 /**
  * Pixel "no3y" wordmark from Figma t3-fork node 364:11245 (Union 387:21624),
- * transcribed cell for cell from the designer's Union.svg export.
- * A 13×3 cell grid drawn at 8px tall, currentColor at 40% so Light and Dark
- * both keep the lockup's muted name without a baked-in white.
+ * transcribed cell for cell from the designer's Union.svg export. 13×3 cells at
+ * 8px tall, or 39×9 under 1.5x (3 device pixels per cell at 1x). currentColor
+ * at 40% so Light and Dark keep the muted name without a baked-in white.
  */
 export function SidebarBrandWordmark() {
   return (
     <svg
       aria-hidden
-      className="h-2 w-[34.667px] shrink-0 text-sidebar-foreground/40"
+      className="h-2 w-[34.667px] shrink-0 text-sidebar-foreground/40 [@media(max-resolution:1.49dppx)]:h-[10px] [@media(max-resolution:1.49dppx)]:w-[39px]"
       fill="currentColor"
+      preserveAspectRatio="xMidYMin meet"
       shapeRendering="crispEdges"
       viewBox="0 0 13 3"
     >
