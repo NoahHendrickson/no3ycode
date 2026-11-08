@@ -18,6 +18,7 @@ import * as Scheduler from "../scheduling/Scheduler.ts";
 import * as GitHubRequestPolicy from "@t3tools/source-control-github/server/GitHubRequestPolicy";
 import * as GitHubRest from "@t3tools/source-control-github/server/GitHubRest";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
+import * as ManagedPolicy from "../policy/ManagedPolicy.ts";
 import * as VcsProcess from "../vcs/VcsProcess.ts";
 import * as Automation from "./GitHubPrAutomation.ts";
 import * as ScheduledTaskService from "./ScheduledTaskService.ts";
@@ -83,6 +84,8 @@ const withService = <A, E>(
             autoPull: false,
             faviconPath: null,
             projectIcon: null,
+            pinnedAt: null,
+            archivedAt: null,
             scripts: [],
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -145,6 +148,7 @@ const withService = <A, E>(
     const deps = Layer.mergeAll(
       NodePlatformCrypto.layer,
       Scheduler.layer,
+      ManagedPolicy.layerTest(),
       Layer.effect(Automation.GitHubPrAutomation, Automation.make).pipe(Layer.provide(external)),
       Layer.mock(ThreadLaunchService.ThreadLaunchService)({
         launch: (request) =>
@@ -288,6 +292,22 @@ it.effect(
         { gate },
       );
     }),
+);
+
+it.effect("starts every PR review in a new thread when a bound task becomes a GitHub one", () =>
+  withService(({ service }) =>
+    Effect.gen(function* () {
+      yield* service.upsert(
+        input({
+          schedule: { type: "interval", everyMs: 60_000 },
+          threadId: "thread-bound",
+        }),
+      );
+      const { task } = yield* service.upsert(input());
+      assert.equal(task.threadId, null);
+      assert.equal(task.threadMode, "new_thread");
+    }),
+  ),
 );
 
 it.effect("routes a PR with its trigger when the task was stored with a dedupe", () =>

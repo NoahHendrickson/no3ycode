@@ -25,7 +25,7 @@ import {
   type ProviderDriverKind,
   type ResolvedKeybindingsConfig,
 } from "@t3tools/contracts";
-import { memo, useRef, useState, type ReactNode } from "react";
+import { createContext, memo, useRef, useState, type ReactNode } from "react";
 import { Badge } from "../ui/badge";
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
@@ -86,6 +86,12 @@ function lockBackgroundScroll(popup: HTMLElement | null) {
     body.style.paddingRight = previousBodyPaddingRight;
   };
 }
+
+/* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+   Upstream's docked effort column (ComposerModelEffort) imports this; the fork never docks
+   one, so nothing provides it and the column reads the default. */
+export const DockedPickerContext = createContext<{ modelLabel: string }>({ modelLabel: "" });
+/* fork:end fork-model-picker */
 
 export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   environmentId: EnvironmentId | null;
@@ -272,6 +278,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
                       driverKind={selection.entry.driverKind}
                       displayName={selection.entry.displayName}
                       accentColor={selection.entry.accentColor}
+                      acpRegistryAgentId={selection.entry.acpRegistryAgentId}
+                      acpRegistryIconUrl={selection.entry.acpRegistryIconUrl}
                       className="size-4 rounded-full bg-(--chat-composer-glass-surface,var(--background)) ring-2 ring-(--chat-composer-glass-surface,var(--background))"
                       iconClassName="size-4"
                     />
