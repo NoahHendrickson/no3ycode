@@ -1,8 +1,10 @@
+// @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork-owned desktop IPC — see `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
  *
- * Turns native macOS vibrancy on and off for the window that asks, so the
- * Glass sidebar can show the desktop wallpaper. Only the main window and the
+ * Turns the native window material (macOS vibrancy, Windows 11 acrylic) on and
+ * off for the window that asks, so the Glass sidebar can show what is behind
+ * the app. Only the main window and the
  * side chat (fork-side-chat) run the fork's renderer and its palette sync; the
  * preview picture-in-picture window and the WSL splash carry their own fills
  * and none of the fork's CSS, so they never ask. Deliberately kept out of
@@ -10,10 +12,12 @@
  * reaches it through the fork's own `forkDesktopBridge` key, so an upstream
  * sync never has to merge a contract this fork added.
  *
- * macOS only. Every other platform resolves `false` and leaves the window
+ * Every other platform resolves `false` and leaves the window
  * opaque, which is why the renderer treats the resolved value — not the
  * requested one — as the answer to "is glass on right now".
  */
+import * as NodeOS from "node:os";
+
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -21,9 +25,22 @@ import * as Schema from "effect/Schema";
 import * as Electron from "electron";
 
 import * as DesktopIpc from "../ipc/DesktopIpc.ts";
-import { FORK_VIBRANCY_MATERIAL, forkSenderWindow, setForkGlassActive } from "./ForkGlassState.ts";
+import {
+  FORK_VIBRANCY_MATERIAL,
+  forkSenderWindow,
+  isForkGlassActive,
+  setForkGlassActive,
+} from "./ForkGlassState.ts";
 
 const FORK_SET_SIDEBAR_VIBRANCY_CHANNEL = "fork:set-sidebar-vibrancy";
+
+/** Windows' counterpart to the macOS material: both sample what is behind the window. */
+const FORK_WINDOWS_BACKDROP_MATERIAL = "acrylic";
+
+/** DWM system backdrops need Windows 11 22H2, build 22621; `release` is `os.release()`. */
+function supportsWindowsBackdrop(release: string): boolean {
+  return Number(release.split(".")[2]) >= 22621;
+}
 
 /**
  * The window is created with an opaque `backgroundColor`. Vibrancy only reaches
@@ -56,9 +73,12 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
   handler: Effect.fn("desktop.ipc.fork.setSidebarVibrancy")(function* (request, event) {
     const platform = yield* HostProcess.Platform;
 
-    // Vibrancy is a macOS material. Asking for it anywhere else is not an
-    // error — the palette is still selectable, it just paints solid.
-    const enabled = request.enabled && platform === "darwin";
+    // Asking where no material exists is not an error: the palette is still
+    // selectable, it just paints solid.
+    const enabled =
+      request.enabled &&
+      (platform === "darwin" ||
+        (platform === "win32" && supportsWindowsBackdrop(NodeOS.release())));
 
     // The asking window only, not syncAllAppearance. That walks every
     // BrowserWindow, which includes the picture-in-picture preview window
@@ -71,8 +91,16 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
     if (painted) {
       // Set before painting, so an appearance sync racing this call sees the
       // new owner and does not repaint the fill out from under the material.
+      const hadGlass = isForkGlassActive(target);
       setForkGlassActive(target, enabled);
-      target.setVibrancy(enabled ? FORK_VIBRANCY_MATERIAL : null);
+      if (platform !== "win32") {
+        // Every macOS window is built with the view, so even a never-glass window clears it.
+        target.setVibrancy(enabled ? FORK_VIBRANCY_MATERIAL : null);
+      } else if (enabled !== hadGlass) {
+        // Every call reruns DWM's frame setup and "none" also paints white, so
+        // only a real change of glass may reach it.
+        target.setBackgroundMaterial(enabled ? FORK_WINDOWS_BACKDROP_MATERIAL : "none");
+      }
       target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
     }
 

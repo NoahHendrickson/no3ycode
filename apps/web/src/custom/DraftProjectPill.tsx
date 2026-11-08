@@ -42,7 +42,7 @@ import {
   MenuTrigger,
 } from "~/components/ui/menu";
 import { toastManager } from "~/components/ui/toast";
-import type { DraftId } from "~/composerDraftStore";
+import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
 import { cn } from "~/lib/utils";
@@ -64,6 +64,7 @@ import {
   FolderPlusIcon,
   MessageSquareDashedIcon,
 } from "./icons/lucide-phosphor";
+import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
 import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
 
 /** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
@@ -167,9 +168,16 @@ export function DraftProjectPill(props: {
   const assignDraftProject = useAssignDraftProject();
   const pendingProjectKey = useDraftProjectAssignmentPending(props.draftId);
   const openAddProject = useCallback(() => openCommandPalette({ open: "add-project" }), []);
-  const noProjectEnvironmentId = scratchEnvironmentId(
-    props.activeProjectRef?.environmentId ?? primaryEnvironmentId,
+  const draftIsUnassigned = useComposerDraftStore((store) =>
+    props.draftId ? isUnassignedDraft(store.getDraftSession(props.draftId)) : false,
   );
+  const noProjectEnvironmentId = resolveNoProjectEnvironmentId({
+    draftIsUnassigned,
+    draftEnvironmentId: props.activeProjectRef?.environmentId ?? null,
+    primaryEnvironmentId,
+    scratchWorkspaceRootFor,
+    scratchEnvironmentId,
+  });
 
   const environmentLabelById = useMemo(
     () =>

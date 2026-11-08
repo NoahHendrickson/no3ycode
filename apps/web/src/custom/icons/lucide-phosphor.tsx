@@ -314,8 +314,9 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
  * fills, so a stray `strokeWidth` is inert rather than wrong.
  *
  * `lucideName` reproduces the `lucide lucide-<name>` classes lucide stamps on
- * every icon (see its `createLucideIcon`). Nothing in the app styles off them,
- * but upstream tests assert them to identify which icon rendered — e.g.
+ * every icon (see its `createLucideIcon`). theme.custom.css's low-density rule
+ * hides the duotone wash through them, and upstream tests assert them to
+ * identify which icon rendered — e.g.
  * `MessagesTimeline.test.tsx` expects `lucide-x` on a failed tool call. Keeping
  * the class contract here means those tests, and future ones like them, pass
  * unmodified: the swap stays a Tier 1 customization instead of leaking edits

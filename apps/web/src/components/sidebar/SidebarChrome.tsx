@@ -144,7 +144,7 @@ export function SidebarBrandWidthProbe({
           ) : null}
         </span>
         <span className="flex h-4 items-center gap-1 pr-4">
-          <SidebarBrandMark className="size-4 shrink-0" />
+          <SidebarBrandMark />
           <SidebarBrandWordmark />
         </span>
       </div>
@@ -199,9 +199,9 @@ function SidebarBrand() {
   return (
     /* The link carries its own display gate (hidden below md, flex row above)
        since upstream 9885a845c deleted the .sidebar-brand stylesheet rule that
-       used to supply it. The lockup is a fixed 16px mark + 4px + 8px wordmark,
-       both shrink-0; the link may still shrink so a 208px sidebar cannot
-       overflow the header. */
+       used to supply it. The lockup is a fixed mark + 4px + wordmark, sized per
+       density and both shrink-0; the link may still shrink so a 208px sidebar
+       cannot overflow the header. */
     <Link
       aria-label="no3y Code home"
       // oxlint-disable-next-line shadcn/no-unknown-classes -- a theme.custom.css hook
@@ -211,10 +211,10 @@ function SidebarBrand() {
       {/* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity
           The borrowed T3 wordmark stays gone. Figma t3-fork 364:11245 is a 16px
           pixel mark, a 4px gap, then the 13×3 "no3y" wordmark at 8px / 40%
-          foreground — not live APP_BASE_NAME type. The mark stays the 23-cell
-          vector: a bitmap cannot resample that grid into 16px without smearing
-          every cell. Inline so palettes can recolour its arms (Westworld). */}
-      <SidebarBrandMark className="size-4 shrink-0" />
+          foreground — not live APP_BASE_NAME type. From 1.5x the mark is the
+          23-cell vector and below that a 15-cell redraw: a bitmap cannot resample
+          that grid without smearing. Inline so palettes can recolour its arms. */}
+      <SidebarBrandMark />
       <SidebarBrandWordmark />
       {/* fork:end fork-app-identity */}
     </Link>

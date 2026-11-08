@@ -368,6 +368,9 @@ describe("DesktopBackendConfiguration", () => {
       );
 
       assert.equal(config.runningDistro, "Ubuntu");
+      /* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity */
+      assert.equal(config.bootstrap.t3Home, "~/.t3-fork");
+      /* fork:end fork-app-identity */
       assert.deepEqual(config.args.slice(0, 2), ["-d", "Ubuntu"]);
       assert.deepEqual(observedDistros, ["Ubuntu", "Ubuntu", "Ubuntu"]);
       assert.isTrue(Option.isNone(config.preflightFailure));

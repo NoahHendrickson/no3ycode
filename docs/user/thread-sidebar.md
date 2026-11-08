@@ -113,6 +113,8 @@ default order until the server is updated.
 away; nothing appears in the thread list yet. To send, choose a project from the first pill above
 the composer (ahead of the workspace and branch pills); the draft then takes its place under that
 project. Change the project from the same pill before sending and the draft moves with it.
+With more than one machine connected, a machine pill next to it picks where the agent runs;
+choose the machine before the project, and "No project" and projects on several machines follow it.
 Clicking **New agent** again returns to the draft you left open.
 
 The **Threads** row sorts and filters the list: the sort button picks the project order, and

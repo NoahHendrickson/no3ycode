@@ -270,22 +270,30 @@
     properties matter more than the build itself: it runs on workflow_dispatch
     alone, so no sync, tag or cron can ever publish from the fork by surprise;
     it must never grow a package-registry publish step, because the fork
-    builds under upstream's package names; and every release is signed,
+    builds under upstream's package names; and every macOS build is signed,
     because installs update in place through Squirrel.Mac, which rejects an
-    update whose signature does not match the running app. Releases default to
-    non-prerelease since the updater only reads the repository's latest
-    release. The fenced hunk in the build script makes passkey signing opt-in:
-    it needs an Associated Domains profile and an RP domain whose
+    update whose signature does not match the running app. It also builds an
+    unsigned Windows x64 NSIS installer natively on a Windows runner, behind
+    its own launch isolation gate (launch-isolation-check-windows.ps1), and
+    publishes both platforms into one release: each updater reads only the
+    repository's latest release, so a release missing latest.yml or
+    latest-mac.yml strands that platform's installs. Unsigned Windows
+    installs still update in place because electron-updater only checks a
+    signature when the app was built with a publisher name. Releases default
+    to non-prerelease for the same latest-release reason. The fenced hunk in
+    the build script makes passkey signing opt-in: it needs an Associated
+    Domains profile and an RP domain whose
     apple-app-site-association lists the fork's team, and upstream's Clerk
     domain only lists upstream's, so fork builds sign without it.
   tier: 1
   files:
     - .github/workflows/fork-release.yml
     - .github/scripts/launch-isolation-check.sh
+    - .github/scripts/launch-isolation-check-windows.ps1
   shadows: []
   watch:
-    # ci.yml carries a fenced fork hunk: release_smoke lints the isolation
-    # gate script on every PR, so a defect there costs a check, not a build.
+    # ci.yml carries a fenced fork hunk: release_smoke lints both isolation
+    # gate scripts on every PR, so a defect there costs a check, not a build.
     - .github/workflows/ci.yml
     # Fenced: passkey signing only when a provisioning profile is configured.
     - scripts/build-desktop-artifact.ts
@@ -325,7 +333,10 @@
     surface resolves to upstream's live ~/.t3/userdata. An explicit
     T3CODE_HOME still overrides the fork base on both halves, with one refused
     value: upstream's own ~/.t3, which a non-development build rejects at
-    startup rather than opening the real app's database.
+    startup rather than opening the real app's database. The Windows WSL
+    backend gets no Windows baseDir, so its bootstrap carries the Linux-side
+    "~/.t3-fork"; without it the distro's server falls back to its own ~/.t3,
+    which is upstream's state there.
     Development paths carry no fork rename — `vp dev` in this repo is already
     the fork — but since upstream a17cbc3b4, dev state in a linked git
     worktree is the worktree's own gitignored .t3 with a userdata leaf
@@ -457,6 +468,7 @@
     # packaged Linux fork release.
     - apps/desktop/src/app/DesktopLinuxUrlHandler.ts
     - apps/desktop/src/backend/DesktopBackendConfiguration.ts
+    - apps/desktop/src/backend/DesktopBackendConfiguration.test.ts
     # The packaged V8 compile cache lives outside $HOME on macOS/Windows, so
     # launch-isolation-check.sh cannot see it sharing upstream's directory.
     - apps/desktop/src/compileCache.ts
@@ -596,10 +608,14 @@
     lucide's 2px stroke. The shim also reproduces lucide's `lucide lucide-<name>`
     SVG classes, because upstream tests assert them to identify which icon
     rendered — honouring the contract keeps those tests passing unmodified
-    instead of forcing Tier 4 edits into upstream test files.
+    instead of forcing Tier 4 edits into upstream test files. Under 1.5x
+    device pixels theme.custom.css hides the duotone wash, which reads as blur
+    beside a 1px anti-aliased outline.
   tier: 1
   files:
     - apps/web/src/custom/icons/lucide-phosphor.tsx
+    # Shared; this entry owns only the low-density duotone rule.
+    - apps/web/src/theme.custom.css
     # Project icons by name (upstream #9137) resolve from the shim's own
     # `icons` table, so the picker only offers names that render.
     - apps/web/src/overrides/lib/lucideIconByName.ts
@@ -1763,7 +1779,12 @@
     glass is on. apps/desktop/src/fork/ForkSidebarVibrancy.ts registers a
     fork-only IPC method on the channel fork:set-sidebar-vibrancy that calls
     setVibrancy + setBackgroundColor on the window that asked, and returns what it
-    actually applied — false on any non-darwin platform.
+    actually applied — false anywhere with no material.
+
+    Windows 11 22H2 and up get the acrylic system backdrop through
+    setBackgroundMaterial, applied at runtime only. Every call reruns DWM's
+    frame setup and "none" also paints the window white, so only a real change
+    of Glass reaches it, and a window that never had Glass is never touched.
 
     The payload carries only `enabled`. The restore colour is resolved in the
     main process from nativeTheme, never sent by the renderer: the renderer
@@ -2007,6 +2028,7 @@
   files:
     - apps/desktop/src/fork/ForkGlassState.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.ts
+    - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/custom/forkSidebarVibrancy.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.palettes.css
@@ -2019,6 +2041,7 @@
     - apps/web/src/custom/designMode/ForkLayersTree.tsx
     - apps/web/src/components/ui/switch.tsx
   verify:
+    - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
     - apps/web/src/__fork_guards__/forkNeutralDarkerTheme.test.ts
 
@@ -2511,7 +2534,10 @@
     t3-fork 364:11245: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
     inline SVG whose arm colours are --fork-brand-mark-* variables with the
     design's colours as fallbacks, so a palette can recolour it), a 4px gap, then
-    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. The link
+    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. Under 1.5x
+    device pixels the 23 cells cannot land on 16 pixels, so
+    SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
+    wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
     carries its own display gate, hidden below 48rem and a flex row above,
     because upstream 9885a845c deleted the .sidebar-brand stylesheet rule that
     used to supply it; without the inline flex the block-level mark pushed the
@@ -2586,6 +2612,7 @@
     - apps/web/src/custom/useScrollGutterWidth.ts
     - apps/web/src/custom/SidebarStageDitherArt.tsx
     - apps/web/src/custom/SidebarBrandMark.tsx
+    - apps/web/src/custom/SidebarBrandMarkLowDensity.tsx
     - apps/web/src/custom/SidebarBrandWordmark.tsx
     - apps/web/src/custom/assets/sidebar-stage-dither-dev.png
     - apps/web/src/theme.custom.css
@@ -5254,7 +5281,15 @@
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
     become a projectless chat. The scratch folder itself is never listed as a
-    project. ChatView
+    project. With two or more machines connected, an unassigned draft also gets a
+    machine chip (custom/DraftMachineChip, upstream's
+    BranchToolbarEnvironmentSelector) after the project chip: it moves the
+    draft's sentinel ref to that environment, which is where "No project"
+    opens (resolveNoProjectEnvironmentId puts the draft's machine ahead of
+    upstream's primary-first scratch rule) and which copy of a multi-machine
+    project a pick resolves to. It renders only for a draft the store marks
+    unassigned, never for a draft whose project merely failed to resolve.
+    Once a project is picked, upstream's strip selector takes over. ChatView
     hands it to BranchToolbar through a fenced `leading` slot (the mirror of
     fork-composer-shell's `trailing`), or to the bare fallback strip while the
     draft has no project — and so no toolbar — yet. The headline shadow

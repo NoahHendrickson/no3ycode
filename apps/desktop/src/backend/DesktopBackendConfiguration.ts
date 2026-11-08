@@ -573,6 +573,11 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
     noBrowser: true,
     port: input.port,
     // Omit t3Home to keep the Linux backend from sharing the primary's Windows SQLite file.
+    /* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity */
+    // A Linux-side "~" path, so the distro's own ~/.t3 (upstream's state) is never opened.
+    // A Linux T3CODE_HOME still outranks it, as on the primary.
+    t3Home: "~/.t3-fork",
+    /* fork:end fork-app-identity */
     host: wslBindHost,
     desktopBootstrapToken: input.bootstrapToken,
     desktopBootstrapSecret: input.bootstrapSecret,

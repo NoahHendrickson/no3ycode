@@ -763,7 +763,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     await expect(syncForkSidebarVibrancy(true, root)).resolves.toBe(true);
     expect(root.attributes.get(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe("true");
 
-    // Desktop says no (non-darwin): the marker must not survive.
+    // Desktop says no (no native material): the marker must not survive.
     (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
       setSidebarVibrancy: () => Promise.resolve(false),
     };
@@ -911,8 +911,10 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     );
     expect(bridgeObject).not.toContain("setSidebarVibrancy");
 
-    // macOS-only, and the renderer is told what actually happened.
-    expect(desktopMethod).toContain('platform === "darwin"');
+    // macOS and Windows 11 22H2+ only, and the renderer is told what actually happened.
+    expect(desktopMethod).toMatch(
+      /platform === "darwin" \|\|\s+\(platform === "win32" && supportsWindowsBackdrop\(/u,
+    );
     expect(desktopMethod).toContain("return applied;");
 
     // forkTheme drives it outside the synchronous chrome repaint, and owns the

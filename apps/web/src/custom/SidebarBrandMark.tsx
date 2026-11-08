@@ -1,3 +1,5 @@
+import { SidebarBrandMarkLowDensity } from "./SidebarBrandMarkLowDensity";
+
 /**
  * Sidebar pixel mark — see `.fork/customizations.yaml#fork-sidebar-chrome`.
  *
@@ -13,9 +15,15 @@
  * reason the guard spells out: a bitmap cannot land 23 cells on a 16px slot
  * without smearing every cell.
  */
-export function SidebarBrandMark({ className }: { className?: string }) {
+function SidebarBrandMarkHighDensity() {
   return (
-    <svg aria-hidden className={className} shapeRendering="crispEdges" viewBox="0 0 23 23">
+    <svg
+      aria-hidden
+      className="size-4 shrink-0"
+      data-fork-brand-art="high"
+      shapeRendering="crispEdges"
+      viewBox="0 0 23 23"
+    >
       <g fill="#000000">
         <rect height="1" width="1" x="11" y="0" />
         <rect height="1" width="3" x="10" y="1" />
@@ -182,5 +190,14 @@ export function SidebarBrandMark({ className }: { className?: string }) {
         <rect height="1" width="1" x="10" y="20" />
       </g>
     </svg>
+  );
+}
+
+export function SidebarBrandMark() {
+  return (
+    <>
+      <SidebarBrandMarkHighDensity />
+      <SidebarBrandMarkLowDensity />
+    </>
   );
 }

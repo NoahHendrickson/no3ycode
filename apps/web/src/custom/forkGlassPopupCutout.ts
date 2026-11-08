@@ -1,7 +1,7 @@
 /**
  * Fork glass popup cutout — see `.fork/customizations.yaml#fork-glass-popup-cutout`.
  *
- * Under Glass the blur is macOS's own material, drawn behind a transparent
+ * Under Glass the blur is the OS's own material, drawn behind a transparent
  * window, and no CSS filter can sample it. The composer's control row still
  * reads as glass because nothing in the page paints behind it: the transcript
  * is masked off above the composer, so its white wash lands straight on the

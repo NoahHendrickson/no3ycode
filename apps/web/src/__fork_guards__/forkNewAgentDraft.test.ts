@@ -186,10 +186,12 @@ describe("fork guard: fork-new-agent-draft", () => {
     for (const prop of ["draftId", "activeProjectRef", "activeProjectTitle"]) {
       expect(override).toContain(`readonly ${prop}:`);
     }
-    // ChatView mounts the chip for a local draft and hands it to BranchToolbar
-    // as the strip's leading chip — or to the fallback strip while the draft
-    // has no project, and so no toolbar, yet. A started thread gets none.
-    expect(chatView).toMatch(/isLocalDraftThread \? \(\s*<DraftProjectPill/u);
+    // ChatView mounts the chip, then the machine chip, for a local draft and hands
+    // them to BranchToolbar as the leading slot — or to the fallback strip while
+    // the draft has no project, and so no toolbar, yet. A started thread gets none.
+    expect(chatView).toMatch(
+      /isLocalDraftThread \? \(\s*<>\s*<DraftProjectPill[\s\S]{0,200}?\/>\s*<DraftMachineChip draftId=\{draftId\} \/>/u,
+    );
     // The toolbar only renders while the strip is visible, so the leading gate is the branch.
     expect(chatView).toMatch(
       /composerContextStrip = showComposerContextStrip \?[\s\S]{0,2500}?\{\.\.\.\(composerContextLeading \? \{ leading: composerContextLeading \} : \{\}\)\}/u,
