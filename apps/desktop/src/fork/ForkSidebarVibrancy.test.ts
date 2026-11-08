@@ -22,7 +22,7 @@ vi.mock("electron", () => ({
   webContents: { fromId: () => ({}) },
 }));
 
-import { setForkSidebarVibrancy, supportsWindowsBackdrop } from "./ForkSidebarVibrancy.ts";
+import { setForkSidebarVibrancy } from "./ForkSidebarVibrancy.ts";
 
 const event = { sender: { id: 1 } } as unknown as DesktopIpc.DesktopIpcInvokeEvent;
 
@@ -37,56 +37,57 @@ function makeWindow() {
   return window;
 }
 
-const request = (enabled: boolean) =>
+const request = (enabled: boolean, platform: NodeJS.Platform = "win32") =>
   setForkSidebarVibrancy.handler({ enabled }, event).pipe(
-    Effect.provideService(HostProcess.Platform, "win32"),
+    Effect.provideService(HostProcess.Platform, platform),
     // Only read for a call with no IPC event; these all carry one.
     Effect.provideService(ElectronWindow.ElectronWindow, {} as never),
   );
 
-describe("ForkSidebarVibrancy on Windows", () => {
-  it.each([
-    ["10.0.22621", true],
-    ["10.0.26100", true],
-    ["10.0.22000", false],
-    ["10.0.19045", false],
-    ["unexpected", false],
-  ])("supportsWindowsBackdrop(%s) is %s", (release, expected) => {
-    assert.strictEqual(supportsWindowsBackdrop(release), expected);
-  });
+describe("ForkSidebarVibrancy", () => {
+  it.effect("gates Windows glass on build 22621", () =>
+    Effect.gen(function* () {
+      for (const [release, expected] of [
+        ["10.0.22621", true],
+        ["10.0.26100", true],
+        ["10.0.22000", false],
+        ["10.0.19045", false],
+        ["unexpected", false],
+      ] as const) {
+        releaseMock.mockReturnValue(release);
+        const window = makeWindow();
 
-  it.effect("paints acrylic on and restores the opaque fill off", () =>
+        assert.strictEqual(yield* request(true), expected, release);
+        assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, expected ? 1 : 0);
+      }
+    }),
+  );
+
+  it.effect("only touches the Windows material when glass changes", () =>
     Effect.gen(function* () {
       releaseMock.mockReturnValue("10.0.22631");
       const window = makeWindow();
 
-      assert.strictEqual(yield* request(true), true);
-      assert.deepStrictEqual(window.setBackgroundMaterial.mock.calls, [["acrylic"]]);
-      assert.deepStrictEqual(window.setBackgroundColor.mock.calls, [["#00000000"]]);
+      yield* request(false);
+      assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, 0);
 
-      assert.strictEqual(yield* request(false), false);
+      yield* request(true);
+      yield* request(true);
+      assert.deepStrictEqual(window.setBackgroundMaterial.mock.calls, [["acrylic"]]);
+
+      yield* request(false);
+      yield* request(false);
       assert.deepStrictEqual(window.setBackgroundMaterial.mock.calls, [["acrylic"], ["none"]]);
-      assert.deepStrictEqual(window.setBackgroundColor.mock.calls.at(-1), ["#000000"]);
       assert.strictEqual(window.setVibrancy.mock.calls.length, 0);
     }),
   );
 
-  it.effect("leaves the material alone on a window that never had glass", () =>
+  it.effect("clears macOS vibrancy on a window that never had glass", () =>
     Effect.gen(function* () {
-      releaseMock.mockReturnValue("10.0.22631");
       const window = makeWindow();
 
-      assert.strictEqual(yield* request(false), false);
-      assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, 0);
-    }),
-  );
-
-  it.effect("reports no glass below Windows 11 22H2", () =>
-    Effect.gen(function* () {
-      releaseMock.mockReturnValue("10.0.19045");
-      const window = makeWindow();
-
-      assert.strictEqual(yield* request(true), false);
+      assert.strictEqual(yield* request(false, "darwin"), false);
+      assert.deepStrictEqual(window.setVibrancy.mock.calls, [[null]]);
       assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, 0);
     }),
   );

@@ -1,3 +1,4 @@
+// @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork-owned desktop IPC — see `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
  *
@@ -37,7 +38,7 @@ const FORK_SET_SIDEBAR_VIBRANCY_CHANNEL = "fork:set-sidebar-vibrancy";
 const FORK_WINDOWS_BACKDROP_MATERIAL = "acrylic";
 
 /** DWM system backdrops need Windows 11 22H2, build 22621; `release` is `os.release()`. */
-export function supportsWindowsBackdrop(release: string): boolean {
+function supportsWindowsBackdrop(release: string): boolean {
   return Number(release.split(".")[2]) >= 22621;
 }
 
@@ -93,10 +94,11 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
       const hadGlass = isForkGlassActive(target);
       setForkGlassActive(target, enabled);
       if (platform !== "win32") {
+        // Every macOS window is built with the view, so even a never-glass window clears it.
         target.setVibrancy(enabled ? FORK_VIBRANCY_MATERIAL : null);
-      } else if (enabled || hadGlass) {
-        // "none" is not a no-op: it resets the DWM frame and caption and paints
-        // white, so a window that never had glass stays untouched.
+      } else if (enabled !== hadGlass) {
+        // Every call reruns DWM's frame setup and "none" also paints white, so
+        // only a real change of glass may reach it.
         target.setBackgroundMaterial(enabled ? FORK_WINDOWS_BACKDROP_MATERIAL : "none");
       }
       target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
