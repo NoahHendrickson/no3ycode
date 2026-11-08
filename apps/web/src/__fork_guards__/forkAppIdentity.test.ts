@@ -299,6 +299,9 @@ describe("fork guard: fork-app-identity", () => {
     const serverConfig = read(SERVER_CONFIG);
     // The desktop hands the server its own baseDir, nothing narrower.
     expect(backendConfiguration).toContain("t3Home: environment.baseDir");
+    // The Windows WSL backend gets no Windows baseDir, and with no t3Home the
+    // Linux server falls back to the distro's ~/.t3, which is upstream's state.
+    expect(backendConfiguration).toContain('t3Home: "~/.t3-fork",');
     // Both halves append the same upstream leaf to that one input. The
     // desktop's leaf choice lives in upstream's DesktopStatePaths helper
     // since the v0.0.32 sync; the environment must still route through it.

@@ -12,10 +12,18 @@ name: Fork Release
 # upstream's pipeline but the build script, signs and notarizes with the fork
 # owner's own Apple Developer ID, and only ever runs when a human dispatches it.
 #
-# Signing is required, not optional: installed apps update themselves from
-# these releases through Squirrel.Mac, which refuses any update not signed by
-# the same identity as the running app. An unsigned release here would be a
+# macOS signing is required, not optional: installed apps update themselves
+# from these releases through Squirrel.Mac, which refuses any update not signed
+# by the same identity as the running app. An unsigned release here would be a
 # dead end for every signed install.
+#
+# Windows ships unsigned: electron-updater only verifies an update's signature
+# when the running app was built with a publisher name, so unsigned installs
+# update in place, and SmartScreen warns once on the first manual install.
+#
+# Both platforms publish into one release because each updater reads only the
+# repository's latest release: a release missing latest.yml or latest-mac.yml
+# would break updates for that platform.
 
 on:
   workflow_dispatch:
@@ -46,26 +54,33 @@ concurrency:
   group: fork-release-${{ inputs.dry_run }}
   cancel-in-progress: false
 
+env:
+  # electron-builder writes the updater feed into the app from this. Without
+  # it a fork build would resolve GITHUB_REPOSITORY implicitly; setting it
+  # explicitly makes it visible that installs update from THIS repo's
+  # releases and never from upstream's.
+  T3CODE_DESKTOP_UPDATE_REPOSITORY: ${{ github.repository }}
+
 jobs:
-  release:
-    name: Build and publish macOS arm64
+  preflight:
+    name: Validate release version
     # This file is fork-owned, so upstream should never see it. Belt and braces
     # in case it ever travels: only repos owned by the fork's account can run it,
-    # so renaming the fork never silently disables releases.
+    # so renaming the fork never silently disables releases. The build jobs
+    # need this job, so they inherit the gate.
     if: github.repository_owner == 'NoahHendrickson'
-    runs-on: macos-latest
-    timeout-minutes: 60
-    env:
-      # electron-builder writes the updater feed into the app from this. Without
-      # it a fork build would resolve GITHUB_REPOSITORY implicitly; setting it
-      # explicitly makes it visible that installs update from THIS repo's
-      # releases and never from upstream's.
-      T3CODE_DESKTOP_UPDATE_REPOSITORY: ${{ github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
+      # Checked out only for its tags; the sparse path keeps the tree empty.
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          sparse-checkout: package.json
 
       - id: meta
         name: Resolve and validate release version
@@ -88,6 +103,15 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
+  mac:
+    name: Build macOS arm64
+    needs: preflight
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
         with:
@@ -99,7 +123,7 @@ jobs:
         run: vp run --filter @t3tools/desktop ensure:electron
 
       - name: Align package versions to release version
-        run: node scripts/update-release-package-versions.ts "${{ steps.meta.outputs.version }}"
+        run: node scripts/update-release-package-versions.ts "${{ needs.preflight.outputs.version }}"
 
       - name: Build desktop artifact
         shell: bash
@@ -128,7 +152,7 @@ jobs:
             --platform mac \
             --target dmg \
             --arch arm64 \
-            --build-version "${{ steps.meta.outputs.version }}" \
+            --build-version "${{ needs.preflight.outputs.version }}" \
             --signed \
             --verbose
 
@@ -184,37 +208,109 @@ jobs:
         shell: bash
         run: bash .github/scripts/launch-isolation-check.sh release
 
-      - name: Collect release assets
-        # A dry run exercises the build and the launch isolation gate without
-        # publishing anything — the gate can only be tested by running it, and
-        # iterating on it must not cost a version number per attempt.
-        if: ${{ !inputs.dry_run }}
+      - name: Upload macOS release assets
+        # Uploaded on dry runs too, so a dry run leaves a downloadable build to
+        # try by hand; only the publish job skips on a dry run. builder-debug.yml
+        # is build diagnostics, not an updater manifest.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-mac-arm64
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.blockmap
+            release/*.yml
+            !release/builder-debug.yml
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    name: Build Windows x64
+    needs: preflight
+    # Built natively rather than cross-built on Linux the way upstream does:
+    # a Windows host runs the build script's packaged-native load probes
+    # in-process, and the launch isolation gate needs Windows anyway.
+    runs-on: windows-2025
+    timeout-minutes: 75
+    steps:
+      # .repos is vendored reference source the build never reads, and its
+      # deep paths overrun Windows path limits.
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            /*
+            !/.repos/
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          cache: true
+          run-install: true
+
+      - name: Ensure Electron runtime is installed
+        run: vp run --filter @t3tools/desktop ensure:electron
+
+      - name: Align package versions to release version
+        run: node scripts/update-release-package-versions.ts "${{ needs.preflight.outputs.version }}"
+
+      # Unsigned on purpose (see the header). No WSL runtime is bundled: that
+      # needs a same-run Linux CLI archive, and without it the WSL backend
+      # launches from the mounted server tree instead.
+      - name: Build Windows installer
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p release-publish
-          shopt -s nullglob
-          for pattern in \
-            "release/*.dmg" \
-            "release/*.zip" \
-            "release/*.blockmap" \
-            "release/*.yml"; do
-            for file in $pattern; do
-              cp "$file" release-publish/
-            done
-          done
-          # builder-debug.yml is build diagnostics, not an updater manifest —
-          # shipping it would put a confusing file in the release.
-          rm -f release-publish/builder-debug.yml
-          ls -lh release-publish
+          vp run dist:desktop:artifact \
+            --platform win \
+            --target nsis \
+            --arch x64 \
+            --build-version "${{ needs.preflight.outputs.version }}" \
+            --verbose
+
+      - name: Windows launch isolation check
+        # Same gate as the macOS one, run against the NSIS installer. Never
+        # skipped. CI's release_smoke job parse-checks the script on every PR.
+        shell: pwsh
+        run: ./.github/scripts/launch-isolation-check-windows.ps1 -ReleaseDir release
+
+      - name: Upload Windows release assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-win-x64
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/*.yml
+            !release/builder-debug.yml
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: [preflight, mac, windows]
+    # A dry run exercises both builds and both launch isolation gates without
+    # publishing anything — the gates can only be tested by running them, and
+    # iterating on them must not cost a version number per attempt.
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Collect release assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: release-*
+          path: release-publish
+          merge-multiple: true
 
       - name: Publish GitHub Release
-        if: ${{ !inputs.dry_run }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
+          tag_name: ${{ needs.preflight.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: no3y Code ${{ steps.meta.outputs.tag }}
+          name: no3y Code ${{ needs.preflight.outputs.tag }}
           generate_release_notes: true
           prerelease: ${{ inputs.prerelease }}
           # `inputs.prerelease` is already a boolean for a typed dispatch
@@ -224,6 +320,7 @@ jobs:
           files: |
             release-publish/*.dmg
             release-publish/*.zip
+            release-publish/*.exe
             release-publish/*.blockmap
             release-publish/*.yml
           fail_on_unmatched_files: true
@@ -232,11 +329,16 @@ jobs:
           # not just the release that introduced them. Drop the prompt-stash
           # stanza only when installs at v0.1.5 or earlier no longer matter.
           body: |
-            Signed and notarized macOS arm64 build of this fork, built from `${{ github.sha }}`.
+            no3y Code for macOS (Apple silicon) and Windows (x64), built from `${{ github.sha }}`.
 
-            Signed installs update themselves: an update notice appears in the
+            - **macOS:** download the `.dmg`. Signed and notarized.
+            - **Windows:** download the `.exe` installer. It is not code-signed,
+              so Windows SmartScreen warns on first install: choose
+              **More info → Run anyway**.
+
+            Installs update themselves: an update notice appears in the
             sidebar, or check from Settings → General → About. If your
-            installed copy predates signing (it needed the quarantine
+            macOS copy predates signing (it needed the quarantine
             workaround), download this DMG and replace
             `"/Applications/no3y Code.app"` once by hand; it opens normally
             and updates in place from then on.

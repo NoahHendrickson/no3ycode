@@ -168,7 +168,7 @@ done
 # name), not just the last one. Exact -name matches: none of these match
 # their -fork variants.
 strays=$(find "$scratch" -maxdepth 5 \
-  \( -name ".t3" -o -name "t3code" -o -name "com.t3tools.t3code" \) 2>/dev/null || true)
+  \( -name ".t3" -o -name "t3code" -o -name "t3code-v2" -o -name "com.t3tools.t3code" \) 2>/dev/null || true)
 if [ -n "$strays" ]; then
   echo "$strays" >&2
   violated "upstream-named paths under the scratch HOME" "$scratch"

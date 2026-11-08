@@ -303,22 +303,30 @@
     properties matter more than the build itself: it runs on workflow_dispatch
     alone, so no sync, tag or cron can ever publish from the fork by surprise;
     it must never grow a package-registry publish step, because the fork
-    builds under upstream's package names; and every release is signed,
+    builds under upstream's package names; and every macOS build is signed,
     because installs update in place through Squirrel.Mac, which rejects an
-    update whose signature does not match the running app. Releases default to
-    non-prerelease since the updater only reads the repository's latest
-    release. The fenced hunk in the build script makes passkey signing opt-in:
-    it needs an Associated Domains profile and an RP domain whose
+    update whose signature does not match the running app. It also builds an
+    unsigned Windows x64 NSIS installer natively on a Windows runner, behind
+    its own launch isolation gate (launch-isolation-check-windows.ps1), and
+    publishes both platforms into one release: each updater reads only the
+    repository's latest release, so a release missing latest.yml or
+    latest-mac.yml strands that platform's installs. Unsigned Windows
+    installs still update in place because electron-updater only checks a
+    signature when the app was built with a publisher name. Releases default
+    to non-prerelease for the same latest-release reason. The fenced hunk in
+    the build script makes passkey signing opt-in: it needs an Associated
+    Domains profile and an RP domain whose
     apple-app-site-association lists the fork's team, and upstream's Clerk
     domain only lists upstream's, so fork builds sign without it.
   tier: 1
   files:
     - .github/workflows/fork-release.yml
     - .github/scripts/launch-isolation-check.sh
+    - .github/scripts/launch-isolation-check-windows.ps1
   shadows: []
   watch:
-    # ci.yml carries a fenced fork hunk: release_smoke lints the isolation
-    # gate script on every PR, so a defect there costs a check, not a build.
+    # ci.yml carries a fenced fork hunk: release_smoke lints both isolation
+    # gate scripts on every PR, so a defect there costs a check, not a build.
     - .github/workflows/ci.yml
     # Fenced: passkey signing only when a provisioning profile is configured.
     - scripts/build-desktop-artifact.ts
@@ -358,7 +366,10 @@
     surface resolves to upstream's live ~/.t3/userdata. An explicit
     T3CODE_HOME still overrides the fork base on both halves, with one refused
     value: upstream's own ~/.t3, which a non-development build rejects at
-    startup rather than opening the real app's database.
+    startup rather than opening the real app's database. The Windows WSL
+    backend gets no Windows baseDir, so its bootstrap carries the Linux-side
+    "~/.t3-fork"; without it the distro's server falls back to its own ~/.t3,
+    which is upstream's state there.
     Development paths carry no fork rename — `vp dev` in this repo is already
     the fork — but since upstream a17cbc3b4, dev state in a linked git
     worktree is the worktree's own gitignored .t3 with a userdata leaf
@@ -485,6 +496,7 @@
     # packaged Linux fork release.
     - apps/desktop/src/app/DesktopLinuxUrlHandler.ts
     - apps/desktop/src/backend/DesktopBackendConfiguration.ts
+    - apps/desktop/src/backend/DesktopBackendConfiguration.test.ts
     # The packaged V8 compile cache lives outside $HOME on macOS/Windows, so
     # launch-isolation-check.sh cannot see it sharing upstream's directory.
     - apps/desktop/src/compileCache.ts
