@@ -54,6 +54,13 @@ concurrency:
   group: fork-release-${{ inputs.dry_run }}
   cancel-in-progress: false
 
+env:
+  # electron-builder writes the updater feed into the app from this. Without
+  # it a fork build would resolve GITHUB_REPOSITORY implicitly; setting it
+  # explicitly makes it visible that installs update from THIS repo's
+  # releases and never from upstream's.
+  T3CODE_DESKTOP_UPDATE_REPOSITORY: ${{ github.repository }}
+
 jobs:
   preflight:
     name: Validate release version
@@ -68,6 +75,7 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
       tag: ${{ steps.meta.outputs.tag }}
     steps:
+      # Checked out only for its tags; the sparse path keeps the tree empty.
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -100,17 +108,9 @@ jobs:
     needs: preflight
     runs-on: macos-latest
     timeout-minutes: 60
-    env:
-      # electron-builder writes the updater feed into the app from this. Without
-      # it a fork build would resolve GITHUB_REPOSITORY implicitly; setting it
-      # explicitly makes it visible that installs update from THIS repo's
-      # releases and never from upstream's.
-      T3CODE_DESKTOP_UPDATE_REPOSITORY: ${{ github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
@@ -208,33 +208,19 @@ jobs:
         shell: bash
         run: bash .github/scripts/launch-isolation-check.sh release
 
-      - name: Stage macOS release assets
-        # Staged on dry runs too, so a dry run leaves a downloadable build to
-        # try by hand; only the publish job's steps skip on a dry run.
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release-publish
-          shopt -s nullglob
-          for pattern in \
-            "release/*.dmg" \
-            "release/*.zip" \
-            "release/*.blockmap" \
-            "release/*.yml"; do
-            for file in $pattern; do
-              cp "$file" release-publish/
-            done
-          done
-          # builder-debug.yml is build diagnostics, not an updater manifest —
-          # shipping it would put a confusing file in the release.
-          rm -f release-publish/builder-debug.yml
-          ls -lh release-publish
-
       - name: Upload macOS release assets
+        # Uploaded on dry runs too, so a dry run leaves a downloadable build to
+        # try by hand; only the publish job skips on a dry run. builder-debug.yml
+        # is build diagnostics, not an updater manifest.
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-mac-arm64
-          path: release-publish/*
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.blockmap
+            release/*.yml
+            !release/builder-debug.yml
           if-no-files-found: error
           retention-days: 7
 
@@ -246,8 +232,6 @@ jobs:
     # in-process, and the launch isolation gate needs Windows anyway.
     runs-on: windows-2025
     timeout-minutes: 75
-    env:
-      T3CODE_DESKTOP_UPDATE_REPOSITORY: ${{ github.repository }}
     steps:
       # .repos is vendored reference source the build never reads, and its
       # deep paths overrun Windows path limits.
@@ -292,42 +276,29 @@ jobs:
         shell: pwsh
         run: ./.github/scripts/launch-isolation-check-windows.ps1 -ReleaseDir release
 
-      - name: Stage Windows release assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release-publish
-          shopt -s nullglob
-          for pattern in \
-            "release/*.exe" \
-            "release/*.blockmap" \
-            "release/*.yml"; do
-            for file in $pattern; do
-              cp "$file" release-publish/
-            done
-          done
-          rm -f release-publish/builder-debug.yml
-          ls -lh release-publish
-
       - name: Upload Windows release assets
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-win-x64
-          path: release-publish/*
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/*.yml
+            !release/builder-debug.yml
           if-no-files-found: error
           retention-days: 7
 
   publish:
     name: Publish GitHub Release
     needs: [preflight, mac, windows]
+    # A dry run exercises both builds and both launch isolation gates without
+    # publishing anything — the gates can only be tested by running them, and
+    # iterating on them must not cost a version number per attempt.
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Collect release assets
-        # A dry run exercises both builds and both launch isolation gates
-        # without publishing anything — the gates can only be tested by running
-        # them, and iterating on them must not cost a version number per attempt.
-        if: ${{ !inputs.dry_run }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: release-*
@@ -335,7 +306,6 @@ jobs:
           merge-multiple: true
 
       - name: Publish GitHub Release
-        if: ${{ !inputs.dry_run }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}

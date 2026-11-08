@@ -366,7 +366,10 @@
     surface resolves to upstream's live ~/.t3/userdata. An explicit
     T3CODE_HOME still overrides the fork base on both halves, with one refused
     value: upstream's own ~/.t3, which a non-development build rejects at
-    startup rather than opening the real app's database.
+    startup rather than opening the real app's database. The Windows WSL
+    backend gets no Windows baseDir, so its bootstrap carries the Linux-side
+    "~/.t3-fork"; without it the distro's server falls back to its own ~/.t3,
+    which is upstream's state there.
     Development paths carry no fork rename — `vp dev` in this repo is already
     the fork — but since upstream a17cbc3b4, dev state in a linked git
     worktree is the worktree's own gitignored .t3 with a userdata leaf
