@@ -25,17 +25,10 @@
 import { scopedProjectKey } from "@t3tools/client-runtime/environment";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
-import { canCreateProjectInEnvironment } from "@t3tools/client-runtime/operations/projects";
-import {
-  type EnvironmentId,
-  resolveEnvironmentMachineKind,
-  type ScopedProjectRef,
-} from "@t3tools/contracts";
+import type { EnvironmentId, ScopedProjectRef } from "@t3tools/contracts";
 import { useCallback, useMemo, type ReactNode } from "react";
 
 import { openCommandPalette } from "~/commandPaletteBus";
-import type { EnvironmentOption } from "~/components/BranchToolbar.logic";
-import { BranchToolbarEnvironmentSelector } from "~/components/BranchToolbarEnvironmentSelector";
 import { sortLogicalProjectsForSidebar } from "~/components/Sidebar.logic";
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
@@ -49,7 +42,7 @@ import {
   MenuTrigger,
 } from "~/components/ui/menu";
 import { toastManager } from "~/components/ui/toast";
-import type { DraftId } from "~/composerDraftStore";
+import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
 import { cn } from "~/lib/utils";
@@ -70,11 +63,8 @@ import {
   FolderPlusIcon,
   MessageSquareDashedIcon,
 } from "./icons/lucide-phosphor";
-import {
-  moveUnassignedDraft,
-  useAssignDraftProject,
-  useDraftProjectAssignmentPending,
-} from "./useNewAgentDraft";
+import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
+import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
 
 /** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
 const DRAFT_PROJECT_CHIP_CLASS_NAME =
@@ -177,9 +167,16 @@ export function DraftProjectPill(props: {
   const assignDraftProject = useAssignDraftProject();
   const pendingProjectKey = useDraftProjectAssignmentPending(props.draftId);
   const openAddProject = useCallback(() => openCommandPalette({ open: "add-project" }), []);
-  const noProjectEnvironmentId = scratchEnvironmentId(
-    props.activeProjectRef?.environmentId ?? primaryEnvironmentId,
+  const draftIsUnassigned = useComposerDraftStore((store) =>
+    props.draftId ? isUnassignedDraft(store.getDraftSession(props.draftId)) : false,
   );
+  const noProjectEnvironmentId = resolveNoProjectEnvironmentId({
+    draftIsUnassigned,
+    draftEnvironmentId: props.activeProjectRef?.environmentId ?? null,
+    primaryEnvironmentId,
+    scratchWorkspaceRootFor,
+    scratchEnvironmentId,
+  });
 
   const environmentLabelById = useMemo(
     () =>
@@ -258,37 +255,6 @@ export function DraftProjectPill(props: {
         : "Choose a project";
   const pending = selection.kind !== "unassigned" && selection.pending;
 
-  // An unassigned draft already sits on a machine (the primary, at first), so
-  // with several connected it is chosen here. Once a project or "No project"
-  // is picked, upstream's machine selector in the strip takes over.
-  const draftId = props.draftId;
-  const draftEnvironmentId = props.activeProjectRef?.environmentId ?? null;
-  const machineOptions: EnvironmentOption[] = environments
-    .filter(
-      (environment) =>
-        environment.environmentId === draftEnvironmentId ||
-        canCreateProjectInEnvironment(environment.connection.phase),
-    )
-    .map((environment) => ({
-      environmentId: environment.environmentId,
-      projectId: null,
-      label: environment.label,
-      isPrimary: environment.environmentId === primaryEnvironmentId,
-      machine: resolveEnvironmentMachineKind(environment.serverConfig ?? null),
-    }));
-  const machineChip =
-    selection.kind === "unassigned" &&
-    draftId !== null &&
-    draftEnvironmentId !== null &&
-    machineOptions.length > 1 ? (
-      <BranchToolbarEnvironmentSelector
-        envLocked={false}
-        environmentId={draftEnvironmentId}
-        availableEnvironments={machineOptions}
-        onEnvironmentChange={(environmentId) => moveUnassignedDraft(draftId, environmentId)}
-      />
-    ) : null;
-
   const reportAssignFailure = (displayName: string, error: unknown) => {
     console.error(error);
     toastManager.add({
@@ -320,120 +286,114 @@ export function DraftProjectPill(props: {
 
   if (projectPickerEntries.length === 0 && noProjectEnvironmentId === null) {
     return (
-      <>
-        <Button
-          type="button"
-          size="xs"
-          variant="ghost"
-          className={DRAFT_PROJECT_CHIP_CLASS_NAME}
-          onClick={openAddProject}
-          data-testid="draft-project-pill"
-          data-composer-context-control
-        >
-          <FolderPlusIcon className="size-3 shrink-0" />
-          <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
-        </Button>
-        {machineChip}
-      </>
+      <Button
+        type="button"
+        size="xs"
+        variant="ghost"
+        className={DRAFT_PROJECT_CHIP_CLASS_NAME}
+        onClick={openAddProject}
+        data-testid="draft-project-pill"
+        data-composer-context-control
+      >
+        <FolderPlusIcon className="size-3 shrink-0" />
+        <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
+      </Button>
     );
   }
 
   return (
-    <>
-      <Menu>
-        <MenuTrigger
-          render={
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
-              // No press-scale, like the branch chip: the popup aligns live to
-              // this trigger and a momentary shrink drags it sideways.
-              className={DRAFT_PROJECT_CHIP_CLASS_NAME}
-              data-testid="draft-project-pill"
-              data-composer-context-control
-              data-project-assigned={selection.kind === "unassigned" ? "false" : "true"}
-              aria-busy={pending || undefined}
-            />
-          }
-        >
-          {selection.kind === "no-project" ? (
-            <MessageSquareDashedIcon className="size-3 shrink-0" />
-          ) : selection.kind === "project" && selection.entry ? (
-            <ProjectFavicon
-              project={selection.entry.targetProject}
-              className="size-3 shrink-0"
-              fallbackIcon={FolderIcon}
-            />
-          ) : (
-            <FolderIcon className="size-3 shrink-0" />
-          )}
-          <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
-          <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
-        </MenuTrigger>
-        <MenuPopup
-          align="start"
-          side="top"
-          data-fork-glass-rim
-          // The popup caps the height and MenuPopup's own list scrolls inside
-          // it. Scrolling the popup itself would carry its glass rim
-          // (theme.custom.glass-surfaces.css) away with the rows.
-          className="max-h-80 min-w-48! w-max max-w-72"
-        >
-          <MenuRadioGroup
-            value={radioValue}
-            onValueChange={(value) => {
-              if (value === radioValue || !props.draftId) return;
-              if (value === NO_PROJECT_VALUE) {
-                if (noProjectEnvironmentId !== null) {
-                  void pickNoProject(props.draftId, noProjectEnvironmentId);
-                }
-                return;
+    <Menu>
+      <MenuTrigger
+        render={
+          <Button
+            type="button"
+            size="xs"
+            variant="ghost"
+            aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
+            // No press-scale, like the branch chip: the popup aligns live to
+            // this trigger and a momentary shrink drags it sideways.
+            className={DRAFT_PROJECT_CHIP_CLASS_NAME}
+            data-testid="draft-project-pill"
+            data-composer-context-control
+            data-project-assigned={selection.kind === "unassigned" ? "false" : "true"}
+            aria-busy={pending || undefined}
+          />
+        }
+      >
+        {selection.kind === "no-project" ? (
+          <MessageSquareDashedIcon className="size-3 shrink-0" />
+        ) : selection.kind === "project" && selection.entry ? (
+          <ProjectFavicon
+            project={selection.entry.targetProject}
+            className="size-3 shrink-0"
+            fallbackIcon={FolderIcon}
+          />
+        ) : (
+          <FolderIcon className="size-3 shrink-0" />
+        )}
+        <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
+        <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
+      </MenuTrigger>
+      <MenuPopup
+        align="start"
+        side="top"
+        data-fork-glass-rim
+        // The popup caps the height and MenuPopup's own list scrolls inside
+        // it. Scrolling the popup itself would carry its glass rim
+        // (theme.custom.glass-surfaces.css) away with the rows.
+        className="max-h-80 min-w-48! w-max max-w-72"
+      >
+        <MenuRadioGroup
+          value={radioValue}
+          onValueChange={(value) => {
+            if (value === radioValue || !props.draftId) return;
+            if (value === NO_PROJECT_VALUE) {
+              if (noProjectEnvironmentId !== null) {
+                void pickNoProject(props.draftId, noProjectEnvironmentId);
               }
-              const entry = projectEntryByKey.get(value as string);
-              if (!entry) return;
-              // The pick already cleared its Send hold on the way out; the
-              // draft is simply still on its previous project, so say so.
-              void assignDraftProject(props.draftId, entry).catch((error: unknown) =>
-                reportAssignFailure(entry.group.displayName, error),
-              );
-            }}
-          >
-            {noProjectEnvironmentId !== null ? (
-              <MenuRadioItem
-                value={NO_PROJECT_VALUE}
-                closeOnClick
-                className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
-              >
-                <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
-                <span className="min-w-0 truncate">No project</span>
-              </MenuRadioItem>
-            ) : null}
-            {projectPickerEntries.map(({ group, targetProject }) => (
-              <MenuRadioItem
-                key={group.projectKey}
-                value={group.projectKey}
-                closeOnClick
-                className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
-              >
-                <ProjectFavicon
-                  project={targetProject}
-                  className="size-4 shrink-0"
-                  fallbackIcon={PickerFolderIcon}
-                />
-                <span className="min-w-0 truncate">{group.displayName}</span>
-              </MenuRadioItem>
-            ))}
-          </MenuRadioGroup>
-          <MenuSeparator />
-          <MenuItem onClick={openAddProject}>
-            <FolderPlusIcon />
-            Add a project
-          </MenuItem>
-        </MenuPopup>
-      </Menu>
-      {machineChip}
-    </>
+              return;
+            }
+            const entry = projectEntryByKey.get(value as string);
+            if (!entry) return;
+            // The pick already cleared its Send hold on the way out; the
+            // draft is simply still on its previous project, so say so.
+            void assignDraftProject(props.draftId, entry).catch((error: unknown) =>
+              reportAssignFailure(entry.group.displayName, error),
+            );
+          }}
+        >
+          {noProjectEnvironmentId !== null ? (
+            <MenuRadioItem
+              value={NO_PROJECT_VALUE}
+              closeOnClick
+              className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
+            >
+              <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
+              <span className="min-w-0 truncate">No project</span>
+            </MenuRadioItem>
+          ) : null}
+          {projectPickerEntries.map(({ group, targetProject }) => (
+            <MenuRadioItem
+              key={group.projectKey}
+              value={group.projectKey}
+              closeOnClick
+              className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
+            >
+              <ProjectFavicon
+                project={targetProject}
+                className="size-4 shrink-0"
+                fallbackIcon={PickerFolderIcon}
+              />
+              <span className="min-w-0 truncate">{group.displayName}</span>
+            </MenuRadioItem>
+          ))}
+        </MenuRadioGroup>
+        <MenuSeparator />
+        <MenuItem onClick={openAddProject}>
+          <FolderPlusIcon />
+          Add a project
+        </MenuItem>
+      </MenuPopup>
+    </Menu>
   );
 }

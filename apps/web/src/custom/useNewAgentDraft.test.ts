@@ -286,4 +286,15 @@ describe("moveUnassignedDraft", () => {
       environmentSelection: "manual",
     });
   });
+
+  it("leaves a draft that already has a project alone", async () => {
+    readProjectFile.mockResolvedValue(null);
+    await assignDraftProject(draftId, target("a"), settings);
+    moveUnassignedDraft(draftId, EnvironmentId.make("env-remote"));
+    expect(session()).toMatchObject({
+      environmentId,
+      projectId: "proj-a",
+      logicalProjectKey: "proj-a",
+    });
+  });
 });

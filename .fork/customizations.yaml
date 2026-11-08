@@ -5282,11 +5282,14 @@
     and assigns the draft to it like any other pick, so a New agent draft can
     become a projectless chat. The scratch folder itself is never listed as a
     project. With two or more machines connected, an unassigned draft also gets a
-    machine chip (upstream's BranchToolbarEnvironmentSelector) after the
-    project chip: it moves the draft's sentinel ref to that environment, which
-    is where "No project" opens and which copy of a multi-machine project a
-    pick resolves to. Once a project is picked, upstream's strip selector
-    takes over. ChatView
+    machine chip (custom/DraftMachineChip, upstream's
+    BranchToolbarEnvironmentSelector) after the project chip: it moves the
+    draft's sentinel ref to that environment, which is where "No project"
+    opens (resolveNoProjectEnvironmentId puts the draft's machine ahead of
+    upstream's primary-first scratch rule) and which copy of a multi-machine
+    project a pick resolves to. It renders only for a draft the store marks
+    unassigned, never for a draft whose project merely failed to resolve.
+    Once a project is picked, upstream's strip selector takes over. ChatView
     hands it to BranchToolbar through a fenced `leading` slot (the mirror of
     fork-composer-shell's `trailing`), or to the bare fallback strip while the
     draft has no project — and so no toolbar — yet. The headline shadow

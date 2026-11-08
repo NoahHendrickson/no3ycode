@@ -118,11 +118,11 @@ export function toSrcRelativePath(
     return null;
   }
 
-  return relative.split(NodePath.sep).join("/");
+  return toModuleId(relative);
 }
 
 /**
- * Returns the absolute path the specifier should resolve to, or null to leave
+ * Returns the module id the specifier should resolve to, or null to leave
  * resolution alone.
  */
 export function resolveForkOverride(
@@ -131,13 +131,21 @@ export function resolveForkOverride(
   options: OverrideResolverOptions,
 ): string | null {
   const { path: specifierPath, suffix } = splitSuffix(specifier);
+  const resolved = resolveForkOverridePath(specifierPath, importer, options);
+  return resolved === null ? null : toModuleId(resolved) + suffix;
+}
 
+/** The resolution rules, on native paths; `resolveForkOverride` turns the result into an id. */
+function resolveForkOverridePath(
+  specifierPath: string,
+  importer: string | undefined,
+  options: OverrideResolverOptions,
+): string | null {
   if (specifierPath.startsWith(UPSTREAM_PREFIX)) {
-    const upstream = resolveWithExtensions(
+    return resolveWithExtensions(
       NodePath.join(options.srcDir, specifierPath.slice(UPSTREAM_PREFIX.length)),
       options.fileExists,
     );
-    return upstream === null ? null : toModuleId(upstream) + suffix;
   }
 
   const srcRelative = toSrcRelativePath(specifierPath, importer, options.srcDir);
@@ -171,7 +179,7 @@ export function resolveForkOverride(
     override === NodePath.resolve(splitSuffix(importer).path);
 
   if (override !== null && !isSelfImport) {
-    return toModuleId(override) + suffix;
+    return override;
   }
 
   // Fall back to upstream explicitly rather than returning null, in the cases
@@ -184,11 +192,7 @@ export function resolveForkOverride(
   //     so answer it here and keep resolution identical either way.
   // Plain relative imports in upstream files still fall through to Vite.
   if (isSelfImport || fromShadowTree || specifierPath.startsWith(ALIAS_PREFIX)) {
-    const upstream = resolveWithExtensions(
-      NodePath.join(options.srcDir, logicalPath),
-      options.fileExists,
-    );
-    return upstream === null ? null : toModuleId(upstream) + suffix;
+    return resolveWithExtensions(NodePath.join(options.srcDir, logicalPath), options.fileExists);
   }
 
   return null;

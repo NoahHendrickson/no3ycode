@@ -315,6 +315,7 @@ import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
+import { DraftMachineChip } from "~/custom/DraftMachineChip";
 import { DraftProjectPill } from "~/custom/DraftProjectPill";
 import { useDraftProjectAssignmentPending } from "~/custom/useNewAgentDraft";
 // Through the alias: TypeScript resolves the relative draftHeroTransition path to
@@ -3431,11 +3432,14 @@ export default function ChatView(props: ChatViewProps) {
   // ChatComposer inside the strip below. A started thread's project is
   // pinned, so it renders none.
   const draftProjectPill = isLocalDraftThread ? (
-    <DraftProjectPill
-      draftId={draftId}
-      activeProjectRef={activeProjectRef}
-      activeProjectTitle={activeProject?.title ?? null}
-    />
+    <>
+      <DraftProjectPill
+        draftId={draftId}
+        activeProjectRef={activeProjectRef}
+        activeProjectTitle={activeProject?.title ?? null}
+      />
+      <DraftMachineChip draftId={draftId} />
+    </>
   ) : null;
   /* fork:end fork-new-agent-draft */
   // A server thread's project and branch are pinned, so while upstream's strip is hidden they

@@ -7,6 +7,7 @@ import {
   NEW_AGENT_DRAFT_PROJECT_ID,
   isUnassignedDraft,
   newAgentDraftProjectRef,
+  resolveNoProjectEnvironmentId,
 } from "./newAgentDraft";
 import { listSidebarDraftRows } from "./sidebarV2DraftRows";
 
@@ -92,5 +93,40 @@ describe("listSidebarDraftRows with a New agent draft", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.shell.projectId).toBe("proj-2");
     expect(rows[0]?.shell.id).toBe("thread-unassigned");
+  });
+});
+
+describe("resolveNoProjectEnvironmentId", () => {
+  const primary = EnvironmentId.make("env-local");
+  const remote = EnvironmentId.make("env-remote");
+  const offline = EnvironmentId.make("env-offline");
+  const scratchRoots = new Map([
+    [primary, "/home/local/.t3/scratch"],
+    [remote, "/home/remote/.t3/scratch"],
+  ]);
+  const scratchWorkspaceRootFor = (id: EnvironmentId | null) =>
+    id === null ? null : (scratchRoots.get(id) ?? null);
+  // Upstream's rule: the primary wins whenever it has a scratch folder.
+  const scratchEnvironmentId = (fallback: EnvironmentId | null) =>
+    scratchWorkspaceRootFor(primary) !== null ? primary : fallback;
+  const resolve = (draftIsUnassigned: boolean, draftEnvironmentId: EnvironmentId | null) =>
+    resolveNoProjectEnvironmentId({
+      draftIsUnassigned,
+      draftEnvironmentId,
+      primaryEnvironmentId: primary,
+      scratchWorkspaceRootFor,
+      scratchEnvironmentId,
+    });
+
+  it("opens on the machine a New agent draft was moved to", () => {
+    expect(resolve(true, remote)).toBe(remote);
+  });
+
+  it("falls back to upstream's rule when that machine has no scratch folder", () => {
+    expect(resolve(true, offline)).toBe(primary);
+  });
+
+  it("keeps upstream's rule for a draft that already has a project", () => {
+    expect(resolve(false, remote)).toBe(primary);
   });
 });

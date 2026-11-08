@@ -29,5 +29,8 @@ describe("resolveForkOverride on Windows", () => {
     expect(resolveForkOverride("../components/ui/button", importer, options)).toBe(
       "C:/repo/apps/web/src/overrides/components/ui/button.tsx",
     );
+    expect(resolveForkOverride("~upstream/components/ui/sidebar", importer, options)).toBe(
+      "C:/repo/apps/web/src/components/ui/sidebar.tsx",
+    );
   });
 });

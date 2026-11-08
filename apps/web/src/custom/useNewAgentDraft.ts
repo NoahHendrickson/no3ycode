@@ -37,7 +37,11 @@ import { readThreadShell } from "../state/entities";
 import { usePrimaryEnvironmentId } from "../state/environments";
 import { environmentServerConfigsAtom } from "../state/server";
 import { resolveThreadRouteTarget } from "../threadRoutes";
-import { NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY, newAgentDraftProjectRef } from "./newAgentDraft";
+import {
+  isUnassignedDraft,
+  NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+  newAgentDraftProjectRef,
+} from "./newAgentDraft";
 
 /** Opens the unassigned draft. Reuses the live one when there is one — the
     prompt is editable before a project is chosen, so a second click goes
@@ -158,7 +162,7 @@ export async function startNewAgentDraft(
 export function moveUnassignedDraft(draftId: DraftId, environmentId: EnvironmentId): void {
   const { getDraftSession, setLogicalProjectDraftThreadId } = useComposerDraftStore.getState();
   const session = getDraftSession(draftId);
-  if (!session || session.promotedTo != null) return;
+  if (!isUnassignedDraft(session) || session?.promotedTo != null) return;
   setLogicalProjectDraftThreadId(
     NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
     newAgentDraftProjectRef(environmentId),
