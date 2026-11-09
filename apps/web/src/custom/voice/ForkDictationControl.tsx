@@ -8,17 +8,13 @@ import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import type { ForkDictation } from "./forkDictation";
 
-// Figma 472:33881 draws 2px blue dots on a 4px pitch, 3px in from either
-// edge, bars up to 16px tall in a 24px row. By request the bars are 1px wide
-// and painted in the canvas's own `color` (the foreground; pure white in dark
-// via theme.custom.css), matching the X beside them. The pitch stays 4px so
-// the timeline scrolls at the same speed, and a silent sample is a 1×2 mark so
-// it still reads as a dot.
+// 1px bars on a 4px pitch, 3px in from either edge, up to 12px tall in the 20px
+// control row, painted in the canvas's own `color` (theme.custom.css).
 const BAR_WIDTH = 1;
 const BAR_PITCH = 4;
 const BAR_GAP = BAR_PITCH - BAR_WIDTH;
 const DOT_HEIGHT = 2;
-const BAR_MAX_HEIGHT = 16;
+const BAR_MAX_HEIGHT = 12;
 const BAR_INSET = 3;
 // Samples arrive at 20 Hz; 30 s of history at 4px each outruns any composer.
 const HISTORY_LIMIT = 600;
@@ -36,9 +32,8 @@ function levelToUnit(rms: number): number {
 
 /**
  * Input-level timeline: one dot per sample, newest at the right edge, so
- * silence is a row of dots and speech is bars scrolling left across the row.
- * Fills whatever width the action row gives it and shows as much history as
- * fits. Mounted only while a session is live, so each session starts empty.
+ * silence is a row of dots and speech is bars scrolling left. Mounted only
+ * while a session is live, so each session starts empty.
  *
  * Painted on a canvas rather than as DOM bars: the row can be hundreds of
  * samples wide and every sample moves all of them, so one clear-and-fill per
@@ -102,14 +97,33 @@ function VoiceLevelTimeline(props: { level: number }) {
     <canvas
       ref={canvasRef}
       aria-hidden
-      // theme.custom.css keys the started thread's compact fill, the stacked
-      // row when there is typed text, the prompt's width reserve, and the
-      // timeline's own floor and colour on this.
       data-fork-dictation-timeline=""
-      className="block h-6 min-w-0 flex-1 text-foreground"
+      className="block h-5 w-16 shrink-0 text-foreground"
     />
   );
 }
+
+/**
+ * The words heard so far, drawn as prompt text after the draft they will join.
+ * theme.custom.css lets `solo` stand in for an empty editor.
+ */
+export function ForkDictationPreview(props: {
+  preview: { readonly committed: string; readonly tentative: string };
+  promptEmpty: boolean;
+}) {
+  return (
+    <div
+      aria-label="Live transcription"
+      data-fork-dictation-preview={props.promptEmpty ? "solo" : "after-draft"}
+      className="font-(family-name:--font-composer,var(--font-sans)) text-(length:--font-size-prompt,var(--text-sm)) leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground max-sm:pointer-coarse:text-(length:--font-size-prompt-touch)"
+    >
+      <span>{props.preview.committed}</span>
+      <span className="text-muted-foreground">{props.preview.tentative}</span>
+    </div>
+  );
+}
+
+const DONE_LABEL = "Done, transcribe (Right Command)";
 
 /** What ComposerPrimaryActions needs to hand the send slot to dictation. */
 export type ForkDictationPrimary = {
@@ -134,35 +148,43 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
 
 /**
  * The mic: a ghost in the composer's control row, beside attach and ahead of
- * the mode controls. Starting a session hands the send slot to
- * ForkDictationPrimaryButton.
+ * the mode controls, with the level timeline beside it for a live session.
+ * Starting a session hands the send slot to ForkDictationPrimaryButton; while
+ * recording, a click finishes it, as the check does.
  */
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
   if (!dictation.isAvailable) return null;
+  const recording = dictation.state.phase === "recording";
   return (
-    <DictationTooltip
-      label="Dictate"
-      trigger={
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Dictate (Right Command)"
-          data-fork-composer-action="dictate"
-          disabled={disabled}
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={dictation.start}
-        />
-      }
-      icon={<MicrophoneIcon weight="fill" />}
-    />
+    <div
+      {...(dictation.blocksSubmission ? { "data-fork-dictation-live": "" } : {})}
+      className="flex shrink-0 items-center"
+    >
+      <DictationTooltip
+        label={recording ? DONE_LABEL : "Dictate"}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={recording ? DONE_LABEL : "Dictate (Right Command)"}
+            data-fork-composer-action="dictate"
+            disabled={disabled && !recording}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={recording ? dictation.stop : dictation.start}
+          />
+        }
+        icon={<MicrophoneIcon weight="fill" />}
+      />
+      {dictation.blocksSubmission ? <VoiceLevelTimeline level={dictation.level} /> : null}
+    </div>
   );
 }
 
 /**
  * A live session borrows the send button: it becomes the check, with a cancel
- * X and the level timeline beside it, and the check spins while transcribing.
+ * X beside it, and the check spins while transcribing.
  * Everything appears in place: nothing slides, grows, or springs in.
  *
  * `className` is the send button's own, passed in by ComposerPrimaryActions so
@@ -183,11 +205,10 @@ export function ForkDictationPrimaryButton(props: {
   const label = transcribing
     ? "Transcribing (Escape to cancel)"
     : busy
-      ? "Done, transcribe (Right Command)"
+      ? DONE_LABEL
       : "Dictate (Right Command)";
   return (
     <>
-      {busy ? <VoiceLevelTimeline level={dictation.level} /> : null}
       {busy ? (
         <Button
           type="button"

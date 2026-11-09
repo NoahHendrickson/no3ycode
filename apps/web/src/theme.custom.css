@@ -837,7 +837,11 @@
 @media (width >= 40rem) {
   :root[data-fork="noahhendrickson-t3code"]
     [data-fork-composer-box]
-    :is([data-testid="composer-editor"], :has(> [data-testid="composer-editor"]) ~ div) {
+    :is(
+      [data-testid="composer-editor"],
+      :has(> [data-testid="composer-editor"]) ~ div,
+      [data-fork-dictation-preview]
+    ) {
     /* The design's body/md: 14px Geist on a 23px line. The 24px action is
        what sets the 44px base row (10 + 24 + 10); the one-line 23px prompt
        sits centred beside it, and each wrapped line adds 23px. Below sm the
@@ -2484,123 +2488,76 @@
   padding-inline: 10px;
 }
 
-/* ── Dictation timeline (fork-local-dictation) ─────────────────────────────
-   While a session is live the action row holds the level timeline, the cancel
-   X and the check (which is the send button). The timeline is a canvas that
-   fills whatever width the row has left. In a started thread an empty prompt
-   would grow if the cluster dropped under it, so the compact row stays one
-   line and the cluster takes the editor's place. Typed text still drops the
-   cluster under the prompt so the timeline does not squeeze the lines: the
-   row becomes the draft box's grid, the cluster spanning the row beneath;
-   the prompt then reserves the idle cluster's width on the right so nothing
-   reflows. Keyed on the timeline's presence plus prompt-empty
-   from ComposerPromptRow. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline]):not(
-    [data-fork-composer-prompt-empty]
-  ) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "prompt"
-    "actions";
-  align-items: end;
-  gap: 4px 0;
+/* ── Dictation session (fork-local-dictation) ──────────────────────────────
+   The level timeline sits beside the mic in the control row, leaving the
+   prompt row to the text and the X and check. The X sits 4px from the check
+   and takes that plus the row's 24px gap back, so the docked prompt keeps its
+   exact width and typed text never reflows. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="dictate-cancel"] {
+  margin-right: -4px;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline]):not(
-    [data-fork-composer-prompt-empty]
-  )
-  [data-fork-composer-prompt] {
-  grid-area: prompt;
+  [data-chat-composer-inline-actions]:has([data-fork-composer-action="dictate-cancel"]) {
+  margin-left: -28px;
+}
+
+/* A live session lights the mic and timeline as one rectangle on the control
+   row's 4% fill. The mic is disabled but reads as on: full ink, cancelling the
+   disabled dim. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-live] {
+  padding-right: 4px;
+  border-radius: 4px;
+  background: var(--fork-composer-control-hover);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline]):not(
-    [data-fork-composer-prompt-empty]
-  )
-  [data-chat-composer-inline-actions] {
-  grid-area: actions;
-  align-self: stretch;
+  [data-fork-composer-control-row-slot="left"]
+  [data-fork-dictation-live]
+  [data-fork-composer-action="dictate"] {
+  color: var(--foreground);
+  opacity: 1;
 }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline])
-  [data-chat-composer-actions="right"] {
-  width: 100%;
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-control-row-slot="left"]
+  [data-fork-dictation-live]
+  [data-fork-composer-action="dictate"] {
+  color: #ffffff;
 }
 
-/* Empty started-thread prompt: stay in the compact row. Collapse the editor
-   (still mounted, so the transcript can land) and let the cluster grow into
-   the prompt's place. Gap is zeroed so the 0-width prompt does not
-   keep the row's 24px neighbour gap as a hole on the left. The draft box is
-   already two rows, so it is left alone. */
+/* Live words share the prompt's scrollport. column-reverse with the words
+   ordered first keeps it pinned to the newest line without script; the auto
+   margin holds short text at the top of the draft box's min-height. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row][data-fork-composer-prompt-empty]:has(
-    [data-fork-dictation-timeline]
-  ) {
-  gap: 0;
+  [data-fork-composer-prompt]:has(> [data-fork-dictation-preview]) {
+  display: flex;
+  flex-direction: column-reverse;
+  max-height: calc(12.5rem + 8px);
+  overflow-y: auto;
 }
 
+:root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-preview] {
+  order: -1;
+  margin-bottom: auto;
+}
+
+/* Empty prompt: the words take the editor's place. It stays mounted for the
+   transcript to land in, clipped so its 4px overhang cannot give the prompt a
+   horizontal scrollbar. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row][data-fork-composer-prompt-empty]:has(
-    [data-fork-dictation-timeline]
-  )
-  [data-fork-composer-prompt] {
-  flex: 0 0 0;
-  min-width: 0;
-  overflow: hidden;
+  [data-fork-composer-prompt]:has(> [data-fork-dictation-preview="solo"])
+  > :has([data-testid="composer-editor"]) {
+  position: absolute;
+  inset-inline: 0;
+  height: 0;
+  overflow: clip;
   visibility: hidden;
 }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row][data-fork-composer-prompt-empty]:has(
-    [data-fork-dictation-timeline]
-  )
-  [data-chat-composer-inline-actions] {
-  flex: 1 1 0;
-  min-width: 0;
-  align-self: stretch;
-}
-
-/* The typed text keeps its measure. Beside it the prompt was the row minus
-   the cluster and its 24px gap; with the cluster underneath it reserves
-   that width as padding, so nothing reflows when the session starts or
-   ends. Idle, the cluster is the 24px send slot, or stop and send on an 8px
-   gap while a turn runs. The draft box already keeps its actions under the
-   prompt, so it reserves nothing. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline]):not(
-    [data-fork-composer-prompt-empty]
-  )
-  [data-fork-composer-prompt] {
-  padding-right: calc(24px + 24px);
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-fork-composer-prompt-row]:has([data-fork-dictation-timeline]):not(
-    [data-fork-composer-prompt-empty]
-  ):has([data-fork-composer-action="stop"])
-  [data-fork-composer-prompt] {
-  padding-right: calc(24px + 8px + 24px + 24px);
-}
-
-/* The timeline paints in its own `color`: the foreground in light mode, and
-   in dark the same pure white as the X beside it. Its floor keeps a readable
-   stretch of history where the row has no free width to spread into. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-timeline] {
-  min-width: 96px;
-}
-
+/* The timeline paints in its own `color`: the foreground, and pure white in
+   dark, the one live thing in a row of muted controls. */
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-dictation-timeline] {
   color: #ffffff;
 }

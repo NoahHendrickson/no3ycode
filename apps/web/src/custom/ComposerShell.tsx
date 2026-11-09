@@ -115,8 +115,6 @@ type ComposerPromptRowProps = Pick<
 > & {
   action: ReactNode;
   children?: ReactNode;
-  /** Empty editor: a live dictation session fills this row instead of stacking. */
-  promptEmpty?: boolean;
 };
 
 /**
@@ -128,7 +126,6 @@ export const ComposerPromptRow = memo(function ComposerPromptRow({
   approvalPending,
   children,
   mobilePendingActionsVisible,
-  promptEmpty = false,
 }: ComposerPromptRowProps) {
   const { showInlinePrimaryAction } = resolveComposerShellVisibility({
     approvalPending,
@@ -139,13 +136,8 @@ export const ComposerPromptRow = memo(function ComposerPromptRow({
   return (
     // Stamped so the draft-only geometry (theme.custom.css, keyed on the
     // overlay's data-draft-hero) can put the prompt on top and the action
-    // cluster beneath it. prompt-empty lets a live dictation session fill
-    // the compact row when there is nothing typed.
-    <div
-      data-fork-composer-prompt-row="true"
-      {...(promptEmpty ? { "data-fork-composer-prompt-empty": "true" } : {})}
-      className="flex min-w-0 items-end gap-6"
-    >
+    // cluster beneath it.
+    <div data-fork-composer-prompt-row="true" className="flex min-w-0 items-end gap-6">
       <div data-fork-composer-prompt="true" className="relative min-w-0 flex-1">
         {children}
       </div>
