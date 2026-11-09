@@ -354,7 +354,8 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-composer-prompt]") &&
         !rule.selector.includes('[data-testid="composer-editor"]'),
     );
-    expect(scrollport?.body).toMatch(/max-height:\s*calc\(12\.5rem \+ 8px\)/u);
+    expect(theme).toMatch(/--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 8px\)/u);
+    expect(scrollport?.body).toMatch(/max-height:\s*var\(--fork-composer-prompt-cap\)/u);
     expect(scrollport?.body).toMatch(/overflow-y:\s*auto/u);
 
     const editor = rules.find(
