@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, XIcon } from "lucide-react";
 import { MicrophoneIcon } from "@phosphor-icons/react";
@@ -8,20 +8,16 @@ import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import type { ForkDictation } from "./forkDictation";
 
-// Figma 472:33881 draws 2px blue dots on a 4px pitch, 3px in from either
-// edge, bars up to 16px tall in a 24px row. By request the bars are 1px wide
-// and painted in the canvas's own `color` (the foreground; pure white in dark
-// via theme.custom.css), matching the X beside them. The pitch stays 4px so
-// the timeline scrolls at the same speed, and a silent sample is a 1×2 mark so
-// it still reads as a dot.
+// 1px bars on a 4px pitch, 3px in from either edge, up to 12px tall in the 20px
+// control row, painted in the canvas's own `color` (theme.custom.css).
 const BAR_WIDTH = 1;
 const BAR_PITCH = 4;
 const BAR_GAP = BAR_PITCH - BAR_WIDTH;
 const DOT_HEIGHT = 2;
-const BAR_MAX_HEIGHT = 16;
+const BAR_MAX_HEIGHT = 12;
 const BAR_INSET = 3;
-// Samples arrive at 20 Hz; 30 s of history at 4px each outruns any composer.
-const HISTORY_LIMIT = 600;
+// The bars a w-16 canvas holds; older samples are never drawn.
+const SLOTS = 15;
 // Quiet speech sits around -40 dBFS and normal speech near -20, so map the
 // -50…-10 dB range to the bar height instead of raw amplitude, which barely
 // moves for anything below a raised voice.
@@ -34,82 +30,92 @@ function levelToUnit(rms: number): number {
   return Math.min(1, Math.max(0, (db - FLOOR_DB) / (CEILING_DB - FLOOR_DB)));
 }
 
+function paintTimeline(canvas: HTMLCanvasElement, history: ReadonlyArray<number>) {
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const scale = window.devicePixelRatio || 1;
+  const pixelWidth = Math.round(width * scale);
+  const pixelHeight = Math.round(height * scale);
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  context.setTransform(scale, 0, 0, scale, 0, 0);
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = getComputedStyle(canvas).color;
+  for (let slot = 0; slot < SLOTS; slot++) {
+    const sample = history[history.length - SLOTS + slot];
+    const barHeight =
+      sample === undefined
+        ? DOT_HEIGHT
+        : DOT_HEIGHT + Math.round(sample * (BAR_MAX_HEIGHT - DOT_HEIGHT));
+    const x = width - BAR_INSET + BAR_GAP - (SLOTS - slot) * BAR_PITCH;
+    context.fillRect(x, (height - barHeight) / 2, BAR_WIDTH, barHeight);
+  }
+}
+
 /**
  * Input-level timeline: one dot per sample, newest at the right edge, so
- * silence is a row of dots and speech is bars scrolling left across the row.
- * Fills whatever width the action row gives it and shows as much history as
- * fits. Mounted only while a session is live, so each session starts empty.
- *
- * Painted on a canvas rather than as DOM bars: the row can be hundreds of
- * samples wide and every sample moves all of them, so one clear-and-fill per
- * sample beats hundreds of style writes. No CSS transition, since a new value
- * every 50 ms would never settle. The bitmap follows the element's box, so a
- * window resize repaints it at the new width.
+ * silence is a row of dots and speech is bars scrolling left. Mounted only
+ * while a session is live, so each session starts empty. A canvas because every
+ * sample moves every bar: one repaint at 20 Hz instead of 15 style writes.
  */
 function VoiceLevelTimeline(props: { level: number }) {
   const { level } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const historyRef = useRef<number[]>([]);
-  const paintRef = useRef<() => void>(() => {});
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- owns the canvas bitmap and repaints it when the element resizes
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
-    const history = historyRef.current;
-    const paint = () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const scale = window.devicePixelRatio || 1;
-      const pixelWidth = Math.round(width * scale);
-      const pixelHeight = Math.round(height * scale);
-      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-        canvas.width = pixelWidth;
-        canvas.height = pixelHeight;
-      }
-      context.setTransform(scale, 0, 0, scale, 0, 0);
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = getComputedStyle(canvas).color;
-      const slots = Math.floor((width - 2 * BAR_INSET + BAR_GAP) / BAR_PITCH);
-      for (let slot = 0; slot < slots; slot++) {
-        const sample = history[history.length - slots + slot];
-        const barHeight =
-          sample === undefined
-            ? DOT_HEIGHT
-            : DOT_HEIGHT + Math.round(sample * (BAR_MAX_HEIGHT - DOT_HEIGHT));
-        const x = width - BAR_INSET + BAR_GAP - (slots - slot) * BAR_PITCH;
-        context.fillRect(x, (height - barHeight) / 2, BAR_WIDTH, barHeight);
-      }
-    };
-    paintRef.current = paint;
-    const observer = new ResizeObserver(paint);
-    observer.observe(canvas);
-    paint();
-    return () => {
-      paintRef.current = () => {};
-      observer.disconnect();
-    };
-  }, []);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- appends each meter sample to the canvas history and repaints the bitmap
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const history = historyRef.current;
     // Upstream meters min(1, 4 × RMS); undo the gain so the bars keep their dB scale.
     history.push(levelToUnit(level / 4));
-    if (history.length > HISTORY_LIMIT) history.shift();
-    paintRef.current();
+    if (history.length > SLOTS) history.shift();
+    paintTimeline(canvas, history);
   }, [level]);
   return (
     <canvas
       ref={canvasRef}
       aria-hidden
-      // theme.custom.css keys the started thread's compact fill, the stacked
-      // row when there is typed text, the prompt's width reserve, and the
-      // timeline's own floor and colour on this.
       data-fork-dictation-timeline=""
-      className="block h-6 min-w-0 flex-1 text-foreground"
+      className="block h-5 w-16 shrink-0"
     />
   );
 }
+
+/**
+ * The words heard so far, drawn as prompt text after the draft they will join.
+ * theme.custom.css lets `solo` stand in for an empty editor.
+ */
+export function ForkDictationPreview(props: {
+  preview: { readonly committed: string; readonly tentative: string };
+  promptEmpty: boolean;
+}) {
+  const { committed, tentative } = props.preview;
+  const ref = useRef<HTMLDivElement>(null);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- keeps the prompt's DOM scroller on the newest words
+  useLayoutEffect(() => {
+    const scroller = ref.current?.parentElement;
+    if (!scroller || (!committed && !tentative)) return;
+    scroller.scrollTop = scroller.scrollHeight;
+  }, [committed, tentative]);
+  return (
+    <div
+      ref={ref}
+      aria-label="Live transcription"
+      data-fork-dictation-preview={props.promptEmpty ? "solo" : ""}
+      className="font-(family-name:--font-composer,var(--font-sans)) text-(length:--font-size-prompt,var(--text-sm)) leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground max-sm:pointer-coarse:text-(length:--font-size-prompt-touch)"
+    >
+      <span>{committed}</span>
+      <span className="text-muted-foreground">{tentative}</span>
+    </div>
+  );
+}
+
+const DONE_LABEL = "Done, transcribe (Right Command)";
 
 /** What ComposerPrimaryActions needs to hand the send slot to dictation. */
 export type ForkDictationPrimary = {
@@ -134,35 +140,43 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
 
 /**
  * The mic: a ghost in the composer's control row, beside attach and ahead of
- * the mode controls. Starting a session hands the send slot to
- * ForkDictationPrimaryButton.
+ * the mode controls, with the level timeline beside it for a live session.
+ * Starting a session hands the send slot to ForkDictationPrimaryButton; while
+ * recording, a click finishes it, as the check does.
  */
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
   if (!dictation.isAvailable) return null;
+  const recording = dictation.state.phase === "recording";
   return (
-    <DictationTooltip
-      label="Dictate"
-      trigger={
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Dictate (Right Command)"
-          data-fork-composer-action="dictate"
-          disabled={disabled}
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={dictation.start}
-        />
-      }
-      icon={<MicrophoneIcon weight="fill" />}
-    />
+    <div
+      {...(dictation.blocksSubmission ? { "data-fork-dictation-live": "" } : {})}
+      className="flex shrink-0 items-center"
+    >
+      <DictationTooltip
+        label={recording ? DONE_LABEL : "Dictate"}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={recording ? DONE_LABEL : "Dictate (Right Command)"}
+            data-fork-composer-action="dictate"
+            disabled={!recording && (disabled || dictation.blocksSubmission)}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={recording ? dictation.stop : dictation.start}
+          />
+        }
+        icon={<MicrophoneIcon weight="fill" />}
+      />
+      {dictation.blocksSubmission ? <VoiceLevelTimeline level={dictation.level} /> : null}
+    </div>
   );
 }
 
 /**
  * A live session borrows the send button: it becomes the check, with a cancel
- * X and the level timeline beside it, and the check spins while transcribing.
+ * X beside it, and the check spins while transcribing.
  * Everything appears in place: nothing slides, grows, or springs in.
  *
  * `className` is the send button's own, passed in by ComposerPrimaryActions so
@@ -183,11 +197,10 @@ export function ForkDictationPrimaryButton(props: {
   const label = transcribing
     ? "Transcribing (Escape to cancel)"
     : busy
-      ? "Done, transcribe (Right Command)"
+      ? DONE_LABEL
       : "Dictate (Right Command)";
   return (
     <>
-      {busy ? <VoiceLevelTimeline level={dictation.level} /> : null}
       {busy ? (
         <Button
           type="button"

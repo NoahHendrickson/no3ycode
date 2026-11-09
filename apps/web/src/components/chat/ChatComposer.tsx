@@ -155,10 +155,15 @@ import {
   type TerminalContextSelection,
 } from "../../lib/terminalContext";
 /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-import { ForkDictationGhostMic, ForkDictationNotices } from "~/custom/voice/ForkDictationControl";
+import {
+  ForkDictationGhostMic,
+  ForkDictationNotices,
+  ForkDictationPreview,
+} from "~/custom/voice/ForkDictationControl";
 import {
   forkDictationFromSpeech,
   useForkDictationHotkeyTarget,
+  useForkDictationPreview,
 } from "~/custom/voice/forkDictation";
 import { useOwnsGlobalInput } from "~/custom/splitThreads/splitPaneContext";
 /* fork:end fork-local-dictation */
@@ -2031,6 +2036,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const dictationOwnsPrimaryAction = dictation.isAvailable && dictation.blocksSubmission;
   const { settleWithoutControls: settleDictationWithoutControls } = dictation;
   const dictationLive = dictation.blocksSubmission;
+  const dictationPromptEmpty = (activePendingProgress?.customAnswer ?? prompt).length === 0;
+  const dictationPreview = useForkDictationPreview(speechInput);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- settles a live dictation whose send-slot controls just unmounted
   useEffect(() => {
     if (dictationLive && !dictationControlsVisible) settleDictationWithoutControls();
@@ -3758,13 +3765,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           <>
             {composerAttachAction}
             {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-                Stays in place, inert, for a live session (its X and check
-                take the send slot) and wherever there is no field to
-                dictate into. */}
-            <ForkDictationGhostMic
-              dictation={dictation}
-              disabled={forkDictationStartBlocked || dictation.blocksSubmission}
-            />
+                Stays in place for a live session, where it finishes the
+                recording like the check, and is inert wherever there is no
+                field to dictate into. */}
+            <ForkDictationGhostMic dictation={dictation} disabled={forkDictationStartBlocked} />
             {/* fork:end fork-local-dictation */}
             {composerModeControls}
           </>
@@ -3899,15 +3903,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 </div>
               ) : null}
 
-              {speechInput.preview ? (
-                <div
-                  aria-label="Live transcription"
-                  className="mx-3 mb-3 max-h-32 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap sm:mx-4"
-                >
-                  <span>{speechInput.preview.committed}</span>
-                  <span className="text-muted-foreground">{speechInput.preview.tentative}</span>
-                </div>
-              ) : null}
+              {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */}
+              {/* Upstream's boxed live preview is not rendered: ForkDictationPreview draws the
+                words in the prompt, after the draft they will join. */}
+              {/* fork:end fork-local-dictation */}
 
               <div
                 ref={(node) => {
@@ -4009,9 +4008,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                     action={composerPrimaryActionSlot}
                     approvalPending={activePendingApproval !== null}
                     mobilePendingActionsVisible={showMobilePendingAnswerActions}
-                    /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-                    promptEmpty={(activePendingProgress?.customAnswer ?? prompt).length === 0}
-                    /* fork:end fork-local-dictation */
                   >
                     {/* fork:end fork-composer-shell */}
                     <ComposerContextActionsContext value={composerContextActions}>
@@ -4076,6 +4072,14 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                         }
                       />
                     </ComposerContextActionsContext>
+                    {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */}
+                    {dictationPreview ? (
+                      <ForkDictationPreview
+                        preview={dictationPreview}
+                        promptEmpty={dictationPromptEmpty}
+                      />
+                    ) : null}
+                    {/* fork:end fork-local-dictation */}
                     {showMobilePendingAnswerActions ? (
                       <div
                         data-chat-composer-mobile-pending-actions="true"

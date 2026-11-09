@@ -23,7 +23,6 @@ describe("fork local dictation", () => {
     const preload = read("../../../desktop/src/preload.ts");
     const packaging = read("../../../../scripts/build-desktop-artifact.ts");
     const theme = read("../theme.custom.css");
-    const shell = read("../custom/ComposerShell.tsx");
     // Upstream's speech input owns the session; the fork's controls read it
     // through one adapter, and the composer registers it with the root hotkey.
     expect(composer).toContain("const speechInput = useEnvironmentSpeechInput({");
@@ -104,17 +103,17 @@ describe("fork local dictation", () => {
     expect(control).toMatch(/busy \? \(\s*<CheckIcon/u);
     expect(control).toMatch(/\) : \(\s*<MicrophoneIcon weight="fill"/u);
     // The mic is a ghost in the control row's left slot, after attach and
-    // before the mode controls (Full access). It stays in place, inert, while
-    // a live session's X and check hold the send slot, and never rides the
-    // primary cluster.
+    // before the mode controls (Full access). It stays in place while a live
+    // session's X and check hold the send slot, finishes a recording as the
+    // check does, and never rides the primary cluster.
     expect(composer).toMatch(
-      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked \|\| dictation\.blocksSubmission\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
+      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
     );
     expect(composer).not.toMatch(
       /const composerPrimaryActionSlot = \([\s\S]{0,1500}?<ForkDictationGhostMic/u,
     );
     expect(control).toMatch(
-      /data-fork-composer-action="dictate"[\s\S]*?onClick=\{dictation\.start\}/u,
+      /data-fork-composer-action="dictate"\s*disabled=\{!recording && \(disabled \|\| dictation\.blocksSubmission\)\}[\s\S]*?onClick=\{recording \? dictation\.stop : dictation\.start\}/u,
     );
     expect(control).toMatch(/icon=\{<MicrophoneIcon weight="fill" \/>\}/u);
     expect(control).toContain(
@@ -125,20 +124,17 @@ describe("fork local dictation", () => {
       /\{busy \? \(\s*<Button[^>]*data-fork-composer-action="dictate-cancel"/su,
     );
     expect(theme).toContain('[data-fork-composer-action="dictate-cancel"]');
-    // The level timeline is a canvas that fills the row to the left of the X,
-    // mounted only while a session is live: dots for silence, bars for
-    // speech, newest at the right edge, painted in its own colour (the
-    // foreground; pure white in dark like the X).
+    // The level timeline is a small canvas beside the mic in the control row,
+    // mounted only while a session is live: dots for silence, bars for speech,
+    // newest at the right edge, painted in its own colour (the foreground;
+    // pure white in dark).
     expect(control).toMatch(
-      /\{busy \? <VoiceLevelTimeline level=\{dictation\.level\} \/> : null\}/u,
+      /\{dictation\.blocksSubmission \? <VoiceLevelTimeline level=\{dictation\.level\} \/> : null\}/u,
     );
     expect(control).toContain("<canvas");
     expect(control).toContain('data-fork-dictation-timeline=""');
-    expect(control).toContain('className="block h-6 min-w-0 flex-1 text-foreground"');
     expect(control).toContain("getComputedStyle(canvas).color");
     expect(control).not.toContain('"#ffffff"');
-    expect(theme).toMatch(/\.dark \[data-fork-dictation-timeline\]\s*\{[^}]*color:\s*#ffffff/u);
-    expect(theme).toMatch(/\[data-fork-dictation-timeline\]\s*\{[^}]*min-width:\s*96px/u);
     // The registration reads a layout-phase mirror: ChatComposer is memoized,
     // so an effect event would keep the first thread's closure.
     expect(dictationModule).toContain(
@@ -148,66 +144,32 @@ describe("fork local dictation", () => {
     expect(dictationModule).not.toContain("useEffectEvent");
     expect(rootRoute).toContain("<ForkDictationHotkeyHost />");
     expect(hotkeyHost).toContain("installForkDictationHotkey()");
-    // In a started thread an empty prompt keeps the compact row: the cluster
-    // fills the editor's place (gap 0, prompt collapsed, actions flex). Typed
-    // text turns the row into the draft box's grid: the cluster spans the row
-    // beneath, and the prompt reserves the cluster's idle width on the right so the lines
-    // never reflow. prompt-empty is stamped on the row; the timeline's
-    // presence keys the rest.
-    const live = String.raw`:has\(\s*\[data-fork-dictation-timeline\]\s*\)`;
-    const typed = String.raw`${live}:not\(\s*\[data-fork-composer-prompt-empty\]\s*\)`;
-    expect(shell).toContain("promptEmpty");
-    expect(shell).toContain("data-fork-composer-prompt-empty");
-    expect(composer).toContain(
-      "promptEmpty={(activePendingProgress?.customAnswer ?? prompt).length === 0}",
-    );
+    // The X cancels its own footprint, so a one-button send slot does not widen.
     expect(theme).toMatch(
-      new RegExp(
-        String.raw`:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt-row\]${typed}\s*\{[^}]*display:\s*grid;[^}]*grid-template-areas:\s*"prompt"\s*"actions"`,
-        "u",
-      ),
+      /\[data-fork-composer-action="dictate-cancel"\]\s*\{\s*margin-inline:\s*-28px -4px/u,
     );
+    // A live session lights the mic and timeline as one rectangle in one ink.
+    expect(control).toContain('"data-fork-dictation-live": ""');
     expect(theme).toMatch(
-      new RegExp(
-        String.raw`${typed}\s*\[data-chat-composer-inline-actions\]\s*\{[^}]*grid-area:\s*actions`,
-        "u",
-      ),
+      /\[data-fork-dictation-live\]\s*\{[^}]*background:\s*var\(--fork-composer-control-hover\)/u,
     );
-    expect(theme).toMatch(
-      new RegExp(
-        String.raw`\[data-fork-composer-prompt-row\]${live}\s*\[data-chat-composer-actions="right"\]\s*\{[^}]*width:\s*100%`,
-        "u",
-      ),
+    expect(theme).toMatch(/\.dark \[data-fork-dictation-live\]\s*\{[^}]*color:\s*#ffffff/u);
+    // Live words are prompt text in the prompt row, not upstream's box above it,
+    // and they hold through transcript cleanup.
+    expect(composer).toMatch(
+      /<ComposerPromptRow[\s\S]*?<ForkDictationPreview[\s\S]*?<\/ComposerPromptRow>/u,
     );
-    expect(theme).toMatch(
-      new RegExp(
-        String.raw`:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt-row\]\[data-fork-composer-prompt-empty\]${live}\s*\{[^}]*gap:\s*0`,
-        "u",
-      ),
+    expect(composer).not.toContain("{speechInput.preview.committed}");
+    expect(composer).toContain("useForkDictationPreview(speechInput)");
+    // The scrollport follows the newest words without changing layout mode, so a
+    // cancelled session leaves a long draft where it was.
+    expect(control).toContain("scroller.scrollTop = scroller.scrollHeight");
+    expect(theme).not.toMatch(
+      /\[data-fork-composer-prompt\]:has\([^)]*preview[^{]*\{[^}]*column-reverse/u,
     );
+    // Solo words replace an empty editor, which stays mounted and focusable.
     expect(theme).toMatch(
-      new RegExp(
-        String.raw`\[data-fork-composer-prompt-empty\]${live}\s*\[data-fork-composer-prompt\]\s*\{[^}]*visibility:\s*hidden`,
-        "u",
-      ),
-    );
-    expect(theme).toMatch(
-      new RegExp(
-        String.raw`\[data-fork-composer-prompt-empty\]${live}\s*\[data-chat-composer-inline-actions\]\s*\{[^}]*flex:\s*1 1 0`,
-        "u",
-      ),
-    );
-    expect(theme).toMatch(
-      new RegExp(
-        String.raw`:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt-row\]${typed}\s*\[data-fork-composer-prompt\]\s*\{[^}]*padding-right:\s*calc\(24px \+ 24px\)`,
-        "u",
-      ),
-    );
-    expect(theme).toMatch(
-      new RegExp(
-        String.raw`${typed}:has\(\[data-fork-composer-action="stop"\]\)\s*\[data-fork-composer-prompt\]\s*\{[^}]*padding-right:\s*calc\(24px \+ 8px \+ 24px \+ 24px\)`,
-        "u",
-      ),
+      /\[data-fork-dictation-preview="solo"\]\)\s*> :has\(\[data-testid="composer-editor"\]\)\s*\{[^}]*overflow:\s*clip[^}]*opacity:\s*0/u,
     );
     expect(theme).not.toMatch(/padding-left:\s*calc\(24px \+ 6px\)/u);
     // Attach keeps its place in the control row, disabled for the session.

@@ -35,9 +35,13 @@
     runtime. ChatComposer feeds upstream's useEnvironmentSpeechInput result
     through forkDictationFromSpeech to ForkDictationControl; upstream's own
     composer mic and recording pill are not rendered, while its first-run
-    setup dialog (VoiceInputSetup), Send-while-dictating, editor freeze and
-    live preview are kept. Upstream's mod+shift+d shortcut and every other
-    editor's dictation stay upstream's.
+    setup dialog (VoiceInputSetup), Send-while-dictating and editor freeze are
+    kept. Upstream's boxed live preview above the composer body is not
+    rendered: ForkDictationPreview draws the words as prompt text after the
+    draft they will join, standing in for the editor when the prompt is empty,
+    with the prompt's scrollport following the newest line, and held through
+    transcript cleanup. Upstream's
+    mod+shift+d shortcut and every other editor's dictation stay upstream's.
     A bare right Command tap starts dictation into the composer on screen
     wherever focus sits while the app is active, and a second tap finishes it:
     every composer registers through useForkDictationHotkeyTarget (reading a
@@ -64,21 +68,18 @@
     Next/Submit sit in a strip below the editor). A typed-answer question is
     dictated into like the prompt and a live session holds its Next/Submit
     slot as it holds send's. A live session borrows the send button: it
-    becomes the check with a ghost cancel X and the level timeline beside it,
-    and the check spins while transcribing or cleaning up; the control-row mic
-    stays in place, disabled, so the row never shifts. The timeline is a
-    canvas filling the row to the left of the X: a 2px dot per 50 ms sample,
-    newest at the right, so silence is dots and speech is bars scrolling
-    left, on a -50…-10 dB scale, painted in the foreground colour (pure white
-    in dark). In a started thread an empty prompt keeps the compact one-line
-    row: the cluster (timeline, X, check) fills the editor's place so the
-    composer does not grow. Typed text turns the row into the draft box's
-    grid: the cluster spans the row beneath so the timeline does not squeeze
-    the lines, and the prompt reserves the idle cluster's width on the right
-    (send, or stop and send while a turn runs) so the typed text never
-    reflows. Attach stays in the control row, disabled rather than hidden for
-    the session. ChatComposer stamps prompt-empty on the row; the timeline's
-    presence keys the rest. ChatComposer decides when dictation owns the slot
+    becomes the check with a ghost cancel X beside it, and the check spins
+    while transcribing or cleaning up; the control-row mic stays in place,
+    lit (full ink, pure white in dark), and while recording a click on it finishes the session as the check does. The level timeline is a small fixed canvas right after the mic,
+    pushing the mode controls along for the session so the prompt row stays
+    the text's: a 2px dot per 50 ms sample, newest at the right, so silence is
+    dots and speech is bars scrolling left, on a -50…-10 dB scale, painted in
+    the mic's colour. Mic and timeline share one
+    rounded rectangle on the control row's 4% fill. The X sits 4px from the
+    check and its margins cancel its own footprint, so a one-button send slot
+    does not widen and the prompt beside it does not reflow.
+    Attach stays in the control row, disabled rather than hidden for the
+    session. ChatComposer decides when dictation owns the slot
     and ComposerPrimaryActions hands it over on every path that renders send,
     including while a turn runs, where it sits to stop's left so stop keeps
     the right edge. The check wears the send button's own class list and fork

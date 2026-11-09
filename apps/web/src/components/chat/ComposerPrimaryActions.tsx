@@ -314,7 +314,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   if (canInterrupt && !hasSendableContent && !isEditingQueuedMessage) {
     /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
        A live session sits to stop's left, so stop keeps the right edge: the
-       session's timeline, X and check grow leftward without moving it. */
+       session's X and check grow leftward without moving it. */
     if (forkDictationButton) {
       return (
         <>
