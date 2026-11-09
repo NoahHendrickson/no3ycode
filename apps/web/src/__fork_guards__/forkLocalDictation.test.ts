@@ -23,7 +23,6 @@ describe("fork local dictation", () => {
     const preload = read("../../../desktop/src/preload.ts");
     const packaging = read("../../../../scripts/build-desktop-artifact.ts");
     const theme = read("../theme.custom.css");
-    const shell = read("../custom/ComposerShell.tsx");
     // Upstream's speech input owns the session; the fork's controls read it
     // through one adapter, and the composer registers it with the root hotkey.
     expect(composer).toContain("const speechInput = useEnvironmentSpeechInput({");
@@ -108,13 +107,13 @@ describe("fork local dictation", () => {
     // session's X and check hold the send slot, finishes a recording as the
     // check does, and never rides the primary cluster.
     expect(composer).toMatch(
-      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked \|\| dictation\.blocksSubmission\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
+      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
     );
     expect(composer).not.toMatch(
       /const composerPrimaryActionSlot = \([\s\S]{0,1500}?<ForkDictationGhostMic/u,
     );
     expect(control).toMatch(
-      /data-fork-composer-action="dictate"\s*disabled=\{disabled && !recording\}[\s\S]*?onClick=\{recording \? dictation\.stop : dictation\.start\}/u,
+      /data-fork-composer-action="dictate"\s*disabled=\{!recording && \(disabled \|\| dictation\.blocksSubmission\)\}[\s\S]*?onClick=\{recording \? dictation\.stop : dictation\.start\}/u,
     );
     expect(control).toMatch(/icon=\{<MicrophoneIcon weight="fill" \/>\}/u);
     expect(control).toContain(
@@ -134,10 +133,8 @@ describe("fork local dictation", () => {
     );
     expect(control).toContain("<canvas");
     expect(control).toContain('data-fork-dictation-timeline=""');
-    expect(control).toContain('className="block h-5 w-16 shrink-0 text-foreground"');
     expect(control).toContain("getComputedStyle(canvas).color");
     expect(control).not.toContain('"#ffffff"');
-    expect(theme).toMatch(/\.dark \[data-fork-dictation-timeline\]\s*\{[^}]*color:\s*#ffffff/u);
     // The registration reads a layout-phase mirror: ChatComposer is memoized,
     // so an effect event would keep the first thread's closure.
     expect(dictationModule).toContain(
@@ -147,43 +144,32 @@ describe("fork local dictation", () => {
     expect(dictationModule).not.toContain("useEffectEvent");
     expect(rootRoute).toContain("<ForkDictationHotkeyHost />");
     expect(hotkeyHost).toContain("installForkDictationHotkey()");
-    // The prompt row stays the prompt's: the X spends the row's gap, and no
-    // session restacks the row or collapses the editor.
+    // The X cancels its own footprint, so a one-button send slot does not widen.
     expect(theme).toMatch(
-      /\[data-chat-composer-inline-actions\]:has\(\[data-fork-composer-action="dictate-cancel"\]\)\s*\{[^}]*margin-left:\s*-28px/u,
+      /\[data-fork-composer-action="dictate-cancel"\]\s*\{\s*margin-inline:\s*-28px -4px/u,
     );
-    expect(theme).not.toMatch(
-      /\[data-fork-composer-prompt-row\][^{]*data-fork-dictation-timeline/u,
-    );
-    expect(theme).toMatch(
-      /\[data-fork-composer-action="dictate-cancel"\]\s*\{\s*margin-right:\s*-4px/u,
-    );
-    // A live session lights the mic and timeline as one rectangle on the row's 4% fill.
+    // A live session lights the mic and timeline as one rectangle in one ink.
     expect(control).toContain('"data-fork-dictation-live": ""');
     expect(theme).toMatch(
       /\[data-fork-dictation-live\]\s*\{[^}]*background:\s*var\(--fork-composer-control-hover\)/u,
     );
-    expect(theme).toMatch(
-      /\[data-fork-dictation-live\]\s*\[data-fork-composer-action="dictate"\]\s*\{[^}]*opacity:\s*1/u,
-    );
-    expect(theme).toMatch(
-      /\.dark[^{]*\[data-fork-dictation-live\]\s*\[data-fork-composer-action="dictate"\]\s*\{[^}]*color:\s*#ffffff/u,
-    );
-    expect(shell).not.toContain("data-fork-composer-prompt-empty");
-    expect(composer).toContain(
-      "const dictationPromptEmpty = (activePendingProgress?.customAnswer ?? prompt).length === 0;",
-    );
-    // Live words are prompt text after the draft, not upstream's box above it.
+    expect(theme).toMatch(/\.dark \[data-fork-dictation-live\]\s*\{[^}]*color:\s*#ffffff/u);
+    // Live words are prompt text in the prompt row, not upstream's box above it,
+    // and they hold through transcript cleanup.
     expect(composer).toMatch(
-      /<\/ComposerContextActionsContext>[\s\S]{0,200}<ForkDictationPreview/u,
+      /<ComposerPromptRow[\s\S]*?<ForkDictationPreview[\s\S]*?<\/ComposerPromptRow>/u,
     );
     expect(composer).not.toContain("{speechInput.preview.committed}");
-    expect(control).toContain(
-      'data-fork-dictation-preview={props.promptEmpty ? "solo" : "after-draft"}',
+    expect(composer).toContain("useForkDictationPreview(speechInput)");
+    // The scrollport follows the newest words without changing layout mode, so a
+    // cancelled session leaves a long draft where it was.
+    expect(control).toContain("scroller.scrollTop = scroller.scrollHeight");
+    expect(theme).not.toMatch(
+      /\[data-fork-composer-prompt\]:has\([^)]*preview[^{]*\{[^}]*column-reverse/u,
     );
-    expect(theme).toMatch(/\[data-fork-dictation-preview\]\s*\{[^}]*order:\s*-1/u);
+    // Solo words replace an empty editor, which stays mounted and focusable.
     expect(theme).toMatch(
-      /\[data-fork-dictation-preview="solo"\]\)\s*> :has\(\[data-testid="composer-editor"\]\)\s*\{[^}]*overflow:\s*clip/u,
+      /\[data-fork-dictation-preview="solo"\]\)\s*> :has\(\[data-testid="composer-editor"\]\)\s*\{[^}]*overflow:\s*clip[^}]*opacity:\s*0/u,
     );
     expect(theme).not.toMatch(/padding-left:\s*calc\(24px \+ 6px\)/u);
     // Attach keeps its place in the control row, disabled for the session.

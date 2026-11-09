@@ -163,6 +163,7 @@ import {
 import {
   forkDictationFromSpeech,
   useForkDictationHotkeyTarget,
+  useForkDictationPreview,
 } from "~/custom/voice/forkDictation";
 import { useOwnsGlobalInput } from "~/custom/splitThreads/splitPaneContext";
 /* fork:end fork-local-dictation */
@@ -2036,6 +2037,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const { settleWithoutControls: settleDictationWithoutControls } = dictation;
   const dictationLive = dictation.blocksSubmission;
   const dictationPromptEmpty = (activePendingProgress?.customAnswer ?? prompt).length === 0;
+  const dictationPreview = useForkDictationPreview(speechInput);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- settles a live dictation whose send-slot controls just unmounted
   useEffect(() => {
     if (dictationLive && !dictationControlsVisible) settleDictationWithoutControls();
@@ -3766,10 +3768,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 Stays in place for a live session, where it finishes the
                 recording like the check, and is inert wherever there is no
                 field to dictate into. */}
-            <ForkDictationGhostMic
-              dictation={dictation}
-              disabled={forkDictationStartBlocked || dictation.blocksSubmission}
-            />
+            <ForkDictationGhostMic dictation={dictation} disabled={forkDictationStartBlocked} />
             {/* fork:end fork-local-dictation */}
             {composerModeControls}
           </>
@@ -4074,9 +4073,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                       />
                     </ComposerContextActionsContext>
                     {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */}
-                    {speechInput.preview ? (
+                    {dictationPreview ? (
                       <ForkDictationPreview
-                        preview={speechInput.preview}
+                        preview={dictationPreview}
                         promptEmpty={dictationPromptEmpty}
                       />
                     ) : null}

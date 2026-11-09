@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { useEnvironmentSpeechInput } from "~/speech/useEnvironmentSpeechInput";
 import { useOwnsGlobalInput } from "../splitThreads/splitPaneContext";
 
@@ -35,6 +35,14 @@ export function forkDictationFromSpeech(speech: SpeechInput) {
 }
 
 export type ForkDictation = ReturnType<typeof forkDictationFromSpeech>;
+
+/** The live words, held through transcript cleanup, where upstream drops them mid-session. */
+export function useForkDictationPreview(speech: SpeechInput): SpeechInput["preview"] {
+  const [held, setHeld] = useState<SpeechInput["preview"]>(null);
+  const preview = speech.blocksSubmission ? (speech.preview ?? held) : null;
+  if (preview !== held) setHeld(preview);
+  return preview;
+}
 
 export type ForkDictationTarget = {
   readonly dictation: () => ForkDictation;

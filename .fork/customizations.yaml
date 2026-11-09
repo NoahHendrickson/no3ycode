@@ -39,7 +39,8 @@
     kept. Upstream's boxed live preview above the composer body is not
     rendered: ForkDictationPreview draws the words as prompt text after the
     draft they will join, standing in for the editor when the prompt is empty,
-    with the prompt's scrollport pinned to the newest line. Upstream's
+    with the prompt's scrollport following the newest line, and held through
+    transcript cleanup. Upstream's
     mod+shift+d shortcut and every other editor's dictation stay upstream's.
     A bare right Command tap starts dictation into the composer on screen
     wherever focus sits while the app is active, and a second tap finishes it:
@@ -75,8 +76,8 @@
     dots and speech is bars scrolling left, on a -50…-10 dB scale, painted in
     the mic's colour. Mic and timeline share one
     rounded rectangle on the control row's 4% fill. The X sits 4px from the
-    check and takes that plus the docked row's 24px gap back, so the prompt
-    keeps its exact width and typed text never reflows.
+    check and its margins cancel its own footprint, so a one-button send slot
+    does not widen and the prompt beside it does not reflow.
     Attach stays in the control row, disabled rather than hidden for the
     session. ChatComposer decides when dictation owns the slot
     and ComposerPrimaryActions hands it over on every path that renders send,
