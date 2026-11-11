@@ -112,7 +112,8 @@ look like it. While open:
 2. The menu squares the corner over the trigger and fills the gap to it.
 3. A concave corner curves from the menu's edge into the trigger's free side.
 4. Menu, join and trigger **sample as the same hex.** No shadow may land on the trigger: cast it
-   away, and clip it at the join.
+   away, and clip it at the join. A menu hung above its trigger (the composer's) casts none,
+   or it falls on the chips beside the trigger.
 5. A thin trigger gets padded fill (4px each side), so the menu never hangs off a sliver.
 
 ### H4. Geometry

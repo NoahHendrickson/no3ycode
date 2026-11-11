@@ -280,6 +280,8 @@ function startMorph(popup: HTMLElement) {
         release(popup);
         return;
       }
+      // Above its button (the composer's menus) the shadow would fall on the button's row.
+      if (!below) svg.style.filter = "none";
     }
     const buttonRadius =
       Number.parseFloat(
