@@ -1359,6 +1359,10 @@
   --contrast-muted-foreground: #68675d;
   --contrast-secondary-label: #68675d;
   --contrast-icon-muted: #68675d;
+  /* A search field's placeholder, icon and focus line, as on the cream composer. */
+  --placeholder: rgb(0 0 0 / 65%);
+  --contrast-placeholder: rgb(0 0 0 / 65%);
+  --ring: #1c1c1a;
   /* Status tones pair a deep light-mode shade with a pale dark: one
      (text-emerald-600 dark:text-emerald-300/90); the page is dark, so the pale
      one wins and fades into the cream. The pale shades stand for the deep. */
@@ -1371,6 +1375,10 @@
   /* The Cursor mark's dark fill is near-white. */
   & .dark\:fill-\[\#EDECEC\] {
     fill: #26251e;
+  }
+
+  & .lucide-search {
+    color: var(--placeholder);
   }
 }
 

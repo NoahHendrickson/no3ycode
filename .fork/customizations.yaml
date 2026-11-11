@@ -6569,3 +6569,20 @@
     - apps/web/src/components/sidebar/SidebarUpdatePill.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
+
+- id: fork-full-width-search-divider
+  intent: >
+    The search field at the top of combobox popups (ComboboxSearchInput: the
+    branch and ref pickers, the diff panel's ref picker, font, PR and code
+    language pickers) underlines itself from one edge of the popup to the
+    other, as every fork divider does (.fork/AGENTS.md, Design defaults).
+    Upstream pads the row 12px each side and draws the line inside that; the
+    fork moves the padding inside the underlined box and offsets the search
+    icon by the same 12px, so the field sits where it did.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/combobox.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkFullWidthSearchDivider.test.ts
