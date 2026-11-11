@@ -334,7 +334,7 @@ describe("fork guard: fork-new-agent-draft", () => {
   });
 
   it("keeps Usage as the chrome's fourth row", () => {
-    expect(chromeRows).toContain("<SidebarV2UsageRow");
+    expect(chromeRows).toContain("<ChromeUsageRow />");
   });
 
   it("keeps the folder mark over upstream's title monogram where the fork names one", () => {

@@ -495,7 +495,7 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(indexHtml).toContain('t3code:fork-theme"');
     expect(indexHtml).toContain(`"cool-dark": "${COOL_DARK_BACKGROUND}"`);
     expect(indexHtml).toMatch(
-      /theme === "dark" &&\s*isDark &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
+      /theme === forkPaletteAppearance &&\s*isDark === \(forkPaletteAppearance === "dark"\) &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
     );
     expect(indexHtml).toContain('setAttribute("data-fork-theme", activeForkPalette)');
     expect(indexHtml).toContain(`html.dark[${FORK_THEME_ATTRIBUTE}="cool-dark"] body`);

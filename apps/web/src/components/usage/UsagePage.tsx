@@ -70,7 +70,11 @@ import {
 } from "../ui/menu";
 import { ScrollArea } from "../ui/scroll-area";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
-import { AppRouteModal, AppRouteModalClose } from "../AppRouteModal";
+/* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page */
+import { SidebarInset } from "../ui/sidebar";
+import { WorkspacePageHeader } from "../WorkspacePageHeader";
+import { isElectron } from "../../env";
+/* fork:end fork-usage-page */
 import { Skeleton } from "../ui/skeleton";
 /* fork:begin fork-usage-tabs — see .fork/customizations.yaml#fork-usage-tabs */
 import { SegmentedTab as Toggle, SegmentedTabs as ToggleGroup } from "../../custom/SegmentedTabs";
@@ -184,11 +188,7 @@ function UsageModelDialogHost({
   );
 }
 
-export function UsagePage(
-  /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-  { chrome = "page" }: { readonly chrome?: "page" | "panel" } = {},
-  /* fork:end fork-usage-popover */
-) {
+export function UsagePage() {
   const [preferences, setPreferences] = useState(readUsagePagePreferences);
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const hour12 = usePrimarySettings((settings) => resolveHour12(settings.timestampFormat));
@@ -375,18 +375,7 @@ export function UsagePage(
       ? `${formatDateTimeShort(shownWindow.sinceTime, shownWindow.timeZone, hour12)} to ${formatDateTimeShort(shownWindow.untilTime, shownWindow.timeZone, hour12)}`
       : `${formatDayShort(shownWindow.sinceDay)} to ${formatDayShort(shownWindow.untilDay)}`;
   const topbarContent = (
-    <div
-      className={
-        /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover
-           The page toolbar keys off the modal header's container width. The popover has none, so
-           the date label and toggle groups would share one overflowing row. Panel chrome wraps and
-           drops the date label. */
-        chrome === "panel"
-          ? "flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-2 py-2"
-          : "grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 py-2 @4xl/usage-header:flex"
-        /* fork:end fork-usage-popover */
-      }
-    >
+    <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 py-2 @4xl/usage-header:flex">
       <WorkspaceBreadcrumb ariaLabel="Usage breadcrumb" className="min-w-0">
         <WorkspaceBreadcrumbItem>
           <h1>Usage</h1>
@@ -415,27 +404,11 @@ export function UsagePage(
         </WorkspaceBreadcrumbItem>
       </WorkspaceBreadcrumb>
       {!showingLimits ? (
-        <span
-          className={
-            /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-            chrome === "panel"
-              ? "hidden"
-              : "hidden min-w-0 truncate text-xs text-muted-foreground @7xl/usage-header:block"
-            /* fork:end fork-usage-popover */
-          }
-        >
+        <span className="hidden min-w-0 truncate text-xs text-muted-foreground @7xl/usage-header:block">
           {windowLabel}
         </span>
       ) : null}
-      <div
-        className={
-          /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-          chrome === "panel"
-            ? "ms-auto flex min-w-0 flex-wrap items-center justify-end gap-2"
-            : "ms-auto hidden shrink-0 items-center justify-end gap-2 @4xl/usage-header:flex"
-          /* fork:end fork-usage-popover */
-        }
-      >
+      <div className="ms-auto hidden shrink-0 items-center justify-end gap-2 @4xl/usage-header:flex">
         {/* Limits are always current, so they have no period. The period sits before the metric
             tabs so dropping it never moves them. */}
         {showingLimits ? null : (
@@ -485,15 +458,7 @@ export function UsagePage(
           <RefreshIcon size="sm" refreshing={isRefreshing} />
         </Button>
       </div>
-      <div
-        className={
-          /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-          chrome === "panel"
-            ? "hidden"
-            : "ms-auto flex shrink-0 items-center justify-end gap-1 @4xl/usage-header:hidden"
-          /* fork:end fork-usage-popover */
-        }
-      >
+      <div className="ms-auto flex shrink-0 items-center justify-end gap-1 @4xl/usage-header:hidden">
         {showingLimits ? null : (
           <Select value={String(windowDays)} onValueChange={(value) => selectWindow(Number(value))}>
             <SelectTrigger
@@ -557,90 +522,81 @@ export function UsagePage(
     </div>
   );
 
-  /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover
-     The body is hoisted so the panel chrome (below) and upstream's modal shell
-     can share it. The JSX inside this fence is upstream's, re-indented one
-     level; the fork's own edits carry inner fences. */
-  const usageBody = (
-    <>
-      {/* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */}
-      {chrome === "panel" ? (
-        <div className="shrink-0 px-4">{topbarContent}</div>
-      ) : (
-        <header className="@container/usage-header flex min-h-12 shrink-0 items-center gap-1 border-b ps-5 pe-2">
-          {topbarContent}
-          <AppRouteModalClose />
-        </header>
-      )}
-      {/* fork:end fork-usage-popover */}
-
-      <ScrollArea className="min-h-0 flex-1">
-        <WorkspacePageContainer
-          width="wide"
-          /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-          className={chrome === "panel" ? "max-w-none px-4 pt-4 pb-6 sm:px-4" : undefined}
-          /* fork:end fork-usage-popover */
+  return (
+    /* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page
+       A page in the main panel, as Automations is, rather than a modal over the
+       thread: no close button, and the stage card under Glass. */
+    <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none isolate">
+      <div data-fork-stage-card="" className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <WorkspacePageHeader
+          electron={isElectron}
+          data-fork-stage-card-title=""
+          className="@container/usage-header gap-1"
         >
-          {selectedEnvironments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {environments.length === 0
-                ? `Connect an environment to see ${showingLimits ? "limits" : "usage"}.`
-                : `Select an environment to see ${showingLimits ? "limits" : "usage"}.`}
-            </p>
-          ) : showingLimits ? (
-            <UsageLimitsSection
-              selectedEnvironmentIds={selectedEnvironmentIds}
-              hiddenProviders={hiddenProviders}
-              now={limitsNow}
-              cursorPrompt={
-                cursorAccessEnvironments.length > 0 ? (
-                  <CursorEnableLimits
-                    environments={cursorAccessEnvironments}
-                    onEnabled={() => {
-                      void refresh();
-                      void refreshLimits(false, true);
-                    }}
-                  />
-                ) : null
-              }
-            />
-          ) : shown === null ? (
-            <UsageSkeleton />
-          ) : !canReadDiagnostics ? (
-            <div className="space-y-2 py-12 text-center text-sm text-muted-foreground">
-              {selectedEnvironments.map((environment) => (
-                <p key={environment.environmentId}>
-                  {selectedEnvironments.length > 1 ? `${environment.label}: ` : null}
-                  {environment.error}
-                </p>
-              ))}
-            </div>
-          ) : (
-            <UsageOverview
-              merged={merged}
-              shownWindow={shownWindow}
-              hour12={hour12}
-              days={days}
-              hours={hours}
-              showingKept={showingKept}
-              metric={metric === "tokens" ? "tokens" : "cost"}
-              selectedEnvironments={selectedEnvironments}
-              hiddenProviders={hiddenProviders}
-              refreshingUsage={refreshingUsage}
-              cursorAccessEnvironments={cursorAccessEnvironments}
-              showChatGptSharing={showChatGptSharing}
-              onCursorEnabled={() => {
-                void refresh();
-                void refreshLimits(false, true);
-              }}
-              onSelectModel={selectUsageModel}
-            />
-          )}
-        </WorkspacePageContainer>
-      </ScrollArea>
-      {/* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover
-          Upstream mounts these two dialogs on the page shell; they ride in the
-          shared body so the popover chrome opens them too. */}
+          {topbarContent}
+        </WorkspacePageHeader>
+
+        <ScrollArea className="min-h-0 flex-1" data-fork-stage-card-body="">
+          {/* fork:end fork-usage-page */}
+          <WorkspacePageContainer width="wide">
+            {selectedEnvironments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {environments.length === 0
+                  ? `Connect an environment to see ${showingLimits ? "limits" : "usage"}.`
+                  : `Select an environment to see ${showingLimits ? "limits" : "usage"}.`}
+              </p>
+            ) : showingLimits ? (
+              <UsageLimitsSection
+                selectedEnvironmentIds={selectedEnvironmentIds}
+                hiddenProviders={hiddenProviders}
+                now={limitsNow}
+                cursorPrompt={
+                  cursorAccessEnvironments.length > 0 ? (
+                    <CursorEnableLimits
+                      environments={cursorAccessEnvironments}
+                      onEnabled={() => {
+                        void refresh();
+                        void refreshLimits(false, true);
+                      }}
+                    />
+                  ) : null
+                }
+              />
+            ) : shown === null ? (
+              <UsageSkeleton />
+            ) : !canReadDiagnostics ? (
+              <div className="space-y-2 py-12 text-center text-sm text-muted-foreground">
+                {selectedEnvironments.map((environment) => (
+                  <p key={environment.environmentId}>
+                    {selectedEnvironments.length > 1 ? `${environment.label}: ` : null}
+                    {environment.error}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <UsageOverview
+                merged={merged}
+                shownWindow={shownWindow}
+                hour12={hour12}
+                days={days}
+                hours={hours}
+                showingKept={showingKept}
+                metric={metric === "tokens" ? "tokens" : "cost"}
+                selectedEnvironments={selectedEnvironments}
+                hiddenProviders={hiddenProviders}
+                refreshingUsage={refreshingUsage}
+                cursorAccessEnvironments={cursorAccessEnvironments}
+                showChatGptSharing={showChatGptSharing}
+                onCursorEnabled={() => {
+                  void refresh();
+                  void refreshLimits(false, true);
+                }}
+                onSelectModel={selectUsageModel}
+              />
+            )}
+          </WorkspacePageContainer>
+        </ScrollArea>
+      </div>
       {showingLimits ? null : (
         <UsageModelDialogHost
           models={merged.models}
@@ -667,25 +623,9 @@ export function UsagePage(
           }}
         />
       ) : null}
-      {/* fork:end fork-usage-popover */}
-    </>
-  );
-  /* fork:end fork-usage-popover */
-
-  /* fork:begin fork-usage-popover — see .fork/customizations.yaml#fork-usage-popover */
-  if (chrome === "panel") {
-    return (
-      <div className="flex h-full min-h-0 flex-col text-foreground" data-testid="usage-panel">
-        {usageBody}
-      </div>
-    );
-  }
-  /* fork:end fork-usage-popover */
-
-  return (
-    <AppRouteModal label="Usage">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{usageBody}</div>
-    </AppRouteModal>
+      {/* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page */}
+    </SidebarInset>
+    /* fork:end fork-usage-page */
   );
 }
 

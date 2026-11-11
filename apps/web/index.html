@@ -37,6 +37,19 @@
         /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
         forkPaletteBackgrounds["cool-darker"] = "#141618";
         /* fork:end fork-cool-darker-theme */
+        /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+        forkPaletteBackgrounds["inlet"] = "#232322";
+        // Inlet's colours (custom/forkTheme.ts INLET_COLOR_OPTIONS): the frame it
+        // pre-paints and the upstream appearance it sits on.
+        const forkInletColors = {
+          charcoal: { frame: "#232322", appearance: "dark" },
+          green: { frame: "#21835c", appearance: "light" },
+          jungle: { frame: "#f2f0d8", appearance: "dark" },
+          "jungle-light": { frame: "#21835c", appearance: "light" },
+          cream: { frame: "#f8f3d8", appearance: "dark" },
+          black: { frame: "#141414", appearance: "light" },
+        };
+        /* fork:end fork-inlet-theme */
         const CUSTOM_THEMES_STORAGE_KEY = "t3code:themes:v1";
         const THEME_FOLLOW_SYSTEM_STORAGE_KEY = "t3code:theme-follow-system";
         const THEME_APPEARANCE_MODE_STORAGE_KEY = "t3code:theme-appearance-mode";
@@ -247,6 +260,15 @@
             forkPalette = "cool-dark";
           }
           /* fork:end fork-cool-dark-theme */
+          /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+          let forkInletColor = window.localStorage.getItem("t3code:fork-inlet-color");
+          if (!Object.prototype.hasOwnProperty.call(forkInletColors, forkInletColor)) {
+            forkInletColor = "charcoal";
+          }
+          const forkPaletteAppearance =
+            forkPalette === "inlet" ? forkInletColors[forkInletColor].appearance : "dark";
+          forkPaletteBackgrounds["inlet"] = forkInletColors[forkInletColor].frame;
+          /* fork:end fork-inlet-theme */
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           const LEGACY_THEME_IDS = {
             "t3-chat-dark": "t3-chat",
@@ -338,9 +360,10 @@
                   ? prefersDark
                   : appearanceMode === "dark";
           /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
+          // Every palette sits on dark except an Inlet colour that names light.
           const activeForkPalette =
-            theme === "dark" &&
-            isDark &&
+            theme === forkPaletteAppearance &&
+            isDark === (forkPaletteAppearance === "dark") &&
             Object.prototype.hasOwnProperty.call(forkPaletteBackgrounds, forkPalette)
               ? forkPalette
               : null;
@@ -348,6 +371,11 @@
             document.documentElement.setAttribute("data-fork-theme", activeForkPalette);
           } else {
             document.documentElement.removeAttribute("data-fork-theme");
+          }
+          if (activeForkPalette === "inlet") {
+            document.documentElement.setAttribute("data-fork-inlet-color", forkInletColor);
+          } else {
+            document.documentElement.removeAttribute("data-fork-inlet-color");
           }
           /* fork:end fork-cool-dark-theme */
           const effectiveIsThemed = halfThemeId !== null || isThemed;
@@ -433,6 +461,9 @@
           /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
           document.documentElement.removeAttribute("data-fork-theme");
           /* fork:end fork-cool-dark-theme */
+          /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+          document.documentElement.removeAttribute("data-fork-inlet-color");
+          /* fork:end fork-inlet-theme */
           document.documentElement.classList.toggle("dark", prefersDark);
           const fallbackColor = prefersDark ? DARK_BACKGROUND : LIGHT_BACKGROUND;
           document.documentElement.style.backgroundColor = fallbackColor;
@@ -493,6 +524,33 @@
         color: #e8e8e8;
       }
       /* fork:end fork-cool-darker-theme */
+
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      html.dark[data-fork-theme="inlet"] body {
+        background: #232322;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="inlet"]:is(
+          [data-fork-inlet-color="green"],
+          [data-fork-inlet-color="jungle-light"]
+        )
+        body {
+        background: #21835c;
+        color: #ffffff;
+      }
+      html[data-fork-theme="inlet"][data-fork-inlet-color="jungle"] body {
+        background: #f2f0d8;
+        color: #1c1c1a;
+      }
+      html[data-fork-theme="inlet"][data-fork-inlet-color="cream"] body {
+        background: #f8f3d8;
+        color: #1c1c1a;
+      }
+      html[data-fork-theme="inlet"][data-fork-inlet-color="black"] body {
+        background: #141414;
+        color: #e8e8e8;
+      }
+      /* fork:end fork-inlet-theme */
 
       #boot-shell {
         position: relative;

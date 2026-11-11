@@ -29,7 +29,7 @@ describe("fork guard: fork-sidebar-scheduled-row", () => {
     expect(chromeRows).toContain('testId="sidebar-v2-scheduled"');
     expect(chromeRows).toContain('label="Automations"');
     expect(chromeRows).toContain("icon={ZapIcon}");
-    const usageAt = chromeRows.indexOf('testId="sidebar-v2-usage"');
+    const usageAt = chromeRows.indexOf("<ChromeUsageRow />");
     const scheduledAt = chromeRows.indexOf("<ChromeAutomationsRow />");
     expect(usageAt).toBeGreaterThan(-1);
     expect(scheduledAt).toBeGreaterThan(usageAt);

@@ -66,6 +66,7 @@ describe("fork theme synchronization", () => {
       readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { migrateLegacyCoolDarkTheme, readForkPalette } = await import("./forkTheme");
@@ -101,6 +102,7 @@ describe("fork theme synchronization", () => {
         return () => {};
       },
       syncBrowserChromeTheme,
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { FORK_THEME_ATTRIBUTE, initializeForkTheme } = await import("./forkTheme");
@@ -149,8 +151,10 @@ describe("fork theme synchronization", () => {
     vi.stubGlobal("document", { documentElement: root });
     vi.doMock("../hooks/useTheme", () => ({
       readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
+      setAppearanceMode: vi.fn(() => true),
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { FORK_THEME_ATTRIBUTE, readForkPalette, resolveAppearanceOption, setForkAppearance } =
@@ -185,6 +189,7 @@ describe("fork theme synchronization", () => {
       readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { FORK_THEME_ATTRIBUTE, readForkPalette, resolveAppearanceOption, setForkAppearance } =
@@ -217,6 +222,7 @@ describe("fork theme synchronization", () => {
       readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { FORK_THEME_ATTRIBUTE, readForkPalette, resolveAppearanceOption, setForkAppearance } =
@@ -249,6 +255,7 @@ describe("fork theme synchronization", () => {
       readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
 
     const { FORK_THEME_ATTRIBUTE, readForkPalette, resolveAppearanceOption, setForkAppearance } =
@@ -264,5 +271,59 @@ describe("fork theme synchronization", () => {
     expect(readForkPalette()).toBe("neutral-darker");
     expect(resolveAppearanceOption("dark", readForkPalette())).toBe("neutral-darker");
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("neutral-darker");
+  });
+  it("moves Inlet onto its colour's appearance, which upstream's setTheme alone keeps", async () => {
+    const { storage, values } = createStorage({ "t3code:theme": "dark" });
+    const { attributes, classes, root } = createDocumentRoot();
+    classes.add("dark");
+    vi.stubGlobal("window", {
+      localStorage: storage,
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        callback(0);
+        return 1;
+      },
+    });
+    vi.stubGlobal("document", { documentElement: root });
+    // Upstream's setTheme keeps the stored light/dark mode; only the mode moves the class.
+    const setAppearanceMode = vi.fn((mode: string) => {
+      if (mode === "dark") classes.add("dark");
+      else classes.delete("dark");
+      return true;
+    });
+    vi.doMock("../hooks/useTheme", () => ({
+      readThemePreference: () => storage.getItem("t3code:theme") ?? "system",
+      setAppearanceMode,
+      subscribeToThemeChanges: vi.fn(() => () => {}),
+      syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
+    }));
+    const setTheme = (theme: string) => {
+      storage.setItem("t3code:theme", theme);
+      return true;
+    };
+
+    const { FORK_THEME_ATTRIBUTE, INLET_COLOR_ATTRIBUTE, setForkAppearance, setForkInletColor } =
+      await import("./forkTheme");
+    setForkAppearance("inlet", setTheme);
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("charcoal");
+    expect(setAppearanceMode).not.toHaveBeenCalled();
+
+    setForkInletColor("green", setTheme);
+    expect(values.get("t3code:theme")).toBe("light");
+    expect(values.get("t3code:fork-inlet-color")).toBe("green");
+    expect(classes.has("dark")).toBe(false);
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("green");
+
+    setForkInletColor("charcoal", setTheme);
+    expect(classes.has("dark")).toBe(true);
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("charcoal");
+
+    // Leaving Inlet clears its colour from the DOM but keeps the preference.
+    setForkAppearance("cool-dark", setTheme);
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("cool-dark");
+    expect(attributes.has(INLET_COLOR_ATTRIBUTE)).toBe(false);
+    expect(values.get("t3code:fork-inlet-color")).toBe("charcoal");
   });
 });

@@ -46,7 +46,6 @@ import {
   SettingsIcon,
   ZapIcon,
 } from "./icons/lucide-phosphor";
-import { SidebarV2UsageRow } from "./UsagePopover";
 import { openCommandPalette } from "~/commandPaletteBus";
 import { Menu, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "~/components/ui/menu";
 import { SidebarGroup, SidebarMenuButton, useSidebar } from "~/components/ui/sidebar";
@@ -274,18 +273,29 @@ export function SidebarV2ChromeActionRows(props: {
         testId="sidebar-v2-add-project"
         onClick={props.onAddProject}
       />
-      <SidebarV2UsageRow
-        trigger={
-          <ChromeLabeledAction
-            icon={ChartDonutIcon}
-            label="Usage"
-            ariaLabel="Usage"
-            testId="sidebar-v2-usage"
-          />
-        }
-      />
+      <ChromeUsageRow />
       <ChromeAutomationsRow />
     </SidebarGroup>
+  );
+}
+
+/** Opens the /usage page, as upstream's footer icon does, and lights while it is open. */
+function ChromeUsageRow() {
+  const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const isOnUsage = useLocation({ select: (location) => location.pathname === "/usage" });
+  return (
+    <ChromeLabeledAction
+      icon={ChartDonutIcon}
+      label="Usage"
+      ariaLabel="Usage"
+      testId="sidebar-v2-usage"
+      active={isOnUsage}
+      onClick={() => {
+        if (isMobile) setOpenMobile(false);
+        void navigate({ to: "/usage" });
+      }}
+    />
   );
 }
 
@@ -592,6 +602,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                         className={PROJECTS_ROW_BUTTON}
                         aria-label={sortTooltip}
                         data-testid="sidebar-v2-project-sort"
+                        data-fork-tab-trigger=""
                       />
                     }
                   />
@@ -605,7 +616,13 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
               </TooltipTrigger>
               <TooltipPopup side="right">{sortTooltip}</TooltipPopup>
             </Tooltip>
-            <MenuPopup align="end" data-fork-glass-rim data-fork-thread-sort className="min-w-48">
+            <MenuPopup
+              align="end"
+              data-fork-glass-rim
+              data-fork-thread-sort
+              data-fork-tab-menu=""
+              className="min-w-48"
+            >
               <MenuRadioGroup
                 value={props.projectSortOrder}
                 onValueChange={(value) =>
@@ -641,6 +658,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                         )}
                         aria-label={filterAriaLabel}
                         data-testid="sidebar-v2-project-filter"
+                        data-fork-tab-trigger=""
                       />
                     }
                   />
@@ -650,7 +668,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
               </TooltipTrigger>
               <TooltipPopup side="right">{filterTooltip}</TooltipPopup>
             </Tooltip>
-            <MenuPopup align="end" data-fork-glass-rim className="min-w-56">
+            <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="" className="min-w-56">
               {/* Above the scope list, not below it: with enough projects the
                   list scrolls, and a preference that decides how the whole
                   sidebar reads should not be the thing you have to scroll to.

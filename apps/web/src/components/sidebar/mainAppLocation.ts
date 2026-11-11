@@ -5,7 +5,10 @@ import { withoutAssistantCitationHash } from "../../lib/assistantCitationNavigat
 
 /** Settings and Usage open as modals over the last main-app view. */
 export function isAppModalPage(pathname: string) {
-  return pathname === "/settings" || pathname.startsWith("/settings/") || pathname === "/usage";
+  /* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page
+     Usage is a page in the main panel, as Automations is; only Settings is a modal. */
+  return pathname === "/settings" || pathname.startsWith("/settings/");
+  /* fork:end fork-usage-page */
 }
 
 export function isSidebarUtilityPage(pathname: string) {
@@ -14,6 +17,9 @@ export function isSidebarUtilityPage(pathname: string) {
     /* fork:begin fork-scheduled-page — see .fork/customizations.yaml#fork-scheduled-page */
     pathname === "/scheduled" ||
     /* fork:end fork-scheduled-page */
+    /* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page */
+    pathname === "/usage" ||
+    /* fork:end fork-usage-page */
     pathname === "/pull-requests"
   );
 }

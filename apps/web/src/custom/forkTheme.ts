@@ -1,24 +1,33 @@
 /**
  * Fork dark-palette preferences — see `.fork/customizations.yaml#fork-cool-dark-theme`,
- * `#fork-cool-darker-theme`, `#fork-neutral-dark-theme`, and `#fork-neutral-darker-theme`.
+ * `#fork-cool-darker-theme`, `#fork-neutral-dark-theme`, `#fork-neutral-darker-theme`, and
+ * `#fork-inlet-theme`.
  *
- * Westworld / Glass / Neutral Dark / Neutral Darker are CSS palette overlays
- * (`data-fork-theme` + `.dark`), not upstream theme definitions. Upstream
+ * Westworld / Glass / Neutral Dark / Neutral Darker / Inlet are CSS palette overlays
+ * (`data-fork-theme` over upstream's dark or light), not upstream theme definitions. Upstream
  * `t3code:theme` may contain a standard, built-in, or imported theme id; this
  * module owns `t3code:fork-theme`
- * (`cool-dark` | `cool-darker` | `neutral-dark` | `neutral-darker` | absent)
+ * (`cool-dark` | `cool-darker` | `neutral-dark` | `neutral-darker` | `inlet` | absent)
  * and the DOM attribute.
  *
  * The storage ids predate the labels: Westworld is persisted as `cool-dark`
  * and Glass as `cool-darker`. They are user preferences already on disk and
  * the fence ids across index.html / SettingsPanels are named after them, so
  * renaming the label never renames the key.
+ *
+ * Inlet is a template with a colour (`t3code:fork-inlet-color`, stamped as
+ * `data-fork-inlet-color`). Each colour names the upstream appearance it sits
+ * on: Charcoal is dark, Green is light (its panel is cream with dark ink, and
+ * Tailwind's `dark:` variant reaches every descendant of a `.dark` root, so a
+ * light panel cannot live under one). Every other palette is dark.
  */
 
 import { useCallback, useSyncExternalStore } from "react";
 
 import {
   readThemePreference,
+  setAppearanceMode,
+  setForkDesktopThemeOverride,
   subscribeToThemeChanges,
   syncBrowserChromeTheme,
 } from "../hooks/useTheme";
@@ -51,11 +60,75 @@ export const NEUTRAL_DARKER_LABEL = "Neutral Darker";
 /** Pre-paint / overscroll colour for Neutral Darker — matches stage `--background`. */
 export const NEUTRAL_DARKER_BACKGROUND = "#1a1a1a";
 
+export const INLET_THEME = "inlet" as const;
+export const INLET_LABEL = "Inlet";
+/** Pre-paint / overscroll colour for Inlet's default colour — the frame, stage `--background`. */
+export const INLET_BACKGROUND = "#232322";
+
+const INLET_COLOR_STORAGE_KEY = "t3code:fork-inlet-color";
+export const INLET_COLOR_ATTRIBUTE = "data-fork-inlet-color";
+export const INLET_COLORS = [
+  "charcoal",
+  "green",
+  "jungle",
+  "jungle-light",
+  "cream",
+  "black",
+] as const;
+export type InletColor = (typeof INLET_COLORS)[number];
+export const DEFAULT_INLET_COLOR: InletColor = "charcoal";
+/** One entry per colour. `frame` is the pre-paint colour and, unless `swatch` says otherwise,
+    the picker's swatch; index.html carries the same table, so a new colour is a row there too. */
+export const INLET_COLOR_OPTIONS = {
+  charcoal: { label: "Charcoal", frame: INLET_BACKGROUND, appearance: "dark" },
+  green: { label: "Green", frame: "#21835c", appearance: "light" },
+  // The panel is a picture, so the swatch shows the cream frame beside its green.
+  jungle: {
+    label: "Jungle Art",
+    frame: "#f2f0d8",
+    appearance: "dark",
+    chrome: "light",
+    swatch: "linear-gradient(135deg, #f2f0d8 50%, #248f6b 50%)",
+  },
+  // Jungle Art turned inside out: Green's stage, the art behind the frame.
+  "jungle-light": {
+    label: "Jungle Light",
+    frame: "#21835c",
+    appearance: "light",
+    swatch: "linear-gradient(135deg, #21835c 50%, #f1f0e0 50%)",
+  },
+  // Inverses of each other: half frame, half panel.
+  cream: {
+    label: "Cream",
+    frame: "#f8f3d8",
+    appearance: "dark",
+    chrome: "light",
+    swatch: "linear-gradient(90deg, #f8f3d8 50%, #141414 50%)",
+  },
+  black: {
+    label: "Black",
+    frame: "#141414",
+    appearance: "light",
+    swatch: "linear-gradient(90deg, #141414 50%, #f8f3d8 50%)",
+  },
+} as const satisfies Record<
+  InletColor,
+  {
+    label: string;
+    frame: string;
+    appearance: "dark" | "light";
+    swatch?: string;
+    /** The native window chrome's appearance, where the frame is light on a dark page. */
+    chrome?: "light";
+  }
+>;
+
 export const FORK_PALETTES = [
   COOL_DARK_THEME,
   COOL_DARKER_THEME,
   NEUTRAL_DARK_THEME,
   NEUTRAL_DARKER_THEME,
+  INLET_THEME,
 ] as const;
 export type ForkPalette = (typeof FORK_PALETTES)[number];
 export type ForkPalettePreference = ForkPalette | null;
@@ -68,6 +141,7 @@ export const FORK_PALETTE_LABELS = {
   [COOL_DARKER_THEME]: COOL_DARKER_LABEL,
   [NEUTRAL_DARK_THEME]: NEUTRAL_DARK_LABEL,
   [NEUTRAL_DARKER_THEME]: NEUTRAL_DARKER_LABEL,
+  [INLET_THEME]: INLET_LABEL,
 } as const satisfies Record<ForkPalette, string>;
 
 type AttributeRoot = {
@@ -85,6 +159,37 @@ function emitChange() {
 
 export function isForkPalette(value: string | null | undefined): value is ForkPalette {
   return value != null && (FORK_PALETTES as readonly string[]).includes(value);
+}
+
+function isInletColor(value: string | null | undefined): value is InletColor {
+  return value != null && (INLET_COLORS as readonly string[]).includes(value);
+}
+
+/** The upstream appearance a palette sits on. */
+export function forkPaletteAppearance(
+  palette: ForkPalette,
+  inletColor: InletColor = DEFAULT_INLET_COLOR,
+): "dark" | "light" {
+  return palette === INLET_THEME ? INLET_COLOR_OPTIONS[inletColor].appearance : "dark";
+}
+
+function readInletColor(): InletColor {
+  if (typeof window === "undefined") return DEFAULT_INLET_COLOR;
+  try {
+    const raw = window.localStorage.getItem(INLET_COLOR_STORAGE_KEY);
+    return isInletColor(raw) ? raw : DEFAULT_INLET_COLOR;
+  } catch {
+    return DEFAULT_INLET_COLOR;
+  }
+}
+
+function writeInletColor(color: InletColor): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(INLET_COLOR_STORAGE_KEY, color);
+  } catch {
+    // The synchronization pass applies the value storage actually retained.
+  }
 }
 
 function readUpstreamTheme(): ThemePreference {
@@ -149,15 +254,19 @@ export function resolveActiveForkPalette(
   theme: ThemePreference,
   palette: ForkPalettePreference,
   isDark = theme === "dark",
+  inletColor: InletColor = DEFAULT_INLET_COLOR,
 ): ForkPalettePreference {
-  return theme === "dark" && isDark && palette !== null ? palette : null;
+  if (palette === null) return null;
+  const appearance = forkPaletteAppearance(palette, inletColor);
+  return theme === appearance && isDark === (appearance === "dark") ? palette : null;
 }
 
 export function resolveAppearanceOption(
   theme: ThemePreference,
   palette: ForkPalettePreference,
+  inletColor: InletColor = DEFAULT_INLET_COLOR,
 ): ResolvedAppearanceOption {
-  return resolveActiveForkPalette(theme, palette) ?? theme;
+  return resolveActiveForkPalette(theme, palette, theme === "dark", inletColor) ?? theme;
 }
 
 function getPaletteSnapshot(): ForkPalettePreference {
@@ -177,8 +286,9 @@ function subscribePalette(listener: () => void): () => void {
 /** Reconcile the DOM and React subscribers to values storage actually retained. */
 function syncForkPaletteFromStorage(): void {
   const theme = readUpstreamTheme();
+  const inletColor = readInletColor();
   let palette = readForkPalette();
-  if (theme !== "dark" && palette !== null) {
+  if (palette !== null && theme !== forkPaletteAppearance(palette, inletColor)) {
     writeForkPalette(null);
     palette = readForkPalette();
   }
@@ -186,9 +296,18 @@ function syncForkPaletteFromStorage(): void {
     theme,
     palette,
     typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+    inletColor,
   );
   if (typeof document !== "undefined") {
     applyForkPaletteAttribute(document.documentElement, activePalette);
+    if (activePalette === INLET_THEME) {
+      document.documentElement.setAttribute(INLET_COLOR_ATTRIBUTE, inletColor);
+    } else {
+      document.documentElement.removeAttribute(INLET_COLOR_ATTRIBUTE);
+    }
+    const inletOption = INLET_COLOR_OPTIONS[inletColor];
+    const inletChrome = "chrome" in inletOption ? inletOption.chrome : null;
+    setForkDesktopThemeOverride(activePalette === INLET_THEME ? inletChrome : null);
     // Synchronous, inside the suppressed-transition window: switching between
     // two fork palettes keeps upstream theme at "dark", so applyTheme no-ops
     // and this is the only repaint of html/body overscroll and theme-color.
@@ -238,6 +357,22 @@ function suppressAppearanceTransitions(update: () => void): void {
   }
 }
 
+/** Upstream keeps the light/dark mode apart from the theme and setTheme preserves it, so a
+    palette that sits on the other appearance has to move the mode as well. Only on a
+    mismatch, so a palette chosen under System keeps following it. */
+function settleAppearance(
+  wanted: "dark" | "light",
+  setTheme: (theme: ThemePreference) => boolean,
+): void {
+  setTheme(wanted);
+  if (
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark") !== (wanted === "dark")
+  ) {
+    setAppearanceMode(wanted);
+  }
+}
+
 /** Apply an Appearance option and reconcile partial storage failures to one visible state. */
 export function setForkAppearance(
   next: AppearanceOption,
@@ -245,7 +380,25 @@ export function setForkAppearance(
 ): void {
   suppressAppearanceTransitions(() => {
     writeForkPalette(isForkPalette(next) ? next : null);
-    setTheme(isForkPalette(next) ? "dark" : next);
+    if (isForkPalette(next)) {
+      settleAppearance(forkPaletteAppearance(next, readInletColor()), setTheme);
+    } else {
+      setTheme(next);
+    }
+    syncForkPaletteFromStorage();
+  });
+}
+
+/** Pick Inlet's colour; while Inlet is on, move upstream to the colour's appearance with it. */
+export function setForkInletColor(
+  color: InletColor,
+  setTheme: (theme: ThemePreference) => boolean,
+): void {
+  suppressAppearanceTransitions(() => {
+    writeInletColor(color);
+    if (readForkPalette() === INLET_THEME) {
+      settleAppearance(INLET_COLOR_OPTIONS[color].appearance, setTheme);
+    }
     syncForkPaletteFromStorage();
   });
 }
@@ -261,7 +414,7 @@ export function initializeForkTheme(): void {
   syncForkPaletteFromStorage();
   subscribeToThemeChanges(syncForkPaletteFromStorage);
   window.addEventListener("storage", (event) => {
-    if (event.key === FORK_PALETTE_STORAGE_KEY) {
+    if (event.key === FORK_PALETTE_STORAGE_KEY || event.key === INLET_COLOR_STORAGE_KEY) {
       syncForkPaletteFromStorage();
     }
   });
@@ -273,12 +426,18 @@ export function useForkAppearance(
   setTheme: (theme: ThemePreference) => boolean,
 ) {
   const palette = useSyncExternalStore(subscribePalette, getPaletteSnapshot, () => null);
-  const appearance = resolveAppearanceOption(theme, palette);
+  const inletColor = useSyncExternalStore(
+    subscribePalette,
+    readInletColor,
+    () => DEFAULT_INLET_COLOR,
+  );
+  const appearance = resolveAppearanceOption(theme, palette, inletColor);
 
   const setAppearance = useCallback(
     (next: AppearanceOption) => setForkAppearance(next, setTheme),
     [setTheme],
   );
+  const setInletColor = (next: InletColor) => setForkInletColor(next, setTheme);
 
-  return { appearance, setAppearance, palette } as const;
+  return { appearance, setAppearance, palette, inletColor, setInletColor } as const;
 }

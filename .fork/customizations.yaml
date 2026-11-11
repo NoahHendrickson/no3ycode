@@ -2410,6 +2410,161 @@
     - apps/web/src/__fork_guards__/forkNeutralDarkerTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
 
+- id: fork-inlet-theme
+  intent: >
+    Appearance offers Inlet alongside the other fork palettes: a template with
+    a colour. Every colour is a frame (window, sidebar, gutter) with the chat
+    column set into it as a flat panel: a real 8px margin and 8px radius on
+    the chat column, which restates --background as the panel so the header,
+    transcript and composer floor paint it; app modals (Settings) restate it
+    too. The open thread's row (aria-current="page") takes the panel's fill
+    and ink, goes square on its right end, and runs into the panel through a
+    bridge with two 9px concave corners, drawn as the open row's list item
+    ::after. Beside a docked sidebar the panel sits flush (no left margin, no
+    sidebar seam) and the 8px gap moves into the sidebar groups' end padding,
+    so the bridge is drawn inside the sidebar and its scrollers clip it with
+    the row; the thread list drops its native scrollbar (it still scrolls)
+    because the gutter would clip the bridge, and the open item drops
+    content-visibility paint containment. Other thread cards are unchanged.
+
+    The colour lives in t3code:fork-inlet-color, stamped as
+    data-fork-inlet-color while Inlet is active; Settings → Appearance shows
+    an Inlet colour swatch row while Inlet is picked. Each colour names the
+    upstream appearance it sits on, because Tailwind's dark: variant reaches
+    every descendant of a .dark root and a light panel cannot live under one:
+    Charcoal (Figma 619:6610, #232322 frame, #303235 panel) is dark; Green
+    (Figma 629:8337, #21835c frame with white ink, cream #f1f0e0 panel with
+    dark ink, #dbd5d1 composer and chips, dark mode's bright status colours)
+    is light, and opts into the fork's dark-only composer vessel fill and chip
+    ink. Jungle Art (Figma 630:10946) is dark: its panel is a picture
+    (custom/assets/inlet-jungle.jpg at 60% over #248f6b, a green fade behind
+    the composer) with white ink, so the column's header, workspace area,
+    new-thread timeline and composer fade go transparent; the cream #f2f0d8
+    frame is --fork-inlet-frame, painted on the inset and the column's wrapper
+    only round a chat column, while --background is a deep green for
+    everything else; rows are pills; the composer is solid cream (the sidebar's hover cream, a lighter cream prompt) with dark ink. Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
+    Green's tokens (the palette rules list both colours) with the same art,
+    faded to 22% over #21835c, painted once on the sidebar wrapper behind the
+    sidebar and the frame round the panel, whose own frame fills step aside.
+    Cream and Black (Figma 630:14154)
+    are inverses with half-and-half swatches: Cream is a #141414 panel with
+    Charcoal's composer in a cream #f8f3d8 frame (--fork-inlet-frame, as
+    Jungle Art) on dark; Black is a cream panel with Green's composer
+    construction in a #141414 frame on light. Menus, popovers and glass
+    tooltips are each colour's solid --popover, unfrosted. A sidebar row's
+    hover card (data-fork-row-hover-card, fenced at its two call sites) opens
+    as a tab: the row takes the card's fill and goes square on the right, and
+    the card's ::after fills the 4px gap and curves into the row's bottom
+    through a concave corner; an open row's panel bridge steps aside meanwhile.
+    The collapsed sidebar's peek card hangs from its toggle as a tab (the
+    card and toggle take a fill one step off the frame, padded 4px; the card drops 4px below it with a
+    concave corner), and the toggle's tooltip (data-fork-peek-tooltip, in the
+    fork-sidebar-peek fence of AppSidebarLayout) hides while it is open.
+    The utility pages (Usage, Automations) are panels set into the frame as the
+    chat column is, flush to a docked sidebar, and the chrome row lit for one
+    bridges into the panel the way the open thread row does. On Jungle Art the
+    whole stage is the row green, to the window's edges, round a frame-cream card.
+    The Threads header's sort and settings menus (data-fork-tab-menu, their
+    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
+    from their button the same way: the open button takes the menu's fill,
+    and the end-aligned menu fills the 4px gap and curves into the button's
+    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there) and growing out of it on open; Jungle Art's tooltips are its menus' green with white ink. The project strip's buttons wear an 8% ink fill. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing) to retract into the mic before the pill springs and fades; theme.custom.css hides a closing timeline everywhere else. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    model menu (overrides ProviderModelPicker) hangs from its button the other
+    way up, without a drop shadow (it would fall on the button), and unfolds out of it on open (a 240ms clip and slight scale from the button's corner, folded back on close, off under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
+    provider rail is the shell and its chosen tab runs into the list through
+    concave corners, and the effort controls sit on the shell. Jungle Art's menus are its sidebar's hover cream with
+    dark ink restated inside them.
+    Motion (prefers-reduced-motion: no-preference only, one run per state
+    change, nothing loops): hung menus, the chips' menus included
+    (--fork-inlet-chip-fold per placement), unfold from their tab by clip and
+    a 0.94 scale over 240ms, and fold back into the tab over 160ms as the model menu does, the button
+    easing its fill out over the same 160ms so the two read as one motion; what they hang from eases its fill
+    and corners over 160ms; a sidebar row eases into the panel's fill and its
+    bridge runs out into the panel.
+    Every hung menu goes further (the Threads header, tab strip, composer
+    chips, model, mode and usage menus, and the thread details card, popover
+    or docked; the docked card stays mounted through its close via
+    useInletMorphPresence, fenced in ThreadDetailsCard.tsx):
+    custom/inletMenuMorph.ts, installed
+    once from main.tsx and woken by a 1ms detect animation on those popups,
+    finds the button through aria-controls and draws menu, button and tab as
+    one SVG path on a layer one step under the popup's own positioner, flipped for menus above
+    their button, filled with the menu's own background and padded by
+    --fork-inlet-tab-pad, and morphs it (width leads, height
+    follows, the pill fades last; 300ms open, 280ms close), redrawing the
+    button (a computed-style clone) on top, holding the closing popup with a no-op animation,
+    and stamping data-fork-morph / data-fork-morphing so the stylesheet drops
+    the popup's and button's own fills. Off Inlet or under reduced motion it
+    does nothing.
+    The composer's context chips take 8px corners, and their menus
+    (data-fork-chip-menu, stamped in DraftProjectPill and the BranchToolbar
+    project, workspace, host and branch pickers under fork-composer-shell
+    fences) hang from the open chip the same way, on whichever side and
+    alignment the popup lands; the rule names the glass box via the menu,
+    select and combobox structures.
+    The thread details card hangs from its toggle too: the card is placed
+    against the header, so the open toggle takes the card's fill and its
+    ::after carries it down (half the header row less half the button, plus
+    12px for the inline card, 0 for the popover) into the card's top with a
+    concave corner either side; the card drops its hairline, and the join is
+    skipped while the find bar pushes the card down.
+    The tab strip's open tab is connective, as a browser's tabs are: it takes
+    the panel's face (Jungle Art's is solid deep green, and the stage under
+    the strip starts in that green and fades into its picture), goes square
+    at its foot, and an ::after neck spans the strip's empty foot to the
+    panel with a concave corner either side (masked); the nav clips sideways
+    only and the strip sits at z 2. A tab's "…" thread menu hangs from the
+    button as the strip's menus do: the button rides to localApi's
+    contextMenu.show (custom/anchoredContextMenu.ts), which under Inlet shows
+    the in-page menu (contextMenuFallback, fenced) even on desktop, placed
+    below the button and claimed by the morph; Jungle Art fills it with the
+    button's hover green.
+    The collapsed sidebar's tab strip (fork-collapsed-thread-tabs) sits on the
+    frame: it shares each colour's sidebar token block, its fills come from
+    those tokens rather than the appearance's black/white washes, the open tab
+    and chosen project take the panel's fill and ink, its status and More
+    menus hang from their buttons as the Threads header's do (the status menu
+    start-aligned, mirrored), the panel's top margin tucks under the strip's
+    foot (--fork-thread-tabs-overlap), and a lone pane's window-pinned
+    controls drop by the strip's height less that overlap plus the margin.
+    Choosing a colour, or a palette whose
+    appearance differs from the page's, moves upstream's appearance mode as
+    well as its theme, since setTheme keeps the stored mode. Template rules
+    never name .dark; colours differ in tokens plus their own scoped rules.
+    index.html pre-paints the colour's frame and stamps both attributes from
+    the same table. Colours with a light frame on dark (Jungle Art, Cream) ask the desktop window chrome for light (a fenced override in hooks/useTheme.ts), so macOS draws light traffic lights on the cream. Must not alter any other palette.
+  tier: 2
+  files:
+    - apps/web/src/custom/forkTheme.ts
+    - apps/web/src/custom/ForkInletColorPicker.tsx
+    - apps/web/src/custom/inletMenuMorph.ts
+    - apps/web/src/custom/anchoredContextMenu.ts
+    - apps/web/src/localApi.ts
+    - apps/web/src/contextMenuFallback.ts
+    - apps/web/src/main.tsx
+    - apps/web/src/components/chat/ThreadDetailsCard.tsx
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/custom/assets/inlet-jungle.jpg
+  watch:
+    - apps/web/src/components/settings/SettingsPanels.tsx
+    - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
+    - apps/web/index.html
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/SidebarThreadRow.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
+    - apps/web/src/overrides/components/chat/ModelPickerContent.tsx
+    - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
+    - apps/web/src/custom/voice/ForkDictationControl.tsx
+    - apps/web/src/hooks/useTheme.ts
+    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/components/ui/tooltip.tsx
+    - apps/web/src/components/AppSidebarLayout.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInletTheme.test.ts
+    - apps/web/src/custom/forkTheme.test.ts
+
 - id: fork-sidebar-type-size
   intent: >
     Sidebar V2 body type is 0.8125rem (13px at the default root) for project
@@ -2504,9 +2659,8 @@
     32px tall, 10px corners, 12px inline padding, a 16px icon 6px from a
     Label/14 Regular label, icon and label alike at the panel's foreground,
     stacked 2px apart inside the panel's 8px inset and flush under the header.
-    No shortcut chips; the shortcut rides the accessible name. Usage opens a
-    popover over the current thread rather than the /usage route (see
-    fork-usage-popover); the V2 sidebar's footer hides its own Usage icon so
+    No shortcut chips; the shortcut rides the accessible name. Usage opens the
+    /usage page (fork-usage-page); the V2 sidebar's footer hides its own Usage icon so
     the row is the one door there; the footer takes a hideUsage flag rather than
     losing the item, so upstream's default footer keeps it. Upstream always
     shows the undo notice in the footer's utility menu (#26874). Type is literal 0.875rem so the panel's 13px text-xs remap cannot
@@ -2649,45 +2803,33 @@
     - apps/web/src/__fork_guards__/forkSidebarChrome.test.ts
     - apps/web/src/custom/sidebarV2ProjectSort.test.ts
 
-- id: fork-usage-popover
+- id: fork-usage-page
   intent: >
-    Clicking Usage in the V2 sidebar opens a popover over the current thread
-    instead of navigating to /usage. The thread stays mounted underneath.
-    The popover is anchored to the Usage row and sized to the remaining
-    viewport to its right. Below 768px the sidebar is a z-50 Sheet, so Usage
-    is a nested Dialog (also z-50) rather than a z-40 popover that would sit
-    inert under the sheet; the model-prices Dialog still stacks above it.
-    Closing it (Escape, outside click, or the row again) returns to the
-    thread that was already open. The /usage route still exists for a typed
-    URL; the chrome row is not that door. The footer Usage icon stays hidden
-    on V2 so there is still one chrome door. The popover imports the
-    dashboard lazily so the /usage route's chunk stays out of the initial
-    bundle; nothing loads or mounts until it opens. The legacy sidebar keeps
-    its footer icon and the dedicated page. Both shells carry dropdown-glass
-    and take the one popup frost (fork-popup-surface); the dialog is the
-    only dialog on that recipe, so under Glass the utility clear skips
-    dialogs that carry dropdown-glass. The panel chrome does not paint
-    bg-background, which would cover the frost from inside.
-    Upstream's model-detail dialog and price-override dialog (#15108) ride in
-    the shared body so they mount from the popover as well as the page.
+    /usage is a workspace page in the main panel, as /scheduled is, rather
+    than upstream's modal over the last thread: the page shell is the
+    sidebar inset with Glass's stage card and the workspace header (no close
+    button), and mainAppLocation counts /usage as a utility page (Back in the
+    sidebar footer) instead of an app modal, so the chat layout renders it
+    in place of the thread. The V2 sidebar's Usage row navigates there and
+    lights while it is open. Upstream's return-location browser test closes
+    Settings instead, the one modal left. Under Inlet the page is a panel set
+    into the frame (fork-inlet-theme).
   tier: 4
   files:
-    - apps/web/src/custom/UsagePopover.tsx
-    - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
   shadows: []
   watch:
     - apps/web/src/components/usage/UsagePage.tsx
-    - apps/web/src/custom/SidebarV2ChromeRows.tsx
-    - apps/web/src/components/Sidebar.tsx
-    - docs/user/usage.md
-    - docs/user/thread-sidebar.md
+    - apps/web/src/components/sidebar/mainAppLocation.ts
+    - apps/web/src/components/sidebar/mainAppLocation.browser.test.tsx
+    - apps/web/src/routes/_chat.tsx
+    - apps/web/src/components/AppRouteModal.tsx
   verify:
-    - apps/web/src/__fork_guards__/forkUsagePopover.test.ts
+    - apps/web/src/__fork_guards__/forkUsagePage.test.ts
 
 - id: fork-usage-limits-surface
   intent: >
-    The Usage limits view (page and popover) is one ScheduledCard per
+    The Usage limits view is one ScheduledCard per
     provider, the Scheduled page's card, so Glass gives it the same 5%
     stage-card wash instead of a bare outline on the frost. The provider's
     mark and name head the card, with its banked reset credits summed at the

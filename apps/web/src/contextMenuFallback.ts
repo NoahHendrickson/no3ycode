@@ -242,6 +242,10 @@ export function dismissContextMenu(restoreFocus = true): void {
 export function showContextMenuFallback<T extends string>(
   items: readonly ContextMenuItem<T>[],
   position?: { x: number; y: number },
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+     The button an Inlet tab's thread menu hangs from (custom/anchoredContextMenu.ts). */
+  anchor?: HTMLElement,
+  /* fork:end fork-inlet-theme */
 ): Promise<T | null> {
   dismissContextMenu();
   return new Promise<T | null>((resolve) => {
@@ -278,6 +282,9 @@ export function showContextMenuFallback<T extends string>(
       if (shouldRestoreFocus && previouslyFocusedElement?.isConnected) {
         previouslyFocusedElement.focus({ preventScroll: true });
       }
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      anchor?.setAttribute("aria-expanded", "false");
+      /* fork:end fork-inlet-theme */
       resolve(result);
     };
 
@@ -394,6 +401,9 @@ export function showContextMenuFallback<T extends string>(
       menu.style.top = `${preferredTop}px`;
       menu.dataset.level = String(level);
       menu.dataset.contextMenu = "true";
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      if (anchor) menu.dataset[level === 0 ? "forkAnchoredMenu" : "forkAnchoredSubmenu"] = "";
+      /* fork:end fork-inlet-theme */
       menu.setAttribute("role", "menu");
       menu.setAttribute("aria-label", parentTrigger?.textContent ?? "Context menu");
       menu.tabIndex = -1;
@@ -588,7 +598,27 @@ export function showContextMenuFallback<T extends string>(
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("contextmenu", onContextMenu, true);
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+       Hung 4px below its button, start-aligned, as the tab strip's own menus; the button is
+       expanded first, so Inlet's morph finds it when the menu announces itself. */
+    const anchorBox = anchor?.getBoundingClientRect();
+    if (anchor && anchorBox) {
+      anchor.setAttribute("aria-expanded", "true");
+      position = { x: anchorBox.left, y: anchorBox.bottom + 4 };
+    }
+    /* fork:end fork-inlet-theme */
     openMenu(items, position?.x ?? 0, position?.y ?? 0, 0);
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+    const anchoredRoot = anchor ? menuStack[0] : undefined;
+    if (anchor && anchorBox && anchoredRoot) {
+      anchoredRoot.id = "fork-anchored-context-menu";
+      anchoredRoot.dataset.forkTabMenu = "";
+      anchoredRoot.dataset.side = "bottom";
+      anchoredRoot.dataset.align = "start";
+      anchoredRoot.style.setProperty("--anchor-width", `${anchorBox.width}px`);
+      anchor.setAttribute("aria-controls", anchoredRoot.id);
+    }
+    /* fork:end fork-inlet-theme */
     activeContextMenuDismiss = dismiss;
     // A keyboard-opened menu starts on its first action, a pointer-opened one on the menu itself.
     // Text fields always match :focus-visible, so they say nothing about how the menu opened.

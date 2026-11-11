@@ -12,6 +12,7 @@ import { useRouter } from "@tanstack/react-router";
 import * as Schema from "effect/Schema";
 import { useShallow } from "zustand/react/shallow";
 import { useState, type CSSProperties, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import {
@@ -38,6 +39,7 @@ import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
+import { anchorNextContextMenu } from "./anchoredContextMenu";
 import { useRightPanelStore } from "~/rightPanelStore";
 import { useSnoozeWakeClock } from "~/components/Sidebar.logic";
 import { useSidebarProjectGroups } from "~/hooks/useSidebarProjectGroups";
@@ -380,13 +382,27 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       .get(thread.environmentId)
       ?.get(thread.runtime?.providerInstanceId ?? thread.modelSelection.instanceId) ?? null;
   // Focusing the other pane replaces the route, as every pane-focus path does.
+  // A switch paints the chosen tab open first and navigates a frame later: the thread view's
+  // render blocks for a while, and the tab answering at once is what makes the switch feel
+  // immediate. Cleared as soon as the route moves.
+  const [pendingOpen, setPendingOpen] = useState<{
+    readonly key: string;
+    readonly from: string | null;
+  } | null>(null);
+  if (pendingOpen !== null && openThreadKey !== pendingOpen.from) setPendingOpen(null);
+  const shownOpenKey = pendingOpen?.key ?? openThreadKey;
   const openThread = ({ thread, threadKey }: CollapsedThreadTab) => {
     clearSidebarSelection();
-    void router.navigate({
-      to: "/$environmentId/$threadId",
-      params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
-      replace: paneThreadKeys.includes(threadKey),
-    });
+    flushSync(() => setPendingOpen({ key: threadKey, from: openThreadKey }));
+    window.requestAnimationFrame(() =>
+      window.setTimeout(() => {
+        void router.navigate({
+          to: "/$environmentId/$threadId",
+          params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
+          replace: paneThreadKeys.includes(threadKey),
+        });
+      }, 0),
+    );
   };
   // The sidebar's rule for cards, as source and target alike: never pinned or shelved.
   const splitPairable = ({ thread }: CollapsedThreadTab) =>
@@ -438,7 +454,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         key={tab.threadKey}
         tab={tab}
         // A split's two tabs are both selected; only the focused one holds the route.
-        active={tab.threadKey === openThreadKey || paneThreadKeys.includes(tab.threadKey)}
+        active={tab.threadKey === shownOpenKey || paneThreadKeys.includes(tab.threadKey)}
         routed={tab.threadKey === openThreadKey}
         status={statusOf(tab)}
         provider={providerOf(tab)}
@@ -487,7 +503,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           if (target) openThread(target);
         }}
         // Scrolls sideways before it can squeeze out More.
-        className="min-w-0 shrink overflow-x-auto rounded-full [scrollbar-width:none]"
+        className="min-w-0 shrink overflow-x-auto rounded-[10px] [scrollbar-width:none]"
       >
         <ProjectTab value={ALL_PROJECTS} label="All projects">
           <LayersIcon className="size-3.5" />
@@ -512,17 +528,18 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                     <button
                       type="button"
                       aria-label={STATUS_MENU_LABEL}
-                      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                      data-fork-tab-trigger=""
+                      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                     />
                   }
                 />
               }
             >
-              <EllipsisIcon className="size-3.5" />
+              <EllipsisIcon className="size-4" />
             </TooltipTrigger>
             <TooltipPopup side="bottom">{STATUS_MENU_LABEL}</TooltipPopup>
           </Tooltip>
-          <MenuPopup align="start" className="min-w-40">
+          <MenuPopup align="start" data-fork-tab-menu="" className="min-w-40">
             <MenuGroup>
               <MenuGroupLabel>Show as tabs</MenuGroupLabel>
               {COLLAPSED_TAB_STATUSES.map((status) => (
@@ -544,12 +561,12 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                 type="button"
                 aria-label={newAgentLabel}
                 disabled={projectGroups.length === 0}
-                className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-64 dark:hover:bg-white/8"
+                className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-64 dark:hover:bg-white/8"
                 onClick={startNewAgent}
               />
             }
           >
-            <PlusIcon className="size-3.5" />
+            <PlusIcon className="size-4" />
           </TooltipTrigger>
           <TooltipPopup side="bottom">
             {filteredProject === null && newAgentShortcutLabel
@@ -591,14 +608,15 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                 <button
                   type="button"
                   aria-label={`${row.overflow.length} more active threads`}
-                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                  data-fork-tab-trigger=""
+                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                 />
               }
             >
               {row.overflow.length} more
               <ChevronDownIcon className="size-3" />
             </MenuTrigger>
-            <MenuPopup align="end" className="max-w-72">
+            <MenuPopup align="end" data-fork-tab-menu="" className="max-w-72">
               {row.overflow.map((entry) =>
                 entry.kind === "draft" ? (
                   // The route's draft has nowhere to go (its X is on the tab); the other pane's opens.
@@ -742,9 +760,14 @@ function ThreadTab(props: {
             <button
               type="button"
               aria-label="More thread actions"
+              aria-haspopup="menu"
+              aria-expanded={false}
+              data-fork-tab-trigger=""
+              data-fork-tab-actions-trigger=""
               className={TAB_ACTION_CLASS}
               onClick={(event) => {
                 const rect = event.currentTarget.getBoundingClientRect();
+                anchorNextContextMenu(event.currentTarget);
                 openMenu({ x: rect.left, y: rect.bottom + 4 });
               }}
             >
@@ -888,7 +911,7 @@ function ProjectTab(props: {
           <SegmentedTab
             value={props.value}
             aria-label={props.label}
-            className="w-7 rounded-full px-0"
+            className="w-7 rounded-lg px-0"
           />
         }
       >

@@ -171,6 +171,7 @@ export const BranchToolbarEnvModeSelector = memo(function BranchToolbarEnvModeSe
         alignItemWithTrigger={false}
         side="top"
         {...composerFloatingLayerProps}
+        data-fork-chip-menu=""
         className={showPreviousWorktree ? "w-[min(21rem,calc(100vw-2rem))]" : undefined}
       >
         <SelectGroup>

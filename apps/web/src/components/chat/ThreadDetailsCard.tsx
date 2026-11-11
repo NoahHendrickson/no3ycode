@@ -18,6 +18,9 @@ import {
 } from "./threadDetailsCardLayout";
 import { observeResize } from "../../lib/observeResize";
 import { requestWorkspaceFocus } from "../../lib/workspaceFocus";
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { useInletMorphPresence } from "../../custom/inletMenuMorph";
+/* fork:end fork-inlet-theme */
 
 export function ThreadDetailsCard({
   threadRef,
@@ -55,6 +58,10 @@ export function ThreadDetailsCard({
   const popoverOpen = useRightPanelStore((state) =>
     selectThreadPanelOpen(state.threadPanelVisibilityByThreadKey, threadRef, "popover"),
   );
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+     Inlet keeps the docked card mounted while its morph folds it closed. */
+  const inlinePresence = useInletMorphPresence(Boolean(placement && inlineOpen));
+  /* fork:end fork-inlet-theme */
   const measurementKey = `${threadRef.environmentId}:${threadRef.threadId}:${preferredPlacement?.width ?? "popup"}:${contentKey}`;
   const [measurements, setMeasurements] = useState({
     key: measurementKey,
@@ -159,7 +166,9 @@ export function ThreadDetailsCard({
         useRightPanelStore.getState().setThreadPanelOpen(threadRef, "popover", open);
       }}
     >
-      {placement && inlineOpen ? (
+      {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+          Mounted while open, and while Inlet's morph folds it closed (inlinePresence). */}
+      {placement && inlinePresence.mounted ? (
         <aside
           {...detailsArea}
           data-workspace-focus-key={`details:${threadRef.environmentId}:${threadRef.threadId}`}
@@ -176,10 +185,13 @@ export function ThreadDetailsCard({
           }}
           data-density={density}
           data-thread-details-panel="inline"
+          data-open={inlinePresence.ending ? undefined : ""}
+          data-ending-style={inlinePresence.ending ? "" : undefined}
         >
           {card}
         </aside>
       ) : null}
+      {/* fork:end fork-inlet-theme */}
       {/* Rendered in both modes: base-ui keeps a popup that unmounts mid-open
           mounted, because its exit animation never finishes. Staying in the tree
           lets it close cleanly when the card switches inline. */}

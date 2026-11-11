@@ -683,7 +683,14 @@ export function BranchToolbarBranchSelector({
         align: displayMode === "panel" ? "start" : "end",
         side: displayMode === "panel" ? "bottom" : "top",
         className: cn("flex flex-col", displayMode === "panel" ? "w-(--anchor-width)" : "w-80"),
-        ...(displayMode === "toolbar" ? composerFloatingLayerProps : {}),
+        ...(displayMode === "toolbar"
+          ? {
+              ...composerFloatingLayerProps,
+              /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+              "data-fork-chip-menu": "",
+              /* fork:end fork-composer-shell */
+            }
+          : {}),
       }}
     >
       <div

@@ -37,10 +37,10 @@ import {
 
 const ULTRATHINK_PROMPT_PREFIX = "Ultrathink:\n";
 /**
- * The thumb's width (w-5). Edge alignment keeps its centre half of this inside
- * the track, so the stops inset by the same amount to sit under it.
+ * The thumb's width, a variable on the track so a palette can widen the thumb (Inlet does). Edge
+ * alignment keeps half of it inside the track, so the stops inset by as much to sit under it.
  */
-const THUMB_WIDTH_PX = 20;
+const THUMB_WIDTH = "var(--fork-effort-thumb-width)";
 
 function replaceDescriptorCurrentValue(
   descriptors: ReadonlyArray<ProviderOptionDescriptor>,
@@ -129,19 +129,23 @@ function EffortSlider(props: {
           {/* A 24px bar with a block thumb of the same height. The fill runs
               from the start under the whole thumb; the stops are dots, and the
               model's default level is a short bar. */}
-          <Slider.Track className="relative h-6 w-full rounded-[6px] bg-foreground/8">
+          <Slider.Track
+            data-fork-effort-track
+            className="relative h-6 w-full rounded-[6px] bg-foreground/8 [--fork-effort-thumb-width:20px]"
+          >
             <div
+              data-fork-effort-fill
               className={cn(
                 "pointer-events-none absolute inset-y-0 left-0 rounded-[6px] bg-foreground/16",
                 glideClass && ["transition-[width]", glideClass],
               )}
               style={{
-                width: `calc(${THUMB_WIDTH_PX}px + ${index / lastIndex} * (100% - ${THUMB_WIDTH_PX}px))`,
+                width: `calc(${THUMB_WIDTH} + ${index / lastIndex} * (100% - ${THUMB_WIDTH}))`,
               }}
             />
             <div
               className="pointer-events-none absolute inset-y-0"
-              style={{ insetInline: THUMB_WIDTH_PX / 2 }}
+              style={{ insetInline: `calc(${THUMB_WIDTH} / 2)` }}
             >
               {descriptor.options.map((stop, stopIndex) => (
                 <span
@@ -162,7 +166,7 @@ function EffortSlider(props: {
               getAriaValueText={() => option?.label ?? ""}
               data-fork-effort-thumb
               className={cn(
-                "h-6 w-5 rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "h-6 w-(--fork-effort-thumb-width) rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 glideClass && ["transition-[inset-inline-start]", glideClass],
               )}
             />

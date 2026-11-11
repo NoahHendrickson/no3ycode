@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, XIcon } from "lucide-react";
 import { MicrophoneIcon } from "@phosphor-icons/react";
@@ -144,13 +151,36 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
  * Starting a session hands the send slot to ForkDictationPrimaryButton; while
  * recording, a click finishes it, as the check does.
  */
+/** How long the timeline outlives its session, for a theme's exit animation. */
+const TIMELINE_CLOSE_MS = 560;
+
+/** True for `ms` after `live` falls, then false again. */
+function useLingering(live: boolean, ms: number): boolean {
+  const [wasLive, setWasLive] = useState(live);
+  const [lingering, setLingering] = useState(false);
+  if (live !== wasLive) {
+    setWasLive(live);
+    setLingering(!live);
+  }
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- releases the timeline once its exit animation has run, on a timer
+  useEffect(() => {
+    if (!lingering) return;
+    const timer = window.setTimeout(() => setLingering(false), ms);
+    return () => window.clearTimeout(timer);
+  }, [lingering, ms]);
+  return lingering;
+}
+
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
+  const live = dictation.blocksSubmission;
+  const closing = useLingering(live, TIMELINE_CLOSE_MS) && !live;
   if (!dictation.isAvailable) return null;
   const recording = dictation.state.phase === "recording";
   return (
     <div
-      {...(dictation.blocksSubmission ? { "data-fork-dictation-live": "" } : {})}
+      {...(live ? { "data-fork-dictation-live": "" } : {})}
+      {...(closing ? { "data-fork-dictation-closing": "" } : {})}
       className="flex shrink-0 items-center"
     >
       <DictationTooltip
@@ -169,7 +199,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
         }
         icon={<MicrophoneIcon weight="fill" />}
       />
-      {dictation.blocksSubmission ? <VoiceLevelTimeline level={dictation.level} /> : null}
+      {live || closing ? <VoiceLevelTimeline level={dictation.level} /> : null}
     </div>
   );
 }

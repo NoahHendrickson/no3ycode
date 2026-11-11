@@ -44,6 +44,10 @@ import {
   useForkAppearance,
 } from "../../custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
+import { ForkInletColorPicker } from "../../custom/ForkInletColorPicker";
+/* fork:end fork-inlet-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
 /* fork:end fork-glass-new-agent-stage */
@@ -140,6 +144,9 @@ export function AppearanceSettingsPanel() {
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
   const { appearance, setAppearance } = useForkAppearance(theme, setTheme);
   /* fork:end fork-cool-dark-theme */
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  const { inletColor, setInletColor } = useForkAppearance(theme, setTheme);
+  /* fork:end fork-inlet-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   /* fork:end fork-glass-new-agent-stage */
@@ -217,11 +224,11 @@ export function AppearanceSettingsPanel() {
       <SettingsSection id="appearance-interface" title="Interface">
         {/* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */}
         <SettingsRow
-          title="Dark palette"
-          description="Use one of the fork's alternate dark palettes."
+          title="Fork palette"
+          description="Use one of the fork's alternate palettes."
           resetAction={
             isForkPalette(appearance) ? (
-              <SettingResetButton label="dark palette" onClick={() => setAppearance("dark")} />
+              <SettingResetButton label="fork palette" onClick={() => setAppearance("dark")} />
             ) : null
           }
           control={
@@ -233,7 +240,7 @@ export function AppearanceSettingsPanel() {
                 }
               }}
             >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Fork dark palette">
+              <SelectTrigger className="w-full sm:w-44" aria-label="Fork palette">
                 <SelectValue>
                   {isForkPalette(appearance) ? FORK_PALETTE_LABELS[appearance] : "Default Dark"}
                 </SelectValue>
@@ -249,6 +256,23 @@ export function AppearanceSettingsPanel() {
           }
         />
         {/* fork:end fork-cool-dark-theme */}
+        {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */}
+        {appearance === INLET_THEME ? (
+          <SettingsRow
+            title="Inlet colour"
+            description="The colour of the frame around the chat."
+            resetAction={
+              inletColor === DEFAULT_INLET_COLOR ? null : (
+                <SettingResetButton
+                  label="Inlet colour"
+                  onClick={() => setInletColor(DEFAULT_INLET_COLOR)}
+                />
+              )
+            }
+            control={<ForkInletColorPicker value={inletColor} onChange={setInletColor} />}
+          />
+        ) : null}
+        {/* fork:end fork-inlet-theme */}
         {/* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */}
         {appearance === COOL_DARKER_THEME ? (
           <SettingsRow

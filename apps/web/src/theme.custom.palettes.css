@@ -1,5 +1,6 @@
 @import "./theme.custom.westworld.css";
 @import "./theme.custom.glass.css";
+@import "./theme.custom.inlet.css";
 
 /* Fork dark palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and sibling palette ids). Kept out of theme.custom.css so a new sibling is a
@@ -462,6 +463,381 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Inlet — see `.fork/customizations.yaml#fork-inlet-theme`.
+
+   A template with a colour: a frame (window, sidebar, gutter) with the chat
+   column set into it as a flat panel, and the open thread's row taking the
+   panel's fill and running into it through concave corners. The panel, the
+   bridge and the composer are rules in theme.custom.inlet.css; these are the
+   tokens, one pair of blocks (stage + frame: the v2 sidebar, and the
+   collapsed sidebar's tab strip, which sits on the frame too) per colour. The stage
+   --background is the frame, and the chat column restates it as the panel,
+   so everything that paints bg-background inside the column paints the
+   panel. --fork-inlet-panel-foreground / -muted ink the open row, which sits
+   on the panel's fill rather than the frame's.
+
+   Charcoal (Figma t3-fork 619:6610) is Inlet's dark colour: a #232322 frame
+   round a #303235 panel. It is the only dark colour, so `.dark` with the
+   palette selects it. */
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="inlet"] {
+  --background: #232322;
+  --app-chrome-background: #232322;
+  --foreground: #e8e8e8;
+  --fork-inlet-panel: #303235;
+  --fork-inlet-panel-foreground: #e8e8e8;
+  --fork-inlet-panel-muted: #9a9a9a;
+  /* Menus open a step above the panel they mostly float over. */
+  --card: #37393c;
+  --card-foreground: #e8e8e8;
+  --popover: #37393c;
+  --popover-foreground: #e8e8e8;
+  --primary: #ffffff;
+  --primary-foreground: #232322;
+  --ring: #ffffff;
+  --secondary: #3a3c3f;
+  --secondary-foreground: #e8e8e8;
+  --muted: #3a3c3f;
+  --muted-foreground: #9a9a9a;
+  --accent: #3a3c3f;
+  --accent-foreground: #e8e8e8;
+  --border: #3a3c3f;
+  --input: #3a3c3f;
+  --surface-grain: none;
+  --fork-pill-border: #3a3c3f;
+  --fork-pill-fg: #e8e8e8;
+  --fork-pill-hover: #3a3c3f;
+  /* The composer is the frame colour set back into the panel (12px corners),
+     the prompt white 4% over it, flattened, with no hairline at rest. */
+  --fork-composer-vessel-bg: #232322;
+  --fork-composer-bg: #2c2c2b;
+  --fork-composer-border: #2c2c2b;
+  --fork-composer-border-focus: #3a3a39;
+  --fork-context-chip-bg: #232322;
+  --fork-context-chip-bg-hover: #2c2c2b;
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="inlet"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: #232322;
+  --foreground: #e8e8e8;
+  --card: #232322;
+  --card-foreground: #e8e8e8;
+  --sidebar: #232322;
+  --sidebar-foreground: #e8e8e8;
+  --border: #303032;
+  --sidebar-border: #303032;
+  --sidebar-stage-fade: #232322;
+  --muted: #2c2c2b;
+  --accent: #2c2c2b;
+  --accent-foreground: #e8e8e8;
+  --muted-foreground: #9a9a9a;
+  --sidebar-muted-foreground: #d5d5d5;
+  --fork-sidebar-card-title-receded: #b0b0b0;
+  --sidebar-control-surface: #303032;
+  --sidebar-row-hover: #2a2a2a;
+  /* Selection is the panel's own fill: the open thread's row is a piece of
+     the panel reaching into the sidebar. */
+  --sidebar-row-active: #303235;
+  --sidebar-row-selected: #303235;
+}
+
+/* Green (Figma t3-fork 629:8337) sits on light: a #21835c frame with white
+   ink round a cream #f1f0e0 panel with dark ink. The composer and the context
+   chips are a warm grey (#dbd5d1), the prompt white 50% over it, flattened.
+   The sidebar keeps dark mode's bright status colours, which read on the
+   green where light mode's deeper ones sink into it. Jungle Light is Green
+   with Jungle Art's picture behind the frame (theme.custom.inlet.css), so it
+   shares these tokens. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="green"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"] {
+  --background: #21835c;
+  --app-chrome-background: #21835c;
+  --foreground: #1c1c1a;
+  --fork-inlet-panel: #f1f0e0;
+  --fork-inlet-panel-foreground: #1c1c1a;
+  --fork-inlet-panel-muted: #6c6c65;
+  --card: #faf9f0;
+  --card-foreground: #1c1c1a;
+  --popover: #faf9f0;
+  --popover-foreground: #1c1c1a;
+  --primary: #1c1c1a;
+  --primary-foreground: #ffffff;
+  --ring: #1c1c1a;
+  --secondary: #e5e4d5;
+  --secondary-foreground: #1c1c1a;
+  --muted: #e5e4d5;
+  --muted-foreground: #6c6c65;
+  --accent: #e5e4d5;
+  --accent-foreground: #1c1c1a;
+  --border: #dbdacc;
+  --input: #dbdacc;
+  --surface-grain: none;
+  --fork-pill-border: #dbdacc;
+  --fork-pill-fg: #1c1c1a;
+  --fork-pill-hover: #e5e4d5;
+  --fork-composer-vessel-bg: #dbd5d1;
+  --fork-composer-bg: #edeae8;
+  --fork-composer-border: #edeae8;
+  --fork-composer-border-focus: #d3cdc9;
+  --fork-context-chip-bg: #dbd5d1;
+  --fork-context-chip-bg-hover: #d0cac7;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="green"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: #21835c;
+  --foreground: #ffffff;
+  --card: #21835c;
+  --card-foreground: #ffffff;
+  --sidebar: #21835c;
+  --sidebar-foreground: #ffffff;
+  /* White over the frame, flattened: 14% for lines, 10% for lifts. */
+  --border: #409473;
+  --sidebar-border: #409473;
+  --sidebar-stage-fade: #21835c;
+  --muted: #378f6c;
+  --accent: #378f6c;
+  --accent-foreground: #ffffff;
+  --muted-foreground: #a6cdbe;
+  --sidebar-muted-foreground: #deece7;
+  --fork-sidebar-card-title-receded: #b1d4c6;
+  --sidebar-control-surface: #3c9270;
+  --sidebar-row-hover: #338d69;
+  --sidebar-row-active: #f1f0e0;
+  --sidebar-row-selected: #f1f0e0;
+  --sidebar-v2-status-working: #24fe8a;
+  --sidebar-v2-status-done: #2498fe;
+  --sidebar-v2-status-approval: #ffcd59;
+  --sidebar-v2-status-input: #ffcd59;
+  --sidebar-v2-status-failed: #ff6b60;
+}
+
+/* Jungle Art (Figma t3-fork 630:10946) sits on dark: the panel is a picture
+   with white ink over it, which only dark's transcript reads on. The cream
+   #f2f0d8 frame is not --background here, so theme.custom.inlet.css paints it;
+   --background is the deep green that anything without a panel of its own
+   (the right panel, menus' surroundings) falls back to. The open row and its
+   bridge are green 80% over the frame, flattened. The composer is white glass
+   with dark ink. Declared after Charcoal, whose `.dark` blocks also match. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
+  --fork-inlet-frame: #f2f0d8;
+  --background: #1e5f46;
+  --app-chrome-background: #f2f0d8;
+  --foreground: #f7f6ec;
+  --fork-inlet-panel: #4a9975;
+  --fork-inlet-panel-foreground: #ffffff;
+  --fork-inlet-panel-muted: #d2e6dc;
+  --card: #23674d;
+  --card-foreground: #f7f6ec;
+  /* Menus are the sidebar's hover cream (theme.custom.inlet.css restates the
+     inks inside them). */
+  --popover: #e8e6cf;
+  --popover-foreground: #1c1c1a;
+  --primary: #f7f6ec;
+  --primary-foreground: #1e5f46;
+  --ring: #f7f6ec;
+  --secondary: #2a7056;
+  --secondary-foreground: #f7f6ec;
+  --muted: #2a7056;
+  --muted-foreground: #a9cbbb;
+  --accent: #2a7056;
+  --accent-foreground: #f7f6ec;
+  --border: #33775d;
+  --input: #33775d;
+  --surface-grain: none;
+  --fork-pill-border: #33775d;
+  --fork-pill-fg: #f7f6ec;
+  --fork-pill-hover: #2a7056;
+  /* A solid cream composer over the picture: the sidebar's hover cream for
+     the vessel and chips, a lighter cream for the prompt. */
+  --fork-composer-vessel-bg: #e8e6cf;
+  --fork-composer-bg: #f6f4e4;
+  --fork-composer-border: #f6f4e4;
+  --fork-composer-border-focus: #dddbc3;
+  --fork-context-chip-bg: #e8e6cf;
+  --fork-context-chip-bg-hover: #dfddc5;
+  /* The model menu hangs from the composer in Green's frame green. */
+  --fork-inlet-model-shell: #21835c;
+}
+
+/* Black over the cream frame, flattened: near-black ink, 65% for faint ink
+   (section labels, receded titles, glyphs), 8% for lines, 4–6% for lifts. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: #f2f0d8;
+  --foreground: #1c1c1a;
+  --card: #f2f0d8;
+  --card-foreground: #1c1c1a;
+  --sidebar: #f2f0d8;
+  --sidebar-foreground: #1c1c1a;
+  --border: #dfddc7;
+  --sidebar-border: #dfddc7;
+  --sidebar-stage-fade: #f2f0d8;
+  --muted: #e6e4cd;
+  --accent: #e6e4cd;
+  --accent-foreground: #1c1c1a;
+  --muted-foreground: #55544c;
+  --sidebar-muted-foreground: #55544c;
+  --fork-sidebar-card-title-receded: #55544c;
+  --sidebar-control-surface: #e3e1cb;
+  --sidebar-row-hover: #dfddc5;
+  --sidebar-row-active: #4a9975;
+  --sidebar-row-selected: #4a9975;
+  /* Status tones pair a deep light shade with a pale dark one; the page is
+     dark, so the pale one wins and fades into the cream. */
+  --color-emerald-300: #047857;
+  --color-teal-300: #0f766e;
+  --color-violet-300: #6d28d9;
+  --color-red-300: #b91c1c;
+  --color-amber-400: #b45309;
+  /* Needs input / approval: dark mode's pale yellow vanishes on the cream;
+     the light theme's amber reads, and stays warm rather than brown. */
+  --sidebar-v2-status-approval: #f59e0b;
+  --sidebar-v2-status-input: #f59e0b;
+}
+
+/* Cream and Black (Figma t3-fork 630:14154) are inverses: a #141414 panel in
+   a cream #f8f3d8 frame on dark, and a cream panel in a #141414 frame on
+   light. Cream's composer is Charcoal's; Black's is Green's construction,
+   black 16% and white 60% over the cream, flattened. Cream's frame is not
+   --background, as with Jungle Art. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"] {
+  --fork-inlet-frame: #f8f3d8;
+  --background: #141414;
+  --app-chrome-background: #f8f3d8;
+  --foreground: #e8e8e8;
+  --fork-inlet-panel: #141414;
+  --fork-inlet-panel-foreground: #e8e8e8;
+  --fork-inlet-panel-muted: #9a9a9a;
+  --card: #232322;
+  --card-foreground: #e8e8e8;
+  --popover: #232322;
+  --popover-foreground: #e8e8e8;
+  --primary: #ffffff;
+  --primary-foreground: #141414;
+  --ring: #ffffff;
+  --secondary: #2c2c2b;
+  --secondary-foreground: #e8e8e8;
+  --muted: #2c2c2b;
+  --muted-foreground: #9a9a9a;
+  --accent: #2c2c2b;
+  --accent-foreground: #e8e8e8;
+  --border: #2c2c2b;
+  --input: #2c2c2b;
+  --surface-grain: none;
+  --fork-pill-border: #2c2c2b;
+  --fork-pill-fg: #e8e8e8;
+  --fork-pill-hover: #2c2c2b;
+  --fork-composer-vessel-bg: #232322;
+  --fork-composer-bg: #2c2c2b;
+  --fork-composer-border: #2c2c2b;
+  --fork-composer-border-focus: #3a3a39;
+  --fork-context-chip-bg: #232322;
+  --fork-context-chip-bg-hover: #2c2c2b;
+}
+
+/* Black over the cream frame, flattened: near-black ink, 65% for faint ink
+   (section labels, receded titles, glyphs), 8% for lines, 4–6% for lifts.
+   The pale dark-mode status shades stand for the deep ones, as in Jungle Art. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: #f8f3d8;
+  --foreground: #1c1c1a;
+  --card: #f8f3d8;
+  --card-foreground: #1c1c1a;
+  --sidebar: #f8f3d8;
+  --sidebar-foreground: #1c1c1a;
+  --border: #e4e0c7;
+  --sidebar-border: #e4e0c7;
+  --sidebar-stage-fade: #f8f3d8;
+  --muted: #ece7cd;
+  --accent: #ece7cd;
+  --accent-foreground: #1c1c1a;
+  --muted-foreground: #57554c;
+  --sidebar-muted-foreground: #57554c;
+  --fork-sidebar-card-title-receded: #57554c;
+  --sidebar-control-surface: #e9e4cb;
+  --sidebar-row-hover: #eee9cf;
+  --sidebar-row-active: #141414;
+  --sidebar-row-selected: #141414;
+  --color-emerald-300: #047857;
+  --color-teal-300: #0f766e;
+  --color-violet-300: #6d28d9;
+  --color-red-300: #b91c1c;
+  --color-amber-400: #b45309;
+  /* Needs input / approval: dark mode's pale yellow vanishes on the cream;
+     the light theme's amber reads, and stays warm rather than brown. */
+  --sidebar-v2-status-approval: #f59e0b;
+  --sidebar-v2-status-input: #f59e0b;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"] {
+  --background: #141414;
+  --app-chrome-background: #141414;
+  --foreground: #1c1c1a;
+  --fork-inlet-panel: #f8f3d8;
+  --fork-inlet-panel-foreground: #1c1c1a;
+  --fork-inlet-panel-muted: #6c6a5e;
+  --card: #fcfaee;
+  --card-foreground: #1c1c1a;
+  --popover: #fcfaee;
+  --popover-foreground: #1c1c1a;
+  --primary: #1c1c1a;
+  --primary-foreground: #ffffff;
+  --ring: #1c1c1a;
+  --secondary: #ebe7cd;
+  --secondary-foreground: #1c1c1a;
+  --muted: #ebe7cd;
+  --muted-foreground: #6c6a5e;
+  --accent: #ebe7cd;
+  --accent-foreground: #1c1c1a;
+  --border: #e0dcc2;
+  --input: #e0dcc2;
+  --surface-grain: none;
+  --fork-pill-border: #e0dcc2;
+  --fork-pill-fg: #1c1c1a;
+  --fork-pill-hover: #ebe7cd;
+  --fork-composer-vessel-bg: #d0ccb5;
+  --fork-composer-bg: #ecebe1;
+  --fork-composer-border: #ecebe1;
+  --fork-composer-border-focus: #c6c2ab;
+  --fork-context-chip-bg: #d0ccb5;
+  --fork-context-chip-bg-hover: #c6c2ab;
+}
+
+/* Charcoal's sidebar on the #141414 frame, with dark mode's bright status
+   colours as Green has; the open row is the cream panel. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: #141414;
+  --foreground: #e8e8e8;
+  --card: #141414;
+  --card-foreground: #e8e8e8;
+  --sidebar: #141414;
+  --sidebar-foreground: #e8e8e8;
+  --border: #2a2a2a;
+  --sidebar-border: #2a2a2a;
+  --sidebar-stage-fade: #141414;
+  --muted: #232322;
+  --accent: #232322;
+  --accent-foreground: #e8e8e8;
+  --muted-foreground: #9a9a9a;
+  --sidebar-muted-foreground: #d5d5d5;
+  --fork-sidebar-card-title-receded: #b0b0b0;
+  --sidebar-control-surface: #2a2a2a;
+  --sidebar-row-hover: #1f1f1f;
+  --sidebar-row-active: #f8f3d8;
+  --sidebar-row-selected: #f8f3d8;
+  --sidebar-v2-status-working: #24fe8a;
+  --sidebar-v2-status-done: #2498fe;
+  --sidebar-v2-status-approval: #ffcd59;
+  --sidebar-v2-status-input: #ffcd59;
+  --sidebar-v2-status-failed: #ff6b60;
+}
+
+/* ---------------------------------------------------------------------------
    Glass sidebar vibrancy — see
    `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
 
@@ -896,8 +1272,8 @@
    Popups are not in the list: they have their own rule below, which drops
    the filter and stands them opaque on the measured floor instead of on
    --glass-opacity.
-   The Usage dialog is the one dialog on that recipe — it carries
-   dropdown-glass beside dialog-glass — so the dialog arm skips it too. */
+   A dialog that also carries dropdown-glass takes that popup recipe, so
+   the dialog arm skips it. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   :is(
     .surface-glass,

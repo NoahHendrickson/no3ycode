@@ -453,7 +453,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(hover?.selector).toContain(":not([data-fork-composer-mode-chip])");
     // The rule reads a per-palette token, so every palette has to declare one
     // on its stage block or that theme falls back to the default dark lift.
-    for (const palette of ["cool-dark", "cool-darker", "neutral-dark", "neutral-darker"]) {
+    for (const palette of ["cool-dark", "cool-darker", "neutral-dark", "neutral-darker", "inlet"]) {
       const stage = paletteRules.find(
         (rule) =>
           rule.selector.includes(`[data-fork-theme="${palette}"]`) &&

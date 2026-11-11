@@ -264,7 +264,14 @@ function SidebarThreadTooltip({
     .map((instanceId) => providerEntryByInstanceId.get(instanceId)?.displayName ?? instanceId);
   const supportsMultiplePullRequests = useSupportsMultiplePullRequests(thread.environmentId);
   return (
-    <ThreadHoverCardPopup side="right" align="start" sideOffset={4}>
+    <ThreadHoverCardPopup
+      side="right"
+      align="start"
+      sideOffset={4}
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      data-fork-row-hover-card=""
+      /* fork:end fork-inlet-theme */
+    >
       <ThreadHoverCard
         title={thread.title}
         footer={

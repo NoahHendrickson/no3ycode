@@ -54,6 +54,7 @@ import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
+import { useForkIconWeight } from "~/custom/icons/lucide-phosphor";
 import {
   isProviderInstancePickerReady,
   isProviderInstancePickerVisible,
@@ -230,6 +231,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     onToggleModel,
   } = props;
   const [searchQuery, setSearchQuery] = useState("");
+  const heartWeight = useForkIconWeight("duotone");
   const contentRef = useRef<HTMLDivElement>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes this picker's mount to global keydown handlers
   useLayoutEffect(() => registerModelPickerContent(), []);
@@ -865,7 +867,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       {renderScopeTab({
         target: "favorites",
         title: "Favorites",
-        icon: <Heart weight="duotone" className="size-4 shrink-0" aria-hidden />,
+        icon: <Heart weight={heartWeight} className="size-4 shrink-0" aria-hidden />,
       })}
       {providerEntries.map(renderProviderTab)}
     </div>
@@ -959,7 +961,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         data-fork-model-picker="true"
         onKeyDownCapture={redirectTypingToSearch}
       >
-        <div className="flex min-w-0 flex-1 flex-col gap-1 p-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
           <label className="flex h-8 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
