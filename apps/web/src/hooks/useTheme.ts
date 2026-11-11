@@ -130,6 +130,10 @@ let lastDesktopTheme: "light" | "dark" | "system" | null = null;
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 // Declared before the module's first applyTheme, which reads it.
 let forkDesktopThemeOverride: "light" | null = null;
+// Electron's themeSource also drives the renderer's prefers-color-scheme, so under System the
+// override would flip the system appearance it follows and loop; System keeps the native chrome.
+const forkDesktopThemeOverrideFor = (appearanceMode?: ThemePreferenceMode) =>
+  appearanceMode === "system" ? null : forkDesktopThemeOverride;
 /* fork:end fork-inlet-theme */
 let lastAppliedTheme: Omit<ThemeSnapshot, "resolvedTheme"> | null = null;
 let themeStorageReadFailure: ThemeStorageError | null = null;
@@ -361,7 +365,7 @@ async function syncDesktopThemePreference(
   try {
     await bridge.setTheme(
       /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-      forkDesktopThemeOverride ??
+      forkDesktopThemeOverrideFor(appearanceMode) ??
         /* fork:end fork-inlet-theme */
         resolveDesktopTheme(theme, followSystem, appearanceMode, halves),
     );
@@ -380,7 +384,7 @@ function syncDesktopTheme(
   const halves = readStoredThemeHalves();
   const desktopTheme =
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-    forkDesktopThemeOverride ??
+    forkDesktopThemeOverrideFor(appearanceMode) ??
     /* fork:end fork-inlet-theme */
     resolveDesktopTheme(theme, followSystem, appearanceMode, halves);
   if (!bridge || typeof bridge.setTheme !== "function" || lastDesktopTheme === desktopTheme) {

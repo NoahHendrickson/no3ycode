@@ -382,9 +382,9 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       .get(thread.environmentId)
       ?.get(thread.runtime?.providerInstanceId ?? thread.modelSelection.instanceId) ?? null;
   // Focusing the other pane replaces the route, as every pane-focus path does.
-  // A switch paints the chosen tab open first and navigates a frame later: the thread view's
-  // render blocks for a while, and the tab answering at once is what makes the switch feel
-  // immediate. Cleared as soon as the route moves.
+  // On Inlet a switch paints the chosen tab open first and navigates a frame later: the thread
+  // view's render blocks for a while, and the tab answering at once is what makes the switch feel
+  // immediate. Cleared as soon as the route moves, or once a navigation that went nowhere settles.
   const [pendingOpen, setPendingOpen] = useState<{
     readonly key: string;
     readonly from: string | null;
@@ -393,14 +393,22 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   const shownOpenKey = pendingOpen?.key ?? openThreadKey;
   const openThread = ({ thread, threadKey }: CollapsedThreadTab) => {
     clearSidebarSelection();
+    const navigate = () =>
+      router.navigate({
+        to: "/$environmentId/$threadId",
+        params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
+        replace: paneThreadKeys.includes(threadKey),
+      });
+    if (document.documentElement.dataset.forkTheme !== "inlet") {
+      void navigate();
+      return;
+    }
     flushSync(() => setPendingOpen({ key: threadKey, from: openThreadKey }));
     window.requestAnimationFrame(() =>
       window.setTimeout(() => {
-        void router.navigate({
-          to: "/$environmentId/$threadId",
-          params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
-          replace: paneThreadKeys.includes(threadKey),
-        });
+        void navigate().finally(() =>
+          setPendingOpen((pending) => (pending?.key === threadKey ? null : pending)),
+        );
       }, 0),
     );
   };

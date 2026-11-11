@@ -283,12 +283,22 @@ function subscribePalette(listener: () => void): () => void {
   };
 }
 
+/** A storage event reports another window's writes one key at a time, so mid-change it can see a
+    palette beside the theme it is leaving. Only this window's own writes may clear the palette. */
+function isOtherWindowWrite(): boolean {
+  return typeof window !== "undefined" && window.event?.type === "storage";
+}
+
 /** Reconcile the DOM and React subscribers to values storage actually retained. */
 function syncForkPaletteFromStorage(): void {
   const theme = readUpstreamTheme();
   const inletColor = readInletColor();
   let palette = readForkPalette();
-  if (palette !== null && theme !== forkPaletteAppearance(palette, inletColor)) {
+  if (
+    palette !== null &&
+    theme !== forkPaletteAppearance(palette, inletColor) &&
+    !isOtherWindowWrite()
+  ) {
     writeForkPalette(null);
     palette = readForkPalette();
   }
@@ -359,18 +369,25 @@ function suppressAppearanceTransitions(update: () => void): void {
 
 /** Upstream keeps the light/dark mode apart from the theme and setTheme preserves it, so a
     palette that sits on the other appearance has to move the mode as well. Only on a
-    mismatch, so a palette chosen under System keeps following it. */
+    mismatch, so a palette chosen under System keeps following it, unless `pin`: a colour that
+    restyles the native chrome cannot follow System, which that override flips (useTheme.ts). */
 function settleAppearance(
   wanted: "dark" | "light",
   setTheme: (theme: ThemePreference) => boolean,
+  pin = false,
 ): void {
   setTheme(wanted);
   if (
     typeof document !== "undefined" &&
-    document.documentElement.classList.contains("dark") !== (wanted === "dark")
+    (pin || document.documentElement.classList.contains("dark") !== (wanted === "dark"))
   ) {
     setAppearanceMode(wanted);
   }
+}
+
+function settleInletColor(color: InletColor, setTheme: (theme: ThemePreference) => boolean) {
+  const option = INLET_COLOR_OPTIONS[color];
+  settleAppearance(option.appearance, setTheme, "chrome" in option);
 }
 
 /** Apply an Appearance option and reconcile partial storage failures to one visible state. */
@@ -379,9 +396,20 @@ export function setForkAppearance(
   setTheme: (theme: ThemePreference) => boolean,
 ): void {
   suppressAppearanceTransitions(() => {
+    const leaving = readForkPalette();
+    const inletColor = readInletColor();
     writeForkPalette(isForkPalette(next) ? next : null);
-    if (isForkPalette(next)) {
-      settleAppearance(forkPaletteAppearance(next, readInletColor()), setTheme);
+    if (next === INLET_THEME) {
+      settleInletColor(inletColor, setTheme);
+    } else if (isForkPalette(next)) {
+      settleAppearance(forkPaletteAppearance(next, inletColor), setTheme);
+    } else if (
+      next === "dark" &&
+      leaving !== null &&
+      forkPaletteAppearance(leaving, inletColor) === "light"
+    ) {
+      // Default Dark after a light Inlet colour: undo the mode that colour moved.
+      settleAppearance("dark", setTheme);
     } else {
       setTheme(next);
     }
@@ -396,9 +424,7 @@ export function setForkInletColor(
 ): void {
   suppressAppearanceTransitions(() => {
     writeInletColor(color);
-    if (readForkPalette() === INLET_THEME) {
-      settleAppearance(INLET_COLOR_OPTIONS[color].appearance, setTheme);
-    }
+    if (readForkPalette() === INLET_THEME) settleInletColor(color, setTheme);
     syncForkPaletteFromStorage();
   });
 }

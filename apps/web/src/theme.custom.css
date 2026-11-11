@@ -2524,15 +2524,6 @@
   opacity: 1;
 }
 
-/* The timeline outlives its session briefly (ForkDictationControl's
-   TIMELINE_CLOSE_MS) only for a palette that animates it away (Inlet);
-   everywhere else it is gone the moment the session ends. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-dictation-closing]
-  [data-fork-dictation-timeline] {
-  display: none;
-}
-
 /* Live words share the prompt's scrollport, at every width. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-prompt]:has(> [data-fork-dictation-preview]) {

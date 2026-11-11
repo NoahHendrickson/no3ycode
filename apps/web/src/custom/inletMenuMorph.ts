@@ -11,6 +11,8 @@ const DETECT_ANIMATION = "fork-inlet-morph-detect";
 const FILLET = 9;
 const OPEN_MS = 300;
 const CLOSE_MS = 280;
+// A closing card stays mounted until its shape is home, plus two frames.
+const CLOSED_MS = CLOSE_MS + 32;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const segment = (value: number, from: number, to: number) =>
@@ -253,7 +255,8 @@ function startMorph(popup: HTMLElement) {
   const draw = () => {
     // A scroll or resize can queue a frame that lands after teardown.
     if (tornDown) return;
-    if (!popup.isConnected) {
+    // A trigger React remounted reads a zero rect; drawing from it would start at the origin.
+    if (!popup.isConnected || !trigger.isConnected) {
       teardown();
       return;
     }
@@ -330,6 +333,8 @@ function startMorph(popup: HTMLElement) {
     }
   });
   closing.observe(popup, { attributes: true, attributeFilter: ["data-ending-style"] });
+  // Base UI repositions the menu a frame after a scroll or resize; redraw once it has.
+  const redraw = () => requestAnimationFrame(draw);
   // Base UI places a popup on scroll and resize, not when its button moves with the layout (the
   // tab strip leaving): a resize then re-places the popup, and with it the shape.
   let checking = false;
@@ -343,17 +348,20 @@ function startMorph(popup: HTMLElement) {
       if (`${box.left},${box.top}` !== placedAt) window.dispatchEvent(new Event("resize"));
     });
   };
-  // A popup can also leave without closing (its page changes); the shape goes with it.
+  // A popup can also leave without closing (its page changes); the shape goes with it. A menu is
+  // open briefly, so it watches the whole page. The docked card stays for as long as it is docked,
+  // through every streamed token, so it watches only its own column: the card leaving it, and the
+  // column's size (what moves its toggle). Its layer is the card's sibling and leaves with them.
   const removal = new MutationObserver(() => {
     if (!popup.isConnected) teardown();
-    else follow();
+    else if (!docked) follow();
   });
-  removal.observe(document.body, { childList: true, subtree: true });
-  // Base UI repositions the menu a frame after a scroll or resize; redraw once it has.
-  const redraw = () => requestAnimationFrame(draw);
+  const column = docked ? popup.parentElement : null;
+  removal.observe(column ?? document.body, { childList: true, subtree: column === null });
+  const stopResize = observeResize(glass, redraw);
+  const stopColumnResize = column ? observeResize(column, redraw) : () => {};
   window.addEventListener("scroll", redraw, true);
   window.addEventListener("resize", redraw);
-  const stopResize = observeResize(glass, redraw);
 
   let tornDown = false;
   const abandon = () => {
@@ -369,6 +377,7 @@ function startMorph(popup: HTMLElement) {
     closing.disconnect();
     removal.disconnect();
     stopResize();
+    stopColumnResize();
     window.removeEventListener("scroll", redraw, true);
     window.removeEventListener("resize", redraw);
     layer.remove();
@@ -388,21 +397,21 @@ const morphRuns = () =>
   document.documentElement.dataset.forkTheme === "inlet" &&
   !matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** Keeps something the morph draws (the docked details card) mounted while its shape closes, as
-    Base UI keeps a closing popup: `ending` while it folds, then gone. Off Inlet or under reduced
-    motion it unmounts at once, as before. */
-export function useInletMorphPresence(open: boolean) {
+/** Keeps something Inlet animates closed (the docked details card's shape, the dictation
+    timeline) mounted for `ms` after it closes, as Base UI keeps a closing popup: `ending` while
+    it folds, then gone. Off Inlet or under reduced motion it unmounts at once, as before. */
+export function useInletMorphPresence(open: boolean, ms = CLOSED_MS) {
   const [lingering, setLingering] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     setLingering(!open && morphRuns());
   }
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a timer: the card unmounts once its closing shape has folded home
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a timer: it unmounts once its closing animation has run
   useEffect(() => {
     if (!lingering) return;
-    const timer = window.setTimeout(() => setLingering(false), CLOSE_MS + 32);
+    const timer = window.setTimeout(() => setLingering(false), ms);
     return () => window.clearTimeout(timer);
-  }, [lingering]);
+  }, [lingering, ms]);
   return { mounted: open || lingering, ending: !open && lingering };
 }

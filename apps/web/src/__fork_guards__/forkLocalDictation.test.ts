@@ -125,15 +125,13 @@ describe("fork local dictation", () => {
     );
     expect(theme).toContain('[data-fork-composer-action="dictate-cancel"]');
     // The level timeline is a small canvas beside the mic in the control row,
-    // mounted while a session is live (and briefly after, for Inlet's exit
-    // animation; hidden then everywhere else): dots for silence, bars for
+    // mounted while a session is live (and briefly after, only for Inlet's exit
+    // animation, useInletMorphPresence): dots for silence, bars for
     // speech, newest at the right edge, painted in its own colour.
     expect(control).toMatch(
       /\{live \|\| closing \? <VoiceLevelTimeline level=\{dictation\.level\} \/> : null\}/u,
     );
-    expect(theme).toMatch(
-      /\[data-fork-dictation-closing\]\s+\[data-fork-dictation-timeline\]\s*\{\s*display: none/u,
-    );
+    expect(control).toContain("useInletMorphPresence(live, TIMELINE_CLOSE_MS)");
     expect(control).toContain("<canvas");
     expect(control).toContain('data-fork-dictation-timeline=""');
     expect(control).toContain("getComputedStyle(canvas).color");
