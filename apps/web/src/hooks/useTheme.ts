@@ -129,7 +129,7 @@ let snapshotStale = true;
 let lastDesktopTheme: "light" | "dark" | "system" | null = null;
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 // Declared before the module's first applyTheme, which reads it.
-let forkDesktopThemeOverride: "light" | null = null;
+let forkDesktopThemeOverride: "light" | "dark" | null = null;
 // Electron's themeSource also drives the renderer's prefers-color-scheme, so under System the
 // override would flip the system appearance it follows and loop; System keeps the native chrome.
 const forkDesktopThemeOverrideFor = (appearanceMode?: ThemePreferenceMode) =>
@@ -659,7 +659,7 @@ export function refreshTheme({ preservePreview = false } = {}): void {
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 /** An Inlet colour with a light frame on a dark page asks the native window
     chrome (macOS's traffic lights) for light, which dark draws for dark chrome. */
-export function setForkDesktopThemeOverride(next: "light" | null): void {
+export function setForkDesktopThemeOverride(next: "light" | "dark" | null): void {
   if (forkDesktopThemeOverride === next) return;
   forkDesktopThemeOverride = next;
   lastDesktopTheme = null;

@@ -142,11 +142,11 @@ export function AppearanceSettingsPanel() {
   const customThemes = useCustomThemes();
   const [isImportThemeOpen, setIsImportThemeOpen] = useState(false);
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-  const { appearance, setAppearance } = useForkAppearance(theme, setTheme);
+  const { appearance, setAppearance, inletColor, setInletColor } = useForkAppearance(
+    theme,
+    setTheme,
+  );
   /* fork:end fork-cool-dark-theme */
-  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-  const { inletColor, setInletColor } = useForkAppearance(theme, setTheme);
-  /* fork:end fork-inlet-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   /* fork:end fork-glass-new-agent-stage */

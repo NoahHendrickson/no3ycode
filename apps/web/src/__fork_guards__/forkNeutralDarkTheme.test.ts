@@ -66,7 +66,7 @@ describe("fork guard: fork-neutral-dark-theme", () => {
     expect(resolveAppearanceOption("dark", "neutral-dark")).toBe("neutral-dark");
     expect(resolveAppearanceOption("dark", null)).toBe("dark");
     expect(resolveAppearanceOption("system", "neutral-dark")).toBe("system");
-    expect(resolveActiveForkPalette("system", "neutral-dark")).toBeNull();
+    expect(resolveActiveForkPalette({ theme: "system", palette: "neutral-dark" })).toBeNull();
   });
 
   it("offers Neutral Dark in Appearance via the fork palette adapter", () => {

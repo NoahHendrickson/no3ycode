@@ -78,51 +78,67 @@ export const INLET_COLORS = [
 ] as const;
 export type InletColor = (typeof INLET_COLORS)[number];
 export const DEFAULT_INLET_COLOR: InletColor = "charcoal";
-/** One entry per colour. `frame` is the pre-paint colour and, unless `swatch` says otherwise,
-    the picker's swatch; index.html carries the same table, so a new colour is a row there too. */
-export const INLET_COLOR_OPTIONS = {
-  charcoal: { label: "Charcoal", frame: INLET_BACKGROUND, appearance: "dark" },
-  green: { label: "Green", frame: "#21835c", appearance: "light" },
+/** One entry per colour. `frame` is the pre-paint colour; index.html carries the same table, so
+    a new colour is a row there too. `chrome` is the native window chrome's appearance, which
+    differs from `appearance` where the frame is light on a dark page. */
+export const INLET_COLOR_OPTIONS: Readonly<
+  Record<
+    InletColor,
+    {
+      readonly label: string;
+      readonly frame: string;
+      readonly swatch: string;
+      readonly appearance: "dark" | "light";
+      readonly chrome: "dark" | "light";
+    }
+  >
+> = {
+  charcoal: {
+    label: "Charcoal",
+    frame: INLET_BACKGROUND,
+    swatch: INLET_BACKGROUND,
+    appearance: "dark",
+    chrome: "dark",
+  },
+  green: {
+    label: "Green",
+    frame: "#21835c",
+    swatch: "#21835c",
+    appearance: "light",
+    chrome: "light",
+  },
   // The panel is a picture, so the swatch shows the cream frame beside its green.
   jungle: {
     label: "Jungle Art",
     frame: "#f2f0d8",
+    swatch: "linear-gradient(135deg, #f2f0d8 50%, #248f6b 50%)",
     appearance: "dark",
     chrome: "light",
-    swatch: "linear-gradient(135deg, #f2f0d8 50%, #248f6b 50%)",
   },
   // Jungle Art turned inside out: Green's stage, the art behind the frame.
   "jungle-light": {
     label: "Jungle Light",
     frame: "#21835c",
-    appearance: "light",
     swatch: "linear-gradient(135deg, #21835c 50%, #f1f0e0 50%)",
+    appearance: "light",
+    chrome: "light",
   },
   // Inverses of each other: half frame, half panel.
   cream: {
     label: "Cream",
     frame: "#f8f3d8",
+    swatch: "linear-gradient(90deg, #f8f3d8 50%, #141414 50%)",
     appearance: "dark",
     chrome: "light",
-    swatch: "linear-gradient(90deg, #f8f3d8 50%, #141414 50%)",
   },
   black: {
     label: "Black",
     frame: "#141414",
-    appearance: "light",
     swatch: "linear-gradient(90deg, #141414 50%, #f8f3d8 50%)",
+    appearance: "light",
+    chrome: "light",
   },
-} as const satisfies Record<
-  InletColor,
-  {
-    label: string;
-    frame: string;
-    appearance: "dark" | "light";
-    swatch?: string;
-    /** The native window chrome's appearance, where the frame is light on a dark page. */
-    chrome?: "light";
-  }
->;
+};
 
 export const FORK_PALETTES = [
   COOL_DARK_THEME,
@@ -251,12 +267,19 @@ export function applyForkPaletteAttribute(
   root.removeAttribute(FORK_THEME_ATTRIBUTE);
 }
 
-export function resolveActiveForkPalette(
-  theme: ThemePreference,
-  palette: ForkPalettePreference,
+/** `isDark` is the rendered appearance (the root's `dark` class), which System can turn away
+    from `theme`; without it, the theme's own. */
+export function resolveActiveForkPalette({
+  theme,
+  palette,
   isDark = theme === "dark",
-  inletColor: InletColor = DEFAULT_INLET_COLOR,
-): ForkPalettePreference {
+  inletColor = DEFAULT_INLET_COLOR,
+}: {
+  readonly theme: ThemePreference;
+  readonly palette: ForkPalettePreference;
+  readonly isDark?: boolean;
+  readonly inletColor?: InletColor;
+}): ForkPalettePreference {
   if (palette === null) return null;
   const appearance = forkPaletteAppearance(palette, inletColor);
   return theme === appearance && isDark === (appearance === "dark") ? palette : null;
@@ -267,7 +290,7 @@ export function resolveAppearanceOption(
   palette: ForkPalettePreference,
   inletColor: InletColor = DEFAULT_INLET_COLOR,
 ): ResolvedAppearanceOption {
-  return resolveActiveForkPalette(theme, palette, theme === "dark", inletColor) ?? theme;
+  return resolveActiveForkPalette({ theme, palette, inletColor }) ?? theme;
 }
 
 function getPaletteSnapshot(): ForkPalettePreference {
@@ -303,12 +326,12 @@ function syncForkPaletteFromStorage(): void {
     writeForkPalette(null);
     palette = readForkPalette();
   }
-  const activePalette = resolveActiveForkPalette(
+  const activePalette = resolveActiveForkPalette({
     theme,
     palette,
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+    isDark: typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
     inletColor,
-  );
+  });
   if (typeof document !== "undefined") {
     applyForkPaletteAttribute(document.documentElement, activePalette);
     if (activePalette === INLET_THEME) {
@@ -316,9 +339,9 @@ function syncForkPaletteFromStorage(): void {
     } else {
       document.documentElement.removeAttribute(INLET_COLOR_ATTRIBUTE);
     }
-    const inletOption = INLET_COLOR_OPTIONS[inletColor];
-    const inletChrome = "chrome" in inletOption ? inletOption.chrome : null;
-    setForkDesktopThemeOverride(activePalette === INLET_THEME ? inletChrome : null);
+    setForkDesktopThemeOverride(
+      activePalette === INLET_THEME ? inletChromeOverride(inletColor) : null,
+    );
     // Synchronous, inside the suppressed-transition window: switching between
     // two fork palettes keeps upstream theme at "dark", so applyTheme no-ops
     // and this is the only repaint of html/body overscroll and theme-color.
@@ -387,9 +410,18 @@ function settleAppearance(
   }
 }
 
+/** The native chrome a colour asks for, where it differs from the page's appearance. */
+function inletChromeOverride(color: InletColor): "dark" | "light" | null {
+  const { appearance, chrome } = INLET_COLOR_OPTIONS[color];
+  return chrome === appearance ? null : chrome;
+}
+
 function settleInletColor(color: InletColor, setTheme: (theme: ThemePreference) => boolean) {
-  const option = INLET_COLOR_OPTIONS[color];
-  settleAppearance(option.appearance, setTheme, "chrome" in option);
+  settleAppearance(
+    INLET_COLOR_OPTIONS[color].appearance,
+    setTheme,
+    inletChromeOverride(color) !== null,
+  );
 }
 
 /** Apply an Appearance option and reconcile partial storage failures to one visible state. */

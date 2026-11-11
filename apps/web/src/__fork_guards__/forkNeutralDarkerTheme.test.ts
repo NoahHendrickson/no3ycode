@@ -77,7 +77,7 @@ describe("fork guard: fork-neutral-darker-theme", () => {
     expect(forkTheme).toContain(`FORK_PALETTE_STORAGE_KEY = "${FORK_PALETTE_STORAGE_KEY}"`);
     expect(resolveAppearanceOption("dark", "neutral-darker")).toBe("neutral-darker");
     expect(resolveAppearanceOption("system", "neutral-darker")).toBe("system");
-    expect(resolveActiveForkPalette("system", "neutral-darker")).toBeNull();
+    expect(resolveActiveForkPalette({ theme: "system", palette: "neutral-darker" })).toBeNull();
   });
 
   it("offers Neutral Darker in Appearance via the fork palette adapter", () => {

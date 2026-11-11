@@ -81,7 +81,7 @@ describe("fork guard: fork-cool-darker-theme", () => {
     );
     expect(resolveAppearanceOption("dark", "cool-darker")).toBe("cool-darker");
     expect(resolveAppearanceOption("system", "cool-darker")).toBe("system");
-    expect(resolveActiveForkPalette("system", "cool-darker")).toBeNull();
+    expect(resolveActiveForkPalette({ theme: "system", palette: "cool-darker" })).toBeNull();
   });
 
   it("offers Glass in Appearance via the fork palette adapter", () => {

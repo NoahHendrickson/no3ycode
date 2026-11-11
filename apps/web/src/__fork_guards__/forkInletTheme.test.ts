@@ -81,8 +81,22 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(forkPaletteAppearance("cool-dark", "green")).toBe("dark");
     expect(resolveAppearanceOption("dark", INLET_THEME, "charcoal")).toBe(INLET_THEME);
     expect(resolveAppearanceOption("light", INLET_THEME, "green")).toBe(INLET_THEME);
-    expect(resolveActiveForkPalette("dark", INLET_THEME, true, "green")).toBeNull();
-    expect(resolveActiveForkPalette("light", INLET_THEME, false, "charcoal")).toBeNull();
+    expect(
+      resolveActiveForkPalette({
+        theme: "dark",
+        palette: INLET_THEME,
+        isDark: true,
+        inletColor: "green",
+      }),
+    ).toBeNull();
+    expect(
+      resolveActiveForkPalette({
+        theme: "light",
+        palette: INLET_THEME,
+        isDark: false,
+        inletColor: "charcoal",
+      }),
+    ).toBeNull();
   });
 
   it("paints Charcoal as a #232322 frame round a #303235 panel", () => {

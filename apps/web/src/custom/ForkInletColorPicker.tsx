@@ -13,12 +13,12 @@ export function ForkInletColorPicker(props: {
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Inlet colour">
       {INLET_COLORS.map((color) => {
-        const option: { frame: string; swatch?: string } = INLET_COLOR_OPTIONS[color];
+        const option = INLET_COLOR_OPTIONS[color];
         return (
           <button
             key={color}
             type="button"
-            aria-label={INLET_COLOR_OPTIONS[color].label}
+            aria-label={option.label}
             aria-pressed={props.value === color}
             className={cn(
               "flex size-7 items-center justify-center rounded-full border border-transparent outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -28,7 +28,7 @@ export function ForkInletColorPicker(props: {
           >
             <span
               className="size-5 rounded-full ring-1 ring-foreground/12 ring-inset"
-              style={{ background: option.swatch ?? option.frame }}
+              style={{ background: option.swatch }}
             />
           </button>
         );
