@@ -915,21 +915,6 @@
   );
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  ) {
-  --fork-inlet-frame-ink: #1c1c1a;
-  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle-light"]
-  ) {
-  --fork-inlet-frame-ink: #ffffff;
-}
-
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"] {
   --fork-inlet-peek-pad: 4px;

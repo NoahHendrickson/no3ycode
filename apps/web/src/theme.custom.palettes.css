@@ -552,6 +552,8 @@
    shares these tokens. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="green"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"] {
+  /* The peek card's ink on the green frame. */
+  --fork-inlet-frame-ink: #ffffff;
   --background: #21835c;
   --app-chrome-background: #21835c;
   --foreground: #1c1c1a;
@@ -624,6 +626,11 @@
    bridge are green 80% over the frame, flattened. The composer is white glass
    with dark ink. Declared after Charcoal, whose `.dark` blocks also match. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
+  /* The peek card's ink and fill on the cream frame; tooltips are the menus' green, inked white. */
+  --fork-inlet-frame-ink: #1c1c1a;
+  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
+  --fork-inlet-tooltip: var(--fork-inlet-model-shell);
+  --fork-inlet-tooltip-foreground: #ffffff;
   --fork-inlet-frame: #f2f0d8;
   --background: #1e5f46;
   --app-chrome-background: #f2f0d8;
@@ -706,6 +713,9 @@
    black 16% and white 60% over the cream, flattened. Cream's frame is not
    --background, as with Jungle Art. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"] {
+  /* The peek card's ink and fill on the cream frame. */
+  --fork-inlet-frame-ink: #1c1c1a;
+  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
   --fork-inlet-frame: #f8f3d8;
   --background: #141414;
   --app-chrome-background: #f8f3d8;

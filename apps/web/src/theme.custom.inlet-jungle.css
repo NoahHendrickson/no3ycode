@@ -574,13 +574,6 @@
   color: #ffffff;
 }
 
-/* Jungle Art's tooltips are its menus' green, inked white. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
-  --fork-inlet-tooltip: var(--fork-inlet-model-shell);
-  --fork-inlet-tooltip-foreground: #ffffff;
-}
-
 /* Jungle Art's send button takes the green the model menu and the open
    controls hang in, inked white, rather than dark mode's flat white. */
 
