@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { observeResize } from "~/lib/observeResize";
 
+import { isInletActive } from "./forkActivePalette";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 const DETECT_ANIMATION = "fork-inlet-morph-detect";
 // The concave corner where the tab meets the menu (theme.custom.inlet.css --fork-inlet-fillet).
@@ -393,9 +395,7 @@ function startMorph(popup: HTMLElement) {
   run(1);
 }
 
-const morphRuns = () =>
-  document.documentElement.dataset.forkTheme === "inlet" &&
-  !matchMedia("(prefers-reduced-motion: reduce)").matches;
+const morphRuns = () => isInletActive() && !matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Keeps something Inlet animates closed (the docked details card's shape, the dictation
     timeline) mounted for `ms` after it closes, as Base UI keeps a closing popup: `ending` while

@@ -118,6 +118,8 @@ function TooltipPositioner(props: TooltipPrimitive.Positioner.Props) {
 }
 
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { isInletActive } from "~/custom/forkActivePalette";
+
 /** theme.custom.inlet.css's --fork-inlet-nub-depth. */
 const FORK_TOOLTIP_NUB_DEPTH = 7;
 /* fork:end fork-inlet-theme */
@@ -130,6 +132,9 @@ function TooltipPopup({
   variant = "default",
   anchor,
   children,
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  forkNub = true,
+  /* fork:end fork-inlet-theme */
   ...props
 }: TooltipPrimitive.Popup.Props & {
   align?: TooltipPrimitive.Positioner.Props["align"];
@@ -137,19 +142,21 @@ function TooltipPopup({
   sideOffset?: TooltipPrimitive.Positioner.Props["sideOffset"];
   variant?: "default" | "glass" | "code";
   anchor?: TooltipPrimitive.Positioner.Props["anchor"];
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  /** Inlet's nub and its standoff; a card that hangs as a tab (the row hover card) opts out. */
+  forkNub?: boolean;
+  /* fork:end fork-inlet-theme */
 }) {
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-  // Inlet stands off by the nub's depth so its tip meets the trigger; read per
-  // positioning. The row hover card hangs as a tab and keeps its offset.
-  const positionerSideOffset: TooltipPrimitive.Positioner.Props["sideOffset"] =
-    "data-fork-row-hover-card" in props
-      ? sideOffset
-      : (data) =>
-          document.documentElement.getAttribute("data-fork-theme") === "inlet"
-            ? FORK_TOOLTIP_NUB_DEPTH
-            : typeof sideOffset === "function"
-              ? sideOffset(data)
-              : sideOffset;
+  // Inlet stands off by the nub's depth so its tip meets the trigger; read per positioning.
+  const positionerSideOffset: TooltipPrimitive.Positioner.Props["sideOffset"] = forkNub
+    ? (data) =>
+        isInletActive()
+          ? FORK_TOOLTIP_NUB_DEPTH
+          : typeof sideOffset === "function"
+            ? sideOffset(data)
+            : sideOffset
+    : sideOffset;
   /* fork:end fork-inlet-theme */
   return (
     <TooltipPrimitive.Portal>

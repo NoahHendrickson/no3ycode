@@ -31,6 +31,7 @@ import {
   subscribeToThemeChanges,
   syncBrowserChromeTheme,
 } from "../hooks/useTheme";
+import { setActiveForkPalette } from "./forkActivePalette";
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
@@ -344,6 +345,7 @@ function syncForkPaletteFromStorage(): void {
       })
       .catch(() => undefined);
   }
+  setActiveForkPalette(activePalette);
   lastPalette = palette;
   emitChange();
 }

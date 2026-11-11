@@ -269,7 +269,9 @@ import {
   User as PhUser,
 } from "@phosphor-icons/react";
 import type { FC, ReactElement, SVGProps } from "react";
-import { createElement, useSyncExternalStore } from "react";
+import { createElement } from "react";
+
+import { useIsInletActive } from "../forkActivePalette";
 
 /**
  * Phosphor's own `IconProps` declares its optionals without `| undefined`,
@@ -307,6 +309,13 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
   return pascalKebab === lucideName ? classes : `${classes} lucide-${pascalKebab}`;
 }
 
+/** Duotone, or Inlet's fill in its place (see `.fork/customizations.yaml#fork-inlet-theme`).
+    Every other weight passes through. */
+export function useForkIconWeight(weight: IconWeight): IconWeight {
+  const fills = useIsInletActive();
+  return weight === "duotone" && fills ? "fill" : weight;
+}
+
 /**
  * Pins a default weight while still letting a caller override it per usage.
  * Phosphor forwards unknown props to the `<svg>`, so upstream's `strokeWidth`
@@ -324,41 +333,6 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
  * lucide aliases share their canonical wrapper so the same glyph cannot drift
  * between two export names.
  */
-/**
- * Inlet (see `.fork/customizations.yaml#fork-inlet-theme`) draws filled icons
- * where every other palette draws duotone. Read from the palette attribute
- * forkTheme stamps on <html>, through one shared observer, so an icon follows
- * a palette switch without a reload.
- */
-const iconWeightListeners = new Set<() => void>();
-let iconWeightObserver: MutationObserver | null = null;
-
-function subscribeIconWeight(listener: () => void): () => void {
-  iconWeightListeners.add(listener);
-  if (iconWeightObserver === null && typeof MutationObserver !== "undefined") {
-    iconWeightObserver = new MutationObserver(() => {
-      for (const notify of iconWeightListeners) notify();
-    });
-    iconWeightObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-fork-theme"],
-    });
-  }
-  return () => {
-    iconWeightListeners.delete(listener);
-  };
-}
-
-function readFillsDuotone(): boolean {
-  return document.documentElement.getAttribute("data-fork-theme") === "inlet";
-}
-
-/** Duotone, or Inlet's fill in its place. Every other weight passes through. */
-export function useForkIconWeight(weight: IconWeight): IconWeight {
-  const fills = useSyncExternalStore(subscribeIconWeight, readFillsDuotone, () => false);
-  return weight === "duotone" && fills ? "fill" : weight;
-}
-
 function icon(lucideName: string, Base: PhosphorIcon, weight: IconWeight): LucideIcon {
   const lucideClasses = withPascalKebabClass(`lucide lucide-${lucideName}`, lucideName);
   const Wrapped: LucideIcon = ({ weight: override, className, ...props }) => {

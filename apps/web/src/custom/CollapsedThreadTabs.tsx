@@ -40,6 +40,7 @@ import { useNowMinute } from "~/hooks/useNowMinute";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { anchorNextContextMenu } from "./anchoredContextMenu";
+import { isInletActive } from "./forkActivePalette";
 import { useRightPanelStore } from "~/rightPanelStore";
 import { useSnoozeWakeClock } from "~/components/Sidebar.logic";
 import { useSidebarProjectGroups } from "~/hooks/useSidebarProjectGroups";
@@ -399,7 +400,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
         replace: paneThreadKeys.includes(threadKey),
       });
-    if (document.documentElement.dataset.forkTheme !== "inlet") {
+    if (!isInletActive()) {
       void navigate();
       return;
     }
