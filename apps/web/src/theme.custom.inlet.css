@@ -2074,11 +2074,13 @@
 
 /* On the cream frames the chrome rows' icons (Search, New agent, Add a
    project, Usage, Automations) are black at 65%, under their full-ink
-   labels. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
+   labels. Settings' nav reuses the rows: on Jungle Art it is cream too, but
+   on Cream it sits on the dark panel and keeps the panel's icon ink. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-chrome-row]
+  svg,
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"]
+  [data-sidebar-version="v2"]
   [data-fork-chrome-row]
   svg {
   color: rgb(0 0 0 / 65%);
