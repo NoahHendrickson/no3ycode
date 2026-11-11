@@ -1811,17 +1811,18 @@
 }
 
 /* ── Dictation ───────────────────────────────────────────────────────────────
-   A live session sits the mic and the level timeline in one rounded pill of
-   the menus' shell, which grows out to the right as the session starts: the
-   pill fades in under the mic and the timeline widens from nothing. The
-   canvas paints its bars in its own `color`. */
+   A live session sits the mic and the level timeline in one pill of the
+   menus' shell, which grows out to the right as the session starts: the pill
+   fades in under the mic and the timeline widens from nothing. It is the mode
+   chip's height and corners, so the two read as one row. The canvas paints
+   its bars in its own `color`. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-control-row-slot="left"]
   :has(> [data-fork-composer-action="dictate"]) {
-  border-radius: 8px;
+  border-radius: 4px;
 
   &[data-fork-dictation-live] {
-    padding: 2px 8px 2px 2px;
+    padding: 0 8px 0 0;
     background: var(--fork-inlet-model-shell);
   }
 
