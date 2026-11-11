@@ -1,17 +1,20 @@
 /** Inlet hangs a tab's thread menu from its "…" button, in the page, so it joins the button as the
-    strip's other menus do; a native menu cannot. The sidebar's handler builds that menu and awaits
-    its own reads first, so the button rides to localApi's show call here, briefly. */
+    strip's other menus do; a native menu cannot. The sidebar's handler hands the position it was
+    given to localApi's show call unchanged, so the button rides on that object. */
 import { isInletActive } from "./forkActivePalette";
 
-let pending: { readonly anchor: HTMLElement; readonly at: number } | null = null;
+const anchors = new WeakMap<object, HTMLElement>();
 
-export function anchorNextContextMenu(anchor: HTMLElement) {
-  pending = { anchor, at: performance.now() };
+/** The menu position 4px below the button, start-aligned, that remembers the button. */
+export function anchoredMenuPosition(anchor: HTMLElement): { x: number; y: number } {
+  const box = anchor.getBoundingClientRect();
+  const position = { x: box.left, y: box.bottom + 4 };
+  anchors.set(position, anchor);
+  return position;
 }
 
-export function takeContextMenuAnchor(): HTMLElement | null {
-  const next = pending;
-  pending = null;
-  if (next === null || !next.anchor.isConnected || performance.now() - next.at > 1000) return null;
-  return isInletActive() ? next.anchor : null;
+/** The button a show call's position hangs from, on Inlet only. */
+export function contextMenuAnchorFor(position: object | undefined): HTMLElement | null {
+  const anchor = position === undefined ? undefined : anchors.get(position);
+  return anchor?.isConnected && isInletActive() ? anchor : null;
 }

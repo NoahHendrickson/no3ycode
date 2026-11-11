@@ -262,7 +262,7 @@ describe("fork guard: fork-inlet-theme", () => {
     // a tab's "…" thread menu (the in-page context menu, marked when it opens).
     const strip = readSibling("../custom/CollapsedThreadTabs.tsx");
     expect(strip.match(/data-fork-tab-trigger=""/gu)).toHaveLength(3);
-    expect(strip).toContain("anchorNextContextMenu(event.currentTarget)");
+    expect(strip).toContain("openMenu(anchoredMenuPosition(event.currentTarget))");
     expect(strip.match(/data-fork-tab-menu=""/gu)).toHaveLength(2);
     expect(
       inletRules.some((rule) =>

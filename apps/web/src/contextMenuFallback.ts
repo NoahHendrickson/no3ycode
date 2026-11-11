@@ -599,13 +599,10 @@ export function showContextMenuFallback<T extends string>(
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("contextmenu", onContextMenu, true);
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
-       Hung 4px below its button, start-aligned, as the tab strip's own menus; the button is
-       expanded first, so Inlet's morph finds it when the menu announces itself. */
+       The position already hangs it below its button (custom/anchoredContextMenu.ts). The button
+       is expanded first, so Inlet's morph finds it when the menu announces itself. */
     const anchorBox = anchor?.getBoundingClientRect();
-    if (anchor && anchorBox) {
-      anchor.setAttribute("aria-expanded", "true");
-      position = { x: anchorBox.left, y: anchorBox.bottom + 4 };
-    }
+    anchor?.setAttribute("aria-expanded", "true");
     /* fork:end fork-inlet-theme */
     openMenu(items, position?.x ?? 0, position?.y ?? 0, 0);
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */

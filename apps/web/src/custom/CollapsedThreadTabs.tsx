@@ -39,7 +39,7 @@ import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
-import { anchorNextContextMenu } from "./anchoredContextMenu";
+import { anchoredMenuPosition } from "./anchoredContextMenu";
 import { isInletActive } from "./forkActivePalette";
 import { useRightPanelStore } from "~/rightPanelStore";
 import { useSnoozeWakeClock } from "~/components/Sidebar.logic";
@@ -770,15 +770,10 @@ function ThreadTab(props: {
               type="button"
               aria-label="More thread actions"
               aria-haspopup="menu"
-              aria-expanded={false}
               data-fork-tab-trigger=""
               data-fork-tab-actions-trigger=""
               className={TAB_ACTION_CLASS}
-              onClick={(event) => {
-                const rect = event.currentTarget.getBoundingClientRect();
-                anchorNextContextMenu(event.currentTarget);
-                openMenu({ x: rect.left, y: rect.bottom + 4 });
-              }}
+              onClick={(event) => openMenu(anchoredMenuPosition(event.currentTarget))}
             >
               <EllipsisIcon className="size-3.5" />
             </button>

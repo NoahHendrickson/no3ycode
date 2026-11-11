@@ -3,7 +3,7 @@ import type { ConfirmDialogOptions, ContextMenuItem, LocalApi } from "@t3tools/c
 import { requestConfirmDialog } from "./confirmDialog";
 import { dismissContextMenu, showContextMenuFallback } from "./contextMenuFallback";
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-import { takeContextMenuAnchor } from "./custom/anchoredContextMenu";
+import { contextMenuAnchorFor } from "./custom/anchoredContextMenu";
 /* fork:end fork-inlet-theme */
 import { readBrowserClientSettings, writeBrowserClientSettings } from "./clientPersistenceStorage";
 
@@ -49,7 +49,7 @@ export function createLocalApi(): LocalApi {
       ): Promise<T | null> => {
         /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
            Inlet hangs a tab's thread menu from its button, in the page even on desktop. */
-        const anchor = takeContextMenuAnchor();
+        const anchor = contextMenuAnchorFor(position);
         if (anchor) return showContextMenuFallback(items, position, anchor);
         /* fork:end fork-inlet-theme */
         if (window.desktopBridge) {

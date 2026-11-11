@@ -2515,7 +2515,9 @@
     panel with a concave corner either side (masked); the nav clips sideways
     only and the strip sits at z 2. A tab's "…" thread menu hangs from the
     button as the strip's menus do: the button rides to localApi's
-    contextMenu.show (custom/anchoredContextMenu.ts), which under Inlet shows
+    contextMenu.show on the menu position itself (custom/anchoredContextMenu.ts,
+    a WeakMap keyed by that object, which the sidebar's handler forwards
+    unchanged), and under Inlet that call shows
     the in-page menu (contextMenuFallback, fenced) even on desktop, placed
     below the button and claimed by the morph; Jungle Art fills it with the
     button's hover green.
