@@ -337,6 +337,12 @@ describe("fork guard: fork-inlet-theme", () => {
       rule.selector.endsWith('[data-fork-model-picker="list"]'),
     )?.body;
     expect(list).toContain("margin: 4px 4px 4px 0");
+    // The morph finds the docked details card's button by its stamp, not its label.
+    const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
+    expect(panelControls).toContain('data-fork-details-toggle=""');
+    expect(readSibling("../custom/inletMenuMorph.ts")).toContain(
+      '[data-fork-details-toggle][aria-pressed="true"]',
+    );
   });
 
   it("pre-paints the colour's frame and stamps it with the palette", () => {

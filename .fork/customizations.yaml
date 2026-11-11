@@ -2486,7 +2486,9 @@
     useInletMorphPresence, fenced in ThreadDetailsCard.tsx):
     custom/inletMenuMorph.ts, installed
     once from main.tsx and woken by a 1ms detect animation on those popups,
-    finds the button through aria-controls and draws menu, button and tab as
+    finds the button through aria-controls (the docked card through the
+    details toggle's fenced data-fork-details-toggle in PanelLayoutControls)
+    and draws menu, button and tab as
     one SVG path on a layer one step under the popup's own positioner, flipped for menus above
     their button, filled with the menu's own background and padded by
     --fork-inlet-tab-pad, and morphs it (width leads, height
@@ -2564,6 +2566,7 @@
     - apps/web/src/components/ui/tooltip.tsx
     - apps/web/src/components/ThreadHoverCard.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts

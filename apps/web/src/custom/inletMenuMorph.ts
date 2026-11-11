@@ -30,22 +30,11 @@ interface Rect {
   readonly bottom: number;
 }
 
-// The last popup button pressed: a popover opened through a detached handle (the thread details
-// toggle) names no popup in its aria-controls, so this is the fallback for finding its button.
-let lastPressed: HTMLElement | null = null;
 // Running morphs, dropped to their stylesheet look when the palette or colour changes under one
 // (the docked details card stays mounted across a switch made in Settings).
 const activeMorphs = new Set<() => void>();
 
 export function installInletMenuMorph() {
-  document.addEventListener(
-    "pointerdown",
-    (event) => {
-      const target = event.target instanceof Element ? event.target : null;
-      lastPressed = target?.closest<HTMLElement>("[aria-haspopup]") ?? null;
-    },
-    true,
-  );
   document.addEventListener("animationstart", (event) => {
     if (event.animationName !== DETECT_ANIMATION) return;
     const popup = event.target;
@@ -74,12 +63,13 @@ export function installInletMenuMorph() {
   });
 }
 
-/** The button whose `aria-controls` names the popup or something in it (a menu's or select's
-    list, a combobox's listbox), else the expanded popup button last pressed. The docked details
-    card is no popup: its button is the pressed details toggle, nearest its own column first. */
+/** The open button whose `aria-controls` names the popup or something in it (a menu's or
+    select's list, a combobox's listbox), as Base UI and the anchored tab menu link them. The
+    docked details card is no popup: its button is the pressed details toggle (stamped in
+    PanelLayoutControls), nearest its own column first. */
 function findTrigger(popup: HTMLElement) {
   if (popup.dataset.threadDetailsPanel === "inline") {
-    const toggle = '[aria-label="Toggle thread details panel"][aria-pressed="true"]';
+    const toggle = '[data-fork-details-toggle][aria-pressed="true"]';
     return (
       popup.closest("[data-chat-column-maximized-away]")?.querySelector<HTMLElement>(toggle) ??
       document.querySelector<HTMLElement>(toggle)
@@ -91,9 +81,7 @@ function findTrigger(popup: HTMLElement) {
     const controlled = document.getElementById(candidate.getAttribute("aria-controls") ?? "");
     if (controlled && (controlled === popup || popup.contains(controlled))) return candidate;
   }
-  return lastPressed?.isConnected && lastPressed.getAttribute("aria-expanded") === "true"
-    ? lastPressed
-    : null;
+  return null;
 }
 
 /** The box that paints the menu: the popup itself, a select's inner glass, a combobox's outer

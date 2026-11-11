@@ -2053,7 +2053,7 @@
       )
     )
     [data-fork-panel-toggle]
-    > :is([aria-expanded="true"], [aria-label="Toggle thread details panel"][aria-pressed="true"]) {
+    > :is([aria-expanded="true"], [data-fork-details-toggle][aria-pressed="true"]) {
     background-color: transparent !important;
 
     &::after {
