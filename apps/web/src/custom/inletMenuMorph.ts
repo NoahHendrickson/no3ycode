@@ -29,6 +29,9 @@ interface Rect {
 // The last popup button pressed: a popover opened through a detached handle (the thread details
 // toggle) names no popup in its aria-controls, so this is the fallback for finding its button.
 let lastPressed: HTMLElement | null = null;
+// Running morphs, dropped to their stylesheet look when the palette or colour changes under one
+// (the docked details card stays mounted across a switch made in Settings).
+const activeMorphs = new Set<() => void>();
 
 export function installInletMenuMorph() {
   document.addEventListener(
@@ -42,8 +45,10 @@ export function installInletMenuMorph() {
   document.addEventListener("animationstart", (event) => {
     if (event.animationName !== DETECT_ANIMATION) return;
     const popup = event.target;
-    // A popup can be reused across opens, so each open (data-open) wakes this again.
-    if (!(popup instanceof HTMLElement) || popup.dataset.forkMorph === "on") return;
+    // A popup can be reused across opens, so each open (data-open) wakes this again. One the
+    // morph gave up on stays released: the detect rule matches it again, and retrying would loop.
+    if (!(popup instanceof HTMLElement)) return;
+    if (popup.dataset.forkMorph === "on" || popup.dataset.forkMorph === "failed") return;
     try {
       startMorph(popup);
     } catch (error) {
@@ -51,6 +56,17 @@ export function installInletMenuMorph() {
       release(popup);
       throw error;
     }
+  });
+  new MutationObserver((records) => {
+    const root = document.documentElement;
+    if (records.every((record) => record.oldValue === root.getAttribute(record.attributeName!))) {
+      return;
+    }
+    for (const abandon of activeMorphs) abandon();
+  }).observe(document.documentElement, {
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: ["data-fork-theme", "data-fork-inlet-color"],
   });
 }
 
@@ -235,6 +251,8 @@ function startMorph(popup: HTMLElement) {
   let placedAt = "";
 
   const draw = () => {
+    // A scroll or resize can queue a frame that lands after teardown.
+    if (tornDown) return;
     if (!popup.isConnected) {
       teardown();
       return;
@@ -338,9 +356,15 @@ function startMorph(popup: HTMLElement) {
   const stopResize = observeResize(glass, redraw);
 
   let tornDown = false;
+  const abandon = () => {
+    teardown();
+    release(popup);
+  };
+  activeMorphs.add(abandon);
   function teardown() {
     if (tornDown) return;
     tornDown = true;
+    activeMorphs.delete(abandon);
     cancelAnimationFrame(frame);
     closing.disconnect();
     removal.disconnect();

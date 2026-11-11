@@ -2105,7 +2105,7 @@
    header keeps its height and its window-drag area. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-header]
-  nav:has([data-slot="workspace-breadcrumb-text"]) {
+  nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input)) {
   visibility: hidden;
 }
 
