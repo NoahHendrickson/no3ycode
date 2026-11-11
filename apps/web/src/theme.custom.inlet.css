@@ -481,10 +481,6 @@
   /* The tab runs a fillet down over the chip's top in the chip's own colour,
      and the shadow stops at its foot, so none of it reaches the chip. */
   translate: 0 calc(-1 * var(--fork-inlet-chip-lift));
-  --fork-inlet-chip-fold: inset(
-    100% calc(100% - var(--anchor-width) - var(--fork-inlet-chip-fillet))
-      calc(-1 * var(--fork-inlet-chip-fillet)) -32px round 8px
-  );
   clip-path: inset(-32px -32px calc(-1 * var(--fork-inlet-chip-fillet)) -32px);
 
   &::after {
@@ -516,10 +512,6 @@
   /* The tab runs a fillet down over the chip's top in the chip's own colour,
      and the shadow stops at its foot, so none of it reaches the chip. */
   translate: 0 calc(-1 * var(--fork-inlet-chip-lift));
-  --fork-inlet-chip-fold: inset(
-    100% -32px calc(-1 * var(--fork-inlet-chip-fillet))
-      calc(100% - var(--anchor-width) - var(--fork-inlet-chip-fillet)) round 8px
-  );
   clip-path: inset(-32px -32px calc(-1 * var(--fork-inlet-chip-fillet)) -32px);
 
   &::after {
@@ -547,10 +539,6 @@
   box-shadow: none;
   filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
   translate: 0 var(--fork-inlet-chip-lift);
-  --fork-inlet-chip-fold: inset(
-    calc(-1 * var(--fork-inlet-chip-fillet))
-      calc(100% - var(--anchor-width) - var(--fork-inlet-chip-fillet)) 100% -32px round 8px
-  );
   clip-path: inset(calc(-1 * var(--fork-inlet-chip-fillet)) -32px -32px -32px);
 
   &::after {
@@ -579,10 +567,6 @@
   box-shadow: none;
   filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
   translate: 0 var(--fork-inlet-chip-lift);
-  --fork-inlet-chip-fold: inset(
-    calc(-1 * var(--fork-inlet-chip-fillet)) -32px 100%
-      calc(100% - var(--anchor-width) - var(--fork-inlet-chip-fillet)) round 8px
-  );
   clip-path: inset(calc(-1 * var(--fork-inlet-chip-fillet)) -32px -32px -32px);
 
   &::after {
@@ -1431,38 +1415,7 @@
   background-color: transparent;
 }
 
-/* The hung menu unfolds out of its button: on open only the tab (the gap
-   strip and its concave corner, below the menu's box) shows, and the menu
-   grows up and leftward out of it; closing folds it back in. A clip and a
-   slight scale, so nothing is laid out again, and one 240ms run per open. The settled clip
-   reaches past the box so it never trims the tab or the corner. */
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-tab-menu][data-side="top"][data-align="end"] {
-    transition:
-      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      scale 240ms cubic-bezier(0.32, 0.72, 0, 1);
-
-    &[data-starting-style],
-    &[data-ending-style] {
-      clip-path: inset(
-        100% -40px calc(-1 * var(--fork-inlet-fillet))
-          calc(
-            100% - var(--anchor-width) - 2 * var(--fork-inlet-tab-pad) - var(--fork-inlet-fillet)
-          )
-          round 8px
-      );
-      /* From the corner at the button (Base UI's --transform-origin), where
-         the tab is, so the tab barely moves while the menu grows. */
-      scale: 0.94;
-    }
-
-    &[data-ending-style] {
-      transition-duration: 160ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
-    }
-  }
-
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     [data-fork-composer-model-controls]
     [data-fork-composer-usage-limits] {
@@ -1717,36 +1670,6 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-slot="menu-popup"]:has([data-composer-permissions]) {
-    transition:
-      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      scale 240ms cubic-bezier(0.32, 0.72, 0, 1);
-
-    &:is([data-starting-style], [data-ending-style]) {
-      scale: 0.94;
-    }
-
-    &[data-side="bottom"]:is([data-starting-style], [data-ending-style]) {
-      clip-path: inset(
-        calc(-1 * var(--fork-inlet-fillet))
-          calc(100% - var(--fork-inlet-tab-width) - var(--fork-inlet-fillet)) 100% -40px round 12px
-      );
-    }
-
-    &[data-side="top"]:is([data-starting-style], [data-ending-style]) {
-      clip-path: inset(
-        100% calc(100% - var(--fork-inlet-tab-width) - var(--fork-inlet-fillet))
-          calc(-1 * var(--fork-inlet-fillet)) -40px round 12px
-      );
-    }
-
-    &[data-ending-style] {
-      transition-duration: 160ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
-    }
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     [data-fork-composer-mode-chip] {
     transition:
       background-color 160ms ease-out,
@@ -1890,103 +1813,12 @@
 }
 
 /* ── Motion ──────────────────────────────────────────────────────────────────
-   Every join moves the way the model and mode menus already do: a menu
-   unfolds out of its tab (a clip from the tab outward and a slight scale
-   from the button's corner), the button fills and squares its corners in
-   step, and the open row's bridge runs out into the panel. One run per state
-   change: 240ms in on the model menu's curve, 160ms back into the tab on
-   its ease-in while the button eases its fill out alongside. Nothing loops. */
+   Hung menus move only through the one-shape morph (custom/inletMenuMorph.ts,
+   below); one it cannot take, or any under reduced motion, opens as its
+   static tab. Here the button fills and squares its corners in step, and the
+   open row's bridge runs out into the panel. One run per state change, 160ms
+   on the buttons, 240ms on the bridge. Nothing loops. */
 @media (prefers-reduced-motion: no-preference) {
-  /* The Threads header's menus and the tab strip's, hung below their
-     buttons, move as the model menu does: they unfold out of their tab and
-     fold back into it, while the button eases its fill in and out over the
-     same 160ms on the way out, so the two read as one motion. The settled
-     clip reaches past the box and its shadow. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-slot="menu-popup"][data-fork-tab-menu][data-side="bottom"]:is(
-      [data-align="start"],
-      [data-align="end"]
-    ) {
-    clip-path: inset(calc(-1 * var(--fork-inlet-fillet) - 1px) -48px -64px -48px round 8px);
-    transition:
-      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      scale 240ms cubic-bezier(0.32, 0.72, 0, 1);
-
-    &:is([data-starting-style], [data-ending-style]) {
-      scale: 0.94;
-    }
-
-    &[data-align="end"]:is([data-starting-style], [data-ending-style]) {
-      clip-path: inset(
-        calc(-1 * var(--fork-inlet-fillet) - 1px) -48px 100%
-          calc(100% - var(--anchor-width) - var(--fork-inlet-fillet)) round 8px
-      );
-    }
-
-    &[data-align="start"]:is([data-starting-style], [data-ending-style]) {
-      clip-path: inset(
-        calc(-1 * var(--fork-inlet-fillet) - 1px)
-          calc(100% - var(--anchor-width) - var(--fork-inlet-fillet)) 100% -48px round 8px
-      );
-    }
-
-    &[data-ending-style] {
-      transition-duration: 160ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
-    }
-  }
-
-  /* The composer's chip menus fold to their tab the same way
-     (--fork-inlet-chip-fold, set per placement above). Selects and
-     comboboxes stamp the open state on a different element from the glass
-     box, as they do the marker. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      .dropdown-glass[data-fork-chip-menu],
-      [data-fork-chip-menu] > .dropdown-glass,
-      .dropdown-glass:has(> [data-fork-chip-menu])
-    ) {
-    transform-origin: var(--transform-origin);
-    transition:
-      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      scale 240ms cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      .dropdown-glass[data-fork-chip-menu]:is([data-starting-style], [data-ending-style]),
-      [data-fork-chip-menu]:is([data-starting-style], [data-ending-style]) > .dropdown-glass,
-      .dropdown-glass:has(> [data-fork-chip-menu]:is([data-starting-style], [data-ending-style]))
-    ) {
-    clip-path: var(--fork-inlet-chip-fold);
-    scale: 0.94;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      .dropdown-glass[data-fork-chip-menu][data-ending-style],
-      [data-fork-chip-menu][data-ending-style] > .dropdown-glass,
-      .dropdown-glass:has(> [data-fork-chip-menu][data-ending-style])
-    ) {
-    transition-duration: 160ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
-  }
-
-  /* A select or combobox waits only on its own popup element's animations
-     before it unmounts, and the glass box is that element's child or parent;
-     this holds the popup for the fold. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-chip-menu][data-ending-style]:not(.dropdown-glass) {
-    animation: fork-inlet-menu-hold 160ms;
-  }
-
-  @keyframes fork-inlet-menu-hold {
-    from,
-    to {
-      opacity: 1;
-    }
-  }
-
   /* What a menu or card hangs from fills and squares off in step: the chips,
      the hung-menu buttons and the details toggle. Not the tab strip's tabs:
      a tab switch must land at once, as a browser's does, and an eased fill

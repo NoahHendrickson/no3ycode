@@ -2470,15 +2470,14 @@
     and the end-aligned menu fills the 4px gap and curves into the button's
     left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}; Jungle Art's tooltips are its menus' green with white ink. The project strip's buttons wear an 8% ink fill. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
-    way up, without a drop shadow (it would fall on the button), and unfolds out of it on open (a 240ms clip and slight scale from the button's corner, folded back on close, off under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
+    way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
     concave corners, and the effort controls sit on the shell. Jungle Art's menus are its sidebar's hover cream with
     dark ink restated inside them.
     Motion (prefers-reduced-motion: no-preference only, one run per state
-    change, nothing loops): hung menus, the chips' menus included
-    (--fork-inlet-chip-fold per placement), unfold from their tab by clip and
-    a 0.94 scale over 240ms, and fold back into the tab over 160ms as the model menu does, the button
-    easing its fill out over the same 160ms so the two read as one motion; what they hang from eases its fill
+    change, nothing loops): hung menus, the chips' menus included, move only
+    through the one-shape morph, and one it gives up on opens as its static
+    tab with no clip unfold; what they hang from eases its fill
     and corners over 160ms; a sidebar row eases into the panel's fill and its
     bridge runs out into the panel.
     Every hung menu goes further (the Threads header, tab strip, composer
