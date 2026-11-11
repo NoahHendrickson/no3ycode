@@ -72,6 +72,7 @@ describe("buildCollapsedThreadTabs", () => {
   const build = (
     supported: boolean,
     statuses: readonly CollapsedThreadTabStatus[] = DEFAULT_COLLAPSED_TAB_STATUSES,
+    openThreadKey: string | null = null,
   ) =>
     buildCollapsedThreadTabs({
       threads,
@@ -79,7 +80,7 @@ describe("buildCollapsedThreadTabs", () => {
       statuses: new Set(statuses),
       localLastVisitedAtById: {},
       now: NOW,
-      openThreadKey: null,
+      openThreadKey,
       holds: createSidebarV2CompletedHoldTracker(),
       supports: () => ({ settlement: supported, snooze: supported }),
     });
@@ -99,6 +100,14 @@ describe("buildCollapsedThreadTabs", () => {
       "idle",
     ]);
     expect(build(true, ["working"]).tabs.map((tab) => tab.thread.id)).toEqual(["working"]);
+  });
+
+  it("keeps the open thread as a tab when its status is left out", () => {
+    const idleKey = scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make("idle")));
+    expect(build(true, ["working"], idleKey).tabs.map((tab) => tab.thread.id)).toEqual([
+      "working",
+      "idle",
+    ]);
   });
 
   it("keeps parked threads where the environment cannot park them, as the sidebar does", () => {

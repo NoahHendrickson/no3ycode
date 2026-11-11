@@ -182,7 +182,7 @@ These look the way Noey wants them to right now, but are still being tuned:
 - **Reasoning slider (Jungle):** the original dots and fill inside a recessed well; a fat 22px
   cream knob.
 - **Mode picker:** recessed well; the selected segment is a cream fill.
-- **Dictation:** one plain pill that grows right from the mic, and retracts with a small spring.
+- **Dictation:** one plain pill that grows right from the mic, and retracts into it in one move, its fill fading as it lands. No spring: a second shrink after the retract read as a stutter.
 - **Brand:** the logo is 24px; its outline is `#3a3934` on cream frames. Light chrome tells macOS
   the window is light, so the traffic lights don't glow.
 - **Header:** no project or thread breadcrumb.

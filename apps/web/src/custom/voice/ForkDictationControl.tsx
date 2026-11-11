@@ -146,7 +146,7 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
  * recording, a click finishes it, as the check does.
  */
 /** How long the timeline outlives its session, for Inlet's exit animation. */
-const TIMELINE_CLOSE_MS = 560;
+const TIMELINE_CLOSE_MS = 320;
 
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
