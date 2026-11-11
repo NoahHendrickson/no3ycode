@@ -127,6 +127,14 @@ let listeners: Array<() => void> = [];
 let lastSnapshot: ThemeSnapshot | null = null;
 let snapshotStale = true;
 let lastDesktopTheme: "light" | "dark" | "system" | null = null;
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+// Declared before the module's first applyTheme, which reads it.
+let forkDesktopThemeOverride: "light" | "dark" | null = null;
+// Electron's themeSource also drives the renderer's prefers-color-scheme, so under System the
+// override would flip the system appearance it follows and loop; System keeps the native chrome.
+const forkDesktopThemeOverrideFor = (appearanceMode?: ThemePreferenceMode) =>
+  appearanceMode === "system" ? null : forkDesktopThemeOverride;
+/* fork:end fork-inlet-theme */
 let lastAppliedTheme: Omit<ThemeSnapshot, "resolvedTheme"> | null = null;
 let themeStorageReadFailure: ThemeStorageError | null = null;
 
@@ -355,7 +363,12 @@ async function syncDesktopThemePreference(
   halves: ThemeHalves | null = readStoredThemeHalves(),
 ): Promise<void> {
   try {
-    await bridge.setTheme(resolveDesktopTheme(theme, followSystem, appearanceMode, halves));
+    await bridge.setTheme(
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      forkDesktopThemeOverrideFor(appearanceMode) ??
+        /* fork:end fork-inlet-theme */
+        resolveDesktopTheme(theme, followSystem, appearanceMode, halves),
+    );
   } catch (cause) {
     throw new DesktopThemeSyncError({ theme, cause });
   }
@@ -369,7 +382,11 @@ function syncDesktopTheme(
   if (typeof window === "undefined") return;
   const bridge = window.desktopBridge;
   const halves = readStoredThemeHalves();
-  const desktopTheme = resolveDesktopTheme(theme, followSystem, appearanceMode, halves);
+  const desktopTheme =
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+    forkDesktopThemeOverrideFor(appearanceMode) ??
+    /* fork:end fork-inlet-theme */
+    resolveDesktopTheme(theme, followSystem, appearanceMode, halves);
   if (!bridge || typeof bridge.setTheme !== "function" || lastDesktopTheme === desktopTheme) {
     return;
   }
@@ -638,6 +655,24 @@ export function refreshTheme({ preservePreview = false } = {}): void {
   applyTheme(getStored(), { suppressTransitions: true, preservePreview });
   emitChange();
 }
+
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+/** An Inlet colour whose frame is the other appearance from its page (a light
+    frame on a dark page, or the reverse) asks the native window chrome (macOS's
+    traffic lights) to match the frame. */
+export function setForkDesktopThemeOverride(next: "light" | "dark" | null): void {
+  if (forkDesktopThemeOverride === next) return;
+  forkDesktopThemeOverride = next;
+  lastDesktopTheme = null;
+  if (lastAppliedTheme) {
+    syncDesktopTheme(
+      lastAppliedTheme.theme,
+      lastAppliedTheme.followSystem,
+      lastAppliedTheme.appearanceMode,
+    );
+  }
+}
+/* fork:end fork-inlet-theme */
 
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 /** Subscribe the document-level fork palette owner to same-tab theme writes. */

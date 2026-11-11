@@ -6,6 +6,7 @@ import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { useInletMorphPresence } from "../inletMenuMorph";
 import type { ForkDictation } from "./forkDictation";
 
 // 1px bars on a 4px pitch, 3px in from either edge, up to 12px tall in the 20px
@@ -138,6 +139,9 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
   );
 }
 
+/** How long the timeline outlives its session, for Inlet's exit animation. */
+const TIMELINE_CLOSE_MS = 320;
+
 /**
  * The mic: a ghost in the composer's control row, beside attach and ahead of
  * the mode controls, with the level timeline beside it for a live session.
@@ -146,11 +150,14 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
  */
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
+  const live = dictation.blocksSubmission;
+  const closing = useInletMorphPresence(live, TIMELINE_CLOSE_MS).ending;
   if (!dictation.isAvailable) return null;
   const recording = dictation.state.phase === "recording";
   return (
     <div
-      {...(dictation.blocksSubmission ? { "data-fork-dictation-live": "" } : {})}
+      {...(live ? { "data-fork-dictation-live": "" } : {})}
+      {...(closing ? { "data-fork-dictation-closing": "" } : {})}
       className="flex shrink-0 items-center"
     >
       <DictationTooltip
@@ -169,7 +176,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
         }
         icon={<MicrophoneIcon weight="fill" />}
       />
-      {dictation.blocksSubmission ? <VoiceLevelTimeline level={dictation.level} /> : null}
+      {live || closing ? <VoiceLevelTimeline level={dictation.level} /> : null}
     </div>
   );
 }

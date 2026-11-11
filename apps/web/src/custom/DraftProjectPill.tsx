@@ -340,6 +340,7 @@ export function DraftProjectPill(props: {
         align="start"
         side="top"
         data-fork-glass-rim
+        data-fork-chip-menu=""
         // The popup caps the height and MenuPopup's own list scrolls inside
         // it. Scrolling the popup itself would carry its glass rim
         // (theme.custom.glass-surfaces.css) away with the rows.

@@ -117,6 +117,13 @@ function TooltipPositioner(props: TooltipPrimitive.Positioner.Props) {
   );
 }
 
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { isInletActive } from "~/custom/forkActivePalette";
+
+/** theme.custom.inlet-menus.css's --fork-inlet-nub-depth. */
+const FORK_TOOLTIP_NUB_DEPTH = 7;
+/* fork:end fork-inlet-theme */
+
 function TooltipPopup({
   className,
   align = "center",
@@ -125,6 +132,9 @@ function TooltipPopup({
   variant = "default",
   anchor,
   children,
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  forkNub = true,
+  /* fork:end fork-inlet-theme */
   ...props
 }: TooltipPrimitive.Popup.Props & {
   align?: TooltipPrimitive.Positioner.Props["align"];
@@ -132,10 +142,34 @@ function TooltipPopup({
   sideOffset?: TooltipPrimitive.Positioner.Props["sideOffset"];
   variant?: "default" | "glass" | "code";
   anchor?: TooltipPrimitive.Positioner.Props["anchor"];
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  /** Inlet's nub and its standoff; a card that hangs as a tab (the row hover card) opts out. */
+  forkNub?: boolean;
+  /* fork:end fork-inlet-theme */
 }) {
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  // Inlet stands off by the nub's depth so its tip meets the trigger; read per positioning.
+  const positionerSideOffset: TooltipPrimitive.Positioner.Props["sideOffset"] = forkNub
+    ? (data) =>
+        isInletActive()
+          ? FORK_TOOLTIP_NUB_DEPTH
+          : typeof sideOffset === "function"
+            ? sideOffset(data)
+            : sideOffset
+    : sideOffset;
+  /* fork:end fork-inlet-theme */
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPositioner align={align} anchor={anchor} side={side} sideOffset={sideOffset}>
+      <TooltipPositioner
+        align={align}
+        anchor={anchor}
+        side={side}
+        sideOffset={
+          /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+          positionerSideOffset
+          /* fork:end fork-inlet-theme */
+        }
+      >
         <TooltipPrimitive.Popup
           className={cn(
             "relative flex origin-(--transform-origin) text-balance rounded-md text-popover-foreground text-xs transition-[scale,opacity] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-md)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0 data-instant:duration-0 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
@@ -153,6 +187,10 @@ function TooltipPopup({
           <div className="min-w-0 px-2 py-1" data-slot="tooltip-viewport">
             {children}
           </div>
+          {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+              Hidden here; Inlet draws it as the nub that points at the trigger. */}
+          <TooltipPrimitive.Arrow data-fork-tooltip-nub="" className="hidden" />
+          {/* fork:end fork-inlet-theme */}
         </TooltipPrimitive.Popup>
       </TooltipPositioner>
     </TooltipPrimitive.Portal>

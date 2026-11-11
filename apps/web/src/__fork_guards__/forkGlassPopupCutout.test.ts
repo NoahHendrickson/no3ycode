@@ -178,6 +178,7 @@ describe("fork guard: fork-glass-popup-cutout", () => {
       readThemePreference: () => values.get("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
+      setForkDesktopThemeOverride: vi.fn(),
     }));
     const cutoutCalls: Array<boolean> = [];
     vi.doMock("../custom/forkGlassPopupCutout", () => ({

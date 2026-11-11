@@ -138,7 +138,13 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
           {shortcutLabel ? ` · ${shortcutLabel}` : null}
         </TooltipPopup>
       </Tooltip>
-      <SelectPopup alignItemWithTrigger={false} {...composerFloatingLayerProps}>
+      <SelectPopup
+        alignItemWithTrigger={false}
+        {...composerFloatingLayerProps}
+        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        data-fork-chip-menu=""
+        /* fork:end fork-composer-shell */
+      >
         <SelectGroup>
           <SelectGroupLabel>Run on</SelectGroupLabel>
           {onAutoEnvironment && (

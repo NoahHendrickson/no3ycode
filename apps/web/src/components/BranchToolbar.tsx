@@ -342,6 +342,9 @@ const RunContextSelector = memo(function RunContextSelector({
       <MenuPopup
         align="start"
         side={isPanel ? "bottom" : "top"}
+        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        data-fork-chip-menu={isPanel ? undefined : ""}
+        /* fork:end fork-composer-shell */
         className={
           isPanel
             ? "w-(--anchor-width)"

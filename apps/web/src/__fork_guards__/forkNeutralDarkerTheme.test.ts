@@ -77,7 +77,7 @@ describe("fork guard: fork-neutral-darker-theme", () => {
     expect(forkTheme).toContain(`FORK_PALETTE_STORAGE_KEY = "${FORK_PALETTE_STORAGE_KEY}"`);
     expect(resolveAppearanceOption("dark", "neutral-darker")).toBe("neutral-darker");
     expect(resolveAppearanceOption("system", "neutral-darker")).toBe("system");
-    expect(resolveActiveForkPalette("system", "neutral-darker")).toBeNull();
+    expect(resolveActiveForkPalette({ theme: "system", palette: "neutral-darker" })).toBeNull();
   });
 
   it("offers Neutral Darker in Appearance via the fork palette adapter", () => {
@@ -187,7 +187,7 @@ describe("fork guard: fork-neutral-darker-theme", () => {
       `forkPaletteBackgrounds["neutral-darker"] = "${NEUTRAL_DARKER_BACKGROUND}"`,
     );
     expect(indexHtml).toMatch(
-      /theme === "dark" &&\s*isDark &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
+      /theme === forkPaletteAppearance &&\s*isDark === \(forkPaletteAppearance === "dark"\) &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
     );
     expect(indexHtml).toContain('setAttribute("data-fork-theme", activeForkPalette)');
     expect(indexHtml).toMatch(

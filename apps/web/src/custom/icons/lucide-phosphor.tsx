@@ -271,6 +271,8 @@ import {
 import type { FC, ReactElement, SVGProps } from "react";
 import { createElement } from "react";
 
+import { useIsInletActive } from "../forkActivePalette";
+
 /**
  * Phosphor's own `IconProps` declares its optionals without `| undefined`,
  * which this repo's `exactOptionalPropertyTypes` treats as "may not be passed
@@ -307,6 +309,13 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
   return pascalKebab === lucideName ? classes : `${classes} lucide-${pascalKebab}`;
 }
 
+/** Duotone, or Inlet's fill in its place (see `.fork/customizations.yaml#fork-inlet-theme`).
+    Every other weight passes through. */
+export function useForkIconWeight(weight: IconWeight): IconWeight {
+  const fills = useIsInletActive();
+  return weight === "duotone" && fills ? "fill" : weight;
+}
+
 /**
  * Pins a default weight while still letting a caller override it per usage.
  * Phosphor forwards unknown props to the `<svg>`, so upstream's `strokeWidth`
@@ -326,15 +335,18 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
  */
 function icon(lucideName: string, Base: PhosphorIcon, weight: IconWeight): LucideIcon {
   const lucideClasses = withPascalKebabClass(`lucide lucide-${lucideName}`, lucideName);
-  const Wrapped: LucideIcon = ({ weight: override, className, ...props }) => (
-    // Cast bridges the `exactOptionalPropertyTypes` gap described above; the
-    // shapes are structurally identical apart from explicit-undefined.
-    <Base
-      {...(props as IconProps)}
-      className={className ? `${lucideClasses} ${className}` : lucideClasses}
-      weight={override ?? weight}
-    />
-  );
+  const Wrapped: LucideIcon = ({ weight: override, className, ...props }) => {
+    const resolved = useForkIconWeight(override ?? weight);
+    return (
+      // Cast bridges the `exactOptionalPropertyTypes` gap described above; the
+      // shapes are structurally identical apart from explicit-undefined.
+      <Base
+        {...(props as IconProps)}
+        className={className ? `${lucideClasses} ${className}` : lucideClasses}
+        weight={resolved}
+      />
+    );
+  };
   Wrapped.displayName = `Duotone(${Base.displayName ?? "Icon"})`;
   return Wrapped;
 }

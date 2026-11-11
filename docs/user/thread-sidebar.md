@@ -122,7 +122,7 @@ the filter button picks how the list is grouped and checks off which projects it
 as many as you like; **All projects** clears the filter. Choose **Manual**
 with grouping on to arrange projects yourself: drag a project header above or below another. Hover a project's
 section to reveal its header buttons: the three dots open a menu with **Settle all threads** (every
-active thread in that project) and **Settings**, and the plus starts a thread in it directly. **Usage** below **Add a project** opens a popover over the current thread.
+active thread in that project) and **Settings**, and the plus starts a thread in it directly. **Usage** below **Add a project** opens the Usage page.
 
 <!-- fork:end fork-new-agent-draft -->
 

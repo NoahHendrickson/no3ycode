@@ -413,8 +413,9 @@ function SidebarControl() {
             }
           />
           {/* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek
-              Beside the trigger: hovering it drops the sidebar card below. */}
-          <TooltipPopup side="right">
+              Beside the trigger: hovering it drops the sidebar card below.
+              Inlet hides it while the card is open (theme.custom.inlet-menus.css). */}
+          <TooltipPopup side="right" data-fork-peek-tooltip="">
             {/* fork:end fork-sidebar-peek */}
             Toggle main sidebar{shortcutLabel ? ` (${shortcutLabel})` : ""}
           </TooltipPopup>

@@ -461,6 +461,10 @@ function SidebarUpdateControl() {
       type="button"
       aria-label={idleTooltip?.detail ? `${tooltip}: ${idleTooltip.detail}` : tooltip}
       aria-disabled={isInteractionDisabled || undefined}
+      /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label
+         A palette's hook for the labelled pill (Inlet's Jungle Art paints it green). */
+      data-fork-update-label={showUpdateLabel ? "" : undefined}
+      /* fork:end fork-sidebar-update-label */
       className={cn(
         "inline-flex size-8 items-center justify-center rounded-full outline-hidden ring-ring transition-colors focus-visible:ring-2 focus-visible:ring-inset",
         isInteractionDisabled ? "cursor-not-allowed" : "cursor-pointer",

@@ -246,6 +246,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
             }
             size={size}
             data-chat-provider-model-picker="true"
+            // Inlet hangs the composer's menu from this button (theme.custom.inlet-menus.css).
+            data-fork-tab-trigger={props.isComposerOwned ? "" : undefined}
             // Effort lives in this menu, so Mod+Shift+E opens it like upstream's TraitsPicker.
             data-composer-shortcut={
               props.isComposerOwned && props.traits ? "composer.effort" : undefined
@@ -375,6 +377,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           ? { side: "top" as const, collisionAvoidance: { side: "none" as const } }
           : {})}
         className={props.combined ? "w-72" : "w-64"}
+        data-fork-tab-menu={props.isComposerOwned ? "" : undefined}
       >
         <ModelPickerContent
           searchInputRef={searchInputRef}

@@ -70,7 +70,13 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
     readonly snooze: boolean;
   };
 }): { readonly tabs: CollapsedThreadTab[]; readonly projects: TProject[] } {
-  const live = input.threads.filter((thread) => !collapsedThreadShelved(thread, input));
+  // The open thread keeps its tab whatever its status, settled or snoozed included, so
+  // collapsing the sidebar never hides it.
+  const isOpen = (thread: EnvironmentThreadShell) =>
+    scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)) === input.openThreadKey;
+  const live = input.threads.filter(
+    (thread) => isOpen(thread) || !collapsedThreadShelved(thread, input),
+  );
   const sections = buildSidebarV2StatusSections({
     threads: live,
     localLastVisitedAtById: input.localLastVisitedAtById,
@@ -80,10 +86,12 @@ export function buildCollapsedThreadTabs<TProject extends SidebarV2GroupableProj
     isDraft: () => false,
   });
   const toTab = collapsedTabMaker(input.projectGroups);
-  const tabs = sections
-    .filter((section) => isCollapsedTabStatus(section.status) && input.statuses.has(section.status))
-    .flatMap((section) => section.threads)
-    .map(toTab);
+  const tabs = sections.flatMap((section) => {
+    const sectionTabs = section.threads.map(toTab);
+    return isCollapsedTabStatus(section.status) && input.statuses.has(section.status)
+      ? sectionTabs
+      : sectionTabs.filter((tab) => tab.threadKey === input.openThreadKey);
+  });
   const projectKeys = new Set(tabs.map((tab) => tab.projectKey));
   return {
     tabs,

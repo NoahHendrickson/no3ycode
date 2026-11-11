@@ -55,6 +55,10 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
       pressed={threadPanelOpen}
       onPressedChange={threadPanelPresentation === "popover" ? undefined : onToggleThreadPanel}
       aria-label="Toggle thread details panel"
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+         What Inlet's morph and the docked card's join key on, not the label. */
+      data-fork-details-toggle=""
+      /* fork:end fork-inlet-theme */
       variant="ghost"
       size="sm"
     >

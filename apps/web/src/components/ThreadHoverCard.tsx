@@ -7,6 +7,9 @@ export function ThreadHoverCardPopup({ className, ...props }: ComponentProps<typ
     <TooltipPopup
       {...props}
       variant="glass"
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      forkNub={false}
+      /* fork:end fork-inlet-theme */
       className={cn("max-w-80 text-left whitespace-normal", className)}
     />
   );

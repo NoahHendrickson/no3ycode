@@ -36,6 +36,9 @@ import { initializeForkGlass3d } from "./custom/forkGlass3d";
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
 import { installTouchLongPressContextMenu } from "./custom/touchLongPressContextMenu";
 /* fork:end fork-touch-affordances */
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { installInletMenuMorph } from "./custom/inletMenuMorph";
+/* fork:end fork-inlet-theme */
 
 import { hasCloudPublicConfig } from "./cloud/publicConfig";
 import { isElectron } from "./env";
@@ -57,6 +60,9 @@ initializeForkGlassNewAgentPicture();
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 initializeForkGlass3d();
 /* fork:end fork-glass-3d */
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+installInletMenuMorph();
+/* fork:end fork-inlet-theme */
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
 installTouchLongPressContextMenu();
 /* fork:end fork-touch-affordances */

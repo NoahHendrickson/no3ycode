@@ -66,7 +66,10 @@ describe("main app return location", () => {
       return router.state.location.href;
     };
 
-    const closingUsage = await returnLocation("/usage", "Close modal");
+    /* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page
+       Usage is a page in the fork, so Settings stands in as the modal. */
+    const closingUsage = await returnLocation("/settings", "Close modal");
+    /* fork:end fork-usage-page */
     const sidebarBack = await returnLocation("/pull-requests", "Back to app");
 
     expect({ closingUsage, sidebarBack }).toEqual({

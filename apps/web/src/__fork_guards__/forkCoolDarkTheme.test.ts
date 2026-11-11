@@ -123,7 +123,7 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(resolveAppearanceOption("dark", "cool-dark")).toBe("cool-dark");
     expect(resolveAppearanceOption("dark", null)).toBe("dark");
     expect(resolveAppearanceOption("system", "cool-dark")).toBe("system");
-    expect(resolveActiveForkPalette("system", "cool-dark")).toBeNull();
+    expect(resolveActiveForkPalette({ theme: "system", palette: "cool-dark" })).toBeNull();
   });
 
   it("offers Westworld in Appearance via the fork palette adapter", () => {
@@ -144,10 +144,10 @@ describe("fork guard: fork-cool-dark-theme", () => {
     );
     // The React Compiler owns caching here (no dependency arrays to fence), so
     // both panels — Restore Defaults and Appearance — read the palette from
-    // their own fenced adapter call.
+    // their own fenced adapter call; Appearance's also reads Inlet's colour.
     expect([
       ...settingsPanels.matchAll(
-        /fork:begin fork-cool-dark-theme[^\n]*\n\s*const \{ appearance, setAppearance \} = useForkAppearance\(theme, setTheme\);\n\s*\/\* fork:end fork-cool-dark-theme/gu,
+        /fork:begin fork-cool-dark-theme[^\n]*\n\s*const \{ appearance, setAppearance(?:, inletColor, setInletColor)? \} = useForkAppearance\(\s*theme,\s*setTheme,?\s*\);\n\s*\/\* fork:end fork-cool-dark-theme/gu,
       ),
     ]).toHaveLength(2);
     // Restore Defaults clears every fork palette, not only Westworld.
@@ -495,7 +495,7 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(indexHtml).toContain('t3code:fork-theme"');
     expect(indexHtml).toContain(`"cool-dark": "${COOL_DARK_BACKGROUND}"`);
     expect(indexHtml).toMatch(
-      /theme === "dark" &&\s*isDark &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
+      /theme === forkPaletteAppearance &&\s*isDark === \(forkPaletteAppearance === "dark"\) &&\s*Object\.prototype\.hasOwnProperty\.call\(forkPaletteBackgrounds, forkPalette\)/u,
     );
     expect(indexHtml).toContain('setAttribute("data-fork-theme", activeForkPalette)');
     expect(indexHtml).toContain(`html.dark[${FORK_THEME_ATTRIBUTE}="cool-dark"] body`);
