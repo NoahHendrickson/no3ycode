@@ -102,12 +102,18 @@ describe("buildCollapsedThreadTabs", () => {
     expect(build(true, ["working"]).tabs.map((tab) => tab.thread.id)).toEqual(["working"]);
   });
 
-  it("keeps the open thread as a tab when its status is left out", () => {
-    const idleKey = scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make("idle")));
-    expect(build(true, ["working"], idleKey).tabs.map((tab) => tab.thread.id)).toEqual([
+  it("keeps the open thread as a tab when its status is left out, or it is parked", () => {
+    const keyOf = (id: string) => scopedThreadKey(scopeThreadRef(environmentId, ThreadId.make(id)));
+    expect(build(true, ["working"], keyOf("idle")).tabs.map((tab) => tab.thread.id)).toEqual([
       "working",
       "idle",
     ]);
+    expect(build(true, ["working"], keyOf("settled")).tabs.map((tab) => tab.thread.id)).toContain(
+      "settled",
+    );
+    expect(build(true, ["working"], keyOf("snoozed")).tabs.map((tab) => tab.thread.id)).toContain(
+      "snoozed",
+    );
   });
 
   it("keeps parked threads where the environment cannot park them, as the sidebar does", () => {

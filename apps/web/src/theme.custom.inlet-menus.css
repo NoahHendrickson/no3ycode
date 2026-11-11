@@ -802,7 +802,30 @@
 }
 
 /* ── Tab strip: connective tabs ──────────────────────────────────────────────
-   The open thread's tab is the stage it opens, as a browser's tab is its
+   The strip's own controls (project switcher, status menu, new agent, More)
+   take Inlet's 8px corners over the default pills, the switcher's track 10px,
+   and their glyphs Inlet's 16px. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-thread-tabs]
+  [data-fork-tab-strip-projects] {
+  border-radius: 10px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-thread-tabs]
+  [data-fork-tab-strip-control] {
+  border-radius: 8px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-thread-tabs]
+  [data-fork-tab-strip-icon] {
+  width: 16px;
+  height: 16px;
+}
+
+/* The open thread's tab is the stage it opens, as a browser's tab is its
    page: it takes the panel's face, goes square at its foot, and a neck
    carries the face down to the panel's top edge with a concave corner either
    side. The neck spans the strip's empty foot: half the row less half the

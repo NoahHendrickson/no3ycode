@@ -139,15 +139,15 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
   );
 }
 
+/** How long the timeline outlives its session, for Inlet's exit animation. */
+const TIMELINE_CLOSE_MS = 320;
+
 /**
  * The mic: a ghost in the composer's control row, beside attach and ahead of
  * the mode controls, with the level timeline beside it for a live session.
  * Starting a session hands the send slot to ForkDictationPrimaryButton; while
  * recording, a click finishes it, as the check does.
  */
-/** How long the timeline outlives its session, for Inlet's exit animation. */
-const TIMELINE_CLOSE_MS = 320;
-
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
   const live = dictation.blocksSubmission;

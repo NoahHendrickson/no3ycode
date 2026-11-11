@@ -25,6 +25,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 import {
+  readAppearanceModePreference,
   readThemePreference,
   setAppearanceMode,
   setForkDesktopThemeOverride,
@@ -131,12 +132,13 @@ export const INLET_COLOR_OPTIONS: Readonly<
     appearance: "dark",
     chrome: "light",
   },
+  // Cream's inverse here too: a dark frame on a light page asks for dark native chrome.
   black: {
     label: "Black",
     frame: "#141414",
     swatch: "linear-gradient(90deg, #141414 50%, #f8f3d8 50%)",
     appearance: "light",
-    chrome: "light",
+    chrome: "dark",
   },
 };
 
@@ -392,10 +394,49 @@ function suppressAppearanceTransitions(update: () => void): void {
   }
 }
 
+/** The mode a palette moved the user off (`before`), and the one it set (`set`), so leaving
+    the palettes can put it back. */
+const MODE_BEFORE_PALETTE_STORAGE_KEY = "t3code:fork-mode-before-palette";
+type ThemePreferenceMode = ReturnType<typeof readAppearanceModePreference>;
+
+function isPreferenceMode(value: unknown): value is ThemePreferenceMode {
+  return value === "light" || value === "dark" || value === "system";
+}
+
+function readModeBeforePalette(): {
+  readonly before: ThemePreferenceMode;
+  readonly set: ThemePreferenceMode;
+} | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw: unknown = JSON.parse(
+      window.localStorage.getItem(MODE_BEFORE_PALETTE_STORAGE_KEY) ?? "null",
+    );
+    if (typeof raw !== "object" || raw === null) return null;
+    const { before, set } = raw as Record<string, unknown>;
+    return isPreferenceMode(before) && isPreferenceMode(set) ? { before, set } : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeModeBeforePalette(
+  value: { readonly before: ThemePreferenceMode; readonly set: ThemePreferenceMode } | null,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (value === null) window.localStorage.removeItem(MODE_BEFORE_PALETTE_STORAGE_KEY);
+    else window.localStorage.setItem(MODE_BEFORE_PALETTE_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // Losing it only means leaving the palette keeps the mode it set.
+  }
+}
+
 /** Upstream keeps the light/dark mode apart from the theme and setTheme preserves it, so a
     palette that sits on the other appearance has to move the mode as well. Only on a
     mismatch, so a palette chosen under System keeps following it, unless `pin`: a colour that
-    restyles the native chrome cannot follow System, which that override flips (useTheme.ts). */
+    restyles the native chrome cannot follow System, which that override flips (useTheme.ts).
+    The first mode it moves the user off is kept, for restoreModeBeforePalette. */
 function settleAppearance(
   wanted: "dark" | "light",
   setTheme: (theme: ThemePreference) => boolean,
@@ -406,7 +447,21 @@ function settleAppearance(
     typeof document !== "undefined" &&
     (pin || document.documentElement.classList.contains("dark") !== (wanted === "dark"))
   ) {
+    const before =
+      readModeBeforePalette()?.before ?? readAppearanceModePreference(readUpstreamTheme());
+    writeModeBeforePalette({ before, set: wanted });
     setAppearanceMode(wanted);
+  }
+}
+
+/** Leaving the palettes for a standard option puts back the mode they moved the user off, unless
+    the user has changed it since: then theirs stands. */
+function restoreModeBeforePalette(): void {
+  const saved = readModeBeforePalette();
+  if (saved === null) return;
+  writeModeBeforePalette(null);
+  if (readAppearanceModePreference(readUpstreamTheme()) === saved.set) {
+    setAppearanceMode(saved.before);
   }
 }
 
@@ -430,22 +485,15 @@ export function setForkAppearance(
   setTheme: (theme: ThemePreference) => boolean,
 ): void {
   suppressAppearanceTransitions(() => {
-    const leaving = readForkPalette();
     const inletColor = readInletColor();
     writeForkPalette(isForkPalette(next) ? next : null);
     if (next === INLET_THEME) {
       settleInletColor(inletColor, setTheme);
     } else if (isForkPalette(next)) {
       settleAppearance(forkPaletteAppearance(next, inletColor), setTheme);
-    } else if (
-      next === "dark" &&
-      leaving !== null &&
-      forkPaletteAppearance(leaving, inletColor) === "light"
-    ) {
-      // Default Dark after a light Inlet colour: undo the mode that colour moved.
-      settleAppearance("dark", setTheme);
     } else {
       setTheme(next);
+      restoreModeBeforePalette();
     }
     syncForkPaletteFromStorage();
   });

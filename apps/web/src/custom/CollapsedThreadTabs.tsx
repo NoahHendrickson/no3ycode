@@ -512,7 +512,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           if (target) openThread(target);
         }}
         // Scrolls sideways before it can squeeze out More.
-        className="min-w-0 shrink overflow-x-auto rounded-[10px] [scrollbar-width:none]"
+        data-fork-tab-strip-projects=""
+        className="min-w-0 shrink overflow-x-auto rounded-full [scrollbar-width:none]"
       >
         <ProjectTab value={ALL_PROJECTS} label="All projects">
           <LayersIcon className="size-3.5" />
@@ -538,13 +539,14 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                       type="button"
                       aria-label={STATUS_MENU_LABEL}
                       data-fork-tab-trigger=""
-                      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                      data-fork-tab-strip-control=""
+                      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                     />
                   }
                 />
               }
             >
-              <EllipsisIcon className="size-4" />
+              <EllipsisIcon className="size-3.5" data-fork-tab-strip-icon="" />
             </TooltipTrigger>
             <TooltipPopup side="bottom">{STATUS_MENU_LABEL}</TooltipPopup>
           </Tooltip>
@@ -570,12 +572,13 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                 type="button"
                 aria-label={newAgentLabel}
                 disabled={projectGroups.length === 0}
-                className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-64 dark:hover:bg-white/8"
+                data-fork-tab-strip-control=""
+                className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-64 dark:hover:bg-white/8"
                 onClick={startNewAgent}
               />
             }
           >
-            <PlusIcon className="size-4" />
+            <PlusIcon className="size-3.5" data-fork-tab-strip-icon="" />
           </TooltipTrigger>
           <TooltipPopup side="bottom">
             {filteredProject === null && newAgentShortcutLabel
@@ -618,7 +621,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                   type="button"
                   aria-label={`${row.overflow.length} more active threads`}
                   data-fork-tab-trigger=""
-                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                  data-fork-tab-strip-control=""
+                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                 />
               }
             >
@@ -915,7 +919,8 @@ function ProjectTab(props: {
           <SegmentedTab
             value={props.value}
             aria-label={props.label}
-            className="w-7 rounded-lg px-0"
+            data-fork-tab-strip-control=""
+            className="w-7 rounded-full px-0"
           />
         }
       >

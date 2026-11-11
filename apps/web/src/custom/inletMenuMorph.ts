@@ -96,6 +96,81 @@ function glassOf(popup: HTMLElement) {
   return outer?.matches(".dropdown-glass") ? outer : popup;
 }
 
+// What the face needs to look as the button does out of its own context: box, text and paint.
+// The clone keeps its classes, so only what its ancestors' selectors gave it has to be restated.
+const FACE_PROPERTIES = [
+  "display",
+  "box-sizing",
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "flex-direction",
+  "flex-wrap",
+  "flex-grow",
+  "flex-shrink",
+  "flex-basis",
+  "align-items",
+  "align-self",
+  "justify-content",
+  "gap",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "overflow",
+  "color",
+  "opacity",
+  "visibility",
+  "background-color",
+  "background-image",
+  "border-top-width",
+  "border-right-width",
+  "border-bottom-width",
+  "border-left-width",
+  "border-top-style",
+  "border-right-style",
+  "border-bottom-style",
+  "border-left-style",
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-right-radius",
+  "border-bottom-left-radius",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "font-variant-numeric",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "text-overflow",
+  "text-transform",
+  "white-space",
+  "fill",
+  "fill-opacity",
+  "stroke",
+  "stroke-width",
+  "stroke-opacity",
+  "transform",
+  "translate",
+  "scale",
+  "mask-image",
+] as const;
+
 /** The trigger again, on the layer above the shape, styled as it computes now (its open ink). */
 function cloneWithStyles(source: HTMLElement) {
   const clone = source.cloneNode(true) as HTMLElement;
@@ -105,7 +180,7 @@ function cloneWithStyles(source: HTMLElement) {
     const to = clones[index];
     if (!to) return;
     const computed = getComputedStyle(from);
-    for (const property of computed) {
+    for (const property of FACE_PROPERTIES) {
       to.style.setProperty(property, computed.getPropertyValue(property));
     }
     to.removeAttribute("id");
@@ -240,7 +315,6 @@ function startMorph(popup: HTMLElement) {
   let frame = 0;
   let hold: Animation | null = null;
   let below: boolean | null = null;
-  let placedAt = "";
 
   const draw = () => {
     // A scroll or resize can queue a frame that lands after teardown.
@@ -251,7 +325,6 @@ function startMorph(popup: HTMLElement) {
       return;
     }
     const triggerBox = trigger.getBoundingClientRect();
-    placedAt = `${triggerBox.left},${triggerBox.top}`;
     const button: Rect = {
       left: triggerBox.left - pad,
       right: triggerBox.right + pad,
@@ -327,29 +400,44 @@ function startMorph(popup: HTMLElement) {
   closing.observe(popup, { attributes: true, attributeFilter: ["data-ending-style"] });
   // Base UI repositions the menu a frame after a scroll or resize; redraw once it has.
   const redraw = () => requestAnimationFrame(draw);
-  // Base UI places a popup on scroll and resize, not when its button moves with the layout (the
-  // tab strip leaving): a resize then re-places the popup, and with it the shape.
-  let checking = false;
-  const follow = () => {
-    if (checking) return;
-    checking = true;
-    requestAnimationFrame(() => {
-      checking = false;
-      if (tornDown || !trigger.isConnected) return;
-      const box = trigger.getBoundingClientRect();
-      if (`${box.left},${box.top}` !== placedAt) window.dispatchEvent(new Event("resize"));
-    });
+  // Base UI keeps a popup on its button itself (its anchor tracking); the shape follows wherever it
+  // is placed: the positioner's style for a popup, the docked card's own (its top) for the card.
+  const placed = docked ? popup : positioner;
+  const placement = new MutationObserver(redraw);
+  if (placed) placement.observe(placed, { attributes: true, attributeFilter: ["style"] });
+  // A placement can also move by transition (the docked card rising for the find bar): follow it
+  // frame by frame while any position transition runs on the placed box, the glass or the card.
+  const moving = new Set<string>();
+  let followFrame = 0;
+  const followMove = () => {
+    draw();
+    followFrame = moving.size > 0 && !tornDown ? requestAnimationFrame(followMove) : 0;
   };
-  // A popup can also leave without closing (its page changes); the shape goes with it. A menu is
-  // open briefly, so it watches the whole page. The docked card stays for as long as it is docked,
-  // through every streamed token, so it watches only its own column: the card leaving it, and the
-  // column's size (what moves its toggle). Its layer is the card's sibling and leaves with them.
+  const isPlacement = (event: TransitionEvent) =>
+    ["top", "left", "translate", "transform"].includes(event.propertyName) &&
+    (event.target === placed ||
+      event.target === glass ||
+      (event.target instanceof Element && event.target.parentElement === popup));
+  const onMoveStart = (event: TransitionEvent) => {
+    if (!isPlacement(event)) return;
+    moving.add(event.propertyName);
+    if (followFrame === 0) followFrame = requestAnimationFrame(followMove);
+  };
+  const onMoveEnd = (event: TransitionEvent) => {
+    if (isPlacement(event)) moving.delete(event.propertyName);
+  };
+  const moveTarget = placed ?? popup;
+  moveTarget.addEventListener("transitionrun", onMoveStart);
+  moveTarget.addEventListener("transitionend", onMoveEnd);
+  moveTarget.addEventListener("transitioncancel", onMoveEnd);
+  // A popup can also leave without closing (its page changes); the shape goes with it. Its portal
+  // is one of the body's children; the docked card is one of its column's, and its layer, the
+  // card's sibling, leaves with them. The column's size is what moves the card's toggle.
   const removal = new MutationObserver(() => {
     if (!popup.isConnected) teardown();
-    else if (!docked) follow();
   });
   const column = docked ? popup.parentElement : null;
-  removal.observe(column ?? document.body, { childList: true, subtree: column === null });
+  removal.observe(column ?? document.body, { childList: true });
   const stopResize = observeResize(glass, redraw);
   const stopColumnResize = column ? observeResize(column, redraw) : () => {};
   window.addEventListener("scroll", redraw, true);
@@ -366,8 +454,13 @@ function startMorph(popup: HTMLElement) {
     tornDown = true;
     activeMorphs.delete(abandon);
     cancelAnimationFrame(frame);
+    cancelAnimationFrame(followFrame);
     closing.disconnect();
+    placement.disconnect();
     removal.disconnect();
+    moveTarget.removeEventListener("transitionrun", onMoveStart);
+    moveTarget.removeEventListener("transitionend", onMoveEnd);
+    moveTarget.removeEventListener("transitioncancel", onMoveEnd);
     stopResize();
     stopColumnResize();
     window.removeEventListener("scroll", redraw, true);
@@ -389,11 +482,17 @@ const morphRuns = () => isInletActive() && !matchMedia("(prefers-reduced-motion:
 
 /** Keeps something Inlet animates closed (the docked details card's shape, the dictation
     timeline) mounted for `ms` after it closes, as Base UI keeps a closing popup: `ending` while
-    it folds, then gone. Off Inlet or under reduced motion it unmounts at once, as before. */
-export function useInletMorphPresence(open: boolean, ms = CLOSED_MS) {
+    it folds, then gone. Off Inlet or under reduced motion it unmounts at once, as before. A new
+    `key` (the details card's thread) is a different thing, not a close: it never lingers. */
+export function useInletMorphPresence(open: boolean, ms = CLOSED_MS, key?: string) {
   const [lingering, setLingering] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
-  if (open !== wasOpen) {
+  const [wasKey, setWasKey] = useState(key);
+  if (key !== wasKey) {
+    setWasKey(key);
+    setWasOpen(open);
+    setLingering(false);
+  } else if (open !== wasOpen) {
     setWasOpen(open);
     setLingering(!open && morphRuns());
   }

@@ -6385,7 +6385,10 @@
     its own Completed-hold tracker), so a tab and its sidebar card agree;
     snoozed, settled, archived and subagent threads are left out, under the
     sidebar's own capability gates and a precise, zoned clock (re-read at
-    each snooze deadline), as the sidebar's partition does. A project
+    each snooze deadline), as the sidebar's partition does. The open thread
+    is the exception to both rules: it keeps its tab whatever its status,
+    unchecked, snoozed or settled, so collapsing the sidebar never hides the
+    thread on screen (collapsedThreadTabsModel). A project
     switcher leads the row: All, then one icon per project with a tab,
     filtering the tabs; the choice persists per device and falls back to All
     while its project has no tab. Collapsing a scoped sidebar hands its shown scope to the

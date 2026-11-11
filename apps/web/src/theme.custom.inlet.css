@@ -128,6 +128,14 @@
   --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
 }
 
+/* The pane actions and panel toggles (the controls' one div; the maximize toggle is a span)
+   stand 4px apart, as the header's other buttons do. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-workspace-titlebar-controls]
+  > div {
+  gap: 4px;
+}
+
 /* Under the collapsed sidebar's tab strip a lone pane starts below the strip
    (theme.custom.css), so its controls drop by the strip as well as the margin. */
 

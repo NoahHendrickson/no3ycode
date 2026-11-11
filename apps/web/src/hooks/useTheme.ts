@@ -657,8 +657,9 @@ export function refreshTheme({ preservePreview = false } = {}): void {
 }
 
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-/** An Inlet colour with a light frame on a dark page asks the native window
-    chrome (macOS's traffic lights) for light, which dark draws for dark chrome. */
+/** An Inlet colour whose frame is the other appearance from its page (a light
+    frame on a dark page, or the reverse) asks the native window chrome (macOS's
+    traffic lights) to match the frame. */
 export function setForkDesktopThemeOverride(next: "light" | "dark" | null): void {
   if (forkDesktopThemeOverride === next) return;
   forkDesktopThemeOverride = next;

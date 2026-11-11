@@ -58,6 +58,9 @@ import {
   useForkAppearance,
 } from "../../custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
+/* fork:end fork-inlet-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
 /* fork:end fork-glass-new-agent-stage */
@@ -452,8 +455,15 @@ export function useSettingsRestore(onRestored?: () => void) {
     themeHalves,
   } = useTheme();
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-  const { appearance, setAppearance } = useForkAppearance(theme, setTheme);
+  const { appearance, setAppearance, inletColor, setInletColor } = useForkAppearance(
+    theme,
+    setTheme,
+  );
   /* fork:end fork-cool-dark-theme */
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  // Only while Inlet shows the row, as with Glass's picture below.
+  const inletColorChanged = appearance === INLET_THEME && inletColor !== DEFAULT_INLET_COLOR;
+  /* fork:end fork-inlet-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   // Only while Glass shows the row: elsewhere the switch is hidden and inert.
@@ -482,6 +492,9 @@ export function useSettingsRestore(onRestored?: () => void) {
     /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
     ...(isForkPalette(appearance) ? [FORK_PALETTE_LABELS[appearance]] : []),
     /* fork:end fork-cool-dark-theme */
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+    ...(inletColorChanged ? ["Inlet colour"] : []),
+    /* fork:end fork-inlet-theme */
     /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
     ...(glassNewAgentPictureChanged ? ["New agent picture"] : []),
     /* fork:end fork-glass-new-agent-stage */
@@ -635,6 +648,10 @@ export function useSettingsRestore(onRestored?: () => void) {
     );
     if (!confirmed) return;
 
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+       Before the palette leaves Inlet, so the colour's appearance is settled with it. */
+    if (inletColorChanged) setInletColor(DEFAULT_INLET_COLOR);
+    /* fork:end fork-inlet-theme */
     /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
     if (isForkPalette(appearance)) setAppearance("dark");
     /* fork:end fork-cool-dark-theme */

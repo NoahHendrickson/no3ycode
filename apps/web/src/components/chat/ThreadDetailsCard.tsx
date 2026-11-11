@@ -59,8 +59,12 @@ export function ThreadDetailsCard({
     selectThreadPanelOpen(state.threadPanelVisibilityByThreadKey, threadRef, "popover"),
   );
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
-     Inlet keeps the docked card mounted while its morph folds it closed. */
-  const inlinePresence = useInletMorphPresence(Boolean(placement && inlineOpen));
+     Inlet keeps the docked card mounted while its morph folds it closed, never across threads. */
+  const inlinePresence = useInletMorphPresence(
+    Boolean(placement && inlineOpen),
+    undefined,
+    `${threadRef.environmentId}:${threadRef.threadId}`,
+  );
   /* fork:end fork-inlet-theme */
   const measurementKey = `${threadRef.environmentId}:${threadRef.threadId}:${preferredPlacement?.width ?? "popup"}:${contentKey}`;
   const [measurements, setMeasurements] = useState({

@@ -78,7 +78,7 @@ export function SplitPaneHeaderControls(props: {
   };
 
   return (
-    <div className="flex h-full items-center gap-1">
+    <>
       {windowAction ? (
         <PaneActionButton
           label={windowAction.kind === "dock" ? "Dock beside" : "Float thread"}
@@ -104,6 +104,6 @@ export function SplitPaneHeaderControls(props: {
           onPress={() => close(draftId, threadRef)}
         />
       ) : null}
-    </div>
+    </>
   );
 }
