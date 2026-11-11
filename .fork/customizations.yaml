@@ -2549,6 +2549,8 @@
     - apps/web/src/components/chat/ThreadDetailsCard.tsx
     - apps/web/src/theme.custom.palettes.css
     - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.inlet-menus.css
+    - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
     - apps/web/src/components/settings/SettingsPanels.tsx

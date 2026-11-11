@@ -1,6 +1,6 @@
 /** Inlet's one-shape menus: a hung menu, its button and the tab between them drawn as one
     morphing path, so the button's fill and the menu cannot fall out of step. Installed once; a 1ms
-    detect animation (theme.custom.inlet.css, Inlet and motion-allowed only) announces each popup. */
+    detect animation (theme.custom.inlet-menus.css, Inlet and motion-allowed only) announces each popup. */
 import { useEffect, useState } from "react";
 
 import { observeResize } from "~/lib/observeResize";

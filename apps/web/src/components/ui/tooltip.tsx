@@ -120,7 +120,7 @@ function TooltipPositioner(props: TooltipPrimitive.Positioner.Props) {
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { isInletActive } from "~/custom/forkActivePalette";
 
-/** theme.custom.inlet.css's --fork-inlet-nub-depth. */
+/** theme.custom.inlet-menus.css's --fork-inlet-nub-depth. */
 const FORK_TOOLTIP_NUB_DEPTH = 7;
 /* fork:end fork-inlet-theme */
 

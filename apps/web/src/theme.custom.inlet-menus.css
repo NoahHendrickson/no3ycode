@@ -1,0 +1,990 @@
+/* Inlet's hung menus — see `.fork/customizations.yaml#fork-inlet-theme`.
+
+   The menus, popovers and cards that hang from a button, the thread details
+   card's join, the stylesheet half of the one-shape morph
+   (custom/inletMenuMorph.ts), the tooltips' nubs, the tab strip's connective
+   tabs and the collapsed sidebar's peek card. Imported after
+   theme.custom.inlet.css (the template) and before
+   theme.custom.inlet-jungle.css; tokens live in theme.custom.palettes.css. */
+
+/* ── Menus and the thread hover card ─────────────────────────────────────────
+   Inlet's menus, popovers and glass tooltips are a solid fill, the colour's
+   --popover, with no frost, on either appearance. One more attribute than
+   theme.custom.css's frost rule so it wins wherever both match. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  :is(
+    :is(
+      [data-slot="menu-popup"],
+      [data-slot="menu-sub-content"],
+      [data-slot="popover-popup"],
+      [data-slot="tooltip-popup"],
+      [data-slot="dialog-popup"]
+    ).dropdown-glass,
+    [data-slot="select-popup"] > .dropdown-glass,
+    .dropdown-glass:has(> [data-slot="combobox-popup"]),
+    [data-thread-details-card].dropdown-glass
+  ) {
+  /* --background is the frame here; a control inside that paints it (a
+     radio's well) would punch a hole of frame through the popup. */
+  --background: var(--popover);
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* A sidebar row's hover card opens as a tab pulled out of the row: while it
+   is open the row takes the card's fill and ink and goes square on its right
+   end, and the card fills the 4px gap (the popup's sideOffset) and curves
+   into the row's bottom edge through a concave corner. The card is anchored
+   top-aligned to the row, so the row's height is --anchor-height. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-testid="sidebar-row-card"][data-popup-open] {
+  --foreground: var(--fork-inlet-row-card-foreground);
+  --sidebar-foreground: var(--fork-inlet-row-card-foreground);
+  --muted-foreground: var(--fork-inlet-row-card-muted);
+  --sidebar-muted-foreground: var(--fork-inlet-row-card-muted);
+  --fork-sidebar-card-title-receded: var(--fork-inlet-row-card-foreground);
+  --contrast-foreground: var(--fork-inlet-row-card-foreground);
+  --contrast-muted-foreground: var(--fork-inlet-row-card-muted);
+  --contrast-secondary-label: var(--fork-inlet-row-card-muted);
+  --contrast-icon-muted: var(--fork-inlet-row-card-muted);
+  background-color: var(--fork-inlet-row-card);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-row-hover-card][data-side="right"][data-align="start"] {
+  --foreground: var(--fork-inlet-row-card-foreground);
+  --muted-foreground: var(--fork-inlet-row-card-muted);
+  --popover-foreground: var(--fork-inlet-row-card-foreground);
+  --contrast-foreground: var(--fork-inlet-row-card-foreground);
+  --contrast-popover-foreground: var(--fork-inlet-row-card-foreground);
+  --contrast-muted-foreground: var(--fork-inlet-row-card-muted);
+  --contrast-secondary-label: var(--fork-inlet-row-card-muted);
+  --contrast-icon-muted: var(--fork-inlet-row-card-muted);
+  background: var(--fork-inlet-row-card);
+  border-color: transparent;
+  border-top-left-radius: 0;
+  box-shadow: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    top: -1px;
+    right: calc(100% + 1px);
+    width: var(--fork-inlet-fillet);
+    height: calc(var(--anchor-height) + var(--fork-inlet-fillet));
+    background:
+      radial-gradient(
+          circle at 0 100%,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--fork-inlet-row-card) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        left bottom / 100% var(--fork-inlet-fillet) no-repeat,
+      linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
+        var(--anchor-height) no-repeat;
+  }
+}
+
+/* The open row's own bridge into the panel steps aside while its card is
+   out, so the row reads as joined to one thing at a time. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  li[data-thread-item]:has(
+    [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]
+  )::after {
+  display: none;
+}
+
+/* An icon button's menu (the Threads header's sort and settings) opens as a
+   tab hung from the button: while it is open the button takes the menu's
+   fill and goes square on its bottom, and the menu, end-aligned 4px below
+   (MenuPopup's sideOffset), fills the gap and curves into the button's
+   left side through a concave corner. aria-expanded, not data-popup-open:
+   the button is also a tooltip trigger, which sets the latter on hover. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-trigger][aria-expanded="true"] {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+
+  /* The glyph's own utility inks it with the frame's sidebar-foreground. */
+  & > svg {
+    color: var(--popover-foreground);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu][data-side="bottom"][data-align="end"] {
+  border-color: transparent;
+  border-top-right-radius: 0;
+
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    right: -1px;
+    bottom: calc(100% + 1px);
+    width: calc(var(--anchor-width) + var(--fork-inlet-fillet));
+    height: var(--fork-inlet-fillet);
+    background:
+      radial-gradient(
+          circle at 0 0,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        left bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+      linear-gradient(var(--popover), var(--popover)) right bottom / var(--anchor-width) 4px
+        no-repeat;
+  }
+}
+
+/* The thread details card hangs from its toggle the same way, but it is
+   placed against the header, not the button: the inline card 12px below the
+   header (threadDetailsCardLayout.ts), the popover flush with it. So the
+   toggle draws the join: it takes the card's fill and goes square at its
+   foot, and its ::after carries the fill down to the card's top with a
+   concave corner either side. Not while the find bar pushes the card down. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
+    :has([data-thread-find-bar])
+  )
+  [data-fork-panel-toggle]
+  > [data-pressed]:not([aria-expanded]) {
+  --fork-inlet-details-drop: 12px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-fork-panel-toggle]
+  > [aria-expanded="true"] {
+  --fork-inlet-details-drop: 0px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
+    :has([data-thread-find-bar])
+  )
+  [data-fork-panel-toggle]
+  > [data-pressed]:not([aria-expanded]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-fork-panel-toggle]
+  > [aria-expanded="true"] {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+
+  & > svg {
+    color: var(--popover-foreground);
+    opacity: 1;
+  }
+
+  /* Height: the button sits centred in the header row, so half the row less
+     half the button (100% here is the button's height), plus the card's drop. */
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    top: 100%;
+    left: calc(-1 * var(--fork-inlet-fillet));
+    right: calc(-1 * var(--fork-inlet-fillet));
+    height: calc((var(--workspace-topbar-height) - 100%) / 2 + var(--fork-inlet-details-drop, 0px));
+    background:
+      radial-gradient(
+          circle at 0 0,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        left bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+      radial-gradient(
+          circle at 100% 0,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+      linear-gradient(var(--popover), var(--popover)) center /
+        calc(100% - 2 * var(--fork-inlet-fillet)) 100% no-repeat;
+  }
+}
+
+/* The join meets the card's top edge, so the card drops its hairline. The
+   rim attribute outranks Jungle Art's menu rule below, which sets one. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-thread-details-panel]
+  > [data-thread-details-card].dropdown-glass[data-fork-glass-rim] {
+  border-color: transparent;
+}
+
+/* Start-aligned (the collapsed sidebar tab strip's status menu), the same
+   tab mirrored: square top-left, the corner curving into the button's right. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu][data-side="bottom"][data-align="start"] {
+  border-color: transparent;
+  border-top-left-radius: 0;
+
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    left: -1px;
+    bottom: calc(100% + 1px);
+    width: calc(var(--anchor-width) + var(--fork-inlet-fillet));
+    height: var(--fork-inlet-fillet);
+    background:
+      radial-gradient(
+          circle at 100% 0,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+      linear-gradient(var(--popover), var(--popover)) left bottom / var(--anchor-width) 4px
+        no-repeat;
+  }
+}
+
+/* The composer's model menu opens above its button, end-aligned, and hangs
+   the other way up: square bottom-right, the gap and the concave corner
+   below it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu][data-side="top"][data-align="end"] {
+  /* The composer's controls are 20px text ghosts, too slight to hang a menu
+     from; the open one pads its fill out by this much on every side (see
+     below), and the menu steps right by as much to keep its edge on the
+     fill's. */
+  --fork-inlet-tab-pad: 4px;
+  border-color: transparent;
+  border-bottom-right-radius: 0;
+  translate: var(--fork-inlet-tab-pad) 0;
+  /* Upstream's drop shadow falls downward, straight onto the button it hangs
+     from, and shades it off the menu's colour. This one lifts up and out
+     instead, and as a filter it follows the outline the tab and its concave
+     corner draw rather than the box. */
+  box-shadow: none;
+  filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+  /* Wide enough for the shadow on three sides; below, it stops at the tab's
+     foot (one fillet down; the tab runs that far over the button's top in
+     the button's own colour), so none of it reaches the button.
+     The open animation runs this clip from the tab outward. */
+  clip-path: inset(-40px -40px calc(-1 * var(--fork-inlet-fillet)) -40px round 8px);
+
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    right: -1px;
+    top: calc(100% + 1px);
+    width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad) + var(--fork-inlet-fillet));
+    height: var(--fork-inlet-fillet);
+    background:
+      radial-gradient(
+          circle at 0 100%,
+          transparent calc(var(--fork-inlet-fillet) - 0.5px),
+          var(--fork-inlet-tab-fill, var(--popover)) calc(var(--fork-inlet-fillet) + 0.5px)
+        )
+        left top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+      linear-gradient(
+          var(--fork-inlet-tab-fill, var(--popover)),
+          var(--fork-inlet-tab-fill, var(--popover))
+        )
+        right top / calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad))
+        var(--fork-inlet-fillet) no-repeat;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  :is(
+    [data-chat-provider-model-picker],
+    [data-fork-composer-usage-limits]
+  )[data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
+  /* Outranks theme.custom.css's hover / open wash on the composer's controls.
+     The model menu's shell is what hangs. */
+  background: var(--fork-inlet-model-shell);
+  /* The fill padded out 4px (the menu's --fork-inlet-tab-pad) without moving
+     the row: a spread shadow, which also closes the 4px gap above. Its
+     corners grow by the spread, so 6px reads as the header buttons' 10px. */
+  box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
+  border-radius: 0 0 6px 6px;
+}
+
+/* The model picker is Inlet in small: the menu's shell is the recess
+   colour, and the model list is a panel set 4px into it, so the provider
+   rail is simply the shell down the left; the effort controls below sit on
+   the shell itself. The chosen
+   provider takes the list's fill, goes square on its right, and runs into
+   the list through a concave corner above and below, as the open thread's
+   row runs into the chat panel. The shell is what hangs from the button. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+  /* It hangs from the composer, so it is drawn in the composer's materials:
+     the prompt's fill for the list, a step off the vessel for the shell. */
+  --popover: var(--fork-composer-bg);
+  --fork-inlet-menu-rail: var(--fork-inlet-model-shell);
+  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
+  --accent: color-mix(in srgb, var(--popover-foreground) 6%, var(--fork-composer-bg));
+  background: var(--fork-inlet-model-shell);
+  /* The open button's padded fill rounds to 10px (its 6px corner plus the
+     4px pad), so the shell matches it, and the list sits concentric inside. */
+  border-radius: var(--fork-inlet-menu-radius);
+
+  & [data-fork-model-picker="list"] {
+    margin: 4px 4px 4px 0;
+    border-radius: calc(var(--fork-inlet-menu-radius) - 4px);
+    background: var(--popover);
+  }
+
+  & [data-fork-model-picker="true"] + [data-slot="menu-separator"] {
+    display: none;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-model-picker="providers"] {
+  --fork-inlet-rail-fillet: 6px;
+  border-inline-end-width: 0;
+  padding-inline-end: var(--fork-inlet-rail-fillet);
+
+  & [aria-current="true"] {
+    background: var(--popover);
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  & [aria-current="true"]::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    left: 100%;
+    width: var(--fork-inlet-rail-fillet);
+    top: calc(-1 * var(--fork-inlet-rail-fillet));
+    bottom: calc(-1 * var(--fork-inlet-rail-fillet));
+    background:
+      radial-gradient(
+          circle at 0 0,
+          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
+        )
+        right top / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
+      radial-gradient(
+          circle at 0 100%,
+          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
+          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
+        )
+        right bottom / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
+      linear-gradient(var(--popover), var(--popover)) 0 var(--fork-inlet-rail-fillet) / 100%
+        calc(100% - 2 * var(--fork-inlet-rail-fillet)) no-repeat;
+  }
+}
+
+/* ── The mode menu, hung from the mode chip ──────────────────────────────────
+   Drawn like the model menu: the model menu's shell, its content straight
+   on it, and the chip filled with the shell while it is
+   open and joined to the menu by a tab with a concave corner. It is aligned
+   to the chip's start and opens below it in the draft hero and above it
+   under a thread, so the tab follows data-side. Keyed on what it holds; the
+   popup carries no mark of its own. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  --fork-inlet-tab-pad: 4px;
+  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
+  --fork-inlet-tab-width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad));
+  border-color: transparent;
+  border-radius: var(--fork-inlet-menu-radius);
+  background: var(--fork-inlet-model-shell);
+  box-shadow: none;
+  /* Its start edge on the chip's padded fill, not the chip. */
+  translate: calc(-1 * var(--fork-inlet-tab-pad)) 0;
+
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    left: -1px;
+    width: calc(var(--fork-inlet-tab-width) + var(--fork-inlet-fillet));
+    height: var(--fork-inlet-fillet);
+  }
+
+  &[data-side="bottom"] {
+    border-top-left-radius: 0;
+    filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
+    clip-path: inset(calc(-1 * var(--fork-inlet-fillet)) -40px -40px -40px round 12px);
+
+    &::after {
+      bottom: calc(100% + 1px);
+      background:
+        radial-gradient(
+            circle at 100% 0,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-tab-fill) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-tab-fill), var(--fork-inlet-tab-fill)) left bottom /
+          var(--fork-inlet-tab-width) var(--fork-inlet-fillet) no-repeat;
+    }
+  }
+
+  &[data-side="top"] {
+    border-bottom-left-radius: 0;
+    filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+    clip-path: inset(-40px -40px calc(-1 * var(--fork-inlet-fillet)) -40px round 12px);
+
+    &::after {
+      top: calc(100% + 1px);
+      background:
+        radial-gradient(
+            circle at 100% 100%,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-tab-fill) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-tab-fill), var(--fork-inlet-tab-fill)) left top /
+          var(--fork-inlet-tab-width) var(--fork-inlet-fillet) no-repeat;
+    }
+  }
+}
+
+/* The open chip takes the shell, padded out 4px by a spread shadow whose
+   corners (5px + 4px) match the fillet, so the tab covers them exactly on
+   the menu's side. It outranks the chip's own hover / open fills. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled) {
+  background: var(--fork-inlet-model-shell);
+  box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
+  border-radius: 5px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-fork-composer-mode-chip] {
+    transition:
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+}
+
+/* The composer's ghost controls (attach, the mic, the model and usage
+   buttons) hover in their own ink at 10%: theme.custom.css's dark 4% white
+   lift is invisible on Inlet's panels, and an ink wash reads on every colour. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
+  --fork-composer-control-hover: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* The thread details card rides up to just under its toggle, so the join is
+   a short neck rather than the header's lower half: the card's top 4px below
+   the button. The popover sits 8px below the header and the inline card
+   12px, and the button's foot is half the row less half the button above
+   the header's, so each lifts by that sum less the 4px. Not while the find
+   bar pushes the card down, as the join itself. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
+  --fork-inlet-details-gap: 4px;
+  --fork-inlet-details-rise: calc(
+    (var(--workspace-topbar-height, 52px) - var(--workspace-titlebar-control-size, 28px)) / 2 -
+      var(--fork-inlet-details-gap)
+  );
+}
+
+/* The popover is portaled out of the column, so it is keyed on itself. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-thread-details-panel="popover"]
+  > [data-thread-details-card] {
+  translate: 0 calc(-1 * (var(--fork-inlet-details-rise) + 8px));
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-thread-details-panel="inline"]
+  > [data-thread-details-card] {
+  translate: 0 calc(-1 * (var(--fork-inlet-details-rise) + 12px));
+}
+
+/* The same two-selector list as the join's own rule above, so the neck's
+   height overrides it at equal specificity. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
+    :has([data-thread-find-bar])
+  )
+  [data-fork-panel-toggle]
+  > [data-pressed]:not([aria-expanded]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-fork-panel-toggle]
+  > [aria-expanded="true"] {
+  &::after {
+    height: calc(var(--fork-inlet-details-gap) + 1px);
+  }
+}
+
+/* ── One-shape menus ─────────────────────────────────────────────────────────
+   Every hung menu draws itself, its button and the tab between them as one
+   morphing path on its own layer (custom/inletMenuMorph.ts). The detect
+   animation below announces each popup as it opens; the controller then
+   stamps data-fork-morph on the popup and its glass box and
+   data-fork-morphing on the button while it runs. The glass keeps only its
+   content and the button only its face; the path is everything else, so the
+   !important beats every colour's own menu and button fills. A menu's
+   translate stays: it places the menu, and the path is measured from it. */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    :is(
+      [data-slot="menu-popup"]:is(
+        [data-fork-tab-menu],
+        [data-fork-chip-menu],
+        :has([data-composer-permissions])
+      ),
+      [data-slot="popover-popup"][data-fork-tab-menu],
+      [data-slot="popover-popup"]:has([data-thread-details-card]),
+      [data-thread-details-panel="inline"],
+      [data-slot="select-popup"][data-fork-chip-menu],
+      [data-slot="combobox-popup"][data-fork-chip-menu]
+    ):is([data-open]):not([data-fork-morph="on"]) {
+    /* On every open, not just on mount: a popup can be reused. */
+    animation: fork-inlet-morph-detect 1ms;
+
+    /* The detect event lands a frame after the popup paints; until the
+       controller claims it, it is unseen, unless it gave up on it ("failed"). */
+    &:not([data-fork-morph="failed"]) {
+      opacity: 0;
+    }
+  }
+
+  /* A tab's "…" menu (custom/anchoredContextMenu.ts) is a new element on
+     every open and carries no data-open. */
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-context-menu][data-fork-anchored-menu]:not([data-fork-morph]) {
+    animation: fork-inlet-morph-detect 1ms;
+    opacity: 0;
+  }
+
+  /* A combobox paints from the glass box round its popup. */
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    .dropdown-glass:has(
+      > [data-slot="combobox-popup"][data-fork-chip-menu][data-open]:not(
+          [data-fork-morph="on"],
+          [data-fork-morph="failed"]
+        )
+    ) {
+    opacity: 0;
+  }
+
+  /* The details card is morphed too, as a popover or docked, so its toggle
+     drops the stylesheet's own fill and join (kept under reduced motion, and
+     for a card the morph gave up on); the shape draws both, wherever the
+     button sits along the card. */
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]:not(
+      :has(
+        [data-slot="popover-popup"][data-fork-morph="failed"] [data-thread-details-card],
+        [data-thread-details-panel="inline"][data-fork-morph="failed"]
+      )
+    )
+    [data-fork-panel-toggle]
+    > :is([aria-expanded="true"], [data-fork-details-toggle][aria-pressed="true"]) {
+    background-color: transparent !important;
+
+    &::after {
+      display: none !important;
+    }
+  }
+
+  @keyframes fork-inlet-morph-detect {
+    from,
+    to {
+      outline-color: transparent;
+    }
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-morph="on"] {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  clip-path: none !important;
+  scale: none !important;
+  transition: none !important;
+
+  &::before,
+  &::after {
+    display: none !important;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-morphing]:is([aria-expanded="true"], [aria-pressed="true"]) {
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ── Tooltips ────────────────────────────────────────────────────────────────
+   A tooltip grows a nub toward what it describes: the body's edge curves out
+   through two concave corners into a tapering neck with a rounded tip. The nub
+   is Base UI's arrow (components/ui/tooltip.tsx, hidden elsewhere), which
+   Base UI slides along the edge to sit opposite the trigger; it is masked to
+   the shape in the tooltip's own fill, sized per axis so Base UI measures
+   the box it draws. The tooltip stands off by exactly its depth (the fenced
+   sideOffset in components/ui/tooltip.tsx), so the tip meets the trigger. The row hover card keeps its own tab. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
+  --fork-inlet-nub-width: 44px;
+  /* components/ui/tooltip.tsx's FORK_TOOLTIP_NUB_DEPTH. */
+  --fork-inlet-nub-depth: 7px;
+  --fork-inlet-tooltip: var(--popover);
+  --fork-inlet-tooltip-foreground: var(--popover-foreground);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]) {
+  --popover-foreground: var(--fork-inlet-tooltip-foreground);
+  --foreground: var(--fork-inlet-tooltip-foreground);
+  --contrast-foreground: var(--fork-inlet-tooltip-foreground);
+  --contrast-popover-foreground: var(--fork-inlet-tooltip-foreground);
+  border-color: transparent;
+  background: var(--fork-inlet-tooltip);
+  color: var(--fork-inlet-tooltip-foreground);
+  /* Pill-round like the composer's chips (half its one-line height), and a
+     step roomier than upstream's 4 / 8px. */
+  border-radius: 14px;
+
+  & [data-slot="tooltip-viewport"] {
+    padding: 6px 12px;
+  }
+
+  & [data-fork-tooltip-nub] {
+    display: block;
+    pointer-events: none;
+    background: var(--fork-inlet-tooltip);
+  }
+
+  & :is([data-side="top"], [data-side="bottom"])[data-fork-tooltip-nub] {
+    width: var(--fork-inlet-nub-width);
+    height: calc(var(--fork-inlet-nub-depth) + 1px);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 330 135' preserveAspectRatio='none'%3E%3Cpath d='M0 0C70 0 100 20 118 55C130 82 140 135 165 135C190 135 200 82 212 55C230 20 260 0 330 0Z'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat;
+  }
+
+  /* Beside its trigger the pill's end is all curve, with no flat edge for the
+     nub's shoulders, so a side tooltip goes without one. */
+  & :is([data-side="left"], [data-side="right"])[data-fork-tooltip-nub] {
+    display: none;
+  }
+
+  & [data-side="top"][data-fork-tooltip-nub] {
+    top: calc(100% - 1px);
+  }
+
+  & [data-side="bottom"][data-fork-tooltip-nub] {
+    bottom: calc(100% - 1px);
+    rotate: 180deg;
+  }
+}
+
+/* The model menu's on/off traits: unchecked, the box is only an outline in the
+   menu's ink at 24%, not a well of --background sunk into the shell. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="menu-popup"]:has([data-fork-model-picker])
+  [data-slot="checkbox"]:not([data-checked]) {
+  border-color: color-mix(in srgb, currentColor 24%, transparent);
+  background: transparent;
+  box-shadow: none;
+
+  &::before {
+    box-shadow: none;
+  }
+}
+
+/* Tooltips grow out of their nub, in the hung menus' easing: a circle
+   opening from Base UI's transform origin (the point the nub aims at) with a
+   slight scale from the same point; leaving, they fold back into it faster.
+   data-instant (gliding between tooltips) skips it, as upstream's does. */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not([data-instant]) {
+    clip-path: circle(150% at var(--transform-origin));
+    transition:
+      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
+      scale 240ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 120ms ease-out;
+
+    &:is([data-starting-style], [data-ending-style]) {
+      clip-path: circle(0 at var(--transform-origin));
+      scale: 0.9;
+      opacity: 1;
+    }
+
+    &[data-ending-style] {
+      transition-duration: 140ms;
+      transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+    }
+  }
+}
+
+/* The project strip's new-agent buttons wear a soft fill at rest, a step
+   firmer on hover: ink at 8% / 12% over the frame. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-recent-project] {
+  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--sidebar-foreground) 12%, transparent);
+  }
+}
+
+/* The usage meter steps aside for the model menu's padded fill in step with
+   the morph. The meter is also the usage popover's button, so the
+   button-fill transition above would otherwise replace its translate; one
+   list carries both. Out on the open's curve; back only once the button's
+   fill starts fading (about 190ms into the 280ms close), so the two never
+   meet. */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-fork-composer-model-controls]
+    [data-fork-composer-usage-limits] {
+    transition:
+      translate 220ms cubic-bezier(0.37, 0, 0.63, 1) 190ms,
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
+    [data-fork-composer-usage-limits] {
+    transition:
+      translate 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+}
+
+/* The details card is lifted toward its toggle (above); in popover mode it
+   sits in Base UI's popover viewport, which scrolls on the y axis and so
+   clipped the lifted top. The card scrolls itself, so the viewport need not. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="popover-viewport"]:has([data-thread-details-panel="popover"]) {
+  overflow: visible;
+}
+
+/* The column moves the window-pinned controls in and down with the panel
+   (--workspace-controls-top, above), but a header-anchored control (the
+   details toggle an inline right panel leaves in the header) is placed in
+   the header itself, which already sits inside the panel: it keeps the
+   header's own top, or it lands 12px low and overlaps the card it opens. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-chat-column-maximized-away]
+  [data-fork-header-anchored-controls] {
+  --workspace-controls-top: 0px;
+}
+
+/* ── Tab strip: connective tabs ──────────────────────────────────────────────
+   The open thread's tab is the stage it opens, as a browser's tab is its
+   page: it takes the panel's face, goes square at its foot, and a neck
+   carries the face down to the panel's top edge with a concave corner either
+   side. The neck spans the strip's empty foot: half the row less half the
+   tab, plus the panel's margin, less what the panel tucks under the strip.
+   The nav clips its tabs sideways only, so the neck can leave it, and the
+   strip sits over the panes, whose frame-coloured wrapper would cover it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-thread-tabs] {
+  --fork-inlet-tab-face: var(--sidebar-row-active);
+  /* The neck: half the row less half the 28px tab, plus the panel's margin,
+     less what the panel tucks under the strip. The concave corners are wider
+     than that short gap, as a browser tab's flare is: each starts partway up
+     the tab's side and sweeps out onto the panel's edge, a true quarter circle
+     tangent to both, rising beside the tab's foot. */
+  --fork-inlet-tab-neck-h: calc(
+    (var(--workspace-topbar-height) - 28px) / 2 + var(--fork-inlet-margin) -
+      var(--fork-thread-tabs-overlap, 0px)
+  );
+  --fork-inlet-tab-fillet: 18px;
+  position: relative;
+  z-index: 2;
+
+  /* Clipped at the row's sides, but the band the flares rise in (one fillet
+     less the neck, plus the nav's 4px foot) reaches a fillet past them, so
+     the first and last tabs keep their outer flare. */
+  & > nav {
+    --fork-inlet-tab-flare-band: calc(
+      var(--fork-inlet-tab-fillet) - var(--fork-inlet-tab-neck-h) + 4px
+    );
+    overflow: visible;
+    clip-path: polygon(
+      0 -8px,
+      100% -8px,
+      100% calc(100% - var(--fork-inlet-tab-flare-band)),
+      calc(100% + var(--fork-inlet-tab-fillet)) calc(100% - var(--fork-inlet-tab-flare-band)),
+      calc(100% + var(--fork-inlet-tab-fillet)) calc(100% + 40px),
+      calc(-1 * var(--fork-inlet-tab-fillet)) calc(100% + 40px),
+      calc(-1 * var(--fork-inlet-tab-fillet)) calc(100% - var(--fork-inlet-tab-flare-band)),
+      0 calc(100% - var(--fork-inlet-tab-flare-band))
+    );
+  }
+
+  & [data-fork-thread-tab][data-active="true"] {
+    border-radius: 10px 10px 0 0;
+    /* The face is its own layer under the label, so it can rise into the tab
+       (below) without clipping the label; isolate keeps it above the strip. */
+    background: transparent;
+    isolation: isolate;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      border-radius: inherit;
+      background: var(--fork-inlet-tab-face);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      /* Rises one fillet beside the tab's foot; the strip under the tab is only
+         the neck. Each corner runs 1px into the panel and the tab, which share
+         its fill, so its antialiased edge sits on the true curve. */
+      top: calc(100% + var(--fork-inlet-tab-neck-h) - var(--fork-inlet-tab-fillet));
+      left: calc(-1 * var(--fork-inlet-tab-fillet));
+      right: calc(-1 * var(--fork-inlet-tab-fillet));
+      height: calc(var(--fork-inlet-tab-fillet) + 1px);
+      background: var(--fork-inlet-tab-neck, var(--fork-inlet-tab-face));
+      mask:
+        radial-gradient(
+            circle var(--fork-inlet-tab-fillet) at 0 0,
+            transparent calc(var(--fork-inlet-tab-fillet) - 0.5px),
+            #000 calc(var(--fork-inlet-tab-fillet) + 0.5px)
+          )
+          left bottom / calc(var(--fork-inlet-tab-fillet) + 1px)
+          calc(var(--fork-inlet-tab-fillet) + 1px) no-repeat,
+        radial-gradient(
+            circle var(--fork-inlet-tab-fillet) at 100% 0,
+            transparent calc(var(--fork-inlet-tab-fillet) - 0.5px),
+            #000 calc(var(--fork-inlet-tab-fillet) + 0.5px)
+          )
+          right bottom / calc(var(--fork-inlet-tab-fillet) + 1px)
+          calc(var(--fork-inlet-tab-fillet) + 1px) no-repeat,
+        linear-gradient(#000, #000) center bottom / calc(100% - 2 * var(--fork-inlet-tab-fillet))
+          calc(var(--fork-inlet-tab-neck-h) + 1px) no-repeat;
+    }
+  }
+}
+
+/* ── The collapsed sidebar's peek card, hung from its toggle ─────────────────
+   The card (fork-sidebar-peek) is the frame's colour. While it is open the
+   toggle is its tab: the card's fill padded 4px round the button, square at
+   its foot; the card drops 4px below the button (the padding's depth), its
+   left edge on the padded fill's, square at that corner, and a concave corner
+   runs from the fill's right side into the card's top. That replaces the
+   shared card's triangle tail and outline. The toggle's tooltip would sit over
+   the tab strip beside it, so it steps aside while the card is out. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  --fork-inlet-frame-ink: #e8e8e8;
+  /* The card is a step off the frame, so it reads as its own piece over it. */
+  --fork-inlet-peek-fill: color-mix(
+    in srgb,
+    var(--app-chrome-background) 92%,
+    var(--fork-inlet-frame-ink)
+  );
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="jungle"],
+    [data-fork-inlet-color="cream"]
+  ) {
+  --fork-inlet-frame-ink: #1c1c1a;
+  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="green"],
+    [data-fork-inlet-color="jungle-light"]
+  ) {
+  --fork-inlet-frame-ink: #ffffff;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"] {
+  --fork-inlet-peek-pad: 4px;
+  --fork-peek-radius: var(--fork-inlet-menu-radius);
+  /* The shared card sits tail + 1px below the toggle: 3px here makes the 4px. */
+  --fork-peek-tail-height: 3px;
+  --fork-peek-left: calc(var(--workspace-controls-left) + 1px - var(--fork-inlet-peek-pad));
+
+  & [data-sidebar-peek-trigger] {
+    background-color: var(--fork-inlet-peek-fill);
+    border-color: transparent;
+    color: var(--fork-inlet-frame-ink);
+    border-radius: var(--control-radius) var(--control-radius) 0 0;
+    box-shadow: 0 0 0 var(--fork-inlet-peek-pad) var(--fork-inlet-peek-fill);
+
+    & svg {
+      color: var(--fork-inlet-frame-ink);
+    }
+  }
+
+  &
+    [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
+    [data-slot="sidebar-container"] {
+    border-top-left-radius: 0;
+    --sidebar: var(--fork-inlet-peek-fill);
+    --background: var(--fork-inlet-peek-fill);
+    --card: var(--fork-inlet-peek-fill);
+    --sidebar-stage-fade: var(--fork-inlet-peek-fill);
+
+    /* The concave corner, where the tail was. */
+    &::before {
+      top: calc(-1 * var(--fork-inlet-fillet));
+      left: calc(var(--workspace-titlebar-control-size) + 2 * var(--fork-inlet-peek-pad));
+      width: var(--fork-inlet-fillet);
+      height: var(--fork-inlet-fillet);
+      background: radial-gradient(
+        circle at 100% 0,
+        transparent calc(var(--fork-inlet-fillet) - 0.5px),
+        var(--fork-inlet-peek-fill) calc(var(--fork-inlet-fillet) + 0.5px)
+      );
+    }
+
+    /* No outline, and a lift that falls below the card, never up onto the
+       tab. */
+    &::after {
+      border-color: transparent;
+      box-shadow: 0 18px 32px -12px rgb(0 0 0 / 0.3);
+      mask-image: none;
+    }
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:has(
+    [data-fork-sidebar-peek="open"]
+  )
+  [data-fork-peek-tooltip] {
+  display: none;
+}

@@ -42,6 +42,7 @@
    already clips (overflow-x hidden), so the radius clips its children too.
    Restating --background here is what turns every bg-background inside the
    column (header, transcript wrapper, composer floor) into the panel. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-column-maximized-away] {
   --background: var(--fork-inlet-panel);
@@ -53,6 +54,7 @@
 /* Menus, popovers, selects and the row hover card share one corner radius.
    Hung menus square the corner at their join with longhands that outrank
    this. A select draws its surface on a child, so that child takes it too. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   :is(
     [data-slot="menu-popup"],
@@ -71,6 +73,7 @@
 
 /* Their rows sit 5px in (the popup's 1px edge and 4px padding), so a row's
    highlight runs parallel to the corner. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   :is(
     [data-slot="menu-item"],
@@ -86,6 +89,7 @@
 
 /* The web build's DOM context menu (contextMenuFallback.ts) writes its radii
    inline, which only !important outranks. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-context-menu="true"]:not([data-fork-anchored-menu]) {
   border-radius: var(--fork-inlet-menu-radius) !important;
@@ -97,12 +101,14 @@
 
 /* App modals (Settings and the other full-page dialogs) float over the frame
    and are panels too: they paint bg-background, which here is the frame. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-app-modal] {
   --background: var(--fork-inlet-panel);
 }
 
 /* The desktop side chat is its own window, and the embedded side chat sits
    in the right panel: neither has a frame to be set into. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-side-chat="true"][data-fork-theme="inlet"]
   [data-chat-column-maximized-away],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
@@ -115,6 +121,7 @@
 /* The header's window-pinned controls move in and down with the panel, so
    they stay on the title's line. Not under Windows' window-controls overlay,
    which sets its own. */
+
 :root[data-fork="noahhendrickson-t3code"]:not(.wco)[data-fork-theme="inlet"]
   [data-chat-column-maximized-away] {
   --workspace-controls-top: var(--fork-inlet-margin);
@@ -123,6 +130,7 @@
 
 /* Under the collapsed sidebar's tab strip a lone pane starts below the strip
    (theme.custom.css), so its controls drop by the strip as well as the margin. */
+
 :root[data-fork="noahhendrickson-t3code"]:not(.wco)[data-fork-theme="inlet"]
   [data-fork-thread-tabs]
   + [data-fork-thread-panes]:not([data-fork-split-threads])
@@ -136,6 +144,7 @@
 /* The collapsed sidebar's toggle is pinned to the window, beside the tab
    strip on a light frame (Jungle Art's, Cream's); it takes the strip's ink,
    not the page's, which is light for the dark panel. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
@@ -157,6 +166,7 @@
    Its utilities pick black or white washes by the page's appearance, which a
    colour's frame need not share, so its fills come from the frame's tokens; the
    open tab and the chosen project are the panel, as the open row is. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-thread-tabs] {
   /* index.css computes the contrast inks (what text-foreground and friends
      read) once at :root, from the panel's ink, so the strip restates them. */
@@ -210,6 +220,7 @@
 
 /* Square on the side that joins the panel, and inked as the panel is, since
    it sits on the panel's fill rather than the frame's. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   [data-testid="sidebar-row-card"][aria-current="page"] {
@@ -234,6 +245,7 @@
    sidebar's scrollers clip it exactly as they clip the row. The thread list
    drops its native scrollbar for the same reason: its gutter would sit
    between the row and the panel and clip the bridge. It still scrolls. */
+
 @media (min-width: 768px) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
@@ -301,6 +313,7 @@
 /* A colour on light. theme.custom.css paints the composer's vessel and inks
    its context chips only under `.dark` (a light fork build keeps upstream's
    composer); a light Inlet colour draws both, so it opts into those two. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
   [data-fork-composer-vessel] {
   background: var(--fork-composer-vessel-bg);
@@ -316,6 +329,7 @@
    frame's own colour, the prompt set 4px inside it on every side with the
    prompt radius, and the context chips above with 8px corners. Geometry for
    every colour; the fills are each colour's tokens. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-composer-vessel] {
   /* The question drawer and banners above the prompt take the same inset. */
   --chat-composer-drawer-inset: 4px;
@@ -330,6 +344,7 @@
 
 /* Attached cards (Questions, notices) take the prompt's inset. Only the
    outer wrapper does: the dock nests a second one, which stays full width. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(
@@ -351,6 +366,7 @@
 
 /* theme.custom.css draws attached cards as vessel floor only under `.dark`;
    a light colour would keep upstream's frosted card tucked under the prompt. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
   [data-fork-composer-vessel]
   [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
@@ -363,6 +379,7 @@
 
 /* The Questions card and the prompt are one box, as on the fork's dark
    composer: the card's 8px top corners over the prompt's square ones, no gap. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
   [data-fork-composer-vessel]
   [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
@@ -390,6 +407,7 @@
 /* The focus tone recolours the hairline round the card and prompt together,
    which rings the whole question; with a question open it keeps its resting
    colour. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-vessel]:has([data-fork-composer-surface]:focus-within):has(
     [data-chat-composer-top-drawer] > [data-fork-pending-user-input]
@@ -407,6 +425,7 @@
    (the project chip) inks its glyphs with --control-icon-color, the root's
    muted ink, which is the panel's and not the chip's; the branch and
    workspace chips' glyphs follow the chip's text, so this one does too. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
@@ -421,6 +440,7 @@
    sideOffset) and curves into the chip's free side through a concave
    corner. Menus, selects and comboboxes put the marker and data-side on
    different elements, so each rule names the visible glass box three ways. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
@@ -587,6 +607,7 @@
 /* Green, Jungle Art and Black draw the mode chip neutral (black 16%, black
    ink) where Charcoal and Cream keep each mode's hue; the light colours also
    take the dark palettes' flat red stop button. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="green"],
     [data-fork-inlet-color="jungle"],
@@ -623,6 +644,7 @@
    frames on dark; see theme.custom.palettes.css) names it --fork-inlet-frame,
    and the inset and the column's wrapper paint it — only round a chat column:
    a page without one is inked for the stage. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
@@ -637,6 +659,7 @@
 
 /* The utility pages (Usage, Automations) are panels as well: their stage
    card is set into the frame the way the chat column is. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-slot="sidebar-inset"]
   > [data-fork-stage-card] {
@@ -659,6 +682,7 @@
 
 /* A chrome row (Usage, Automations) lit for its open page is the panel's
    colour, like the open thread's row, so it takes the panel's ink. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   [data-fork-chrome-row][data-active="true"] {
@@ -674,6 +698,7 @@
    the bridge above): the sidebar takes the frame's gap as end padding and
    the row's bridge crosses it. The row clips nothing of its own while lit,
    so the bridge can hang off it. */
+
 @media (min-width: 768px) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
@@ -733,1020 +758,13 @@
   }
 }
 
-/* ── Jungle Art (Figma 630:10946) ────────────────────────────────────────────
-   The panel is a picture: the art at 60% over #248f6b, under a fade to the
-   frame's green behind the composer. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away] {
-  --background: #248f6b;
-  /* The left edge fades from the open row's green, so its bridge runs into
-     solid fill before the art. Top layer of either background below. */
-  --fork-inlet-jungle-edge: linear-gradient(
-    to right,
-    #4a9975,
-    #4a9975 4px,
-    rgb(74 153 117 / 82%) 40px,
-    rgb(74 153 117 / 58%) 90px,
-    rgb(74 153 117 / 34%) 150px,
-    rgb(74 153 117 / 14%) 220px,
-    rgb(74 153 117 / 0%) 300px
-  );
-  background:
-    var(--fork-inlet-jungle-top, none),
-    var(--fork-inlet-jungle-edge),
-    linear-gradient(rgb(33 131 92 / 0%) 19.712%, rgb(27 124 85 / 80%) 95.833%) bottom / 100% 462px
-      no-repeat,
-    linear-gradient(rgb(36 143 107 / 40%), rgb(36 143 107 / 40%)),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-    #248f6b;
-}
-
-/* Once the thread has a transcript the art steps back under the stage's
-   deep green, so the transcript's white ink reads over it: 15% of it shows
-   from halfway down, more toward the top, where the canopy is. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]:has([data-timeline-row-kind]) {
-  background:
-    var(--fork-inlet-jungle-top, none),
-    var(--fork-inlet-jungle-edge),
-    linear-gradient(rgb(30 95 70 / 0%) 19.712%, rgb(30 95 70 / 60%) 95.833%) bottom / 100% 462px
-      no-repeat,
-    linear-gradient(rgb(30 95 70 / 62%), rgb(30 95 70 / 85%) 50%),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-    #1e5f46;
-}
-
-/* The header, the transcript's area, the new-thread timeline and the fade
-   behind the composer all paint --background; the picture shows through them
-   instead. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]
-  :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
-  background-color: transparent;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]
-  [data-chat-composer-overlay] {
-  background-image: none;
-}
-
-/* Settings and the other app modals, and the utility pages (Usage,
-   Automations), are cream, inked dark like the sidebar. The stage is dark, so
-   the contrast inks (computed at :root from its white) and the status tones (dark mode's pale shades) are
-   restated, and primary actions take the accent green. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is([data-app-modal], [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
-  --background: #f6f4e4;
-  --foreground: #1c1c1a;
-  --card: #e8e6cf;
-  --card-foreground: #1c1c1a;
-  --primary: #21835c;
-  --primary-foreground: #ffffff;
-  --ring: #21835c;
-  --secondary: #e6e4cd;
-  --secondary-foreground: #1c1c1a;
-  --muted: #e6e4cd;
-  --muted-foreground: #55544c;
-  --placeholder: #55544c;
-  --secondary-label: #55544c;
-  --icon-muted: #55544c;
-  --accent: #e6e4cd;
-  --accent-foreground: #1c1c1a;
-  --border: #dfddc7;
-  --input: #d4d2bc;
-  --contrast-foreground: #1c1c1a;
-  --contrast-card-foreground: #1c1c1a;
-  --contrast-muted-foreground: #55544c;
-  --contrast-placeholder: #55544c;
-  --contrast-secondary-label: #55544c;
-  --contrast-icon-muted: #55544c;
-  --contrast-accent-foreground: #1c1c1a;
-  --contrast-secondary-foreground: #1c1c1a;
-  --contrast-border: #dfddc7;
-  --contrast-input: #d4d2bc;
-  --color-emerald-300: #047857;
-  --color-teal-300: #0f766e;
-  --color-violet-300: #6d28d9;
-  --color-red-300: #b91c1c;
-  --color-amber-400: #b45309;
-  /* Settings' nav column is the frame's cream beside the page's lighter one. */
-  --sidebar: #f2f0d8;
-  --sidebar-foreground: #1c1c1a;
-  --sidebar-muted-foreground: #55544c;
-  --sidebar-border: #dfddc7;
-  --sidebar-icon-color: #55544c;
-  --sidebar-row-hover: #e8e6cf;
-  --sidebar-row-active: #e3e1cb;
-  --sidebar-row-selected: #e3e1cb;
-  --contrast-sidebar-foreground: #1c1c1a;
-  --contrast-sidebar-muted-foreground: #55544c;
-  --contrast-sidebar-border: #dfddc7;
-  color: var(--foreground);
-
-  /* Segmented tabs: a recessed well with the pick lifted out of it; their
-     `dark:` washes assume a dark page. */
-  & [data-fork-segmented-tabs] {
-    background-color: #e3e1cb;
-  }
-
-  & [data-fork-segmented-tab][data-pressed] {
-    background-color: #fdfcf5;
-    color: #1c1c1a;
-  }
-}
-
-/* On the utility pages the whole stage is the open row's green, out to the
-   window's edges, so the lit row runs into it; the page is a frame-cream card
-   set into it, the frame's gap of green on every side. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
-  background: var(--fork-inlet-panel);
-  /* Its sidebar-side corners round off against the frame, concentric with
-     the card's 8px ones; the window's edge squares the others. */
-  border-radius: calc(var(--fork-inlet-radius) + var(--fork-inlet-margin)) 0 0
-    calc(var(--fork-inlet-radius) + var(--fork-inlet-margin));
-}
-
-/* The body behind it is green as well, so the frame shows in those corners
-   only if the wrapper paints it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-wrapper"]:has(> [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
-  background: var(--fork-inlet-frame);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]
-  > [data-fork-stage-card] {
-  --background: #f2f0d8;
-  background: var(--background);
-}
-
-@media (min-width: 768px) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
-      [data-fork-sidebar-overlay="true"]
-    ):has([data-slot="sidebar-inset"] > [data-fork-stage-card])
-    [data-slot="sidebar-inset"]
-    > [data-fork-stage-card] {
-    margin-left: var(--fork-inlet-margin);
-  }
-}
-
-/* Jungle Art, Cream and Black draw rows as pills; the open one stays square
-   where it joins the panel. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"],
-    [data-fork-inlet-color="black"]
-  )
-  [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"] {
-  border-radius: 9999px;
-
-  &[aria-current="page"] {
-    border-radius: 9999px 0 0 9999px;
-  }
-}
-
-/* Green's cream composer over the picture, inked dark. The contrast inks are
-   computed once at :root from the stage's white, so the vessel restates
-   them. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-vessel] {
-  --foreground: #1c1c1a;
-  --muted-foreground: rgb(0 0 0 / 65%);
-  --placeholder: rgb(0 0 0 / 65%);
-  --contrast-foreground: #1c1c1a;
-  --contrast-muted-foreground: rgb(0 0 0 / 65%);
-  --contrast-placeholder: rgb(0 0 0 / 65%);
-  --contrast-secondary-label: rgb(0 0 0 / 65%);
-  --contrast-icon-muted: rgb(0 0 0 / 65%);
-  --fork-composer-control-ink: #1c1c1a;
-  color: var(--foreground);
-
-  /* The primary action ("Submit answer") reads Tailwind's root-resolved
-     primary, the stage's pale one; Green's dark button instead. */
-  & [data-fork-pending-user-input-action="advance"] {
-    background: #1c1c1a;
-    color: #ffffff;
-  }
-
-  & [data-fork-composer-usage-limits] span:has(> span) {
-    background: rgb(0 0 0 / 32%);
-  }
-
-  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
-    background: #faf9f0;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
-  color: #1c1c1a;
-}
-
-/* ── Menus and the thread hover card ─────────────────────────────────────────
-   Inlet's menus, popovers and glass tooltips are a solid fill, the colour's
-   --popover, with no frost, on either appearance. One more attribute than
-   theme.custom.css's frost rule so it wins wherever both match. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  :is(
-    :is(
-      [data-slot="menu-popup"],
-      [data-slot="menu-sub-content"],
-      [data-slot="popover-popup"],
-      [data-slot="tooltip-popup"],
-      [data-slot="dialog-popup"]
-    ).dropdown-glass,
-    [data-slot="select-popup"] > .dropdown-glass,
-    .dropdown-glass:has(> [data-slot="combobox-popup"]),
-    [data-thread-details-card].dropdown-glass
-  ) {
-  /* --background is the frame here; a control inside that paints it (a
-     radio's well) would punch a hole of frame through the popup. */
-  --background: var(--popover);
-  background: var(--popover);
-  border-color: var(--border);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/* A sidebar row's hover card opens as a tab pulled out of the row: while it
-   is open the row takes the card's fill and ink and goes square on its right
-   end, and the card fills the 4px gap (the popup's sideOffset) and curves
-   into the row's bottom edge through a concave corner. The card is anchored
-   top-aligned to the row, so the row's height is --anchor-height. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][data-popup-open] {
-  --foreground: var(--fork-inlet-row-card-foreground);
-  --sidebar-foreground: var(--fork-inlet-row-card-foreground);
-  --muted-foreground: var(--fork-inlet-row-card-muted);
-  --sidebar-muted-foreground: var(--fork-inlet-row-card-muted);
-  --fork-sidebar-card-title-receded: var(--fork-inlet-row-card-foreground);
-  --contrast-foreground: var(--fork-inlet-row-card-foreground);
-  --contrast-muted-foreground: var(--fork-inlet-row-card-muted);
-  --contrast-secondary-label: var(--fork-inlet-row-card-muted);
-  --contrast-icon-muted: var(--fork-inlet-row-card-muted);
-  background-color: var(--fork-inlet-row-card);
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"][data-align="start"] {
-  --foreground: var(--fork-inlet-row-card-foreground);
-  --muted-foreground: var(--fork-inlet-row-card-muted);
-  --popover-foreground: var(--fork-inlet-row-card-foreground);
-  --contrast-foreground: var(--fork-inlet-row-card-foreground);
-  --contrast-popover-foreground: var(--fork-inlet-row-card-foreground);
-  --contrast-muted-foreground: var(--fork-inlet-row-card-muted);
-  --contrast-secondary-label: var(--fork-inlet-row-card-muted);
-  --contrast-icon-muted: var(--fork-inlet-row-card-muted);
-  background: var(--fork-inlet-row-card);
-  border-color: transparent;
-  border-top-left-radius: 0;
-  box-shadow: none;
-
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    top: -1px;
-    right: calc(100% + 1px);
-    width: var(--fork-inlet-fillet);
-    height: calc(var(--anchor-height) + var(--fork-inlet-fillet));
-    background:
-      radial-gradient(
-          circle at 0 100%,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--fork-inlet-row-card) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        left bottom / 100% var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
-        var(--anchor-height) no-repeat;
-  }
-}
-
-/* The open row's own bridge into the panel steps aside while its card is
-   out, so the row reads as joined to one thing at a time. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  li[data-thread-item]:has(
-    [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]
-  )::after {
-  display: none;
-}
-
-/* An icon button's menu (the Threads header's sort and settings) opens as a
-   tab hung from the button: while it is open the button takes the menu's
-   fill and goes square on its bottom, and the menu, end-aligned 4px below
-   (MenuPopup's sideOffset), fills the gap and curves into the button's
-   left side through a concave corner. aria-expanded, not data-popup-open:
-   the button is also a tooltip trigger, which sets the latter on hover. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-tab-trigger][aria-expanded="true"] {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-
-  /* The glyph's own utility inks it with the frame's sidebar-foreground. */
-  & > svg {
-    color: var(--popover-foreground);
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-tab-menu][data-side="bottom"][data-align="end"] {
-  border-color: transparent;
-  border-top-right-radius: 0;
-
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    right: -1px;
-    bottom: calc(100% + 1px);
-    width: calc(var(--anchor-width) + var(--fork-inlet-fillet));
-    height: var(--fork-inlet-fillet);
-    background:
-      radial-gradient(
-          circle at 0 0,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        left bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(var(--popover), var(--popover)) right bottom / var(--anchor-width) 4px
-        no-repeat;
-  }
-}
-
-/* The thread details card hangs from its toggle the same way, but it is
-   placed against the header, not the button: the inline card 12px below the
-   header (threadDetailsCardLayout.ts), the popover flush with it. So the
-   toggle draws the join: it takes the card's fill and goes square at its
-   foot, and its ::after carries the fill down to the card's top with a
-   concave corner either side. Not while the find bar pushes the card down. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
-  [data-fork-panel-toggle]
-  > [data-pressed]:not([aria-expanded]) {
-  --fork-inlet-details-drop: 12px;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
-  [data-fork-panel-toggle]
-  > [aria-expanded="true"] {
-  --fork-inlet-details-drop: 0px;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
-  [data-fork-panel-toggle]
-  > [data-pressed]:not([aria-expanded]),
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
-  [data-fork-panel-toggle]
-  > [aria-expanded="true"] {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-
-  & > svg {
-    color: var(--popover-foreground);
-    opacity: 1;
-  }
-
-  /* Height: the button sits centred in the header row, so half the row less
-     half the button (100% here is the button's height), plus the card's drop. */
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    top: 100%;
-    left: calc(-1 * var(--fork-inlet-fillet));
-    right: calc(-1 * var(--fork-inlet-fillet));
-    height: calc((var(--workspace-topbar-height) - 100%) / 2 + var(--fork-inlet-details-drop, 0px));
-    background:
-      radial-gradient(
-          circle at 0 0,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        left bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-      radial-gradient(
-          circle at 100% 0,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(var(--popover), var(--popover)) center /
-        calc(100% - 2 * var(--fork-inlet-fillet)) 100% no-repeat;
-  }
-}
-
-/* The join meets the card's top edge, so the card drops its hairline. The
-   rim attribute outranks Jungle Art's menu rule below, which sets one. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-thread-details-panel]
-  > [data-thread-details-card].dropdown-glass[data-fork-glass-rim] {
-  border-color: transparent;
-}
-
-/* Start-aligned (the collapsed sidebar tab strip's status menu), the same
-   tab mirrored: square top-left, the corner curving into the button's right. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-tab-menu][data-side="bottom"][data-align="start"] {
-  border-color: transparent;
-  border-top-left-radius: 0;
-
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    left: -1px;
-    bottom: calc(100% + 1px);
-    width: calc(var(--anchor-width) + var(--fork-inlet-fillet));
-    height: var(--fork-inlet-fillet);
-    background:
-      radial-gradient(
-          circle at 100% 0,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(var(--popover), var(--popover)) left bottom / var(--anchor-width) 4px
-        no-repeat;
-  }
-}
-
-/* The composer's model menu opens above its button, end-aligned, and hangs
-   the other way up: square bottom-right, the gap and the concave corner
-   below it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-tab-menu][data-side="top"][data-align="end"] {
-  /* The composer's controls are 20px text ghosts, too slight to hang a menu
-     from; the open one pads its fill out by this much on every side (see
-     below), and the menu steps right by as much to keep its edge on the
-     fill's. */
-  --fork-inlet-tab-pad: 4px;
-  border-color: transparent;
-  border-bottom-right-radius: 0;
-  translate: var(--fork-inlet-tab-pad) 0;
-  /* Upstream's drop shadow falls downward, straight onto the button it hangs
-     from, and shades it off the menu's colour. This one lifts up and out
-     instead, and as a filter it follows the outline the tab and its concave
-     corner draw rather than the box. */
-  box-shadow: none;
-  filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
-  /* Wide enough for the shadow on three sides; below, it stops at the tab's
-     foot (one fillet down; the tab runs that far over the button's top in
-     the button's own colour), so none of it reaches the button.
-     The open animation runs this clip from the tab outward. */
-  clip-path: inset(-40px -40px calc(-1 * var(--fork-inlet-fillet)) -40px round 8px);
-
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    right: -1px;
-    top: calc(100% + 1px);
-    width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad) + var(--fork-inlet-fillet));
-    height: var(--fork-inlet-fillet);
-    background:
-      radial-gradient(
-          circle at 0 100%,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--fork-inlet-tab-fill, var(--popover)) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        left top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(
-          var(--fork-inlet-tab-fill, var(--popover)),
-          var(--fork-inlet-tab-fill, var(--popover))
-        )
-        right top / calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad))
-        var(--fork-inlet-fillet) no-repeat;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  :is(
-    [data-chat-provider-model-picker],
-    [data-fork-composer-usage-limits]
-  )[data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
-  /* Outranks theme.custom.css's hover / open wash on the composer's controls.
-     The model menu's shell is what hangs. */
-  background: var(--fork-inlet-model-shell);
-  /* The fill padded out 4px (the menu's --fork-inlet-tab-pad) without moving
-     the row: a spread shadow, which also closes the 4px gap above. Its
-     corners grow by the spread, so 6px reads as the header buttons' 10px. */
-  box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
-  border-radius: 0 0 6px 6px;
-}
-
-/* The model picker is Inlet in small: the menu's shell is the recess
-   colour, and the model list is a panel set 4px into it, so the provider
-   rail is simply the shell down the left; the effort controls below sit on
-   the shell itself. The chosen
-   provider takes the list's fill, goes square on its right, and runs into
-   the list through a concave corner above and below, as the open thread's
-   row runs into the chat panel. The shell is what hangs from the button. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-  /* It hangs from the composer, so it is drawn in the composer's materials:
-     the prompt's fill for the list, a step off the vessel for the shell. */
-  --popover: var(--fork-composer-bg);
-  --fork-inlet-menu-rail: var(--fork-inlet-model-shell);
-  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
-  --accent: color-mix(in srgb, var(--popover-foreground) 6%, var(--fork-composer-bg));
-  background: var(--fork-inlet-model-shell);
-  /* The open button's padded fill rounds to 10px (its 6px corner plus the
-     4px pad), so the shell matches it, and the list sits concentric inside. */
-  border-radius: var(--fork-inlet-menu-radius);
-
-  & [data-fork-model-picker="list"] {
-    margin: 4px 4px 4px 0;
-    border-radius: calc(var(--fork-inlet-menu-radius) - 4px);
-    background: var(--popover);
-  }
-
-  & [data-fork-model-picker="true"] + [data-slot="menu-separator"] {
-    display: none;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-model-picker="providers"] {
-  --fork-inlet-rail-fillet: 6px;
-  border-inline-end-width: 0;
-  padding-inline-end: var(--fork-inlet-rail-fillet);
-
-  & [aria-current="true"] {
-    background: var(--popover);
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-
-  & [aria-current="true"]::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    left: 100%;
-    width: var(--fork-inlet-rail-fillet);
-    top: calc(-1 * var(--fork-inlet-rail-fillet));
-    bottom: calc(-1 * var(--fork-inlet-rail-fillet));
-    background:
-      radial-gradient(
-          circle at 0 0,
-          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
-        )
-        right top / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
-      radial-gradient(
-          circle at 0 100%,
-          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
-        )
-        right bottom / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
-      linear-gradient(var(--popover), var(--popover)) 0 var(--fork-inlet-rail-fillet) / 100%
-        calc(100% - 2 * var(--fork-inlet-rail-fillet)) no-repeat;
-  }
-}
-
-/* On Jungle Art the rail is green, so a hovered provider lifts with white
-   rather than the menus' cream accent. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-model-picker="providers"]
-  [data-model-picker-provider]:not([aria-current="true"]):is(:hover, [data-highlighted]) {
-  background: rgb(255 255 255 / 8%);
-}
-
-/* Jungle Art's menus are its sidebar's hover cream with the sidebar's ink,
-   not the stage's green: inside them the stage's light inks are restated. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is(
-    :is(
-      [data-slot="menu-popup"],
-      [data-slot="menu-sub-content"],
-      [data-slot="popover-popup"],
-      [data-slot="tooltip-popup"],
-      [data-slot="dialog-popup"]
-    ).dropdown-glass,
-    [data-slot="select-popup"] > .dropdown-glass,
-    .dropdown-glass:has(> [data-slot="combobox-popup"]),
-    [data-thread-details-card].dropdown-glass
-  ) {
-  --foreground: #1c1c1a;
-  --muted-foreground: #68675d;
-  --accent: #dddbc3;
-  --accent-foreground: #1c1c1a;
-  --muted: #dddbc3;
-  --secondary: #dddbc3;
-  --secondary-foreground: #1c1c1a;
-  --border: #d4d2b9;
-  --input: #d4d2b9;
-  --contrast-foreground: #1c1c1a;
-  --contrast-popover-foreground: #1c1c1a;
-  --contrast-muted-foreground: #68675d;
-  --contrast-secondary-label: #68675d;
-  --contrast-icon-muted: #68675d;
-  /* A search field's placeholder, icon and focus line, as on the cream composer. */
-  --placeholder: rgb(0 0 0 / 65%);
-  --contrast-placeholder: rgb(0 0 0 / 65%);
-  --ring: #1c1c1a;
-  /* Status tones pair a deep light-mode shade with a pale dark: one
-     (text-emerald-600 dark:text-emerald-300/90); the page is dark, so the pale
-     one wins and fades into the cream. The pale shades stand for the deep. */
-  --color-emerald-300: #047857;
-  --color-teal-300: #0f766e;
-  --color-amber-400: #b45309;
-  border-color: var(--border);
-  color: var(--popover-foreground);
-
-  /* The Cursor mark's dark fill is near-white. */
-  & .dark\:fill-\[\#EDECEC\] {
-    fill: #26251e;
-  }
-
-  & .lucide-search {
-    color: var(--placeholder);
-  }
-}
-
-/* The user's bubble is the composer's cream, inked dark, not the stage's
-   green card (theme.custom.css paints .bg-message with --card on dark). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]
-  .bg-message {
-  --foreground: #1c1c1a;
-  --muted-foreground: #68675d;
-  --contrast-foreground: #1c1c1a;
-  --contrast-message-foreground: #1c1c1a;
-  --contrast-muted-foreground: #68675d;
-  --contrast-secondary-label: #68675d;
-  --contrast-icon-muted: #68675d;
-  background-color: var(--fork-composer-vessel-bg);
-  color: #1c1c1a;
-}
-
-/* ── Jungle Light ────────────────────────────────────────────────────────────
-   Jungle Art inside out: Green's stage and tokens, with the art behind the
-   frame instead of the panel, faded well into Green's frame so the
-   sidebar's white ink still reads. Painted once on the wrapper so it runs
-   unbroken under the sidebar and round the panel; the three surfaces that
-   paint the frame's colour over it step aside. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
-  [data-slot="sidebar-wrapper"] {
-  --sidebar-stage-fade: transparent;
-  background:
-    linear-gradient(rgb(33 131 92 / 78%), rgb(33 131 92 / 78%)),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat,
-    #21835c;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
-  [data-slot="sidebar-wrapper"]
-  :is(
-    [data-slot="sidebar-inner"],
-    [data-slot="sidebar-inset"],
-    :has(> [data-chat-column-maximized-away])
-  ) {
-  background-color: transparent;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-model-controls]
-    [data-fork-composer-usage-limits] {
-    transition: translate 160ms ease-out;
-  }
-
-  /* The button fills in step with it, from the composer's control wash. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      [data-chat-provider-model-picker],
-      [data-fork-composer-usage-limits]
-    )[data-fork-tab-trigger] {
-    transition:
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-}
-
-/* Jungle Art's model menu is the open row's green (its --fork-inlet-model-
-   shell) with the cream list set into it, so what sits on the shell (the
-   rail, the effort controls) and the open button take white ink; the list
-   keeps the menus' dark ink. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-  --foreground: #ffffff;
-  --muted-foreground: #d2e6dc;
-  --contrast-foreground: #ffffff;
-  --contrast-muted-foreground: #d2e6dc;
-  --contrast-secondary-label: #d2e6dc;
-  --contrast-icon-muted: #d2e6dc;
-  --border: rgb(255 255 255 / 24%);
-  --input: rgb(255 255 255 / 24%);
-  color: #ffffff;
-
-  & [data-fork-model-picker="list"] {
-    --foreground: #1c1c1a;
-    --muted-foreground: #68675d;
-    --contrast-foreground: #1c1c1a;
-    --contrast-muted-foreground: #68675d;
-    --contrast-secondary-label: #68675d;
-    --contrast-icon-muted: #68675d;
-    --border: #d4d2b9;
-    --input: #d4d2b9;
-    color: #1c1c1a;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"] {
-  color: #ffffff;
-
-  & * {
-    color: inherit;
-  }
-}
-
-/* The open model button's fill pads 4px past it, onto the usage meter beside
-   it; the meter steps aside while the menu is out. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
-  [data-fork-composer-usage-limits] {
-  translate: -8px 0;
-}
-
-/* The usage readout hangs from the usage bar the same way, in the model
-   menu's shell, with each provider's section set into it as its own panel in
-   the prompt's fill. That replaces the divider, whose colour is the
-   root-resolved --border Tailwind's divide reads: the stage's, not the
-   popup's. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="popover-popup"][data-fork-tab-menu] {
-  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
-  background: var(--fork-inlet-model-shell);
-  border-radius: var(--fork-inlet-menu-radius);
-
-  /* Each provider's section is its own panel, 4px in from the shell on every
-     side (the scroller's 4px block padding gives the top and bottom), with
-     corners concentric to the shell's. */
-  & .divide-y > * {
-    margin-inline: 4px;
-    border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
-    background: var(--fork-composer-bg);
-  }
-
-  & .divide-y > :not(:last-child) {
-    /* The shell shows 5px round the panels (its 1px border, then the 4px
-       inset), so they part by as much. */
-    margin-bottom: 5px;
-    border-bottom-width: 0;
-  }
-}
-
-/* Jungle Art's other hung menus (the Threads header's sort and settings)
-   take the model menu's green too, inked white, and so do their buttons.
-   Restating --popover moves the fill, the tab and the controls' wells with
-   it; the model menu keeps its own shell and cream list. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="menu-popup"][data-fork-tab-menu]:not(:has([data-fork-model-picker])) {
-  --popover: var(--fork-inlet-model-shell);
-  --background: var(--fork-inlet-model-shell);
-  --popover-foreground: #ffffff;
-  --foreground: #ffffff;
-  --muted-foreground: #d2e6dc;
-  --accent: #3b926f;
-  --accent-foreground: #ffffff;
-  --border: rgb(255 255 255 / 24%);
-  --input: rgb(255 255 255 / 24%);
-  --contrast-foreground: #ffffff;
-  --contrast-popover-foreground: #ffffff;
-  --contrast-muted-foreground: #d2e6dc;
-  --contrast-secondary-label: #d2e6dc;
-  --contrast-icon-muted: #d2e6dc;
-  background: var(--fork-inlet-model-shell);
-  color: #ffffff;
-}
-
-/* A tab's thread menu (custom/anchoredContextMenu.ts, the in-page context
-   menu) hangs from the tab's "…" button in the button's hover fill, and its
-   submenus take it too: the open tab's green under 10% white, solid so the
-   morph's path can take it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-context-menu]:is([data-fork-anchored-menu], [data-fork-anchored-submenu]) {
-  --popover: #408a6d;
-  --background: #408a6d;
-  --popover-foreground: #ffffff;
-  --foreground: #ffffff;
-  --muted-foreground: #d2e6dc;
-  --accent: #4f9479;
-  --accent-foreground: #ffffff;
-  --border: rgb(255 255 255 / 24%);
-  --contrast-foreground: #ffffff;
-  --contrast-popover-foreground: #ffffff;
-  --contrast-accent-foreground: #ffffff;
-  --contrast-muted-foreground: #d2e6dc;
-  --contrast-border: rgb(255 255 255 / 24%);
-  background: #408a6d;
-  color: #ffffff;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/* The tab's actions show on hover; while their menu is open they stay. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-thread-tab]
-  span:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
-  opacity: 1;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-thread-tabs]
-  [data-fork-tab-trigger][data-fork-tab-actions-trigger][aria-expanded="true"] {
-  background-color: #408a6d;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is([data-sidebar-version="v2"], [data-fork-thread-tabs])
-  [data-fork-tab-trigger][aria-expanded="true"] {
-  background-color: var(--fork-inlet-model-shell);
-  color: #ffffff;
-
-  & > svg {
-    color: #ffffff;
-  }
-}
-
-/* ── The mode menu, hung from the mode chip ──────────────────────────────────
-   Drawn like the model menu: the model menu's shell, its content straight
-   on it, and the chip filled with the shell while it is
-   open and joined to the menu by a tab with a concave corner. It is aligned
-   to the chip's start and opens below it in the draft hero and above it
-   under a thread, so the tab follows data-side. Keyed on what it holds; the
-   popup carries no mark of its own. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="menu-popup"]:has([data-composer-permissions]) {
-  --fork-inlet-tab-pad: 4px;
-  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
-  --fork-inlet-tab-width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad));
-  border-color: transparent;
-  border-radius: var(--fork-inlet-menu-radius);
-  background: var(--fork-inlet-model-shell);
-  box-shadow: none;
-  /* Its start edge on the chip's padded fill, not the chip. */
-  translate: calc(-1 * var(--fork-inlet-tab-pad)) 0;
-
-  &::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    left: -1px;
-    width: calc(var(--fork-inlet-tab-width) + var(--fork-inlet-fillet));
-    height: var(--fork-inlet-fillet);
-  }
-
-  &[data-side="bottom"] {
-    border-top-left-radius: 0;
-    filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
-    clip-path: inset(calc(-1 * var(--fork-inlet-fillet)) -40px -40px -40px round 12px);
-
-    &::after {
-      bottom: calc(100% + 1px);
-      background:
-        radial-gradient(
-            circle at 100% 0,
-            transparent calc(var(--fork-inlet-fillet) - 0.5px),
-            var(--fork-inlet-tab-fill) calc(var(--fork-inlet-fillet) + 0.5px)
-          )
-          right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-        linear-gradient(var(--fork-inlet-tab-fill), var(--fork-inlet-tab-fill)) left bottom /
-          var(--fork-inlet-tab-width) var(--fork-inlet-fillet) no-repeat;
-    }
-  }
-
-  &[data-side="top"] {
-    border-bottom-left-radius: 0;
-    filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
-    clip-path: inset(-40px -40px calc(-1 * var(--fork-inlet-fillet)) -40px round 12px);
-
-    &::after {
-      top: calc(100% + 1px);
-      background:
-        radial-gradient(
-            circle at 100% 100%,
-            transparent calc(var(--fork-inlet-fillet) - 0.5px),
-            var(--fork-inlet-tab-fill) calc(var(--fork-inlet-fillet) + 0.5px)
-          )
-          right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-        linear-gradient(var(--fork-inlet-tab-fill), var(--fork-inlet-tab-fill)) left top /
-          var(--fork-inlet-tab-width) var(--fork-inlet-fillet) no-repeat;
-    }
-  }
-}
-
-/* The open chip takes the shell, padded out 4px by a spread shadow whose
-   corners (5px + 4px) match the fillet, so the tab covers them exactly on
-   the menu's side. It outranks the chip's own hover / open fills. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled) {
-  background: var(--fork-inlet-model-shell);
-  box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
-  border-radius: 5px;
-}
-
-/* On Jungle Art that shell is green, so the chip's label goes white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled) {
-  color: #ffffff;
-
-  & * {
-    color: inherit;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-mode-chip] {
-    transition:
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-}
-
-/* On Jungle Art that shell is green: the permissions content is inked white
-   on it, and the mode segments become a white wash with a brighter one for
-   the chosen mode. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="menu-popup"]:has([data-composer-permissions]) {
-  --foreground: #ffffff;
-  --muted-foreground: #d2e6dc;
-  --contrast-foreground: #ffffff;
-  --contrast-muted-foreground: #d2e6dc;
-  --contrast-secondary-label: #d2e6dc;
-  --contrast-icon-muted: #d2e6dc;
-  color: #ffffff;
-
-  & [data-composer-permissions] > :not([role="group"]) {
-    color: #ffffff;
-  }
-
-  & [data-composer-permissions] > :first-child,
-  & [data-composer-permissions] > :not([role="group"]) :is(p, span, div):last-child {
-    color: #d2e6dc;
-  }
-
-  /* The mode segments in the inset language: a recessed well, each mode a
-     rounded segment set 3px into it, a faint lift on hover, and the
-     composer's cream for the chosen mode. */
-  & [data-composer-permissions] [role="group"] {
-    gap: 3px;
-    padding: 3px;
-    border-radius: 9px;
-    background: rgb(0 0 0 / 18%);
-  }
-
-  & [data-composer-permissions] [role="menuitemradio"] {
-    border-radius: 6px;
-    background: transparent;
-    color: #d2e6dc;
-  }
-
-  & [data-composer-permissions] [role="menuitemradio"]:is(:hover, [data-highlighted]) {
-    background: rgb(255 255 255 / 10%);
-    color: #ffffff;
-  }
-
-  & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
-    background: var(--fork-composer-bg);
-    color: #1c1c1a;
-  }
-}
-
-/* The composer's ghost controls (attach, the mic, the model and usage
-   buttons) hover in their own ink at 10%: theme.custom.css's dark 4% white
-   lift is invisible on Inlet's panels, and an ink wash reads on every colour. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
-  --fork-composer-control-hover: color-mix(in srgb, currentColor 10%, transparent);
-}
-
 /* ── Dictation ───────────────────────────────────────────────────────────────
    A live session sits the mic and the level timeline in one pill of the
    menus' shell, which grows out to the right as the session starts: the pill
    fades in under the mic and the timeline widens from nothing. It is the mode
    chip's height and corners, so the two read as one row. The canvas paints
    its bars in its own `color`. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-control-row-slot="left"]
   :has(> [data-fork-composer-action="dictate"]) {
@@ -1765,13 +783,6 @@
   & [data-fork-dictation-timeline] {
     margin-left: 4px;
   }
-}
-
-/* Jungle Art's shell is green, so the mic and the bars go white on it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-control-row-slot="left"]
-  [data-fork-dictation-live] {
-  color: #ffffff;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1826,6 +837,7 @@
    static tab. Here the button fills and squares its corners in step, and the
    open row's bridge runs out into the panel. One run per state change, 160ms
    on the buttons, 240ms on the bridge. Nothing loops. */
+
 @media (prefers-reduced-motion: no-preference) {
   /* What a menu or card hangs from fills and squares off in step: the chips,
      the hung-menu buttons and the details toggle. Not the tab strip's tabs:
@@ -1877,6 +889,7 @@
 /* The brand mark's literal black outline and veins sink into the dark
    frames; on a cream frame they read as a heavy cross and punched holes, so
    there they take the sidebar's dark ink. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
@@ -1888,6 +901,7 @@
 
 /* Inlet's brand lockup a step up: the mark 16 → 24px and the wordmark by the
    same 1.5, the link's 16px row growing with them. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] .sidebar-brand {
   height: 24px;
   gap: 6px;
@@ -1906,6 +920,7 @@
 /* Inlet draws filled icons (custom/icons/lucide-phosphor.tsx picks Phosphor's
    fill weight); the hand-drawn worktree mark has no fill weight, so its
    duotone wash goes solid instead. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   svg.lucide-worktree
   [opacity="0.2"] {
@@ -1916,6 +931,7 @@
    project, Usage, Automations) are black at 65%, under their full-ink
    labels. Settings' nav reuses the rows: on Jungle Art it is cream too, but
    on Cream it sits on the dark panel and keeps the panel's icon ink. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-fork-chrome-row]
   svg,
@@ -1928,6 +944,7 @@
 
 /* The footer's icons (Settings, Pull Requests) ink from
    --sidebar-icon-color, which the frame's palette tints green; same 65%. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
@@ -1939,685 +956,9 @@
 /* Inlet's chat header carries no breadcrumb (project / thread title): the
    open row says which thread this is. Hidden rather than removed, so the
    header keeps its height and its window-drag area. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-header]
   nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input)) {
   visibility: hidden;
-}
-
-/* The thread details card rides up to just under its toggle, so the join is
-   a short neck rather than the header's lower half: the card's top 4px below
-   the button. The popover sits 8px below the header and the inline card
-   12px, and the button's foot is half the row less half the button above
-   the header's, so each lifts by that sum less the 4px. Not while the find
-   bar pushes the card down, as the join itself. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
-  --fork-inlet-details-gap: 4px;
-  --fork-inlet-details-rise: calc(
-    (var(--workspace-topbar-height, 52px) - var(--workspace-titlebar-control-size, 28px)) / 2 -
-      var(--fork-inlet-details-gap)
-  );
-}
-
-/* The popover is portaled out of the column, so it is keyed on itself. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-thread-details-panel="popover"]
-  > [data-thread-details-card] {
-  translate: 0 calc(-1 * (var(--fork-inlet-details-rise) + 8px));
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
-  [data-thread-details-panel="inline"]
-  > [data-thread-details-card] {
-  translate: 0 calc(-1 * (var(--fork-inlet-details-rise) + 12px));
-}
-
-/* The same two-selector list as the join's own rule above, so the neck's
-   height overrides it at equal specificity. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
-  [data-fork-panel-toggle]
-  > [data-pressed]:not([aria-expanded]),
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
-  [data-fork-panel-toggle]
-  > [aria-expanded="true"] {
-  &::after {
-    height: calc(var(--fork-inlet-details-gap) + 1px);
-  }
-}
-
-/* ── One-shape menus ─────────────────────────────────────────────────────────
-   Every hung menu draws itself, its button and the tab between them as one
-   morphing path on its own layer (custom/inletMenuMorph.ts). The detect
-   animation below announces each popup as it opens; the controller then
-   stamps data-fork-morph on the popup and its glass box and
-   data-fork-morphing on the button while it runs. The glass keeps only its
-   content and the button only its face; the path is everything else, so the
-   !important beats every colour's own menu and button fills. A menu's
-   translate stays: it places the menu, and the path is measured from it. */
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      [data-slot="menu-popup"]:is(
-        [data-fork-tab-menu],
-        [data-fork-chip-menu],
-        :has([data-composer-permissions])
-      ),
-      [data-slot="popover-popup"][data-fork-tab-menu],
-      [data-slot="popover-popup"]:has([data-thread-details-card]),
-      [data-thread-details-panel="inline"],
-      [data-slot="select-popup"][data-fork-chip-menu],
-      [data-slot="combobox-popup"][data-fork-chip-menu]
-    ):is([data-open]):not([data-fork-morph="on"]) {
-    /* On every open, not just on mount: a popup can be reused. */
-    animation: fork-inlet-morph-detect 1ms;
-
-    /* The detect event lands a frame after the popup paints; until the
-       controller claims it, it is unseen, unless it gave up on it ("failed"). */
-    &:not([data-fork-morph="failed"]) {
-      opacity: 0;
-    }
-  }
-
-  /* A tab's "…" menu (custom/anchoredContextMenu.ts) is a new element on
-     every open and carries no data-open. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-context-menu][data-fork-anchored-menu]:not([data-fork-morph]) {
-    animation: fork-inlet-morph-detect 1ms;
-    opacity: 0;
-  }
-
-  /* A combobox paints from the glass box round its popup. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    .dropdown-glass:has(
-      > [data-slot="combobox-popup"][data-fork-chip-menu][data-open]:not(
-          [data-fork-morph="on"],
-          [data-fork-morph="failed"]
-        )
-    ) {
-    opacity: 0;
-  }
-
-  /* The details card is morphed too, as a popover or docked, so its toggle
-     drops the stylesheet's own fill and join (kept under reduced motion, and
-     for a card the morph gave up on); the shape draws both, wherever the
-     button sits along the card. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]:not(
-      :has(
-        [data-slot="popover-popup"][data-fork-morph="failed"] [data-thread-details-card],
-        [data-thread-details-panel="inline"][data-fork-morph="failed"]
-      )
-    )
-    [data-fork-panel-toggle]
-    > :is([aria-expanded="true"], [data-fork-details-toggle][aria-pressed="true"]) {
-    background-color: transparent !important;
-
-    &::after {
-      display: none !important;
-    }
-  }
-
-  @keyframes fork-inlet-morph-detect {
-    from,
-    to {
-      outline-color: transparent;
-    }
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-morph="on"] {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  filter: none !important;
-  clip-path: none !important;
-  scale: none !important;
-  transition: none !important;
-
-  &::before,
-  &::after {
-    display: none !important;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-morphing]:is([aria-expanded="true"], [aria-pressed="true"]) {
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* ── Tooltips ────────────────────────────────────────────────────────────────
-   A tooltip grows a nub toward what it describes: the body's edge curves out
-   through two concave corners into a tapering neck with a rounded tip. The nub
-   is Base UI's arrow (components/ui/tooltip.tsx, hidden elsewhere), which
-   Base UI slides along the edge to sit opposite the trigger; it is masked to
-   the shape in the tooltip's own fill, sized per axis so Base UI measures
-   the box it draws. The tooltip stands off by exactly its depth (the fenced
-   sideOffset in components/ui/tooltip.tsx), so the tip meets the trigger. The row hover card keeps its own tab. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
-  --fork-inlet-nub-width: 44px;
-  /* components/ui/tooltip.tsx's FORK_TOOLTIP_NUB_DEPTH. */
-  --fork-inlet-nub-depth: 7px;
-  --fork-inlet-tooltip: var(--popover);
-  --fork-inlet-tooltip-foreground: var(--popover-foreground);
-}
-
-/* Jungle Art's tooltips are its menus' green, inked white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
-  --fork-inlet-tooltip: var(--fork-inlet-model-shell);
-  --fork-inlet-tooltip-foreground: #ffffff;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]) {
-  --popover-foreground: var(--fork-inlet-tooltip-foreground);
-  --foreground: var(--fork-inlet-tooltip-foreground);
-  --contrast-foreground: var(--fork-inlet-tooltip-foreground);
-  --contrast-popover-foreground: var(--fork-inlet-tooltip-foreground);
-  border-color: transparent;
-  background: var(--fork-inlet-tooltip);
-  color: var(--fork-inlet-tooltip-foreground);
-  /* Pill-round like the composer's chips (half its one-line height), and a
-     step roomier than upstream's 4 / 8px. */
-  border-radius: 14px;
-
-  & [data-slot="tooltip-viewport"] {
-    padding: 6px 12px;
-  }
-
-  & [data-fork-tooltip-nub] {
-    display: block;
-    pointer-events: none;
-    background: var(--fork-inlet-tooltip);
-  }
-
-  & :is([data-side="top"], [data-side="bottom"])[data-fork-tooltip-nub] {
-    width: var(--fork-inlet-nub-width);
-    height: calc(var(--fork-inlet-nub-depth) + 1px);
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 330 135' preserveAspectRatio='none'%3E%3Cpath d='M0 0C70 0 100 20 118 55C130 82 140 135 165 135C190 135 200 82 212 55C230 20 260 0 330 0Z'/%3E%3C/svg%3E")
-      center / 100% 100% no-repeat;
-  }
-
-  /* Beside its trigger the pill's end is all curve, with no flat edge for the
-     nub's shoulders, so a side tooltip goes without one. */
-  & :is([data-side="left"], [data-side="right"])[data-fork-tooltip-nub] {
-    display: none;
-  }
-
-  & [data-side="top"][data-fork-tooltip-nub] {
-    top: calc(100% - 1px);
-  }
-
-  & [data-side="bottom"][data-fork-tooltip-nub] {
-    bottom: calc(100% - 1px);
-    rotate: 180deg;
-  }
-}
-
-/* The model menu's on/off traits: unchecked, the box is only an outline in the
-   menu's ink at 24%, not a well of --background sunk into the shell. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="menu-popup"]:has([data-fork-model-picker])
-  [data-slot="checkbox"]:not([data-checked]) {
-  border-color: color-mix(in srgb, currentColor 24%, transparent);
-  background: transparent;
-  box-shadow: none;
-
-  &::before {
-    box-shadow: none;
-  }
-}
-
-/* Tooltips grow out of their nub, in the hung menus' easing: a circle
-   opening from Base UI's transform origin (the point the nub aims at) with a
-   slight scale from the same point; leaving, they fold back into it faster.
-   data-instant (gliding between tooltips) skips it, as upstream's does. */
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not([data-instant]) {
-    clip-path: circle(150% at var(--transform-origin));
-    transition:
-      clip-path 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      scale 240ms cubic-bezier(0.32, 0.72, 0, 1),
-      opacity 120ms ease-out;
-
-    &:is([data-starting-style], [data-ending-style]) {
-      clip-path: circle(0 at var(--transform-origin));
-      scale: 0.9;
-      opacity: 1;
-    }
-
-    &[data-ending-style] {
-      transition-duration: 140ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
-    }
-  }
-}
-
-/* The project strip's new-agent buttons wear a soft fill at rest, a step
-   firmer on hover: ink at 8% / 12% over the frame. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-recent-project] {
-  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
-
-  &:hover {
-    background: color-mix(in srgb, var(--sidebar-foreground) 12%, transparent);
-  }
-}
-
-/* Jungle Art's send button takes the green the model menu and the open
-   controls hang in, inked white, rather than dark mode's flat white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
-  background: var(--fork-inlet-model-shell);
-  color: #ffffff;
-
-  &:is(:hover, [data-pressed]):not(:disabled) {
-    background: color-mix(in srgb, #000000 10%, var(--fork-inlet-model-shell));
-  }
-}
-
-/* The usage meter steps aside for the model menu's padded fill in step with
-   the morph. The meter is also the usage popover's button, so the
-   button-fill transition above would otherwise replace its translate; one
-   list carries both. Out on the open's curve; back only once the button's
-   fill starts fading (about 190ms into the 280ms close), so the two never
-   meet. */
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-model-controls]
-    [data-fork-composer-usage-limits] {
-    transition:
-      translate 220ms cubic-bezier(0.37, 0, 0.63, 1) 190ms,
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
-    [data-fork-composer-usage-limits] {
-    transition:
-      translate 300ms cubic-bezier(0.33, 1, 0.68, 1),
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-}
-
-/* Jungle Art's reasoning slider in the inset language of the mode menu's
-   segments: a recessed well, the fill a faint lift inside it, and the thumb
-   a cream pill set 3px into the well. The thumb's box keeps its 20px, so the
-   slider's own positioning holds; its padding insets the cream instead, and
-   the fill's tip is clipped to stay under that narrower pill. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-  & :has(> [data-fork-effort-track]) {
-    height: 30px;
-  }
-
-  & [data-fork-effort-track] {
-    /* 28px less the 3px inset each side: a 22px cream pill. */
-    --fork-effort-thumb-width: 28px;
-    height: 30px;
-    border-radius: 9px;
-    background: rgb(0 0 0 / 18%);
-  }
-
-  & [data-fork-effort-fill] {
-    inset-block: 3px;
-    left: 3px;
-    border-radius: 6px;
-    background: rgb(255 255 255 / 10%);
-    clip-path: inset(0 9px 0 0);
-  }
-
-  & [data-fork-effort-thumb] {
-    height: 30px;
-    padding: 3px;
-    border-radius: 9px;
-    background: var(--fork-composer-bg);
-    background-clip: content-box;
-    box-shadow: none;
-
-    &:focus-visible {
-      box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
-    }
-  }
-}
-
-/* Jungle Art's details card is cream: the dark palettes' row lift (white 4%)
-   vanishes on it and their section hairline (the composer's light border)
-   reads as a white rule. A black lift, which still stacks on split rows, and
-   the card's own border instead. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-thread-details-card] {
-  --fork-outline-hover-bg: rgb(0 0 0 / 5%);
-  --fork-composer-border: var(--border);
-}
-
-/* Jungle Art's docked right panel is a stage of its own, set into the frame
-   like the chat column, and shows the same picture: both pin it to the window
-   (background-attachment: fixed), so one image runs across the two stages
-   through the frame between them. The stage is the panel's content wrapper,
-   not the panel, because the panel collapses to no width when closed and a
-   margin on it would leave a gap; the content inside, pinned to the panel's
-   width, gives back the margin. It dims further once the chat column's
-   thread has messages, as the column does. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-preview-panel-mode="inline"] {
-  border-width: 0;
-  background: transparent;
-
-  & > :last-child {
-    --background: #1e5f46;
-    /* The panel's own light inks: the launcher's rows set no colour and would
-       inherit a dark one from the frame round them. */
-    --foreground: var(--fork-inlet-panel-foreground);
-    --muted-foreground: var(--fork-inlet-panel-muted);
-    --contrast-foreground: var(--fork-inlet-panel-foreground);
-    --contrast-muted-foreground: var(--fork-inlet-panel-muted);
-    --contrast-secondary-label: var(--fork-inlet-panel-muted);
-    --contrast-icon-muted: var(--fork-inlet-panel-muted);
-    color: var(--fork-inlet-panel-foreground);
-    width: auto;
-    margin: var(--fork-inlet-margin) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
-    overflow: clip;
-    border-radius: var(--fork-inlet-radius);
-    /* Quieter than the chat column's empty state: the panel holds controls
-       and text from the start, so the picture sits under 72% deep green. */
-    background:
-      linear-gradient(rgb(30 95 70 / 72%), rgb(30 95 70 / 72%)),
-      url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-      #1e5f46;
-  }
-
-  & > :last-child > [style*="--resizable-width"] {
-    width: calc(var(--resizable-width) - var(--fork-inlet-margin)) !important;
-  }
-
-  &[data-preview-panel-maximized="true"] > :last-child {
-    margin-left: var(--fork-inlet-margin);
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away] [data-timeline-row-kind])
-  [data-preview-panel-mode="inline"]
-  > :last-child {
-  background:
-    linear-gradient(rgb(30 95 70 / 85%), rgb(30 95 70 / 85%)),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-    #1e5f46;
-}
-
-/* Jungle Art's icon buttons over the picture (the window's panel toggles and
-   the right panel's add button) sit on a light wash so they read against
-   it; hover lifts the wash, and a pressed one is the menus' cream, inked
-   dark. An open popover's toggle is the morph's to fill. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is(
-    [data-workspace-titlebar-controls] :is([data-slot="toggle"], button),
-    [data-right-panel-tabbar] [aria-label="Add panel surface"]
-  ) {
-  background-color: rgb(255 255 255 / 14%);
-  color: #ffffff;
-  /* The picture is busy behind a 28px button; softening it is what lets the
-     glyph read. Static, so the blur costs nothing per frame. */
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-
-  &:hover:not(:disabled) {
-    background-color: rgb(255 255 255 / 24%);
-  }
-
-  &:is([data-pressed], [aria-pressed="true"]):not([aria-expanded="true"]) {
-    background-color: var(--fork-composer-vessel-bg);
-    color: #1c1c1a;
-  }
-}
-
-/* The details card is lifted toward its toggle (above); in popover mode it
-   sits in Base UI's popover viewport, which scrolls on the y axis and so
-   clipped the lifted top. The card scrolls itself, so the viewport need not. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="popover-viewport"]:has([data-thread-details-panel="popover"]) {
-  overflow: visible;
-}
-
-/* The column moves the window-pinned controls in and down with the panel
-   (--workspace-controls-top, above), but a header-anchored control (the
-   details toggle an inline right panel leaves in the header) is placed in
-   the header itself, which already sits inside the panel: it keeps the
-   header's own top, or it lands 12px low and overlaps the card it opens. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-chat-column-maximized-away]
-  [data-fork-header-anchored-controls] {
-  --workspace-controls-top: 0px;
-}
-
-/* Jungle Art's sidebar Update pill is the green the send button and the open
-   controls take, inked white, not dark mode's flat white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-update-label] {
-  background: var(--fork-inlet-model-shell);
-  color: #ffffff;
-
-  &:hover:not([aria-disabled="true"]) {
-    background: color-mix(in srgb, #000000 10%, var(--fork-inlet-model-shell));
-  }
-}
-
-/* ── Tab strip: connective tabs ──────────────────────────────────────────────
-   The open thread's tab is the stage it opens, as a browser's tab is its
-   page: it takes the panel's face, goes square at its foot, and a neck
-   carries the face down to the panel's top edge with a concave corner either
-   side. The neck spans the strip's empty foot: half the row less half the
-   tab, plus the panel's margin, less what the panel tucks under the strip.
-   The nav clips its tabs sideways only, so the neck can leave it, and the
-   strip sits over the panes, whose frame-coloured wrapper would cover it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-thread-tabs] {
-  --fork-inlet-tab-face: var(--sidebar-row-active);
-  /* The neck: half the row less half the 28px tab, plus the panel's margin,
-     less what the panel tucks under the strip. The concave corners are wider
-     than that short gap, as a browser tab's flare is: each starts partway up
-     the tab's side and sweeps out onto the panel's edge, a true quarter circle
-     tangent to both, rising beside the tab's foot. */
-  --fork-inlet-tab-neck-h: calc(
-    (var(--workspace-topbar-height) - 28px) / 2 + var(--fork-inlet-margin) -
-      var(--fork-thread-tabs-overlap, 0px)
-  );
-  --fork-inlet-tab-fillet: 18px;
-  position: relative;
-  z-index: 2;
-
-  /* Clipped at the row's sides, but the band the flares rise in (one fillet
-     less the neck, plus the nav's 4px foot) reaches a fillet past them, so
-     the first and last tabs keep their outer flare. */
-  & > nav {
-    --fork-inlet-tab-flare-band: calc(
-      var(--fork-inlet-tab-fillet) - var(--fork-inlet-tab-neck-h) + 4px
-    );
-    overflow: visible;
-    clip-path: polygon(
-      0 -8px,
-      100% -8px,
-      100% calc(100% - var(--fork-inlet-tab-flare-band)),
-      calc(100% + var(--fork-inlet-tab-fillet)) calc(100% - var(--fork-inlet-tab-flare-band)),
-      calc(100% + var(--fork-inlet-tab-fillet)) calc(100% + 40px),
-      calc(-1 * var(--fork-inlet-tab-fillet)) calc(100% + 40px),
-      calc(-1 * var(--fork-inlet-tab-fillet)) calc(100% - var(--fork-inlet-tab-flare-band)),
-      0 calc(100% - var(--fork-inlet-tab-flare-band))
-    );
-  }
-
-  & [data-fork-thread-tab][data-active="true"] {
-    border-radius: 10px 10px 0 0;
-    /* The face is its own layer under the label, so it can rise into the tab
-       (below) without clipping the label; isolate keeps it above the strip. */
-    background: transparent;
-    isolation: isolate;
-
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      border-radius: inherit;
-      background: var(--fork-inlet-tab-face);
-    }
-
-    &::after {
-      content: "";
-      position: absolute;
-      pointer-events: none;
-      /* Rises one fillet beside the tab's foot; the strip under the tab is only
-         the neck. Each corner runs 1px into the panel and the tab, which share
-         its fill, so its antialiased edge sits on the true curve. */
-      top: calc(100% + var(--fork-inlet-tab-neck-h) - var(--fork-inlet-tab-fillet));
-      left: calc(-1 * var(--fork-inlet-tab-fillet));
-      right: calc(-1 * var(--fork-inlet-tab-fillet));
-      height: calc(var(--fork-inlet-tab-fillet) + 1px);
-      background: var(--fork-inlet-tab-neck, var(--fork-inlet-tab-face));
-      mask:
-        radial-gradient(
-            circle var(--fork-inlet-tab-fillet) at 0 0,
-            transparent calc(var(--fork-inlet-tab-fillet) - 0.5px),
-            #000 calc(var(--fork-inlet-tab-fillet) + 0.5px)
-          )
-          left bottom / calc(var(--fork-inlet-tab-fillet) + 1px)
-          calc(var(--fork-inlet-tab-fillet) + 1px) no-repeat,
-        radial-gradient(
-            circle var(--fork-inlet-tab-fillet) at 100% 0,
-            transparent calc(var(--fork-inlet-tab-fillet) - 0.5px),
-            #000 calc(var(--fork-inlet-tab-fillet) + 0.5px)
-          )
-          right bottom / calc(var(--fork-inlet-tab-fillet) + 1px)
-          calc(var(--fork-inlet-tab-fillet) + 1px) no-repeat,
-        linear-gradient(#000, #000) center bottom / calc(100% - 2 * var(--fork-inlet-tab-fillet))
-          calc(var(--fork-inlet-tab-neck-h) + 1px) no-repeat;
-    }
-  }
-}
-
-/* Jungle Art's open tab is solid green, not the picture: a tab switch
-   repaints it at once, with no picture to decode. The stage under the strip
-   starts in that green and fades into its picture, so the join has no seam;
-   the tab is the stage's top, so its left-edge fade is dropped. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-thread-tabs] {
-  --fork-inlet-tab-face: #2b7d5d;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-thread-tabs]
-  + [data-fork-thread-panes]
-  [data-chat-column-maximized-away] {
-  --fork-inlet-jungle-edge: none;
-  --fork-inlet-jungle-top: linear-gradient(
-      #2b7d5d,
-      #2b7d5d 6px,
-      rgb(43 125 93 / 78%) 40px,
-      rgb(43 125 93 / 42%) 90px,
-      rgb(43 125 93 / 14%) 140px,
-      rgb(43 125 93 / 0%) 180px
-    )
-    top / 100% 180px no-repeat;
-}
-
-/* ── The collapsed sidebar's peek card, hung from its toggle ─────────────────
-   The card (fork-sidebar-peek) is the frame's colour. While it is open the
-   toggle is its tab: the card's fill padded 4px round the button, square at
-   its foot; the card drops 4px below the button (the padding's depth), its
-   left edge on the padded fill's, square at that corner, and a concave corner
-   runs from the fill's right side into the card's top. That replaces the
-   shared card's triangle tail and outline. The toggle's tooltip would sit over
-   the tab strip beside it, so it steps aside while the card is out. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
-  --fork-inlet-frame-ink: #e8e8e8;
-  /* The card is a step off the frame, so it reads as its own piece over it. */
-  --fork-inlet-peek-fill: color-mix(
-    in srgb,
-    var(--app-chrome-background) 92%,
-    var(--fork-inlet-frame-ink)
-  );
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  ) {
-  --fork-inlet-frame-ink: #1c1c1a;
-  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle-light"]
-  ) {
-  --fork-inlet-frame-ink: #ffffff;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"] {
-  --fork-inlet-peek-pad: 4px;
-  --fork-peek-radius: var(--fork-inlet-menu-radius);
-  /* The shared card sits tail + 1px below the toggle: 3px here makes the 4px. */
-  --fork-peek-tail-height: 3px;
-  --fork-peek-left: calc(var(--workspace-controls-left) + 1px - var(--fork-inlet-peek-pad));
-
-  & [data-sidebar-peek-trigger] {
-    background-color: var(--fork-inlet-peek-fill);
-    border-color: transparent;
-    color: var(--fork-inlet-frame-ink);
-    border-radius: var(--control-radius) var(--control-radius) 0 0;
-    box-shadow: 0 0 0 var(--fork-inlet-peek-pad) var(--fork-inlet-peek-fill);
-
-    & svg {
-      color: var(--fork-inlet-frame-ink);
-    }
-  }
-
-  &
-    [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
-    [data-slot="sidebar-container"] {
-    border-top-left-radius: 0;
-    --sidebar: var(--fork-inlet-peek-fill);
-    --background: var(--fork-inlet-peek-fill);
-    --card: var(--fork-inlet-peek-fill);
-    --sidebar-stage-fade: var(--fork-inlet-peek-fill);
-
-    /* The concave corner, where the tail was. */
-    &::before {
-      top: calc(-1 * var(--fork-inlet-fillet));
-      left: calc(var(--workspace-titlebar-control-size) + 2 * var(--fork-inlet-peek-pad));
-      width: var(--fork-inlet-fillet);
-      height: var(--fork-inlet-fillet);
-      background: radial-gradient(
-        circle at 100% 0,
-        transparent calc(var(--fork-inlet-fillet) - 0.5px),
-        var(--fork-inlet-peek-fill) calc(var(--fork-inlet-fillet) + 0.5px)
-      );
-    }
-
-    /* No outline, and a lift that falls below the card, never up onto the
-       tab. */
-    &::after {
-      border-color: transparent;
-      box-shadow: 0 18px 32px -12px rgb(0 0 0 / 0.3);
-      mask-image: none;
-    }
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:has(
-    [data-fork-sidebar-peek="open"]
-  )
-  [data-fork-peek-tooltip] {
-  display: none;
 }

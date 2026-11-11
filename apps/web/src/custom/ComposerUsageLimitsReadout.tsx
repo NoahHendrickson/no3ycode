@@ -33,7 +33,7 @@ export const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReado
     >
       <PopoverTrigger
         data-fork-composer-usage-limits="true"
-        // Inlet hangs the readout from this button (theme.custom.inlet.css).
+        // Inlet hangs the readout from this button (theme.custom.inlet-menus.css).
         data-fork-tab-trigger=""
         aria-label={`${session.label} limit: ${remaining}% left. Show usage limits`}
         className="flex shrink-0 cursor-pointer items-center outline-none focus-visible:ring-2 focus-visible:ring-ring"

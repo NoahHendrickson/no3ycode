@@ -1,0 +1,770 @@
+/* Inlet's picture colours — see `.fork/customizations.yaml#fork-inlet-theme`.
+
+   Jungle Art and Jungle Light, and every rule that restates a shared surface
+   for Jungle Art alone (its cream menus, its green menu shell, the user's
+   bubble). Imported last of the three Inlet files so these follow the rules
+   they restate, and kept in their original order among themselves: several
+   override one another at equal specificity. */
+
+/* ── Jungle Art (Figma 630:10946) ────────────────────────────────────────────
+   The panel is a picture: the art at 60% over #248f6b, under a fade to the
+   frame's green behind the composer. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away] {
+  --background: #248f6b;
+  /* The left edge fades from the open row's green, so its bridge runs into
+     solid fill before the art. Top layer of either background below. */
+  --fork-inlet-jungle-edge: linear-gradient(
+    to right,
+    #4a9975,
+    #4a9975 4px,
+    rgb(74 153 117 / 82%) 40px,
+    rgb(74 153 117 / 58%) 90px,
+    rgb(74 153 117 / 34%) 150px,
+    rgb(74 153 117 / 14%) 220px,
+    rgb(74 153 117 / 0%) 300px
+  );
+  background:
+    var(--fork-inlet-jungle-top, none),
+    var(--fork-inlet-jungle-edge),
+    linear-gradient(rgb(33 131 92 / 0%) 19.712%, rgb(27 124 85 / 80%) 95.833%) bottom / 100% 462px
+      no-repeat,
+    linear-gradient(rgb(36 143 107 / 40%), rgb(36 143 107 / 40%)),
+    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
+    #248f6b;
+}
+
+/* Once the thread has a transcript the art steps back under the stage's
+   deep green, so the transcript's white ink reads over it: 15% of it shows
+   from halfway down, more toward the top, where the canopy is. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away]:has([data-timeline-row-kind]) {
+  background:
+    var(--fork-inlet-jungle-top, none),
+    var(--fork-inlet-jungle-edge),
+    linear-gradient(rgb(30 95 70 / 0%) 19.712%, rgb(30 95 70 / 60%) 95.833%) bottom / 100% 462px
+      no-repeat,
+    linear-gradient(rgb(30 95 70 / 62%), rgb(30 95 70 / 85%) 50%),
+    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
+    #1e5f46;
+}
+
+/* The header, the transcript's area, the new-thread timeline and the fade
+   behind the composer all paint --background; the picture shows through them
+   instead. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away]
+  :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
+  background-color: transparent;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away]
+  [data-chat-composer-overlay] {
+  background-image: none;
+}
+
+/* Settings and the other app modals, and the utility pages (Usage,
+   Automations), are cream, inked dark like the sidebar. The stage is dark, so
+   the contrast inks (computed at :root from its white) and the status tones (dark mode's pale shades) are
+   restated, and primary actions take the accent green. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is([data-app-modal], [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+  --background: #f6f4e4;
+  --foreground: #1c1c1a;
+  --card: #e8e6cf;
+  --card-foreground: #1c1c1a;
+  --primary: #21835c;
+  --primary-foreground: #ffffff;
+  --ring: #21835c;
+  --secondary: #e6e4cd;
+  --secondary-foreground: #1c1c1a;
+  --muted: #e6e4cd;
+  --muted-foreground: #55544c;
+  --placeholder: #55544c;
+  --secondary-label: #55544c;
+  --icon-muted: #55544c;
+  --accent: #e6e4cd;
+  --accent-foreground: #1c1c1a;
+  --border: #dfddc7;
+  --input: #d4d2bc;
+  --contrast-foreground: #1c1c1a;
+  --contrast-card-foreground: #1c1c1a;
+  --contrast-muted-foreground: #55544c;
+  --contrast-placeholder: #55544c;
+  --contrast-secondary-label: #55544c;
+  --contrast-icon-muted: #55544c;
+  --contrast-accent-foreground: #1c1c1a;
+  --contrast-secondary-foreground: #1c1c1a;
+  --contrast-border: #dfddc7;
+  --contrast-input: #d4d2bc;
+  --color-emerald-300: #047857;
+  --color-teal-300: #0f766e;
+  --color-violet-300: #6d28d9;
+  --color-red-300: #b91c1c;
+  --color-amber-400: #b45309;
+  /* Settings' nav column is the frame's cream beside the page's lighter one. */
+  --sidebar: #f2f0d8;
+  --sidebar-foreground: #1c1c1a;
+  --sidebar-muted-foreground: #55544c;
+  --sidebar-border: #dfddc7;
+  --sidebar-icon-color: #55544c;
+  --sidebar-row-hover: #e8e6cf;
+  --sidebar-row-active: #e3e1cb;
+  --sidebar-row-selected: #e3e1cb;
+  --contrast-sidebar-foreground: #1c1c1a;
+  --contrast-sidebar-muted-foreground: #55544c;
+  --contrast-sidebar-border: #dfddc7;
+  color: var(--foreground);
+
+  /* Segmented tabs: a recessed well with the pick lifted out of it; their
+     `dark:` washes assume a dark page. */
+  & [data-fork-segmented-tabs] {
+    background-color: #e3e1cb;
+  }
+
+  & [data-fork-segmented-tab][data-pressed] {
+    background-color: #fdfcf5;
+    color: #1c1c1a;
+  }
+}
+
+/* On the utility pages the whole stage is the open row's green, out to the
+   window's edges, so the lit row runs into it; the page is a frame-cream card
+   set into it, the frame's gap of green on every side. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
+  background: var(--fork-inlet-panel);
+  /* Its sidebar-side corners round off against the frame, concentric with
+     the card's 8px ones; the window's edge squares the others. */
+  border-radius: calc(var(--fork-inlet-radius) + var(--fork-inlet-margin)) 0 0
+    calc(var(--fork-inlet-radius) + var(--fork-inlet-margin));
+}
+
+/* The body behind it is green as well, so the frame shows in those corners
+   only if the wrapper paints it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="sidebar-wrapper"]:has(> [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+  background: var(--fork-inlet-frame);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="sidebar-inset"]
+  > [data-fork-stage-card] {
+  --background: #f2f0d8;
+  background: var(--background);
+}
+
+@media (min-width: 768px) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
+      [data-fork-sidebar-overlay="true"]
+    ):has([data-slot="sidebar-inset"] > [data-fork-stage-card])
+    [data-slot="sidebar-inset"]
+    > [data-fork-stage-card] {
+    margin-left: var(--fork-inlet-margin);
+  }
+}
+
+/* Jungle Art, Cream and Black draw rows as pills; the open one stays square
+   where it joins the panel. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="jungle"],
+    [data-fork-inlet-color="cream"],
+    [data-fork-inlet-color="black"]
+  )
+  [data-sidebar-version="v2"]
+  [data-testid="sidebar-row-card"] {
+  border-radius: 9999px;
+
+  &[aria-current="page"] {
+    border-radius: 9999px 0 0 9999px;
+  }
+}
+
+/* Green's cream composer over the picture, inked dark. The contrast inks are
+   computed once at :root from the stage's white, so the vessel restates
+   them. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-vessel] {
+  --foreground: #1c1c1a;
+  --muted-foreground: rgb(0 0 0 / 65%);
+  --placeholder: rgb(0 0 0 / 65%);
+  --contrast-foreground: #1c1c1a;
+  --contrast-muted-foreground: rgb(0 0 0 / 65%);
+  --contrast-placeholder: rgb(0 0 0 / 65%);
+  --contrast-secondary-label: rgb(0 0 0 / 65%);
+  --contrast-icon-muted: rgb(0 0 0 / 65%);
+  --fork-composer-control-ink: #1c1c1a;
+  color: var(--foreground);
+
+  /* The primary action ("Submit answer") reads Tailwind's root-resolved
+     primary, the stage's pale one; Green's dark button instead. */
+  & [data-fork-pending-user-input-action="advance"] {
+    background: #1c1c1a;
+    color: #ffffff;
+  }
+
+  & [data-fork-composer-usage-limits] span:has(> span) {
+    background: rgb(0 0 0 / 32%);
+  }
+
+  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
+    background: #faf9f0;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  color: #1c1c1a;
+}
+
+/* On Jungle Art the rail is green, so a hovered provider lifts with white
+   rather than the menus' cream accent. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-model-picker="providers"]
+  [data-model-picker-provider]:not([aria-current="true"]):is(:hover, [data-highlighted]) {
+  background: rgb(255 255 255 / 8%);
+}
+
+/* Jungle Art's menus are its sidebar's hover cream with the sidebar's ink,
+   not the stage's green: inside them the stage's light inks are restated. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is(
+    :is(
+      [data-slot="menu-popup"],
+      [data-slot="menu-sub-content"],
+      [data-slot="popover-popup"],
+      [data-slot="tooltip-popup"],
+      [data-slot="dialog-popup"]
+    ).dropdown-glass,
+    [data-slot="select-popup"] > .dropdown-glass,
+    .dropdown-glass:has(> [data-slot="combobox-popup"]),
+    [data-thread-details-card].dropdown-glass
+  ) {
+  --foreground: #1c1c1a;
+  --muted-foreground: #68675d;
+  --accent: #dddbc3;
+  --accent-foreground: #1c1c1a;
+  --muted: #dddbc3;
+  --secondary: #dddbc3;
+  --secondary-foreground: #1c1c1a;
+  --border: #d4d2b9;
+  --input: #d4d2b9;
+  --contrast-foreground: #1c1c1a;
+  --contrast-popover-foreground: #1c1c1a;
+  --contrast-muted-foreground: #68675d;
+  --contrast-secondary-label: #68675d;
+  --contrast-icon-muted: #68675d;
+  /* A search field's placeholder, icon and focus line, as on the cream composer. */
+  --placeholder: rgb(0 0 0 / 65%);
+  --contrast-placeholder: rgb(0 0 0 / 65%);
+  --ring: #1c1c1a;
+  /* Status tones pair a deep light-mode shade with a pale dark: one
+     (text-emerald-600 dark:text-emerald-300/90); the page is dark, so the pale
+     one wins and fades into the cream. The pale shades stand for the deep. */
+  --color-emerald-300: #047857;
+  --color-teal-300: #0f766e;
+  --color-amber-400: #b45309;
+  border-color: var(--border);
+  color: var(--popover-foreground);
+
+  /* The Cursor mark's dark fill is near-white. */
+  & .dark\:fill-\[\#EDECEC\] {
+    fill: #26251e;
+  }
+
+  & .lucide-search {
+    color: var(--placeholder);
+  }
+}
+
+/* The user's bubble is the composer's cream, inked dark, not the stage's
+   green card (theme.custom.css paints .bg-message with --card on dark). */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away]
+  .bg-message {
+  --foreground: #1c1c1a;
+  --muted-foreground: #68675d;
+  --contrast-foreground: #1c1c1a;
+  --contrast-message-foreground: #1c1c1a;
+  --contrast-muted-foreground: #68675d;
+  --contrast-secondary-label: #68675d;
+  --contrast-icon-muted: #68675d;
+  background-color: var(--fork-composer-vessel-bg);
+  color: #1c1c1a;
+}
+
+/* ── Jungle Light ────────────────────────────────────────────────────────────
+   Jungle Art inside out: Green's stage and tokens, with the art behind the
+   frame instead of the panel, faded well into Green's frame so the
+   sidebar's white ink still reads. Painted once on the wrapper so it runs
+   unbroken under the sidebar and round the panel; the three surfaces that
+   paint the frame's colour over it step aside. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
+  [data-slot="sidebar-wrapper"] {
+  --sidebar-stage-fade: transparent;
+  background:
+    linear-gradient(rgb(33 131 92 / 78%), rgb(33 131 92 / 78%)),
+    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat,
+    #21835c;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
+  [data-slot="sidebar-wrapper"]
+  :is(
+    [data-slot="sidebar-inner"],
+    [data-slot="sidebar-inset"],
+    :has(> [data-chat-column-maximized-away])
+  ) {
+  background-color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-fork-composer-model-controls]
+    [data-fork-composer-usage-limits] {
+    transition: translate 160ms ease-out;
+  }
+
+  /* The button fills in step with it, from the composer's control wash. */
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    :is(
+      [data-chat-provider-model-picker],
+      [data-fork-composer-usage-limits]
+    )[data-fork-tab-trigger] {
+    transition:
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+}
+
+/* Jungle Art's model menu is the open row's green (its --fork-inlet-model-
+   shell) with the cream list set into it, so what sits on the shell (the
+   rail, the effort controls) and the open button take white ink; the list
+   keeps the menus' dark ink. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+  --foreground: #ffffff;
+  --muted-foreground: #d2e6dc;
+  --contrast-foreground: #ffffff;
+  --contrast-muted-foreground: #d2e6dc;
+  --contrast-secondary-label: #d2e6dc;
+  --contrast-icon-muted: #d2e6dc;
+  --border: rgb(255 255 255 / 24%);
+  --input: rgb(255 255 255 / 24%);
+  color: #ffffff;
+
+  & [data-fork-model-picker="list"] {
+    --foreground: #1c1c1a;
+    --muted-foreground: #68675d;
+    --contrast-foreground: #1c1c1a;
+    --contrast-muted-foreground: #68675d;
+    --contrast-secondary-label: #68675d;
+    --contrast-icon-muted: #68675d;
+    --border: #d4d2b9;
+    --input: #d4d2b9;
+    color: #1c1c1a;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"] {
+  color: #ffffff;
+
+  & * {
+    color: inherit;
+  }
+}
+
+/* The open model button's fill pads 4px past it, onto the usage meter beside
+   it; the meter steps aside while the menu is out. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
+  [data-fork-composer-usage-limits] {
+  translate: -8px 0;
+}
+
+/* The usage readout hangs from the usage bar the same way, in the model
+   menu's shell, with each provider's section set into it as its own panel in
+   the prompt's fill. That replaces the divider, whose colour is the
+   root-resolved --border Tailwind's divide reads: the stage's, not the
+   popup's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="popover-popup"][data-fork-tab-menu] {
+  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
+  background: var(--fork-inlet-model-shell);
+  border-radius: var(--fork-inlet-menu-radius);
+
+  /* Each provider's section is its own panel, 4px in from the shell on every
+     side (the scroller's 4px block padding gives the top and bottom), with
+     corners concentric to the shell's. */
+  & .divide-y > * {
+    margin-inline: 4px;
+    border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
+    background: var(--fork-composer-bg);
+  }
+
+  & .divide-y > :not(:last-child) {
+    /* The shell shows 5px round the panels (its 1px border, then the 4px
+       inset), so they part by as much. */
+    margin-bottom: 5px;
+    border-bottom-width: 0;
+  }
+}
+
+/* Jungle Art's other hung menus (the Threads header's sort and settings)
+   take the model menu's green too, inked white, and so do their buttons.
+   Restating --popover moves the fill, the tab and the controls' wells with
+   it; the model menu keeps its own shell and cream list. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="menu-popup"][data-fork-tab-menu]:not(:has([data-fork-model-picker])) {
+  --popover: var(--fork-inlet-model-shell);
+  --background: var(--fork-inlet-model-shell);
+  --popover-foreground: #ffffff;
+  --foreground: #ffffff;
+  --muted-foreground: #d2e6dc;
+  --accent: #3b926f;
+  --accent-foreground: #ffffff;
+  --border: rgb(255 255 255 / 24%);
+  --input: rgb(255 255 255 / 24%);
+  --contrast-foreground: #ffffff;
+  --contrast-popover-foreground: #ffffff;
+  --contrast-muted-foreground: #d2e6dc;
+  --contrast-secondary-label: #d2e6dc;
+  --contrast-icon-muted: #d2e6dc;
+  background: var(--fork-inlet-model-shell);
+  color: #ffffff;
+}
+
+/* A tab's thread menu (custom/anchoredContextMenu.ts, the in-page context
+   menu) hangs from the tab's "…" button in the button's hover fill, and its
+   submenus take it too: the open tab's green under 10% white, solid so the
+   morph's path can take it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-context-menu]:is([data-fork-anchored-menu], [data-fork-anchored-submenu]) {
+  --popover: #408a6d;
+  --background: #408a6d;
+  --popover-foreground: #ffffff;
+  --foreground: #ffffff;
+  --muted-foreground: #d2e6dc;
+  --accent: #4f9479;
+  --accent-foreground: #ffffff;
+  --border: rgb(255 255 255 / 24%);
+  --contrast-foreground: #ffffff;
+  --contrast-popover-foreground: #ffffff;
+  --contrast-accent-foreground: #ffffff;
+  --contrast-muted-foreground: #d2e6dc;
+  --contrast-border: rgb(255 255 255 / 24%);
+  background: #408a6d;
+  color: #ffffff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* The tab's actions show on hover; while their menu is open they stay. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-thread-tab]
+  span:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
+  opacity: 1;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-thread-tabs]
+  [data-fork-tab-trigger][data-fork-tab-actions-trigger][aria-expanded="true"] {
+  background-color: #408a6d;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs])
+  [data-fork-tab-trigger][aria-expanded="true"] {
+  background-color: var(--fork-inlet-model-shell);
+  color: #ffffff;
+
+  & > svg {
+    color: #ffffff;
+  }
+}
+
+/* On Jungle Art that shell is green, so the chip's label goes white. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled) {
+  color: #ffffff;
+
+  & * {
+    color: inherit;
+  }
+}
+
+/* On Jungle Art that shell is green: the permissions content is inked white
+   on it, and the mode segments become a white wash with a brighter one for
+   the chosen mode. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  --foreground: #ffffff;
+  --muted-foreground: #d2e6dc;
+  --contrast-foreground: #ffffff;
+  --contrast-muted-foreground: #d2e6dc;
+  --contrast-secondary-label: #d2e6dc;
+  --contrast-icon-muted: #d2e6dc;
+  color: #ffffff;
+
+  & [data-composer-permissions] > :not([role="group"]) {
+    color: #ffffff;
+  }
+
+  & [data-composer-permissions] > :first-child,
+  & [data-composer-permissions] > :not([role="group"]) :is(p, span, div):last-child {
+    color: #d2e6dc;
+  }
+
+  /* The mode segments in the inset language: a recessed well, each mode a
+     rounded segment set 3px into it, a faint lift on hover, and the
+     composer's cream for the chosen mode. */
+  & [data-composer-permissions] [role="group"] {
+    gap: 3px;
+    padding: 3px;
+    border-radius: 9px;
+    background: rgb(0 0 0 / 18%);
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"] {
+    border-radius: 6px;
+    background: transparent;
+    color: #d2e6dc;
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"]:is(:hover, [data-highlighted]) {
+    background: rgb(255 255 255 / 10%);
+    color: #ffffff;
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
+    background: var(--fork-composer-bg);
+    color: #1c1c1a;
+  }
+}
+
+/* Jungle Art's shell is green, so the mic and the bars go white on it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-control-row-slot="left"]
+  [data-fork-dictation-live] {
+  color: #ffffff;
+}
+
+/* Jungle Art's tooltips are its menus' green, inked white. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
+  --fork-inlet-tooltip: var(--fork-inlet-model-shell);
+  --fork-inlet-tooltip-foreground: #ffffff;
+}
+
+/* Jungle Art's send button takes the green the model menu and the open
+   controls hang in, inked white, rather than dark mode's flat white. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
+  background: var(--fork-inlet-model-shell);
+  color: #ffffff;
+
+  &:is(:hover, [data-pressed]):not(:disabled) {
+    background: color-mix(in srgb, #000000 10%, var(--fork-inlet-model-shell));
+  }
+}
+
+/* Jungle Art's reasoning slider in the inset language of the mode menu's
+   segments: a recessed well, the fill a faint lift inside it, and the thumb
+   a cream pill set 3px into the well. The thumb's box keeps its 20px, so the
+   slider's own positioning holds; its padding insets the cream instead, and
+   the fill's tip is clipped to stay under that narrower pill. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+  & :has(> [data-fork-effort-track]) {
+    height: 30px;
+  }
+
+  & [data-fork-effort-track] {
+    /* 28px less the 3px inset each side: a 22px cream pill. */
+    --fork-effort-thumb-width: 28px;
+    height: 30px;
+    border-radius: 9px;
+    background: rgb(0 0 0 / 18%);
+  }
+
+  & [data-fork-effort-fill] {
+    inset-block: 3px;
+    left: 3px;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 10%);
+    clip-path: inset(0 9px 0 0);
+  }
+
+  & [data-fork-effort-thumb] {
+    height: 30px;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--fork-composer-bg);
+    background-clip: content-box;
+    box-shadow: none;
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+    }
+  }
+}
+
+/* Jungle Art's details card is cream: the dark palettes' row lift (white 4%)
+   vanishes on it and their section hairline (the composer's light border)
+   reads as a white rule. A black lift, which still stacks on split rows, and
+   the card's own border instead. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-thread-details-card] {
+  --fork-outline-hover-bg: rgb(0 0 0 / 5%);
+  --fork-composer-border: var(--border);
+}
+
+/* Jungle Art's docked right panel is a stage of its own, set into the frame
+   like the chat column, and shows the same picture: both pin it to the window
+   (background-attachment: fixed), so one image runs across the two stages
+   through the frame between them. The stage is the panel's content wrapper,
+   not the panel, because the panel collapses to no width when closed and a
+   margin on it would leave a gap; the content inside, pinned to the panel's
+   width, gives back the margin. It dims further once the chat column's
+   thread has messages, as the column does. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-preview-panel-mode="inline"] {
+  border-width: 0;
+  background: transparent;
+
+  & > :last-child {
+    --background: #1e5f46;
+    /* The panel's own light inks: the launcher's rows set no colour and would
+       inherit a dark one from the frame round them. */
+    --foreground: var(--fork-inlet-panel-foreground);
+    --muted-foreground: var(--fork-inlet-panel-muted);
+    --contrast-foreground: var(--fork-inlet-panel-foreground);
+    --contrast-muted-foreground: var(--fork-inlet-panel-muted);
+    --contrast-secondary-label: var(--fork-inlet-panel-muted);
+    --contrast-icon-muted: var(--fork-inlet-panel-muted);
+    color: var(--fork-inlet-panel-foreground);
+    width: auto;
+    margin: var(--fork-inlet-margin) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
+    overflow: clip;
+    border-radius: var(--fork-inlet-radius);
+    /* Quieter than the chat column's empty state: the panel holds controls
+       and text from the start, so the picture sits under 72% deep green. */
+    background:
+      linear-gradient(rgb(30 95 70 / 72%), rgb(30 95 70 / 72%)),
+      url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
+      #1e5f46;
+  }
+
+  & > :last-child > [style*="--resizable-width"] {
+    width: calc(var(--resizable-width) - var(--fork-inlet-margin)) !important;
+  }
+
+  &[data-preview-panel-maximized="true"] > :last-child {
+    margin-left: var(--fork-inlet-margin);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away] [data-timeline-row-kind])
+  [data-preview-panel-mode="inline"]
+  > :last-child {
+  background:
+    linear-gradient(rgb(30 95 70 / 85%), rgb(30 95 70 / 85%)),
+    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
+    #1e5f46;
+}
+
+/* Jungle Art's icon buttons over the picture (the window's panel toggles and
+   the right panel's add button) sit on a light wash so they read against
+   it; hover lifts the wash, and a pressed one is the menus' cream, inked
+   dark. An open popover's toggle is the morph's to fill. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is(
+    [data-workspace-titlebar-controls] :is([data-slot="toggle"], button),
+    [data-right-panel-tabbar] [aria-label="Add panel surface"]
+  ) {
+  background-color: rgb(255 255 255 / 14%);
+  color: #ffffff;
+  /* The picture is busy behind a 28px button; softening it is what lets the
+     glyph read. Static, so the blur costs nothing per frame. */
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+
+  &:hover:not(:disabled) {
+    background-color: rgb(255 255 255 / 24%);
+  }
+
+  &:is([data-pressed], [aria-pressed="true"]):not([aria-expanded="true"]) {
+    background-color: var(--fork-composer-vessel-bg);
+    color: #1c1c1a;
+  }
+}
+
+/* Jungle Art's sidebar Update pill is the green the send button and the open
+   controls take, inked white, not dark mode's flat white. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-update-label] {
+  background: var(--fork-inlet-model-shell);
+  color: #ffffff;
+
+  &:hover:not([aria-disabled="true"]) {
+    background: color-mix(in srgb, #000000 10%, var(--fork-inlet-model-shell));
+  }
+}
+
+/* Jungle Art's open tab is solid green, not the picture: a tab switch
+   repaints it at once, with no picture to decode. The stage under the strip
+   starts in that green and fades into its picture, so the join has no seam;
+   the tab is the stage's top, so its left-edge fade is dropped. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-thread-tabs] {
+  --fork-inlet-tab-face: #2b7d5d;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-thread-tabs]
+  + [data-fork-thread-panes]
+  [data-chat-column-maximized-away] {
+  --fork-inlet-jungle-edge: none;
+  --fork-inlet-jungle-top: linear-gradient(
+      #2b7d5d,
+      #2b7d5d 6px,
+      rgb(43 125 93 / 78%) 40px,
+      rgb(43 125 93 / 42%) 90px,
+      rgb(43 125 93 / 14%) 140px,
+      rgb(43 125 93 / 0%) 180px
+    )
+    top / 100% 180px no-repeat;
+}

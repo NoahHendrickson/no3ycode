@@ -5,8 +5,9 @@ style in plain terms; use judgement there. Part 2 lists the **hard rules**: exac
 has signed off on and that new work must follow as written. Change a hard rule only when Noey asks,
 then update this file.
 
-Code: `apps/web/src/theme.custom.inlet.css` (shared rules), `theme.custom.palettes.css`
-(per-colour tokens), `custom/inletMenuMorph.ts` (menu motion). Figma `t3-fork`: 619:6610
+Code: `apps/web/src/theme.custom.inlet.css` (the template), `theme.custom.inlet-menus.css`
+(hung menus, tooltips, tab strip), `theme.custom.inlet-jungle.css` (Jungle Art and Jungle Light),
+`theme.custom.palettes.css` (per-colour tokens), `custom/inletMenuMorph.ts` (menu motion). Figma `t3-fork`: 619:6610
 (Charcoal), 629:8337 (Green), 630:10946 (Jungle Art), 630:14154 (Cream / Black).
 
 ---

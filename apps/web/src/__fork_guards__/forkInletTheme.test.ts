@@ -57,7 +57,13 @@ function ruleNaming(rules: ReturnType<typeof cssRules>, parts: readonly string[]
   if (rule === undefined) throw new Error(`no rule names: ${wanted}`);
   return rule.body;
 }
-const inlet = readSibling("../theme.custom.inlet.css");
+// The template, its hung menus and tooltips, and the picture colours, in their import order.
+const INLET_FILES = [
+  "theme.custom.inlet.css",
+  "theme.custom.inlet-menus.css",
+  "theme.custom.inlet-jungle.css",
+] as const;
+const inlet = INLET_FILES.map((file) => readSibling(`../${file}`)).join("\n");
 const paletteRules = cssRules(palettes);
 const inletRules = cssRules(inlet);
 const indexHtml = readSibling("../../index.html");
@@ -108,7 +114,7 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(declarationHex(stage, "--fork-context-chip-bg-hover")).toMatch(/^#/u);
     expect(declarationHex(panel, "--sidebar")).toBe(INLET_BACKGROUND);
     expect(declarationHex(panel, "--sidebar-row-selected")).toBe("#303235");
-    expect(palettes).toContain('@import "./theme.custom.inlet.css";');
+    expect(palettes).toContain(INLET_FILES.map((file) => `@import "./${file}";`).join("\n"));
   });
 
   it("paints Green as a #21835c frame round a cream panel, on light", () => {
