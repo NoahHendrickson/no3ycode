@@ -250,6 +250,24 @@
   color: var(--fork-inlet-panel-foreground);
 }
 
+/* On a cream panel beside a dark sidebar (Green, Jungle Light, Black), the
+   open row's status marks take deep shades: the sidebar's bright ones, tuned
+   for its dark fill, vanish on the cream. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="green"],
+    [data-fork-inlet-color="jungle-light"],
+    [data-fork-inlet-color="black"]
+  )
+  [data-sidebar-version="v2"]
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  --sidebar-v2-status-working: #047857;
+  --sidebar-v2-status-done: #1d4ed8;
+  --sidebar-v2-status-approval: #b45309;
+  --sidebar-v2-status-input: #b45309;
+  --sidebar-v2-status-failed: #b91c1c;
+}
+
 /* The card is square on the side that joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
