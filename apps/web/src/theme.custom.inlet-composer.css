@@ -186,3 +186,14 @@
     color: #55544c;
   }
 }
+
+/* The queued message being edited lifts in the composer's own ink wash, not
+   the stage's --accent: on a colour whose composer differs from its stage
+   that was a dark fill under the vessel's dark ink. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-queued-runs-banner]
+  li[aria-current="true"] {
+  background-color: var(--fork-composer-control-hover);
+  color: inherit;
+}
