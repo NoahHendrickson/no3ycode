@@ -1,6 +1,7 @@
 @import "./theme.custom.westworld.css";
 @import "./theme.custom.glass.css";
 @import "./theme.custom.inlet.css";
+@import "./theme.custom.inlet-composer.css";
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-jungle.css";
 
@@ -482,6 +483,7 @@
    round a #303235 panel. It is the only dark colour, so `.dark` with the
    palette selects it. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="inlet"] {
+  --fork-inlet-question-fill: var(--fork-popup-fill);
   --background: #232322;
   --app-chrome-background: #232322;
   --foreground: #e8e8e8;
@@ -618,49 +620,58 @@
   --sidebar-v2-status-failed: #ff6b60;
 }
 
-/* Jungle Art (Figma t3-fork 630:10946) sits on dark: the panel is a picture
-   with white ink over it, which only dark's transcript reads on. The cream
-   #f2f0d8 frame is not --background here, so theme.custom.inlet.css paints it;
-   --background is the deep green that anything without a panel of its own
-   (the right panel, menus' surroundings) falls back to. The open row and its
-   bridge are green 80% over the frame, flattened. The composer is white glass
-   with dark ink. Declared after Charcoal, whose `.dark` blocks also match. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
-  /* The peek card's ink and fill on the cream frame; tooltips are the menus' green, inked white. */
+/* Jungle Art (Figma t3-fork 630:10946) and Cream share one charcoal stage on
+   dark: a #141414 panel, open row and bridge in a cream frame that is not
+   --background, so theme.custom.inlet.css paints it. Declared after
+   Charcoal, whose `.dark` blocks also match. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="jungle"],
+    [data-fork-inlet-color="cream"]
+  ) {
+  /* The peek card's ink and fill on the cream frame. */
   --fork-inlet-frame-ink: #1c1c1a;
   --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
+  --background: #141414;
+  --foreground: #e8e8e8;
+  --fork-inlet-panel: #141414;
+  --fork-inlet-panel-foreground: #e8e8e8;
+  --fork-inlet-panel-muted: #9a9a9a;
+  --card: #232322;
+  --card-foreground: #e8e8e8;
+  --primary: #ffffff;
+  --primary-foreground: #141414;
+  --ring: #ffffff;
+  --secondary: #2c2c2b;
+  --secondary-foreground: #e8e8e8;
+  --muted: #2c2c2b;
+  --muted-foreground: #9a9a9a;
+  --accent: #2c2c2b;
+  --accent-foreground: #e8e8e8;
+  --border: #2c2c2b;
+  --input: #2c2c2b;
+  --surface-grain: none;
+  --fork-pill-border: #2c2c2b;
+  --fork-pill-fg: #e8e8e8;
+  --fork-pill-hover: #2c2c2b;
+}
+
+/* Jungle Art shows its picture only on the new-agent screen
+   (theme.custom.inlet-jungle.css), so no transcript scrolls over it. The
+   green stays in the controls: the cream composer, the green model shell,
+   send button and open tab. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
+  /* Tooltips are the menus' green, inked white. */
   --fork-inlet-tooltip: var(--fork-inlet-model-shell);
   --fork-inlet-tooltip-foreground: #ffffff;
   --fork-inlet-frame: #f2f0d8;
-  --background: #1e5f46;
   --app-chrome-background: #f2f0d8;
-  --foreground: #f7f6ec;
-  --fork-inlet-panel: #4a9975;
-  --fork-inlet-panel-foreground: #ffffff;
-  --fork-inlet-panel-muted: #d2e6dc;
-  --card: #23674d;
-  --card-foreground: #f7f6ec;
   /* Menus are the sidebar's hover cream (theme.custom.inlet.css restates the
      inks inside them). */
   --popover: #e8e6cf;
   --popover-foreground: #1c1c1a;
-  --primary: #f7f6ec;
-  --primary-foreground: #1e5f46;
-  --ring: #f7f6ec;
-  --secondary: #2a7056;
-  --secondary-foreground: #f7f6ec;
-  --muted: #2a7056;
-  --muted-foreground: #a9cbbb;
-  --accent: #2a7056;
-  --accent-foreground: #f7f6ec;
-  --border: #33775d;
-  --input: #33775d;
-  --surface-grain: none;
-  --fork-pill-border: #33775d;
-  --fork-pill-fg: #f7f6ec;
-  --fork-pill-hover: #2a7056;
-  /* A solid cream composer over the picture: the sidebar's hover cream for
-     the vessel and chips, a lighter cream for the prompt. */
+  /* A solid cream composer on the charcoal stage and the picture: the
+     sidebar's hover cream for the vessel and chips, a lighter cream for the
+     prompt. */
   --fork-composer-vessel-bg: #e8e6cf;
   --fork-composer-bg: #f6f4e4;
   --fork-composer-border: #f6f4e4;
@@ -669,6 +680,7 @@
   --fork-context-chip-bg-hover: #dfddc5;
   /* The model menu hangs from the composer in Green's frame green. */
   --fork-inlet-model-shell: #21835c;
+  --fork-inlet-question-fill: #faf9f0;
 }
 
 /* Black over the cream frame, flattened: near-black ink, 65% for faint ink
@@ -692,7 +704,7 @@
   --fork-sidebar-card-title-receded: #55544c;
   --sidebar-control-surface: #e3e1cb;
   --sidebar-row-hover: #dfddc5;
-  --sidebar-row-active: #4a9975;
+  --sidebar-row-active: #141414;
   --sidebar-row-selected: #4a9975;
   /* Status tones pair a deep light shade with a pale dark one; the page is
      dark, so the pale one wins and fades into the cream. */
@@ -713,35 +725,10 @@
    black 16% and white 60% over the cream, flattened. Cream's frame is not
    --background, as with Jungle Art. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"] {
-  /* The peek card's ink and fill on the cream frame. */
-  --fork-inlet-frame-ink: #1c1c1a;
-  --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
   --fork-inlet-frame: #f8f3d8;
-  --background: #141414;
   --app-chrome-background: #f8f3d8;
-  --foreground: #e8e8e8;
-  --fork-inlet-panel: #141414;
-  --fork-inlet-panel-foreground: #e8e8e8;
-  --fork-inlet-panel-muted: #9a9a9a;
-  --card: #232322;
-  --card-foreground: #e8e8e8;
   --popover: #232322;
   --popover-foreground: #e8e8e8;
-  --primary: #ffffff;
-  --primary-foreground: #141414;
-  --ring: #ffffff;
-  --secondary: #2c2c2b;
-  --secondary-foreground: #e8e8e8;
-  --muted: #2c2c2b;
-  --muted-foreground: #9a9a9a;
-  --accent: #2c2c2b;
-  --accent-foreground: #e8e8e8;
-  --border: #2c2c2b;
-  --input: #2c2c2b;
-  --surface-grain: none;
-  --fork-pill-border: #2c2c2b;
-  --fork-pill-fg: #e8e8e8;
-  --fork-pill-hover: #2c2c2b;
   --fork-composer-vessel-bg: #232322;
   --fork-composer-bg: #2c2c2b;
   --fork-composer-border: #2c2c2b;
