@@ -354,6 +354,22 @@
   }
 }
 
+/* A glass tooltip (the Automations row's run card) is still a tooltip: the
+   green fill, so it keeps the tooltip's white ink, not the menus' dark. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="tooltip-popup"].dropdown-glass:not([data-fork-row-hover-card]) {
+  --foreground: #ffffff;
+  --muted-foreground: rgb(255 255 255 / 72%);
+  --contrast-foreground: #ffffff;
+  --contrast-popover-foreground: #ffffff;
+  --contrast-muted-foreground: rgb(255 255 255 / 72%);
+  --contrast-secondary-label: rgb(255 255 255 / 72%);
+  --contrast-icon-muted: rgb(255 255 255 / 72%);
+  --border: rgb(255 255 255 / 24%);
+  color: #ffffff;
+}
+
 /* The user's bubble is the composer's cream, inked dark, not the stage's
    green card (theme.custom.css paints .bg-message with --card on dark). */
 
