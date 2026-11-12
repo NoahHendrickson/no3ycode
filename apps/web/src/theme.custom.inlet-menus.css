@@ -1157,3 +1157,18 @@
   --popover: var(--fork-context-chip-bg);
   --accent: var(--fork-context-chip-bg-hover);
 }
+
+/* The transcript minimap's turn preview is a glass card inside the column,
+   not a portaled popup, so the menu rule above misses it: it is drawn as
+   Inlet's other menus, solid, with faint ink taken from its own fill rather
+   than the stage's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-minimap-preview]
+  > .dropdown-glass {
+  --muted-foreground: color-mix(in srgb, var(--popover-foreground) 65%, var(--popover));
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
