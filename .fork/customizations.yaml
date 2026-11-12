@@ -6714,6 +6714,7 @@
   watch:
     - apps/web/src/components/chat/chatCanvasLayout.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
+    - apps/web/src/components/chat/threadDetailsCardLayout.ts
   verify:
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts

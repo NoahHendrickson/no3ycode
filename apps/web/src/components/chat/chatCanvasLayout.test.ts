@@ -145,16 +145,8 @@ describe("chat canvas layout", () => {
     expect(result.overlapsDetailsCard).toBe(false);
     expect(result.chat).toEqual({ left: 424, width: 736, insetStart: 0, insetEnd: 0 });
   });
-  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay */
-  it("keeps the chat centred under a details card it overlaps", () => {
-    const { chat } = resolveChatCanvasLayout({
-      container: { width: 1344, height: 988 },
-      maxChatWidth: 736,
-      detailsCard: { left: 1052, right: 1332, bottom: 339 },
-      preview: null,
-    });
-    expect(chat).toMatchObject({ left: (1344 - 736) / 2, width: 736 });
-  });
+  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
+     Upstream's cases for a lane that steps aside for the card are dropped; the guard covers it. */
   /* fork:end fork-details-card-overlay */
   it("keeps the chat canvas-centered when it clears the details card", () => {
     const result = resolveChatCanvasLayout({
@@ -340,17 +332,7 @@ describe("workspace card beside chat", () => {
   it("keeps chat centered while the card fits beside it", () => {
     expect(withCard(1500).chat).toEqual({ left: 382, width: 736, insetStart: 0, insetEnd: 0 });
   });
-  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay */
-  it("lays the chat out as if the details card were not there", () => {
-    for (let width = 1012; width <= 1440; width++) {
-      expect(withCard(width).chat).toEqual(
-        resolveChatCanvasLayout({
-          container: { width, height: 900 },
-          maxChatWidth: 736,
-          preview: null,
-        }).chat,
-      );
-    }
-  });
+  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
+     Upstream's cases for a lane that steps aside for the card are dropped; the guard covers it. */
   /* fork:end fork-details-card-overlay */
 });
