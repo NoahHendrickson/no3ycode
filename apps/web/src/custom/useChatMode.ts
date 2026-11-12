@@ -4,15 +4,14 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
-import type { EnvironmentId, ScopedProjectRef, ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { type NewThreadHandler, useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { useScratchProject } from "~/hooks/useScratchProject";
-import { useProjects, useQuietThreadShell } from "~/state/entities";
-import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
+import { useQuietThreadShell } from "~/state/entities";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
@@ -34,7 +33,6 @@ import { useStartNewAgentDraft } from "./useNewAgentDraft";
     opened is claimed, so a failed start leaves whatever is on screen as it was. */
 export function createStartNewChat(input: {
   readonly environmentId: () => EnvironmentId | null;
-  readonly fallbackProject: () => ScopedProjectRef | null;
   readonly openScratchProject: (
     environmentId: EnvironmentId,
     failureTitle: string,
@@ -43,54 +41,39 @@ export function createStartNewChat(input: {
 }): () => Promise<void> {
   return async () => {
     const environmentId = input.environmentId();
-    let projectRef = environmentId === null ? input.fallbackProject() : null;
-    if (environmentId !== null) {
-      const project = await input.openScratchProject(environmentId, "Could not start a chat");
-      if (project === null) return;
-      projectRef = scopeProjectRef(project.environmentId, project.id);
-    }
-    if (projectRef === null) {
+    if (environmentId === null) {
       toastManager.add({
         type: "error",
         title: "Could not start a chat",
         description:
-          "No machine offers No-project chats. They are off while T3 Code's data folder is inside a git repository.",
+          "Chats run in a No-project workspace, on the primary machine or the only connected machine that has one. It is off while T3 Code's data folder is inside a git repository.",
       });
       return;
     }
-    const opened = await input.handleNewThread(projectRef).catch((error: unknown) => {
-      toastManager.add(
-        stackedThreadToast({
-          type: "error",
-          title: "Could not start a chat",
-          description: error instanceof Error ? error.message : "An error occurred.",
-        }),
-      );
-      return null;
-    });
+    const project = await input.openScratchProject(environmentId, "Could not start a chat");
+    if (project === null) return;
+    const opened = await input
+      .handleNewThread(scopeProjectRef(project.environmentId, project.id))
+      .catch((error: unknown) => {
+        toastManager.add(
+          stackedThreadToast({
+            type: "error",
+            title: "Could not start a chat",
+            description: error instanceof Error ? error.message : "An error occurred.",
+          }),
+        );
+        return null;
+      });
     if (opened !== null) claimChatDraft(opened.draftId);
   };
 }
 
 export function useStartNewChat(): () => Promise<void> {
-  const { scratchEnvironmentId, scratchWorkspaceRootFor, openScratchProject } = useScratchProject();
-  const { environments } = useEnvironments();
-  const primaryEnvironmentId = usePrimaryEnvironmentId();
-  const projects = useProjects();
+  const { scratchEnvironmentId, openScratchProject } = useScratchProject();
   const handleNewThread = useNewThreadHandler();
   return createStartNewChat({
-    // The primary machine's No-project workspace, else any connected machine's.
-    environmentId: () =>
-      scratchEnvironmentId(primaryEnvironmentId) ??
-      environments
-        .map((environment) => environment.environmentId)
-        .find((id) => scratchWorkspaceRootFor(id) !== null) ??
-      null,
-    // No machine reports one: a No-project project that already exists still hosts a chat.
-    fallbackProject: () => {
-      const project = projects.find((candidate) => candidate.isScratch === true);
-      return project ? scopeProjectRef(project.environmentId, project.id) : null;
-    },
+    // The primary machine wins, else the one machine offering a No-project workspace.
+    environmentId: () => scratchEnvironmentId(null),
     openScratchProject,
     handleNewThread,
   });

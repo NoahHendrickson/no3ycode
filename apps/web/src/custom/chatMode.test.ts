@@ -58,7 +58,6 @@ describe("createStartNewChat", () => {
     const { openDraft } = setup();
     await createStartNewChat({
       environmentId: () => environmentId,
-      fallbackProject: () => null,
       openScratchProject: async () => scratchProject,
       handleNewThread: openDraft,
     })();
@@ -76,7 +75,6 @@ describe("createStartNewChat", () => {
     ]) {
       await createStartNewChat({
         environmentId: () => environmentId,
-        fallbackProject: () => null,
         ...failing,
       })();
     }
