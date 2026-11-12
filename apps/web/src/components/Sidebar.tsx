@@ -9,9 +9,6 @@ import * as Option from "effect/Option";
 import { Atom } from "effect/reactivity";
 import * as Schema from "effect/Schema";
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
-/* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-import { autoAnimate } from "@formkit/auto-animate";
-/* fork:end sidebar-v2-list-animation */
 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping
    Upstream moved its sensors, collision and sorting into Sidebar.pointer; the
    fork's two DndContexts still import them here. */
@@ -392,7 +389,7 @@ import { useSidebarV2CompactCards } from "~/custom/sidebarV2CompactCards";
 import { WorktreeIcon } from "~/custom/icons/WorktreeIcon";
 /* fork:end sidebar-v2-compact-cards */
 /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-import { sidebarV2ListAnimation } from "~/custom/sidebarV2ListAnimation";
+import { attachSidebarV2ListMotion } from "~/custom/sidebarV2ListAnimation";
 /* fork:end sidebar-v2-list-animation */
 /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
 import {
@@ -4590,11 +4587,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     threadListRef.current = node;
     if (!node) return;
     /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-    // Default AutoAnimate inserts hold at opacity 0 for half of a 1.5×
-    // ease-in; removals keep the short ease-out. Expanding a project group
-    // then feels unlike collapsing it. The plugin makes add the reverse of
-    // remove so both directions share duration, easing, and scale/opacity.
-    autoAnimate(node, sidebarV2ListAnimation);
+    // Rows grow in and shrink out while their neighbours slide.
+    const stopListMotion = attachSidebarV2ListMotion(node);
+    return () => {
+      stopListMotion();
+      threadListRef.current = null;
+    };
     /* fork:end sidebar-v2-list-animation */
   }, []);
 

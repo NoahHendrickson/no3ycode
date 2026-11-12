@@ -3,11 +3,10 @@
  * Fork guard — see `.fork/README.md` §4b and
  * `.fork/customizations.yaml#sidebar-v2-list-animation`.
  *
- * The animation math lives next to the plugin
- * (`custom/sidebarV2ListAnimation.test.ts`). This file only guards the seam
- * inside upstream's `Sidebar.tsx`: that the list still mounts AutoAnimate,
- * and that it uses the fork plugin rather than the options object whose insert
- * path holds at opacity 0 for half of a 1.5× ease-in.
+ * The motion's behaviour is tested beside it
+ * (`custom/sidebarV2ListAnimation.browser.test.tsx`). This file guards the seam
+ * inside `Sidebar.tsx`: that the list mounts the fork's motion and stops it on
+ * unmount, and that AutoAnimate, which polled every row's position, stays out.
  */
 
 import * as NodeFS from "node:fs";
@@ -22,14 +21,15 @@ const sidebar = readSibling("../components/Sidebar.tsx");
 const animation = readSibling("../custom/sidebarV2ListAnimation.ts");
 
 describe("fork guard: sidebar-v2-list-animation", () => {
-  it("wires the symmetric list plugin into SidebarV2's AutoAnimate mount", () => {
-    expect(sidebar).toContain('import { autoAnimate } from "@formkit/auto-animate"');
+  it("mounts the list motion on the thread list and stops it on unmount", () => {
     expect(sidebar).toContain(
-      'import { sidebarV2ListAnimation } from "~/custom/sidebarV2ListAnimation"',
+      'import { attachSidebarV2ListMotion } from "~/custom/sidebarV2ListAnimation"',
     );
-    expect(sidebar).toContain("autoAnimate(node, sidebarV2ListAnimation)");
-    // The options form is what reintroduces the asymmetric insert path.
-    expect(sidebar).not.toContain('autoAnimate(node, { duration: 150, easing: "ease-out" })');
+    expect(sidebar).toContain("const stopListMotion = attachSidebarV2ListMotion(node);");
+    expect(sidebar).toContain("stopListMotion();");
+    expect(sidebar).toContain("ref={attachListAutoAnimateRef}");
+    expect(sidebar).not.toContain("@formkit/auto-animate");
+    expect(animation).not.toContain('from "@formkit/auto-animate"');
   });
 
   it("keeps add as the reverse of remove", () => {
