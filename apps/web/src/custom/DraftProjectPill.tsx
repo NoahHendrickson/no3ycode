@@ -37,7 +37,7 @@ import {
 
 import { openCommandPalette } from "~/commandPaletteBus";
 import {
-  filterSidebarV2VisibleThreads,
+  rankRecentProjectEntries,
   sortLogicalProjectsForSidebar,
 } from "~/components/Sidebar.logic";
 import { ProjectFavicon } from "~/components/ProjectFavicon";
@@ -308,26 +308,9 @@ export function DraftProjectPill(props: {
     }).catch((error: unknown) => reportAssignFailure("No project", error));
 
   // An unassigned draft offers its recent projects as pills above the composer.
-  const liveProjectRefs = new Set(
-    filterSidebarV2VisibleThreads(threads, null, new Set()).map(
-      (thread) => `${thread.environmentId}:${thread.projectId}`,
-    ),
-  );
   const quickPicks =
     selection.kind === "unassigned" && props.draftId !== null
-      ? sortLogicalProjectsForSidebar(
-          projectPickerEntries
-            .map((entry) => entry.group)
-            .filter((group) =>
-              group.memberProjectRefs.some((ref) =>
-                liveProjectRefs.has(`${ref.environmentId}:${ref.projectId}`),
-              ),
-            ),
-          threads,
-          "updated_at",
-        )
-          .slice(0, QUICK_PICK_LIMIT)
-          .flatMap((group) => projectEntryByKey.get(group.projectKey) ?? [])
+      ? rankRecentProjectEntries(projectPickerEntries, threads, QUICK_PICK_LIMIT)
       : null;
 
   const rootRef = useRef<HTMLSpanElement>(null);

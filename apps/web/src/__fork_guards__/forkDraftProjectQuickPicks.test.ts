@@ -14,7 +14,9 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     expect(pill).toContain("const QUICK_PICK_LIMIT = 5;");
     expect(pill).toContain('selection.kind === "unassigned" && props.draftId !== null');
     expect(pill).toContain('data-fork-project-quick-pick=""');
-    expect(pill).toContain('"updated_at"');
+    expect(pill).toContain(
+      "rankRecentProjectEntries(projectPickerEntries, threads, QUICK_PICK_LIMIT)",
+    );
   });
 
   it("opens a picked pill into the project chip from where it was", () => {

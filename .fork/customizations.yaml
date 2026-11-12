@@ -6248,7 +6248,9 @@
     An unassigned New agent draft offers its recent projects as pills above
     the composer, in place of the project chip: No project first, then up to
     five projects with a thread the sidebar would show, newest activity first
-    (sortLogicalProjectsForSidebar over those threads), each its icon then a
+    by those same threads (rankRecentProjectEntries, which ranks through
+    sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
+    automation run cannot reorder them), each its icon then a
     plus, and a chevron opening the full project menu. Picking a pill assigns
     the draft (the chip's own assign path) and the project chip opens from
     where the pill was, sliding to the row's start as its label is revealed;
@@ -6257,12 +6259,14 @@
   tier: 4
   files:
     - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
   shadows: []
   watch:
-    # The ranking the pills reuse.
+    # Fenced rankRecentProjectEntries beside sortLogicalProjectsForSidebar.
     - apps/web/src/components/Sidebar.logic.ts
   verify:
     - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
 
 - id: fork-git-256-non-repository
   intent: >
