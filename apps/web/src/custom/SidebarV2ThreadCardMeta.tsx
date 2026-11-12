@@ -128,6 +128,12 @@ export function SidebarV2CheckoutMark(props: {
       ) : (
         <GitBranchIcon aria-hidden className={MARK} />
       )}
+      {/* The pulse's foreground pole, faded over the green mark (theme.custom.css). */}
+      {props.devServerPort == null ? null : props.hasWorktree ? (
+        <WorktreeIcon aria-hidden data-fork-dev-server-fade="" className={MARK} />
+      ) : (
+        <GitBranchIcon aria-hidden data-fork-dev-server-fade="" className={MARK} />
+      )}
       {props.branch ? (
         <span className={props.branchName === "visible" ? "truncate whitespace-nowrap" : "sr-only"}>
           {props.branch}

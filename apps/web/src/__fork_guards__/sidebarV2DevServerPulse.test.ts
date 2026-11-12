@@ -81,6 +81,8 @@ function renderMeta(over: {
   );
 }
 
+const compact = (selector: string) => selector.replace(/\s+/gu, "");
+
 describe("fork guard: sidebar-v2-dev-server-pulse", () => {
   it("subscribes card rows to the thread's own attribution, and slim rows to nothing", () => {
     const hunk = readPulseHunks();
@@ -147,39 +149,54 @@ describe("fork guard: sidebar-v2-dev-server-pulse", () => {
     expect(slotless).not.toContain("Server listening");
   });
 
-  it("animates the mark from the working green, scoped to the fork marker", () => {
+  it("stacks a foreground copy on a live mark, and only on a live one", () => {
+    const fade = /data-fork-dev-server-fade=""/gu;
+    for (const hasWorktree of [true, false]) {
+      const live = renderMeta({ branch: "fork/x", hasWorktree, devServerPort: 5173 });
+      expect(live.match(fade)).toHaveLength(1);
+      const off = renderMeta({ branch: "fork/x", hasWorktree, devServerPort: null });
+      expect(off).not.toMatch(fade);
+    }
+  });
+
+  it("breathes from the working green to foreground by opacity, scoped to the fork marker", () => {
     const rules = cssRules(theme);
-    const selector = ':root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg';
+    const mark = ':root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg';
     // Declaration content, order-free: the first revision pinned `color:` one
     // line above `animation:` and broke on a behaviour-identical swap.
-    const base = rules.find((rule) => rule.selector === selector && rule.atRules.length === 0);
-    expect(base).toBeDefined();
-    expect(base?.body).toContain("animation: sidebar-v2-dev-server-pulse");
-    // The static declaration is what reduced-motion falls back onto.
+    const base = rules.find((rule) => rule.selector === mark && rule.atRules.length === 0);
     expect(base?.body).toContain("color: var(--sidebar-v2-status-working)");
+    expect(base?.body).not.toContain("animation");
+    // Foreground, not literal white, so light mode pulses toward ink instead
+    // of vanishing into the panel. Opacity, so the compositor runs it.
+    const copy = rules.find(
+      (rule) =>
+        compact(rule.selector) === compact(`${mark}[data-fork-dev-server-fade]`) &&
+        rule.atRules.length === 0,
+    );
+    expect(copy?.body).toContain("color: var(--foreground)");
+    expect(copy?.body).toContain("animation: sidebar-v2-dev-server-pulse");
 
     const keyframeRules = rules.filter((rule) =>
       rule.atRules.some((at) => at === "@keyframes sidebar-v2-dev-server-pulse"),
     );
-    const from = keyframeRules.find((rule) => rule.selector === "from");
-    const to = keyframeRules.find((rule) => rule.selector === "to");
-    // Working green to foreground — not literal white, so light mode pulses
-    // toward ink instead of vanishing into the panel.
-    expect(from?.body).toContain("color: var(--sidebar-v2-status-working)");
-    expect(to?.body).toContain("color: var(--foreground)");
+    expect(keyframeRules.map((rule) => rule.selector).sort()).toEqual(["from", "to"]);
+    expect(keyframeRules.map((rule) => rule.body).join("")).not.toMatch(/\bcolor\b/u);
+    expect(keyframeRules.find((rule) => rule.selector === "from")?.body).toContain("opacity: 0");
+    expect(keyframeRules.find((rule) => rule.selector === "to")?.body).toContain("opacity: 1");
   });
 
   it("drops the motion, not the state, under prefers-reduced-motion", () => {
     const rules = cssRules(theme);
     const reduced = rules.find(
       (rule) =>
-        rule.selector ===
-          ':root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg' &&
-        rule.atRules.some((at) => at.includes("prefers-reduced-motion: reduce")),
+        compact(rule.selector) ===
+          compact(
+            ':root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg[data-fork-dev-server-fade]',
+          ) && rule.atRules.some((at) => at.includes("prefers-reduced-motion: reduce")),
     );
-    // `animation: none` leaves the base rule's static green standing, so
-    // reduced-motion users keep the indicator and lose only the breathing.
-    expect(reduced).toBeDefined();
-    expect(reduced?.body).toContain("animation: none");
+    // Hiding the copy leaves the green mark standing, so reduced-motion
+    // users keep the indicator and lose only the breathing.
+    expect(reduced?.body).toContain("display: none");
   });
 });
