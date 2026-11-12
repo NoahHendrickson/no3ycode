@@ -1,6 +1,6 @@
 /**
  * A limit meter: a muted, fully rounded track filled to the share left, toned
- * green from 50%, pastel yellow down to 20%, red below. Shared by the Usage
+ * green from 50%, amber down to 20%, red below. Shared by the Usage
  * limits view and the composer's limits bar (fork-usage-limits-surface,
  * fork-composer-usage-limits). Size the track with `className`; `remaining`
  * null draws the bare track for an account with no window.
@@ -9,7 +9,7 @@ import { cn } from "~/lib/utils";
 
 function toneOf(remaining: number): string {
   if (remaining >= 50) return "bg-success";
-  if (remaining >= 20) return "bg-yellow-300 dark:bg-yellow-200";
+  if (remaining >= 20) return "bg-amber-500 dark:bg-yellow-200";
   return "bg-destructive";
 }
 
