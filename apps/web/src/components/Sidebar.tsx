@@ -1054,6 +1054,10 @@ type SidebarThreadRowProps = {
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   projectTitleHidden?: boolean;
   /* fork:end sidebar-v2-project-grouping */
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  /** Chat's rows are titles alone: no project favicon or project name. */
+  hideProjectMark?: boolean;
+  /* fork:end fork-chat-mode */
   /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
   // Cards draw the title line alone, with the repo line reduced to marks on
   // it; the hover card carries the names. Slim rows only take the pill.
@@ -1735,15 +1739,21 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             }
           >
             {accessibleTitle}
-            <span
-              className={cn(
-                "flex shrink-0 items-center transition-opacity",
-                (!props.isActive || variantAction === "unsettle") &&
-                  "opacity-40 grayscale group-focus-within/v2-row:opacity-100 group-focus-within/v2-row:grayscale-0 group-any-hover/v2-row:opacity-100 group-any-hover/v2-row:grayscale-0",
-              )}
-            >
-              {props.project ? <ProjectFavicon project={props.project} className="size-4" /> : null}
-            </span>
+            {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+            {props.hideProjectMark === true ? null : (
+              /* fork:end fork-chat-mode */
+              <span
+                className={cn(
+                  "flex shrink-0 items-center transition-opacity",
+                  (!props.isActive || variantAction === "unsettle") &&
+                    "opacity-40 grayscale group-focus-within/v2-row:opacity-100 group-focus-within/v2-row:grayscale-0 group-any-hover/v2-row:opacity-100 group-any-hover/v2-row:grayscale-0",
+                )}
+              >
+                {props.project ? (
+                  <ProjectFavicon project={props.project} className="size-4" />
+                ) : null}
+              </span>
+            )}
             {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                 Fixed 14px leading slot (same as the card) so a monitoring mark
                 cannot shove the title 24px right of every neighboring slim row. */}
@@ -1972,7 +1982,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   A compact card has no repo line to name its project, so the
                   favicon leads the title instead, as on the slim rows. Under a
                   project header the header already names it. */}
-              {props.compact === true && props.projectTitleHidden !== true ? (
+              {props.compact === true &&
+              props.projectTitleHidden !== true &&
+              /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+              props.hideProjectMark !== true ? (
+                /* fork:end fork-chat-mode */
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <SidebarV2CompactCardLead project={props.project} />
                   {title}
@@ -2196,7 +2210,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               <SidebarV2ThreadCardMeta
                 projectTitle={props.projectTitle}
                 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
-                projectTitleHidden={props.projectTitleHidden === true}
+                projectTitleHidden={
+                  props.projectTitleHidden === true ||
+                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                  props.hideProjectMark === true
+                  /* fork:end fork-chat-mode */
+                }
                 /* fork:end sidebar-v2-project-grouping */
                 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                  The project favicon, pre-built above beside the terminal glyph. */
@@ -2645,7 +2664,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         hasServerShell: (threadRef) => serverThreadKeys.has(scopedThreadKey(threadRef)),
       })
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-        .filter((row) => isChatThread(row.shell, pendingChats) === (sidebarMode === "chat")),
+        // A chat stays out of the list until its first send makes it a thread.
+        .filter((row) => sidebarMode === "code" && !isChatThread(row.shell, pendingChats)),
     /* fork:end fork-chat-mode */
     // routeThreadKey: snapshot composer prompts when the open thread changes.
     [
@@ -4861,6 +4881,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           onAddProject={openAddProjectCommandPalette}
           /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
           onNewChat={sidebarMode === "chat" ? () => void startNewChat() : undefined}
+          newChatActive={
+            newThreadContext.activeDraftThread != null &&
+            newThreadContext.activeDraftThread.promotedTo == null &&
+            pendingChats.has(
+              scopedThreadKey(
+                scopeThreadRef(
+                  newThreadContext.activeDraftThread.environmentId,
+                  newThreadContext.activeDraftThread.threadId,
+                ),
+              ),
+            )
+          }
           /* fork:end fork-chat-mode */
         />
         {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
@@ -5134,6 +5166,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           // dropped: assistive tech has no "two rows up".
                           projectTitleHidden={underProjectHeader}
                           /* fork:end sidebar-v2-project-grouping */
+                          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                          hideProjectMark={sidebarMode === "chat"}
+                          /* fork:end fork-chat-mode */
                           providerEntryByInstanceId={
                             providerEntriesByEnvironment.get(thread.environmentId) ??
                             EMPTY_PROVIDER_ENTRIES

@@ -6729,6 +6729,9 @@
     The sidebar header switches between Code and Chat (Figma t3-fork
     676:42030). Code is the sidebar as it was. Chat is one flat list of chats
     under a lone "New chat" row: no search row, projects, scope or grouping.
+    Its rows are titles alone (hideProjectMark drops the project favicon and
+    name), and a chat joins the list only once its first send makes it a
+    thread: until then New chat is the lit row.
     A thread belongs to the mode it was created in. "New chat" starts a
     No-project (scratch) draft; once its first send creates the thread, it is
     tagged `chat` (the server's existing thread tags, thread.tag.set), and

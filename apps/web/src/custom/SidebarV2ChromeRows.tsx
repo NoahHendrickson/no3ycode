@@ -245,6 +245,8 @@ export function SidebarV2ChromeActionRows(props: {
   readonly onAddProject: () => void;
   /** Chat mode (custom/chatMode): its only row is New chat. */
   readonly onNewChat?: (() => void) | undefined;
+  /** Lit while the open draft is a chat not yet sent. */
+  readonly newChatActive?: boolean;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
@@ -260,6 +262,7 @@ export function SidebarV2ChromeActionRows(props: {
           label="New chat"
           ariaLabel="New chat"
           testId="sidebar-v2-new-chat"
+          active={props.newChatActive === true}
           onClick={props.onNewChat}
         />
       </SidebarGroup>
