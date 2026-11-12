@@ -20,7 +20,7 @@ import type { ScopedProjectRef } from "@t3tools/contracts";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 
 import { isSideChatSurface } from "~/custom/sideChat/surface";
-import { useIsChatDraft } from "~/custom/useChatMode";
+import { useIsChatThread } from "~/custom/useChatMode";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { isTriagePrompt } from "~/hooks/useStartTriage";
 import { useProjects } from "~/state/entities";
@@ -58,7 +58,7 @@ export function DraftHeroHeadline({
     isScratchProject(activeProject, scratchWorkspaceRootFor(activeProject.environmentId));
   const hasResolvedProject = activeProjectTitle !== null;
   // A chat started in Chat mode (custom/chatMode).
-  const isChatDraft = useIsChatDraft(draftId);
+  const isChatDraft = useIsChatThread(draftId);
   if (isScratchDraft && isTriageDraftPrompt) {
     const environment = environments.find(
       (entry) => entry.environmentId === activeProject.environmentId,

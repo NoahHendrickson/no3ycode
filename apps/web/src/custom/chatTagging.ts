@@ -1,12 +1,6 @@
-/**
- * A chat becomes a thread at its first send; this tags that thread `chat` — see
- * `.fork/customizations.yaml#fork-chat-mode`.
- *
- * Started from the app root, beside the drafts' own promotion, so a chat is tagged wherever
- * the user is. From the send until the tag shows on the thread's shell, the thread's key is in
- * the sent-chats set, which keeps it in Chat: the draft that says so can finalize before the
- * thread or its tag arrives. One try per chat; a failure says so and leaves the thread in Code.
- */
+/** Tags a sent chat's thread `chat`, from the app root — see `.fork/customizations.yaml#fork-chat-mode`.
+    Until the tag shows, the thread's key stays in the sent set, which keeps it in Chat: its draft
+    can finalize before the thread or the tag arrives. One try per chat; a failure says so. */
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { AtomCommandResult } from "@t3tools/client-runtime/state/runtime";

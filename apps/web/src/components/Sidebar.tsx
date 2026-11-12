@@ -352,14 +352,10 @@ import {
 /* fork:end sidebar-v2-card-rows */
 import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/SidebarV2ChromeRows";
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-import { chatModeMoveMenuItem, isChatDraft } from "~/custom/chatMode";
+import { isChatModeMoveMenuId } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
-import {
-  useMoveThreadToMode,
-  useSidebarModeThreads,
-  useStartNewChat,
-  useSwitchSidebarMode,
-} from "~/custom/useChatMode";
+import { SidebarV2ChatActionRows } from "~/custom/SidebarV2ChromeRows";
+import { useSidebarModePolicy } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
 /* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
 import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
@@ -2282,13 +2278,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const reorderProjects = useUiStateStore((store) => store.reorderProjects);
   /* fork:end sidebar-v2-project-grouping */
   // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
-  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
-     The list is the open mode's: Chat's threads, or Code's (everything else). */
-  const allThreads = useQuietThreadShells();
-  const [sidebarMode, switchSidebarMode] = useSwitchSidebarMode();
-  const startNewChat = useStartNewChat();
-  const moveThreadToMode = useMoveThreadToMode();
-  const threads = useSidebarModeThreads(allThreads, sidebarMode);
+  const threads = useQuietThreadShells();
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  const modePolicy = useSidebarModePolicy();
   /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
@@ -2303,17 +2295,15 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const sidebarProjectSortOrder = useClientSettings((s) => s.sidebarProjectSortOrder);
   const timestampFormat = useClientSettings((s) => s.timestampFormat);
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-  // Chat has no Working shelf: a running chat stays in its place in the list.
   const workingShelfEnabled =
-    useClientSettings((s) => s.sidebarWorkingShelfEnabled) && sidebarMode === "code";
+    useClientSettings((s) => s.sidebarWorkingShelfEnabled) && modePolicy.workingShelf;
   /* fork:end fork-chat-mode */
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   // One grouping value: flat, by project, or by status (sidebar-v2-status-grouping).
   const [storedGrouping, setGrouping] = useSidebarV2Grouping();
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-  // Chat is one flat list whatever Code's grouping is.
-  const grouping = sidebarMode === "chat" ? "none" : storedGrouping;
+  const grouping = modePolicy.grouping(storedGrouping);
   /* fork:end fork-chat-mode */
   const groupByProject = grouping === "project";
   const [collapsedProjectKeys, toggleProjectGroupCollapsed] = useSidebarV2CollapsedProjects();
@@ -2575,7 +2565,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     findThread: (key) =>
       threads.find(
         (candidate) =>
-          scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key,
+          scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key &&
+          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+             Widening the scope cannot list a thread the open mode hides. */
+          modePolicy.listsThread(candidate),
+        /* fork:end fork-chat-mode */
       ),
   });
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a route reveal widens the session project scope so the open thread's row lists
@@ -2661,10 +2655,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         hasServerShell: (threadRef) => serverThreadKeys.has(scopedThreadKey(threadRef)),
       })
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-        // A chat stays out of the list until its first send makes it a thread.
-        .filter(
-          (row) => sidebarMode === "code" && !isChatDraft(draftThreadsByThreadKey[row.draftId]),
-        ),
+        // Code's drafts, by the threads' own rule; an unsent chat is never a row.
+        .filter((row) => modePolicy.listsThread(row.shell)),
     /* fork:end fork-chat-mode */
     // routeThreadKey: snapshot composer prompts when the open thread changes.
     [
@@ -2673,7 +2665,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       routeThreadKey,
       serverThreadKeys,
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-      sidebarMode,
+      modePolicy.listsThread,
       /* fork:end fork-chat-mode */
     ],
   );
@@ -2704,7 +2696,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     const preciseNow = new Date().toISOString();
     // Subagent child threads live in the parent's Agents surface, not the
     // sidebar roster (v2 models them as real threads with lineage).
-    const visible = filterSidebarV2VisibleThreads(threads, scopedProjectKeys, delegatedUnderParent);
+    const visible = filterSidebarV2VisibleThreads(
+      threads,
+      scopedProjectKeys,
+      delegatedUnderParent,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      modePolicy.listsThread,
+      /* fork:end fork-chat-mode */
+    );
     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
        Status grouping orders its sections by return too, and draws its own
        Working section, so the beta shelf stands down while it is on. */
@@ -2811,6 +2810,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     /* fork:end sidebar-v2-status-grouping */
     threads,
     workingShelfEnabled,
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    modePolicy.listsThread,
+    /* fork:end fork-chat-mode */
   ]);
 
   // The settled tail renders in pages: history shouldn't dominate the
@@ -4300,7 +4302,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 snoozePresets,
               }),
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-              chatModeMoveMenuItem(sidebarMode),
+              modePolicy.threadMenuItem(),
               /* fork:end fork-chat-mode */
             ],
             position,
@@ -4308,8 +4310,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         );
         if (clicked._tag === "Failure" || clicked.value === null) return;
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-        if (clicked.value === "fork:move-to-chat" || clicked.value === "fork:move-to-code") {
-          moveThreadToMode(thread, clicked.value === "fork:move-to-chat" ? "chat" : "code");
+        if (isChatModeMoveMenuId(clicked.value)) {
+          modePolicy.moveThread(thread, clicked.value);
           return;
         }
         /* fork:end fork-chat-mode */
@@ -4568,8 +4570,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       updateThreadMetadata,
       timestampFormat,
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-      moveThreadToMode,
-      sidebarMode,
+      modePolicy.threadMenuItem,
+      modePolicy.moveThread,
       /* fork:end fork-chat-mode */
     ],
   );
@@ -4858,7 +4860,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       <SidebarChromeHeader
         isElectron={isElectron}
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-        modeTabs={<SidebarModeTabs mode={sidebarMode} onModeChange={switchSidebarMode} />}
+        modeTabs={<SidebarModeTabs mode={modePolicy.mode} onModeChange={modePolicy.switchMode} />}
         /* fork:end fork-chat-mode */
       />
       {/* oxlint-disable-next-line shadcn/no-restyle -- the fork's list owns its own spacing */}
@@ -4866,30 +4868,25 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
             Control rows are fork-owned; only these call sites live here.
             See custom/SidebarV2ChromeRows.tsx. */}
-        <SidebarV2ChromeActionRows
-          commandPaletteShortcutLabel={commandPaletteShortcutLabel}
-          newThreadShortcutLabel={newThreadShortcutLabel ?? null}
-          newThreadDisabled={projects.length === 0}
-          /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
-             Lit while the open draft still has no project: the column it
-             opened is this row's until the pill assigns one. */
-          newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}
-          /* fork:end fork-new-agent-draft */
-          onNewThread={handleNewThreadClick}
-          onAddProject={openAddProjectCommandPalette}
-          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-          onNewChat={sidebarMode === "chat" ? () => void startNewChat() : undefined}
-          newChatActive={
-            newThreadContext.activeDraftThread?.promotedTo == null &&
-            isChatDraft(newThreadContext.activeDraftThread)
-          }
-          /* fork:end fork-chat-mode */
-        />
         {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
-            Chat has no projects to strip, scope or group. */}
-        {sidebarMode === "chat" ? null : (
+            Chat's only row is New chat: no search, projects, scope or grouping. */}
+        {modePolicy.chat ? (
+          <SidebarV2ChatActionRows />
+        ) : (
           <>
             {/* fork:end fork-chat-mode */}
+            <SidebarV2ChromeActionRows
+              commandPaletteShortcutLabel={commandPaletteShortcutLabel}
+              newThreadShortcutLabel={newThreadShortcutLabel ?? null}
+              newThreadDisabled={projects.length === 0}
+              /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+                 Lit while the open draft still has no project: the column it
+                 opened is this row's until the pill assigns one. */
+              newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}
+              /* fork:end fork-new-agent-draft */
+              onNewThread={handleNewThreadClick}
+              onAddProject={openAddProjectCommandPalette}
+            />
             {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
             <SidebarV2RecentProjectsStrip
               projectGroups={projectGroups}
@@ -5157,7 +5154,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           projectTitleHidden={underProjectHeader}
                           /* fork:end sidebar-v2-project-grouping */
                           /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-                          hideProjectMark={sidebarMode === "chat"}
+                          hideProjectMark={!modePolicy.projectControls}
                           /* fork:end fork-chat-mode */
                           providerEntryByInstanceId={
                             providerEntriesByEnvironment.get(thread.environmentId) ??

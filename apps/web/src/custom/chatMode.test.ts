@@ -4,7 +4,7 @@ import { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { DraftId, useComposerDraftStore } from "../composerDraftStore";
-import { CHAT_THREAD_TAG, isChatDraft, threadsForSidebarMode } from "./chatMode";
+import { CHAT_THREAD_TAG, isChatDraft, isChatThread } from "./chatMode";
 import { createStartNewChat } from "./useChatMode";
 
 const thread = (id: string, tags?: readonly string[]) =>
@@ -12,9 +12,9 @@ const thread = (id: string, tags?: readonly string[]) =>
     environmentId: "env",
     id,
     source: tags === undefined ? {} : { tags },
-  }) as unknown as Parameters<typeof threadsForSidebarMode>[0][number];
+  }) as unknown as Parameters<typeof isChatThread>[0];
 
-describe("threadsForSidebarMode", () => {
+describe("isChatThread", () => {
   const tagged = thread("tagged", [CHAT_THREAD_TAG, "other"]);
   const sent = thread("sent");
   const code = thread("code", ["other"]);
@@ -22,9 +22,8 @@ describe("threadsForSidebarMode", () => {
   const threads = [tagged, sent, code, untagged];
   const sentChats = new Set(["env:sent"]);
 
-  it("lists a chat (tagged, or sent from here and not yet tagged) only in Chat", () => {
-    expect(threadsForSidebarMode(threads, "chat", sentChats)).toEqual([tagged, sent]);
-    expect(threadsForSidebarMode(threads, "code", sentChats)).toEqual([code, untagged]);
+  it("is a chat when tagged, or sent from here and not yet tagged", () => {
+    expect(threads.filter((entry) => isChatThread(entry, sentChats))).toEqual([tagged, sent]);
   });
 });
 

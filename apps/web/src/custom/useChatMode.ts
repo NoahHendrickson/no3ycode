@@ -17,13 +17,15 @@ import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
 import {
   CHAT_THREAD_TAG,
+  type ChatModeMoveMenuId,
+  chatModeMoveMenuItem,
+  chatModeMoveTarget,
   claimChatDraft,
   type ForkSidebarMode,
   isChatDraft,
   isChatThread,
   latestUnsentChatDraft,
   shellThreadKey,
-  threadsForSidebarMode,
   useForkSidebarMode,
 } from "./chatMode";
 import { forgetSentChat, useSentChats } from "./chatTagging";
@@ -80,7 +82,7 @@ export function useStartNewChat(): () => Promise<void> {
 }
 
 /** Moves a thread between the modes by its tag. */
-export function useMoveThreadToMode(): (
+function useMoveThreadToMode(): (
   thread: Pick<EnvironmentThreadShell, "environmentId" | "id">,
   mode: ForkSidebarMode,
 ) => void {
@@ -96,7 +98,7 @@ export function useMoveThreadToMode(): (
 }
 
 /** Switches the sidebar and opens that mode's fresh start: a new chat, or Code's New agent. */
-export function useSwitchSidebarMode(): [ForkSidebarMode, (next: ForkSidebarMode) => void] {
+function useSwitchSidebarMode(): [ForkSidebarMode, (next: ForkSidebarMode) => void] {
   const [mode, setMode] = useForkSidebarMode();
   const startNewChat = useStartNewChat();
   const startNewAgentDraft = useStartNewAgentDraft();
@@ -116,27 +118,41 @@ export function useSwitchSidebarMode(): [ForkSidebarMode, (next: ForkSidebarMode
   return [mode, switchMode];
 }
 
-/** The current mode's threads; the compiler keeps the list while its inputs hold. */
-export function useSidebarModeThreads<
-  T extends Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
->(threads: readonly T[], mode: ForkSidebarMode): T[] {
-  const sentChats = useSentChats();
-  return threadsForSidebarMode(threads, mode, sentChats);
-}
-
-/** Whether a thread (or the draft reserving it) is a chat. */
-export function useIsChatThread(ref: ScopedThreadRef | null): boolean {
+/** Whether a thread, or the draft reserving it, is a chat. */
+export function useIsChatThread(target: ScopedThreadRef | DraftId | null): boolean {
   const sentChats = useSentChats();
   const draftIsChat = useComposerDraftStore((store) =>
-    ref === null ? false : isChatDraft(store.getDraftThreadByRef(ref)),
+    target === null ? false : isChatDraft(store.getDraftThread(target)),
   );
-  const shell = useQuietThreadShell(ref);
+  const shell = useQuietThreadShell(typeof target === "string" ? null : target);
   return draftIsChat || (shell !== null && isChatThread(shell, sentChats));
 }
 
-/** Whether a draft is a chat not yet sent. */
-export function useIsChatDraft(draftId: DraftId | null): boolean {
-  return useComposerDraftStore((store) =>
-    draftId === null ? false : isChatDraft(store.getDraftSession(draftId)),
-  );
+/**
+ * How the open mode shapes the sidebar, so Sidebar.tsx reads a field rather than deciding.
+ * Chat is one flat list of chats: no projects to strip, scope, group or mark on its rows, and
+ * no Working shelf. Code is the sidebar as it was, less the chats.
+ */
+export function useSidebarModePolicy() {
+  const [mode, switchMode] = useSwitchSidebarMode();
+  const sentChats = useSentChats();
+  const moveThreadToMode = useMoveThreadToMode();
+  const chat = mode === "chat";
+  return {
+    mode,
+    switchMode,
+    chat,
+    /** Off in Chat: the strip, the scope row and its filter, grouping, the rows' project marks. */
+    projectControls: !chat,
+    workingShelf: !chat,
+    grouping: <G extends string>(stored: G): G | "none" => (chat ? "none" : stored),
+    /** The one visibility rule for the open mode, for threads and draft rows alike. */
+    listsThread: (thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">) =>
+      isChatThread(thread, sentChats) === chat,
+    threadMenuItem: () => chatModeMoveMenuItem(mode),
+    moveThread: (
+      thread: Pick<EnvironmentThreadShell, "environmentId" | "id">,
+      id: ChatModeMoveMenuId,
+    ) => moveThreadToMode(thread, chatModeMoveTarget(id)),
+  };
 }

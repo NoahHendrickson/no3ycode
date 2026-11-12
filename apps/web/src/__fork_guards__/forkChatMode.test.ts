@@ -11,12 +11,21 @@ const read = (path: string) =>
 describe("fork guard: fork-chat-mode", () => {
   it("lists the open mode's threads, flat in Chat, under the header's mode tabs", () => {
     const sidebar = read("../components/Sidebar.tsx");
-    expect(sidebar).toContain("const threads = useSidebarModeThreads(allThreads, sidebarMode);");
-    expect(sidebar).toContain('const grouping = sidebarMode === "chat" ? "none" : storedGrouping;');
-    expect(sidebar).toContain(
-      "modeTabs={<SidebarModeTabs mode={sidebarMode} onModeChange={switchSidebarMode} />}",
+    // One policy decides; the roster stays whole and one visibility rule applies the mode.
+    expect(sidebar).toContain("const threads = useQuietThreadShells();");
+    expect(sidebar).toContain("const modePolicy = useSidebarModePolicy();");
+    expect(sidebar).toMatch(
+      /delegatedUnderParent,\s*\/\* fork:begin fork-chat-mode[^*]*\*\/\s*modePolicy\.listsThread,/u,
     );
-    expect(sidebar).toContain("chatModeMoveMenuItem(sidebarMode)");
+    expect(read("../components/Sidebar.logic.ts")).toContain("listedInMode(thread) &&");
+    expect(sidebar).toContain(".filter((row) => modePolicy.listsThread(row.shell))");
+    expect(read("../custom/sidebarV2DraftRows.ts")).toContain("if (isChatDraft(draft)) continue;");
+    expect(sidebar).toContain("const grouping = modePolicy.grouping(storedGrouping);");
+    expect(sidebar).toContain(
+      "<SidebarModeTabs mode={modePolicy.mode} onModeChange={modePolicy.switchMode} />",
+    );
+    expect(sidebar).toContain("<SidebarV2ChatActionRows />");
+    expect(sidebar).toContain("modePolicy.threadMenuItem(");
     expect(read("../components/sidebar/SidebarChrome.tsx")).toContain("{modeTabs ?");
     expect(read("../main.tsx")).toContain("initializeForkSidebarMode();");
   });

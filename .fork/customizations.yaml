@@ -6762,8 +6762,10 @@
   watch:
     - apps/web/src/appInit.tsx
     - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/components/sidebar/SidebarChrome.tsx
+    - apps/web/src/custom/sidebarV2DraftRows.ts
     - apps/web/src/main.tsx
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts

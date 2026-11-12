@@ -81,14 +81,9 @@ export function isChatThread(
   );
 }
 
-/** The threads a mode's sidebar lists: Chat's only, or everything else. */
-export function threadsForSidebarMode<
-  T extends Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
->(threads: readonly T[], mode: ForkSidebarMode, sentChats: ReadonlySet<string>): T[] {
-  return threads.filter((thread) => isChatThread(thread, sentChats) === (mode === "chat"));
-}
-
-export type ChatModeMoveMenuId = "fork:move-to-chat" | "fork:move-to-code";
+const MOVE_TO_CHAT = "fork:move-to-chat";
+const MOVE_TO_CODE = "fork:move-to-code";
+export type ChatModeMoveMenuId = typeof MOVE_TO_CHAT | typeof MOVE_TO_CODE;
 
 /** A thread's way between the modes, last in its context menu. */
 export function chatModeMoveMenuItem(mode: ForkSidebarMode): {
@@ -97,6 +92,15 @@ export function chatModeMoveMenuItem(mode: ForkSidebarMode): {
   readonly separatorBefore: true;
 } {
   return mode === "chat"
-    ? { id: "fork:move-to-code", label: "Move to Code", separatorBefore: true }
-    : { id: "fork:move-to-chat", label: "Move to Chat", separatorBefore: true };
+    ? { id: MOVE_TO_CODE, label: "Move to Code", separatorBefore: true }
+    : { id: MOVE_TO_CHAT, label: "Move to Chat", separatorBefore: true };
+}
+
+export function isChatModeMoveMenuId(id: string): id is ChatModeMoveMenuId {
+  return id === MOVE_TO_CHAT || id === MOVE_TO_CODE;
+}
+
+/** The mode a move item sends its thread to. */
+export function chatModeMoveTarget(id: ChatModeMoveMenuId): ForkSidebarMode {
+  return id === MOVE_TO_CHAT ? "chat" : "code";
 }

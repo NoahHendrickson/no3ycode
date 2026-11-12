@@ -18,6 +18,7 @@ import { truncate } from "@t3tools/shared/String";
 import * as DateTime from "effect/DateTime";
 
 import type { ComposerThreadDraftState, DraftId, DraftSessionState } from "../composerDraftStore";
+import { isChatDraft } from "./chatMode";
 import { isUnassignedDraft } from "./newAgentDraft";
 
 export interface SidebarV2DraftRow {
@@ -110,6 +111,8 @@ export function listSidebarDraftRows(input: {
   for (const [draftIdValue, draft] of Object.entries(input.draftsById)) {
     if (draft.promotedTo != null) continue;
     if (isUnassignedDraft(draft)) continue;
+    // An unsent chat (fork-chat-mode) joins Chat's list once its first send makes it a thread.
+    if (isChatDraft(draft)) continue;
     const threadRef = scopeThreadRef(draft.environmentId, draft.threadId);
     if (input.hasServerShell(threadRef)) continue;
     const draftId = draftIdValue as DraftId;
