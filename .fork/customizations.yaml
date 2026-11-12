@@ -5780,8 +5780,10 @@
     only opened PRs in those repositories start a review. Every run receives
     the exact triggering repository, PR and commits in a fresh worktree.
     Retries do not duplicate reviews; deliveries that never reached durable dispatch
-    can be redelivered after failure or restart. Failed repository changes clean up
-    newly connected hooks, and deletion removes managed hooks.
+    can be redelivered after failure or restart. An event's claim is pruned
+    after 30 days, well past GitHub's 3-day redelivery window. Failed
+    repository changes clean up newly connected hooks, and deletion removes
+    managed hooks.
   tier: 4
   files:
     - packages/contracts/src/githubPrAutomation.ts

@@ -9,6 +9,7 @@ import * as Queue from "effect/Queue";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as SqlClient from "effect/sql/SqlClient";
+import * as TestClock from "effect/testing/TestClock";
 import * as ProjectStore from "../orchestration-v2/ProjectStore.ts";
 import * as ThreadLaunchService from "../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadManagementService from "../orchestration-v2/ThreadManagementService.ts";
@@ -369,17 +370,18 @@ it.effect(
 );
 
 it.effect(
-  "rejects an invalid signature before claiming the event; deduplicates direct and relay redelivery",
+  "rejects an invalid signature before claiming the event; deduplicates direct and relay redelivery until the claim is 30 days old",
   () =>
-    withService(({ service, hooks, launches }) =>
+    withService(({ service, hooks, launches, sql }) =>
       Effect.gen(function* () {
         const { task } = yield* service.upsert(input());
         const token = task.webhook!.path.split("/").at(-1)!;
+        const secret = hooks.get("owner/d2")!.config.secret;
         assert.equal(
           (yield* service.triggerWebhook(request("wrong", token)))._tag,
           "rejected_signature",
         );
-        const valid = request(hooks.get("owner/d2")!.config.secret, token);
+        const valid = request(secret, token);
         const first = yield* service.triggerWebhook(valid);
         yield* Queue.take(launches);
         const duplicate = yield* service.triggerWebhook({
@@ -392,6 +394,22 @@ it.effect(
           duplicate._tag === "accepted" && duplicate.deliveryId,
         );
         assert.equal(yield* Queue.size(launches), 0);
+        // Each new PR's claim prunes GitHub claims older than 30 days.
+        const claims = sql<{ relay_delivery_id: string }>`
+          SELECT relay_delivery_id FROM scheduled_task_webhook_relay_deliveries
+          ORDER BY seen_at`.pipe(
+          Effect.map((rows) => rows.map((row) => row.relay_delivery_id.split(":").at(-2))),
+        );
+        yield* TestClock.adjust("29 days");
+        yield* service.triggerWebhook(request(secret, token, "owner/d2", 43));
+        yield* Queue.take(launches);
+        assert.deepEqual(yield* claims, ["42", "43"]);
+        const late = yield* service.triggerWebhook(valid);
+        assert.equal(late._tag === "accepted" && late.outcome, "duplicate");
+        yield* TestClock.adjust("2 days");
+        yield* service.triggerWebhook(request(secret, token, "owner/d2", 44));
+        yield* Queue.take(launches);
+        assert.deepEqual(yield* claims, ["43", "44"]);
       }),
     ),
 );

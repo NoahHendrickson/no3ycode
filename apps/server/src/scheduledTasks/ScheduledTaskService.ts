@@ -2641,6 +2641,13 @@ export const layer = Layer.effect(
               return { _tag: "accepted" as const, deliveryId, outcome: "duplicate" as const };
             }
             claimedGithub = true;
+            // GitHub redelivers only the past 3 days and the relay holds a request
+            // under 48 hours, so an event claimed this long ago cannot arrive again.
+            yield* sql`
+              DELETE FROM scheduled_task_webhook_relay_deliveries
+              WHERE relay_delivery_id LIKE 'delivery:github:%'
+                AND seen_at < ${iso(DateTime.subtract(now, { days: 30 }))}
+            `.pipe(Effect.ignore);
           }
           // A delivery that never reaches dispatch gives its event key back so GitHub's redelivery can run.
           const releaseGithubClaim = Effect.suspend(() =>
