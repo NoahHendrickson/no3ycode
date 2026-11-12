@@ -1317,6 +1317,9 @@ importers:
       esbuild:
         specifier: ^0.28.1
         version: 0.28.2
+      lightningcss:
+        specifier: 1.33.0
+        version: 1.33.0
       micromark-util-types:
         specifier: 'catalog:'
         version: 2.0.2
