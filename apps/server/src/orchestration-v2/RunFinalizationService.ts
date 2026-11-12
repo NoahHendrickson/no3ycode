@@ -4,6 +4,7 @@ import {
   RunId,
   ThreadId,
   /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+  type OrchestrationV2ThreadShell,
   type VcsStatusLocalResult,
   /* fork:end server-local-checkout-branch-follow */
 } from "@t3tools/contracts";
@@ -45,10 +46,16 @@ export class RunFinalizationObserver extends Context.Reference<{
     readonly threadId: ThreadId;
     readonly runId: RunId;
     /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
-       The refresh hands back the checkout status it already read, so finalize
-       can follow the branch a local thread's turn ran on without a second
-       git status; null when no observer is installed. */
-  }) => Effect.Effect<VcsStatusLocalResult | null, RunFinalizationRefreshError>;
+       The refresh hands back the checkout status and thread shell it read, so
+       the follow re-reads neither; thread is null when the status rules a
+       follow out, the result null when no observer is installed. */
+  }) => Effect.Effect<
+    {
+      readonly local: VcsStatusLocalResult;
+      readonly thread: OrchestrationV2ThreadShell | null;
+    } | null,
+    RunFinalizationRefreshError
+  >;
 }>("t3/orchestration-v2/RunFinalizationObserver", {
   defaultValue: () => ({
     refresh: () => Effect.succeed(null),
@@ -100,7 +107,7 @@ const make = Effect.gen(function* () {
          The thread whose turn just ran on the shared checkout adopts the
          branch found there; the follower never fails the finalization. A
          failed refresh is logged as upstream does and skips the follow. */
-      const local = yield* observer
+      const refreshed = yield* observer
         .refresh({ cwd, threadId: input.threadId, runId: input.runId })
         .pipe(
           Effect.catchTags({
@@ -111,8 +118,8 @@ const make = Effect.gen(function* () {
               }).pipe(Effect.as(null)),
           }),
         );
-      if (local !== null) {
-        yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local });
+      if (refreshed !== null) {
+        yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, ...refreshed });
       }
       /* fork:end server-local-checkout-branch-follow */
     }
@@ -139,11 +146,13 @@ export const layerObserver = Layer.effect(
             { concurrency: "unbounded" },
           );
           /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
-             Every exit returns the status read above; see the observer shape. */
-          if (local.refName === null || local.isDefaultRef) return local;
+             Every exit returns what was read above; see the observer shape. */
+          if (local.refName === null || local.isDefaultRef) return { local, thread: null };
           const thread = yield* projections.getThreadShell(threadId);
-          if (!thread || thread.branch !== local.refName) return local;
-          if (thread.activeRunId !== null && thread.activeRunId !== runId) return local;
+          if (!thread || thread.branch !== local.refName) return { local, thread };
+          if (thread.activeRunId !== null && thread.activeRunId !== runId) {
+            return { local, thread };
+          }
           /* fork:end server-local-checkout-branch-follow */
           // The forge CLI can take minutes, so the next turn must not wait for it. A newer
           // turn's lookup replaces a running one instead of queueing behind the cwd's lock.
@@ -158,7 +167,7 @@ export const layerObserver = Layer.effect(
             FiberMap.run(pullRequestLookups, cwd),
           );
           /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
-          return local;
+          return { local, thread };
           /* fork:end server-local-checkout-branch-follow */
         },
         (effect, { cwd }) =>

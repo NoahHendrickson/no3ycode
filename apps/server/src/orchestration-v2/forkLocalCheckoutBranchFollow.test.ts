@@ -37,9 +37,8 @@ function run(input: {
 }) {
   const dispatched: Array<OrchestrationV2Command> = [];
   return followLocalCheckoutBranch(
-    { threadId, runId, cwd: "/repo", local: input.local },
+    { threadId, runId, cwd: "/repo", ...input },
     {
-      getThreadShell: () => Effect.succeed(input.thread),
       dispatch: (command) =>
         Effect.sync(() => {
           dispatched.push(command);
@@ -111,11 +110,8 @@ it.effect.each([
 it.effect("a failed dispatch is a warning, never a finalization failure", () =>
   Effect.gen(function* () {
     const adopted = yield* followLocalCheckoutBranch(
-      { threadId, runId, cwd: "/repo", local: status("feature/x") },
-      {
-        getThreadShell: () => Effect.succeed(shell()),
-        dispatch: () => Effect.fail(new DeciderRejected()),
-      },
+      { threadId, runId, cwd: "/repo", local: status("feature/x"), thread: shell() },
+      { dispatch: () => Effect.fail(new DeciderRejected()) },
     );
     assert.isNull(adopted);
   }),

@@ -35,19 +35,20 @@ function readCustomizationHunks(source: string): string {
 }
 
 describe("fork guard: server-local-checkout-branch-follow", () => {
-  it("hands the finalization's checkout status to the follower", () => {
+  it("hands the finalization's checkout status and thread shell to the follower", () => {
     const hunks = readCustomizationHunks(finalization);
-    // The observer returns the status it already read instead of void, and
-    // finalize feeds it to the follower; no second git status per turn.
-    expect(hunks).toContain(
-      "Effect.Effect<VcsStatusLocalResult | null, RunFinalizationRefreshError>",
-    );
+    // The observer returns the status and shell it already read instead of
+    // void, and finalize feeds them to the follower; no second git status or
+    // shell read per turn.
+    expect(hunks).toContain("readonly local: VcsStatusLocalResult;");
+    expect(hunks).toContain("readonly thread: OrchestrationV2ThreadShell | null;");
     expect(hunks).toContain("const follower = yield* LocalCheckoutBranchFollower;");
     expect(hunks).toContain(
-      "yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local });",
+      "yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, ...refreshed });",
     );
-    expect(hunks).toContain("return local;");
+    expect(hunks).toContain("return { local, thread };");
     expect(finalization).not.toMatch(/local\.isDefaultRef\) return;/u);
+    expect(follower).not.toContain("getThreadShell");
   });
 
   it("wires the real follower into production only", () => {

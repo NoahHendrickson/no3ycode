@@ -138,7 +138,11 @@ it.effect.each(
   );
   return Effect.gen(function* () {
     const observer = yield* RunFinalization.RunFinalizationObserver;
-    yield* observer.refresh({ cwd: "/repo", threadId, runId });
+    /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
+       The branch follow reuses the shell read here instead of reading it again. */
+    const handedBack = yield* observer.refresh({ cwd: "/repo", threadId, runId });
+    assert.equal(handedBack?.thread?.id ?? null, scenario.checkedOut === "main" ? null : threadId);
+    /* fork:end server-local-checkout-branch-follow */
     if (scenario.expected.length > 0) yield* Deferred.await(lookedUp);
     assert.deepEqual(refreshed, [...scenario.expected]);
   }).pipe(Effect.provide(layer));

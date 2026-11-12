@@ -5698,9 +5698,10 @@
 
     Shape: the policy and its Context.Reference live in the fork's own
     forkLocalCheckoutBranchFollow.ts. RunFinalizationService's observer hands
-    back the checkout status it already read (no second git status per turn)
-    and finalize passes it to the follower; runtimeLayer provides the real
-    follower, backed by ThreadManagementService, to production only — thread
+    back the checkout status and thread shell it already read (no second git
+    status or shell read per turn) and finalize passes both to the follower;
+    runtimeLayer provides the real follower, whose dispatch is
+    ThreadManagementService's, to production only — thread
     management sits above the orchestrator and finalization below the effect
     executor, so this closes no layer cycle, and the replay harness and unit
     tests keep the no-op default. The follower never fails a finalization.
