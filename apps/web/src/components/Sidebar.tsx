@@ -351,6 +351,16 @@ import {
 } from "~/custom/sidebarV2RowPolicy";
 /* fork:end sidebar-v2-card-rows */
 import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/SidebarV2ChromeRows";
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import { isChatModeMoveMenuId } from "~/custom/chatMode";
+import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
+import { SidebarV2ChatActionRows } from "~/custom/SidebarV2ChromeRows";
+import {
+  chatThreadMenuItem,
+  useChatSettledShelfPaging,
+  useSidebarModePolicy,
+} from "~/custom/useChatMode";
+/* fork:end fork-chat-mode */
 /* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
 import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
 /* fork:end fork-sidebar-recent-projects */
@@ -1039,6 +1049,10 @@ type SidebarThreadRowProps = {
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   projectTitleHidden?: boolean;
   /* fork:end sidebar-v2-project-grouping */
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  /** Chat's rows are titles alone: no project favicon or project name. */
+  hideProjectMark?: boolean;
+  /* fork:end fork-chat-mode */
   /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
   // Cards draw the title line alone, with the repo line reduced to marks on
   // it; the hover card carries the names. Slim rows only take the pill.
@@ -1720,15 +1734,21 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             }
           >
             {accessibleTitle}
-            <span
-              className={cn(
-                "flex shrink-0 items-center transition-opacity",
-                (!props.isActive || variantAction === "unsettle") &&
-                  "opacity-40 grayscale group-focus-within/v2-row:opacity-100 group-focus-within/v2-row:grayscale-0 group-any-hover/v2-row:opacity-100 group-any-hover/v2-row:grayscale-0",
-              )}
-            >
-              {props.project ? <ProjectFavicon project={props.project} className="size-4" /> : null}
-            </span>
+            {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+            {props.hideProjectMark === true ? null : (
+              /* fork:end fork-chat-mode */
+              <span
+                className={cn(
+                  "flex shrink-0 items-center transition-opacity",
+                  (!props.isActive || variantAction === "unsettle") &&
+                    "opacity-40 grayscale group-focus-within/v2-row:opacity-100 group-focus-within/v2-row:grayscale-0 group-any-hover/v2-row:opacity-100 group-any-hover/v2-row:grayscale-0",
+                )}
+              >
+                {props.project ? (
+                  <ProjectFavicon project={props.project} className="size-4" />
+                ) : null}
+              </span>
+            )}
             {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                 Fixed 14px leading slot (same as the card) so a monitoring mark
                 cannot shove the title 24px right of every neighboring slim row. */}
@@ -1957,7 +1977,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   A compact card has no repo line to name its project, so the
                   favicon leads the title instead, as on the slim rows. Under a
                   project header the header already names it. */}
-              {props.compact === true && props.projectTitleHidden !== true ? (
+              {props.compact === true &&
+              props.projectTitleHidden !== true &&
+              /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+              props.hideProjectMark !== true ? (
+                /* fork:end fork-chat-mode */
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <SidebarV2CompactCardLead project={props.project} />
                   {title}
@@ -2181,7 +2205,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               <SidebarV2ThreadCardMeta
                 projectTitle={props.projectTitle}
                 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
-                projectTitleHidden={props.projectTitleHidden === true}
+                projectTitleHidden={
+                  props.projectTitleHidden === true ||
+                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                  props.hideProjectMark === true
+                  /* fork:end fork-chat-mode */
+                }
                 /* fork:end sidebar-v2-project-grouping */
                 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                  The project favicon, pre-built above beside the terminal glyph. */
@@ -2254,6 +2283,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end sidebar-v2-project-grouping */
   // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
   const threads = useQuietThreadShells();
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  const modePolicy = useSidebarModePolicy();
+  // Read off the policy: the memoized menu handler below depends on the callee itself.
+  const moveThreadToMode = modePolicy.moveThread;
+  /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -2266,11 +2300,17 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const confirmThreadArchive = useClientSettings((s) => s.confirmThreadArchive);
   const sidebarProjectSortOrder = useClientSettings((s) => s.sidebarProjectSortOrder);
   const timestampFormat = useClientSettings((s) => s.timestampFormat);
-  const workingShelfEnabled = useClientSettings((s) => s.sidebarWorkingShelfEnabled);
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  const workingShelfEnabled =
+    useClientSettings((s) => s.sidebarWorkingShelfEnabled) && modePolicy.workingShelf;
+  /* fork:end fork-chat-mode */
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   // One grouping value: flat, by project, or by status (sidebar-v2-status-grouping).
-  const [grouping, setGrouping] = useSidebarV2Grouping();
+  const [storedGrouping, setGrouping] = useSidebarV2Grouping();
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  const grouping = modePolicy.grouping(storedGrouping);
+  /* fork:end fork-chat-mode */
   const groupByProject = grouping === "project";
   const [collapsedProjectKeys, toggleProjectGroupCollapsed] = useSidebarV2CollapsedProjects();
   /* fork:end sidebar-v2-project-grouping */
@@ -2470,6 +2510,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   const scopedProjectKeys = useMemo(
     () =>
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+         Chat has no scope: Code's choice waits, unapplied, for Code. */
+      !modePolicy.projectControls ||
+      /* fork:end fork-chat-mode */
       scopedProjectGroups.length === 0
         ? null
         : new Set(
@@ -2479,7 +2523,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               ),
             ),
           ),
-    [scopedProjectGroups],
+    [
+      scopedProjectGroups,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      modePolicy.projectControls,
+      /* fork:end fork-chat-mode */
+    ],
   );
   // How many projects the list can show: every project when unscoped, else
   // the scoped ones. Grouping and its unavailable-reason read this.
@@ -2488,9 +2537,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   // One name, or a count — what the filter button's tooltip and the empty
   // state call the scope.
   const scopedProjectsLabel =
-    scopedProjectGroups.length > 1
-      ? `${scopedProjectGroups.length} projects`
-      : (scopedProjectGroups[0]?.displayName ?? null);
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    scopedProjectKeys === null
+      ? null
+      : /* fork:end fork-chat-mode */
+        scopedProjectGroups.length > 1
+        ? `${scopedProjectGroups.length} projects`
+        : (scopedProjectGroups[0]?.displayName ?? null);
   // A scoped project that goes away (deleted, environment gone) leaves the
   // scope, so a stale key cannot keep the filter lit over nothing — but only
   // once every catalog environment has a live project snapshot (upstream
@@ -2531,7 +2584,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     findThread: (key) =>
       threads.find(
         (candidate) =>
-          scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key,
+          scopedThreadKey(scopeThreadRef(candidate.environmentId, candidate.id)) === key &&
+          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+             Widening the scope cannot list a thread the open mode hides. */
+          modePolicy.listsThread(candidate),
+        /* fork:end fork-chat-mode */
       ),
   });
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a route reveal widens the session project scope so the open thread's row lists
@@ -2615,9 +2672,21 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             (occurrence) => occurrence.label,
           ),
         hasServerShell: (threadRef) => serverThreadKeys.has(scopedThreadKey(threadRef)),
-      }),
+      })
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        // Code's drafts, by the threads' own rule; an unsent chat is never a row.
+        .filter((row) => modePolicy.listsThread(row.shell)),
+    /* fork:end fork-chat-mode */
     // routeThreadKey: snapshot composer prompts when the open thread changes.
-    [draftThreadsByThreadKey, projectDefaultModelByKey, routeThreadKey, serverThreadKeys],
+    [
+      draftThreadsByThreadKey,
+      projectDefaultModelByKey,
+      routeThreadKey,
+      serverThreadKeys,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      modePolicy.listsThread,
+      /* fork:end fork-chat-mode */
+    ],
   );
   const draftIdByThreadKey = useMemo(() => indexDraftIdsByThreadKey(draftRows), [draftRows]);
   const draftIdByThreadKeyRef = useRef(draftIdByThreadKey);
@@ -2646,7 +2715,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     const preciseNow = new Date().toISOString();
     // Subagent child threads live in the parent's Agents surface, not the
     // sidebar roster (v2 models them as real threads with lineage).
-    const visible = filterSidebarV2VisibleThreads(threads, scopedProjectKeys, delegatedUnderParent);
+    const visible = filterSidebarV2VisibleThreads(
+      threads,
+      scopedProjectKeys,
+      delegatedUnderParent,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      modePolicy.listsThread,
+      /* fork:end fork-chat-mode */
+    );
     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
        Status grouping orders its sections by return too, and draws its own
        Working section, so the beta shelf stands down while it is on. */
@@ -2735,7 +2811,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ),
       settledThreads: sortSettledThreads(settled),
       snoozeNow: preciseNow,
-      visibleThreads: visible,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+         Every mode's: the server's older-settled counts hold chats and Code threads alike. */
+      visibleThreads: modePolicy.chat
+        ? visible
+        : filterSidebarV2VisibleThreads(threads, scopedProjectKeys, delegatedUnderParent),
+      /* fork:end fork-chat-mode */
     };
   }, [
     delegatedUnderParent,
@@ -2753,6 +2834,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     /* fork:end sidebar-v2-status-grouping */
     threads,
     workingShelfEnabled,
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    modePolicy.listsThread,
+    modePolicy.chat,
+    /* fork:end fork-chat-mode */
   ]);
 
   // The settled tail renders in pages: history shouldn't dominate the
@@ -2784,8 +2869,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   // The partition's own list while every row is listed, so the memos below keep their inputs.
   const listedSettledThreads =
     listedSettledRows.length === settledThreads.length ? settledThreads : listedSettledRows;
-  useOlderSettledShelfGrowth(olderSettledShelf, listedSettledThreads);
-  const settledCount = settledThreads.length + olderSettledShelf.unloadedCount(visibleThreads);
+  useOlderSettledShelfGrowth(
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    useChatSettledShelfPaging(olderSettledShelf, listedSettledThreads.length, modePolicy.chat),
+    /* fork:end fork-chat-mode */
+    listedSettledThreads,
+  );
+  const settledCount =
+    settledThreads.length +
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+       The server cannot count chats apart, so Chat counts the chats it holds. */
+    (modePolicy.chat ? 0 : olderSettledShelf.unloadedCount(visibleThreads));
+  /* fork:end fork-chat-mode */
   const visibleSettledThreads = useMemo(() => {
     const visible = listedSettledThreads.slice(0, settledVisibleCount);
     // The open thread must never hide under "Show more": navigating into a
@@ -4200,50 +4295,68 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           ) ?? null;
         const clicked = await settlePromise(() =>
           api.contextMenu.show(
-            buildThreadActionMenuItems({
-              canOperate: readEnvironmentScope(
-                threadRef.environmentId,
-                AuthOrchestrationOperateScope,
-              ),
-              branch: thread.branch ?? null,
-              /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+            [
+              ...buildThreadActionMenuItems({
+                canOperate: readEnvironmentScope(
+                  threadRef.environmentId,
+                  AuthOrchestrationOperateScope,
+                ),
+                branch: thread.branch ?? null,
+                /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
                  The scope is a set here; the menu item reads "already scoped"
                  as the set holding exactly this project. */
-              // An archived project is not a filter choice.
-              projectFilter:
-                threadProjectGroup && !threadProjectGroup.archived
-                  ? {
-                      label: threadProjectGroup.displayName,
-                      isActive:
-                        projectScopeKeys.size === 1 &&
-                        projectScopeKeys.has(threadProjectGroup.projectKey),
-                    }
-                  : null,
-              /* fork:end fork-sidebar-chrome */
-              isPinned,
-              isSettled,
-              autoSettleEnabled: thread.autoSettleDisabledAt == null,
-              isSnoozed,
-              canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
-              isRegeneratingTitle,
-              isRunning: !threadRuntimeCanArchive(thread.runtime),
-              canShareWithGuest: appAtomRegistry.get(
-                canShareWithGuestAtom(threadRef.environmentId),
+                // An archived project is not a filter choice.
+                projectFilter:
+                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                  modePolicy.projectControls &&
+                  /* fork:end fork-chat-mode */
+                  threadProjectGroup &&
+                  !threadProjectGroup.archived
+                    ? {
+                        label: threadProjectGroup.displayName,
+                        isActive:
+                          projectScopeKeys.size === 1 &&
+                          projectScopeKeys.has(threadProjectGroup.projectKey),
+                      }
+                    : null,
+                /* fork:end fork-sidebar-chrome */
+                isPinned,
+                isSettled,
+                autoSettleEnabled: thread.autoSettleDisabledAt == null,
+                isSnoozed,
+                canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
+                isRegeneratingTitle,
+                isRunning: !threadRuntimeCanArchive(thread.runtime),
+                canShareWithGuest: appAtomRegistry.get(
+                  canShareWithGuestAtom(threadRef.environmentId),
+                ),
+                canTurnIntoProject: canTurnThreadIntoProject(threadRef),
+                supports: {
+                  settlement: configLoaded,
+                  autoSettleOptOut: supportsAutoSettleOptOut,
+                  snooze: configLoaded,
+                  pinning: configLoaded,
+                  titleRegeneration: configLoaded,
+                },
+                snoozePresets,
+              }),
+              /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+              chatThreadMenuItem(
+                thread,
+                readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
               ),
-              canTurnIntoProject: canTurnThreadIntoProject(threadRef),
-              supports: {
-                settlement: configLoaded,
-                autoSettleOptOut: supportsAutoSettleOptOut,
-                snooze: configLoaded,
-                pinning: configLoaded,
-                titleRegeneration: configLoaded,
-              },
-              snoozePresets,
-            }),
+              /* fork:end fork-chat-mode */
+            ],
             position,
           ),
         );
         if (clicked._tag === "Failure" || clicked.value === null) return;
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        if (isChatModeMoveMenuId(clicked.value)) {
+          if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
+          return;
+        }
+        /* fork:end fork-chat-mode */
         if (threadActionRequiresOperate(clicked.value) && !checkThreadOperations([thread])) return;
         if (clicked.value?.startsWith("snooze:")) {
           const preset =
@@ -4498,6 +4611,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       turnThreadIntoProject,
       updateThreadMetadata,
       timestampFormat,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      moveThreadToMode,
+      modePolicy.projectControls,
+      /* fork:end fork-chat-mode */
     ],
   );
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4782,68 +4899,84 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end fork-sidebar-chrome */
   return (
     <>
-      <SidebarChromeHeader isElectron={isElectron} />
+      <SidebarChromeHeader
+        isElectron={isElectron}
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        modeTabs={<SidebarModeTabs mode={modePolicy.mode} onModeChange={modePolicy.switchMode} />}
+        /* fork:end fork-chat-mode */
+      />
       {/* oxlint-disable-next-line shadcn/no-restyle -- the fork's list owns its own spacing */}
       <SidebarContent className="gap-0">
         {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
             Control rows are fork-owned; only these call sites live here.
             See custom/SidebarV2ChromeRows.tsx. */}
-        <SidebarV2ChromeActionRows
-          commandPaletteShortcutLabel={commandPaletteShortcutLabel}
-          newThreadShortcutLabel={newThreadShortcutLabel ?? null}
-          newThreadDisabled={projects.length === 0}
-          /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
-             Lit while the open draft still has no project: the column it
-             opened is this row's until the pill assigns one. */
-          newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}
-          /* fork:end fork-new-agent-draft */
-          onNewThread={handleNewThreadClick}
-          onAddProject={openAddProjectCommandPalette}
-        />
-        {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
-        <SidebarV2RecentProjectsStrip
-          projectGroups={projectGroups}
-          onStartAgent={handleNewThreadInProject}
-        />
-        {/* fork:end fork-sidebar-recent-projects */}
-        <SidebarV2ProjectScopeRow
-          projectGroups={projectGroups}
-          projectScopeKeys={projectScopeKeys}
-          scopedProjectDisplayName={scopedProjectsLabel}
-          onProjectScopeChange={setProjectScopeKeys}
-          menuOpen={projectScopeMenuState.open}
-          onMenuOpenChange={(open) => dispatchProjectScopeMenu({ type: "open-changed", open })}
-          onProjectActions={(event, project) => {
-            void handleProjectSettings(event, project);
-          }}
-          /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
+        {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+            Chat's only row is New chat: no search, projects, scope or grouping. */}
+        {modePolicy.chat ? (
+          <SidebarV2ChatActionRows />
+        ) : (
+          <>
+            {/* fork:end fork-chat-mode */}
+            <SidebarV2ChromeActionRows
+              commandPaletteShortcutLabel={commandPaletteShortcutLabel}
+              newThreadShortcutLabel={newThreadShortcutLabel ?? null}
+              newThreadDisabled={projects.length === 0}
+              /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+                 Lit while the open draft still has no project: the column it
+                 opened is this row's until the pill assigns one. */
+              newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}
+              /* fork:end fork-new-agent-draft */
+              onNewThread={handleNewThreadClick}
+              onAddProject={openAddProjectCommandPalette}
+            />
+            {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
+            <SidebarV2RecentProjectsStrip
+              projectGroups={projectGroups}
+              onStartAgent={handleNewThreadInProject}
+            />
+            {/* fork:end fork-sidebar-recent-projects */}
+            <SidebarV2ProjectScopeRow
+              projectGroups={projectGroups}
+              projectScopeKeys={projectScopeKeys}
+              scopedProjectDisplayName={scopedProjectsLabel}
+              onProjectScopeChange={setProjectScopeKeys}
+              menuOpen={projectScopeMenuState.open}
+              onMenuOpenChange={(open) => dispatchProjectScopeMenu({ type: "open-changed", open })}
+              onProjectActions={(event, project) => {
+                void handleProjectSettings(event, project);
+              }}
+              /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
              One grouping value; the menu's radios pick it. */
-          grouping={grouping}
-          onGroupingChange={setGrouping}
-          /* fork:end sidebar-v2-status-grouping */
-          /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-          compactCards={compactCards}
-          onCompactCardsChange={setCompactCards}
-          /* fork:end sidebar-v2-compact-cards */
-          // The same client setting the legacy sidebar's sort menu edits.
-          projectSortOrder={sidebarProjectSortOrder}
-          onProjectSortOrderChange={(sortOrder) => {
-            if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
-              snapshotVisibleProjectOrderAsManual(projectGroups);
-            }
-            void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
-          }}
-          // An option that visibly does nothing teaches nothing. Where headers
-          // are suppressed — one project on screen, by scope or by having only
-          // one — it says so instead of quietly ignoring the click.
-          groupByProjectUnavailableReason={
-            visibleProjectCount > 1
-              ? null
-              : scopedProjectKeys !== null
-                ? "Grouping applies when the sidebar shows more than one project"
-                : "Grouping applies once you have more than one project"
-          }
-        />
+              grouping={grouping}
+              onGroupingChange={setGrouping}
+              /* fork:end sidebar-v2-status-grouping */
+              /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+              compactCards={compactCards}
+              onCompactCardsChange={setCompactCards}
+              /* fork:end sidebar-v2-compact-cards */
+              // The same client setting the legacy sidebar's sort menu edits.
+              projectSortOrder={sidebarProjectSortOrder}
+              onProjectSortOrderChange={(sortOrder) => {
+                if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
+                  snapshotVisibleProjectOrderAsManual(projectGroups);
+                }
+                void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
+              }}
+              // An option that visibly does nothing teaches nothing. Where headers
+              // are suppressed — one project on screen, by scope or by having only
+              // one — it says so instead of quietly ignoring the click.
+              groupByProjectUnavailableReason={
+                visibleProjectCount > 1
+                  ? null
+                  : scopedProjectKeys !== null
+                    ? "Grouping applies when the sidebar shows more than one project"
+                    : "Grouping applies once you have more than one project"
+              }
+            />
+            {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+          </>
+        )}
+        {/* fork:end fork-chat-mode */}
         {/* fork:end fork-sidebar-chrome */}
         {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
             The list's two sides are padded to look equal, not to measure
@@ -5062,6 +5195,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           // dropped: assistive tech has no "two rows up".
                           projectTitleHidden={underProjectHeader}
                           /* fork:end sidebar-v2-project-grouping */
+                          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                          hideProjectMark={!modePolicy.projectControls}
+                          /* fork:end fork-chat-mode */
                           providerEntryByInstanceId={
                             providerEntriesByEnvironment.get(thread.environmentId) ??
                             EMPTY_PROVIDER_ENTRIES

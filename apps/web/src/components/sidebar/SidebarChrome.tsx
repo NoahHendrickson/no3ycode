@@ -43,8 +43,14 @@ import { observeResize } from "~/lib/observeResize";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
   isElectron,
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  modeTabs,
+  /* fork:end fork-chat-mode */
 }: {
   isElectron: boolean;
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  modeTabs?: ReactNode;
+  /* fork:end fork-chat-mode */
 }) {
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
      Everything from here to the fence's end diverges from upstream: the
@@ -106,6 +112,11 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
       ) : null}
       <SidebarBrand />
       {/* fork:end fork-sidebar-chrome */}
+      {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+      {modeTabs ? (
+        <div className="mr-3 flex shrink-0 [-webkit-app-region:no-drag]">{modeTabs}</div>
+      ) : null}
+      {/* fork:end fork-chat-mode */}
     </div>
   );
 });

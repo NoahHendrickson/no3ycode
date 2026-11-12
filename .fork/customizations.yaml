@@ -6723,3 +6723,57 @@
   verify:
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
+
+- id: fork-chat-mode
+  intent: >
+    The sidebar header switches between Code and Chat (Figma t3-fork
+    676:42030). Code is the sidebar as it was. Chat is one flat list of chats
+    under a lone "New chat" row: no search row, projects, scope or grouping.
+    Code's project scope stays chosen for Code but does not filter Chat.
+    Chat's Settled shelf counts the chats it holds (the server's older-settled
+    counts cannot tell modes apart) and stops paging once a page lists no chat.
+    Its rows are titles alone (hideProjectMark drops the project favicon and
+    name), and a chat joins the list only once its first send makes it a
+    thread: until then New chat is the lit row.
+    A thread belongs to the mode it was created in. "New chat" starts a
+    No-project (scratch) draft and moves it onto Chat's own logical draft key
+    (fork:chat), so the draft itself says it is a chat and Code's No-project
+    paths never reopen it. Its first send creates the thread, which the app
+    root tags `chat` (the server's existing thread tags, thread.tag.set;
+    custom/chatTagging); from the send until the tag shows, the thread is held
+    in Chat in memory. Code lists every thread without the tag,
+    No-project threads made in Code included. Each thread's context menu moves
+    it to the other mode (sets or clears the tag), by the thread's own mode, so
+    the collapsed tab strip offers the right move, and only with operate
+    scope. Switching modes always opens that mode's start: the chat typed but
+    not yet sent (else a new chat), or Code's New agent (which keeps its own
+    unsent prompt). A chat shows the composer alone, without the project,
+    checkout and branch chips (data-fork-chat-thread on the chat column), and
+    a new chat's headline is "What's up?". The mode is per client
+    (localStorage, stamped as data-fork-sidebar-mode). The collapsed tab strip
+    and mobile are not mode-aware.
+  tier: 4
+  files:
+    - apps/web/src/custom/chatMode.ts
+    - apps/web/src/custom/chatTagging.ts
+    - apps/web/src/custom/useChatMode.ts
+    - apps/web/src/custom/SidebarModeTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/overrides/components/chat/DraftHeroHeadline.tsx
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.inlet.css
+  shadows: []
+  watch:
+    - apps/web/src/appInit.tsx
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
+    - apps/web/src/custom/sidebarV2DraftRows.ts
+    - apps/web/src/main.tsx
+    - packages/client-runtime/src/operations/commands.ts
+    - packages/client-runtime/src/state/threadCommands.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkChatMode.test.ts
+    - apps/web/src/custom/chatMode.test.ts
+    - apps/web/src/custom/chatTagging.test.ts

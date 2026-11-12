@@ -908,3 +908,21 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+   Chat's lone New chat row sits first in the scrolling list, so the fillet its
+   bridge hangs above it needs that much room inside the list, or it is clipped. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-sidebar-mode="chat"]
+  [data-sidebar-version="v2"]
+  [data-slot="sidebar-group"][data-fork-chrome-rows] {
+  padding-top: var(--fork-inlet-fillet);
+}
+
+/* The open chat often sits first in the scrolling list too; its top fillet
+   needs the same room. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-sidebar-mode="chat"]
+  [data-sidebar-version="v2"]
+  [data-slot="sidebar-group"][data-fork-thread-list] {
+  padding-top: var(--fork-inlet-fillet);
+}
+/* fork:end fork-chat-mode */

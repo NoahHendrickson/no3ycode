@@ -605,10 +605,17 @@ export function filterSidebarV2VisibleThreads<
   threads: readonly T[],
   scopedProjectKeys: ReadonlySet<string> | null,
   delegatedUnderParent: ReadonlySet<string>,
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+     The open sidebar mode's threads: Chat's, or Code's. */
+  listedInMode: (thread: T) => boolean = () => true,
+  /* fork:end fork-chat-mode */
 ): T[] {
   return threads.filter(
     (thread) =>
       thread.archivedAt === null &&
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      listedInMode(thread) &&
+      /* fork:end fork-chat-mode */
       !isShownUnderParent(
         { environmentId: thread.environmentId, threadId: thread.id },
         thread.lineage,

@@ -59,6 +59,9 @@ import { resolveThreadRouteTarget } from "./threadRoutes";
 /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
 import { isSideChatSurface } from "./custom/sideChat/surface";
 /* fork:end fork-side-chat */
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import { startAppChatThreadTagging } from "./custom/chatTagging";
+/* fork:end fork-chat-mode */
 
 /** Writes appearance settings onto the document, touching only the groups that changed. */
 function startClientAppearance(): void {
@@ -223,6 +226,9 @@ export function startAppServices(): AppRouter {
      second copy would double notifications, sounds and app-wide toasts. */
   if (isSideChatSurface) return router;
   /* fork:end fork-side-chat */
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  startAppChatThreadTagging();
+  /* fork:end fork-chat-mode */
   startBackgroundThreadAnnouncements(appAtomRegistry, router);
   startThreadVisitedMigration(appAtomRegistry);
   startSshPasswordPromptQueue();
