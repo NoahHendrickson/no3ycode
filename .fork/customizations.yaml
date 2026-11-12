@@ -6707,13 +6707,16 @@
     it aside: the chat lane is laid out as if the card were not there, so
     the transcript stays centred and the card sits on top of it. The card
     still counts as an obstacle for the preview mini player, and whether the
-    card docks or opens as a popover is upstream's rule, unchanged.
+    card docks or opens as a popover is upstream's rule, unchanged. Where the
+    card overlaps the lane (canvases up to about 1320px wide) it stops above
+    the measured composer, so it never covers the send controls.
   tier: 4
   files: []
   shadows: []
   watch:
     - apps/web/src/components/chat/chatCanvasLayout.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
+    - apps/web/src/components/chat/canvasStore.ts
     - apps/web/src/components/chat/threadDetailsCardLayout.ts
   verify:
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
