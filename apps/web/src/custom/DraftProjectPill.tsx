@@ -56,7 +56,7 @@ import {
   buildSidebarProjectSnapshots,
   type SidebarProjectPickerEntry,
 } from "~/sidebarProjectGrouping";
-import { useProjects, useVisibleThreadShells } from "~/state/entities";
+import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
 import {
   ChevronDownIcon,
@@ -160,7 +160,7 @@ export function DraftProjectPill(props: {
     }
     return partition;
   }, [allProjects, scratchWorkspaceRootFor]);
-  const threads = useVisibleThreadShells();
+  const threads = useQuietThreadShells();
   const { environments } = useEnvironments();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);

@@ -249,8 +249,8 @@ import {
   useAllEnvironmentProjectSnapshotsReady,
   useDelegatedUnderParent,
   useProjects,
+  useQuietThreadShells,
   useServerConfigs,
-  useVisibleThreadShells,
 } from "../state/entities";
 import { environmentPresentations } from "../state/presentation";
 import { primaryServerKeybindingsAtom } from "../state/server";
@@ -2247,8 +2247,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   const reorderProjects = useUiStateStore((store) => store.reorderProjects);
   /* fork:end sidebar-v2-project-grouping */
-  // Upstream #29053: threads tagged to hide stay out of the list while recording.
-  const threads = useVisibleThreadShells();
+  // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
+  const threads = useQuietThreadShells();
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
