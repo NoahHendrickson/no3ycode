@@ -2504,6 +2504,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   const scopedProjectKeys = useMemo(
     () =>
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+         Chat has no scope: Code's choice waits, unapplied, for Code. */
+      !modePolicy.projectControls ||
+      /* fork:end fork-chat-mode */
       scopedProjectGroups.length === 0
         ? null
         : new Set(
@@ -2513,7 +2517,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               ),
             ),
           ),
-    [scopedProjectGroups],
+    [
+      scopedProjectGroups,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      modePolicy.projectControls,
+      /* fork:end fork-chat-mode */
+    ],
   );
   // How many projects the list can show: every project when unscoped, else
   // the scoped ones. Grouping and its unavailable-reason read this.
@@ -2522,9 +2531,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   // One name, or a count — what the filter button's tooltip and the empty
   // state call the scope.
   const scopedProjectsLabel =
-    scopedProjectGroups.length > 1
-      ? `${scopedProjectGroups.length} projects`
-      : (scopedProjectGroups[0]?.displayName ?? null);
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    scopedProjectKeys === null
+      ? null
+      : /* fork:end fork-chat-mode */
+        scopedProjectGroups.length > 1
+        ? `${scopedProjectGroups.length} projects`
+        : (scopedProjectGroups[0]?.displayName ?? null);
   // A scoped project that goes away (deleted, environment gone) leaves the
   // scope, so a stale key cannot keep the filter lit over nothing — but only
   // once every catalog environment has a live project snapshot (upstream
@@ -4272,7 +4285,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                  as the set holding exactly this project. */
                 // An archived project is not a filter choice.
                 projectFilter:
-                  threadProjectGroup && !threadProjectGroup.archived
+                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                  modePolicy.projectControls &&
+                  /* fork:end fork-chat-mode */
+                  threadProjectGroup &&
+                  !threadProjectGroup.archived
                     ? {
                         label: threadProjectGroup.displayName,
                         isActive:
@@ -4572,6 +4589,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
       modePolicy.threadMenuItem,
       modePolicy.moveThread,
+      modePolicy.projectControls,
       /* fork:end fork-chat-mode */
     ],
   );

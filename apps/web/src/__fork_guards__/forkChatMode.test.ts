@@ -25,6 +25,10 @@ describe("fork guard: fork-chat-mode", () => {
       "<SidebarModeTabs mode={modePolicy.mode} onModeChange={modePolicy.switchMode} />",
     );
     expect(sidebar).toContain("<SidebarV2ChatActionRows />");
+    // Code's project scope stays chosen but does not filter Chat.
+    expect(sidebar).toMatch(
+      /!modePolicy\.projectControls \|\|\s*\/\* fork:end fork-chat-mode \*\/\s*scopedProjectGroups\.length === 0/u,
+    );
     expect(sidebar).toContain("modePolicy.threadMenuItem(");
     expect(read("../components/sidebar/SidebarChrome.tsx")).toContain("{modeTabs ?");
     expect(read("../main.tsx")).toContain("initializeForkSidebarMode();");

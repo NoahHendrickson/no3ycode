@@ -6729,6 +6729,7 @@
     The sidebar header switches between Code and Chat (Figma t3-fork
     676:42030). Code is the sidebar as it was. Chat is one flat list of chats
     under a lone "New chat" row: no search row, projects, scope or grouping.
+    Code's project scope stays chosen for Code but does not filter Chat.
     Its rows are titles alone (hideProjectMark drops the project favicon and
     name), and a chat joins the list only once its first send makes it a
     thread: until then New chat is the lit row.
