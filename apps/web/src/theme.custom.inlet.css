@@ -928,3 +928,12 @@
     background-image: none;
   }
 }
+
+/* Inlet Black's message links are the new-agent texture's blue (#44aaf8,
+   custom/pixelTexture), deepened on the same hue to reach 4.5:1 on the cream
+   panel. File and thread links read the same token. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  .chat-markdown {
+  --info-foreground: #1670b5;
+}
