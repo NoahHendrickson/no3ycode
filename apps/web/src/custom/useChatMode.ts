@@ -31,7 +31,7 @@ import {
   shellThreadKey,
   useForkSidebarMode,
 } from "./chatMode";
-import { forgetSentChat, useSentChats } from "./chatTagging";
+import { forgetSentChat, readSentChats, useSentChats } from "./chatTagging";
 import { useStartNewAgentDraft } from "./useNewAgentDraft";
 
 /** "New chat": a No-project draft, claimed for Chat once it is open. Only the draft the handler
@@ -131,6 +131,14 @@ export function useIsChatThread(target: ScopedThreadRef | DraftId | null): boole
   return draftIsChat || (shell !== null && isChatThread(shell, sentChats));
 }
 
+/** A thread's move to the other mode, by its own mode as the click finds it. */
+export function chatThreadMenuItem(
+  thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
+  canOperate: boolean,
+) {
+  return chatModeMoveMenuItem(isChatThread(thread, readSentChats()), canOperate);
+}
+
 /**
  * How the open mode shapes the sidebar, so Sidebar.tsx reads a field rather than deciding.
  * Chat is one flat list of chats: no projects to strip, scope, group or mark on its rows, and
@@ -152,7 +160,6 @@ export function useSidebarModePolicy() {
     /** The one visibility rule for the open mode, for threads and draft rows alike. */
     listsThread: (thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">) =>
       isChatThread(thread, sentChats) === chat,
-    threadMenuItem: () => chatModeMoveMenuItem(mode),
     moveThread: (
       thread: Pick<EnvironmentThreadShell, "environmentId" | "id">,
       id: ChatModeMoveMenuId,

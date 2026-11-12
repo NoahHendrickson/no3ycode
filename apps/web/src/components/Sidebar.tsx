@@ -355,7 +355,11 @@ import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/Si
 import { isChatModeMoveMenuId } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
 import { SidebarV2ChatActionRows } from "~/custom/SidebarV2ChromeRows";
-import { useChatSettledShelfPaging, useSidebarModePolicy } from "~/custom/useChatMode";
+import {
+  chatThreadMenuItem,
+  useChatSettledShelfPaging,
+  useSidebarModePolicy,
+} from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
 /* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
 import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
@@ -2281,6 +2285,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const threads = useQuietThreadShells();
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
   const modePolicy = useSidebarModePolicy();
+  // Read off the policy: the memoized menu handler below depends on the callee itself.
+  const moveThreadToMode = modePolicy.moveThread;
   /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
@@ -4335,7 +4341,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 snoozePresets,
               }),
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-              modePolicy.threadMenuItem(),
+              chatThreadMenuItem(
+                thread,
+                readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+              ),
               /* fork:end fork-chat-mode */
             ],
             position,
@@ -4344,7 +4353,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         if (clicked._tag === "Failure" || clicked.value === null) return;
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
-          modePolicy.moveThread(thread, clicked.value);
+          if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
           return;
         }
         /* fork:end fork-chat-mode */
@@ -4603,8 +4612,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       updateThreadMetadata,
       timestampFormat,
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-      modePolicy.threadMenuItem,
-      modePolicy.moveThread,
+      moveThreadToMode,
       modePolicy.projectControls,
       /* fork:end fork-chat-mode */
     ],

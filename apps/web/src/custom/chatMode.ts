@@ -85,15 +85,24 @@ const MOVE_TO_CHAT = "fork:move-to-chat";
 const MOVE_TO_CODE = "fork:move-to-code";
 export type ChatModeMoveMenuId = typeof MOVE_TO_CHAT | typeof MOVE_TO_CODE;
 
-/** A thread's way between the modes, last in its context menu. */
-export function chatModeMoveMenuItem(mode: ForkSidebarMode): {
+/** A thread's way to the other mode, last in its context menu. From the thread's own mode, not
+    the sidebar's: the collapsed tab strip lists both modes' threads. */
+export function chatModeMoveMenuItem(
+  isChat: boolean,
+  canOperate: boolean,
+): {
   readonly id: ChatModeMoveMenuId;
   readonly label: string;
   readonly separatorBefore: true;
+  readonly disabled: boolean;
 } {
-  return mode === "chat"
-    ? { id: MOVE_TO_CODE, label: "Move to Code", separatorBefore: true }
-    : { id: MOVE_TO_CHAT, label: "Move to Chat", separatorBefore: true };
+  return {
+    ...(isChat
+      ? { id: MOVE_TO_CODE, label: "Move to Code" }
+      : { id: MOVE_TO_CHAT, label: "Move to Chat" }),
+    separatorBefore: true,
+    disabled: !canOperate,
+  };
 }
 
 export function isChatModeMoveMenuId(id: string): id is ChatModeMoveMenuId {

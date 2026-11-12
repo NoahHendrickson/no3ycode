@@ -36,7 +36,7 @@ describe("fork guard: fork-chat-mode", () => {
     expect(sidebar).toMatch(
       /!modePolicy\.projectControls \|\|\s*\/\* fork:end fork-chat-mode \*\/\s*scopedProjectGroups\.length === 0/u,
     );
-    expect(sidebar).toContain("modePolicy.threadMenuItem(");
+    expect(sidebar).toContain("chatThreadMenuItem(");
     expect(read("../components/sidebar/SidebarChrome.tsx")).toContain("{modeTabs ?");
     expect(read("../main.tsx")).toContain("initializeForkSidebarMode();");
   });
