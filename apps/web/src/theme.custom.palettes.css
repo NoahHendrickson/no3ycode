@@ -804,7 +804,7 @@
   --fork-context-chip-bg-hover: #c6c2ab;
   /* A row's hover card, and the row while it is open, are the sidebar's own
      hover fill in its light ink rather than the popover's cream. */
-  --fork-inlet-row-card: #1f1f1f;
+  --fork-inlet-row-card: #272727;
   --fork-inlet-row-card-foreground: #e8e8e8;
   --fork-inlet-row-card-muted: #9a9a9a;
   /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
@@ -831,7 +831,8 @@
   --sidebar-muted-foreground: #d5d5d5;
   --fork-sidebar-card-title-receded: #b0b0b0;
   --sidebar-control-surface: #2a2a2a;
-  --sidebar-row-hover: #1f1f1f;
+  /* White 8% over the #141414 sidebar, flattened. */
+  --sidebar-row-hover: #272727;
   --sidebar-row-active: #f8f3d8;
   --sidebar-row-selected: #f8f3d8;
   --sidebar-v2-status-working: #24fe8a;
