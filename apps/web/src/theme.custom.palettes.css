@@ -1380,6 +1380,29 @@
   box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
 }
 
+/* floatWindow writes these on every pane behind the window per drag frame, in
+   every theme; not inheriting keeps each write to that pane's own style. */
+@property --fork-float-hole-x {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-y {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-h {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-fork-float-behind] {
   mask-image:
