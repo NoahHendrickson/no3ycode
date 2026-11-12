@@ -6258,22 +6258,30 @@
     because the chip remounts mid-slide when the assignment settles and
     ChatView swaps the fallback strip for BranchToolbar; each chip that mounts
     resumes the slide where the last one was. The chips the pick brings in
-    (checkout, branch) fade in after it. Reduced
-    motion skips the motion.
+    (checkout, branch) fade in after it, and the row that renders them owns
+    that: BranchToolbar (fenced) stamps data-fork-chips-joining on its strip
+    when it mounts within a moment of a pick, and theme.custom.css gives every
+    chip under the stamp but the project chip a one-shot fade, so chips that
+    mount later in that window (git status resolving) fade in too. Reduced
+    motion skips both.
   tier: 4
   files:
     - apps/web/src/custom/DraftProjectPill.tsx
     - apps/web/src/custom/draftProjectPickMotion.ts
-    - apps/web/src/custom/draftProjectPickMotion.browser.test.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    # The joining chips fade, after the context row rules.
+    - apps/web/src/theme.custom.css
   shadows: []
   watch:
     # Fenced rankRecentProjectEntries beside sortLogicalProjectsForSidebar.
     - apps/web/src/components/Sidebar.logic.ts
+    # Fenced data-fork-chips-joining stamp on the context strip.
+    - apps/web/src/components/BranchToolbar.tsx
   verify:
     - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
-    - apps/web/src/custom/draftProjectPickMotion.browser.test.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
 
 - id: fork-git-256-non-repository
   intent: >

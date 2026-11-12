@@ -1109,6 +1109,25 @@
   flex: 0 1 auto;
 }
 
+/* A strip that mounts just after a quick pick fades its chips in behind the
+   project chip's slide (fork-draft-project-quick-picks). One shot per chip. */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-slot="composer-context-strip"][data-fork-chips-joining]
+    :is(button, [data-composer-context-control]):not(
+      [data-fork-draft-project-chip],
+      :is(button, [data-composer-context-control]) *
+    ) {
+    animation: fork-context-chip-join 200ms ease-out 140ms backwards;
+  }
+}
+
+@keyframes fork-context-chip-join {
+  from {
+    opacity: 0;
+  }
+}
+
 /* The context chips are the filled controls above the surface (checkout /
    worktree mode and branch). Same selected-surface fill, no hairline. Light
    mode falls back to upstream's accent; the drawn values are dark-only. */

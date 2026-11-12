@@ -406,6 +406,7 @@ export function DraftProjectPill(props: {
                 // this trigger and a momentary shrink drags it sideways.
                 className={DRAFT_PROJECT_CHIP_CLASS_NAME}
                 data-testid="draft-project-pill"
+                data-fork-draft-project-chip=""
                 data-composer-context-control
                 data-project-assigned={selection.kind === "unassigned" ? "false" : "true"}
                 aria-busy={pending || undefined}

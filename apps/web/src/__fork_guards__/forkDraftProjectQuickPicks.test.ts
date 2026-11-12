@@ -28,4 +28,14 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     const motion = read("../custom/draftProjectPickMotion.ts");
     expect(motion).toContain('matchMedia("(prefers-reduced-motion: reduce)")');
   });
+
+  it("fades in the chips a pick brings in from the row that renders them", () => {
+    const toolbar = read("../components/BranchToolbar.tsx");
+    expect(toolbar).toContain("const chipsJoining = useDraftProjectChipsJoining(draftId ?? null);");
+    expect(toolbar).toContain('data-fork-chips-joining={chipsJoining ? "" : undefined}');
+    const theme = read("../theme.custom.css");
+    expect(theme).toMatch(
+      /@media \(prefers-reduced-motion: no-preference\) \{[^@]*\[data-fork-chips-joining\][^{]*:not\(\s*\[data-fork-draft-project-chip\][^{]*\{\s*animation: fork-context-chip-join/u,
+    );
+  });
 });

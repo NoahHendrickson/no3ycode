@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { DraftId } from "~/composerDraftStore";
-import { playDraftProjectPick, rememberDraftProjectPick } from "./draftProjectPickMotion";
+import { render } from "../../test/render";
+import {
+  playDraftProjectPick,
+  rememberDraftProjectPick,
+  useDraftProjectChipsJoining,
+} from "./draftProjectPickMotion";
+
+function Strip(props: { readonly draftId: DraftId }) {
+  const joining = useDraftProjectChipsJoining(props.draftId);
+  return <div data-testid="strip" data-joining={joining ? "" : undefined} />;
+}
 
 function button(left: number): HTMLButtonElement {
   const element = document.createElement("button");
@@ -34,5 +44,21 @@ describe("draftProjectPickMotion", () => {
     playDraftProjectPick(draftId, laterChip);
     expect(laterChip.getAnimations()).toHaveLength(0);
     for (const element of [settledChip, laterChip]) element.remove();
+  });
+
+  it("fades in the chips of a strip that mounts just after a pick, and no other", async () => {
+    using _now = vi.spyOn(Date, "now").mockReturnValue(5_000);
+    const pill = button(200);
+    rememberDraftProjectPick("draft-picked" as DraftId, pill);
+    pill.remove();
+    await using screen = await render(
+      <>
+        <Strip draftId={"draft-picked" as DraftId} />
+        <Strip draftId={"draft-untouched" as DraftId} />
+      </>,
+    );
+    const [picked, untouched] = screen.getByTestId("strip").elements();
+    expect(picked?.hasAttribute("data-joining")).toBe(true);
+    expect(untouched?.hasAttribute("data-joining")).toBe(false);
   });
 });
