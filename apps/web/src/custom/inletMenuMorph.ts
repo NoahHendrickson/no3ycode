@@ -258,6 +258,10 @@ function release(popup: HTMLElement) {
   popup.dataset.forkMorph = "failed";
   glass.dataset.forkMorph = "failed";
   glass.style.opacity = "";
+  // Its button keeps the stylesheet's fill and join. A :has() on :root read this before, and
+  // every element inserted anywhere re-checked it, restyling the page.
+  const trigger = findTrigger(popup);
+  if (trigger !== null) trigger.dataset.forkMorphFailed = "";
 }
 
 function startMorph(popup: HTMLElement) {
@@ -282,6 +286,7 @@ function startMorph(popup: HTMLElement) {
   glass.dataset.forkMorph = "on";
   glass.style.opacity = "0";
   trigger.dataset.forkMorphing = "";
+  delete trigger.dataset.forkMorphFailed;
 
   // One step under the popup's own positioner, above everything it floats over: menus sit at
   // z-130, the thread details popover on the sheet layer (--z-sheet, 46). The docked details card

@@ -80,6 +80,7 @@ import {
 import { ScheduledCard, useConnectedEnvironments } from "./scheduledPageChrome";
 import { ScheduledRunRows, ScheduledRunsHeader } from "./ScheduledRunsTable";
 import { ScheduledTaskDetail } from "./ScheduledTaskDetail";
+import { forkStageCardRef } from "../forkStageStamps";
 
 /**
  * Escape steps back a level, except from a field or popup: leaving the task
@@ -130,7 +131,7 @@ export function ScheduledPage() {
     <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none isolate">
       {/* Glass sets the page on the stage card, as a chat view is
           (theme.custom.glass-stage.css). */}
-      <div data-fork-stage-card="" className="flex min-h-0 flex-1 flex-col">
+      <div ref={forkStageCardRef} data-fork-stage-card="" className="flex min-h-0 flex-1 flex-col">
         <WorkspacePageHeader electron={isElectron} data-fork-stage-card-title="">
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <ZapIcon className="size-4 text-muted-foreground" aria-hidden />

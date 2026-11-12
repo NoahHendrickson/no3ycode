@@ -158,17 +158,16 @@
   transition: opacity 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* The draft state is read off the overlay's own data-draft-hero stamp
-   (fork-new-agent-draft, the same isDraftHeroState that centres the composer)
-   through `:has()` on the chat view, so nothing in ChatView is stamped for
-   the theme. The argument names two attributes no message node carries, so
-   streaming a turn never puts these rules in the invalidation path. */
+/* The draft state is ChatView's isDraftHeroState (the one that centres the
+   composer), stamped on the chat column as data-fork-draft-hero and on :root
+   as data-fork-draft-hero-shown (fork-stage-stamps). Not a :has() on the
+   column, inset or wrapper: Chromium re-checks those for every transcript
+   row inserted beneath them, which restyled the page on each thread switch.
+   The repeated [data-chat-column] keeps the old :has() specificity. */
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has(
-    [data-chat-composer-overlay="true"][data-draft-hero]
-  )::after {
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]::after {
   opacity: 0.8;
 }
 
@@ -193,7 +192,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
   .bg-background:not([data-slot="switch-thumb"]) {
   background: none;
 }
@@ -205,7 +204,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
   [data-chat-header]
   :is(
     ol:has([data-slot="workspace-breadcrumb-text"]),
@@ -228,23 +227,21 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]:not([data-fork-sidebar-vibrancy="true"])
-  [data-slot="sidebar-inset"]:has([data-chat-composer-overlay="true"][data-draft-hero]) {
+  [data-slot="sidebar-inset"]:is(:root[data-fork-draft-hero-shown] *) {
   background-color: var(--fork-glass-panel);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   )[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-inset"]:has([data-chat-composer-overlay="true"][data-draft-hero]) {
+  [data-slot="sidebar-inset"]:is(:root[data-fork-draft-hero-shown] *) {
   background-image: linear-gradient(var(--fork-glass-panel) 0 100%);
 }
 
 /* No seam while the gutter matches the panel: the card's edge is the only
    line the frame draws. Same container rule Westworld and the glass seam
-   target, read through the sidebar wrapper's :has() because the panel is
-   the inset's sibling, not the draft's ancestor — the wrapper is their
-   nearest common ancestor, and keeps the :has() off :root, where it would
-   widen invalidation to the whole document. The panel's own colour, not
+   target, read off the :root stamp because the panel is the inset's
+   sibling, not the draft's ancestor. The panel's own colour, not
    transparent: the panel tint paints inside the container, so under the
    desktop glass a transparent border is a 1px strip of raw wallpaper down
    the seam (it read orange against a sunset). --sidebar is the panel's fill
@@ -252,7 +249,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-wrapper"]:has([data-chat-composer-overlay="true"][data-draft-hero])
+  [data-slot="sidebar-wrapper"]:is(:root[data-fork-draft-hero-shown] *)
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
   border-color: var(--sidebar);
 }
@@ -346,7 +343,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"]
@@ -369,7 +366,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-picture="off"])):where(
       :not([data-fork-glass-3d])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-fork-composer-stack="true"]
     :is(
       [data-fork-composer-vessel],
@@ -382,7 +379,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"]
@@ -396,7 +393,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"]
@@ -425,7 +422,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-fork-composer-stack="true"]
     [data-fork-composer-vessel] {
     --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
@@ -435,7 +432,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-fork-composer-stack="true"]
     [data-fork-composer-context-row]
     :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
@@ -446,7 +443,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-fork-composer-stack="true"]
     [data-fork-composer-context-row]
     :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
@@ -467,7 +464,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-chat-header]
     [data-fork-pill] {
     --fork-glass-frost-wash: rgb(255 255 255 / 18%);
@@ -478,7 +475,7 @@
   :root[data-fork="noahhendrickson-t3code"]:where(
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
-    [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+    [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
     [data-chat-header]
     button[data-fork-pill]:is(:hover, [data-pressed]) {
     --fork-glass-frost-wash: rgb(255 255 255 / 26%);
@@ -498,7 +495,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
   [data-chat-header]
   [data-fork-panel-toggle] {
   border-radius: 6px;
@@ -518,7 +515,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero]):not(
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]:not(
     :has([data-preview-mini-player] [data-browser-surface-slot])
   )
   [data-thread-details-panel="inline"]
@@ -539,7 +536,7 @@
 :root[data-fork="noahhendrickson-t3code"]:where(
     :not([data-fork-glass-picture="off"])
   ).dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero])
+  [data-chat-column-maximized-away][data-fork-draft-hero][data-chat-column]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
     [data-fork-composer-stack="true"]

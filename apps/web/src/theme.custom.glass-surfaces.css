@@ -763,7 +763,7 @@
      (the mockup's proportion) on their brand colour; any other provider keeps
      its icon on a neutral wash. */
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-tabs] {
-    & [data-fork-thread-tab]:has([data-fork-tab-provider-mark]) > [data-fork-tab-content] {
+    & [data-fork-thread-tab][data-fork-tab-has-mark] > [data-fork-tab-content] {
       padding-inline-start: 4px;
     }
 

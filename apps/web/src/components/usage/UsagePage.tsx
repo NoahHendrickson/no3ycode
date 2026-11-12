@@ -96,6 +96,9 @@ import { UsageShareBar } from "./UsageShareBar";
 /* fork:begin fork-usage-limits-surface — see .fork/customizations.yaml#fork-usage-limits-surface */
 import { ScheduledCard } from "../../custom/scheduled/scheduledPageChrome";
 /* fork:end fork-usage-limits-surface */
+/* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+import { forkStageCardRef } from "../../custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 import {
   costTypeSegments,
   modelShare,
@@ -527,7 +530,11 @@ export function UsagePage() {
        A page in the main panel, as Automations is, rather than a modal over the
        thread: no close button, and the stage card under Glass. */
     <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none isolate">
-      <div data-fork-stage-card="" className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div
+        ref={forkStageCardRef}
+        data-fork-stage-card=""
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+      >
         <WorkspacePageHeader
           electron={isElectron}
           data-fork-stage-card-title=""

@@ -2478,8 +2478,8 @@
     change, nothing loops): hung menus, the chips' menus included, move only
     through the one-shape morph, and one it gives up on opens as its static
     tab with no clip unfold; what they hang from eases its fill
-    and corners over 160ms; a sidebar row eases into the panel's fill and its
-    bridge runs out into the panel.
+    and corners over 160ms; the sidebar's open row and its bridge land at
+    once, like a tab switch.
     Every hung menu goes further (the Threads header, tab strip, composer
     chips, model, mode and usage menus, and the thread details card, popover
     or docked; the docked card stays mounted through its close via
@@ -6594,3 +6594,32 @@
     - apps/web/src/components/ui/combobox.tsx
   verify:
     - apps/web/src/__fork_guards__/forkFullWidthSearchDivider.test.ts
+
+- id: fork-stage-stamps
+  intent: >
+    The palettes read page conditions off attributes React stamps, not a
+    :has() on a large ancestor. Chromium re-checks such a :has() for every
+    element inserted under it and, through the one invalidation list all
+    :has() rules share, restyles most of the page: under Inlet a thread
+    switch restyled the whole document about 18 times. custom/forkStageStamps
+    counts mounts and stamps :root with data-fork-has-chat-column (ChatView's
+    column), data-fork-has-stage-card (Usage, Automations),
+    data-fork-has-thread-tabs (the collapsed tab strip) and
+    data-fork-draft-hero-shown (ChatView's isDraftHeroState). ChatView
+    (fenced) also stamps the column with data-fork-draft-hero, its workspace
+    root with data-fork-workspace-root and its messages wrapper with
+    data-fork-messages-wrapper once the transcript has rows. The fork's own
+    markup carries the rest: data-fork-thread-list, data-fork-chrome-rows,
+    data-fork-dictation-mic, data-fork-tab-has-mark, and
+    inletMenuMorph.ts's data-fork-morph-failed on a button whose menu the
+    morph gave up on.
+  tier: 4
+  files:
+    - apps/web/src/custom/forkStageStamps.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/usage/UsagePage.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
+    - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts

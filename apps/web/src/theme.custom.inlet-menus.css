@@ -589,16 +589,14 @@
 
   /* The details card is morphed too, as a popover or docked, so its toggle
      drops the stylesheet's own fill and join (kept under reduced motion, and
-     for a card the morph gave up on); the shape draws both, wherever the
+     for a card the morph gave up on, whose button custom/inletMenuMorph.ts
+     stamps data-fork-morph-failed); the shape draws both, wherever the
      button sits along the card. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]:not(
-      :has(
-        [data-slot="popover-popup"][data-fork-morph="failed"] [data-thread-details-card],
-        [data-thread-details-panel="inline"][data-fork-morph="failed"]
-      )
-    )
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     [data-fork-panel-toggle]
-    > :is([aria-expanded="true"], [data-fork-details-toggle][aria-pressed="true"]) {
+    > :is([aria-expanded="true"], [data-fork-details-toggle][aria-pressed="true"]):not(
+      [data-fork-morph-failed]
+    ) {
     background-color: transparent !important;
 
     &::after {

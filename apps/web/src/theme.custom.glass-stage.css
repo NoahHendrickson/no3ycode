@@ -171,27 +171,27 @@
      gradient over the inset the vibrancy block has already cleared. Settings,
      Usage and the other routes in the inset hold no card and keep the stage
      as it was. */
-  &.dark[data-fork-theme="cool-darker"]:not([data-fork-sidebar-vibrancy="true"])
-    [data-slot="sidebar-inset"]:has(
-      :is([data-chat-column-maximized-away], [data-fork-stage-card])
-    ) {
+  &.dark[data-fork-theme="cool-darker"]:not([data-fork-sidebar-vibrancy="true"]):is(
+      [data-fork-has-chat-column],
+      [data-fork-has-stage-card]
+    )
+    [data-slot="sidebar-inset"] {
     background-color: var(--fork-glass-panel);
   }
 
-  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-inset"]:has(
-      :is([data-chat-column-maximized-away], [data-fork-stage-card])
-    ) {
+  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]:is(
+      [data-fork-has-chat-column],
+      [data-fork-has-stage-card]
+    )
+    [data-slot="sidebar-inset"] {
     background-image: linear-gradient(var(--fork-glass-panel) 0 100%);
   }
 
   /* No seam while the gutter matches the panel: the card's edge is the only
      line between them. The panel's own fill rather than a clear border, which
      under the desktop glass is a 1px strip of raw wallpaper. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-wrapper"]:has(
-      :is([data-chat-column-maximized-away], [data-fork-stage-card])
-    )
+  &.dark[data-fork-theme="cool-darker"]:is([data-fork-has-chat-column], [data-fork-has-stage-card])
+    [data-slot="sidebar-wrapper"]
     [data-slot="sidebar-container"][data-sidebar-version="v2"] {
     border-color: var(--sidebar);
   }
@@ -207,9 +207,9 @@
      in the top layer and needs its backing. */
   &.dark[data-fork-theme="cool-darker"]:not([data-fork-sidebar-vibrancy="true"])
     :is(
-      [data-slot="sidebar-inset"] .bg-background:has(> [data-chat-column]),
+      [data-slot="sidebar-inset"] [data-fork-workspace-root].bg-background,
       [data-chat-column-maximized-away]
-        :is([data-chat-header], :has([data-timeline-root]), [data-timeline-loading]).bg-background
+        :is([data-chat-header], [data-fork-messages-wrapper], [data-timeline-loading]).bg-background
     ) {
     background: none;
   }
@@ -293,8 +293,8 @@
      composites back to the stage's, and the card's wash so it reads level
      with the card beside it. As an image, under the vibrancy block's clear of
      its colour. */
-  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away])
+  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"][data-fork-has-chat-column]
+    [data-slot="sidebar-inset"]
     [data-preview-panel-mode="inline"] {
     background-image:
       linear-gradient(var(--fork-glass-card-wash) 0 100%),
@@ -324,21 +324,27 @@
     }
 
     /* The thread list: its end padding is 8px less the measured gutter. */
-    &.dark[data-fork-theme="cool-darker"]
+    &.dark[data-fork-theme="cool-darker"]:is(
+        [data-fork-has-chat-column],
+        [data-fork-has-stage-card]
+      )
       [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
         [data-fork-sidebar-overlay="true"]
-      ):has(:is([data-chat-column-maximized-away], [data-fork-stage-card]))
+      )
       [data-sidebar-version="v2"]
-      [data-slot="sidebar-group"]:has([data-thread-item]) {
+      [data-slot="sidebar-group"][data-fork-thread-list] {
       padding-inline-end: 0;
     }
 
-    &.dark[data-fork-theme="cool-darker"]
+    &.dark[data-fork-theme="cool-darker"]:is(
+        [data-fork-has-chat-column],
+        [data-fork-has-stage-card]
+      )
       [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
         [data-fork-sidebar-overlay="true"]
-      ):has(:is([data-chat-column-maximized-away], [data-fork-stage-card]))
+      )
       [data-sidebar-version="v2"]
-      [data-slot="sidebar-group"]:is(:has(> [data-fork-chrome-row]), [data-fork-projects-row]) {
+      [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
       padding-inline-end: 6px;
     }
   }

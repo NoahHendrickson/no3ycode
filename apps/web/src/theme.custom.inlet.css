@@ -156,7 +156,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
-  ):has([data-fork-thread-tabs])
+  )[data-fork-has-thread-tabs]
   [data-sidebar-control] {
   --foreground: #1c1c1a;
   --muted-foreground: #55544c;
@@ -214,7 +214,7 @@
   /* The provider mark sits in a cutout: a disc of the frame's own colour,
      concentric with the tab's start (20px in the 28px tab leaves 4px round),
      so on a filled tab it reads as a hole through to the frame. */
-  & [data-fork-thread-tab]:has([data-fork-tab-provider-mark]) > [data-fork-tab-content] {
+  & [data-fork-thread-tab][data-fork-tab-has-mark] > [data-fork-tab-content] {
     padding-inline-start: 4px;
   }
 
@@ -255,10 +255,10 @@
    between the row and the panel and clip the bridge. It still scrolls. */
 
 @media (min-width: 768px) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-has-chat-column]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
-    ):has([data-chat-column-maximized-away]) {
+    ) {
     & [data-chat-column-maximized-away] {
       margin-left: 0;
     }
@@ -267,7 +267,7 @@
       border-right-width: 0;
     }
 
-    & [data-sidebar-version="v2"] [data-slot="sidebar-group"]:has([data-thread-item]) {
+    & [data-sidebar-version="v2"] [data-slot="sidebar-group"][data-fork-thread-list] {
       padding-inline-end: var(--fork-inlet-margin);
       scrollbar-gutter: auto;
       scrollbar-width: none;
@@ -275,7 +275,7 @@
 
     &
       [data-sidebar-version="v2"]
-      [data-slot="sidebar-group"]:is(:has(> [data-fork-chrome-row]), [data-fork-projects-row]) {
+      [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
       padding-inline-end: var(--fork-inlet-margin);
     }
 
@@ -656,11 +656,11 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
-  )
-  [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away]) {
+  )[data-fork-has-chat-column]
+  [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-frame);
 
-  & :has(> [data-chat-column-maximized-away]) {
+  & [data-fork-workspace-root] {
     background: var(--fork-inlet-frame);
   }
 }
@@ -683,8 +683,8 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
     [data-fork-inlet-color="cream"]
-  )
-  [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
+  )[data-fork-has-stage-card]
+  [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-frame);
 }
 
@@ -711,7 +711,7 @@
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
-    ):has([data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+    ):is(:root[data-fork-has-stage-card] *) {
     & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
       margin-left: 0;
     }
@@ -720,7 +720,7 @@
       border-right-width: 0;
     }
 
-    & [data-sidebar-version="v2"] [data-slot="sidebar-group"]:has([data-thread-item]) {
+    & [data-sidebar-version="v2"] [data-slot="sidebar-group"][data-fork-thread-list] {
       padding-inline-end: var(--fork-inlet-margin);
       scrollbar-gutter: auto;
       scrollbar-width: none;
@@ -728,7 +728,7 @@
 
     &
       [data-sidebar-version="v2"]
-      [data-slot="sidebar-group"]:is(:has(> [data-fork-chrome-row]), [data-fork-projects-row]) {
+      [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
       padding-inline-end: var(--fork-inlet-margin);
     }
 
@@ -775,7 +775,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-control-row-slot="left"]
-  :has(> [data-fork-composer-action="dictate"]) {
+  [data-fork-dictation-mic] {
   border-radius: 4px;
 
   &[data-fork-dictation-live] {
@@ -796,7 +796,7 @@
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     [data-fork-composer-control-row-slot="left"]
-    :has(> [data-fork-composer-action="dictate"]) {
+    [data-fork-dictation-mic] {
     transition:
       background-color 200ms ease-out,
       padding 320ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -842,15 +842,15 @@
 /* ── Motion ──────────────────────────────────────────────────────────────────
    Hung menus move only through the one-shape morph (custom/inletMenuMorph.ts,
    below); one it cannot take, or any under reduced motion, opens as its
-   static tab. Here the button fills and squares its corners in step, and the
-   open row's bridge runs out into the panel. One run per state change, 160ms
-   on the buttons, 240ms on the bridge. Nothing loops. */
+   static tab. Here the button fills and squares its corners in step, 160ms,
+   once per state change. Nothing loops. */
 
 @media (prefers-reduced-motion: no-preference) {
   /* What a menu or card hangs from fills and squares off in step: the chips,
-     the hung-menu buttons and the details toggle. Not the tab strip's tabs:
-     a tab switch must land at once, as a browser's does, and an eased fill
-     reads as lag. The list keeps the shadow and scale these controls ease. */
+     the hung-menu buttons and the details toggle. Not the tab strip's tabs or
+     the sidebar's open row: a switch must land at once, as a browser's does,
+     and an eased fill reads as lag (the switch's render also stalls it). The
+     list keeps the shadow and scale these controls ease. */
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     :is(
       [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip]),
@@ -863,34 +863,6 @@
     transition-property: background-color, color, border-radius, box-shadow, scale;
     transition-duration: 160ms;
     transition-timing-function: ease-out;
-  }
-
-  /* A sidebar row eases into the panel's fill as it opens, and its bridge
-     runs out of it into the panel, the concave corners arriving last. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-    [data-sidebar-version="v2"]
-    [data-testid="sidebar-row-card"] {
-    transition:
-      background-color 200ms ease-out,
-      border-radius 200ms ease-out;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-    li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])::after {
-    /* backwards, not both: a clip left on at rest anti-aliases the bridge's
-       edge against the row into a hairline seam. Its left edge starts past
-       the box for the same reason while it runs. */
-    animation: fork-inlet-bridge-in 240ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
-  }
-
-  @keyframes fork-inlet-bridge-in {
-    from {
-      clip-path: inset(-1px 100% -1px -4px);
-    }
-
-    to {
-      clip-path: inset(-1px 0 -1px -4px);
-    }
   }
 }
 

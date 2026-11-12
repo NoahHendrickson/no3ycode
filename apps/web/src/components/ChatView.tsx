@@ -323,6 +323,9 @@ import {
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
+/* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+import { forkChatColumnRef, useForkDraftHeroShownStamp } from "~/custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
 import { DraftMachineChip } from "~/custom/DraftMachineChip";
 import { DraftProjectPill } from "~/custom/DraftProjectPill";
@@ -1662,6 +1665,9 @@ export default function ChatView(props: ChatViewProps) {
     backgroundSubmissionPending,
     hasWorktreeSetupCard: worktreeSetup !== null,
   });
+  /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+  useForkDraftHeroShownStamp(isDraftHeroState);
+  /* fork:end fork-stage-stamps */
   const {
     transitionGroupRef: draftHeroTransitionGroupRef,
     composerAnchorRef: draftHeroComposerAnchorRef,
@@ -3689,6 +3695,9 @@ export default function ChatView(props: ChatViewProps) {
     <div
       ref={setWorkspaceLayoutElement}
       className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background"
+      /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+      data-fork-workspace-root=""
+      /* fork:end fork-stage-stamps */
     >
       {embedded ? null : (
         <DeviceSetupDialogHost
@@ -3705,6 +3714,10 @@ export default function ChatView(props: ChatViewProps) {
         )}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
         data-chat-column
+        /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+        ref={forkChatColumnRef}
+        data-fork-draft-hero={isDraftHeroState || undefined}
+        /* fork:end fork-stage-stamps */
         inert={rightPanelMaximized}
       >
         {embedded ? null : (
@@ -3809,6 +3822,9 @@ export default function ChatView(props: ChatViewProps) {
             <div
               {...conversationArea}
               className="relative flex min-h-0 flex-1 flex-col bg-background"
+              /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+              data-fork-messages-wrapper={timelineEmpty ? undefined : ""}
+              /* fork:end fork-stage-stamps */
             >
               <WorkspaceMutationIdContext value={workspaceMutationId}>
                 <ThreadTimeline

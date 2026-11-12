@@ -7,7 +7,7 @@
  * the dithered portrait behind the centred composer, the header inside the
  * card, the composer and the header's controls frosted over the picture,
  * the gutter in the sidebar's colour with no seam. Losing the import
- * silently drops the whole stage; losing the `:has()` lift leaves the art
+ * silently drops the whole stage; losing the draft stamp's lift leaves the art
  * painted at opacity 0; a rule that reaches the root with a margin, clip or
  * fill changes a started thread, which this customization promises not to
  * touch; and a backdrop-filter anywhere flattens the native material and
@@ -37,7 +37,9 @@ const GLASS = `${MARKER}.dark[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"]`;
 const VIBRANCY = '[data-fork-sidebar-vibrancy="true"]';
 const ROOT = "[data-chat-column-maximized-away]";
 const HERO = '[data-chat-composer-overlay="true"][data-draft-hero]';
-const DRAFT = `${ROOT}:has(${HERO})`;
+// ChatView's draft stamps (fork-stage-stamps): on the chat view, and on :root for the gutter.
+const DRAFT = `${ROOT}[data-fork-draft-hero][data-chat-column]`;
+const SHOWN = ":is(:root[data-fork-draft-hero-shown] *)";
 // A popup the cutout frosts over the draft card instead of cutting.
 const FROSTED = "[data-fork-glass-frost]";
 const TOKENS = `:is(${ROOT},${FROSTED})`;
@@ -159,7 +161,10 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       ),
     ).toBe("isolation: auto; --fork-glass-frost-image: none;");
     const unkeyed = rules.filter(
-      (rule) => !compact(rule.selector).includes(HERO) && !root.includes(rule),
+      (rule) =>
+        !rule.selector.includes("data-fork-draft-hero") &&
+        !compact(rule.selector).includes(HERO) &&
+        !root.includes(rule),
     );
     // Only the at-rest art and its reduced-motion twin paint without the
     // stamp, beside the frosted popups, which only exist over the draft.
@@ -170,9 +175,9 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       `${VIBRANT_GLASS}${POPUP}`,
       `${VIBRANT_GLASS}${POPUP}::after`,
     ]);
-    // Every :has() that reads the stamp sits on the chat view, the inset or
-    // the sidebar wrapper — never on :root, which would widen invalidation
-    // to the whole document while a thread streams.
+    // The draft is read off ChatView's stamps, never a :has() on the chat view, the
+    // inset or the wrapper: Chromium re-checks those for each transcript row inserted.
+    expect(sheet).not.toContain(`:has(${HERO})`);
     for (const rule of rules) {
       // The raw selector: a :has() chained straight onto the :root compound,
       // before any descendant combinator.
@@ -180,11 +185,10 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
         /^:root(?:\[[^\]]*\]|\.[\w-]+)*:has\(/u,
       );
     }
-    // The root is upstream's own stamp, and the overlay's stamp is the fork's
-    // layout mode: nothing in ChatView is stamped for the theme.
     expect(chatView).not.toContain("data-fork-glass");
     expect(chatView).toMatch(/data-chat-column-maximized-away=\{rightPanelMaximized/u);
-    expect(chatView).toContain("data-draft-hero={isDraftHeroState || undefined}");
+    expect(chatView).toContain("data-fork-draft-hero={isDraftHeroState || undefined}");
+    expect(chatView).toContain("useForkDraftHeroShownStamp(isDraftHeroState);");
     expect(chatView).toContain("data-chat-header");
   });
 
@@ -285,10 +289,10 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       "--fork-glass-panel: rgb(var(--fork-glass-tint) / var(--fork-glass-panel-alpha));",
     );
 
-    const opaque = find(`${GLASS}:not(${VIBRANCY})[data-slot="sidebar-inset"]:has(${HERO})`);
+    const opaque = find(`${GLASS}:not(${VIBRANCY})[data-slot="sidebar-inset"]${SHOWN}`);
     expect(flat(opaque?.body)).toBe("background-color: var(--fork-glass-panel);");
     const glassGutter = find(
-      `${MARKER}${VIBRANCY}.dark[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"][data-slot="sidebar-inset"]:has(${HERO})`,
+      `${MARKER}${VIBRANCY}.dark[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"][data-slot="sidebar-inset"]${SHOWN}`,
     );
     expect(flat(glassGutter?.body)).toBe(
       "background-image: linear-gradient(var(--fork-glass-panel) 0 100%);",
@@ -302,7 +306,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     // No seam: the panel's own fill on the container's border, read through
     // the sidebar wrapper, the nearest ancestor of both the panel and the draft.
     const seam = find(
-      `${GLASS}[data-slot="sidebar-wrapper"]:has(${HERO})[data-slot="sidebar-container"][data-sidebar-version="v2"]`,
+      `${GLASS}[data-slot="sidebar-wrapper"]${SHOWN}[data-slot="sidebar-container"][data-sidebar-version="v2"]`,
     );
     expect(flat(seam?.body)).toBe("border-color: var(--sidebar);");
   });

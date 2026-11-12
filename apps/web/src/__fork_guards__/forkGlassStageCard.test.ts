@@ -169,9 +169,16 @@ describe("fork guard: fork-glass-stage-card", () => {
   });
 
   it("paints the gutter on both clients and drops the seam", () => {
-    const gutters = rules.filter((rule) =>
-      compact(rule.selector).endsWith(`[data-slot="sidebar-inset"]:has(${ROOT})`),
-    );
+    // Read off the :root stamps a chat view or stage card sets (fork-stage-stamps), not a
+    // :has() on the inset, which every inserted transcript row would re-check.
+    const gutters = rules.filter((rule) => {
+      const selector = compact(rule.selector);
+      return (
+        selector.endsWith('[data-slot="sidebar-inset"]') &&
+        selector.includes(":is([data-fork-has-chat-column],[data-fork-has-stage-card])")
+      );
+    });
+    expect(sheet).not.toContain(`[data-slot="sidebar-inset"]:has(`);
     expect(gutters).toHaveLength(2);
     expect(gutters.every((rule) => rule.body.includes("var(--fork-glass-panel)"))).toBe(true);
     // The opaque arm must never reach the desktop glass: a fill there covers
