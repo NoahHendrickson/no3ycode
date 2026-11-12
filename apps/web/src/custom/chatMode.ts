@@ -104,3 +104,22 @@ export function isChatModeMoveMenuId(id: string): id is ChatModeMoveMenuId {
 export function chatModeMoveTarget(id: ChatModeMoveMenuId): ForkSidebarMode {
   return id === MOVE_TO_CHAT ? "chat" : "code";
 }
+
+/** The Settled shelf's paging when its last page was asked for. */
+export interface SettledPagingMark {
+  readonly pages: ReadonlyMap<string, number>;
+  readonly listedCount: number;
+  readonly visibleCount: number;
+}
+
+/** Chat's Settled shelf pages through every mode's history to find chats, so it stops once a
+    page lists none, until Show more asks for more. */
+export function settledPagingStalled(mark: SettledPagingMark | null, now: SettledPagingMark) {
+  return (
+    mark !== null &&
+    now.pages.size > 0 &&
+    mark.pages === now.pages &&
+    mark.visibleCount === now.visibleCount &&
+    now.listedCount <= mark.listedCount
+  );
+}

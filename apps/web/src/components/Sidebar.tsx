@@ -355,7 +355,7 @@ import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/Si
 import { isChatModeMoveMenuId } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
 import { SidebarV2ChatActionRows } from "~/custom/SidebarV2ChromeRows";
-import { useSidebarModePolicy } from "~/custom/useChatMode";
+import { useChatSettledShelfPaging, useSidebarModePolicy } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
 /* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
 import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
@@ -2805,7 +2805,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ),
       settledThreads: sortSettledThreads(settled),
       snoozeNow: preciseNow,
-      visibleThreads: visible,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+         Every mode's: the server's older-settled counts hold chats and Code threads alike. */
+      visibleThreads: modePolicy.chat
+        ? visible
+        : filterSidebarV2VisibleThreads(threads, scopedProjectKeys, delegatedUnderParent),
+      /* fork:end fork-chat-mode */
     };
   }, [
     delegatedUnderParent,
@@ -2825,6 +2830,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     workingShelfEnabled,
     /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
     modePolicy.listsThread,
+    modePolicy.chat,
     /* fork:end fork-chat-mode */
   ]);
 
@@ -2857,8 +2863,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   // The partition's own list while every row is listed, so the memos below keep their inputs.
   const listedSettledThreads =
     listedSettledRows.length === settledThreads.length ? settledThreads : listedSettledRows;
-  useOlderSettledShelfGrowth(olderSettledShelf, listedSettledThreads);
-  const settledCount = settledThreads.length + olderSettledShelf.unloadedCount(visibleThreads);
+  useOlderSettledShelfGrowth(
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    useChatSettledShelfPaging(olderSettledShelf, listedSettledThreads.length, modePolicy.chat),
+    /* fork:end fork-chat-mode */
+    listedSettledThreads,
+  );
+  const settledCount =
+    settledThreads.length +
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+       The server cannot count chats apart, so Chat counts the chats it holds. */
+    (modePolicy.chat ? 0 : olderSettledShelf.unloadedCount(visibleThreads));
+  /* fork:end fork-chat-mode */
   const visibleSettledThreads = useMemo(() => {
     const visible = listedSettledThreads.slice(0, settledVisibleCount);
     // The open thread must never hide under "Show more": navigating into a

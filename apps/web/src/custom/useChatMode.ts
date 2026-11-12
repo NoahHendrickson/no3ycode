@@ -6,6 +6,7 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
@@ -25,6 +26,8 @@ import {
   isChatDraft,
   isChatThread,
   latestUnsentChatDraft,
+  type SettledPagingMark,
+  settledPagingStalled,
   shellThreadKey,
   useForkSidebarMode,
 } from "./chatMode";
@@ -155,4 +158,25 @@ export function useSidebarModePolicy() {
       id: ChatModeMoveMenuId,
     ) => moveThreadToMode(thread, chatModeMoveTarget(id)),
   };
+}
+
+/** The Settled shelf its growth reads. In Chat a page that lists no new chat stops the paging
+    (settledPagingStalled); entering Chat starts afresh, at the next page asked for. */
+export function useChatSettledShelfPaging<
+  S extends { readonly pages: ReadonlyMap<EnvironmentId, number>; readonly visibleCount: number },
+>(shelf: S, listedCount: number, chat: boolean): S {
+  const [asked, setAsked] = useState<{
+    readonly pages: S["pages"];
+    readonly mark: SettledPagingMark | null;
+  } | null>(null);
+  const now = { pages: shelf.pages, listedCount, visibleCount: shelf.visibleCount };
+  if (!chat) {
+    if (asked !== null) setAsked(null);
+    return shelf;
+  }
+  if (asked === null || asked.pages !== shelf.pages) {
+    setAsked({ pages: shelf.pages, mark: asked === null ? null : now });
+    return shelf;
+  }
+  return settledPagingStalled(asked.mark, now) ? { ...shelf, visibleCount: listedCount } : shelf;
 }

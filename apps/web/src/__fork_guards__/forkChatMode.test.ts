@@ -25,6 +25,13 @@ describe("fork guard: fork-chat-mode", () => {
       "<SidebarModeTabs mode={modePolicy.mode} onModeChange={modePolicy.switchMode} />",
     );
     expect(sidebar).toContain("<SidebarV2ChatActionRows />");
+    // The server cannot count chats apart: Chat's Settled shelf counts and pages what it lists.
+    expect(sidebar).toContain(
+      "(modePolicy.chat ? 0 : olderSettledShelf.unloadedCount(visibleThreads))",
+    );
+    expect(sidebar).toContain(
+      "useChatSettledShelfPaging(olderSettledShelf, listedSettledThreads.length, modePolicy.chat)",
+    );
     // Code's project scope stays chosen but does not filter Chat.
     expect(sidebar).toMatch(
       /!modePolicy\.projectControls \|\|\s*\/\* fork:end fork-chat-mode \*\/\s*scopedProjectGroups\.length === 0/u,

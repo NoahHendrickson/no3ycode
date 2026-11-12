@@ -4,7 +4,7 @@ import { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { DraftId, useComposerDraftStore } from "../composerDraftStore";
-import { CHAT_THREAD_TAG, isChatDraft, isChatThread } from "./chatMode";
+import { CHAT_THREAD_TAG, isChatDraft, isChatThread, settledPagingStalled } from "./chatMode";
 import { createStartNewChat } from "./useChatMode";
 
 const thread = (id: string, tags?: readonly string[]) =>
@@ -80,5 +80,23 @@ describe("createStartNewChat", () => {
     const store = useComposerDraftStore.getState();
     expect(isChatDraft(store.getDraftSession(open.draftId))).toBe(false);
     expect(store.getDraftSessionByLogicalProjectKey(scratchKey)?.draftId).toBe(open.draftId);
+  });
+});
+
+describe("settledPagingStalled", () => {
+  const firstPage = new Map([["env", 1]]);
+  const asked = { pages: firstPage, listedCount: 2, visibleCount: 10 };
+
+  it("stops Chat's paging once a page lists no new chat, until Show more", () => {
+    expect(settledPagingStalled(asked, { ...asked, listedCount: 2 })).toBe(true);
+    expect(settledPagingStalled(asked, { ...asked, listedCount: 4 })).toBe(false);
+    expect(settledPagingStalled(asked, { ...asked, visibleCount: 35 })).toBe(false);
+    expect(settledPagingStalled(asked, { ...asked, pages: new Map([["env", 2]]) })).toBe(false);
+  });
+
+  it("never stalls before a page was asked for", () => {
+    const none = { pages: new Map<string, number>(), listedCount: 0, visibleCount: 10 };
+    expect(settledPagingStalled(none, none)).toBe(false);
+    expect(settledPagingStalled(null, asked)).toBe(false);
   });
 });
