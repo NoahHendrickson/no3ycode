@@ -158,6 +158,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
     <div
       {...(live ? { "data-fork-dictation-live": "" } : {})}
       {...(closing ? { "data-fork-dictation-closing": "" } : {})}
+      data-fork-dictation-mic=""
       className="flex shrink-0 items-center"
     >
       <DictationTooltip

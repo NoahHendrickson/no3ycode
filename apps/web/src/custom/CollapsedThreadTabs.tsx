@@ -111,6 +111,7 @@ import {
   SIDEBAR_V2_STATUS_SECTION_LABELS,
 } from "./sidebarV2StatusGrouping";
 import { useStartNewAgentDraft } from "./useNewAgentDraft";
+import { forkThreadTabsRef } from "./forkStageStamps";
 
 const STATUSES_STORAGE_KEY = "t3code:fork:collapsed-thread-tabs-statuses:v1";
 const StoredStatuses = Schema.Array(Schema.Literals(COLLAPSED_TAB_STATUSES));
@@ -481,6 +482,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
 
   return (
     <div
+      ref={forkThreadTabsRef}
       data-fork-thread-tabs=""
       className={cn(
         "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-3",
@@ -716,6 +718,7 @@ function ThreadTab(props: {
     <div
       data-fork-thread-tab=""
       data-active={props.active ? "true" : undefined}
+      data-fork-tab-has-mark={props.provider ? "" : undefined}
       // Dragged onto another tab (or sidebar card), this thread opens beside it.
       {...splitThreadDragSourceProps(threadKey, props.splitDraggable)}
       className={cn(
@@ -832,6 +835,7 @@ function DraftTab(
     <div
       data-fork-thread-tab=""
       data-active="true"
+      data-fork-tab-has-mark={provider ? "" : undefined}
       className={cn(TAB_SHELL_CLASS, "bg-black/10 text-foreground dark:bg-white/16")}
       style={TAB_SHELL_STYLE}
     >

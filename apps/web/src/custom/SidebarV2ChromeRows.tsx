@@ -248,7 +248,10 @@ export function SidebarV2ChromeActionRows(props: {
     ? "Add a project to start an agent"
     : undefined;
   return (
-    <SidebarGroup className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+    <SidebarGroup
+      data-fork-chrome-rows=""
+      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
+    >
       <ChromeSearchRow commandPaletteShortcutLabel={props.commandPaletteShortcutLabel} />
       <ChromeLabeledAction
         icon={NavigationArrowIcon}

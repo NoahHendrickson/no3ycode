@@ -55,6 +55,16 @@ fork only ever reads from; there is no valid reason to open one.
   direct child of `MenuPopup` (its scroll wrapper pads 4px), `-mx-2` inside a further `p-1`
   container, and so on.
 
+## No `:has()` on large ancestors
+
+A `:has()` whose subject is `:root`, the sidebar wrapper, inset or a sidebar group, or the chat
+column is re-checked for every element inserted beneath it, and a match restyles most of the page.
+Under Inlet that made a thread switch spend about 4× stock's time in style recalculation, and it
+counts every palette's rules, even while that palette is off. Stamp the condition from React instead
+(`custom/forkStageStamps.ts`, `.fork/customizations.yaml#fork-stage-stamps`). The
+`forkStageStamps` guard fails on a new one; its allowlist holds the few whose argument mounts only
+on a rare interaction (a floating tab, an opened panel), with the reason for each.
+
 ## Dev state in a worktree moved (upstream a17cbc3b4)
 
 A linked git worktree no longer shares `~/.t3/dev`. Its dev state is the worktree's own gitignored

@@ -2480,8 +2480,8 @@
     change, nothing loops): hung menus, the chips' menus included, move only
     through the one-shape morph, and one it gives up on opens as its static
     tab with no clip unfold; what they hang from eases its fill
-    and corners over 160ms; a sidebar row eases into the panel's fill and its
-    bridge runs out into the panel.
+    and corners over 160ms; the sidebar's open row and its bridge land at
+    once, like a tab switch.
     Every hung menu goes further (the Threads header, tab strip, composer
     chips, model, mode and usage menus, and the thread details card, popover
     or docked; the docked card stays mounted through its close via
@@ -6607,3 +6607,47 @@
     - apps/web/src/components/ui/combobox.tsx
   verify:
     - apps/web/src/__fork_guards__/forkFullWidthSearchDivider.test.ts
+
+- id: fork-stage-stamps
+  intent: >
+    The palettes read page conditions off attributes React stamps, not a
+    :has() on a large ancestor (:root, the sidebar wrapper, inset or groups,
+    the chat column). Chromium re-checks such a :has() for every element
+    inserted under it and, through the one invalidation list all :has()
+    rules share, restyles most of the page: under Inlet a thread switch
+    restyled the whole document about 18 times. custom/forkStageStamps
+    counts mounts and stamps :root with data-fork-has-chat-column,
+    data-fork-has-stage-card, data-fork-has-thread-tabs and
+    data-fork-draft-hero-shown, all from stable module-level refs so a render
+    never re-stamps :root; ChatView (fenced) stamps its column with
+    data-fork-draft-hero and marks its workspace root and messages wrapper,
+    which MessagesTimeline (fenced) stamps data-fork-has-rows while it
+    renders rows. The docked
+    details panel and the find bar (fenced) stamp their column with
+    data-fork-has-docked-details and data-fork-has-find-bar. The fork's own
+    markup carries data-fork-thread-list (Sidebar, fenced),
+    data-fork-chrome-rows, data-fork-dictation-mic, data-fork-tab-has-mark,
+    and inletMenuMorph.ts's data-fork-morph-failed on the button of a menu it
+    released, while that menu is in the document. The guard pins each stamp
+    to its producer and a reader, and fails on a new large-ancestor :has()
+    outside its commented allowlist.
+  tier: 4
+  files:
+    - apps/web/src/custom/forkStageStamps.ts
+    - apps/web/src/custom/CollapsedThreadTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/custom/inletMenuMorph.ts
+    - apps/web/src/custom/scheduled/ScheduledPage.tsx
+    - apps/web/src/custom/voice/ForkDictationControl.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/ThreadDetailsCard.tsx
+    - apps/web/src/components/chat/ThreadFindBar.tsx
+    - apps/web/src/components/usage/UsagePage.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkStageStamps.test.ts
+    - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
+    - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts

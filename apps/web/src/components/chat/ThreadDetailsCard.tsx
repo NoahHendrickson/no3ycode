@@ -21,6 +21,9 @@ import { requestWorkspaceFocus } from "../../lib/workspaceFocus";
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { useInletMorphPresence } from "../../custom/inletMenuMorph";
 /* fork:end fork-inlet-theme */
+/* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+import { forkDockedDetailsRef } from "../../custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 
 export function ThreadDetailsCard({
   threadRef,
@@ -175,6 +178,9 @@ export function ThreadDetailsCard({
       {placement && inlinePresence.mounted ? (
         <aside
           {...detailsArea}
+          /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+          ref={forkDockedDetailsRef}
+          /* fork:end fork-stage-stamps */
           data-workspace-focus-key={`details:${threadRef.environmentId}:${threadRef.threadId}`}
           // Skip the return transition to avoid overlapping the rising preview.
           className={cn(

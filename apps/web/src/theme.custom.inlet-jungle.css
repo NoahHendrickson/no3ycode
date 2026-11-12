@@ -18,11 +18,12 @@
 }
 
 /* The new-agent screen: the art at 60% over #248f6b, under a fade to the
-   frame's green behind the composer. Its draft composer is the one element
-   that carries data-draft-hero, and it never changes while a reply streams. */
+   frame's green behind the composer. The chat column carries
+   data-fork-draft-hero (fork-stage-stamps), which never changes while a reply
+   streams. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]:has([data-draft-hero]) {
+  [data-chat-column-maximized-away][data-fork-draft-hero] {
   --background: #248f6b;
   /* The left edge fades from the open row's charcoal, so a project draft's
      bridge runs into solid fill before the art. Top layer of the background
@@ -138,8 +139,8 @@
    the window's edges, so the row runs into it; the page is a frame-cream card
    set into it, the frame's gap of panel on every side. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-panel);
   /* Its sidebar-side corners round off against the frame, concentric with
      the card's 8px ones; the window's edge squares the others. */
@@ -150,8 +151,8 @@
 /* The body behind it is the panel's colour as well, so the frame shows in
    those corners only if the wrapper paints it. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-wrapper"]:has(> [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  [data-slot="sidebar-wrapper"] {
   background: var(--fork-inlet-frame);
 }
 
@@ -163,10 +164,10 @@
 }
 
 @media (min-width: 768px) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
-    ):has([data-slot="sidebar-inset"] > [data-fork-stage-card])
+    )
     [data-slot="sidebar-inset"]
     > [data-fork-stage-card] {
     margin-left: var(--fork-inlet-margin);
@@ -325,11 +326,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
   [data-slot="sidebar-wrapper"]
-  :is(
-    [data-slot="sidebar-inner"],
-    [data-slot="sidebar-inset"],
-    :has(> [data-chat-column-maximized-away])
-  ) {
+  :is([data-slot="sidebar-inner"], [data-slot="sidebar-inset"], [data-fork-workspace-root]) {
   background-color: transparent;
 }
 
