@@ -400,6 +400,7 @@ import {
   sidebarDraftRowCapabilities,
   sidebarServerActionThreadKeys,
 } from "~/custom/sidebarV2DraftRows";
+import { useQuietThreadShellKeys } from "~/custom/quietThreadShellKeys";
 /* fork:end sidebar-v2-draft-rows */
 import { getTriggerDisplayModelName } from "./chat/providerIconUtils";
 import {
@@ -2583,15 +2584,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ),
     [projects],
   );
-  // Keyed on the joined keys, so a shell change that adds or drops no thread
-  // keeps the set, and the draft rows below, as they were.
-  const serverThreadKeyList = threads
-    .map((thread) => scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)))
-    .join("\n");
-  const serverThreadKeys = useMemo(
-    () => new Set(serverThreadKeyList.split("\n")),
-    [serverThreadKeyList],
-  );
+  // Kept while no thread joins or leaves, so shell changes leave the draft rows as they were.
+  const serverThreadKeys = useQuietThreadShellKeys();
   // Prompt titles are read from getState() on route/shell changes — not
   // subscribed per keystroke — so typing in the composer does not rebuild the
   // partition. Leaving the draft (routeThreadKey) is what refreshes the label.

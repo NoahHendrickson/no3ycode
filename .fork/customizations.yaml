@@ -1345,6 +1345,7 @@
   tier: 4
   files:
     - apps/web/src/custom/sidebarV2DraftRows.ts
+    - apps/web/src/custom/quietThreadShellKeys.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
