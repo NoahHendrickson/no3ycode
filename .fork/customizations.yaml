@@ -6723,3 +6723,36 @@
   verify:
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
+
+- id: fork-chat-mode
+  intent: >
+    The sidebar header switches between Code and Chat (Figma t3-fork
+    676:42030). Code is the sidebar as it was. Chat is one flat list of chats
+    under a lone "New chat" row: no search row, projects, scope or grouping.
+    A thread belongs to the mode it was created in. "New chat" starts a
+    No-project (scratch) draft; once its first send creates the thread, it is
+    tagged `chat` (the server's existing thread tags, thread.tag.set), and
+    until then its reserved thread key waits in a per-client pending list so
+    the draft already sits in Chat. Code lists every thread without the tag,
+    No-project threads made in Code included. Each thread's context menu moves
+    it to the other mode (sets or clears the tag). Switching modes goes where
+    that mode was left in this window, else its latest thread, else a new
+    chat (Chat) or home (Code). The mode is per client (localStorage, stamped
+    as data-fork-sidebar-mode). The collapsed tab strip and mobile are not
+    mode-aware.
+  tier: 4
+  files:
+    - apps/web/src/custom/chatMode.ts
+    - apps/web/src/custom/useChatMode.ts
+    - apps/web/src/custom/SidebarModeTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
+    - apps/web/src/main.tsx
+    - packages/client-runtime/src/operations/commands.ts
+    - packages/client-runtime/src/state/threadCommands.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkChatMode.test.ts
+    - apps/web/src/custom/chatMode.test.ts

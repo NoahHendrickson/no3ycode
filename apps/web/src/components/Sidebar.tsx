@@ -351,6 +351,21 @@ import {
 } from "~/custom/sidebarV2RowPolicy";
 /* fork:end sidebar-v2-card-rows */
 import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/SidebarV2ChromeRows";
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import {
+  chatModeMoveMenuItem,
+  isChatThread,
+  usePendingChats,
+  useSidebarModeThreads,
+} from "~/custom/chatMode";
+import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
+import {
+  useChatTagSync,
+  useMoveThreadToMode,
+  useStartNewChat,
+  useSwitchSidebarMode,
+} from "~/custom/useChatMode";
+/* fork:end fork-chat-mode */
 /* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
 import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
 /* fork:end fork-sidebar-recent-projects */
@@ -2253,7 +2268,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const reorderProjects = useUiStateStore((store) => store.reorderProjects);
   /* fork:end sidebar-v2-project-grouping */
   // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
-  const threads = useQuietThreadShells();
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+     The list is the open mode's: Chat's threads, or Code's (everything else). */
+  const allThreads = useQuietThreadShells();
+  const [sidebarMode, switchSidebarMode] = useSwitchSidebarMode(allThreads);
+  const pendingChats = usePendingChats();
+  useChatTagSync(allThreads);
+  const startNewChat = useStartNewChat();
+  const moveThreadToMode = useMoveThreadToMode();
+  const threads = useSidebarModeThreads(allThreads, sidebarMode);
+  /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -2270,7 +2294,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   // One grouping value: flat, by project, or by status (sidebar-v2-status-grouping).
-  const [grouping, setGrouping] = useSidebarV2Grouping();
+  const [storedGrouping, setGrouping] = useSidebarV2Grouping();
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  // Chat is one flat list whatever Code's grouping is.
+  const grouping = sidebarMode === "chat" ? "none" : storedGrouping;
+  /* fork:end fork-chat-mode */
   const groupByProject = grouping === "project";
   const [collapsedProjectKeys, toggleProjectGroupCollapsed] = useSidebarV2CollapsedProjects();
   /* fork:end sidebar-v2-project-grouping */
@@ -2615,9 +2643,21 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             (occurrence) => occurrence.label,
           ),
         hasServerShell: (threadRef) => serverThreadKeys.has(scopedThreadKey(threadRef)),
-      }),
+      })
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        .filter((row) => isChatThread(row.shell, pendingChats) === (sidebarMode === "chat")),
+    /* fork:end fork-chat-mode */
     // routeThreadKey: snapshot composer prompts when the open thread changes.
-    [draftThreadsByThreadKey, projectDefaultModelByKey, routeThreadKey, serverThreadKeys],
+    [
+      draftThreadsByThreadKey,
+      projectDefaultModelByKey,
+      routeThreadKey,
+      serverThreadKeys,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      pendingChats,
+      sidebarMode,
+      /* fork:end fork-chat-mode */
+    ],
   );
   const draftIdByThreadKey = useMemo(() => indexDraftIdsByThreadKey(draftRows), [draftRows]);
   const draftIdByThreadKeyRef = useRef(draftIdByThreadKey);
@@ -4200,50 +4240,61 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           ) ?? null;
         const clicked = await settlePromise(() =>
           api.contextMenu.show(
-            buildThreadActionMenuItems({
-              canOperate: readEnvironmentScope(
-                threadRef.environmentId,
-                AuthOrchestrationOperateScope,
-              ),
-              branch: thread.branch ?? null,
-              /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+            [
+              ...buildThreadActionMenuItems({
+                canOperate: readEnvironmentScope(
+                  threadRef.environmentId,
+                  AuthOrchestrationOperateScope,
+                ),
+                branch: thread.branch ?? null,
+                /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
                  The scope is a set here; the menu item reads "already scoped"
                  as the set holding exactly this project. */
-              // An archived project is not a filter choice.
-              projectFilter:
-                threadProjectGroup && !threadProjectGroup.archived
-                  ? {
-                      label: threadProjectGroup.displayName,
-                      isActive:
-                        projectScopeKeys.size === 1 &&
-                        projectScopeKeys.has(threadProjectGroup.projectKey),
-                    }
-                  : null,
-              /* fork:end fork-sidebar-chrome */
-              isPinned,
-              isSettled,
-              autoSettleEnabled: thread.autoSettleDisabledAt == null,
-              isSnoozed,
-              canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
-              isRegeneratingTitle,
-              isRunning: !threadRuntimeCanArchive(thread.runtime),
-              canShareWithGuest: appAtomRegistry.get(
-                canShareWithGuestAtom(threadRef.environmentId),
-              ),
-              canTurnIntoProject: canTurnThreadIntoProject(threadRef),
-              supports: {
-                settlement: configLoaded,
-                autoSettleOptOut: supportsAutoSettleOptOut,
-                snooze: configLoaded,
-                pinning: configLoaded,
-                titleRegeneration: configLoaded,
-              },
-              snoozePresets,
-            }),
+                // An archived project is not a filter choice.
+                projectFilter:
+                  threadProjectGroup && !threadProjectGroup.archived
+                    ? {
+                        label: threadProjectGroup.displayName,
+                        isActive:
+                          projectScopeKeys.size === 1 &&
+                          projectScopeKeys.has(threadProjectGroup.projectKey),
+                      }
+                    : null,
+                /* fork:end fork-sidebar-chrome */
+                isPinned,
+                isSettled,
+                autoSettleEnabled: thread.autoSettleDisabledAt == null,
+                isSnoozed,
+                canSnoozeNow: canSnooze(thread, { now: new Date().toISOString() }),
+                isRegeneratingTitle,
+                isRunning: !threadRuntimeCanArchive(thread.runtime),
+                canShareWithGuest: appAtomRegistry.get(
+                  canShareWithGuestAtom(threadRef.environmentId),
+                ),
+                canTurnIntoProject: canTurnThreadIntoProject(threadRef),
+                supports: {
+                  settlement: configLoaded,
+                  autoSettleOptOut: supportsAutoSettleOptOut,
+                  snooze: configLoaded,
+                  pinning: configLoaded,
+                  titleRegeneration: configLoaded,
+                },
+                snoozePresets,
+              }),
+              /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+              chatModeMoveMenuItem(sidebarMode),
+              /* fork:end fork-chat-mode */
+            ],
             position,
           ),
         );
         if (clicked._tag === "Failure" || clicked.value === null) return;
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        if (clicked.value === "fork:move-to-chat" || clicked.value === "fork:move-to-code") {
+          moveThreadToMode(thread, clicked.value === "fork:move-to-chat" ? "chat" : "code");
+          return;
+        }
+        /* fork:end fork-chat-mode */
         if (threadActionRequiresOperate(clicked.value) && !checkThreadOperations([thread])) return;
         if (clicked.value?.startsWith("snooze:")) {
           const preset =
@@ -4498,6 +4549,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       turnThreadIntoProject,
       updateThreadMetadata,
       timestampFormat,
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      moveThreadToMode,
+      sidebarMode,
+      /* fork:end fork-chat-mode */
     ],
   );
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4782,7 +4837,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end fork-sidebar-chrome */
   return (
     <>
-      <SidebarChromeHeader isElectron={isElectron} />
+      <SidebarChromeHeader
+        isElectron={isElectron}
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        modeTabs={<SidebarModeTabs mode={sidebarMode} onModeChange={switchSidebarMode} />}
+        /* fork:end fork-chat-mode */
+      />
       {/* oxlint-disable-next-line shadcn/no-restyle -- the fork's list owns its own spacing */}
       <SidebarContent className="gap-0">
         {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
@@ -4799,51 +4859,63 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           /* fork:end fork-new-agent-draft */
           onNewThread={handleNewThreadClick}
           onAddProject={openAddProjectCommandPalette}
+          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+          onNewChat={sidebarMode === "chat" ? () => void startNewChat() : undefined}
+          /* fork:end fork-chat-mode */
         />
-        {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
-        <SidebarV2RecentProjectsStrip
-          projectGroups={projectGroups}
-          onStartAgent={handleNewThreadInProject}
-        />
-        {/* fork:end fork-sidebar-recent-projects */}
-        <SidebarV2ProjectScopeRow
-          projectGroups={projectGroups}
-          projectScopeKeys={projectScopeKeys}
-          scopedProjectDisplayName={scopedProjectsLabel}
-          onProjectScopeChange={setProjectScopeKeys}
-          menuOpen={projectScopeMenuState.open}
-          onMenuOpenChange={(open) => dispatchProjectScopeMenu({ type: "open-changed", open })}
-          onProjectActions={(event, project) => {
-            void handleProjectSettings(event, project);
-          }}
-          /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
+        {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+            Chat has no projects to strip, scope or group. */}
+        {sidebarMode === "chat" ? null : (
+          <>
+            {/* fork:end fork-chat-mode */}
+            {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
+            <SidebarV2RecentProjectsStrip
+              projectGroups={projectGroups}
+              onStartAgent={handleNewThreadInProject}
+            />
+            {/* fork:end fork-sidebar-recent-projects */}
+            <SidebarV2ProjectScopeRow
+              projectGroups={projectGroups}
+              projectScopeKeys={projectScopeKeys}
+              scopedProjectDisplayName={scopedProjectsLabel}
+              onProjectScopeChange={setProjectScopeKeys}
+              menuOpen={projectScopeMenuState.open}
+              onMenuOpenChange={(open) => dispatchProjectScopeMenu({ type: "open-changed", open })}
+              onProjectActions={(event, project) => {
+                void handleProjectSettings(event, project);
+              }}
+              /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
              One grouping value; the menu's radios pick it. */
-          grouping={grouping}
-          onGroupingChange={setGrouping}
-          /* fork:end sidebar-v2-status-grouping */
-          /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-          compactCards={compactCards}
-          onCompactCardsChange={setCompactCards}
-          /* fork:end sidebar-v2-compact-cards */
-          // The same client setting the legacy sidebar's sort menu edits.
-          projectSortOrder={sidebarProjectSortOrder}
-          onProjectSortOrderChange={(sortOrder) => {
-            if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
-              snapshotVisibleProjectOrderAsManual(projectGroups);
-            }
-            void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
-          }}
-          // An option that visibly does nothing teaches nothing. Where headers
-          // are suppressed — one project on screen, by scope or by having only
-          // one — it says so instead of quietly ignoring the click.
-          groupByProjectUnavailableReason={
-            visibleProjectCount > 1
-              ? null
-              : scopedProjectKeys !== null
-                ? "Grouping applies when the sidebar shows more than one project"
-                : "Grouping applies once you have more than one project"
-          }
-        />
+              grouping={grouping}
+              onGroupingChange={setGrouping}
+              /* fork:end sidebar-v2-status-grouping */
+              /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+              compactCards={compactCards}
+              onCompactCardsChange={setCompactCards}
+              /* fork:end sidebar-v2-compact-cards */
+              // The same client setting the legacy sidebar's sort menu edits.
+              projectSortOrder={sidebarProjectSortOrder}
+              onProjectSortOrderChange={(sortOrder) => {
+                if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
+                  snapshotVisibleProjectOrderAsManual(projectGroups);
+                }
+                void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
+              }}
+              // An option that visibly does nothing teaches nothing. Where headers
+              // are suppressed — one project on screen, by scope or by having only
+              // one — it says so instead of quietly ignoring the click.
+              groupByProjectUnavailableReason={
+                visibleProjectCount > 1
+                  ? null
+                  : scopedProjectKeys !== null
+                    ? "Grouping applies when the sidebar shows more than one project"
+                    : "Grouping applies once you have more than one project"
+              }
+            />
+            {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+          </>
+        )}
+        {/* fork:end fork-chat-mode */}
         {/* fork:end fork-sidebar-chrome */}
         {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
             The list's two sides are padded to look equal, not to measure

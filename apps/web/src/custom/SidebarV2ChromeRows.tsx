@@ -243,10 +243,28 @@ export function SidebarV2ChromeActionRows(props: {
   readonly newThreadActive: boolean;
   readonly onNewThread: () => void;
   readonly onAddProject: () => void;
+  /** Chat mode (custom/chatMode): its only row is New chat. */
+  readonly onNewChat?: (() => void) | undefined;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
     : undefined;
+  if (props.onNewChat) {
+    return (
+      <SidebarGroup
+        data-fork-chrome-rows=""
+        className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
+      >
+        <ChromeLabeledAction
+          icon={NavigationArrowIcon}
+          label="New chat"
+          ariaLabel="New chat"
+          testId="sidebar-v2-new-chat"
+          onClick={props.onNewChat}
+        />
+      </SidebarGroup>
+    );
+  }
   return (
     <SidebarGroup
       data-fork-chrome-rows=""

@@ -30,6 +30,9 @@ import { initializeForkTheme } from "./custom/forkTheme";
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 import { initializeForkGlassNewAgentPicture } from "./custom/forkGlassNewAgentPicture";
 /* fork:end fork-glass-new-agent-stage */
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import { initializeForkSidebarMode } from "./custom/chatMode";
+/* fork:end fork-chat-mode */
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 import { initializeForkGlass3d } from "./custom/forkGlass3d";
 /* fork:end fork-glass-3d */
@@ -57,6 +60,9 @@ initializeForkTheme();
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 initializeForkGlassNewAgentPicture();
 /* fork:end fork-glass-new-agent-stage */
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+initializeForkSidebarMode();
+/* fork:end fork-chat-mode */
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 initializeForkGlass3d();
 /* fork:end fork-glass-3d */
