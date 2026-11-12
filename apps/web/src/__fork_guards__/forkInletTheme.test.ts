@@ -128,14 +128,27 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(declarationHex(panel, "--sidebar-row-selected")).toBe("#f1f0e0");
   });
 
-  it("paints Jungle Art as a picture set into a cream frame, on dark", () => {
+  it("paints Jungle Art's threads charcoal and its new-agent screen as a picture, on dark", () => {
     const jungle = `${MARKER}[data-fork-theme="${INLET_THEME}"][data-fork-inlet-color="jungle"]`;
     const stage = ruleBodyFor(paletteRules, [jungle]);
     expect(forkPaletteAppearance(INLET_THEME, "jungle")).toBe("dark");
     expect(declarationHex(stage, "--fork-inlet-frame")).toBe(INLET_COLOR_OPTIONS.jungle.frame);
-    expect(declarationHex(stage, "--fork-inlet-panel")).toBe("#4a9975");
+    expect(declarationHex(stage, "--fork-inlet-panel")).toBe("#141414");
+    // A transcript never scrolls over the picture: a pinned background costs every scrolled frame.
     const column = ruleBodyFor(inletRules, [jungle, "[data-chat-column-maximized-away]"]);
-    expect(column).toContain('url("./custom/assets/inlet-jungle.jpg")');
+    expect(column).not.toContain("url(");
+    const draft = ruleBodyFor(inletRules, [
+      jungle,
+      "[data-chat-column-maximized-away]:has([data-draft-hero])",
+    ]);
+    expect(draft).toContain('url("./custom/assets/inlet-jungle.jpg")');
+    expect(
+      inletRules.filter(
+        (rule) =>
+          rule.selector.includes('[data-fork-inlet-color="jungle"]') &&
+          rule.body.includes("inlet-jungle.jpg"),
+      ),
+    ).toHaveLength(1);
     expect(NodeFS.existsSync(new URL("../custom/assets/inlet-jungle.jpg", import.meta.url))).toBe(
       true,
     );

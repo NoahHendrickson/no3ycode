@@ -7,23 +7,35 @@
    override one another at equal specificity. */
 
 /* ── Jungle Art (Figma 630:10946) ────────────────────────────────────────────
-   The panel is a picture: the art at 60% over #248f6b, under a fade to the
-   frame's green behind the composer. */
+   A thread is Cream's charcoal stage; the open tab's green, when the tab
+   strip is up, fades into its top. The picture is the new-agent screen's
+   alone: nothing scrolls over it there, so pinning it to the window
+   (background-attachment: fixed, which costs every scrolled frame) is free. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-chat-column-maximized-away] {
+  background: var(--fork-inlet-jungle-top, none), var(--background);
+}
+
+/* The new-agent screen: the art at 60% over #248f6b, under a fade to the
+   frame's green behind the composer. Its draft composer is the one element
+   that carries data-draft-hero, and it never changes while a reply streams. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-column-maximized-away]:has([data-draft-hero]) {
   --background: #248f6b;
-  /* The left edge fades from the open row's green, so its bridge runs into
-     solid fill before the art. Top layer of either background below. */
+  /* The left edge fades from the open row's charcoal, so a project draft's
+     bridge runs into solid fill before the art. Top layer of the background
+     below. */
   --fork-inlet-jungle-edge: linear-gradient(
     to right,
-    #4a9975,
-    #4a9975 4px,
-    rgb(74 153 117 / 82%) 40px,
-    rgb(74 153 117 / 58%) 90px,
-    rgb(74 153 117 / 34%) 150px,
-    rgb(74 153 117 / 14%) 220px,
-    rgb(74 153 117 / 0%) 300px
+    #141414,
+    #141414 4px,
+    rgb(20 20 20 / 82%) 40px,
+    rgb(20 20 20 / 58%) 90px,
+    rgb(20 20 20 / 34%) 150px,
+    rgb(20 20 20 / 14%) 220px,
+    rgb(20 20 20 / 0%) 300px
   );
   background:
     var(--fork-inlet-jungle-top, none),
@@ -35,25 +47,9 @@
     #248f6b;
 }
 
-/* Once the thread has a transcript the art steps back under the stage's
-   deep green, so the transcript's white ink reads over it: 15% of it shows
-   from halfway down, more toward the top, where the canopy is. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]:has([data-timeline-row-kind]) {
-  background:
-    var(--fork-inlet-jungle-top, none),
-    var(--fork-inlet-jungle-edge),
-    linear-gradient(rgb(30 95 70 / 0%) 19.712%, rgb(30 95 70 / 60%) 95.833%) bottom / 100% 462px
-      no-repeat,
-    linear-gradient(rgb(30 95 70 / 62%), rgb(30 95 70 / 85%) 50%),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-    #1e5f46;
-}
-
-/* The header, the transcript's area, the new-thread timeline and the fade
-   behind the composer all paint --background; the picture shows through them
-   instead. */
+/* The header, the transcript's area and the new-thread timeline paint
+   --background; the column's own fill shows through them instead, and the
+   draft composer drops its fade over the picture. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-chat-column-maximized-away]
@@ -63,7 +59,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-chat-column-maximized-away]
-  [data-chat-composer-overlay] {
+  [data-chat-composer-overlay][data-draft-hero] {
   background-image: none;
 }
 
@@ -133,9 +129,9 @@
   }
 }
 
-/* On the utility pages the whole stage is the open row's green, out to the
-   window's edges, so the lit row runs into it; the page is a frame-cream card
-   set into it, the frame's gap of green on every side. */
+/* On the utility pages the whole stage is the lit row's panel colour, out to
+   the window's edges, so the row runs into it; the page is a frame-cream card
+   set into it, the frame's gap of panel on every side. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
@@ -640,14 +636,11 @@
   --fork-composer-border: var(--border);
 }
 
-/* Jungle Art's docked right panel is a stage of its own, set into the frame
-   like the chat column, and shows the same picture: both pin it to the window
-   (background-attachment: fixed), so one image runs across the two stages
-   through the frame between them. The stage is the panel's content wrapper,
+/* Jungle Art's docked right panel is a charcoal stage of its own, set into
+   the frame like the chat column. The stage is the panel's content wrapper,
    not the panel, because the panel collapses to no width when closed and a
    margin on it would leave a gap; the content inside, pinned to the panel's
-   width, gives back the margin. It dims further once the chat column's
-   thread has messages, as the column does. */
+   width, gives back the margin. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-preview-panel-mode="inline"] {
@@ -655,7 +648,7 @@
   background: transparent;
 
   & > :last-child {
-    --background: #1e5f46;
+    --background: var(--fork-inlet-panel);
     /* The panel's own light inks: the launcher's rows set no colour and would
        inherit a dark one from the frame round them. */
     --foreground: var(--fork-inlet-panel-foreground);
@@ -669,12 +662,7 @@
     margin: var(--fork-inlet-margin) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
     overflow: clip;
     border-radius: var(--fork-inlet-radius);
-    /* Quieter than the chat column's empty state: the panel holds controls
-       and text from the start, so the picture sits under 72% deep green. */
-    background:
-      linear-gradient(rgb(30 95 70 / 72%), rgb(30 95 70 / 72%)),
-      url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-      #1e5f46;
+    background: var(--background);
   }
 
   & > :last-child > [style*="--resizable-width"] {
@@ -684,16 +672,6 @@
   &[data-preview-panel-maximized="true"] > :last-child {
     margin-left: var(--fork-inlet-margin);
   }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]:has([data-chat-column-maximized-away] [data-timeline-row-kind])
-  [data-preview-panel-mode="inline"]
-  > :last-child {
-  background:
-    linear-gradient(rgb(30 95 70 / 85%), rgb(30 95 70 / 85%)),
-    url("./custom/assets/inlet-jungle.jpg") 58% 100% / cover no-repeat fixed,
-    #1e5f46;
 }
 
 /* Jungle Art's icon buttons over the picture (the window's panel toggles and
@@ -736,10 +714,9 @@
   }
 }
 
-/* Jungle Art's open tab is solid green, not the picture: a tab switch
-   repaints it at once, with no picture to decode. The stage under the strip
-   starts in that green and fades into its picture, so the join has no seam;
-   the tab is the stage's top, so its left-edge fade is dropped. */
+/* Jungle Art's open tab is solid green. The stage under the strip starts in
+   that green and fades into its own fill, so the join has no seam; the tab
+   is the stage's top, so the new-agent picture's left-edge fade is dropped. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-fork-thread-tabs] {

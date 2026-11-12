@@ -246,6 +246,24 @@
   border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
 }
 
+/* A settled thread's open row is the slim row: the panel's fill too, so the
+   panel's ink, though nothing bridges it into the panel. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  [data-testid="sidebar-row-slim"][aria-current="page"] {
+  --foreground: var(--fork-inlet-panel-foreground);
+  --sidebar-foreground: var(--fork-inlet-panel-foreground);
+  --muted-foreground: var(--fork-inlet-panel-muted);
+  --sidebar-muted-foreground: var(--fork-inlet-panel-muted);
+  --fork-sidebar-card-title-receded: var(--fork-inlet-panel-foreground);
+  --contrast-foreground: var(--fork-inlet-panel-foreground);
+  --contrast-muted-foreground: var(--fork-inlet-panel-muted);
+  --contrast-secondary-label: var(--fork-inlet-panel-muted);
+  --contrast-icon-muted: var(--fork-inlet-panel-muted);
+  color: var(--fork-inlet-panel-foreground);
+}
+
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
    the gap the frame shows on the panel's other sides moves into the
    sidebar's end padding. That puts nothing but the open row's own list item
