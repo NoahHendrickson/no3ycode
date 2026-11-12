@@ -533,6 +533,16 @@ export const layer = Layer.effect(
       `.pipe(
         Effect.mapError((cause) => taskError("Could not recover GitHub deliveries.", { cause })),
       );
+    // Every claim prune applies both rules: a relay claim outlives the relay's 48-hour hold, and a
+    // GitHub event claim outlives GitHub's 3-day redelivery window by a wide margin.
+    const pruneExpiredDeliveryClaims = (now: DateTime.DateTime) =>
+      sql`
+        DELETE FROM scheduled_task_webhook_relay_deliveries
+        WHERE (relay_delivery_id NOT LIKE 'delivery:github:%'
+            AND seen_at < ${iso(DateTime.subtract(now, { hours: 48 }))})
+          OR (relay_delivery_id LIKE 'delivery:github:%'
+            AND seen_at < ${iso(DateTime.subtract(now, { days: 30 }))})
+      `.pipe(Effect.ignore);
     // Best-effort at startup: a busy database must not keep the service from building.
     yield* releaseUndispatchedGithubClaims().pipe(
       Effect.catch((cause) =>
@@ -2387,13 +2397,10 @@ export const layer = Layer.effect(
               return { _tag: "accepted" as const, deliveryId, outcome: "duplicate" as const };
             }
             claimAcquired = true;
-            yield* sql`
-                DELETE FROM scheduled_task_webhook_relay_deliveries
-                WHERE seen_at < ${iso(DateTime.subtract(now, { hours: 48 }))}
-                  /* fork:begin fork-github-pr-automation - see .fork/customizations.yaml#fork-github-pr-automation */
-                  AND relay_delivery_id NOT LIKE 'delivery:github:%'
-                  /* fork:end fork-github-pr-automation */
-              `.pipe(Effect.ignore);
+            /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation
+               Upstream's 48-hour prune, which also keeps GitHub event claims for 30 days. */
+            yield* pruneExpiredDeliveryClaims(now);
+            /* fork:end fork-github-pr-automation */
           }
           const log = (
             outcome: ScheduledTaskWebhookDeliveryOutcome,
@@ -2641,13 +2648,7 @@ export const layer = Layer.effect(
               return { _tag: "accepted" as const, deliveryId, outcome: "duplicate" as const };
             }
             claimedGithub = true;
-            // GitHub redelivers only the past 3 days and the relay holds a request
-            // under 48 hours, so an event claimed this long ago cannot arrive again.
-            yield* sql`
-              DELETE FROM scheduled_task_webhook_relay_deliveries
-              WHERE relay_delivery_id LIKE 'delivery:github:%'
-                AND seen_at < ${iso(DateTime.subtract(now, { days: 30 }))}
-            `.pipe(Effect.ignore);
+            yield* pruneExpiredDeliveryClaims(now);
           }
           // A delivery that never reaches dispatch gives its event key back so GitHub's redelivery can run.
           const releaseGithubClaim = Effect.suspend(() =>

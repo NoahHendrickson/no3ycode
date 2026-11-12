@@ -370,7 +370,7 @@ it.effect(
 );
 
 it.effect(
-  "rejects an invalid signature before claiming the event; deduplicates direct and relay redelivery until the claim is 30 days old",
+  "rejects an invalid signature before claiming the event; deduplicates direct and relay redelivery until the claim is 30 days old, and prunes relay claims after 48 hours",
   () =>
     withService(({ service, hooks, launches, sql }) =>
       Effect.gen(function* () {
@@ -394,12 +394,22 @@ it.effect(
           duplicate._tag === "accepted" && duplicate.deliveryId,
         );
         assert.equal(yield* Queue.size(launches), 0);
-        // Each new PR's claim prunes GitHub claims older than 30 days.
+        // Each new PR's claim prunes GitHub claims older than 30 days and relay claims older than 48 hours.
+        yield* sql`
+          INSERT INTO scheduled_task_webhook_relay_deliveries (relay_delivery_id, task_id, seen_at)
+          SELECT 'relay-stale', task_id, seen_at FROM scheduled_task_webhook_relay_deliveries`;
         const claims = sql<{ relay_delivery_id: string }>`
           SELECT relay_delivery_id FROM scheduled_task_webhook_relay_deliveries
-          ORDER BY seen_at`.pipe(
-          Effect.map((rows) => rows.map((row) => row.relay_delivery_id.split(":").at(-2))),
+          ORDER BY seen_at, relay_delivery_id`.pipe(
+          Effect.map((rows) =>
+            rows.map((row) =>
+              row.relay_delivery_id.startsWith("delivery:github:")
+                ? row.relay_delivery_id.split(":").at(-2)
+                : row.relay_delivery_id,
+            ),
+          ),
         );
+        assert.deepEqual(yield* claims, ["42", "relay-stale"]);
         yield* TestClock.adjust("29 days");
         yield* service.triggerWebhook(request(secret, token, "owner/d2", 43));
         yield* Queue.take(launches);
