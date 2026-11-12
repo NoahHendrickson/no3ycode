@@ -809,6 +809,9 @@
   --fork-inlet-row-card-muted: #9a9a9a;
   /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
   --message-surface: #ebe7cd;
+  /* The composer's menus and their open buttons are the sidebar's #141414
+     (theme.custom.inlet-menus.css restates their inks). */
+  --fork-inlet-model-shell: #141414;
 }
 
 /* Charcoal's sidebar on the #141414 frame, with dark mode's bright status

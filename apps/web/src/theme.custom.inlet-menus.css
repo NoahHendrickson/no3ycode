@@ -988,3 +988,91 @@
   [data-fork-peek-tooltip] {
   display: none;
 }
+
+/* ── Inlet Black's composer menus ────────────────────────────────────────────
+   The menus hung from the composer (model, usage, mode) are the sidebar's
+   #141414 in its light ink rather than the composer's cream: the shell
+   (--fork-inlet-model-shell) paints them and their open buttons, the model
+   list is a step up, and a hover a step past that, as in the sidebar. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is(
+    [data-slot="menu-popup"]:has([data-fork-model-picker]),
+    [data-slot="menu-popup"]:has([data-composer-permissions]),
+    [data-slot="popover-popup"][data-fork-tab-menu]
+  ) {
+  --popover: #1f1f1f;
+  --popover-foreground: #e8e8e8;
+  --foreground: #e8e8e8;
+  --muted-foreground: #9a9a9a;
+  --accent: #272727;
+  --accent-foreground: #e8e8e8;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --contrast-foreground: #e8e8e8;
+  --contrast-popover-foreground: #e8e8e8;
+  --contrast-accent-foreground: #e8e8e8;
+  --contrast-muted-foreground: #9a9a9a;
+  --contrast-secondary-label: #9a9a9a;
+  --contrast-icon-muted: #9a9a9a;
+  --contrast-border: #2a2a2a;
+  color: #e8e8e8;
+}
+
+/* The usage popover has no list set into it: it is the shell, as its button. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-slot="popover-popup"][data-fork-tab-menu] {
+  --popover: var(--fork-inlet-model-shell);
+  --background: var(--fork-inlet-model-shell);
+  background: var(--fork-inlet-model-shell);
+}
+
+/* The mode segments: a recessed well, a lift on hover, the chosen mode
+   lifted further. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  & [data-composer-permissions] > :first-child,
+  & [data-composer-permissions] > :not([role="group"]) :is(p, span, div):last-child {
+    color: #9a9a9a;
+  }
+
+  & [data-composer-permissions] [role="group"] {
+    gap: 3px;
+    padding: 3px;
+    border-radius: 9px;
+    background: #1f1f1f;
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"] {
+    border-radius: 6px;
+    background: transparent;
+    color: #9a9a9a;
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"]:is(:hover, [data-highlighted]) {
+    background: #272727;
+    color: #e8e8e8;
+  }
+
+  & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
+    background: #3a3a3a;
+    color: #ffffff;
+  }
+}
+
+/* Their open buttons, and a live dictation pill, sit on the shell in its ink. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is(
+    [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"],
+    [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled),
+    [data-fork-composer-control-row-slot="left"] [data-fork-dictation-live]
+  ) {
+  color: #e8e8e8;
+
+  & * {
+    color: inherit;
+  }
+}
