@@ -174,10 +174,9 @@
   }
 }
 
-/* Jungle Art, Cream and Black draw rows as pills. The open one, and one whose
-   hover card is out, stay square where they join the panel or card and take
-   the nav rows' 10px on the other side (CHROME_ACTION,
-   custom/SidebarV2ChromeRows), so they match a lit New agent. */
+/* Jungle Art, Cream and Black round rows to the nav rows' 10px (CHROME_ACTION,
+   custom/SidebarV2ChromeRows), at rest, hovered and open alike. The open one
+   stays square where it joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
@@ -186,15 +185,10 @@
   )
   [data-sidebar-version="v2"]
   :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"]) {
-  border-radius: 9999px;
+  border-radius: 10px;
 
   &[aria-current="page"] {
     border-radius: 10px 0 0 10px;
-  }
-
-  &[data-popup-open] {
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
   }
 }
 
