@@ -6753,6 +6753,7 @@
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
     - apps/web/src/overrides/components/chat/DraftHeroHeadline.tsx
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.inlet.css
   shadows: []
   watch:
     - apps/web/src/components/ChatView.tsx
