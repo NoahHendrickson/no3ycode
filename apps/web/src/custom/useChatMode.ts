@@ -1,7 +1,11 @@
 /**
  * Code and Chat's actions — see `.fork/customizations.yaml#fork-chat-mode`.
  */
-import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import {
+  scopedThreadKey,
+  scopeProjectRef,
+  scopeThreadRef,
+} from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
@@ -9,8 +13,10 @@ import { useEffect, useRef } from "react";
 
 import { toastManager } from "~/components/ui/toast";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
+import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 import { useScratchProject } from "~/hooks/useScratchProject";
-import { useQuietThreadShell } from "~/state/entities";
+import { useProjects, useQuietThreadShell } from "~/state/entities";
+import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 import { resolveThreadRouteTarget } from "~/threadRoutes";
@@ -28,11 +34,28 @@ import { useStartNewAgentDraft } from "./useNewAgentDraft";
 
 /** "New chat": a No-project draft, remembered as a chat until its first send tags it. */
 export function useStartNewChat(): () => Promise<void> {
-  const { scratchEnvironmentId, startScratchThread } = useScratchProject();
+  const { scratchEnvironmentId, scratchWorkspaceRootFor, startScratchThread } = useScratchProject();
+  const { environments } = useEnvironments();
+  const primaryEnvironmentId = usePrimaryEnvironmentId();
+  const projects = useProjects();
+  const handleNewThread = useNewThreadHandler();
   const router = useRouter();
   return async () => {
-    const environmentId = scratchEnvironmentId(null);
-    if (environmentId === null) {
+    // The primary machine's No-project workspace, else any connected machine's.
+    const environmentId =
+      scratchEnvironmentId(primaryEnvironmentId) ??
+      environments
+        .map((environment) => environment.environmentId)
+        .find((id) => scratchWorkspaceRootFor(id) !== null) ??
+      null;
+    // No machine reports one: a No-project project that already exists still hosts a chat.
+    const scratchProject =
+      environmentId === null ? projects.find((project) => project.isScratch === true) : undefined;
+    if (environmentId !== null) {
+      await startScratchThread(environmentId);
+    } else if (scratchProject) {
+      await handleNewThread(scopeProjectRef(scratchProject.environmentId, scratchProject.id));
+    } else {
       toastManager.add({
         type: "error",
         title: "Could not start a chat",
@@ -40,7 +63,6 @@ export function useStartNewChat(): () => Promise<void> {
       });
       return;
     }
-    await startScratchThread(environmentId);
     const target = resolveThreadRouteTarget(router.state.matches.at(-1)?.params ?? {});
     if (target?.kind !== "draft") return;
     const session = useComposerDraftStore.getState().getDraftSession(target.draftId);
