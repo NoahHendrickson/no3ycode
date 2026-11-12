@@ -1121,3 +1121,22 @@
   [data-slot="popover-popup"]:has([data-thread-details-card]) {
   box-shadow: 0 8px 12px rgb(0 0 0 / 14%);
 }
+
+/* Inside it, rows lift as the sidebar's rows hover (upstream's light-mode
+   black wash vanishes on #141414, and is !important, so this is too), and
+   the editor marks drawn black-on-light take their dark-mode fills. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-thread-details-card] {
+  & .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
+    background-color: var(--fork-outline-hover-bg) !important;
+  }
+
+  & svg[class~="fill-[#26251E]"] {
+    fill: #edecec;
+  }
+
+  & svg[class~="fill-black"] {
+    fill: #ffffff;
+  }
+}
