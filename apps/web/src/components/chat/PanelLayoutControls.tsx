@@ -9,6 +9,10 @@ import type { ThreadPanelPresentation } from "../../rightPanelLayout";
 import { PopoverCreateHandle, PopoverTrigger } from "../ui/popover";
 import { Toggle } from "../ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import type { ScopedThreadRef } from "@t3tools/contracts";
+import { MusicPanelToggle } from "../../custom/music/MusicPanelToggle";
+/* fork:end fork-music-panel */
 
 export interface PanelLayoutControlsProps {
   showThreadPanelControl?: boolean;
@@ -28,6 +32,10 @@ export interface PanelLayoutControlsProps {
   onToggleTerminal: () => void;
   onToggleThreadPanel: () => void;
   onToggleRightPanel: () => void;
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
+     The thread whose right panel the music button opens; omitted, the button is not offered. */
+  musicThreadRef?: ScopedThreadRef | null;
+  /* fork:end fork-music-panel */
 }
 
 export const PanelLayoutControls = memo(function PanelLayoutControls({
@@ -48,6 +56,9 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
   onToggleTerminal,
   onToggleThreadPanel,
   onToggleRightPanel,
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+  musicThreadRef,
+  /* fork:end fork-music-panel */
 }: PanelLayoutControlsProps) {
   const threadPanelToggle = (
     <Toggle
@@ -115,6 +126,11 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
           </TooltipPopup>
         </Tooltip>
       ) : null}
+      {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
+      {showRightPanelControl && musicThreadRef !== undefined ? (
+        <MusicPanelToggle available={rightPanelAvailable} threadRef={musicThreadRef} />
+      ) : null}
+      {/* fork:end fork-music-panel */}
       {showRightPanelControl ? (
         <Tooltip>
           {/* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage

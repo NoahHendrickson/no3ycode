@@ -267,6 +267,9 @@ import {
   Eraser as PhEraser,
   Buildings as PhBuildings,
   User as PhUser,
+  Playlist as PhPlaylist,
+  SkipBack as PhSkipBack,
+  SkipForward as PhSkipForward,
 } from "@phosphor-icons/react";
 import type { FC, ReactElement, SVGProps } from "react";
 import { createElement } from "react";
@@ -622,6 +625,11 @@ export const PackagePlusIcon = DownloadIcon;
 export const UserRoundIcon = icon("user-round", PhUserCircle, "duotone");
 export const Volume2 = icon("volume-2", PhSpeakerHigh, "duotone");
 export const VolumeOff = icon("volume-off", PhSpeakerSlash, "duotone");
+// The music panel (fork-music-panel).
+export const Volume2Icon = Volume2;
+export const SkipBackIcon = icon("skip-back", PhSkipBack, "duotone");
+export const SkipForwardIcon = icon("skip-forward", PhSkipForward, "duotone");
+export const ListMusicIcon = icon("list-music", PhPlaylist, "duotone");
 export const Square = icon("square", PhSquare, "duotone");
 
 // Added by the 2026-10-07 sync for upstream imports new in that range.
@@ -679,6 +687,7 @@ export const Gamepad2Icon = icon("gamepad-2", PhGameController, "duotone");
 export const Layers3Icon = icon("layers-3", PhStack, "duotone");
 export const Layers3 = Layers3Icon;
 export const MusicIcon = icon("music", PhMusicNotes, "duotone");
+export const Music = MusicIcon;
 export const ShoppingBagIcon = icon("shopping-bag", PhShoppingBag, "duotone");
 export const VideoIcon = icon("video", PhVideoCamera, "duotone");
 export const ChevronLeft = ChevronLeftIcon;

@@ -497,5 +497,19 @@ contextBridge.exposeInMainWorld("forkDesktopBridge", {
     },
   },
   /* fork:end fork-side-chat */
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+  // Mirrored by apps/web/src/custom/music/musicBridge.ts; the channels are in
+  // fork/ForkMusic.ts, which relays to ah ahh's remote API on this computer.
+  music: {
+    // Only macOS can find and start ah ahh by its bundle id.
+    canOpen: clientPlatform === "darwin",
+    request: (request: unknown): Promise<unknown> => ipcRenderer.invoke("fork:music", request),
+    onState: (listener: (state: unknown) => void): (() => void) => {
+      const receive = (_event: Electron.IpcRendererEvent, state: unknown) => listener(state);
+      ipcRenderer.on("fork:music-state", receive);
+      return () => ipcRenderer.removeListener("fork:music-state", receive);
+    },
+  },
+  /* fork:end fork-music-panel */
 });
 /* fork:end fork-cool-darker-sidebar-vibrancy */
