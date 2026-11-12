@@ -71,7 +71,6 @@
   --fork-context-chip-bg: rgb(255 255 255 / 12%);
   --fork-context-chip-bg-hover: rgb(255 255 255 / 17%);
   --fork-westworld-vessel-blur: 20px;
-  --fork-westworld-chip-blur: 18px;
   /* Working is Figma's #1877f2 here, not the green every other dark palette
      uses: the status dot, the pixel rain (sidebar cards, the composer
      monitoring pill, the spawn row, the transcript) and the dev-server pulse
@@ -153,7 +152,6 @@
   --fork-context-chip-bg: rgb(47 47 47 / 50%);
   --fork-context-chip-bg-hover: rgb(47 47 47 / 68%);
   --fork-westworld-vessel-blur: 16px;
-  --fork-westworld-chip-blur: 4px;
 }
 
 /* ---------------------------------------------------------------------------

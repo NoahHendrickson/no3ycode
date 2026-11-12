@@ -1563,11 +1563,12 @@
     above the surface), borders #33343a, muted text #8a8a8a, primary
     #fcfcf5. The composer is glass over the art, in two frames. A started
     thread (Figma 423:13864) is white glass: vessel white 8% with a 20px
-    backdrop blur, context chips white 12% at 18px, an opaque #1f1f1f prompt
+    backdrop blur, context chips white 12% (unblurred: they sit on the vessel's
+    blur, and one per chip re-ran as the transcript moved), an opaque #1f1f1f prompt
     surface behind a white 12% hairline (white 22% on focus, one quiet step
     up rather than the palette's opaque grey), and the flat white send. The
     new-agent draft (Figma 447:16789) is dark glass: one rgb(47 47 47) fill
-    at 50% for the vessel and chips (16px / 4px blur) and 60% for the prompt,
+    at 50% for the vessel (16px blur) and chips and 60% for the prompt,
     behind a white 24% hairline (white 45% on focus, one quiet step up in the
     same family rather than the palette's opaque grey, which read as a dull
     ring over the art), and a #1877f2 send (the working token's blue). The
