@@ -226,12 +226,13 @@
   }
 }
 
-/* Square on the side that joins the panel, and inked as the panel is, since
-   it sits on the panel's fill rather than the frame's. */
+/* The open row (a card, or the slim row a settled thread takes) is inked as
+   the panel is, since it sits on the panel's fill rather than the frame's.
+   Tailwind's text-sidebar-foreground resolves at :root, hence the color. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][aria-current="page"] {
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
   --foreground: var(--fork-inlet-panel-foreground);
   --sidebar-foreground: var(--fork-inlet-panel-foreground);
   --muted-foreground: var(--fork-inlet-panel-muted);
@@ -243,25 +244,15 @@
   --contrast-muted-foreground: var(--fork-inlet-panel-muted);
   --contrast-secondary-label: var(--fork-inlet-panel-muted);
   --contrast-icon-muted: var(--fork-inlet-panel-muted);
-  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+  color: var(--fork-inlet-panel-foreground);
 }
 
-/* A settled thread's open row is the slim row: the panel's fill too, so the
-   panel's ink, though nothing bridges it into the panel. */
+/* The card is square on the side that joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-slim"][aria-current="page"] {
-  --foreground: var(--fork-inlet-panel-foreground);
-  --sidebar-foreground: var(--fork-inlet-panel-foreground);
-  --muted-foreground: var(--fork-inlet-panel-muted);
-  --sidebar-muted-foreground: var(--fork-inlet-panel-muted);
-  --fork-sidebar-card-title-receded: var(--fork-inlet-panel-foreground);
-  --contrast-foreground: var(--fork-inlet-panel-foreground);
-  --contrast-muted-foreground: var(--fork-inlet-panel-muted);
-  --contrast-secondary-label: var(--fork-inlet-panel-muted);
-  --contrast-icon-muted: var(--fork-inlet-panel-muted);
-  color: var(--fork-inlet-panel-foreground);
+  [data-testid="sidebar-row-card"][aria-current="page"] {
+  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
@@ -681,6 +672,19 @@
   & :has(> [data-chat-column-maximized-away]) {
     background: var(--fork-inlet-frame);
   }
+}
+
+/* Sidebar menu buttons press in --sidebar-row-active (ui/sidebar.tsx), which
+   on the cream frames is the open row's charcoal under the frame's dark ink;
+   a press keeps the hover cream instead. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="jungle"],
+    [data-fork-inlet-color="cream"]
+  )
+  [data-sidebar-version="v2"]
+  :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active {
+  background-color: var(--sidebar-row-hover);
 }
 
 /* The utility pages (Usage, Automations) are panels as well: their stage

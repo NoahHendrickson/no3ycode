@@ -142,8 +142,8 @@
     calc(var(--fork-inlet-radius) + var(--fork-inlet-margin));
 }
 
-/* The body behind it is green as well, so the frame shows in those corners
-   only if the wrapper paints it. */
+/* The body behind it is the panel's colour as well, so the frame shows in
+   those corners only if the wrapper paints it. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-slot="sidebar-wrapper"]:has(> [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
@@ -185,9 +185,8 @@
   }
 }
 
-/* Green's cream composer over the picture, inked dark. The contrast inks are
-   computed once at :root from the stage's white, so the vessel restates
-   them. */
+/* Green's cream composer, inked dark. The contrast inks are computed once at
+   :root from the stage's light ink, so the vessel restates them. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-fork-composer-vessel] {
@@ -674,10 +673,13 @@
   }
 }
 
-/* Jungle Art's icon buttons over the picture (the window's panel toggles and
-   the right panel's add button) sit on a light wash so they read against
-   it; hover lifts the wash, and a pressed one is the menus' cream, inked
-   dark. An open popover's toggle is the morph's to fill. */
+/* Jungle Art's icon buttons (the window's panel toggles and the right
+   panel's add button) sit on a light wash so they read over the new-agent
+   picture, and keep it on the charcoal so they do not change between the two
+   screens: with a right panel open they render outside the chat column
+   (ChatView's rightPanelControlsAtRoot), where no draft-only rule reaches.
+   Hover lifts the wash, and a pressed one is the menus' cream, inked dark. An
+   open popover's toggle is the morph's to fill. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   :is(
