@@ -982,3 +982,13 @@
   --contrast-secondary-label: var(--fork-inlet-panel-muted);
   --contrast-icon-muted: var(--fork-inlet-panel-muted);
 }
+
+/* Inlet Black's dev-server pulse is plain ink: the mark breathes from the
+   sidebar's muted grey up to its light ink (the fade copy's --foreground),
+   with no working-green. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-fork-dev-server-live]
+  > svg:not([data-fork-dev-server-fade]) {
+  color: #9a9a9a;
+}
