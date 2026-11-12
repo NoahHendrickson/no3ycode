@@ -218,11 +218,16 @@ describe("fork guard: fork-inlet-theme", () => {
   });
 
   it("runs the open row into the panel through concave corners, clipped by the sidebar", () => {
-    const card = ruleBodyFor(inletRules, [
+    // A settled thread's open row is the slim row; it takes the same corners.
+    const openSelector = [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
-      '[data-testid="sidebar-row-card"][aria-current="page"]',
-    ]);
+      ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
+    ].join(" ");
+    const card = inletRules
+      .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === openSelector)
+      .map((rule) => rule.body)
+      .join("\n");
     expect(card).toMatch(
       /border-radius:\s*var\(--fork-inlet-radius\) 0 0 var\(--fork-inlet-radius\)/u,
     );
@@ -240,17 +245,21 @@ describe("fork guard: fork-inlet-theme", () => {
       rule.atRules.some((atRule) => atRule.includes("min-width: 768px")),
     );
     const bridge = docked.find((rule) =>
-      rule.selector.endsWith(
-        'li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])::after',
-      ),
+      rule.selector
+        .replace(/\s+/gu, "")
+        .endsWith(
+          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])::after',
+        ),
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
     // Paint containment from content-visibility would clip the bridge to the item.
     const item = docked.find((rule) =>
-      rule.selector.endsWith(
-        'li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])',
-      ),
+      rule.selector
+        .replace(/\s+/gu, "")
+        .endsWith(
+          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])',
+        ),
     );
     expect(item?.body).toContain("content-visibility: visible");
     // Nothing between the row and the panel: flush panel, no seam, no gutter.
