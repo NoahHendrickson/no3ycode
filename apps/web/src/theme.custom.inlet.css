@@ -15,6 +15,9 @@
   --fork-inlet-radius: 8px;
   /* Every menu and popover's corners; panels set into one run parallel. */
   --fork-inlet-menu-radius: 10px;
+  /* The Questions card's fill, which the / and @ menu shares: the card on
+     light; dark colours take the popup material (theme.custom.palettes.css). */
+  --fork-inlet-question-fill: var(--card);
   --fork-inlet-fillet: 9px;
   /* The collapsed sidebar's tab strip already sits the panel below its tabs;
      the panel's top margin tucks under the strip's empty foot (theme.custom.css),
@@ -331,102 +334,6 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
   color: var(--foreground);
-}
-
-/* The composer, Figma 619:7512 / 629:9196: a vessel with 12px corners in the
-   frame's own colour, the prompt set 4px inside it on every side with the
-   prompt radius, and the context chips above with 8px corners. Geometry for
-   every colour; the fills are each colour's tokens. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-composer-vessel] {
-  /* The question drawer and banners above the prompt take the same inset. */
-  --chat-composer-drawer-inset: 4px;
-  border-radius: 12px;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-box] {
-  margin: 4px;
-}
-
-/* Attached cards (Questions, notices) take the prompt's inset. Only the
-   outer wrapper does: the dock nests a second one, which stays full width. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]
-  [data-slot="composer-banner-attachment"]:has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]
-  ) {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]
-  > [data-slot="composer-banner-attachment"]:has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]
-  ) {
-  width: auto;
-  margin: 4px 4px 0;
-}
-
-/* theme.custom.css draws attached cards as vessel floor only under `.dark`;
-   a light colour would keep upstream's frosted card tucked under the prompt. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
-  [data-fork-composer-vessel]
-  [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
-  --chat-composer-attachment-overlap: 0px;
-
-  &::before {
-    display: none;
-  }
-}
-
-/* The Questions card and the prompt are one box, as on the fork's dark
-   composer: the card's 8px top corners over the prompt's square ones, no gap. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
-  [data-fork-composer-vessel]
-  [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
-  padding: 0;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
-  [data-fork-composer-vessel]
-  [data-chat-composer-top-drawer]
-  > [data-fork-pending-user-input] {
-  border: 1px solid var(--fork-composer-border);
-  border-bottom: 0;
-  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
-  background: var(--card);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]:has([data-chat-composer-top-drawer] > [data-fork-pending-user-input])
-  [data-fork-composer-box] {
-  margin-top: 0;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-
-/* The focus tone recolours the hairline round the card and prompt together,
-   which rings the whole question; with a question open it keeps its resting
-   colour. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]:has([data-fork-composer-surface]:focus-within):has(
-    [data-chat-composer-top-drawer] > [data-fork-pending-user-input]
-  ) {
-  & [data-fork-composer-surface]:focus-within {
-    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
-  }
-
-  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
-    border-color: var(--fork-composer-border);
-  }
 }
 
 /* The context chips take the header buttons' 8px corners. A ghost Button

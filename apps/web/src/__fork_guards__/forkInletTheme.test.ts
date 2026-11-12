@@ -60,6 +60,7 @@ function ruleNaming(rules: ReturnType<typeof cssRules>, parts: readonly string[]
 // The template, its hung menus and tooltips, and the picture colours, in their import order.
 const INLET_FILES = [
   "theme.custom.inlet.css",
+  "theme.custom.inlet-composer.css",
   "theme.custom.inlet-menus.css",
   "theme.custom.inlet-jungle.css",
 ] as const;
@@ -259,6 +260,28 @@ describe("fork guard: fork-inlet-theme", () => {
         rule.selector.includes("pending-user-input"),
     );
     expect(fused?.body).toContain("margin-top: 0");
+    // The portaled / and @ menu copies that card: told the drawer inset is 0 it spans the
+    // prompt, takes the card's fill, and the prompt squares its top corners while it is open.
+    const slashMenu = inletRules.find((rule) =>
+      rule.selector
+        .replace(/\s+/gu, " ")
+        .endsWith("[data-composer-drawer-layer] [data-composer-command-drawer]"),
+    );
+    expect(slashMenu?.body).toContain("background: var(--fork-inlet-question-fill)");
+    expect(slashMenu?.body).toContain("margin-bottom: var(--chat-composer-attachment-overlap)");
+    expect(
+      inletRules.find((rule) =>
+        rule.selector.endsWith("[data-chat-composer-form]:has([data-fork-composer-menu-open])"),
+      )?.body,
+    ).toContain("--chat-composer-drawer-inset: 0rem");
+    expect(readSibling("../components/chat/ChatComposer.tsx")).toContain(
+      "data-fork-composer-menu-open={composerSuggestionsVisible",
+    );
+    expect(
+      inletRules.some((rule) =>
+        rule.selector.includes("[data-fork-composer-box][data-fork-composer-menu-open]"),
+      ),
+    ).toBe(true);
   });
 
   it("opens a row's hover card as a solid tab joined to the row", () => {

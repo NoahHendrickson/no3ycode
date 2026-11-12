@@ -1,0 +1,174 @@
+/* Inlet's composer — see `.fork/customizations.yaml#fork-inlet-theme`.
+
+   The vessel and the prompt set into it, the cards attached above the prompt
+   (Questions, notices), and the drawers that open from it. Imported right
+   after theme.custom.inlet.css, which keeps its light-colour vessel and chip
+   ink rules: the chip ink ties an open chip's menu ink on specificity and
+   must stay before it. */
+
+/* The composer, Figma 619:7512 / 629:9196: a vessel with 12px corners in the
+   frame's own colour, the prompt set 4px inside it on every side with the
+   prompt radius, and the context chips above with 8px corners. Geometry for
+   every colour; the fills are each colour's tokens. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-composer-vessel] {
+  /* The question drawer and banners above the prompt take the same inset. */
+  --chat-composer-drawer-inset: 4px;
+  border-radius: 12px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]
+  [data-fork-composer-box] {
+  margin: 4px;
+}
+
+/* Attached cards (Questions, notices) take the prompt's inset. Only the
+   outer wrapper does: the dock nests a second one, which stays full width. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]
+  [data-slot="composer-banner-attachment"]:has(
+    [data-slot="composer-banner"][data-composer-banner-surface="attached"]
+  ) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]
+  > [data-slot="composer-banner-attachment"]:has(
+    [data-slot="composer-banner"][data-composer-banner-surface="attached"]
+  ) {
+  width: auto;
+  margin: 4px 4px 0;
+}
+
+/* theme.custom.css draws attached cards as vessel floor only under `.dark`;
+   a light colour would keep upstream's frosted card tucked under the prompt. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
+  [data-fork-composer-vessel]
+  [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
+  --chat-composer-attachment-overlap: 0px;
+
+  &::before {
+    display: none;
+  }
+}
+
+/* The composer's drawers (the stash list, the / and @ menu) are solid, like
+   every Inlet menu. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]
+  [data-composer-banner-surface] {
+  --glass-opacity: 100%;
+
+  &::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* The / and @ menu is built like the Questions card: a card in the
+   Questions fill set on the prompt, the vessel's 4px ring round it. It is
+   portaled, so it can't sit in the vessel. Told the drawer inset is 0, the
+   layer spans the prompt; the card stops at the prompt's top (the layer
+   tucks it the surface's own overlap under it) and draws the ring as a
+   clipped spread, while the vessel and the prompt square their top corners
+   under it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-chat-composer-form]:has([data-fork-composer-menu-open]) {
+  --chat-composer-drawer-inset: 0rem;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]:has([data-composer-command-drawer]) {
+  /* The body's ink is the frame's; the menu is on the panel's. */
+  color: var(--foreground);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer] {
+  margin-bottom: var(--chat-composer-attachment-overlap);
+  padding-bottom: 0;
+  border: 1px solid var(--fork-composer-border);
+  border-bottom: 0;
+  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+  background: var(--fork-inlet-question-fill);
+  box-shadow: 0 0 0 4px var(--fork-composer-vessel-bg);
+  clip-path: inset(-4px -4px 0);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer]::before {
+  display: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]:has([data-fork-composer-menu-open]):not(
+    :has([data-composer-banner-surface])
+  ),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-box][data-fork-composer-menu-open] {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* The caret is in the prompt while the menu is open; its focus hairline keeps
+   the resting colour so it doesn't split from the card's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-box][data-fork-composer-menu-open]
+  [data-fork-composer-surface]:focus-within {
+  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+}
+
+/* The Questions card and the prompt are one box, as on the fork's dark
+   composer: the card's 8px top corners over the prompt's square ones, no gap. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
+  [data-fork-composer-vessel]
+  [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
+  padding: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
+  [data-fork-composer-vessel]
+  [data-chat-composer-top-drawer]
+  > [data-fork-pending-user-input] {
+  border: 1px solid var(--fork-composer-border);
+  border-bottom: 0;
+  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+  background: var(--fork-inlet-question-fill);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]:has([data-chat-composer-top-drawer] > [data-fork-pending-user-input])
+  [data-fork-composer-box] {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* The focus tone recolours the hairline round the card and prompt together,
+   which rings the whole question; with a question open it keeps its resting
+   colour. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]:has([data-fork-composer-surface]:focus-within):has(
+    [data-chat-composer-top-drawer] > [data-fork-pending-user-input]
+  ) {
+  & [data-fork-composer-surface]:focus-within {
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+  }
+
+  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
+    border-color: var(--fork-composer-border);
+  }
+}
