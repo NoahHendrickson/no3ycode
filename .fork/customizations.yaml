@@ -2456,7 +2456,7 @@
     background; the column's header, workspace area and new-thread timeline
     go transparent over the column's fill; the cream #f2f0d8 frame is
     --fork-inlet-frame, painted on the inset and the column's wrapper only
-    round a chat column; rows are pills; the composer is solid cream (the sidebar's hover cream, a lighter cream prompt) with dark ink. Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
+    round a chat column; rows are pills; the composer is glass (Figma 630:11828), its fills restated on the composer stack so menus and the user's bubble keep the solid cream: on a thread a faint white over the charcoal in the stage's light ink (vessel 8%, prompt 6%, chips 10%, no blur), over the new-agent picture light glass in dark ink (vessel 40% and chips 20% with a 12px blur, prompt 60%). Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
     Green's tokens (the palette rules list both colours) with the same art,
     faded to 22% over #21835c, painted once on the sidebar wrapper behind the
     sidebar and the frame round the panel, whose own frame fills step aside.

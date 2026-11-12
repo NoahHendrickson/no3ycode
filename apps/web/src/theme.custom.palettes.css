@@ -655,8 +655,8 @@
 
 /* Jungle Art shows its picture only on the new-agent screen
    (theme.custom.inlet-jungle.css), so no transcript scrolls over it. The
-   green stays in the controls: the cream composer, the green model shell,
-   send button and open tab. */
+   green stays in the controls: the green model shell, send button and open
+   tab. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
   /* Tooltips are the menus' green, inked white. */
   --fork-inlet-tooltip: var(--fork-inlet-model-shell);
@@ -667,9 +667,9 @@
      inks inside them). */
   --popover: #e8e6cf;
   --popover-foreground: #1c1c1a;
-  /* A solid cream composer on the charcoal stage and the picture: the
-     sidebar's hover cream for the vessel and chips, a lighter cream for the
-     prompt. */
+  /* The composer's creams, which the menus, the user's bubble and the effort
+     knob read. The composer itself restates glass fills on its stack
+     (theme.custom.inlet-jungle.css). */
   --fork-composer-vessel-bg: #e8e6cf;
   --fork-composer-bg: #f6f4e4;
   --fork-composer-border: #f6f4e4;

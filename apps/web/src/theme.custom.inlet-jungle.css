@@ -191,11 +191,75 @@
   }
 }
 
-/* Green's cream composer, inked dark. The contrast inks are computed once at
+/* Jungle Art's composer is glass (Figma 630:11828). The fills are restated on
+   the composer's own stack, so the menus, the user's bubble and the effort
+   knob, which read the same tokens from :root, stay solid cream. On a thread
+   it is a faint white over the charcoal stage, in the stage's light ink, with
+   no blur: there is nothing behind it to blur. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-stack] {
+  --fork-composer-vessel-bg: rgb(255 255 255 / 8%);
+  --fork-composer-bg: rgb(255 255 255 / 6%);
+  --fork-composer-border: transparent;
+  --fork-composer-border-focus: rgb(255 255 255 / 16%);
+  --fork-context-chip-bg: rgb(255 255 255 / 10%);
+  --fork-context-chip-bg-hover: rgb(255 255 255 / 16%);
+
+  & [data-fork-composer-mode-chip] {
+    background: rgb(255 255 255 / 10%);
+  }
+
+  & [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
+    background: rgb(255 255 255 / 16%);
+  }
+}
+
+/* Over the new-agent picture it is light glass in dark ink. The vessel and
+   chips blur the art; it is fixed and nothing scrolls over it, so the blur is
+   drawn once rather than every frame. The contrast inks are computed once at
    :root from the stage's light ink, so the vessel restates them. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-vessel] {
+  [data-chat-composer-overlay][data-draft-hero]
+  [data-fork-composer-stack] {
+  --fork-composer-vessel-bg: rgb(255 255 255 / 40%);
+  --fork-composer-bg: rgb(255 255 255 / 60%);
+  --fork-composer-border-focus: rgb(255 255 255 / 80%);
+  --fork-context-chip-bg: rgb(255 255 255 / 20%);
+  --fork-context-chip-bg-hover: rgb(255 255 255 / 30%);
+
+  & [data-fork-composer-vessel],
+  & [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip]) {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  &
+    [data-fork-composer-context-row]
+    :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+    color: #1c1c1a;
+  }
+
+  & [data-fork-composer-mode-chip] {
+    background: rgb(0 0 0 / 16%);
+  }
+
+  & [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
+    background: rgb(0 0 0 / 22%);
+  }
+
+  /* The meter's track while it holds a fill: no :has() keyed on a bare span. */
+  & [data-fork-composer-usage-limits] > span:not(:empty) {
+    background: rgb(0 0 0 / 32%);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is(
+    [data-chat-composer-overlay][data-draft-hero] [data-fork-composer-vessel],
+    [data-chat-composer-top-drawer] > [data-fork-pending-user-input]
+  ) {
   --foreground: #1c1c1a;
   --muted-foreground: rgb(0 0 0 / 65%);
   --placeholder: rgb(0 0 0 / 65%);
@@ -206,28 +270,21 @@
   --contrast-icon-muted: rgb(0 0 0 / 65%);
   --fork-composer-control-ink: #1c1c1a;
   color: var(--foreground);
+}
 
-  /* The primary action ("Submit answer") reads Tailwind's root-resolved
-     primary, the stage's pale one; Green's dark button instead. */
+/* The Questions card is cream on either glass, inked dark. Its primary action
+   ("Submit answer") reads Tailwind's root-resolved primary, the stage's pale
+   one; Green's dark button instead. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-composer-top-drawer]
+  > [data-fork-pending-user-input] {
+  background: var(--fork-inlet-question-fill);
+
   & [data-fork-pending-user-input-action="advance"] {
     background: #1c1c1a;
     color: #ffffff;
   }
-
-  /* The meter's track while it holds a fill: no :has() keyed on a bare span. */
-  & [data-fork-composer-usage-limits] > span:not(:empty) {
-    background: rgb(0 0 0 / 32%);
-  }
-
-  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
-    background: var(--fork-inlet-question-fill);
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
-  color: #1c1c1a;
 }
 
 /* On Jungle Art the rail is green, so a hovered provider lifts with white
