@@ -258,6 +258,14 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(list?.body).toContain("scrollbar-gutter: auto");
     expect(docked.some((rule) => rule.body.includes("margin-left: 0"))).toBe(true);
     expect(docked.some((rule) => rule.body.includes("border-right-width: 0"))).toBe(true);
+    // A lit chrome row (New agent, Usage, Automations) bridges into the chat column and the
+    // stage card alike.
+    const chromeBridge = docked.find((rule) =>
+      rule.selector.endsWith('[data-fork-chrome-row][data-active="true"]::after'),
+    );
+    expect(chromeBridge?.selector).toContain("[data-fork-has-chat-column]");
+    expect(chromeBridge?.selector).toContain("[data-fork-has-stage-card]");
+    expect(chromeBridge?.body).toContain("radial-gradient");
   });
 
   it("sets the prompt 4px inside a 12px vessel under 8px context chips", () => {

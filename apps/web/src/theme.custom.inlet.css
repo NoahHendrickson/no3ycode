@@ -660,37 +660,52 @@
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
       padding-inline-end: var(--fork-inlet-margin);
     }
+  }
+}
 
-    & [data-sidebar-version="v2"] [data-fork-chrome-row][data-active="true"] {
-      position: relative;
-      overflow: visible;
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
+/* A lit chrome row runs into the panel beside it, as the open thread's row
+   does: New agent into the new-agent screen's chat column, Usage and
+   Automations into their stage card. Both blocks above move the frame's gap
+   into the sidebar's end padding, which the bridge crosses. */
 
-      &::after {
-        content: "";
-        position: absolute;
-        pointer-events: none;
-        left: 100%;
-        right: calc(-1 * var(--fork-inlet-margin));
-        top: calc(-1 * var(--fork-inlet-fillet));
-        bottom: calc(-1 * var(--fork-inlet-fillet));
-        background:
-          radial-gradient(
-              circle at 0 0,
-              transparent calc(var(--fork-inlet-fillet) - 0.5px),
-              var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
-            )
-            right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-          radial-gradient(
-              circle at 0 100%,
-              transparent calc(var(--fork-inlet-fillet) - 0.5px),
-              var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
-            )
-            right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-          linear-gradient(var(--fork-inlet-panel), var(--fork-inlet-panel)) 0
-            var(--fork-inlet-fillet) / 100% calc(100% - 2 * var(--fork-inlet-fillet)) no-repeat;
-      }
+@media (min-width: 768px) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+      [data-fork-has-chat-column],
+      [data-fork-has-stage-card]
+    )
+    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
+      [data-fork-sidebar-overlay="true"]
+    )
+    [data-sidebar-version="v2"]
+    [data-fork-chrome-row][data-active="true"] {
+    position: relative;
+    overflow: visible;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    &::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      left: 100%;
+      right: calc(-1 * var(--fork-inlet-margin));
+      top: calc(-1 * var(--fork-inlet-fillet));
+      bottom: calc(-1 * var(--fork-inlet-fillet));
+      background:
+        radial-gradient(
+            circle at 0 0,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        radial-gradient(
+            circle at 0 100%,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-panel), var(--fork-inlet-panel)) 0
+          var(--fork-inlet-fillet) / 100% calc(100% - 2 * var(--fork-inlet-fillet)) no-repeat;
     }
   }
 }
