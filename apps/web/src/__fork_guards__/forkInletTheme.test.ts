@@ -67,6 +67,18 @@ const INLET_FILES = [
 const inlet = INLET_FILES.map((file) => readSibling(`../${file}`)).join("\n");
 const paletteRules = cssRules(palettes);
 const inletRules = cssRules(inlet);
+
+/** Every :root-level palette block that names the colour, alone or in an :is() list. */
+function rootStageBody(color: string): string {
+  return paletteRules
+    .filter(
+      (rule) =>
+        rule.selector.includes(`[data-fork-inlet-color="${color}"]`) &&
+        !/\s(?![^(]*\))/u.test(rule.selector.trim().replace(/,\s+/gu, ",")),
+    )
+    .map((rule) => rule.body)
+    .join("\n");
+}
 const indexHtml = readSibling("../../index.html");
 const appearancePanel = readSibling("../components/settings/AppearanceSettingsPanel.tsx");
 const customizations = readSibling("../../../../.fork/customizations.yaml");
@@ -129,14 +141,34 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(declarationHex(panel, "--sidebar-row-selected")).toBe("#f1f0e0");
   });
 
-  it("paints Jungle Art as a picture set into a cream frame, on dark", () => {
+  it("paints Jungle Art's threads charcoal and its new-agent screen as a picture, on dark", () => {
     const jungle = `${MARKER}[data-fork-theme="${INLET_THEME}"][data-fork-inlet-color="jungle"]`;
     const stage = ruleBodyFor(paletteRules, [jungle]);
     expect(forkPaletteAppearance(INLET_THEME, "jungle")).toBe("dark");
     expect(declarationHex(stage, "--fork-inlet-frame")).toBe(INLET_COLOR_OPTIONS.jungle.frame);
-    expect(declarationHex(stage, "--fork-inlet-panel")).toBe("#4a9975");
+    // A thread is Cream's charcoal stage: one block both colours read.
+    const shared = paletteRules.find(
+      (rule) =>
+        rule.selector.includes('[data-fork-inlet-color="jungle"]') &&
+        rule.selector.includes('[data-fork-inlet-color="cream"]') &&
+        rule.body.includes("--fork-inlet-panel:"),
+    );
+    expect(declarationHex(shared?.body ?? "", "--fork-inlet-panel")).toBe("#141414");
+    // A transcript never scrolls over the picture: a pinned background costs every scrolled frame.
     const column = ruleBodyFor(inletRules, [jungle, "[data-chat-column-maximized-away]"]);
-    expect(column).toContain('url("./custom/assets/inlet-jungle.jpg")');
+    expect(column).not.toContain("url(");
+    const draft = ruleBodyFor(inletRules, [
+      jungle,
+      "[data-chat-column-maximized-away]:has([data-draft-hero])",
+    ]);
+    expect(draft).toContain('url("./custom/assets/inlet-jungle.jpg")');
+    expect(
+      inletRules.filter(
+        (rule) =>
+          rule.selector.includes('[data-fork-inlet-color="jungle"]') &&
+          rule.body.includes("inlet-jungle.jpg"),
+      ),
+    ).toHaveLength(1);
     expect(NodeFS.existsSync(new URL("../custom/assets/inlet-jungle.jpg", import.meta.url))).toBe(
       true,
     );
@@ -156,11 +188,7 @@ describe("fork guard: fork-inlet-theme", () => {
   it("declares every colour's frame, panel and row ink", () => {
     for (const color of INLET_COLORS) {
       const stage = {
-        body: ruleNaming(paletteRules, [
-          color === "charcoal"
-            ? CHARCOAL
-            : `${MARKER}[data-fork-theme="${INLET_THEME}"][data-fork-inlet-color="${color}"]`,
-        ]),
+        body: color === "charcoal" ? ruleNaming(paletteRules, [CHARCOAL]) : rootStageBody(color),
       };
       expect(stage?.body, color).toContain("--fork-inlet-panel:");
       expect(stage?.body, color).toContain("--fork-inlet-panel-foreground:");
@@ -190,15 +218,21 @@ describe("fork guard: fork-inlet-theme", () => {
   });
 
   it("runs the open row into the panel through concave corners, clipped by the sidebar", () => {
-    const row = ruleBodyFor(inletRules, [
+    const card = ruleBodyFor(inletRules, [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
       '[data-testid="sidebar-row-card"][aria-current="page"]',
     ]);
-    expect(row).toMatch(
+    expect(card).toMatch(
       /border-radius:\s*var\(--fork-inlet-radius\) 0 0 var\(--fork-inlet-radius\)/u,
     );
-    // The row sits on the panel, so it takes the panel's ink, contrast inks included.
+    // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
+    // settled thread's open row is the slim row, on the same fill.
+    const row = ruleBodyFor(inletRules, [
+      TEMPLATE,
+      '[data-sidebar-version="v2"]',
+      ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
+    ]);
     expect(row).toContain("--foreground: var(--fork-inlet-panel-foreground)");
     expect(row).toContain("--contrast-foreground: var(--fork-inlet-panel-foreground)");
 
