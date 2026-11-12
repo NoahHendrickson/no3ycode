@@ -618,6 +618,17 @@
   background-color: var(--sidebar-row-hover);
 }
 
+/* On Black the press is the open row's cream under the sidebar's light ink, so the
+   label vanishes; a press keeps the hover fill. A lit row stays lit. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-sidebar-version="v2"]
+  :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active:not(
+    [data-active="true"]
+  ) {
+  background-color: var(--sidebar-row-hover);
+}
+
 /* The utility pages (Usage, Automations) are panels as well: their stage
    card is set into the frame the way the chat column is. */
 
