@@ -54,6 +54,13 @@
   background: var(--background);
 }
 
+/* A split's panes are each their own panel, whose margins already part them, so the
+   line between the panes (fork-split-threads) goes, as on Glass's stage cards. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-split-divider] {
+  display: none;
+}
+
 /* Menus, popovers, selects and the row hover card share one corner radius.
    Hung menus square the corner at their join with longhands that outrank
    this. A select draws its surface on a child, so that child takes it too. */
