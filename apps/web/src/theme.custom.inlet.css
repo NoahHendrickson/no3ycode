@@ -940,6 +940,26 @@
   }
 }
 
+/* Over the texture the draft composer is frosted cream: its fills (Black's
+   #d0ccb5 vessel, #ecebe1 prompt, chips) let the texture through, and the
+   vessel blurs it. The texture keeps moving, so the blur redraws with it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]
+  [data-chat-composer-overlay][data-draft-hero]
+  [data-fork-composer-stack] {
+  --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
+  --fork-composer-bg: rgb(236 235 225 / 70%);
+  --fork-composer-border: transparent;
+  --fork-context-chip-bg: rgb(208 204 181 / 55%);
+  --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
+
+  & [data-fork-composer-vessel] {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
 /* Inlet Black's message links are the new-agent texture's blue (#44aaf8,
    custom/pixelTexture), deepened on the same hue to reach 4.5:1 on the cream
    panel. File and thread links read the same token. */
