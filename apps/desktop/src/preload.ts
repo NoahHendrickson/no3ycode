@@ -12,6 +12,13 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from "electron";
 
 import * as IpcChannels from "./ipc/channels.ts";
 import { mergeLegacyLocalStorage } from "./legacyLocalStorageMerge.ts";
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import type {
+  ForkMusicLibraryPage,
+  ForkMusicQueueEntry,
+  ForkMusicState,
+} from "./fork/ForkMusicClient.ts";
+/* fork:end fork-music-panel */
 
 const SNAP_SHOT_EVENT_TYPES = new Set([
   "requested",
@@ -459,6 +466,11 @@ contextBridge.exposeInMainWorld("desktopBridge", {
   },
 } satisfies DesktopBridge);
 
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+/** One fork:music call. A failed invoke answers `fallback`, so the page never sees a rejection. */
+const forkMusic = <T>(request: Record<string, unknown>, fallback: T): Promise<T> =>
+  ipcRenderer.invoke("fork:music", request).catch(() => fallback);
+/* fork:end fork-music-panel */
 /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
 /**
  * Separate world key on purpose: the fork's vibrancy call stays off
@@ -497,5 +509,31 @@ contextBridge.exposeInMainWorld("forkDesktopBridge", {
     },
   },
   /* fork:end fork-side-chat */
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+  // Mirrored by apps/web/src/custom/music/musicBridge.ts. fork/ForkMusic.ts answers each
+  // of these from ah ahh's remote API on this computer, already checked and typed.
+  music: {
+    // Only macOS can find and start ah ahh by its bundle id.
+    canOpen: clientPlatform === "darwin",
+    // Following and unfollowing ride the subscription, so the two cannot drift apart.
+    follow: (listener: (state: ForkMusicState) => void): (() => void) => {
+      const receive = (_event: Electron.IpcRendererEvent, state: ForkMusicState) => listener(state);
+      ipcRenderer.on("fork:music-state", receive);
+      void forkMusic<ForkMusicState | null>({ type: "follow" }, null).then((state) => {
+        if (state !== null) listener(state);
+      });
+      return () => {
+        ipcRenderer.removeListener("fork:music-state", receive);
+        void forkMusic({ type: "unfollow" }, null);
+      };
+    },
+    open: () => forkMusic({ type: "open" }, false),
+    command: (command: { action: string; value?: unknown }) =>
+      forkMusic({ type: "command", ...command }, false),
+    upNext: () => forkMusic<ReadonlyArray<ForkMusicQueueEntry> | null>({ type: "upNext" }, null),
+    libraryPage: (path: string, offset: number) =>
+      forkMusic<ForkMusicLibraryPage | null>({ type: "libraryPage", path, offset }, null),
+  },
+  /* fork:end fork-music-panel */
 });
 /* fork:end fork-cool-darker-sidebar-vibrancy */

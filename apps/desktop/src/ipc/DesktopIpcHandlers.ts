@@ -87,6 +87,9 @@ import { setForkSidebarVibrancy } from "../fork/ForkSidebarVibrancy.ts";
 /* fork:begin fork-glass-floor-color — see .fork/customizations.yaml#fork-glass-floor-color */
 import { installForkGlassFloorColorIpc } from "../fork/ForkGlassFloorColor.ts";
 /* fork:end fork-glass-floor-color */
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import { installForkMusicIpc } from "../fork/ForkMusic.ts";
+/* fork:end fork-music-panel */
 
 export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers")(function* () {
   const ipc = yield* DesktopIpc.DesktopIpc;
@@ -184,4 +187,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   /* fork:begin fork-glass-floor-color — see .fork/customizations.yaml#fork-glass-floor-color */
   yield* installForkGlassFloorColorIpc();
   /* fork:end fork-glass-floor-color */
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+  yield* installForkMusicIpc();
+  /* fork:end fork-music-panel */
 });

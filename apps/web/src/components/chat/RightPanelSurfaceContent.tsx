@@ -11,6 +11,9 @@ import type {
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { lazy, Suspense } from "react";
 import SideChatPane from "./SideChatPane";
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import { MusicPanel } from "../../custom/music/MusicPanel";
+/* fork:end fork-music-panel */
 import type { ComposerImageAttachment, DraftId } from "../../composerDraftStore";
 import type { ShortcutMatchContext } from "../../keybindings";
 import type { SideChatParentPanel } from "../../lib/sideChatPane";
@@ -180,6 +183,10 @@ export function RightPanelSurfaceContent(props: {
           onClose={() => onCloseSurface(surface)}
         />
       );
+    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+    case "music":
+      return <MusicPanel />;
+    /* fork:end fork-music-panel */
     case "device":
       return (
         <Suspense fallback={null}>

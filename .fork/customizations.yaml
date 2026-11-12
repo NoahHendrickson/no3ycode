@@ -6802,3 +6802,60 @@
     - apps/web/src/__fork_guards__/forkChatMode.test.ts
     - apps/web/src/custom/chatMode.test.ts
     - apps/web/src/custom/chatTagging.test.ts
+
+- id: fork-music-panel
+  intent: >
+    In the desktop app, a music button beside the right panel toggle opens
+    the right panel on a Music tab: what is playing with its artwork,
+    previous, play or pause, next, a volume slider, the library's playlists
+    and songs, and the queue. It is a remote for ah ahh, the maintainer's own
+    Apple Music player (NoahHendrickson/ah-ahh), running on the same
+    computer, exactly as ah ahh's iPhone app is. ah ahh keeps MusicKit, the
+    developer token, the Widevine build of Electron and the audio; this app
+    carries none of them, and never becomes a player. The desktop main
+    process relays to ah ahh's remote API on 127.0.0.1:10771 with the
+    pairing token it reads from remote.json in ah ahh's data folder, because
+    the page can neither read that file nor cross origins; nothing touches
+    the server or packages/contracts, since the music belongs to the machine
+    the user sits at rather than to the environment a thread runs in. ah
+    ahh's JSON is checked once, in the desktop's client, and the fork's own
+    forkDesktopBridge key carries one typed method per operation; with no
+    music entry on it (the web, mobile) the button is not rendered at all.
+    Nothing polls: the main process holds ah ahh's state stream open only
+    while a page has the panel mounted (a reload or a crash counts as
+    unmounting), drops the ten-second position heartbeats the panel has no
+    use for, and reports once when the stream ends. A closed ah ahh shows as
+    that, with a retry that also runs when the window regains focus. The
+    click on the music button that opens the panel also asks the desktop to
+    make sure ah ahh is up: it looks first, and on macOS starts a closed one
+    hidden and behind this app, then waits (bounded) for its player. A panel
+    remounting on a thread switch never asks, so an ah ahh quit on purpose
+    stays quit until the panel's Open button. Up Next is ah ahh's real
+    queue. Songs play by id from the list shown, so what plays is what was
+    clicked even if the playlist changed since; a list stops at 500 rows,
+    the most ah ahh takes in one play command, and skips layout for rows off
+    screen. ah ahh must answer on loopback without its Phone remote setting
+    turned on, which needs a version that always starts its remote server.
+  tier: 4
+  files:
+    - apps/desktop/src/fork/ForkMusic.ts
+    - apps/desktop/src/fork/ForkMusicClient.ts
+    - apps/web/src/custom/music/musicBridge.ts
+    - apps/web/src/custom/music/musicStore.ts
+    - apps/web/src/custom/music/MusicPanel.tsx
+    - apps/web/src/custom/music/MusicPanelToggle.tsx
+    # The glyphs the panel uses, added to the fork's lucide shim.
+    - apps/web/src/custom/icons/lucide-phosphor.tsx
+  shadows: []
+  watch:
+    - apps/desktop/src/preload.ts
+    - apps/desktop/src/ipc/DesktopIpcHandlers.ts
+    - apps/web/src/rightPanelStore.ts
+    - apps/web/src/closedViewStore.ts
+    - apps/web/src/components/RightPanelTabs.tsx
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/components/chat/RightPanelSurfaceContent.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
+    - apps/desktop/src/fork/ForkMusicClient.test.ts

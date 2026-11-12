@@ -3544,6 +3544,9 @@ export default function ChatView(props: ChatViewProps) {
     onToggleTerminal: toggleTerminalVisibilityStable,
     onToggleThreadPanel: toggleThreadPanelStable,
     onToggleRightPanel: toggleRightPanelStable,
+    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+    musicThreadRef: activeThreadRef,
+    /* fork:end fork-music-panel */
   } satisfies PanelLayoutControlsProps;
   const panelToggleControls = (
     <PanelLayoutControls
