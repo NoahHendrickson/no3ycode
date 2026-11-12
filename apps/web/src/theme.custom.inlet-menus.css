@@ -1172,3 +1172,16 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* Black's --background is the #141414 frame under the panel's dark ink, so a
+   dialog's glass (index.css dialog-glass) drew dark on dark; dialogs are the
+   cream popover, solid, as the menus are. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  .dialog-glass {
+  --background: var(--popover);
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
