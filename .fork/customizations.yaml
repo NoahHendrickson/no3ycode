@@ -5564,7 +5564,10 @@
   files:
     - apps/web/src/custom/newAgentDraft.ts
     - apps/web/src/custom/useNewAgentDraft.ts
+    # The chip, its menu, and the choices and pick dispatcher both share.
     - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/DraftProjectMenuPopup.tsx
+    - apps/web/src/custom/useDraftProjectChoices.ts
     - apps/web/src/custom/newAgentDraft.test.ts
     - apps/web/src/custom/useNewAgentDraft.test.ts
     # Draft-only prompt geometry and the docked-only floor, keyed on data-draft-hero.
@@ -6251,8 +6254,10 @@
     by those same threads (rankRecentProjectEntries, which ranks through
     sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
     automation run cannot reorder them), each its icon then a
-    plus, and a chevron opening the full project menu. Picking a pill assigns
-    the draft (the chip's own assign path) and the project chip opens from
+    plus, and a chevron opening the full project menu. A pill and a menu row
+    go through the same pick dispatcher (useDraftProjectChoices, owned by
+    fork-new-agent-draft) keyed on the row's radio value, and the chevron
+    opens the chip's own DraftProjectMenuPopup. The project chip opens from
     where the pill was, sliding to the row's start as its label is revealed.
     The pick is kept outside the component (custom/draftProjectPickMotion),
     because the chip remounts mid-slide when the assignment settles and
@@ -6266,7 +6271,7 @@
     motion skips both.
   tier: 4
   files:
-    - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.tsx
     - apps/web/src/custom/draftProjectPickMotion.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
     - apps/web/src/custom/rankRecentProjectEntries.test.ts

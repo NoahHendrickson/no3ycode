@@ -8,23 +8,35 @@ import { describe, expect, it } from "vite-plus/test";
 const read = (path: string) =>
   NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(path, import.meta.url)), "utf8");
 
+const choices = read("../custom/useDraftProjectChoices.ts");
+const quickPicks = read("../custom/DraftProjectQuickPicks.tsx");
+
 describe("fork guard: fork-draft-project-quick-picks", () => {
-  it("offers recent projects as pills above an unassigned draft's composer", () => {
-    const pill = read("../custom/DraftProjectPill.tsx");
-    expect(pill).toContain("const QUICK_PICK_LIMIT = 5;");
-    expect(pill).toContain('selection.kind === "unassigned" && props.draftId !== null');
-    expect(pill).toContain('data-fork-project-quick-pick=""');
-    expect(pill).toContain(
-      "rankRecentProjectEntries(projectPickerEntries, threads, QUICK_PICK_LIMIT)",
-    );
+  it("ranks the pills through the sidebar's own project order", () => {
+    expect(choices).toContain("const QUICK_PICK_LIMIT = 5;");
+    expect(choices).toContain("rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)");
+    const logic = read("../components/Sidebar.logic.ts");
+    const helperAt = logic.indexOf("export function rankRecentProjectEntries<");
+    const helper = logic.slice(helperAt, logic.indexOf("fork:end", helperAt));
+    expect(helper).toContain("filterSidebarV2VisibleThreads(threads, null, new Set())");
+    expect(helper).toContain("sortLogicalProjectsForSidebar(");
+  });
+
+  it("assigns a picked pill through the menu's own dispatcher", () => {
+    expect(quickPicks).toContain('data-fork-project-quick-pick=""');
+    expect(quickPicks).toContain("onPick={choices.pick}");
+    expect(quickPicks).toContain("<DraftProjectMenuPopup choices={choices} />");
+    expect(choices).toMatch(/const pick = \(next: string, pill\?: Element\) => \{/u);
+    expect(choices).toMatch(/void assignDraftProject\(draftId, entry\)\.catch\(/u);
   });
 
   it("opens a picked pill into the project chip from where it was", () => {
-    const pill = read("../custom/DraftProjectPill.tsx");
-    // The pill records the pick and every chip that mounts plays it, so the
+    // The pick records the pill and every chip that mounts plays it, so the
     // slide survives ChatView swapping the fallback strip for BranchToolbar.
-    expect(pill).toContain("rememberDraftProjectPick(");
-    expect(pill).toContain("playDraftProjectPick(");
+    expect(choices).toContain("if (pill) rememberDraftProjectPick(draftId, pill);");
+    expect(read("../custom/DraftProjectPill.tsx")).toContain(
+      "playDraftProjectPick(props.draftId, chipRef.current);",
+    );
     const motion = read("../custom/draftProjectPickMotion.ts");
     expect(motion).toContain('matchMedia("(prefers-reduced-motion: reduce)")');
   });
