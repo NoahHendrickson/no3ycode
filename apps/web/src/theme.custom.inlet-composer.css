@@ -172,3 +172,17 @@
     border-color: var(--fork-composer-border);
   }
 }
+
+/* Inlet Black's composer is a light vessel inside a dark frame, so a notice
+   card's copy is inked for the vessel here rather than inherited. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-fork-composer-vessel]
+  [data-fork-composer-notice="true"]
+  [data-slot="composer-banner-content"] {
+  color: #1c1c1a;
+
+  & > :not(:first-child) {
+    color: #55544c;
+  }
+}
