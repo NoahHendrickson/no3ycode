@@ -1747,15 +1747,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               </span>
             )}
             {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                Fixed 14px leading slot (same as the card) so a monitoring mark
-                cannot shove the title 24px right of every neighboring slim row. */}
-            <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
-              <SidebarV2StatusMark
-                status={topStatus}
-                seed={threadKey}
-                idle={showDiscardDraft ? "draft" : "empty"}
-              />
-            </span>
+                Only rendered with a mark to draw: an empty slot plus its two
+                gaps left a 34px hole between the favicon and the title. */}
+            {topStatus === null && !showDiscardDraft ? null : (
+              <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
+                <SidebarV2StatusMark
+                  status={topStatus}
+                  seed={threadKey}
+                  idle={showDiscardDraft ? "draft" : "empty"}
+                />
+              </span>
+            )}
             {/* fork:end sidebar-v2-card-rows */}
             {draftIndicator}
             {title}
