@@ -2503,6 +2503,12 @@
     fences) hang from the open chip the same way, on whichever side and
     alignment the popup lands; the rule names the glass box via the menu,
     select and combobox structures.
+    The composer's / and @ menu is built like the Questions card: the
+    portaled layer lands flush on the prompt and paints the vessel's 4px
+    ring, the card takes the Questions fill and hairline, and the vessel and
+    prompt square their top corners while ChatComposer marks the prompt box
+    data-fork-composer-menu-open (under the fork-composer-shell fence). The
+    layer restates the panel's ink, since the body's is the frame's.
     The thread details card hangs from its toggle too: the card is placed
     against the header, so the open toggle takes the card's fill and its
     ::after carries it down (half the header row less half the button, plus

@@ -3828,6 +3828,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             data-inline-resting-controls="true"
             /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
             data-fork-composer-box="true"
+            data-fork-composer-menu-open={composerSuggestionsVisible ? "true" : undefined}
             /* fork:end fork-composer-shell */
             className={composerProviderState.composerFrameClassName}
           >

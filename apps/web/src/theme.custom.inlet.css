@@ -385,6 +385,67 @@
   }
 }
 
+/* The composer's drawers (the stash list, the / and @ menu) are solid, like
+   every Inlet menu. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]
+  [data-composer-banner-surface] {
+  --glass-opacity: 100%;
+
+  &::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* The / and @ menu is built like the Questions card: a card in the
+   Questions fill set on the prompt, the vessel's 4px ring round it. It is
+   portaled, so it can't sit in the vessel; the layer instead lands flush on
+   the prompt (it measures the prompt, inset by the shell's 1.375rem and
+   tucked 1rem + 1px under it) and paints the ring itself, while the vessel
+   and the prompt square their top corners under it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]:has([data-composer-command-drawer]) {
+  box-sizing: content-box;
+  margin-left: calc(-1.375rem - 4px);
+  padding: 4px calc(1.375rem + 4px) 0;
+  border-radius: 12px 12px 0 0;
+  background: var(--fork-composer-vessel-bg);
+  /* The body's ink is the frame's; the menu is on the panel's. */
+  color: var(--foreground);
+  translate: 0 calc(-1rem - 1px);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]:has([data-composer-command-drawer])
+  [data-composer-command-drawer] {
+  --chat-composer-attachment-overlap: 0px;
+  width: auto;
+  margin-inline: -1.375rem;
+  border: 1px solid var(--fork-composer-border);
+  border-bottom: 0;
+  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+  /* The Questions card's fill: the popup material on dark, the card on light. */
+  background: var(--fork-popup-fill, var(--card));
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-composer-drawer-layer]:has([data-composer-command-drawer])
+  [data-composer-command-drawer]::before {
+  display: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]:has([data-fork-composer-menu-open]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]:has([data-fork-composer-menu-open])
+  [data-fork-composer-box] {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 /* The Questions card and the prompt are one box, as on the fork's dark
    composer: the card's 8px top corners over the prompt's square ones, no gap. */
 

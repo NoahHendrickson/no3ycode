@@ -67,13 +67,18 @@
   background-image: none;
 }
 
-/* Settings and the other app modals, and the utility pages (Usage,
-   Automations), are cream, inked dark like the sidebar. The stage is dark, so
+/* Settings and the other app modals, the utility pages (Usage,
+   Automations) and the composer's slash menu (portaled to the body) are
+   cream, inked dark like the sidebar. The stage is dark, so
    the contrast inks (computed at :root from its white) and the status tones (dark mode's pale shades) are
    restated, and primary actions take the accent green. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is([data-app-modal], [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+  :is(
+    [data-app-modal],
+    [data-slot="sidebar-inset"] > [data-fork-stage-card],
+    [data-composer-drawer-layer]
+  ) {
   --background: #f6f4e4;
   --foreground: #1c1c1a;
   --card: #e8e6cf;
@@ -220,6 +225,14 @@
   & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
     background: #faf9f0;
   }
+}
+
+/* The / and @ menu takes the Questions card's fill. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer] {
+  background: #faf9f0;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]

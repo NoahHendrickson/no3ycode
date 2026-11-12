@@ -259,6 +259,19 @@ describe("fork guard: fork-inlet-theme", () => {
         rule.selector.includes("pending-user-input"),
     );
     expect(fused?.body).toContain("margin-top: 0");
+    // The portaled / and @ menu copies that card: the vessel's ring round it, fused to the
+    // prompt, which squares its top corners while the composer marks the menu open.
+    const slashMenu = inletRules.find((rule) =>
+      rule.selector.endsWith("[data-composer-drawer-layer]:has([data-composer-command-drawer])"),
+    );
+    expect(slashMenu?.body).toContain("background: var(--fork-composer-vessel-bg)");
+    expect(slashMenu?.body).toContain("color: var(--foreground)");
+    expect(readSibling("../components/chat/ChatComposer.tsx")).toContain(
+      "data-fork-composer-menu-open={composerSuggestionsVisible",
+    );
+    expect(
+      inletRules.some((rule) => rule.selector.includes(":has([data-fork-composer-menu-open])")),
+    ).toBe(true);
   });
 
   it("opens a row's hover card as a solid tab joined to the row", () => {
