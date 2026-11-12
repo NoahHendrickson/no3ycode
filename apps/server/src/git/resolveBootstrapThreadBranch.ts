@@ -4,16 +4,16 @@
  *
  * Upstream mobile records a branch only when its picker is tapped, so the
  * untouched "Current checkout" default arrives as null and the thread never
- * shows a branch on any other surface. The server has the checkout and the
- * status service, so it fills the label in at creation instead of waiting on
- * a client release.
+ * shows a branch on any other surface. The server can read the checkout's
+ * branch, so it fills the label in at creation instead of waiting on a client
+ * release.
  *
  * Precedence: an explicit client branch always wins; a worktree being
  * prepared names its own branch through that flow; an existing worktree path
  * is the checkout to read, the project root is the fallback. The source is
- * the live local status — the same value the sidebar and PR badge compare
- * against — never listRefs' cache-served flag. A detached HEAD, a
- * non-repository project, a missing project, or a status failure yields null
+ * the live HEAD (one `git symbolic-ref`), never listRefs' cache-served flag
+ * or a full status, whose diff stats this never uses. A detached HEAD, a
+ * non-repository project, a missing project, or a git failure yields null
  * with a warning rather than fabricating a branch or failing the create.
  *
  * A temporary worktree placeholder (`t3/…`) is never adopted, matching the
@@ -35,18 +35,17 @@ export interface BootstrapThreadBranchInput {
   readonly preparingWorktree: boolean;
 }
 
-export interface BootstrapThreadBranchDeps<ProjectError = never, StatusError = never> {
+export interface BootstrapThreadBranchDeps<ProjectError = never, BranchError = never> {
   readonly getProjectShellById: (
     projectId: ProjectId,
   ) => Effect.Effect<Option.Option<{ readonly workspaceRoot: string }>, ProjectError>;
-  readonly localStatus: (input: {
-    readonly cwd: string;
-  }) => Effect.Effect<{ readonly refName: string | null }, StatusError>;
+  /** Null on a detached HEAD or a non-repository checkout. */
+  readonly currentBranch: (cwd: string) => Effect.Effect<string | null, BranchError>;
 }
 
-export const resolveBootstrapThreadBranch = <ProjectError, StatusError>(
+export const resolveBootstrapThreadBranch = <ProjectError, BranchError>(
   input: BootstrapThreadBranchInput,
-  deps: BootstrapThreadBranchDeps<ProjectError, StatusError>,
+  deps: BootstrapThreadBranchDeps<ProjectError, BranchError>,
 ): Effect.Effect<string | null> => {
   if (input.branch !== null || input.preparingWorktree) {
     return Effect.succeed(input.branch);
@@ -58,7 +57,7 @@ export const resolveBootstrapThreadBranch = <ProjectError, StatusError>(
         Option.map(yield* deps.getProjectShellById(input.projectId), (p) => p.workspaceRoot),
       );
     if (cwd === null) return null;
-    const refName = (yield* deps.localStatus({ cwd })).refName;
+    const refName = yield* deps.currentBranch(cwd);
     return refName === null || isTemporaryWorktreeBranch(refName) ? null : refName;
   }).pipe(
     Effect.catchCause((cause) =>
