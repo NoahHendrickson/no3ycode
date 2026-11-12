@@ -802,6 +802,11 @@
   --fork-composer-border-focus: #c6c2ab;
   --fork-context-chip-bg: #d0ccb5;
   --fork-context-chip-bg-hover: #c6c2ab;
+  /* A row's hover card, and the row while it is open, are the sidebar's own
+     hover fill in its light ink rather than the popover's cream. */
+  --fork-inlet-row-card: #1f1f1f;
+  --fork-inlet-row-card-foreground: #e8e8e8;
+  --fork-inlet-row-card-muted: #9a9a9a;
 }
 
 /* Charcoal's sidebar on the #141414 frame, with dark mode's bright status

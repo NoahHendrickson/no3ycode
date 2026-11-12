@@ -174,9 +174,10 @@
   }
 }
 
-/* Jungle Art, Cream and Black draw rows as pills. The open one stays square
-   where it joins the panel and takes the nav rows' 10px on its other side
-   (CHROME_ACTION, custom/SidebarV2ChromeRows), so it matches a lit New agent. */
+/* Jungle Art, Cream and Black draw rows as pills. The open one, and one whose
+   hover card is out, stay square where they join the panel or card and take
+   the nav rows' 10px on the other side (CHROME_ACTION,
+   custom/SidebarV2ChromeRows), so they match a lit New agent. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
@@ -189,6 +190,11 @@
 
   &[aria-current="page"] {
     border-radius: 10px 0 0 10px;
+  }
+
+  &[data-popup-open] {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
   }
 }
 
