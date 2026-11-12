@@ -9,6 +9,7 @@ import {
   collapsedPaneTabs,
   collapsedTabProjectForScope,
   DEFAULT_COLLAPSED_TAB_STATUSES,
+  collapsedTabWidthBucket,
   fitCollapsedThreadTabs,
   layoutCollapsedTabRow,
   splitCollapsedTabsAroundPanes,
@@ -264,6 +265,29 @@ describe("fitCollapsedThreadTabs", () => {
       });
     },
   );
+});
+
+describe("collapsedTabWidthBucket", () => {
+  it("fits every count alike for widths that share a bucket", () => {
+    const firstWidthByBucket = new Map<string, number>();
+    for (let width = -1; width <= 1600; width += 0.5) {
+      const bucket = collapsedTabWidthBucket(width);
+      const first = firstWidthByBucket.get(bucket) ?? width;
+      firstWidthByBucket.set(bucket, first);
+      for (let count = 0; count <= 14; count++) {
+        for (const [activeIndex, activeLength] of [
+          [-1, 1],
+          [count - 1, 1],
+          [count - 2, 2],
+        ] as const) {
+          const input = { count, activeIndex, activeLength };
+          expect(fitCollapsedThreadTabs({ ...input, width })).toEqual(
+            fitCollapsedThreadTabs({ ...input, width: first }),
+          );
+        }
+      }
+    }
+  });
 });
 
 describe("layoutCollapsedTabRow", () => {

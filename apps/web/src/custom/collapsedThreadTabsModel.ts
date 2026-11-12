@@ -270,6 +270,14 @@ export function fitCollapsedThreadTabs(input: {
   return { visible, overflow: all.filter((index) => !shown.has(index)) };
 }
 
+/** Widths with the same bucket fit every count alike (fitCollapsedThreadTabs reads the width
+    only through these), so a resize frame inside one bucket can keep the previous width. */
+export function collapsedTabWidthBucket(width: number): string {
+  const step = COLLAPSED_TAB_MIN_WIDTH + COLLAPSED_TAB_GAP;
+  if (width <= 0) return "none";
+  return `${Math.floor((width + COLLAPSED_TAB_GAP) / step)}:${Math.floor((width - COLLAPSED_TAB_MORE_WIDTH) / step)}`;
+}
+
 export type CollapsedTabSlot<TEntry> =
   | { readonly kind: "tab"; readonly entry: TEntry }
   /** A split's pane tabs side by side in one capsule, both selected. */

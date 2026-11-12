@@ -76,6 +76,7 @@ import {
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
   collapsedPaneTabs,
+  collapsedTabWidthBucket,
   collapsedThreadShelved,
   COLLAPSED_TAB_MIN_WIDTH,
   COLLAPSED_TAB_STATUSES,
@@ -245,7 +246,15 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     () => (node: HTMLElement | null) =>
       node === null
         ? undefined
-        : observeResize(node, (entries) => setNavWidth(entries.at(-1)?.contentRect.width ?? 0)),
+        : observeResize(node, (entries) => {
+            const width = entries.at(-1)?.contentRect.width ?? 0;
+            // Only a width that changes which tabs fit re-renders the strip.
+            setNavWidth((previous) =>
+              collapsedTabWidthBucket(previous) === collapsedTabWidthBucket(width)
+                ? previous
+                : width,
+            );
+          }),
   );
 
   const { tabs, projects } = buildCollapsedThreadTabs({ ...source, projectGroups, statuses });
