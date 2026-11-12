@@ -307,8 +307,7 @@ export function DraftProjectPill(props: {
       },
     }).catch((error: unknown) => reportAssignFailure("No project", error));
 
-  // An unassigned draft offers its recent projects as pills above the composer, the strip
-  // the sidebar used to carry: projects with a thread the list would show, newest first.
+  // An unassigned draft offers its recent projects as pills above the composer.
   const liveProjectRefs = new Set(
     filterSidebarV2VisibleThreads(threads, null, new Set()).map(
       (thread) => `${thread.environmentId}:${thread.projectId}`,
@@ -548,7 +547,7 @@ export function DraftProjectPill(props: {
   );
 }
 
-/** One project's pill: its icon then a plus, as the sidebar strip drew it. */
+/** One project's pill: its icon then a plus. */
 function QuickPick(props: {
   readonly label: string;
   readonly icon: ReactNode;

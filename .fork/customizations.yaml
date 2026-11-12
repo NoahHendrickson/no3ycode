@@ -5277,16 +5277,14 @@
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
     (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows, the sidebar's recent-project
-    buttons (fork-sidebar-recent-projects) and the model picker's selected
+    thread card, the active top sidebar rows and the model picker's selected
     provider tab (fork-model-picker). Off: the flat stage and
     fills Glass had before #203. The lighter tint (#214) and everything else
     stays in every mode. The setting stamps data-fork-glass-3d="selection" or
     "off" on the root before first render (absent at Full). The sheets nest
     under parents that carry the gate through a zero-specificity :where():
     the stage sheet needs Full; the surfaces sheet keeps source order across
-    alternating parents, the tokens, selected rows and the recent-project
-    buttons (the one named exception) under "not off" and everything else
+    alternating parents, the tokens and selected rows under "not off" and everything else
     under Full. & takes a parent's specificity, so every rule
     ranks as it did flat. The card-inset and radius tokens are shared with the
     new-agent picture and live in the palettes sheet, outside the setting,
@@ -6245,7 +6243,7 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
-- id: fork-sidebar-recent-projects
+- id: fork-draft-project-quick-picks
   intent: >
     An unassigned New agent draft offers its recent projects as pills above
     the composer, in place of the project chip: No project first, then up to
@@ -6255,18 +6253,16 @@
     the draft (the chip's own assign path) and the project chip opens from
     where the pill was, sliding to the row's start as its label is revealed;
     the chips the pick brings in (checkout, branch) fade in after it. Reduced
-    motion skips the motion. The pills used to be a strip in the sidebar
-    between the action rows and the Threads row; the sidebar no longer has it.
+    motion skips the motion.
   tier: 4
   files:
     - apps/web/src/custom/DraftProjectPill.tsx
   shadows: []
   watch:
-    - apps/web/src/components/Sidebar.tsx
     # The ranking the pills reuse.
     - apps/web/src/components/Sidebar.logic.ts
   verify:
-    - apps/web/src/__fork_guards__/forkSidebarRecentProjects.test.ts
+    - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
 
 - id: fork-git-256-non-repository
   intent: >
