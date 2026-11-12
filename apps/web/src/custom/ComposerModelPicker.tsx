@@ -125,7 +125,10 @@ function EffortSlider(props: {
           if (next && value !== committedIndex) props.onCommit(next.id);
         }}
       >
-        <Slider.Control className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64">
+        <Slider.Control
+          data-fork-effort-control
+          className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64"
+        >
           {/* A 24px bar with a block thumb of the same height. The fill runs
               from the start under the whole thumb; the stops are dots, and the
               model's default level is a short bar. */}

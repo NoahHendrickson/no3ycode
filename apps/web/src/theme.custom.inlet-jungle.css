@@ -214,7 +214,8 @@
     color: #ffffff;
   }
 
-  & [data-fork-composer-usage-limits] span:has(> span) {
+  /* The meter's track while it holds a fill: no :has() keyed on a bare span. */
+  & [data-fork-composer-usage-limits] > span:not(:empty) {
     background: rgb(0 0 0 / 32%);
   }
 
@@ -481,7 +482,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-thread-tab]
-  span:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
+  [data-fork-tab-actions]:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
   opacity: 1;
 }
 
@@ -592,7 +593,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-  & :has(> [data-fork-effort-track]) {
+  & [data-fork-effort-control] {
     height: 30px;
   }
 

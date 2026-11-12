@@ -771,7 +771,10 @@ function ThreadTab(props: {
               {thread.title}
             </span>
           </span>
-          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden">
+          <span
+            data-fork-tab-actions=""
+            className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden"
+          >
             {props.canSettle ? (
               <button
                 type="button"
