@@ -22,6 +22,16 @@ describe("fork guard: fork-chat-mode", () => {
     expect(read("../main.tsx")).toContain("initializeForkSidebarMode();");
   });
 
+  it("draws a chat as the composer alone, under its own headline", () => {
+    expect(read("../components/ChatView.tsx")).toContain(
+      'data-fork-chat-thread={isForkChatThread ? "" : undefined}',
+    );
+    expect(read("../theme.custom.css")).toMatch(
+      /\[data-fork-chat-thread\]\s*\[data-fork-composer-context-row\] \{\s*display: none;/u,
+    );
+    expect(read("../overrides/components/chat/DraftHeroHeadline.tsx")).toContain(`"What's up?"`);
+  });
+
   it("tags a chat through the client's thread.tag.set command", () => {
     expect(read("../../../../packages/client-runtime/src/operations/commands.ts")).toContain(
       'type: "thread.tag.set"',

@@ -100,13 +100,6 @@ export function threadsForSidebarMode<
   return threads.filter((thread) => isChatThread(thread, pendingChats) === (mode === "chat"));
 }
 
-/** The time a list orders a thread by: its last message from the user, else its last change. */
-export function threadRecency(
-  thread: Pick<EnvironmentThreadShell, "latestUserMessageAt" | "updatedAt">,
-): string {
-  return thread.latestUserMessageAt ?? thread.updatedAt;
-}
-
 export type ChatModeMoveMenuId = "fork:move-to-chat" | "fork:move-to-code";
 
 /** A thread's way between the modes, last in its context menu. */

@@ -2271,7 +2271,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
      The list is the open mode's: Chat's threads, or Code's (everything else). */
   const allThreads = useQuietThreadShells();
-  const [sidebarMode, switchSidebarMode] = useSwitchSidebarMode(allThreads);
+  const [sidebarMode, switchSidebarMode] = useSwitchSidebarMode();
   const pendingChats = usePendingChats();
   useChatTagSync(allThreads);
   const startNewChat = useStartNewChat();

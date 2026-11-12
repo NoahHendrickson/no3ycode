@@ -6735,10 +6735,12 @@
     until then its reserved thread key waits in a per-client pending list so
     the draft already sits in Chat. Code lists every thread without the tag,
     No-project threads made in Code included. Each thread's context menu moves
-    it to the other mode (sets or clears the tag). Switching modes goes where
-    that mode was left in this window, else its latest thread, else a new
-    chat (Chat) or home (Code). The mode is per client (localStorage, stamped
-    as data-fork-sidebar-mode). The collapsed tab strip and mobile are not
+    it to the other mode (sets or clears the tag). Switching modes always
+    opens that mode's fresh start: a new chat, or Code's New agent. A chat
+    shows the composer alone, without the project, checkout and branch chips
+    (data-fork-chat-thread on the chat column), and a new chat's headline is
+    "What's up?". The mode is per client (localStorage, stamped as
+    data-fork-sidebar-mode). The collapsed tab strip and mobile are not
     mode-aware.
   tier: 4
   files:
@@ -6746,8 +6748,11 @@
     - apps/web/src/custom/useChatMode.ts
     - apps/web/src/custom/SidebarModeTabs.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/overrides/components/chat/DraftHeroHeadline.tsx
+    - apps/web/src/theme.custom.css
   shadows: []
   watch:
+    - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/components/sidebar/SidebarChrome.tsx
     - apps/web/src/main.tsx

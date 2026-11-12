@@ -2866,3 +2866,12 @@
     display: none;
   }
 }
+
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+   A chat is the composer alone: no project, checkout or branch chips above it. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-column][data-fork-chat-thread]
+  [data-fork-composer-context-row] {
+  display: none;
+}
+/* fork:end fork-chat-mode */
