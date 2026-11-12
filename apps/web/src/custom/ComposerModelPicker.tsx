@@ -125,7 +125,10 @@ function EffortSlider(props: {
           if (next && value !== committedIndex) props.onCommit(next.id);
         }}
       >
-        <Slider.Control className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64">
+        <Slider.Control
+          data-fork-effort-control
+          className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64"
+        >
           {/* A 24px bar with a block thumb of the same height. The fill runs
               from the start under the whole thumb; the stops are dots, and the
               model's default level is a short bar. */}
@@ -184,7 +187,10 @@ function SegmentedTrait(props: {
 }) {
   const current = getProviderOptionCurrentValue(props.descriptor);
   return (
-    <div className="flex min-w-0 flex-wrap justify-end gap-0.5 rounded-[6px] bg-input/40 p-0.5">
+    <div
+      data-fork-segmented-trait=""
+      className="flex min-w-0 flex-wrap justify-end gap-0.5 rounded-[6px] bg-input/40 p-0.5"
+    >
       {props.descriptor.options.map((option) => {
         const selected = option.id === current;
         return (

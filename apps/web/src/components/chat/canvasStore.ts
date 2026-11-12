@@ -137,8 +137,15 @@ export function resolveChatCanvasModel({
     detailsCard,
     findBar,
   });
+  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
+     The card floats over the lane, so where they overlap it stops above the composer. */
+  const overlapsLane =
+    preferredDetailsCard !== null && preferredDetailsCard.x < layout.chat.left + layout.chat.width;
   const detailsCardPlacement = resolveThreadDetailsCardLayout({
-    container,
+    container: overlapsLane
+      ? { ...container, height: container.height - measurements.composerHeight }
+      : container,
+    /* fork:end fork-details-card-overlay */
     lane,
     frame: layout.frame,
     overlapsDetailsCard: layout.overlapsDetailsCard,

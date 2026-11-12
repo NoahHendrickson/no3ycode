@@ -209,13 +209,11 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // never says where the ternary sits. A worktree with no branch drew
     // nothing. Pinning the outer condition is what makes that regression fail.
     expect(meta).toContain("props.hasWorktree || props.branch ?");
-    expect(meta).toContain("props.hasWorktree ?");
-    expect(meta).toContain("<WorktreeIcon");
+    expect(meta).toContain("const Mark = props.hasWorktree ? WorktreeIcon : GitBranchIcon;");
     // Every mark on the line is the component set's 12px (364:17299) — the
     // runtime glyph leads, then a hairline, then the checkout cluster.
     expect(meta).toContain('const MARK = "size-3 shrink-0"');
-    expect(meta).toContain("<WorktreeIcon aria-hidden className={MARK} />");
-    expect(meta).toContain("<GitBranchIcon aria-hidden className={MARK} />");
+    expect(meta).toContain("<Mark aria-hidden className={MARK} />");
     // The folder mark is the exported SidebarV2ProjectFolderMark, drawn for a
     // null project slot; it carries the aria-hidden, the meta the size.
     expect(meta).toContain("<FolderIcon aria-hidden className={props.className} />");
@@ -459,7 +457,8 @@ describe("fork guard: sidebar-v2-card-rows", () => {
   it("does not layer text-xs onto card titles (that forced a 16px line box)", () => {
     // text-xs carries --text-xs--line-height: 1rem. Paired with the card's
     // explicit 0.875rem size it still won the cascade for leading and grew
-    // the title row to 16px around a 14px rain. Slim shelves keep text-sm.
+    // the title row to 16px around a 14px rain. Slim shelves are 14px too, on a
+    // 16px line, and explicit so the panel's 13px --text-sm remap cannot shrink them.
     const titleClass =
       /className=\{cn\(\s*"min-w-0 flex-1[^"]*",([\s\S]*?)isRegeneratingTitle/u.exec(
         sidebarV2,
@@ -467,7 +466,8 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(titleClass).toBeDefined();
     expect(titleClass).toContain("threadCardTitleClassName({ recedes: cardRecedes })");
     expect(titleClass).not.toMatch(/variant === "card" \? "text-xs"/u);
-    expect(titleClass).toContain('"text-sm"');
+    expect(titleClass).toContain("THREAD_TITLE_TYPE,");
+    expect(titleClass).not.toContain('"text-sm"');
   });
 
   it("tones the whole repo line off the muted channel", () => {

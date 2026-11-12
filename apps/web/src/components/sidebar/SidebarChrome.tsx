@@ -43,8 +43,14 @@ import { observeResize } from "~/lib/observeResize";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
   isElectron,
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  modeTabs,
+  /* fork:end fork-chat-mode */
 }: {
   isElectron: boolean;
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  modeTabs?: ReactNode;
+  /* fork:end fork-chat-mode */
 }) {
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
      Everything from here to the fence's end diverges from upstream: the
@@ -106,6 +112,11 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
       ) : null}
       <SidebarBrand />
       {/* fork:end fork-sidebar-chrome */}
+      {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+      {modeTabs ? (
+        <div className="mr-3 flex shrink-0 [-webkit-app-region:no-drag]">{modeTabs}</div>
+      ) : null}
+      {/* fork:end fork-chat-mode */}
     </div>
   );
 });
@@ -209,10 +220,10 @@ function SidebarBrand() {
       to="/"
     >
       {/* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity
-          The borrowed T3 wordmark stays gone. Figma t3-fork 364:11245 is a 16px
+          The borrowed T3 wordmark stays gone. Figma t3-fork 676:41854 is a 16px
           pixel mark, a 4px gap, then the 13×3 "no3y" wordmark at 8px / 40%
           foreground — not live APP_BASE_NAME type. From 1.5x the mark is the
-          23-cell vector and below that a 15-cell redraw: a bitmap cannot resample
+          21-cell vector and below that a 15-cell redraw: a bitmap cannot resample
           that grid without smearing. Inline so palettes can recolour its arms. */}
       <SidebarBrandMark />
       <SidebarBrandWordmark />

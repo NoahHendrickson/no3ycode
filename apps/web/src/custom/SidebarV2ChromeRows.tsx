@@ -19,9 +19,9 @@
  * command palette trigger, a radio group, three labeled actions and a
  * per-project overflow action. It is all data and callbacks, though: no
  * upstream state is reached into, so an upstream refactor of how that state
- * is produced cannot break this file. The Automations row is the one
- * exception: it reads the router and the thread shells itself, so the
- * Sidebar.tsx call site gains no props for it.
+ * is produced cannot break this file. The Automations row and Chat's New
+ * chat row are the exceptions: they read the router and app state
+ * themselves, so the Sidebar.tsx call site gains no props for them.
  */
 import type { SidebarProjectSortOrder } from "@t3tools/contracts/settings";
 import type {
@@ -54,7 +54,7 @@ import { ProjectFavicon, type ProjectFaviconProject } from "~/components/Project
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
-import { useVisibleThreadShells } from "~/state/entities";
+import { useQuietThreadShells } from "~/state/entities";
 import {
   listScheduledRunActivity,
   SCHEDULED_RUN_ACTIVITY_MARKS,
@@ -63,6 +63,10 @@ import {
 import { SidebarV2AutomationsHoverCard } from "./SidebarV2AutomationsHoverCard";
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "./SidebarV2StatusIndicator";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
+import { useComposerDraftStore } from "~/composerDraftStore";
+import { useThreadRouteTarget } from "~/hooks/useThreadRouteTarget";
+import { isChatDraft } from "./chatMode";
+import { useStartNewChat } from "./useChatMode";
 
 /** Structural on purpose: the four fields these rows read, no more. The row is
     generic over anything satisfying it, so the callbacks hand back upstream's
@@ -282,6 +286,33 @@ export function SidebarV2ChromeActionRows(props: {
   );
 }
 
+/** Chat's rows (custom/chatMode): New chat alone, lit while the open draft is a chat not yet
+    sent. */
+export function SidebarV2ChatActionRows() {
+  const startNewChat = useStartNewChat();
+  const routeTarget = useThreadRouteTarget();
+  const draftId = routeTarget?.kind === "draft" ? routeTarget.draftId : null;
+  const active = useComposerDraftStore((store) => {
+    const draft = draftId === null ? null : store.getDraftSession(draftId);
+    return draft?.promotedTo == null && isChatDraft(draft);
+  });
+  return (
+    <SidebarGroup
+      data-fork-chrome-rows=""
+      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
+    >
+      <ChromeLabeledAction
+        icon={NavigationArrowIcon}
+        label="New chat"
+        ariaLabel="New chat"
+        testId="sidebar-v2-new-chat"
+        active={active}
+        onClick={() => void startNewChat()}
+      />
+    </SidebarGroup>
+  );
+}
+
 /** Opens the /usage page, as upstream's footer icon does, and lights while it is open. */
 function ChromeUsageRow() {
   const navigate = useNavigate();
@@ -321,7 +352,7 @@ function ChromeAutomationsRow() {
   const isOnScheduledTasks = useLocation({
     select: (location) => location.pathname === SCHEDULED_TASKS_PATH,
   });
-  const threads = useVisibleThreadShells();
+  const threads = useQuietThreadShells();
   const runs = useMemo(() => listScheduledRunActivity(threads), [threads]);
   const { working, needsYou, failed } = summarizeScheduledRunActivity(runs);
   const live = working + needsYou + failed;

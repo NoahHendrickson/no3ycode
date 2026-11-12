@@ -30,13 +30,17 @@ function readCustomizationHunks(source: string): string {
 }
 
 describe("fork guard: server-local-thread-branch", () => {
-  it("wires the resolver into the launch create with the live status source", () => {
+  it("wires the resolver into the launch create with the live branch source", () => {
     const hunks = readCustomizationHunks(launch);
     // The call site: the created thread's branch comes from the resolver,
-    // fed by the status service — the same live value the sidebar and PR
-    // badge compare against — never listRefs' cache-served flag.
-    expect(hunks).toContain("const initialBranch = yield* resolveBootstrapThreadBranch(");
-    expect(hunks).toContain("localStatus: git.localStatus");
+    // fed by the live HEAD read — never listRefs' cache-served flag, and not
+    // a full status whose diff stats the branch never needs.
+    expect(hunks).toContain("const initialBranch =");
+    expect(hunks).toContain("yield* resolveBootstrapThreadBranch(");
+    expect(hunks).toContain("currentBranch: git.currentBranch");
+    expect(hunks).not.toContain("git.localStatus");
+    // A reused thread keeps the branch it recorded, so the launch reads nothing.
+    expect(hunks).toContain("input.reuseExistingThread === true\n            ? null");
     expect(hunks).toContain("getProjectShellById: projects.getById");
     // Only a worktree actually being made names its own branch; a root or
     // existing-folder launch still gets the live branch.
@@ -69,6 +73,7 @@ describe("fork guard: server-local-thread-branch", () => {
     expect(hunks).toContain("fills in the checked-out branch when a root launch names none");
     expect(hunks).toContain("keeps an explicit branch over the checked-out one");
     expect(hunks).toContain("leaves a worktree launch to name its own branch");
+    expect(hunks).toContain("keeps a reused thread's recorded branch without reading the checkout");
     expect(hunks).toContain(
       "keeps the checked-out branch once preparation records the workspace (%s)",
     );

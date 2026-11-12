@@ -1,92 +1,62 @@
-/**
- * Sidebar V2 list AutoAnimate plugin — see
- * `.fork/customizations.yaml#sidebar-v2-list-animation`.
- *
- * Upstream wires `@formkit/auto-animate` with `{ duration: 150, easing: "ease-out" }`,
- * but AutoAnimate's built-in *insert* path ignores that easing and instead holds
- * at `opacity: 0` for half of a 1.5× `ease-in` duration. Removals keep the short
- * ease-out scale/fade. Expanding a project group therefore feels delayed and
- * different from collapsing it, even though both are the same list mutation.
- *
- * This plugin makes add the reverse of remove: same duration, same easing,
- * same scale/opacity endpoints. Remain keeps AutoAnimate's FLIP (including the
- * right/bottom-anchored short-circuit). Plugins do not inherit AutoAnimate's
- * `prefers-reduced-motion` gate, so duration collapses to 0 when that is set.
- *
- * Every removal takes the same fade, including the card a collapsed group
- * keeps for the thread you are on. That one used to leave instantly, because
- * it left in the frame the route changed and the new chat view mounted — the
- * busiest frame there is — and a fade started there stuttered while the rows
- * below slid up unevenly. Sidebar.tsx now reads the keep off a deferred route
- * key, so the card leaves in the quiet re-render after that frame and the
- * ordinary fade and FLIP run clean.
- */
-import { getTransitionSizes, type AutoAnimationPlugin } from "@formkit/auto-animate";
+/** Sidebar V2 list motion (`.fork/customizations.yaml#sidebar-v2-list-animation`): upstream's
+    engine with the fork's fades. Rows grow in from 98% and shrink out to it where they stand,
+    and only rows on screen fade, so a group toggle animates however many rows it holds. */
+import { createSidebarListMotion, type SidebarListFadeStyle } from "~/components/Sidebar.motion";
 
-export const SIDEBAR_V2_LIST_ANIMATION_DURATION_MS = 150;
-export const SIDEBAR_V2_LIST_ANIMATION_EASING = "ease-out";
+/** Where a row stands while it fades, and where it lands. */
+const SIDEBAR_V2_LIST_FADE = { shown: "scale(1)", hidden: "scale(.98)" } as const;
 
-/** Collapse / remove — AutoAnimate's default remove keyframes. */
-export const SIDEBAR_V2_LIST_REMOVE_KEYFRAMES = [
-  { transform: "scale(1)", opacity: 1 },
-  { transform: "scale(.98)", opacity: 0 },
-] as const;
+type Band = { readonly top: number; readonly bottom: number };
 
-/** Expand / add — exact reverse of remove (no hold, no 1.5× duration). */
-export const SIDEBAR_V2_LIST_ADD_KEYFRAMES = [
-  { transform: "scale(.98)", opacity: 0 },
-  { transform: "scale(1)", opacity: 1 },
-] as const;
-
-type MatchMedia = (query: string) => { readonly matches: boolean };
-
-/** Exported for tests — plugins skip AutoAnimate's own reduced-motion gate. */
-export function sidebarV2ListAnimationDurationMs(
-  matchMedia: MatchMedia | undefined = globalThis.matchMedia,
-): number {
-  if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return 0;
-  }
-  return SIDEBAR_V2_LIST_ANIMATION_DURATION_MS;
+/** The list's visible slice of its scroll viewport, in the list's own coordinates. */
+function onScreenBand(list: HTMLElement): Band | null {
+  const viewport = list.closest('[data-slot="scroll-area-viewport"]');
+  if (viewport === null) return null;
+  const listTop = list.getBoundingClientRect().top;
+  const { top, bottom } = viewport.getBoundingClientRect();
+  return { top: top - listTop, bottom: bottom - listTop };
 }
 
-export const sidebarV2ListAnimation: AutoAnimationPlugin = (el, action, first, second) => {
-  const duration = sidebarV2ListAnimationDurationMs();
-  const easing = SIDEBAR_V2_LIST_ANIMATION_EASING;
-
-  if (action === "add") {
-    return new KeyframeEffect(el, [...SIDEBAR_V2_LIST_ADD_KEYFRAMES], { duration, easing });
-  }
-
-  if (action === "remove") {
-    return new KeyframeEffect(el, [...SIDEBAR_V2_LIST_REMOVE_KEYFRAMES], { duration, easing });
-  }
-
-  // Runtime passes (oldCoords, newCoords) for remain — see AutoAnimate's
-  // remain() call site. The published param names swap those labels.
-  const oldCoords = first!;
-  const newCoords = second!;
-  let deltaLeft = oldCoords.left - newCoords.left;
-  let deltaTop = oldCoords.top - newCoords.top;
-  const deltaRight = oldCoords.left + oldCoords.width - (newCoords.left + newCoords.width);
-  const deltaBottom = oldCoords.top + oldCoords.height - (newCoords.top + newCoords.height);
-  if (deltaBottom === 0) deltaTop = 0;
-  if (deltaRight === 0) deltaLeft = 0;
-
-  const [widthFrom, widthTo, heightFrom, heightTo] = getTransitionSizes(el, oldCoords, newCoords);
-  const start: Keyframe = {
-    transform: `translate(${deltaLeft}px, ${deltaTop}px)`,
+export function createSidebarV2ListMotion(list: HTMLUListElement) {
+  let band: Band | null = null;
+  const fadeStyle: SidebarListFadeStyle = {
+    ...SIDEBAR_V2_LIST_FADE,
+    fades: (row) => band === null || (row.top + row.height > band.top && row.top < band.bottom),
+    // Fading only what is on screen bounds the clones; the cap would stop a large group's toggle.
+    maxFadedRows: Number.POSITIVE_INFINITY,
   };
-  const end: Keyframe = {
-    transform: "translate(0, 0)",
+  const motion = createSidebarListMotion(list, fadeStyle);
+  // The rows the engine last measured, so a render that changed none of them skips the reads.
+  let measured: readonly Element[] | null = null;
+  let releasing = false;
+  return {
+    update(animate: boolean) {
+      const rows = Array.from(list.children);
+      const unchanged =
+        measured !== null &&
+        rows.length === measured.length &&
+        rows.every((row, index) => row === measured![index]);
+      if (unchanged && !releasing) return;
+      releasing = false;
+      // A hidden list (the closed mobile sheet) measures every row at 0; the next change starts over.
+      if (list.getClientRects().length === 0) {
+        motion.suspend();
+        measured = rows;
+        return;
+      }
+      band = onScreenBand(list);
+      motion.update(animate);
+      measured = Array.from(list.children);
+    },
+    /** Before a drop: rows slide from where the drag left them, transforms included. */
+    release() {
+      motion.release();
+      releasing = true;
+    },
+    suspend() {
+      motion.suspend();
+      measured = null;
+    },
+    dispose: motion.dispose,
   };
-  if (widthFrom !== widthTo) {
-    start.width = `${widthFrom}px`;
-    end.width = `${widthTo}px`;
-  }
-  if (heightFrom !== heightTo) {
-    start.height = `${heightFrom}px`;
-    end.height = `${heightTo}px`;
-  }
-  return new KeyframeEffect(el, [start, end], { duration, easing });
-};
+}

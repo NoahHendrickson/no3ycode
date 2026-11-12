@@ -43,6 +43,10 @@ import {
   type ScheduledRunRosterFields,
 } from "../custom/scheduledRunsOffSidebar";
 /* fork:end fork-scheduled-runs-off-sidebar */
+/* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
+import { scopedProjectKey } from "@t3tools/client-runtime/environment";
+import type { ScopedProjectRef } from "@t3tools/contracts";
+/* fork:end fork-draft-project-quick-picks */
 import { isLatestRunSettled } from "../session-logic";
 import { observeIntersection } from "../lib/observeIntersection";
 import { deadlineAfter, deadlineStore } from "@t3tools/client-runtime/clock";
@@ -605,10 +609,17 @@ export function filterSidebarV2VisibleThreads<
   threads: readonly T[],
   scopedProjectKeys: ReadonlySet<string> | null,
   delegatedUnderParent: ReadonlySet<string>,
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+     The open sidebar mode's threads: Chat's, or Code's. */
+  listedInMode: (thread: T) => boolean = () => true,
+  /* fork:end fork-chat-mode */
 ): T[] {
   return threads.filter(
     (thread) =>
       thread.archivedAt === null &&
+      /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+      listedInMode(thread) &&
+      /* fork:end fork-chat-mode */
       !isShownUnderParent(
         { environmentId: thread.environmentId, threadId: thread.id },
         thread.lineage,
@@ -1312,6 +1323,37 @@ export function sortLogicalProjectsForSidebar<
       left.title.localeCompare(right.title) || left.projectKey.localeCompare(right.projectKey),
   );
 }
+
+/* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
+/** Up to `limit` entries whose project has a thread the sidebar shows, newest
+    activity first, ranked over those same threads. */
+export function rankRecentProjectEntries<
+  TEntry extends {
+    readonly group: SidebarProject & {
+      readonly projectKey: string;
+      readonly memberProjectRefs: readonly ScopedProjectRef[];
+    };
+  },
+  TThread extends Parameters<typeof filterSidebarV2VisibleThreads>[0][number] &
+    ScopedSidebarThread &
+    ScopedProjectRef,
+>(entries: readonly TEntry[], threads: readonly TThread[], limit: number): TEntry[] {
+  const visibleThreads = filterSidebarV2VisibleThreads(threads, null, new Set());
+  const liveProjectKeys = new Set(visibleThreads.map(scopedProjectKey));
+  const entryByKey = new Map(entries.map((entry) => [entry.group.projectKey, entry] as const));
+  return sortLogicalProjectsForSidebar(
+    entries
+      .map((entry) => entry.group)
+      .filter((group) =>
+        group.memberProjectRefs.some((ref) => liveProjectKeys.has(scopedProjectKey(ref))),
+      ),
+    visibleThreads,
+    "updated_at",
+  )
+    .slice(0, limit)
+    .flatMap((group) => entryByKey.get(group.projectKey) ?? []);
+}
+/* fork:end fork-draft-project-quick-picks */
 
 export function sortSidebarV2ProjectGroups<
   TProject extends LogicalSidebarProject,

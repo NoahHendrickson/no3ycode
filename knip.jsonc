@@ -135,7 +135,6 @@
         // fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
         // Upstream split its sidebar rows into these modules; the fork's Sidebar
         // keeps its own rows, so they stay on disk only so syncs merge cleanly.
-        "src/components/Sidebar.motion.ts",
         "src/components/sidebar/SidebarDraftBlock.tsx",
         "src/components/sidebar/SidebarListMarkers.tsx",
         "src/components/sidebar/SidebarProjectFolderHeader.tsx",

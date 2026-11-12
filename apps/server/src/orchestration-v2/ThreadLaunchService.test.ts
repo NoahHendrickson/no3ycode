@@ -127,7 +127,7 @@ interface HarnessOptions {
   readonly hasCommit?: GitWorkflow.GitWorkflowService["Service"]["hasCommit"];
   readonly renameBranch?: GitWorkflow.GitWorkflowService["Service"]["renameBranch"];
   /* fork:begin server-local-thread-branch — see .fork/customizations.yaml#server-local-thread-branch */
-  readonly localStatus?: GitWorkflow.GitWorkflowService["Service"]["localStatus"];
+  readonly currentBranch?: GitWorkflow.GitWorkflowService["Service"]["currentBranch"];
   /* fork:end server-local-thread-branch */
   readonly runSetup?: ProjectSetupScriptRunner.ProjectSetupScriptRunner["Service"]["runForThread"];
   readonly generateTitle?: TextGeneration.TextGeneration["Service"]["generateThreadTitle"];
@@ -210,17 +210,7 @@ function makeHarness(options: HarnessOptions = {}) {
       /* fork:begin server-local-thread-branch — see .fork/customizations.yaml#server-local-thread-branch
          The default checkout has no branch to adopt, so upstream's launches
          keep recording null exactly as before. */
-      localStatus:
-        options.localStatus ??
-        (() =>
-          Effect.succeed({
-            isRepo: true,
-            hasPrimaryRemote: true,
-            isDefaultRef: false,
-            refName: null,
-            hasWorkingTreeChanges: false,
-            workingTree: { files: [], insertions: 0, deletions: 0 },
-          })),
+      currentBranch: options.currentBranch ?? (() => Effect.succeed(null)),
       /* fork:end server-local-thread-branch */
       fetchWorktreeBaseCommit:
         options.fetchWorktreeBaseCommit ??
@@ -2528,19 +2518,11 @@ it.effect("replays an accepted send after the project disables the instance", ()
 /* fork:begin server-local-thread-branch — see .fork/customizations.yaml#server-local-thread-branch
    The policy is unit-tested next to resolveBootstrapThreadBranch; these pin
    only the seam: a launch that names no branch records the live checkout's. */
-const checkedOut = (refName: string) => () =>
-  Effect.succeed({
-    isRepo: true,
-    hasPrimaryRemote: true,
-    isDefaultRef: false,
-    refName,
-    hasWorkingTreeChanges: false,
-    workingTree: { files: [], insertions: 0, deletions: 0 },
-  });
+const checkedOut = (refName: string) => () => Effect.succeed(refName);
 
 it.effect("fills in the checked-out branch when a root launch names none", () =>
   Effect.gen(function* () {
-    const harness = makeHarness({ localStatus: checkedOut("feature/from-phone") });
+    const harness = makeHarness({ currentBranch: checkedOut("feature/from-phone") });
     yield* Effect.gen(function* () {
       const launches = yield* ThreadLaunch.ThreadLaunchService;
       const launched = yield* launches.launch(
@@ -2561,7 +2543,7 @@ it.effect.each(["root", "scratch"] as const)(
   (launch) =>
     Effect.gen(function* () {
       const harness = makeHarness({
-        localStatus: checkedOut("feature/from-phone"),
+        currentBranch: checkedOut("feature/from-phone"),
         // A Scratch launch arrives as root and prepares an existing folder.
         ...(launch === "scratch"
           ? {
@@ -2601,7 +2583,7 @@ it.effect.each(["root", "scratch"] as const)(
 
 it.effect("keeps an explicit branch over the checked-out one", () =>
   Effect.gen(function* () {
-    const harness = makeHarness({ localStatus: checkedOut("feature/from-phone") });
+    const harness = makeHarness({ currentBranch: checkedOut("feature/from-phone") });
     yield* Effect.gen(function* () {
       const launches = yield* ThreadLaunch.ThreadLaunchService;
       const launched = yield* launches.launch(
@@ -2619,7 +2601,7 @@ it.effect("keeps an explicit branch over the checked-out one", () =>
 
 it.effect("leaves a worktree launch to name its own branch", () =>
   Effect.gen(function* () {
-    const harness = makeHarness({ localStatus: checkedOut("feature/from-phone") });
+    const harness = makeHarness({ currentBranch: checkedOut("feature/from-phone") });
     yield* Effect.gen(function* () {
       const launches = yield* ThreadLaunch.ThreadLaunchService;
       const launched = yield* launches.launch(
@@ -2631,6 +2613,44 @@ it.effect("leaves a worktree launch to name its own branch", () =>
         }),
       );
       assert.notEqual(launched.projection.thread.branch, "feature/from-phone");
+    }).pipe(Effect.provide(harness.layer));
+  }),
+);
+
+it.effect("keeps a reused thread's recorded branch without reading the checkout", () =>
+  Effect.gen(function* () {
+    let branchReads = 0;
+    const harness = makeHarness({
+      currentBranch: () => Effect.sync(() => (branchReads += 1)).pipe(Effect.as("feature/live")),
+    });
+    yield* Effect.gen(function* () {
+      const launches = yield* ThreadLaunch.ThreadLaunchService;
+      const threads = yield* ThreadManagement.ThreadManagementService;
+      const threadId = ThreadId.make("thread:launch:fork-reused-branch");
+      yield* threads.dispatch({
+        type: "thread.create",
+        commandId: CommandId.make("command:launch:fork-reused-branch:create"),
+        threadId,
+        projectId,
+        title: "Client draft",
+        modelSelection,
+        runtimeMode: "full-access",
+        interactionMode: "default",
+        branch: "feature/client",
+        worktreePath: null,
+        createdBy: "user",
+        creationSource: "web",
+      });
+      const launched = yield* launches.launch({
+        ...launchInput({
+          command: "command:launch:fork-reused-branch",
+          thread: threadId,
+          message: "hello",
+        }),
+        reuseExistingThread: true,
+      });
+      assert.equal(launched.projection.thread.branch, "feature/client");
+      assert.equal(branchReads, 0);
     }).pipe(Effect.provide(harness.layer));
   }),
 );

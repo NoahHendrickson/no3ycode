@@ -45,6 +45,9 @@ import {
   setThreadInteractionMode,
   setThreadRuntimeMode,
   pinThread,
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  setThreadTag,
+  /* fork:end fork-chat-mode */
   reorderPinnedThread,
   reorderActiveThread,
   setThreadAutoSettle,
@@ -194,6 +197,14 @@ export function createThreadEnvironmentAtoms<R, E>(
       scheduler,
       concurrency,
     }),
+    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+    setTag: createEnvironmentCommand(runtime, {
+      label: "environment-data:commands:thread:set-tag",
+      execute: setThreadTag,
+      scheduler,
+      concurrency,
+    }),
+    /* fork:end fork-chat-mode */
     reorderPin: createEnvironmentCommand(runtime, {
       label: "environment-data:commands:thread:reorder-pin",
       execute: reorderPinnedThread,

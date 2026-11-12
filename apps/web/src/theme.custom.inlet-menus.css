@@ -5,7 +5,8 @@
    (custom/inletMenuMorph.ts), the tooltips' nubs, the tab strip's connective
    tabs and the collapsed sidebar's peek card. Imported after
    theme.custom.inlet.css (the template) and before
-   theme.custom.inlet-jungle.css; tokens live in theme.custom.palettes.css. */
+   theme.custom.inlet-jungle.css and theme.custom.inlet-black.css; tokens live
+   in theme.custom.palettes.css. */
 
 /* ── Menus and the thread hover card ─────────────────────────────────────────
    Inlet's menus, popovers and glass tooltips are a solid fill, the colour's
@@ -734,17 +735,6 @@
   }
 }
 
-/* The project strip's new-agent buttons wear a soft fill at rest, a step
-   firmer on hover: ink at 8% / 12% over the frame. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-recent-project] {
-  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
-
-  &:hover {
-    background: color-mix(in srgb, var(--sidebar-foreground) 12%, transparent);
-  }
-}
-
 /* The usage meter steps aside for the model menu's padded fill in step with
    the morph. The meter is also the usage popover's button, so the
    button-fill transition above would otherwise replace its translate; one
@@ -987,4 +977,12 @@
   )
   [data-fork-peek-tooltip] {
   display: none;
+}
+
+/* The details popover's own shadow (upstream's 55% panel shadow) is Inlet's
+   hung-menu shadow instead, for when the morph isn't drawing it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="popover-popup"]:has([data-thread-details-card]) {
+  box-shadow: 0 8px 12px rgb(0 0 0 / 14%);
 }

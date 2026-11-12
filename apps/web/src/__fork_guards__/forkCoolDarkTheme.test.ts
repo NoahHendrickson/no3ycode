@@ -188,7 +188,6 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(stage).toContain("--fork-composer-bg: #1f1f1f");
     expect(stage).toContain("--fork-composer-border: rgb(255 255 255 / 12%)");
     expect(stage).toContain("--fork-westworld-vessel-blur: 20px");
-    expect(stage).toContain("--fork-westworld-chip-blur: 18px");
     // Figma 447:16789: the new-agent draft restates dark glass on its overlay,
     // which every composer element descends from — one rgb(47 47 47), 50% for
     // the vessel and chips and 60% for the prompt well.
@@ -203,7 +202,6 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(hero?.body).toContain("--fork-composer-border-focus: rgb(255 255 255 / 45%)");
     expect(hero?.body).toContain("--fork-context-chip-bg: rgb(47 47 47 / 50%)");
     expect(hero?.body).toContain("--fork-westworld-vessel-blur: 16px");
-    expect(hero?.body).toContain("--fork-westworld-chip-blur: 4px");
   });
 
   it("blurs the glass composer over the art, and only there", () => {
@@ -216,12 +214,15 @@ describe("fork guard: fork-cool-dark-theme", () => {
     expect(vessel?.body).toContain(
       "-webkit-backdrop-filter: blur(var(--fork-westworld-vessel-blur))",
     );
-    const chips = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("backdrop-filter"),
-    );
-    expect(chips?.body).toMatch(/backdrop-filter:\s*blur\(var\(--fork-westworld-chip-blur\)\)/u);
+    // The chips sit on the vessel's blur with a translucent fill; a blur per
+    // chip re-ran on every frame the transcript moved under the composer.
+    expect(
+      rules.filter(
+        (rule) =>
+          rule.selector.includes("[data-fork-composer-context-row]") &&
+          rule.body.includes("backdrop-filter"),
+      ),
+    ).toEqual([]);
     const blurred = cssRules(theme).filter(
       (rule) =>
         /backdrop-filter:\s*blur\(/u.test(rule.body) &&
@@ -417,8 +418,7 @@ describe("fork guard: fork-cool-dark-theme", () => {
     const panel = blockFor(theme, COOL_PANEL);
     expect(stage).toContain("--sidebar-v2-status-working: #1877f2");
     expect(panel).toContain("--sidebar-v2-status-working: #1877f2");
-    // Figma 412:31179 — the same 23-cell grid as the default mark, every arm's
-    // pair swapped for blues. The component's slots must match these names.
+    // Figma 412:31179 — every arm's pair swapped for blues, outlined in black. The component's slots must match these names.
     const mark = readSibling("../custom/SidebarBrandMark.tsx");
     for (const [slot, hex] of [
       ["top", "#00bfff"],
@@ -429,6 +429,10 @@ describe("fork guard: fork-cool-dark-theme", () => {
       ["right-light", "#a089ff"],
       ["bottom", "#1aadfc"],
       ["bottom-light", "#72c4ff"],
+      ["top-outline", "#000000"],
+      ["left-outline", "#000000"],
+      ["right-outline", "#000000"],
+      ["bottom-outline", "#000000"],
     ]) {
       expect(stage).toContain(`--fork-brand-mark-${slot}: ${hex}`);
       expect(mark).toContain(`var(--fork-brand-mark-${slot},`);

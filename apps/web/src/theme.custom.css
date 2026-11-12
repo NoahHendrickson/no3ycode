@@ -1109,6 +1109,25 @@
   flex: 0 1 auto;
 }
 
+/* A strip that mounts just after a quick pick fades its chips in behind the
+   project chip's slide (fork-draft-project-quick-picks). One shot per chip. */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-slot="composer-context-strip"][data-fork-chips-joining]
+    :is(button, [data-composer-context-control]):not(
+      [data-fork-draft-project-chip],
+      :is(button, [data-composer-context-control]) *
+    ) {
+    animation: fork-context-chip-join 200ms ease-out 140ms backwards;
+  }
+}
+
+@keyframes fork-context-chip-join {
+  from {
+    opacity: 0;
+  }
+}
+
 /* The context chips are the filled controls above the surface (checkout /
    worktree mode and branch). Same selected-surface fill, no hairline. Light
    mode falls back to upstream's accent; the drawn values are dark-only. */
@@ -1719,40 +1738,53 @@
    white so the light theme pulses toward ink instead of vanishing into the
    panel.
 
-   The mark is `currentColor` throughout (both fork WorktreeIcon and Lucide's
-   GitBranchIcon), so animating `color` on the svg is the whole mechanism —
-   the duotone's 20% inner nodes ride along for free. `> svg` rather than a
-   bare descendant: the slot also carries text (`sr-only` labels, the branch
-   name) and only the glyph is the signal.
+   The slot draws the mark twice: the green glyph, and a foreground copy
+   stacked over it (`data-fork-dev-server-fade`) whose opacity breathes. An
+   opacity animation runs on the compositor, so a live row never repaints;
+   animating `color` on the glyph repainted it every frame while a dev
+   server ran. `> svg` rather than a bare descendant: the slot also carries
+   text (`sr-only` labels, the branch name) and only the glyph is the signal.
 
    4s and `alternate`, so a full breath is 8s — slow enough to read as ambient
    status rather than an alert; every notification-shaped pulse in this app is
    something blocked on you, and a healthy dev server is the opposite. Under
-   `prefers-reduced-motion` the animation drops and the `color` declaration
-   beneath it keeps the mark statically green, so the state survives without
-   the motion.
+   `prefers-reduced-motion` the copy is hidden and the mark stays statically
+   green, so the state survives without the motion. Rows offscreen pay
+   nothing: `content-visibility: auto` on the li skips them. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] {
+  position: relative;
+}
 
-   `color` does not composite, so each live row repaints its 12px glyph every
-   frame for as long as the listener runs — same deal the pixel rain already
-   accepts, and at this size a deliberate yes rather than an accident. Rows
-   offscreen pay nothing: `content-visibility: auto` on the li skips them. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg {
   color: var(--sidebar-v2-status-working);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-dev-server-live]
+  > svg[data-fork-dev-server-fade] {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  translate: 0 -50%;
+  color: var(--foreground);
+  opacity: 0;
   animation: sidebar-v2-dev-server-pulse 4s ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg {
-    animation: none;
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-fork-dev-server-live]
+    > svg[data-fork-dev-server-fade] {
+    display: none;
   }
 }
 
 @keyframes sidebar-v2-dev-server-pulse {
   from {
-    color: var(--sidebar-v2-status-working);
+    opacity: 0;
   }
   to {
-    color: var(--foreground);
+    opacity: 1;
   }
 }
 
@@ -2171,8 +2203,10 @@
 /* Notice metrics, Figma 467:33308, keyed on data-fork-composer-notice so
    Reconnect / Update / tasks / the rest of the drawer keep their density.
    The activity strip shares the 14/16 type and 16px icon but stays a status
-   line at 16px padding — including when it is folded into the stack. */
-:root[data-fork="noahhendrickson-t3code"].dark
+   line at 16px padding — including when it is folded into the stack.
+   Every Inlet colour takes them too: the light ones would otherwise keep
+   upstream's one-line row, whose copy crowds the action off the card. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
@@ -2180,20 +2214,20 @@
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"] {
   padding: 12px 8px 12px 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-composer-banner-row] {
   column-gap: 6px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-icon"]
@@ -2207,7 +2241,7 @@
    (ComposerBannerStack drops font-medium / leading-7 on these cards); only
    branch names inside the copy go Medium. padding-inline zeros the no-icon
    ps-2 so settled copy starts on the 16px pad. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"] {
@@ -2220,7 +2254,7 @@
   white-space: normal;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"]
@@ -2230,7 +2264,7 @@
   text-overflow: unset;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-actions"] {
@@ -2240,7 +2274,8 @@
 /* Primaries and Dismiss are stamped in ChatView / ComposerBannerStack —
    never selected by child position or :has(svg). The stamp survives
    Compact's TooltipTrigger <span> wrapper. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="primary"] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="primary"] {
   height: 24px;
   min-height: 24px;
   border-radius: 4px;
@@ -2249,7 +2284,8 @@
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="dismiss"] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="dismiss"] {
   width: 24px;
   height: 24px;
   min-height: 24px;
@@ -2257,7 +2293,9 @@
   border-radius: 4px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="dismiss"] svg {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="dismiss"]
+  svg {
   width: 16px;
   height: 16px;
 }
@@ -2847,3 +2885,12 @@
     display: none;
   }
 }
+
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+   A chat is the composer alone: no project, checkout or branch chips above it. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-column][data-fork-chat-thread]
+  [data-fork-composer-context-row] {
+  display: none;
+}
+/* fork:end fork-chat-mode */

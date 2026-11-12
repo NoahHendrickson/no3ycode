@@ -353,7 +353,7 @@
     and from the four .repos exclusions in .vscode/settings.json, the way
     .repos already was.
     The rendered app carries the name too: the sidebar brand drops the T3
-    wordmark and draws Figma t3-fork 364:11245 — the 16px pixel mark and the
+    wordmark and draws Figma t3-fork 676:41854 — the 16px pixel mark and the
     13x3 "no3y" wordmark owned by fork-sidebar-chrome. APP_BASE_NAME still
     names the packaged app and branding.ts's bridge-less fallback, which
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
@@ -376,8 +376,8 @@
     splash uses the orange family, while packaged builds stamp the green
     production family. Web favicons and the project icon are the bare leaf
     with no tile (t3-fork 556:28871): assets/fork/n3-project-icon.svg is
-    SidebarBrandMark's integer cells on the 23-unit grid with crispEdges,
-    literal fills, and a #373737 outline, and the n3-web-favicon*
+    the earlier 23-cell leaf (it did not follow the sidebar mark to 676:42956)
+    as integer cells with crispEdges, literal fills, and a #373737 outline, and the n3-web-favicon*
     rasters (with apps/web/public copies) are rendered from it at an exact
     multiple of its 23-cell grid, then downscaled; export-icons.ts leaves
     them alone. Filenames still say n3-* for path stability. t3.json's
@@ -1098,8 +1098,9 @@
     sidebar over a grouped ordered list.
     The fork's two DndContexts deliberately do not adopt upstream's single
     flat sortable list with section-marker drop verbs (#9731, #9750, #10378,
-    #10453, #10464); Sidebar.drag.ts / Sidebar.pointer.ts / Sidebar.motion.ts
-    stay on disk untouched as the landing pad if that is ever ported.
+    #10453, #10464); Sidebar.drag.ts / Sidebar.pointer.ts stay on disk untouched
+    as the landing pad if that is ever ported. Sidebar.motion.ts drives the
+    list's motion (sidebar-v2-list-animation).
     Since the 2026-10-05 sync Sidebar.pointer.ts is imported for one thing:
     its SidebarPointerSensor drives upstream's sweep-to-settle/un-settle/wake
     (#14768) over the fork's own ordered row keys. The single-list drag and
@@ -1247,33 +1248,42 @@
 
 - id: sidebar-v2-list-animation
   intent: >
-    Sidebar V2's thread list mounts `@formkit/auto-animate` so rows ease when
-    they leave or reflow. AutoAnimate's default *insert* path ignores the
-    `{ duration: 150, easing: "ease-out" }` options upstream passes: it holds
-    at opacity 0 for half of a 1.5× ease-in duration, while removals keep the
-    short ease-out scale/fade. Expanding a collapsed project group therefore
-    feels delayed and different from collapsing it, even though both are the
-    same list mutation.
+    Sidebar V2's thread list animates whenever its rows are added, removed or
+    reordered. An entering row grows in from 98% as it fades in, a leaving
+    row shrinks to 98% as it fades out where it stood, and the rows around
+    them slide to their new places. Add is the exact reverse of remove (same
+    150ms ease-out, same scale/opacity endpoints), so expanding a project
+    group plays as its collapse backwards; that symmetry, and the grow and
+    shrink on a group toggle however many rows it holds, must stay.
 
-    The fork replaces that options object with a plugin whose add keyframes
-    are the reverse of remove (same duration, same easing, same scale/opacity
-    endpoints). Remain keeps AutoAnimate's FLIP, including the right/bottom-
-    anchored short-circuit. Plugins skip AutoAnimate's prefers-reduced-motion
-    gate, so the plugin itself collapses duration to 0 when that preference
-    is set.
+    The engine is upstream's createSidebarListMotion (components/Sidebar.motion.ts),
+    the one upstream's own sidebar runs. A fenced seam there takes the fork's
+    fade style: rows fade in place between scale(1) and scale(.98) instead of
+    riding translateY with their neighbours, only rows the list's scroll
+    viewport shows fade (the rest come and go at once), and the bulk-change cap
+    that would stop a large group's toggle is lifted, because the on-screen
+    filter already bounds the clones. With no style passed the engine is
+    upstream's, unchanged.
 
-    One Tier-4 fence in Sidebar.tsx carries the import and the
-    `autoAnimate(node, …)` call. A sync that restores the options object
-    silently brings the asymmetric open back.
+    custom/sidebarV2ListAnimation.ts wraps it: it skips the layout reads when a
+    commit left the list's rows as they were, starts over after the list was
+    hidden (the closed mobile sheet), and lets a drop measure even when nothing
+    reordered. Sidebar.tsx creates it from the list's ref and calls update()
+    from a layout effect after every commit, as upstream's sidebar does. A
+    project header drag suspends it on start and releases it on drop or cancel,
+    so the dropped header slides from where the pointer left it rather than
+    from its old slot. A row whose own size changes moves the rows below it at
+    once; prefers-reduced-motion turns it off.
   tier: 4
   files:
     - apps/web/src/custom/sidebarV2ListAnimation.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/Sidebar.motion.ts
   verify:
     - apps/web/src/__fork_guards__/sidebarV2ListAnimation.test.ts
-    - apps/web/src/custom/sidebarV2ListAnimation.test.ts
+    - apps/web/src/custom/sidebarV2ListAnimation.browser.test.tsx
 
 - id: sidebar-offcanvas-compositing
   intent: >
@@ -1343,6 +1353,7 @@
   tier: 4
   files:
     - apps/web/src/custom/sidebarV2DraftRows.ts
+    - apps/web/src/custom/quietThreadShellKeys.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
@@ -1563,11 +1574,12 @@
     above the surface), borders #33343a, muted text #8a8a8a, primary
     #fcfcf5. The composer is glass over the art, in two frames. A started
     thread (Figma 423:13864) is white glass: vessel white 8% with a 20px
-    backdrop blur, context chips white 12% at 18px, an opaque #1f1f1f prompt
+    backdrop blur, context chips white 12% (unblurred: they sit on the vessel's
+    blur, and one per chip re-ran as the transcript moved), an opaque #1f1f1f prompt
     surface behind a white 12% hairline (white 22% on focus, one quiet step
     up rather than the palette's opaque grey), and the flat white send. The
     new-agent draft (Figma 447:16789) is dark glass: one rgb(47 47 47) fill
-    at 50% for the vessel and chips (16px / 4px blur) and 60% for the prompt,
+    at 50% for the vessel (16px blur) and chips and 60% for the prompt,
     behind a white 24% hairline (white 45% on focus, one quiet step up in the
     same family rather than the palette's opaque grey, which read as a dull
     ring over the art), and a #1877f2 send (the working token's blue). The
@@ -2444,7 +2456,7 @@
     background; the column's header, workspace area and new-thread timeline
     go transparent over the column's fill; the cream #f2f0d8 frame is
     --fork-inlet-frame, painted on the inset and the column's wrapper only
-    round a chat column; rows are pills; the composer is solid cream (the sidebar's hover cream, a lighter cream prompt) with dark ink. Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
+    round a chat column; rows are pills; the composer is glass (Figma 630:11828), its fills restated on the composer stack so menus and the user's bubble keep the solid cream: on a thread a faint white over the charcoal in the stage's light ink (vessel 8%, prompt 6%, chips 10%, no blur), over the new-agent picture light glass in dark ink (vessel 40% and chips 20% with a 12px blur, prompt 60%). Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
     Green's tokens (the palette rules list both colours) with the same art,
     faded to 22% over #21835c, painted once on the sidebar wrapper behind the
     sidebar and the frame round the panel, whose own frame fills step aside.
@@ -2470,7 +2482,7 @@
     buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
     from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
-    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}; Jungle Art's tooltips are its menus' green with white ink. The project strip's buttons wear an 8% ink fill. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -2564,8 +2576,10 @@
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
     - apps/web/src/theme.custom.inlet-jungle.css
+    - apps/web/src/theme.custom.inlet-black.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
+    - apps/web/src/components/ui/standalone-page.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/index.html
@@ -2582,6 +2596,7 @@
     - apps/web/src/components/ThreadHoverCard.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/projectIconColors.ts
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
@@ -2593,8 +2608,8 @@
     --text-sm (and their --line-height companions) to 0.8125rem / 1rem so those
     share one size without rewriting each className. Search, New thread, Add
     project, and the Projects label opt out at 0.875rem (14px) via CHROME_TYPE;
-    card titles and the repo/branch line opt out with literal rem sizes
-    (0.875rem / 0.75rem — see
+    card titles, slim (settled and snoozed) titles and the rename field are
+    0.875rem, and the repo/branch line 0.75rem, as literal rem sizes (see
     sidebar-v2-card-rows) so the remap cannot flatten them. Rem, not px:
     a px pin would freeze the sidebar while h-4 and the rest of the app still
     honour the browser font-size setting. Line-height stays 1rem so the card's
@@ -2712,11 +2727,12 @@
     edge inset.
 
     The brand stays on the trailing edge and ends 16px from it. It is Figma
-    t3-fork 364:11245: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
-    inline SVG whose arm colours are --fork-brand-mark-* variables with the
-    design's colours as fallbacks, so a palette can recolour it), a 4px gap, then
-    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. Under 1.5x
-    device pixels the 23 cells cannot land on 16 pixels, so
+    t3-fork 676:41854: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
+    inline SVG of 676:42956's 21-cell pinwheel whose body, light and outline
+    colours are --fork-brand-mark-* variables with the design's colours as
+    fallbacks, so a palette can recolour it), a 4px gap, then the 13x3 "no3y"
+    wordmark at 8px and 40% sidebar-foreground, on every theme including Inlet.
+    Under 1.5x device pixels the 21 cells cannot land on 16 pixels, so
     SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
     wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
     carries its own display gate, hidden below 48rem and a flex row above,
@@ -5261,16 +5277,14 @@
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
     (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows, the sidebar's recent-project
-    buttons (fork-sidebar-recent-projects) and the model picker's selected
+    thread card, the active top sidebar rows and the model picker's selected
     provider tab (fork-model-picker). Off: the flat stage and
     fills Glass had before #203. The lighter tint (#214) and everything else
     stays in every mode. The setting stamps data-fork-glass-3d="selection" or
     "off" on the root before first render (absent at Full). The sheets nest
     under parents that carry the gate through a zero-specificity :where():
     the stage sheet needs Full; the surfaces sheet keeps source order across
-    alternating parents, the tokens, selected rows and the recent-project
-    buttons (the one named exception) under "not off" and everything else
+    alternating parents, the tokens and selected rows under "not off" and everything else
     under Full. & takes a parent's specificity, so every rule
     ranks as it did flat. The card-inset and radius tokens are shared with the
     new-agent picture and live in the palettes sheet, outside the setting,
@@ -5550,7 +5564,10 @@
   files:
     - apps/web/src/custom/newAgentDraft.ts
     - apps/web/src/custom/useNewAgentDraft.ts
+    # The chip, its menu, and the choices and pick dispatcher both share.
     - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/DraftProjectMenuPopup.tsx
+    - apps/web/src/custom/useDraftProjectChoices.ts
     - apps/web/src/custom/newAgentDraft.test.ts
     - apps/web/src/custom/useNewAgentDraft.test.ts
     # Draft-only prompt geometry and the docked-only floor, keyed on data-draft-hero.
@@ -5597,19 +5614,21 @@
     untouched "Current checkout" default displays the current branch but
     sends null, and the App Store build is what the phone runs — the fork's
     own mobile fence (mobile-current-checkout-branch) never reaches it because
-    the fork ships no mobile builds. The server has the checkout and the
-    status service, so it fills the label in at bootstrap time instead of
-    waiting on a client release; this covers every client, old or new.
+    the fork ships no mobile builds. The server can read the checkout's
+    branch, so it fills the label in at bootstrap time instead of waiting on
+    a client release; this covers every client, old or new.
 
     Precedence: an explicit client branch always wins; a worktree being
     prepared names its own branch through that flow and is left alone; an
     existing worktree path is the checkout to read, the project root is the
-    fallback. Source is GitWorkflowService.localStatus (the same live value
-    the sidebar and PR badge compare against), never listRefs' cache-served
-    current flag. A detached HEAD, a non-repository project, a temporary
-    worktree placeholder (t3/…, which the checkpoint and provider reactors
-    also refuse to adopt), or a status failure yields null with a warning
-    rather than fabricating a branch or failing the turn start.
+    fallback. Source is GitWorkflowService.currentBranch (one live
+    `git symbolic-ref HEAD`), never listRefs' cache-served current flag and
+    not localStatus, whose status and diff-stat subprocesses a cold cache
+    would run on the launch path for a value only refName needs. A detached
+    HEAD, a non-repository project, a temporary worktree placeholder (t3/…,
+    which the checkpoint and provider reactors also refuse to adopt), or a
+    git failure yields null with a warning rather than fabricating a branch
+    or failing the turn start.
 
     This is a real branch record, not a display label: a filled thread
     crosses every gate upstream keys on thread.branch. The composer shows
@@ -5620,16 +5639,13 @@
     thread and is the point — a phone thread should behave like the same
     thread started on the desktop.
 
-    Two accepted trade-offs. The status read sits on the turn-start path
-    before thread.create dispatches; it is the same cache-served status the
-    open desktop already polls for every labelled row on that checkout, so
-    it is warm in practice, and a cold read on a large dirty repo is the
-    cost of the label being present from the first event rather than
-    arriving in a second one. And the fill-in is one-shot: a create that
-    lands while another git operation holds the index stays null (web
-    self-heals on its next send through the mismatch path, mobile does
-    not), because a repeatable backfill would be a second mechanism for a
-    race that is rare in practice.
+    Two accepted trade-offs. The branch read sits on the turn-start path
+    before thread.create dispatches — one subprocess, the cost of the label
+    being present from the first event rather than arriving in a second
+    one. And the fill-in is one-shot: a create whose branch read fails
+    stays null (web self-heals on its next send through the mismatch path,
+    mobile does not), because a repeatable backfill would be a second
+    mechanism for a failure that is rare in practice.
 
     The policy lives in its own server file (resolveBootstrapThreadBranch),
     unit-tested next to it. Since the orchestrator-V2 sync (2026-10-05) the
@@ -5643,7 +5659,7 @@
     branch the create had just recorded on every root launch.
     A launch that reuses a client-created thread
     (reuseExistingThread) keeps the branch the client recorded, by product
-    choice. Upstream mobile now also sends the live checkout at send time
+    choice, and skips the read entirely. Upstream mobile now also sends the live checkout at send time
     (currentCheckoutBranch), but only when it starts rather than queues, and
     only once a store build carries it; the server fill-in still covers every
     client.
@@ -5780,8 +5796,10 @@
     only opened PRs in those repositories start a review. Every run receives
     the exact triggering repository, PR and commits in a fresh worktree.
     Retries do not duplicate reviews; deliveries that never reached durable dispatch
-    can be redelivered after failure or restart. Failed repository changes clean up
-    newly connected hooks, and deletion removes managed hooks.
+    can be redelivered after failure or restart. An event's claim is pruned
+    after 30 days, well past GitHub's 3-day redelivery window. Failed
+    repository changes clean up newly connected hooks, and deletion removes
+    managed hooks.
   tier: 4
   files:
     - packages/contracts/src/githubPrAutomation.ts
@@ -6228,35 +6246,59 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
-- id: fork-sidebar-recent-projects
+- id: fork-draft-project-quick-picks
   intent: >
-    A strip between the V2 sidebar's action block and the Threads row offers
-    one chip per recently active project, up to five, newest activity first:
-    the project's icon then a plus. Clicking a chip starts a new agent already
-    in that project through the same handler a project header's plus uses, so
-    both pick the same environment. Recency is the sidebar's own Recent
-    project order (sortLogicalProjectsForSidebar) over the threads the list
-    would show, so the strip cannot disagree with it; a project with no such
-    thread is not offered, and the strip renders nothing when no project
-    qualifies. A narrow sidebar scrolls the strip sideways instead of
-    wrapping it. The strip reads thread shells itself, so the Sidebar.tsx call
-    site passes only the project groups and the start handler. Each button
-    rests on a white 8% fill and brightens to 12% on hover (black 5% / 8% on
-    a light sidebar, where white would vanish); under Glass it
-    also wears the composer chips' glass rim unless 3D glass is off, so
-    Selected items only shows it as it shows the active rows above it.
+    An unassigned New agent draft offers its recent projects as pills above
+    the composer, in place of the project chip: No project first, then up to
+    five projects with a thread the sidebar would show, newest activity first
+    by those same threads (rankRecentProjectEntries, which ranks through
+    sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
+    automation run cannot reorder them), each its icon then a
+    plus, and a chevron opening the full project menu. A pill and a menu row
+    go through the same pick dispatcher (useDraftProjectChoices, owned by
+    fork-new-agent-draft) keyed on the row's radio value, and the chevron
+    opens the chip's own DraftProjectMenuPopup. A narrow composer scrolls the
+    pills sideways while the chevron stays outside the scroller, so the only
+    route to every project and Add a project is never clipped. The project
+    chip opens from
+    where the pill was, sliding to the row's start as its label is revealed.
+    The pick is kept outside the component (custom/draftProjectPickMotion),
+    because the chip remounts mid-slide when the assignment settles and
+    ChatView swaps the fallback strip for BranchToolbar; each chip that mounts
+    resumes the slide where the last one was. The chips the pick brings in
+    (checkout, branch) fade in after it, and the row that renders them owns
+    that: BranchToolbar (fenced) stamps data-fork-chips-joining on its strip
+    when it mounts within a moment of a pick, and theme.custom.css gives every
+    chip under the stamp but the project chip a one-shot fade, so chips that
+    mount later in that window (git status resolving) fade in too. Reduced
+    motion skips both.
+    Each pill names its project in a tooltip; the pills share one
+    TooltipProvider (150ms delay, instant hand-off between pills). Under Inlet
+    the tooltip stands 4px past where its nub meets the pill, through
+    TooltipPopup's fenced forkNubGap (fork-inlet-theme), and Inlet Black
+    inks it like the sidebar (#141414 / #e8e8e8, theme.custom.inlet-black.css).
   tier: 4
   files:
-    - apps/web/src/custom/SidebarV2RecentProjectsStrip.tsx
-    - apps/web/src/theme.custom.glass-surfaces.css
+    - apps/web/src/custom/DraftProjectQuickPicks.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
+    - apps/web/src/custom/draftProjectPickMotion.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    # The joining chips fade, after the context row rules.
+    - apps/web/src/theme.custom.css
+    # Black's tooltip ink for the pills.
+    - apps/web/src/theme.custom.inlet-black.css
   shadows: []
   watch:
-    # Fenced import and call site between the action rows and the Threads row.
-    - apps/web/src/components/Sidebar.tsx
-    # The ranking the strip reuses.
+    # Fenced rankRecentProjectEntries beside sortLogicalProjectsForSidebar.
     - apps/web/src/components/Sidebar.logic.ts
+    # Fenced data-fork-chips-joining stamp on the context strip.
+    - apps/web/src/components/BranchToolbar.tsx
   verify:
-    - apps/web/src/__fork_guards__/forkSidebarRecentProjects.test.ts
+    - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
 
 - id: fork-git-256-non-repository
   intent: >
@@ -6651,6 +6693,115 @@
     - apps/web/src/__fork_guards__/forkStageStamps.test.ts
     - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
     - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts
+
+- id: fork-inlet-black-texture
+  intent: >
+    Inlet Black's new-agent screen shows the portfolio's pixel texture (the
+    Landing preset: an Edge of pixel faces, leaves and shapes coming in from
+    the panel's right edge) on the panel's cream, behind the draft. Only Inlet
+    Black, only the new-agent screen; threads keep the plain panel.
+
+    It keeps moving while the screen is open, which Noey chose over settling
+    (Nov 12) as an explicit sign-off on CLAUDE.md's rule against continuously
+    repainting animations: frames are capped at about 30-40 a second (nothing
+    in it moves faster), it pauses while the window is in the background, and
+    the browser stops it when hidden. Reduced motion draws one still frame. The
+    engine (custom/pixelTexture) is a trimmed port of the portfolio's
+    TextureCanvas that renders the Landing look: a pure grid model
+    (textureModel.ts) and a painter that owns the canvas and frame loop. A
+    resize re-deals it only when the whole-cell grid changes.
+    The column's header, workspace area and draft composer stop painting the
+    panel there so the texture shows through.
+  tier: 4
+  files:
+    - apps/web/src/custom/InletBlackNewAgentTexture.tsx
+    - apps/web/src/custom/pixelTexture/PixelTextureBackdrop.tsx
+    - apps/web/src/custom/pixelTexture/paintPixelTexture.ts
+    - apps/web/src/custom/pixelTexture/textureModel.ts
+    - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
+    - apps/web/src/custom/forkTheme.ts
+    - apps/web/src/theme.custom.inlet-black.css
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
+    - apps/web/src/custom/pixelTexture/textureModel.test.ts
+
+- id: fork-details-card-overlay
+  intent: >
+    The docked thread details card floats over the chat instead of pushing
+    it aside: the chat lane is laid out as if the card were not there, so
+    the transcript stays centred and the card sits on top of it. The card
+    still counts as an obstacle for the preview mini player, and whether the
+    card docks or opens as a popover is upstream's rule, unchanged. Where the
+    card overlaps the lane (canvases up to about 1320px wide) it stops above
+    the measured composer, so it never covers the send controls.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/chatCanvasLayout.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts
+    - apps/web/src/components/chat/canvasStore.ts
+    - apps/web/src/components/chat/threadDetailsCardLayout.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts
+
+- id: fork-chat-mode
+  intent: >
+    The sidebar header switches between Code and Chat (Figma t3-fork
+    676:42030). Code is the sidebar as it was. Chat is one flat list of chats
+    under a lone "New chat" row: no search row, projects, scope or grouping.
+    Code's project scope stays chosen for Code but does not filter Chat.
+    Chat's Settled shelf counts the chats it holds (the server's older-settled
+    counts cannot tell modes apart) and stops paging once a page lists no chat.
+    Its rows are titles alone (hideProjectMark drops the project favicon and
+    name), and a chat joins the list only once its first send makes it a
+    thread: until then New chat is the lit row.
+    A thread belongs to the mode it was created in. "New chat" starts a
+    No-project (scratch) draft and moves it onto Chat's own logical draft key
+    (fork:chat), so the draft itself says it is a chat and Code's No-project
+    paths never reopen it. Its first send creates the thread, which the app
+    root tags `chat` (the server's existing thread tags, thread.tag.set;
+    custom/chatTagging); from the send until the tag shows, the thread is held
+    in Chat in memory. Code lists every thread without the tag,
+    No-project threads made in Code included. Each thread's context menu moves
+    it to the other mode (sets or clears the tag), by the thread's own mode, so
+    the collapsed tab strip offers the right move, and only with operate
+    scope. Switching modes always opens that mode's start: the chat typed but
+    not yet sent (else a new chat), or Code's New agent (which keeps its own
+    unsent prompt). A chat shows the composer alone, without the project,
+    checkout and branch chips (data-fork-chat-thread on the chat column), and
+    a new chat's headline is "What's up?". The mode is per client
+    (localStorage, stamped as data-fork-sidebar-mode). The collapsed tab strip
+    and mobile are not mode-aware.
+  tier: 4
+  files:
+    - apps/web/src/custom/chatMode.ts
+    - apps/web/src/custom/chatTagging.ts
+    - apps/web/src/custom/useChatMode.ts
+    - apps/web/src/custom/SidebarModeTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/overrides/components/chat/DraftHeroHeadline.tsx
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.inlet.css
+  shadows: []
+  watch:
+    - apps/web/src/appInit.tsx
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
+    - apps/web/src/custom/sidebarV2DraftRows.ts
+    - apps/web/src/main.tsx
+    - packages/client-runtime/src/operations/commands.ts
+    - packages/client-runtime/src/state/threadCommands.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkChatMode.test.ts
+    - apps/web/src/custom/chatMode.test.ts
+    - apps/web/src/custom/chatTagging.test.ts
 
 - id: fork-music-panel
   intent: >

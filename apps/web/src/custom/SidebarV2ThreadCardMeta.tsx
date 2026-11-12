@@ -115,18 +115,17 @@ export function SidebarV2CheckoutMark(props: {
   readonly branchName: "visible" | "sr-only";
   readonly className: string;
 }) {
+  const Mark = props.hasWorktree ? WorktreeIcon : GitBranchIcon;
   return (
     <span
       className={props.className}
       data-fork-dev-server-live={props.devServerPort != null ? "" : undefined}
     >
-      {props.hasWorktree ? (
-        <>
-          <span className="sr-only">Worktree</span>
-          <WorktreeIcon aria-hidden className={MARK} />
-        </>
-      ) : (
-        <GitBranchIcon aria-hidden className={MARK} />
+      {props.hasWorktree ? <span className="sr-only">Worktree</span> : null}
+      <Mark aria-hidden className={MARK} />
+      {/* The pulse's foreground pole, faded over the green mark (theme.custom.css). */}
+      {props.devServerPort == null ? null : (
+        <Mark aria-hidden data-fork-dev-server-fade="" className={MARK} />
       )}
       {props.branch ? (
         <span className={props.branchName === "visible" ? "truncate whitespace-nowrap" : "sr-only"}>

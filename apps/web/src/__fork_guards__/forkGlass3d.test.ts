@@ -41,13 +41,7 @@ describe("fork guard: fork-glass-3d", () => {
         /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]|\[data-fork-model-picker="providers"\] \[data-model-picker-provider\]\[aria-current="true"\]/u.test(
           rule.selector.replace(/\s+/gu, " "),
         );
-      // The block's one named exception (fork-sidebar-recent-projects); a
-      // new chip belongs under Full, not on this list.
-      const isQuickStart = compact(rule.selector).endsWith("[data-fork-recent-project]");
-      expect(
-        isTokens || isSelectedRow || isQuickStart,
-        `not a selected row: "${rule.selector}"`,
-      ).toBe(true);
+      expect(isTokens || isSelectedRow, `not a selected row: "${rule.selector}"`).toBe(true);
       expect(rule.selector, rule.selector).not.toContain("data-fork-thread-sort");
     }
   });

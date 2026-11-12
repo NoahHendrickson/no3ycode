@@ -273,20 +273,20 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // The pixelated hack lived on the component, not the asset — a substring
     // check on the class list would not notice it coming back beside it.
     expect(chrome).not.toContain("image-rendering");
-    // The mark's art is a 23x23 pixel grid drawn at a 16px slot. A bitmap can
-    // only get there by resampling 23 cells onto 16 pixels, which blends every
+    // The mark's art is a 21x21 pixel grid drawn at a 16px slot. A bitmap can
+    // only get there by resampling 21 cells onto 16 pixels, which blends every
     // cell into its neighbours — the blur the vector mark replaced. Keep it
-    // vector, keep the viewBox on the 23-unit grid, and keep crispEdges so the
+    // vector, keep the viewBox on the 21-unit grid, and keep crispEdges so the
     // cells stay hard-edged at every DPR instead of antialiasing back to mush.
     // Inline SVG rather than an <img>, so a palette can recolour the arms
     // through the --fork-brand-mark-* variables (Westworld does). The design's
-    // own colours ride along as the var() fallbacks; the outline is literal.
+    // own colours ride along as the var() fallbacks, each leaf's outline too.
     const mark = readSibling("../custom/SidebarBrandMark.tsx");
     const lowDensityMark = readSibling("../custom/SidebarBrandMarkLowDensity.tsx");
     expect(chrome).toContain("<SidebarBrandMark />");
     expect(mark).toContain('className="size-4 shrink-0"');
     expect(chrome).not.toContain("sidebar-brand-mark.svg");
-    expect(mark).toContain('viewBox="0 0 23 23"');
+    expect(mark).toContain('viewBox="0 0 21 21"');
     expect(mark).toContain('shapeRendering="crispEdges"');
     expect(mark).not.toMatch(/image-rendering|<image\b/u);
     for (const [slot, fallback] of [
@@ -302,8 +302,15 @@ describe("fork guard: fork-sidebar-chrome", () => {
       expect(mark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
       expect(lowDensityMark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
     }
-    expect(mark).toContain('<g fill="#000000">');
-    // Under 1.5x the 15-cell redraw replaces the 23-cell art. At 1x that is one
+    for (const [slot, fallback] of [
+      ["top-outline", "#0e440c"],
+      ["left-outline", "#0a2a18"],
+      ["right-outline", "#3e2e14"],
+      ["bottom-outline", "#4c3f0f"],
+    ]) {
+      expect(mark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
+    }
+    // Under 1.5x the 15-cell redraw replaces the 21-cell art. At 1x that is one
     // device pixel per cell, and three per cell for the wordmark.
     const lowDensity =
       /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(

@@ -415,6 +415,12 @@ import {
   useSystemComposerBanners,
 } from "./chat/useSystemComposerBanners";
 import { useDraftHeroLayoutTransition } from "./chat/useDraftHeroLayoutTransition";
+/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
+/* fork:end fork-inlet-black-texture */
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import { useIsChatThread } from "~/custom/useChatMode";
+/* fork:end fork-chat-mode */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -1041,6 +1047,9 @@ export default function ChatView(props: ChatViewProps) {
     return labels;
   })();
   const activeThreadRef = useActiveThreadRef(activeThread);
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  const isForkChatThread = useIsChatThread(activeThreadRef);
+  /* fork:end fork-chat-mode */
   const activeThreadKey = activeThreadRef ? scopedThreadKey(activeThreadRef) : null;
   const activeEnvironmentServerBrowser = useEnvironmentSupportsServerBrowser(
     activeThreadRef?.environmentId ?? null,
@@ -3718,8 +3727,14 @@ export default function ChatView(props: ChatViewProps) {
         ref={forkChatColumnRef}
         data-fork-draft-hero={isDraftHeroState ? "" : undefined}
         /* fork:end fork-stage-stamps */
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        data-fork-chat-thread={isForkChatThread ? "" : undefined}
+        /* fork:end fork-chat-mode */
         inert={rightPanelMaximized}
       >
+        {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
+        <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
+        {/* fork:end fork-inlet-black-texture */}
         {embedded ? null : (
           <header
             ref={threadPanelPopoverAnchorRef}
