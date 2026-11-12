@@ -1019,10 +1019,13 @@
   color: #e8e8e8;
 }
 
-/* The usage popover has no list set into it: it is the shell, as its button. */
+/* The usage popover is the shell, as its button; each provider's panel set
+   into it is the model list's step up rather than the composer's cream. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-slot="popover-popup"][data-fork-tab-menu] {
+  --fork-composer-bg: #1f1f1f;
+  --muted: #2a2a2a;
   --popover: var(--fork-inlet-model-shell);
   --background: var(--fork-inlet-model-shell);
   background: var(--fork-inlet-model-shell);
