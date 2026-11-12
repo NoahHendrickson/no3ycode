@@ -1076,3 +1076,39 @@
     color: inherit;
   }
 }
+
+/* Inlet Black's thread details card is the sidebar's #141414 too, and the
+   header button it hangs from joins it in that colour. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is([data-thread-details-card], [data-fork-panel-toggle]) {
+  --popover: #141414;
+  --popover-foreground: #e8e8e8;
+  --foreground: #e8e8e8;
+  --muted-foreground: #9a9a9a;
+  --accent: #272727;
+  --accent-foreground: #e8e8e8;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --contrast-foreground: #e8e8e8;
+  --contrast-popover-foreground: #e8e8e8;
+  --contrast-accent-foreground: #e8e8e8;
+  --contrast-muted-foreground: #9a9a9a;
+  --contrast-secondary-label: #9a9a9a;
+  --contrast-icon-muted: #9a9a9a;
+  --contrast-border: #2a2a2a;
+  --fork-outline-hover-bg: #272727;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-thread-details-card] {
+  color: #e8e8e8;
+}
+
+/* The details popover's own shadow (upstream's 55% panel shadow) is Inlet's
+   hung-menu shadow instead, for when the morph isn't drawing it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="popover-popup"]:has([data-thread-details-card]) {
+  box-shadow: 0 8px 12px rgb(0 0 0 / 14%);
+}
