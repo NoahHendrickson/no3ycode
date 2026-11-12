@@ -6675,10 +6675,13 @@
     Black, only the new-agent screen; threads keep the plain panel.
 
     It keeps moving while the screen is open, which Noey chose over settling
-    (Nov 12): frames are capped at about 30-40 a second (nothing in it moves
-    faster), it pauses while the window is in the background, and the browser
-    stops it when hidden. Reduced motion draws one still frame. The engine (custom/pixelTexture) is a trimmed port of the
-    portfolio's TextureCanvas that renders the Landing look pixel for pixel.
+    (Nov 12) as an explicit sign-off on CLAUDE.md's rule against continuously
+    repainting animations: frames are capped at about 30-40 a second (nothing
+    in it moves faster), it pauses while the window is in the background, and
+    the browser stops it when hidden. Reduced motion draws one still frame. The
+    engine (custom/pixelTexture) is a trimmed port of the portfolio's
+    TextureCanvas that renders the Landing look: a pure grid model
+    (textureModel.ts) and a painter that owns the canvas and frame loop.
     The column's header, workspace area and draft composer stop painting the
     panel there so the texture shows through.
   tier: 4
@@ -6686,6 +6689,7 @@
     - apps/web/src/custom/InletBlackNewAgentTexture.tsx
     - apps/web/src/custom/pixelTexture/PixelTextureBackdrop.tsx
     - apps/web/src/custom/pixelTexture/paintPixelTexture.ts
+    - apps/web/src/custom/pixelTexture/textureModel.ts
     - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.inlet.css
@@ -6694,7 +6698,7 @@
     - apps/web/src/components/ChatView.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
-    - apps/web/src/custom/pixelTexture/paintPixelTexture.test.ts
+    - apps/web/src/custom/pixelTexture/textureModel.test.ts
 
 - id: fork-details-card-overlay
   intent: >
