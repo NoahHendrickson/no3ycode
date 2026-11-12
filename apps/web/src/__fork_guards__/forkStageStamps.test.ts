@@ -45,12 +45,6 @@ const ALLOWED: ReadonlyArray<{ readonly sheet: string; readonly selector: string
   // A sidebar peek, and a chip's menu opening below it.
   { sheet: "theme.custom.inlet-menus.css", selector: ':has([data-fork-sidebar-peek="open"])' },
   { sheet: "theme.custom.inlet.css", selector: ':has([data-fork-chip-menu][data-side="bottom"])' },
-  // Jungle Art's transcript dimming, which #292 deletes with the picture behind threads.
-  { sheet: "theme.custom.inlet-jungle.css", selector: ":has([data-timeline-row-kind])" },
-  {
-    sheet: "theme.custom.inlet-jungle.css",
-    selector: ":has([data-chat-column-maximized-away][data-timeline-row-kind])",
-  },
 ];
 
 const STAMPS: ReadonlyArray<{

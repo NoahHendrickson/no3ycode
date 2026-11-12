@@ -18,11 +18,12 @@
 }
 
 /* The new-agent screen: the art at 60% over #248f6b, under a fade to the
-   frame's green behind the composer. Its draft composer is the one element
-   that carries data-draft-hero, and it never changes while a reply streams. */
+   frame's green behind the composer. The chat column carries
+   data-fork-draft-hero (fork-stage-stamps), which never changes while a reply
+   streams. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-chat-column-maximized-away]:has([data-draft-hero]) {
+  [data-chat-column-maximized-away][data-fork-draft-hero] {
   --background: #248f6b;
   /* The left edge fades from the open row's charcoal, so a project draft's
      bridge runs into solid fill before the art. Top layer of the background

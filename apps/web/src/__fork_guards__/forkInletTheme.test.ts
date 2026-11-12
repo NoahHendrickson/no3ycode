@@ -159,7 +159,7 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(column).not.toContain("url(");
     const draft = ruleBodyFor(inletRules, [
       jungle,
-      "[data-chat-column-maximized-away]:has([data-draft-hero])",
+      "[data-chat-column-maximized-away][data-fork-draft-hero]",
     ]);
     expect(draft).toContain('url("./custom/assets/inlet-jungle.jpg")');
     expect(
