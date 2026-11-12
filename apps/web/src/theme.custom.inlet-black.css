@@ -45,9 +45,11 @@
   }
 
   /* PR state tones (pullRequestIcons.tsx) take the -400s on the charcoal
-     surfaces by the same hook move. Rows on the cream fills (open, folder,
-     multi-selected) and the open tab take deep shades, the purple lifted to
-     the green's weight; a card row is charcoal while its hover card is open. */
+     surfaces by the same hook move, and the monitoring pulse (light mode's
+     black breath, lost on the charcoal) takes dark mode's white. Rows on the
+     cream fills (open, folder, multi-selected) and the open tab keep the pulse
+     black and take deep PR shades, the purple lifted to the green's weight; a
+     card row is charcoal while its hover card is open. */
 
   &
     :is(
@@ -55,11 +57,16 @@
       [data-fork-thread-tabs],
       [data-fork-row-hover-card],
       [data-thread-details-card]
-    )
-    .fork-pr-tone {
-    --color-emerald-600: var(--color-emerald-400);
-    --color-violet-600: var(--color-violet-400);
-    --color-red-600: var(--color-red-400);
+    ) {
+    & .fork-pr-tone {
+      --color-emerald-600: var(--color-emerald-400);
+      --color-violet-600: var(--color-violet-400);
+      --color-red-600: var(--color-red-400);
+    }
+
+    & [data-fork-monitoring-pulse] {
+      background-color: #ffffff;
+    }
   }
 
   &
@@ -69,11 +76,16 @@
           [data-testid="sidebar-row-card"][data-popup-open]
         ),
       [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
-    )
-    .fork-pr-tone {
-    --color-emerald-600: var(--color-emerald-700);
-    --color-violet-600: #7a48e1;
-    --color-red-600: var(--color-red-700);
+    ) {
+    & .fork-pr-tone {
+      --color-emerald-600: var(--color-emerald-700);
+      --color-violet-600: #7a48e1;
+      --color-red-600: var(--color-red-700);
+    }
+
+    & [data-fork-monitoring-pulse] {
+      background-color: #000000;
+    }
   }
 
   /* Inlet Black's new-agent screen draws the pixel texture
