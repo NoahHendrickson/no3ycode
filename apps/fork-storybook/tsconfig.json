@@ -1,0 +1,33 @@
+{
+  // Stories compile apps/web's sources, so this mirrors apps/web/tsconfig.json's options and paths.
+  // router.ts registers the app's routes, which typed navigation in the components a story renders reads.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "erasableSyntaxOnly": false,
+    "verbatimModuleSyntax": false,
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "rootDirs": ["../web/src/overrides", "../web/src"],
+    "paths": {
+      "~/*": ["../web/src/overrides/*", "../web/src/*"],
+      "~upstream/*": ["../web/src/*"],
+      "lucide-react": ["../web/src/custom/icons/lucide-phosphor.tsx"]
+    },
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnosticSeverity": {
+          "globalDate": "off",
+          "globalConsole": "off",
+          "globalRandom": "off",
+          "globalTimers": "off",
+          "globalFetch": "off"
+        }
+      }
+    ]
+  },
+  "include": [".storybook", "stories", "../web/src/**/*.d.ts", "../web/src/router.ts"]
+}

@@ -6570,3 +6570,34 @@
     - apps/web/src/components/sidebar/SidebarUpdatePill.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
+
+- id: fork-storybook
+  intent: >
+    apps/fork-storybook is the fork's component library: a Storybook that
+    renders the app's real components (apps/web/src through the override tree,
+    never copies) in Inlet · Jungle Art. Its preview stores the Jungle Art
+    preferences before any app module loads, loads exactly main.tsx's
+    stylesheets in main.tsx's order, and runs main.tsx's theme startup
+    (applyForkMarker, initializeForkTheme, installInletMenuMorph). Its Vite
+    config adds the same resolution as apps/web's (forkOverrides, brand name,
+    React Compiler, Tailwind scanning apps/web plus the stories, the
+    lucide-react shim alias). Stories sit components on the app's own scope
+    markers (the panel's data-chat-column-maximized-away, the frame's
+    data-sidebar-version), so Inlet's selectors apply as in the app. The
+    token pages read the Jungle Art rule blocks from the CSS itself. The
+    package touches no upstream file: apps/* already covers it, release smoke
+    copies a fixed package list, and CI typechecks it through vpr typecheck.
+    Stories cover components/ui primitives and fork-owned components only,
+    never upstream feature components or mocked upstream stores.
+  tier: 1
+  files:
+    - apps/fork-storybook/package.json
+    - apps/fork-storybook/tsconfig.json
+    - apps/fork-storybook/.storybook/main.ts
+    - apps/fork-storybook/.storybook/preview.tsx
+    - apps/fork-storybook/.storybook/appearance.ts
+    - apps/fork-storybook/stories
+  shadows: []
+  watch: []
+  verify:
+    - apps/web/src/__fork_guards__/forkStorybook.test.ts

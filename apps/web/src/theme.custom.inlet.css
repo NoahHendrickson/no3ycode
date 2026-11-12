@@ -2245,6 +2245,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-morphing]:is([aria-expanded="true"], [aria-pressed="true"]) {
   background: transparent !important;
+  border-color: transparent !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;

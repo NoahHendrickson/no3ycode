@@ -657,7 +657,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   );
 }
 
-function ThreadTab(props: {
+/** @public — the fork Storybook renders it, a package knip does not scan. */
+export function ThreadTab(props: {
   readonly tab: CollapsedThreadTab;
   /** Selected: the route's thread, or either of a split's two. */
   readonly active: boolean;
