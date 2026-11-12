@@ -52,7 +52,7 @@ import {
   MenuTrigger,
 } from "~/components/ui/menu";
 import { toastManager } from "~/components/ui/toast";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -398,54 +398,57 @@ export function DraftProjectPill(props: {
     <span ref={rootRef} className="contents">
       <Menu>
         {quickPicks !== null && draftId !== null ? (
-          <span data-fork-project-quick-picks="" className="flex min-w-0 items-center gap-1.5">
-            {noProjectEnvironmentId !== null ? (
-              <QuickPick
-                label="No project"
-                icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
-                onClick={(event) =>
-                  choose(event, () => void pickNoProject(draftId, noProjectEnvironmentId))
-                }
-              />
-            ) : null}
-            {quickPicks.map((entry) => (
-              <QuickPick
-                key={entry.group.projectKey}
-                label={entry.group.displayName}
-                icon={
-                  <ProjectFavicon
-                    project={entry.targetProject}
-                    className="size-4 shrink-0"
-                    fallbackIcon={FolderIcon}
+          // One group: the first tooltip comes quickly, and the next pill's takes over at once.
+          <TooltipProvider delay={150} closeDelay={0} timeout={400}>
+            <span data-fork-project-quick-picks="" className="flex min-w-0 items-center gap-1.5">
+              {noProjectEnvironmentId !== null ? (
+                <QuickPick
+                  label="No project"
+                  icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
+                  onClick={(event) =>
+                    choose(event, () => void pickNoProject(draftId, noProjectEnvironmentId))
+                  }
+                />
+              ) : null}
+              {quickPicks.map((entry) => (
+                <QuickPick
+                  key={entry.group.projectKey}
+                  label={entry.group.displayName}
+                  icon={
+                    <ProjectFavicon
+                      project={entry.targetProject}
+                      className="size-4 shrink-0"
+                      fallbackIcon={FolderIcon}
+                    />
+                  }
+                  onClick={(event) =>
+                    choose(
+                      event,
+                      () =>
+                        void assignDraftProject(draftId, entry).catch((error: unknown) =>
+                          reportAssignFailure(entry.group.displayName, error),
+                        ),
+                    )
+                  }
+                />
+              ))}
+              <MenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="ghost"
+                    aria-label="All projects"
+                    data-testid="draft-project-pill"
+                    data-composer-context-control
+                    data-project-assigned="false"
                   />
                 }
-                onClick={(event) =>
-                  choose(
-                    event,
-                    () =>
-                      void assignDraftProject(draftId, entry).catch((error: unknown) =>
-                        reportAssignFailure(entry.group.displayName, error),
-                      ),
-                  )
-                }
-              />
-            ))}
-            <MenuTrigger
-              render={
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="ghost"
-                  aria-label="All projects"
-                  data-testid="draft-project-pill"
-                  data-composer-context-control
-                  data-project-assigned="false"
-                />
-              }
-            >
-              <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
-            </MenuTrigger>
-          </span>
+              >
+                <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
+              </MenuTrigger>
+            </span>
+          </TooltipProvider>
         ) : (
           <MenuTrigger
             render={
