@@ -1098,8 +1098,9 @@
     sidebar over a grouped ordered list.
     The fork's two DndContexts deliberately do not adopt upstream's single
     flat sortable list with section-marker drop verbs (#9731, #9750, #10378,
-    #10453, #10464); Sidebar.drag.ts / Sidebar.pointer.ts / Sidebar.motion.ts
-    stay on disk untouched as the landing pad if that is ever ported.
+    #10453, #10464); Sidebar.drag.ts / Sidebar.pointer.ts stay on disk untouched
+    as the landing pad if that is ever ported. Sidebar.motion.ts drives the
+    list's motion (sidebar-v2-list-animation).
     Since the 2026-10-05 sync Sidebar.pointer.ts is imported for one thing:
     its SidebarPointerSensor drives upstream's sweep-to-settle/un-settle/wake
     (#14768) over the fork's own ordered row keys. The single-list drag and
@@ -1255,26 +1256,33 @@
     group plays as its collapse backwards; that symmetry, and the grow and
     shrink on a group toggle however many rows it holds, must stay.
 
-    The motion is the fork's own (custom/sidebarV2ListAnimation.ts), not
-    @formkit/auto-animate. AutoAnimate drew these keyframes as a plugin but
-    polled every row's position on a 2s timer, rebuilding an
-    IntersectionObserver per row, for the list's whole life and for rows that
-    had left. The fork's motion reads layout offsets when the rows change and
-    when one resizes, so nothing runs while the list is still. A row whose own
-    size changes takes it at once and the rows below slide; a slide skips a
-    row whose bottom edge stayed put. prefers-reduced-motion turns it off.
+    The engine is upstream's createSidebarListMotion (components/Sidebar.motion.ts),
+    the one upstream's own sidebar runs. A fenced seam there takes the fork's
+    fade style: rows fade in place between scale(1) and scale(.98) instead of
+    riding translateY with their neighbours, only rows the list's scroll
+    viewport shows fade (the rest come and go at once), and the bulk-change cap
+    that would stop a large group's toggle is lifted, because the on-screen
+    filter already bounds the clones. With no style passed the engine is
+    upstream's, unchanged.
 
-    One Tier-4 fence in Sidebar.tsx carries the import and the list ref that
-    attaches the motion and returns its cleanup.
+    custom/sidebarV2ListAnimation.ts wraps it: it skips the layout reads when a
+    commit left the list's rows as they were, starts over after the list was
+    hidden (the closed mobile sheet), and lets a drop measure even when nothing
+    reordered. Sidebar.tsx creates it from the list's ref and calls update()
+    from a layout effect after every commit, as upstream's sidebar does. A
+    project header drag suspends it on start and releases it on drop or cancel,
+    so the dropped header slides from where the pointer left it rather than
+    from its old slot. A row whose own size changes moves the rows below it at
+    once; prefers-reduced-motion turns it off.
   tier: 4
   files:
     - apps/web/src/custom/sidebarV2ListAnimation.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/Sidebar.motion.ts
   verify:
     - apps/web/src/__fork_guards__/sidebarV2ListAnimation.test.ts
-    - apps/web/src/custom/sidebarV2ListAnimation.test.ts
     - apps/web/src/custom/sidebarV2ListAnimation.browser.test.tsx
 
 - id: sidebar-offcanvas-compositing
