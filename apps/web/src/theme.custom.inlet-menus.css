@@ -1077,11 +1077,10 @@
   }
 }
 
-/* Inlet Black's thread details card is the sidebar's #141414 too, and the
-   header button it hangs from joins it in that colour. */
+/* Inlet Black's thread details card is the sidebar's #141414 too. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  :is([data-thread-details-card], [data-fork-panel-toggle]) {
+  [data-thread-details-card] {
   --popover: #141414;
   --popover-foreground: #e8e8e8;
   --foreground: #e8e8e8;
@@ -1103,6 +1102,16 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-thread-details-card] {
   color: #e8e8e8;
+}
+
+/* The header button joins the card in that colour while it is open; only
+   the popover pair, which the open state and its join read, so the resting
+   icons keep the panel's ink. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-fork-panel-toggle] {
+  --popover: #141414;
+  --popover-foreground: #e8e8e8;
 }
 
 /* The details popover's own shadow (upstream's 55% panel shadow) is Inlet's
