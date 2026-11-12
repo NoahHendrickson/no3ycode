@@ -1039,16 +1039,38 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+  /* Jungle Art's inset geometry (theme.custom.inlet-jungle.css): a 30px well,
+     the fill and a 22px pill thumb set 3px into it. */
+  & [data-fork-effort-control] {
+    height: 30px;
+  }
+
   & [data-fork-effort-track] {
+    --fork-effort-thumb-width: 28px;
+    height: 30px;
+    border-radius: 9px;
     background: #262626;
   }
 
   & [data-fork-effort-fill] {
+    inset-block: 3px;
+    left: 3px;
+    border-radius: 6px;
     background: #333333;
+    clip-path: inset(0 9px 0 0);
   }
 
   & [data-fork-effort-thumb] {
+    height: 30px;
+    padding: 3px;
+    border-radius: 9px;
     background: #e8e8e8;
+    background-clip: content-box;
+    box-shadow: none;
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+    }
   }
 
   & [data-fork-segmented-trait] {
