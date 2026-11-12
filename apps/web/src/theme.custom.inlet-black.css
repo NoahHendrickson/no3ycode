@@ -1,0 +1,321 @@
+/* Inlet Black — see `.fork/customizations.yaml#fork-inlet-theme`.
+
+   Every rule that restates the template, its composer or its hung menus for
+   Inlet Black alone (Figma 630:14154): the dark-ink sidebar surfaces on a
+   cream panel, the new-agent texture, the composer menus. Tokens live in
+   theme.custom.palettes.css. Imported last of the Inlet files so these follow
+   the rules they restate, and kept in their original order among themselves:
+   several override one another at equal specificity. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"] {
+  /* A press is the open row's cream under the sidebar's light ink, so the
+     label vanishes; a press keeps the hover fill. A lit row stays lit. */
+
+  &
+    [data-sidebar-version="v2"]
+    :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active:not(
+      [data-active="true"]
+    ) {
+    background-color: var(--sidebar-row-hover);
+  }
+
+  /* Project icons ink light mode's -600 shades (projectIconColors.ts), dark
+     on the charcoal sidebar; there they take dark mode's -400s. The hook is
+     the icons' own class, so no other -600 utility in the sidebar moves. */
+
+  & :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) .fork-project-icon {
+    --color-gray-600: var(--color-gray-400);
+    --color-red-600: var(--color-red-400);
+    --color-orange-600: var(--color-orange-400);
+    --color-amber-600: var(--color-amber-400);
+    --color-yellow-600: var(--color-yellow-400);
+    --color-lime-600: var(--color-lime-400);
+    --color-green-600: var(--color-green-400);
+    --color-emerald-600: var(--color-emerald-400);
+    --color-teal-600: var(--color-teal-400);
+    --color-cyan-600: var(--color-cyan-400);
+    --color-sky-600: var(--color-sky-400);
+    --color-blue-600: var(--color-blue-400);
+    --color-indigo-600: var(--color-indigo-400);
+    --color-violet-600: var(--color-violet-400);
+    --color-purple-600: var(--color-purple-400);
+    --color-fuchsia-600: var(--color-fuchsia-400);
+    --color-pink-600: var(--color-pink-400);
+    --color-rose-600: var(--color-rose-400);
+  }
+
+  /* Inlet Black's new-agent screen draws the pixel texture
+     (custom/InletBlackNewAgentTexture) behind the panel's content, so the
+     header, the workspace and the draft composer stop painting the panel over
+     it. The column already paints the cream under the texture's faded edge. */
+
+  & [data-chat-column-maximized-away][data-fork-draft-hero] {
+    position: relative;
+
+    & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
+      background-color: transparent;
+    }
+
+    & [data-chat-composer-overlay][data-draft-hero] {
+      background-image: none;
+    }
+  }
+
+  /* Over the texture the draft composer is frosted cream: its fills (Black's
+     #d0ccb5 vessel, #ecebe1 prompt, chips) let the texture through, and the
+     vessel blurs it. The texture keeps moving, so the blur redraws with it. */
+
+  &
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-chat-composer-overlay][data-draft-hero]
+    [data-fork-composer-stack] {
+    --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
+    --fork-composer-bg: rgb(236 235 225 / 70%);
+    --fork-composer-border: transparent;
+    --fork-context-chip-bg: rgb(208 204 181 / 55%);
+    --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
+
+    & [data-fork-composer-vessel] {
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+  }
+
+  /* Inlet Black's message links are the new-agent texture's blue (#44aaf8,
+     custom/pixelTexture), deepened on the same hue to reach 4.5:1 on the cream
+     panel. File and thread links read the same token. */
+
+  & .chat-markdown {
+    --info-foreground: #1670b5;
+  }
+
+  /* Inlet Black's dev-server pulse is plain ink: the mark breathes from the
+     sidebar's muted grey up to its light ink (the fade copy's --foreground),
+     with no working-green. */
+
+  & [data-fork-dev-server-live] > svg:not([data-fork-dev-server-fade]) {
+    color: var(--fork-inlet-black-ink-muted);
+  }
+
+  /* Inlet Black's composer is a light vessel inside a dark frame, so a notice
+     card's copy is inked for the vessel here rather than inherited. */
+
+  &
+    [data-fork-composer-vessel]
+    [data-fork-composer-notice="true"]
+    [data-slot="composer-banner-content"] {
+    color: #1c1c1a;
+
+    & > :not(:first-child) {
+      color: #55544c;
+    }
+  }
+
+  /* ── Inlet Black's composer menus ────────────────────────────────────────────
+     The menus hung from the composer (model, usage, mode) are the sidebar's
+     #141414 in its light ink rather than the composer's cream: the shell
+     (--fork-inlet-model-shell) paints them and their open buttons, the model
+     list is a step up, and a hover a step past that, as in the sidebar.
+     theme.custom.palettes.css maps their inks from these. */
+
+  &
+    :is(
+      [data-slot="menu-popup"]:has([data-fork-model-picker]),
+      [data-slot="menu-popup"]:has([data-composer-permissions]),
+      [data-slot="popover-popup"][data-fork-tab-menu]
+    ) {
+    --fork-inlet-black-surface: #262626;
+    --fork-inlet-black-step: #333333;
+    --fork-inlet-black-line: #333333;
+    --contrast-input: var(--fork-inlet-black-line);
+  }
+
+  /* The usage popover is the shell, as its button; each provider's panel set
+     into it is the model list's step up rather than the composer's cream. */
+
+  & [data-slot="popover-popup"][data-fork-tab-menu] {
+    --fork-inlet-black-surface: var(--fork-inlet-model-shell);
+    --fork-composer-bg: #262626;
+    --muted: var(--fork-inlet-black-step);
+    --background: var(--fork-inlet-model-shell);
+    background: var(--fork-inlet-model-shell);
+  }
+
+  /* The model menu's controls on the shell: the reasoning slider a recessed
+     well with a light thumb, and a segmented trait (Service Tier) in the mode
+     segments' language. Their utilities (bg-background, bg-input) resolve to
+     the page's cream and charcoal, not the menu's. */
+
+  & [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+    /* Jungle Art's inset geometry (theme.custom.inlet-jungle.css): a 30px well,
+       the fill and a 22px pill thumb set 3px into it. */
+    & [data-fork-effort-control] {
+      height: 30px;
+    }
+
+    & [data-fork-effort-track] {
+      --fork-effort-thumb-width: 28px;
+      height: 30px;
+      border-radius: 9px;
+      background: #303030;
+    }
+
+    & [data-fork-effort-fill] {
+      inset-block: 3px;
+      left: 3px;
+      border-radius: 6px;
+      background: #4a4a4a;
+      clip-path: inset(0 9px 0 0);
+    }
+
+    & [data-fork-effort-thumb] {
+      height: 30px;
+      padding: 3px;
+      border-radius: 9px;
+      background: var(--fork-inlet-black-ink);
+      background-clip: content-box;
+      box-shadow: none;
+
+      &:focus-visible {
+        box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+      }
+    }
+
+    & [data-fork-segmented-trait] {
+      background: var(--fork-inlet-black-surface);
+    }
+
+    & [data-fork-segmented-trait] > button {
+      color: var(--fork-inlet-black-ink-muted);
+    }
+
+    & [data-fork-segmented-trait] > button:hover {
+      color: var(--fork-inlet-black-ink);
+    }
+
+    & [data-fork-segmented-trait] > button[aria-pressed="true"] {
+      background: #3a3a3a;
+      color: #ffffff;
+      box-shadow: none;
+    }
+  }
+
+  /* The mode segments: a recessed well, a lift on hover, the chosen mode
+     lifted further. */
+
+  & [data-slot="menu-popup"]:has([data-composer-permissions]) {
+    & [data-composer-permissions] > :first-child,
+    & [data-composer-permissions] > :not([role="group"]) :is(p, span, div):last-child {
+      color: var(--fork-inlet-black-ink-muted);
+    }
+
+    & [data-composer-permissions] [role="group"] {
+      gap: 3px;
+      padding: 3px;
+      border-radius: 9px;
+      background: #1f1f1f;
+    }
+
+    & [data-composer-permissions] [role="menuitemradio"] {
+      border-radius: 6px;
+      background: transparent;
+      color: var(--fork-inlet-black-ink-muted);
+    }
+
+    & [data-composer-permissions] [role="menuitemradio"]:is(:hover, [data-highlighted]) {
+      background: var(--fork-inlet-black-step-hover);
+      color: var(--fork-inlet-black-ink);
+    }
+
+    & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
+      background: #3a3a3a;
+      color: #ffffff;
+    }
+  }
+
+  /* Their open buttons, and a live dictation pill, sit on the shell in its ink. */
+
+  &
+    :is(
+      [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"],
+      [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled),
+      [data-fork-composer-control-row-slot="left"] [data-fork-dictation-live]
+    ) {
+    color: var(--fork-inlet-black-ink);
+
+    & * {
+      color: inherit;
+    }
+  }
+
+  /* Inlet Black's thread details card is the sidebar's #141414 too, its
+     hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
+     it, rows lift as the sidebar's rows hover (upstream's light-mode black
+     wash vanishes on #141414, and is !important, so this is too), and the
+     editor marks drawn black-on-light take their dark-mode fills. */
+
+  & [data-thread-details-card] {
+    --fork-inlet-black-step: var(--fork-inlet-black-step-hover);
+    --fork-outline-hover-bg: var(--fork-inlet-black-step-hover);
+
+    & .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
+      background-color: var(--fork-outline-hover-bg) !important;
+    }
+
+    & svg[class~="fill-[#26251E]"] {
+      fill: #edecec;
+    }
+
+    & svg[class~="fill-black"] {
+      fill: #ffffff;
+    }
+  }
+
+  /* The header button joins the card in that colour while it is open; only
+     the popover pair, which the open state and its join read, so the resting
+     icons keep the panel's ink. */
+
+  & [data-fork-panel-toggle] {
+    --popover: var(--fork-inlet-black-surface);
+    --popover-foreground: var(--fork-inlet-black-ink);
+  }
+
+  /* Inlet Black's composer chips open in their own resting fill, not the
+     popover's near-white: the open chip and its menu take the chip colour, and
+     a highlighted row the chip's hover step. */
+
+  &
+    :is(
+      [data-fork-composer-context-row],
+      [data-fork-chip-menu],
+      .dropdown-glass:has(> [data-fork-chip-menu])
+    ) {
+    --popover: var(--fork-context-chip-bg);
+    --accent: var(--fork-context-chip-bg-hover);
+  }
+
+  /* Black's --background is the #141414 frame under the panel's dark ink, so a
+     dialog's glass (index.css dialog-glass) drew dark on dark; dialogs are the
+     cream popover, solid, as the menus are. */
+
+  & .dialog-glass {
+    --background: var(--popover);
+    background: var(--popover);
+    border-color: var(--border);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* The usage panels' provider icons take the dark appearance's fills on
+     the charcoal (theme.custom.inlet-jungle.css has Jungle Art's reverse). */
+
+  & [data-slot="popover-popup"][data-fork-tab-menu] {
+    & [data-provider-package-icon] {
+      fill: var(--icon-dark);
+    }
+
+    & [data-provider-package-icon] [data-icon-detail] {
+      fill: var(--path-dark);
+    }
+  }
+}

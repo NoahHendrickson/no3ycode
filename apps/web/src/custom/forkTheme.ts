@@ -32,7 +32,7 @@ import {
   subscribeToThemeChanges,
   syncBrowserChromeTheme,
 } from "../hooks/useTheme";
-import { setActiveForkPalette } from "./forkActivePalette";
+import { setActiveForkPalette, useIsInletActive } from "./forkActivePalette";
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
@@ -548,4 +548,11 @@ export function useForkAppearance(
   const setInletColor = (next: InletColor) => setForkInletColor(next, setTheme);
 
   return { appearance, setAppearance, palette, inletColor, setInletColor } as const;
+}
+
+/** Inlet's colour while Inlet is the palette painted, else null. */
+export function useActiveInletColor(): InletColor | null {
+  const inletActive = useIsInletActive();
+  const color = useSyncExternalStore(subscribePalette, readInletColor, () => DEFAULT_INLET_COLOR);
+  return inletActive ? color : null;
 }

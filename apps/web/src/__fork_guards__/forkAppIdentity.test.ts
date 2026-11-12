@@ -252,12 +252,22 @@ describe("fork guard: fork-app-identity", () => {
     expect(JSON.parse(read("t3.json")).iconPath).toBe("assets/fork/n3-project-icon.svg");
     const icon = read("assets/fork/n3-project-icon.svg");
     expect(icon).toContain('viewBox="0 0 23 23"');
-    // The bare leaf is the sidebar mark's cells with a #373737 outline, and no backdrop.
-    const sidebar = cellFills(read("apps/web/src/custom/SidebarBrandMark.tsx"));
-    const outlined = new Map(
-      [...sidebar].map(([cell, fill]) => [cell, fill === "#000000" ? "#373737" : fill]),
-    );
-    expect(cellFills(icon)).toEqual(outlined);
+    // The bare 23-cell leaf (t3-fork 556:28871) with a #373737 outline and no
+    // backdrop. It keeps that drawing while the sidebar mark moved to Figma
+    // 676:42956; the web favicons are rendered from it, so they move together.
+    const icon23 = cellFills(icon);
+    expect(icon23.size).toBe(253);
+    expect([...new Set(icon23.values())].toSorted()).toEqual([
+      "#008755",
+      "#08b776",
+      "#26b846",
+      "#373737",
+      "#3aed62",
+      "#f95b1c",
+      "#fcb01a",
+      "#ff8f0c",
+      "#ffd233",
+    ]);
   });
 
   it("keeps packaged state out of the shared ~/.t3 base directory", () => {

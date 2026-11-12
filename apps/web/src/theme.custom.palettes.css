@@ -4,6 +4,7 @@
 @import "./theme.custom.inlet-composer.css";
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-jungle.css";
+@import "./theme.custom.inlet-black.css";
 
 /* Fork dark palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and sibling palette ids). Kept out of theme.custom.css so a new sibling is a
@@ -77,9 +78,9 @@
      all read this one token. Restated on the v2 panel below because the
      default block declares it there too. */
   --sidebar-v2-status-working: #1877f2;
-  /* The sidebar mark's eight colour runs, Figma 412:31179 — cell for cell
-     the same grid as the default mark, with each arm's green/orange pair
-     swapped for a blue pair. custom/SidebarBrandMark.tsx reads these. */
+  /* The sidebar mark's colour runs, Figma 412:31179: each arm's green/orange
+     pair swapped for a blue pair, and black outlines rather than each leaf's
+     dark shade. custom/SidebarBrandMark.tsx reads these. */
   --fork-brand-mark-top: #00bfff;
   --fork-brand-mark-top-light: #5ee7ff;
   --fork-brand-mark-left: #2a72e6;
@@ -88,6 +89,10 @@
   --fork-brand-mark-right-light: #a089ff;
   --fork-brand-mark-bottom: #1aadfc;
   --fork-brand-mark-bottom-light: #72c4ff;
+  --fork-brand-mark-top-outline: #000000;
+  --fork-brand-mark-left-outline: #000000;
+  --fork-brand-mark-right-outline: #000000;
+  --fork-brand-mark-bottom-outline: #000000;
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"]
@@ -655,8 +660,8 @@
 
 /* Jungle Art shows its picture only on the new-agent screen
    (theme.custom.inlet-jungle.css), so no transcript scrolls over it. The
-   green stays in the controls: the cream composer, the green model shell,
-   send button and open tab. */
+   green stays in the controls: the green model shell, send button and open
+   tab. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"] {
   /* Tooltips are the menus' green, inked white. */
   --fork-inlet-tooltip: var(--fork-inlet-model-shell);
@@ -667,9 +672,9 @@
      inks inside them). */
   --popover: #e8e6cf;
   --popover-foreground: #1c1c1a;
-  /* A solid cream composer on the charcoal stage and the picture: the
-     sidebar's hover cream for the vessel and chips, a lighter cream for the
-     prompt. */
+  /* The composer's creams, which the menus, the user's bubble and the effort
+     knob read. The composer itself restates glass fills on its stack
+     (theme.custom.inlet-jungle.css). */
   --fork-composer-vessel-bg: #e8e6cf;
   --fork-composer-bg: #f6f4e4;
   --fork-composer-border: #f6f4e4;
@@ -802,29 +807,87 @@
   --fork-composer-border-focus: #c6c2ab;
   --fork-context-chip-bg: #d0ccb5;
   --fork-context-chip-bg-hover: #c6c2ab;
+  /* Black's dark ink, for the surfaces drawn in the sidebar's charcoal: the
+     sidebar, the thread details card and the composer's menus. The rules
+     below map the semantic tokens from these; a surface that differs from
+     the sidebar restates only its own surface, step and line. */
+  --fork-inlet-black-ink: #e8e8e8;
+  --fork-inlet-black-ink-muted: #9a9a9a;
+  --fork-inlet-black-surface: #141414;
+  --fork-inlet-black-step: #232322;
+  /* White 8% over the #141414 sidebar, flattened. */
+  --fork-inlet-black-step-hover: #272727;
+  --fork-inlet-black-line: #2a2a2a;
+  /* A row's hover card, and the row while it is open, are the sidebar's own
+     hover fill in its light ink rather than the popover's cream. */
+  --fork-inlet-row-card: var(--fork-inlet-black-step-hover);
+  --fork-inlet-row-card-foreground: var(--fork-inlet-black-ink);
+  --fork-inlet-row-card-muted: var(--fork-inlet-black-ink-muted);
+  /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
+  --message-surface: #ebe7cd;
+  /* The composer's menus and their open buttons are the sidebar's #141414
+     (theme.custom.inlet-black.css restates their inks). */
+  --fork-inlet-model-shell: var(--fork-inlet-black-surface);
+}
+
+/* Black's dark-ink surfaces take its ink, steps and line; the menus and the
+   details card restate their surface and steps (theme.custom.inlet-black.css). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-thread-details-card],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is(
+    [data-slot="menu-popup"]:has([data-fork-model-picker]),
+    [data-slot="menu-popup"]:has([data-composer-permissions]),
+    [data-slot="popover-popup"][data-fork-tab-menu]
+  ) {
+  --foreground: var(--fork-inlet-black-ink);
+  --muted-foreground: var(--fork-inlet-black-ink-muted);
+  --accent: var(--fork-inlet-black-step);
+  --accent-foreground: var(--fork-inlet-black-ink);
+  --border: var(--fork-inlet-black-line);
+}
+
+/* The details card and the menus are popovers on that ink, so they restate
+   the contrast inks too (theme.custom.inlet-black.css sets their fills). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-thread-details-card],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is(
+    [data-slot="menu-popup"]:has([data-fork-model-picker]),
+    [data-slot="menu-popup"]:has([data-composer-permissions]),
+    [data-slot="popover-popup"][data-fork-tab-menu]
+  ) {
+  --popover: var(--fork-inlet-black-surface);
+  --popover-foreground: var(--fork-inlet-black-ink);
+  --input: var(--fork-inlet-black-line);
+  --contrast-foreground: var(--fork-inlet-black-ink);
+  --contrast-popover-foreground: var(--fork-inlet-black-ink);
+  --contrast-accent-foreground: var(--fork-inlet-black-ink);
+  --contrast-muted-foreground: var(--fork-inlet-black-ink-muted);
+  --contrast-secondary-label: var(--fork-inlet-black-ink-muted);
+  --contrast-icon-muted: var(--fork-inlet-black-ink-muted);
+  --contrast-border: var(--fork-inlet-black-line);
+  color: var(--fork-inlet-black-ink);
 }
 
 /* Charcoal's sidebar on the #141414 frame, with dark mode's bright status
    colours as Green has; the open row is the cream panel. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   :is([data-sidebar-version="v2"], [data-fork-thread-tabs]) {
-  --background: #141414;
-  --foreground: #e8e8e8;
-  --card: #141414;
-  --card-foreground: #e8e8e8;
-  --sidebar: #141414;
-  --sidebar-foreground: #e8e8e8;
-  --border: #2a2a2a;
-  --sidebar-border: #2a2a2a;
-  --sidebar-stage-fade: #141414;
-  --muted: #232322;
-  --accent: #232322;
-  --accent-foreground: #e8e8e8;
-  --muted-foreground: #9a9a9a;
+  --background: var(--fork-inlet-black-surface);
+  --card: var(--fork-inlet-black-surface);
+  --card-foreground: var(--fork-inlet-black-ink);
+  --sidebar: var(--fork-inlet-black-surface);
+  --sidebar-foreground: var(--fork-inlet-black-ink);
+  --sidebar-border: var(--fork-inlet-black-line);
+  --sidebar-stage-fade: var(--fork-inlet-black-surface);
+  --muted: var(--fork-inlet-black-step);
   --sidebar-muted-foreground: #d5d5d5;
   --fork-sidebar-card-title-receded: #b0b0b0;
-  --sidebar-control-surface: #2a2a2a;
-  --sidebar-row-hover: #1f1f1f;
+  --sidebar-control-surface: var(--fork-inlet-black-line);
+  --sidebar-row-hover: var(--fork-inlet-black-step-hover);
   --sidebar-row-active: #f8f3d8;
   --sidebar-row-selected: #f8f3d8;
   --sidebar-v2-status-working: #24fe8a;

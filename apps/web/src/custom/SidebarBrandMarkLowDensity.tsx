@@ -1,6 +1,6 @@
 /**
  * The sidebar flower under 1.5x: one device pixel per cell at 1x, 1-2 at 1.25x.
- * SidebarBrandMark's 23-cell art cannot land on 16 pixels: crispEdges has to drop
+ * SidebarBrandMark's 21-cell art cannot land on 16 pixels: crispEdges has to drop
  * cells. 15 rows because the brand link clips to 16px; odd keeps the centre cross.
  */
 export function SidebarBrandMarkLowDensity() {

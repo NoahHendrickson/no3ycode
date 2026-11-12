@@ -174,8 +174,9 @@
   }
 }
 
-/* Jungle Art, Cream and Black draw rows as pills; the open one stays square
-   where it joins the panel. */
+/* Jungle Art, Cream and Black round rows to the nav rows' 10px (CHROME_ACTION,
+   custom/SidebarV2ChromeRows), at rest, hovered and open alike. The open one
+   stays square where it joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="jungle"],
@@ -183,19 +184,87 @@
     [data-fork-inlet-color="black"]
   )
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"] {
-  border-radius: 9999px;
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"]) {
+  border-radius: 10px;
 
   &[aria-current="page"] {
-    border-radius: 9999px 0 0 9999px;
+    border-radius: 10px 0 0 10px;
   }
 }
 
-/* Green's cream composer, inked dark. The contrast inks are computed once at
+/* Jungle Art's composer is glass (Figma 630:11828). The fills are restated on
+   the composer's own stack, so the menus, the user's bubble and the effort
+   knob, which read the same tokens from :root, stay solid cream. On a thread
+   it is a faint white over the charcoal stage, in the stage's light ink, with
+   no blur: there is nothing behind it to blur. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-fork-composer-stack] {
+  --fork-composer-vessel-bg: rgb(255 255 255 / 8%);
+  --fork-composer-bg: rgb(255 255 255 / 6%);
+  --fork-composer-border: transparent;
+  --fork-composer-border-focus: rgb(255 255 255 / 16%);
+  --fork-context-chip-bg: rgb(255 255 255 / 10%);
+  --fork-context-chip-bg-hover: rgb(255 255 255 / 16%);
+
+  & [data-fork-composer-mode-chip] {
+    background: rgb(255 255 255 / 10%);
+  }
+
+  & [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
+    background: rgb(255 255 255 / 16%);
+  }
+}
+
+/* Over the new-agent picture it is light glass in dark ink. The vessel and
+   chips blur the art; it is fixed and nothing scrolls over it, so the blur is
+   drawn once rather than every frame. The contrast inks are computed once at
    :root from the stage's light ink, so the vessel restates them. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-vessel] {
+  [data-chat-composer-overlay][data-draft-hero]
+  [data-fork-composer-stack] {
+  --fork-composer-vessel-bg: rgb(255 255 255 / 40%);
+  --fork-composer-bg: rgb(255 255 255 / 60%);
+  --fork-composer-border-focus: rgb(255 255 255 / 80%);
+  --fork-context-chip-bg: rgb(255 255 255 / 20%);
+  --fork-context-chip-bg-hover: rgb(255 255 255 / 30%);
+
+  & [data-fork-composer-vessel],
+  & [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip]) {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  &
+    [data-fork-composer-context-row]
+    :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+    color: #ffffff;
+
+    & svg {
+      color: inherit;
+    }
+  }
+
+  & [data-fork-composer-mode-chip] {
+    background: rgb(0 0 0 / 16%);
+  }
+
+  & [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
+    background: rgb(0 0 0 / 22%);
+  }
+
+  /* The meter's track while it holds a fill: no :has() keyed on a bare span. */
+  & [data-fork-composer-usage-limits] > span:not(:empty) {
+    background: rgb(0 0 0 / 32%);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :is(
+    [data-chat-composer-overlay][data-draft-hero] [data-fork-composer-vessel],
+    [data-chat-composer-top-drawer] > [data-fork-pending-user-input]
+  ) {
   --foreground: #1c1c1a;
   --muted-foreground: rgb(0 0 0 / 65%);
   --placeholder: rgb(0 0 0 / 65%);
@@ -206,28 +275,21 @@
   --contrast-icon-muted: rgb(0 0 0 / 65%);
   --fork-composer-control-ink: #1c1c1a;
   color: var(--foreground);
+}
 
-  /* The primary action ("Submit answer") reads Tailwind's root-resolved
-     primary, the stage's pale one; Green's dark button instead. */
+/* The Questions card is cream on either glass, inked dark. Its primary action
+   ("Submit answer") reads Tailwind's root-resolved primary, the stage's pale
+   one; Green's dark button instead. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-chat-composer-top-drawer]
+  > [data-fork-pending-user-input] {
+  background: var(--fork-inlet-question-fill);
+
   & [data-fork-pending-user-input-action="advance"] {
     background: #1c1c1a;
     color: #ffffff;
   }
-
-  /* The meter's track while it holds a fill: no :has() keyed on a bare span. */
-  & [data-fork-composer-usage-limits] > span:not(:empty) {
-    background: rgb(0 0 0 / 32%);
-  }
-
-  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
-    background: var(--fork-inlet-question-fill);
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
-  color: #1c1c1a;
 }
 
 /* On Jungle Art the rail is green, so a hovered provider lifts with white
@@ -290,6 +352,22 @@
   & .lucide-search {
     color: var(--placeholder);
   }
+}
+
+/* A glass tooltip (the Automations row's run card) is still a tooltip: the
+   green fill, so it keeps the tooltip's white ink, not the menus' dark. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="tooltip-popup"].dropdown-glass:not([data-fork-row-hover-card]) {
+  --foreground: #ffffff;
+  --muted-foreground: rgb(255 255 255 / 72%);
+  --contrast-foreground: #ffffff;
+  --contrast-popover-foreground: #ffffff;
+  --contrast-muted-foreground: rgb(255 255 255 / 72%);
+  --contrast-secondary-label: rgb(255 255 255 / 72%);
+  --contrast-icon-muted: rgb(255 255 255 / 72%);
+  --border: rgb(255 255 255 / 24%);
+  color: #ffffff;
 }
 
 /* The user's bubble is the composer's cream, inked dark, not the stage's
@@ -424,6 +502,27 @@
        inset), so they part by as much. */
     margin-bottom: 5px;
     border-bottom-width: 0;
+  }
+
+  /* A classic scrollbar would paint its track down the shell and push the
+     panels off centre; the list still scrolls, as the sidebar's does. */
+  & [data-fork-usage-scroller] {
+    scrollbar-width: none;
+  }
+}
+
+/* A provider's package icon (Grok's) fills for the app's appearance, but these
+   panels go the other way: cream on Jungle Art's dark appearance, charcoal on
+   Black's light one (theme.custom.inlet-black.css), so each takes the other fill. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  [data-slot="popover-popup"][data-fork-tab-menu] {
+  & [data-provider-package-icon] {
+    fill: var(--icon-light);
+  }
+
+  & [data-provider-package-icon] [data-icon-detail] {
+    fill: var(--path-light);
   }
 }
 

@@ -250,11 +250,29 @@
   color: var(--fork-inlet-panel-foreground);
 }
 
+/* On a cream panel beside a dark sidebar (Green, Jungle Light, Black), the
+   open row's status marks take deep shades: the sidebar's bright ones, tuned
+   for its dark fill, vanish on the cream. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="green"],
+    [data-fork-inlet-color="jungle-light"],
+    [data-fork-inlet-color="black"]
+  )
+  [data-sidebar-version="v2"]
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  --sidebar-v2-status-working: #047857;
+  --sidebar-v2-status-done: #1d4ed8;
+  --sidebar-v2-status-approval: #b45309;
+  --sidebar-v2-status-input: #b45309;
+  --sidebar-v2-status-failed: #b91c1c;
+}
+
 /* The card is square on the side that joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][aria-current="page"] {
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
   border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
 }
 
@@ -294,7 +312,10 @@
     /* The open row's item. content-visibility: auto implies paint containment,
        which would clip the bridge to the item's box; one visible item costs
        nothing. */
-    & li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"]) {
+    &
+      li[data-thread-item]:has(
+        :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]
+      ) {
       position: relative;
       content-visibility: visible;
     }
@@ -303,7 +324,10 @@
        one fillet above and below it. The fillets are the panel's fill outside
        a circle centred off the corner, so the row's top and bottom edges curve
        into the panel's side. */
-    & li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])::after {
+    &
+      li[data-thread-item]:has(
+        :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]
+      )::after {
       content: "";
       position: absolute;
       pointer-events: none;
@@ -660,37 +684,52 @@
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
       padding-inline-end: var(--fork-inlet-margin);
     }
+  }
+}
 
-    & [data-sidebar-version="v2"] [data-fork-chrome-row][data-active="true"] {
-      position: relative;
-      overflow: visible;
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
+/* A lit chrome row runs into the panel beside it, as the open thread's row
+   does: New agent into the new-agent screen's chat column, Usage and
+   Automations into their stage card. Both blocks above move the frame's gap
+   into the sidebar's end padding, which the bridge crosses. */
 
-      &::after {
-        content: "";
-        position: absolute;
-        pointer-events: none;
-        left: 100%;
-        right: calc(-1 * var(--fork-inlet-margin));
-        top: calc(-1 * var(--fork-inlet-fillet));
-        bottom: calc(-1 * var(--fork-inlet-fillet));
-        background:
-          radial-gradient(
-              circle at 0 0,
-              transparent calc(var(--fork-inlet-fillet) - 0.5px),
-              var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
-            )
-            right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-          radial-gradient(
-              circle at 0 100%,
-              transparent calc(var(--fork-inlet-fillet) - 0.5px),
-              var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
-            )
-            right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
-          linear-gradient(var(--fork-inlet-panel), var(--fork-inlet-panel)) 0
-            var(--fork-inlet-fillet) / 100% calc(100% - 2 * var(--fork-inlet-fillet)) no-repeat;
-      }
+@media (min-width: 768px) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+      [data-fork-has-chat-column],
+      [data-fork-has-stage-card]
+    )
+    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
+      [data-fork-sidebar-overlay="true"]
+    )
+    [data-sidebar-version="v2"]
+    [data-fork-chrome-row][data-active="true"] {
+    position: relative;
+    overflow: visible;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    &::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      left: 100%;
+      right: calc(-1 * var(--fork-inlet-margin));
+      top: calc(-1 * var(--fork-inlet-fillet));
+      bottom: calc(-1 * var(--fork-inlet-fillet));
+      background:
+        radial-gradient(
+            circle at 0 0,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right top / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        radial-gradient(
+            circle at 0 100%,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-panel) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          right bottom / var(--fork-inlet-fillet) var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-panel), var(--fork-inlet-panel)) 0
+          var(--fork-inlet-fillet) / 100% calc(100% - 2 * var(--fork-inlet-fillet)) no-repeat;
     }
   }
 }
@@ -795,37 +834,6 @@
   }
 }
 
-/* The brand mark's literal black outline and veins sink into the dark
-   frames; on a cream frame they read as a heavy cross and punched holes, so
-   there they take the sidebar's dark ink. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
-  [data-fork-brand-art]
-  > g[fill="#000000"] {
-  fill: #3a3934;
-}
-
-/* Inlet's brand lockup a step up: the mark 16 → 24px and the wordmark by the
-   same 1.5, the link's 16px row growing with them. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] .sidebar-brand {
-  height: 24px;
-  gap: 6px;
-
-  & [data-fork-brand-art] {
-    width: 24px;
-    height: 24px;
-  }
-
-  & [data-fork-brand-wordmark] {
-    width: 52px;
-    height: 12px;
-  }
-}
-
 /* Inlet draws filled icons (custom/icons/lucide-phosphor.tsx picks Phosphor's
    fill weight); the hand-drawn worktree mark has no fill weight, so its
    duotone wash goes solid instead. */
@@ -870,4 +878,33 @@
   [data-chat-header]
   nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input)) {
   visibility: hidden;
+}
+
+/* A standalone page (the error screen, pairing) sits outside the chat
+   column, where --background is the frame and, on Inlet Black, the ink is
+   the panel's dark one. It takes the panel's fill and inks, as the stage. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-standalone-page] {
+  --background: var(--fork-inlet-panel);
+  --foreground: var(--fork-inlet-panel-foreground);
+  --muted-foreground: var(--fork-inlet-panel-muted);
+  --contrast-foreground: var(--fork-inlet-panel-foreground);
+  --contrast-muted-foreground: var(--fork-inlet-panel-muted);
+  --contrast-secondary-label: var(--fork-inlet-panel-muted);
+  --contrast-icon-muted: var(--fork-inlet-panel-muted);
+}
+
+/* The transcript minimap's turn preview is a glass card inside the column,
+   not a portaled popup, so the menu rule in theme.custom.inlet-menus.css
+   misses it: it is drawn as Inlet's other menus, solid, with faint ink taken
+   from its own fill rather than the stage's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-minimap-preview]
+  > .dropdown-glass {
+  --muted-foreground: color-mix(in srgb, var(--popover-foreground) 65%, var(--popover));
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

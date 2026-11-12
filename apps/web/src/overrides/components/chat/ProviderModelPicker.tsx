@@ -31,6 +31,7 @@ import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "~/lib/utils";
 import { ChevronDownIcon } from "~/custom/icons/lucide-phosphor";
+import { useIsInletActive } from "~/custom/forkActivePalette";
 import { triggerModelName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerContent, resolveModelPickerSelectedModel } from "./ModelPickerContent";
 import { ChatGptSharingControl } from "./ChatGptSharingControl";
@@ -225,6 +226,17 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   const composerIconClassName =
     props.isComposerOwned &&
     (size === "xs" ? "hidden @max-[640px]/composer-surface:inline-flex" : "hidden");
+  // Inlet's open composer menu hangs from this button as a tab, so its label
+  // holds while the menu is open and catches up on close; the menu shows the
+  // live choice. Otherwise a new effort resizes the button and the tab with it.
+  const liveLabel = {
+    model: props.triggerLabel ?? multipleLabel ?? triggerTitle,
+    traits: props.traits?.label,
+  };
+  const [heldLabel, setHeldLabel] = useState<typeof liveLabel | null>(null);
+  const holdsLabel = useIsInletActive() && props.isComposerOwned === true && isMenuOpen;
+  if (holdsLabel !== (heldLabel !== null)) setHeldLabel(holdsLabel ? liveLabel : null);
+  const shownLabel = heldLabel ?? liveLabel;
 
   return (
     <Menu
@@ -323,7 +335,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
                 />
               }
             >
-              {props.triggerLabel ?? multipleLabel ?? triggerTitle}
+              {shownLabel.model}
             </TooltipTrigger>
             <TooltipPopup side="top">
               {triggerTooltipContent}
@@ -343,7 +355,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               below 640px, so the traits label collapses there with the model
               name. Elsewhere it truncates rather than spill past the trigger's
               max width. Fast mode is part of the label text (upstream #16069). */}
-          {props.traits?.label ? (
+          {shownLabel.traits ? (
             <span
               className={cn(
                 "min-w-0 truncate text-muted-foreground",
@@ -351,7 +363,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               )}
               data-chat-provider-model-picker-traits="true"
             >
-              {props.traits.label}
+              {shownLabel.traits}
             </span>
           ) : null}
         </span>

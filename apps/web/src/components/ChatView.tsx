@@ -415,6 +415,9 @@ import {
   useSystemComposerBanners,
 } from "./chat/useSystemComposerBanners";
 import { useDraftHeroLayoutTransition } from "./chat/useDraftHeroLayoutTransition";
+/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
+/* fork:end fork-inlet-black-texture */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -3717,6 +3720,9 @@ export default function ChatView(props: ChatViewProps) {
         /* fork:end fork-stage-stamps */
         inert={rightPanelMaximized}
       >
+        {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
+        <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
+        {/* fork:end fork-inlet-black-texture */}
         {embedded ? null : (
           <header
             ref={threadPanelPopoverAnchorRef}

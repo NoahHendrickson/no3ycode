@@ -353,7 +353,7 @@
     and from the four .repos exclusions in .vscode/settings.json, the way
     .repos already was.
     The rendered app carries the name too: the sidebar brand drops the T3
-    wordmark and draws Figma t3-fork 364:11245 — the 16px pixel mark and the
+    wordmark and draws Figma t3-fork 676:41854 — the 16px pixel mark and the
     13x3 "no3y" wordmark owned by fork-sidebar-chrome. APP_BASE_NAME still
     names the packaged app and branding.ts's bridge-less fallback, which
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
@@ -376,8 +376,8 @@
     splash uses the orange family, while packaged builds stamp the green
     production family. Web favicons and the project icon are the bare leaf
     with no tile (t3-fork 556:28871): assets/fork/n3-project-icon.svg is
-    SidebarBrandMark's integer cells on the 23-unit grid with crispEdges,
-    literal fills, and a #373737 outline, and the n3-web-favicon*
+    the earlier 23-cell leaf (it did not follow the sidebar mark to 676:42956)
+    as integer cells with crispEdges, literal fills, and a #373737 outline, and the n3-web-favicon*
     rasters (with apps/web/public copies) are rendered from it at an exact
     multiple of its 23-cell grid, then downscaled; export-icons.ts leaves
     them alone. Filenames still say n3-* for path stability. t3.json's
@@ -2456,7 +2456,7 @@
     background; the column's header, workspace area and new-thread timeline
     go transparent over the column's fill; the cream #f2f0d8 frame is
     --fork-inlet-frame, painted on the inset and the column's wrapper only
-    round a chat column; rows are pills; the composer is solid cream (the sidebar's hover cream, a lighter cream prompt) with dark ink. Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
+    round a chat column; rows are pills; the composer is glass (Figma 630:11828), its fills restated on the composer stack so menus and the user's bubble keep the solid cream: on a thread a faint white over the charcoal in the stage's light ink (vessel 8%, prompt 6%, chips 10%, no blur), over the new-agent picture light glass in dark ink (vessel 40% and chips 20% with a 12px blur, prompt 60%). Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
     Green's tokens (the palette rules list both colours) with the same art,
     faded to 22% over #21835c, painted once on the sidebar wrapper behind the
     sidebar and the frame round the panel, whose own frame fills step aside.
@@ -2576,8 +2576,10 @@
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
     - apps/web/src/theme.custom.inlet-jungle.css
+    - apps/web/src/theme.custom.inlet-black.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
+    - apps/web/src/components/ui/standalone-page.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/index.html
@@ -2594,6 +2596,7 @@
     - apps/web/src/components/ThreadHoverCard.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/projectIconColors.ts
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
@@ -2605,8 +2608,8 @@
     --text-sm (and their --line-height companions) to 0.8125rem / 1rem so those
     share one size without rewriting each className. Search, New thread, Add
     project, and the Projects label opt out at 0.875rem (14px) via CHROME_TYPE;
-    card titles and the repo/branch line opt out with literal rem sizes
-    (0.875rem / 0.75rem — see
+    card titles, slim (settled and snoozed) titles and the rename field are
+    0.875rem, and the repo/branch line 0.75rem, as literal rem sizes (see
     sidebar-v2-card-rows) so the remap cannot flatten them. Rem, not px:
     a px pin would freeze the sidebar while h-4 and the rest of the app still
     honour the browser font-size setting. Line-height stays 1rem so the card's
@@ -2724,11 +2727,12 @@
     edge inset.
 
     The brand stays on the trailing edge and ends 16px from it. It is Figma
-    t3-fork 364:11245: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
-    inline SVG whose arm colours are --fork-brand-mark-* variables with the
-    design's colours as fallbacks, so a palette can recolour it), a 4px gap, then
-    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. Under 1.5x
-    device pixels the 23 cells cannot land on 16 pixels, so
+    t3-fork 676:41854: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
+    inline SVG of 676:42956's 21-cell pinwheel whose body, light and outline
+    colours are --fork-brand-mark-* variables with the design's colours as
+    fallbacks, so a palette can recolour it), a 4px gap, then the 13x3 "no3y"
+    wordmark at 8px and 40% sidebar-foreground, on every theme including Inlet.
+    Under 1.5x device pixels the 21 cells cannot land on 16 pixels, so
     SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
     wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
     carries its own display gate, hidden below 48rem and a flex row above,
@@ -6664,3 +6668,58 @@
     - apps/web/src/__fork_guards__/forkStageStamps.test.ts
     - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
     - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts
+
+- id: fork-inlet-black-texture
+  intent: >
+    Inlet Black's new-agent screen shows the portfolio's pixel texture (the
+    Landing preset: an Edge of pixel faces, leaves and shapes coming in from
+    the panel's right edge) on the panel's cream, behind the draft. Only Inlet
+    Black, only the new-agent screen; threads keep the plain panel.
+
+    It keeps moving while the screen is open, which Noey chose over settling
+    (Nov 12) as an explicit sign-off on CLAUDE.md's rule against continuously
+    repainting animations: frames are capped at about 30-40 a second (nothing
+    in it moves faster), it pauses while the window is in the background, and
+    the browser stops it when hidden. Reduced motion draws one still frame. The
+    engine (custom/pixelTexture) is a trimmed port of the portfolio's
+    TextureCanvas that renders the Landing look: a pure grid model
+    (textureModel.ts) and a painter that owns the canvas and frame loop. A
+    resize re-deals it only when the whole-cell grid changes.
+    The column's header, workspace area and draft composer stop painting the
+    panel there so the texture shows through.
+  tier: 4
+  files:
+    - apps/web/src/custom/InletBlackNewAgentTexture.tsx
+    - apps/web/src/custom/pixelTexture/PixelTextureBackdrop.tsx
+    - apps/web/src/custom/pixelTexture/paintPixelTexture.ts
+    - apps/web/src/custom/pixelTexture/textureModel.ts
+    - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
+    - apps/web/src/custom/forkTheme.ts
+    - apps/web/src/theme.custom.inlet-black.css
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
+    - apps/web/src/custom/pixelTexture/textureModel.test.ts
+
+- id: fork-details-card-overlay
+  intent: >
+    The docked thread details card floats over the chat instead of pushing
+    it aside: the chat lane is laid out as if the card were not there, so
+    the transcript stays centred and the card sits on top of it. The card
+    still counts as an obstacle for the preview mini player, and whether the
+    card docks or opens as a popover is upstream's rule, unchanged. Where the
+    card overlaps the lane (canvases up to about 1320px wide) it stops above
+    the measured composer, so it never covers the send controls.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/chatCanvasLayout.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts
+    - apps/web/src/components/chat/canvasStore.ts
+    - apps/web/src/components/chat/threadDetailsCardLayout.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts

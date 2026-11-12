@@ -2184,8 +2184,10 @@
 /* Notice metrics, Figma 467:33308, keyed on data-fork-composer-notice so
    Reconnect / Update / tasks / the rest of the drawer keep their density.
    The activity strip shares the 14/16 type and 16px icon but stays a status
-   line at 16px padding — including when it is folded into the stack. */
-:root[data-fork="noahhendrickson-t3code"].dark
+   line at 16px padding — including when it is folded into the stack.
+   Every Inlet colour takes them too: the light ones would otherwise keep
+   upstream's one-line row, whose copy crowds the action off the card. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
@@ -2193,20 +2195,20 @@
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"] {
   padding: 12px 8px 12px 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-composer-banner-row] {
   column-gap: 6px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-icon"]
@@ -2220,7 +2222,7 @@
    (ComposerBannerStack drops font-medium / leading-7 on these cards); only
    branch names inside the copy go Medium. padding-inline zeros the no-icon
    ps-2 so settled copy starts on the 16px pad. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"] {
@@ -2233,7 +2235,7 @@
   white-space: normal;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"]
@@ -2243,7 +2245,7 @@
   text-overflow: unset;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
   [data-fork-composer-vessel]
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-actions"] {
@@ -2253,7 +2255,8 @@
 /* Primaries and Dismiss are stamped in ChatView / ComposerBannerStack —
    never selected by child position or :has(svg). The stamp survives
    Compact's TooltipTrigger <span> wrapper. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="primary"] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="primary"] {
   height: 24px;
   min-height: 24px;
   border-radius: 4px;
@@ -2262,7 +2265,8 @@
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="dismiss"] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="dismiss"] {
   width: 24px;
   height: 24px;
   min-height: 24px;
@@ -2270,7 +2274,9 @@
   border-radius: 4px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-notice-action="dismiss"] svg {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+  [data-fork-composer-notice-action="dismiss"]
+  svg {
   width: 16px;
   height: 16px;
 }

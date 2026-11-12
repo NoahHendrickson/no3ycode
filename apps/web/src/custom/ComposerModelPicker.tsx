@@ -187,7 +187,10 @@ function SegmentedTrait(props: {
 }) {
   const current = getProviderOptionCurrentValue(props.descriptor);
   return (
-    <div className="flex min-w-0 flex-wrap justify-end gap-0.5 rounded-[6px] bg-input/40 p-0.5">
+    <div
+      data-fork-segmented-trait=""
+      className="flex min-w-0 flex-wrap justify-end gap-0.5 rounded-[6px] bg-input/40 p-0.5"
+    >
       {props.descriptor.options.map((option) => {
         const selected = option.id === current;
         return (

@@ -20,6 +20,7 @@ import {
   resolveAppearanceOption,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
+import { projectIconColorClassName } from "../projectIconColors";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -57,12 +58,13 @@ function ruleNaming(rules: ReturnType<typeof cssRules>, parts: readonly string[]
   if (rule === undefined) throw new Error(`no rule names: ${wanted}`);
   return rule.body;
 }
-// The template, its hung menus and tooltips, and the picture colours, in their import order.
+// The template, its hung menus and tooltips, and the per-colour sheets, in their import order.
 const INLET_FILES = [
   "theme.custom.inlet.css",
   "theme.custom.inlet-composer.css",
   "theme.custom.inlet-menus.css",
   "theme.custom.inlet-jungle.css",
+  "theme.custom.inlet-black.css",
 ] as const;
 const inlet = INLET_FILES.map((file) => readSibling(`../${file}`)).join("\n");
 const paletteRules = cssRules(palettes);
@@ -197,6 +199,24 @@ describe("fork guard: fork-inlet-theme", () => {
     }
   });
 
+  it("gives only project icons their dark shades in Black's charcoal sidebar", () => {
+    expect(projectIconColorClassName("red").split(" ")).toEqual(
+      expect.arrayContaining(["text-red-600", "fork-project-icon"]),
+    );
+    const black = `${TEMPLATE}[data-fork-inlet-color="black"]`;
+    const icons = inletRules.find(
+      (rule) =>
+        rule.selector.includes(black) &&
+        rule.selector.includes(FRAME) &&
+        rule.selector.trim().endsWith(".fork-project-icon"),
+    );
+    expect(icons?.body).toContain("--color-red-600: var(--color-red-400);");
+    const remapsScope = paletteRules.some(
+      (rule) => rule.selector.includes(black) && /--color-[a-z]+-600:/u.test(rule.body),
+    );
+    expect(remapsScope).toBe(false);
+  });
+
   it("sets the chat column into the frame as a rounded panel on either appearance", () => {
     const column = ruleBodyFor(inletRules, [TEMPLATE, "[data-chat-column-maximized-away]"]);
     expect(column).toContain("--background: var(--fork-inlet-panel)");
@@ -218,11 +238,16 @@ describe("fork guard: fork-inlet-theme", () => {
   });
 
   it("runs the open row into the panel through concave corners, clipped by the sidebar", () => {
-    const card = ruleBodyFor(inletRules, [
+    // A settled thread's open row is the slim row; it takes the same corners.
+    const openSelector = [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
-      '[data-testid="sidebar-row-card"][aria-current="page"]',
-    ]);
+      ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
+    ].join(" ");
+    const card = inletRules
+      .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === openSelector)
+      .map((rule) => rule.body)
+      .join("\n");
     expect(card).toMatch(
       /border-radius:\s*var\(--fork-inlet-radius\) 0 0 var\(--fork-inlet-radius\)/u,
     );
@@ -240,17 +265,21 @@ describe("fork guard: fork-inlet-theme", () => {
       rule.atRules.some((atRule) => atRule.includes("min-width: 768px")),
     );
     const bridge = docked.find((rule) =>
-      rule.selector.endsWith(
-        'li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])::after',
-      ),
+      rule.selector
+        .replace(/\s+/gu, "")
+        .endsWith(
+          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])::after',
+        ),
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
     // Paint containment from content-visibility would clip the bridge to the item.
     const item = docked.find((rule) =>
-      rule.selector.endsWith(
-        'li[data-thread-item]:has([data-testid="sidebar-row-card"][aria-current="page"])',
-      ),
+      rule.selector
+        .replace(/\s+/gu, "")
+        .endsWith(
+          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])',
+        ),
     );
     expect(item?.body).toContain("content-visibility: visible");
     // Nothing between the row and the panel: flush panel, no seam, no gutter.
@@ -258,6 +287,14 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(list?.body).toContain("scrollbar-gutter: auto");
     expect(docked.some((rule) => rule.body.includes("margin-left: 0"))).toBe(true);
     expect(docked.some((rule) => rule.body.includes("border-right-width: 0"))).toBe(true);
+    // A lit chrome row (New agent, Usage, Automations) bridges into the chat column and the
+    // stage card alike.
+    const chromeBridge = docked.find((rule) =>
+      rule.selector.endsWith('[data-fork-chrome-row][data-active="true"]::after'),
+    );
+    expect(chromeBridge?.selector).toContain("[data-fork-has-chat-column]");
+    expect(chromeBridge?.selector).toContain("[data-fork-has-stage-card]");
+    expect(chromeBridge?.body).toContain("radial-gradient");
   });
 
   it("sets the prompt 4px inside a 12px vessel under 8px context chips", () => {

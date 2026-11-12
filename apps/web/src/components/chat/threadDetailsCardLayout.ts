@@ -30,6 +30,9 @@ export function resolveThreadDetailsCardLayout({
   const gap = THREAD_DETAILS_CARD_GAP;
   const width = THREAD_DETAILS_CARD_WIDTH;
   const x = container.width - width - gap;
+  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
+     Upstream's dock threshold, kept on purpose though the card now floats over the chat. */
+  /* fork:end fork-details-card-overlay */
   if (x - DETAILS_CARD_CLEARANCE - lane.padding < lane.minChatWidth) return null;
   const y = gap + topInset;
   const height =

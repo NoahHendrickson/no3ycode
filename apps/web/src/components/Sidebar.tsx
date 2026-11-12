@@ -343,6 +343,7 @@ import { SidebarV2ThreadCardMeta } from "~/custom/SidebarV2ThreadCardMeta";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "~/custom/sidebarV2CardAlignment";
 import { triggerModelName } from "~/custom/modelPickerDisplayName";
 import {
+  THREAD_TITLE_TYPE,
   threadCardTitleClassName,
   threadCardTitleRecedes,
   threadRowShape,
@@ -1535,7 +1536,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         onBlur={handleRenameBlur}
         onClick={(event) => event.stopPropagation()}
         onDoubleClick={(event) => event.stopPropagation()}
-        className="min-w-0 flex-1 rounded-sm border border-input bg-card px-1 text-sm font-medium text-card-foreground outline-none focus:border-foreground"
+        className={cn(
+          "min-w-0 flex-1 rounded-sm border border-input bg-card px-1 font-medium text-card-foreground outline-none focus:border-foreground",
+          THREAD_TITLE_TYPE,
+        )}
       />
     ) : (
       <span
@@ -1549,7 +1553,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           variant === "card"
             ? threadCardTitleClassName({ recedes: cardRecedes })
             : cn(
-                "text-sm",
+                THREAD_TITLE_TYPE,
                 shouldRecede ? "font-normal" : "font-medium",
                 "truncate group-focus-within/v2-row:text-foreground group-any-hover/v2-row:text-foreground",
                 // Upstream #9759 puts recede ahead of unread/woke here. Under the
