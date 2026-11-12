@@ -926,3 +926,11 @@
   padding-top: var(--fork-inlet-fillet);
 }
 /* fork:end fork-chat-mode */
+
+/* The New agent project pills' tooltips stand a little off the pill rather
+   than meeting it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="tooltip-popup"][data-fork-project-quick-pick-tip] {
+  translate: 0 -4px;
+}

@@ -572,7 +572,9 @@ function QuickPick(props: {
         {props.icon}
         <PlusIcon className="size-3 shrink-0" />
       </TooltipTrigger>
-      <TooltipPopup side="top">{props.label}</TooltipPopup>
+      <TooltipPopup side="top" data-fork-project-quick-pick-tip="">
+        {props.label}
+      </TooltipPopup>
     </Tooltip>
   );
 }
