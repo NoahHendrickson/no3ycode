@@ -59,7 +59,8 @@ export function useStartNewChat(): () => Promise<void> {
       toastManager.add({
         type: "error",
         title: "Could not start a chat",
-        description: "No connected machine offers a No-project workspace.",
+        description:
+          "No machine offers No-project chats. They are off while T3 Code's data folder is inside a git repository.",
       });
       return;
     }
