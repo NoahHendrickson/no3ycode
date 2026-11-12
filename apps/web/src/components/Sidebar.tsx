@@ -352,16 +352,11 @@ import {
 /* fork:end sidebar-v2-card-rows */
 import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/SidebarV2ChromeRows";
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-import {
-  chatModeMoveMenuItem,
-  isChatThread,
-  usePendingChats,
-  useSidebarModeThreads,
-} from "~/custom/chatMode";
+import { chatModeMoveMenuItem, isChatDraft } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
 import {
-  useChatTagSync,
   useMoveThreadToMode,
+  useSidebarModeThreads,
   useStartNewChat,
   useSwitchSidebarMode,
 } from "~/custom/useChatMode";
@@ -2291,8 +2286,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      The list is the open mode's: Chat's threads, or Code's (everything else). */
   const allThreads = useQuietThreadShells();
   const [sidebarMode, switchSidebarMode] = useSwitchSidebarMode();
-  const pendingChats = usePendingChats();
-  useChatTagSync(allThreads);
   const startNewChat = useStartNewChat();
   const moveThreadToMode = useMoveThreadToMode();
   const threads = useSidebarModeThreads(allThreads, sidebarMode);
@@ -2669,7 +2662,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       })
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         // A chat stays out of the list until its first send makes it a thread.
-        .filter((row) => sidebarMode === "code" && !isChatThread(row.shell, pendingChats)),
+        .filter(
+          (row) => sidebarMode === "code" && !isChatDraft(draftThreadsByThreadKey[row.draftId]),
+        ),
     /* fork:end fork-chat-mode */
     // routeThreadKey: snapshot composer prompts when the open thread changes.
     [
@@ -2678,7 +2673,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       routeThreadKey,
       serverThreadKeys,
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-      pendingChats,
       sidebarMode,
       /* fork:end fork-chat-mode */
     ],
@@ -4886,16 +4880,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
           onNewChat={sidebarMode === "chat" ? () => void startNewChat() : undefined}
           newChatActive={
-            newThreadContext.activeDraftThread != null &&
-            newThreadContext.activeDraftThread.promotedTo == null &&
-            pendingChats.has(
-              scopedThreadKey(
-                scopeThreadRef(
-                  newThreadContext.activeDraftThread.environmentId,
-                  newThreadContext.activeDraftThread.threadId,
-                ),
-              ),
-            )
+            newThreadContext.activeDraftThread?.promotedTo == null &&
+            isChatDraft(newThreadContext.activeDraftThread)
           }
           /* fork:end fork-chat-mode */
         />

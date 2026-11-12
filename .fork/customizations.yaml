@@ -6733,10 +6733,12 @@
     name), and a chat joins the list only once its first send makes it a
     thread: until then New chat is the lit row.
     A thread belongs to the mode it was created in. "New chat" starts a
-    No-project (scratch) draft; once its first send creates the thread, it is
-    tagged `chat` (the server's existing thread tags, thread.tag.set), and
-    until then its reserved thread key waits in a per-client pending list so
-    the draft already sits in Chat. Code lists every thread without the tag,
+    No-project (scratch) draft and moves it onto Chat's own logical draft key
+    (fork:chat), so the draft itself says it is a chat and Code's No-project
+    paths never reopen it. Its first send creates the thread, which the app
+    root tags `chat` (the server's existing thread tags, thread.tag.set;
+    custom/chatTagging); from the send until the tag shows, the thread is held
+    in Chat in memory. Code lists every thread without the tag,
     No-project threads made in Code included. Each thread's context menu moves
     it to the other mode (sets or clears the tag). Switching modes always
     opens that mode's start: the chat typed but not yet sent (else a new
@@ -6749,6 +6751,7 @@
   tier: 4
   files:
     - apps/web/src/custom/chatMode.ts
+    - apps/web/src/custom/chatTagging.ts
     - apps/web/src/custom/useChatMode.ts
     - apps/web/src/custom/SidebarModeTabs.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
@@ -6757,6 +6760,7 @@
     - apps/web/src/theme.custom.inlet.css
   shadows: []
   watch:
+    - apps/web/src/appInit.tsx
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/components/sidebar/SidebarChrome.tsx
@@ -6766,3 +6770,4 @@
   verify:
     - apps/web/src/__fork_guards__/forkChatMode.test.ts
     - apps/web/src/custom/chatMode.test.ts
+    - apps/web/src/custom/chatTagging.test.ts

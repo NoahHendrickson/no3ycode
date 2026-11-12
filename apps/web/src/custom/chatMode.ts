@@ -1,12 +1,15 @@
 /** Code and Chat — see `.fork/customizations.yaml#fork-chat-mode`. A thread is in the mode it
-    was made in: Chat's carry the `chat` tag, set at the first send; until then a chat's
-    reserved thread key waits in a pending list, so its draft already sits in Chat. */
-import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+    was made in. An unsent chat is a draft under Chat's own logical key; its first send makes it a
+    thread, which custom/chatTagging tags `chat`. */
+import {
+  scopedThreadKey,
+  scopeProjectRef,
+  scopeThreadRef,
+} from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import * as Schema from "effect/Schema";
-import { useSyncExternalStore } from "react";
 
-import { getLocalStorageItem, setLocalStorageItem } from "~/hooks/useLocalStorage";
+import { type DraftId, type DraftSessionState, useComposerDraftStore } from "~/composerDraftStore";
 
 import { createForkRootSetting } from "./forkRootSetting";
 
@@ -26,78 +29,63 @@ export const { initialize: initializeForkSidebarMode, useValue: useForkSidebarMo
     attributeValue: (mode) => mode,
   });
 
-const PENDING_CHATS_STORAGE_KEY = "t3code:fork:pending-chat-threads:v1";
-const PendingChats = Schema.Array(Schema.String);
-const NO_PENDING_CHATS: ReadonlySet<string> = new Set();
-const pendingListeners = new Set<() => void>();
-let pendingSnapshot: ReadonlySet<string> | null = null;
+/** The logical project key a chat draft is registered under. Code's No-project draft keeps the
+    No-project project's own key, so neither ever reopens the other's empty draft. */
+export const CHAT_DRAFT_LOGICAL_PROJECT_KEY = "fork:chat";
 
-function readPendingChats(): ReadonlySet<string> {
-  if (pendingSnapshot !== null) return pendingSnapshot;
-  try {
-    const stored = getLocalStorageItem(PENDING_CHATS_STORAGE_KEY, PendingChats);
-    pendingSnapshot = stored && stored.length > 0 ? new Set(stored) : NO_PENDING_CHATS;
-  } catch {
-    pendingSnapshot = NO_PENDING_CHATS;
+export function isChatDraft(
+  draft: Pick<DraftSessionState, "logicalProjectKey"> | null | undefined,
+): boolean {
+  return draft?.logicalProjectKey === CHAT_DRAFT_LOGICAL_PROJECT_KEY;
+}
+
+/** Moves a just-opened No-project draft onto Chat's key. An empty chat draft left there before
+    gives way, as the store does for any logical project. */
+export function claimChatDraft(draftId: DraftId): void {
+  const { getDraftSession, setLogicalProjectDraftThreadId } = useComposerDraftStore.getState();
+  const draft = getDraftSession(draftId);
+  if (draft === null || draft.promotedTo != null || isChatDraft(draft)) return;
+  setLogicalProjectDraftThreadId(
+    CHAT_DRAFT_LOGICAL_PROJECT_KEY,
+    scopeProjectRef(draft.environmentId, draft.projectId),
+    draftId,
+    { threadId: draft.threadId },
+  );
+}
+
+/** The chat typed but not yet sent that was started last. */
+export function latestUnsentChatDraft(
+  drafts: Readonly<Record<string, DraftSessionState>>,
+): DraftId | null {
+  let latest: { readonly draftId: string; readonly createdAt: string } | null = null;
+  for (const [draftId, draft] of Object.entries(drafts)) {
+    if (draft.promotedTo != null || !isChatDraft(draft)) continue;
+    if (latest === null || draft.createdAt > latest.createdAt) {
+      latest = { draftId, createdAt: draft.createdAt };
+    }
   }
-  return pendingSnapshot;
-}
-
-function writePendingChats(next: ReadonlySet<string>): void {
-  pendingSnapshot = next.size === 0 ? NO_PENDING_CHATS : next;
-  try {
-    setLocalStorageItem(PENDING_CHATS_STORAGE_KEY, [...next], PendingChats);
-  } catch (error) {
-    console.error("[fork-chat-mode] Could not store pending chats.", error);
-  }
-  for (const listener of pendingListeners) listener();
-}
-
-/** A chat started but not yet sent, by its reserved thread key. */
-export function addPendingChat(threadKey: string): void {
-  const current = readPendingChats();
-  if (current.has(threadKey)) return;
-  writePendingChats(new Set([...current, threadKey]));
-}
-
-export function removePendingChat(threadKey: string): void {
-  const current = readPendingChats();
-  if (!current.has(threadKey)) return;
-  const next = new Set(current);
-  next.delete(threadKey);
-  writePendingChats(next);
-}
-
-function subscribePendingChats(listener: () => void): () => void {
-  pendingListeners.add(listener);
-  return () => {
-    pendingListeners.delete(listener);
-  };
-}
-
-export function usePendingChats(): ReadonlySet<string> {
-  return useSyncExternalStore(subscribePendingChats, readPendingChats, () => NO_PENDING_CHATS);
+  return latest === null ? null : (latest.draftId as DraftId);
 }
 
 export function shellThreadKey(thread: Pick<EnvironmentThreadShell, "environmentId" | "id">) {
   return scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
 }
 
+/** `sentChats`: chats sent from this client whose tag has not shown yet (custom/chatTagging). */
 export function isChatThread(
   thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
-  pendingChats: ReadonlySet<string>,
+  sentChats: ReadonlySet<string>,
 ): boolean {
   return (
-    thread.source.tags?.includes(CHAT_THREAD_TAG) === true ||
-    pendingChats.has(shellThreadKey(thread))
+    thread.source.tags?.includes(CHAT_THREAD_TAG) === true || sentChats.has(shellThreadKey(thread))
   );
 }
 
 /** The threads a mode's sidebar lists: Chat's only, or everything else. */
 export function threadsForSidebarMode<
   T extends Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
->(threads: readonly T[], mode: ForkSidebarMode, pendingChats: ReadonlySet<string>): T[] {
-  return threads.filter((thread) => isChatThread(thread, pendingChats) === (mode === "chat"));
+>(threads: readonly T[], mode: ForkSidebarMode, sentChats: ReadonlySet<string>): T[] {
+  return threads.filter((thread) => isChatThread(thread, sentChats) === (mode === "chat"));
 }
 
 export type ChatModeMoveMenuId = "fork:move-to-chat" | "fork:move-to-code";
@@ -111,12 +99,4 @@ export function chatModeMoveMenuItem(mode: ForkSidebarMode): {
   return mode === "chat"
     ? { id: "fork:move-to-code", label: "Move to Code", separatorBefore: true }
     : { id: "fork:move-to-chat", label: "Move to Chat", separatorBefore: true };
-}
-
-/** The current mode's threads; the compiler keeps the list while its inputs hold. */
-export function useSidebarModeThreads<
-  T extends Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
->(threads: readonly T[], mode: ForkSidebarMode): T[] {
-  const pendingChats = usePendingChats();
-  return threadsForSidebarMode(threads, mode, pendingChats);
 }

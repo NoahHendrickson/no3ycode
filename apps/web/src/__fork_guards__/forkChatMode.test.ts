@@ -13,13 +13,16 @@ describe("fork guard: fork-chat-mode", () => {
     const sidebar = read("../components/Sidebar.tsx");
     expect(sidebar).toContain("const threads = useSidebarModeThreads(allThreads, sidebarMode);");
     expect(sidebar).toContain('const grouping = sidebarMode === "chat" ? "none" : storedGrouping;');
-    expect(sidebar).toContain("useChatTagSync(allThreads);");
     expect(sidebar).toContain(
       "modeTabs={<SidebarModeTabs mode={sidebarMode} onModeChange={switchSidebarMode} />}",
     );
     expect(sidebar).toContain("chatModeMoveMenuItem(sidebarMode)");
     expect(read("../components/sidebar/SidebarChrome.tsx")).toContain("{modeTabs ?");
     expect(read("../main.tsx")).toContain("initializeForkSidebarMode();");
+  });
+
+  it("tags a sent chat from the app root, not from a view", () => {
+    expect(read("../appInit.tsx")).toContain("startAppChatThreadTagging();");
   });
 
   it("draws a chat as the composer alone, under its own headline", () => {
