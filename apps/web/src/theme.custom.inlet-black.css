@@ -44,9 +44,10 @@
     --color-rose-600: var(--color-rose-400);
   }
 
-  /* PR and status tones ink light mode's -600s, too dark on the charcoal
-     surfaces; there they take the -400s. The open row and tab are the cream
-     panel, so they take deep shades, the purple lifted to the green's weight. */
+  /* PR state tones (pullRequestIcons.tsx) take the -400s on the charcoal
+     surfaces by the same hook move. The open row and tab are the cream panel,
+     so there they take deep shades, the purple lifted to the green's weight;
+     a card row is charcoal while its hover card is open. */
 
   &
     :is(
@@ -54,7 +55,8 @@
       [data-fork-thread-tabs],
       [data-fork-row-hover-card],
       [data-thread-details-card]
-    ) {
+    )
+    .fork-pr-tone {
     --color-emerald-600: var(--color-emerald-400);
     --color-violet-600: var(--color-violet-400);
     --color-red-600: var(--color-red-400);
@@ -66,10 +68,11 @@
         [data-testid="sidebar-row-card"][aria-current="page"]:not([data-popup-open]),
       [data-sidebar-version="v2"] [data-testid="sidebar-row-slim"][aria-current="page"],
       [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
-    ) {
-    --color-emerald-600: #047857;
+    )
+    .fork-pr-tone {
+    --color-emerald-600: var(--color-emerald-700);
     --color-violet-600: #7a48e1;
-    --color-red-600: #b91c1c;
+    --color-red-600: var(--color-red-700);
   }
 
   /* Inlet Black's new-agent screen draws the pixel texture
