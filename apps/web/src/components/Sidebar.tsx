@@ -2309,7 +2309,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const confirmThreadArchive = useClientSettings((s) => s.confirmThreadArchive);
   const sidebarProjectSortOrder = useClientSettings((s) => s.sidebarProjectSortOrder);
   const timestampFormat = useClientSettings((s) => s.timestampFormat);
-  const workingShelfEnabled = useClientSettings((s) => s.sidebarWorkingShelfEnabled);
+  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+  // Chat has no Working shelf: a running chat stays in its place in the list.
+  const workingShelfEnabled =
+    useClientSettings((s) => s.sidebarWorkingShelfEnabled) && sidebarMode === "code";
+  /* fork:end fork-chat-mode */
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   // One grouping value: flat, by project, or by status (sidebar-v2-status-grouping).
