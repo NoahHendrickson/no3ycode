@@ -137,8 +137,8 @@
    window's edges, so the lit row runs into it; the page is a frame-cream card
    set into it, the frame's gap of green on every side. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]:has(> [data-fork-stage-card]) {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-panel);
   /* Its sidebar-side corners round off against the frame, concentric with
      the card's 8px ones; the window's edge squares the others. */
@@ -149,8 +149,8 @@
 /* The body behind it is green as well, so the frame shows in those corners
    only if the wrapper paints it. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-wrapper"]:has(> [data-slot="sidebar-inset"] > [data-fork-stage-card]) {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  [data-slot="sidebar-wrapper"] {
   background: var(--fork-inlet-frame);
 }
 
@@ -162,10 +162,10 @@
 }
 
 @media (min-width: 768px) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
-    ):has([data-slot="sidebar-inset"] > [data-fork-stage-card])
+    )
     [data-slot="sidebar-inset"]
     > [data-fork-stage-card] {
     margin-left: var(--fork-inlet-margin);
@@ -325,11 +325,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle-light"]
   [data-slot="sidebar-wrapper"]
-  :is(
-    [data-slot="sidebar-inner"],
-    [data-slot="sidebar-inset"],
-    :has(> [data-chat-column-maximized-away])
-  ) {
+  :is([data-slot="sidebar-inner"], [data-slot="sidebar-inset"], [data-fork-workspace-root]) {
   background-color: transparent;
 }
 

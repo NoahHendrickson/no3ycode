@@ -42,11 +42,13 @@ export function installInletMenuMorph() {
     // morph gave up on stays released: the detect rule matches it again, and retrying would loop.
     if (!(popup instanceof HTMLElement)) return;
     if (popup.dataset.forkMorph === "on" || popup.dataset.forkMorph === "failed") return;
+    let trigger: HTMLElement | null = null;
     try {
-      startMorph(popup);
+      trigger = findTrigger(popup);
+      startMorph(popup, trigger);
     } catch (error) {
       // Never leave a menu hidden: release it to its stylesheet look.
-      release(popup);
+      release(popup, trigger);
       throw error;
     }
   });
@@ -251,23 +253,48 @@ const flipped = (rect: Rect): Rect => ({
   bottom: -rect.top,
 });
 
-/** Gives a popup back to its stylesheet look: "failed" is never hidden, unlike an unclaimed
-    or closed one, so a menu the morph cannot take still shows. */
-function release(popup: HTMLElement) {
-  const glass = glassOf(popup);
-  popup.dataset.forkMorph = "failed";
-  glass.dataset.forkMorph = "failed";
-  glass.style.opacity = "";
-  // Its button keeps the stylesheet's fill and join. A :has() on :root read this before, and
-  // every element inserted anywhere re-checked it, restyling the page.
-  const trigger = findTrigger(popup);
-  if (trigger !== null) trigger.dataset.forkMorphFailed = "";
+type MorphState = "on" | "off" | "failed";
+
+const failedPopupOf = new WeakMap<HTMLElement, HTMLElement>();
+
+/** One write for a morph's state on the popup, its glass box and its button. A released
+    popup's button carries data-fork-morph-failed, which keeps the stylesheet's fill and join on
+    it (a :has() on :root read this before, and every inserted element re-checked it). */
+function setMorphState(popup: HTMLElement, trigger: HTMLElement | null, state: MorphState) {
+  popup.dataset.forkMorph = state;
+  glassOf(popup).dataset.forkMorph = state;
+  if (trigger === null) return;
+  if (state === "on") trigger.dataset.forkMorphing = "";
+  else delete trigger.dataset.forkMorphing;
+  if (state === "failed") {
+    trigger.dataset.forkMorphFailed = "";
+    failedPopupOf.set(trigger, popup);
+  } else {
+    delete trigger.dataset.forkMorphFailed;
+    failedPopupOf.delete(trigger);
+  }
 }
 
-function startMorph(popup: HTMLElement) {
-  const trigger = findTrigger(popup);
+/** Gives a popup back to its stylesheet look: "failed" is never hidden, unlike an unclaimed
+    or closed one, so a menu the morph cannot take still shows. Its button's stamp lasts while
+    the popup is in the document. */
+function release(popup: HTMLElement, trigger: HTMLElement | null) {
+  setMorphState(popup, trigger, "failed");
+  glassOf(popup).style.opacity = "";
+  if (trigger === null) return;
+  const gone = new MutationObserver(() => {
+    if (popup.isConnected) return;
+    gone.disconnect();
+    if (failedPopupOf.get(trigger) !== popup) return;
+    delete trigger.dataset.forkMorphFailed;
+    failedPopupOf.delete(trigger);
+  });
+  gone.observe(document.body, { childList: true, subtree: true });
+}
+
+function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   if (trigger === null) {
-    release(popup);
+    release(popup, null);
     return;
   }
   // Typed for teardown, a hoisted function the null check does not narrow into.
@@ -282,11 +309,8 @@ function startMorph(popup: HTMLElement) {
     Number.parseFloat(getComputedStyle(popup).getPropertyValue("--fork-inlet-tab-pad")) || 0;
   const triggerStyle = getComputedStyle(trigger);
 
-  popup.dataset.forkMorph = "on";
-  glass.dataset.forkMorph = "on";
+  setMorphState(popup, trigger, "on");
   glass.style.opacity = "0";
-  trigger.dataset.forkMorphing = "";
-  delete trigger.dataset.forkMorphFailed;
 
   // One step under the popup's own positioner, above everything it floats over: menus sit at
   // z-130, the thread details popover on the sheet layer (--z-sheet, 46). The docked details card
@@ -343,7 +367,7 @@ function startMorph(popup: HTMLElement) {
       below = menu.top >= button.bottom - 1 ? true : menu.bottom <= button.top + 1 ? false : null;
       if (below === null) {
         teardown();
-        release(popup);
+        release(popup, owner);
         return;
       }
       // Above its button (the composer's menus) the shadow would fall on the button's row.
@@ -451,7 +475,7 @@ function startMorph(popup: HTMLElement) {
   let tornDown = false;
   const abandon = () => {
     teardown();
-    release(popup);
+    release(popup, owner);
   };
   activeMorphs.add(abandon);
   function teardown() {
@@ -471,10 +495,8 @@ function startMorph(popup: HTMLElement) {
     window.removeEventListener("scroll", redraw, true);
     window.removeEventListener("resize", redraw);
     layer.remove();
-    delete owner.dataset.forkMorphing;
     // "off": closed. The stylesheet hides it again on its next open, until it is claimed.
-    popup.dataset.forkMorph = "off";
-    if (glass !== popup) glass.dataset.forkMorph = "off";
+    setMorphState(popup, owner, "off");
     // Closed: the popup lingers a frame or two before Base UI unmounts it, so it stays unseen.
     glass.style.opacity = target === 0 ? "0" : "";
   }

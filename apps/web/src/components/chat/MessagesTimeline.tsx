@@ -140,6 +140,9 @@ import { useThreadFindPositionReader } from "./useThreadFindPositionReader";
 import { ThreadActivityAnnouncer } from "./ThreadActivityAnnouncer";
 import { useStableHandoffRuns, useIncrementalTimelineRows, useStableRows } from "./useTimelineRows";
 import { useClientSettings } from "../../hooks/useSettings";
+/* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 
 function timelineListStateFor(identity: string): {
   readonly identity: string;
@@ -779,6 +782,12 @@ const ConversationTimeline = memo(function ConversationTimeline({
   const [timelineViewportElement, setTimelineViewportElement] = useState<HTMLDivElement | null>(
     null,
   );
+  /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+  useForkTimelineRowsStamp(
+    timelineViewportElement,
+    !showsEmptyState && (rows.length > 0 || unmatchedPendingApprovals.length > 0),
+  );
+  /* fork:end fork-stage-stamps */
   const {
     target: readyCitationRequest,
     positioning: citationPositioning,

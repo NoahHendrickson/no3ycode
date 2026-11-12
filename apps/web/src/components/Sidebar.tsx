@@ -4842,7 +4842,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             applies — see custom/useScrollGutterWidth. */}
         <SidebarGroup
           ref={listScrollGutterRef}
+          /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
           data-fork-thread-list=""
+          /* fork:end fork-stage-stamps */
           // oxlint-disable-next-line shadcn/no-restyle, shadcn/no-arbitrary-values -- measured scroll gutter
           className="min-h-0 flex-1 overflow-y-auto pb-1 [--sidebar-list-pad:--spacing(2)] ps-(--sidebar-list-pad) pe-[calc(var(--sidebar-list-pad)-var(--sidebar-list-gutter,0px))] [scrollbar-gutter:stable]"
         >

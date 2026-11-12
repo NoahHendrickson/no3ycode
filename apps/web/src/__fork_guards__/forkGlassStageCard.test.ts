@@ -178,7 +178,6 @@ describe("fork guard: fork-glass-stage-card", () => {
         selector.includes(":is([data-fork-has-chat-column],[data-fork-has-stage-card])")
       );
     });
-    expect(sheet).not.toContain(`[data-slot="sidebar-inset"]:has(`);
     expect(gutters).toHaveLength(2);
     expect(gutters.every((rule) => rule.body.includes("var(--fork-glass-panel)"))).toBe(true);
     // The opaque arm must never reach the desktop glass: a fill there covers

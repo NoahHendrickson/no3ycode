@@ -324,7 +324,7 @@ import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
-import { forkChatColumnRef, useForkDraftHeroShownStamp } from "~/custom/forkStageStamps";
+import { forkChatColumnRef, forkDraftHeroShownRef } from "~/custom/forkStageStamps";
 /* fork:end fork-stage-stamps */
 /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
 import { DraftMachineChip } from "~/custom/DraftMachineChip";
@@ -1665,9 +1665,6 @@ export default function ChatView(props: ChatViewProps) {
     backgroundSubmissionPending,
     hasWorktreeSetupCard: worktreeSetup !== null,
   });
-  /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
-  useForkDraftHeroShownStamp(isDraftHeroState);
-  /* fork:end fork-stage-stamps */
   const {
     transitionGroupRef: draftHeroTransitionGroupRef,
     composerAnchorRef: draftHeroComposerAnchorRef,
@@ -3716,7 +3713,7 @@ export default function ChatView(props: ChatViewProps) {
         data-chat-column
         /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
         ref={forkChatColumnRef}
-        data-fork-draft-hero={isDraftHeroState || undefined}
+        data-fork-draft-hero={isDraftHeroState ? "" : undefined}
         /* fork:end fork-stage-stamps */
         inert={rightPanelMaximized}
       >
@@ -3823,7 +3820,7 @@ export default function ChatView(props: ChatViewProps) {
               {...conversationArea}
               className="relative flex min-h-0 flex-1 flex-col bg-background"
               /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
-              data-fork-messages-wrapper={timelineEmpty ? undefined : ""}
+              data-fork-messages-wrapper=""
               /* fork:end fork-stage-stamps */
             >
               <WorkspaceMutationIdContext value={workspaceMutationId}>
@@ -3978,7 +3975,12 @@ export default function ChatView(props: ChatViewProps) {
                        The banner stack and sync status render in ChatComposer's dock;
                        only the draft greeting rides above the composer, parked bottom-full
                        as upstream does, so the composer sits on the column's centre line. */
-                    <div className="pointer-events-none absolute inset-x-0 bottom-full">
+                    <div
+                      /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+                      ref={forkDraftHeroShownRef}
+                      /* fork:end fork-stage-stamps */
+                      className="pointer-events-none absolute inset-x-0 bottom-full"
+                    >
                       {/* fork:end fork-composer-shell */}
                       <div
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell

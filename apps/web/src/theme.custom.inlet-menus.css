@@ -155,29 +155,25 @@
    concave corner either side. Not while the find bar pushes the card down. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
+  [data-chat-column-maximized-away][data-fork-has-docked-details]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [data-pressed]:not([aria-expanded]) {
   --fork-inlet-details-drop: 12px;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-chat-column-maximized-away]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [aria-expanded="true"] {
   --fork-inlet-details-drop: 0px;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
+  [data-chat-column-maximized-away][data-fork-has-docked-details]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [data-pressed]:not([aria-expanded]),
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-chat-column-maximized-away]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [aria-expanded="true"] {
   background-color: var(--popover);
@@ -510,7 +506,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-chat-column-maximized-away]:not([data-fork-has-find-bar])
   [data-thread-details-panel="inline"]
   > [data-thread-details-card] {
   translate: 0 calc(-1 * (var(--fork-inlet-details-rise) + 12px));
@@ -520,13 +516,11 @@
    height overrides it at equal specificity. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:has([data-thread-details-panel="inline"]):not(
-    :has([data-thread-find-bar])
-  )
+  [data-chat-column-maximized-away][data-fork-has-docked-details]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [data-pressed]:not([aria-expanded]),
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-column-maximized-away]:not(:has([data-thread-find-bar]))
+  [data-chat-column-maximized-away]:not([data-fork-has-find-bar])
   [data-fork-panel-toggle]
   > [aria-expanded="true"] {
   &::after {

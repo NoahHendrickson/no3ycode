@@ -337,6 +337,37 @@ describe("MessagesTimeline work rows", () => {
       }
     },
   );
+
+  // fork-stage-stamps: Glass clears the wrapper's fill off this stamp, and setup rows count
+  // though the thread has no entries yet.
+  it.each([
+    ["stamps", "running", true],
+    ["leaves unstamped", null, false],
+  ] as const)("%s ChatView's messages wrapper for worktree setup %s", async (_, phase, stamped) => {
+    const worktreeSetup =
+      phase === null
+        ? null
+        : ({
+            threadId: ThreadId.make("thread-setup"),
+            phase,
+            startedAt: CREATED_AT,
+            endedAt: null,
+            branch: "feature",
+            baseRef: "main",
+            worktreePath: null,
+            setupScript: null,
+            stages: [],
+            error: null,
+            sequence: 1,
+          } as const);
+    await using screen = await renderElement(
+      <div data-fork-messages-wrapper="">
+        <MessagesTimeline {...baseProps()} timelineEntries={[]} worktreeSetup={worktreeSetup} />
+      </div>,
+    );
+    const wrapper = screen.container.querySelector("[data-fork-messages-wrapper]");
+    await vi.waitFor(() => expect(wrapper?.hasAttribute("data-fork-has-rows")).toBe(stamped));
+  });
 });
 
 describe("MessagesTimeline messages", () => {
