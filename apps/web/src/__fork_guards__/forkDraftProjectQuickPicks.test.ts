@@ -21,7 +21,11 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
 
   it("opens a picked pill into the project chip from where it was", () => {
     const pill = read("../custom/DraftProjectPill.tsx");
-    expect(pill).toContain("transform: `translateX(${pick.from.left - to.left}px)`");
-    expect(pill).toContain('matchMedia("(prefers-reduced-motion: reduce)")');
+    // The pill records the pick and every chip that mounts plays it, so the
+    // slide survives ChatView swapping the fallback strip for BranchToolbar.
+    expect(pill).toContain("rememberDraftProjectPick(");
+    expect(pill).toContain("playDraftProjectPick(");
+    const motion = read("../custom/draftProjectPickMotion.ts");
+    expect(motion).toContain('matchMedia("(prefers-reduced-motion: reduce)")');
   });
 });

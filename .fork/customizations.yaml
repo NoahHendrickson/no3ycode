@@ -6253,12 +6253,18 @@
     automation run cannot reorder them), each its icon then a
     plus, and a chevron opening the full project menu. Picking a pill assigns
     the draft (the chip's own assign path) and the project chip opens from
-    where the pill was, sliding to the row's start as its label is revealed;
-    the chips the pick brings in (checkout, branch) fade in after it. Reduced
+    where the pill was, sliding to the row's start as its label is revealed.
+    The pick is kept outside the component (custom/draftProjectPickMotion),
+    because the chip remounts mid-slide when the assignment settles and
+    ChatView swaps the fallback strip for BranchToolbar; each chip that mounts
+    resumes the slide where the last one was. The chips the pick brings in
+    (checkout, branch) fade in after it. Reduced
     motion skips the motion.
   tier: 4
   files:
     - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/draftProjectPickMotion.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.ts
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
   shadows: []
   watch:
@@ -6267,6 +6273,7 @@
   verify:
     - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.ts
 
 - id: fork-git-256-non-repository
   intent: >

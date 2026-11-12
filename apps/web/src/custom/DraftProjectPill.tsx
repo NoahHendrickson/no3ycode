@@ -77,6 +77,7 @@ import {
   PlusIcon,
 } from "./icons/lucide-phosphor";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
+import { playDraftProjectPick, rememberDraftProjectPick } from "./draftProjectPickMotion";
 import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
 
 /** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
@@ -85,12 +86,6 @@ const DRAFT_PROJECT_CHIP_CLASS_NAME =
 
 /** How many recent projects an unassigned draft offers as pills; the rest wait in the menu. */
 const QUICK_PICK_LIMIT = 5;
-
-/** A picked pill slides to the row's start and opens into the project chip. */
-const QUICK_PICK_SETTLE: KeyframeAnimationOptions = {
-  duration: 320,
-  easing: "cubic-bezier(0.23, 1, 0.32, 1)",
-};
 
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
@@ -313,50 +308,17 @@ export function DraftProjectPill(props: {
       ? rankRecentProjectEntries(projectPickerEntries, threads, QUICK_PICK_LIMIT)
       : null;
 
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const picked = useRef<{ readonly from: DOMRect; readonly before: ReadonlySet<Element> } | null>(
-    null,
-  );
-  const choose = (event: MouseEvent<HTMLButtonElement>, pick: () => void) => {
-    const row = event.currentTarget.closest("[data-fork-composer-context-row]");
-    picked.current = {
-      from: event.currentTarget.getBoundingClientRect(),
-      before: new Set(row ? row.children : []),
-    };
-    pick();
+  const chipRef = useRef<HTMLButtonElement>(null);
+  const choose = (event: MouseEvent<HTMLButtonElement>, pick: (draftId: DraftId) => void) => {
+    if (props.draftId === null) return;
+    rememberDraftProjectPick(props.draftId, event.currentTarget);
+    pick(props.draftId);
   };
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the project chip in from the pill picked, reading both boxes before paint
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a newly mounted chip in from the picked pill, reading both boxes before paint
   useLayoutEffect(() => {
-    const pick = picked.current;
-    if (pick === null || selection.kind === "unassigned") return;
-    picked.current = null;
-    const trigger = rootRef.current?.querySelector<HTMLElement>(
-      '[data-testid="draft-project-pill"]',
-    );
-    if (!trigger || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const to = trigger.getBoundingClientRect();
-    trigger.animate(
-      [
-        {
-          transform: `translateX(${pick.from.left - to.left}px)`,
-          clipPath: `inset(0 ${Math.max(0, to.width - pick.from.width)}px 0 0 round 8px)`,
-        },
-        { transform: "translateX(0)", clipPath: "inset(0 0 0 0 round 8px)" },
-      ],
-      QUICK_PICK_SETTLE,
-    );
-    // The chips the pick brought in (branch, checkout) follow it in.
-    const row = trigger.closest("[data-fork-composer-context-row]");
-    for (const child of row ? row.children : []) {
-      if (pick.before.has(child) || child.contains(trigger)) continue;
-      child.animate([{ opacity: 0 }, { opacity: 1 }], {
-        duration: 200,
-        delay: 140,
-        easing: "ease-out",
-        fill: "backwards",
-      });
-    }
-  }, [selection.kind]);
+    if (props.draftId !== null && chipRef.current)
+      playDraftProjectPick(props.draftId, chipRef.current);
+  }, [props.draftId, selection.kind]);
 
   if (projectPickerEntries.length === 0 && noProjectEnvironmentId === null) {
     return (
@@ -377,7 +339,7 @@ export function DraftProjectPill(props: {
 
   const draftId = props.draftId;
   return (
-    <span ref={rootRef} className="contents">
+    <>
       <Menu>
         {quickPicks !== null && draftId !== null ? (
           // One group: the first tooltip comes quickly, and the next pill's takes over at once.
@@ -388,7 +350,7 @@ export function DraftProjectPill(props: {
                   label="No project"
                   icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
                   onClick={(event) =>
-                    choose(event, () => void pickNoProject(draftId, noProjectEnvironmentId))
+                    choose(event, (id) => void pickNoProject(id, noProjectEnvironmentId))
                   }
                 />
               ) : null}
@@ -406,8 +368,8 @@ export function DraftProjectPill(props: {
                   onClick={(event) =>
                     choose(
                       event,
-                      () =>
-                        void assignDraftProject(draftId, entry).catch((error: unknown) =>
+                      (id) =>
+                        void assignDraftProject(id, entry).catch((error: unknown) =>
                           reportAssignFailure(entry.group.displayName, error),
                         ),
                     )
@@ -433,6 +395,7 @@ export function DraftProjectPill(props: {
           </TooltipProvider>
         ) : (
           <MenuTrigger
+            ref={chipRef}
             render={
               <Button
                 type="button"
@@ -526,7 +489,7 @@ export function DraftProjectPill(props: {
           </MenuItem>
         </MenuPopup>
       </Menu>
-    </span>
+    </>
   );
 }
 
