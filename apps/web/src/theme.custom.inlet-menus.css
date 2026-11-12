@@ -1140,3 +1140,17 @@
     fill: #ffffff;
   }
 }
+
+/* Inlet Black's composer chips open in their own resting fill, not the
+   popover's near-white: the open chip and its menu take the chip colour, and
+   a highlighted row the chip's hover step. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  :is(
+    [data-fork-composer-context-row],
+    [data-fork-chip-menu],
+    .dropdown-glass:has(> [data-fork-chip-menu])
+  ) {
+  --popover: var(--fork-context-chip-bg);
+  --accent: var(--fork-context-chip-bg-hover);
+}
