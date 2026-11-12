@@ -76,12 +76,14 @@ import {
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
   collapsedPaneTabs,
-  collapsedTabWidthBucket,
+  collapsedTabCapacity,
   collapsedThreadShelved,
   COLLAPSED_TAB_MIN_WIDTH,
   COLLAPSED_TAB_STATUSES,
   DEFAULT_COLLAPSED_TAB_STATUSES,
   layoutCollapsedTabRow,
+  sameCollapsedTabCapacity,
+  type CollapsedTabCapacity,
   type CollapsedThreadTab,
   type CollapsedThreadTabStatus,
 } from "./collapsedThreadTabsModel";
@@ -240,19 +242,17 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     useAtomValue(primaryServerKeybindingsAtom),
     "chat.new",
   );
-  const [navWidth, setNavWidth] = useState(0);
+  const [navCapacity, setNavCapacity] = useState<CollapsedTabCapacity>(null);
   // Created once so the ref never re-subscribes.
   const [measureNav] = useState(
     () => (node: HTMLElement | null) =>
       node === null
         ? undefined
         : observeResize(node, (entries) => {
-            const width = entries.at(-1)?.contentRect.width ?? 0;
-            // Only a width that changes which tabs fit re-renders the strip.
-            setNavWidth((previous) =>
-              collapsedTabWidthBucket(previous) === collapsedTabWidthBucket(width)
-                ? previous
-                : width,
+            const capacity = collapsedTabCapacity(entries.at(-1)?.contentRect.width ?? 0);
+            // A resize frame that fits the same tabs keeps the state, so the strip skips it.
+            setNavCapacity((previous) =>
+              sameCollapsedTabCapacity(previous, capacity) ? previous : capacity,
             );
           }),
   );
@@ -344,7 +344,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     tabs: shownTabs.map(threadEntry),
     panes: paneEntries,
     openKey: openThreadKey ?? draftEntry?.threadKey ?? null,
-    width: navWidth,
+    capacity: navCapacity,
   });
   const discardDraft = (draftId: DraftId) => {
     // Home would start a fresh draft, so fall back to the most recent thread.

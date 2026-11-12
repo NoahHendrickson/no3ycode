@@ -239,25 +239,42 @@ const COLLAPSED_TAB_GAP = 6;
 const COLLAPSED_TAB_MORE_WIDTH = 72;
 
 /**
- * How many tabs fit at their minimum width, the rest going behind More. The open
- * thread (a split's whole group) takes the last visible slots when it would overflow; with no slot at all (narrower
- * than one tab plus More), More keeps the room, and the header still names the thread.
- * An unmeasured row (width 0) shows every tab.
+ * How many minimum-width tabs a row holds: `all` with no More, `withMore` beside it. Null for an
+ * unmeasured row (width 0), which shows every tab. The fit reads the width only through this.
+ */
+export type CollapsedTabCapacity = { readonly all: number; readonly withMore: number } | null;
+
+export function collapsedTabCapacity(width: number): CollapsedTabCapacity {
+  if (width <= 0) return null;
+  const step = COLLAPSED_TAB_MIN_WIDTH + COLLAPSED_TAB_GAP;
+  return {
+    all: Math.floor((width + COLLAPSED_TAB_GAP) / step),
+    withMore: Math.max(0, Math.floor((width - COLLAPSED_TAB_MORE_WIDTH) / step)),
+  };
+}
+
+export function sameCollapsedTabCapacity(a: CollapsedTabCapacity, b: CollapsedTabCapacity) {
+  return a === b || (a !== null && b !== null && a.all === b.all && a.withMore === b.withMore);
+}
+
+/**
+ * Which tabs fit, the rest going behind More. The open thread (a split's whole group) takes the
+ * last visible slots when it would overflow; with no slot at all (narrower than one tab plus
+ * More), More keeps the room, and the header still names the thread.
  */
 export function fitCollapsedThreadTabs(input: {
   readonly count: number;
-  readonly width: number;
+  readonly capacity: CollapsedTabCapacity;
   readonly activeIndex: number;
   /** Tabs from activeIndex on that stay visible together. */
   readonly activeLength: number;
 }): { readonly visible: number[]; readonly overflow: number[] } {
   const all = Array.from({ length: input.count }, (_, index) => index);
-  const step = COLLAPSED_TAB_MIN_WIDTH + COLLAPSED_TAB_GAP;
-  const width = input.width;
-  if (width <= 0 || input.count * step - COLLAPSED_TAB_GAP <= width) {
+  const { capacity } = input;
+  if (capacity === null || input.count <= capacity.all) {
     return { visible: all, overflow: [] };
   }
-  const fit = Math.max(0, Math.floor((width - COLLAPSED_TAB_MORE_WIDTH) / step));
+  const fit = capacity.withMore;
   const activeEnd = input.activeIndex + input.activeLength;
   const visible =
     input.activeIndex >= 0 && activeEnd > fit
@@ -270,14 +287,6 @@ export function fitCollapsedThreadTabs(input: {
   return { visible, overflow: all.filter((index) => !shown.has(index)) };
 }
 
-/** Widths with the same bucket fit every count alike (fitCollapsedThreadTabs reads the width
-    only through these), so a resize frame inside one bucket can keep the previous width. */
-export function collapsedTabWidthBucket(width: number): string {
-  const step = COLLAPSED_TAB_MIN_WIDTH + COLLAPSED_TAB_GAP;
-  if (width <= 0) return "none";
-  return `${Math.floor((width + COLLAPSED_TAB_GAP) / step)}:${Math.floor((width - COLLAPSED_TAB_MORE_WIDTH) / step)}`;
-}
-
 export type CollapsedTabSlot<TEntry> =
   | { readonly kind: "tab"; readonly entry: TEntry }
   /** A split's pane tabs side by side in one capsule, both selected. */
@@ -285,7 +294,7 @@ export type CollapsedTabSlot<TEntry> =
 
 /**
  * The strip's row: the leading draft, then the thread tabs with a split's panes in place of the
- * first of them to hold a tab, fitted to the width. The open thread (or the split's panes) stays
+ * first of them to hold a tab, fitted to the row's capacity. The open thread (or the split's panes) stays
  * on screen as fitCollapsedThreadTabs allows; the rest go behind More.
  */
 export function layoutCollapsedTabRow<TEntry extends { readonly threadKey: string }>(input: {
@@ -296,7 +305,7 @@ export function layoutCollapsedTabRow<TEntry extends { readonly threadKey: strin
   readonly panes: readonly TEntry[];
   /** The route's thread or draft, kept on screen outside a split. */
   readonly openKey: string | null;
-  readonly width: number;
+  readonly capacity: CollapsedTabCapacity;
 }): { readonly slots: CollapsedTabSlot<TEntry>[]; readonly overflow: TEntry[] } {
   const { leading, panes } = input;
   const { before, after } = splitCollapsedTabsAroundPanes(
@@ -311,7 +320,7 @@ export function layoutCollapsedTabRow<TEntry extends { readonly threadKey: strin
       : [entries.findIndex((entry) => entry.threadKey === input.openKey), 1];
   const fit = fitCollapsedThreadTabs({
     count: entries.length,
-    width: input.width,
+    capacity: input.capacity,
     activeIndex,
     activeLength,
   });

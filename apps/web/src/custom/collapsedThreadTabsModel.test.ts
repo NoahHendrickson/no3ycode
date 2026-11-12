@@ -9,7 +9,7 @@ import {
   collapsedPaneTabs,
   collapsedTabProjectForScope,
   DEFAULT_COLLAPSED_TAB_STATUSES,
-  collapsedTabWidthBucket,
+  collapsedTabCapacity,
   fitCollapsedThreadTabs,
   layoutCollapsedTabRow,
   splitCollapsedTabsAroundPanes,
@@ -259,35 +259,16 @@ describe("fitCollapsedThreadTabs", () => {
   ])(
     "%i tabs in %ipx with the open one at %i (%i long)",
     (count, width, activeIndex, activeLength, visible, overflow) => {
-      expect(fitCollapsedThreadTabs({ count, width, activeIndex, activeLength })).toEqual({
-        visible,
-        overflow,
-      });
+      expect(
+        fitCollapsedThreadTabs({
+          count,
+          capacity: collapsedTabCapacity(width),
+          activeIndex,
+          activeLength,
+        }),
+      ).toEqual({ visible, overflow });
     },
   );
-});
-
-describe("collapsedTabWidthBucket", () => {
-  it("fits every count alike for widths that share a bucket", () => {
-    const firstWidthByBucket = new Map<string, number>();
-    for (let width = -1; width <= 1600; width += 0.5) {
-      const bucket = collapsedTabWidthBucket(width);
-      const first = firstWidthByBucket.get(bucket) ?? width;
-      firstWidthByBucket.set(bucket, first);
-      for (let count = 0; count <= 14; count++) {
-        for (const [activeIndex, activeLength] of [
-          [-1, 1],
-          [count - 1, 1],
-          [count - 2, 2],
-        ] as const) {
-          const input = { count, activeIndex, activeLength };
-          expect(fitCollapsedThreadTabs({ ...input, width })).toEqual(
-            fitCollapsedThreadTabs({ ...input, width: first }),
-          );
-        }
-      }
-    }
-  });
 });
 
 describe("layoutCollapsedTabRow", () => {
@@ -304,7 +285,7 @@ describe("layoutCollapsedTabRow", () => {
       tabs: input.tabs.map(entry),
       panes: (input.panes ?? []).map(entry),
       openKey: input.openKey ?? null,
-      width: input.width,
+      capacity: collapsedTabCapacity(input.width),
     });
     return {
       slots: row.slots.map((slot) =>
