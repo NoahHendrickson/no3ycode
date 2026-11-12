@@ -118,14 +118,37 @@ export function useMoveThreadToMode(): (
 /** Switches the sidebar and opens that mode's fresh start: a new chat, or Code's New agent. */
 export function useSwitchSidebarMode(): [ForkSidebarMode, (next: ForkSidebarMode) => void] {
   const [mode, setMode] = useForkSidebarMode();
+  const pending = usePendingChats();
   const startNewChat = useStartNewChat();
   const startNewAgentDraft = useStartNewAgentDraft();
+  const router = useRouter();
   const switchMode = (next: ForkSidebarMode) => {
     if (next === mode) return;
     setMode(next);
-    void (next === "chat" ? startNewChat() : startNewAgentDraft());
+    if (next === "code") {
+      void startNewAgentDraft();
+      return;
+    }
+    // A chat typed but not sent is where Chat was left; reopen it rather than a blank one.
+    const unsent = latestUnsentChatDraft(pending);
+    if (unsent === null) void startNewChat();
+    else void router.navigate({ to: "/draft/$draftId", params: { draftId: unsent } });
   };
   return [mode, switchMode];
+}
+
+function latestUnsentChatDraft(pending: ReadonlySet<string>): DraftId | null {
+  let latest: { readonly draftId: DraftId; readonly createdAt: string } | null = null;
+  const drafts = useComposerDraftStore.getState().draftThreadsByThreadKey;
+  for (const [draftId, draft] of Object.entries(drafts)) {
+    if (draft.promotedTo != null) continue;
+    if (!pending.has(scopedThreadKey(scopeThreadRef(draft.environmentId, draft.threadId))))
+      continue;
+    if (latest === null || draft.createdAt > latest.createdAt) {
+      latest = { draftId: draftId as DraftId, createdAt: draft.createdAt };
+    }
+  }
+  return latest?.draftId ?? null;
 }
 
 /** Whether a thread (or the draft reserving it) is a chat. */

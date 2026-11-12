@@ -6739,7 +6739,8 @@
     the draft already sits in Chat. Code lists every thread without the tag,
     No-project threads made in Code included. Each thread's context menu moves
     it to the other mode (sets or clears the tag). Switching modes always
-    opens that mode's fresh start: a new chat, or Code's New agent. A chat
+    opens that mode's start: the chat typed but not yet sent (else a new
+    chat), or Code's New agent (which keeps its own unsent prompt). A chat
     shows the composer alone, without the project, checkout and branch chips
     (data-fork-chat-thread on the chat column), and a new chat's headline is
     "What's up?". The mode is per client (localStorage, stamped as
