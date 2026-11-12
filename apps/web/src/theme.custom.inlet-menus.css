@@ -1001,21 +1001,22 @@
     [data-slot="menu-popup"]:has([data-composer-permissions]),
     [data-slot="popover-popup"][data-fork-tab-menu]
   ) {
-  --popover: #1f1f1f;
+  --popover: #262626;
   --popover-foreground: #e8e8e8;
   --foreground: #e8e8e8;
   --muted-foreground: #9a9a9a;
-  --accent: #272727;
+  --accent: #333333;
   --accent-foreground: #e8e8e8;
-  --border: #2a2a2a;
-  --input: #2a2a2a;
+  --border: #333333;
+  --input: #333333;
+  --contrast-input: #333333;
   --contrast-foreground: #e8e8e8;
   --contrast-popover-foreground: #e8e8e8;
   --contrast-accent-foreground: #e8e8e8;
   --contrast-muted-foreground: #9a9a9a;
   --contrast-secondary-label: #9a9a9a;
   --contrast-icon-muted: #9a9a9a;
-  --contrast-border: #2a2a2a;
+  --contrast-border: #333333;
   color: #e8e8e8;
 }
 
@@ -1024,11 +1025,49 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-slot="popover-popup"][data-fork-tab-menu] {
-  --fork-composer-bg: #1f1f1f;
-  --muted: #2a2a2a;
+  --fork-composer-bg: #262626;
+  --muted: #333333;
   --popover: var(--fork-inlet-model-shell);
   --background: var(--fork-inlet-model-shell);
   background: var(--fork-inlet-model-shell);
+}
+
+/* The model menu's controls on the shell: the reasoning slider a recessed
+   well with a light thumb, and a segmented trait (Service Tier) in the mode
+   segments' language. Their utilities (bg-background, bg-input) resolve to
+   the page's cream and charcoal, not the menu's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-slot="menu-popup"]:has([data-fork-model-picker]) {
+  & [data-fork-effort-track] {
+    background: #262626;
+  }
+
+  & [data-fork-effort-fill] {
+    background: #333333;
+  }
+
+  & [data-fork-effort-thumb] {
+    background: #e8e8e8;
+  }
+
+  & [data-fork-segmented-trait] {
+    background: #262626;
+  }
+
+  & [data-fork-segmented-trait] > button {
+    color: #9a9a9a;
+  }
+
+  & [data-fork-segmented-trait] > button:hover {
+    color: #e8e8e8;
+  }
+
+  & [data-fork-segmented-trait] > button[aria-pressed="true"] {
+    background: #3a3a3a;
+    color: #ffffff;
+    box-shadow: none;
+  }
 }
 
 /* The mode segments: a recessed well, a lift on hover, the chosen mode
