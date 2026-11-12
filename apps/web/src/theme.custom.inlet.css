@@ -50,6 +50,7 @@
   [data-chat-column-maximized-away] {
   --background: var(--fork-inlet-panel);
   margin: var(--fork-inlet-margin);
+  margin-top: var(--fork-inlet-panel-top, var(--fork-inlet-margin));
   border-radius: var(--fork-inlet-radius);
   background: var(--background);
 }
@@ -129,6 +130,30 @@
   [data-chat-column-maximized-away] {
   --workspace-controls-top: var(--fork-inlet-margin);
   --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
+}
+
+/* Windows paints its caption buttons over the window's top band, so the
+   panel starts below that band and its controls drop onto its header line.
+   The tab strip clears the buttons itself (theme.custom.css), and the
+   floating thread window already sits below the band. */
+
+:root[data-fork="noahhendrickson-t3code"].wco[data-fork-theme="inlet"]:not(
+    [data-fork-has-thread-tabs]
+  ) {
+  --fork-inlet-panel-top: var(--workspace-topbar-height);
+
+  & [data-fork-split-pane="floating"] {
+    --fork-inlet-panel-top: var(--fork-inlet-margin);
+  }
+
+  &
+    [data-chat-column-maximized-away]:not(
+      :is([data-side-chat-pane], [data-fork-split-pane="floating"]) *
+    ) {
+    --workspace-controls-top: var(--workspace-topbar-height);
+    --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
+    --workspace-native-controls-inset: 0px;
+  }
 }
 
 /* The pane actions and panel toggles (the controls' one div; the maximize toggle is a span)
