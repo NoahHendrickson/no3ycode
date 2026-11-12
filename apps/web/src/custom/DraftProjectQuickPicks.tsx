@@ -2,11 +2,10 @@
     full menu — see `.fork/customizations.yaml#fork-draft-project-quick-picks`. */
 import type { ReactNode } from "react";
 
-import { ProjectFavicon } from "~/components/ProjectFavicon";
+import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import type { SidebarProjectPickerEntry } from "~/sidebarProjectGrouping";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
 import {
   ChevronDownIcon,
@@ -14,11 +13,16 @@ import {
   MessageSquareDashedIcon,
   PlusIcon,
 } from "./icons/lucide-phosphor";
-import { NO_PROJECT_VALUE, type DraftProjectChoices } from "./useDraftProjectChoices";
+import { NO_PROJECT_VALUE, type DraftProjectMenuChoices } from "./useDraftProjectChoices";
+
+interface QuickPickEntry {
+  readonly group: { readonly projectKey: string; readonly displayName: string };
+  readonly targetProject: ProjectFaviconProject;
+}
 
 export function DraftProjectQuickPicks(props: {
-  readonly choices: DraftProjectChoices;
-  readonly recentEntries: readonly SidebarProjectPickerEntry[];
+  readonly choices: DraftProjectMenuChoices;
+  readonly recentEntries: readonly QuickPickEntry[];
 }) {
   const { choices } = props;
   return (
@@ -26,29 +30,34 @@ export function DraftProjectQuickPicks(props: {
       {/* One group: the first tooltip comes quickly, and the next pill's takes over at once. */}
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
         <span data-fork-project-quick-picks="" className="flex min-w-0 items-center gap-1.5">
-          {choices.noProjectEnvironmentId !== null ? (
-            <QuickPick
-              value={NO_PROJECT_VALUE}
-              label="No project"
-              icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
-              onPick={choices.pick}
-            />
-          ) : null}
-          {props.recentEntries.map((entry) => (
-            <QuickPick
-              key={entry.group.projectKey}
-              value={entry.group.projectKey}
-              label={entry.group.displayName}
-              icon={
-                <ProjectFavicon
-                  project={entry.targetProject}
-                  className="size-4 shrink-0"
-                  fallbackIcon={FolderIcon}
-                />
-              }
-              onPick={choices.pick}
-            />
-          ))}
+          {/* The pills scroll sideways in a narrow composer so the chevron, the
+              only way to every project and Add a project, is never clipped. A
+              scroller clips both axes: -m-1 p-1 leaves room for Glass's halo. */}
+          <span className="-m-1 flex min-w-0 items-center gap-1.5 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {choices.noProjectEnvironmentId !== null ? (
+              <QuickPick
+                value={NO_PROJECT_VALUE}
+                label="No project"
+                icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
+                onPick={choices.pick}
+              />
+            ) : null}
+            {props.recentEntries.map((entry) => (
+              <QuickPick
+                key={entry.group.projectKey}
+                value={entry.group.projectKey}
+                label={entry.group.displayName}
+                icon={
+                  <ProjectFavicon
+                    project={entry.targetProject}
+                    className="size-4 shrink-0"
+                    fallbackIcon={FolderIcon}
+                  />
+                }
+                onPick={choices.pick}
+              />
+            ))}
+          </span>
           <MenuTrigger
             render={
               <Button

@@ -222,3 +222,9 @@ export function useDraftProjectChoices(props: {
 }
 
 export type DraftProjectChoices = ReturnType<typeof useDraftProjectChoices>;
+
+/** What the shared menu reads: the rows, the checked value and the dispatcher. */
+export type DraftProjectMenuChoices = Pick<
+  DraftProjectChoices,
+  "entries" | "value" | "pick" | "noProjectEnvironmentId"
+>;

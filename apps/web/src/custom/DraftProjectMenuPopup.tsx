@@ -13,7 +13,7 @@ import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/luc
 import {
   NO_PROJECT_VALUE,
   openAddProject,
-  type DraftProjectChoices,
+  type DraftProjectMenuChoices,
 } from "./useDraftProjectChoices";
 
 /** A favicon-less project's folder: white at low opacity tints with the dark
@@ -25,7 +25,7 @@ function PickerFolderIcon(props: { readonly className?: string | undefined }) {
 const ROW_CLASS_NAME =
   "[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2";
 
-export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectChoices }) {
+export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMenuChoices }) {
   const { choices } = props;
   return (
     <MenuPopup

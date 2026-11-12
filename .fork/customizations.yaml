@@ -6257,7 +6257,10 @@
     plus, and a chevron opening the full project menu. A pill and a menu row
     go through the same pick dispatcher (useDraftProjectChoices, owned by
     fork-new-agent-draft) keyed on the row's radio value, and the chevron
-    opens the chip's own DraftProjectMenuPopup. The project chip opens from
+    opens the chip's own DraftProjectMenuPopup. A narrow composer scrolls the
+    pills sideways while the chevron stays outside the scroller, so the only
+    route to every project and Add a project is never clipped. The project
+    chip opens from
     where the pill was, sliding to the row's start as its label is revealed.
     The pick is kept outside the component (custom/draftProjectPickMotion),
     because the chip remounts mid-slide when the assignment settles and
@@ -6272,6 +6275,7 @@
   tier: 4
   files:
     - apps/web/src/custom/DraftProjectQuickPicks.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
     - apps/web/src/custom/draftProjectPickMotion.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
@@ -6287,6 +6291,7 @@
     - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
 
 - id: fork-git-256-non-repository
   intent: >
