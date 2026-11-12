@@ -41,9 +41,10 @@ export function resolveChatCanvasLayout({
   findBar?: PreviewMiniPlayerObstacles["detailsCard"];
 }) {
   const centeredWidth = Math.max(0, Math.min(maxChatWidth, container.width - padding * 2));
-  const laneRight = detailsCard
-    ? detailsCard.left - DETAILS_CARD_CLEARANCE
-    : container.width - padding;
+  /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
+     The docked details card floats over the chat; the lane no longer steps aside for it. */
+  const laneRight = container.width - padding;
+  /* fork:end fork-details-card-overlay */
   const normalWidth = Math.max(0, Math.min(centeredWidth, laneRight - padding));
   const canvasCenterLeft = (container.width - normalWidth) / 2;
   const normalLeft = Math.max(padding, Math.min(canvasCenterLeft, laneRight - normalWidth));

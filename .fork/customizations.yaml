@@ -6693,3 +6693,20 @@
   verify:
     - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
     - apps/web/src/custom/pixelTexture/paintPixelTexture.test.ts
+
+- id: fork-details-card-overlay
+  intent: >
+    The docked thread details card floats over the chat instead of pushing
+    it aside: the chat lane is laid out as if the card were not there, so
+    the transcript stays centred and the card sits on top of it. The card
+    still counts as an obstacle for the preview mini player, and whether the
+    card docks or opens as a popover is upstream's rule, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/chatCanvasLayout.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
+    - apps/web/src/components/chat/chatCanvasLayout.test.ts
