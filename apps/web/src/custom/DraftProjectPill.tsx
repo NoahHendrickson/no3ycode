@@ -26,10 +26,20 @@ import { scopedProjectKey } from "@t3tools/client-runtime/environment";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 import type { EnvironmentId, ScopedProjectRef } from "@t3tools/contracts";
-import { useCallback, useMemo, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 import { openCommandPalette } from "~/commandPaletteBus";
-import { sortLogicalProjectsForSidebar } from "~/components/Sidebar.logic";
+import {
+  filterSidebarV2VisibleThreads,
+  sortLogicalProjectsForSidebar,
+} from "~/components/Sidebar.logic";
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
 import {
@@ -42,6 +52,7 @@ import {
   MenuTrigger,
 } from "~/components/ui/menu";
 import { toastManager } from "~/components/ui/toast";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -63,6 +74,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   MessageSquareDashedIcon,
+  PlusIcon,
 } from "./icons/lucide-phosphor";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
 import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
@@ -70,6 +82,15 @@ import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNe
 /** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
 const DRAFT_PROJECT_CHIP_CLASS_NAME =
   "min-w-0 max-w-72 font-normal text-muted-foreground/70 text-xs! hover:text-foreground/80 active:scale-100";
+
+/** How many recent projects an unassigned draft offers as pills; the rest wait in the menu. */
+const QUICK_PICK_LIMIT = 5;
+
+/** A picked pill slides to the row's start and opens into the project chip. */
+const QUICK_PICK_SETTLE: KeyframeAnimationOptions = {
+  duration: 320,
+  easing: "cubic-bezier(0.23, 1, 0.32, 1)",
+};
 
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
@@ -286,6 +307,75 @@ export function DraftProjectPill(props: {
       },
     }).catch((error: unknown) => reportAssignFailure("No project", error));
 
+  // An unassigned draft offers its recent projects as pills above the composer, the strip
+  // the sidebar used to carry: projects with a thread the list would show, newest first.
+  const liveProjectRefs = new Set(
+    filterSidebarV2VisibleThreads(threads, null, new Set()).map(
+      (thread) => `${thread.environmentId}:${thread.projectId}`,
+    ),
+  );
+  const quickPicks =
+    selection.kind === "unassigned" && props.draftId !== null
+      ? sortLogicalProjectsForSidebar(
+          projectPickerEntries
+            .map((entry) => entry.group)
+            .filter((group) =>
+              group.memberProjectRefs.some((ref) =>
+                liveProjectRefs.has(`${ref.environmentId}:${ref.projectId}`),
+              ),
+            ),
+          threads,
+          "updated_at",
+        )
+          .slice(0, QUICK_PICK_LIMIT)
+          .flatMap((group) => projectEntryByKey.get(group.projectKey) ?? [])
+      : null;
+
+  const rootRef = useRef<HTMLSpanElement>(null);
+  const picked = useRef<{ readonly from: DOMRect; readonly before: ReadonlySet<Element> } | null>(
+    null,
+  );
+  const choose = (event: MouseEvent<HTMLButtonElement>, pick: () => void) => {
+    const row = event.currentTarget.closest("[data-fork-composer-context-row]");
+    picked.current = {
+      from: event.currentTarget.getBoundingClientRect(),
+      before: new Set(row ? row.children : []),
+    };
+    pick();
+  };
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the project chip in from the pill picked, reading both boxes before paint
+  useLayoutEffect(() => {
+    const pick = picked.current;
+    if (pick === null || selection.kind === "unassigned") return;
+    picked.current = null;
+    const trigger = rootRef.current?.querySelector<HTMLElement>(
+      '[data-testid="draft-project-pill"]',
+    );
+    if (!trigger || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const to = trigger.getBoundingClientRect();
+    trigger.animate(
+      [
+        {
+          transform: `translateX(${pick.from.left - to.left}px)`,
+          clipPath: `inset(0 ${Math.max(0, to.width - pick.from.width)}px 0 0 round 8px)`,
+        },
+        { transform: "translateX(0)", clipPath: "inset(0 0 0 0 round 8px)" },
+      ],
+      QUICK_PICK_SETTLE,
+    );
+    // The chips the pick brought in (branch, checkout) follow it in.
+    const row = trigger.closest("[data-fork-composer-context-row]");
+    for (const child of row ? row.children : []) {
+      if (pick.before.has(child) || child.contains(trigger)) continue;
+      child.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: 200,
+        delay: 140,
+        easing: "ease-out",
+        fill: "backwards",
+      });
+    }
+  }, [selection.kind]);
+
   if (projectPickerEntries.length === 0 && noProjectEnvironmentId === null) {
     return (
       <Button
@@ -303,100 +393,183 @@ export function DraftProjectPill(props: {
     );
   }
 
+  const draftId = props.draftId;
   return (
-    <Menu>
-      <MenuTrigger
+    <span ref={rootRef} className="contents">
+      <Menu>
+        {quickPicks !== null && draftId !== null ? (
+          <span data-fork-project-quick-picks="" className="flex min-w-0 items-center gap-1.5">
+            {noProjectEnvironmentId !== null ? (
+              <QuickPick
+                label="No project"
+                icon={<MessageSquareDashedIcon className="size-4 shrink-0" />}
+                onClick={(event) =>
+                  choose(event, () => void pickNoProject(draftId, noProjectEnvironmentId))
+                }
+              />
+            ) : null}
+            {quickPicks.map((entry) => (
+              <QuickPick
+                key={entry.group.projectKey}
+                label={entry.group.displayName}
+                icon={
+                  <ProjectFavicon
+                    project={entry.targetProject}
+                    className="size-4 shrink-0"
+                    fallbackIcon={FolderIcon}
+                  />
+                }
+                onClick={(event) =>
+                  choose(
+                    event,
+                    () =>
+                      void assignDraftProject(draftId, entry).catch((error: unknown) =>
+                        reportAssignFailure(entry.group.displayName, error),
+                      ),
+                  )
+                }
+              />
+            ))}
+            <MenuTrigger
+              render={
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="ghost"
+                  aria-label="All projects"
+                  data-testid="draft-project-pill"
+                  data-composer-context-control
+                  data-project-assigned="false"
+                />
+              }
+            >
+              <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
+            </MenuTrigger>
+          </span>
+        ) : (
+          <MenuTrigger
+            render={
+              <Button
+                type="button"
+                size="xs"
+                variant="ghost"
+                aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
+                // No press-scale, like the branch chip: the popup aligns live to
+                // this trigger and a momentary shrink drags it sideways.
+                className={DRAFT_PROJECT_CHIP_CLASS_NAME}
+                data-testid="draft-project-pill"
+                data-composer-context-control
+                data-project-assigned={selection.kind === "unassigned" ? "false" : "true"}
+                aria-busy={pending || undefined}
+              />
+            }
+          >
+            {selection.kind === "no-project" ? (
+              <MessageSquareDashedIcon className="size-3 shrink-0" />
+            ) : selection.kind === "project" && selection.entry ? (
+              <ProjectFavicon
+                project={selection.entry.targetProject}
+                className="size-3 shrink-0"
+                fallbackIcon={FolderIcon}
+              />
+            ) : (
+              <FolderIcon className="size-3 shrink-0" />
+            )}
+            <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
+            <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
+          </MenuTrigger>
+        )}
+        <MenuPopup
+          align="start"
+          side="top"
+          data-fork-glass-rim
+          data-fork-chip-menu=""
+          // The popup caps the height and MenuPopup's own list scrolls inside
+          // it. Scrolling the popup itself would carry its glass rim
+          // (theme.custom.glass-surfaces.css) away with the rows.
+          className="max-h-80 min-w-48! w-max max-w-72"
+        >
+          <MenuRadioGroup
+            value={radioValue}
+            onValueChange={(value) => {
+              if (value === radioValue || !props.draftId) return;
+              if (value === NO_PROJECT_VALUE) {
+                if (noProjectEnvironmentId !== null) {
+                  void pickNoProject(props.draftId, noProjectEnvironmentId);
+                }
+                return;
+              }
+              const entry = projectEntryByKey.get(value as string);
+              if (!entry) return;
+              // The pick already cleared its Send hold on the way out; the
+              // draft is simply still on its previous project, so say so.
+              void assignDraftProject(props.draftId, entry).catch((error: unknown) =>
+                reportAssignFailure(entry.group.displayName, error),
+              );
+            }}
+          >
+            {noProjectEnvironmentId !== null ? (
+              <MenuRadioItem
+                value={NO_PROJECT_VALUE}
+                closeOnClick
+                className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
+              >
+                <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
+                <span className="min-w-0 truncate">No project</span>
+              </MenuRadioItem>
+            ) : null}
+            {projectPickerEntries.map(({ group, targetProject }) => (
+              <MenuRadioItem
+                key={group.projectKey}
+                value={group.projectKey}
+                closeOnClick
+                className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
+              >
+                <ProjectFavicon
+                  project={targetProject}
+                  className="size-4 shrink-0"
+                  fallbackIcon={PickerFolderIcon}
+                />
+                <span className="min-w-0 truncate">{group.displayName}</span>
+              </MenuRadioItem>
+            ))}
+          </MenuRadioGroup>
+          <MenuSeparator />
+          <MenuItem onClick={openAddProject}>
+            <FolderPlusIcon />
+            Add a project
+          </MenuItem>
+        </MenuPopup>
+      </Menu>
+    </span>
+  );
+}
+
+/** One project's pill: its icon then a plus, as the sidebar strip drew it. */
+function QuickPick(props: {
+  readonly label: string;
+  readonly icon: ReactNode;
+  readonly onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
         render={
           <Button
             type="button"
             size="xs"
             variant="ghost"
-            aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
-            // No press-scale, like the branch chip: the popup aligns live to
-            // this trigger and a momentary shrink drags it sideways.
-            className={DRAFT_PROJECT_CHIP_CLASS_NAME}
-            data-testid="draft-project-pill"
+            aria-label={`New agent in ${props.label}`}
+            data-fork-project-quick-pick=""
             data-composer-context-control
-            data-project-assigned={selection.kind === "unassigned" ? "false" : "true"}
-            aria-busy={pending || undefined}
+            onClick={props.onClick}
           />
         }
       >
-        {selection.kind === "no-project" ? (
-          <MessageSquareDashedIcon className="size-3 shrink-0" />
-        ) : selection.kind === "project" && selection.entry ? (
-          <ProjectFavicon
-            project={selection.entry.targetProject}
-            className="size-3 shrink-0"
-            fallbackIcon={FolderIcon}
-          />
-        ) : (
-          <FolderIcon className="size-3 shrink-0" />
-        )}
-        <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
-        <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
-      </MenuTrigger>
-      <MenuPopup
-        align="start"
-        side="top"
-        data-fork-glass-rim
-        data-fork-chip-menu=""
-        // The popup caps the height and MenuPopup's own list scrolls inside
-        // it. Scrolling the popup itself would carry its glass rim
-        // (theme.custom.glass-surfaces.css) away with the rows.
-        className="max-h-80 min-w-48! w-max max-w-72"
-      >
-        <MenuRadioGroup
-          value={radioValue}
-          onValueChange={(value) => {
-            if (value === radioValue || !props.draftId) return;
-            if (value === NO_PROJECT_VALUE) {
-              if (noProjectEnvironmentId !== null) {
-                void pickNoProject(props.draftId, noProjectEnvironmentId);
-              }
-              return;
-            }
-            const entry = projectEntryByKey.get(value as string);
-            if (!entry) return;
-            // The pick already cleared its Send hold on the way out; the
-            // draft is simply still on its previous project, so say so.
-            void assignDraftProject(props.draftId, entry).catch((error: unknown) =>
-              reportAssignFailure(entry.group.displayName, error),
-            );
-          }}
-        >
-          {noProjectEnvironmentId !== null ? (
-            <MenuRadioItem
-              value={NO_PROJECT_VALUE}
-              closeOnClick
-              className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
-            >
-              <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
-              <span className="min-w-0 truncate">No project</span>
-            </MenuRadioItem>
-          ) : null}
-          {projectPickerEntries.map(({ group, targetProject }) => (
-            <MenuRadioItem
-              key={group.projectKey}
-              value={group.projectKey}
-              closeOnClick
-              className="[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
-            >
-              <ProjectFavicon
-                project={targetProject}
-                className="size-4 shrink-0"
-                fallbackIcon={PickerFolderIcon}
-              />
-              <span className="min-w-0 truncate">{group.displayName}</span>
-            </MenuRadioItem>
-          ))}
-        </MenuRadioGroup>
-        <MenuSeparator />
-        <MenuItem onClick={openAddProject}>
-          <FolderPlusIcon />
-          Add a project
-        </MenuItem>
-      </MenuPopup>
-    </Menu>
+        {props.icon}
+        <PlusIcon className="size-3 shrink-0" />
+      </TooltipTrigger>
+      <TooltipPopup side="top">{props.label}</TooltipPopup>
+    </Tooltip>
   );
 }

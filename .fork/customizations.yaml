@@ -6247,30 +6247,23 @@
 
 - id: fork-sidebar-recent-projects
   intent: >
-    A strip between the V2 sidebar's action block and the Threads row offers
-    one chip per recently active project, up to five, newest activity first:
-    the project's icon then a plus. Clicking a chip starts a new agent already
-    in that project through the same handler a project header's plus uses, so
-    both pick the same environment. Recency is the sidebar's own Recent
-    project order (sortLogicalProjectsForSidebar) over the threads the list
-    would show, so the strip cannot disagree with it; a project with no such
-    thread is not offered, and the strip renders nothing when no project
-    qualifies. A narrow sidebar scrolls the strip sideways instead of
-    wrapping it. The strip reads thread shells itself, so the Sidebar.tsx call
-    site passes only the project groups and the start handler. Each button
-    rests on a white 8% fill and brightens to 12% on hover (black 5% / 8% on
-    a light sidebar, where white would vanish); under Glass it
-    also wears the composer chips' glass rim unless 3D glass is off, so
-    Selected items only shows it as it shows the active rows above it.
+    An unassigned New agent draft offers its recent projects as pills above
+    the composer, in place of the project chip: No project first, then up to
+    five projects with a thread the sidebar would show, newest activity first
+    (sortLogicalProjectsForSidebar over those threads), each its icon then a
+    plus, and a chevron opening the full project menu. Picking a pill assigns
+    the draft (the chip's own assign path) and the project chip opens from
+    where the pill was, sliding to the row's start as its label is revealed;
+    the chips the pick brings in (checkout, branch) fade in after it. Reduced
+    motion skips the motion. The pills used to be a strip in the sidebar
+    between the action rows and the Threads row; the sidebar no longer has it.
   tier: 4
   files:
-    - apps/web/src/custom/SidebarV2RecentProjectsStrip.tsx
-    - apps/web/src/theme.custom.glass-surfaces.css
+    - apps/web/src/custom/DraftProjectPill.tsx
   shadows: []
   watch:
-    # Fenced import and call site between the action rows and the Threads row.
     - apps/web/src/components/Sidebar.tsx
-    # The ranking the strip reuses.
+    # The ranking the pills reuse.
     - apps/web/src/components/Sidebar.logic.ts
   verify:
     - apps/web/src/__fork_guards__/forkSidebarRecentProjects.test.ts

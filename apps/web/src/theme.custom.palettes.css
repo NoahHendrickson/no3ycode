@@ -288,7 +288,6 @@
   [data-sidebar-version="v2"]
   :is(
     [data-fork-projects-row],
-    [data-fork-recent-projects],
     [data-fork-project-section-header],
     [data-fork-status-section-header],
     [data-fork-thread-card-meta],
