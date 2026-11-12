@@ -807,6 +807,8 @@
   --fork-inlet-row-card: #1f1f1f;
   --fork-inlet-row-card-foreground: #e8e8e8;
   --fork-inlet-row-card-muted: #9a9a9a;
+  /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
+  --message-surface: #ebe7cd;
 }
 
 /* Charcoal's sidebar on the #141414 frame, with dark mode's bright status
