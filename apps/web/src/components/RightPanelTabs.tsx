@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import { Volume2, VolumeOff } from "lucide";
 /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-import { Music } from "lucide-react";
+import { MusicIcon } from "lucide-react";
 /* fork:end fork-music-panel */
 import {
   type KeyboardEvent as ReactKeyboardEvent,
@@ -693,7 +693,7 @@ function SurfaceIcon({
       return <SideChatTabIcon environmentId={environmentId} threadId={surface.threadId} />;
     /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
     case "music":
-      return <Music className="size-3 shrink-0" />;
+      return <MusicIcon className="size-3 shrink-0" />;
     /* fork:end fork-music-panel */
     case "device":
       return surface.target?.platform === "ios" ? (

@@ -11,7 +11,7 @@ import {
   PlayIcon,
   SkipBackIcon,
   SkipForwardIcon,
-  Volume2Icon,
+  Volume2,
 } from "lucide-react";
 import { memo, useState, useSyncExternalStore } from "react";
 
@@ -26,16 +26,20 @@ import {
 import { cn } from "~/lib/utils";
 
 import { SegmentedTab, SegmentedTabs } from "../SegmentedTabs";
-import { type MusicState, readMusicBridge } from "./musicBridge";
 import {
-  browseMusicPlaylist,
-  getMusicSnapshot,
-  type MusicPlaylist,
   type MusicQueueEntry,
+  type MusicRow,
+  type MusicState,
+  readMusicBridge,
+} from "./musicBridge";
+import {
+  browseMusicSource,
+  getMusicSnapshot,
   type MusicSnapshot,
-  type MusicTrack,
+  type MusicSource,
   openMusic,
   playBrowsedTrack,
+  retryMusic,
   sendMusic,
   setMusicVolume,
   subscribeMusic,
@@ -47,34 +51,26 @@ type MusicTab = "playlists" | "upNext";
 const ROW_CLASS =
   "flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
 
-const UNAVAILABLE: Record<
-  Exclude<MusicState["status"], "ready">,
-  { readonly title: string; readonly description: string }
-> = {
-  closed: {
-    title: "ah ahh isn't open",
-    description: "Your music shows up here once it's running.",
-  },
-  error: {
-    title: "Couldn't reach ah ahh",
-    description: "It's running, but it didn't answer.",
-  },
-};
-
 function MusicUnavailable(props: {
   status: Exclude<MusicState["status"], "ready">;
   opening: boolean;
   openFailed: boolean;
 }) {
-  const canOpen = readMusicBridge()?.canOpen === true;
+  // Only a closed ah ahh can be started. One that answered badly is already running.
+  const canOpen = props.status === "closed" && readMusicBridge()?.canOpen === true;
   const copy = props.opening
     ? { title: "Opening ah ahh", description: "Your music shows up here in a moment." }
-    : props.openFailed
-      ? {
-          title: "Couldn't open ah ahh",
-          description: "Check that it's installed on this computer.",
-        }
-      : UNAVAILABLE[props.status];
+    : props.status === "error"
+      ? { title: "Couldn't reach ah ahh", description: "It's running, but it didn't answer." }
+      : canOpen && props.openFailed
+        ? {
+            title: "Couldn't open ah ahh",
+            description: "Check that it's installed on this computer.",
+          }
+        : {
+            title: "ah ahh isn't open",
+            description: "Your music shows up here once it's running.",
+          };
   return (
     <Empty size="compact">
       <EmptyMedia variant="icon">
@@ -84,16 +80,20 @@ function MusicUnavailable(props: {
         <EmptyTitle>{copy.title}</EmptyTitle>
         <EmptyDescription>{copy.description}</EmptyDescription>
       </EmptyHeader>
-      {props.opening ? null : (
+      {props.opening ? null : canOpen ? (
         <Button size="sm" variant="outline" onClick={() => void openMusic()}>
-          {canOpen && props.status === "closed" ? "Open ah ahh" : "Try again"}
+          Open ah ahh
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" onClick={retryMusic}>
+          Try again
         </Button>
       )}
     </Empty>
   );
 }
 
-function NowPlaying({ state }: { state: ReadyState }) {
+function NowPlaying({ state, volume }: { state: ReadyState; volume: number }) {
   return (
     <div className="flex shrink-0 flex-col gap-2 p-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -138,7 +138,7 @@ function NowPlaying({ state }: { state: ReadyState }) {
         >
           <SkipForwardIcon />
         </Button>
-        <Volume2Icon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+        <Volume2 className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
         <input
           aria-label="Volume"
           className="h-1 min-w-0 flex-1 cursor-pointer accent-foreground"
@@ -146,7 +146,7 @@ function NowPlaying({ state }: { state: ReadyState }) {
           min={0}
           onChange={(event) => setMusicVolume(Number(event.currentTarget.value) / 100)}
           type="range"
-          value={Math.round(state.volume * 100)}
+          value={Math.round(volume * 100)}
         />
       </div>
     </div>
@@ -170,14 +170,14 @@ function SongRow(props: { title: string; artist: string; playing: boolean; onPla
         <span className="block truncate text-sm">{props.title}</span>
         <span className="block truncate text-xs text-muted-foreground">{props.artist}</span>
       </span>
-      {props.playing ? <Volume2Icon className="size-3.5 shrink-0 text-muted-foreground" /> : null}
+      {props.playing ? <Volume2 className="size-3.5 shrink-0 text-muted-foreground" /> : null}
     </button>
   );
 }
 
 /** Memoized on its own so a volume drag does not re-render a library's worth of rows. */
 const TrackList = memo(function TrackList(props: {
-  tracks: ReadonlyArray<MusicTrack>;
+  tracks: ReadonlyArray<MusicRow>;
   playingTitle: string | null;
   playingArtist: string;
 }) {
@@ -217,20 +217,20 @@ function Note({ children }: { children: string }) {
 }
 
 function Playlists({
-  playlists,
+  sources,
   browsing,
   state,
-}: Pick<MusicSnapshot, "playlists" | "browsing"> & { state: ReadyState }) {
+}: Pick<MusicSnapshot, "sources" | "browsing"> & { state: ReadyState }) {
   if (browsing === null) {
-    return playlists?.map((playlist) => (
+    return sources?.map((source) => (
       <button
         className={ROW_CLASS}
-        key={playlist.id}
-        onClick={() => void browseMusicPlaylist(playlist)}
+        key={source.path}
+        onClick={() => void browseMusicSource(source)}
         type="button"
       >
         <ListMusicIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="min-w-0 flex-1 truncate text-sm">{playlist.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm">{source.name}</span>
       </button>
     ));
   }
@@ -248,20 +248,20 @@ function Playlists({
 }
 
 /** Sits above the scrolling list, so the way back stays in reach down a long playlist. */
-function PlaylistHeader({ playlist }: { playlist: MusicPlaylist }) {
+function SourceHeader({ source }: { source: MusicSource }) {
   return (
     <div className="flex min-w-0 shrink-0 items-center gap-1 px-1.5 pb-1">
       <Button
         aria-label="Back to playlists"
         size="icon-xs"
         variant="ghost"
-        onClick={() => void browseMusicPlaylist(null)}
+        onClick={() => void browseMusicSource(null)}
       >
         <ChevronLeftIcon />
       </Button>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{playlist.name}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{source.name}</span>
       <Button
-        aria-label={`Play ${playlist.name}`}
+        aria-label={`Play ${source.name}`}
         size="icon-xs"
         variant="ghost"
         onClick={() => playBrowsedTrack(0)}
@@ -273,19 +273,23 @@ function PlaylistHeader({ playlist }: { playlist: MusicPlaylist }) {
 }
 
 export function MusicPanel() {
-  const { state, upNext, playlists, browsing, opening, openFailed } = useSyncExternalStore(
-    subscribeMusic,
-    getMusicSnapshot,
-  );
+  const { state, sentVolume, upNext, sources, browsing, opening, openFailed } =
+    useSyncExternalStore(subscribeMusic, getMusicSnapshot);
   const [tab, setTab] = useState<MusicTab>("playlists");
-  // ah ahh answers within a frame or two; a spinner would only flash.
-  if (state === null) return null;
-  if (state.status !== "ready") {
-    return <MusicUnavailable openFailed={openFailed} opening={opening} status={state.status} />;
+  if (state === null || state.status !== "ready") {
+    // ah ahh answers within a frame or two; a spinner would only flash.
+    if (state === null && !opening) return null;
+    return (
+      <MusicUnavailable
+        openFailed={openFailed}
+        opening={opening}
+        status={state === null ? "closed" : state.status}
+      />
+    );
   }
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col" data-fork-music-panel="">
-      <NowPlaying state={state} />
+      <NowPlaying state={state} volume={sentVolume ?? state.volume} />
       <div className="flex shrink-0 border-t px-3 py-2">
         <SegmentedTabs
           aria-label="Music lists"
@@ -299,12 +303,10 @@ export function MusicPanel() {
           <SegmentedTab value="upNext">Up Next</SegmentedTab>
         </SegmentedTabs>
       </div>
-      {tab === "playlists" && browsing !== null ? (
-        <PlaylistHeader playlist={browsing.playlist} />
-      ) : null}
+      {tab === "playlists" && browsing !== null ? <SourceHeader source={browsing.source} /> : null}
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
         {tab === "playlists" ? (
-          <Playlists browsing={browsing} playlists={playlists} state={state} />
+          <Playlists browsing={browsing} sources={sources} state={state} />
         ) : (
           <UpNext upNext={upNext} />
         )}

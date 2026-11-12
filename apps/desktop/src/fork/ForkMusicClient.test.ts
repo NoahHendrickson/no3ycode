@@ -7,9 +7,41 @@ import * as NodePath from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
 
-import { followForkMusic, requestForkMusic, waitForForkMusicPlayer } from "./ForkMusicClient.ts";
+import {
+  commandForkMusic,
+  followForkMusic,
+  libraryPageForkMusic,
+  upNextForkMusic,
+  waitForForkMusicPlayer,
+} from "./ForkMusicClient.ts";
 
 const TOKEN = "pairing-token";
+
+/** What ah ahh's remoteState sends; the client keeps only what the panel shows. */
+const player = (title: string, positionMs: number) => ({
+  playing: true,
+  title,
+  artist: "Artist",
+  album: "Album",
+  artwork: null,
+  durationMs: 1000,
+  positionMs,
+  volume: 0.5,
+  shuffle: false,
+  repeat: 0,
+  queueRevision: 1,
+  favorite: null,
+});
+const shown = (title: string) => ({
+  status: "ready",
+  playing: true,
+  title,
+  artist: "Artist",
+  album: "Album",
+  artwork: null,
+  volume: 0.5,
+  queueRevision: 1,
+});
 
 /** Values pushed by a callback, taken in order by a test that awaits each one. */
 function inbox<T>() {
@@ -47,7 +79,13 @@ async function startAhAhh() {
       return;
     }
     if (request.url === "/v1/queue") {
-      response.writeHead(200).end(JSON.stringify({ position: 0, items: [{ index: 0 }] }));
+      const entry = (index: number) => ({
+        index,
+        id: `q${index}`,
+        title: `Q${index}`,
+        artist: "A",
+      });
+      response.writeHead(200).end(JSON.stringify({ position: 4, items: [entry(4), entry(5)] }));
       return;
     }
     let text = "";
@@ -59,8 +97,18 @@ async function startAhAhh() {
         response.writeHead(body.action === "refused" ? 400 : 204).end();
       } else if (body.path === "/empty") {
         response.writeHead(404).end("{}");
+      } else if (body.path === "/garbled") {
+        response.writeHead(200).end(JSON.stringify({ data: [{ id: 7 }] }));
       } else {
-        response.writeHead(200).end(JSON.stringify({ data: [{ id: "p.1" }] }));
+        response.writeHead(200).end(
+          JSON.stringify({
+            data: [
+              { id: "i.1", type: "library-songs", attributes: { name: "One", artistName: "A" } },
+              { id: "p.1", type: "library-playlists", attributes: { name: "Girlpop" } },
+            ],
+            ...(body.path === "/more" ? { next: "/more?offset=100" } : {}),
+          }),
+        );
       }
     });
   });
@@ -82,70 +130,78 @@ async function startAhAhh() {
 }
 
 describe("ForkMusicClient", () => {
-  it("relays requests, and answers closed or error instead of failing", async () => {
+  it("answers typed values, and false or null instead of failing", async () => {
     await using ahAhh = await startAhAhh();
     const { target } = ahAhh;
 
     // ah ahh has never run on this computer: there is no token to read.
-    expect(await requestForkMusic(target, { type: "queue" })).toEqual({ status: "closed" });
+    expect(await upNextForkMusic(target)).toBeNull();
+    expect(await waitForForkMusicPlayer(target, 1)).toBe(false);
 
     await ahAhh.pair(TOKEN);
-    expect(await requestForkMusic(target, { type: "queue" })).toEqual({
-      queue: { position: 0, items: [{ index: 0 }] },
+    // What a launch waits on: the player answering for its queue.
+    expect(await waitForForkMusicPlayer(target, 1)).toBe(true);
+    // The first entry is the song playing; ids and artwork are not the panel's business.
+    expect(await upNextForkMusic(target)).toEqual([{ index: 5, title: "Q5", artist: "A" }]);
+    expect(await commandForkMusic(target, { action: "volume", value: 0.25 })).toBe(true);
+    expect(await commandForkMusic(target, { action: "refused" })).toBe(false);
+
+    expect(await libraryPageForkMusic(target, "/more", 200)).toEqual({
+      rows: [
+        { id: "i.1", name: "One", artist: "A" },
+        { id: "p.1", name: "Girlpop", artist: "" },
+      ],
+      nextOffset: 300,
     });
-    expect(
-      await requestForkMusic(target, { type: "command", action: "volume", value: 0.25 }),
-    ).toEqual({ ok: true });
-    expect(await requestForkMusic(target, { type: "command", action: "refused" })).toEqual({
-      ok: false,
-    });
-    expect(
-      await requestForkMusic(target, { type: "music", path: "/list", params: { limit: 100 } }),
-    ).toEqual({ data: { data: [{ id: "p.1" }] } });
+    expect((await libraryPageForkMusic(target, "/last", 0))?.nextOffset).toBeNull();
     // Apple's 404 is how an empty playlist lists its tracks.
-    expect(await requestForkMusic(target, { type: "music", path: "/empty" })).toEqual({
-      data: null,
-    });
+    expect(await libraryPageForkMusic(target, "/empty", 0)).toEqual({ rows: [], nextOffset: null });
+    // An answer in the wrong shape is a failure, not a list with defaults filled in.
+    expect(await libraryPageForkMusic(target, "/garbled", 0)).toBeNull();
     expect(ahAhh.bodies).toEqual([
       { action: "volume", value: 0.25 },
       { action: "refused" },
-      { path: "/list", params: { limit: 100 } },
-      { path: "/empty" },
+      { path: "/more", params: { limit: 100, offset: 200 } },
+      { path: "/last", params: { limit: 100, offset: 0 } },
+      { path: "/empty", params: { limit: 100, offset: 0 } },
+      { path: "/garbled", params: { limit: 100, offset: 0 } },
     ]);
 
-    // What a launch waits on: the player answering for its queue.
-    expect(await waitForForkMusicPlayer(target, 1, 0)).toBe(true);
-
-    // Reset pairing in ah ahh replaced the token: refused, not closed.
+    // Reset pairing in ah ahh replaced the token, or nothing is listening at all.
     await ahAhh.pair("stale");
-    expect(await requestForkMusic(target, { type: "queue" })).toEqual({ status: "error" });
-
-    // Nothing listening on the port: ah ahh is not running.
-    expect(
-      await requestForkMusic({ ...target, origin: "http://127.0.0.1:1" }, { type: "queue" }),
-    ).toEqual({ status: "closed" });
+    expect(await upNextForkMusic(target)).toBeNull();
+    const nowhere = { ...target, origin: "http://127.0.0.1:1" };
+    expect(await commandForkMusic(nowhere, { action: "toggle" })).toBe(false);
     // A launch that never comes up gives up rather than waiting forever.
-    expect(await waitForForkMusicPlayer({ ...target, origin: "http://127.0.0.1:1" }, 2, 0)).toBe(
-      false,
-    );
+    expect(await waitForForkMusicPlayer(nowhere, 2, 0)).toBe(false);
   });
 
-  it("streams state without the position heartbeat, and reports closed once when it ends", async () => {
+  it("streams state without the position heartbeat, and reports once when it ends", async () => {
     await using ahAhh = await startAhAhh();
     await ahAhh.pair(TOKEN);
     const states = inbox<unknown>();
     const stop = followForkMusic(ahAhh.target, (state) => states.push(state));
     await ahAhh.connected.take();
 
-    ahAhh.publish({ title: "One", positionMs: 10 });
-    expect(await states.take()).toEqual({ status: "ready", title: "One", positionMs: 10 });
+    ahAhh.publish(player("One", 10));
+    expect(await states.take()).toEqual(shown("One"));
     // ah ahh re-sends every ten seconds to carry the position; the panel has no use for it.
-    ahAhh.publish({ title: "One", positionMs: 10_010 });
-    ahAhh.publish({ title: "Two", positionMs: 0 });
-    expect(await states.take()).toEqual({ status: "ready", title: "Two", positionMs: 0 });
+    ahAhh.publish(player("One", 10_010));
+    ahAhh.publish(player("Two", 0));
+    expect(await states.take()).toEqual(shown("Two"));
 
     ahAhh.endStream();
     expect(await states.take()).toEqual({ status: "closed" });
     stop();
+
+    // A refused stream is an error, not a closed ah ahh; so is a state in the wrong shape.
+    await ahAhh.pair("stale");
+    followForkMusic(ahAhh.target, (state) => states.push(state));
+    expect(await states.take()).toEqual({ status: "error" });
+    await ahAhh.pair(TOKEN);
+    followForkMusic(ahAhh.target, (state) => states.push(state));
+    await ahAhh.connected.take();
+    ahAhh.publish({ title: 7 });
+    expect(await states.take()).toEqual({ status: "error" });
   });
 });

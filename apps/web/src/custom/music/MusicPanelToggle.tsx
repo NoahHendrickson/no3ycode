@@ -11,7 +11,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { selectActiveRightPanel, useRightPanelStore } from "~/rightPanelStore";
 
 import { readMusicBridge } from "./musicBridge";
-import { launchMusicWhenClosed } from "./musicStore";
+import { openMusic } from "./musicStore";
 
 export function MusicPanelToggle(props: { threadRef: ScopedThreadRef | null; available: boolean }) {
   const { threadRef, available } = props;
@@ -29,7 +29,8 @@ export function MusicPanelToggle(props: { threadRef: ScopedThreadRef | null; ava
           disabled={!available || threadRef === null}
           onPressedChange={() => {
             if (threadRef === null) return;
-            if (!open) launchMusicWhenClosed();
+            // The click itself asks for ah ahh, so a panel that merely remounts never starts it.
+            if (!open) void openMusic();
             useRightPanelStore.getState().toggle(threadRef, "music");
           }}
           pressed={open}

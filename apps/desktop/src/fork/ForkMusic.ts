@@ -15,11 +15,13 @@ import * as Schema from "effect/Schema";
 import * as Electron from "electron";
 
 import * as DesktopIpc from "../ipc/DesktopIpc.ts";
-import { forkSenderWindow } from "./ForkGlassState.ts";
 import {
+  commandForkMusic,
   followForkMusic,
+  type ForkMusicState,
   type ForkMusicTarget,
-  requestForkMusic,
+  libraryPageForkMusic,
+  upNextForkMusic,
   waitForForkMusicPlayer,
 } from "./ForkMusicClient.ts";
 
@@ -31,22 +33,24 @@ const AH_AHH_REMOTE_ORIGIN = "http://127.0.0.1:10771";
 const AH_AHH_BUNDLE_ID = "dev.noey.ahahh";
 /** ah ahh's Electron app name, which names its data folder. */
 const AH_AHH_DATA_FOLDER = "ah ahh";
+/** How long a launch may take, in half-second tries. */
+const LAUNCH_ATTEMPTS = 30;
 
 // ah ahh validates commands and Apple Music paths itself, so they pass through unexamined.
 const Request = Schema.Union([
   Schema.Struct({ type: Schema.Literal("follow") }),
   Schema.Struct({ type: Schema.Literal("unfollow") }),
   Schema.Struct({ type: Schema.Literal("open") }),
-  Schema.Struct({ type: Schema.Literal("queue") }),
+  Schema.Struct({ type: Schema.Literal("upNext") }),
   Schema.Struct({
     type: Schema.Literal("command"),
     action: Schema.String,
     value: Schema.optional(Schema.Unknown),
   }),
   Schema.Struct({
-    type: Schema.Literal("music"),
+    type: Schema.Literal("libraryPage"),
     path: Schema.String,
-    params: Schema.optional(Schema.Unknown),
+    offset: Schema.Number,
   }),
 ]);
 const decodeRequest = Schema.decodeUnknownEffect(Request);
@@ -56,54 +60,65 @@ const target = (): ForkMusicTarget => ({
   tokenFile: NodePath.join(Electron.app.getPath("appData"), AH_AHH_DATA_FOLDER, "remote.json"),
 });
 
-/**
- * Starts ah ahh hidden and behind this app, then waits for its player. False when it is not
- * installed or never answered. macOS only: `open` finds it by bundle id; the preload tells
- * the renderer not to offer this elsewhere.
- */
-function openAhAhh(): Promise<boolean> {
-  return new Promise((resolve) => {
-    NodeChildProcess.execFile("/usr/bin/open", ["-g", "-j", "-b", AH_AHH_BUNDLE_ID], (error) => {
-      if (error) resolve(false);
-      else void waitForForkMusicPlayer(target()).then(resolve);
-    });
+/** Pages with the panel open. The stream to ah ahh is held only while there is one. */
+const followers = new Set<Electron.WebContents>();
+const hooked = new WeakSet<Electron.WebContents>();
+let stopStream: (() => void) | null = null;
+let lastState: ForkMusicState | null = null;
+
+/** Starts the stream when a page follows and none is running, or the last one ended. */
+function ensureStream(): void {
+  const ended = lastState !== null && lastState.status !== "ready";
+  if (followers.size === 0 || (stopStream !== null && !ended)) return;
+  stopStream?.();
+  lastState = null;
+  stopStream = followForkMusic(target(), (state) => {
+    lastState = state;
+    for (const follower of followers) {
+      if (!follower.isDestroyed()) follower.send(FORK_MUSIC_STATE_CHANNEL, state);
+    }
   });
 }
 
-/** Windows with the panel open. The stream to ah ahh is held only while there is one. */
-const followers = new Set<Electron.BrowserWindow>();
-let stream: { stop: () => void; ended: boolean } | null = null;
-let lastState: unknown = null;
-
-function unfollow(window: Electron.BrowserWindow): void {
-  followers.delete(window);
+function unfollow(contents: Electron.WebContents): void {
+  followers.delete(contents);
   if (followers.size > 0) return;
-  stream?.stop();
-  stream = null;
+  stopStream?.();
+  stopStream = null;
   lastState = null;
 }
 
-/** Answers with the state last streamed, for a window that joins a stream already open. */
-function follow(window: Electron.BrowserWindow): unknown {
-  if (!followers.has(window)) {
-    followers.add(window);
-    window.once("closed", () => unfollow(window));
-  }
-  // An ended stream is not retried on its own; following again (the panel's Try again) is the retry.
-  if (stream === null || stream.ended) {
-    const started = { stop: () => {}, ended: false };
-    stream = started;
-    lastState = null;
-    started.stop = followForkMusic(target(), (state) => {
-      if (stream !== started) return;
-      started.ended = (state as { status?: unknown }).status !== "ready";
-      lastState = state;
-      for (const follower of followers) {
-        if (!follower.isDestroyed()) follower.webContents.send(FORK_MUSIC_STATE_CHANNEL, state);
-      }
+/** Answers with the state last streamed, for a page that joins a stream already open. */
+function follow(contents: Electron.WebContents): ForkMusicState | null {
+  followers.add(contents);
+  if (!hooked.has(contents)) {
+    hooked.add(contents);
+    // A reload, a crash or a closed window ends the page without its panel's unfollow.
+    const drop = () => unfollow(contents);
+    contents.on("destroyed", drop);
+    contents.on("render-process-gone", drop);
+    contents.on("did-start-navigation", (details) => {
+      if (details.isMainFrame && !details.isSameDocument) drop();
     });
   }
+  ensureStream();
   return lastState;
+}
+
+/**
+ * True once ah ahh's player answers. Starts it first when it is not already up, hidden and
+ * behind this app; macOS only, where `open` finds it by bundle id. False when it is not
+ * installed or never answered.
+ */
+async function openAhAhh(canLaunch: boolean): Promise<boolean> {
+  if (await waitForForkMusicPlayer(target(), 1)) return true;
+  if (!canLaunch) return false;
+  const launched = await new Promise<boolean>((resolve) => {
+    NodeChildProcess.execFile("/usr/bin/open", ["-g", "-j", "-b", AH_AHH_BUNDLE_ID], (error) =>
+      resolve(error === null),
+    );
+  });
+  return launched && (await waitForForkMusicPlayer(target(), LAUNCH_ATTEMPTS));
 }
 
 export const installForkMusicIpc = Effect.fn("desktop.fork.installMusic")(function* () {
@@ -114,18 +129,33 @@ export const installForkMusicIpc = Effect.fn("desktop.fork.installMusic")(functi
     channel: FORK_MUSIC_CHANNEL,
     handler: Effect.fn("desktop.ipc.fork.music")(function* (raw, event) {
       const request = yield* decodeRequest(raw);
-      if (request.type === "follow" || request.type === "unfollow") {
-        const window = yield* forkSenderWindow(event);
-        if (window === null || window.isDestroyed()) return null;
-        if (request.type === "follow") return follow(window);
-        unfollow(window);
-        return null;
+      switch (request.type) {
+        case "follow":
+        case "unfollow": {
+          const contents =
+            event === undefined ? undefined : Electron.webContents.fromId(event.sender.id);
+          if (contents === undefined) return null;
+          if (request.type === "follow") return follow(contents);
+          unfollow(contents);
+          return null;
+        }
+        case "open": {
+          const opened = yield* Effect.promise(() => openAhAhh(platform === "darwin"));
+          // The panel that asked followed a closed ah ahh, and that stream has ended.
+          if (opened) ensureStream();
+          return opened;
+        }
+        case "command":
+          return yield* Effect.promise(() =>
+            commandForkMusic(target(), { action: request.action, value: request.value }),
+          );
+        case "upNext":
+          return yield* Effect.promise(() => upNextForkMusic(target()));
+        case "libraryPage":
+          return yield* Effect.promise(() =>
+            libraryPageForkMusic(target(), request.path, request.offset),
+          );
       }
-      if (request.type === "open") {
-        if (platform !== "darwin") return { ok: false };
-        return { ok: yield* Effect.promise(openAhAhh) };
-      }
-      return yield* Effect.promise(() => requestForkMusic(target(), request));
     }),
   });
 });

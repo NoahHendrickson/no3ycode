@@ -9,14 +9,14 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import type { MusicRequest } from "../custom/music/musicBridge";
+import type { MusicBridge, MusicCommand, MusicState } from "../custom/music/musicBridge";
 import { readMusicBridge } from "../custom/music/musicBridge";
 import {
-  browseMusicPlaylist,
+  browseMusicSource,
   getMusicSnapshot,
-  launchMusicWhenClosed,
-  MUSIC_ALL_SONGS,
+  openMusic,
   playBrowsedTrack,
+  retryMusic,
   setMusicVolume,
   subscribeMusic,
 } from "../custom/music/musicStore";
@@ -41,10 +41,10 @@ const fenced = (body: string) =>
     "u",
   );
 
-const ready = (title: string, volume: number, queueRevision: number) => ({
+const ready = (volume: number, queueRevision = 1): MusicState => ({
   status: "ready",
   playing: true,
-  title,
+  title: "One",
   artist: "Artist",
   album: "Album",
   artwork: null,
@@ -52,10 +52,11 @@ const ready = (title: string, volume: number, queueRevision: number) => ({
   queueRevision,
 });
 
-const rows = (count: number, from: number) =>
+const songs = (count: number, from: number) =>
   Array.from({ length: count }, (_, i) => ({
     id: `i.${from + i}`,
-    attributes: { name: `Song ${from + i}`, artistName: "Artist" },
+    name: `Song ${from + i}`,
+    artist: "Artist",
   }));
 
 describe("fork guard: fork-music-panel", () => {
@@ -75,13 +76,15 @@ describe("fork guard: fork-music-panel", () => {
     expect(desktopMethod).toContain(
       'NodePath.join(Electron.app.getPath("appData"), AH_AHH_DATA_FOLDER, "remote.json")',
     );
-    // Clicking the music button may start ah ahh, hidden and behind this app; a remount may not.
+    // Opening looks before it launches, hidden and behind this app, and only the click asks.
+    expect(desktopMethod).toContain("if (await waitForForkMusicPlayer(target(), 1)) return true;");
     expect(desktopMethod).toContain('AH_AHH_BUNDLE_ID = "dev.noey.ahahh"');
     expect(desktopMethod).toContain('["-g", "-j", "-b", AH_AHH_BUNDLE_ID]');
     expect(desktopPreload).toMatch(fenced('canOpen: clientPlatform === "darwin",'));
-    expect(toggle).toContain("if (!open) launchMusicWhenClosed();");
-    // The last panel to close ends the stream; nothing polls.
-    expect(desktopMethod).toMatch(/if \(followers\.size > 0\) return;\s*stream\?\.stop\(\);/u);
+    expect(toggle).toContain("if (!open) void openMusic();");
+    // The last panel to close ends the stream, a reloaded page counts as closed, nothing polls.
+    expect(desktopMethod).toMatch(/if \(followers\.size > 0\) return;\s*stopStream\?\.\(\);/u);
+    expect(desktopMethod).toContain('contents.on("did-start-navigation"');
     expect(desktopMethod).not.toMatch(/setInterval|setTimeout/u);
   });
 
@@ -102,134 +105,123 @@ describe("fork guard: fork-music-panel", () => {
     expect(readMusicBridge()).toBeNull();
   });
 
-  it("starts ah ahh on the button's click, pages its library, and holds the slider through a volume drag", async () => {
-    const requests: MusicRequest[] = [];
-    const volumeAnswers: Array<() => void> = [];
-    let pushState: (state: unknown) => void = () => undefined;
-    let stopped = 0;
-    let running = false;
-    (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
-      music: {
-        canOpen: true,
-        request: (request: MusicRequest): Promise<unknown> => {
-          requests.push(request);
-          if (request.type === "open") {
-            running = true;
-            return Promise.resolve({ ok: true });
-          }
-          if (request.type === "follow") {
-            return Promise.resolve(running ? ready("One", 0.5, 1) : { status: "closed" });
-          }
-          if (request.type === "queue") {
-            return Promise.resolve({
-              queue: {
-                position: 4,
-                items: [
-                  { index: 4, title: "One", artist: "Artist" },
-                  { index: 5, title: "Two", artist: "Artist" },
-                ],
-              },
-            });
-          }
-          if (request.type === "command" && request.action === "volume") {
-            return new Promise((resolve) => volumeAnswers.push(() => resolve({ ok: true })));
-          }
-          if (request.type !== "music") return Promise.resolve({ ok: true });
-          if (request.path === "/v1/me/library/playlists") {
-            return Promise.resolve({
-              data: { data: [{ id: "p.1", attributes: { name: "Girlpop" } }] },
-            });
-          }
-          // Two pages of a playlist's tracks, or of the library's songs.
+  it("follows ah ahh, starts it only when asked, lists its library, and holds the slider through a drag", async () => {
+    const commands: MusicCommand[] = [];
+    const pages: string[] = [];
+    const volumeAnswers: Array<(taken: boolean) => void> = [];
+    const counts = { follows: 0, unfollows: 0, opens: 0, queueReads: 0 };
+    let pushState: (state: MusicState) => void = () => undefined;
+    const bridge: MusicBridge = {
+      canOpen: true,
+      follow: (listener) => {
+        counts.follows += 1;
+        pushState = listener;
+        return () => {
+          counts.unfollows += 1;
+        };
+      },
+      open: () => {
+        counts.opens += 1;
+        return Promise.resolve(true);
+      },
+      command: (command) => {
+        commands.push(command);
+        return command.action === "volume"
+          ? new Promise((resolve) => volumeAnswers.push(resolve))
+          : Promise.resolve(true);
+      },
+      upNext: () => {
+        counts.queueReads += 1;
+        return Promise.resolve([{ index: 5, title: "Two", artist: "Artist" }]);
+      },
+      libraryPage: (path, offset) => {
+        pages.push(`${path}@${offset}`);
+        if (path === "/v1/me/library/playlists") {
           return Promise.resolve({
-            data:
-              request.params?.offset === 0
-                ? { data: rows(100, 0), next: "/more" }
-                : { data: rows(20, 100) },
+            rows: [{ id: "p.1", name: "Girlpop", artist: "" }],
+            nextOffset: null,
           });
-        },
-        onState: (listener: (state: unknown) => void) => {
-          pushState = listener;
-          return () => {
-            stopped += 1;
-          };
-        },
+        }
+        return Promise.resolve(
+          offset === 0
+            ? { rows: songs(100, 0), nextOffset: 100 }
+            : { rows: songs(20, 100), nextOffset: null },
+        );
       },
     };
-    const commands = () =>
-      requests.flatMap((request) => (request.type === "command" ? [request] : []));
+    (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = { music: bridge };
+    const volumes = () =>
+      commands.flatMap((command) => (command.action === "volume" ? [command.value] : []));
     try {
-      // The click that opens the panel finds ah ahh closed, starts it, and follows it.
-      launchMusicWhenClosed();
+      // A mount follows; it never starts ah ahh. The button's click (or Open) is what does.
       const unsubscribe = subscribeMusic(() => undefined);
-      await vi.waitFor(() => expect(getMusicSnapshot().playlists).toHaveLength(2));
-      expect(getMusicSnapshot().playlists).toEqual([
-        MUSIC_ALL_SONGS,
-        { id: "p.1", name: "Girlpop" },
+      pushState({ status: "closed" });
+      expect(counts).toMatchObject({ follows: 1, opens: 0 });
+      await openMusic();
+      expect(counts.opens).toBe(1);
+      expect(getMusicSnapshot()).toMatchObject({ opening: false, openFailed: false });
+
+      pushState(ready(0.5));
+      await vi.waitFor(() => expect(getMusicSnapshot().sources).toHaveLength(2));
+      expect(getMusicSnapshot().sources).toEqual([
+        { name: "Songs", path: "/v1/me/library/songs" },
+        { name: "Girlpop", path: "/v1/me/library/playlists/p.1/tracks" },
       ]);
-      // The queue's first entry is the song playing; the rest is what comes next.
       expect(getMusicSnapshot().upNext).toEqual([{ index: 5, title: "Two", artist: "Artist" }]);
 
-      const girlpop = getMusicSnapshot().playlists?.[1];
+      const girlpop = getMusicSnapshot().sources?.[1];
       if (!girlpop) throw new Error("no playlist");
-      await browseMusicPlaylist(girlpop);
+      await browseMusicSource(girlpop);
       expect(getMusicSnapshot().browsing?.tracks).toHaveLength(120);
-      expect(getMusicSnapshot().browsing?.tracks?.[119]).toEqual({
-        id: "i.119",
-        name: "Song 119",
-        artist: "Artist",
-      });
+      // By id: what plays is what the list shows, whatever the playlist has become since.
       playBrowsedTrack(7);
-      expect(commands().at(-1)).toMatchObject({
-        action: "playItem",
-        value: { type: "library-playlists", id: "p.1", startWith: 7 },
-      });
+      const played = commands.at(-1);
+      expect(played).toMatchObject({ action: "playSongs", value: { startWith: 7 } });
+      expect(played?.action === "playSongs" ? played.value.ids : null).toHaveLength(120);
 
-      // The library's songs are not a playlist ah ahh can be pointed at, so their ids go along.
-      await browseMusicPlaylist(MUSIC_ALL_SONGS);
-      playBrowsedTrack(2);
-      const playSongs = commands().at(-1);
-      expect(playSongs).toMatchObject({ action: "playSongs", value: { startWith: 2 } });
-      expect(playSongs?.action === "playSongs" ? playSongs.value.ids.slice(0, 2) : null).toEqual([
-        "i.0",
-        "i.1",
-      ]);
+      // The same source opened twice in a row: the first listing stops, the second is the list.
+      const before = pages.length;
+      await Promise.all([browseMusicSource(girlpop), browseMusicSource(girlpop)]);
+      expect(getMusicSnapshot().browsing?.tracks).toHaveLength(120);
+      expect(pages.length - before).toBe(3);
 
       // A drag: the first value goes out, the ones behind it collapse to the last.
       setMusicVolume(0.1);
       setMusicVolume(0.2);
       setMusicVolume(0.3);
-      // ah ahh reports the volume a beat behind: the older value must not move the slider.
-      pushState(ready("One", 0.1, 1));
-      expect(getMusicSnapshot().state).toMatchObject({ volume: 0.3 });
-      volumeAnswers[0]?.();
+      // ah ahh reports a beat behind: the older value must not move the slider.
+      pushState(ready(0.1));
+      expect(getMusicSnapshot().sentVolume).toBe(0.3);
+      volumeAnswers[0]?.(true);
       await vi.waitFor(() => expect(volumeAnswers).toHaveLength(2));
-      volumeAnswers[1]?.();
-      await vi.waitFor(() => {
-        pushState(ready("One", 0.3, 1));
-        pushState(ready("One", 0.8, 1));
-        // Once ah ahh has caught up, a volume changed in ah ahh itself shows again.
-        expect(getMusicSnapshot().state).toMatchObject({ volume: 0.8 });
-      });
-      expect(
-        commands().flatMap((command) => (command.action === "volume" ? [command.value] : [])),
-      ).toEqual([0.1, 0.3]);
+      // The report of the final value lands before its command is answered. That is enough
+      // to let go: nothing else may ever arrive, since repeats of a state are not streamed.
+      pushState(ready(0.3));
+      expect(getMusicSnapshot().sentVolume).toBeNull();
+      volumeAnswers[1]?.(true);
+      pushState(ready(0.8));
+      expect(getMusicSnapshot()).toMatchObject({ sentVolume: null, state: { volume: 0.8 } });
+      // Set to what ah ahh already has, so no report follows: let go when the command is taken.
+      setMusicVolume(0.8);
+      expect(getMusicSnapshot().sentVolume).toBe(0.8);
+      await vi.waitFor(() => expect(volumeAnswers).toHaveLength(3));
+      volumeAnswers[2]?.(true);
+      await vi.waitFor(() => expect(getMusicSnapshot().sentVolume).toBeNull());
+      expect(volumes()).toEqual([0.1, 0.3, 0.8]);
 
-      // A changed queue is fetched again; a closed ah ahh shows as that.
-      const queueReads = () => requests.filter((request) => request.type === "queue").length;
-      const before = queueReads();
-      pushState(ready("One", 0.8, 2));
-      expect(queueReads()).toBe(before + 1);
-      // Reopened mid exit animation, the panel never remounts: that click must not arm a launch.
-      launchMusicWhenClosed();
+      // A changed queue is read again. A closed ah ahh shows as that and is not restarted.
+      const queueReads = counts.queueReads;
+      pushState(ready(0.8, 2));
+      expect(counts.queueReads).toBe(queueReads + 1);
       pushState({ status: "closed" });
       expect(getMusicSnapshot().state).toEqual({ status: "closed" });
-      // Quit on purpose with the panel open: it stays quit until the user asks.
-      expect(requests.filter((request) => request.type === "open")).toHaveLength(1);
+      expect(counts.opens).toBe(1);
 
+      // Try again follows afresh; the last panel to close stops following.
+      retryMusic();
+      expect(counts).toMatchObject({ follows: 2, unfollows: 1 });
       unsubscribe();
-      expect(stopped).toBe(1);
-      expect(requests.at(-1)).toEqual({ type: "unfollow" });
+      expect(counts.unfollows).toBe(2);
     } finally {
       delete (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
     }

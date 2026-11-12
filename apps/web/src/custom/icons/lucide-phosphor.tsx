@@ -626,7 +626,6 @@ export const UserRoundIcon = icon("user-round", PhUserCircle, "duotone");
 export const Volume2 = icon("volume-2", PhSpeakerHigh, "duotone");
 export const VolumeOff = icon("volume-off", PhSpeakerSlash, "duotone");
 // The music panel (fork-music-panel).
-export const Volume2Icon = Volume2;
 export const SkipBackIcon = icon("skip-back", PhSkipBack, "duotone");
 export const SkipForwardIcon = icon("skip-forward", PhSkipForward, "duotone");
 export const ListMusicIcon = icon("list-music", PhPlaylist, "duotone");
@@ -687,7 +686,6 @@ export const Gamepad2Icon = icon("gamepad-2", PhGameController, "duotone");
 export const Layers3Icon = icon("layers-3", PhStack, "duotone");
 export const Layers3 = Layers3Icon;
 export const MusicIcon = icon("music", PhMusicNotes, "duotone");
-export const Music = MusicIcon;
 export const ShoppingBagIcon = icon("shopping-bag", PhShoppingBag, "duotone");
 export const VideoIcon = icon("video", PhVideoCamera, "duotone");
 export const ChevronLeft = ChevronLeftIcon;
