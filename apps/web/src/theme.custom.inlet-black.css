@@ -69,7 +69,7 @@
      with no working-green. */
 
   & [data-fork-dev-server-live] > svg:not([data-fork-dev-server-fade]) {
-    color: #9a9a9a;
+    color: var(--fork-inlet-black-ink-muted);
   }
 
   /* Inlet Black's composer is a light vessel inside a dark frame, so a notice
@@ -90,7 +90,8 @@
      The menus hung from the composer (model, usage, mode) are the sidebar's
      #141414 in its light ink rather than the composer's cream: the shell
      (--fork-inlet-model-shell) paints them and their open buttons, the model
-     list is a step up, and a hover a step past that, as in the sidebar. */
+     list is a step up, and a hover a step past that, as in the sidebar.
+     theme.custom.palettes.css maps their inks from these. */
 
   &
     :is(
@@ -98,32 +99,19 @@
       [data-slot="menu-popup"]:has([data-composer-permissions]),
       [data-slot="popover-popup"][data-fork-tab-menu]
     ) {
-    --popover: #262626;
-    --popover-foreground: #e8e8e8;
-    --foreground: #e8e8e8;
-    --muted-foreground: #9a9a9a;
-    --accent: #333333;
-    --accent-foreground: #e8e8e8;
-    --border: #333333;
-    --input: #333333;
-    --contrast-input: #333333;
-    --contrast-foreground: #e8e8e8;
-    --contrast-popover-foreground: #e8e8e8;
-    --contrast-accent-foreground: #e8e8e8;
-    --contrast-muted-foreground: #9a9a9a;
-    --contrast-secondary-label: #9a9a9a;
-    --contrast-icon-muted: #9a9a9a;
-    --contrast-border: #333333;
-    color: #e8e8e8;
+    --fork-inlet-black-surface: #262626;
+    --fork-inlet-black-step: #333333;
+    --fork-inlet-black-line: #333333;
+    --contrast-input: var(--fork-inlet-black-line);
   }
 
   /* The usage popover is the shell, as its button; each provider's panel set
      into it is the model list's step up rather than the composer's cream. */
 
   & [data-slot="popover-popup"][data-fork-tab-menu] {
+    --fork-inlet-black-surface: var(--fork-inlet-model-shell);
     --fork-composer-bg: #262626;
-    --muted: #333333;
-    --popover: var(--fork-inlet-model-shell);
+    --muted: var(--fork-inlet-black-step);
     --background: var(--fork-inlet-model-shell);
     background: var(--fork-inlet-model-shell);
   }
@@ -159,7 +147,7 @@
       height: 30px;
       padding: 3px;
       border-radius: 9px;
-      background: #e8e8e8;
+      background: var(--fork-inlet-black-ink);
       background-clip: content-box;
       box-shadow: none;
 
@@ -169,15 +157,15 @@
     }
 
     & [data-fork-segmented-trait] {
-      background: #262626;
+      background: var(--fork-inlet-black-surface);
     }
 
     & [data-fork-segmented-trait] > button {
-      color: #9a9a9a;
+      color: var(--fork-inlet-black-ink-muted);
     }
 
     & [data-fork-segmented-trait] > button:hover {
-      color: #e8e8e8;
+      color: var(--fork-inlet-black-ink);
     }
 
     & [data-fork-segmented-trait] > button[aria-pressed="true"] {
@@ -193,7 +181,7 @@
   & [data-slot="menu-popup"]:has([data-composer-permissions]) {
     & [data-composer-permissions] > :first-child,
     & [data-composer-permissions] > :not([role="group"]) :is(p, span, div):last-child {
-      color: #9a9a9a;
+      color: var(--fork-inlet-black-ink-muted);
     }
 
     & [data-composer-permissions] [role="group"] {
@@ -206,12 +194,12 @@
     & [data-composer-permissions] [role="menuitemradio"] {
       border-radius: 6px;
       background: transparent;
-      color: #9a9a9a;
+      color: var(--fork-inlet-black-ink-muted);
     }
 
     & [data-composer-permissions] [role="menuitemradio"]:is(:hover, [data-highlighted]) {
-      background: #272727;
-      color: #e8e8e8;
+      background: var(--fork-inlet-black-step-hover);
+      color: var(--fork-inlet-black-ink);
     }
 
     & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
@@ -228,52 +216,23 @@
       [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled),
       [data-fork-composer-control-row-slot="left"] [data-fork-dictation-live]
     ) {
-    color: #e8e8e8;
+    color: var(--fork-inlet-black-ink);
 
     & * {
       color: inherit;
     }
   }
 
-  /* Inlet Black's thread details card is the sidebar's #141414 too. */
+  /* Inlet Black's thread details card is the sidebar's #141414 too, its
+     hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
+     it, rows lift as the sidebar's rows hover (upstream's light-mode black
+     wash vanishes on #141414, and is !important, so this is too), and the
+     editor marks drawn black-on-light take their dark-mode fills. */
 
   & [data-thread-details-card] {
-    --popover: #141414;
-    --popover-foreground: #e8e8e8;
-    --foreground: #e8e8e8;
-    --muted-foreground: #9a9a9a;
-    --accent: #272727;
-    --accent-foreground: #e8e8e8;
-    --border: #2a2a2a;
-    --input: #2a2a2a;
-    --contrast-foreground: #e8e8e8;
-    --contrast-popover-foreground: #e8e8e8;
-    --contrast-accent-foreground: #e8e8e8;
-    --contrast-muted-foreground: #9a9a9a;
-    --contrast-secondary-label: #9a9a9a;
-    --contrast-icon-muted: #9a9a9a;
-    --contrast-border: #2a2a2a;
-    --fork-outline-hover-bg: #272727;
-  }
+    --fork-inlet-black-step: var(--fork-inlet-black-step-hover);
+    --fork-outline-hover-bg: var(--fork-inlet-black-step-hover);
 
-  & [data-thread-details-card] {
-    color: #e8e8e8;
-  }
-
-  /* The header button joins the card in that colour while it is open; only
-     the popover pair, which the open state and its join read, so the resting
-     icons keep the panel's ink. */
-
-  & [data-fork-panel-toggle] {
-    --popover: #141414;
-    --popover-foreground: #e8e8e8;
-  }
-
-  /* Inside it, rows lift as the sidebar's rows hover (upstream's light-mode
-     black wash vanishes on #141414, and is !important, so this is too), and
-     the editor marks drawn black-on-light take their dark-mode fills. */
-
-  & [data-thread-details-card] {
     & .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
       background-color: var(--fork-outline-hover-bg) !important;
     }
@@ -285,6 +244,15 @@
     & svg[class~="fill-black"] {
       fill: #ffffff;
     }
+  }
+
+  /* The header button joins the card in that colour while it is open; only
+     the popover pair, which the open state and its join read, so the resting
+     icons keep the panel's ink. */
+
+  & [data-fork-panel-toggle] {
+    --popover: var(--fork-inlet-black-surface);
+    --popover-foreground: var(--fork-inlet-black-ink);
   }
 
   /* Inlet Black's composer chips open in their own resting fill, not the
