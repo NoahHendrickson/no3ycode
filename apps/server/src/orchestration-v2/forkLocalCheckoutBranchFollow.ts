@@ -20,8 +20,8 @@
  * fail the run's finalization: every error becomes a warning.
  *
  * `RunFinalizationService` calls `LocalCheckoutBranchFollower` with the
- * checkout status and thread shell its observer already read; the reference
- * defaults to a no-op so the replay harness and unit tests need no wiring.
+ * checkout status its observer already read; the reference defaults to a
+ * no-op so the replay harness and unit tests need no wiring.
  */
 import {
   CommandId,
@@ -39,18 +39,11 @@ import * as Layer from "effect/Layer";
 
 import * as ThreadManagement from "./ThreadManagementService.ts";
 
-export type LocalCheckoutBranchFollowShell = Pick<
-  OrchestrationV2ThreadShell,
-  "id" | "branch" | "worktreePath" | "activeRunId"
->;
-
 export interface LocalCheckoutBranchFollowInput {
   readonly threadId: ThreadId;
   readonly runId: RunId;
   readonly cwd: string;
   readonly local: VcsStatusLocalResult;
-  /** Null when the thread is gone or `local` already rules the follow out. */
-  readonly thread: LocalCheckoutBranchFollowShell | null;
 }
 
 export class LocalCheckoutBranchFollower extends Context.Reference<{
@@ -59,7 +52,15 @@ export class LocalCheckoutBranchFollower extends Context.Reference<{
   defaultValue: () => ({ follow: () => Effect.void }),
 }) {}
 
-export interface LocalCheckoutBranchFollowDeps<DispatchError = never> {
+export type LocalCheckoutBranchFollowShell = Pick<
+  OrchestrationV2ThreadShell,
+  "id" | "branch" | "worktreePath" | "activeRunId"
+>;
+
+export interface LocalCheckoutBranchFollowDeps<ShellError = never, DispatchError = never> {
+  readonly getThreadShell: (
+    threadId: ThreadId,
+  ) => Effect.Effect<LocalCheckoutBranchFollowShell | null, ShellError>;
   readonly dispatch: (
     command: Extract<OrchestrationV2Command, { readonly type: "thread.metadata.update" }>,
   ) => Effect.Effect<unknown, DispatchError>;
@@ -67,15 +68,15 @@ export interface LocalCheckoutBranchFollowDeps<DispatchError = never> {
 
 /** Returns the adopted branch, or null when the thread keeps its record. */
 export const followLocalCheckoutBranch = Effect.fn("LocalCheckoutBranchFollower.follow")(
-  function* <DispatchError>(
+  function* <ShellError, DispatchError>(
     input: LocalCheckoutBranchFollowInput,
-    deps: LocalCheckoutBranchFollowDeps<DispatchError>,
+    deps: LocalCheckoutBranchFollowDeps<ShellError, DispatchError>,
   ) {
     const checkedOut = input.local.refName;
     if (checkedOut === null || input.local.isDefaultRef || isTemporaryWorktreeBranch(checkedOut)) {
       return null;
     }
-    const thread = input.thread;
+    const thread = yield* deps.getThreadShell(input.threadId);
     if (
       thread === null ||
       thread.worktreePath !== null ||
@@ -119,7 +120,10 @@ export const layer = Layer.effect(
     const threads = yield* ThreadManagement.ThreadManagementService;
     return LocalCheckoutBranchFollower.of({
       follow: Effect.fn("LocalCheckoutBranchFollower.follow")((input) =>
-        followLocalCheckoutBranch(input, { dispatch: threads.dispatch }).pipe(Effect.asVoid),
+        followLocalCheckoutBranch(input, {
+          getThreadShell: threads.getThreadShell,
+          dispatch: threads.dispatch,
+        }).pipe(Effect.asVoid),
       ),
     });
   }),
