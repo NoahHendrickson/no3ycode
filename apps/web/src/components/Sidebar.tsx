@@ -2586,12 +2586,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ),
     [projects],
   );
+  // Keyed on the joined keys, so a shell change that adds or drops no thread
+  // keeps the set, and the draft rows below, as they were.
+  const serverThreadKeyList = threads
+    .map((thread) => scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)))
+    .join("\n");
   const serverThreadKeys = useMemo(
-    () =>
-      new Set(
-        threads.map((thread) => scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id))),
-      ),
-    [threads],
+    () => new Set(serverThreadKeyList.split("\n")),
+    [serverThreadKeyList],
   );
   // Prompt titles are read from getState() on route/shell changes — not
   // subscribed per keystroke — so typing in the composer does not rebuild the
