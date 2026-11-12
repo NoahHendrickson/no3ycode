@@ -15,13 +15,20 @@ const read = (path: string) =>
   NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(path, srcUrl)), "utf8");
 const compact = (value: string) => value.replace(/\s+/gu, "");
 
-const sheets = NodeFS.readdirSync(NodeURL.fileURLToPath(srcUrl))
-  .filter((name) => /^theme\.custom.*\.css$/u.test(name))
-  .map((name) => ({ name, css: read(name) }));
+// Every fork sheet: the palettes, and the component sheets under custom/.
+const sheets = [
+  ...NodeFS.readdirSync(NodeURL.fileURLToPath(srcUrl)).filter((name) =>
+    /^theme\.custom.*\.css$/u.test(name),
+  ),
+  ...NodeFS.readdirSync(NodeURL.fileURLToPath(new URL("custom/", srcUrl)), { recursive: true })
+    .map(String)
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => `custom/${name}`),
+].map((name) => ({ name, css: read(name) }));
 
 // A compound naming one of these, with a :has() (or :not(:has())) in the same compound.
 const LARGE_ANCESTOR =
-  /(?::root|\[data-slot="sidebar-(?:inset|wrapper|group)"\]|\[data-chat-column-maximized-away\])(?:\[[^\]]*\]|\.[\w-]+|:[\w-]+(?:\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))?)*?:(?:not\(\s*:)?has\(/u;
+  /(?::root|\[data-slot="sidebar-(?:inset|wrapper|group)"\]|\[data-chat-column-maximized-away\])(?:\[[^\]]*\]|\.[\w-]+|:[\w-]+(?:\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))?)*?:(?:(?:not|is|where)\(\s*:)?has\(/u;
 
 const MINI_PLAYER = ":has([data-preview-mini-player] [data-browser-surface-slot])";
 
@@ -45,6 +52,88 @@ const ALLOWED: ReadonlyArray<{ readonly sheet: string; readonly selector: string
   // A sidebar peek, and a chip's menu opening below it.
   { sheet: "theme.custom.inlet-menus.css", selector: ':has([data-fork-sidebar-peek="open"])' },
   { sheet: "theme.custom.inlet.css", selector: ':has([data-fork-chip-menu][data-side="bottom"])' },
+];
+
+/** The compound a :has() at `at` belongs to, cut from the selector at its own nesting level. */
+function compoundAround(selector: string, at: number) {
+  let start = at;
+  let depth = 0;
+  let stop: "edge" | "open" | "comma" = "edge";
+  for (; start > 0; start--) {
+    const char = selector[start - 1]!;
+    if (char === ")") depth++;
+    else if (char === "(") {
+      if (depth === 0) {
+        stop = "open";
+        break;
+      }
+      depth--;
+    } else if (depth === 0 && char === ",") {
+      stop = "comma";
+      break;
+    } else if (depth === 0 && /[ >+~]/u.test(char)) break;
+  }
+  let end = at;
+  depth = 0;
+  for (; end < selector.length; end++) {
+    const char = selector[end]!;
+    if (char === "(") depth++;
+    else if (char === ")") {
+      if (depth === 0) break;
+      depth--;
+    } else if (depth === 0 && /[ >+~,]/u.test(char)) break;
+  }
+  return { start, stop, text: selector.slice(start, end) };
+}
+
+/** The selector with each named pseudo-class's argument emptied. */
+function withoutArguments(selector: string, pseudos: readonly string[]): string {
+  let out = "";
+  for (let index = 0; index < selector.length; index++) {
+    const pseudo = pseudos.find((name) => selector.startsWith(`:${name}(`, index));
+    if (pseudo === undefined) {
+      out += selector[index];
+      continue;
+    }
+    let depth = 0;
+    for (index += pseudo.length + 1; index < selector.length; index++) {
+      if (selector[index] === "(") depth++;
+      else if (selector[index] === ")" && depth-- === 0) break;
+    }
+  }
+  return out;
+}
+
+/** Whether a :has() is keyed on an attribute, class or id, here or on the compound its
+    :is()/:where()/:not() hangs from. A bare tag or nothing makes every such element its subject. */
+function hasKeyedSubject(selector: string, at: number): boolean {
+  const compound = compoundAround(selector, at);
+  if (/[[.#]/u.test(withoutArguments(compound.text, ["has", "not"]))) return true;
+  if (compound.stop === "edge") return false;
+  let open = compound.start - 1;
+  for (let depth = 0; open >= 0; open--) {
+    const char = selector[open]!;
+    if (char === ")") depth++;
+    else if (char === "(") {
+      if (depth === 0) break;
+      depth--;
+    }
+  }
+  const pseudo = /:(not|is|where)$/u.exec(selector.slice(0, open));
+  return pseudo !== null && hasKeyedSubject(selector, pseudo.index);
+}
+
+/** :has() rules whose subject is a bare tag or any element, still in place. Each is a known cost
+    under every palette; take it off once the rule keys on an attribute. */
+const BARE_SUBJECT_KNOWN: ReadonlyArray<{ readonly sheet: string; readonly selector: string }> = [
+  // The editor's wrapper is upstream markup with nothing to key on.
+  { sheet: "theme.custom.css", selector: ':has(>[data-testid="composer-editor"])~div' },
+  { sheet: "theme.custom.css", selector: '>:has([data-testid="composer-editor"])' },
+  { sheet: "theme.custom.westworld.css", selector: ':has(>[data-testid="composer-editor"])~div' },
+  { sheet: "custom/ComposerShell.css", selector: ">:has(>[data-composer-control-chevron])" },
+  // Inlet's breadcrumb, and Glass's header breadcrumb list.
+  { sheet: "theme.custom.inlet.css", selector: 'nav:has([data-slot="workspace-breadcrumb-text"])' },
+  { sheet: "theme.custom.glass.css", selector: "ol:has([data-sl" },
 ];
 
 const STAMPS: ReadonlyArray<{
@@ -145,6 +234,36 @@ describe("fork guard: fork-stage-stamps", () => {
     // An entry whose rule is gone, or now reads a stamp, comes off the list.
     expect(
       ALLOWED.filter(
+        (entry) =>
+          !found.some(
+            (hit) => hit.sheet === entry.sheet && hit.selector.includes(compact(entry.selector)),
+          ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("keys every new :has() on an attribute, class or id, not a bare tag or any element", () => {
+    const found = sheets.flatMap(({ name, css }) =>
+      cssRules(css).flatMap((rule) => {
+        // One space per descendant combinator, none where whitespace is not one.
+        const spaced = rule.selector
+          .replace(/\s+/gu, " ")
+          .replace(/\s*([(,>+~])\s*/gu, "$1")
+          .replace(/\s+\)/gu, ")")
+          .trim();
+        const bare = [...spaced.matchAll(/:has\(/gu)].some(
+          (match) => !hasKeyedSubject(spaced, match.index),
+        );
+        return bare ? [{ sheet: name, selector: compact(rule.selector) }] : [];
+      }),
+    );
+    const known = (hit: { sheet: string; selector: string }) =>
+      BARE_SUBJECT_KNOWN.some(
+        (entry) => entry.sheet === hit.sheet && hit.selector.includes(compact(entry.selector)),
+      );
+    expect(found.filter((hit) => !known(hit))).toEqual([]);
+    expect(
+      BARE_SUBJECT_KNOWN.filter(
         (entry) =>
           !found.some(
             (hit) => hit.sheet === entry.sheet && hit.selector.includes(compact(entry.selector)),
