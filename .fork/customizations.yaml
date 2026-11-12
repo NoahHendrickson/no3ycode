@@ -2576,6 +2576,7 @@
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
     - apps/web/src/theme.custom.inlet-jungle.css
+    - apps/web/src/theme.custom.inlet-black.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
     - apps/web/src/components/ui/standalone-page.tsx
@@ -6693,7 +6694,7 @@
     - apps/web/src/custom/pixelTexture/textureModel.ts
     - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
     - apps/web/src/custom/forkTheme.ts
-    - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.inlet-black.css
   shadows: []
   watch:
     - apps/web/src/components/ChatView.tsx

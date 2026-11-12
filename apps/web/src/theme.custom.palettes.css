@@ -4,6 +4,7 @@
 @import "./theme.custom.inlet-composer.css";
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-jungle.css";
+@import "./theme.custom.inlet-black.css";
 
 /* Fork dark palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and sibling palette ids). Kept out of theme.custom.css so a new sibling is a
@@ -814,7 +815,7 @@
   /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
   --message-surface: #ebe7cd;
   /* The composer's menus and their open buttons are the sidebar's #141414
-     (theme.custom.inlet-menus.css restates their inks). */
+     (theme.custom.inlet-black.css restates their inks). */
   --fork-inlet-model-shell: #141414;
 }
 

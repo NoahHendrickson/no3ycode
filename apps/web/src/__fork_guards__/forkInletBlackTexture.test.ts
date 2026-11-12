@@ -68,7 +68,7 @@ describe("fork guard: fork-inlet-black-texture", () => {
   });
 
   it("clears the panel's paint over the texture on Inlet Black's new-agent screen", () => {
-    const rule = cssRules(read("../theme.custom.inlet.css")).find(
+    const rule = cssRules(read("../theme.custom.inlet-black.css")).find(
       (candidate) =>
         candidate.selector.includes('[data-fork-inlet-color="black"]') &&
         candidate.selector.includes("[data-fork-draft-hero]") &&

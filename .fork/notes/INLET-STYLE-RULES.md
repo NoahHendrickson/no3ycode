@@ -7,6 +7,7 @@ then update this file.
 
 Code: `apps/web/src/theme.custom.inlet.css` (the template), `theme.custom.inlet-menus.css`
 (hung menus, tooltips, tab strip), `theme.custom.inlet-jungle.css` (Jungle Art and Jungle Light),
+`theme.custom.inlet-black.css` (Black),
 `theme.custom.palettes.css` (per-colour tokens), `custom/inletMenuMorph.ts` (menu motion). Figma `t3-fork`: 619:6610
 (Charcoal), 629:8337 (Green), 630:10946 (Jungle Art), 630:14154 (Cream / Black).
 

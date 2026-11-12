@@ -618,17 +618,6 @@
   background-color: var(--sidebar-row-hover);
 }
 
-/* On Black the press is the open row's cream under the sidebar's light ink, so the
-   label vanishes; a press keeps the hover fill. A lit row stays lit. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-sidebar-version="v2"]
-  :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active:not(
-    [data-active="true"]
-  ) {
-  background-color: var(--sidebar-row-hover);
-}
-
 /* The utility pages (Usage, Automations) are panels as well: their stage
    card is set into the frame the way the chat column is. */
 
@@ -891,53 +880,6 @@
   visibility: hidden;
 }
 
-/* Inlet Black's new-agent screen draws the pixel texture
-   (custom/InletBlackNewAgentTexture) behind the panel's content, so the
-   header, the workspace and the draft composer stop painting the panel over
-   it. The column already paints the cream under the texture's faded edge. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-chat-column-maximized-away][data-fork-draft-hero] {
-  position: relative;
-
-  & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
-    background-color: transparent;
-  }
-
-  & [data-chat-composer-overlay][data-draft-hero] {
-    background-image: none;
-  }
-}
-
-/* Over the texture the draft composer is frosted cream: its fills (Black's
-   #d0ccb5 vessel, #ecebe1 prompt, chips) let the texture through, and the
-   vessel blurs it. The texture keeps moving, so the blur redraws with it. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-chat-column-maximized-away][data-fork-draft-hero]
-  [data-chat-composer-overlay][data-draft-hero]
-  [data-fork-composer-stack] {
-  --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
-  --fork-composer-bg: rgb(236 235 225 / 70%);
-  --fork-composer-border: transparent;
-  --fork-context-chip-bg: rgb(208 204 181 / 55%);
-  --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
-
-  & [data-fork-composer-vessel] {
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-}
-
-/* Inlet Black's message links are the new-agent texture's blue (#44aaf8,
-   custom/pixelTexture), deepened on the same hue to reach 4.5:1 on the cream
-   panel. File and thread links read the same token. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  .chat-markdown {
-  --info-foreground: #1670b5;
-}
-
 /* A standalone page (the error screen, pairing) sits outside the chat
    column, where --background is the frame and, on Inlet Black, the ink is
    the panel's dark one. It takes the panel's fill and inks, as the stage. */
@@ -952,12 +894,17 @@
   --contrast-icon-muted: var(--fork-inlet-panel-muted);
 }
 
-/* Inlet Black's dev-server pulse is plain ink: the mark breathes from the
-   sidebar's muted grey up to its light ink (the fade copy's --foreground),
-   with no working-green. */
+/* The transcript minimap's turn preview is a glass card inside the column,
+   not a portaled popup, so the menu rule in theme.custom.inlet-menus.css
+   misses it: it is drawn as Inlet's other menus, solid, with faint ink taken
+   from its own fill rather than the stage's. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-fork-dev-server-live]
-  > svg:not([data-fork-dev-server-fade]) {
-  color: #9a9a9a;
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-minimap-preview]
+  > .dropdown-glass {
+  --muted-foreground: color-mix(in srgb, var(--popover-foreground) 65%, var(--popover));
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

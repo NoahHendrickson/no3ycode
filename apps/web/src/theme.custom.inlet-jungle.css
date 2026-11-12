@@ -513,7 +513,7 @@
 
 /* A provider's package icon (Grok's) fills for the app's appearance, but these
    panels go the other way: cream on Jungle Art's dark appearance, charcoal on
-   Black's light one (theme.custom.inlet-menus.css), so each takes the other fill. */
+   Black's light one (theme.custom.inlet-black.css), so each takes the other fill. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-slot="popover-popup"][data-fork-tab-menu] {
@@ -523,17 +523,6 @@
 
   & [data-provider-package-icon] [data-icon-detail] {
     fill: var(--path-light);
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-slot="popover-popup"][data-fork-tab-menu] {
-  & [data-provider-package-icon] {
-    fill: var(--icon-dark);
-  }
-
-  & [data-provider-package-icon] [data-icon-detail] {
-    fill: var(--path-dark);
   }
 }
 

@@ -57,12 +57,13 @@ function ruleNaming(rules: ReturnType<typeof cssRules>, parts: readonly string[]
   if (rule === undefined) throw new Error(`no rule names: ${wanted}`);
   return rule.body;
 }
-// The template, its hung menus and tooltips, and the picture colours, in their import order.
+// The template, its hung menus and tooltips, and the per-colour sheets, in their import order.
 const INLET_FILES = [
   "theme.custom.inlet.css",
   "theme.custom.inlet-composer.css",
   "theme.custom.inlet-menus.css",
   "theme.custom.inlet-jungle.css",
+  "theme.custom.inlet-black.css",
 ] as const;
 const inlet = INLET_FILES.map((file) => readSibling(`../${file}`)).join("\n");
 const paletteRules = cssRules(palettes);
