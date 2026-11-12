@@ -871,3 +871,21 @@
   nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input)) {
   visibility: hidden;
 }
+
+/* Inlet Black's new-agent screen draws the pixel texture
+   (custom/InletBlackNewAgentTexture) behind the panel's content, so the
+   header, the workspace and the draft composer stop painting the panel over
+   it. The column already paints the cream under the texture's faded edge. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-chat-column-maximized-away][data-fork-draft-hero] {
+  position: relative;
+
+  & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
+    background-color: transparent;
+  }
+
+  & [data-chat-composer-overlay][data-draft-hero] {
+    background-image: none;
+  }
+}

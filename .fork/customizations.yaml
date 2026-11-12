@@ -6664,3 +6664,31 @@
     - apps/web/src/__fork_guards__/forkStageStamps.test.ts
     - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
     - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts
+
+- id: fork-inlet-black-texture
+  intent: >
+    Inlet Black's new-agent screen shows the portfolio's pixel texture (the
+    Landing preset: an Edge of pixel faces, leaves and shapes coming in from
+    the panel's right edge) on the panel's cream, behind the draft. Only Inlet
+    Black, only the new-agent screen; threads keep the plain panel.
+
+    It animates for 2.5s when the screen mounts, then holds its last frame:
+    nothing runs while the screen sits open. Reduced motion draws one still
+    frame. The engine (custom/pixelTexture) is a trimmed port of the
+    portfolio's TextureCanvas that renders the Landing look pixel for pixel.
+    The column's header, workspace area and draft composer stop painting the
+    panel there so the texture shows through.
+  tier: 4
+  files:
+    - apps/web/src/custom/InletBlackNewAgentTexture.tsx
+    - apps/web/src/custom/pixelTexture/PixelTextureBackdrop.tsx
+    - apps/web/src/custom/pixelTexture/paintPixelTexture.ts
+    - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
+    - apps/web/src/custom/forkTheme.ts
+    - apps/web/src/theme.custom.inlet.css
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
+    - apps/web/src/custom/pixelTexture/paintPixelTexture.test.ts
