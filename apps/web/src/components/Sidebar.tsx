@@ -9,9 +9,6 @@ import * as Option from "effect/Option";
 import { Atom } from "effect/reactivity";
 import * as Schema from "effect/Schema";
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
-/* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-import { autoAnimate } from "@formkit/auto-animate";
-/* fork:end sidebar-v2-list-animation */
 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping
    Upstream moved its sensors, collision and sorting into Sidebar.pointer; the
    fork's two DndContexts still import them here. */
@@ -124,6 +121,9 @@ import {
   useCallback,
   useDeferredValue,
   useEffect,
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  useLayoutEffect,
+  /* fork:end sidebar-v2-list-animation */
   useMemo,
   useReducer,
   useRef,
@@ -249,8 +249,8 @@ import {
   useAllEnvironmentProjectSnapshotsReady,
   useDelegatedUnderParent,
   useProjects,
+  useQuietThreadShells,
   useServerConfigs,
-  useVisibleThreadShells,
 } from "../state/entities";
 import { environmentPresentations } from "../state/presentation";
 import { primaryServerKeybindingsAtom } from "../state/server";
@@ -392,7 +392,7 @@ import { useSidebarV2CompactCards } from "~/custom/sidebarV2CompactCards";
 import { WorktreeIcon } from "~/custom/icons/WorktreeIcon";
 /* fork:end sidebar-v2-compact-cards */
 /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-import { sidebarV2ListAnimation } from "~/custom/sidebarV2ListAnimation";
+import { createSidebarV2ListMotion } from "~/custom/sidebarV2ListAnimation";
 /* fork:end sidebar-v2-list-animation */
 /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
 import {
@@ -403,6 +403,7 @@ import {
   sidebarDraftRowCapabilities,
   sidebarServerActionThreadKeys,
 } from "~/custom/sidebarV2DraftRows";
+import { useQuietThreadShellKeys } from "~/custom/quietThreadShellKeys";
 /* fork:end sidebar-v2-draft-rows */
 import { getTriggerDisplayModelName } from "./chat/providerIconUtils";
 import {
@@ -2247,8 +2248,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   const reorderProjects = useUiStateStore((store) => store.reorderProjects);
   /* fork:end sidebar-v2-project-grouping */
-  // Upstream #29053: threads tagged to hide stay out of the list while recording.
-  const threads = useVisibleThreadShells();
+  // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
+  const threads = useQuietThreadShells();
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -2586,13 +2587,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ),
     [projects],
   );
-  const serverThreadKeys = useMemo(
-    () =>
-      new Set(
-        threads.map((thread) => scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id))),
-      ),
-    [threads],
-  );
+  // Kept while no thread joins or leaves, so shell changes leave the draft rows as they were.
+  const serverThreadKeys = useQuietThreadShellKeys();
   // Prompt titles are read from getState() on route/shell changes — not
   // subscribed per keystroke — so typing in the composer does not rebuild the
   // partition. Leaving the draft (routeThreadKey) is what refreshes the label.
@@ -4584,17 +4580,31 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   const showJumpHints = useThreadJumpHintsVisible(shouldShowJumpHintsNow);
 
-  const attachListAutoAnimateRef = useCallback((node: HTMLUListElement | null) => {
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  const listMotionRef = useRef<ReturnType<typeof createSidebarV2ListMotion> | null>(null);
+  // A project header drag holds the motion: its own transform is dnd-kit's until the drop.
+  const [projectDragActive, setProjectDragActive] = useState(false);
+  /* fork:end sidebar-v2-list-animation */
+  const attachThreadListRef = useCallback((node: HTMLUListElement) => {
     threadListRef.current = node;
-    if (!node) return;
     /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-    // Default AutoAnimate inserts hold at opacity 0 for half of a 1.5×
-    // ease-in; removals keep the short ease-out. Expanding a project group
-    // then feels unlike collapsing it. The plugin makes add the reverse of
-    // remove so both directions share duration, easing, and scale/opacity.
-    autoAnimate(node, sidebarV2ListAnimation);
+    // Rows grow in and shrink out while their neighbours slide.
+    const motion = createSidebarV2ListMotion(node);
+    listMotionRef.current = motion;
+    motion.update(false);
+    return () => {
+      motion.dispose();
+      if (listMotionRef.current === motion) listMotionRef.current = null;
+      if (threadListRef.current === node) threadListRef.current = null;
+    };
     /* fork:end sidebar-v2-list-animation */
   }, []);
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- after each commit the list motion measures its rows and animates the ones that came, went or moved
+  useLayoutEffect(() => {
+    listMotionRef.current?.update(!projectDragActive);
+  });
+  /* fork:end sidebar-v2-list-animation */
 
   /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
      "New agent" opens a blank chat column with no project chosen; the project
@@ -4634,6 +4644,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   const handleProjectDragEnd = useCallback(
     (event: DragEndEvent) => {
+      /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+      listMotionRef.current?.release();
+      setProjectDragActive(false);
+      /* fork:end sidebar-v2-list-animation */
       const { active, over } = event;
       if (!over || active.id === over.id) return;
       const activeGroup = projectGroups.find((group) => group.projectKey === active.id);
@@ -4867,6 +4881,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               // section the pointer is in, not the nearest header centre.
               collisionDetection={sidebarV2ProjectSectionCollision}
               modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+              /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+              onDragStart={() => {
+                listMotionRef.current?.suspend();
+                setProjectDragActive(true);
+              }}
+              onDragCancel={() => {
+                listMotionRef.current?.release();
+                setProjectDragActive(false);
+              }}
+              /* fork:end sidebar-v2-list-animation */
               onDragEnd={handleProjectDragEnd}
             >
               <SortableContext
@@ -4879,14 +4903,15 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 only space between them and the project header's margins are
                 derived from it — both live in custom/sidebarV2CardAlignment. */}
                 <ul
-                  ref={attachListAutoAnimateRef}
+                  ref={attachThreadListRef}
                   // VoiceOver treats an exposed list as an interaction boundary,
                   // which hides its rows from ordinary linear navigation. A
                   // presentational list also makes its implicit listitems
                   // presentational while preserving every descendant control.
                   role="presentation"
                   className={cn(
-                    "flex flex-col",
+                    // relative: the list motion's leaving rows are placed against it.
+                    "relative flex flex-col",
                     SIDEBAR_V2_CARD_ALIGNMENT.listGap,
                     // An action sweep owns the pointer: rows it passes over
                     // neither show hover actions nor open tooltips, even

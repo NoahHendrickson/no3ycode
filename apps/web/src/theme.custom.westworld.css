@@ -171,13 +171,6 @@
   backdrop-filter: blur(var(--fork-westworld-vessel-blur));
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
-  -webkit-backdrop-filter: blur(var(--fork-westworld-chip-blur));
-  backdrop-filter: blur(var(--fork-westworld-chip-blur));
-}
-
 /* The model and effort triggers are text-only ghosts on the glass control
    row. theme.custom.css inks them #a6a6a6 for every dark palette, which reads
    on an opaque vessel but sinks into the blue glass over the art; on

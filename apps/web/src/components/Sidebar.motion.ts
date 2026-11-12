@@ -5,6 +5,17 @@ const MAX_FADED_ROWS_PER_UPDATE = 40;
 
 type RowPosition = { top: number; left: number; width: number; height: number };
 
+/* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+/** Fades between two transforms where the row stands instead of riding with its neighbours.
+    Only rows `fades` admits fade or count toward the bulk cap; the rest change at once. */
+export type SidebarListFadeStyle = {
+  readonly shown: string;
+  readonly hidden: string;
+  readonly fades: (position: RowPosition) => boolean;
+  readonly maxFadedRows: number;
+};
+/* fork:end sidebar-v2-list-animation */
+
 function progress(animation: Animation) {
   return animation.playState === "finished"
     ? 1
@@ -12,7 +23,24 @@ function progress(animation: Animation) {
 }
 
 /** Position the list so all direct children's offsetTop share an origin. */
-export function createSidebarListMotion(parent: HTMLUListElement) {
+export function createSidebarListMotion(
+  parent: HTMLUListElement,
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  fadeStyle: SidebarListFadeStyle | null = null,
+  /* fork:end sidebar-v2-list-animation */
+) {
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  const pose = (travel: number, shown: boolean) =>
+    fadeStyle === null
+      ? `translateY(${shown ? 0 : travel}px)`
+      : shown
+        ? fadeStyle.shown
+        : fadeStyle.hidden;
+  const fadeTravel = (travel: number) => (fadeStyle === null ? travel : 0);
+  const fades = (position: RowPosition) =>
+    position.height > 0 && (fadeStyle === null || fadeStyle.fades(position));
+  const maxFadedRows = fadeStyle?.maxFadedRows ?? MAX_FADED_ROWS_PER_UPDATE;
+  /* fork:end sidebar-v2-list-animation */
   let positions: Map<HTMLElement, RowPosition> | null = null;
   let disposed = false;
   const reducedMotion = parent.ownerDocument.defaultView?.matchMedia(
@@ -38,7 +66,9 @@ export function createSidebarListMotion(parent: HTMLUListElement) {
     exiting.clear();
   };
   const fadeOut = (node: HTMLElement, position: RowPosition, travel: number) => {
-    if (position.height === 0) return;
+    /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+    if (!fades(position)) return;
+    /* fork:end sidebar-v2-list-animation */
     const clone = node.cloneNode(true) as HTMLElement;
     for (const element of [clone, ...clone.querySelectorAll("*")]) {
       for (const attribute of Array.from(element.attributes)) {
@@ -71,10 +101,12 @@ export function createSidebarListMotion(parent: HTMLUListElement) {
     const entry = entering.get(node);
     const entryProgress = entry ? progress(entry.animation) : 1;
     const animation = clone.animate(
+      /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
       [
-        { opacity: entryProgress, transform: "translateY(0px)" },
-        { opacity: 0, transform: `translateY(${travel}px)` },
+        { opacity: entryProgress, transform: pose(travel, true) },
+        { opacity: 0, transform: pose(travel, false) },
       ],
+      /* fork:end sidebar-v2-list-animation */
       motionTiming,
     );
     exiting.set(clone, animation);
@@ -135,18 +167,22 @@ export function createSidebarListMotion(parent: HTMLUListElement) {
       );
       let fadeCount = 0;
       if (positions !== null) {
+        /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
         for (const [node, position] of positions) {
-          if (!next.has(node) && position.height > 0) fadeCount++;
+          if (!next.has(node) && fades(position)) fadeCount++;
         }
         for (const [node, position] of next) {
-          if (!positions.has(node) && position.height > 0) fadeCount++;
+          if (!positions.has(node) && fades(position)) fadeCount++;
         }
+        /* fork:end sidebar-v2-list-animation */
       }
       const shouldAnimate =
         animate &&
         positions !== null &&
         !reducedMotion?.matches &&
-        fadeCount <= MAX_FADED_ROWS_PER_UPDATE;
+        /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+        fadeCount <= maxFadedRows;
+      /* fork:end sidebar-v2-list-animation */
       const movedDelta = new Map<HTMLElement, number>();
       const nextOrder = [...next.keys()];
       const oldOrder = positions === null ? [] : [...positions.keys()];
@@ -173,7 +209,13 @@ export function createSidebarListMotion(parent: HTMLUListElement) {
         for (const [node, position] of positions!) {
           if (next.has(node)) continue;
           const delta = ridingDelta(oldOrder, oldOrder.indexOf(node), (n) => next.has(n));
-          fadeOut(node, position, delta === undefined ? rowTravel(position.height) : -delta);
+          /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+          fadeOut(
+            node,
+            position,
+            fadeTravel(delta === undefined ? rowTravel(position.height) : -delta),
+          );
+          /* fork:end sidebar-v2-list-animation */
         }
       }
       for (const [node, entry] of entering) {
@@ -190,16 +232,18 @@ export function createSidebarListMotion(parent: HTMLUListElement) {
           const position = next.get(node)!;
           const previousTop = positions!.get(node)?.top;
           if (previousTop === undefined) {
-            if (position.height > 0) {
+            /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+            if (fades(position)) {
               const delta = ridingDelta(nextOrder, index, (n) => positions!.has(n));
-              const travel = delta === undefined ? -rowTravel(position.height) : delta;
+              const travel = fadeTravel(delta === undefined ? -rowTravel(position.height) : delta);
               const animation = node.animate(
                 [
-                  { opacity: 0, transform: `translateY(${travel}px)` },
-                  { opacity: 1, transform: "translateY(0px)" },
+                  { opacity: 0, transform: pose(travel, false) },
+                  { opacity: 1, transform: pose(travel, true) },
                 ],
                 motionTiming,
               );
+              /* fork:end sidebar-v2-list-animation */
               entering.set(node, { animation, travel });
               animation.addEventListener(
                 "finish",

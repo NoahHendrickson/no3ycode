@@ -71,7 +71,6 @@
   --fork-context-chip-bg: rgb(255 255 255 / 12%);
   --fork-context-chip-bg-hover: rgb(255 255 255 / 17%);
   --fork-westworld-vessel-blur: 20px;
-  --fork-westworld-chip-blur: 18px;
   /* Working is Figma's #1877f2 here, not the green every other dark palette
      uses: the status dot, the pixel rain (sidebar cards, the composer
      monitoring pill, the spawn row, the transcript) and the dev-server pulse
@@ -153,7 +152,6 @@
   --fork-context-chip-bg: rgb(47 47 47 / 50%);
   --fork-context-chip-bg-hover: rgb(47 47 47 / 68%);
   --fork-westworld-vessel-blur: 16px;
-  --fork-westworld-chip-blur: 4px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1378,6 +1376,29 @@
   /* The hole below is drawn with this radius; keep the two together. */
   border-radius: 14px;
   box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+}
+
+/* floatWindow writes these on every pane behind the window per drag frame, in
+   every theme; not inheriting keeps each write to that pane's own style. */
+@property --fork-float-hole-x {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-y {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fork-float-hole-h {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]

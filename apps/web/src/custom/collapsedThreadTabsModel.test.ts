@@ -9,6 +9,7 @@ import {
   collapsedPaneTabs,
   collapsedTabProjectForScope,
   DEFAULT_COLLAPSED_TAB_STATUSES,
+  collapsedTabCapacity,
   fitCollapsedThreadTabs,
   layoutCollapsedTabRow,
   splitCollapsedTabsAroundPanes,
@@ -258,10 +259,14 @@ describe("fitCollapsedThreadTabs", () => {
   ])(
     "%i tabs in %ipx with the open one at %i (%i long)",
     (count, width, activeIndex, activeLength, visible, overflow) => {
-      expect(fitCollapsedThreadTabs({ count, width, activeIndex, activeLength })).toEqual({
-        visible,
-        overflow,
-      });
+      expect(
+        fitCollapsedThreadTabs({
+          count,
+          capacity: collapsedTabCapacity(width),
+          activeIndex,
+          activeLength,
+        }),
+      ).toEqual({ visible, overflow });
     },
   );
 });
@@ -280,7 +285,7 @@ describe("layoutCollapsedTabRow", () => {
       tabs: input.tabs.map(entry),
       panes: (input.panes ?? []).map(entry),
       openKey: input.openKey ?? null,
-      width: input.width,
+      capacity: collapsedTabCapacity(input.width),
     });
     return {
       slots: row.slots.map((slot) =>

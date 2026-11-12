@@ -54,7 +54,7 @@ import { ProjectFavicon, type ProjectFaviconProject } from "~/components/Project
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
-import { useVisibleThreadShells } from "~/state/entities";
+import { useQuietThreadShells } from "~/state/entities";
 import {
   listScheduledRunActivity,
   SCHEDULED_RUN_ACTIVITY_MARKS,
@@ -321,7 +321,7 @@ function ChromeAutomationsRow() {
   const isOnScheduledTasks = useLocation({
     select: (location) => location.pathname === SCHEDULED_TASKS_PATH,
   });
-  const threads = useVisibleThreadShells();
+  const threads = useQuietThreadShells();
   const runs = useMemo(() => listScheduledRunActivity(threads), [threads]);
   const { working, needsYou, failed } = summarizeScheduledRunActivity(runs);
   const live = working + needsYou + failed;

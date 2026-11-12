@@ -344,6 +344,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   let frame = 0;
   let hold: Animation | null = null;
   let below: boolean | null = null;
+  let drawn = "";
 
   const draw = () => {
     // A scroll or resize can queue a frame that lands after teardown.
@@ -373,6 +374,12 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
       // Above its button (the composer's menus) the shadow would fall on the button's row.
       if (!below) svg.style.filter = "none";
     }
+    // Every scroll in the page redraws; one that moved neither box changes nothing.
+    const geometry = [triggerBox.left, triggerBox.top, triggerBox.width, triggerBox.height]
+      .concat([menu.left, menu.top, menu.width, menu.height, progress])
+      .join(",");
+    if (geometry === drawn) return;
+    drawn = geometry;
     const buttonRadius =
       Number.parseFloat(
         below ? triggerStyle.borderTopLeftRadius : triggerStyle.borderBottomLeftRadius,
@@ -428,7 +435,15 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   });
   closing.observe(popup, { attributes: true, attributeFilter: ["data-ending-style"] });
   // Base UI repositions the menu a frame after a scroll or resize; redraw once it has.
-  const redraw = () => requestAnimationFrame(draw);
+  // One per frame, however many scroll or resize events land in it.
+  let redrawFrame = 0;
+  const redraw = () => {
+    if (redrawFrame !== 0) return;
+    redrawFrame = requestAnimationFrame(() => {
+      redrawFrame = 0;
+      draw();
+    });
+  };
   // Base UI keeps a popup on its button itself (its anchor tracking); the shape follows wherever it
   // is placed: the positioner's style for a popup, the docked card's own (its top) for the card.
   const placed = docked ? popup : positioner;
@@ -484,6 +499,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
     activeMorphs.delete(abandon);
     cancelAnimationFrame(frame);
     cancelAnimationFrame(followFrame);
+    cancelAnimationFrame(redrawFrame);
     closing.disconnect();
     placement.disconnect();
     removal.disconnect();

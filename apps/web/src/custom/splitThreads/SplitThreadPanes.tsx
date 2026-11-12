@@ -17,11 +17,12 @@
  * only window-level input.
  */
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
-import type { ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import {
   cloneElement,
   isValidElement,
+  memo,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -38,6 +39,7 @@ import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandl
 import { threadShellHasStarted } from "~/components/ChatView.logic";
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useStableCallback } from "~/hooks/useStableCallback";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentShellStatus } from "~/state/shell";
 import { useEnvironmentThread } from "~/state/threads";
@@ -67,10 +69,9 @@ import { useSplitThreadStore, type PaneRoute, type SplitLayout } from "./splitTh
     focused pane shows. The pair (or float) is kept and returns on a wider window. */
 const SPLIT_THREADS_MIN_WIDTH_QUERY = "lg";
 
-/** What a pane shows for a thread that is not the route's. Whether the
-    thread exists is upstream's rule (resolveThreadRouteRenderState, as
-    ThreadRouteView applies it); which route it shows is the pane's own: an
-    unsent draft until its promoted thread has started. Null while it loads. */
+/** What a pane shows for a thread that is not the route's. Existence is upstream's rule
+    (resolveThreadRouteRenderState); the route is the pane's own: an unsent draft until its
+    promoted thread has started. Null while it loads. */
 function usePaneRoute(ref: ScopedThreadRef | null): {
   readonly route: PaneRoute | null;
   readonly missing: boolean;
@@ -105,18 +106,21 @@ function usePaneRoute(ref: ScopedThreadRef | null): {
 const SERVER_ROUTE: PaneRoute = { kind: "server" };
 
 /** Keys are left to the slot latch (splitPaneSlots). */
-function paneView(ref: ScopedThreadRef | null, route: PaneRoute | null): ReactNode {
-  if (ref === null || route === null) return null;
-  return route.kind === "draft" ? (
+function paneView(
+  environmentId: EnvironmentId,
+  threadId: ThreadId,
+  draftId: DraftId | null,
+): ReactNode {
+  return draftId !== null ? (
     <ChatView
-      draftId={route.draftId}
-      environmentId={ref.environmentId}
-      threadId={ref.threadId}
+      draftId={draftId}
+      environmentId={environmentId}
+      threadId={threadId}
       routeKind="draft"
       forceExpandedMobileComposer
     />
   ) : (
-    <ChatView environmentId={ref.environmentId} threadId={ref.threadId} routeKind="server" />
+    <ChatView environmentId={environmentId} threadId={threadId} routeKind="server" />
   );
 }
 
@@ -131,6 +135,11 @@ const PANE_SLOT_KEYS = ["slot-a", "slot-b", "slot-c"] as const;
 
 function viewKey(view: ReactNode): string | null {
   return isValidElement(view) ? (view.key ?? UNKEYED_VIEW) : null;
+}
+
+/** A pane's view key before its view is built: paneView's views carry none. */
+function paneViewKey(route: PaneRoute | null): string | null {
+  return route === null ? null : UNKEYED_VIEW;
 }
 
 type ComposerRef = RefObject<ChatComposerHandle | null>;
@@ -153,6 +162,53 @@ function navigateToPane(
 /** Controls that act on their own pane (close, float) must not first focus it. */
 const PANE_ACTION_SELECTOR = "[data-split-pane-action]";
 
+/** The pane's context and ChatView behind a memo boundary. Every prop is a primitive, a
+    stable callback or a view that keeps its identity, so the context value and the ChatView
+    under it change only when one of them does, not on every render of the panes. */
+const SplitPaneBody = memo(function SplitPaneBody(props: {
+  readonly split: boolean;
+  readonly focused: boolean;
+  readonly leading: boolean;
+  readonly canSplit: boolean;
+  readonly floating: boolean;
+  readonly windowActionKind: PaneWindowAction["kind"] | null;
+  readonly focusPartner: () => Promise<boolean>;
+  readonly runWindowAction: () => void;
+  readonly composerRef: ComposerRef;
+  /** The route's own view; null for a pane that shows its thread through paneView. */
+  readonly routeView: ReactNode;
+  readonly environmentId: EnvironmentId | null;
+  readonly threadId: ThreadId | null;
+  readonly draftId: DraftId | null;
+  readonly elementKey: string | null;
+}) {
+  const { split, focused, leading, canSplit, floating, focusPartner } = props;
+  const { windowActionKind, routeView, environmentId, threadId, elementKey } = props;
+  const windowAction =
+    windowActionKind === null ? null : { kind: windowActionKind, run: props.runWindowAction };
+  const state: SplitPaneState = {
+    split,
+    focused,
+    leading,
+    canSplit,
+    floating,
+    focusPartner,
+    windowAction,
+  };
+  const view =
+    routeView ??
+    (environmentId === null || threadId === null
+      ? null
+      : paneView(environmentId, threadId, props.draftId));
+  const child =
+    isValidElement(view) && elementKey !== null ? cloneElement(view, { key: elementKey }) : view;
+  return (
+    <ComposerHandleContext value={props.composerRef}>
+      <SplitPaneContext.Provider value={state}>{child}</SplitPaneContext.Provider>
+    </ComposerHandleContext>
+  );
+});
+
 function SplitPane(props: {
   readonly state: SplitPaneState;
   /** CSS order: left and right are drawn, not slotted. */
@@ -163,9 +219,15 @@ function SplitPane(props: {
   readonly behindFloat: boolean;
   /** A press or focus coming into the pane, before its target sees it. */
   readonly onEnter: (() => void) | null;
-  readonly children: ReactNode;
+  readonly routeView: ReactNode;
+  readonly paneRef: ScopedThreadRef | null;
+  readonly paneRoute: PaneRoute | null;
+  readonly elementKey: string | null;
 }) {
-  const { state, onEnter } = props;
+  const { state, onEnter, paneRef, paneRoute } = props;
+  // The parent rebuilds these closures every render; the body gets one identity that calls the latest.
+  const focusPartner = useStableCallback(() => state.focusPartner());
+  const runWindowAction = useStableCallback(() => state.windowAction?.run());
   const {
     setElement: setFloatElement,
     style: floatStyle,
@@ -213,9 +275,22 @@ function SplitPane(props: {
       onPointerDownCapture={enter}
       onFocusCapture={enter}
     >
-      <ComposerHandleContext value={props.composerRef}>
-        <SplitPaneContext.Provider value={state}>{props.children}</SplitPaneContext.Provider>
-      </ComposerHandleContext>
+      <SplitPaneBody
+        split={state.split}
+        focused={state.focused}
+        leading={state.leading}
+        canSplit={state.canSplit}
+        floating={state.floating}
+        windowActionKind={state.windowAction?.kind ?? null}
+        focusPartner={focusPartner}
+        runWindowAction={runWindowAction}
+        composerRef={props.composerRef}
+        routeView={props.routeView}
+        environmentId={paneRoute === null ? null : (paneRef?.environmentId ?? null)}
+        threadId={paneRoute === null ? null : (paneRef?.threadId ?? null)}
+        draftId={paneRoute?.kind === "draft" ? paneRoute.draftId : null}
+        elementKey={props.elementKey}
+      />
       {state.floating ? resizeHandles : null}
     </div>
   );
@@ -287,7 +362,6 @@ export function SplitThreadPanes(props: {
   const leftFocused = !split || scopedThreadKey(layout.left) === scopedThreadKey(focusedRef);
   const partnerRef = !split ? null : leftFocused ? layout.right : layout.left;
   const partner = usePaneRoute(partnerRef);
-  const partnerView = paneView(partnerRef, partner.route);
 
   const storedFloatingRef = useSplitThreadStore((state) => state.floating);
   const pendingFloat = useSplitThreadStore((state) => state.pendingFloat);
@@ -304,7 +378,6 @@ export function SplitThreadPanes(props: {
     !sameThread(floatingRef, focusedRef) &&
     !sameThread(floatingRef, partnerRef);
   const floating = usePaneRoute(floatShown ? floatingRef : null);
-  const floatingView = paneView(floatShown ? floatingRef : null, floating.route);
   const floatingKey = floatShown ? scopedThreadKey(floatingRef) : null;
 
   // Where the column goes when its own thread floats away, if it still exists.
@@ -383,10 +456,10 @@ export function SplitThreadPanes(props: {
   const shown: SplitPaneSlot[] = [];
   if (focusedKey !== null) shown.push({ threadKey: focusedKey, elementKey: viewKey(focusedView) });
   if (partnerRef !== null) {
-    shown.push({ threadKey: scopedThreadKey(partnerRef), elementKey: viewKey(partnerView) });
+    shown.push({ threadKey: scopedThreadKey(partnerRef), elementKey: paneViewKey(partner.route) });
   }
   if (floatingKey !== null) {
-    shown.push({ threadKey: floatingKey, elementKey: viewKey(floatingView) });
+    shown.push({ threadKey: floatingKey, elementKey: paneViewKey(floating.route) });
   }
   const [previousSlots, setSlots] = useState<SplitPaneSlots>(EMPTY_SPLIT_PANE_SLOTS);
   const slots = assignSplitPaneSlots(previousSlots, shown);
@@ -401,7 +474,6 @@ export function SplitThreadPanes(props: {
     if (slot === null) return null;
     const holdsRoute = slot.threadKey === focusedKey;
     const isFloating = !holdsRoute && slot.threadKey === floatingKey;
-    const view = holdsRoute ? focusedView : isFloating ? floatingView : partnerView;
     const paneRef = holdsRoute ? focusedRef : isFloating ? floatingRef : partnerRef;
     const left = !split || slot.threadKey === scopedThreadKey(layout.left);
     let state: SplitPaneState;
@@ -454,11 +526,11 @@ export function SplitThreadPanes(props: {
         composerRef={slotComposerRefs[index] ?? firstSlotComposerRef}
         behindFloat={floatShown && !isFloating}
         onEnter={onEnter}
-      >
-        {isValidElement(view) && slot.elementKey !== null
-          ? cloneElement(view, { key: slot.elementKey })
-          : view}
-      </SplitPane>
+        routeView={holdsRoute ? focusedView : null}
+        paneRef={holdsRoute ? null : paneRef}
+        paneRoute={holdsRoute ? null : isFloating ? floating.route : partner.route}
+        elementKey={slot.elementKey}
+      />
     );
   });
   return (

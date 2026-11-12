@@ -9,7 +9,7 @@ import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { ScopedThreadRef, type ScopedProjectRef } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 
 import type { DraftId } from "~/composerDraftStore";
 import { resolveStorage } from "~/lib/storage";
@@ -78,6 +78,19 @@ const isFloatFrame = (value: unknown): value is FloatFrame => {
   );
 };
 
+/** Persist writes after every set, and arrive() sets on each navigation
+    without touching what is stored, so an unchanged payload is not rewritten. */
+function skipUnchangedWrites(storage: StateStorage): StateStorage {
+  return {
+    getItem: (name) => storage.getItem(name),
+    setItem: (name, value) => {
+      if (storage.getItem(name) === value) return;
+      return storage.setItem(name, value);
+    },
+    removeItem: (name) => storage.removeItem(name),
+  };
+}
+
 export const useSplitThreadStore = create<SplitThreadStoreState>()(
   persist(
     (set) => ({
@@ -127,7 +140,9 @@ export const useSplitThreadStore = create<SplitThreadStoreState>()(
     {
       name: "t3code:fork:split-threads:v1",
       storage: createJSONStorage(() =>
-        resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
+        skipUnchangedWrites(
+          resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
+        ),
       ),
       version: 1,
       partialize: ({ pairs, floating, floatFrame }) => ({ pairs, floating, floatFrame }),

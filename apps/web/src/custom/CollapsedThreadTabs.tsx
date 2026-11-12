@@ -76,11 +76,14 @@ import {
   collapsedDraftTabKey,
   collapsedFilterSwitchTarget,
   collapsedPaneTabs,
+  collapsedTabCapacity,
   collapsedThreadShelved,
   COLLAPSED_TAB_MIN_WIDTH,
   COLLAPSED_TAB_STATUSES,
   DEFAULT_COLLAPSED_TAB_STATUSES,
   layoutCollapsedTabRow,
+  sameCollapsedTabCapacity,
+  type CollapsedTabCapacity,
   type CollapsedThreadTab,
   type CollapsedThreadTabStatus,
 } from "./collapsedThreadTabsModel";
@@ -239,13 +242,19 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     useAtomValue(primaryServerKeybindingsAtom),
     "chat.new",
   );
-  const [navWidth, setNavWidth] = useState(0);
+  const [navCapacity, setNavCapacity] = useState<CollapsedTabCapacity>(null);
   // Created once so the ref never re-subscribes.
   const [measureNav] = useState(
     () => (node: HTMLElement | null) =>
       node === null
         ? undefined
-        : observeResize(node, (entries) => setNavWidth(entries.at(-1)?.contentRect.width ?? 0)),
+        : observeResize(node, (entries) => {
+            const capacity = collapsedTabCapacity(entries.at(-1)?.contentRect.width ?? 0);
+            // A resize frame that fits the same tabs keeps the state, so the strip skips it.
+            setNavCapacity((previous) =>
+              sameCollapsedTabCapacity(previous, capacity) ? previous : capacity,
+            );
+          }),
   );
 
   const { tabs, projects } = buildCollapsedThreadTabs({ ...source, projectGroups, statuses });
@@ -335,7 +344,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     tabs: shownTabs.map(threadEntry),
     panes: paneEntries,
     openKey: openThreadKey ?? draftEntry?.threadKey ?? null,
-    width: navWidth,
+    capacity: navCapacity,
   });
   const discardDraft = (draftId: DraftId) => {
     // Home would start a fresh draft, so fall back to the most recent thread.
@@ -762,7 +771,10 @@ function ThreadTab(props: {
               {thread.title}
             </span>
           </span>
-          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden">
+          <span
+            data-fork-tab-actions=""
+            className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden"
+          >
             {props.canSettle ? (
               <button
                 type="button"

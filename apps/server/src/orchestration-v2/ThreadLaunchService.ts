@@ -937,21 +937,24 @@ const make = Effect.gen(function* () {
           workspaceStrategy.type === "existing_worktree" ? workspaceStrategy.worktreePath : null;
         /* fork:begin server-local-thread-branch — see .fork/customizations.yaml#server-local-thread-branch
            A launch that names no branch (upstream mobile's untouched "Current
-           checkout") records the checkout's live branch. A worktree launch
-           names its own branch through the provisioning flow and is left alone. */
-        const initialBranch = yield* resolveBootstrapThreadBranch(
-          {
-            threadId: candidateThreadId,
-            projectId: input.projectId,
-            branch: workspaceStrategy.branch ?? null,
-            worktreePath: initialWorktreePath,
-            preparingWorktree: workspaceStrategy.type === "worktree",
-          },
-          {
-            getProjectShellById: projects.getById,
-            localStatus: git.localStatus,
-          },
-        );
+           checkout") records the checkout's live branch. A worktree launch names
+           its own branch, and a reused thread keeps the one it recorded. */
+        const initialBranch =
+          input.reuseExistingThread === true
+            ? null
+            : yield* resolveBootstrapThreadBranch(
+                {
+                  threadId: candidateThreadId,
+                  projectId: input.projectId,
+                  branch: workspaceStrategy.branch ?? null,
+                  worktreePath: initialWorktreePath,
+                  preparingWorktree: workspaceStrategy.type === "worktree",
+                },
+                {
+                  getProjectShellById: projects.getById,
+                  currentBranch: git.currentBranch,
+                },
+              );
         /* fork:end server-local-thread-branch */
         const claimDispatch =
           input.reuseExistingThread === true

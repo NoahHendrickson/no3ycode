@@ -1719,40 +1719,53 @@
    white so the light theme pulses toward ink instead of vanishing into the
    panel.
 
-   The mark is `currentColor` throughout (both fork WorktreeIcon and Lucide's
-   GitBranchIcon), so animating `color` on the svg is the whole mechanism —
-   the duotone's 20% inner nodes ride along for free. `> svg` rather than a
-   bare descendant: the slot also carries text (`sr-only` labels, the branch
-   name) and only the glyph is the signal.
+   The slot draws the mark twice: the green glyph, and a foreground copy
+   stacked over it (`data-fork-dev-server-fade`) whose opacity breathes. An
+   opacity animation runs on the compositor, so a live row never repaints;
+   animating `color` on the glyph repainted it every frame while a dev
+   server ran. `> svg` rather than a bare descendant: the slot also carries
+   text (`sr-only` labels, the branch name) and only the glyph is the signal.
 
    4s and `alternate`, so a full breath is 8s — slow enough to read as ambient
    status rather than an alert; every notification-shaped pulse in this app is
    something blocked on you, and a healthy dev server is the opposite. Under
-   `prefers-reduced-motion` the animation drops and the `color` declaration
-   beneath it keeps the mark statically green, so the state survives without
-   the motion.
+   `prefers-reduced-motion` the copy is hidden and the mark stays statically
+   green, so the state survives without the motion. Rows offscreen pay
+   nothing: `content-visibility: auto` on the li skips them. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] {
+  position: relative;
+}
 
-   `color` does not composite, so each live row repaints its 12px glyph every
-   frame for as long as the listener runs — same deal the pixel rain already
-   accepts, and at this size a deliberate yes rather than an accident. Rows
-   offscreen pay nothing: `content-visibility: auto` on the li skips them. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg {
   color: var(--sidebar-v2-status-working);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-dev-server-live]
+  > svg[data-fork-dev-server-fade] {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  translate: 0 -50%;
+  color: var(--foreground);
+  opacity: 0;
   animation: sidebar-v2-dev-server-pulse 4s ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] > svg {
-    animation: none;
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-fork-dev-server-live]
+    > svg[data-fork-dev-server-fade] {
+    display: none;
   }
 }
 
 @keyframes sidebar-v2-dev-server-pulse {
   from {
-    color: var(--sidebar-v2-status-working);
+    opacity: 0;
   }
   to {
-    color: var(--foreground);
+    opacity: 1;
   }
 }
 
