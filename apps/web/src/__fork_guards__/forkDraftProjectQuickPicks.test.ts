@@ -50,4 +50,13 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
       /@media \(prefers-reduced-motion: no-preference\) \{[^@]*\[data-fork-chips-joining\][^{]*:not\(\s*\[data-fork-draft-project-chip\][^{]*\{\s*animation: fork-context-chip-join/u,
     );
   });
+
+  it("stands the pills' tooltips off through the wrapper, in Black's ink", () => {
+    expect(quickPicks).toMatch(/<TooltipPopup side="top" forkNubGap=\{4\}/u);
+    expect(read("../components/ui/tooltip.tsx")).toContain("FORK_TOOLTIP_NUB_DEPTH + forkNubGap");
+    expect(read("../theme.custom.inlet.css")).not.toContain("data-fork-project-quick-pick-tip");
+    expect(read("../theme.custom.inlet-black.css")).toMatch(
+      /\[data-slot="tooltip-popup"\]\[data-fork-project-quick-pick-tip\] \{\s*--fork-inlet-tooltip: #141414;\s*--fork-inlet-tooltip-foreground: #e8e8e8;/u,
+    );
+  });
 });

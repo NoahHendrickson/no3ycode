@@ -105,7 +105,7 @@ function QuickPick(props: {
         {props.icon}
         <PlusIcon className="size-3 shrink-0" />
       </TooltipTrigger>
-      <TooltipPopup side="top" data-fork-project-quick-pick-tip="">
+      <TooltipPopup side="top" forkNubGap={4} data-fork-project-quick-pick-tip="">
         {props.label}
       </TooltipPopup>
     </Tooltip>
