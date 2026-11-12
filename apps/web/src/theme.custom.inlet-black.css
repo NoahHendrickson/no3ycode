@@ -44,6 +44,34 @@
     --color-rose-600: var(--color-rose-400);
   }
 
+  /* PR and status tones ink light mode's -600s, too dark on the charcoal
+     surfaces; there they take the -400s. The open row and tab are the cream
+     panel, so they take deep shades, the purple lifted to the green's weight. */
+
+  &
+    :is(
+      [data-sidebar-version="v2"],
+      [data-fork-thread-tabs],
+      [data-fork-row-hover-card],
+      [data-thread-details-card]
+    ) {
+    --color-emerald-600: var(--color-emerald-400);
+    --color-violet-600: var(--color-violet-400);
+    --color-red-600: var(--color-red-400);
+  }
+
+  &
+    :is(
+      [data-sidebar-version="v2"]
+        [data-testid="sidebar-row-card"][aria-current="page"]:not([data-popup-open]),
+      [data-sidebar-version="v2"] [data-testid="sidebar-row-slim"][aria-current="page"],
+      [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
+    ) {
+    --color-emerald-600: #047857;
+    --color-violet-600: #7a48e1;
+    --color-red-600: #b91c1c;
+  }
+
   /* Inlet Black's new-agent screen draws the pixel texture
      (custom/InletBlackNewAgentTexture) behind the panel's content, so the
      header, the workspace and the draft composer stop painting the panel over
