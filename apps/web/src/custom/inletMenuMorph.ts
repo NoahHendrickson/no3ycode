@@ -327,7 +327,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   };`;
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.style.cssText =
-    "position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 18px rgb(0 0 0 / 30%));";
+    "position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 12px rgb(0 0 0 / 14%));";
   const path = document.createElementNS(SVG_NS, "path");
   path.setAttribute("fill", fill);
   svg.append(path);
