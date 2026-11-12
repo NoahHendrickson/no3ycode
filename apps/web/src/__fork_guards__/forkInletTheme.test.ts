@@ -20,6 +20,7 @@ import {
   resolveAppearanceOption,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
+import { projectIconColorClassName } from "../projectIconColors";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -196,6 +197,24 @@ describe("fork guard: fork-inlet-theme", () => {
       expect(stage?.body, color).toContain("--fork-inlet-panel-muted:");
       expect(stage?.body, color).toContain("--fork-context-chip-bg-hover:");
     }
+  });
+
+  it("gives only project icons their dark shades in Black's charcoal sidebar", () => {
+    expect(projectIconColorClassName("red").split(" ")).toEqual(
+      expect.arrayContaining(["text-red-600", "fork-project-icon"]),
+    );
+    const black = `${TEMPLATE}[data-fork-inlet-color="black"]`;
+    const icons = inletRules.find(
+      (rule) =>
+        rule.selector.includes(black) &&
+        rule.selector.includes(FRAME) &&
+        rule.selector.trim().endsWith(".fork-project-icon"),
+    );
+    expect(icons?.body).toContain("--color-red-600: var(--color-red-400);");
+    const remapsScope = paletteRules.some(
+      (rule) => rule.selector.includes(black) && /--color-[a-z]+-600:/u.test(rule.body),
+    );
+    expect(remapsScope).toBe(false);
   });
 
   it("sets the chat column into the frame as a rounded panel on either appearance", () => {

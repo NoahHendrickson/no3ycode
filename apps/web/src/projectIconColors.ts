@@ -121,5 +121,9 @@ const PROJECT_ICON_COLOR_CLASSES = Object.fromEntries(
 ) as Record<ProjectIconColor, string>;
 
 export function projectIconColorClassName(color: ProjectIconColor): string {
-  return PROJECT_ICON_COLOR_CLASSES[color];
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
+     The hook a dark sidebar on a light colour (Inlet Black) uses to give only
+     project icons their dark-mode shades (theme.custom.inlet-black.css). */
+  return `${PROJECT_ICON_COLOR_CLASSES[color]} fork-project-icon`;
+  /* fork:end fork-inlet-theme */
 }
