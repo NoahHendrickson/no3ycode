@@ -238,7 +238,11 @@
   &
     [data-fork-composer-context-row]
     :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
-    color: #1c1c1a;
+    color: #ffffff;
+
+    & svg {
+      color: inherit;
+    }
   }
 
   & [data-fork-composer-mode-chip] {
