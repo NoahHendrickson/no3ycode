@@ -353,7 +353,7 @@
     and from the four .repos exclusions in .vscode/settings.json, the way
     .repos already was.
     The rendered app carries the name too: the sidebar brand drops the T3
-    wordmark and draws Figma t3-fork 364:11245 — the 16px pixel mark and the
+    wordmark and draws Figma t3-fork 676:41854 — the 16px pixel mark and the
     13x3 "no3y" wordmark owned by fork-sidebar-chrome. APP_BASE_NAME still
     names the packaged app and branding.ts's bridge-less fallback, which
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
@@ -376,8 +376,8 @@
     splash uses the orange family, while packaged builds stamp the green
     production family. Web favicons and the project icon are the bare leaf
     with no tile (t3-fork 556:28871): assets/fork/n3-project-icon.svg is
-    SidebarBrandMark's integer cells on the 23-unit grid with crispEdges,
-    literal fills, and a #373737 outline, and the n3-web-favicon*
+    the earlier 23-cell leaf (it did not follow the sidebar mark to 676:42956)
+    as integer cells with crispEdges, literal fills, and a #373737 outline, and the n3-web-favicon*
     rasters (with apps/web/public copies) are rendered from it at an exact
     multiple of its 23-cell grid, then downscaled; export-icons.ts leaves
     them alone. Filenames still say n3-* for path stability. t3.json's
@@ -2725,11 +2725,12 @@
     edge inset.
 
     The brand stays on the trailing edge and ends 16px from it. It is Figma
-    t3-fork 364:11245: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
-    inline SVG whose arm colours are --fork-brand-mark-* variables with the
-    design's colours as fallbacks, so a palette can recolour it), a 4px gap, then
-    the 13x3 "no3y" wordmark at 8px and 40% sidebar-foreground. Under 1.5x
-    device pixels the 23 cells cannot land on 16 pixels, so
+    t3-fork 676:41854: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
+    inline SVG of 676:42956's 21-cell pinwheel whose body, light and outline
+    colours are --fork-brand-mark-* variables with the design's colours as
+    fallbacks, so a palette can recolour it), a 4px gap, then the 13x3 "no3y"
+    wordmark at 8px and 40% sidebar-foreground, on every theme including Inlet.
+    Under 1.5x device pixels the 21 cells cannot land on 16 pixels, so
     SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
     wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
     carries its own display gate, hidden below 48rem and a flex row above,

@@ -845,37 +845,6 @@
   }
 }
 
-/* The brand mark's literal black outline and veins sink into the dark
-   frames; on a cream frame they read as a heavy cross and punched holes, so
-   there they take the sidebar's dark ink. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
-  [data-fork-brand-art]
-  > g[fill="#000000"] {
-  fill: #3a3934;
-}
-
-/* Inlet's brand lockup a step up: the mark 16 → 24px and the wordmark by the
-   same 1.5, the link's 16px row growing with them. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] .sidebar-brand {
-  height: 24px;
-  gap: 6px;
-
-  & [data-fork-brand-art] {
-    width: 24px;
-    height: 24px;
-  }
-
-  & [data-fork-brand-wordmark] {
-    width: 52px;
-    height: 12px;
-  }
-}
-
 /* Inlet draws filled icons (custom/icons/lucide-phosphor.tsx picks Phosphor's
    fill weight); the hand-drawn worktree mark has no fill weight, so its
    duotone wash goes solid instead. */

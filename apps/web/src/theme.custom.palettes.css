@@ -77,9 +77,9 @@
      all read this one token. Restated on the v2 panel below because the
      default block declares it there too. */
   --sidebar-v2-status-working: #1877f2;
-  /* The sidebar mark's eight colour runs, Figma 412:31179 — cell for cell
-     the same grid as the default mark, with each arm's green/orange pair
-     swapped for a blue pair. custom/SidebarBrandMark.tsx reads these. */
+  /* The sidebar mark's colour runs, Figma 412:31179: each arm's green/orange
+     pair swapped for a blue pair, and black outlines rather than each leaf's
+     dark shade. custom/SidebarBrandMark.tsx reads these. */
   --fork-brand-mark-top: #00bfff;
   --fork-brand-mark-top-light: #5ee7ff;
   --fork-brand-mark-left: #2a72e6;
@@ -88,6 +88,10 @@
   --fork-brand-mark-right-light: #a089ff;
   --fork-brand-mark-bottom: #1aadfc;
   --fork-brand-mark-bottom-light: #72c4ff;
+  --fork-brand-mark-top-outline: #000000;
+  --fork-brand-mark-left-outline: #000000;
+  --fork-brand-mark-right-outline: #000000;
+  --fork-brand-mark-bottom-outline: #000000;
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"]

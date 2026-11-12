@@ -418,8 +418,7 @@ describe("fork guard: fork-cool-dark-theme", () => {
     const panel = blockFor(theme, COOL_PANEL);
     expect(stage).toContain("--sidebar-v2-status-working: #1877f2");
     expect(panel).toContain("--sidebar-v2-status-working: #1877f2");
-    // Figma 412:31179 — the same 23-cell grid as the default mark, every arm's
-    // pair swapped for blues. The component's slots must match these names.
+    // Figma 412:31179 — every arm's pair swapped for blues, outlined in black. The component's slots must match these names.
     const mark = readSibling("../custom/SidebarBrandMark.tsx");
     for (const [slot, hex] of [
       ["top", "#00bfff"],
@@ -430,6 +429,10 @@ describe("fork guard: fork-cool-dark-theme", () => {
       ["right-light", "#a089ff"],
       ["bottom", "#1aadfc"],
       ["bottom-light", "#72c4ff"],
+      ["top-outline", "#000000"],
+      ["left-outline", "#000000"],
+      ["right-outline", "#000000"],
+      ["bottom-outline", "#000000"],
     ]) {
       expect(stage).toContain(`--fork-brand-mark-${slot}: ${hex}`);
       expect(mark).toContain(`var(--fork-brand-mark-${slot},`);

@@ -209,10 +209,10 @@ function SidebarBrand() {
       to="/"
     >
       {/* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity
-          The borrowed T3 wordmark stays gone. Figma t3-fork 364:11245 is a 16px
+          The borrowed T3 wordmark stays gone. Figma t3-fork 676:41854 is a 16px
           pixel mark, a 4px gap, then the 13×3 "no3y" wordmark at 8px / 40%
           foreground — not live APP_BASE_NAME type. From 1.5x the mark is the
-          23-cell vector and below that a 15-cell redraw: a bitmap cannot resample
+          21-cell vector and below that a 15-cell redraw: a bitmap cannot resample
           that grid without smearing. Inline so palettes can recolour its arms. */}
       <SidebarBrandMark />
       <SidebarBrandWordmark />
