@@ -361,9 +361,6 @@ import {
   useSidebarModePolicy,
 } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
-/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */
-import { SidebarV2RecentProjectsStrip } from "~/custom/SidebarV2RecentProjectsStrip";
-/* fork:end fork-sidebar-recent-projects */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
   SIDEBAR_V2_ICON_BUTTON_CLASS,
@@ -4929,12 +4926,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               onNewThread={handleNewThreadClick}
               onAddProject={openAddProjectCommandPalette}
             />
-            {/* fork:begin fork-sidebar-recent-projects — see .fork/customizations.yaml#fork-sidebar-recent-projects */}
-            <SidebarV2RecentProjectsStrip
-              projectGroups={projectGroups}
-              onStartAgent={handleNewThreadInProject}
-            />
-            {/* fork:end fork-sidebar-recent-projects */}
             <SidebarV2ProjectScopeRow
               projectGroups={projectGroups}
               projectScopeKeys={projectScopeKeys}

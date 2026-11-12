@@ -318,4 +318,11 @@
       fill: var(--path-dark);
     }
   }
+
+  /* The New agent project pills' tooltips are the sidebar's ink. */
+
+  & [data-slot="tooltip-popup"][data-fork-project-quick-pick-tip] {
+    --fork-inlet-tooltip: #141414;
+    --fork-inlet-tooltip-foreground: #e8e8e8;
+  }
 }

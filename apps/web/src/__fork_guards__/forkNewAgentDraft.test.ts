@@ -162,17 +162,18 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(chatView).toMatch(
       /sendDisabledReason=\{[\s\S]{0,1200}?draftProjectAssignmentPending\s*\?\s*"Preparing project"/u,
     );
+    const choices = readSibling("../custom/useDraftProjectChoices.ts");
     const pill = readSibling("../custom/DraftProjectPill.tsx");
-    expect(pill).toContain(
-      "const pendingProjectKey = useDraftProjectAssignmentPending(props.draftId);",
+    expect(choices).toContain(
+      "const pendingProjectKey = useDraftProjectAssignmentPending(draftId);",
     );
     // A pending "No project" pick shows too, ahead of the draft's old project,
     // and it is pending from the click: the scratch project opens inside the
     // pick, not before it.
-    expect(pill).toContain(
+    expect(choices).toContain(
       'if (input.pendingProjectKey === NO_PROJECT_VALUE) return { kind: "no-project", pending: true };',
     );
-    expect(pill).toMatch(/assignDraftProject\(draftId, \{\s*pendingKey: NO_PROJECT_VALUE,/u);
+    expect(choices).toMatch(/assignDraftProject\(draftId, \{\s*pendingKey: NO_PROJECT_VALUE,/u);
     expect(pill).toContain("aria-busy={pending || undefined}");
   });
 
@@ -215,6 +216,8 @@ describe("fork guard: fork-new-agent-draft", () => {
     // Dressed like its neighbours: the row's CSS paints ghost buttons as chips,
     // and the label pair collapses with the workspace and branch labels.
     const pill = readSibling("../custom/DraftProjectPill.tsx");
+    const choices = readSibling("../custom/useDraftProjectChoices.ts");
+    const menu = readSibling("../custom/DraftProjectMenuPopup.tsx");
     expect(pill).toContain('data-testid="draft-project-pill"');
     expect(pill).toContain("data-composer-context-control");
     expect(pill).toContain("data-composer-label");
@@ -222,17 +225,21 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(pill).not.toContain("rounded-full");
     // A pick that fails to resolve tells the user, rather than surfacing as
     // an unhandled rejection with the draft silently left where it was.
-    expect(pill).toMatch(/void assignDraftProject\(props\.draftId, entry\)\.catch\(/u);
-    expect(pill).toContain("toastManager.add({");
+    expect(choices).toMatch(/void assignDraftProject\(draftId, entry\)\.catch\(/u);
+    expect(choices).toContain("toastManager.add({");
     // Same project list and member rule as the palette and the grouped header.
-    expect(pill).toContain("buildSidebarProjectPickerEntries({");
+    expect(choices).toContain("buildSidebarProjectPickerEntries({");
     // Upstream's scratch folder is never listed as a project; it is offered as
     // its own "No project" row, which points the draft at the scratch project.
-    expect(pill).toContain(
+    expect(choices).toContain(
       "isScratchProject(project, scratchWorkspaceRootFor(project.environmentId))",
     );
-    expect(pill).toContain('<span className="min-w-0 truncate">No project</span>');
-    expect(pill).toMatch(/const project = await openScratchProject\(environmentId\);/u);
+    expect(menu).toContain('<span className="min-w-0 truncate">No project</span>');
+    expect(choices).toMatch(/const project = await openScratchProject\(noProjectEnvironmentId\);/u);
+    // The chip and the quick picks share one menu, and every pick goes through one dispatcher.
+    expect(menu).toMatch(
+      /onValueChange=\{\(value\) => \{\s*if \(typeof value === "string"\) choices\.pick\(value\);/u,
+    );
   });
 
   it("centers the draft composer and grows its prompt until the thread starts", () => {

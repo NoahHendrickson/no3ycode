@@ -31,6 +31,9 @@ import {
   renderComposerContextStripFallback,
 } from "../custom/composerContextStrip";
 /* fork:end fork-composer-shell */
+/* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
+import { useDraftProjectChipsJoining } from "../custom/draftProjectPickMotion";
+/* fork:end fork-draft-project-quick-picks */
 import { flushSync } from "react-dom";
 
 import { useComposerDraftStore, type DraftId } from "../composerDraftStore";
@@ -724,6 +727,9 @@ export const BranchToolbar = memo(function BranchToolbar({
     canPickEnvironment: hasMultipleEnvironments,
   });
   const [attachStrip, labelsOverflow] = useLabelsOverflow();
+  /* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
+  const chipsJoining = useDraftProjectChipsJoining(draftId ?? null);
+  /* fork:end fork-draft-project-quick-picks */
 
   if (!activeProject) {
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
@@ -786,6 +792,9 @@ export const BranchToolbar = memo(function BranchToolbar({
     <ComposerSurface.ContextStrip
       ref={attachStrip}
       data-compact={labelsOverflow ? "" : undefined}
+      /* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
+      data-fork-chips-joining={chipsJoining ? "" : undefined}
+      /* fork:end fork-draft-project-quick-picks */
       className={cn("gap-1 text-xs font-normal text-foreground/70 dark:text-muted-foreground")}
     >
       {/* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */}

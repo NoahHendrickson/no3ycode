@@ -2482,7 +2482,7 @@
     buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
     from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
-    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}; Jungle Art's tooltips are its menus' green with white ink. The project strip's buttons wear an 8% ink fill. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -5277,16 +5277,14 @@
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
     (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows, the sidebar's recent-project
-    buttons (fork-sidebar-recent-projects) and the model picker's selected
+    thread card, the active top sidebar rows and the model picker's selected
     provider tab (fork-model-picker). Off: the flat stage and
     fills Glass had before #203. The lighter tint (#214) and everything else
     stays in every mode. The setting stamps data-fork-glass-3d="selection" or
     "off" on the root before first render (absent at Full). The sheets nest
     under parents that carry the gate through a zero-specificity :where():
     the stage sheet needs Full; the surfaces sheet keeps source order across
-    alternating parents, the tokens, selected rows and the recent-project
-    buttons (the one named exception) under "not off" and everything else
+    alternating parents, the tokens and selected rows under "not off" and everything else
     under Full. & takes a parent's specificity, so every rule
     ranks as it did flat. The card-inset and radius tokens are shared with the
     new-agent picture and live in the palettes sheet, outside the setting,
@@ -5566,7 +5564,10 @@
   files:
     - apps/web/src/custom/newAgentDraft.ts
     - apps/web/src/custom/useNewAgentDraft.ts
+    # The chip, its menu, and the choices and pick dispatcher both share.
     - apps/web/src/custom/DraftProjectPill.tsx
+    - apps/web/src/custom/DraftProjectMenuPopup.tsx
+    - apps/web/src/custom/useDraftProjectChoices.ts
     - apps/web/src/custom/newAgentDraft.test.ts
     - apps/web/src/custom/useNewAgentDraft.test.ts
     # Draft-only prompt geometry and the docked-only floor, keyed on data-draft-hero.
@@ -6245,35 +6246,59 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
-- id: fork-sidebar-recent-projects
+- id: fork-draft-project-quick-picks
   intent: >
-    A strip between the V2 sidebar's action block and the Threads row offers
-    one chip per recently active project, up to five, newest activity first:
-    the project's icon then a plus. Clicking a chip starts a new agent already
-    in that project through the same handler a project header's plus uses, so
-    both pick the same environment. Recency is the sidebar's own Recent
-    project order (sortLogicalProjectsForSidebar) over the threads the list
-    would show, so the strip cannot disagree with it; a project with no such
-    thread is not offered, and the strip renders nothing when no project
-    qualifies. A narrow sidebar scrolls the strip sideways instead of
-    wrapping it. The strip reads thread shells itself, so the Sidebar.tsx call
-    site passes only the project groups and the start handler. Each button
-    rests on a white 8% fill and brightens to 12% on hover (black 5% / 8% on
-    a light sidebar, where white would vanish); under Glass it
-    also wears the composer chips' glass rim unless 3D glass is off, so
-    Selected items only shows it as it shows the active rows above it.
+    An unassigned New agent draft offers its recent projects as pills above
+    the composer, in place of the project chip: No project first, then up to
+    five projects with a thread the sidebar would show, newest activity first
+    by those same threads (rankRecentProjectEntries, which ranks through
+    sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
+    automation run cannot reorder them), each its icon then a
+    plus, and a chevron opening the full project menu. A pill and a menu row
+    go through the same pick dispatcher (useDraftProjectChoices, owned by
+    fork-new-agent-draft) keyed on the row's radio value, and the chevron
+    opens the chip's own DraftProjectMenuPopup. A narrow composer scrolls the
+    pills sideways while the chevron stays outside the scroller, so the only
+    route to every project and Add a project is never clipped. The project
+    chip opens from
+    where the pill was, sliding to the row's start as its label is revealed.
+    The pick is kept outside the component (custom/draftProjectPickMotion),
+    because the chip remounts mid-slide when the assignment settles and
+    ChatView swaps the fallback strip for BranchToolbar; each chip that mounts
+    resumes the slide where the last one was. The chips the pick brings in
+    (checkout, branch) fade in after it, and the row that renders them owns
+    that: BranchToolbar (fenced) stamps data-fork-chips-joining on its strip
+    when it mounts within a moment of a pick, and theme.custom.css gives every
+    chip under the stamp but the project chip a one-shot fade, so chips that
+    mount later in that window (git status resolving) fade in too. Reduced
+    motion skips both.
+    Each pill names its project in a tooltip; the pills share one
+    TooltipProvider (150ms delay, instant hand-off between pills). Under Inlet
+    the tooltip stands 4px past where its nub meets the pill, through
+    TooltipPopup's fenced forkNubGap (fork-inlet-theme), and Inlet Black
+    inks it like the sidebar (#141414 / #e8e8e8, theme.custom.inlet-black.css).
   tier: 4
   files:
-    - apps/web/src/custom/SidebarV2RecentProjectsStrip.tsx
-    - apps/web/src/theme.custom.glass-surfaces.css
+    - apps/web/src/custom/DraftProjectQuickPicks.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
+    - apps/web/src/custom/draftProjectPickMotion.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    # The joining chips fade, after the context row rules.
+    - apps/web/src/theme.custom.css
+    # Black's tooltip ink for the pills.
+    - apps/web/src/theme.custom.inlet-black.css
   shadows: []
   watch:
-    # Fenced import and call site between the action rows and the Threads row.
-    - apps/web/src/components/Sidebar.tsx
-    # The ranking the strip reuses.
+    # Fenced rankRecentProjectEntries beside sortLogicalProjectsForSidebar.
     - apps/web/src/components/Sidebar.logic.ts
+    # Fenced data-fork-chips-joining stamp on the context strip.
+    - apps/web/src/components/BranchToolbar.tsx
   verify:
-    - apps/web/src/__fork_guards__/forkSidebarRecentProjects.test.ts
+    - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
+    - apps/web/src/custom/rankRecentProjectEntries.test.ts
+    - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
+    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
 
 - id: fork-git-256-non-repository
   intent: >
