@@ -1,6 +1,7 @@
 @import "./theme.custom.westworld.css";
 @import "./theme.custom.glass.css";
 @import "./theme.custom.inlet.css";
+@import "./theme.custom.inlet-composer.css";
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-jungle.css";
 
@@ -482,6 +483,7 @@
    round a #303235 panel. It is the only dark colour, so `.dark` with the
    palette selects it. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="inlet"] {
+  --fork-inlet-question-fill: var(--fork-popup-fill);
   --background: #232322;
   --app-chrome-background: #232322;
   --foreground: #e8e8e8;
@@ -669,6 +671,7 @@
   --fork-context-chip-bg-hover: #dfddc5;
   /* The model menu hangs from the composer in Green's frame green. */
   --fork-inlet-model-shell: #21835c;
+  --fork-inlet-question-fill: #faf9f0;
 }
 
 /* Black over the cream frame, flattened: near-black ink, 65% for faint ink

@@ -223,16 +223,8 @@
   }
 
   & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
-    background: #faf9f0;
+    background: var(--fork-inlet-question-fill);
   }
-}
-
-/* The / and @ menu takes the Questions card's fill. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-composer-drawer-layer]
-  [data-composer-command-drawer] {
-  background: #faf9f0;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]

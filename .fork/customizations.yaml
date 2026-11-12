@@ -2503,12 +2503,16 @@
     fences) hang from the open chip the same way, on whichever side and
     alignment the popup lands; the rule names the glass box via the menu,
     select and combobox structures.
-    The composer's / and @ menu is built like the Questions card: the
-    portaled layer lands flush on the prompt and paints the vessel's 4px
-    ring, the card takes the Questions fill and hairline, and the vessel and
-    prompt square their top corners while ChatComposer marks the prompt box
-    data-fork-composer-menu-open (under the fork-composer-shell fence). The
-    layer restates the panel's ink, since the body's is the frame's.
+    The composer's / and @ menu is built like the Questions card
+    (theme.custom.inlet-composer.css): while ChatComposer marks the prompt
+    box data-fork-composer-menu-open (under the fork-composer-shell fence),
+    the form tells the portaled layer its drawer inset is 0 so it spans the
+    prompt; the card stops at the prompt's top, takes the Questions fill
+    (--fork-inlet-question-fill) and hairline, and draws the vessel's 4px
+    ring as a clipped spread; the vessel (when nothing sits above the
+    prompt) and the prompt square their top corners, and the prompt's focus
+    hairline keeps its resting colour. The layer restates the panel's ink,
+    since the body's is the frame's.
     The thread details card hangs from its toggle too: the card is placed
     against the header, so the open toggle takes the card's fill and its
     ::after carries it down (half the header row less half the button, plus
@@ -2555,6 +2559,7 @@
     - apps/web/src/components/chat/ThreadDetailsCard.tsx
     - apps/web/src/theme.custom.palettes.css
     - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
     - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
