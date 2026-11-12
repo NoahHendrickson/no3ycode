@@ -45,9 +45,9 @@
   }
 
   /* PR state tones (pullRequestIcons.tsx) take the -400s on the charcoal
-     surfaces by the same hook move. The open row and tab are the cream panel,
-     so there they take deep shades, the purple lifted to the green's weight;
-     a card row is charcoal while its hover card is open. */
+     surfaces by the same hook move. Rows on the cream fills (open, folder,
+     multi-selected) and the open tab take deep shades, the purple lifted to
+     the green's weight; a card row is charcoal while its hover card is open. */
 
   &
     :is(
@@ -65,8 +65,9 @@
   &
     :is(
       [data-sidebar-version="v2"]
-        [data-testid="sidebar-row-card"][aria-current="page"]:not([data-popup-open]),
-      [data-sidebar-version="v2"] [data-testid="sidebar-row-slim"][aria-current="page"],
+        :is([class~="bg-sidebar-row-active"], [class~="bg-sidebar-row-selected"]):not(
+          [data-testid="sidebar-row-card"][data-popup-open]
+        ),
       [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
     )
     .fork-pr-tone {
