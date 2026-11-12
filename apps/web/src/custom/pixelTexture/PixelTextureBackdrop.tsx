@@ -4,7 +4,7 @@ import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
 
-import { paintPixelTexture, textureGrid } from "./paintPixelTexture";
+import { paintPixelTexture, textureGrid, type TextureGrid } from "./paintPixelTexture";
 
 const MASK = "linear-gradient(to right, transparent 0, #000 12%)";
 
@@ -24,7 +24,7 @@ export function PixelTextureBackdrop({
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const [box, setBox] = useState({ width: 0, height: 0 });
+  const [grid, setGrid] = useState<TextureGrid | null>(null);
   const { ground, text } = colors;
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the wrapper's DOM box, which the caller's layout sizes
@@ -32,19 +32,26 @@ export function PixelTextureBackdrop({
     const wrap = wrapRef.current;
     if (!wrap) return;
     return observeResize(wrap, () => {
-      const width = wrap.clientWidth;
-      const height = wrap.clientHeight;
-      setBox((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
+      if (wrap.clientWidth === 0) return;
+      const next = textureGrid(
+        { width: wrap.clientWidth, height: wrap.clientHeight },
+        window.devicePixelRatio || 1,
+      );
+      // A resize inside the same whole cells keeps the texture; only a new grid re-deals it.
+      setGrid((prev) =>
+        prev?.cols === next.cols && prev.rows === next.rows && prev.unit === next.unit
+          ? prev
+          : next,
+      );
     });
   }, []);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- paints the canvas imperatively and owns its frame loop
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || box.width === 0) return;
-    const grid = textureGrid(box, window.devicePixelRatio || 1);
+    if (!canvas || !grid) return;
     return paintPixelTexture(canvas, grid, { ground, text }, !reducedMotion);
-  }, [box, ground, text, reducedMotion]);
+  }, [grid, ground, text, reducedMotion]);
 
   return (
     <div

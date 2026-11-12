@@ -6681,7 +6681,8 @@
     the browser stops it when hidden. Reduced motion draws one still frame. The
     engine (custom/pixelTexture) is a trimmed port of the portfolio's
     TextureCanvas that renders the Landing look: a pure grid model
-    (textureModel.ts) and a painter that owns the canvas and frame loop.
+    (textureModel.ts) and a painter that owns the canvas and frame loop. A
+    resize re-deals it only when the whole-cell grid changes.
     The column's header, workspace area and draft composer stop painting the
     panel there so the texture shows through.
   tier: 4
