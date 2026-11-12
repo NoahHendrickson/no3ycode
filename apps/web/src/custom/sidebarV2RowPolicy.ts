@@ -124,6 +124,10 @@ export function threadRowSurfaceClassName(input: {
   );
 }
 
+/** A slim row's title and the rename field: a card title's 14px on the panel's 16px line,
+    explicit so the panel's 13px --text-sm remap cannot shrink them. */
+export const THREAD_TITLE_TYPE = "text-[0.875rem] leading-4";
+
 /** A card title's colour and size. Hover restores a receded title, which is
     what keeps the dimming reading as depth rather than as a disabled row.
     Weight is Regular for every status (Figma 113:724 draws no medium titles);

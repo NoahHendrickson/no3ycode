@@ -2605,8 +2605,8 @@
     --text-sm (and their --line-height companions) to 0.8125rem / 1rem so those
     share one size without rewriting each className. Search, New thread, Add
     project, and the Projects label opt out at 0.875rem (14px) via CHROME_TYPE;
-    card titles and the repo/branch line opt out with literal rem sizes
-    (0.875rem / 0.75rem — see
+    card titles, slim (settled and snoozed) titles and the rename field are
+    0.875rem, and the repo/branch line 0.75rem, as literal rem sizes (see
     sidebar-v2-card-rows) so the remap cannot flatten them. Rem, not px:
     a px pin would freeze the sidebar while h-4 and the rest of the app still
     honour the browser font-size setting. Line-height stays 1rem so the card's
