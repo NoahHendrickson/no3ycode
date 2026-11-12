@@ -209,13 +209,11 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // never says where the ternary sits. A worktree with no branch drew
     // nothing. Pinning the outer condition is what makes that regression fail.
     expect(meta).toContain("props.hasWorktree || props.branch ?");
-    expect(meta).toContain("props.hasWorktree ?");
-    expect(meta).toContain("<WorktreeIcon");
+    expect(meta).toContain("const Mark = props.hasWorktree ? WorktreeIcon : GitBranchIcon;");
     // Every mark on the line is the component set's 12px (364:17299) — the
     // runtime glyph leads, then a hairline, then the checkout cluster.
     expect(meta).toContain('const MARK = "size-3 shrink-0"');
-    expect(meta).toContain("<WorktreeIcon aria-hidden className={MARK} />");
-    expect(meta).toContain("<GitBranchIcon aria-hidden className={MARK} />");
+    expect(meta).toContain("<Mark aria-hidden className={MARK} />");
     // The folder mark is the exported SidebarV2ProjectFolderMark, drawn for a
     // null project slot; it carries the aria-hidden, the meta the size.
     expect(meta).toContain("<FolderIcon aria-hidden className={props.className} />");
