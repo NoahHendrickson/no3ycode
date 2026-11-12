@@ -20,10 +20,16 @@ describe("fork guard: fork-inlet-black-texture", () => {
     expect(mount).toContain('inletColor !== "black"');
   });
 
-  it("settles instead of animating for as long as the screen is open", () => {
-    const backdrop = read("../custom/pixelTexture/PixelTextureBackdrop.tsx");
-    expect(backdrop).toContain("settleMs = 2500");
-    expect(backdrop).toContain("prefers-reduced-motion: reduce");
+  it("keeps moving on the new-agent screen, capped and paused in the background", () => {
+    expect(read("../custom/InletBlackNewAgentTexture.tsx")).toContain(
+      "settleMs={Number.POSITIVE_INFINITY}",
+    );
+    const loop = read("../custom/pixelTexture/paintPixelTexture.ts");
+    expect(loop).toContain("const FRAME_GAP_MS = 20;");
+    expect(loop).toContain('window.addEventListener("blur", pause);');
+    expect(read("../custom/pixelTexture/PixelTextureBackdrop.tsx")).toContain(
+      "prefers-reduced-motion: reduce",
+    );
   });
 
   it("clears the panel's paint over the texture on Inlet Black's new-agent screen", () => {

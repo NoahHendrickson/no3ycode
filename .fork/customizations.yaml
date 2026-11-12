@@ -6672,9 +6672,10 @@
     the panel's right edge) on the panel's cream, behind the draft. Only Inlet
     Black, only the new-agent screen; threads keep the plain panel.
 
-    It animates for 2.5s when the screen mounts, then holds its last frame:
-    nothing runs while the screen sits open. Reduced motion draws one still
-    frame. The engine (custom/pixelTexture) is a trimmed port of the
+    It keeps moving while the screen is open, which Noey chose over settling
+    (Nov 12): frames are capped at about 30-40 a second (nothing in it moves
+    faster), it pauses while the window is in the background, and the browser
+    stops it when hidden. Reduced motion draws one still frame. The engine (custom/pixelTexture) is a trimmed port of the
     portfolio's TextureCanvas that renders the Landing look pixel for pixel.
     The column's header, workspace area and draft composer stop painting the
     panel there so the texture shows through.

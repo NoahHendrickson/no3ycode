@@ -24,6 +24,9 @@ const FLOW_STEP_MS = 140;
 const SWAY_REACH = 1.1;
 const SWAY_PACE = 0.00035;
 const SWAY_STEP_MS = 110;
+/** Nothing moves faster than a streak's 32 cells a second, so frames this far apart (about
+    30–40 a second) draw what every vsync would, without waking the page 120 times a second. */
+const FRAME_GAP_MS = 20;
 /** The line eases back to its side over the grid's last 12% so the shape slopes away at the foot. */
 const TAPER_SHARE = 0.12;
 const CELLS_PER_PATCH = 26;
@@ -476,8 +479,13 @@ export function paintPixelTexture(
   let nextStreak = now0 + 600;
   let last = now0;
   let frame = 0;
+  let timer = 0;
+  // Time spent paused in the background, taken off the clock so nothing jumps on return.
+  let pausedFor = 0;
+  let pausedAt: number | null = null;
 
-  const tick = (now: number) => {
+  const tick = (time: number) => {
+    const now = time - pausedFor;
     // Past the deadline nothing is drawn or scheduled: the last frame holds.
     if (now >= animateUntil) return;
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -552,8 +560,32 @@ export function paintPixelTexture(
     }
     dirty.forEach(draw);
     dirty.clear();
+    timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(tick);
+    }, FRAME_GAP_MS);
+  };
+
+  // Holds while the window is in the background (another app focused) and picks up on return.
+  const pause = () => {
+    if (pausedAt !== null) return;
+    pausedAt = performance.now();
+    cancelAnimationFrame(frame);
+    window.clearTimeout(timer);
+  };
+  const resume = () => {
+    if (pausedAt === null) return;
+    pausedFor += performance.now() - pausedAt;
+    pausedAt = null;
     frame = requestAnimationFrame(tick);
   };
-  frame = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(frame);
+  window.addEventListener("blur", pause);
+  window.addEventListener("focus", resume);
+  if (document.hasFocus()) frame = requestAnimationFrame(tick);
+  else pausedAt = performance.now();
+  return () => {
+    cancelAnimationFrame(frame);
+    window.clearTimeout(timer);
+    window.removeEventListener("blur", pause);
+    window.removeEventListener("focus", resume);
+  };
 }

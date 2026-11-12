@@ -1,6 +1,7 @@
 /**
  * Inlet Black's new-agent stage — see `.fork/customizations.yaml#fork-inlet-black-texture`.
- * The portfolio's pixel texture comes in from the panel's right edge behind the draft.
+ * The portfolio's pixel texture comes in from the panel's right edge behind the draft, and
+ * keeps moving while the screen is open (paused while the window is in the background).
  */
 import { useActiveInletColor } from "./forkTheme";
 import { PixelTextureBackdrop } from "./pixelTexture/PixelTextureBackdrop";
@@ -14,6 +15,7 @@ export function InletBlackNewAgentTexture(props: { readonly shown: boolean }) {
   return (
     <PixelTextureBackdrop
       colors={COLORS}
+      settleMs={Number.POSITIVE_INFINITY}
       className="pointer-events-none absolute inset-y-0 right-0 w-1/2"
     />
   );

@@ -16,6 +16,14 @@ describe("settleTexture", () => {
     expect(settleTexture(null, 1000, 0, false).animateUntil).toBeNull();
   });
 
+  it("never settles with an endless window", () => {
+    const endless = settleTexture(null, 1000, Number.POSITIVE_INFINITY, false);
+    expect(endless.animateUntil).toBe(Number.POSITIVE_INFINITY);
+    expect(settleTexture(endless.settleAt, 1e9, 2500, false).animateUntil).toBe(
+      Number.POSITIVE_INFINITY,
+    );
+  });
+
   it("never animates under reduced motion", () => {
     expect(settleTexture(null, 1000, 2500, true)).toEqual({ settleAt: 3500, animateUntil: null });
   });
