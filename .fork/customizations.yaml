@@ -2578,6 +2578,7 @@
     - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
+    - apps/web/src/components/ui/standalone-page.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/index.html

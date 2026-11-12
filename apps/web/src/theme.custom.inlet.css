@@ -937,3 +937,17 @@
   .chat-markdown {
   --info-foreground: #1670b5;
 }
+
+/* A standalone page (the error screen, pairing) sits outside the chat
+   column, where --background is the frame and, on Inlet Black, the ink is
+   the panel's dark one. It takes the panel's fill and inks, as the stage. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-standalone-page] {
+  --background: var(--fork-inlet-panel);
+  --foreground: var(--fork-inlet-panel-foreground);
+  --muted-foreground: var(--fork-inlet-panel-muted);
+  --contrast-foreground: var(--fork-inlet-panel-foreground);
+  --contrast-muted-foreground: var(--fork-inlet-panel-muted);
+  --contrast-secondary-label: var(--fork-inlet-panel-muted);
+  --contrast-icon-muted: var(--fork-inlet-panel-muted);
+}
