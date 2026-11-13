@@ -13,11 +13,14 @@ import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import {
   BOT_MASCOT_MOODS,
   BOT_MASCOT_SHAPES,
+  botMascotFromMenuId,
+  botMascotMenuItem,
   botMascotMood,
   botMascotRows,
   botMascotShape,
   botMascotSprite,
   botMascotTag,
+  botMascotTagWrites,
   nextBotMascotShape,
 } from "../custom/bots/botMascots";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
@@ -31,6 +34,7 @@ import {
   BOT_THREAD_TAG,
   botFolderName,
   botFolderPath,
+  botStatusLine,
   isBotThread,
   isQuietBotReport,
   listSidebarBots,
@@ -48,6 +52,7 @@ const cardStatus = readSibling("../custom/sidebarV2CardStatus.ts");
 const chatView = readSibling("../components/ChatView.tsx");
 const composerSend = readSibling("../components/chat/useComposerSend.ts");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
+const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 
 function bot(
   id: string,
@@ -87,6 +92,31 @@ describe("fork guard: fork-bots", () => {
     ).toEqual(["mine"]);
     expect(listSidebarBots(threads).map((thread) => thread.id)).toEqual(["gym", "mail"]);
     expect(isBotThread(threads[0]!)).toBe(false);
+  });
+
+  it("says what a bot is doing, did last or does next, never model or branch", () => {
+    const line = (thread: Thread, status = "ready", nextWakeAt: string | null = null) =>
+      botStatusLine({ thread, status, nextWakeAt });
+    const report = bot("r", {}, "## **Inbox**: 3 new from [Sam](https://x.y)\n\nMore detail");
+    expect(line(report)).toEqual({ text: "Inbox: 3 new from Sam" });
+    expect(line(report, "working")).toEqual({ text: "Working on it…" });
+    expect(line(report, "approval")).toEqual({ text: "Needs your approval" });
+    expect(line(report, "failed")).toEqual({ text: "Last run failed" });
+    // A quiet wake shows the next one instead, when one is scheduled.
+    const quiet = bot("q", {}, BOT_QUIET_REPLY);
+    expect(line(quiet, "ready", "2026-11-14T09:00:00Z")).toEqual({
+      nextWakeAt: "2026-11-14T09:00:00Z",
+    });
+    expect(line(quiet)).toEqual({ text: "Nothing to report" });
+    expect(line(bot("new"))).toEqual({ text: "Tell it what its job is" });
+    expect(sidebar).toContain("<BotCardStatusLine");
+    expect(sidebar).toContain("<BotMascotAvatar");
+    // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
+    expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
+    // The status mark's column spans both lines, so the status text stops short of it.
+    expect(sidebar).toContain("[&>[data-fork-bot-title-row]>:last-child]:row-span-2");
+    // Bots keep their own density: the threads' Compact cards never folds them.
+    expect(sidebar).toMatch(/isBotThread\(thread\)\s*\?\s*compactBots/);
   });
 
   it("treats only the bare quiet reply from a bot as a silent wake", () => {
@@ -177,6 +207,22 @@ describe("fork guard: fork-bots", () => {
     expect(botMascotShape(bot("untagged"))).toBe(botMascotShape(bot("untagged")));
     expect(nextBotMascotShape(["Classic", "Round"])).toBe("Willow");
     expect(botMascotTag("Sakura")).toBe("mascot:Sakura");
+    // Changing a mascot sets the new tag, then clears every other one.
+    expect(botMascotTagWrites(bot("tagged", {}, undefined, ["mascot:Sakura"]), "Round")).toEqual([
+      { tag: "mascot:Round", tagged: true },
+      { tag: "mascot:Sakura", tagged: false },
+    ]);
+    expect(botMascotTagWrites(bot("tagged", {}, undefined, ["mascot:Sakura"]), "Sakura")).toEqual(
+      [],
+    );
+    const menu = botMascotMenuItem(bot("tagged", {}, undefined, ["mascot:Sakura"]), true);
+    expect(menu.children.filter((item) => item.checked).map((item) => item.label)).toEqual([
+      "Sakura",
+    ]);
+    expect(menu.children.map((item) => botMascotFromMenuId(item.id))).toEqual(BOT_MASCOT_SHAPES);
+    expect(botMascotFromMenuId("rename")).toBeNull();
+    expect(sidebar).toContain("setBotMascot(thread, mascot)");
+    expect(detailsPanel).toContain("<BotMascotDetailsSection threadRef={activeThreadRef} />");
     const mood = (status: string, isUnread = false, resting = true) =>
       botMascotMood({ status, isUnread, resting });
     expect(mood("working")).toBe("Thinking");
@@ -186,6 +232,7 @@ describe("fork guard: fork-bots", () => {
     expect(mood("ready", false, false)).toBe("Idle");
     expect(mood("input")).toBe("Idle");
     expect(sidebar).toContain("<BotMascotLead");
+    expect(sidebar).toContain('topStatus?.mark === "working" && isBotThread(thread)');
     expect(timeline).toContain("<BotEmptyConversation");
   });
 
@@ -204,6 +251,14 @@ describe("fork guard: fork-bots", () => {
     // A fresh wake drops the chat, so the bot is told where its own conversation is.
     expect(rules).toContain("thread id `thread-1`");
     expect(rules).toContain("a wake writes STATE.md only");
+    // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
+    expect(rules).toContain("never wake more often than every 15 minutes");
+    expect(rules).toContain(
+      "`afterPosition` set to `itemCount` minus 21 when `itemCount` is over 20",
+    );
+    expect(rules).toContain("Keep at most 30 lines");
+    expect(rules).toContain('model: "haiku"');
+    expect(rules).toContain("A wake never creates, changes or deletes scheduled tasks");
     expect(files.get("STATE.md")).toContain("- 2026-11-13: Created.");
     expect(files.get(".claude/compact-instructions.md")).toContain("NOT YET SAVED");
     const settings = JSON.parse(files.get(".claude/settings.json") ?? "{}") as {
@@ -223,6 +278,7 @@ describe("fork guard: fork-bots", () => {
     expect(settings.hooks.PreCompact[0]?.hooks[0]?.command).toContain("compact-instructions.md");
     expect(settings.hooks.SessionStart[0]?.matcher).toBe("startup|clear|compact");
     expect(settings.hooks.SessionStart[0]?.hooks[0]?.command).toContain("STATE.md");
+    expect(settings.hooks.SessionStart[0]?.hooks[0]?.command).toContain("head -c 8000");
   });
 
   it("names a bot's folder from its name and thread, on the server's separator", () => {

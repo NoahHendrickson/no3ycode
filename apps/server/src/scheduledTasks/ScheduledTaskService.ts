@@ -81,7 +81,11 @@ import { describeFailedWebhookFilter, findFailedWebhookFilter } from "./webhookF
 import { constantTimeEquals, verifyWebhookSignature } from "./webhookVerification.ts";
 /* fork:begin fork-scheduled-page — see .fork/customizations.yaml#fork-scheduled-page */
 import type { ScheduledTaskListRunsInput, ScheduledTaskListRunsResult } from "@t3tools/contracts";
-import { hasUnfinishedScheduledRun, listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
+import {
+  hasUnfinishedScheduledRun,
+  isUsageLimitedUntilLater,
+  listScheduledTaskRuns,
+} from "./forkScheduledTaskRuns.ts";
 /* fork:end fork-scheduled-page */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
@@ -1311,14 +1315,19 @@ export const layer = Layer.effect(
               isMissedFixedTimeRun(task.schedule, dueAt, now)
                 ? rescheduleMissedRun(task, now)
                 : /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-                   A bound task whose earlier wake is still queued or running skips this
-                   fire, so a held-up thread does not collect one wake per interval. A one-time
+                   A bound task skips this fire while its earlier wake is unfinished or its
+                   thread is usage-limited until a known reset, so nothing piles up. A one-time
                    run has no later fire to make up for a skip, so it always runs. */
                   task.threadId === null || task.schedule.type === "once"
                   ? runTask(task, "scheduled")
-                  : hasUnfinishedScheduledRun(sql, task.id, task.threadId).pipe(
-                      Effect.flatMap((unfinished) =>
-                        unfinished ? rescheduleMissedRun(task, now) : runTask(task, "scheduled"),
+                  : Effect.all([
+                      hasUnfinishedScheduledRun(sql, task.id, task.threadId),
+                      threadManagement.getThreadShell(task.threadId),
+                    ]).pipe(
+                      Effect.flatMap(([unfinished, shell]) =>
+                        unfinished || isUsageLimitedUntilLater(shell, DateTime.toEpochMillis(now))
+                          ? rescheduleMissedRun(task, now)
+                          : runTask(task, "scheduled"),
                       ),
                     ),
             /* fork:end fork-bots */

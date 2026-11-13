@@ -412,7 +412,10 @@ section above **Threads** in the sidebar and never appear among your threads.
 Press the plus beside **Bots**, name the bot, and tell it its job in plain
 words. It writes the job down, schedules its own wake-ups, and asks for anything
 it needs, such as access to an account. Change the job later the same way, by
-telling it.
+telling it. To give a bot a different mascot, pick one under **Mascot** in its
+thread details, or right-click its card in the sidebar. The gear beside
+**Bots** has its own **Compact cards** option, separate from the one for
+threads.
 
 A bot keeps what it knows in its own folder, not in the conversation, and each
 scheduled wake starts a fresh session there. That keeps it consistent however
@@ -423,7 +426,7 @@ A wake that finds nothing replies "Nothing to report." and stays silent: no
 notification and no unread mark. Deleting a bot's conversation also deletes its
 scheduled tasks. Its tasks are listed with the rest under **Automations**.
 
-Bots need the **No project** workspace and work best with Claude. Scheduled wakes
+Bots need the **No project** workspace and work best with Claude. A new bot starts on Claude Sonnet, since every scheduled wake uses your plan even when there is nothing to report; change its model in its conversation. Scheduled wakes
 only run while the environment is running, so keep it on or install the
 background service for a bot that should wake while the app is closed. Both
 section headings fold their section.

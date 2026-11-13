@@ -11,6 +11,7 @@
  */
 import {
   OrchestrationV2RunStatus,
+  type OrchestrationV2ThreadShell,
   ScheduledTaskError,
   ScheduledTaskRun,
   SCHEDULED_TASK_RUNS_DEFAULT_LIMIT,
@@ -237,4 +238,18 @@ export function hasUnfinishedScheduledRun(
         }),
     ),
   );
+}
+
+/**
+ * Whether a bound thread is held by a usage limit whose known reset is still ahead — see
+ * `.fork/customizations.yaml#fork-bots`. A fire then would only hit the limit again. An unknown
+ * reset never holds, so a held thread always wakes again on its own.
+ */
+export function isUsageLimitedUntilLater(
+  shell: Pick<OrchestrationV2ThreadShell, "lastErrorClass" | "usageLimitResetAt"> | null,
+  nowMs: number,
+): boolean {
+  if (shell?.lastErrorClass !== "usage_limit" || !shell.usageLimitResetAt) return false;
+  const resetAt = Date.parse(shell.usageLimitResetAt);
+  return Number.isFinite(resetAt) && resetAt > nowMs;
 }

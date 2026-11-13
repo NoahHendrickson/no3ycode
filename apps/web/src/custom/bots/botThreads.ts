@@ -75,3 +75,51 @@ export function botFolderPath(scratchWorkspaceRoot: string, folderName: string):
   const root = scratchWorkspaceRoot.replace(/[\\/]+$/, "");
   return [root, BOT_FOLDERS_DIRECTORY, folderName].join(separator);
 }
+
+/** A bot card's second line: what it is doing, did last, or does next. Never model or branch. */
+export type BotStatusLine = { readonly text: string } | { readonly nextWakeAt: string };
+
+/** The first line of a message as plain words: markdown marks and link targets dropped. */
+function botMessageSummary(text: string): string {
+  const line =
+    text
+      .split("\n")
+      .map((candidate) => candidate.trim())
+      .find((candidate) => candidate !== "" && !/^(```|---|\*\*\*)/.test(candidate)) ?? "";
+  return line
+    .replace(/^(#{1,6}|[-*+]|\d+\.|>)\s+/, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__|`)/g, "")
+    .trim();
+}
+
+export function botStatusLine(input: {
+  readonly thread: BotThreadFields;
+  /** The sidebar's thread status (Sidebar.logic's resolveSidebarThreadStatus). */
+  readonly status: string;
+  readonly nextWakeAt: string | null;
+}): BotStatusLine {
+  switch (input.status) {
+    case "working":
+    case "preparing":
+      return { text: "Working on it…" };
+    case "approval":
+      return { text: "Needs your approval" };
+    case "input":
+    case "request":
+      return { text: "Waiting for your reply" };
+    case "failed":
+      return { text: "Last run failed" };
+    case "limited":
+      return { text: "Hit a usage limit" };
+  }
+  const latest = input.thread.source?.latestVisibleMessage;
+  const report =
+    latest?.role === "assistant" && !isQuietBotReport(input.thread)
+      ? botMessageSummary(latest.text)
+      : "";
+  if (report !== "") return { text: report };
+  if (input.nextWakeAt !== null) return { nextWakeAt: input.nextWakeAt };
+  if (latest?.role === "assistant") return { text: "Nothing to report" };
+  return { text: latest == null ? "Tell it what its job is" : "Nothing yet" };
+}

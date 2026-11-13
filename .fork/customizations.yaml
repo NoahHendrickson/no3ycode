@@ -6973,15 +6973,35 @@
     Bots are long-running agents with one ongoing conversation each, listed in
     their own sidebar section. A bot is a No-project thread tagged `bot` (the
     server's existing thread tags) whose checkout is its own folder under the
-    No-project workspace (bots/<name>-<id>). Nothing on the server knows about
-    bots: creating one is the existing file-write, thread.create and
-    thread.tag.set commands, and its routines are ordinary scheduled tasks the
+    No-project workspace (bots/<name>-<id>). Creating one is the existing
+    file-write, thread.create and thread.tag.set commands, and its routines are ordinary scheduled tasks the
     bot makes for itself and binds to its conversation. One server rule
     serves them, for any thread-bound task: a scheduled fire is skipped while
     an earlier wake of the same task is still queued or running in that thread
     (hasUnfinishedScheduledRun), so a held-up bot does not collect a wake per
     interval and then run them back to back. Manual and webhook runs are not
-    skipped.
+    skipped. The server knows one more thing: a thread shell carries no
+    message bodies, but a bot-tagged one carries the first 280 characters of
+    the final reply of its latest settled run (never a wake's progress replies)
+    as latestVisibleMessage
+    (orchestration-v2/forkBotReport, a tag-gated subquery in the shell rows),
+    which the quiet-wake rule and the card status line read.
+
+    Usage limits, because every wake (even a quiet one) is a full model turn:
+    a new bot starts on the newest non-legacy Sonnet of its Claude instance,
+    without the owner's default options (useCreateBot botModelSelection); a
+    task a bot schedules for its own thread defaults to a fresh session
+    (OrchestratorMcpService.scheduleTask), so a forgotten flag cannot resume
+    its long session every wake; a bound task's scheduled fire is also skipped
+    while its thread is usage-limited until a known reset still ahead
+    (isUsageLimitedUntilLater; an unknown reset never holds). The seeded
+    CLAUDE.md asks for the slowest schedule (15 minutes or slower unless the
+    owner asks), webhook coalescing for event jobs, tail reads of the
+    conversation (t3_thread_read pages from the oldest item), a Log of at most
+    30 meaningful lines, Haiku subagents, and no task changes or self-sends
+    during a wake; SessionStart prints at most 8 KB of STATE.md. Not limited:
+    total wakes per bot, a per-wake turn budget, and webhook wakes queueing
+    behind an unfinished one.
 
     The folder is what keeps a bot coherent over months, so it is seeded before
     the thread exists (custom/bots/botSeedFiles). CLAUDE.md holds the bot's
@@ -7020,10 +7040,29 @@
     generator's rules, cell for cell). It is chosen while naming the bot (the
     button beside the name steps through them, starting at the first no bot
     wears) and kept as a second thread tag, mascot:<Shape>; a bot without one
-    gets a face from its id. The mascot leads the bot's card at one pixel per
-    cell in a fixed-width slot, and its mood follows the thread: Thinking
+    gets a face from its id. A bot's card is laid out like a contact: the
+    mascot is an avatar in a 22px column spanning both lines, scaled into a
+    22px box (so the smallest faces grow most), on a 44px card (6 + 16 + 2
+    + 14 + 6) rather than a thread's 54. The title line is display:
+    contents there, so its trailing group (time, actions, pin, status mark)
+    sits in a third column centred on both lines and nothing runs under
+    it. The second line is a
+    status in words instead of the model, folder and branch: what it is
+    doing, what it needs from you, the first line of its last report, or
+    after a quiet wake when it next checks (its bound scheduled tasks'
+    nextRunAt), from custom/bots/BotCardStatusLine. Bots have their own
+    Compact cards toggle in the Bots row's view options, per device and
+    apart from the threads' one (sidebar-v2-compact-cards), off by default;
+    a compact bot card keeps the mascot at one pixel per cell before the
+    title. Two places change it later: a Mascot section in
+    the bot's thread details card (a grid of every face, the worn one
+    selected; custom/bots/BotMascotDetailsSection) and the card's context
+    menu (Mascot, a ticked list of shapes). Either way the new tag is set before the old one
+    is cleared, so the card never flashes the id-picked face. The mascot's mood follows the thread: Thinking
     while it works, Happy with an unread report, Error after a failed run,
-    Sleeping between wakes, Idle while it is open or waiting on you. An empty
+    Sleeping between wakes, Idle while it is open or waiting on you. Since
+    the Thinking face says it is working, a working bot's card draws no
+    working mark (helix or rain) in its status slot; its other marks stay. An empty
     bot conversation shows the mascot large with a line saying what to tell
     it. The mascots do not animate. A bot keeps the name it was given: its first send asks for no
     generated title. The collapsed tab strip and mobile are not bot-aware, and mobile
@@ -7032,11 +7071,15 @@
   files:
     - apps/web/src/custom/bots/botThreads.ts
     - apps/server/src/scheduledTasks/forkScheduledTaskRuns.ts
+    - apps/server/src/orchestration-v2/forkBotReport.ts
     - apps/web/src/custom/bots/botReports.ts
     - apps/web/src/custom/bots/botMascots.ts
     - apps/web/src/custom/bots/BotMascot.tsx
     - apps/web/src/custom/bots/botSeedFiles.ts
     - apps/web/src/custom/bots/useCreateBot.ts
+    - apps/web/src/custom/bots/useSetBotMascot.ts
+    - apps/web/src/custom/bots/BotMascotDetailsSection.tsx
+    - apps/web/src/custom/bots/BotCardStatusLine.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
@@ -7047,11 +7090,15 @@
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/ThreadDetailsPanel.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/useComposerSend.ts
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - docs/user/thread-sidebar.md
     - apps/server/src/scheduledTasks/ScheduledTaskService.ts
+    - apps/server/src/orchestration-v2/ProjectionStore.ts
+    - apps/server/src/mcp/OrchestratorMcpService.ts
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
+    - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts

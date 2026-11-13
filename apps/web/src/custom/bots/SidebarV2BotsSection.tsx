@@ -37,6 +37,13 @@ export function useSidebarV2CollapsedListSections(): readonly [
   ];
 }
 
+const COMPACT_BOTS_STORAGE_KEY = "t3code:fork:sidebar-v2-compact-bots:v1";
+
+/** One-line bot cards, apart from the threads' Compact cards: bots default to the avatar card. */
+export function useSidebarV2CompactBots(): [boolean, (value: boolean) => void] {
+  return useLocalStorage(COMPACT_BOTS_STORAGE_KEY, false, Schema.Boolean);
+}
+
 /** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. */
 export function SidebarV2NewBotRow(props: {
   /** The mascot offered first; the button beside the name steps through the rest. */

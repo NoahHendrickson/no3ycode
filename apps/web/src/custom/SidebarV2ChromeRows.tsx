@@ -172,12 +172,17 @@ export function SidebarV2BotsRow({
   onToggleCollapsed,
   onNewBot,
   onListElement,
+  compactCards,
+  onCompactCardsChange,
 }: {
   readonly count: number;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
   readonly onNewBot: () => void;
   readonly onListElement: (element: HTMLUListElement | null) => void;
+  /** The bots' own card density, independent of the threads' Compact cards. */
+  readonly compactCards: boolean;
+  readonly onCompactCardsChange: (compactCards: boolean) => void;
 }) {
   return (
     <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
@@ -194,6 +199,37 @@ export function SidebarV2BotsRow({
           </SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
+          <Menu>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <MenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        size="sm"
+                        type="button"
+                        className={PROJECTS_ROW_BUTTON}
+                        aria-label="Bot view options"
+                        data-testid="sidebar-v2-bots-options"
+                      />
+                    }
+                  />
+                }
+              >
+                <SettingsIcon className="size-4 shrink-0" />
+              </TooltipTrigger>
+              <TooltipPopup side="right">View options</TooltipPopup>
+            </Tooltip>
+            <MenuPopup align="end" data-fork-glass-rim className="min-w-48">
+              <OptionCheckboxItem
+                checked={compactCards}
+                onCheckedChange={onCompactCardsChange}
+                testId="sidebar-v2-compact-bots-toggle"
+              >
+                Compact cards
+              </OptionCheckboxItem>
+            </MenuPopup>
+          </Menu>
           <Tooltip>
             <TooltipTrigger
               render={

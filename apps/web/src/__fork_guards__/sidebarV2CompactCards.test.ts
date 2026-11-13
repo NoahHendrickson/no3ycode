@@ -34,14 +34,13 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(chromeRows).not.toMatch(/variant="switch"[\s\S]{0,120}checked=\{props\.compactCards\}/u);
     expect(sidebar).toContain("compactCards={compactCards}");
     // Slim shelf rows are already one line; they only take the pill.
-    expect(sidebar).toContain("compact={compactCards}");
+    // Bots have their own toggle (fork-bots); every other card takes this one.
+    expect(sidebar).toMatch(/compact=\{[^}]*?\?\s*compactBots\s*:[^]*?compactCards\s*\}/u);
   });
 
   it("swaps the repo line for marks on the title line", () => {
     expect(sidebar).toContain("<SidebarV2ThreadCardCompactMarks");
-    expect(sidebar).toMatch(
-      /props\.compact === true \? null : \(\s*\/\*[^]*?\*\/\s*<SidebarV2ThreadCardMeta/u,
-    );
+    expect(sidebar).toMatch(/props\.compact === true \? null : [^]*?<SidebarV2ThreadCardMeta/u);
     // One line has no room for a mark nearly every thread carries.
     expect(marks).not.toContain("<SidebarV2CheckoutMark");
     expect(sidebar).toContain("<SidebarV2CompactCardLead project={props.project} />");

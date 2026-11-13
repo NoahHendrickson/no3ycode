@@ -128,6 +128,9 @@ import { isLiveCallerShell, threadNotFound } from "./threadAccess.ts";
 import * as SecretRequests from "../secrets/SecretRequests.ts";
 import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+/* fork:end fork-bots */
 
 const DEFAULT_WAIT_TIMEOUT_MS = 10 * 60 * 1_000;
 const MAX_WAIT_TIMEOUT_MS = 60 * 60 * 1_000;
@@ -2007,6 +2010,12 @@ const make = Effect.gen(function* () {
       const derivedTitle = input.prompt.split("\n")[0]?.trim() ?? "";
       const title =
         input.title ?? (derivedTitle.length > 0 ? derivedTitle.slice(0, 80) : "Scheduled task");
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         A bot's own wakes start clean unless it asks otherwise, so a forgotten flag
+         cannot make every wake resume its long session. */
+      const forkBotFreshSession =
+        bindToCurrentThread && parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
+      /* fork:end fork-bots */
       const upsertInput: ScheduledTaskUpsertInput = {
         title,
         prompt: input.prompt,
@@ -2014,11 +2023,12 @@ const make = Effect.gen(function* () {
         schedule: input.schedule,
         projectId,
         threadId: bindToCurrentThread && parent !== undefined ? parent.thread.id : null,
-        threadMode: input.freshSession
-          ? "fresh_session"
-          : bindToCurrentThread
-            ? "continue"
-            : "new_thread",
+        threadMode:
+          (input.freshSession ?? forkBotFreshSession)
+            ? "fresh_session"
+            : bindToCurrentThread
+              ? "continue"
+              : "new_thread",
         workspaceStrategy: yield* scheduledTaskWorkspaceStrategy(bindToCurrentThread, projectId),
         modelSelection,
         runtimeMode: limits.runtimeMode,

@@ -651,3 +651,51 @@ export function botMascotMood(input: {
   if (input.isUnread) return "Happy";
   return input.status === "ready" && input.resting ? "Sleeping" : "Idle";
 }
+
+const MASCOT_MENU_PREFIX = "bot-mascot:";
+export type BotMascotMenuId = `${typeof MASCOT_MENU_PREFIX}${BotMascotShape}`;
+
+/** A bot's context-menu item for changing its mascot, ticked at the face it wears now. */
+export function botMascotMenuItem(
+  thread: BotThreadFields & { readonly id: string },
+  canOperate: boolean,
+) {
+  const current = botMascotShape(thread);
+  return {
+    id: "bot-mascot" as const,
+    label: "Mascot",
+    disabled: !canOperate,
+    children: BOT_MASCOT_SHAPES.map((shape) => ({
+      id: `${MASCOT_MENU_PREFIX}${shape}` as BotMascotMenuId,
+      label: shape,
+      checked: shape === current,
+    })),
+  };
+}
+
+/** The Mascot item and its shapes, so the menu's click handler can take them all out of its union. */
+export function isBotMascotMenuId(id: string): id is "bot-mascot" | BotMascotMenuId {
+  return id === "bot-mascot" || id.startsWith(MASCOT_MENU_PREFIX);
+}
+
+export function botMascotFromMenuId(id: string): BotMascotShape | null {
+  if (!id.startsWith(MASCOT_MENU_PREFIX)) return null;
+  const name = id.slice(MASCOT_MENU_PREFIX.length);
+  return isShape(name) ? name : null;
+}
+
+/** The tag writes that make `shape` a bot's only mascot: the new one first, so the bot never
+    shows the face picked from its id between the writes. */
+export function botMascotTagWrites(
+  thread: BotThreadFields,
+  shape: BotMascotShape,
+): ReadonlyArray<{ readonly tag: string; readonly tagged: boolean }> {
+  const next = botMascotTag(shape);
+  const tags = thread.source?.tags ?? [];
+  return [
+    ...(tags.includes(next) ? [] : [{ tag: next, tagged: true }]),
+    ...tags
+      .filter((tag) => tag.startsWith(BOT_THREAD_TAG_PREFIX_MASCOT) && tag !== next)
+      .map((tag) => ({ tag, tagged: false })),
+  ];
+}

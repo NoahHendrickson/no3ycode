@@ -110,6 +110,15 @@ import {
   THREAD_HISTORY_INLINE_WORK_ITEM_LIMIT,
   THREAD_HISTORY_TURN_SNAPSHOT_ROW_LIMIT,
 } from "./threadHistoryPaging.ts";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import {
+  FORK_BOT_REPORT_CHARS,
+  FORK_BOT_SETTLED_RUN_STATUSES,
+  FORK_BOT_THREAD_TAG,
+  forkBotReportFromProjection,
+  forkBotReportFromRow,
+} from "./forkBotReport.ts";
+/* fork:end fork-bots */
 
 export class ProjectionStoreApplyEventError extends Schema.TaggedError<ProjectionStoreApplyEventError>()(
   "ProjectionStoreApplyEventError",
@@ -1043,6 +1052,9 @@ type ShellThreadRow = {
   readonly latest_user_message_at: string | null;
   readonly latest_user_authored_message_at: string | null;
   readonly has_actionable_proposed_plan: number;
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  readonly fork_bot_report_json: string | null;
+  /* fork:end fork-bots */
 };
 
 type ShellRunRow = {
@@ -1670,7 +1682,10 @@ export function threadShellFromProjection(
     pendingGuestMessageCount: pendingGuestMessageCount(projection.thread.guestShare),
     // Thread detail owns message bodies. Keeping them out of shell rows makes
     // initial hydration and streaming updates independent of transcript size.
-    latestVisibleMessage: null,
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+       A bot's shell carries the head of its latest finished report. */
+    latestVisibleMessage: forkBotReportFromProjection(projection),
+    /* fork:end fork-bots */
     latestUserMessageAt: latestUserMessage?.updatedAt ?? null,
     latestUserAuthoredMessageAt,
     hasActionableProposedPlan: projection.plans.some(
@@ -1787,6 +1802,9 @@ type ShellThreadState = {
   readonly hasActionableProposedPlan: boolean;
   readonly pendingBackgroundTasks: OrchestrationV2ThreadShell["pendingBackgroundTasks"];
   readonly providerInstanceHistory: OrchestrationV2ThreadShell["providerInstanceHistory"];
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  readonly forkBotReport: OrchestrationV2ThreadShell["latestVisibleMessage"];
+  /* fork:end fork-bots */
   readonly goal: OrchestrationV2ThreadShell["goal"];
   readonly itemCount: number;
   readonly runlessItemCount: number;
@@ -1949,7 +1967,9 @@ function shellFromState(input: {
     usageLimitResetAt: input.state.usageLimitResetAt,
     pendingRuntimeRequest: input.state.pendingRuntimeRequest,
     pendingGuestMessageCount: pendingGuestMessageCount(input.state.thread.guestShare),
-    latestVisibleMessage: null,
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    latestVisibleMessage: input.state.forkBotReport,
+    /* fork:end fork-bots */
     latestUserMessageAt: input.state.latestUserMessageAt,
     latestUserAuthoredMessageAt: input.state.latestUserAuthoredMessageAt,
     hasActionableProposedPlan: input.state.hasActionableProposedPlan,
@@ -6353,7 +6373,28 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                 WHERE plan.thread_id = t.thread_id
                   AND plan.kind = 'proposed_plan'
                   AND plan.status = 'active'
-              ) AS has_actionable_proposed_plan
+              ) AS has_actionable_proposed_plan,
+              -- fork:begin fork-bots
+              CASE WHEN EXISTS (
+                SELECT 1 FROM json_each(t.payload_json, '$.tags') tag
+                WHERE tag.value = ${FORK_BOT_THREAD_TAG}
+              ) THEN (
+                SELECT json_object(
+                  'id', message.message_id,
+                  'text', substr(json_extract(message.payload_json, '$.text'), 1, ${FORK_BOT_REPORT_CHARS}),
+                  'updatedAt', message.updated_at
+                )
+                FROM orchestration_v2_projection_messages message
+                JOIN orchestration_v2_projection_runs report_run
+                  ON report_run.run_id = message.run_id
+                WHERE message.thread_id = t.thread_id
+                  AND message.role = 'assistant'
+                  AND message.streaming = 0
+                  AND report_run.status IN ${sql.in(FORK_BOT_SETTLED_RUN_STATUSES)}
+                ORDER BY message.updated_at DESC, message.message_id DESC
+                LIMIT 1
+              ) END AS fork_bot_report_json
+              -- fork:end fork-bots
             FROM orchestration_v2_projection_threads t
             LEFT JOIN orchestration_v2_projection_runs active ON active.run_id = (
               SELECT r.run_id
@@ -6954,6 +6995,9 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
           latestUserAuthoredMessageAt,
           hasActionableProposedPlan: row.has_actionable_proposed_plan === 1,
           pendingBackgroundTasks,
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+          forkBotReport: yield* forkBotReportFromRow(row.fork_bot_report_json),
+          /* fork:end fork-bots */
           providerInstanceHistory: providerInstanceHistoryForShell({
             threadId: thread.id,
             providerThreads: providerThreadsByThreadId.get(thread.id) ?? [],

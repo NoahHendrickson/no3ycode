@@ -363,14 +363,24 @@ import {
 /* fork:end fork-chat-mode */
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { createPortal } from "react-dom";
-import { BotMascotLead } from "~/custom/bots/BotMascot";
-import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots/botMascots";
+import { BotMascotAvatar, BotMascotLead } from "~/custom/bots/BotMascot";
+import { BotCardStatusLine } from "~/custom/bots/BotCardStatusLine";
+import {
+  botMascotFromMenuId,
+  botMascotMenuItem,
+  botMascotMood,
+  botMascotShape,
+  isBotMascotMenuId,
+  nextBotMascotShape,
+} from "~/custom/bots/botMascots";
 import { isBotThread, listSidebarBots } from "~/custom/bots/botThreads";
 import {
   SidebarV2NewBotRow,
   useSidebarV2CollapsedListSections,
+  useSidebarV2CompactBots,
 } from "~/custom/bots/SidebarV2BotsSection";
 import { useCreateBot } from "~/custom/bots/useCreateBot";
+import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
 import { SidebarV2BotsRow } from "~/custom/SidebarV2ChromeRows";
 /* fork:end fork-bots */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
@@ -1566,6 +1576,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     projectDisplayName: props.projectTitle,
     isActive: props.isActive,
   });
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     The mascot's face follows what the bot is doing. */
+  const botAvatar = isBotThread(thread) && props.compact !== true;
+  const botMood = botMascotMood({ status, isUnread, resting: !props.isActive });
+  /* fork:end fork-bots */
 
   const title =
     isRenaming && canOperateThread ? (
@@ -1948,7 +1963,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         props.compact === true
           ? "[contain-intrinsic-size:auto_34px]"
           : /* fork:end sidebar-v2-compact-cards */
-            "[contain-intrinsic-size:auto_54px]",
+            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+               A bot's avatar card: 6 + 16 + 2 + 14 + 6 = 44. */
+            isBotThread(thread)
+            ? "[contain-intrinsic-size:auto_44px]"
+            : /* fork:end fork-bots */
+              "[contain-intrinsic-size:auto_54px]",
         /* fork:end sidebar-v2-card-rows */
       )}
     >
@@ -1992,9 +2012,19 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               SIDEBAR_V2_CARD_ALIGNMENT.rowGap,
               SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
               SIDEBAR_V2_CARD_ALIGNMENT.cardPadY,
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+              /* The title line dissolves into this grid, so its trailing group (time,
+                 actions, pin, status mark) takes a third column centred on both lines. */
+              botAvatar &&
+                "grid grid-cols-[22px_minmax(0,1fr)_auto] grid-rows-[16px_14px] items-center gap-x-2 gap-y-0.5 py-1.5 [&>[data-fork-bot-title-row]>:last-child]:col-start-3 [&>[data-fork-bot-title-row]>:last-child]:row-span-2 [&>[data-fork-bot-title-row]>:last-child]:row-start-1 [&>[data-fork-bot-title-row]>:last-child]:ms-2",
+              /* fork:end fork-bots */
             )}
           >
             {/* fork:end sidebar-v2-card-rows */}
+            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                A bot's mascot is its avatar, spanning both lines of a 44px card. */}
+            {botAvatar ? <BotMascotAvatar shape={botMascotShape(thread)} mood={botMood} /> : null}
+            {/* fork:end fork-bots */}
             {/* Title line is 18px tall — the 14px prompt's own line box, and
                 one of the terms the card's 54 is measured from (see
                 custom/sidebarV2CardAlignment). */}
@@ -2006,7 +2036,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               className={cn(
                 "flex h-[18px] min-h-[18px] min-w-0 items-center",
                 SIDEBAR_V2_CARD_ALIGNMENT.titleGap,
+                /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+                botAvatar && "contents",
+                /* fork:end fork-bots */
               )}
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+              data-fork-bot-title-row={botAvatar ? "" : undefined}
+              /* fork:end fork-bots */
             >
               {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
                   A compact card has no repo line to name its project, so the
@@ -2023,17 +2059,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 </span>
               ) : /* fork:end sidebar-v2-compact-cards */
               /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-                 A bot's card leads with its mascot, whose face follows what the bot is doing. */
-              isBotThread(thread) ? (
+                 A compact bot card has one line, so the mascot leads its title instead. */
+              isBotThread(thread) && props.compact === true ? (
                 <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <BotMascotLead
-                    shape={botMascotShape(thread)}
-                    mood={botMascotMood({
-                      status,
-                      isUnread,
-                      resting: !props.isActive,
-                    })}
-                  />
+                  <BotMascotLead shape={botMascotShape(thread)} mood={botMood} />
                   {title}
                 </span>
               ) : (
@@ -2236,19 +2265,37 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     isSwept && "hidden",
                   )}
                 >
-                  <SidebarV2StatusMark
-                    status={topStatus}
-                    seed={threadKey}
-                    idle={showDiscardDraft ? "draft" : "dot"}
-                  />
+                  {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                      A working bot's mascot is already thinking, so its card draws no working mark. */}
+                  {topStatus?.mark === "working" && isBotThread(thread) ? (
+                    <span role="status" className="sr-only">
+                      {topStatus.label}
+                    </span>
+                  ) : (
+                    /* fork:end fork-bots */
+                    <SidebarV2StatusMark
+                      status={topStatus}
+                      seed={threadKey}
+                      idle={showDiscardDraft ? "draft" : "dot"}
+                    />
+                  )}
                 </span>
                 {/* fork:end sidebar-v2-card-rows */}
                 {isSwept ? sweepBadge : null}
               </span>
             </div>
             {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */}
-            {props.compact === true ? null : (
-              /* fork:end sidebar-v2-compact-cards */
+            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                A bot's second line says what it is doing, did or does next, not model or branch. */}
+            {props.compact === true ? null : botAvatar ? (
+              <BotCardStatusLine
+                environmentId={thread.environmentId}
+                threadId={thread.id}
+                thread={thread}
+                status={status}
+              />
+            ) : (
+              /* fork:end fork-bots */
               <SidebarV2ThreadCardMeta
                 projectTitle={props.projectTitle}
                 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
@@ -2292,7 +2339,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 /* fork:end sidebar-v2-card-rows */
                 isRemote={isRemote}
               />
-              /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
             )}
             {/* fork:end sidebar-v2-compact-cards */}
           </div>
@@ -2342,8 +2388,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
   const botsSectionCollapsed = isListSectionCollapsed("bots");
   const threadsSectionCollapsed = !modePolicy.chat && isListSectionCollapsed("threads");
+  const [compactBots, setCompactBots] = useSidebarV2CompactBots();
   const [namingBot, setNamingBot] = useState(false);
   const createBot = useCreateBot();
+  const setBotMascot = useSetBotMascot();
   // The cards are built where every row is, inside the list, and portalled up into the Bots row.
   const [botListElement, setBotListElement] = useState<HTMLUListElement | null>(null);
   /* fork:end fork-bots */
@@ -4400,6 +4448,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 },
                 snoozePresets,
               }),
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+              ...(isBotThread(thread)
+                ? [
+                    botMascotMenuItem(
+                      thread,
+                      readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+                    ),
+                  ]
+                : []),
+              /* fork:end fork-bots */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(
                 thread,
@@ -4411,6 +4469,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           ),
         );
         if (clicked._tag === "Failure" || clicked.value === null) return;
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        if (isBotMascotMenuId(clicked.value)) {
+          const mascot = botMascotFromMenuId(clicked.value);
+          if (mascot !== null && checkThreadOperations([thread])) void setBotMascot(thread, mascot);
+          return;
+        }
+        /* fork:end fork-bots */
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
           if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
@@ -4675,6 +4740,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       moveThreadToMode,
       modePolicy.projectControls,
       /* fork:end fork-chat-mode */
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+      setBotMascot,
+      /* fork:end fork-bots */
     ],
   );
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4998,6 +5066,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 if (botsSectionCollapsed) toggleListSectionCollapsed("bots");
               }}
               onListElement={setBotListElement}
+              compactCards={compactBots}
+              onCompactCardsChange={setCompactBots}
             />
             {/* fork:end fork-bots */}
             <SidebarV2ProjectScopeRow
@@ -5206,7 +5276,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           }
                           isPinned={thread.pinnedAt != null}
                           /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-                          compact={compactCards}
+                          compact={
+                            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+                            isBotThread(thread)
+                              ? compactBots
+                              : /* fork:end fork-bots */
+                                compactCards
+                          }
                           /* fork:end sidebar-v2-compact-cards */
                           /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
                           onOpenSplitPair={options.onOpenSplitPair === true}

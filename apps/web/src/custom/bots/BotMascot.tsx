@@ -1,6 +1,7 @@
 /**
  * A bot's mascot as crisp pixels — see `.fork/customizations.yaml#fork-bots`.
- * One CSS pixel per cell by default; pass a whole `cell` so the pixels stay square.
+ * One CSS pixel per cell by default; pass a whole `cell` so the pixels stay square, or `fit`
+ * to scale it into a square box, so faces of every size read alike (a small one grows most).
  */
 import { parseScopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ReactNode } from "react";
@@ -20,10 +21,14 @@ export function BotMascot(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
   readonly cell?: number;
+  readonly fit?: number;
   readonly className?: string;
 }) {
   const sprite = botMascotSprite(props.shape, props.mood);
-  const cell = props.cell ?? 1;
+  const cell =
+    props.fit === undefined
+      ? (props.cell ?? 1)
+      : Math.min(props.fit / sprite.width, props.fit / sprite.height);
   return (
     <svg
       aria-hidden
@@ -42,7 +47,7 @@ export function BotMascot(props: {
   );
 }
 
-/** The mascot in a card's lead slot. The slot is one width, so bot names line up under each other. */
+/** The mascot in a compact card's lead slot. The slot is one width, so bot names line up. */
 export function BotMascotLead(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
@@ -50,6 +55,21 @@ export function BotMascotLead(props: {
   return (
     <span className="flex h-[18px] w-[22px] shrink-0 items-center justify-center">
       <BotMascot shape={props.shape} mood={props.mood} />
+    </span>
+  );
+}
+
+/** The mascot as a card's avatar: a 22px column beside both of the card's lines. */
+export function BotMascotAvatar(props: {
+  readonly shape: BotMascotShape;
+  readonly mood: BotMascotMood;
+}) {
+  return (
+    <span
+      className="row-span-2 flex items-center justify-center"
+      data-testid="sidebar-v2-bot-avatar"
+    >
+      <BotMascot shape={props.shape} mood={props.mood} fit={22} />
     </span>
   );
 }
