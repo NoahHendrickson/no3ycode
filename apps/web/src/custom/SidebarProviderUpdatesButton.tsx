@@ -3,8 +3,10 @@ import { settlePromise } from "@t3tools/client-runtime/state/runtime";
 import { PackageIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { getProviderUpdateRunToastView } from "~/components/ProviderUpdateLaunchNotification.logic";
 import { useProviderUpdates } from "~/components/ProviderUpdatesAction";
 import { SidebarMenuItem } from "~/components/ui/sidebar";
+import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { usePrimaryEnvironmentId } from "~/state/environments";
 
@@ -23,7 +25,21 @@ export function SidebarProviderUpdatesButton() {
     setIsPending(true);
     // The footer pill only reports the primary environment; other machines still get a toast.
     const quiet = machines.every((machine) => machine.environmentId === primaryEnvironmentId);
-    await settlePromise(() => updateAll({ quiet }));
+    const result = await settlePromise(() => updateAll({ quiet }));
+    // A rejected request never writes updateState, so the footer pill cannot show it.
+    const rejected =
+      quiet && result._tag === "Success"
+        ? result.value.filter((run) => run.result._tag === "Failure")
+        : [];
+    const view = getProviderUpdateRunToastView(rejected);
+    if (view?.type === "error") {
+      toastManager.add(
+        stackedThreadToast({
+          ...view,
+          description: <span className="whitespace-pre-line">{view.description}</span>,
+        }),
+      );
+    }
     pending.current = false;
     setIsPending(false);
   };
