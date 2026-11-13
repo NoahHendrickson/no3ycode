@@ -3254,7 +3254,9 @@
     preview open leaves the chat 220px and needs the overlay, while a 950px
     window with no panel leaves it 690px and does not. narrowChatOverlay
     measures the column (ChatView's data-chat-column-maximized-away wrapper, or
-    the inset on routes with no workspace) plus the panel, and writes
+    the inset on routes with no workspace; across a split, the panes' whole row
+    against two minimums, since its divider drags one pane narrow) plus the
+    panel, and writes
     data-fork-sidebar-overlay onto the sidebar wrapper for the Tier 1 stylesheet
     to key off. It decides on the width the column *would* have if the panel
     pushed, not the width it has: overlaying hands the column the panel's width
