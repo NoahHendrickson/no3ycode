@@ -2803,6 +2803,30 @@
   outline-offset: -1px;
 }
 
+/* A card being carried (custom/splitThreads/splitThreadDrag): the drag image is
+   a copy on the open row's solid fill, lifted by a shadow its inset leaves room
+   for, and the row it left dims to a placeholder until the drop. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-split-drag-image] {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  padding: 12px;
+  pointer-events: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-split-drag-image] > * {
+  background-color: var(--sidebar-row-active);
+  color: var(--sidebar-foreground);
+  box-shadow:
+    0 10px 24px -6px rgb(0 0 0 / 0.35),
+    0 2px 6px rgb(0 0 0 / 0.18);
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-split-dragging] {
+  opacity: 0.4;
+  transition: opacity 150ms ease;
+}
+
 /* Pairing and unpairing morph (custom/splitThreads/splitMorph): the involved
    cards and pair rows morph, the other rows on screen slide, and the rest of
    the page changes at once. A card keeps its own size and is clipped as its

@@ -6226,7 +6226,9 @@
     tab strip's pair capsule carries the same divider. Pairing by drag and the
     Unsplit chip run a view transition (custom/splitThreads/splitMorph): the
     two cards morph between their own rows and the pair row while the other
-    rows on screen slide, and nothing else animates.
+    rows on screen slide, and nothing else animates. A card being dragged is
+    carried as a copy on the open row's solid fill with a shadow, and its row
+    dims until the drop.
     A partner the list is not showing leaves its card on its own. Only active
     cards pair: the pinned block sorts its cards with dnd-kit, and settled or
     snoozed rows carry their own un-settle and wake actions. Keyboard and

@@ -400,7 +400,11 @@
   :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  li[data-fork-split-pair][data-active] {
+  li[data-fork-split-pair][data-active],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  [data-fork-split-drag-image]
+  > * {
   --foreground: var(--fork-inlet-panel-foreground);
   --sidebar-foreground: var(--fork-inlet-panel-foreground);
   --muted-foreground: var(--fork-inlet-panel-muted);
