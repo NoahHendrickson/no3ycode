@@ -20,6 +20,7 @@ import {
   resolveAppearanceOption,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
+import { PULL_REQUEST_STATE_PRESENTATION } from "../components/pullRequest/pullRequestIcons";
 import { projectIconColorClassName } from "../projectIconColors";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
@@ -199,7 +200,7 @@ describe("fork guard: fork-inlet-theme", () => {
     }
   });
 
-  it("gives only project icons their dark shades in Black's charcoal sidebar", () => {
+  it("gives only project icons and PR tones their dark shades in Black's charcoal sidebar", () => {
     expect(projectIconColorClassName("red").split(" ")).toEqual(
       expect.arrayContaining(["text-red-600", "fork-project-icon"]),
     );
@@ -215,6 +216,18 @@ describe("fork guard: fork-inlet-theme", () => {
       (rule) => rule.selector.includes(black) && /--color-[a-z]+-600:/u.test(rule.body),
     );
     expect(remapsScope).toBe(false);
+    for (const state of ["open", "merged", "closed"] as const) {
+      expect(PULL_REQUEST_STATE_PRESENTATION[state].toneClassName.split(" ")).toContain(
+        "fork-pr-tone",
+      );
+    }
+    const unhooked = inletRules.filter(
+      (rule) =>
+        rule.selector.includes(black) &&
+        /--color-[a-z]+-600:/u.test(rule.body) &&
+        !/\.fork-(project-icon|pr-tone)\s*$/u.test(rule.selector.trim()),
+    );
+    expect(unhooked.map((rule) => rule.selector)).toEqual([]);
   });
 
   it("sets the chat column into the frame as a rounded panel on either appearance", () => {

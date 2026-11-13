@@ -2597,6 +2597,8 @@
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/projectIconColors.ts
+    - apps/web/src/components/pullRequest/pullRequestIcons.tsx
+    - apps/web/src/components/ThreadStatusIndicators.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
