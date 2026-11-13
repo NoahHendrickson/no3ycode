@@ -38,3 +38,11 @@ export function automationScheduleFromDraft(
   const schedule = scheduleFromDraft(draft);
   return schedule?.type === "webhook" ? { ...schedule, github: null } : schedule;
 }
+
+/** A GitHub PR trigger runs in whichever listed repository the PR targets, not the task's project. */
+export function automationProjectIds(
+  task: Pick<ScheduledTask, "projectId" | "schedule">,
+): ReadonlyArray<ProjectId> {
+  const repositories = task.schedule.type === "webhook" ? task.schedule.github?.repositories : null;
+  return repositories?.length ? repositories.map((entry) => entry.projectId) : [task.projectId];
+}
