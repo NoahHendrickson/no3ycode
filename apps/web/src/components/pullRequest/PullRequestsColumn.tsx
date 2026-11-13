@@ -177,6 +177,9 @@ export function PullRequestsColumn({
       <WorkspacePageHeader
         electron={isElectron}
         reserveNativeControls={!rightPanelOpen}
+        /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+        data-fork-stage-card-title=""
+        /* fork:end fork-stage-stamps */
         className="relative bg-background"
       >
         {titlebarControls}
@@ -237,6 +240,9 @@ export function PullRequestsColumn({
 
       <div
         ref={scrollRef}
+        /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+        data-fork-stage-card-body=""
+        /* fork:end fork-stage-stamps */
         className="topbar-scroll-fade scrollbar-gutter-both min-h-0 flex-1 overflow-y-auto"
       >
         <WorkspacePageContainer width="expanded" className="min-h-full gap-4">

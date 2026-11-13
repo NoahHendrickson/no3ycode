@@ -64,8 +64,8 @@
   background-image: none;
 }
 
-/* Settings and the other app modals, the utility pages (Usage,
-   Automations) and the composer's slash menu (portaled to the body) are
+/* Settings and the other app modals, the stage-card pages (and the right
+   panel beside one) and the composer's slash menu (portaled to the body) are
    cream, inked dark like the sidebar. The stage is dark, so
    the contrast inks (computed at :root from its white) and the status tones (dark mode's pale shades) are
    restated, and primary actions take the accent green. */
@@ -74,6 +74,7 @@
   :is(
     [data-app-modal],
     [data-slot="sidebar-inset"] [data-fork-stage-card],
+    :where([data-fork-has-stage-card]) [data-preview-panel-mode="inline"] > :last-child,
     [data-composer-drawer-layer]
   ) {
   --background: #f6f4e4;
@@ -157,8 +158,10 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-slot="sidebar-inset"]
-  [data-fork-stage-card] {
+  :is(
+    [data-slot="sidebar-inset"] [data-fork-stage-card],
+    :where([data-fork-has-stage-card]) [data-preview-panel-mode="inline"] > :last-child
+  ) {
   --background: #f2f0d8;
   background: var(--background);
 }
@@ -764,6 +767,24 @@
   &:is([data-pressed], [aria-pressed="true"]):not([aria-expanded="true"]) {
     background-color: var(--fork-composer-vessel-bg);
     color: #1c1c1a;
+  }
+}
+
+/* On a stage-card page the right panel is a cream card (above), so its
+   controls drop the wash and take the card's ink. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  :is(
+    [data-workspace-titlebar-controls] :is([data-slot="toggle"], button),
+    [data-right-panel-tabbar] [aria-label="Add panel surface"]
+  ) {
+  background-color: transparent;
+  color: #1c1c1a;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+
+  &:hover:not(:disabled, [data-pressed], [aria-pressed="true"]) {
+    background-color: #e6e4cd;
   }
 }
 
