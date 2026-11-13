@@ -688,6 +688,9 @@ function SidebarThreadTooltip({
   /* fork:end sidebar-v2-dev-server-pulse */
   terminalStatus,
   terminalProcessCount,
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  onOpenSplitPair,
+  /* fork:end fork-split-threads */
 }: {
   thread: SidebarThreadSummary;
   project: ProjectFaviconProject | null;
@@ -711,6 +714,10 @@ function SidebarThreadTooltip({
   /* fork:end sidebar-v2-dev-server-pulse */
   terminalStatus: TerminalStatusIndicator | null;
   terminalProcessCount: number;
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  // An open pair stays joined to the panel, so its cards' hover card floats.
+  onOpenSplitPair: boolean;
+  /* fork:end fork-split-threads */
 }) {
   const driverKind = providerEntry?.driverKind ?? null;
   const previousProviderNames = thread.providerInstanceHistory
@@ -725,6 +732,9 @@ function SidebarThreadTooltip({
       /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
       data-fork-row-hover-card=""
       /* fork:end fork-inlet-theme */
+      /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+      data-fork-on-open-pair={onOpenSplitPair ? "" : undefined}
+      /* fork:end fork-split-threads */
     >
       <ThreadHoverCard
         title={thread.title}
@@ -1337,6 +1347,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       /* fork:end sidebar-v2-dev-server-pulse */
       terminalStatus={terminalStatus}
       terminalProcessCount={terminalProcessCount}
+      /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+      onOpenSplitPair={props.onOpenSplitPair === true}
+      /* fork:end fork-split-threads */
     />
   );
 

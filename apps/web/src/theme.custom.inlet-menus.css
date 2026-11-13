@@ -75,7 +75,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"][data-align="start"] {
+  [data-fork-row-hover-card][data-side="right"][data-align="start"]:not([data-fork-on-open-pair]) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);

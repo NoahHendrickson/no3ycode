@@ -296,6 +296,10 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
+    // An open split pair (fork-split-threads) bridges from its row, not its open half.
+    expect(bridge?.selector.replace(/\s+/gu, "")).toContain(
+      "li[data-fork-split-pair][data-active]::after",
+    );
     // Paint containment from content-visibility would clip the bridge to the item.
     const item = docked.find((rule) =>
       rule.selector

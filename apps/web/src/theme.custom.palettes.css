@@ -865,6 +865,9 @@
   :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
+  li[data-fork-split-pair][data-active],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-sidebar-version="v2"]
   [data-fork-chrome-row][data-active="true"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-thread-tabs]
@@ -875,7 +878,9 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open],
+  [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]:not(
+    li[data-fork-split-pair][data-active] *
+  ),
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-row-hover-card] {
   --fork-inlet-tooltip: #fcfaee;

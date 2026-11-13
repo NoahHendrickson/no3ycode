@@ -412,6 +412,8 @@
   --contrast-muted-foreground: var(--fork-inlet-panel-muted);
   --contrast-secondary-label: var(--fork-inlet-panel-muted);
   --contrast-icon-muted: var(--fork-inlet-panel-muted);
+  --contrast-sidebar-foreground: var(--fork-inlet-panel-foreground);
+  --contrast-sidebar-muted-foreground: var(--fork-inlet-panel-muted);
   color: var(--fork-inlet-panel-foreground);
 }
 
