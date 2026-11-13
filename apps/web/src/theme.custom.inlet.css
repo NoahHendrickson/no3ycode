@@ -28,6 +28,7 @@
   --fork-inlet-row-card: var(--popover);
   --fork-inlet-row-card-foreground: var(--popover-foreground);
   --fork-inlet-row-card-muted: color-mix(in srgb, var(--popover-foreground) 65%, var(--popover));
+  --fork-inlet-row-card-line: var(--contrast-border);
   /* A recess in a menu (the model picker's shell and provider rail):
      a step of the menu's ink into its fill. */
   --fork-inlet-menu-rail: color-mix(in srgb, var(--popover-foreground) 10%, var(--popover));
