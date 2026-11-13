@@ -64,6 +64,7 @@ const INLET_FILES = [
   "theme.custom.inlet.css",
   "theme.custom.inlet-composer.css",
   "theme.custom.inlet-menus.css",
+  "theme.custom.inlet-peek.css",
   "theme.custom.inlet-jungle.css",
   "theme.custom.inlet-black.css",
 ] as const;
@@ -386,6 +387,7 @@ describe("fork guard: fork-inlet-theme", () => {
     for (const site of [
       "../components/Sidebar.tsx",
       "../components/sidebar/SidebarThreadRow.tsx",
+      "../custom/SidebarV2AutomationsHoverCard.tsx",
     ]) {
       expect(readSibling(site), site).toContain('data-fork-row-hover-card=""');
     }

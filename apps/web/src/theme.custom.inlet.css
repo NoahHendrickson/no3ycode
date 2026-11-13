@@ -844,6 +844,11 @@
         linear-gradient(var(--fork-inlet-panel), var(--fork-inlet-panel)) 0
           var(--fork-inlet-fillet) / 100% calc(100% - 2 * var(--fork-inlet-fillet)) no-repeat;
     }
+
+    /* As an open thread row's does, while its hover card is out. */
+    &[data-popup-open]::after {
+      display: none;
+    }
   }
 }
 
