@@ -229,15 +229,6 @@
       background: var(--fork-inlet-black-surface);
     }
 
-    /* Provider marks drawn black-on-light (Cursor, Grok) take their dark-mode fills. */
-    & svg[class~="fill-[#26251E]"] {
-      fill: #edecec;
-    }
-
-    & svg[class~="fill-black"] {
-      fill: #ffffff;
-    }
-
     & [data-fork-segmented-trait] > button {
       color: var(--fork-inlet-black-ink-muted);
     }
@@ -359,10 +350,15 @@
     backdrop-filter: none;
   }
 
-  /* The usage panels' provider icons take the dark appearance's fills on
-     the charcoal (theme.custom.inlet-jungle.css has Jungle Art's reverse). */
+  /* The usage panels' and model menu's provider icons take the dark
+     appearance's fills on the charcoal (theme.custom.inlet-jungle.css has
+     Jungle Art's reverse). */
 
-  & [data-slot="popover-popup"][data-fork-tab-menu] {
+  &
+    :is(
+      [data-slot="popover-popup"][data-fork-tab-menu],
+      [data-slot="menu-popup"]:has([data-fork-model-picker])
+    ) {
     & [data-provider-package-icon] {
       fill: var(--icon-dark);
     }
