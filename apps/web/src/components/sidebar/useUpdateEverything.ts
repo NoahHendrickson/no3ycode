@@ -72,9 +72,13 @@ export function useUpdateEverything(
   // Track-only hosts save a setting and restart nothing, so they are neither listed nor counted.
   const moving = servers.filter((server) => server.trackOnly !== true);
   const restarts = collectRestartingMachines(machines, moving, localUpdateVersion !== null);
-  const providerUpdates = useProviderUpdates();
-  // A track switch moves app and servers only; provider updates stay a separate choice.
-  const providers = channelSwitch ? { machines: [], updateAll: async () => [] } : providerUpdates;
+  /* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates
+     Providers have their own sidebar button, so no run here includes them. */
+  const providers: ReturnType<typeof useProviderUpdates> = {
+    machines: [],
+    updateAll: async () => [],
+  };
+  /* fork:end fork-separate-provider-updates */
   const updateServer = useServerUpdate();
 
   const view = describeUpdateEverything({
