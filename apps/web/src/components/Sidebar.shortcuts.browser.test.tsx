@@ -99,5 +99,24 @@ it("leaves thread shortcuts and their hints to the preview when their rules excl
   await vi.waitFor(() =>
     expect(router.history.location.pathname).toBe(`/${ENVIRONMENT_ID}/${second.id}`),
   );
-  await whileHoldingControl(() => expect(jumpHint()).not.toBeNull());
+  const describeState = () => {
+    const active = document.activeElement;
+    const rows = [...document.querySelectorAll("li[data-thread-item]")].map(
+      (row) => `${row.getAttribute("data-thread-item")}:${row.textContent?.slice(0, 30)}`,
+    );
+    return JSON.stringify({
+      path: router.history.location.pathname,
+      active: active
+        ? `${active.tagName}.${String(active.className).slice(0, 40)}|${active.textContent?.slice(0, 20)}|inPreview=${active.closest("[data-preview-panel-mode]") !== null}`
+        : null,
+      hasFocus: document.hasFocus(),
+      rows,
+      hints: document.querySelectorAll("[data-jump-hint]").length,
+    });
+  };
+  console.info(`[shortcuts-diag] before hold ${describeState()}`);
+  await whileHoldingControl(() => {
+    console.info(`[shortcuts-diag] poll ${describeState()}`);
+    expect(jumpHint()).not.toBeNull();
+  });
 });
