@@ -1,16 +1,20 @@
-import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import { EnvironmentId, type ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { act, render } from "../../../test/render";
 import { selectActiveRightPanel, useRightPanelStore } from "../../rightPanelStore";
-import { setMusicKeepOpen } from "./musicKeepOpen";
-import { MusicPanelToggle } from "./MusicPanelToggle";
+import { setMusicKeepOpen, useMusicKeepOpenCarry } from "./musicKeepOpen";
 
 const environmentId = EnvironmentId.make("local");
 const threadA = { environmentId, threadId: ThreadId.make("a") };
 const threadB = { environmentId, threadId: ThreadId.make("b") };
-const showing = (ref: typeof threadA) =>
+const showing = (ref: ScopedThreadRef) =>
   selectActiveRightPanel(useRightPanelStore.getState().byThreadKey, ref);
+
+function Carry(props: { threadRef: ScopedThreadRef; ready: boolean }) {
+  useMusicKeepOpenCarry(props.threadRef, props.ready);
+  return null;
+}
 
 function setup(): Disposable {
   (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
@@ -25,33 +29,27 @@ function setup(): Disposable {
   };
 }
 
-describe("MusicPanelToggle", () => {
+describe("useMusicKeepOpenCarry", () => {
   it("carries Music to each thread arrived at, and leaves a panel closed on the same thread closed", async () => {
     using _bridge = setup();
-    // The header renders the button only with the panel available; the arrival waits for that.
-    await using screen = await render(
-      <MusicPanelToggle available={false} started threadRef={threadA} />,
-    );
+    // A thread that can't show a panel yet (a new agent's draft before its first message) waits.
+    await using screen = await render(<Carry ready={false} threadRef={threadA} />);
     expect(showing(threadA)).not.toBe("music");
-    // A new agent's draft keeps its id once its first message starts it; only then does Music come.
-    await screen.rerender(<MusicPanelToggle available started={false} threadRef={threadA} />);
-    expect(showing(threadA)).not.toBe("music");
-    await screen.rerender(<MusicPanelToggle available started threadRef={threadA} />);
+    await screen.rerender(<Carry ready threadRef={threadA} />);
     expect(showing(threadA)).toBe("music");
 
-    // Closing the panel moves the button from the panel to the header: a remount, same thread.
+    // Closed on the thread, then the view remounts on it: still closed.
     await act(() => useRightPanelStore.getState().close(threadA));
     await screen.rerender(<span />);
-    await screen.rerender(<MusicPanelToggle available started threadRef={threadA} />);
+    await screen.rerender(<Carry ready threadRef={threadA} />);
     expect(showing(threadA)).not.toBe("music");
 
-    await screen.rerender(<MusicPanelToggle available started threadRef={threadB} />);
+    await screen.rerender(<Carry ready threadRef={threadB} />);
     expect(showing(threadB)).toBe("music");
 
     // Off, a thread switch leaves each thread's panel as it was.
-    await act(() => useRightPanelStore.getState().close(threadA));
     setMusicKeepOpen(false);
-    await screen.rerender(<MusicPanelToggle available started threadRef={threadA} />);
+    await screen.rerender(<Carry ready threadRef={threadA} />);
     expect(showing(threadA)).not.toBe("music");
   });
 });

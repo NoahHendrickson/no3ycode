@@ -1,9 +1,15 @@
 /**
  * Whether the music panel follows the user from thread to thread. Its own store, because
- * subscribing to the music store follows ah ahh, which the thread header must not do. A
+ * subscribing to the music store follows ah ahh, which the thread view must not do. A
  * per-device convenience, so it lives in localStorage. See .fork/customizations.yaml#fork-music-panel.
  */
-import { useSyncExternalStore } from "react";
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
+import type { ScopedThreadRef } from "@t3tools/contracts";
+import { useEffect, useSyncExternalStore } from "react";
+
+import { selectActiveRightPanel, useRightPanelStore } from "~/rightPanelStore";
+
+import { readMusicBridge } from "./musicBridge";
 
 const STORAGE_KEY = "t3code:fork-music-keep-open";
 
@@ -34,8 +40,6 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-export const getMusicKeepOpen = (): boolean => keepOpen;
-
 export const useMusicKeepOpen = (): boolean => useSyncExternalStore(subscribe, () => keepOpen);
 
 /**
@@ -44,4 +48,26 @@ export const useMusicKeepOpen = (): boolean => useSyncExternalStore(subscribe, (
  */
 export function useRightPanelWidthKey(threadWidthKey: string): string {
   return useMusicKeepOpen() ? "t3code:preview-panel-width:fork-music" : threadWidthKey;
+}
+
+/** The thread Music was last carried to; module-level, since a view can remount on one thread. */
+let carriedTo: string | null = null;
+
+/**
+ * Opens Music on each thread the user arrives on while it is kept open. A thread is arrived
+ * on once it can show a panel (a new agent's draft waits for its first message); closing
+ * Music there afterwards leaves it closed.
+ */
+export function useMusicKeepOpenCarry(threadRef: ScopedThreadRef | null, ready: boolean): void {
+  const threadKey = threadRef === null ? null : scopedThreadKey(threadRef);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- carries the panel to the thread just navigated to; the panel store is per thread
+  useEffect(() => {
+    if (threadRef === null || threadKey === null || !ready || threadKey === carriedTo) return;
+    carriedTo = threadKey;
+    if (!keepOpen || readMusicBridge() === null) return;
+    const panels = useRightPanelStore.getState();
+    if (selectActiveRightPanel(panels.byThreadKey, threadRef) !== "music") {
+      panels.open(threadRef, "music");
+    }
+  }, [threadKey, threadRef, ready]);
 }

@@ -6817,12 +6817,13 @@
     Artists and Up Next tabs. Playlists are a grid of covers (one Apple did
     not give art takes its first song's, read one row at a time, a few at
     once); an artist opens on a grid of its albums, an album on its songs.
-    Each tab's list is read the first time it shows, artists by name only,
+    Each tab is a stack whose root is its own listing, read the first time it
+    shows (and again after ah ahh restarts) page by page, artists by name only,
     since their photos come from the catalog at many times the payload. Song
     rows and the queue show lazily loaded covers. A pin in the Music tab keeps
     Music open across threads (remembered on this device): arriving at a
-    thread opens its right panel on Music, while the button remounting on the
-    same thread, as closing the panel moves it, leaves a closed panel closed.
+    thread opens its right panel on Music (ChatView's useMusicKeepOpenCarry),
+    while the view remounting on the same thread leaves a closed panel closed.
     A new agent's draft is not arrived at until its first message starts it
     (it keeps its id), so picking a project does not open Music.
     While it is on, the right panel keeps one shared width instead of each
@@ -6842,8 +6843,9 @@
     music entry on it (the web, mobile) the button is not rendered at all.
     Nothing polls: the bar runs on from the last position ah ahh reported, ticking
     once a second straight to the DOM while a song plays, and the ten-second
-    heartbeat is dropped unless its position jumped (a seek); a page joining
-    an open stream gets the cached state with its position moved on to now.
+    heartbeat is dropped unless its position jumped (a seek). The desktop
+    stamps each state with when it received it (positionAt), so a page joining
+    an open stream reads the cached state's position from that.
     The main process holds ah ahh's state stream open only
     while a page has the panel mounted (a reload or a crash counts as
     unmounting), drops the ten-second position heartbeats the panel has no
@@ -6885,4 +6887,4 @@
   verify:
     - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
     - apps/desktop/src/fork/ForkMusicClient.test.ts
-    - apps/web/src/custom/music/MusicPanelToggle.browser.test.tsx
+    - apps/web/src/custom/music/musicKeepOpen.browser.test.tsx

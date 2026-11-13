@@ -43,7 +43,19 @@ const POSITION_TOLERANCE_MS = 1500;
 /** `closed`: ah ahh is not running, or has never run. `error`: it answered, but not usefully. */
 export type ForkMusicState =
   | { readonly status: "closed" | "error" }
-  | ({ readonly status: "ready" } & typeof Player.Type);
+  | ({
+      readonly status: "ready";
+      /** When this process received it (epoch ms), which `positionMs` is as of. */
+      readonly positionAt: number;
+    } & typeof Player.Type);
+
+type ForkMusicReadyState = Extract<ForkMusicState, { status: "ready" }>;
+
+/** Where a ready state's song is at `now`: on from `positionAt` while it plays, never past its end. */
+const forkMusicPositionNow = (state: ForkMusicReadyState, now: number): number =>
+  state.playing
+    ? Math.min(state.positionMs + now - state.positionAt, state.durationMs)
+    : state.positionMs;
 
 const Queue = Schema.Struct({
   items: Schema.Array(
@@ -56,7 +68,9 @@ const Queue = Schema.Struct({
     }),
   ),
 });
-export type ForkMusicQueueEntry = (typeof Queue.Type)["items"][number];
+export type ForkMusicQueueEntry = Omit<(typeof Queue.Type)["items"][number], "artwork"> & {
+  readonly artwork: string | null;
+};
 
 /** An Apple Music API listing, as ah ahh relays it. */
 const Listing = Schema.Struct({
@@ -137,8 +151,11 @@ export async function upNextForkMusic(
   try {
     const response = await call(target, "/v1/queue");
     if (response?.ok !== true) return null;
+    const queue = Option.getOrNull(decodeQueue(await response.json()));
     // The first entry is the song playing.
-    return Option.getOrNull(decodeQueue(await response.json()))?.items.slice(1) ?? null;
+    return (
+      queue?.items.slice(1).map((entry) => ({ ...entry, artwork: entry.artwork ?? null })) ?? null
+    );
   } catch {
     return null;
   }
@@ -217,11 +234,7 @@ export function followForkMusic(
     if (!response.ok || response.body === null) return "error";
     const decoder = new TextDecoder();
     let buffered = "";
-    let lastSent: {
-      readonly rest: string;
-      readonly positionMs: number;
-      readonly at: number;
-    } | null = null;
+    let lastSent: { readonly rest: string; readonly state: ForkMusicReadyState } | null = null;
     for await (const chunk of response.body) {
       buffered += decoder.decode(chunk, { stream: true });
       const lines = buffered.split("\n");
@@ -233,12 +246,16 @@ export function followForkMusic(
         const { positionMs, ...others } = player;
         const rest = JSON.stringify(others);
         const at = now();
-        if (lastSent !== null && lastSent.rest === rest) {
-          const expected = lastSent.positionMs + (player.playing ? at - lastSent.at : 0);
-          if (Math.abs(expected - positionMs) < POSITION_TOLERANCE_MS) continue;
+        if (
+          lastSent !== null &&
+          lastSent.rest === rest &&
+          Math.abs(forkMusicPositionNow(lastSent.state, at) - positionMs) < POSITION_TOLERANCE_MS
+        ) {
+          continue;
         }
-        lastSent = { rest, positionMs, at };
-        onState({ status: "ready", ...player });
+        const state: ForkMusicReadyState = { status: "ready", ...player, positionAt: at };
+        lastSent = { rest, state };
+        onState(state);
       }
     }
     return "closed";
@@ -249,20 +266,4 @@ export function followForkMusic(
       if (!abort.signal.aborted) onState({ status });
     });
   return () => abort.abort();
-}
-
-/** The state last streamed, read back with a playing song's position moved on to now. */
-export function latestForkMusicState(now: () => number = Date.now) {
-  let state: ForkMusicState | null = null;
-  let at = 0;
-  return {
-    set(next: ForkMusicState | null): void {
-      state = next;
-      at = now();
-    },
-    get(): ForkMusicState | null {
-      if (state?.status !== "ready" || !state.playing) return state;
-      return { ...state, positionMs: Math.min(state.positionMs + now() - at, state.durationMs) };
-    },
-  };
 }

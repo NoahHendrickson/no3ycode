@@ -40,15 +40,13 @@ import {
   sizedArtwork,
 } from "./musicBridge";
 import {
-  albumSource,
   closeMusicSource,
   getMusicSnapshot,
+  type ListKind,
   type MusicListing,
-  type MusicSource,
   type MusicTab,
-  type OpenedMusicSource,
   openMusic,
-  openMusicSource,
+  openMusicRow,
   playMusicRows,
   retryMusic,
   sendMusic,
@@ -134,20 +132,20 @@ function paintPosition(
  */
 function PlaybackBar(props: {
   positionMs: number;
+  positionAt: number;
   durationMs: number;
   playing: boolean;
-  stateAt: number;
 }) {
-  const { positionMs, durationMs, playing, stateAt } = props;
+  const { positionMs, positionAt, durationMs, playing } = props;
   const input = useRef<HTMLInputElement>(null);
   const elapsed = useRef<HTMLSpanElement>(null);
   /** Where the song was at `at`; a seek moves it ahead of ah ahh's next report. */
-  const base = useRef({ positionMs, at: stateAt });
+  const base = useRef({ positionMs, at: positionAt });
   const scrubbing = useRef(false);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a once-a-second clock while the song plays, painted straight to the DOM
   useEffect(() => {
-    base.current = { positionMs, at: stateAt };
+    base.current = { positionMs, at: positionAt };
     const tick = () => {
       if (scrubbing.current) return;
       const { positionMs: from, at } = base.current;
@@ -159,7 +157,7 @@ function PlaybackBar(props: {
     if (!playing) return;
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
-  }, [positionMs, durationMs, playing, stateAt]);
+  }, [positionMs, positionAt, durationMs, playing]);
 
   const commit = () => {
     if (!scrubbing.current || !input.current) return;
@@ -206,8 +204,8 @@ function PlaybackBar(props: {
 const nextRepeat = { 0: 2, 2: 1, 1: 0 } as const satisfies Record<MusicRepeat, MusicRepeat>;
 const repeatLabel = { 0: "Repeat off", 2: "Repeat all", 1: "Repeat one" } as const;
 
-function NowPlaying(props: { state: ReadyState; stateAt: number; volume: number }) {
-  const { state, stateAt, volume } = props;
+function NowPlaying(props: { state: ReadyState; volume: number }) {
+  const { state, volume } = props;
   return (
     <div className="flex shrink-0 flex-col gap-2 p-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -231,8 +229,8 @@ function NowPlaying(props: { state: ReadyState; stateAt: number; volume: number 
         <PlaybackBar
           durationMs={state.durationMs}
           playing={state.playing}
+          positionAt={state.positionAt}
           positionMs={state.positionMs}
-          stateAt={stateAt}
         />
       ) : null}
       <div className="flex min-w-0 items-center gap-1">
@@ -377,7 +375,7 @@ const UpNext = memo(function UpNext({ upNext }: { upNext: ReadonlyArray<MusicQue
   return upNext?.map((entry) => (
     <SongRow
       artist={entry.artist}
-      artwork={entry.artwork ?? null}
+      artwork={entry.artwork}
       key={entry.index}
       onPlay={() => sendMusic({ action: "jumpTo", value: entry.index })}
       playing={false}
@@ -390,8 +388,8 @@ function Note({ children }: { children: string }) {
   return <p className="px-2 py-1.5 text-xs text-balance text-muted-foreground">{children}</p>;
 }
 
-function Songs({ listing, state }: { listing: MusicListing | null; state: ReadyState }) {
-  if (listing === null || listing.rows === null) return null;
+function Songs({ listing, state }: { listing: MusicListing; state: ReadyState }) {
+  if (listing.rows === null) return null;
   return (
     <>
       {listing.rows.length === 0 ? (
@@ -407,18 +405,22 @@ function Songs({ listing, state }: { listing: MusicListing | null; state: ReadyS
 }
 
 /** Playlists and an artist's albums, as covers. Few enough that every tile renders. */
-const CoverGrid = memo(function CoverGrid({ sources }: { sources: ReadonlyArray<MusicSource> }) {
-  if (sources.length === 0) return <Note>Nothing in here yet.</Note>;
+const CoverGrid = memo(function CoverGrid(props: {
+  rows: ReadonlyArray<MusicRow>;
+  kind: Extract<ListKind, "playlists" | "albums">;
+}) {
+  const { rows, kind } = props;
+  if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 py-1">
-      {sources.map((source) => (
+      {rows.map((row) => (
         <button
           className="flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-md p-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-          key={source.path}
-          onClick={() => void openMusicSource(source)}
+          key={row.id}
+          onClick={() => void openMusicRow(row, kind)}
           type="button"
         >
-          {source.artwork === null ? (
+          {row.artwork === null ? (
             <span className="flex aspect-square w-full items-center justify-center rounded-sm bg-muted text-muted-foreground">
               <ListMusicIcon className="size-6" />
             </span>
@@ -429,28 +431,23 @@ const CoverGrid = memo(function CoverGrid({ sources }: { sources: ReadonlyArray<
               decoding="async"
               draggable={false}
               loading="lazy"
-              src={sizedArtwork(source.artwork, 300)}
+              src={sizedArtwork(row.artwork, 300)}
             />
           )}
-          <span className="block w-full truncate text-xs font-medium">{source.name}</span>
+          <span className="block w-full truncate text-xs font-medium">{row.name}</span>
         </button>
       ))}
     </div>
   );
 });
 
-/** An artist's albums: mapped here so the grid's memo sees the same array between renders. */
-const AlbumGrid = memo(function AlbumGrid({ albums }: { albums: ReadonlyArray<MusicRow> }) {
-  return <CoverGrid sources={albums.map(albumSource)} />;
-});
-
-const ArtistList = memo(function ArtistList({ artists }: { artists: ReadonlyArray<MusicSource> }) {
-  if (artists.length === 0) return <Note>Nothing in here yet.</Note>;
-  return artists.map((artist) => (
+const ArtistList = memo(function ArtistList({ rows }: { rows: ReadonlyArray<MusicRow> }) {
+  if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
+  return rows.map((artist) => (
     <button
       className={cn(ROW_CLASS, "[contain-intrinsic-size:auto_2rem] [content-visibility:auto]")}
-      key={artist.path}
-      onClick={() => void openMusicSource(artist)}
+      key={artist.id}
+      onClick={() => void openMusicRow(artist, "artists")}
       type="button"
     >
       <UserRoundIcon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -459,17 +456,22 @@ const ArtistList = memo(function ArtistList({ artists }: { artists: ReadonlyArra
   ));
 });
 
-function Opened({ opened, state }: { opened: OpenedMusicSource; state: ReadyState }) {
-  if (opened.rows === null) return null;
-  return opened.source.lists === "albums" ? (
-    <AlbumGrid albums={opened.rows} />
-  ) : (
-    <Songs listing={opened} state={state} />
-  );
+/** A listing as its kind of rows reads: songs as a list, playlists and albums as covers. */
+function Listing({ listing, state }: { listing: MusicListing; state: ReadyState }) {
+  if (listing.rows === null) return null;
+  switch (listing.source.lists) {
+    case "songs":
+      return <Songs listing={listing} state={state} />;
+    case "artists":
+      return <ArtistList rows={listing.rows} />;
+    case "playlists":
+    case "albums":
+      return <CoverGrid kind={listing.source.lists} rows={listing.rows} />;
+  }
 }
 
 /** Sits above the scrolling list, so the way back stays in reach down a long playlist. */
-function SourceHeader({ opened }: { opened: OpenedMusicSource }) {
+function SourceHeader({ opened }: { opened: MusicListing }) {
   const { source, rows } = opened;
   return (
     <div className="flex min-w-0 shrink-0 items-center gap-1 px-1.5 pb-1">
@@ -500,8 +502,7 @@ const TABS: ReadonlyArray<{ readonly value: MusicTab; readonly label: string }> 
 
 export function MusicPanel() {
   const snapshot = useSyncExternalStore(subscribeMusic, getMusicSnapshot);
-  const { state, sentVolume, upNext, tab, songs, playlists, artists, opening, openFailed } =
-    snapshot;
+  const { state, sentVolume, upNext, tab, stacks, opening, openFailed } = snapshot;
   if (state === null || state.status !== "ready") {
     // ah ahh answers within a frame or two; a spinner would only flash.
     if (state === null && !opening) return null;
@@ -513,11 +514,11 @@ export function MusicPanel() {
       />
     );
   }
-  const opened =
-    tab === "playlists" || tab === "artists" ? (snapshot.opened[tab].at(-1) ?? null) : null;
+  const stack = tab === "upNext" ? null : stacks[tab];
+  const top = stack?.at(-1) ?? null;
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col" data-fork-music-panel="">
-      <NowPlaying state={state} stateAt={snapshot.stateAt} volume={sentVolume ?? state.volume} />
+      <NowPlaying state={state} volume={sentVolume ?? state.volume} />
       <div className="flex shrink-0 border-t px-3 py-2">
         <SegmentedTabs
           aria-label="Music lists"
@@ -534,23 +535,9 @@ export function MusicPanel() {
           ))}
         </SegmentedTabs>
       </div>
-      {opened === null ? null : <SourceHeader opened={opened} />}
+      {stack !== null && top !== null && stack.length > 1 ? <SourceHeader opened={top} /> : null}
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
-        {opened !== null ? (
-          <Opened opened={opened} state={state} />
-        ) : tab === "songs" ? (
-          <Songs listing={songs} state={state} />
-        ) : tab === "playlists" ? (
-          playlists === null ? null : (
-            <CoverGrid sources={playlists} />
-          )
-        ) : tab === "artists" ? (
-          artists === null ? null : (
-            <ArtistList artists={artists} />
-          )
-        ) : (
-          <UpNext upNext={upNext} />
-        )}
+        {top === null ? <UpNext upNext={upNext} /> : <Listing listing={top} state={state} />}
       </div>
     </div>
   );

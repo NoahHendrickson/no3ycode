@@ -35,8 +35,6 @@ export interface PanelLayoutControlsProps {
   /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
      The thread whose right panel the music button opens; omitted, the button is not offered. */
   musicThreadRef?: ScopedThreadRef | null;
-  /** False on a new agent's draft: a kept-open Music panel waits for its first message. */
-  musicThreadStarted?: boolean;
   /* fork:end fork-music-panel */
 }
 
@@ -60,7 +58,6 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
   onToggleRightPanel,
   /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
   musicThreadRef,
-  musicThreadStarted,
   /* fork:end fork-music-panel */
 }: PanelLayoutControlsProps) {
   const threadPanelToggle = (
@@ -131,11 +128,7 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
       ) : null}
       {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
       {showRightPanelControl && musicThreadRef !== undefined ? (
-        <MusicPanelToggle
-          available={rightPanelAvailable}
-          started={musicThreadStarted ?? true}
-          threadRef={musicThreadRef}
-        />
+        <MusicPanelToggle available={rightPanelAvailable} threadRef={musicThreadRef} />
       ) : null}
       {/* fork:end fork-music-panel */}
       {showRightPanelControl ? (

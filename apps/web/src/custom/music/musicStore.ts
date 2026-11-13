@@ -12,53 +12,70 @@ import {
 } from "./musicBridge";
 
 export type MusicTab = "songs" | "playlists" | "artists" | "upNext";
-type BrowseTab = "playlists" | "artists";
+export type LibraryTab = Exclude<MusicTab, "upNext">;
 
-/** Something the panel opens: a playlist or album lists songs, an artist lists albums. */
+/** What a listing's rows are, and so what one of them opens. */
+export type ListKind = "songs" | "playlists" | "artists" | "albums";
+
+/** Something a library tab lists: its own root, or a playlist, artist or album opened from it. */
 export interface MusicSource {
   readonly name: string;
   /** Its listing in the Apple Music library API, which also tells one source from another. */
   readonly path: string;
-  readonly lists: "songs" | "albums";
-  /** An Apple `{w}x{h}` cover template. */
-  readonly artwork: string | null;
+  readonly lists: ListKind;
 }
 
-/** A library listing; rows are null until the first page arrives. */
+/** A source and what it lists; rows are null until the first page arrives. */
 export interface MusicListing {
+  readonly source: MusicSource;
   readonly rows: ReadonlyArray<MusicRow> | null;
   /** It stopped at its cap with more to come. */
   readonly truncated: boolean;
 }
 
-export interface OpenedMusicSource extends MusicListing {
-  readonly source: MusicSource;
-}
+/** A library tab's own listing first, then what was opened from it, innermost last. */
+type MusicStack = readonly [MusicListing, ...MusicListing[]];
 
-const SONGS_PATH = "/v1/me/library/songs";
 const PLAYLISTS_PATH = "/v1/me/library/playlists";
 const ARTISTS_PATH = "/v1/me/library/artists";
+const ROOTS: Readonly<Record<LibraryTab, MusicSource>> = {
+  songs: { name: "Songs", path: "/v1/me/library/songs", lists: "songs" },
+  playlists: { name: "Playlists", path: PLAYLISTS_PATH, lists: "playlists" },
+  artists: { name: "Artists", path: ARTISTS_PATH, lists: "artists" },
+};
+/** What a row opens, by the kind of listing it sits in. Songs play instead. */
+const OPENS: Readonly<Partial<Record<ListKind, (row: MusicRow) => MusicSource>>> = {
+  playlists: (row) => ({
+    name: row.name,
+    path: `${PLAYLISTS_PATH}/${row.id}/tracks`,
+    lists: "songs",
+  }),
+  artists: (row) => ({ name: row.name, path: `${ARTISTS_PATH}/${row.id}/albums`, lists: "albums" }),
+  albums: (row) => ({
+    name: row.name,
+    path: `/v1/me/library/albums/${row.id}/tracks`,
+    lists: "songs",
+  }),
+};
 /** The most songs ah ahh takes in one play command, and so the most a list shows. */
 const TRACK_LIMIT = 500;
 /** First-song cover reads in flight at once, for the playlists Apple gives no art. */
 const COVER_READS = 4;
 
+const emptyStack = (tab: LibraryTab): MusicStack => [
+  { source: ROOTS[tab], rows: null, truncated: false },
+];
+
 export interface MusicSnapshot {
   /** Null until ah ahh first answers. */
   readonly state: MusicState | null;
-  /** When `state` arrived, which its position is as of. */
-  readonly stateAt: number;
   /** The volume set here, shown in place of ah ahh's own until ah ahh reports it back. */
   readonly sentVolume: number | null;
   /** ah ahh's queue after the playing song. */
   readonly upNext: ReadonlyArray<MusicQueueEntry> | null;
   readonly tab: MusicTab;
-  /** Each list is read the first time its tab shows; null until it is. */
-  readonly songs: MusicListing | null;
-  readonly playlists: ReadonlyArray<MusicSource> | null;
-  readonly artists: ReadonlyArray<MusicSource> | null;
-  /** What each browsing tab has open, innermost last: an artist, then one of its albums. */
-  readonly opened: Readonly<Record<BrowseTab, ReadonlyArray<OpenedMusicSource>>>;
+  /** Each library tab's listings; a root is read the first time its tab shows. */
+  readonly stacks: Readonly<Record<LibraryTab, MusicStack>>;
   /** ah ahh is being started; `openFailed` once that did not work (it is not installed). */
   readonly opening: boolean;
   readonly openFailed: boolean;
@@ -66,14 +83,14 @@ export interface MusicSnapshot {
 
 let snapshot: MusicSnapshot = {
   state: null,
-  stateAt: 0,
   sentVolume: null,
   upNext: null,
   tab: "songs",
-  songs: null,
-  playlists: null,
-  artists: null,
-  opened: { playlists: [], artists: [] },
+  stacks: {
+    songs: emptyStack("songs"),
+    playlists: emptyStack("playlists"),
+    artists: emptyStack("artists"),
+  },
   opening: false,
   openFailed: false,
 };
@@ -82,6 +99,17 @@ const listeners = new Set<() => void>();
 function update(patch: Partial<MusicSnapshot>): void {
   snapshot = { ...snapshot, ...patch };
   for (const listener of listeners) listener();
+}
+
+const setStack = (tab: LibraryTab, stack: MusicStack) =>
+  update({ stacks: { ...snapshot.stacks, [tab]: stack } });
+
+/** The stack with its `at`th listing replaced. */
+function replaceAt(stack: MusicStack, at: number, listing: MusicListing): MusicStack {
+  const [root, ...opened] = stack;
+  return at === 0
+    ? [listing, ...opened]
+    : [root, ...opened.map((entry, index) => (index === at - 1 ? listing : entry))];
 }
 
 /** The pages of a library listing, in order. A failed page ends it early. */
@@ -97,144 +125,130 @@ async function* libraryPages(path: string) {
   }
 }
 
-/**
- * Reads a listing up to `max` rows, reporting each page as it lands so a long list shows
- * from its first page. Null when not even one page came back.
- */
-async function readListing(
-  path: string,
-  onPage: (listing: MusicListing) => boolean,
-  max = TRACK_LIMIT,
-): Promise<MusicListing | null> {
-  let listing: MusicListing | null = null;
-  for await (const page of libraryPages(path)) {
-    const rows: ReadonlyArray<MusicRow> = [...(listing?.rows ?? []), ...page.rows].slice(0, max);
-    const full = rows.length >= max;
-    listing = { rows, truncated: full && page.nextOffset !== null };
-    if (!onPage(listing) || full) break;
-  }
-  return listing;
-}
+/** Each playlist's first-song cover once read (null: it has none), so a re-listing reads none again. */
+const playlistCovers = new Map<string, string | null>();
 
-const sourceOf = {
-  playlist: (row: MusicRow): MusicSource => ({
-    name: row.name,
-    path: `${PLAYLISTS_PATH}/${row.id}/tracks`,
-    lists: "songs",
-    artwork: row.artwork,
-  }),
-  artist: (row: MusicRow): MusicSource => ({
-    name: row.name,
-    path: `${ARTISTS_PATH}/${row.id}/albums`,
-    lists: "albums",
-    artwork: null,
-  }),
-  album: (row: MusicRow): MusicSource => ({
-    name: row.name,
-    path: `/v1/me/library/albums/${row.id}/tracks`,
-    lists: "songs",
-    artwork: row.artwork,
-  }),
-};
+const withCovers = (rows: ReadonlyArray<MusicRow>): ReadonlyArray<MusicRow> =>
+  rows.map((row) => {
+    const cover = row.artwork === null ? playlistCovers.get(row.id) : null;
+    return cover ? { ...row, artwork: cover } : row;
+  });
 
-const loading = new Set<"songs" | BrowseTab>();
+let fillingCovers = false;
 
 /**
  * Playlists the user made have no art of their own, so they take their first song's, as
- * Apple's apps do. One single-row read each, a few at a time, and one update per batch.
+ * Apple's apps do. One single-row read each, a few at a time, one update per batch. Rows a
+ * newer listing brings are picked up by the next batch; a failed read waits for the next fill.
  */
-async function fillPlaylistCovers(playlists: ReadonlyArray<MusicSource>): Promise<void> {
+async function fillPlaylistCovers(): Promise<void> {
   const bridge = readMusicBridge();
-  const bare = playlists.filter((playlist) => playlist.artwork === null);
-  if (bridge === null) return;
-  for (let start = 0; start < bare.length; start += COVER_READS) {
-    const batch = bare.slice(start, start + COVER_READS);
-    const covers = await Promise.all(
-      batch.map(async (playlist) => (await bridge.libraryPage(playlist.path, 0, 1))?.rows[0]),
-    );
-    const found = new Map(batch.map((playlist, index) => [playlist.path, covers[index]?.artwork]));
-    // A newer listing replaced this one while the covers were read.
-    if (snapshot.playlists === null || !snapshot.playlists.some((p) => found.has(p.path))) return;
-    update({
-      playlists: snapshot.playlists.map((playlist) => {
-        const artwork = found.get(playlist.path);
-        return artwork ? { ...playlist, artwork } : playlist;
-      }),
-    });
-  }
-}
-
-/** Reads a tab's list. Nothing listed is a failed call: left as it was, to try again later. */
-async function loadList(tab: MusicTab): Promise<void> {
-  if (tab === "upNext" || loading.has(tab)) return;
-  loading.add(tab);
+  if (bridge === null || fillingCovers) return;
+  fillingCovers = true;
   try {
-    if (tab === "songs") {
-      await readListing(SONGS_PATH, (songs) => {
-        update({ songs });
-        return true;
+    for (;;) {
+      const bare = (snapshot.stacks.playlists[0].rows ?? []).filter(
+        (row) => row.artwork === null && !playlistCovers.has(row.id),
+      );
+      const batch = bare.slice(0, COVER_READS);
+      if (batch.length === 0) return;
+      const firsts = await Promise.all(
+        batch.map((row) => bridge.libraryPage(`${PLAYLISTS_PATH}/${row.id}/tracks`, 0, 1)),
+      );
+      batch.forEach((row, index) => {
+        const first = firsts[index];
+        if (first) playlistCovers.set(row.id, first.rows[0]?.artwork ?? null);
       });
-      return;
+      const [root, ...opened] = snapshot.stacks.playlists;
+      if (root.rows !== null)
+        setStack("playlists", [{ ...root, rows: withCovers(root.rows) }, ...opened]);
+      if (firsts.includes(null)) return;
     }
-    // Names only, so a whole library's worth is cheap; songs stop at what one play takes.
-    const listing = await readListing(
-      tab === "playlists" ? PLAYLISTS_PATH : ARTISTS_PATH,
-      () => true,
-      Number.POSITIVE_INFINITY,
-    );
-    if (listing === null || listing.rows === null) return;
-    if (tab === "artists") {
-      update({ artists: listing.rows.map(sourceOf.artist) });
-      return;
-    }
-    const playlists = listing.rows.map(sourceOf.playlist);
-    update({ playlists });
-    void fillPlaylistCovers(playlists);
   } finally {
-    loading.delete(tab);
+    fillingCovers = false;
   }
 }
 
-/** Shows a tab, reading its list the first time. */
+/**
+ * Reads a listing into its tab, page by page, so a long list shows from its first page. It
+ * keeps reading while its source is anywhere in the stack, so opening an album does not stop
+ * its artist's later pages. Songs stop at what one play takes; names and covers read in full.
+ * Null when not even one page came back.
+ */
+async function readInto(tab: LibraryTab, source: MusicSource): Promise<MusicListing | null> {
+  const max = source.lists === "songs" ? TRACK_LIMIT : Number.POSITIVE_INFINITY;
+  let listing: MusicListing | null = null;
+  let all: ReadonlyArray<MusicRow> = [];
+  for await (const page of libraryPages(source.path)) {
+    const at = snapshot.stacks[tab].findIndex((entry) => entry.source === source);
+    // Gone back past it, or opened again, while this was reading.
+    if (at < 0) return listing;
+    all = [...all, ...page.rows].slice(0, max);
+    const full = all.length >= max;
+    listing = {
+      source,
+      rows: source.lists === "playlists" ? withCovers(all) : all,
+      truncated: full && page.nextOffset !== null,
+    };
+    setStack(tab, replaceAt(snapshot.stacks[tab], at, listing));
+    if (full) break;
+  }
+  if (source.lists === "playlists") void fillPlaylistCovers();
+  return listing;
+}
+
+/** Roots being read, and roots a restarted ah ahh may have changed since they were. */
+const readingRoots = new Set<LibraryTab>();
+const staleRoots = new Set<LibraryTab>();
+
+/** Reads a tab's own listing again. Nothing listed is a failed call: left as it was, to try again later. */
+async function readRoot(tab: LibraryTab): Promise<void> {
+  if (readingRoots.has(tab)) return;
+  readingRoots.add(tab);
+  staleRoots.delete(tab);
+  try {
+    await readInto(tab, ROOTS[tab]);
+  } finally {
+    readingRoots.delete(tab);
+  }
+}
+
+const rootWanted = (tab: LibraryTab) =>
+  snapshot.stacks[tab][0].rows === null || staleRoots.has(tab);
+
+/** Shows a tab, reading its list the first time and after ah ahh restarted. */
 export function showMusicTab(tab: MusicTab): void {
   update({ tab });
   if (tab === "upNext") {
     if (upNextStale) void loadUpNext();
-  } else if (snapshot[tab] === null) void loadList(tab);
+  } else if (rootWanted(tab)) void readRoot(tab);
 }
 
-/** Opens a playlist, artist or album inside the tab showing it, and reads what it lists. */
-export async function openMusicSource(source: MusicSource): Promise<void> {
+/** Opens a playlist, artist or album row (from a listing of `kind`) in the tab showing. */
+export async function openMusicRow(row: MusicRow, kind: ListKind): Promise<void> {
   const tab = snapshot.tab;
-  if (tab !== "playlists" && tab !== "artists") return;
-  const stack = snapshot.opened[tab];
+  const source = OPENS[kind]?.(row);
+  if (tab === "upNext" || source === undefined) return;
+  const [root, ...opened] = snapshot.stacks[tab];
   // Opened again while still reading: start it over rather than stacking a copy.
-  const base = stack.at(-1)?.source.path === source.path ? stack.slice(0, -1) : stack;
-  const entry: OpenedMusicSource = { source, rows: null, truncated: false };
-  const setTop = (next: OpenedMusicSource | null) =>
-    update({ opened: { ...snapshot.opened, [tab]: next === null ? base : [...base, next] } });
-  setTop(entry);
-  let current = entry;
-  const listing = await readListing(source.path, (page) => {
-    // Gone back, or opened something else, while this was reading.
-    if (snapshot.opened[tab].at(-1) !== current) return false;
-    current = { source, ...page };
-    setTop(current);
-    return true;
-  });
+  const below = opened.at(-1)?.source.path === source.path ? opened.slice(0, -1) : opened;
+  setStack(tab, [root, ...below, { source, rows: null, truncated: false }]);
+  const listing = await readInto(tab, source);
   // Nothing came back at all: ah ahh went away, and its state says so.
-  if (listing === null && snapshot.opened[tab].at(-1) === current) setTop(null);
+  if (listing === null) {
+    const stack = snapshot.stacks[tab];
+    const at = stack.findIndex((entry) => entry.source === source);
+    if (at > 0) setStack(tab, [stack[0], ...stack.slice(1, at)]);
+  }
 }
 
 /** Goes back one level in the tab showing. */
 export function closeMusicSource(): void {
   const tab = snapshot.tab;
-  if (tab !== "playlists" && tab !== "artists") return;
-  update({ opened: { ...snapshot.opened, [tab]: snapshot.opened[tab].slice(0, -1) } });
+  if (tab === "upNext") return;
+  const [root, ...opened] = snapshot.stacks[tab];
+  setStack(tab, [root, ...opened.slice(0, -1)]);
 }
-
-/** The source an artist's album row opens. */
-export const albumSource = sourceOf.album;
 
 let upNextRequest = 0;
 /** The queue changed since it was last read; it is read again only while Up Next shows. */
@@ -293,22 +307,20 @@ const queueKey = (state: MusicState | null) =>
 
 function applyState(state: MusicState): void {
   const previous = snapshot.state;
-  update(
-    state.status === "ready"
-      ? { state, stateAt: Date.now(), openFailed: false }
-      : { state, stateAt: Date.now() },
-  );
+  update(state.status === "ready" ? { state, openFailed: false } : { state });
   settleVolume();
   if (state.status !== "ready") return;
   if (queueKey(state) !== queueKey(previous)) {
     upNextStale = true;
     if (snapshot.tab === "upNext") void loadUpNext();
   }
-  // A restarted ah ahh may have a changed library; a failed listing is tried again here.
-  const tab = snapshot.tab;
-  if (tab !== "upNext" && (snapshot[tab] === null || previous?.status !== "ready")) {
-    void loadList(tab);
+  // A restarted ah ahh may have a changed library: every root is read again as its tab
+  // next shows. A failed listing is tried again here too.
+  if (previous?.status !== "ready") {
+    for (const tab of Object.keys(ROOTS) as LibraryTab[]) staleRoots.add(tab);
   }
+  const tab = snapshot.tab;
+  if (tab !== "upNext" && rootWanted(tab)) void readRoot(tab);
 }
 
 /** ah ahh reports what a command did through its state, so there is nothing to await. */

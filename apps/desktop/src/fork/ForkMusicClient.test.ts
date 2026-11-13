@@ -10,7 +10,6 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   commandForkMusic,
   followForkMusic,
-  latestForkMusicState,
   libraryPageForkMusic,
   upNextForkMusic,
   waitForForkMusicPlayer,
@@ -34,8 +33,9 @@ const player = (title: string, positionMs: number) => ({
   queueRevision: 1,
   favorite: null,
 });
-const shown = (title: string, positionMs: number) => ({
+const shown = (title: string, positionMs: number, positionAt: number) => ({
   status: "ready",
+  positionAt,
   playing: true,
   title,
   artist: "Artist",
@@ -210,15 +210,15 @@ describe("ForkMusicClient", () => {
     await ahAhh.connected.take();
 
     ahAhh.publish(player("One", 10));
-    expect(await states.take()).toEqual(shown("One", 10));
+    expect(await states.take()).toEqual(shown("One", 10, 0));
     // ah ahh re-sends every ten seconds to carry the position, which the panel advances itself.
     clock = 10_000;
     ahAhh.publish(player("One", 10_010));
     // A seek moves it further than the song played: that comes through.
     ahAhh.publish(player("One", 90_000));
-    expect(await states.take()).toEqual(shown("One", 90_000));
+    expect(await states.take()).toEqual(shown("One", 90_000, 10_000));
     ahAhh.publish(player("Two", 0));
-    expect(await states.take()).toEqual(shown("Two", 0));
+    expect(await states.take()).toEqual(shown("Two", 0, 10_000));
 
     ahAhh.endStream();
     expect(await states.take()).toEqual({ status: "closed" });
@@ -233,19 +233,5 @@ describe("ForkMusicClient", () => {
     await ahAhh.connected.take();
     ahAhh.publish({ title: 7 });
     expect(await states.take()).toEqual({ status: "error" });
-  });
-
-  it("hands a page joining later the song where it is now, not where it was", () => {
-    let clock = 0;
-    const latest = latestForkMusicState(() => clock);
-    latest.set({ status: "ready", ...player("One", 1000) });
-    clock = 4000;
-    expect(latest.get()).toMatchObject({ positionMs: 5000 });
-    // It never runs past the end, and a paused song stays put.
-    clock = 1_000_000;
-    expect(latest.get()).toMatchObject({ positionMs: 200_000 });
-    latest.set({ status: "ready", ...player("One", 1000), playing: false });
-    clock += 4000;
-    expect(latest.get()).toMatchObject({ positionMs: 1000 });
   });
 });

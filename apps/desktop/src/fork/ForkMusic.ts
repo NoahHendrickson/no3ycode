@@ -20,7 +20,6 @@ import {
   followForkMusic,
   type ForkMusicState,
   type ForkMusicTarget,
-  latestForkMusicState,
   libraryPageForkMusic,
   upNextForkMusic,
   waitForForkMusicPlayer,
@@ -66,17 +65,16 @@ const target = (): ForkMusicTarget => ({
 const followers = new Set<Electron.WebContents>();
 const hooked = new WeakSet<Electron.WebContents>();
 let stopStream: (() => void) | null = null;
-const lastState = latestForkMusicState();
+let lastState: ForkMusicState | null = null;
 
 /** Starts the stream when a page follows and none is running, or the last one ended. */
 function ensureStream(): void {
-  const latest = lastState.get();
-  const ended = latest !== null && latest.status !== "ready";
+  const ended = lastState !== null && lastState.status !== "ready";
   if (followers.size === 0 || (stopStream !== null && !ended)) return;
   stopStream?.();
-  lastState.set(null);
+  lastState = null;
   stopStream = followForkMusic(target(), (state) => {
-    lastState.set(state);
+    lastState = state;
     for (const follower of followers) {
       if (!follower.isDestroyed()) follower.send(FORK_MUSIC_STATE_CHANNEL, state);
     }
@@ -88,7 +86,7 @@ function unfollow(contents: Electron.WebContents): void {
   if (followers.size > 0) return;
   stopStream?.();
   stopStream = null;
-  lastState.set(null);
+  lastState = null;
 }
 
 /** Answers with the state last streamed, for a page that joins a stream already open. */
@@ -105,7 +103,7 @@ function follow(contents: Electron.WebContents): ForkMusicState | null {
     });
   }
   ensureStream();
-  return lastState.get();
+  return lastState;
 }
 
 /**

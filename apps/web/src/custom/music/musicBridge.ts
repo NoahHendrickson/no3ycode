@@ -15,9 +15,10 @@ export type MusicState =
       readonly artist: string;
       readonly album: string;
       readonly artwork: string | null;
-      /** The song's length, and where it was when this state arrived. */
+      /** The song's length, and where it was at `positionAt` (epoch ms, the desktop's clock). */
       readonly durationMs: number;
       readonly positionMs: number;
+      readonly positionAt: number;
       /** 0 to 1. */
       readonly volume: number;
       readonly shuffle: boolean;
@@ -43,8 +44,8 @@ export interface MusicQueueEntry {
   readonly index: number;
   readonly title: string;
   readonly artist: string;
-  /** A 120px cover URL; absent from older ah ahh builds. */
-  readonly artwork?: string | null;
+  /** A 120px cover URL. */
+  readonly artwork: string | null;
 }
 
 /** The actions of ah ahh's remote API this panel sends; ah ahh validates each one. */
