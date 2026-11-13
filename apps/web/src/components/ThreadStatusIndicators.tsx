@@ -881,7 +881,14 @@ export function ThreadSearchPullRequestNumber({
       className={cn(
         "inline-flex shrink-0 items-center gap-0.5 text-xs tabular-nums",
         settled
-          ? cn("text-secondary-label transition-colors", state && settledPrHoverColorClass(state))
+          ? cn(
+              "text-secondary-label transition-colors",
+              state && settledPrHoverColorClass(state),
+              /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+              // oxlint-disable-next-line shadcn/no-unknown-classes -- a theme.custom.inlet-black.css hook
+              "fork-pr-tone",
+              /* fork:end fork-inlet-theme */
+            )
           : presentation.toneClassName,
       )}
     >

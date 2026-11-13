@@ -2442,6 +2442,8 @@
     the row; the thread list drops its native scrollbar (it still scrolls)
     because the gutter would clip the bridge, and the open item drops
     content-visibility paint containment. Other thread cards are unchanged.
+    A split's panes are each such a panel, so the line between them
+    (fork-split-threads) is hidden.
 
     The colour lives in t3code:fork-inlet-color, stamped as
     data-fork-inlet-color while Inlet is active; Settings → Appearance shows
@@ -2601,6 +2603,8 @@
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/projectIconColors.ts
+    - apps/web/src/components/pullRequest/pullRequestIcons.tsx
+    - apps/web/src/components/ThreadStatusIndicators.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts

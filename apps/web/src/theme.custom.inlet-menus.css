@@ -68,6 +68,7 @@
   --contrast-muted-foreground: var(--fork-inlet-row-card-muted);
   --contrast-secondary-label: var(--fork-inlet-row-card-muted);
   --contrast-icon-muted: var(--fork-inlet-row-card-muted);
+  --contrast-border: var(--fork-inlet-row-card-line);
   background: var(--fork-inlet-row-card);
   border-color: transparent;
   border-top-left-radius: 0;

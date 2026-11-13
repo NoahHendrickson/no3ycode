@@ -248,14 +248,17 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
       "pointer-events-none flex size-[14px] shrink-0 items-center justify-center",
     );
     // Idle and live marks alike render through the shared status-mark switch,
-    // card rows drawing the idle dot and slim rows leaving the slot empty.
+    // card rows drawing the idle dot. Slim rows mount their slot only when a
+    // mark draws, so an idle settled row leaves no hole before its title.
     const statusMark = (idle: string) =>
       new RegExp(
         `<SidebarV2StatusMark\\b[^>]*status=\\{topStatus\\}[^>]*idle=\\{showDiscardDraft \\? "draft" : "${idle}"\\}[^>]*/>`,
         "u",
       );
     expect(sidebarV2).toMatch(statusMark("dot"));
-    expect(sidebarV2).toMatch(statusMark("empty"));
+    expect(sidebarV2).toMatch(
+      /\{topStatus === null && !showDiscardDraft \? null : \(\s*<span className="pointer-events-none flex size-\[14px\][^"]*">\s*<SidebarV2StatusMark status=\{topStatus\} seed=\{threadKey\} idle="draft" \/>/u,
+    );
     // Order inside the card's trailing group: the actions grid closes before
     // the status box opens, so the two can never share a stacking context.
     const actionsGrid = sidebarV2.indexOf(
