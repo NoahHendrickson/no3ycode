@@ -28,6 +28,9 @@ const WRAPPER_SELECTOR = '[data-slot="sidebar-wrapper"]';
 const CONTAINER_SELECTOR = '[data-slot="sidebar-container"]';
 const INSET_SELECTOR = '[data-slot="sidebar-inset"]';
 const CHAT_COLUMN_SELECTOR = "[data-chat-column-maximized-away]";
+const THREAD_PANES_SELECTOR = "[data-fork-thread-panes]";
+// A split's panes are dragged apart, so one pane is not the column: the row is two of them.
+const SPLIT_ROW_SELECTOR = "[data-fork-split-threads]";
 
 /**
  * The slice of `Element` this needs, so the resolution and the decision can be
@@ -51,12 +54,16 @@ export interface OverlayTargets {
   readonly inset: OverlayNode | null;
   /** ChatView's row, once the thread has resolved. Watched, never measured. */
   readonly workspace: OverlayNode | null;
+  /** The thread panes' row, whose children change as a split opens or closes. Watched. */
+  readonly panes: OverlayNode | null;
   /**
    * The column, or the widest stand-in available while the workspace mounts.
    * Null only before the route renders anything, where there is nothing to
    * decide about yet.
    */
   readonly chatColumn: OverlayNode | null;
+  /** How many columns share chatColumn: 2 across a split's row, else 1. */
+  readonly columns: number;
 }
 
 export interface ChatColumnMetrics {
@@ -66,6 +73,8 @@ export interface ChatColumnMetrics {
   readonly sidebarWidth: number;
   /** Whether the panel is currently taking layout space from the column. */
   readonly sidebarOccupiesLayout: boolean;
+  /** Columns sharing the measured width, each owed the minimum. One unless split. */
+  readonly columns?: number;
 }
 
 /**
@@ -88,7 +97,9 @@ export function resolvePushedChatColumnWidth(metrics: ChatColumnMetrics): number
  * which way the space is taken.
  */
 export function shouldOverlaySidebar(metrics: ChatColumnMetrics): boolean {
-  return resolvePushedChatColumnWidth(metrics) < THREAD_MAIN_CONTENT_MIN_WIDTH;
+  return (
+    resolvePushedChatColumnWidth(metrics) < THREAD_MAIN_CONTENT_MIN_WIDTH * (metrics.columns ?? 1)
+  );
 }
 
 /**
@@ -104,13 +115,16 @@ export function resolveOverlayTargets(
   if (!wrapper || !container) return null;
 
   const inset = wrapper.querySelector(INSET_SELECTOR);
-  const chatColumn = inset?.querySelector(CHAT_COLUMN_SELECTOR) ?? inset;
+  const splitRow = inset?.querySelector(SPLIT_ROW_SELECTOR) ?? null;
+  const chatColumn = splitRow ?? inset?.querySelector(CHAT_COLUMN_SELECTOR) ?? inset;
   return {
     wrapper,
     container,
     inset,
     workspace: inset?.querySelector(":scope > *") ?? null,
+    panes: inset?.querySelector(THREAD_PANES_SELECTOR) ?? null,
     chatColumn,
+    columns: splitRow ? 2 : 1,
   };
 }
 
@@ -126,6 +140,7 @@ export function syncSidebarOverlay(targets: OverlayTargets): boolean {
     // what opening the panel would do before it is opened.
     sidebarOccupiesLayout:
       targets.wrapper.getAttribute(SIDEBAR_STATE_ATTRIBUTE) === "expanded" && !overlaying,
+    columns: targets.columns,
   });
 
   if (next !== overlaying) {
@@ -160,7 +175,7 @@ export function useSidebarOverlayOnNarrowChat(routeKey: string): void {
       // appearing under the inset, the column and the right panel appearing
       // under ChatView. `childList` without `subtree` on each, so streaming
       // messages and composer keystrokes — both far deeper — are never seen.
-      const nextWatched = [targets.wrapper, targets.inset, targets.workspace].filter(
+      const nextWatched = [targets.wrapper, targets.inset, targets.workspace, targets.panes].filter(
         (node): node is Element => node instanceof Element,
       );
       if (!sameNodes(nextWatched, watched)) {

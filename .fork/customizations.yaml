@@ -2330,7 +2330,7 @@
     fills. While a desktop tab floats over the chat the chat view gives up
     its stacking context, as the picture sheet does, so the tab's chrome
     stays above the webview. A split's panes each sit on their own card, so
-    the line between them (fork-split-threads) is hidden, and the right card
+    the line between them (fork-split-threads) is hidden (its drag area stays), and the right card
     keeps only 3px (its halo's reach) off its pane while the pane overlaps the
     left one's gutter by 3px: the cards stand as far apart as from the window.
   tier: 2
@@ -2443,7 +2443,10 @@
     because the gutter would clip the bridge, and the open item drops
     content-visibility paint containment. Other thread cards are unchanged.
     A split's panes are each such a panel, so the line between them
-    (fork-split-threads) is hidden.
+    (fork-split-threads) is hidden and the divider becomes the frame's gap:
+    the right pane drops its leading margin, so split panes and the right
+    panel all stand one margin apart. A bar of the panel's fill shows in the
+    gap while it is hovered or dragged.
 
     The colour lives in t3code:fork-inlet-color, stamped as
     data-fork-inlet-color while Inlet is active; Settings → Appearance shows
@@ -3252,7 +3255,9 @@
     preview open leaves the chat 220px and needs the overlay, while a 950px
     window with no panel leaves it 690px and does not. narrowChatOverlay
     measures the column (ChatView's data-chat-column-maximized-away wrapper, or
-    the inset on routes with no workspace) plus the panel, and writes
+    the inset on routes with no workspace; across a split, the panes' whole row
+    against two minimums, since its divider drags one pane narrow) plus the
+    panel, and writes
     data-fork-sidebar-overlay onto the sidebar wrapper for the Tier 1 stylesheet
     to key off. It decides on the width the column *would* have if the panel
     pushed, not the width it has: overlaying hands the column the panel's width
@@ -6181,6 +6186,11 @@
     one getter installed once; one shared ref would send and focus through
     the wrong composer. Below the lg breakpoint only the focused pane shows
     and the pill hides (the pane context's canSplit); the pair is kept.
+    The divider between the panes drags their shares (each pane at least
+    360px), written straight onto the row as a CSS variable while it moves
+    and stored on the pair on release; a double-click evens them. In the
+    collapsed tab strip the pair is one selected tab whose two halves keep
+    their own marks, titles, actions and clicks.
 
     Only the focused pane answers window-level input, in one style: each
     effect that listens on the window guards on the pane context's focused

@@ -16,8 +16,11 @@ import { resolveStorage } from "~/lib/storage";
 
 import type { FloatFrame } from "./floatFrame";
 import {
+  DEFAULT_SPLIT_RATIO,
   findSplitPair,
+  isSplitRatio,
   pairSplitThreads,
+  resizeSplitPair,
   sameThread,
   unpairSplitThread,
   type SplitThreadPair,
@@ -50,6 +53,8 @@ interface SplitThreadStoreState {
   readonly pendingFloat: ScopedThreadRef | null;
   readonly pair: (a: ScopedThreadRef, b: ScopedThreadRef) => void;
   readonly unpair: (ref: ScopedThreadRef) => void;
+  /** The left pane's share of the column for the pair holding `ref`. */
+  readonly resize: (ref: ScopedThreadRef, ratio: number) => void;
   readonly float: (ref: ScopedThreadRef) => void;
   /** Floats the route's own thread when the route next arrives somewhere
       else. Until then it stays the column's thread, and the panes draw it
@@ -67,7 +72,13 @@ interface SplitThreadStoreState {
 const isThreadRef = Schema.is(ScopedThreadRef);
 const isPair = (value: unknown): value is SplitThreadPair => {
   const pair = value as SplitThreadPair | null;
-  return pair !== null && typeof pair === "object" && isThreadRef(pair.a) && isThreadRef(pair.b);
+  return (
+    pair !== null &&
+    typeof pair === "object" &&
+    isThreadRef(pair.a) &&
+    isThreadRef(pair.b) &&
+    (pair.ratio === undefined || isSplitRatio(pair.ratio))
+  );
 };
 const isFloatFrame = (value: unknown): value is FloatFrame => {
   const frame = value as Partial<FloatFrame> | null;
@@ -107,6 +118,7 @@ export const useSplitThreadStore = create<SplitThreadStoreState>()(
             sameThread(state.floating, a) || sameThread(state.floating, b) ? null : state.floating,
         })),
       unpair: (ref) => set((state) => ({ pairs: unpairSplitThread(state.pairs, ref) })),
+      resize: (ref, ratio) => set((state) => ({ pairs: resizeSplitPair(state.pairs, ref, ratio) })),
       float: (ref) =>
         set((state) => ({ floating: ref, pairs: unpairSplitThread(state.pairs, ref) })),
       floatOnLeave: (ref) => set({ pendingFloat: ref }),
@@ -179,6 +191,8 @@ export const usePendingSplitStore = create<{ readonly pending: PendingSplit | nu
 export interface SplitLayout {
   readonly left: ScopedThreadRef;
   readonly right: ScopedThreadRef;
+  /** The left pane's share of the column. */
+  readonly ratio: number;
 }
 
 /** The two panes to show for the thread on screen, or null to show it alone.
@@ -194,7 +208,7 @@ export function useSplitLayout(
   );
   const pending = usePendingSplitStore((state) => state.pending);
   if (ref === null) return null;
-  if (pair) return { left: pair.a, right: pair.b };
+  if (pair) return { left: pair.a, right: pair.b, ratio: pair.ratio ?? DEFAULT_SPLIT_RATIO };
   if (
     pending !== null &&
     draftProjectRef !== null &&
@@ -202,7 +216,7 @@ export function useSplitLayout(
     pending.projectRef.projectId === draftProjectRef.projectId &&
     scopedThreadKey(pending.source) !== scopedThreadKey(ref)
   ) {
-    return { left: pending.source, right: ref };
+    return { left: pending.source, right: ref, ratio: DEFAULT_SPLIT_RATIO };
   }
   return null;
 }

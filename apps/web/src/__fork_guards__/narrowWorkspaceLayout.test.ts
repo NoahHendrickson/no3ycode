@@ -246,6 +246,36 @@ describe("fork guard: narrow-workspace-layout", () => {
     expect(ready.wrapper.attributes[SIDEBAR_OVERLAY_ATTRIBUTE]).toBe("true");
   });
 
+  it("measures a split's whole row, so dragging one pane narrow never floats the panel", () => {
+    // One pane is dragged down to 360px; measuring it alone would float the panel
+    // over the other pane at any window width.
+    const container = node({ width: PANEL });
+    const pane = node({ width: 352 });
+    const row = node({ width: 1184 });
+    const inset = node({
+      matches: { "[data-chat-column-maximized-away]": pane, "[data-fork-split-threads]": row },
+    });
+    const wrapper = node({
+      attributes: { [SIDEBAR_STATE_ATTRIBUTE]: "expanded" },
+      matches: {
+        '[data-slot="sidebar-container"]': container,
+        '[data-slot="sidebar-inset"]': inset,
+      },
+    });
+    const targets = resolveOverlayTargets({ querySelector: () => wrapper })!;
+    expect(targets.chatColumn).toBe(row);
+    expect(syncSidebarOverlay(targets)).toBe(false);
+    // Two columns are owed the minimum, as an even split's halves were.
+    expect(
+      shouldOverlaySidebar({
+        chatColumnWidth: 780,
+        sidebarWidth: PANEL,
+        sidebarOccupiesLayout: true,
+        columns: 2,
+      }),
+    ).toBe(true);
+  });
+
   it("watches structure shallowly enough to ignore the chat's own churn", () => {
     // `subtree` here would put a MutationObserver over streaming messages and
     // every composer keystroke. The three watched nodes are each one level up
