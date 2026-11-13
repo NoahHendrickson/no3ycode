@@ -443,7 +443,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     openThreadKey,
     openThread: (threadRef) => {
       clearSidebarSelection();
-      void router.navigate({
+      return router.navigate({
         to: "/$environmentId/$threadId",
         params: buildThreadRouteParams(threadRef),
       });

@@ -114,7 +114,7 @@ function rowUnder(event: DragEvent<HTMLElement>): HTMLElement | null {
 export function makeSplitDropHandlers(input: {
   readonly canPair: (threadKey: string) => boolean;
   readonly openThreadKey: string | null;
-  readonly openThread: (threadRef: ScopedThreadRef) => void;
+  readonly openThread: (threadRef: ScopedThreadRef) => Promise<unknown> | void;
 }) {
   const clearTarget = (event: DragEvent<HTMLElement>) => {
     event.currentTarget
@@ -138,8 +138,9 @@ export function makeSplitDropHandlers(input: {
     morphSplitPairs([target, dragged], () => {
       useSplitThreadStore.getState().pair(target, dragged);
       if (input.openThreadKey !== draggedKey && input.openThreadKey !== targetKey) {
-        input.openThread(dragged);
+        return input.openThread(dragged);
       }
+      return undefined;
     });
   };
   return {

@@ -3,6 +3,8 @@
     and only rows on screen fade, so a group toggle animates however many rows it holds. */
 import { createSidebarListMotion, type SidebarListFadeStyle } from "~/components/Sidebar.motion";
 
+import { isSplitMorphing } from "./splitThreads/splitMorph";
+
 /** Where a row stands while it fades, and where it lands. */
 const SIDEBAR_V2_LIST_FADE = { shown: "scale(1)", hidden: "scale(.98)" } as const;
 
@@ -45,7 +47,8 @@ export function createSidebarV2ListMotion(list: HTMLUListElement) {
         return;
       }
       band = onScreenBand(list);
-      motion.update(animate);
+      // A pair or unpair morph (fork-split-threads) moves these rows itself; this one reseeds.
+      motion.update(animate && !isSplitMorphing());
       measured = Array.from(list.children);
     },
     /** Before a drop: rows slide from where the drag left them, transforms included. */

@@ -50,8 +50,14 @@ function nameRows(keys: readonly string[]): HTMLElement[] {
 }
 
 type TransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => { readonly finished: Promise<void> };
+  startViewTransition?: (update: () => Promise<void>) => { readonly finished: Promise<void> };
 };
+
+// The longest the morph holds the page for a route change: no frame paints until it ends.
+const ROUTE_WAIT_MS = 200;
+
+/** While true, other list motion stands down so the morph captures the settled layout. */
+export const isSplitMorphing = () => document.documentElement.hasAttribute(MORPH_ATTRIBUTE);
 
 /** Names each involved, visible item and the pair rows holding them; returns the named. */
 function nameInvolved(keys: readonly string[]): HTMLElement[] {
@@ -78,11 +84,15 @@ function nameInvolved(keys: readonly string[]): HTMLElement[] {
 }
 
 /** Runs `update` (a pair or unpair of `refs`) inside the morph, or directly where
-    view transitions are unavailable. */
-export function morphSplitPairs(refs: readonly ScopedThreadRef[], update: () => void): void {
+    view transitions are unavailable. A promise it returns (a route change) joins the end
+    state if it settles quickly. */
+export function morphSplitPairs(
+  refs: readonly ScopedThreadRef[],
+  update: () => Promise<unknown> | void,
+): void {
   const transitionDocument = document as TransitionDocument;
   if (!transitionDocument.startViewTransition) {
-    update();
+    void update();
     return;
   }
   // The refs and their partners now: a thread paired elsewhere leaves that pair.
@@ -101,9 +111,15 @@ export function morphSplitPairs(refs: readonly ScopedThreadRef[], update: () => 
   let named = nameInvolved(keys);
   const rows = nameRows(keys);
   root.setAttribute(MORPH_ATTRIBUTE, "");
-  const transition = transitionDocument.startViewTransition(() => {
+  const transition = transitionDocument.startViewTransition(async () => {
     named.forEach(unname);
-    flushSync(update);
+    let pending: unknown;
+    flushSync(() => {
+      pending = update();
+    });
+    if (pending instanceof Promise) {
+      await Promise.race([pending, new Promise((resolve) => setTimeout(resolve, ROUTE_WAIT_MS))]);
+    }
     named = nameInvolved(keys);
   });
   void transition.finished.finally(() => {

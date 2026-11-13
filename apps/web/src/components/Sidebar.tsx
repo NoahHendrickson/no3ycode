@@ -3275,9 +3275,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
   // Stable, so the handlers built in render never hold navigateToThread's ref reads.
-  const openDroppedThread = useStableCallback((threadRef: ScopedThreadRef) => {
-    void navigateToThread(threadRef);
-  });
+  const openDroppedThread = useStableCallback((threadRef: ScopedThreadRef) =>
+    navigateToThread(threadRef),
+  );
   const splitDropHandlers = makeSplitDropHandlers({
     canPair: (threadKey) => splitModel.pairable.has(threadKey),
     openThreadKey: routeThreadKey,
