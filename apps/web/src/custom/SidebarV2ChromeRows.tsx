@@ -67,7 +67,7 @@ import { SidebarV2AutomationsHoverCard } from "./SidebarV2AutomationsHoverCard";
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "./SidebarV2StatusIndicator";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import { useComposerDraftStore } from "~/composerDraftStore";
-import { useThreadRouteTarget } from "~/hooks/useThreadRouteTarget";
+import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
 import { isChatDraft } from "./chatMode";
 import { useStartNewChat } from "./useChatMode";
 
@@ -286,7 +286,7 @@ export function SidebarV2ChromeActionRows(props: {
     sent. */
 export function SidebarV2ChatActionRows() {
   const startNewChat = useStartNewChat();
-  const routeTarget = useThreadRouteTarget();
+  const routeTarget = useShownThreadRouteTarget().shownTarget;
   const draftId = routeTarget?.kind === "draft" ? routeTarget.draftId : null;
   const active = useComposerDraftStore((store) => {
     const draft = draftId === null ? null : store.getDraftSession(draftId);
