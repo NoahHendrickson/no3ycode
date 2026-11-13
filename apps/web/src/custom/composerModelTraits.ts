@@ -45,6 +45,8 @@ export type ComposerModelTraitsInput = {
   onPromptEdit: (edit: (prompt: string) => string) => void;
   triggerLabelSeparator?: string;
   includePlanAgent?: boolean | undefined;
+  /** Runs after a change is written to the draft. */
+  onDraftModelOptionsChange?: () => void;
   /** Controlled editors persist options on their own draft rather than a conversation. */
   onModelOptionsChange?: (options: ProviderOptionSelections | undefined) => void;
 };

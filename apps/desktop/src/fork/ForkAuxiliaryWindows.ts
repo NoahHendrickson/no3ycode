@@ -9,11 +9,24 @@ import type * as Electron from "electron";
  * chat, which imports ElectronWindow.
  */
 const auxiliaryWindows = new WeakSet<Electron.BrowserWindow>();
+const auxiliaryContents = new Map<number, Electron.WebContents>();
 
 export function markForkAuxiliaryWindow(window: Electron.BrowserWindow): void {
   auxiliaryWindows.add(window);
+  const contents = window.webContents;
+  auxiliaryContents.set(contents.id, contents);
+  window.once("closed", () => auxiliaryContents.delete(contents.id));
 }
 
 export function isForkAuxiliaryWindow(window: Electron.BrowserWindow): boolean {
   return auxiliaryWindows.has(window);
+}
+
+// DesktopIpc answers only the main window's top frame; the side chat runs the same preload.
+export function isForkAuxiliaryMainFrame(event: {
+  readonly sender: { readonly id: number };
+  readonly senderFrame?: unknown;
+}): boolean {
+  const contents = auxiliaryContents.get(event.sender.id);
+  return contents !== undefined && contents.mainFrame === event.senderFrame;
 }

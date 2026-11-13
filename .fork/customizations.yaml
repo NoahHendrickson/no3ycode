@@ -6005,6 +6005,9 @@
     - apps/desktop/src/app/DesktopApp.ts
     - apps/desktop/src/window/DesktopWindow.ts
     - apps/desktop/src/electron/ElectronWindow.ts
+    # IPC answers only the main window's top frame; the side chat is let through.
+    - apps/desktop/src/ipc/DesktopIpc.ts
+    - apps/desktop/src/ipc/DesktopIpc.test.ts
     # Test doubles of the DesktopWindow service carry wireRendererWindow.
     - apps/desktop/src/app/DesktopLifecycle.test.ts
     - apps/desktop/src/backend/DesktopBackendPool.test.ts

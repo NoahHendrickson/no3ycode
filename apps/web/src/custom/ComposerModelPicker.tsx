@@ -233,6 +233,7 @@ function ComposerModelTraitsPanel(props: {
       model: input.model,
       persistSticky: true,
     });
+    input.onDraftModelOptionsChange?.();
   };
 
   // Upstream's select semantics: Ultrathink is a prompt prefix, not a stored

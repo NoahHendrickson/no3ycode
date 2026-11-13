@@ -6,6 +6,9 @@ import * as Schema from "effect/Schema";
 import * as Scope from "effect/Scope";
 
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
+/* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
+import { isForkAuxiliaryMainFrame } from "../fork/ForkAuxiliaryWindows.ts";
+/* fork:end fork-side-chat */
 
 export interface DesktopIpcInvokeEvent {
   readonly sender: { readonly id: number };
@@ -184,15 +187,18 @@ export const layer = (ipcMain: DesktopIpcMain) =>
     DesktopIpc,
     Effect.gen(function* () {
       const electronWindow = yield* ElectronWindow.ElectronWindow;
-      return make(ipcMain, (event) =>
-        Effect.map(
+      return make(ipcMain, (event) => {
+        /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
+        if (isForkAuxiliaryMainFrame(event)) return Effect.succeed(true);
+        /* fork:end fork-side-chat */
+        return Effect.map(
           electronWindow.main,
           (main) =>
             Option.isSome(main) &&
             main.value.webContents.id === event.sender.id &&
             main.value.webContents.mainFrame === event.senderFrame,
-        ),
-      );
+        );
+      });
     }),
   );
 

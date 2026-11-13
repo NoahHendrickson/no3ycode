@@ -8,10 +8,20 @@ vi.mock("electron", () => ({}));
 
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
 import * as DesktopIpc from "./DesktopIpc.ts";
+/* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
+import { markForkAuxiliaryWindow } from "../fork/ForkAuxiliaryWindows.ts";
+/* fork:end fork-side-chat */
 
 it.effect("answers only the main window's top frame", () =>
   Effect.gen(function* () {
     const mainFrame = {};
+    /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
+    const sideChatFrame = {};
+    markForkAuxiliaryWindow({
+      webContents: { id: 3, mainFrame: sideChatFrame },
+      once: () => undefined,
+    } as unknown as Electron.BrowserWindow);
+    /* fork:end fork-side-chat */
     const invoke = new Map<string, DesktopIpc.DesktopIpcHandleListener>();
     const sync = new Map<string, DesktopIpc.DesktopIpcSyncListener>();
     const ipc = yield* DesktopIpc.DesktopIpc.pipe(
@@ -46,6 +56,10 @@ it.effect("answers only the main window's top frame", () =>
       app: { sender: { id: 1 }, senderFrame: mainFrame },
       appSubframe: { sender: { id: 1 }, senderFrame: {} },
       previewGuest: { sender: { id: 2 }, senderFrame: {} },
+      // fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat
+      sideChat: { sender: { id: 3 }, senderFrame: sideChatFrame },
+      sideChatSubframe: { sender: { id: 3 }, senderFrame: {} },
+      // fork:end fork-side-chat
     };
     const results: Record<string, unknown> = {};
     for (const [name, sender] of Object.entries(senders)) {
@@ -62,6 +76,10 @@ it.effect("answers only the main window's top frame", () =>
       app: ["secret", "secret"],
       appSubframe: ["rejected", undefined],
       previewGuest: ["rejected", undefined],
+      // fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat
+      sideChat: ["secret", "secret"],
+      sideChatSubframe: ["rejected", undefined],
+      // fork:end fork-side-chat
     });
   }),
 );
