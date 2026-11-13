@@ -10,12 +10,14 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   commandForkMusic,
   followForkMusic,
+  latestForkMusicState,
   libraryPageForkMusic,
   upNextForkMusic,
   waitForForkMusicPlayer,
 } from "./ForkMusicClient.ts";
 
 const TOKEN = "pairing-token";
+const ART = "https://is1-ssl.mzstatic.com/image/thumb/a.jpg/{w}x{h}bb.jpg";
 
 /** What ah ahh's remoteState sends; the client keeps only what the panel shows. */
 const player = (title: string, positionMs: number) => ({
@@ -24,22 +26,26 @@ const player = (title: string, positionMs: number) => ({
   artist: "Artist",
   album: "Album",
   artwork: null,
-  durationMs: 1000,
+  durationMs: 200_000,
   positionMs,
   volume: 0.5,
   shuffle: false,
-  repeat: 0,
+  repeat: 0 as const,
   queueRevision: 1,
   favorite: null,
 });
-const shown = (title: string) => ({
+const shown = (title: string, positionMs: number) => ({
   status: "ready",
   playing: true,
   title,
   artist: "Artist",
   album: "Album",
   artwork: null,
+  durationMs: 200_000,
+  positionMs,
   volume: 0.5,
+  shuffle: false,
+  repeat: 0,
   queueRevision: 1,
 });
 
@@ -84,6 +90,7 @@ async function startAhAhh() {
         id: `q${index}`,
         title: `Q${index}`,
         artist: "A",
+        artwork: `https://is1-ssl.mzstatic.com/${index}/120x120bb.jpg`,
       });
       response.writeHead(200).end(JSON.stringify({ position: 4, items: [entry(4), entry(5)] }));
       return;
@@ -103,7 +110,11 @@ async function startAhAhh() {
         response.writeHead(200).end(
           JSON.stringify({
             data: [
-              { id: "i.1", type: "library-songs", attributes: { name: "One", artistName: "A" } },
+              {
+                id: "i.1",
+                type: "library-songs",
+                attributes: { name: "One", artistName: "A", artwork: { url: ART } },
+              },
               { id: "p.1", type: "library-playlists", attributes: { name: "Girlpop" } },
             ],
             ...(body.path === "/more" ? { next: "/more?offset=100" } : {}),
@@ -141,18 +152,27 @@ describe("ForkMusicClient", () => {
     await ahAhh.pair(TOKEN);
     // What a launch waits on: the player answering for its queue.
     expect(await waitForForkMusicPlayer(target, 1)).toBe(true);
-    // The first entry is the song playing; ids and artwork are not the panel's business.
-    expect(await upNextForkMusic(target)).toEqual([{ index: 5, title: "Q5", artist: "A" }]);
+    // The first entry is the song playing; ids are not the panel's business.
+    expect(await upNextForkMusic(target)).toEqual([
+      {
+        index: 5,
+        title: "Q5",
+        artist: "A",
+        artwork: "https://is1-ssl.mzstatic.com/5/120x120bb.jpg",
+      },
+    ]);
     expect(await commandForkMusic(target, { action: "volume", value: 0.25 })).toBe(true);
     expect(await commandForkMusic(target, { action: "refused" })).toBe(false);
 
     expect(await libraryPageForkMusic(target, "/more", 200)).toEqual({
       rows: [
-        { id: "i.1", name: "One", artist: "A" },
-        { id: "p.1", name: "Girlpop", artist: "" },
+        { id: "i.1", name: "One", artist: "A", artwork: ART },
+        { id: "p.1", name: "Girlpop", artist: "", artwork: null },
       ],
       nextOffset: 300,
     });
+    // A playlist's cover is its first song's, so one row is asked for.
+    expect((await libraryPageForkMusic(target, "/more", 0, 1))?.nextOffset).toBe(1);
     expect((await libraryPageForkMusic(target, "/last", 0))?.nextOffset).toBeNull();
     // Apple's 404 is how an empty playlist lists its tracks.
     expect(await libraryPageForkMusic(target, "/empty", 0)).toEqual({ rows: [], nextOffset: null });
@@ -162,6 +182,7 @@ describe("ForkMusicClient", () => {
       { action: "volume", value: 0.25 },
       { action: "refused" },
       { path: "/more", params: { limit: 100, offset: 200 } },
+      { path: "/more", params: { limit: 1, offset: 0 } },
       { path: "/last", params: { limit: 100, offset: 0 } },
       { path: "/empty", params: { limit: 100, offset: 0 } },
       { path: "/garbled", params: { limit: 100, offset: 0 } },
@@ -180,15 +201,24 @@ describe("ForkMusicClient", () => {
     await using ahAhh = await startAhAhh();
     await ahAhh.pair(TOKEN);
     const states = inbox<unknown>();
-    const stop = followForkMusic(ahAhh.target, (state) => states.push(state));
+    let clock = 0;
+    const stop = followForkMusic(
+      ahAhh.target,
+      (state) => states.push(state),
+      () => clock,
+    );
     await ahAhh.connected.take();
 
     ahAhh.publish(player("One", 10));
-    expect(await states.take()).toEqual(shown("One"));
-    // ah ahh re-sends every ten seconds to carry the position; the panel has no use for it.
+    expect(await states.take()).toEqual(shown("One", 10));
+    // ah ahh re-sends every ten seconds to carry the position, which the panel advances itself.
+    clock = 10_000;
     ahAhh.publish(player("One", 10_010));
+    // A seek moves it further than the song played: that comes through.
+    ahAhh.publish(player("One", 90_000));
+    expect(await states.take()).toEqual(shown("One", 90_000));
     ahAhh.publish(player("Two", 0));
-    expect(await states.take()).toEqual(shown("Two"));
+    expect(await states.take()).toEqual(shown("Two", 0));
 
     ahAhh.endStream();
     expect(await states.take()).toEqual({ status: "closed" });
@@ -203,5 +233,19 @@ describe("ForkMusicClient", () => {
     await ahAhh.connected.take();
     ahAhh.publish({ title: 7 });
     expect(await states.take()).toEqual({ status: "error" });
+  });
+
+  it("hands a page joining later the song where it is now, not where it was", () => {
+    let clock = 0;
+    const latest = latestForkMusicState(() => clock);
+    latest.set({ status: "ready", ...player("One", 1000) });
+    clock = 4000;
+    expect(latest.get()).toMatchObject({ positionMs: 5000 });
+    // It never runs past the end, and a paused song stays put.
+    clock = 1_000_000;
+    expect(latest.get()).toMatchObject({ positionMs: 200_000 });
+    latest.set({ status: "ready", ...player("One", 1000), playing: false });
+    clock += 4000;
+    expect(latest.get()).toMatchObject({ positionMs: 1000 });
   });
 });

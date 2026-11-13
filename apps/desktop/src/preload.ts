@@ -531,8 +531,8 @@ contextBridge.exposeInMainWorld("forkDesktopBridge", {
     command: (command: { action: string; value?: unknown }) =>
       forkMusic({ type: "command", ...command }, false),
     upNext: () => forkMusic<ReadonlyArray<ForkMusicQueueEntry> | null>({ type: "upNext" }, null),
-    libraryPage: (path: string, offset: number) =>
-      forkMusic<ForkMusicLibraryPage | null>({ type: "libraryPage", path, offset }, null),
+    libraryPage: (path: string, offset: number, limit?: number) =>
+      forkMusic<ForkMusicLibraryPage | null>({ type: "libraryPage", path, offset, limit }, null),
   },
   /* fork:end fork-music-panel */
 });

@@ -25,11 +25,20 @@ const Player = Schema.Struct({
   artist: Schema.String,
   album: Schema.String,
   artwork: Schema.NullOr(Schema.String),
+  /** The song's length, and where it was when ah ahh sent this. */
+  durationMs: Schema.Number,
+  positionMs: Schema.Number,
   /** 0 to 1. */
   volume: Schema.Number,
+  shuffle: Schema.Boolean,
+  /** 0 off, 1 the one song, 2 the whole queue. */
+  repeat: Schema.Literals([0, 1, 2]),
   /** Bumped by ah ahh whenever its queue changes. */
   queueRevision: Schema.Number,
 });
+
+/** Within this, a heartbeat's position is where the song was already known to be. */
+const POSITION_TOLERANCE_MS = 1500;
 
 /** `closed`: ah ahh is not running, or has never run. `error`: it answered, but not usefully. */
 export type ForkMusicState =
@@ -38,7 +47,13 @@ export type ForkMusicState =
 
 const Queue = Schema.Struct({
   items: Schema.Array(
-    Schema.Struct({ index: Schema.Number, title: Schema.String, artist: Schema.String }),
+    Schema.Struct({
+      index: Schema.Number,
+      title: Schema.String,
+      artist: Schema.String,
+      /** A 120px cover on Apple's CDN; older ah ahh builds leave it out. */
+      artwork: Schema.optionalKey(Schema.NullOr(Schema.String)),
+    }),
   ),
 });
 export type ForkMusicQueueEntry = (typeof Queue.Type)["items"][number];
@@ -51,6 +66,8 @@ const Listing = Schema.Struct({
       attributes: Schema.Struct({
         name: Schema.String,
         artistName: Schema.optional(Schema.String),
+        // An Apple `{w}x{h}` template; playlists the user made have none.
+        artwork: Schema.optional(Schema.Struct({ url: Schema.String })),
       }),
     }),
   ),
@@ -62,6 +79,7 @@ export interface ForkMusicLibraryPage {
     readonly id: string;
     readonly name: string;
     readonly artist: string;
+    readonly artwork: string | null;
   }>;
   /** Where the next page starts, or null on the last one. */
   readonly nextOffset: number | null;
@@ -131,10 +149,11 @@ export async function libraryPageForkMusic(
   target: ForkMusicTarget,
   path: string,
   offset: number,
+  limit = LIBRARY_PAGE_SIZE,
 ): Promise<ForkMusicLibraryPage | null> {
   try {
     const response = await call(target, "/v1/music", {
-      body: { path, params: { limit: LIBRARY_PAGE_SIZE, offset } },
+      body: { path, params: { limit, offset } },
     });
     // Apple answers 404 for an empty playlist's tracks.
     if (response?.status === 404) return { rows: [], nextOffset: null };
@@ -146,8 +165,11 @@ export async function libraryPageForkMusic(
         id: row.id,
         name: row.attributes.name,
         artist: row.attributes.artistName ?? "",
+        artwork: row.attributes.artwork?.url.startsWith("https://")
+          ? row.attributes.artwork.url
+          : null,
       })),
-      nextOffset: listing.next === undefined ? null : offset + LIBRARY_PAGE_SIZE,
+      nextOffset: listing.next === undefined ? null : offset + limit,
     };
   } catch {
     return null;
@@ -178,14 +200,15 @@ export async function waitForForkMusicPlayer(
 }
 
 /**
- * Streams ah ahh's player state to `onState`, never synchronously, until the returned
- * function is called. ah ahh re-sends the state every ten seconds to carry the playback
- * position, which the panel does not show, so a repeat of the last state is dropped. A
- * stream that ends on its own reports `closed` or `error` once and is not retried here.
+ * Streams ah ahh's player state to `onState`, never synchronously, until the returned function
+ * is called. The ten-second heartbeat that only carries the position as far as the song played
+ * is dropped (the panel advances it itself); a seek comes through. A stream that ends on its
+ * own reports `closed` or `error` once and is not retried here.
  */
 export function followForkMusic(
   target: ForkMusicTarget,
   onState: (state: ForkMusicState) => void,
+  now: () => number = Date.now,
 ): () => void {
   const abort = new AbortController();
   const run = async (): Promise<"closed" | "error"> => {
@@ -194,7 +217,11 @@ export function followForkMusic(
     if (!response.ok || response.body === null) return "error";
     const decoder = new TextDecoder();
     let buffered = "";
-    let lastSent = "";
+    let lastSent: {
+      readonly rest: string;
+      readonly positionMs: number;
+      readonly at: number;
+    } | null = null;
     for await (const chunk of response.body) {
       buffered += decoder.decode(chunk, { stream: true });
       const lines = buffered.split("\n");
@@ -203,10 +230,14 @@ export function followForkMusic(
         if (!line.startsWith("data: ")) continue;
         const player = Option.getOrNull(decodePlayer(JSON.parse(line.slice("data: ".length))));
         if (player === null) return "error";
-        // Decoding dropped the position, so the heartbeat is now an exact repeat.
-        const comparable = JSON.stringify(player);
-        if (comparable === lastSent) continue;
-        lastSent = comparable;
+        const { positionMs, ...others } = player;
+        const rest = JSON.stringify(others);
+        const at = now();
+        if (lastSent !== null && lastSent.rest === rest) {
+          const expected = lastSent.positionMs + (player.playing ? at - lastSent.at : 0);
+          if (Math.abs(expected - positionMs) < POSITION_TOLERANCE_MS) continue;
+        }
+        lastSent = { rest, positionMs, at };
         onState({ status: "ready", ...player });
       }
     }
@@ -218,4 +249,20 @@ export function followForkMusic(
       if (!abort.signal.aborted) onState({ status });
     });
   return () => abort.abort();
+}
+
+/** The state last streamed, read back with a playing song's position moved on to now. */
+export function latestForkMusicState(now: () => number = Date.now) {
+  let state: ForkMusicState | null = null;
+  let at = 0;
+  return {
+    set(next: ForkMusicState | null): void {
+      state = next;
+      at = now();
+    },
+    get(): ForkMusicState | null {
+      if (state?.status !== "ready" || !state.playing) return state;
+      return { ...state, positionMs: Math.min(state.positionMs + now() - at, state.durationMs) };
+    },
+  };
 }

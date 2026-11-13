@@ -20,6 +20,7 @@ import {
   followForkMusic,
   type ForkMusicState,
   type ForkMusicTarget,
+  latestForkMusicState,
   libraryPageForkMusic,
   upNextForkMusic,
   waitForForkMusicPlayer,
@@ -51,6 +52,7 @@ const Request = Schema.Union([
     type: Schema.Literal("libraryPage"),
     path: Schema.String,
     offset: Schema.Number,
+    limit: Schema.optional(Schema.Number),
   }),
 ]);
 const decodeRequest = Schema.decodeUnknownEffect(Request);
@@ -64,16 +66,17 @@ const target = (): ForkMusicTarget => ({
 const followers = new Set<Electron.WebContents>();
 const hooked = new WeakSet<Electron.WebContents>();
 let stopStream: (() => void) | null = null;
-let lastState: ForkMusicState | null = null;
+const lastState = latestForkMusicState();
 
 /** Starts the stream when a page follows and none is running, or the last one ended. */
 function ensureStream(): void {
-  const ended = lastState !== null && lastState.status !== "ready";
+  const latest = lastState.get();
+  const ended = latest !== null && latest.status !== "ready";
   if (followers.size === 0 || (stopStream !== null && !ended)) return;
   stopStream?.();
-  lastState = null;
+  lastState.set(null);
   stopStream = followForkMusic(target(), (state) => {
-    lastState = state;
+    lastState.set(state);
     for (const follower of followers) {
       if (!follower.isDestroyed()) follower.send(FORK_MUSIC_STATE_CHANNEL, state);
     }
@@ -85,7 +88,7 @@ function unfollow(contents: Electron.WebContents): void {
   if (followers.size > 0) return;
   stopStream?.();
   stopStream = null;
-  lastState = null;
+  lastState.set(null);
 }
 
 /** Answers with the state last streamed, for a page that joins a stream already open. */
@@ -102,7 +105,7 @@ function follow(contents: Electron.WebContents): ForkMusicState | null {
     });
   }
   ensureStream();
-  return lastState;
+  return lastState.get();
 }
 
 /**
@@ -153,7 +156,7 @@ export const installForkMusicIpc = Effect.fn("desktop.fork.installMusic")(functi
           return yield* Effect.promise(() => upNextForkMusic(target()));
         case "libraryPage":
           return yield* Effect.promise(() =>
-            libraryPageForkMusic(target(), request.path, request.offset),
+            libraryPageForkMusic(target(), request.path, request.offset, request.limit),
           );
       }
     }),

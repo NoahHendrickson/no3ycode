@@ -268,6 +268,9 @@ import {
   Buildings as PhBuildings,
   User as PhUser,
   Playlist as PhPlaylist,
+  Shuffle as PhShuffle,
+  Repeat as PhRepeat,
+  RepeatOnce as PhRepeatOnce,
   SkipBack as PhSkipBack,
   SkipForward as PhSkipForward,
 } from "@phosphor-icons/react";
@@ -629,6 +632,9 @@ export const VolumeOff = icon("volume-off", PhSpeakerSlash, "duotone");
 export const SkipBackIcon = icon("skip-back", PhSkipBack, "duotone");
 export const SkipForwardIcon = icon("skip-forward", PhSkipForward, "duotone");
 export const ListMusicIcon = icon("list-music", PhPlaylist, "duotone");
+export const ShuffleIcon = icon("shuffle", PhShuffle, "duotone");
+export const RepeatIcon = icon("repeat", PhRepeat, "duotone");
+export const Repeat1Icon = icon("repeat-1", PhRepeatOnce, "duotone");
 export const Square = icon("square", PhSquare, "duotone");
 
 // Added by the 2026-10-07 sync for upstream imports new in that range.
