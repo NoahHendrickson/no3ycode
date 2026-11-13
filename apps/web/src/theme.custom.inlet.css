@@ -47,11 +47,14 @@
    transcript's scrollbar and the composer all sit inside it. The column
    already clips (overflow-x hidden), so the radius clips its children too.
    Restating --background here is what turns every bg-background inside the
-   column (header, transcript wrapper, composer floor) into the panel. */
+   column (header, transcript wrapper, composer floor) into the panel. Its ink
+   too: the body carries the frame's (index.html), which any currentColor
+   glyph inside would otherwise take. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-column-maximized-away] {
   --background: var(--fork-inlet-panel);
+  color: var(--fork-inlet-panel-foreground);
   margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
   background: var(--background);
