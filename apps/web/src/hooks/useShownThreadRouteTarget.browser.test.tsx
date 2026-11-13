@@ -65,7 +65,10 @@ describe("useShownThreadRouteTarget", () => {
     await expect.element(shown).toHaveTextContent("thread-a");
 
     await act(() => router.navigate({ to: "/usage" }));
-    await expect.element(shown).toHaveTextContent("thread-a");
+    /* fork:begin fork-usage-page — see .fork/customizations.yaml#fork-usage-page
+       Usage is a page in the main panel, not a modal over the thread. */
+    await expect.element(shown).toHaveTextContent("none");
+    /* fork:end fork-usage-page */
 
     await act(() => router.navigate({ href: "/env-1/thread-b" }));
     await expect.element(shown).toHaveTextContent("thread-b");

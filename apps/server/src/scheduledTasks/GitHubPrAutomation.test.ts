@@ -9,7 +9,6 @@ import * as Queue from "effect/Queue";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as SqlClient from "effect/sql/SqlClient";
-import * as TestClock from "effect/testing/TestClock";
 import * as ProjectStore from "../orchestration-v2/ProjectStore.ts";
 import * as ThreadLaunchService from "../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadManagementService from "../orchestration-v2/ThreadManagementService.ts";
@@ -415,13 +414,17 @@ it.effect(
           ),
         );
         assert.deepEqual(yield* claims, ["42", "relay-stale"]);
-        yield* TestClock.adjust("29 days");
+        // Ages the claims, not the clock: a jump of days runs the 5-second scheduler tick per step.
+        const ageClaims = (days: number) =>
+          sql`UPDATE scheduled_task_webhook_relay_deliveries
+            SET seen_at = strftime('%Y-%m-%dT%H:%M:%fZ', seen_at, ${`-${days} days`})`;
+        yield* ageClaims(29);
         yield* service.triggerWebhook(request(secret, token, "owner/d2", 43));
         yield* Queue.take(launches);
         assert.deepEqual(yield* claims, ["42", "43"]);
         const late = yield* service.triggerWebhook(valid);
         assert.equal(late._tag === "accepted" && late.outcome, "duplicate");
-        yield* TestClock.adjust("2 days");
+        yield* ageClaims(2);
         yield* service.triggerWebhook(request(secret, token, "owner/d2", 44));
         yield* Queue.take(launches);
         assert.deepEqual(yield* claims, ["43", "44"]);

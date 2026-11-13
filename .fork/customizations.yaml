@@ -580,6 +580,8 @@
   shadows: []
   watch:
     - apps/web/src/main.tsx
+    # Boots main.tsx with the fork's page-level installers mocked out.
+    - apps/web/src/main.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkMarker.test.ts
 
@@ -2891,6 +2893,7 @@
     - apps/web/src/components/usage/UsagePage.tsx
     - apps/web/src/components/sidebar/mainAppLocation.ts
     - apps/web/src/components/sidebar/mainAppLocation.browser.test.tsx
+    - apps/web/src/hooks/useShownThreadRouteTarget.browser.test.tsx
     - apps/web/src/routes/_chat.tsx
     - apps/web/src/components/AppRouteModal.tsx
   verify:

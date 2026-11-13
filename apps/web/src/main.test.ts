@@ -4,6 +4,21 @@ vi.mock("./appInit", () => ({ startAppServices: () => ({ load: async () => {} })
 vi.mock("./AppRoot", () => ({ AppRoot: () => null }));
 vi.mock("./i18n/runtime", () => ({ whenLocaleReady: async () => {} }));
 vi.mock("react-dom/client", () => ({ default: { createRoot: () => ({ render: () => {} }) } }));
+/* fork:begin fork-marker — see .fork/customizations.yaml#fork-marker
+   main.tsx also boots the fork's page-level installers, which need a real document. */
+vi.mock("./custom/sideChat/surface", () => ({}));
+vi.mock("./custom/forkMarker", () => ({ applyForkMarker: () => {} }));
+vi.mock("./custom/forkTheme", () => ({ initializeForkTheme: () => {} }));
+vi.mock("./custom/forkGlassNewAgentPicture", () => ({
+  initializeForkGlassNewAgentPicture: () => {},
+}));
+vi.mock("./custom/chatMode", () => ({ initializeForkSidebarMode: () => {} }));
+vi.mock("./custom/forkGlass3d", () => ({ initializeForkGlass3d: () => {} }));
+vi.mock("./custom/inletMenuMorph", () => ({ installInletMenuMorph: () => {} }));
+vi.mock("./custom/touchLongPressContextMenu", () => ({
+  installTouchLongPressContextMenu: () => {},
+}));
+/* fork:end fork-marker */
 
 // Boots main in a fresh page that shares the tab's sessionStorage, as a reload does.
 async function bootThenFailLazyChunk(sessionStorage: Map<string, string>) {
