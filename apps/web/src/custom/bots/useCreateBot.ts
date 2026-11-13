@@ -33,7 +33,8 @@ import { EMPTY_SERVER_PROVIDERS, serverEnvironment } from "~/state/server";
 import { threadEnvironment } from "~/state/threads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
-import { type BotMascotShape, botMascotTag } from "./botMascots";
+import type { BotMascotShape } from "./botMascotArt";
+import { botMascotTag } from "./botMascotTags";
 import { botSeedFiles } from "./botSeedFiles";
 import { BOT_FOLDERS_DIRECTORY, BOT_THREAD_TAG, botFolderName, botFolderPath } from "./botThreads";
 
@@ -126,21 +127,19 @@ export function useCreateBot(): (
 
     const threadId = newThreadId();
     const folderName = botFolderName(name, threadId);
-    for (const file of botSeedFiles({
-      name,
-      today: new Date().toISOString().slice(0, 10),
-      threadId,
-    })) {
-      const written = await run(projectEnvironment.writeFile, {
-        environmentId,
-        input: {
-          cwd: scratchRoot,
-          relativePath: `${BOT_FOLDERS_DIRECTORY}/${folderName}/${file.relativePath}`,
-          contents: file.contents,
-        },
-      });
-      if (failed(written)) return null;
-    }
+    const seeded = await Promise.all(
+      botSeedFiles({ name, today: new Date().toISOString().slice(0, 10), threadId }).map((file) =>
+        run(projectEnvironment.writeFile, {
+          environmentId,
+          input: {
+            cwd: scratchRoot,
+            relativePath: `${BOT_FOLDERS_DIRECTORY}/${folderName}/${file.relativePath}`,
+            contents: file.contents,
+          },
+        }),
+      ),
+    );
+    if (seeded.some(failed)) return null;
 
     const created = await run(threadEnvironment.create, {
       environmentId,
@@ -157,8 +156,8 @@ export function useCreateBot(): (
       },
     });
     if (failed(created)) return null;
-    // The mascot first, so the bot is never listed wearing another face.
-    for (const tag of [botMascotTag(mascot), BOT_THREAD_TAG]) {
+    // `bot` first: a failed mascot write leaves a bot with a face from its id, not a stray thread.
+    for (const tag of [BOT_THREAD_TAG, botMascotTag(mascot)]) {
       const tagged = await run(threadEnvironment.setTag, {
         environmentId,
         input: { threadId, tag, tagged: true },

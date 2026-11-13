@@ -112,6 +112,7 @@ import {
 } from "./threadHistoryPaging.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import {
+  FORK_BOT_QUIET_REPLIES,
   FORK_BOT_REPORT_CHARS,
   FORK_BOT_SETTLED_RUN_STATUSES,
   FORK_BOT_THREAD_TAG,
@@ -6390,7 +6391,19 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                 WHERE message.thread_id = t.thread_id
                   AND message.role = 'assistant'
                   AND message.streaming = 0
-                  AND report_run.status IN ${sql.in(FORK_BOT_SETTLED_RUN_STATUSES)}
+                  AND report_run.status IN ${sql.in([...FORK_BOT_SETTLED_RUN_STATUSES])}
+                  AND NOT EXISTS (
+                    SELECT 1 FROM orchestration_v2_projection_messages later
+                    WHERE later.thread_id = message.thread_id
+                      AND later.run_id = message.run_id
+                      AND later.role = 'assistant'
+                      AND later.streaming = 0
+                      AND (later.updated_at > message.updated_at
+                        OR (later.updated_at = message.updated_at
+                          AND later.message_id > message.message_id))
+                  )
+                  AND lower(trim(json_extract(message.payload_json, '$.text'), ' ' || char(9, 10, 13)))
+                    NOT IN ${sql.in(FORK_BOT_QUIET_REPLIES)}
                 ORDER BY message.updated_at DESC, message.message_id DESC
                 LIMIT 1
               ) END AS fork_bot_report_json

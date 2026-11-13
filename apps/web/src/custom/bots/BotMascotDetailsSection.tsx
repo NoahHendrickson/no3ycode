@@ -8,7 +8,8 @@ import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentScope } from "~/state/session";
 
 import { BotMascot } from "./BotMascot";
-import { BOT_MASCOT_SHAPES, botMascotShape } from "./botMascots";
+import { BOT_MASCOT_SHAPES } from "./botMascotArt";
+import { botMascotShape } from "./botMascotTags";
 import { isBotThread } from "./botThreads";
 import { useSetBotMascot } from "./useSetBotMascot";
 
@@ -19,8 +20,8 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
     AuthOrchestrationOperateScope,
   );
   const setBotMascot = useSetBotMascot();
-  if (shell === null || !isBotThread(shell)) return null;
-  const current = botMascotShape(shell);
+  if (shell === null || !isBotThread(shell.source)) return null;
+  const current = botMascotShape(shell.source);
   return (
     <ThreadDetailsSection headingId="thread-details-bot-mascot-heading" title="Mascot">
       <div

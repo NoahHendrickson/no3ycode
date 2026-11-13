@@ -3740,12 +3740,10 @@ export default function ChatView(props: ChatViewProps) {
         ref={forkChatColumnRef}
         data-fork-draft-hero={isDraftHeroState ? "" : undefined}
         /* fork:end fork-stage-stamps */
-        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-        data-fork-chat-thread={isForkChatThread ? "" : undefined}
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+           fork-bots: a bot's conversation is the composer alone too. */
+        data-fork-chat-thread={isForkChatThread || isForkBotThread ? "" : undefined}
         /* fork:end fork-chat-mode */
-        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-        data-fork-bot-thread={isForkBotThread ? "" : undefined}
-        /* fork:end fork-bots */
         inert={rightPanelMaximized}
       >
         {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}

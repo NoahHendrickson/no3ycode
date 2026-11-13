@@ -81,12 +81,11 @@ import { describeFailedWebhookFilter, findFailedWebhookFilter } from "./webhookF
 import { constantTimeEquals, verifyWebhookSignature } from "./webhookVerification.ts";
 /* fork:begin fork-scheduled-page — see .fork/customizations.yaml#fork-scheduled-page */
 import type { ScheduledTaskListRunsInput, ScheduledTaskListRunsResult } from "@t3tools/contracts";
-import {
-  hasUnfinishedScheduledRun,
-  isUsageLimitedUntilLater,
-  listScheduledTaskRuns,
-} from "./forkScheduledTaskRuns.ts";
+import { listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
 /* fork:end fork-scheduled-page */
+/* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
+import { forkScheduledFireHeld } from "./forkScheduledWakeHold.ts";
+/* fork:end fork-scheduled-wake-hold */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
 const isScheduledTaskError = Schema.is(ScheduledTaskError);
@@ -1314,23 +1313,18 @@ export const layer = Layer.effect(
             () =>
               isMissedFixedTimeRun(task.schedule, dueAt, now)
                 ? rescheduleMissedRun(task, now)
-                : /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-                   A bound task skips this fire while its earlier wake is unfinished or its
-                   thread is usage-limited until a known reset, so nothing piles up. A one-time
-                   run has no later fire to make up for a skip, so it always runs. */
-                  task.threadId === null || task.schedule.type === "once"
-                  ? runTask(task, "scheduled")
-                  : Effect.all([
-                      hasUnfinishedScheduledRun(sql, task.id, task.threadId),
-                      threadManagement.getThreadShell(task.threadId),
-                    ]).pipe(
-                      Effect.flatMap(([unfinished, shell]) =>
-                        unfinished || isUsageLimitedUntilLater(shell, DateTime.toEpochMillis(now))
-                          ? rescheduleMissedRun(task, now)
-                          : runTask(task, "scheduled"),
-                      ),
+                : /* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
+                  forkScheduledFireHeld({
+                    sql,
+                    task,
+                    nowMs: DateTime.toEpochMillis(now),
+                    getThreadShell: threadManagement.getThreadShell,
+                  }).pipe(
+                    Effect.flatMap((held) =>
+                      held ? rescheduleMissedRun(task, now) : runTask(task, "scheduled"),
                     ),
-            /* fork:end fork-bots */
+                  ),
+            /* fork:end fork-scheduled-wake-hold */
           ).pipe(
             Effect.catch((cause) =>
               Effect.logWarning("Scheduled task run failed", { taskId: task.id, cause }),

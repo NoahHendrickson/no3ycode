@@ -1,44 +1,48 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard — see `.fork/README.md` §4b and `.fork/customizations.yaml#fork-bots`.
- * Bots stay out of the thread roster, quiet wakes stay silent, and the seeded folder keeps its hooks.
+ * Bots stay out of the thread roster, unread follows the server's report, and the seeded folder
+ * keeps its hooks.
  */
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { MessageId } from "@t3tools/contracts";
+import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
-import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
+import {
+  filterSidebarV2VisibleThreads,
+  type SidebarThreadStatus,
+} from "../components/Sidebar.logic";
+import { createThreadNotificationGate } from "../components/ThreadNotificationCoordinator.logic";
 import {
   BOT_MASCOT_MOODS,
   BOT_MASCOT_SHAPES,
-  botMascotFromMenuId,
-  botMascotMenuItem,
-  botMascotMood,
   botMascotRows,
-  botMascotShape,
   botMascotSprite,
+} from "../custom/bots/botMascotArt";
+import { botMascotFromMenuId, botMascotMenuItem } from "../custom/bots/botMascotMenu";
+import {
+  botMascotMood,
+  botMascotShape,
   botMascotTag,
   botMascotTagWrites,
   nextBotMascotShape,
-} from "../custom/bots/botMascots";
+} from "../custom/bots/botMascotTags";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
-import {
-  hasUnseenBotReport,
-  noteBotReport,
-  resetBotReportsForTest,
-} from "../custom/bots/botReports";
 import {
   BOT_QUIET_REPLY,
   BOT_THREAD_TAG,
   botFolderName,
   botFolderPath,
   botStatusLine,
+  hasUnreadBotReport,
   isBotThread,
-  isQuietBotReport,
+  isQuietBotCompletion,
   listSidebarBots,
 } from "../custom/bots/botThreads";
+import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
 
@@ -53,11 +57,13 @@ const chatView = readSibling("../components/ChatView.tsx");
 const composerSend = readSibling("../components/chat/useComposerSend.ts");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
+const createBot = readSibling("../custom/bots/useCreateBot.ts");
 
+/** A bot whose shell carries `report` as its latest report, as the server fills it. */
 function bot(
   id: string,
   overrides: Partial<Thread> = {},
-  lastWord?: string,
+  report?: { readonly text: string; readonly at?: string },
   extraTags: ReadonlyArray<string> = [],
 ): Thread {
   const thread = makeThreadFixture({ id: id as Thread["id"], ...overrides });
@@ -67,13 +73,14 @@ function bot(
       ...thread.source,
       tags: [BOT_THREAD_TAG, ...extraTags],
       latestVisibleMessage:
-        lastWord === undefined
+        report === undefined
           ? null
           : {
               id: MessageId.make(`message:${id}`),
               role: "assistant",
-              text: lastWord,
-              updatedAt: thread.source.updatedAt,
+              text: report.text,
+              updatedAt:
+                report.at === undefined ? thread.source.updatedAt : DateTime.makeUnsafe(report.at),
             },
     },
   };
@@ -91,86 +98,107 @@ describe("fork guard: fork-bots", () => {
       filterSidebarV2VisibleThreads(threads, null, new Set()).map((thread) => thread.id),
     ).toEqual(["mine"]);
     expect(listSidebarBots(threads).map((thread) => thread.id)).toEqual(["gym", "mail"]);
-    expect(isBotThread(threads[0]!)).toBe(false);
+    expect(isBotThread(threads[0]!.source)).toBe(false);
   });
 
-  it("says what a bot is doing, did last or does next, never model or branch", () => {
-    const line = (thread: Thread, status = "ready", nextWakeAt: string | null = null) =>
-      botStatusLine({ thread, status, nextWakeAt });
-    const report = bot("r", {}, "## **Inbox**: 3 new from [Sam](https://x.y)\n\nMore detail");
+  it("reads unread off the server's report, the same on every device", () => {
+    const mail = bot(
+      "mail",
+      {},
+      { text: "Your rent is due Friday.", at: "2026-11-13T08:00:00.000Z" },
+    );
+    expect(hasUnreadBotReport(mail.source, "2026-11-13T07:00:00.000Z")).toBe(true);
+    expect(hasUnreadBotReport(mail.source, "2026-11-13T08:30:00.000Z")).toBe(false);
+    // Never opened reads as read, as for other threads; no report is never unread.
+    expect(hasUnreadBotReport(mail.source, undefined)).toBe(false);
+    expect(hasUnreadBotReport(bot("new").source, "2026-11-13T07:00:00.000Z")).toBe(false);
+    expect(cardStatus).toContain("hasUnreadBotReport(thread.source, input.lastVisitedAt)");
+    expect(notifications).toContain(
+      "isBotThread(state.raw) && isQuietBotCompletion(state.raw, state.thread.latestRun)",
+    );
+  });
+
+  it("notifies a wake that brought a report, even when it settles a step later", () => {
+    const run = { requestedAt: "2026-11-13T09:00:00.000Z", startedAt: null };
+    const news = bot("mail", {}, { text: "Rent is due", at: "2026-11-13T09:01:00.000Z" }).source;
+    const stale = bot("mail", {}, { text: "Rent is due", at: "2026-11-13T08:01:00.000Z" }).source;
+    expect(isQuietBotCompletion(news, run)).toBe(false);
+    expect(isQuietBotCompletion(stale, run)).toBe(true);
+    expect(isQuietBotCompletion(bot("new").source, run)).toBe(true);
+    // Running, then completed with the new report while background work still runs, then settled.
+    const notified: Array<string> = [];
+    const gate = createThreadNotificationGate<string>((_key, kind) => notified.push(kind));
+    const step = (settled: boolean, completedAt: number | null) => ({
+      attention: null,
+      settled,
+      completedAt,
+    });
+    const quiet = isQuietBotCompletion(news, run);
+    gate.observe("mail", undefined, step(false, null), { archived: false, quiet });
+    gate.observe("mail", step(false, null), step(false, 1), { archived: false, quiet });
+    gate.observe("mail", step(false, 1), step(true, 1), { archived: false, quiet });
+    expect(notified).toEqual(["completion"]);
+  });
+
+  it("says what a bot is doing, its unread news, or when it next checks", () => {
+    const line = (
+      thread: Thread,
+      status: SidebarThreadStatus = "ready",
+      input: { readonly isUnread?: boolean; readonly nextWakeAt?: string } = {},
+    ) =>
+      botStatusLine({
+        shell: thread.source,
+        status,
+        isUnread: input.isUnread ?? false,
+        nextWakeAt: input.nextWakeAt ?? null,
+      });
+    const report = bot("r", {}, { text: "## **Inbox**: 3 new from [Sam](https://x.y)\n\nMore" });
+    const next = "2026-11-14T09:00:00Z";
+    expect(line(report, "ready", { isUnread: true, nextWakeAt: next })).toEqual({
+      text: "Inbox: 3 new from Sam",
+    });
+    expect(line(report, "ready", { nextWakeAt: next })).toEqual({ nextWakeAt: next });
     expect(line(report)).toEqual({ text: "Inbox: 3 new from Sam" });
     expect(line(report, "working")).toEqual({ text: "Working on it…" });
     expect(line(report, "approval")).toEqual({ text: "Needs your approval" });
     expect(line(report, "failed")).toEqual({ text: "Last run failed" });
-    // A quiet wake shows the next one instead, when one is scheduled.
-    const quiet = bot("q", {}, BOT_QUIET_REPLY);
-    expect(line(quiet, "ready", "2026-11-14T09:00:00Z")).toEqual({
-      nextWakeAt: "2026-11-14T09:00:00Z",
-    });
-    expect(line(quiet)).toEqual({ text: "Nothing to report" });
     expect(line(bot("new"))).toEqual({ text: "Tell it what its job is" });
-    expect(sidebar).toContain("<BotCardStatusLine");
-    expect(sidebar).toContain("<BotMascotAvatar");
+  });
+
+  it("draws a bot card as one kind, chosen once per row", () => {
+    expect(sidebarV2CardKind(bot("b").source, false)).toBe("bot");
+    expect(sidebarV2CardKind(bot("b").source, true)).toBe("bot-compact");
+    const plain = makeThreadFixture({ id: "plain" as Thread["id"] }).source;
+    expect(sidebarV2CardKind(plain, false)).toBe("card");
+    expect(sidebarV2CardKind(plain, true)).toBe("compact");
+    expect(sidebar).toContain(
+      "const cardKind = sidebarV2CardKind(thread.source, props.compact === true);",
+    );
+    expect(sidebar).toContain("<SidebarV2BotCardBody");
     // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
     expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
-    // The status mark's column spans both lines, so the status text stops short of it.
-    expect(sidebar).toContain("[&>[data-fork-bot-title-row]>:last-child]:row-span-2");
-    // Bots keep their own density: the threads' Compact cards never folds them.
-    expect(sidebar).toMatch(/isBotThread\(thread\)\s*\?\s*compactBots/);
+    expect(sidebar).toContain('workingMark={cardKind !== "bot" && cardKind !== "bot-compact"}');
+    expect(sidebar).toContain("<BotMascotLead");
   });
 
-  it("treats only the bare quiet reply from a bot as a silent wake", () => {
-    expect(isQuietBotReport(bot("a", {}, BOT_QUIET_REPLY))).toBe(true);
-    expect(isQuietBotReport(bot("b", {}, "  nothing to report  "))).toBe(true);
-    expect(isQuietBotReport(bot("c", {}, "Nothing to report. But your rent is due."))).toBe(false);
-    expect(isQuietBotReport(bot("d"))).toBe(false);
-    const thread = makeThreadFixture({ id: "plain" as Thread["id"] });
-    expect(
-      isQuietBotReport({
-        source: {
-          tags: [],
-          latestVisibleMessage: { role: "assistant", text: BOT_QUIET_REPLY },
-        },
-      }),
-    ).toBe(false);
-    expect(isQuietBotReport(thread)).toBe(false);
-  });
-
-  it("keeps a report unread through a later quiet wake, until the bot is opened", () => {
-    resetBotReportsForTest();
-    const reported = bot("mail", {}, "Your rent is due Friday.");
-    noteBotReport("env:mail", reported, Date.parse("2026-11-13T08:00:00.000Z"));
-    // The quiet wake that follows is not a report and does not replace the one before it.
-    noteBotReport(
-      "env:mail",
-      bot("mail", {}, BOT_QUIET_REPLY),
-      Date.parse("2026-11-13T09:00:00.000Z"),
-    );
-    expect(hasUnseenBotReport("env:mail", "2026-11-13T07:00:00.000Z")).toBe(true);
-    expect(hasUnseenBotReport("env:mail", "2026-11-13T08:30:00.000Z")).toBe(false);
-    expect(hasUnseenBotReport("env:mail", undefined)).toBe(false);
-    expect(hasUnseenBotReport("env:other", "2026-11-13T07:00:00.000Z")).toBe(false);
-    resetBotReportsForTest();
-  });
-
-  it("silences quiet wakes in notifications and in the card's unread mark", () => {
-    expect(notifications).toContain("isQuietBotReport({ source: state.raw })");
-    expect(cardStatus).toContain("const isUnread = isQuietBotReport(thread)");
-    expect(notifications).toContain("noteBotReport(");
-  });
-
-  it("paints Bots above a collapsible Threads section, outside Chat", () => {
-    expect(sidebar).toContain("if (modePolicy.chat || botListElement === null) return items;");
+  it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
+    expect(sidebar).toContain('renderOneThreadRow(bot, "active", { compact: compactBots })');
+    expect(sidebar).toContain("options.compact ??");
+    expect(sidebar).not.toContain("createPortal");
     expect(sidebar).toContain('onToggleCollapsed={() => toggleListSectionCollapsed("threads")}');
-    expect(sidebar).toContain("...(threadsSectionCollapsed ? [] : items),");
-    expect(chatView).toContain('data-fork-bot-thread={isForkBotThread ? "" : undefined}');
+    expect(sidebar).toContain("return threadsSectionCollapsed ? [] : items;");
+    expect(chatView).toContain("isForkChatThread || isForkBotThread");
   });
 
   it("keeps the name a bot was given through its first send", () => {
     expect(composerSend).toContain(
       "isBotThreadRef(scopeThreadRef(environmentId, threadIdForSend))",
     );
+  });
+
+  it("tags a new bot `bot` before its mascot", () => {
+    expect(createBot).toContain("for (const tag of [BOT_THREAD_TAG, botMascotTag(mascot)])");
   });
 
   it("draws each mascot as the brand file's generator does, and reads its mood off the thread", () => {
@@ -198,24 +226,23 @@ describe("fork guard: fork-bots", () => {
         expect([sprite.width, sprite.height]).toEqual([idle.width, idle.height]);
         expect(sprite.paths.length).toBeGreaterThan(2);
       }
-      // One CSS pixel per cell must fit the card's lead slot (22px wide, 18px line plus padding).
+      // One CSS pixel per cell must fit the compact card's lead slot (22px wide).
       expect(idle.width).toBeLessThanOrEqual(22);
       expect(idle.height).toBeLessThanOrEqual(20);
     }
-    expect(botMascotShape(bot("tagged", {}, undefined, ["mascot:Sakura"]))).toBe("Sakura");
-    expect(BOT_MASCOT_SHAPES).toContain(botMascotShape(bot("untagged")));
-    expect(botMascotShape(bot("untagged"))).toBe(botMascotShape(bot("untagged")));
+    const tagged = bot("tagged", {}, undefined, ["mascot:Sakura"]).source;
+    expect(botMascotShape(tagged)).toBe("Sakura");
+    expect(BOT_MASCOT_SHAPES).toContain(botMascotShape(bot("untagged").source));
+    expect(botMascotShape(bot("untagged").source)).toBe(botMascotShape(bot("untagged").source));
     expect(nextBotMascotShape(["Classic", "Round"])).toBe("Willow");
     expect(botMascotTag("Sakura")).toBe("mascot:Sakura");
     // Changing a mascot sets the new tag, then clears every other one.
-    expect(botMascotTagWrites(bot("tagged", {}, undefined, ["mascot:Sakura"]), "Round")).toEqual([
+    expect(botMascotTagWrites(tagged, "Round")).toEqual([
       { tag: "mascot:Round", tagged: true },
       { tag: "mascot:Sakura", tagged: false },
     ]);
-    expect(botMascotTagWrites(bot("tagged", {}, undefined, ["mascot:Sakura"]), "Sakura")).toEqual(
-      [],
-    );
-    const menu = botMascotMenuItem(bot("tagged", {}, undefined, ["mascot:Sakura"]), true);
+    expect(botMascotTagWrites(tagged, "Sakura")).toEqual([]);
+    const menu = botMascotMenuItem(tagged, true);
     expect(menu.children.filter((item) => item.checked).map((item) => item.label)).toEqual([
       "Sakura",
     ]);
@@ -223,7 +250,7 @@ describe("fork guard: fork-bots", () => {
     expect(botMascotFromMenuId("rename")).toBeNull();
     expect(sidebar).toContain("setBotMascot(thread, mascot)");
     expect(detailsPanel).toContain("<BotMascotDetailsSection threadRef={activeThreadRef} />");
-    const mood = (status: string, isUnread = false, resting = true) =>
+    const mood = (status: SidebarThreadStatus, isUnread = false, resting = true) =>
       botMascotMood({ status, isUnread, resting });
     expect(mood("working")).toBe("Thinking");
     expect(mood("failed", true)).toBe("Error");
@@ -231,8 +258,6 @@ describe("fork guard: fork-bots", () => {
     expect(mood("ready")).toBe("Sleeping");
     expect(mood("ready", false, false)).toBe("Idle");
     expect(mood("input")).toBe("Idle");
-    expect(sidebar).toContain("<BotMascotLead");
-    expect(sidebar).toContain('topStatus?.mark === "working" && isBotThread(thread)');
     expect(timeline).toContain("<BotEmptyConversation");
   });
 

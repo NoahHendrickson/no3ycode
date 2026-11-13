@@ -1,5 +1,5 @@
 /**
- * Fork-owned — see `.fork/customizations.yaml#fork-bots`.
+ * Fork-owned — see `.fork/customizations.yaml#fork-scheduled-wake-hold`.
  */
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { expect, it } from "@effect/vitest";

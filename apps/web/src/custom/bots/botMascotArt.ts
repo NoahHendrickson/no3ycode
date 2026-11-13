@@ -1,10 +1,8 @@
 /**
- * Bot mascots — see `.fork/customizations.yaml#fork-bots`. The leaf and petal bots from the Noey
- * Brand file's "bots" page, drawn by the same rules as its generator: a silhouette mask per shape,
- * then outline, highlight, veins and eyes. Each cell is one pixel of the sprite.
+ * Bot mascot art — see `.fork/customizations.yaml#fork-bots`. The leaf and petal bots from the
+ * Noey Brand file's "bots" page, drawn by the same rules as its generator: a silhouette mask per
+ * shape, then outline, highlight, veins and eyes. Each cell is one pixel of the sprite.
  */
-import { BOT_THREAD_TAG_PREFIX_MASCOT, type BotThreadFields } from "./botThreads";
-
 export const BOT_MASCOT_MOODS = ["Idle", "Thinking", "Happy", "Sleeping", "Error"] as const;
 export type BotMascotMood = (typeof BOT_MASCOT_MOODS)[number];
 
@@ -610,92 +608,5 @@ export function botMascotSprite(shape: BotMascotShape, mood: BotMascotMood): Bot
   return sprite;
 }
 
-const isShape = (value: string): value is BotMascotShape =>
+export const isBotMascotShape = (value: string): value is BotMascotShape =>
   (BOT_MASCOT_SHAPES as ReadonlyArray<string>).includes(value);
-
-export function botMascotTag(shape: BotMascotShape): string {
-  return `${BOT_THREAD_TAG_PREFIX_MASCOT}${shape}`;
-}
-
-/** The mascot a bot was given, or one picked from its id so an untagged bot still has a face. */
-export function botMascotShape(thread: BotThreadFields & { readonly id: string }): BotMascotShape {
-  for (const tag of thread.source?.tags ?? []) {
-    const name = tag.startsWith(BOT_THREAD_TAG_PREFIX_MASCOT)
-      ? tag.slice(BOT_THREAD_TAG_PREFIX_MASCOT.length)
-      : "";
-    if (isShape(name)) return name;
-  }
-  let hash = 0;
-  for (const char of thread.id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return BOT_MASCOT_SHAPES[hash % BOT_MASCOT_SHAPES.length] ?? "Classic";
-}
-
-/** The first mascot no listed bot wears yet, so new bots look different while there are faces left. */
-export function nextBotMascotShape(taken: ReadonlyArray<BotMascotShape>): BotMascotShape {
-  return BOT_MASCOT_SHAPES.find((shape) => !taken.includes(shape)) ?? "Classic";
-}
-
-/**
- * How a bot's face reads its thread: thinking while it works, happy with something to tell you,
- * crossed out when a run failed, asleep between wakes. It is awake while you have it open, and
- * whenever it is waiting on you.
- */
-export function botMascotMood(input: {
-  readonly status: string;
-  readonly isUnread: boolean;
-  /** False while the bot's conversation is the one on screen. */
-  readonly resting: boolean;
-}): BotMascotMood {
-  if (input.status === "failed" || input.status === "limited") return "Error";
-  if (input.status === "working" || input.status === "preparing") return "Thinking";
-  if (input.isUnread) return "Happy";
-  return input.status === "ready" && input.resting ? "Sleeping" : "Idle";
-}
-
-const MASCOT_MENU_PREFIX = "bot-mascot:";
-export type BotMascotMenuId = `${typeof MASCOT_MENU_PREFIX}${BotMascotShape}`;
-
-/** A bot's context-menu item for changing its mascot, ticked at the face it wears now. */
-export function botMascotMenuItem(
-  thread: BotThreadFields & { readonly id: string },
-  canOperate: boolean,
-) {
-  const current = botMascotShape(thread);
-  return {
-    id: "bot-mascot" as const,
-    label: "Mascot",
-    disabled: !canOperate,
-    children: BOT_MASCOT_SHAPES.map((shape) => ({
-      id: `${MASCOT_MENU_PREFIX}${shape}` as BotMascotMenuId,
-      label: shape,
-      checked: shape === current,
-    })),
-  };
-}
-
-/** The Mascot item and its shapes, so the menu's click handler can take them all out of its union. */
-export function isBotMascotMenuId(id: string): id is "bot-mascot" | BotMascotMenuId {
-  return id === "bot-mascot" || id.startsWith(MASCOT_MENU_PREFIX);
-}
-
-export function botMascotFromMenuId(id: string): BotMascotShape | null {
-  if (!id.startsWith(MASCOT_MENU_PREFIX)) return null;
-  const name = id.slice(MASCOT_MENU_PREFIX.length);
-  return isShape(name) ? name : null;
-}
-
-/** The tag writes that make `shape` a bot's only mascot: the new one first, so the bot never
-    shows the face picked from its id between the writes. */
-export function botMascotTagWrites(
-  thread: BotThreadFields,
-  shape: BotMascotShape,
-): ReadonlyArray<{ readonly tag: string; readonly tagged: boolean }> {
-  const next = botMascotTag(shape);
-  const tags = thread.source?.tags ?? [];
-  return [
-    ...(tags.includes(next) ? [] : [{ tag: next, tagged: true }]),
-    ...tags
-      .filter((tag) => tag.startsWith(BOT_THREAD_TAG_PREFIX_MASCOT) && tag !== next)
-      .map((tag) => ({ tag, tagged: false })),
-  ];
-}

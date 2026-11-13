@@ -4,7 +4,8 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
-import { type BotMascotShape, botMascotTagWrites } from "./botMascots";
+import type { BotMascotShape } from "./botMascotArt";
+import { botMascotTagWrites } from "./botMascotTags";
 
 export function useSetBotMascot(): (
   thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
@@ -12,7 +13,7 @@ export function useSetBotMascot(): (
 ) => Promise<void> {
   const setTag = useOrchestrationCommand(threadEnvironment.setTag);
   return async (thread, shape) => {
-    for (const write of botMascotTagWrites(thread, shape)) {
+    for (const write of botMascotTagWrites(thread.source, shape)) {
       const result = await setTag({
         environmentId: thread.environmentId,
         input: { threadId: thread.id, ...write },

@@ -35,7 +35,7 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(sidebar).toContain("compactCards={compactCards}");
     // Slim shelf rows are already one line; they only take the pill.
     // Bots have their own toggle (fork-bots); every other card takes this one.
-    expect(sidebar).toMatch(/compact=\{[^}]*?\?\s*compactBots\s*:[^]*?compactCards\s*\}/u);
+    expect(sidebar).toMatch(/compact=\{[^}]*?options\.compact \?\?[^}]*?compactCards\s*\}/u);
   });
 
   it("swaps the repo line for marks on the title line", () => {

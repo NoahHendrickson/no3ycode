@@ -1,11 +1,12 @@
 /**
  * A bot's latest report on its thread shell — see `.fork/customizations.yaml#fork-bots`.
- * Shells carry no message bodies; bot-tagged ones carry the head of their last settled run's
- * final reply, never a wake's progress replies.
+ * Shells carry no message bodies; a bot-tagged one carries the head of the final reply of its
+ * latest settled run that found something, so clients read unread state off the server alone.
  */
 import {
   MessageId,
   type OrchestrationV2LatestVisibleMessageSummary,
+  type OrchestrationV2RunStatus,
   type OrchestrationV2ThreadProjection,
 } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
@@ -14,10 +15,20 @@ import * as Schema from "effect/Schema";
 
 /** Must match the web client's `BOT_THREAD_TAG` (custom/bots/botThreads). */
 export const FORK_BOT_THREAD_TAG = "bot";
-/** Enough for the card's first line and the quiet-reply check; the transcript has the rest. */
+/** Enough for the card's first line; the transcript has the rest. */
 export const FORK_BOT_REPORT_CHARS = 280;
-/** A run whose last reply is its report. Rolled-back runs never report. */
-export const FORK_BOT_SETTLED_RUN_STATUSES = ["completed", "interrupted", "failed", "cancelled"];
+/** A run whose final reply can be a report. Rolled-back runs never report. */
+export const FORK_BOT_SETTLED_RUN_STATUSES: ReadonlyArray<OrchestrationV2RunStatus> = [
+  "completed",
+  "interrupted",
+  "failed",
+  "cancelled",
+];
+/** A wake that found nothing ends on this reply (the client seeds it as `BOT_QUIET_REPLY`).
+    Lowercased and trimmed, with and without its full stop, for the shell query to compare. */
+export const FORK_BOT_QUIET_REPLIES = ["nothing to report", "nothing to report."];
+
+const isQuietReply = (text: string) => FORK_BOT_QUIET_REPLIES.includes(text.trim().toLowerCase());
 
 const decodeReportRow = Schema.decodeUnknownEffect(
   Schema.fromJsonString(
@@ -49,7 +60,7 @@ export function forkBotReportFromProjection(
       .filter((run) => FORK_BOT_SETTLED_RUN_STATUSES.includes(run.status))
       .map((run) => run.id),
   );
-  const latest = projection.messages
+  const newestFirst = projection.messages
     .filter(
       (message) =>
         message.role === "assistant" &&
@@ -61,13 +72,18 @@ export function forkBotReportFromProjection(
       (left, right) =>
         DateTime.toEpochMillis(right.updatedAt) - DateTime.toEpochMillis(left.updatedAt) ||
         right.id.localeCompare(left.id),
-    )[0];
-  return latest === undefined
+    );
+  // Each run's final reply is its newest one; progress replies before it never count.
+  const finalReplies = newestFirst.filter(
+    (message, index) => newestFirst.findIndex((other) => other.runId === message.runId) === index,
+  );
+  const report = finalReplies.find((message) => !isQuietReply(message.text));
+  return report === undefined
     ? null
     : {
-        id: latest.id,
+        id: report.id,
         role: "assistant",
-        text: latest.text.slice(0, FORK_BOT_REPORT_CHARS),
-        updatedAt: latest.updatedAt,
+        text: report.text.slice(0, FORK_BOT_REPORT_CHARS),
+        updatedAt: report.updatedAt,
       };
 }

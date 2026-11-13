@@ -2,53 +2,63 @@
  * Bots — see `.fork/customizations.yaml#fork-bots`. A bot is a No-project thread tagged `bot`
  * that runs in its own folder; the folder, not the transcript, holds what it knows.
  */
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
+import * as DateTime from "effect/DateTime";
 
-/** The server-side tag that makes a thread a bot. */
+import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
+
+/** The server-side tag that makes a thread a bot (the server's `FORK_BOT_THREAD_TAG`). */
 export const BOT_THREAD_TAG = "bot";
 
-/** A second tag names the bot's mascot, e.g. `mascot:Sakura` (custom/bots/botMascots). */
+/** A second tag names the bot's mascot, e.g. `mascot:Sakura` (custom/bots/botMascotTags). */
 export const BOT_THREAD_TAG_PREFIX_MASCOT = "mascot:";
 
 /** Where bot folders live, relative to the No-project workspace root. */
 export const BOT_FOLDERS_DIRECTORY = "bots";
 
-/** What a bot replies when a wake found nothing worth saying. */
+/** What a bot replies when a wake found nothing; the server's report skips it. */
 export const BOT_QUIET_REPLY = "Nothing to report.";
 
-/** Structural, so the roster filter and its guard can pass any thread shape. */
-export interface BotThreadFields {
-  readonly source?:
-    | {
-        readonly tags?: ReadonlyArray<string> | undefined;
-        readonly latestVisibleMessage?:
-          | { readonly role: string; readonly text: string }
-          | null
-          | undefined;
-      }
-    | undefined;
+/** The part of a thread shell bots read. Its `latestVisibleMessage` is the bot's latest report:
+    the server fills it for bots only, skipping quiet wakes (orchestration-v2/forkBotReport). */
+export type BotShell = Pick<OrchestrationV2ThreadShell, "tags" | "latestVisibleMessage">;
+
+export function isBotThread(shell: Pick<BotShell, "tags">): boolean {
+  return shell.tags?.includes(BOT_THREAD_TAG) === true;
 }
 
-export function isBotThread(thread: BotThreadFields): boolean {
-  return thread.source?.tags?.includes(BOT_THREAD_TAG) === true;
+/** Whether a bot's latest report arrived after the thread was last opened. Server clock on both
+    sides, so every device agrees. Never opened reads as read, like other threads. */
+export function hasUnreadBotReport(shell: BotShell, lastVisitedAt: string | undefined): boolean {
+  const report = shell.latestVisibleMessage;
+  if (report === null || report === undefined || lastVisitedAt === undefined) return false;
+  const visitedAt = Date.parse(lastVisitedAt);
+  return Number.isNaN(visitedAt) || DateTime.toEpochMillis(report.updatedAt) > visitedAt;
 }
 
-/** A bot whose last word was the quiet reply: a wake that found nothing. It
-    neither notifies nor marks the bot unread. Anything more than the bare
-    reply counts as a report, so a bot that says too much is heard. */
-export function isQuietBotReport(thread: BotThreadFields): boolean {
-  if (!isBotThread(thread)) return false;
-  const latest = thread.source?.latestVisibleMessage;
-  if (latest == null || latest.role !== "assistant") return false;
-  return /^nothing to report\.?$/i.test(latest.text.trim());
+/** Whether a bot's latest run brought no new report: its report predates the run, or it has
+    none. Stateless, so a completion that becomes eligible later (background work still
+    settling) is judged the same as when the run ended. */
+export function isQuietBotCompletion(
+  shell: BotShell,
+  latestRun: { readonly requestedAt: string | null; readonly startedAt: string | null } | null,
+): boolean {
+  const report = shell.latestVisibleMessage;
+  if (report === null || report === undefined) return true;
+  const runAt = Date.parse(latestRun?.requestedAt ?? latestRun?.startedAt ?? "");
+  return !Number.isNaN(runAt) && DateTime.toEpochMillis(report.updatedAt) < runAt;
 }
 
 /** Bots listed in the sidebar's Bots section, oldest first so a bot keeps its place. */
 export function listSidebarBots<
-  T extends Pick<EnvironmentThreadShell, "archivedAt" | "createdAt"> & BotThreadFields,
+  T extends {
+    readonly archivedAt: string | null;
+    readonly createdAt: string;
+    readonly source: Pick<BotShell, "tags">;
+  },
 >(threads: ReadonlyArray<T>): T[] {
   return threads
-    .filter((thread) => thread.archivedAt === null && isBotThread(thread))
+    .filter((thread) => thread.archivedAt === null && isBotThread(thread.source))
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 
@@ -93,10 +103,11 @@ function botMessageSummary(text: string): string {
     .trim();
 }
 
+/** An unread report is the news; once it is read, when the bot next checks. */
 export function botStatusLine(input: {
-  readonly thread: BotThreadFields;
-  /** The sidebar's thread status (Sidebar.logic's resolveSidebarThreadStatus). */
-  readonly status: string;
+  readonly shell: BotShell;
+  readonly status: SidebarThreadStatus;
+  readonly isUnread: boolean;
   readonly nextWakeAt: string | null;
 }): BotStatusLine {
   switch (input.status) {
@@ -112,14 +123,13 @@ export function botStatusLine(input: {
       return { text: "Last run failed" };
     case "limited":
       return { text: "Hit a usage limit" };
+    case "waiting":
+    case "ready":
+      break;
   }
-  const latest = input.thread.source?.latestVisibleMessage;
-  const report =
-    latest?.role === "assistant" && !isQuietBotReport(input.thread)
-      ? botMessageSummary(latest.text)
-      : "";
-  if (report !== "") return { text: report };
+  const report = input.shell.latestVisibleMessage;
+  const summary = report == null ? "" : botMessageSummary(report.text);
+  if (summary !== "" && (input.isUnread || input.nextWakeAt === null)) return { text: summary };
   if (input.nextWakeAt !== null) return { nextWakeAt: input.nextWakeAt };
-  if (latest?.role === "assistant") return { text: "Nothing to report" };
-  return { text: latest == null ? "Tell it what its job is" : "Nothing yet" };
+  return { text: "Tell it what its job is" };
 }

@@ -9,12 +9,8 @@ import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
 import { useQuietThreadShell } from "~/state/entities";
 
-import {
-  type BotMascotMood,
-  type BotMascotShape,
-  botMascotShape,
-  botMascotSprite,
-} from "./botMascots";
+import { type BotMascotMood, type BotMascotShape, botMascotSprite } from "./botMascotArt";
+import { botMascotShape } from "./botMascotTags";
 import { isBotThread } from "./botThreads";
 
 export function BotMascot(props: {
@@ -59,31 +55,16 @@ export function BotMascotLead(props: {
   );
 }
 
-/** The mascot as a card's avatar: a 22px column beside both of the card's lines. */
-export function BotMascotAvatar(props: {
-  readonly shape: BotMascotShape;
-  readonly mood: BotMascotMood;
-}) {
-  return (
-    <span
-      className="row-span-2 flex items-center justify-center"
-      data-testid="sidebar-v2-bot-avatar"
-    >
-      <BotMascot shape={props.shape} mood={props.mood} fit={22} />
-    </span>
-  );
-}
-
 /** A bot's empty conversation: its mascot, large, and what to say first. Other threads keep `fallback`. */
 export function BotEmptyConversation(props: {
   readonly threadKey: string;
   readonly fallback: ReactNode;
 }) {
   const shell = useQuietThreadShell(parseScopedThreadKey(props.threadKey));
-  if (shell === null || !isBotThread(shell)) return props.fallback;
+  if (shell === null || !isBotThread(shell.source)) return props.fallback;
   return (
     <div className="flex flex-col items-center gap-5" data-testid="bot-empty-conversation">
-      <BotMascot shape={botMascotShape(shell)} mood="Idle" cell={6} />
+      <BotMascot shape={botMascotShape(shell.source)} mood="Idle" cell={6} />
       <p className="text-sm text-muted-foreground">Tell {shell.title} what its job is.</p>
     </div>
   );

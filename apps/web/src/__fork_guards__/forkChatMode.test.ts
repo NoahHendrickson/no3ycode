@@ -46,8 +46,9 @@ describe("fork guard: fork-chat-mode", () => {
   });
 
   it("draws a chat as the composer alone, under its own headline", () => {
+    // A bot's conversation (fork-bots) reads the same way.
     expect(read("../components/ChatView.tsx")).toContain(
-      'data-fork-chat-thread={isForkChatThread ? "" : undefined}',
+      'data-fork-chat-thread={isForkChatThread || isForkBotThread ? "" : undefined}',
     );
     expect(read("../theme.custom.css")).toMatch(
       /\[data-fork-chat-thread\]\s*\[data-fork-composer-context-row\] \{\s*display: none;/u,

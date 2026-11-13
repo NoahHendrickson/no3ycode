@@ -1,14 +1,24 @@
 /**
- * The sidebar's Bots and Threads sections — see `.fork/customizations.yaml#fork-bots`.
- * Their rows are in custom/SidebarV2ChromeRows; this holds what folds them and names a new bot.
+ * The sidebar's Bots section — see `.fork/customizations.yaml#fork-bots`: its row, its cards'
+ * density, naming a new bot, and what folds it and the Threads list under it.
  */
 import * as Schema from "effect/Schema";
-import { useState, type KeyboardEvent } from "react";
+import { PlusIcon } from "lucide-react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 
+import { Menu, MenuPopup, MenuTrigger } from "~/components/ui/menu";
+import { SidebarGroup, SidebarMenuButton } from "~/components/ui/sidebar";
+import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
+import { cn } from "~/lib/utils";
+
+import { SettingsIcon } from "../icons/lucide-phosphor";
+import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
+import { CHROME_ROW_INSET, OptionCheckboxItem, PROJECTS_ROW_BUTTON } from "../SidebarV2ChromeRows";
+import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
 import { BotMascot } from "./BotMascot";
-import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascots";
+import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
 
 export type SidebarV2ListSection = "bots" | "threads";
 
@@ -113,5 +123,91 @@ export function SidebarV2NewBotRow(props: {
         className="h-9 min-w-0 flex-1 rounded-md border border-sidebar-border bg-transparent px-2 text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-muted-foreground/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60"
       />
     </li>
+  );
+}
+
+/** The Bots section above the Threads row, in its shape: label, count, fold caret, view options
+    and a plus that names a new bot. Its cards are its children. */
+export function SidebarV2BotsRow(props: {
+  readonly count: number;
+  readonly collapsed: boolean;
+  readonly onToggleCollapsed: () => void;
+  readonly onNewBot: () => void;
+  /** The bots' own card density, independent of the threads' Compact cards. */
+  readonly compactCards: boolean;
+  readonly onCompactCardsChange: (compactCards: boolean) => void;
+  readonly children: ReactNode;
+}) {
+  return (
+    <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+      <div className="flex h-8 items-center gap-1.5 px-3">
+        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
+          <SidebarV2SectionLabel
+            count={props.count}
+            collapsed={props.collapsed}
+            onToggle={props.onToggleCollapsed}
+            testId="sidebar-v2-bots-section-toggle"
+          >
+            Bots
+          </SidebarV2SectionLabel>
+        </span>
+        <div className="-me-3 flex shrink-0 items-center">
+          <Menu>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <MenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        size="sm"
+                        type="button"
+                        className={PROJECTS_ROW_BUTTON}
+                        aria-label="Bot view options"
+                        data-testid="sidebar-v2-bots-options"
+                      />
+                    }
+                  />
+                }
+              >
+                <SettingsIcon className="size-4 shrink-0" />
+              </TooltipTrigger>
+              <TooltipPopup side="right">View options</TooltipPopup>
+            </Tooltip>
+            <MenuPopup align="end" data-fork-glass-rim className="min-w-48">
+              <OptionCheckboxItem
+                checked={props.compactCards}
+                onCheckedChange={props.onCompactCardsChange}
+                testId="sidebar-v2-compact-bots-toggle"
+              >
+                Compact cards
+              </OptionCheckboxItem>
+            </MenuPopup>
+          </Menu>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <SidebarMenuButton
+                  size="sm"
+                  type="button"
+                  className={PROJECTS_ROW_BUTTON}
+                  aria-label="New bot"
+                  data-testid="sidebar-v2-new-bot"
+                  onClick={props.onNewBot}
+                />
+              }
+            >
+              <PlusIcon className="size-4 shrink-0" />
+            </TooltipTrigger>
+            <TooltipPopup side="right">New bot</TooltipPopup>
+          </Tooltip>
+        </div>
+      </div>
+      {/* The thread list's tooltip timing, so a bot card's hover card opens like a thread's. */}
+      <TooltipProvider delay={150} closeDelay={0} timeout={400}>
+        <ul role="presentation" className={cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}>
+          {props.children}
+        </ul>
+      </TooltipProvider>
+    </SidebarGroup>
   );
 }

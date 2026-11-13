@@ -1,17 +1,19 @@
 /** A bot card's status line, in place of the model and branch — see `.fork/customizations.yaml#fork-bots`. */
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 
+import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import { ScheduledRelativeLabel } from "~/components/settings/ScheduledTasksSettings";
 import { useEnvironmentQuery } from "~/state/query";
 import { serverEnvironment } from "~/state/server";
 
-import { type BotThreadFields, botStatusLine } from "./botThreads";
+import { type BotShell, botStatusLine } from "./botThreads";
 
 export function BotCardStatusLine(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
-  readonly thread: BotThreadFields;
-  readonly status: string;
+  readonly shell: BotShell;
+  readonly status: SidebarThreadStatus;
+  readonly isUnread: boolean;
 }) {
   // One live list per environment, shared with the details card's Automations.
   const tasks = useEnvironmentQuery(
@@ -25,7 +27,12 @@ export function BotCardStatusLine(props: {
           : [],
       )
       .toSorted()[0] ?? null;
-  const line = botStatusLine({ thread: props.thread, status: props.status, nextWakeAt });
+  const line = botStatusLine({
+    shell: props.shell,
+    status: props.status,
+    isUnread: props.isUnread,
+    nextWakeAt,
+  });
   return (
     <div
       data-testid="sidebar-v2-bot-status-line"

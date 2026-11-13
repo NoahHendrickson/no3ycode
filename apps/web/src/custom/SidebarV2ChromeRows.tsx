@@ -35,7 +35,7 @@ import type {
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { CheckIcon, FolderIcon, FolderPlusIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "lucide-react";
 // Fork-only glyphs (no lucide counterpart) come from the shim's own path: this
 // file is fork-owned, so there is no upstream import site to preserve.
 import {
@@ -55,6 +55,7 @@ import { ProjectFavicon, type ProjectFaviconProject } from "~/components/Project
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
+import { SidebarV2SectionLabel } from "./SidebarV2SectionLabel";
 import { useQuietThreadShells } from "~/state/entities";
 import { usePullRequestsSupported } from "~/state/environments";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
@@ -86,7 +87,7 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
  *  custom/sidebarV2TrailingColumn, which records the derivation. The inset
  *  carries no scrollbar term: the list gives its reserved gutter back out of
  *  its own end padding, so a gutter term here would double-count it. */
-const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
+export const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
 /** Displaces sidebarMenuButtonVariants' base icon pair (muted-foreground at
     opacity-60, upstream v0.0.30): parent-level [&>svg] selectors outweigh the
     icon's own class, so without this the fork's tint on the glyph is dead and
@@ -110,153 +111,11 @@ const CHROME_TYPE =
     box the project headers' plus and settings buttons draw. Icon tint is
     overridden to muted here (CHROME_ROW_ICON_TINT lifts it to foreground for
     the action rows), lifting back to foreground on hover. */
-const PROJECTS_ROW_BUTTON = cn(
+export const PROJECTS_ROW_BUTTON = cn(
   "relative size-8 shrink-0 justify-center rounded-[10px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
   CHROME_ROW_ICON_TINT,
   "[&>svg]:text-current",
 );
-
-/** A section's label, 13px semibold like the status headers under it. With `onToggle` it folds
-    its section: the label, an optional count, and the status headers' caret. See `fork-bots`. */
-function SectionLabel(props: {
-  readonly count?: number;
-  readonly collapsed?: boolean;
-  readonly onToggle?: (() => void) | undefined;
-  readonly testId: string;
-  readonly className: string;
-  readonly children: ReactNode;
-}) {
-  if (props.onToggle === undefined) {
-    return <span className={props.className}>{props.children}</span>;
-  }
-  return (
-    <button
-      type="button"
-      onClick={props.onToggle}
-      aria-expanded={props.collapsed !== true}
-      data-testid={props.testId}
-      className={cn(
-        "group/section inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-left hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-        props.className,
-      )}
-    >
-      <span className="truncate">{props.children}</span>
-      {props.count === undefined ? null : (
-        <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
-      )}
-      <svg
-        aria-hidden
-        viewBox="0 0 14 14"
-        fill="currentColor"
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeLinejoin="round"
-        className={cn(
-          "size-3.5 shrink-0 opacity-0 transition-[opacity,rotate] group-hover/section:opacity-100 group-focus-visible/section:opacity-100",
-          props.collapsed === true ? "opacity-100" : "rotate-180",
-        )}
-      >
-        <path d="M2.71 4.75H11.29L7 9.04Z" />
-      </svg>
-    </button>
-  );
-}
-
-/**
- * The Bots section's row, above the Threads row and in its shape — see
- * `.fork/customizations.yaml#fork-bots`. Sidebar.tsx portals the bot cards into the list it hands to `onListElement`.
- */
-export function SidebarV2BotsRow({
-  count,
-  collapsed,
-  onToggleCollapsed,
-  onNewBot,
-  onListElement,
-  compactCards,
-  onCompactCardsChange,
-}: {
-  readonly count: number;
-  readonly collapsed: boolean;
-  readonly onToggleCollapsed: () => void;
-  readonly onNewBot: () => void;
-  readonly onListElement: (element: HTMLUListElement | null) => void;
-  /** The bots' own card density, independent of the threads' Compact cards. */
-  readonly compactCards: boolean;
-  readonly onCompactCardsChange: (compactCards: boolean) => void;
-}) {
-  return (
-    <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
-      <div className="flex h-8 items-center gap-1.5 px-3">
-        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
-          <SectionLabel
-            count={count}
-            collapsed={collapsed}
-            onToggle={onToggleCollapsed}
-            testId="sidebar-v2-bots-section-toggle"
-            className="text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
-          >
-            Bots
-          </SectionLabel>
-        </span>
-        <div className="-me-3 flex shrink-0 items-center">
-          <Menu>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <MenuTrigger
-                    render={
-                      <SidebarMenuButton
-                        size="sm"
-                        type="button"
-                        className={PROJECTS_ROW_BUTTON}
-                        aria-label="Bot view options"
-                        data-testid="sidebar-v2-bots-options"
-                      />
-                    }
-                  />
-                }
-              >
-                <SettingsIcon className="size-4 shrink-0" />
-              </TooltipTrigger>
-              <TooltipPopup side="right">View options</TooltipPopup>
-            </Tooltip>
-            <MenuPopup align="end" data-fork-glass-rim className="min-w-48">
-              <OptionCheckboxItem
-                checked={compactCards}
-                onCheckedChange={onCompactCardsChange}
-                testId="sidebar-v2-compact-bots-toggle"
-              >
-                Compact cards
-              </OptionCheckboxItem>
-            </MenuPopup>
-          </Menu>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <SidebarMenuButton
-                  size="sm"
-                  type="button"
-                  className={PROJECTS_ROW_BUTTON}
-                  aria-label="New bot"
-                  data-testid="sidebar-v2-new-bot"
-                  onClick={onNewBot}
-                />
-              }
-            >
-              <PlusIcon className="size-4 shrink-0" />
-            </TooltipTrigger>
-            <TooltipPopup side="right">New bot</TooltipPopup>
-          </Tooltip>
-        </div>
-      </div>
-      <ul
-        ref={onListElement}
-        role="presentation"
-        className={cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}
-      />
-    </SidebarGroup>
-  );
-}
 
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
@@ -665,7 +524,7 @@ function FullWidthMenuSeparator() {
 const OPTION_ITEM = cn(SCOPE_ITEM, "justify-between gap-4");
 const OPTION_RADIO = "inline-flex size-4 shrink-0 items-center justify-center rounded-full border";
 
-function OptionCheckboxItem(props: {
+export function OptionCheckboxItem(props: {
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
   readonly testId: string;
@@ -783,14 +642,13 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
       <div className="flex h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
-          <SectionLabel
+          <SidebarV2SectionLabel
             collapsed={props.collapsed === true}
             onToggle={props.onToggleCollapsed}
             testId="sidebar-v2-threads-section-toggle"
-            className="text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
           >
             Threads
-          </SectionLabel>
+          </SidebarV2SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
           <Tooltip>

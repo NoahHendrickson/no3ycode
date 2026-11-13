@@ -11,7 +11,6 @@
  */
 import {
   OrchestrationV2RunStatus,
-  type OrchestrationV2ThreadShell,
   ScheduledTaskError,
   ScheduledTaskRun,
   SCHEDULED_TASK_RUNS_DEFAULT_LIMIT,
@@ -206,50 +205,4 @@ export function listScheduledTaskRuns(
         }),
     ),
   );
-}
-
-/**
- * Whether a wake `taskId` sent into `threadId` is still queued or running — see
- * `.fork/customizations.yaml#fork-bots`. A bound task queues each fire behind whatever the thread
- * is doing, so a thread held up for a day would otherwise collect a day of wakes and run them back
- * to back. Runs name the message that started them, and every fire's message id starts with its task.
- */
-export function hasUnfinishedScheduledRun(
-  sql: SqlClient.SqlClient,
-  taskId: ScheduledTaskId,
-  threadId: string,
-): Effect.Effect<boolean, ScheduledTaskError> {
-  const pattern = `${escapeGlobPrefix(`${SCHEDULED_TASK_MESSAGE_PREFIX}${taskId}:`)}*`;
-  return sql<{ readonly found: number }>`
-    SELECT 1 AS found
-    FROM orchestration_v2_projection_runs
-    WHERE thread_id = ${threadId}
-      AND status IN ('preparing', 'queued', 'starting', 'running', 'waiting')
-      AND json_extract(payload_json, '$.userMessageId') GLOB ${pattern}
-    LIMIT 1
-  `.pipe(
-    Effect.map((rows) => rows.length > 0),
-    Effect.mapError(
-      (cause) =>
-        new ScheduledTaskError({
-          message: "Could not check the task's earlier runs.",
-          taskId,
-          cause,
-        }),
-    ),
-  );
-}
-
-/**
- * Whether a bound thread is held by a usage limit whose known reset is still ahead — see
- * `.fork/customizations.yaml#fork-bots`. A fire then would only hit the limit again. An unknown
- * reset never holds, so a held thread always wakes again on its own.
- */
-export function isUsageLimitedUntilLater(
-  shell: Pick<OrchestrationV2ThreadShell, "lastErrorClass" | "usageLimitResetAt"> | null,
-  nowMs: number,
-): boolean {
-  if (shell?.lastErrorClass !== "usage_limit" || !shell.usageLimitResetAt) return false;
-  const resetAt = Date.parse(shell.usageLimitResetAt);
-  return Number.isFinite(resetAt) && resetAt > nowMs;
 }
