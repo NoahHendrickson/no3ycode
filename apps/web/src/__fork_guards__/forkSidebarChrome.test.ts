@@ -167,20 +167,25 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(rows).toContain("function ChromeLabeledAction");
     expect(rows).toContain('data-testid="command-palette-trigger"');
     expect(rows).toContain('testId="sidebar-v2-new-thread"');
-    expect(rows).toContain('testId="sidebar-v2-add-project"');
+    expect(rows).toContain('data-testid="sidebar-v2-add-project"');
     expect(rows).toContain('testId="sidebar-v2-usage"');
+    expect(rows).toContain('testId="sidebar-v2-pull-requests"');
     expect(rows).toContain('data-testid="sidebar-v2-project-filter"');
-    // The design's four rows (Figma 364:11246), in its words.
     expect(rows).toMatch(/>Search</u);
     expect(rows).toContain('label="New agent"');
-    expect(rows).toContain('label="Add a project"');
+    expect(rows).toContain('label="Pull requests"');
+    // Add a project is the Threads row's icon button, not a labeled row.
+    expect(rows).not.toMatch(/(?<![-\w])label="Add a project"/u);
+    expect(rows).toMatch(/<ChromeAutomationsRow \/>\s*<ChromePullRequestsRow \/>/u);
     expect(rows).not.toContain("New thread");
     // The Usage row navigates itself; Sidebar passes it no handler.
     expect(sidebarV2).not.toContain("onUsage=");
     expect(sidebarV2).not.toContain('void router.navigate({ to: "/usage" });');
-    // One door, not two: the footer hides its Usage icon since the row above is
-    // the same overlay. Upstream always shows the undo notice in its utility menu.
+    // One door, not two: the footer hides its Usage icon and drops upstream's
+    // Pull requests icon, since the rows above open the same pages. Upstream
+    // always shows the undo notice in its utility menu.
     expect(sidebarV2).toContain("<SidebarChromeFooter hideUsage />");
+    expect(chrome).not.toContain('label="Pull requests"');
     expect(chrome).toMatch(
       /hideUsage \? null : \(\s*<SidebarUtilityItem\s+icon=\{<ChartNoAxesColumnIcon/u,
     );
