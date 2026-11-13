@@ -12,6 +12,8 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   --fork-inlet-margin: 8px;
+  /* A panel's top inset: the margin, or the caption band on Windows below. */
+  --fork-inlet-panel-top: var(--fork-inlet-margin);
   --fork-inlet-radius: 8px;
   /* Every menu and popover's corners; panels set into one run parallel. */
   --fork-inlet-menu-radius: 10px;
@@ -49,8 +51,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-column-maximized-away] {
   --background: var(--fork-inlet-panel);
-  margin: var(--fork-inlet-margin);
-  margin-top: var(--fork-inlet-panel-top, var(--fork-inlet-margin));
+  margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
   background: var(--background);
 }
@@ -122,38 +123,60 @@
   border-radius: 0;
 }
 
-/* The header's window-pinned controls move in and down with the panel, so
-   they stay on the title's line. Not under Windows' window-controls overlay,
-   which sets its own. */
-
-:root[data-fork="noahhendrickson-t3code"]:not(.wco)[data-fork-theme="inlet"]
-  [data-chat-column-maximized-away] {
-  --workspace-controls-top: var(--fork-inlet-margin);
-  --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
-}
-
-/* Windows paints its caption buttons over the window's top band, so the
-   panel starts below that band and its controls drop onto its header line.
-   The tab strip clears the buttons itself (theme.custom.css), and the
-   floating thread window already sits below the band. */
+/* Windows paints its caption buttons over the window's top band, so panels
+   start below it, and the band drags the window as a title bar would. The
+   tab strip clears the buttons itself (theme.custom.css); the floating
+   window sits below the band; the side chat has no frame; and while the
+   inline right panel owns the title bar the buttons sit over its tabs. */
 
 :root[data-fork="noahhendrickson-t3code"].wco[data-fork-theme="inlet"]:not(
     [data-fork-has-thread-tabs]
   ) {
   --fork-inlet-panel-top: var(--workspace-topbar-height);
 
-  & [data-fork-split-pane="floating"] {
+  &
+    :is(
+      [data-fork-split-pane="floating"],
+      [data-side-chat-pane],
+      [data-chat-column-maximized-away][data-fork-right-panel-titlebar]
+    ) {
     --fork-inlet-panel-top: var(--fork-inlet-margin);
   }
 
-  &
-    [data-chat-column-maximized-away]:not(
-      :is([data-side-chat-pane], [data-fork-split-pane="floating"]) *
-    ) {
-    --workspace-controls-top: var(--workspace-topbar-height);
-    --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
+  & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
     --workspace-native-controls-inset: 0px;
   }
+
+  /* Pseudo-element rects come first in the inset, so every later control's
+     no-drag rect still wins; a floating sidebar owns the strip (theme.custom.css). */
+  &
+    [data-slot="sidebar-wrapper"]:not(
+      :is(
+        [data-fork-sidebar-overlay="true"],
+        [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+      )
+    )
+    [data-slot="sidebar-inset"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--fork-inlet-panel-top);
+    pointer-events: none;
+    -webkit-app-region: drag;
+  }
+}
+
+/* The header's window-pinned controls move in and down with the panel, so
+   they stay on the title's line, clear of no caption buttons: the panel
+   is below them. Under the tab strip Windows keeps upstream's offsets. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(
+    .wco[data-fork-has-thread-tabs]
+  )
+  [data-chat-column-maximized-away] {
+  --workspace-controls-top: var(--fork-inlet-panel-top);
+  --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
+  --workspace-native-controls-inset: 0px;
 }
 
 /* The pane actions and panel toggles (the controls' one div; the maximize toggle is a span)
@@ -650,7 +673,7 @@
   [data-slot="sidebar-inset"]
   > [data-fork-stage-card] {
   --background: var(--fork-inlet-panel);
-  margin: var(--fork-inlet-margin);
+  margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
   overflow: hidden;
   background: var(--background);

@@ -220,7 +220,21 @@ describe("fork guard: fork-inlet-theme", () => {
   it("sets the chat column into the frame as a rounded panel on either appearance", () => {
     const column = ruleBodyFor(inletRules, [TEMPLATE, "[data-chat-column-maximized-away]"]);
     expect(column).toContain("--background: var(--fork-inlet-panel)");
-    expect(column).toMatch(/margin:\s*var\(--fork-inlet-margin\)/u);
+    expect(column).toMatch(
+      /margin:\s*var\(--fork-inlet-panel-top\) var\(--fork-inlet-margin\) var\(--fork-inlet-margin\)/u,
+    );
+    // On Windows the panel starts below the caption buttons, except while the
+    // inline right panel owns the title bar (ChatView stamps the column then).
+    expect(inlet).toMatch(
+      /\.wco\[data-fork-theme="inlet"\]:not\(\s*\[data-fork-has-thread-tabs\]\s*\)\s*\{\s*--fork-inlet-panel-top: var\(--workspace-topbar-height\);/u,
+    );
+    const stepBack = inletRules.find((rule) =>
+      rule.selector.includes("[data-chat-column-maximized-away][data-fork-right-panel-titlebar]"),
+    );
+    expect(stepBack?.body).toContain("--fork-inlet-panel-top: var(--fork-inlet-margin)");
+    expect(readSibling("../components/ChatView.tsx")).toContain(
+      'data-fork-right-panel-titlebar={inlineRightPanelOwnsTitleBar ? "" : undefined}',
+    );
     expect(column).toMatch(/border-radius:\s*var\(--fork-inlet-radius\)/u);
     const modal = ruleBodyFor(inletRules, [TEMPLATE, "[data-app-modal]"]);
     expect(modal).toContain("--background: var(--fork-inlet-panel)");
