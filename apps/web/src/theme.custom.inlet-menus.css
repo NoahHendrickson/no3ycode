@@ -355,6 +355,9 @@
   --fork-inlet-rail-fillet: 6px;
   border-inline-end-width: 0;
   padding-inline-end: var(--fork-inlet-rail-fillet);
+  /* Down by the list's 4px inset, so the first tab still lines up with the
+     search field and its fillet stays below the list's rounded top corner. */
+  padding-top: 12px;
 
   & [aria-current="true"] {
     background: var(--popover);
