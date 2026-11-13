@@ -1747,15 +1747,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               </span>
             )}
             {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                Only rendered with a mark to draw: an empty slot plus its two
-                gaps left a 34px hole between the favicon and the title. */}
+                The 14px slot renders only when a mark draws, so mark-less rows
+                sit tight; a mark that comes or goes shifts the title 24px. */}
             {topStatus === null && !showDiscardDraft ? null : (
               <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
-                <SidebarV2StatusMark
-                  status={topStatus}
-                  seed={threadKey}
-                  idle={showDiscardDraft ? "draft" : "empty"}
-                />
+                <SidebarV2StatusMark status={topStatus} seed={threadKey} idle="draft" />
               </span>
             )}
             {/* fork:end sidebar-v2-card-rows */}

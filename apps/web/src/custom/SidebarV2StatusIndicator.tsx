@@ -423,9 +423,9 @@ export type SidebarV2TopStatusMark =
 export function SidebarV2StatusMark(props: {
   readonly status: SidebarV2TopStatusMark | null;
   readonly seed: string;
-  /** Card rows draw the idle dot; slim leaves the slot empty. Unpromoted
-      drafts use the pencil as their idle glyph. */
-  readonly idle?: "dot" | "empty" | "draft";
+  /** Card rows draw the idle dot; without one an idle mark draws nothing.
+      Unpromoted drafts use the pencil as their idle glyph. */
+  readonly idle?: "dot" | "draft";
 }) {
   const status = props.status;
   if (status === null) {

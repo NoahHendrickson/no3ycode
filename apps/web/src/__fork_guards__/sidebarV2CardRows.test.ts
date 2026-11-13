@@ -75,7 +75,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(kind({ hasPendingBackgroundTasks: true })).toBe("monitoring");
     expect(cardStatus).toContain('return { label: "Monitoring", mark: "monitoring" };');
     // Monitoring is a pulsing dot via the shared mark renderer, not a sky
-    // text label — and both card and slim draw it in the same 14px-tall slot.
+    // text label — and card and slim rows both draw it through that renderer.
     expect(sidebarV2).toContain("<SidebarV2StatusMark");
     expect(sidebarV2).not.toContain("text-sky-600 dark:text-sky-400");
     expect(sidebarV2).not.toContain("group-hover/sidebar-row:");
