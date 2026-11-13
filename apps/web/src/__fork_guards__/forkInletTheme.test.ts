@@ -64,6 +64,7 @@ const INLET_FILES = [
   "theme.custom.inlet.css",
   "theme.custom.inlet-composer.css",
   "theme.custom.inlet-menus.css",
+  "theme.custom.inlet-peek.css",
   "theme.custom.inlet-jungle.css",
   "theme.custom.inlet-black.css",
 ] as const;

@@ -2585,6 +2585,7 @@
     - apps/web/src/theme.custom.inlet.css
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
+    - apps/web/src/theme.custom.inlet-peek.css
     - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/theme.custom.inlet-black.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
