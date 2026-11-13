@@ -15,6 +15,7 @@ import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
 import { NavigationArrowIcon } from "../icons/lucide-phosphor";
 import { useSplitPane, type SplitPaneState } from "./splitPaneContext";
+import { morphSplitPairs } from "./splitMorph";
 import { usePendingSplitStore, useSplitThreadStore } from "./splitThreadStore";
 
 /** Whether the pill shows: always in a split, and alone on a started thread
@@ -55,7 +56,11 @@ export function SplitAgentPill(props: {
 
   if (splitPane.split) {
     return (
-      <Button size="xs" variant="ghost" {...pressHandlers(() => unpair(threadRef))}>
+      <Button
+        size="xs"
+        variant="ghost"
+        {...pressHandlers(() => morphSplitPairs([threadRef], () => unpair(threadRef)))}
+      >
         <ExternalLinkIcon className="size-3.5" />
         Unsplit
       </Button>

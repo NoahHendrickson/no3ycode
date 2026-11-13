@@ -13,6 +13,7 @@ import { parseScopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { DragEvent, PointerEvent } from "react";
 
+import { morphSplitPairs } from "./splitMorph";
 import { useSplitThreadStore } from "./splitThreadStore";
 
 const SPLIT_THREAD_DRAG_TYPE = "application/x-t3code-split-thread";
@@ -85,10 +86,12 @@ export function makeSplitDropHandlers(input: {
     const dragged = parseScopedThreadKey(draggedKey);
     const target = parseScopedThreadKey(targetKey);
     if (!dragged || !target) return;
-    useSplitThreadStore.getState().pair(target, dragged);
-    if (input.openThreadKey !== draggedKey && input.openThreadKey !== targetKey) {
-      input.openThread(dragged);
-    }
+    morphSplitPairs([target, dragged], () => {
+      useSplitThreadStore.getState().pair(target, dragged);
+      if (input.openThreadKey !== draggedKey && input.openThreadKey !== targetKey) {
+        input.openThread(dragged);
+      }
+    });
   };
   return {
     onDragOver: (event: DragEvent<HTMLElement>) => {
