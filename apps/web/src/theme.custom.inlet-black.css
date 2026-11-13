@@ -73,7 +73,7 @@
     :is(
       [data-sidebar-version="v2"]
         :is([class~="bg-sidebar-row-active"], [class~="bg-sidebar-row-selected"]):not(
-          [data-testid="sidebar-row-card"][data-popup-open]
+          :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[data-popup-open]
         ),
       [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
     ) {
@@ -86,6 +86,23 @@
     & [data-fork-monitoring-pulse] {
       background-color: #000000;
     }
+  }
+
+  /* Info blue (snoozed wake times, the snoozed shelf) is light mode's deep
+     shade, lost on the charcoal sidebar; there it takes the new-agent
+     texture's blue. A row on a cream fill keeps the deep shade the chat
+     panel's links use. */
+
+  & [data-sidebar-version="v2"] {
+    --info-foreground: #44aaf8;
+  }
+
+  &
+    [data-sidebar-version="v2"]
+    :is([class~="bg-sidebar-row-active"], [class~="bg-sidebar-row-selected"]):not(
+      :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[data-popup-open]
+    ) {
+    --info-foreground: #1670b5;
   }
 
   /* Inlet Black's new-agent screen draws the pixel texture

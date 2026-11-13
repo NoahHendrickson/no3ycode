@@ -70,6 +70,17 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
     expect(draftsSpread).toBeLessThan(sidebar.indexOf("...visiblePinnedThreads,"));
   });
 
+  it("gives the snoozed shelf the status header while status grouping is on", () => {
+    expect(sidebar).toContain(
+      "const snoozedSectionShown = statusGrouped && snoozedThreads.length > 0;",
+    );
+    expect(sidebar).toMatch(/snoozedThreads\.length > 0 &&[\s\S]{0,200}?!snoozedSectionShown/u);
+    expect(sidebar).toContain('section="snoozed"');
+    expect(sidebar).toContain("collapsed={!snoozedShelfExpanded}");
+    // Flat and project modes keep the blue shelf header.
+    expect(sidebar).toContain('data-testid="sidebar-v2-snoozed-shelf-toggle"');
+  });
+
   it("gives the settled tail the status header while status grouping is on", () => {
     // settledCount includes older settled threads the server has not sent yet.
     expect(sidebar).toContain("const settledSectionShown = statusGrouped && settledCount > 0;");
@@ -94,7 +105,7 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
       'data-fork-status-section={props.inStatusSection === true ? "" : undefined}',
     );
     expect(sidebar).toMatch(
-      /inStatusSection=\{\s*statusSection !== undefined \|\|\s*\(section === "settled" && settledSectionShown\)\s*\}/u,
+      /inStatusSection=\{\s*statusSection !== undefined \|\|\s*\(section === "snoozed" && snoozedSectionShown\) \|\|\s*\(section === "settled" && settledSectionShown\)\s*\}/u,
     );
     expect(sidebar).toContain('data-fork-status-section={pinnedSectionShown ? "" : undefined}');
   });

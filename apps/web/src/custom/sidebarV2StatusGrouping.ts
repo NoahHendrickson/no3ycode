@@ -67,9 +67,10 @@ const SIDEBAR_V2_STATUS_BUCKET_ORDER: readonly SidebarV2StatusBucket[] = [
     so it reads as one more group. */
 export type SidebarV2StatusSectionKey = SidebarV2StatusBucket | "pinned";
 
-/** Every header status grouping draws. Settled takes one too, but collapses
-    through its own shelf flag, so it is a label here and not a section key. */
-export type SidebarV2StatusHeaderKey = SidebarV2StatusSectionKey | "settled";
+/** Every header status grouping draws. Snoozed and Settled take one too, but
+    collapse through their own shelf flags, so they are labels here and not
+    section keys. */
+export type SidebarV2StatusHeaderKey = SidebarV2StatusSectionKey | "snoozed" | "settled";
 
 export const SIDEBAR_V2_STATUS_SECTION_LABELS: Record<SidebarV2StatusHeaderKey, string> = {
   drafts: "Drafts",
@@ -78,6 +79,7 @@ export const SIDEBAR_V2_STATUS_SECTION_LABELS: Record<SidebarV2StatusHeaderKey, 
   done: "Completed",
   working: "Working",
   idle: "Idle",
+  snoozed: "Snoozed",
   settled: "Settled",
 };
 
@@ -107,7 +109,7 @@ export type SidebarV2ListSection<TThread> =
   | SidebarV2StatusSection<TThread>;
 
 const isStatusSectionKey = (key: string): key is SidebarV2StatusSectionKey =>
-  key !== "settled" && key in SIDEBAR_V2_STATUS_SECTION_LABELS;
+  key !== "snoozed" && key !== "settled" && key in SIDEBAR_V2_STATUS_SECTION_LABELS;
 
 export function useSidebarV2CollapsedStatusSections() {
   return useSidebarV2CollapsedKeys(

@@ -43,7 +43,11 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-v2-scheduled"])[data-popup-open] {
+  :is(
+    [data-testid="sidebar-row-card"],
+    [data-testid="sidebar-row-slim"],
+    [data-testid="sidebar-v2-scheduled"]
+  )[data-popup-open] {
   --foreground: var(--fork-inlet-row-card-foreground);
   --sidebar-foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
@@ -72,8 +76,12 @@
   }
 }
 
+/* Near the window's bottom Base UI flips the card to end-aligned, its
+   bottom on the row's bottom, so the join mirrors: square bottom-left
+   corner, concave corner into the row's top edge. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"][data-align="start"] {
+  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);
@@ -85,26 +93,49 @@
   --contrast-border: var(--fork-inlet-row-card-line);
   background: var(--fork-inlet-row-card);
   border-color: transparent;
-  border-top-left-radius: 0;
   box-shadow: none;
 
   &::after {
     content: "";
     position: absolute;
     pointer-events: none;
-    top: -1px;
     right: calc(100% + 1px);
     width: var(--fork-inlet-fillet);
     height: calc(var(--anchor-height) + var(--fork-inlet-fillet));
-    background:
-      radial-gradient(
-          circle at 0 100%,
-          transparent calc(var(--fork-inlet-fillet) - 0.5px),
-          var(--fork-inlet-row-card) calc(var(--fork-inlet-fillet) + 0.5px)
-        )
-        left bottom / 100% var(--fork-inlet-fillet) no-repeat,
-      linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
-        var(--anchor-height) no-repeat;
+  }
+
+  &[data-align="start"] {
+    border-top-left-radius: 0;
+
+    &::after {
+      top: -1px;
+      background:
+        radial-gradient(
+            circle at 0 100%,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-row-card) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          left bottom / 100% var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
+          var(--anchor-height) no-repeat;
+    }
+  }
+
+  &[data-align="end"] {
+    border-bottom-left-radius: 0;
+
+    &::after {
+      bottom: -1px;
+      background:
+        radial-gradient(
+            circle at 0 0,
+            transparent calc(var(--fork-inlet-fillet) - 0.5px),
+            var(--fork-inlet-row-card) calc(var(--fork-inlet-fillet) + 0.5px)
+          )
+          left top / 100% var(--fork-inlet-fillet) no-repeat,
+        linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right bottom / 4px
+          var(--anchor-height) no-repeat;
+    }
   }
 }
 
@@ -113,7 +144,10 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   li[data-thread-item]:has(
-    [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]
+    :is(
+        [data-testid="sidebar-row-card"],
+        [data-testid="sidebar-row-slim"]
+      )[aria-current="page"][data-popup-open]
   )::after {
   display: none;
 }

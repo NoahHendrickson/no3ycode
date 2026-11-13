@@ -386,12 +386,20 @@ describe("fork guard: fork-inlet-theme", () => {
     ]) {
       expect(readSibling(site), site).toContain('data-fork-row-hover-card=""');
     }
-    const tab = inletRules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-row-hover-card]") && rule.selector.endsWith("::after"),
-    )?.body;
-    expect(tab).toContain("var(--anchor-height)");
-    expect(tab).toContain("radial-gradient");
+    // Joined whichever way Base UI aligns it: start, or end when the row is
+    // near the window's bottom and the card flips.
+    for (const align of ["start", "end"]) {
+      const tab = inletRules
+        .filter(
+          (rule) =>
+            rule.selector.includes("[data-fork-row-hover-card]") &&
+            rule.selector.endsWith(`[data-align="${align}"]::after`),
+        )
+        .map((rule) => rule.body)
+        .join("\n");
+      expect(tab, align).toContain("var(--anchor-height)");
+      expect(tab, align).toContain("radial-gradient");
+    }
     // The Threads header's icon menus hang from their buttons the same way.
     const chrome = readSibling("../custom/SidebarV2ChromeRows.tsx");
     expect(chrome.match(/data-fork-tab-trigger=""/gu)).toHaveLength(2);

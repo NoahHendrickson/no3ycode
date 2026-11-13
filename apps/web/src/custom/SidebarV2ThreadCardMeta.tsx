@@ -101,12 +101,10 @@ export function SidebarV2ProjectFolderMark(props: { readonly className?: string 
 }
 
 /** Which checkout a thread is on: the worktree or branch mark, the branch name
-    (drawn, or for assistive tech only), and the dev-server pulse hook. Shared
-    by this repo line and the compact card (`sidebar-v2-compact-cards`), so the
-    mark, its pulse and its accessible text change in one place. Callers draw
+    (drawn, or for assistive tech only), and the dev-server pulse hook. Callers draw
     it only when the thread has a worktree or a branch — see the repo line for
     why the worktree mark replaces the branch mark rather than joining it. */
-export function SidebarV2CheckoutMark(props: {
+function SidebarV2CheckoutMark(props: {
   readonly branch: string | null;
   readonly hasWorktree: boolean;
   readonly devServerPort: number | null;

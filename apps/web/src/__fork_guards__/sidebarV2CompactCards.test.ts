@@ -42,10 +42,8 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(sidebar).toMatch(
       /props\.compact === true \? null : \(\s*\/\*[^]*?\*\/\s*<SidebarV2ThreadCardMeta/u,
     );
-    // The checkout mark is the repo line's own, so its pulse and accessible
-    // text cannot drift between the two cards.
-    expect(marks).toContain("<SidebarV2CheckoutMark");
-    expect(marks).toContain('branchName="sr-only"');
+    // One line has no room for a mark nearly every thread carries.
+    expect(marks).not.toContain("<SidebarV2CheckoutMark");
     expect(sidebar).toContain("<SidebarV2CompactCardLead project={props.project} />");
   });
 

@@ -2007,9 +2007,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     so the title truncates against them. */}
                 {props.compact === true ? (
                   <SidebarV2ThreadCardCompactMarks
-                    branch={thread.branch}
-                    hasWorktree={thread.worktreePath !== null}
-                    devServerPort={devServerPort}
                     isRemote={isRemote}
                     terminalSlot={terminalStatusIcon}
                     prSlot={prBadge}
@@ -3015,7 +3012,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      shown only while something is pinned, and it collapses the same way: the
      open thread stays visible. Flat and project modes keep the divider. */
   const pinnedSectionShown = statusGrouped && pinnedThreads.length > 0;
-  // The settled tail takes the same header in place of its hairline shelf.
+  // The snoozed shelf and the settled tail take the same header in place of
+  // their shelf headers.
+  const snoozedSectionShown = statusGrouped && snoozedThreads.length > 0;
   const settledSectionShown = statusGrouped && settledCount > 0;
   const pinnedCollapsed = pinnedSectionShown && collapsedStatusSections.has("pinned");
   const keepCollapsedPinnedRow = useCallback(
@@ -5128,6 +5127,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           statusSection={statusSection}
                           inStatusSection={
                             statusSection !== undefined ||
+                            (section === "snoozed" && snoozedSectionShown) ||
                             (section === "settled" && settledSectionShown)
                           }
                           /* fork:end sidebar-v2-status-grouping */
@@ -5536,7 +5536,28 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     // is snoozed (the count is the whole footprint when
                     // collapsed); rows only when expanded. Vanishes entirely at
                     // count 0.
-                    if (snoozedThreads.length > 0) {
+                    /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
+                       Same header as the status sections; the shelf's own
+                       expanded flag still decides which rows paint. */
+                    if (snoozedSectionShown) {
+                      items.push(
+                        <SidebarV2StatusSectionHeader
+                          key="status-section-header:snoozed"
+                          section="snoozed"
+                          count={snoozedThreads.length}
+                          isFirst={items.every((item) => item === null)}
+                          collapsed={!snoozedShelfExpanded}
+                          onToggleCollapsed={toggleSnoozedShelf}
+                        />,
+                      );
+                    }
+                    /* fork:end sidebar-v2-status-grouping */
+                    if (
+                      snoozedThreads.length > 0 &&
+                      /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
+                      !snoozedSectionShown
+                      /* fork:end sidebar-v2-status-grouping */
+                    ) {
                       items.push(
                         <li
                           key="snoozed-shelf-header"
@@ -5582,9 +5603,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           </button>
                         </li>,
                       );
-                      for (const thread of visibleSnoozedThreads) {
-                        items.push(renderThreadRow(thread, "snoozed"));
-                      }
+                    }
+                    for (const thread of visibleSnoozedThreads) {
+                      items.push(renderThreadRow(thread, "snoozed"));
                     }
                     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
                        Same header as the status sections. The hairline shelf
