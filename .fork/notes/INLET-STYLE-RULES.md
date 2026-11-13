@@ -182,7 +182,7 @@ These look the way Noey wants them to right now, but are still being tuned:
 
 - **Tooltips:** pill-like 14px corners and 6px / 12px padding. A nub with long, gradual sloping
   shoulders into a round tip (44px wide, 7px deep), landing at the trigger. Tooltips beside their trigger (left or right) have no tail: the pill's round end has no flat edge for one. They grow out of the
-  nub.
+  nub. Black's tooltips are ink (`#141414`) over cream and cream over its dark-ink surfaces.
 - **Reasoning slider (Jungle):** the original dots and fill inside a recessed well; a fat 22px
   cream knob.
 - **Mode picker:** recessed well; the selected segment is a cream fill.

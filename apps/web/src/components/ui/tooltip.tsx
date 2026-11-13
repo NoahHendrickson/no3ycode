@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type CSSProperties,
   type RefObject,
 } from "react";
 
@@ -60,25 +61,53 @@ function TooltipScrollDismissArea({ onScrollCapture, ...props }: ComponentProps<
   );
 }
 
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+type ForkTooltipFill = { background: string; foreground: string };
+const ForkTooltipFillContext = createContext<ForkTooltipFill | null>(null);
+
+// The tooltip is portaled to the body, so it takes the fill its trigger's surface declares.
+function readForkTooltipFill(trigger: Element | undefined): ForkTooltipFill | null {
+  if (!trigger || !isInletActive()) return null;
+  const style = getComputedStyle(trigger);
+  const background = style.getPropertyValue("--fork-inlet-tooltip").trim();
+  const foreground = style.getPropertyValue("--fork-inlet-tooltip-foreground").trim();
+  return background && foreground ? { background, foreground } : null;
+}
+/* fork:end fork-inlet-theme */
+
 function Tooltip<Payload>(props: TooltipPrimitive.Root.Props<Payload>) {
   const tracker = use(TooltipScrollContext);
   const localActionsRef = useRef<TooltipPrimitive.Root.Actions | null>(null);
   const actionsRef = props.actionsRef ?? localActionsRef;
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- releases this tooltip from the scroll tracker on unmount
   useEffect(() => () => tracker?.release(actionsRef), [actionsRef, tracker]);
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  const [forkFill, setForkFill] = useState<ForkTooltipFill | null>(null);
+  const onOpenChange: TooltipPrimitive.Root.Props<Payload>["onOpenChange"] = (open, details) => {
+    if (open) setForkFill(readForkTooltipFill(details.trigger));
+    props.onOpenChange?.(open, details);
+  };
+  /* fork:end fork-inlet-theme */
 
-  if (!tracker) return <TooltipPrimitive.Root {...props} />;
+  if (!tracker)
+    return (
+      <ForkTooltipFillContext value={forkFill}>
+        <TooltipPrimitive.Root {...props} onOpenChange={onOpenChange} />
+      </ForkTooltipFillContext>
+    );
   return (
-    <TooltipHoverContext value={actionsRef}>
-      <TooltipPrimitive.Root
-        {...props}
-        actionsRef={actionsRef}
-        onOpenChange={(open, details) => {
-          props.onOpenChange?.(open, details);
-          if (!open && !details.isCanceled) tracker.release(actionsRef);
-        }}
-      />
-    </TooltipHoverContext>
+    <ForkTooltipFillContext value={forkFill}>
+      <TooltipHoverContext value={actionsRef}>
+        <TooltipPrimitive.Root
+          {...props}
+          actionsRef={actionsRef}
+          onOpenChange={(open, details) => {
+            onOpenChange(open, details);
+            if (!open && !details.isCanceled) tracker.release(actionsRef);
+          }}
+        />
+      </TooltipHoverContext>
+    </ForkTooltipFillContext>
   );
 }
 
@@ -102,8 +131,21 @@ function TooltipTrigger(props: TooltipPrimitive.Trigger.Props) {
 
 function TooltipPositioner(props: TooltipPrimitive.Positioner.Props) {
   const titlebarHeight = useNativeTitlebarHeight();
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  const forkFill = use(ForkTooltipFillContext);
+  /* fork:end fork-inlet-theme */
   return (
     <TooltipPrimitive.Positioner
+      /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+      style={
+        forkFill
+          ? ({
+              "--fork-inlet-tooltip": forkFill.background,
+              "--fork-inlet-tooltip-foreground": forkFill.foreground,
+            } as CSSProperties)
+          : undefined
+      }
+      /* fork:end fork-inlet-theme */
       className="pointer-events-none z-[140] max-w-(--available-width) transition-[top,left,right,bottom,transform] data-instant:transition-none"
       collisionPadding={{
         top: COLLISION_PADDING + titlebarHeight,
