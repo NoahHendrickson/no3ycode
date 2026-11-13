@@ -78,7 +78,21 @@ function coldClaudeThread() {
 }
 
 it("sends a Codex follow-up on a cold Claude thread without compacting first", async () => {
-  const step = (name: string) => console.info(`[handoff-diag] ${name}`);
+  const step = (name: string) => {
+    const items = [...document.querySelectorAll("[role=menuitem]")].map(
+      (item) =>
+        `${item.textContent?.slice(0, 40)}|disabled=${item.getAttribute("aria-disabled") ?? item.hasAttribute("data-disabled")}|highlighted=${item.hasAttribute("data-highlighted")}`,
+    );
+    const buttons = [...document.querySelectorAll("button")]
+      .map((button) => button.getAttribute("aria-label") ?? button.textContent ?? "")
+      .filter((name) => /GPT|Opus|Codex|Claude/.test(name));
+    const dialogs = [...document.querySelectorAll("[role=dialog],[role=alertdialog]")].map((d) =>
+      d.textContent?.slice(0, 120),
+    );
+    console.info(
+      `[handoff-diag] ${name} :: items=${JSON.stringify(items)} buttons=${JSON.stringify(buttons)} dialogs=${JSON.stringify(dialogs)} active=${document.activeElement?.tagName}`,
+    );
+  };
   const thread = coldClaudeThread();
   using _environment = installFakeEnvironment([thread], {
     acceptCommands: true,
