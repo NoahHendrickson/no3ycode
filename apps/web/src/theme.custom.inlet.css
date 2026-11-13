@@ -88,7 +88,7 @@
 
     & > :last-child {
       width: auto;
-      margin: var(--fork-inlet-margin) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
+      margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
     }
 
     & > :last-child > [style*="--resizable-width"] {
@@ -191,21 +191,30 @@
 /* Windows paints its caption buttons over the window's top band, so panels
    start below it, and the band drags the window as a title bar would. The
    tab strip clears the buttons itself (theme.custom.css); the floating
-   window sits below the band; the side chat has no frame; and while the
-   inline right panel owns the title bar the buttons sit over its tabs. */
+   window sits below the band; and the side chat has no frame. */
 
 :root[data-fork="noahhendrickson-t3code"].wco[data-fork-theme="inlet"]:not(
     [data-fork-has-thread-tabs]
   ) {
   --fork-inlet-panel-top: var(--workspace-topbar-height);
 
+  & :is([data-fork-split-pane="floating"], [data-side-chat-pane]) {
+    --fork-inlet-panel-top: var(--fork-inlet-margin);
+  }
+
+  /* The inline right panel is below the band too, so its tab bar keeps no
+     room for the caption buttons, and the panel controls ChatView pins at the
+     workspace root (only while that panel is present) drop onto its tab line. */
   &
     :is(
-      [data-fork-split-pane="floating"],
-      [data-side-chat-pane],
-      [data-chat-column-maximized-away][data-fork-right-panel-titlebar]
+      [data-preview-panel-mode="inline"],
+      [data-fork-workspace-root] > [data-workspace-titlebar-controls]
     ) {
-    --fork-inlet-panel-top: var(--fork-inlet-margin);
+    --workspace-controls-top: var(--fork-inlet-panel-top);
+    --workspace-controls-right: calc(
+      env(safe-area-inset-right) + var(--fork-inlet-margin) + 0.75rem
+    );
+    --workspace-native-controls-inset: 0px;
   }
 
   & [data-slot="sidebar-inset"] > [data-fork-stage-card] {

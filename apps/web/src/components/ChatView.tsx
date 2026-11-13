@@ -3736,9 +3736,6 @@ export default function ChatView(props: ChatViewProps) {
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         data-fork-chat-thread={isForkChatThread ? "" : undefined}
         /* fork:end fork-chat-mode */
-        /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-        data-fork-right-panel-titlebar={inlineRightPanelOwnsTitleBar ? "" : undefined}
-        /* fork:end fork-inlet-theme */
         inert={rightPanelMaximized}
       >
         {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
