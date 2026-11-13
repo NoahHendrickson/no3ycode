@@ -43,7 +43,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][data-popup-open] {
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-v2-scheduled"])[data-popup-open] {
   --foreground: var(--fork-inlet-row-card-foreground);
   --sidebar-foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
@@ -56,6 +56,19 @@
   background-color: var(--fork-inlet-row-card);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+/* The Automations row inks its label and icon directly (the chrome rows'
+   icon rules, the lit row's panel ink), so it restates the card's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-testid="sidebar-v2-scheduled"][data-popup-open] {
+  color: var(--fork-inlet-row-card-foreground);
+
+  & svg {
+    color: var(--fork-inlet-row-card-muted);
+  }
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]

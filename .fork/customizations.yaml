@@ -2472,7 +2472,8 @@
     Jungle Art) on dark; Black is a cream panel with Green's composer
     construction in a #141414 frame on light. Menus, popovers and glass
     tooltips are each colour's solid --popover, unfrosted. A sidebar row's
-    hover card (data-fork-row-hover-card, fenced at its two call sites) opens
+    hover card (data-fork-row-hover-card, fenced at its two thread call sites,
+    and on the Automations row's run card) opens
     as a tab: the row takes the card's fill and goes square on the right, and
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.

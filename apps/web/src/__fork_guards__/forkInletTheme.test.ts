@@ -386,6 +386,7 @@ describe("fork guard: fork-inlet-theme", () => {
     for (const site of [
       "../components/Sidebar.tsx",
       "../components/sidebar/SidebarThreadRow.tsx",
+      "../custom/SidebarV2AutomationsHoverCard.tsx",
     ]) {
       expect(readSibling(site), site).toContain('data-fork-row-hover-card=""');
     }
