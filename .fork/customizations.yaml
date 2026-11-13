@@ -2568,8 +2568,8 @@
     index.html pre-paints the colour's frame and stamps both attributes from
     the same table. Colours with a light frame on dark (Jungle Art, Cream) ask the desktop window chrome for light (a fenced override in hooks/useTheme.ts), so macOS draws light traffic lights on the cream. Must not alter any other palette.
     On Windows (.wco) without the tab strip, panels start below the caption
-    band (--fork-inlet-panel-top), which drags the window, except while the
-    inline right panel owns the title bar (ChatView stamps the column).
+    band (--fork-inlet-panel-top), which drags the window; the inline right
+    panel included.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -2595,7 +2595,6 @@
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/index.html
     - apps/web/src/components/Sidebar.tsx
-    - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/sidebar/SidebarThreadRow.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
