@@ -183,11 +183,13 @@
     [data-fork-inlet-color="cream"],
     [data-fork-inlet-color="black"]
   )
-  [data-sidebar-version="v2"]
-  [data-fork-thread-row] {
-  border-radius: 10px;
+  [data-sidebar-version="v2"] {
+  & [data-fork-thread-row] {
+    border-radius: 10px;
+  }
 
-  &[aria-current="page"] {
+  & [data-fork-thread-row][aria-current="page"],
+  & li[data-fork-split-pair][data-active] > ul {
     border-radius: 10px 0 0 10px;
   }
 }

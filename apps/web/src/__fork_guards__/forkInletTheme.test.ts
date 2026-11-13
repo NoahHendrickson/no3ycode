@@ -276,7 +276,7 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
     // settled thread's open row is the slim row, on the same fill.
-    const row = ruleBodyFor(inletRules, [
+    const row = ruleNaming(inletRules, [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
       '[data-fork-thread-row][aria-current="page"]',
@@ -294,6 +294,10 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
+    // An open split pair (fork-split-threads) bridges from its row, not its open half.
+    expect(bridge?.selector.replace(/\s+/gu, "")).toContain(
+      "li[data-fork-split-pair][data-active]::after",
+    );
     // Paint containment from content-visibility would clip the bridge to the item.
     const item = docked.find((rule) =>
       rule.selector
@@ -390,9 +394,12 @@ describe("fork guard: fork-inlet-theme", () => {
     const hoverCardAfter = (suffix: string) =>
       inletRules.find(
         (rule) =>
-          rule.selector.includes("[data-fork-row-hover-card]") && rule.selector.endsWith(suffix),
+          rule.selector.includes("[data-fork-row-hover-card]") &&
+          rule.selector.replace(/\(\s+/gu, "(").replace(/\s+\)/gu, ")").endsWith(suffix),
       )?.body;
-    const tab = hoverCardAfter(':is([data-align="start"], [data-align="end"])::after');
+    const tab = hoverCardAfter(
+      ':is([data-align="start"], [data-align="end"]):not([data-fork-on-open-pair])::after',
+    );
     expect(tab).toContain("var(--anchor-height)");
     expect(tab).toContain("radial-gradient");
     // Near the window's bottom the card flips end-aligned; the join is the same

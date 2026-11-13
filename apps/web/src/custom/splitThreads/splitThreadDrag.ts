@@ -13,6 +13,7 @@ import { parseScopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { DragEvent, PointerEvent } from "react";
 
+import { morphSplitPairs } from "./splitMorph";
 import { useSplitThreadStore } from "./splitThreadStore";
 
 const SPLIT_THREAD_DRAG_TYPE = "application/x-t3code-split-thread";
@@ -23,8 +24,50 @@ const DROP_TARGET_ATTRIBUTE = "data-fork-split-drop-target";
 // button opts back in with data-fork-split-drag-surface.
 const CONTROL_SELECTOR = ":is(button, a, input):not([data-fork-split-drag-surface])";
 
+const DRAGGING_ATTRIBUTE = "data-fork-split-dragging";
+// Room around the lifted copy for its shadow, which the drag image would clip.
+const DRAG_IMAGE_INSET = 12;
+
 /** dataTransfer is unreadable during dragover, so the source rides here. */
 let draggedThreadKey: string | null = null;
+
+const clearDragging = () =>
+  document
+    .querySelectorAll(`[${DRAGGING_ATTRIBUTE}]`)
+    .forEach((element) => element.removeAttribute(DRAGGING_ATTRIBUTE));
+
+/** Carries a copy of the card on a solid, shadowed surface (theme.custom.css) in place
+    of the browser's faint snapshot, and dims the row it left. */
+function liftCard(event: DragEvent<HTMLElement>) {
+  const source = event.currentTarget;
+  const surface = source.querySelector<HTMLElement>('[data-testid="sidebar-row-card"]') ?? source;
+  const rect = surface.getBoundingClientRect();
+  const copy = surface.cloneNode(true) as HTMLElement;
+  copy.style.width = `${rect.width}px`;
+  copy.style.height = `${rect.height}px`;
+  // A free card, not the open row joined to its panel or the row a hover card hangs from.
+  copy.removeAttribute("aria-current");
+  copy.removeAttribute("data-popup-open");
+  // A tab's copy wears the selected tab's fill and ink.
+  if (copy.hasAttribute("data-fork-thread-tab")) copy.dataset.active = "true";
+  const image = document.createElement("div");
+  image.setAttribute("data-fork-split-drag-image", "");
+  image.append(copy);
+  // Inside the list or strip, so it reads the same theme tokens as the row.
+  (source.closest("[data-fork-thread-list], [data-fork-thread-tabs]") ?? document.body).append(
+    image,
+  );
+  event.dataTransfer.setDragImage(
+    image,
+    event.clientX - rect.left + DRAG_IMAGE_INSET,
+    event.clientY - rect.top + DRAG_IMAGE_INSET,
+  );
+  // The browser snapshots the image when dragstart returns.
+  setTimeout(() => {
+    image.remove();
+    if (draggedThreadKey !== null) source.setAttribute(DRAGGING_ATTRIBUTE, "");
+  }, 0);
+}
 
 const startsOnControl = (event: { readonly target: EventTarget | null }) =>
   event.target instanceof Element && event.target.closest(CONTROL_SELECTOR) !== null;
@@ -51,6 +94,11 @@ export function splitThreadDragSourceProps(threadKey: string, enabled: boolean) 
       draggedThreadKey = threadKey;
       event.dataTransfer.setData(SPLIT_THREAD_DRAG_TYPE, threadKey);
       event.dataTransfer.effectAllowed = "link";
+      liftCard(event);
+    },
+    onDragEnd: () => {
+      draggedThreadKey = null;
+      clearDragging();
     },
   };
 }
@@ -66,7 +114,7 @@ function rowUnder(event: DragEvent<HTMLElement>): HTMLElement | null {
 export function makeSplitDropHandlers(input: {
   readonly canPair: (threadKey: string) => boolean;
   readonly openThreadKey: string | null;
-  readonly openThread: (threadRef: ScopedThreadRef) => void;
+  readonly openThread: (threadRef: ScopedThreadRef) => Promise<unknown> | void;
 }) {
   const clearTarget = (event: DragEvent<HTMLElement>) => {
     event.currentTarget
@@ -85,10 +133,15 @@ export function makeSplitDropHandlers(input: {
     const dragged = parseScopedThreadKey(draggedKey);
     const target = parseScopedThreadKey(targetKey);
     if (!dragged || !target) return;
-    useSplitThreadStore.getState().pair(target, dragged);
-    if (input.openThreadKey !== draggedKey && input.openThreadKey !== targetKey) {
-      input.openThread(dragged);
-    }
+    // The morph starts from the rows at rest, not from the dimmed one.
+    clearDragging();
+    morphSplitPairs([target, dragged], () => {
+      useSplitThreadStore.getState().pair(target, dragged);
+      if (input.openThreadKey !== draggedKey && input.openThreadKey !== targetKey) {
+        return input.openThread(dragged);
+      }
+      return undefined;
+    });
   };
   return {
     onDragOver: (event: DragEvent<HTMLElement>) => {

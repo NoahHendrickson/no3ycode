@@ -338,6 +338,21 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(sidebarV2).toContain("threadCardTitleRecedes({");
   });
 
+  it("leaves an open split pair's fill to the pair, keeping selection on its cards", () => {
+    const onPair = (isActive: boolean, isSelected: boolean) =>
+      threadRowSurfaceClassName({
+        isActive,
+        isSelected,
+        recedes: true,
+        shape: "card",
+        onOpenPair: true,
+      });
+    expect(onPair(true, false)).not.toContain("bg-sidebar-row-active");
+    expect(onPair(false, false)).not.toContain("hover:bg-sidebar-row-hover");
+    expect(onPair(false, true)).toContain("bg-sidebar-row-selected");
+    expect(onPair(true, true)).toContain("bg-sidebar-row-selected");
+  });
+
   it("never paints a row surface from its status", () => {
     // The reversal this revision is about. `--sidebar-row-working` was the
     // resting fill; both the token and every reference to it are gone, and a

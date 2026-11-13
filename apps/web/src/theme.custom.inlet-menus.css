@@ -43,7 +43,9 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
-  :is([data-fork-thread-row], [data-testid="sidebar-v2-scheduled"])[data-popup-open] {
+  :is([data-fork-thread-row], [data-testid="sidebar-v2-scheduled"])[data-popup-open]:not(
+    li[data-fork-split-pair][data-active] *
+  ) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --sidebar-foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
@@ -77,7 +79,9 @@
    corner, concave corner into the row's top edge. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]) {
+  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]):not(
+    [data-fork-on-open-pair]
+  ) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);
