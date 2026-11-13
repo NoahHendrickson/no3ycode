@@ -361,6 +361,18 @@ import {
   useSidebarModePolicy,
 } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { createPortal } from "react-dom";
+import { BotMascotLead } from "~/custom/bots/BotMascot";
+import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots/botMascots";
+import { isBotThread, listSidebarBots } from "~/custom/bots/botThreads";
+import {
+  SidebarV2NewBotRow,
+  useSidebarV2CollapsedListSections,
+} from "~/custom/bots/SidebarV2BotsSection";
+import { useCreateBot } from "~/custom/bots/useCreateBot";
+import { SidebarV2BotsRow } from "~/custom/SidebarV2ChromeRows";
+/* fork:end fork-bots */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
   SIDEBAR_V2_ICON_BUTTON_CLASS,
@@ -2009,8 +2021,23 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   <SidebarV2CompactCardLead project={props.project} />
                   {title}
                 </span>
+              ) : /* fork:end sidebar-v2-compact-cards */
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                 A bot's card leads with its mascot, whose face follows what the bot is doing. */
+              isBotThread(thread) ? (
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <BotMascotLead
+                    shape={botMascotShape(thread)}
+                    mood={botMascotMood({
+                      status,
+                      isUnread,
+                      resting: !props.isActive,
+                    })}
+                  />
+                  {title}
+                </span>
               ) : (
-                /* fork:end sidebar-v2-compact-cards */
+                /* fork:end fork-bots */
                 title
               )}
               {isRegeneratingTitle ? (
@@ -2309,6 +2336,17 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const moveThreadToMode = modePolicy.moveThread;
   /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     Bots list in their own section above the threads; Chat stays one flat list. */
+  const botThreads = listSidebarBots(threads);
+  const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
+  const botsSectionCollapsed = isListSectionCollapsed("bots");
+  const threadsSectionCollapsed = !modePolicy.chat && isListSectionCollapsed("threads");
+  const [namingBot, setNamingBot] = useState(false);
+  const createBot = useCreateBot();
+  // The cards are built where every row is, inside the list, and portalled up into the Bots row.
+  const [botListElement, setBotListElement] = useState<HTMLUListElement | null>(null);
+  /* fork:end fork-bots */
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4950,7 +4988,23 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               /* fork:end fork-new-agent-draft */
               onNewThread={handleNewThreadClick}
             />
+            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+            <SidebarV2BotsRow
+              count={botThreads.length}
+              collapsed={botsSectionCollapsed}
+              onToggleCollapsed={() => toggleListSectionCollapsed("bots")}
+              onNewBot={() => {
+                setNamingBot(true);
+                if (botsSectionCollapsed) toggleListSectionCollapsed("bots");
+              }}
+              onListElement={setBotListElement}
+            />
+            {/* fork:end fork-bots */}
             <SidebarV2ProjectScopeRow
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+              collapsed={threadsSectionCollapsed}
+              onToggleCollapsed={() => toggleListSectionCollapsed("threads")}
+              /* fork:end fork-bots */
               projectGroups={projectGroups}
               projectScopeKeys={projectScopeKeys}
               scopedProjectDisplayName={scopedProjectsLabel}
@@ -5219,7 +5273,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           projectTitleHidden={underProjectHeader}
                           /* fork:end sidebar-v2-project-grouping */
                           /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-                          hideProjectMark={!modePolicy.projectControls}
+                          hideProjectMark={
+                            !modePolicy.projectControls ||
+                            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+                            isBotThread(thread)
+                            /* fork:end fork-bots */
+                          }
                           /* fork:end fork-chat-mode */
                           providerEntryByInstanceId={
                             providerEntriesByEnvironment.get(thread.environmentId) ??
@@ -5704,9 +5763,42 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     for (const thread of renderedSettledThreads) {
                       items.push(renderThreadRow(thread, "settled"));
                     }
-                    return items;
+                    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                       The Threads row folds the list. Bot cards are built here,
+                       with every other row, and shown in the Bots row above it;
+                       a folded Bots section keeps the open bot's card. */
+                    if (modePolicy.chat || botListElement === null) return items;
+                    return [
+                      ...(threadsSectionCollapsed ? [] : items),
+                      createPortal(
+                        <>
+                          {botThreads
+                            .filter(
+                              (bot) =>
+                                !botsSectionCollapsed ||
+                                routeRowThreadKey ===
+                                  scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
+                            )
+                            .map((bot) => renderOneThreadRow(bot, "active"))}
+                          {namingBot ? (
+                            <SidebarV2NewBotRow
+                              initialMascot={nextBotMascotShape(botThreads.map(botMascotShape))}
+                              onCreate={createBot}
+                              onDone={() => setNamingBot(false)}
+                            />
+                          ) : null}
+                        </>,
+                        botListElement,
+                        "bots",
+                      ),
+                    ];
+                    /* fork:end fork-bots */
                   })()}
-                  {settledShelfExpanded && hiddenSettledCount > 0 ? (
+                  {settledShelfExpanded &&
+                  hiddenSettledCount > 0 &&
+                  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+                  !threadsSectionCollapsed ? (
+                    /* fork:end fork-bots */
                     <li
                       /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
                       data-fork-status-section={settledSectionShown ? "" : undefined}

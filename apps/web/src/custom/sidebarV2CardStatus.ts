@@ -23,6 +23,7 @@
  *   Settlement is server-side (upstream #8600): a settled thread never reads
  *   as woke.
  */
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 
 import {
@@ -31,6 +32,9 @@ import {
   type SidebarThreadStatus,
 } from "~/components/Sidebar.logic";
 import { parseTimestampDate } from "~/timestampFormat";
+
+import { hasUnseenBotReport } from "./bots/botReports";
+import { isQuietBotReport } from "./bots/botThreads";
 
 import type { SidebarV2DotTone } from "./SidebarV2StatusIndicator";
 
@@ -133,7 +137,13 @@ export function resolveSidebarV2CardStatus(
   input: { readonly lastVisitedAt: string | undefined; readonly wokeAt: string | null },
 ): SidebarV2CardStatus {
   const status = resolveSidebarThreadStatus(thread);
-  const isUnread = hasUnseenCompletion({ ...thread, lastVisitedAt: input.lastVisitedAt });
+  // A bot's wake that found nothing is not news, but an earlier report still unread is.
+  const isUnread = isQuietBotReport(thread)
+    ? hasUnseenBotReport(
+        scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+        input.lastVisitedAt,
+      )
+    : hasUnseenCompletion({ ...thread, lastVisitedAt: input.lastVisitedAt });
   const lastVisitedDate =
     input.lastVisitedAt === undefined ? null : parseTimestampDate(input.lastVisitedAt);
   const wokeAtDate = input.wokeAt === null ? null : parseTimestampDate(input.wokeAt);

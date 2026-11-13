@@ -142,6 +142,9 @@ import { useStableHandoffRuns, useIncrementalTimelineRows, useStableRows } from 
 import { useClientSettings } from "../../hooks/useSettings";
 /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
 import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { BotEmptyConversation } from "~/custom/bots/BotMascot";
+/* fork:end fork-bots */
 /* fork:end fork-stage-stamps */
 
 function timelineListStateFor(identity: string): {
@@ -1323,7 +1326,17 @@ const ConversationTimeline = memo(function ConversationTimeline({
           className="flex h-full items-center justify-center ps-(--chat-lane-inset-start) pe-(--chat-lane-inset-end)"
           style={{ paddingBottom: emptyPlaceholderInset }}
         >
-          <p className="text-sm text-muted-foreground">Send a message to start the conversation.</p>
+          {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+              An empty bot greets with its mascot; every other thread keeps upstream's line. */}
+          <BotEmptyConversation
+            threadKey={routeThreadKey}
+            fallback={
+              <p className="text-sm text-muted-foreground">
+                Send a message to start the conversation.
+              </p>
+            }
+          />
+          {/* fork:end fork-bots */}
         </div>
       </>
     );

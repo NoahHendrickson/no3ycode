@@ -2980,6 +2980,15 @@
 }
 /* fork:end fork-chat-mode */
 
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+   A bot's conversation is the composer alone too. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-column][data-fork-bot-thread]
+  [data-fork-composer-context-row] {
+  display: none;
+}
+/* fork:end fork-bots */
+
 /* ── Sidebar resize rail (fork-sidebar-rail-accent) ─────────────────────────
    The drag line and its tooltip take the new-agent texture's blue
    (custom/pixelTexture's leaf highlight), so the grab target reads on every

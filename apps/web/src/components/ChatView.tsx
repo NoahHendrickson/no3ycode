@@ -424,6 +424,9 @@ import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
 import { useIsChatThread } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { useIsBotThread } from "~/custom/bots/useIsBotThread";
+/* fork:end fork-bots */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -1053,6 +1056,10 @@ export default function ChatView(props: ChatViewProps) {
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
   const isForkChatThread = useIsChatThread(activeThreadRef);
   /* fork:end fork-chat-mode */
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     A bot reads like a chat: the composer alone, without project and checkout chips. */
+  const isForkBotThread = useIsBotThread(activeThreadRef);
+  /* fork:end fork-bots */
   const activeThreadKey = activeThreadRef ? scopedThreadKey(activeThreadRef) : null;
   const activeEnvironmentServerBrowser = useEnvironmentSupportsServerBrowser(
     activeThreadRef?.environmentId ?? null,
@@ -3736,6 +3743,9 @@ export default function ChatView(props: ChatViewProps) {
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         data-fork-chat-thread={isForkChatThread ? "" : undefined}
         /* fork:end fork-chat-mode */
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        data-fork-bot-thread={isForkBotThread ? "" : undefined}
+        /* fork:end fork-bots */
         inert={rightPanelMaximized}
       >
         {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}

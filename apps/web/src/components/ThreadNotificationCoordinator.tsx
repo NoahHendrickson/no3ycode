@@ -37,6 +37,11 @@ import {
   type ThreadNotificationObservation,
 } from "./ThreadNotificationCoordinator.logic";
 import { toastManager } from "./ui/toast";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { noteBotReport } from "~/custom/bots/botReports";
+import { isQuietBotReport } from "~/custom/bots/botThreads";
+/* fork:end fork-bots */
 
 interface NotificationState extends ThreadNotificationObservation {
   readonly raw: OrchestrationV2ThreadShell;
@@ -249,6 +254,14 @@ export function startThreadNotifications(
         next.set(rawThread.id, prior);
         continue;
       }
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         Remembers a bot's report, so a later quiet wake cannot clear its unread mark. */
+      noteBotReport(
+        scopedThreadKey(scopeThreadRef(environmentId, rawThread.id)),
+        { source: rawThread },
+        Date.now(),
+      );
+      /* fork:end fork-bots */
       const thread = presentThreadShell(environmentId, rawThread, subagentRequest);
       let status = resolveSidebarThreadStatus(thread);
       if (status === "ready" && thread.latestRun?.status === "failed") status = "failed";
@@ -280,7 +293,12 @@ export function startThreadNotifications(
     for (const [prior, state] of changed) {
       entry.gate.observe(state.thread.id, prior, state, {
         archived: state.thread.archivedAt !== null,
-        quiet: state.raw.latestRunStopRequested === true,
+        quiet:
+          state.raw.latestRunStopRequested === true ||
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+             A bot's wake that found nothing stays silent. */
+          isQuietBotReport({ source: state.raw }),
+        /* fork:end fork-bots */
       });
     }
   };

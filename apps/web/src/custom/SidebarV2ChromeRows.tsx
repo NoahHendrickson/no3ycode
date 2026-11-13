@@ -35,7 +35,7 @@ import type {
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, FolderIcon, FolderPlusIcon, PlusIcon, SearchIcon } from "lucide-react";
 // Fork-only glyphs (no lucide counterpart) come from the shim's own path: this
 // file is fork-owned, so there is no upstream import site to preserve.
 import {
@@ -115,6 +115,112 @@ const PROJECTS_ROW_BUTTON = cn(
   CHROME_ROW_ICON_TINT,
   "[&>svg]:text-current",
 );
+
+/** A section's label, 13px semibold like the status headers under it. With `onToggle` it folds
+    its section: the label, an optional count, and the status headers' caret. See `fork-bots`. */
+function SectionLabel(props: {
+  readonly count?: number;
+  readonly collapsed?: boolean;
+  readonly onToggle?: (() => void) | undefined;
+  readonly testId: string;
+  readonly className: string;
+  readonly children: ReactNode;
+}) {
+  if (props.onToggle === undefined) {
+    return <span className={props.className}>{props.children}</span>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={props.onToggle}
+      aria-expanded={props.collapsed !== true}
+      data-testid={props.testId}
+      className={cn(
+        "group/section inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-left hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        props.className,
+      )}
+    >
+      <span className="truncate">{props.children}</span>
+      {props.count === undefined ? null : (
+        <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
+      )}
+      <svg
+        aria-hidden
+        viewBox="0 0 14 14"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={1}
+        strokeLinejoin="round"
+        className={cn(
+          "size-3.5 shrink-0 opacity-0 transition-[opacity,rotate] group-hover/section:opacity-100 group-focus-visible/section:opacity-100",
+          props.collapsed === true ? "opacity-100" : "rotate-180",
+        )}
+      >
+        <path d="M2.71 4.75H11.29L7 9.04Z" />
+      </svg>
+    </button>
+  );
+}
+
+/**
+ * The Bots section's row, above the Threads row and in its shape — see
+ * `.fork/customizations.yaml#fork-bots`. Sidebar.tsx portals the bot cards into the list it hands to `onListElement`.
+ */
+export function SidebarV2BotsRow({
+  count,
+  collapsed,
+  onToggleCollapsed,
+  onNewBot,
+  onListElement,
+}: {
+  readonly count: number;
+  readonly collapsed: boolean;
+  readonly onToggleCollapsed: () => void;
+  readonly onNewBot: () => void;
+  readonly onListElement: (element: HTMLUListElement | null) => void;
+}) {
+  return (
+    <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+      <div className="flex h-8 items-center gap-1.5 px-3">
+        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
+          <SectionLabel
+            count={count}
+            collapsed={collapsed}
+            onToggle={onToggleCollapsed}
+            testId="sidebar-v2-bots-section-toggle"
+            className="text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
+          >
+            Bots
+          </SectionLabel>
+        </span>
+        <div className="-me-3 flex shrink-0 items-center">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <SidebarMenuButton
+                  size="sm"
+                  type="button"
+                  className={PROJECTS_ROW_BUTTON}
+                  aria-label="New bot"
+                  data-testid="sidebar-v2-new-bot"
+                  onClick={onNewBot}
+                />
+              }
+            >
+              <PlusIcon className="size-4 shrink-0" />
+            </TooltipTrigger>
+            <TooltipPopup side="right">New bot</TooltipPopup>
+          </Tooltip>
+        </div>
+      </div>
+      <ul
+        ref={onListElement}
+        role="presentation"
+        className={cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}
+      />
+    </SidebarGroup>
+  );
+}
 
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
@@ -607,6 +713,9 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
   readonly projectSortOrder: SidebarProjectSortOrder;
   readonly onProjectSortOrderChange: (sortOrder: SidebarProjectSortOrder) => void;
   readonly onAddProject: () => void;
+  /** Folds the whole list under this row — see `fork-bots`. Omitted where the row cannot fold. */
+  readonly collapsed?: boolean;
+  readonly onToggleCollapsed?: () => void;
 }) {
   const hasProjects = props.projectGroups.length > 0;
   const isScoped = props.projectScopeKeys.size > 0;
@@ -637,12 +746,15 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     // project headers and the card meta lines together (theme.custom.palettes.css).
     <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
       <div className="flex h-8 items-center gap-1.5 px-3">
-        <span
-          role="heading"
-          aria-level={2}
-          className="min-w-0 flex-1 truncate text-left text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
-        >
-          Threads
+        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
+          <SectionLabel
+            collapsed={props.collapsed === true}
+            onToggle={props.onToggleCollapsed}
+            testId="sidebar-v2-threads-section-toggle"
+            className="text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
+          >
+            Threads
+          </SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
           <Tooltip>

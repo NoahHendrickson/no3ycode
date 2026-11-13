@@ -81,7 +81,7 @@ import { describeFailedWebhookFilter, findFailedWebhookFilter } from "./webhookF
 import { constantTimeEquals, verifyWebhookSignature } from "./webhookVerification.ts";
 /* fork:begin fork-scheduled-page — see .fork/customizations.yaml#fork-scheduled-page */
 import type { ScheduledTaskListRunsInput, ScheduledTaskListRunsResult } from "@t3tools/contracts";
-import { listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
+import { hasUnfinishedScheduledRun, listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
 /* fork:end fork-scheduled-page */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
@@ -1306,10 +1306,22 @@ export const layer = Layer.effect(
       yield* Effect.forEach(
         due,
         ({ task, dueAt }) =>
-          Effect.suspend(() =>
-            isMissedFixedTimeRun(task.schedule, dueAt, now)
-              ? rescheduleMissedRun(task, now)
-              : runTask(task, "scheduled"),
+          Effect.suspend(
+            () =>
+              isMissedFixedTimeRun(task.schedule, dueAt, now)
+                ? rescheduleMissedRun(task, now)
+                : /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                   A bound task whose earlier wake is still queued or running skips this
+                   fire, so a held-up thread does not collect one wake per interval. A one-time
+                   run has no later fire to make up for a skip, so it always runs. */
+                  task.threadId === null || task.schedule.type === "once"
+                  ? runTask(task, "scheduled")
+                  : hasUnfinishedScheduledRun(sql, task.id, task.threadId).pipe(
+                      Effect.flatMap((unfinished) =>
+                        unfinished ? rescheduleMissedRun(task, now) : runTask(task, "scheduled"),
+                      ),
+                    ),
+            /* fork:end fork-bots */
           ).pipe(
             Effect.catch((cause) =>
               Effect.logWarning("Scheduled task run failed", { taskId: task.id, cause }),
