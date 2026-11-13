@@ -124,9 +124,10 @@ const TAB_SHELL_CLASS =
 const TAB_SHELL_STYLE = { minWidth: COLLAPSED_TAB_MIN_WIDTH };
 const TAB_ACTION_CLASS = cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-5 rounded-full");
 const ACTIVE_TAB_CLASS = "bg-black/10 text-foreground dark:bg-white/16";
-// No group/tab: each half's hover actions answer to that half alone.
+// No group/tab: each half's hover actions answer to that half alone. Its minimum is its
+// halves' (one fitCollapsedThreadTabs slot each), so it never shrinks under them.
 const SPLIT_TAB_CLASS = cn(
-  "relative flex h-7 min-w-0 shrink items-center rounded-full text-xs font-medium",
+  "relative flex h-7 shrink items-center rounded-full text-xs font-medium",
   ACTIVE_TAB_CLASS,
 );
 
@@ -632,6 +633,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
               data-fork-thread-tab=""
               data-active="true"
               className={SPLIT_TAB_CLASS}
+              style={{ minWidth: slot.entries.length * COLLAPSED_TAB_MIN_WIDTH }}
             >
               {slot.entries.map((entry) => renderEntry(entry, true))}
             </div>

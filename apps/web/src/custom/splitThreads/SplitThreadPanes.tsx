@@ -28,7 +28,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
   type SyntheticEvent,
@@ -41,6 +40,7 @@ import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandl
 import { threadShellHasStarted } from "~/components/ChatView.logic";
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useResizeDrag } from "~/hooks/useResizeDrag";
 import { useStableCallback } from "~/hooks/useStableCallback";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentShellStatus } from "~/state/shell";
@@ -87,48 +87,55 @@ function SplitResizeHandle(props: {
   readonly floatBehind: boolean;
   readonly onResize: (ratio: number) => void;
 }) {
-  const dragRef = useRef<{ readonly row: HTMLElement; ratio: number } | null>(null);
-  const write = (row: HTMLElement, ratio: number) => {
-    row.style.setProperty(SPLIT_RATIO_VAR, String(ratio));
-  };
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (drag === null) return;
-    const rect = drag.row.getBoundingClientRect();
-    const handleWidth = event.currentTarget.offsetWidth;
-    const span = rect.width - handleWidth;
-    if (span <= 0) return;
-    const min = Math.min(DEFAULT_SPLIT_RATIO, MIN_SPLIT_PANE_WIDTH / span);
-    const raw = (event.clientX - rect.left - handleWidth / 2) / span;
-    drag.ratio = Math.min(1 - min, Math.max(min, raw));
-    write(drag.row, drag.ratio);
-  };
-  const end = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (drag === null) return;
-    dragRef.current = null;
-    delete event.currentTarget.dataset.dragging;
-    props.onResize(drag.ratio);
-  };
+  const { ref, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } =
+    useResizeDrag<HTMLDivElement>((event) => {
+      const handle = event.currentTarget;
+      const row = handle.parentElement;
+      if (row === null) return null;
+      const style = getComputedStyle(handle);
+      // The room the handle takes from the panes (Inlet lays it over a margin, so none).
+      const handleSpace =
+        handle.offsetWidth +
+        Number.parseFloat(style.marginLeft) +
+        Number.parseFloat(style.marginRight);
+      const span = row.getBoundingClientRect().width - handleSpace;
+      if (span <= 0) return null;
+      const stored = Number.parseFloat(row.style.getPropertyValue(SPLIT_RATIO_VAR));
+      const startRatio = Number.isFinite(stored) ? stored : DEFAULT_SPLIT_RATIO;
+      const min = Math.min(span * DEFAULT_SPLIT_RATIO, MIN_SPLIT_PANE_WIDTH);
+      handle.dataset.dragging = "";
+      return {
+        width: startRatio * span,
+        edge: "right",
+        bounds: { min, max: span - min },
+        resize(leftWidth) {
+          row.style.setProperty(SPLIT_RATIO_VAR, String(leftWidth / span));
+          return leftWidth;
+        },
+        // A press that never travelled (a click, half a double-click) keeps the stored share.
+        finish(leftWidth, moved) {
+          if (moved) props.onResize(leftWidth / span);
+          else row.style.setProperty(SPLIT_RATIO_VAR, String(startRatio));
+        },
+        cleanup(committed) {
+          delete handle.dataset.dragging;
+          if (!committed) row.style.setProperty(SPLIT_RATIO_VAR, String(startRatio));
+        },
+      };
+    });
   return (
     <div
       aria-hidden
+      ref={ref}
       // Themes that frame each pane on its own card hide the line and keep the handle.
       data-fork-split-divider=""
       data-fork-float-behind={props.floatBehind || undefined}
       className="relative z-20 order-1 w-px shrink-0 cursor-col-resize touch-none bg-border select-none before:absolute before:inset-y-0 before:-inset-x-1 before:content-[''] hover:bg-ring/60 data-dragging:bg-ring"
-      onPointerDown={(event) => {
-        const row = event.currentTarget.parentElement;
-        if (event.button !== 0 || row === null) return;
-        event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        event.currentTarget.dataset.dragging = "";
-        const ratio = Number.parseFloat(row.style.getPropertyValue(SPLIT_RATIO_VAR));
-        dragRef.current = { row, ratio: Number.isFinite(ratio) ? ratio : DEFAULT_SPLIT_RATIO };
-      }}
+      onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={end}
-      onLostPointerCapture={end}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onLostPointerCapture={onLostPointerCapture}
       onDoubleClick={() => props.onResize(DEFAULT_SPLIT_RATIO)}
     />
   );
