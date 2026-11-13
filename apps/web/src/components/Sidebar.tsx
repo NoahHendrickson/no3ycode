@@ -5237,6 +5237,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         <SidebarSplitPairRow
                           key={splitRow.key}
                           projectSection={options.underProjectHeader === true}
+                          compact={compactCards}
+                          active={[splitRow.left, splitRow.right].some(
+                            (card) =>
+                              scopedThreadKey(scopeThreadRef(card.environmentId, card.id)) ===
+                              routeRowThreadKey,
+                          )}
                         >
                           {[splitRow.left, splitRow.right].map((card) =>
                             renderOneThreadRow(

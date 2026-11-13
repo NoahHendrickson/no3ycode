@@ -192,6 +192,17 @@
   }
 }
 
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="jungle"],
+    [data-fork-inlet-color="cream"],
+    [data-fork-inlet-color="black"]
+  )
+  [data-sidebar-version="v2"]
+  li[data-fork-split-pair][data-active]
+  > ul {
+  border-radius: 10px 0 0 10px;
+}
+
 /* Jungle Art's composer is glass (Figma 630:11828). The fills are restated on
    the composer's own stack, so the menus, the user's bubble and the effort
    knob, which read the same tokens from :root, stay solid cream. On a thread

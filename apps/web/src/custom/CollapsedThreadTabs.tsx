@@ -635,7 +635,17 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
               className={SPLIT_TAB_CLASS}
               style={{ minWidth: slot.entries.length * COLLAPSED_TAB_MIN_WIDTH }}
             >
-              {slot.entries.map((entry) => renderEntry(entry, true))}
+              {slot.entries.map((entry, index) => [
+                index === 0 ? null : (
+                  <span
+                    key={`divider:${entry.threadKey}`}
+                    aria-hidden
+                    data-fork-split-tab-divider=""
+                    className="pointer-events-none h-3.5 w-px shrink-0 bg-current opacity-20"
+                  />
+                ),
+                renderEntry(entry, true),
+              ])}
             </div>
           ),
         )}

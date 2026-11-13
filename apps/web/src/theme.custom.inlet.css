@@ -397,7 +397,10 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  li[data-fork-split-pair][data-active] {
   --foreground: var(--fork-inlet-panel-foreground);
   --sidebar-foreground: var(--fork-inlet-panel-foreground);
   --muted-foreground: var(--fork-inlet-panel-muted);
@@ -422,7 +425,10 @@
     [data-fork-inlet-color="black"]
   )
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  :is(
+    :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
+    li[data-fork-split-pair][data-active]
+  ) {
   --sidebar-v2-status-working: #047857;
   --sidebar-v2-status-done: #1d4ed8;
   --sidebar-v2-status-approval: #b45309;
@@ -436,6 +442,24 @@
   [data-sidebar-version="v2"]
   :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
   border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+}
+
+/* An open split pair (fork-split-threads) is one item: its row is the shape
+   that joins the panel, and its cards sit square inside it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  li[data-fork-split-pair][data-active]
+  > ul {
+  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+  box-shadow: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  li[data-fork-split-pair][data-active]
+  [data-testid="sidebar-row-card"] {
+  border-radius: 0;
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
@@ -482,10 +506,16 @@
       content-visibility: visible;
     }
 
+    /* An open split pair bridges from its row's end, not its open half's. */
+    & li[data-fork-split-pair][data-active] li[data-thread-item]::after {
+      content: none;
+    }
+
     /* The bridge: the row's height across the end padding to the panel, and
        one fillet above and below it. The fillets are the panel's fill outside
        a circle centred off the corner, so the row's top and bottom edges curve
        into the panel's side. */
+    & li[data-fork-split-pair][data-active]::after,
     &
       li[data-thread-item]:has(
         :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]

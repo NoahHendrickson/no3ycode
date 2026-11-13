@@ -276,7 +276,7 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
     // settled thread's open row is the slim row, on the same fill.
-    const row = ruleBodyFor(inletRules, [
+    const row = ruleNaming(inletRules, [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
       ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',

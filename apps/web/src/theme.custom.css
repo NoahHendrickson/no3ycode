@@ -2802,6 +2802,18 @@
   outline: 1px solid color-mix(in srgb, var(--primary) 70%, transparent);
   outline-offset: -1px;
 }
+
+/* An open pair is one item: its row paints the open fill, so neither card
+   paints its own (open, hover or the light rim) inside it. */
+:root[data-fork="noahhendrickson-t3code"]
+  li[data-fork-split-pair][data-active]
+  [data-testid="sidebar-row-card"] {
+  background-color: transparent;
+
+  &:not(:focus-visible) {
+    box-shadow: none;
+  }
+}
 /* fork:end fork-split-threads */
 
 /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice
