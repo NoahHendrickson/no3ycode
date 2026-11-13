@@ -822,6 +822,8 @@
   --fork-inlet-row-card: var(--fork-inlet-black-step-hover);
   --fork-inlet-row-card-foreground: var(--fork-inlet-black-ink);
   --fork-inlet-row-card-muted: var(--fork-inlet-black-ink-muted);
+  /* A step up from the card's #272727, as the card portals past the sidebar's line. */
+  --fork-inlet-row-card-line: #3a3a3a;
   /* The sent bubble is the panel's warm step, not light mode's zinc grey. */
   --message-surface: #ebe7cd;
   /* The composer's menus and their open buttons are the sidebar's #141414

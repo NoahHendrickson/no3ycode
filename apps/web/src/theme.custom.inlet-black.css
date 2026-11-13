@@ -271,13 +271,6 @@
     }
   }
 
-  /* A row's hover card portals out of the sidebar, so its divider would read
-     the cream panel's line; it takes a line a step up from its #272727. */
-
-  & [data-fork-row-hover-card] {
-    --contrast-border: #3a3a3a;
-  }
-
   /* The header button joins the card in that colour while it is open; only
      the popover pair, which the open state and its join read, so the resting
      icons keep the panel's ink. */
