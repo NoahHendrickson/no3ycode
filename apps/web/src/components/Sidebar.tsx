@@ -1747,15 +1747,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               </span>
             )}
             {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                Fixed 14px leading slot (same as the card) so a monitoring mark
-                cannot shove the title 24px right of every neighboring slim row. */}
-            <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
-              <SidebarV2StatusMark
-                status={topStatus}
-                seed={threadKey}
-                idle={showDiscardDraft ? "draft" : "empty"}
-              />
-            </span>
+                The 14px slot renders only when a mark draws, so mark-less rows
+                sit tight; a mark that comes or goes shifts the title 24px. */}
+            {topStatus === null && !showDiscardDraft ? null : (
+              <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
+                <SidebarV2StatusMark status={topStatus} seed={threadKey} idle="draft" />
+              </span>
+            )}
             {/* fork:end sidebar-v2-card-rows */}
             {draftIndicator}
             {title}
