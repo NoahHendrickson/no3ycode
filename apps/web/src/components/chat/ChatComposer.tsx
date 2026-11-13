@@ -3421,12 +3421,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const providerTraitsPickerInput = {
     provider: selectedProvider,
     instanceId: selectedInstanceId,
-    ...(routeKind === "server"
-      ? {
-          threadRef: routeThreadRef,
-          onDraftModelOptionsChange: () => void applyThreadModelPick(routeThreadRef),
-        }
-      : {}),
+    ...(routeKind === "server" ? { threadRef: routeThreadRef } : {}),
     ...(routeKind === "draft" && draftId ? { draftId } : {}),
     model: selectedModel,
     models: selectedProviderModels,

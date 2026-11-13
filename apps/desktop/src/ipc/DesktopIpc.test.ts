@@ -17,9 +17,10 @@ it.effect("answers only the main window's top frame", () =>
     const mainFrame = {};
     /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
     const sideChatFrame = {};
+    let closeSideChat = () => {};
     markForkAuxiliaryWindow({
       webContents: { id: 3, mainFrame: sideChatFrame },
-      once: () => undefined,
+      once: (_event: "closed", listener: () => void) => void (closeSideChat = listener),
     } as unknown as Electron.BrowserWindow);
     /* fork:end fork-side-chat */
     const invoke = new Map<string, DesktopIpc.DesktopIpcHandleListener>();
@@ -81,5 +82,8 @@ it.effect("answers only the main window's top frame", () =>
       sideChatSubframe: ["rejected", undefined],
       // fork:end fork-side-chat
     });
+    // fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat
+    closeSideChat();
+    // fork:end fork-side-chat
   }),
 );

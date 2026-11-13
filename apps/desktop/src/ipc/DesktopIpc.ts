@@ -7,7 +7,7 @@ import * as Scope from "effect/Scope";
 
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
 /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
-import { isForkAuxiliaryMainFrame } from "../fork/ForkAuxiliaryWindows.ts";
+import { forkAuxiliaryWindows } from "../fork/ForkAuxiliaryWindows.ts";
 /* fork:end fork-side-chat */
 
 export interface DesktopIpcInvokeEvent {
@@ -187,18 +187,19 @@ export const layer = (ipcMain: DesktopIpcMain) =>
     DesktopIpc,
     Effect.gen(function* () {
       const electronWindow = yield* ElectronWindow.ElectronWindow;
-      return make(ipcMain, (event) => {
-        /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
-        if (isForkAuxiliaryMainFrame(event)) return Effect.succeed(true);
-        /* fork:end fork-side-chat */
-        return Effect.map(
-          electronWindow.main,
-          (main) =>
-            Option.isSome(main) &&
-            main.value.webContents.id === event.sender.id &&
-            main.value.webContents.mainFrame === event.senderFrame,
-        );
-      });
+      const isTopFrameOf = (window: Electron.BrowserWindow, event: DesktopIpcInvokeEvent) =>
+        window.webContents.id === event.sender.id &&
+        window.webContents.mainFrame === event.senderFrame;
+      return make(ipcMain, (event) =>
+        Effect.map(electronWindow.main, (main) =>
+          [
+            ...Option.toArray(main),
+            /* fork:begin fork-side-chat — see .fork/customizations.yaml#fork-side-chat */
+            ...forkAuxiliaryWindows(),
+            /* fork:end fork-side-chat */
+          ].some((window) => isTopFrameOf(window, event)),
+        ),
+      );
     }),
   );
 
