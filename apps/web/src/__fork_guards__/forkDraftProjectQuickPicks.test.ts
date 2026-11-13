@@ -68,5 +68,9 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     expect(palettes).toMatch(
       /--border: var\(--fork-inlet-black-line\);\s*--fork-inlet-tooltip: #fcfaee;\s*--fork-inlet-tooltip-foreground: #1c1c1a;/u,
     );
+    // The open row is cream inside the dark sidebar, so its tooltips are ink again.
+    expect(palettes).toMatch(
+      /\[data-testid="sidebar-row-slim"\]\)\[aria-current="page"\],[^{]*\{\s*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);/u,
+    );
   });
 });

@@ -854,6 +854,31 @@
   --fork-inlet-tooltip-foreground: #1c1c1a;
 }
 
+/* The cream surfaces set into those (the open row, a lit chrome row, the open
+   tab) take the ink tooltips back; an open row whose hover card is out, and
+   the card itself, are charcoal again. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-sidebar-version="v2"]
+  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-sidebar-version="v2"]
+  [data-fork-chrome-row][data-active="true"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-fork-thread-tabs]
+  :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
+  --fork-inlet-tooltip: var(--fork-inlet-black-surface);
+  --fork-inlet-tooltip-foreground: var(--fork-inlet-black-ink);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-sidebar-version="v2"]
+  [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
+  [data-fork-row-hover-card] {
+  --fork-inlet-tooltip: #fcfaee;
+  --fork-inlet-tooltip-foreground: #1c1c1a;
+}
+
 /* The details card and the menus are popovers on that ink, so they restate
    the contrast inks too (theme.custom.inlet-black.css sets their fills). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
