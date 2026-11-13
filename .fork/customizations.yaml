@@ -2429,7 +2429,11 @@
     column set into it as a flat panel: a real 8px margin and 8px radius on
     the chat column, which restates --background as the panel so the header,
     transcript and composer floor paint it; app modals (Settings) restate it
-    too. The open thread's row (aria-current="page") takes the panel's fill
+    too. The right panel is a second panel set into the frame the same way,
+    8px from the chat column, in the panel's fill and inks (its content
+    wrapper carries the margin, since the panel itself collapses to no width);
+    on a narrow window its sheet is inset 8px with a ring of the frame round
+    it. The open thread's row (aria-current="page") takes the panel's fill
     and ink, goes square on its right end, and runs into the panel through a
     bridge with two 9px concave corners, drawn as the open row's list item
     ::after. Beside a docked sidebar the panel sits flush (no left margin, no
@@ -2451,7 +2455,7 @@
     dark ink, #dbd5d1 composer and chips, dark mode's bright status colours)
     is light, and opts into the fork's dark-only composer vessel fill and chip
     ink. Jungle Art (Figma 630:10946) is dark: a thread is Cream's #141414
-    stage, open row and bridge (the docked right panel too), and only the
+    stage, open row and bridge (and so the right panel), and only the
     new-agent screen's column (the one holding [data-draft-hero]) shows the
     picture (custom/assets/inlet-jungle.jpg at 60% over #248f6b, a green fade
     behind the composer), so no transcript scrolls over a window-pinned
@@ -6815,8 +6819,24 @@
   intent: >
     In the desktop app, a music button beside the right panel toggle opens
     the right panel on a Music tab: what is playing with its artwork,
-    previous, play or pause, next, a volume slider, the library's playlists
-    and songs, and the queue. It is a remote for ah ahh, the maintainer's own
+    a playback bar (position and length, dragged to seek on release), then
+    shuffle, previous, play or pause, next, repeat (off, all, one) and a
+    volume slider, then Songs, Playlists,
+    Artists and Up Next tabs. Playlists are a grid of covers (one Apple did
+    not give art takes its first song's, read one row at a time, a few at
+    once); an artist opens on a grid of its albums, an album on its songs.
+    Each tab is a stack whose root is its own listing, read the first time it
+    shows (and again after ah ahh restarts) page by page, artists by name only,
+    since their photos come from the catalog at many times the payload. Song
+    rows and the queue show lazily loaded covers. A pin in the Music tab keeps
+    Music open across threads (remembered on this device): arriving at a
+    thread opens its right panel on Music (ChatView's useMusicKeepOpenCarry),
+    while the view remounting on the same thread leaves a closed panel closed.
+    A new agent's draft is not arrived at until its first message starts it
+    (it keeps its id), so picking a project does not open Music.
+    While it is on, the right panel keeps one shared width instead of each
+    thread's own, so it does not change size as threads change.
+    It is a remote for ah ahh, the maintainer's own
     Apple Music player (NoahHendrickson/ah-ahh), running on the same
     computer, exactly as ah ahh's iPhone app is. ah ahh keeps MusicKit, the
     developer token, the Widevine build of Electron and the audio; this app
@@ -6829,7 +6849,12 @@
     ahh's JSON is checked once, in the desktop's client, and the fork's own
     forkDesktopBridge key carries one typed method per operation; with no
     music entry on it (the web, mobile) the button is not rendered at all.
-    Nothing polls: the main process holds ah ahh's state stream open only
+    Nothing polls: the bar runs on from the last position ah ahh reported, ticking
+    once a second straight to the DOM while a song plays, and the ten-second
+    heartbeat is dropped unless its position jumped (a seek). The desktop
+    stamps each state with when it received it (positionAt), so a page joining
+    an open stream reads the cached state's position from that.
+    The main process holds ah ahh's state stream open only
     while a page has the panel mounted (a reload or a crash counts as
     unmounting), drops the ten-second position heartbeats the panel has no
     use for, and reports once when the stream ends. A closed ah ahh shows as
@@ -6841,8 +6866,8 @@
     stays quit until the panel's Open button. Up Next is ah ahh's real
     queue. Songs play by id from the list shown, so what plays is what was
     clicked even if the playlist changed since; a list stops at 500 rows,
-    the most ah ahh takes in one play command, and skips layout for rows off
-    screen. ah ahh must answer on loopback without its Phone remote setting
+    the most ah ahh takes in one play command (artist and playlist lists are
+    not capped), and skips layout for rows off screen. ah ahh must answer on loopback without its Phone remote setting
     turned on, which needs a version that always starts its remote server.
   tier: 4
   files:
@@ -6852,6 +6877,8 @@
     - apps/web/src/custom/music/musicStore.ts
     - apps/web/src/custom/music/MusicPanel.tsx
     - apps/web/src/custom/music/MusicPanelToggle.tsx
+    - apps/web/src/custom/music/musicKeepOpen.ts
+    - apps/web/src/custom/music/MusicTabPin.tsx
     # The glyphs the panel uses, added to the fork's lucide shim.
     - apps/web/src/custom/icons/lucide-phosphor.tsx
   shadows: []
@@ -6864,6 +6891,8 @@
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/components/chat/RightPanelSurfaceContent.tsx
+    - apps/web/src/components/chat/ChatRightPanel.tsx
   verify:
     - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
     - apps/desktop/src/fork/ForkMusicClient.test.ts
+    - apps/web/src/custom/music/musicKeepOpen.browser.test.tsx

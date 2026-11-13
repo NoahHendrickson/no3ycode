@@ -25,23 +25,52 @@ const Player = Schema.Struct({
   artist: Schema.String,
   album: Schema.String,
   artwork: Schema.NullOr(Schema.String),
+  /** The song's length, and where it was when ah ahh sent this. */
+  durationMs: Schema.Number,
+  positionMs: Schema.Number,
   /** 0 to 1. */
   volume: Schema.Number,
+  shuffle: Schema.Boolean,
+  /** 0 off, 1 the one song, 2 the whole queue. */
+  repeat: Schema.Literals([0, 1, 2]),
   /** Bumped by ah ahh whenever its queue changes. */
   queueRevision: Schema.Number,
 });
 
+/** Within this, a heartbeat's position is where the song was already known to be. */
+const POSITION_TOLERANCE_MS = 1500;
+
 /** `closed`: ah ahh is not running, or has never run. `error`: it answered, but not usefully. */
 export type ForkMusicState =
   | { readonly status: "closed" | "error" }
-  | ({ readonly status: "ready" } & typeof Player.Type);
+  | ({
+      readonly status: "ready";
+      /** When this process received it (epoch ms), which `positionMs` is as of. */
+      readonly positionAt: number;
+    } & typeof Player.Type);
+
+type ForkMusicReadyState = Extract<ForkMusicState, { status: "ready" }>;
+
+/** Where a ready state's song is at `now`: on from `positionAt` while it plays, never past its end. */
+const forkMusicPositionNow = (state: ForkMusicReadyState, now: number): number =>
+  state.playing
+    ? Math.min(state.positionMs + now - state.positionAt, state.durationMs)
+    : state.positionMs;
 
 const Queue = Schema.Struct({
   items: Schema.Array(
-    Schema.Struct({ index: Schema.Number, title: Schema.String, artist: Schema.String }),
+    Schema.Struct({
+      index: Schema.Number,
+      title: Schema.String,
+      artist: Schema.String,
+      /** A 120px cover on Apple's CDN; older ah ahh builds leave it out. */
+      artwork: Schema.optionalKey(Schema.NullOr(Schema.String)),
+    }),
   ),
 });
-export type ForkMusicQueueEntry = (typeof Queue.Type)["items"][number];
+export type ForkMusicQueueEntry = Omit<(typeof Queue.Type)["items"][number], "artwork"> & {
+  readonly artwork: string | null;
+};
 
 /** An Apple Music API listing, as ah ahh relays it. */
 const Listing = Schema.Struct({
@@ -51,6 +80,8 @@ const Listing = Schema.Struct({
       attributes: Schema.Struct({
         name: Schema.String,
         artistName: Schema.optional(Schema.String),
+        // An Apple `{w}x{h}` template; playlists the user made have none.
+        artwork: Schema.optional(Schema.Struct({ url: Schema.String })),
       }),
     }),
   ),
@@ -62,6 +93,7 @@ export interface ForkMusicLibraryPage {
     readonly id: string;
     readonly name: string;
     readonly artist: string;
+    readonly artwork: string | null;
   }>;
   /** Where the next page starts, or null on the last one. */
   readonly nextOffset: number | null;
@@ -119,8 +151,11 @@ export async function upNextForkMusic(
   try {
     const response = await call(target, "/v1/queue");
     if (response?.ok !== true) return null;
+    const queue = Option.getOrNull(decodeQueue(await response.json()));
     // The first entry is the song playing.
-    return Option.getOrNull(decodeQueue(await response.json()))?.items.slice(1) ?? null;
+    return (
+      queue?.items.slice(1).map((entry) => ({ ...entry, artwork: entry.artwork ?? null })) ?? null
+    );
   } catch {
     return null;
   }
@@ -131,10 +166,11 @@ export async function libraryPageForkMusic(
   target: ForkMusicTarget,
   path: string,
   offset: number,
+  limit = LIBRARY_PAGE_SIZE,
 ): Promise<ForkMusicLibraryPage | null> {
   try {
     const response = await call(target, "/v1/music", {
-      body: { path, params: { limit: LIBRARY_PAGE_SIZE, offset } },
+      body: { path, params: { limit, offset } },
     });
     // Apple answers 404 for an empty playlist's tracks.
     if (response?.status === 404) return { rows: [], nextOffset: null };
@@ -146,8 +182,11 @@ export async function libraryPageForkMusic(
         id: row.id,
         name: row.attributes.name,
         artist: row.attributes.artistName ?? "",
+        artwork: row.attributes.artwork?.url.startsWith("https://")
+          ? row.attributes.artwork.url
+          : null,
       })),
-      nextOffset: listing.next === undefined ? null : offset + LIBRARY_PAGE_SIZE,
+      nextOffset: listing.next === undefined ? null : offset + limit,
     };
   } catch {
     return null;
@@ -178,14 +217,15 @@ export async function waitForForkMusicPlayer(
 }
 
 /**
- * Streams ah ahh's player state to `onState`, never synchronously, until the returned
- * function is called. ah ahh re-sends the state every ten seconds to carry the playback
- * position, which the panel does not show, so a repeat of the last state is dropped. A
- * stream that ends on its own reports `closed` or `error` once and is not retried here.
+ * Streams ah ahh's player state to `onState`, never synchronously, until the returned function
+ * is called. The ten-second heartbeat that only carries the position as far as the song played
+ * is dropped (the panel advances it itself); a seek comes through. A stream that ends on its
+ * own reports `closed` or `error` once and is not retried here.
  */
 export function followForkMusic(
   target: ForkMusicTarget,
   onState: (state: ForkMusicState) => void,
+  now: () => number = Date.now,
 ): () => void {
   const abort = new AbortController();
   const run = async (): Promise<"closed" | "error"> => {
@@ -194,7 +234,7 @@ export function followForkMusic(
     if (!response.ok || response.body === null) return "error";
     const decoder = new TextDecoder();
     let buffered = "";
-    let lastSent = "";
+    let lastSent: { readonly rest: string; readonly state: ForkMusicReadyState } | null = null;
     for await (const chunk of response.body) {
       buffered += decoder.decode(chunk, { stream: true });
       const lines = buffered.split("\n");
@@ -203,11 +243,19 @@ export function followForkMusic(
         if (!line.startsWith("data: ")) continue;
         const player = Option.getOrNull(decodePlayer(JSON.parse(line.slice("data: ".length))));
         if (player === null) return "error";
-        // Decoding dropped the position, so the heartbeat is now an exact repeat.
-        const comparable = JSON.stringify(player);
-        if (comparable === lastSent) continue;
-        lastSent = comparable;
-        onState({ status: "ready", ...player });
+        const { positionMs, ...others } = player;
+        const rest = JSON.stringify(others);
+        const at = now();
+        if (
+          lastSent !== null &&
+          lastSent.rest === rest &&
+          Math.abs(forkMusicPositionNow(lastSent.state, at) - positionMs) < POSITION_TOLERANCE_MS
+        ) {
+          continue;
+        }
+        const state: ForkMusicReadyState = { status: "ready", ...player, positionAt: at };
+        lastSent = { rest, state };
+        onState(state);
       }
     }
     return "closed";

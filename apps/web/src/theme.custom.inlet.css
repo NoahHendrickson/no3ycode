@@ -57,6 +57,63 @@
   background: var(--background);
 }
 
+/* The right panel is a second panel set into the frame beside the chat
+   column, in the panel's colour and inks: its tabs (Music, the launcher's
+   rows) set no colour of their own and would take the frame's. The inline
+   panel collapses to no width when closed, so a margin on it would leave a
+   gap: its content wrapper is the panel, and the content pinned to the
+   panel's width gives back the margin. On a narrow window the right panel is
+   a sheet over the chat column, set into the window the same way. The sheet's
+   :has() argument is its own direct child, so it is checked only there. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  & [data-preview-panel-mode="inline"] > :last-child,
+  & [data-slot="sheet-popup"]:has(> [data-preview-panel-mode="sheet"]) {
+    --background: var(--fork-inlet-panel);
+    --foreground: var(--fork-inlet-panel-foreground);
+    --muted-foreground: var(--fork-inlet-panel-muted);
+    --contrast-foreground: var(--fork-inlet-panel-foreground);
+    --contrast-muted-foreground: var(--fork-inlet-panel-muted);
+    --contrast-secondary-label: var(--fork-inlet-panel-muted);
+    --contrast-icon-muted: var(--fork-inlet-panel-muted);
+    color: var(--fork-inlet-panel-foreground);
+    overflow: clip;
+    border-radius: var(--fork-inlet-radius);
+    background: var(--background);
+  }
+
+  & [data-preview-panel-mode="inline"] {
+    border-width: 0;
+    background: transparent;
+
+    & > :last-child {
+      width: auto;
+      margin: var(--fork-inlet-margin) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
+    }
+
+    & > :last-child > [style*="--resizable-width"] {
+      width: calc(var(--resizable-width) - var(--fork-inlet-margin)) !important;
+    }
+
+    &[data-preview-panel-maximized="true"] > :last-child {
+      margin-left: var(--fork-inlet-margin);
+    }
+  }
+
+  & [data-slot="sheet-popup"]:has(> [data-preview-panel-mode="sheet"]) {
+    height: auto;
+    margin: var(--fork-inlet-margin);
+    border-width: 0;
+    /* The frame's gap round it, so it reads as a second panel beside the chat
+       column it covers rather than melting into it. */
+    box-shadow: 0 0 0 var(--fork-inlet-margin) var(--app-chrome-background);
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
 /* A split's panes are each their own panel, whose margins already part them, so the
    line between the panes (fork-split-threads) goes, as on Glass's stage cards. */
 

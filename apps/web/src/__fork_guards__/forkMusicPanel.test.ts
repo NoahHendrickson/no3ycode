@@ -12,12 +12,14 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import type { MusicBridge, MusicCommand, MusicState } from "../custom/music/musicBridge";
 import { readMusicBridge } from "../custom/music/musicBridge";
 import {
-  browseMusicSource,
+  closeMusicSource,
   getMusicSnapshot,
   openMusic,
-  playBrowsedTrack,
+  openMusicRow,
+  playMusicRows,
   retryMusic,
   setMusicVolume,
+  showMusicTab,
   subscribeMusic,
 } from "../custom/music/musicStore";
 
@@ -30,6 +32,8 @@ const desktopHandlers = readSibling("../../../desktop/src/ipc/DesktopIpcHandlers
 const desktopPreload = readSibling("../../../desktop/src/preload.ts");
 const rightPanelStore = readSibling("../rightPanelStore.ts");
 const surfaceContent = readSibling("../components/chat/RightPanelSurfaceContent.tsx");
+const rightPanelTabs = readSibling("../components/RightPanelTabs.tsx");
+const chatRightPanel = readSibling("../components/chat/ChatRightPanel.tsx");
 const layoutControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const chatView = readSibling("../components/ChatView.tsx");
 const toggle = readSibling("../custom/music/MusicPanelToggle.tsx");
@@ -48,7 +52,12 @@ const ready = (volume: number, queueRevision = 1): MusicState => ({
   artist: "Artist",
   album: "Album",
   artwork: null,
+  durationMs: 200_000,
+  positionMs: 0,
+  positionAt: 0,
   volume,
+  shuffle: false,
+  repeat: 0,
   queueRevision,
 });
 
@@ -57,6 +66,7 @@ const songs = (count: number, from: number) =>
     id: `i.${from + i}`,
     name: `Song ${from + i}`,
     artist: "Artist",
+    artwork: `https://art/${from + i}/{w}x{h}.jpg`,
   }));
 
 describe("fork guard: fork-music-panel", () => {
@@ -92,11 +102,17 @@ describe("fork guard: fork-music-panel", () => {
     expect(rightPanelStore).toMatch(fenced('"music",'));
     expect(rightPanelStore).toMatch(fenced('return \\{ id: "music", kind \\};'));
     expect(surfaceContent).toMatch(fenced('case "music":\\s*return <MusicPanel />;'));
+    // The keep-open pin rides in the Music tab itself.
+    expect(rightPanelTabs).toMatch(fenced('surface.kind === "music" \\? <MusicTabPin /> : null'));
+    // Kept open, it is one panel across threads, so it keeps one width.
+    expect(chatRightPanel).toMatch(fenced("widthStorageKey: sharedWidthKey,"));
     expect(layoutControls).toMatch(fenced("<MusicPanelToggle"));
     expect(layoutControls.indexOf("<MusicPanelToggle")).toBeLessThan(
       layoutControls.indexOf("data-right-panel-toggle"),
     );
     expect(chatView).toMatch(fenced("musicThreadRef: activeThreadRef,"));
+    // Arriving on a thread carries a kept-open Music; the view, not the button, owns that.
+    expect(chatView).toMatch(fenced("useMusicKeepOpenCarry\\(activeThreadRef, isServerThread"));
     expect(toggle).toContain("if (readMusicBridge() === null) return null;");
     expect(toggle).toContain('.toggle(threadRef, "music")');
   });
@@ -111,6 +127,7 @@ describe("fork guard: fork-music-panel", () => {
     const volumeAnswers: Array<(taken: boolean) => void> = [];
     const counts = { follows: 0, unfollows: 0, opens: 0, queueReads: 0 };
     let pushState: (state: MusicState) => void = () => undefined;
+    let releaseAlbums: () => void = () => undefined;
     const bridge: MusicBridge = {
       canOpen: true,
       follow: (listener) => {
@@ -132,16 +149,50 @@ describe("fork guard: fork-music-panel", () => {
       },
       upNext: () => {
         counts.queueReads += 1;
-        return Promise.resolve([{ index: 5, title: "Two", artist: "Artist" }]);
+        return Promise.resolve([{ index: 5, title: "Two", artist: "Artist", artwork: null }]);
       },
-      libraryPage: (path, offset) => {
-        pages.push(`${path}@${offset}`);
+      libraryPage: (path, offset, limit) => {
+        pages.push(`${path}@${offset}${limit === undefined ? "" : `/${limit}`}`);
         if (path === "/v1/me/library/playlists") {
           return Promise.resolve({
-            rows: [{ id: "p.1", name: "Girlpop", artist: "" }],
+            rows: [
+              { id: "p.1", name: "Girlpop", artist: "", artwork: null },
+              { id: "p.2", name: "Apple's", artist: "", artwork: "https://art/p2/{w}x{h}.jpg" },
+            ],
             nextOffset: null,
           });
         }
+        if (path === "/v1/me/library/artists") {
+          return Promise.resolve({
+            rows: [
+              { id: "r.1", name: "Kim", artist: "", artwork: null },
+              { id: "r.2", name: "Prolific", artist: "", artwork: null },
+            ],
+            nextOffset: null,
+          });
+        }
+        if (path === "/v1/me/library/artists/r.2/albums") {
+          const albums = (count: number, from: number) =>
+            Array.from({ length: count }, (_, i) => ({
+              id: `l.${from + i}`,
+              name: `Album ${from + i}`,
+              artist: "",
+              artwork: null,
+            }));
+          if (offset === 0) return Promise.resolve({ rows: albums(100, 100), nextOffset: 100 });
+          return new Promise((resolve) => {
+            releaseAlbums = () => resolve({ rows: albums(5, 200), nextOffset: null });
+          });
+        }
+        if (path === "/v1/me/library/artists/r.1/albums") {
+          return Promise.resolve({
+            rows: [
+              { id: "l.1", name: "Turn Off", artist: "", artwork: "https://art/l1/{w}x{h}.jpg" },
+            ],
+            nextOffset: null,
+          });
+        }
+        if (limit === 1) return Promise.resolve({ rows: songs(1, 0), nextOffset: 1 });
         return Promise.resolve(
           offset === 0
             ? { rows: songs(100, 0), nextOffset: 100 }
@@ -162,28 +213,76 @@ describe("fork guard: fork-music-panel", () => {
       expect(getMusicSnapshot()).toMatchObject({ opening: false, openFailed: false });
 
       pushState(ready(0.5));
-      await vi.waitFor(() => expect(getMusicSnapshot().sources).toHaveLength(2));
-      expect(getMusicSnapshot().sources).toEqual([
-        { name: "Songs", path: "/v1/me/library/songs" },
-        { name: "Girlpop", path: "/v1/me/library/playlists/p.1/tracks" },
-      ]);
-      expect(getMusicSnapshot().upNext).toEqual([{ index: 5, title: "Two", artist: "Artist" }]);
+      // Only the tab showing is read: the library's songs, page by page.
+      const root = (tab: "songs" | "playlists" | "artists") => getMusicSnapshot().stacks[tab][0];
+      await vi.waitFor(() => expect(root("songs").rows).toHaveLength(120));
+      expect(pages).toEqual(["/v1/me/library/songs@0", "/v1/me/library/songs@100"]);
+      expect(root("playlists").rows).toBeNull();
+      expect(root("artists").rows).toBeNull();
+      expect(getMusicSnapshot().upNext).toBeNull();
+      expect(counts.queueReads).toBe(0);
 
-      const girlpop = getMusicSnapshot().sources?.[1];
+      // A playlist without art of its own takes its first song's, read one row at a time.
+      showMusicTab("playlists");
+      await vi.waitFor(() =>
+        expect(root("playlists").rows?.[0]?.artwork).toBe("https://art/0/{w}x{h}.jpg"),
+      );
+      expect(root("playlists").rows?.[1]?.artwork).toBe("https://art/p2/{w}x{h}.jpg");
+      expect(pages).toContain("/v1/me/library/playlists/p.1/tracks@0/1");
+      expect(pages).not.toContain("/v1/me/library/playlists/p.2/tracks@0/1");
+
+      const girlpop = root("playlists").rows?.[0];
       if (!girlpop) throw new Error("no playlist");
-      await browseMusicSource(girlpop);
-      expect(getMusicSnapshot().browsing?.tracks).toHaveLength(120);
+      await openMusicRow(girlpop, "playlists");
+      const tracks = getMusicSnapshot().stacks.playlists.at(-1)?.rows;
+      expect(tracks).toHaveLength(120);
       // By id: what plays is what the list shows, whatever the playlist has become since.
-      playBrowsedTrack(7);
+      playMusicRows(tracks ?? [], 7);
       const played = commands.at(-1);
       expect(played).toMatchObject({ action: "playSongs", value: { startWith: 7 } });
       expect(played?.action === "playSongs" ? played.value.ids : null).toHaveLength(120);
 
       // The same source opened twice in a row: the first listing stops, the second is the list.
+      closeMusicSource();
       const before = pages.length;
-      await Promise.all([browseMusicSource(girlpop), browseMusicSource(girlpop)]);
-      expect(getMusicSnapshot().browsing?.tracks).toHaveLength(120);
+      await Promise.all([openMusicRow(girlpop, "playlists"), openMusicRow(girlpop, "playlists")]);
+      expect(getMusicSnapshot().stacks.playlists).toHaveLength(2);
+      expect(getMusicSnapshot().stacks.playlists[1]?.rows).toHaveLength(120);
       expect(pages.length - before).toBe(3);
+
+      // An artist opens on its albums, an album on its songs, and back goes one level.
+      showMusicTab("artists");
+      await vi.waitFor(() => expect(root("artists").rows).toHaveLength(2));
+      const [kim, prolific] = root("artists").rows ?? [];
+      if (!kim || !prolific) throw new Error("no artists");
+      await openMusicRow(kim, "artists");
+      const album = getMusicSnapshot().stacks.artists.at(-1)?.rows?.[0];
+      if (!album) throw new Error("no album");
+      await openMusicRow(album, "albums");
+      expect(getMusicSnapshot().stacks.artists.map((level) => level.source.lists)).toEqual([
+        "artists",
+        "albums",
+        "songs",
+      ]);
+      closeMusicSource();
+      expect(getMusicSnapshot().stacks.artists).toHaveLength(2);
+      // Each tab keeps its own place.
+      expect(getMusicSnapshot().stacks.playlists).toHaveLength(2);
+
+      // An album opened while its artist's albums are still paging: the artist keeps reading.
+      closeMusicSource();
+      const prolificRead = openMusicRow(prolific, "artists");
+      await vi.waitFor(() =>
+        expect(getMusicSnapshot().stacks.artists.at(-1)?.rows).toHaveLength(100),
+      );
+      const first = getMusicSnapshot().stacks.artists.at(-1)?.rows?.[0];
+      if (!first) throw new Error("no album");
+      await openMusicRow(first, "albums");
+      releaseAlbums();
+      await prolificRead;
+      closeMusicSource();
+      expect(getMusicSnapshot().stacks.artists.at(-1)?.rows).toHaveLength(105);
+      closeMusicSource();
 
       // A drag: the first value goes out, the ones behind it collapse to the last.
       setMusicVolume(0.1);
@@ -209,13 +308,36 @@ describe("fork guard: fork-music-panel", () => {
       await vi.waitFor(() => expect(getMusicSnapshot().sentVolume).toBeNull());
       expect(volumes()).toEqual([0.1, 0.3, 0.8]);
 
-      // A changed queue is read again. A closed ah ahh shows as that and is not restarted.
-      const queueReads = counts.queueReads;
+      // The queue is read when Up Next shows, and again when it changes while it shows; a
+      // change behind another tab waits for Up Next to show.
       pushState(ready(0.8, 2));
-      expect(counts.queueReads).toBe(queueReads + 1);
+      expect(counts.queueReads).toBe(0);
+      showMusicTab("upNext");
+      await vi.waitFor(() =>
+        expect(getMusicSnapshot().upNext).toEqual([
+          { index: 5, title: "Two", artist: "Artist", artwork: null },
+        ]),
+      );
+      pushState(ready(0.8, 3));
+      expect(counts.queueReads).toBe(2);
+      showMusicTab("songs");
+      showMusicTab("upNext");
+      expect(counts.queueReads).toBe(2);
+      // A closed ah ahh shows as that and is not restarted.
       pushState({ status: "closed" });
       expect(getMusicSnapshot().state).toEqual({ status: "closed" });
       expect(counts.opens).toBe(1);
+
+      // ah ahh back after a restart: a hidden tab's list is read again when it next shows, and
+      // the playlist covers already found are not.
+      const playlistReads = () => pages.filter((page) => page === "/v1/me/library/playlists@0");
+      expect(playlistReads()).toHaveLength(1);
+      pushState(ready(0.8, 3));
+      showMusicTab("playlists");
+      await vi.waitFor(() => expect(playlistReads()).toHaveLength(2));
+      expect(pages.filter((page) => page.endsWith("/tracks@0/1"))).toHaveLength(1);
+      showMusicTab("songs");
+      pushState({ status: "closed" });
 
       // Try again follows afresh; the last panel to close stops following.
       retryMusic();

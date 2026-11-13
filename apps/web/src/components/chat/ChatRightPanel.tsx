@@ -1,6 +1,9 @@
 import { usePreviewPanelInlineSize } from "../../hooks/usePreviewPanelInlineSize";
 import { RightPanelSheet } from "../RightPanelSheet";
 import { RightPanelTabs, type RightPanelTabsProps } from "../RightPanelTabs";
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import { useRightPanelWidthKey } from "../../custom/music/musicKeepOpen";
+/* fork:end fork-music-panel */
 
 type ChatRightPanelProps = Omit<RightPanelTabsProps, "mode" | "inlineSize" | "maximized"> & {
   readonly sheet: boolean;
@@ -33,9 +36,14 @@ export function ChatRightPanel(props: ChatRightPanelProps) {
     layoutControls,
     ...tabs
   } = props;
+  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+  const sharedWidthKey = useRightPanelWidthKey(widthStorageKey);
+  /* fork:end fork-music-panel */
   const inlineSize = usePreviewPanelInlineSize({
     container: workspaceLayoutElement,
-    widthStorageKey,
+    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+    widthStorageKey: sharedWidthKey,
+    /* fork:end fork-music-panel */
     /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
     minWidth,
     /* fork:end fork-design-mode */

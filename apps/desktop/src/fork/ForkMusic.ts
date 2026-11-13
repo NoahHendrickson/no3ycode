@@ -51,6 +51,7 @@ const Request = Schema.Union([
     type: Schema.Literal("libraryPage"),
     path: Schema.String,
     offset: Schema.Number,
+    limit: Schema.optional(Schema.Number),
   }),
 ]);
 const decodeRequest = Schema.decodeUnknownEffect(Request);
@@ -153,7 +154,7 @@ export const installForkMusicIpc = Effect.fn("desktop.fork.installMusic")(functi
           return yield* Effect.promise(() => upNextForkMusic(target()));
         case "libraryPage":
           return yield* Effect.promise(() =>
-            libraryPageForkMusic(target(), request.path, request.offset),
+            libraryPageForkMusic(target(), request.path, request.offset, request.limit),
           );
       }
     }),
