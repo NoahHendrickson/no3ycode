@@ -44,7 +44,7 @@ export function SidebarV2AutomationsHoverCard(props: {
     else byEnvironment.set(run.thread.environmentId, [run]);
   }
   return (
-    <ThreadHoverCardPopup side="right" align="start" sideOffset={4}>
+    <ThreadHoverCardPopup side="right" align="start" sideOffset={4} data-fork-row-hover-card="">
       <ThreadHoverCard
         title={props.title}
         footer={

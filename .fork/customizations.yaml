@@ -2330,7 +2330,7 @@
     fills. While a desktop tab floats over the chat the chat view gives up
     its stacking context, as the picture sheet does, so the tab's chrome
     stays above the webview. A split's panes each sit on their own card, so
-    the line between them (fork-split-threads) is hidden, and the right card
+    the line between them (fork-split-threads) is hidden (its drag area stays), and the right card
     keeps only 3px (its halo's reach) off its pane while the pane overlaps the
     left one's gutter by 3px: the cards stand as far apart as from the window.
   tier: 2
@@ -2443,7 +2443,10 @@
     because the gutter would clip the bridge, and the open item drops
     content-visibility paint containment. Other thread cards are unchanged.
     A split's panes are each such a panel, so the line between them
-    (fork-split-threads) is hidden.
+    (fork-split-threads) is hidden and the divider becomes the frame's gap:
+    the right pane drops its leading margin, so split panes and the right
+    panel all stand one margin apart. A bar of the panel's fill shows in the
+    gap while it is hovered or dragged.
 
     The colour lives in t3code:fork-inlet-color, stamped as
     data-fork-inlet-color while Inlet is active; Settings → Appearance shows
@@ -2472,7 +2475,8 @@
     Jungle Art) on dark; Black is a cream panel with Green's composer
     construction in a #141414 frame on light. Menus, popovers and glass
     tooltips are each colour's solid --popover, unfrosted. A sidebar row's
-    hover card (data-fork-row-hover-card, fenced at its two call sites) opens
+    hover card (data-fork-row-hover-card, fenced at its two thread call sites,
+    and on the Automations row's run card) opens
     as a tab: the row takes the card's fill and goes square on the right, and
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.
@@ -2488,7 +2492,7 @@
     buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
     from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
-    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink. Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -2567,8 +2571,8 @@
     index.html pre-paints the colour's frame and stamps both attributes from
     the same table. Colours with a light frame on dark (Jungle Art, Cream) ask the desktop window chrome for light (a fenced override in hooks/useTheme.ts), so macOS draws light traffic lights on the cream. Must not alter any other palette.
     On Windows (.wco) without the tab strip, panels start below the caption
-    band (--fork-inlet-panel-top), which drags the window, except while the
-    inline right panel owns the title bar (ChatView stamps the column).
+    band (--fork-inlet-panel-top), which drags the window; the inline right
+    panel included.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -2584,6 +2588,7 @@
     - apps/web/src/theme.custom.inlet.css
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
+    - apps/web/src/theme.custom.inlet-peek.css
     - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/theme.custom.inlet-black.css
     - apps/web/src/custom/assets/inlet-jungle.jpg
@@ -2593,7 +2598,6 @@
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/index.html
     - apps/web/src/components/Sidebar.tsx
-    - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/sidebar/SidebarThreadRow.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
@@ -2702,21 +2706,25 @@
     one leaves the other subtracting from a stale number, and the cards drift
     off the chrome icons' axis with nothing failing.
 
-    Action rows (Search, New agent, Add a project, Usage) are the design
+    Action rows (Search, New agent, Usage, Automations, Pull requests) are the design
     system's ghost Button at its default size (Figma 364:11246 / 364:10544):
     32px tall, 10px corners, 12px inline padding, a 16px icon 6px from a
     Label/14 Regular label, icon and label alike at the panel's foreground,
     stacked 2px apart inside the panel's 8px inset and flush under the header.
     No shortcut chips; the shortcut rides the accessible name. Usage opens the
-    /usage page (fork-usage-page); the V2 sidebar's footer hides its own Usage icon so
-    the row is the one door there; the footer takes a hideUsage flag rather than
-    losing the item, so upstream's default footer keeps it. Upstream always
+    /usage page (fork-usage-page) and Pull requests opens /pull-requests under
+    Automations. The V2 sidebar's footer hides its own Usage icon so the row is
+    the one door there; the footer takes a hideUsage flag rather than losing the
+    item, so upstream's default footer keeps it. Upstream's footer Pull requests
+    icon is deleted outright: the V2 sidebar is the footer's only consumer, so
+    the labeled row is the one owner. Upstream always
     shows the undo notice in the footer's utility menu (#26874). Type is literal 0.875rem so the panel's 13px text-xs remap cannot
     shrink it.
 
     The Threads row (368:21211, drawn there as "Projects") takes the project
-    headers' shape on the same inset: a static muted label (13px semibold, matching the status-section labels), then two 32px icon buttons on the
-    list edge — a sort menu (ArrowsDownUp) over the same
+    headers' shape on the same inset: a static muted label (13px semibold, matching the status-section labels), then 32px icon buttons on the
+    list edge — Add a project (FolderPlus, opening the palette's add-project
+    page; shown even before the first project, when sort and filter are not), a sort menu (ArrowsDownUp) over the same
     sidebarProjectSortOrder client setting the legacy sidebar's sort menu and
     Settings edit, and the menu button (a gear) that owns the scope,
     grouping and density menu. Switching that menu to Manual writes the on-screen
@@ -2752,9 +2760,10 @@
     used to supply it; without the inline flex the block-level mark pushed the
     name below the header. The lockup is a fixed 55px and both halves are
     shrink-0; the link may still shrink so a 208px sidebar cannot overflow the
-    header. Search, New agent, Add a project and Usage remain labeled action
-    rows; Projects remains a static label whose trailing sort and filter
-    buttons own the sort order and the scope / group-by menu.
+    header. Search, New agent, Usage, Automations and Pull requests remain
+    labeled action rows; Threads remains a static label whose trailing add,
+    sort and filter buttons own adding a project, the sort order and the
+    scope / group-by menu.
     Foreground, hover, pill, and focus treatments resolve through sidebar
     tokens so the flat header remains legible in Light, Dark, and Westworld.
 
@@ -3251,7 +3260,9 @@
     preview open leaves the chat 220px and needs the overlay, while a 950px
     window with no panel leaves it 690px and does not. narrowChatOverlay
     measures the column (ChatView's data-chat-column-maximized-away wrapper, or
-    the inset on routes with no workspace) plus the panel, and writes
+    the inset on routes with no workspace; across a split, the panes' whole row
+    against two minimums, since its divider drags one pane narrow) plus the
+    panel, and writes
     data-fork-sidebar-overlay onto the sidebar wrapper for the Tier 1 stylesheet
     to key off. It decides on the width the column *would* have if the panel
     pushed, not the width it has: overlaying hands the column the panel's width
@@ -6180,6 +6191,11 @@
     one getter installed once; one shared ref would send and focus through
     the wrong composer. Below the lg breakpoint only the focused pane shows
     and the pill hides (the pane context's canSplit); the pair is kept.
+    The divider between the panes drags their shares (each pane at least
+    360px), written straight onto the row as a CSS variable while it moves
+    and stored on the pair on release; a double-click evens them. In the
+    collapsed tab strip the pair is one selected tab whose two halves keep
+    their own marks, titles, actions and clicks.
 
     Only the focused pane answers window-level input, in one style: each
     effect that listens on the window guards on the pane context's focused

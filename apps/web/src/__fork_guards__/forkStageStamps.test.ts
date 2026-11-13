@@ -130,7 +130,7 @@ const ALLOWED: ReadonlyArray<{ readonly sheet: string; readonly has: string }> =
   { sheet: "theme.custom.glass-stage.css", has: ":has(.fork-timeline-cutoff)" },
   { sheet: "theme.custom.palettes.css", has: ":has(.fork-timeline-cutoff)" },
   // A sidebar peek, and a chip's menu opening below it.
-  { sheet: "theme.custom.inlet-menus.css", has: ':has([data-fork-sidebar-peek="open"])' },
+  { sheet: "theme.custom.inlet-peek.css", has: ':has([data-fork-sidebar-peek="open"])' },
   { sheet: "theme.custom.inlet.css", has: ':has([data-fork-chip-menu][data-side="bottom"])' },
 ];
 

@@ -51,12 +51,26 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     );
   });
 
-  it("stands the pills' tooltips off through the wrapper, in Black's ink", () => {
-    expect(quickPicks).toMatch(/<TooltipPopup side="top" forkNubGap=\{4\}/u);
+  it("stands the pills' tooltips off through the wrapper", () => {
+    expect(quickPicks).toMatch(/<TooltipPopup side="top" forkNubGap=\{4\}>/u);
     expect(read("../components/ui/tooltip.tsx")).toContain("FORK_TOOLTIP_NUB_DEPTH + forkNubGap");
-    expect(read("../theme.custom.inlet.css")).not.toContain("data-fork-project-quick-pick-tip");
-    expect(read("../theme.custom.inlet-black.css")).toMatch(
-      /\[data-slot="tooltip-popup"\]\[data-fork-project-quick-pick-tip\] \{\s*--fork-inlet-tooltip: #141414;\s*--fork-inlet-tooltip-foreground: #e8e8e8;/u,
+  });
+
+  // Black's tooltips are ink over its cream panel and cream over its dark-ink surfaces.
+  it("gives each tooltip the fill its trigger's surface declares", () => {
+    const tooltip = read("../components/ui/tooltip.tsx");
+    expect(tooltip).toContain('getPropertyValue("--fork-inlet-tooltip")');
+    expect(tooltip).toMatch(/if \(open\) setForkFill\(readForkTooltipFill\(details\.trigger\)\)/u);
+    const palettes = read("../theme.custom.palettes.css");
+    expect(palettes).toMatch(
+      /--fork-inlet-model-shell: var\(--fork-inlet-black-surface\);[^}]*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);\s*--fork-inlet-tooltip-foreground: var\(--fork-inlet-black-ink\);/u,
+    );
+    expect(palettes).toMatch(
+      /--border: var\(--fork-inlet-black-line\);\s*--fork-inlet-tooltip: #fcfaee;\s*--fork-inlet-tooltip-foreground: #1c1c1a;/u,
+    );
+    // The open row is cream inside the dark sidebar, so its tooltips are ink again.
+    expect(palettes).toMatch(
+      /\[data-testid="sidebar-row-slim"\]\)\[aria-current="page"\],[^{]*\{\s*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);/u,
     );
   });
 });

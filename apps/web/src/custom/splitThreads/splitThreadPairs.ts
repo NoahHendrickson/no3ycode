@@ -14,7 +14,14 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 export interface SplitThreadPair {
   readonly a: ScopedThreadRef;
   readonly b: ScopedThreadRef;
+  /** The left pane's share of the column, dragged on the divider; even when unset. */
+  readonly ratio?: number;
 }
+
+export const DEFAULT_SPLIT_RATIO = 0.5;
+
+export const isSplitRatio = (value: unknown): value is number =>
+  typeof value === "number" && value > 0 && value < 1;
 
 export const sameThread = (a: ScopedThreadRef | null, b: ScopedThreadRef | null) =>
   a !== null && b !== null && scopedThreadKey(a) === scopedThreadKey(b);
@@ -56,4 +63,17 @@ export function unpairSplitThread(
   const key = scopedThreadKey(ref);
   const next = pairs.filter((pair) => !pairHas(pair, key));
   return next.length === pairs.length ? pairs : next;
+}
+
+/** Sets the left pane's share on the pair holding `ref`; no pair, no change. */
+export function resizeSplitPair(
+  pairs: readonly SplitThreadPair[],
+  ref: ScopedThreadRef,
+  ratio: number,
+): readonly SplitThreadPair[] {
+  const key = scopedThreadKey(ref);
+  const index = pairs.findIndex((pair) => pairHas(pair, key));
+  const pair = pairs[index];
+  if (pair === undefined || !isSplitRatio(ratio) || pair.ratio === ratio) return pairs;
+  return pairs.with(index, { ...pair, ratio });
 }

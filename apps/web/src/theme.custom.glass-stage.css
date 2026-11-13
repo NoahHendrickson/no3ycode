@@ -259,9 +259,10 @@
   }
 
   /* A split's panes each sit on their own card, whose edges already part them, so the
-     line between the panes (fork-split-threads) goes. */
+     line between the panes (fork-split-threads) goes; its drag area stays. */
   &.dark[data-fork-theme="cool-darker"] [data-fork-split-divider] {
-    display: none;
+    width: 0;
+    background: transparent;
   }
 
   /* The Automations page scrolls inside the card, not across its gutter: its

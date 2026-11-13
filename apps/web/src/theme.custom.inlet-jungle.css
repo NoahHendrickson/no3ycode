@@ -354,7 +354,7 @@
   }
 }
 
-/* A glass tooltip (the Automations row's run card) is still a tooltip: the
+/* A glass tooltip (an agent relationship's card) is still a tooltip: the
    green fill, so it keeps the tooltip's white ink, not the menus' dark. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]

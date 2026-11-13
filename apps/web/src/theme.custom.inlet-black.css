@@ -350,10 +350,15 @@
     backdrop-filter: none;
   }
 
-  /* The usage panels' provider icons take the dark appearance's fills on
-     the charcoal (theme.custom.inlet-jungle.css has Jungle Art's reverse). */
+  /* The usage panels' and model menu's provider icons take the dark
+     appearance's fills on the charcoal (theme.custom.inlet-jungle.css has
+     Jungle Art's reverse). */
 
-  & [data-slot="popover-popup"][data-fork-tab-menu] {
+  &
+    :is(
+      [data-slot="popover-popup"][data-fork-tab-menu],
+      [data-slot="menu-popup"]:has([data-fork-model-picker])
+    ) {
     & [data-provider-package-icon] {
       fill: var(--icon-dark);
     }
@@ -361,12 +366,5 @@
     & [data-provider-package-icon] [data-icon-detail] {
       fill: var(--path-dark);
     }
-  }
-
-  /* The New agent project pills' tooltips are the sidebar's ink. */
-
-  & [data-slot="tooltip-popup"][data-fork-project-quick-pick-tip] {
-    --fork-inlet-tooltip: #141414;
-    --fork-inlet-tooltip-foreground: #e8e8e8;
   }
 }

@@ -27,6 +27,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type RefObject,
   type SyntheticEvent,
@@ -39,6 +40,7 @@ import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandl
 import { threadShellHasStarted } from "~/components/ChatView.logic";
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useResizeDrag } from "~/hooks/useResizeDrag";
 import { useStableCallback } from "~/hooks/useStableCallback";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentShellStatus } from "~/state/shell";
@@ -62,12 +64,82 @@ import {
   type SplitPaneSlot,
   type SplitPaneSlots,
 } from "./splitPaneSlots";
-import { sameThread } from "./splitThreadPairs";
+import { DEFAULT_SPLIT_RATIO, sameThread } from "./splitThreadPairs";
 import { useSplitThreadStore, type PaneRoute, type SplitLayout } from "./splitThreadStore";
 
 /** Below this the column is too narrow for two transcripts, so only the
     focused pane shows. The pair (or float) is kept and returns on a wider window. */
 const SPLIT_THREADS_MIN_WIDTH_QUERY = "lg";
+
+/** Neither pane drags or squeezes narrower than this, unless the column cannot fit two. */
+const MIN_SPLIT_PANE_WIDTH = 360;
+const SPLIT_PANE_MIN_WIDTH = `min(${MIN_SPLIT_PANE_WIDTH}px, 50%)`;
+
+/** Each pane grows by its share of the column; the divider writes the share
+    straight onto the row while it is dragged, so a drag renders nothing. */
+const SPLIT_RATIO_VAR = "--fork-split-ratio";
+const LEFT_PANE_GROW = `var(${SPLIT_RATIO_VAR})`;
+const RIGHT_PANE_GROW = `calc(1 - var(${SPLIT_RATIO_VAR}))`;
+
+/** The divider between a split's panes: drag it to share the column, double-click it to even the
+    panes. The share is stored on release. */
+function SplitResizeHandle(props: {
+  readonly floatBehind: boolean;
+  readonly onResize: (ratio: number) => void;
+}) {
+  const { ref, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } =
+    useResizeDrag<HTMLDivElement>((event) => {
+      const handle = event.currentTarget;
+      const row = handle.parentElement;
+      if (row === null) return null;
+      const style = getComputedStyle(handle);
+      // The room the handle takes from the panes (Inlet lays it over a margin, so none).
+      const handleSpace =
+        handle.offsetWidth +
+        Number.parseFloat(style.marginLeft) +
+        Number.parseFloat(style.marginRight);
+      const span = row.getBoundingClientRect().width - handleSpace;
+      if (span <= 0) return null;
+      const stored = Number.parseFloat(row.style.getPropertyValue(SPLIT_RATIO_VAR));
+      const startRatio = Number.isFinite(stored) ? stored : DEFAULT_SPLIT_RATIO;
+      const min = Math.min(span * DEFAULT_SPLIT_RATIO, MIN_SPLIT_PANE_WIDTH);
+      handle.dataset.dragging = "";
+      return {
+        width: startRatio * span,
+        edge: "right",
+        bounds: { min, max: span - min },
+        resize(leftWidth) {
+          row.style.setProperty(SPLIT_RATIO_VAR, String(leftWidth / span));
+          return leftWidth;
+        },
+        // A press that never travelled (a click, half a double-click) keeps the stored share.
+        finish(leftWidth, moved) {
+          if (moved) props.onResize(leftWidth / span);
+          else row.style.setProperty(SPLIT_RATIO_VAR, String(startRatio));
+        },
+        cleanup(committed) {
+          delete handle.dataset.dragging;
+          if (!committed) row.style.setProperty(SPLIT_RATIO_VAR, String(startRatio));
+        },
+      };
+    });
+  return (
+    <div
+      aria-hidden
+      ref={ref}
+      // Themes that frame each pane on its own card hide the line and keep the handle.
+      data-fork-split-divider=""
+      data-fork-float-behind={props.floatBehind || undefined}
+      className="relative z-20 order-1 w-px shrink-0 cursor-col-resize touch-none bg-border select-none before:absolute before:inset-y-0 before:-inset-x-1 before:content-[''] hover:bg-ring/60 data-dragging:bg-ring"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onLostPointerCapture={onLostPointerCapture}
+      onDoubleClick={() => props.onResize(DEFAULT_SPLIT_RATIO)}
+    />
+  );
+}
 
 /** What a pane shows for a thread that is not the route's. Existence is upstream's rule
     (resolveThreadRouteRenderState); the route is the pane's own: an unsent draft until its
@@ -213,6 +285,8 @@ function SplitPane(props: {
   readonly state: SplitPaneState;
   /** CSS order: left and right are drawn, not slotted. */
   readonly order: number;
+  /** Its share of a split's column (flex-grow). */
+  readonly grow: string;
   readonly composerRef: ComposerRef;
   /** A column pane while a window floats over it: it gets a box of its own,
       as a split pane does, so the hole under the window has one to cut. */
@@ -270,7 +344,13 @@ function SplitPane(props: {
             ? "relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col [contain:layout]"
             : "contents"
       }
-      style={state.floating ? floatStyle : state.split ? { order: props.order } : undefined}
+      style={
+        state.floating
+          ? floatStyle
+          : state.split
+            ? { order: props.order, flexGrow: props.grow, minWidth: SPLIT_PANE_MIN_WIDTH }
+            : undefined
+      }
       onPointerDown={state.floating ? onFloatPointerDown : undefined}
       onPointerDownCapture={enter}
       onFocusCapture={enter}
@@ -395,6 +475,7 @@ export function SplitThreadPanes(props: {
   const partnerMissing = partner.missing;
   const floatingMissing = floating.missing;
   const unpair = useSplitThreadStore((state) => state.unpair);
+  const resize = useSplitThreadStore((state) => state.resize);
   const pair = useSplitThreadStore((state) => state.pair);
   const floatThread = useSplitThreadStore((state) => state.float);
   const floatOnLeave = useSplitThreadStore((state) => state.floatOnLeave);
@@ -523,6 +604,7 @@ export function SplitThreadPanes(props: {
         key={PANE_SLOT_KEYS[index]}
         state={state}
         order={left ? 0 : 2}
+        grow={left ? LEFT_PANE_GROW : RIGHT_PANE_GROW}
         composerRef={slotComposerRefs[index] ?? firstSlotComposerRef}
         behindFloat={floatShown && !isFloating}
         onEnter={onEnter}
@@ -541,15 +623,13 @@ export function SplitThreadPanes(props: {
         data-fork-thread-panes=""
         data-fork-split-threads={split ? "" : undefined}
         className={split ? "flex min-h-0 flex-1 flex-row" : "contents"}
+        style={split ? ({ [SPLIT_RATIO_VAR]: layout.ratio } as CSSProperties) : undefined}
       >
         {panes}
         {split ? (
-          <div
-            aria-hidden
-            // Themes that frame each pane on its own card hide this line.
-            data-fork-split-divider=""
-            data-fork-float-behind={floatShown || undefined}
-            className="order-1 w-px shrink-0 bg-border"
+          <SplitResizeHandle
+            floatBehind={floatShown}
+            onResize={(ratio) => resize(layout.left, ratio)}
           />
         ) : null}
       </div>

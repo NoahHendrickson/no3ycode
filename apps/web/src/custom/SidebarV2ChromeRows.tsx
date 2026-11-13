@@ -1,14 +1,14 @@
 /**
- * The Sidebar V2 control rows — search, new agent, add project, usage,
- * automations, and the projects filter — see `.fork/customizations.yaml#fork-sidebar-chrome`.
+ * The Sidebar V2 control rows — search, new agent, usage, automations, pull
+ * requests, and the Threads row (add project, sort, filter) — see `.fork/customizations.yaml#fork-sidebar-chrome`.
  *
  * Metrics from Figma t3-fork node 364:11246: the action rows are the
  * design system's ghost Button (364:10544) stacked 2px apart inside the
  * panel's 8px inset — 32px tall, 10px corners, 12px inline padding, a 16px
  * leading icon 6px from a 14px Regular label, everything at the panel's
  * foreground. The Threads row below (368:21211) is the project headers'
- * shape on the same inset: a muted 13px semibold label, then two 32px icon
- * buttons — sort and the view menu — on the list edge.
+ * shape on the same inset: a muted 13px semibold label, then 32px icon
+ * buttons — add project, sort, and the view menu — on the list edge.
  *
  * Fork-owned rather than fenced in place: this is pure presentation, and
  * leaving it inline meant `Sidebar.tsx` carried the whole rewrite while the
@@ -42,6 +42,7 @@ import {
   ArrowUpDownIcon,
   ChartDonutIcon,
   EllipsisVerticalIcon,
+  GitPullRequestIcon,
   NavigationArrowIcon,
   SettingsIcon,
   ZapIcon,
@@ -55,6 +56,8 @@ import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 import { useQuietThreadShells } from "~/state/entities";
+import { usePullRequestsSupported } from "~/state/environments";
+import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
 import {
   listScheduledRunActivity,
   SCHEDULED_RUN_ACTIVITY_MARKS,
@@ -94,7 +97,7 @@ const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
     red. The design (364:11246) tints the icon and the label alike, at the
     panel's foreground. */
 export const CHROME_ROW_ICON_TINT = "[&>svg]:text-sidebar-foreground [&>svg]:opacity-100";
-/** Label/14 Regular for Search / New agent / Add a project / Usage — literal
+/** Label/14 Regular for Search / New agent / Usage / Automations / Pull requests — literal
     so the panel's 13px text-xs remap cannot shrink them. font-normal and the
     active twin displace sidebarMenuButtonVariants' font-medium (default
     variant and data-[active=true]), so the New agent row stays Regular while
@@ -132,7 +135,7 @@ const CHROME_ACTION = cn(
 
 type ChromeIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
-/** New agent, Add a project, Usage, and Scheduled share one shape; Search keeps its own
+/** New agent, Usage, Automations, and Pull requests share one shape; Search keeps its own
     (a div label, see ChromeSearchRow). onClick is optional so Usage can hand
     the same button to PopoverTrigger / DialogTrigger via `render`. Extra
     props (ref, aria-expanded) forward onto the button. */
@@ -204,7 +207,7 @@ function ChromeLabeledAction({
 }
 
 /**
- * Opens the palette through the bus, the path "Add a project" takes. A dialog
+ * Opens the palette through the bus, the path the Threads row's "Add a project" takes. A dialog
  * trigger here never opened it on a phone, where the sidebar is a modal sheet:
  * the tap only closed the sheet.
  */
@@ -233,7 +236,7 @@ function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string |
   );
 }
 
-/** Search + New agent + Add a project + Usage + Scheduled share one group so Figma's
+/** Search + New agent + Usage + Automations + Pull requests share one group so Figma's
  *  stacked action block (364:11246) does not pick up inter-group padding: the
  *  block starts flush under the header and stacks its rows 2px apart inside
  *  the panel's 8px inset. */
@@ -246,7 +249,6 @@ export function SidebarV2ChromeActionRows(props: {
       chosen, which is when the draft leaves this row for a card. */
   readonly newThreadActive: boolean;
   readonly onNewThread: () => void;
-  readonly onAddProject: () => void;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
@@ -273,15 +275,9 @@ export function SidebarV2ChromeActionRows(props: {
         active={props.newThreadActive}
         onClick={props.onNewThread}
       />
-      <ChromeLabeledAction
-        icon={FolderPlusIcon}
-        label="Add a project"
-        ariaLabel="Add a project"
-        testId="sidebar-v2-add-project"
-        onClick={props.onAddProject}
-      />
       <ChromeUsageRow />
       <ChromeAutomationsRow />
+      <ChromePullRequestsRow />
     </SidebarGroup>
   );
 }
@@ -328,6 +324,31 @@ function ChromeUsageRow() {
       onClick={() => {
         if (isMobile) setOpenMobile(false);
         void navigate({ to: "/usage" });
+      }}
+    />
+  );
+}
+
+/** Upstream's footer Pull requests icon, promoted to a row. Absent where the
+    environment cannot list pull requests, as the icon was. */
+function ChromePullRequestsRow() {
+  const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const supported = usePullRequestsSupported();
+  const isOnPullRequests = useLocation({
+    select: (location) => location.pathname === "/pull-requests",
+  });
+  if (!supported) return null;
+  return (
+    <ChromeLabeledAction
+      icon={GitPullRequestIcon}
+      label="Pull requests"
+      ariaLabel="Pull requests"
+      testId="sidebar-v2-pull-requests"
+      active={isOnPullRequests}
+      onClick={() => {
+        if (isMobile) setOpenMobile(false);
+        void navigate({ to: "/pull-requests", search: readPullRequestListPreferences() });
       }}
     />
   );
@@ -585,9 +606,9 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
       sort menu and Settings edit, so the surfaces cannot disagree. */
   readonly projectSortOrder: SidebarProjectSortOrder;
   readonly onProjectSortOrderChange: (sortOrder: SidebarProjectSortOrder) => void;
+  readonly onAddProject: () => void;
 }) {
-  if (props.projectGroups.length === 0) return null;
-
+  const hasProjects = props.projectGroups.length > 0;
   const isScoped = props.projectScopeKeys.size > 0;
   const filterAriaLabel = isScoped
     ? `Filter threads by project — showing ${props.scopedProjectDisplayName ?? "selected projects"}. Opens project filter and group-by.`
@@ -624,86 +645,112 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
           Threads
         </span>
         <div className="-me-3 flex shrink-0 items-center">
-          <Menu>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <MenuTrigger
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <SidebarMenuButton
+                  size="sm"
+                  type="button"
+                  className={PROJECTS_ROW_BUTTON}
+                  aria-label="Add a project"
+                  data-testid="sidebar-v2-add-project"
+                  onClick={props.onAddProject}
+                />
+              }
+            >
+              <FolderPlusIcon className="size-4 shrink-0" />
+            </TooltipTrigger>
+            <TooltipPopup side="right">Add a project</TooltipPopup>
+          </Tooltip>
+          {/* Sort and filter act on projects, so they wait for the first one;
+              Add a project is the row's way in before then. */}
+          {hasProjects ? (
+            <>
+              <Menu>
+                <Tooltip>
+                  <TooltipTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
-                        type="button"
-                        className={PROJECTS_ROW_BUTTON}
-                        aria-label={sortTooltip}
-                        data-testid="sidebar-v2-project-sort"
-                        data-fork-tab-trigger=""
+                      <MenuTrigger
+                        render={
+                          <SidebarMenuButton
+                            size="sm"
+                            type="button"
+                            className={PROJECTS_ROW_BUTTON}
+                            aria-label={sortTooltip}
+                            data-testid="sidebar-v2-project-sort"
+                            data-fork-tab-trigger=""
+                          />
+                        }
                       />
                     }
-                  />
-                }
-              >
-                {/* Regular, not the shim's bold pin: the faders beside it are
+                  >
+                    {/* Regular, not the shim's bold pin: the faders beside it are
                     duotone, whose outline is the regular weight, and the row's
                     other marks are duotone too. Bold read a stroke heavier
                     than every neighbour. */}
-                <ArrowUpDownIcon weight="regular" className="size-4 shrink-0" />
-              </TooltipTrigger>
-              <TooltipPopup side="right">{sortTooltip}</TooltipPopup>
-            </Tooltip>
-            <MenuPopup
-              align="end"
-              data-fork-glass-rim
-              data-fork-thread-sort
-              data-fork-tab-menu=""
-              className="min-w-48"
-            >
-              <MenuRadioGroup
-                value={props.projectSortOrder}
-                onValueChange={(value) =>
-                  props.onProjectSortOrderChange(value as SidebarProjectSortOrder)
-                }
-              >
-                {SORT_ORDERS.map((sortOrder) => (
-                  <MenuRadioItem
-                    key={sortOrder}
-                    value={sortOrder}
-                    closeOnClick
-                    className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                    <ArrowUpDownIcon weight="regular" className="size-4 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipPopup side="right">{sortTooltip}</TooltipPopup>
+                </Tooltip>
+                <MenuPopup
+                  align="end"
+                  data-fork-glass-rim
+                  data-fork-thread-sort
+                  data-fork-tab-menu=""
+                  className="min-w-48"
+                >
+                  <MenuRadioGroup
+                    value={props.projectSortOrder}
+                    onValueChange={(value) =>
+                      props.onProjectSortOrderChange(value as SidebarProjectSortOrder)
+                    }
                   >
-                    {SORT_ORDER_LABELS[sortOrder]}
-                  </MenuRadioItem>
-                ))}
-              </MenuRadioGroup>
-            </MenuPopup>
-          </Menu>
-          <Menu open={props.menuOpen} onOpenChange={props.onMenuOpenChange}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <MenuTrigger
+                    {SORT_ORDERS.map((sortOrder) => (
+                      <MenuRadioItem
+                        key={sortOrder}
+                        value={sortOrder}
+                        closeOnClick
+                        className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                      >
+                        {SORT_ORDER_LABELS[sortOrder]}
+                      </MenuRadioItem>
+                    ))}
+                  </MenuRadioGroup>
+                </MenuPopup>
+              </Menu>
+              <Menu open={props.menuOpen} onOpenChange={props.onMenuOpenChange}>
+                <Tooltip>
+                  <TooltipTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
-                        type="button"
-                        className={cn(
-                          PROJECTS_ROW_BUTTON,
-                          // The active scope lifts the glyph to foreground.
-                          isScoped && "text-sidebar-foreground",
-                        )}
-                        aria-label={filterAriaLabel}
-                        data-testid="sidebar-v2-project-filter"
-                        data-fork-tab-trigger=""
+                      <MenuTrigger
+                        render={
+                          <SidebarMenuButton
+                            size="sm"
+                            type="button"
+                            className={cn(
+                              PROJECTS_ROW_BUTTON,
+                              // The active scope lifts the glyph to foreground.
+                              isScoped && "text-sidebar-foreground",
+                            )}
+                            aria-label={filterAriaLabel}
+                            data-testid="sidebar-v2-project-filter"
+                            data-fork-tab-trigger=""
+                          />
+                        }
                       />
                     }
-                  />
-                }
-              >
-                <SettingsIcon className="size-4 shrink-0" />
-              </TooltipTrigger>
-              <TooltipPopup side="right">{filterTooltip}</TooltipPopup>
-            </Tooltip>
-            <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="" className="min-w-56">
-              {/* Above the scope list, not below it: with enough projects the
+                  >
+                    <SettingsIcon className="size-4 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipPopup side="right">{filterTooltip}</TooltipPopup>
+                </Tooltip>
+                <MenuPopup
+                  align="end"
+                  data-fork-glass-rim
+                  data-fork-tab-menu=""
+                  className="min-w-56"
+                >
+                  {/* Above the scope list, not below it: with enough projects the
                   list scrolls, and a preference that decides how the whole
                   sidebar reads should not be the thing you have to scroll to.
 
@@ -713,93 +760,95 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                   rides on the accessible name and the native tooltip, so it
                   reaches both the pointer and the screen reader rather than
                   leaving either to infer it from an option that does nothing. */}
-              {/* Radios: grouping is one choice of three, so picking one
+                  {/* Radios: grouping is one choice of three, so picking one
                   clears the others; "No grouping" is the way back to the flat
                   list. The menu stays open so the choice can be seen taking
                   effect behind it. */}
-              <MenuRadioGroup
-                value={props.grouping}
-                onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
-              >
-                <OptionRadioItem
-                  value="none"
-                  checked={props.grouping === "none"}
-                  testId="sidebar-v2-grouping-none"
-                >
-                  No grouping
-                </OptionRadioItem>
-                <OptionRadioItem
-                  value="project"
-                  checked={props.grouping === "project"}
-                  disabled={props.groupByProjectUnavailableReason !== null}
-                  aria-label={
-                    props.groupByProjectUnavailableReason === null
-                      ? undefined
-                      : `Group by project — ${props.groupByProjectUnavailableReason}`
-                  }
-                  title={props.groupByProjectUnavailableReason ?? undefined}
-                  testId="sidebar-v2-group-by-project-toggle"
-                >
-                  Group by project
-                </OptionRadioItem>
-                {/* Never disabled: status sections read the same with one
+                  <MenuRadioGroup
+                    value={props.grouping}
+                    onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
+                  >
+                    <OptionRadioItem
+                      value="none"
+                      checked={props.grouping === "none"}
+                      testId="sidebar-v2-grouping-none"
+                    >
+                      No grouping
+                    </OptionRadioItem>
+                    <OptionRadioItem
+                      value="project"
+                      checked={props.grouping === "project"}
+                      disabled={props.groupByProjectUnavailableReason !== null}
+                      aria-label={
+                        props.groupByProjectUnavailableReason === null
+                          ? undefined
+                          : `Group by project — ${props.groupByProjectUnavailableReason}`
+                      }
+                      title={props.groupByProjectUnavailableReason ?? undefined}
+                      testId="sidebar-v2-group-by-project-toggle"
+                    >
+                      Group by project
+                    </OptionRadioItem>
+                    {/* Never disabled: status sections read the same with one
                     project as with ten. */}
-                <OptionRadioItem
-                  value="status"
-                  checked={props.grouping === "status"}
-                  testId="sidebar-v2-group-by-status-toggle"
-                >
-                  Group by status
-                </OptionRadioItem>
-              </MenuRadioGroup>
-              <FullWidthMenuSeparator />
-              {/* Set apart from the radios: card density is independent of
+                    <OptionRadioItem
+                      value="status"
+                      checked={props.grouping === "status"}
+                      testId="sidebar-v2-group-by-status-toggle"
+                    >
+                      Group by status
+                    </OptionRadioItem>
+                  </MenuRadioGroup>
+                  <FullWidthMenuSeparator />
+                  {/* Set apart from the radios: card density is independent of
                   grouping and combines with any of the three. */}
-              <OptionCheckboxItem
-                checked={props.compactCards}
-                onCheckedChange={props.onCompactCardsChange}
-                testId="sidebar-v2-compact-cards-toggle"
-              >
-                Compact cards
-              </OptionCheckboxItem>
-              <FullWidthMenuSeparator />
-              {/* Checkboxes, not radios: the scope is a set, so several
+                  <OptionCheckboxItem
+                    checked={props.compactCards}
+                    onCheckedChange={props.onCompactCardsChange}
+                    testId="sidebar-v2-compact-cards-toggle"
+                  >
+                    Compact cards
+                  </OptionCheckboxItem>
+                  <FullWidthMenuSeparator />
+                  {/* Checkboxes, not radios: the scope is a set, so several
                   projects can be on at once and each toggles independently.
                   The menu stays open across toggles for the same reason the
                   options above keep it open — picking three projects should
                   not take three trips. "All projects" is checked while the
                   set is empty and clears it when chosen. */}
-              <ScopeCheckboxItem
-                checked={!isScoped}
-                onCheckedChange={() => props.onProjectScopeChange(EMPTY_PROJECT_SCOPE)}
-                testId="sidebar-v2-project-scope-all"
-              >
-                <FolderIcon className="size-4 shrink-0" />
-                <span className="min-w-0 truncate text-sm">All projects</span>
-              </ScopeCheckboxItem>
-              {props.projectGroups.map((project) => (
-                <ScopeCheckboxItem
-                  key={project.projectKey}
-                  checked={props.projectScopeKeys.has(project.projectKey)}
-                  onCheckedChange={() => toggleProjectScope(project.projectKey)}
-                >
-                  <ProjectFavicon project={project} className="size-4 shrink-0" />
-                  <span className="min-w-0 truncate text-sm">{project.displayName}</span>
-                  <button
-                    type="button"
-                    aria-label={`Project actions for ${project.displayName}`}
-                    className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                    // Stopping pointerdown keeps the checkbox item from toggling
-                    // the project as a side effect of reaching its overflow.
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => props.onProjectActions(event, project)}
+                  <ScopeCheckboxItem
+                    checked={!isScoped}
+                    onCheckedChange={() => props.onProjectScopeChange(EMPTY_PROJECT_SCOPE)}
+                    testId="sidebar-v2-project-scope-all"
                   >
-                    <EllipsisVerticalIcon className="size-4" />
-                  </button>
-                </ScopeCheckboxItem>
-              ))}
-            </MenuPopup>
-          </Menu>
+                    <FolderIcon className="size-4 shrink-0" />
+                    <span className="min-w-0 truncate text-sm">All projects</span>
+                  </ScopeCheckboxItem>
+                  {props.projectGroups.map((project) => (
+                    <ScopeCheckboxItem
+                      key={project.projectKey}
+                      checked={props.projectScopeKeys.has(project.projectKey)}
+                      onCheckedChange={() => toggleProjectScope(project.projectKey)}
+                    >
+                      <ProjectFavicon project={project} className="size-4 shrink-0" />
+                      <span className="min-w-0 truncate text-sm">{project.displayName}</span>
+                      <button
+                        type="button"
+                        aria-label={`Project actions for ${project.displayName}`}
+                        className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                        // Stopping pointerdown keeps the checkbox item from toggling
+                        // the project as a side effect of reaching its overflow.
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => props.onProjectActions(event, project)}
+                      >
+                        <EllipsisVerticalIcon className="size-4" />
+                      </button>
+                    </ScopeCheckboxItem>
+                  ))}
+                </MenuPopup>
+              </Menu>
+            </>
+          ) : null}
         </div>
       </div>
     </SidebarGroup>

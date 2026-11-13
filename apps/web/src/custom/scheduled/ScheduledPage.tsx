@@ -80,6 +80,7 @@ import {
 import { ScheduledCard, useConnectedEnvironments } from "./scheduledPageChrome";
 import { ScheduledRunRows, ScheduledRunsHeader } from "./ScheduledRunsTable";
 import { ScheduledTaskDetail } from "./ScheduledTaskDetail";
+import { automationProjectIds } from "./githubAutomation.logic";
 import { forkStageCardRef } from "../forkStageStamps";
 
 /**
@@ -353,9 +354,13 @@ function TaskRow(props: { readonly environmentId: EnvironmentId; readonly task: 
   const { environmentId, task } = props;
   const navigate = useNavigate();
   const projects = useProjects();
-  const project = projects.find(
-    (entry) => entry.environmentId === environmentId && entry.id === task.projectId,
-  );
+  const projectLabel = automationProjectIds(task)
+    .map(
+      (projectId) =>
+        projects.find((entry) => entry.environmentId === environmentId && entry.id === projectId)
+          ?.title ?? "Unknown project",
+    )
+    .join(", ");
   const canOperate = useAtomValue(
     serverEnvironment.upsertScheduledTask.permissionAtom(environmentId),
   );
@@ -423,9 +428,7 @@ function TaskRow(props: { readonly environmentId: EnvironmentId; readonly task: 
       <TableCell className="max-w-96 whitespace-normal">
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium text-foreground">{task.title}</span>
-          <span className="truncate text-muted-foreground">
-            {project?.title ?? "Unknown project"}
-          </span>
+          <span className="truncate text-muted-foreground">{projectLabel}</span>
         </div>
       </TableCell>
       <TableCell>
