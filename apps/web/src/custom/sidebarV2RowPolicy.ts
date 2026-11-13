@@ -95,6 +95,14 @@ const THREAD_ROW_RADIUS = {
 
 export type ThreadRowShape = keyof typeof THREAD_ROW_RADIUS;
 
+const THREAD_ROW_OPEN_FILL = "bg-sidebar-row-active text-sidebar-foreground";
+
+/** The open row's surface, for a split pair's row (fork-split-threads), which paints it for both
+    of its cards. */
+export function threadRowOpenSurfaceClassName(shape: ThreadRowShape): string {
+  return cn(THREAD_ROW_RADIUS[shape], THREAD_ROW_OPEN_FILL);
+}
+
 export function threadRowShape(input: {
   readonly variant: "card" | "slim";
   readonly compact: boolean;
@@ -110,17 +118,21 @@ export function threadRowSurfaceClassName(input: {
       slim-shelf rule for shelves. See the note at the top of this file. */
   readonly recedes: boolean;
   readonly shape: ThreadRowShape;
+  /** Sits on an open split pair, whose row paints the open fill: the card paints only selection. */
+  readonly onOpenPair?: boolean;
 }): string {
   return cn(
     "group/v2-row relative w-full cursor-pointer overflow-hidden text-left outline-none select-none",
     THREAD_ROW_RADIUS[input.shape],
-    input.isActive
-      ? "bg-sidebar-row-active text-sidebar-foreground"
+    input.isActive && !input.onOpenPair
+      ? THREAD_ROW_OPEN_FILL
       : input.isSelected
         ? "bg-sidebar-row-selected text-sidebar-foreground"
-        : input.recedes
-          ? "text-sidebar-muted-foreground/75 hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
-          : "bg-transparent text-sidebar-foreground hover:bg-sidebar-row-hover",
+        : input.onOpenPair
+          ? "text-sidebar-foreground"
+          : input.recedes
+            ? "text-sidebar-muted-foreground/75 hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
+            : "bg-transparent text-sidebar-foreground hover:bg-sidebar-row-hover",
   );
 }
 

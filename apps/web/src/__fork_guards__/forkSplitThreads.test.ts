@@ -122,5 +122,9 @@ describe("fork guard: fork-split-threads", () => {
     expect(sidebar).toContain("canPair: (threadKey) => splitModel.pairable.has(threadKey),");
     expect(sidebar).toContain("{...splitDropHandlers}");
     expect(sidebar).toContain("splitThreadDragSourceProps(threadKey,");
+    // An open pair is one item: its row paints the open fill and its cards leave it alone.
+    expect(sidebar).toContain("active={pairOpen}");
+    expect(sidebar).toContain("onOpenSplitPair: pairOpen,");
+    expect(sidebar).toContain("onOpenPair: props.onOpenSplitPair === true,");
   });
 });

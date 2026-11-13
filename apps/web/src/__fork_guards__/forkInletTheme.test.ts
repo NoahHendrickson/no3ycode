@@ -276,7 +276,7 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
     // settled thread's open row is the slim row, on the same fill.
-    const row = ruleBodyFor(inletRules, [
+    const row = ruleNaming(inletRules, [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
       ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
@@ -296,6 +296,10 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
+    // An open split pair (fork-split-threads) bridges from its row, not its open half.
+    expect(bridge?.selector.replace(/\s+/gu, "")).toContain(
+      "li[data-fork-split-pair][data-active]::after",
+    );
     // Paint containment from content-visibility would clip the bridge to the item.
     const item = docked.find((rule) =>
       rule.selector

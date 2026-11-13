@@ -23,6 +23,8 @@ export type SidebarSplitRow<TThread> =
       readonly key: string;
       readonly left: TThread;
       readonly right: TThread;
+      /** The two threads' keys, left then right. */
+      readonly memberKeys: readonly [string, string];
     };
 
 export interface SidebarSplitModel<TThread> {
@@ -74,7 +76,13 @@ export function buildSidebarSplitModel<TThread>(input: {
       continue;
     }
     const partnerKey = key === leftKey ? rightKey : leftKey;
-    rows.set(key, { kind: "pair", key: `split:${leftKey}|${rightKey}`, left, right });
+    rows.set(key, {
+      kind: "pair",
+      key: `split:${leftKey}|${rightKey}`,
+      left,
+      right,
+      memberKeys: [leftKey, rightKey],
+    });
     rows.set(partnerKey, { kind: "skip" });
     order.push(left, right);
   }

@@ -443,7 +443,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     openThreadKey,
     openThread: (threadRef) => {
       clearSidebarSelection();
-      void router.navigate({
+      return router.navigate({
         to: "/$environmentId/$threadId",
         params: buildThreadRouteParams(threadRef),
       });
@@ -635,7 +635,20 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
               className={SPLIT_TAB_CLASS}
               style={{ minWidth: slot.entries.length * COLLAPSED_TAB_MIN_WIDTH }}
             >
-              {slot.entries.map((entry) => renderEntry(entry, true))}
+              {slot.entries.flatMap((entry, index) => [
+                ...(index === 0
+                  ? []
+                  : [
+                      // -mr-px: no width of its own, so the halves' minimum still fits.
+                      <span
+                        key={`divider:${entry.threadKey}`}
+                        aria-hidden
+                        data-fork-split-tab-divider=""
+                        className="pointer-events-none -mr-px h-3.5 w-px shrink-0 bg-current opacity-20"
+                      />,
+                    ]),
+                renderEntry(entry, true),
+              ])}
             </div>
           ),
         )}
