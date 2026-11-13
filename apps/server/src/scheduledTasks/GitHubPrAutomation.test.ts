@@ -79,6 +79,7 @@ const withService = <A, E>(
           Effect.succeedSome({
             projectId,
             title: projectId,
+            hasCustomTitle: false,
             workspaceRoot: `/repo/${projectId}`,
             defaultModelSelection: null,
             defaultThreadEnvMode: null,
@@ -177,7 +178,11 @@ const withService = <A, E>(
         namedProjectsRoot: "/projects",
         isScratchProject: () => Effect.succeed(false),
       }),
-      Layer.mock(ThreadManagementService.ThreadManagementService)({}),
+      Layer.mock(ThreadManagementService.ThreadManagementService)({
+        // A bound task's destination is checked on save (upstream); it lives in the task's project.
+        getThreadShell: () =>
+          Effect.succeed({ projectId: "d2", deletedAt: null, archivedAt: null } as never),
+      }),
       Layer.mock(SecretRequests.SecretRequests)({}),
       Layer.succeed(
         ScheduledTaskService.ScheduledTaskWebhookOrigin,

@@ -31,8 +31,9 @@ describe("fork guard: fork-sidebar-chrome", () => {
   it("still offers a toggle while the sidebar is collapsed", () => {
     // The inline toggle leaves with the panel. Without this branch a collapsed
     // sidebar can only be reopened by keyboard or by finding the rail.
-    // Upstream now keeps the wrapper mounted and swaps the trigger in place.
-    expect(layout).toContain("{isSidebarVisible ? null : (");
+    // Upstream now keeps the wrapper mounted and swaps the trigger in place;
+    // its showSidebar (false on Welcome) drops the toggle with the sidebar.
+    expect(layout).toContain("{showSidebar && !isSidebarVisible ? (");
     expect(layout).toContain("data-sidebar-control");
   });
 
@@ -42,7 +43,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // open — the one state in which you need it most.
     // Formatting may break the comparison across lines; match the token pair.
     const effect = layout.search(/!==\s*"sidebar\.toggle"/u);
-    const earlyReturn = layout.indexOf("{isSidebarVisible ? null : (");
+    const earlyReturn = layout.indexOf("{showSidebar && !isSidebarVisible ? (");
     expect(effect).toBeGreaterThanOrEqual(0);
     expect(earlyReturn).toBeGreaterThan(effect);
   });

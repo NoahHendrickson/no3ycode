@@ -434,6 +434,8 @@
   shadows: []
   watch:
     - apps/desktop/src/window/DesktopApplicationMenu.test.ts
+    # The pool test provides the fork environment layer its FileSystem.
+    - apps/desktop/src/backend/DesktopBackendPool.test.ts
     - t3.json
     - apps/desktop/src/main.ts
     - apps/desktop/src/app/DesktopStartupRecovery.ts
@@ -831,6 +833,10 @@
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
+    # Upstream's render-isolation case spies an export the fork's rows never render.
+    - apps/web/src/components/Sidebar.browser.test.tsx
+    # Upstream's Sidebar.drag.browser.test.tsx is deleted, not ported: it drags a search
+    # result out of the boring sidebar's folders, and the fork renders neither.
     # The fork customizes upstream's canonical Sidebar V2 implementation in place.
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/index.css
@@ -1198,6 +1204,8 @@
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
+    # Upstream's settled-pagination case reads the fork's shelf toggle and settlement capability.
+    - apps/web/src/components/Sidebar.browser.test.tsx
     - docs/user/thread-sidebar.md
     - apps/web/src/components/Sidebar.tsx
   verify:
@@ -2903,8 +2911,9 @@
     Every figure appears once. A pooled window keeps one segment per account
     in fixed columns; who an account is, its own share, its reset and the
     reset-credit action live in that segment's hover/click popover, so there
-    is no in-bar label, index chip or legend row. The Cursor keychain prompt
-    and the external-usage links are the same card. A provider that reports
+    is no in-bar label, index chip or legend row. The external-usage links
+    are the same card (upstream dropped the Cursor keychain prompt when Cursor
+    usage moved to the SDK account). A provider that reports
     no windows (e.g. Grok) gets no "No limits reported." warning; probe
     failures and source errors still do. The dropped line is derived from
     upstream's limitsNotice, not copied, so a rewording cannot bring it
@@ -2920,6 +2929,7 @@
   shadows:
     - apps/web/src/components/usage/UsageLimitsPooled.tsx
   watch:
+    # Hosts the pooled limits; it carried the Cursor prompt card until upstream removed it.
     - apps/web/src/components/usage/UsagePage.tsx
   verify:
     - apps/web/src/__fork_guards__/forkUsageLimits.test.ts
@@ -3584,10 +3594,11 @@
     on the pill edge. The workspace select opens above the chip row (side top,
     no align-item-with-trigger) so its glass menu clears the neighboring
     branch pill instead of overlapping it. Only the prompt and primary action sit
-    inside the prompt surface. Runtime and interaction modes sit below-left
-    inside the vessel; context usage, model, and effort sit below-right in a
-    control row with 8px padding — 36px tall over the 20px ghost controls,
-    40px whenever the 24px context-usage meter renders (4px-radius controls —
+    inside the prompt surface. The runtime mode sits below-left inside the
+    vessel (upstream #33131 removed plan mode and the context meter, so the
+    Build/Plan toggle and the readout slot's meter are gone); model and effort
+    sit below-right in a control row with 8px padding — 36px tall over the
+    20px ghost controls (4px-radius controls —
     Noey's radius over the drawn full-pill ghosts, so hover fills square
     off). The
     runtime mode renders as the design's 20px accent chip — label only, no
@@ -3706,9 +3717,7 @@
     The dictation cancel X, a ghost in the send slot, paints pure white in
     dark instead of the muted foreground. Actions are always stamped by
     name, never selected by position: ComposerPrimaryActions hoists a
-    labelled Refine submit into the same cluster as a direct child. The
-    context-usage meter carries
-    upstream's compact action (#8144) in the readout slot.
+    labelled Refine submit into the same cluster as a direct child.
     Default-dark context chips are Figma 322:6316's white 12% wash (hover
     17%), the pair the Glass glass tier already uses; the other
     palettes keep their own opaque tints. The PR chip is the exception: its
@@ -4918,12 +4927,14 @@
     - docs/user/providers-claude.md
   shadows: []
   watch:
+    # Upstream's handoff test drives the resume card instead of the compact-send button.
+    - apps/web/src/components/ChatView.handoffCompaction.browser.test.tsx
     # Owns resumeCompactionTokens, the compact-before-send path and the banner stack.
     - apps/web/src/components/ChatView.tsx
     # Renders the compact-send button when compactBeforeSendTokens is non-null.
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
     # Owns shouldOfferResumeCompaction, the offer threshold the card reuses.
-    - apps/web/src/components/chat/ContextWindowMeter.logic.ts
+    - packages/client-runtime/src/state/contextWindow.ts
     - docs/user/providers-claude.md
   verify:
     - apps/web/src/__fork_guards__/forkResumeCompactionBanner.test.ts
@@ -5157,6 +5168,8 @@
     - apps/web/src/components/chat/ProviderModelPicker.tsx
     - apps/web/src/components/chat/ModelPickerContent.tsx
   watch:
+    # Upstream's model-pick test picks a menu item, not an option row.
+    - apps/web/src/components/ChatView.modelPick.browser.test.tsx
     # Upstream's picker tests, fenced to the fork's menu-item rows and search label;
     # the docked effort column case is removed (the composer uses ComposerModelPicker).
     - apps/web/src/components/chat/ProviderModelPicker.browser.test.tsx
@@ -5763,39 +5776,6 @@
     - apps/server/src/orchestration-v2/forkLocalCheckoutBranchFollow.test.ts
     - apps/server/src/orchestration-v2/RunFinalizationService.test.ts
 
-- id: server-repository-identity-base-remote
-  intent: >
-    A project's repository identity names the repository its pull requests
-    live in. Upstream's resolver always prefers a remote called `upstream`
-    over `origin`, which is right for a contributor checkout whose PRs go to
-    upstream, and wrong for this fork: PRs go to `origin`, and since
-    upstream #10101 the thread PR reactor refuses any PR whose repository
-    differs from the project identity, so no thread card in the fork's own
-    checkout ever got a PR link while the composer chip (live git status,
-    no identity check) kept showing it.
-
-    `gh repo set-default` records the answer as `remote.<name>.gh-resolved =
-    base`, and `gh pr list` already resolves from that remote. The fork
-    reads the same marker: when a checkout has more than one remote and one
-    of them carries the base marker, that remote is the identity. A
-    checkout with a single remote, no marker, or a marker naming a remote
-    that no longer exists keeps upstream's upstream-then-origin order, so
-    every other project resolves exactly as before. Only the literal `base`
-    form is honoured: when the chosen default repository is not one of the
-    checkout's remotes, gh writes `owner/repo` instead, and with no remote
-    naming that repository there is nothing to build a locator from, so that
-    checkout also keeps upstream's order. One extra `git config` call, paid
-    only by multi-remote checkouts and cached with the identity.
-  tier: 4
-  files: []
-  shadows: []
-  watch:
-    - apps/server/src/project/RepositoryIdentityResolver.ts
-    - apps/server/src/project/RepositoryIdentityResolver.test.ts
-  verify:
-    - apps/web/src/__fork_guards__/serverRepositoryIdentityBaseRemote.test.ts
-    - apps/server/src/project/RepositoryIdentityResolver.test.ts
-
 - id: fork-scheduled-task-effort
   intent: >
     Scheduled task editors reuse the composer's combined model menu and effort
@@ -6340,31 +6320,6 @@
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
     - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
-
-- id: fork-git-256-non-repository
-  intent: >
-    Git 2.56 reports a worktree whose .git file points at a missing gitdir as
-    "gitfile does not point to a valid repository"; Git 2.55 said "not a git
-    repository", the only message upstream matches. On 2.56, storage cleanup
-    reported such a worktree as a cleanup failure instead of keeping it
-    ("Repository or branch changed"), GitVcsDriverCore status threw instead of
-    returning non-repository details, and classifyGitFailure lost the
-    not_a_repository reason. GitVcsDriverCore.isNonRepositoryGitStderr matches
-    both messages and is exported, so storage cleanup and GitManager call it
-    instead of their own copies of the string match. Drop this entry once
-    upstream matches the new message.
-  tier: 4
-  files: []
-  shadows: []
-  watch:
-    - apps/server/src/vcs/GitVcsDriverCore.ts
-    - apps/server/src/storageCleanup.ts
-    - apps/server/src/git/GitManager.ts
-    # Table test over both Git messages.
-    - apps/server/src/vcs/GitVcsDriverCore.test.ts
-  verify:
-    - apps/server/src/vcs/GitVcsDriverCore.test.ts
-    - apps/server/src/storageCleanup.test.ts
 
 - id: fork-landing-draft-cleanup
   intent: >

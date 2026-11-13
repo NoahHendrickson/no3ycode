@@ -22,7 +22,7 @@ import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 import { isSideChatSurface } from "~/custom/sideChat/surface";
 import { useIsChatThread } from "~/custom/useChatMode";
 import { useScratchProject } from "~/hooks/useScratchProject";
-import { isTriagePrompt } from "~/hooks/useStartTriage";
+import { isTriagePrompt } from "@t3tools/shared/triagePrompt";
 import { useProjects } from "~/state/entities";
 import { useEnvironments } from "~/state/environments";
 import { TriageDraftHero } from "./TriageDraftHero";

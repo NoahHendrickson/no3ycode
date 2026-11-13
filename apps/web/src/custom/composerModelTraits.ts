@@ -20,6 +20,7 @@ import {
   getProviderOptionCurrentValue,
   getProviderOptionDescriptors,
   normalizeModelSlug,
+  withImplicitFastModeDefault,
 } from "@t3tools/shared/model";
 
 import {
@@ -27,7 +28,6 @@ import {
   buildUnavailableModelOptionDescriptors,
   type PromptUltrathink,
 } from "../components/chat/TraitsPicker";
-import { withImplicitFastModeDefault } from "../components/chat/composerProviderState";
 import type { DraftId } from "../composerDraftStore";
 import { getProviderModelCapabilities } from "../providerModels";
 
@@ -44,7 +44,7 @@ export type ComposerModelTraitsInput = {
   promptUltrathink: PromptUltrathink;
   onPromptEdit: (edit: (prompt: string) => string) => void;
   triggerLabelSeparator?: string;
-  planModeEnabled: boolean;
+  includePlanAgent?: boolean | undefined;
   /** Controlled editors persist options on their own draft rather than a conversation. */
   onModelOptionsChange?: (options: ProviderOptionSelections | undefined) => void;
 };
@@ -103,7 +103,7 @@ export type ComposerModelTraits = ReturnType<typeof resolveComposerModelTraits>;
 
 /** Null when the model has nothing to configure or no destination for edited options. */
 export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
-  const { provider, model, models, promptUltrathink, planModeEnabled } = input;
+  const { provider, model, models, promptUltrathink, includePlanAgent } = input;
   if (
     input.threadRef === undefined &&
     input.draftId === undefined &&
@@ -111,16 +111,16 @@ export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
   )
     return null;
 
-  const caps = getProviderModelCapabilities(models, model, provider, planModeEnabled);
+  const caps = getProviderModelCapabilities(models, model, provider, includePlanAgent);
   const modelOptions = withImplicitFastModeDefault(caps, input.modelOptions);
   // OpenCode keeps a model's saved options even when its catalog drops it;
   // they show read-only.
   const modelIsUnavailable =
-    provider === "opencode" &&
+    (provider === "opencode" || provider === "cursor") &&
     !models.some((candidate) => candidate.slug === normalizeModelSlug(model, provider));
   const descriptors = modelIsUnavailable
     ? buildUnavailableModelOptionDescriptors(
-        planModeEnabled
+        includePlanAgent
           ? modelOptions
           : modelOptions?.filter((option) => option.id !== "agent" || option.value !== "plan"),
       )
@@ -145,7 +145,6 @@ export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
     ultrathinkInBodyText,
     modelIsUnavailable,
     trigger: buildTraitsTriggerDisplay({
-      provider,
       descriptors,
       primarySelectDescriptorId: primarySelect?.id ?? null,
       ultrathinkPromptControlled,

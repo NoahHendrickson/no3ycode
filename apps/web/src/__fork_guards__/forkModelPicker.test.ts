@@ -320,7 +320,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(effectEnd).toBeGreaterThan(effectStart);
     // That first dependency list is the controlled-update effect's own.
     expect(tiptap.slice(effectEnd)).toMatch(
-      /^\}, \[\s*clampEditorCursor,\s*cursor,\s*editor,[\s\S]*?skillLabelFor,\s*value,\s*\]\);/u,
+      /^\}, \[\s*clampEditorCursor,\s*cursor,\s*editor,[\s\S]*?skillLabelFor,[\s\S]*?value,\s*\]\);/u,
     );
     expect(tiptap.slice(effectStart, effectEnd)).not.toMatch(/\.focus\(/u);
     // Effort is a slider over the model's own levels; its keys stay out of

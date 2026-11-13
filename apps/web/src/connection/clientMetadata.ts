@@ -5,7 +5,7 @@ import type {
   DesktopBridge,
 } from "@t3tools/contracts";
 
-interface BrowserIdentity {
+export interface BrowserIdentity {
   readonly userAgent: string;
   readonly platform: string;
   readonly maxTouchPoints: number;
@@ -32,9 +32,6 @@ function isIpadosDesktopUserAgent(identity: BrowserIdentity): boolean {
   );
 }
 
-/* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
-// Exported: the fork's long-press context menu needs the browser OS.
-/* fork:end fork-touch-affordances */
 export function browserClientOs(identity: BrowserIdentity): ClientOs {
   const userAgent = identity.userAgent;
   if (userAgent.trim() === "") return "unknown";
