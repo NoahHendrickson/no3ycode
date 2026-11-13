@@ -73,10 +73,12 @@
     :is(
       [data-sidebar-version="v2"]
         :is([class~="bg-sidebar-row-active"], [class~="bg-sidebar-row-selected"]):not(
-          [data-testid="sidebar-row-card"][data-popup-open]
+          [data-fork-thread-row][data-popup-open]
         ),
       [data-fork-thread-tabs] [data-fork-thread-tab][data-active="true"]
     ) {
+    --info-foreground: var(--fork-texture-blue-deep);
+
     & .fork-pr-tone {
       --color-emerald-600: var(--color-emerald-700);
       --color-violet-600: #7a48e1;
@@ -86,6 +88,14 @@
     & [data-fork-monitoring-pulse] {
       background-color: #000000;
     }
+  }
+
+  /* Info blue (snoozed wake times, the snoozed shelf) is light mode's deep
+     shade, lost on the charcoal sidebar; there it takes the new-agent
+     texture's blue. The cream rows above take the deep shade back. */
+
+  & [data-sidebar-version="v2"] {
+    --info-foreground: var(--fork-texture-blue);
   }
 
   /* Inlet Black's new-agent screen draws the pixel texture
@@ -125,12 +135,12 @@
     }
   }
 
-  /* Inlet Black's message links are the new-agent texture's blue (#44aaf8,
-     custom/pixelTexture), deepened on the same hue to reach 4.5:1 on the cream
-     panel. File and thread links read the same token. */
+  /* Inlet Black's message links are the new-agent texture's blue, deepened
+     on the same hue to reach 4.5:1 on the cream panel. File and thread links
+     read the same token. */
 
   & .chat-markdown {
-    --info-foreground: #1670b5;
+    --info-foreground: var(--fork-texture-blue-deep);
   }
 
   /* Inlet Black's dev-server pulse is plain ink: the mark breathes from the

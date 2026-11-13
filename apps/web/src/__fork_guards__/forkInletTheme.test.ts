@@ -265,7 +265,7 @@ describe("fork guard: fork-inlet-theme", () => {
     const openSelector = [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
-      ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
+      '[data-fork-thread-row][aria-current="page"]',
     ].join(" ");
     const card = inletRules
       .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === openSelector)
@@ -279,7 +279,7 @@ describe("fork guard: fork-inlet-theme", () => {
     const row = ruleNaming(inletRules, [
       TEMPLATE,
       '[data-sidebar-version="v2"]',
-      ':is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]',
+      '[data-fork-thread-row][aria-current="page"]',
     ]);
     expect(row).toContain("--foreground: var(--fork-inlet-panel-foreground)");
     expect(row).toContain("--contrast-foreground: var(--fork-inlet-panel-foreground)");
@@ -290,9 +290,7 @@ describe("fork guard: fork-inlet-theme", () => {
     const bridge = docked.find((rule) =>
       rule.selector
         .replace(/\s+/gu, "")
-        .endsWith(
-          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])::after',
-        ),
+        .endsWith('li[data-thread-item]:has([data-fork-thread-row][aria-current="page"])::after'),
     );
     expect(bridge?.body).toContain("radial-gradient");
     expect(bridge?.body).toContain("var(--fork-inlet-panel)");
@@ -304,9 +302,7 @@ describe("fork guard: fork-inlet-theme", () => {
     const item = docked.find((rule) =>
       rule.selector
         .replace(/\s+/gu, "")
-        .endsWith(
-          'li[data-thread-item]:has(:is([data-testid="sidebar-row-card"],[data-testid="sidebar-row-slim"])[aria-current="page"])',
-        ),
+        .endsWith('li[data-thread-item]:has([data-fork-thread-row][aria-current="page"])'),
     );
     expect(item?.body).toContain("content-visibility: visible");
     // Nothing between the row and the panel: flush panel, no seam, no gutter.
@@ -390,12 +386,27 @@ describe("fork guard: fork-inlet-theme", () => {
     ]) {
       expect(readSibling(site), site).toContain('data-fork-row-hover-card=""');
     }
-    const tab = inletRules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-row-hover-card]") && rule.selector.endsWith("::after"),
-    )?.body;
+    // Both row shapes carry one styling hook, so a row rule can't miss a shape.
+    expect(
+      readSibling("../components/Sidebar.tsx").match(/data-fork-thread-row=""/gu),
+    ).toHaveLength(2);
+    expect(`${inlet}\n${palettes}`).not.toMatch(/data-testid="sidebar-row-(?:card|slim)"/u);
+    const hoverCardAfter = (suffix: string) =>
+      inletRules.find(
+        (rule) =>
+          rule.selector.includes("[data-fork-row-hover-card]") &&
+          rule.selector.replace(/\(\s+/gu, "(").replace(/\s+\)/gu, ")").endsWith(suffix),
+      )?.body;
+    const tab = hoverCardAfter(
+      ':is([data-align="start"], [data-align="end"]):not([data-fork-on-open-pair])::after',
+    );
     expect(tab).toContain("var(--anchor-height)");
     expect(tab).toContain("radial-gradient");
+    // Near the window's bottom the card flips end-aligned; the join is the same
+    // drawing flipped, never a second copy of it.
+    const flipped = hoverCardAfter('[data-align="end"]::after');
+    expect(flipped).toContain("scale: 1 -1");
+    expect(flipped).not.toContain("gradient");
     // The Threads header's icon menus hang from their buttons the same way.
     const chrome = readSibling("../custom/SidebarV2ChromeRows.tsx");
     expect(chrome.match(/data-fork-tab-trigger=""/gu)).toHaveLength(2);

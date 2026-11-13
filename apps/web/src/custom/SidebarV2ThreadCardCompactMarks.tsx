@@ -4,15 +4,13 @@
  *
  * A compact card is the full card's title line alone. What the repo line said
  * in words is reduced to marks that ride ahead of the trailing group: a cloud
- * when the agent runs on another machine, the checkout mark (the repo line's
- * own `SidebarV2CheckoutMark`, branch name for assistive tech only), the
- * terminal glyph, and the pull request badge. The project, which the repo line
- * names, leads the title as its favicon instead (`SidebarV2CompactCardLead`).
- * Names — project, branch, model — are in the row's hover card, which every
- * card already has.
+ * when the agent runs on another machine, the terminal glyph, and the pull
+ * request badge. The project, which the repo line names, leads the title as
+ * its favicon instead (`SidebarV2CompactCardLead`). Names — project, branch,
+ * model — are in the row's hover card, which every card already has.
  *
- * Laptop is not drawn: on the repo line it fills a slot the layout reserves,
- * but on one line a mark that every local thread carries says nothing.
+ * Laptop and the worktree/branch mark are not drawn: on one line a mark that
+ * nearly every thread carries says nothing.
  *
  * Presentational only, with the PR badge and terminal glyph as slots, for the
  * same reason as `SidebarV2ThreadCardMeta`: no row state crosses the seam.
@@ -22,15 +20,9 @@ import type { ReactNode } from "react";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 
 import { CloudIcon } from "./icons/lucide-phosphor";
-import { SidebarV2CheckoutMark, SidebarV2ProjectFolderMark } from "./SidebarV2ThreadCardMeta";
+import { SidebarV2ProjectFolderMark } from "./SidebarV2ThreadCardMeta";
 
 export interface SidebarV2ThreadCardCompactMarksProps {
-  readonly branch: string | null;
-  /** True when the thread runs in a worktree of its own — see
-      `SidebarV2ThreadCardMetaProps.hasWorktree`. */
-  readonly hasWorktree: boolean;
-  /** See `SidebarV2ThreadCardMetaProps.devServerPort`. */
-  readonly devServerPort: number | null;
   readonly isRemote: boolean;
   /** Required slots, so a call site has to say `null` out loud — see
       `SidebarV2ThreadCardMetaProps.terminalSlot`. */
@@ -56,34 +48,27 @@ export function SidebarV2ThreadCardCompactMarks(props: SidebarV2ThreadCardCompac
           <CloudIcon aria-hidden className={MARK} />
         </>
       ) : null}
-      {props.hasWorktree || props.branch ? (
-        <SidebarV2CheckoutMark
-          branch={props.branch}
-          hasWorktree={props.hasWorktree}
-          devServerPort={props.devServerPort}
-          branchName="sr-only"
-          className="flex items-center"
-        />
-      ) : null}
       {props.terminalSlot ?? null}
       {props.prSlot ?? null}
     </span>
   );
 }
 
-/** The project favicon a compact card's title leads with, at the slim rows'
-    16px. A favicon-less project draws upstream's title monogram, like the
-    repo line; the folder mark stands in only for a thread whose project
-    record has not landed yet. */
+/** The project favicon a compact card's title leads with, at 12px inside an
+    18px tile as tall as the title line. The tile's foreground tint follows
+    every palette, so any favicon sits on the same quiet ground. A
+    favicon-less project draws upstream's title monogram, like the repo line;
+    the folder mark stands in only for a thread whose project record has not
+    landed yet. */
 export function SidebarV2CompactCardLead(props: {
   readonly project: ProjectFaviconProject | null;
 }) {
   return (
-    <span className="flex size-4 shrink-0 items-center justify-center">
+    <span className="flex size-[18px] shrink-0 items-center justify-center rounded-[5px] bg-foreground/[0.12]">
       {props.project ? (
-        <ProjectFavicon project={props.project} className="size-4" />
+        <ProjectFavicon project={props.project} className="size-3" />
       ) : (
-        <SidebarV2ProjectFolderMark className="size-4 text-muted-foreground" />
+        <SidebarV2ProjectFolderMark className="size-3 text-muted-foreground" />
       )}
     </span>
   );

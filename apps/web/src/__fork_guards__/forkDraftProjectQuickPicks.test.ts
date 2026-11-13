@@ -70,7 +70,7 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     );
     // The open row is cream inside the dark sidebar, so its tooltips are ink again.
     expect(palettes).toMatch(
-      /\[data-testid="sidebar-row-slim"\]\)\[aria-current="page"\],[^{]*\{\s*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);/u,
+      /\[data-fork-thread-row\]\[aria-current="page"\],[^{]*\{\s*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);/u,
     );
   });
 });

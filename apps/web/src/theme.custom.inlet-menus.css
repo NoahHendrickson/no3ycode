@@ -43,7 +43,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-v2-scheduled"])[data-popup-open]:not(
+  :is([data-fork-thread-row], [data-testid="sidebar-v2-scheduled"])[data-popup-open]:not(
     li[data-fork-split-pair][data-active] *
   ) {
   --foreground: var(--fork-inlet-row-card-foreground);
@@ -74,8 +74,14 @@
   }
 }
 
+/* Near the window's bottom Base UI flips the card to end-aligned, its
+   bottom on the row's bottom, so the join mirrors: square bottom-left
+   corner, concave corner into the row's top edge. */
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"][data-align="start"]:not([data-fork-on-open-pair]) {
+  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]):not(
+    [data-fork-on-open-pair]
+  ) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);
@@ -87,7 +93,6 @@
   --contrast-border: var(--fork-inlet-row-card-line);
   background: var(--fork-inlet-row-card);
   border-color: transparent;
-  border-top-left-radius: 0;
   box-shadow: none;
 
   &::after {
@@ -108,15 +113,27 @@
       linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
         var(--anchor-height) no-repeat;
   }
+
+  &[data-align="start"] {
+    border-top-left-radius: 0;
+  }
+
+  &[data-align="end"] {
+    border-bottom-left-radius: 0;
+  }
+
+  &[data-align="end"]::after {
+    top: auto;
+    bottom: -1px;
+    scale: 1 -1;
+  }
 }
 
 /* The open row's own bridge into the panel steps aside while its card is
    out, so the row reads as joined to one thing at a time. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  li[data-thread-item]:has(
-    [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]
-  )::after {
+  li[data-thread-item]:has([data-fork-thread-row][aria-current="page"][data-popup-open])::after {
   display: none;
 }
 

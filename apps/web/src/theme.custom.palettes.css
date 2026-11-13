@@ -862,7 +862,7 @@
    the card itself, are charcoal again. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"],
+  [data-fork-thread-row][aria-current="page"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active],
@@ -878,7 +878,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
-  [data-testid="sidebar-row-card"][aria-current="page"][data-popup-open]:not(
+  [data-fork-thread-row][aria-current="page"][data-popup-open]:not(
     li[data-fork-split-pair][data-active] *
   ),
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]

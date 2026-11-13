@@ -1146,15 +1146,16 @@
     no mark is Idle. The one deliberate exception is the commands-only
     Monitoring mark, visible in sidebarV2StatusBucketForKind: such a thread
     sits in Idle, because nothing will wake its agent and the command can run
-    for hours. Snoozed keeps its shelf, and Idle reaches Settled through the
-    server's existing auto-settle. While status grouping is on the Working
+    for hours. Snoozed is not a status bucket, and Idle reaches Settled through
+    the server's existing auto-settle. While status grouping is on the Working
     shelf beta stands down and its threads paint in the Working section, the
     pinned block takes a "Pinned" header of the same style in place of its
     divider, shown only while something is pinned and collapsible like the
-    rest (the open thread stays visible), and the settled tail takes a
-    "Settled" header of that same style in place of its hairline shelf header.
-    Settled still collapses through its own shelf (collapsed by default, the
-    open thread stays visible, paging unchanged) and its rows stay slim. Flat
+    rest (the open thread stays visible), and the snoozed shelf and the settled
+    tail take "Snoozed" and "Settled" headers of that same style in place of
+    their shelf headers. Both still collapse through their own shelf flags
+    (the open thread stays visible, settled paging unchanged) and their rows
+    stay slim. Flat
     and project modes keep the divider and the shelf header.
 
     Under a status header the section decides a card's title brightness
@@ -1210,22 +1211,19 @@
 
     A compact card is the full card's title line alone, in the same padding,
     so its height is sidebarV2CompactCardHeight() (34) and its
-    contain-intrinsic-size hint must match. The repo line's facts ride ahead of
-    the trailing group as marks: a cloud for a remote thread, the checkout mark
-    (worktree or branch, the same either-or the repo line draws, keeping the
-    dev-server pulse hook), the terminal glyph and the PR badge. Project,
-    branch and model names move to the row's hover card, which every card
-    already opens; that hover card names the checkout as a worktree when it is
-    one, because the compact mark alone cannot.
+    contain-intrinsic-size hint must match. Some of the repo line's facts ride
+    ahead of the trailing group as marks: a cloud for a remote thread, the
+    terminal glyph and the PR badge. The worktree/branch mark is left off (and
+    with it the dev-server pulse), since nearly every thread carries one.
+    Project, branch and model names move to the row's hover card, which every
+    card already opens; that hover card names the checkout as a worktree when
+    it is one.
 
-    The checkout mark is the repo line's own SidebarV2CheckoutMark (exported
-    from SidebarV2ThreadCardMeta.tsx), branch name for assistive tech only, so
-    the mark, its dev-server pulse and its accessible text change in one
-    place. The leading favicon is SidebarV2CompactCardLead.
-
-    The project favicon leads a compact card's title, since there is no repo
-    line to name the project; under a project header (projectTitleHidden) it
-    is left off because the header already names it.
+    The project favicon leads a compact card's title (SidebarV2CompactCardLead),
+    since there is no repo line to name the project. It draws at 12px in an
+    18px rounded tile tinted with the foreground, so every favicon sits on the
+    same quiet ground in every palette. Under a project header
+    (projectTitleHidden) it is left off because the header already names it.
 
     Only card-variant rows (pinned, active, working) go compact. The snoozed and
     settled slim rows are already one line and keep their own layout, taking
@@ -2480,6 +2478,11 @@
     as a tab: the row takes the card's fill and goes square on the right, and
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.
+    When Base UI flips the card end-aligned near the window's bottom, the same
+    ::after is flipped (scale: 1 -1) to curve into the row's top instead. Both
+    row shapes, card and slim, carry data-fork-thread-row (fenced in
+    Sidebar.tsx), and every Inlet and palette row rule keys on it rather than
+    on test ids, so a row rule cannot miss a shape.
     The collapsed sidebar's peek card hangs from its toggle as a tab (the
     card and toggle take a fill one step off the frame, padded 4px; the card drops 4px below it with a
     concave corner), and the toggle's tooltip (data-fork-peek-tooltip, in the
@@ -6572,6 +6575,24 @@
     - apps/web/src/__fork_guards__/forkCollapsedThreadTabs.test.ts
     - apps/web/src/__fork_guards__/forkGlass3d.test.ts
     - apps/web/src/custom/collapsedThreadTabsModel.test.ts
+
+- id: fork-sidebar-rail-accent
+  intent: >
+    The sidebar's resize rail draws its drag line, on hover and while
+    dragging, in the new-agent texture's blue (#44aaf8), and its "Drag to
+    resize sidebar" tooltip is a blue pill with cream text (#f8f3d8), on every palette.
+    Upstream's line is the sidebar border colour and hard to see. Under Inlet
+    the tooltip restates --fork-inlet-tooltip on the popup so the shared
+    tooltip rule paints it.
+  tier: 4
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Fenced: data-fork-sidebar-rail-tooltip on the rail's TooltipPopup.
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSidebarRailAccent.test.ts
 
 - id: fork-sidebar-peek
   intent: >

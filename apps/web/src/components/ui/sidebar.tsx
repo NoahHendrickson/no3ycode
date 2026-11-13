@@ -608,7 +608,14 @@ function SidebarRail({
           />
         }
       />
-      <TooltipPopup side="right">{railTitle}</TooltipPopup>
+      <TooltipPopup
+        side="right"
+        /* fork:begin fork-sidebar-rail-accent — see .fork/customizations.yaml#fork-sidebar-rail-accent */
+        data-fork-sidebar-rail-tooltip=""
+        /* fork:end fork-sidebar-rail-accent */
+      >
+        {railTitle}
+      </TooltipPopup>
     </Tooltip>
   );
 }
