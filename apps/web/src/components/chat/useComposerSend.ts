@@ -90,9 +90,6 @@ import {
 import { environmentServerConfigsAtom } from "../../state/server";
 import { threadEnvironment } from "../../state/threads";
 import { runMobileComposerTransition } from "./draftHeroTransition";
-/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { isBotThreadRef } from "~/custom/bots/useIsBotThread";
-/* fork:end fork-bots */
 /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
 import { forkDesignChanges } from "~/custom/designMode/designChangeDraftStore";
 /* fork:end fork-design-mode */
@@ -1402,12 +1399,7 @@ export function useComposerSend(input: ComposerSendInput) {
             }),
           },
           modelSelection: ctxSelectedModelSelection,
-          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-             A bot keeps the name it was given: its first message is its job, not its title. */
-          ...(isBotThreadRef(scopeThreadRef(environmentId, threadIdForSend))
-            ? {}
-            : { titleSeed: title }),
-          /* fork:end fork-bots */
+          titleSeed: title,
           runtimeMode,
           interactionMode: sendInteractionMode,
           dispatchMode: turnDispatchMode,

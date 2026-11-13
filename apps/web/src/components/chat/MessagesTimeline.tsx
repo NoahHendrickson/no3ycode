@@ -142,10 +142,10 @@ import { useStableHandoffRuns, useIncrementalTimelineRows, useStableRows } from 
 import { useClientSettings } from "../../hooks/useSettings";
 /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
 import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { BotEmptyConversation } from "~/custom/bots/BotMascot";
 /* fork:end fork-bots */
-/* fork:end fork-stage-stamps */
 
 function timelineListStateFor(identity: string): {
   readonly identity: string;

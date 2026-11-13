@@ -116,7 +116,6 @@ import {
   FORK_BOT_REPORT_CHARS,
   FORK_BOT_SETTLED_RUN_STATUSES,
   FORK_BOT_THREAD_TAG,
-  forkBotReportFromProjection,
   forkBotReportFromRow,
 } from "./forkBotReport.ts";
 /* fork:end fork-bots */
@@ -1683,10 +1682,7 @@ export function threadShellFromProjection(
     pendingGuestMessageCount: pendingGuestMessageCount(projection.thread.guestShare),
     // Thread detail owns message bodies. Keeping them out of shell rows makes
     // initial hydration and streaming updates independent of transcript size.
-    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-       A bot's shell carries the head of its latest finished report. */
-    latestVisibleMessage: forkBotReportFromProjection(projection),
-    /* fork:end fork-bots */
+    latestVisibleMessage: null,
     latestUserMessageAt: latestUserMessage?.updatedAt ?? null,
     latestUserAuthoredMessageAt,
     hasActionableProposedPlan: projection.plans.some(
@@ -6376,7 +6372,10 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                   AND plan.status = 'active'
               ) AS has_actionable_proposed_plan,
               -- fork:begin fork-bots
-              CASE WHEN EXISTS (
+              -- A cheap text check first, so a thread that is not a bot never parses its tags.
+              -- The report walks the indexed (thread_id, created_at) order from the newest
+              -- message and stops at the first settled, non-quiet final reply.
+              CASE WHEN instr(t.payload_json, ${`"${FORK_BOT_THREAD_TAG}"`}) > 0 AND EXISTS (
                 SELECT 1 FROM json_each(t.payload_json, '$.tags') tag
                 WHERE tag.value = ${FORK_BOT_THREAD_TAG}
               ) THEN (
@@ -6398,13 +6397,13 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                       AND later.run_id = message.run_id
                       AND later.role = 'assistant'
                       AND later.streaming = 0
-                      AND (later.updated_at > message.updated_at
-                        OR (later.updated_at = message.updated_at
+                      AND (later.created_at > message.created_at
+                        OR (later.created_at = message.created_at
                           AND later.message_id > message.message_id))
                   )
                   AND lower(trim(json_extract(message.payload_json, '$.text'), ' ' || char(9, 10, 13)))
                     NOT IN ${sql.in(FORK_BOT_QUIET_REPLIES)}
-                ORDER BY message.updated_at DESC, message.message_id DESC
+                ORDER BY message.created_at DESC, message.message_id DESC
                 LIMIT 1
               ) END AS fork_bot_report_json
               -- fork:end fork-bots

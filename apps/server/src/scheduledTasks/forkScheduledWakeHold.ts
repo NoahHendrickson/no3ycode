@@ -1,8 +1,8 @@
 /**
- * When a thread-bound task's scheduled fire is held — see
- * `.fork/customizations.yaml#fork-scheduled-wake-hold`. A bound task queues each fire behind
- * whatever its thread is doing, so a thread held up for a day would otherwise collect a day of
- * wakes and run them back to back, and a usage-limited one would hit the limit every interval.
+ * When a bot's scheduled wake is held — see `.fork/customizations.yaml#fork-scheduled-wake-hold`.
+ * A bound task queues each fire behind whatever its thread is doing, so a bot held up for a day
+ * would otherwise collect a day of wakes and run them back to back, and a usage-limited one would
+ * hit the limit every interval.
  */
 import type {
   OrchestrationV2ThreadShell,
@@ -13,6 +13,7 @@ import * as Effect from "effect/Effect";
 import type * as SqlClient from "effect/sql/SqlClient";
 import { ScheduledTaskError } from "@t3tools/contracts";
 
+import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
 import { escapeGlobPrefix } from "./forkScheduledTaskRuns.ts";
 
 /** Must match the message ids ScheduledTaskService mints for each fire. */
@@ -57,9 +58,9 @@ function isUsageLimitedUntilLater(
   return Number.isFinite(resetAt) && resetAt > nowMs;
 }
 
-/** Whether this scheduled fire of `task` is held: it is bound, recurring, and its thread still
-    runs an earlier wake of it or is usage-limited. A one-time run has no later fire to make up
-    for a skip, so it is never held. */
+/** Whether this scheduled fire of `task` is held: it is bound to a bot, recurring, and the bot
+    still runs an earlier wake of it or is usage-limited. Other bound tasks queue behind an
+    earlier run as upstream's do. A one-time run has no later fire to make up for a skip. */
 export function forkScheduledFireHeld<E>(input: {
   readonly sql: SqlClient.SqlClient;
   readonly task: ScheduledTask;
@@ -67,16 +68,22 @@ export function forkScheduledFireHeld<E>(input: {
   readonly getThreadShell: (
     threadId: NonNullable<ScheduledTask["threadId"]>,
   ) => Effect.Effect<
-    Pick<OrchestrationV2ThreadShell, "lastErrorClass" | "usageLimitResetAt"> | null,
+    Pick<OrchestrationV2ThreadShell, "tags" | "lastErrorClass" | "usageLimitResetAt"> | null,
     E
   >;
 }): Effect.Effect<boolean, ScheduledTaskError | E> {
   const { task } = input;
-  if (task.threadId === null || task.schedule.type === "once") return Effect.succeed(false);
-  return Effect.all([
-    hasUnfinishedScheduledRun(input.sql, task.id, task.threadId),
-    input.getThreadShell(task.threadId),
-  ]).pipe(
-    Effect.map(([unfinished, shell]) => unfinished || isUsageLimitedUntilLater(shell, input.nowMs)),
-  );
+  const threadId = task.threadId;
+  if (threadId === null || task.schedule.type === "once") return Effect.succeed(false);
+  return input
+    .getThreadShell(threadId)
+    .pipe(
+      Effect.flatMap((shell) =>
+        shell?.tags?.includes(FORK_BOT_THREAD_TAG) !== true
+          ? Effect.succeed(false)
+          : isUsageLimitedUntilLater(shell, input.nowMs)
+            ? Effect.succeed(true)
+            : hasUnfinishedScheduledRun(input.sql, task.id, threadId),
+      ),
+    );
 }

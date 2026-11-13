@@ -6983,8 +6983,10 @@
     bodies, but a bot-tagged one carries, as latestVisibleMessage, the first
     280 characters of the final reply of its latest settled run that did not
     end on the quiet reply "Nothing to report." (orchestration-v2/forkBotReport,
-    a tag-gated subquery in the shell rows; progress replies before a run's
-    final one never count). So a bot is unread while that report is newer
+    a tag-gated subquery in the shell rows that walks the messages' indexed
+    (thread_id, created_at) order from the newest; progress replies before a
+    run's final one never count). The shell built from a full projection
+    keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
     than its last visit, server clock on both sides and the same on every
     device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
     notifies only when the report changed.
@@ -7050,7 +7052,8 @@
     Mascot grid; BotMascotDetailsSection) or the card's context menu
     (botMascotMenu); the new tag is set before the old one is cleared. An empty
     bot conversation shows the mascot large. The mascots do not animate. A bot
-    keeps the name it was given: its first send asks for no generated title.
+    keeps the name it was given from every client: the orchestrator never
+    starts a title regeneration for a thread tagged `bot`.
     The collapsed tab strip and mobile are not bot-aware, and mobile lists bots
     as No-project threads.
   tier: 4
@@ -7079,26 +7082,28 @@
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
-    - apps/web/src/components/chat/useComposerSend.ts
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
+    - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
+    - apps/server/src/orchestration-v2/runtimeLayer.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
-    A thread-bound scheduled task's scheduled fire is held (rescheduled to its
-    next fire) while an earlier wake of the same task is still queued or
-    running in that thread, or while the thread is usage-limited until a known
-    reset still ahead (an unknown reset never holds). A bound task queues each
-    fire behind whatever its thread is doing, so without this a thread held up
-    for a day collects a wake per interval and runs them back to back, and a
-    limited one hits the limit every interval. It applies to every bound task,
-    not just bots. One-time, manual and webhook runs are never held. The check
-    is forkScheduledFireHeld (scheduledTasks/forkScheduledWakeHold), called
-    once from ScheduledTaskService's due-task loop.
+    A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)
+    is held (rescheduled to its next fire, logged at info) while an earlier
+    wake of the same task is still queued or running in that thread, or while
+    the thread is usage-limited until a known reset still ahead (an unknown
+    reset never holds). A bound task queues each fire behind whatever its
+    thread is doing, so without this a bot held up for a day collects a wake
+    per interval and runs them back to back, and a limited one hits the limit
+    every interval. Other bound tasks keep upstream's queueing. One-time,
+    manual and webhook runs are never held. The check is forkScheduledFireHeld
+    (scheduledTasks/forkScheduledWakeHold), called once from
+    ScheduledTaskService's due-task loop.
   tier: 3
   files:
     - apps/server/src/scheduledTasks/forkScheduledWakeHold.ts

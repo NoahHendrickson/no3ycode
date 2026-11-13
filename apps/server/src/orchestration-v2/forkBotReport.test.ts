@@ -188,11 +188,6 @@ it.layer(layerTest)("fork-bots shell report", (it) => {
           snapshot.threads.find((thread) => thread.id === bot)?.latestVisibleMessage?.text,
           expected,
         );
-        assert.equal(
-          ProjectionStore.threadShellFromProjection(yield* store.getThreadProjection(bot))
-            .latestVisibleMessage?.text,
-          expected,
-        );
 
         // A wake that settles on the quiet reply leaves the earlier report standing, and its
         // progress reply never takes its place.
@@ -206,11 +201,6 @@ it.layer(layerTest)("fork-bots shell report", (it) => {
         yield* run(bot, 2, "completed");
         const afterQuiet = yield* store.getThreadShell(bot);
         assert.equal(afterQuiet?.latestVisibleMessage?.text, expected);
-        assert.equal(
-          ProjectionStore.threadShellFromProjection(yield* store.getThreadProjection(bot))
-            .latestVisibleMessage?.text,
-          expected,
-        );
 
         // The next wake that finds something is the new report.
         yield* run(bot, 3, "running");

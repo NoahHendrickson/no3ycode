@@ -54,7 +54,6 @@ const sidebar = readSibling("../components/Sidebar.tsx");
 const notifications = readSibling("../components/ThreadNotificationCoordinator.tsx");
 const cardStatus = readSibling("../custom/sidebarV2CardStatus.ts");
 const chatView = readSibling("../components/ChatView.tsx");
-const composerSend = readSibling("../components/chat/useComposerSend.ts");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
@@ -191,14 +190,11 @@ describe("fork guard: fork-bots", () => {
     expect(chatView).toContain("isForkChatThread || isForkBotThread");
   });
 
-  it("keeps the name a bot was given through its first send", () => {
-    expect(composerSend).toContain(
-      "isBotThreadRef(scopeThreadRef(environmentId, threadIdForSend))",
-    );
-  });
-
   it("tags a new bot `bot` before its mascot", () => {
-    expect(createBot).toContain("for (const tag of [BOT_THREAD_TAG, botMascotTag(mascot)])");
+    expect(createBot).toContain("input: { threadId, tag: BOT_THREAD_TAG, tagged: true },");
+    expect(createBot).toContain(
+      "await run(threadEnvironment.delete, { environmentId, input: { threadId } });",
+    );
   });
 
   it("draws each mascot as the brand file's generator does, and reads its mood off the thread", () => {

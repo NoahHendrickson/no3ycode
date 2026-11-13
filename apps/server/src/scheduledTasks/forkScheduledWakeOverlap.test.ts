@@ -24,18 +24,22 @@ const decodeUpsertInput = Schema.decodeUnknownEffect(ScheduledTaskUpsertInput);
 const THREAD_ID = "thread-bot";
 
 it.effect(
-  "skips a bound task's fire while its earlier wake is unfinished or its thread is limited",
+  "skips a bot's wake while its earlier wake is unfinished or it is limited, and only a bot's",
   () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
       const sent = yield* Ref.make<ReadonlyArray<string>>([]);
       const usageLimitResetAt = yield* Ref.make<string | null>(null);
+      const tags = yield* Ref.make<ReadonlyArray<string>>(["bot"]);
       const getThreadShell = () =>
-        Ref.get(usageLimitResetAt).pipe(
-          Effect.map((resetAt) =>
-            resetAt === null
-              ? null
-              : ({ lastErrorClass: "usage_limit", usageLimitResetAt: resetAt } as never),
+        Effect.all([Ref.get(tags), Ref.get(usageLimitResetAt)]).pipe(
+          Effect.map(
+            ([threadTags, resetAt]) =>
+              ({
+                tags: threadTags,
+                lastErrorClass: resetAt === null ? null : "usage_limit",
+                usageLimitResetAt: resetAt,
+              }) as never,
           ),
         );
       // Each wake leaves a run the thread has not finished, as a bot held up on a question would.
@@ -115,6 +119,12 @@ it.effect(
         yield* Ref.set(usageLimitResetAt, "1970-01-01T00:00:00.000Z");
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(3);
+
+        // A thread that is not a bot keeps upstream's queueing: its fire goes out behind the
+        // still-waiting third wake.
+        yield* Ref.set(tags, []);
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(4);
       }).pipe(Effect.provide(ScheduledTaskService.layer.pipe(Layer.provide(dependencies))));
     }).pipe(Effect.provide(SqlitePersistence.layerMemory)),
 );

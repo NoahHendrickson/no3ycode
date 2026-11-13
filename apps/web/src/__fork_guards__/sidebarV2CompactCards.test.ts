@@ -40,7 +40,9 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
 
   it("swaps the repo line for marks on the title line", () => {
     expect(sidebar).toContain("<SidebarV2ThreadCardCompactMarks");
-    expect(sidebar).toMatch(/props\.compact === true \? null : [^]*?<SidebarV2ThreadCardMeta/u);
+    expect(sidebar).toMatch(
+      /props\.compact === true \? null : \(\s*\/\*[^]*?\*\/\s*<SidebarV2ThreadCardMeta/u,
+    );
     // One line has no room for a mark nearly every thread carries.
     expect(marks).not.toContain("<SidebarV2CheckoutMark");
     expect(sidebar).toContain("<SidebarV2CompactCardLead project={props.project} />");

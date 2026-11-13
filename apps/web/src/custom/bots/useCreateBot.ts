@@ -156,14 +156,23 @@ export function useCreateBot(): (
       },
     });
     if (failed(created)) return null;
-    // `bot` first: a failed mascot write leaves a bot with a face from its id, not a stray thread.
-    for (const tag of [BOT_THREAD_TAG, botMascotTag(mascot)]) {
-      const tagged = await run(threadEnvironment.setTag, {
-        environmentId,
-        input: { threadId, tag, tagged: true },
-      });
-      if (failed(tagged)) return null;
+    // `bot` first: a failed mascot write leaves a bot with a face from its id. A failed `bot`
+    // write would leave a stray No-project thread, so that thread goes again.
+    const taggedBot = await run(threadEnvironment.setTag, {
+      environmentId,
+      input: { threadId, tag: BOT_THREAD_TAG, tagged: true },
+    });
+    if (failed(taggedBot)) {
+      await run(threadEnvironment.delete, { environmentId, input: { threadId } });
+      return null;
     }
+    // Reported, but the bot stands: it wears a face from its id until the mascot is changed.
+    failed(
+      await run(threadEnvironment.setTag, {
+        environmentId,
+        input: { threadId, tag: botMascotTag(mascot), tagged: true },
+      }),
+    );
 
     const ref = { environmentId, threadId };
     void router.navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
