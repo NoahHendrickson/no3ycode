@@ -36,6 +36,9 @@ import { isSidebarUtilityPage, useNavigateToMainApp } from "./mainAppLocation";
 import { SidebarThreadUndoNotice } from "./SidebarThreadUndoNotice";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
 import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUpdatePill";
+/* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates */
+import { SidebarProviderUpdatesButton } from "~/custom/SidebarProviderUpdatesButton";
+/* fork:end fork-separate-provider-updates */
 import { observeResize } from "~/lib/observeResize";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
@@ -324,6 +327,9 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
         </>
       )}
       <SidebarThreadUndoNotice />
+      {/* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates */}
+      <SidebarProviderUpdatesButton />
+      {/* fork:end fork-separate-provider-updates */}
       <SidebarUpdatePill />
     </SidebarMenu>
   );

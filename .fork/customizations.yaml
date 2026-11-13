@@ -6661,6 +6661,29 @@
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
 
+- id: fork-separate-provider-updates
+  intent: >
+    The sidebar's update pill updates the app and the remote servers that
+    follow its version; provider CLIs get their own round package-icon button beside
+    it. Upstream folded provider updates into one "Update everything" run, so
+    an outdated Codex turned the app's pill into "Update" while the app was
+    current, and a run showed provider progress in both the capsule and the
+    footer's provider pill at once. useUpdateEverything now never includes
+    providers (the track-switch dialog already excluded them). The Providers
+    button runs the same one-click update as Settings > Providers "Update
+    all", then hides while it runs: the footer pill reports progress and
+    results, and a toast covers machines other than the primary one, which
+    that pill does not show.
+  tier: 4
+  files:
+    - apps/web/src/custom/SidebarProviderUpdatesButton.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/sidebar/useUpdateEverything.ts
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSeparateProviderUpdates.test.ts
+
 - id: fork-full-width-search-divider
   intent: >
     The search field at the top of combobox popups (ComboboxSearchInput: the
