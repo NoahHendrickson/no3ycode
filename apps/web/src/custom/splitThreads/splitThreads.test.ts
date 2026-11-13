@@ -8,7 +8,12 @@ import {
   assignSplitPaneSlots,
   type SplitPaneSlots,
 } from "./splitPaneSlots";
-import { findSplitPair, pairSplitThreads, unpairSplitThread } from "./splitThreadPairs";
+import {
+  findSplitPair,
+  pairSplitThreads,
+  resizeSplitPair,
+  unpairSplitThread,
+} from "./splitThreadPairs";
 
 const ref = (id: string) => scopeThreadRef(EnvironmentId.make("env"), ThreadId.make(id));
 const a = ref("a");
@@ -42,6 +47,14 @@ describe("split pairs", () => {
     expect(pairs).toHaveLength(50);
     expect(findSplitPair(pairs, ref("x0"))).toBeNull();
     expect(findSplitPair(pairs, ref("x50"))).not.toBeNull();
+  });
+
+  it("stores a dragged share on the pair, and a new pairing starts even", () => {
+    const pairs = resizeSplitPair(pairSplitThreads([], a, b), b, 0.7);
+    expect(findSplitPair(pairs, a)).toEqual({ a, b, ratio: 0.7 });
+    expect(resizeSplitPair(pairs, c, 0.3)).toBe(pairs);
+    expect(resizeSplitPair(pairs, a, 1)).toBe(pairs);
+    expect(findSplitPair(pairSplitThreads(pairs, b, a), a)).toEqual({ a: b, b: a });
   });
 
   it("pops either member out, leaving both on their own", () => {

@@ -123,6 +123,12 @@ const TAB_SHELL_CLASS =
   "group/tab relative flex h-7 max-w-56 shrink items-center rounded-full text-xs font-medium";
 const TAB_SHELL_STYLE = { minWidth: COLLAPSED_TAB_MIN_WIDTH };
 const TAB_ACTION_CLASS = cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-5 rounded-full");
+const ACTIVE_TAB_CLASS = "bg-black/10 text-foreground dark:bg-white/16";
+// No group/tab: each half's hover actions answer to that half alone.
+const SPLIT_TAB_CLASS = cn(
+  "relative flex h-7 min-w-0 shrink items-center rounded-full text-xs font-medium",
+  ACTIVE_TAB_CLASS,
+);
 
 // Its own tracker: the sidebar's resets whenever status grouping is off.
 const completedHolds = createSidebarV2CompletedHoldTracker();
@@ -448,11 +454,13 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
     void router.navigate({ to: "/draft/$draftId", params: { draftId }, replace: true });
   };
 
-  const renderEntry = (entry: StripEntry) => {
+  /** `segment`: one half of a split's tab, which wears the selected face for both. */
+  const renderEntry = (entry: StripEntry, segment = false) => {
     if (entry.kind === "draft") {
       return (
         <DraftTab
           key={entry.threadKey}
+          segment={segment}
           draftId={entry.draftId}
           defaultModelSelection={entry.defaultModelSelection}
           project={entry.project}
@@ -472,6 +480,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       <ThreadTab
         key={tab.threadKey}
         tab={tab}
+        segment={segment}
         // A split's two tabs are both selected; only the focused one holds the route.
         active={tab.threadKey === shownOpenKey || paneThreadKeys.includes(tab.threadKey)}
         routed={tab.threadKey === openThreadKey}
@@ -615,13 +624,17 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           slot.kind === "tab" ? (
             renderEntry(slot.entry)
           ) : (
-            <span
+            // One selected tab naming both panes: each half keeps its own mark, title,
+            // actions and click, but the face is the pair's.
+            <div
               key="split-group"
               data-fork-split-tab-group=""
-              className="flex shrink items-center gap-0.5 rounded-full bg-black/4 p-0.5 dark:bg-white/5"
+              data-fork-thread-tab=""
+              data-active="true"
+              className={SPLIT_TAB_CLASS}
             >
-              {slot.entries.map(renderEntry)}
-            </span>
+              {slot.entries.map((entry) => renderEntry(entry, true))}
+            </div>
           ),
         )}
         {row.overflow.length === 0 ? null : (
@@ -674,6 +687,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
 
 function ThreadTab(props: {
   readonly tab: CollapsedThreadTab;
+  /** Half of a split's tab: the pair's tab is the selected one, so this one paints no fill. */
+  readonly segment: boolean;
   /** Selected: the route's thread, or either of a split's two. */
   readonly active: boolean;
   /** Holds the route, so the PR actions need not open it first. */
@@ -726,15 +741,18 @@ function ThreadTab(props: {
   return (
     <div
       data-fork-thread-tab=""
-      data-active={props.active ? "true" : undefined}
+      data-active={props.active && !props.segment ? "true" : undefined}
+      data-fork-split-tab-segment={props.segment ? "" : undefined}
       data-fork-tab-has-mark={props.provider ? "" : undefined}
       // Dragged onto another tab (or sidebar card), this thread opens beside it.
       {...splitThreadDragSourceProps(threadKey, props.splitDraggable)}
       className={cn(
         TAB_SHELL_CLASS,
-        props.active
-          ? "bg-black/10 text-foreground dark:bg-white/16"
-          : "text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/8",
+        props.segment
+          ? "text-foreground"
+          : props.active
+            ? ACTIVE_TAB_CLASS
+            : "text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/8",
       )}
       style={TAB_SHELL_STYLE}
       onContextMenu={(event) => {
@@ -830,6 +848,8 @@ function DraftTab(
     readonly defaultModelSelection: ModelSelection;
     readonly project: ProjectFaviconProject | null;
     readonly providerOf: (instanceId: string) => ProviderInstanceEntry | null;
+    /** Half of a split's tab, as ThreadTab's. */
+    readonly segment: boolean;
   } & (
     | { readonly routed: true; readonly onDiscard: () => void }
     | { readonly routed: false; readonly onOpen: () => void }
@@ -846,9 +866,10 @@ function DraftTab(
   return (
     <div
       data-fork-thread-tab=""
-      data-active="true"
+      data-active={props.segment ? undefined : "true"}
+      data-fork-split-tab-segment={props.segment ? "" : undefined}
       data-fork-tab-has-mark={provider ? "" : undefined}
-      className={cn(TAB_SHELL_CLASS, "bg-black/10 text-foreground dark:bg-white/16")}
+      className={cn(TAB_SHELL_CLASS, props.segment ? "text-foreground" : ACTIVE_TAB_CLASS)}
       style={TAB_SHELL_STYLE}
     >
       {props.routed ? null : (

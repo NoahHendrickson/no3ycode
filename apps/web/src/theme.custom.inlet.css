@@ -114,11 +114,48 @@
   }
 }
 
-/* A split's panes are each their own panel, whose margins already part them, so the
-   line between the panes (fork-split-threads) goes, as on Glass's stage cards. */
+/* A split's panes are each their own panel, so the line between them
+   (fork-split-threads) goes and the divider is the frame's gap: the right
+   pane drops its leading margin and the divider lies over the left pane's
+   trailing one, so the panes stand one margin apart, as a panel stands from
+   the right panel beside it. A bar of the panel's fill shows in the gap
+   while it is hovered or dragged. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-split-divider] {
-  display: none;
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  & [data-fork-split-threads] > [data-fork-split-side="right"] [data-chat-column-maximized-away] {
+    margin-left: 0;
+  }
+
+  & [data-fork-split-divider] {
+    width: var(--fork-inlet-margin);
+    margin-left: calc(-1 * var(--fork-inlet-margin));
+    background: transparent;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 4px;
+      height: 40px;
+      border-radius: 9999px;
+      background: var(--fork-inlet-panel);
+      opacity: 0;
+      transition: opacity 150ms ease-out;
+      pointer-events: none;
+    }
+
+    &:is(:hover, [data-dragging])::after {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+    [data-fork-split-divider]::after {
+    transition: none;
+  }
 }
 
 /* Menus, popovers, selects and the row hover card share one corner radius.
@@ -299,13 +336,14 @@
   --contrast-secondary-label: var(--muted-foreground);
   --contrast-icon-muted: var(--muted-foreground);
 
-  & :is([data-fork-segmented-tabs], [data-fork-split-tab-group]) {
+  & [data-fork-segmented-tabs] {
     background-color: var(--sidebar-control-surface);
   }
 
+  /* A split's tab is one selected face; its halves paint no hover of their own. */
   & > span > button:hover,
   & nav > button:hover,
-  & [data-fork-thread-tab]:hover {
+  & [data-fork-thread-tab]:not([data-fork-split-tab-segment]):hover {
     background-color: var(--sidebar-row-hover);
   }
 
