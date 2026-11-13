@@ -78,21 +78,6 @@ function coldClaudeThread() {
 }
 
 it("sends a Codex follow-up on a cold Claude thread without compacting first", async () => {
-  const step = (name: string) => {
-    const items = [...document.querySelectorAll("[role=menuitem]")].map(
-      (item) =>
-        `${item.textContent?.slice(0, 40)}|disabled=${item.getAttribute("aria-disabled") ?? item.hasAttribute("data-disabled")}|highlighted=${item.hasAttribute("data-highlighted")}`,
-    );
-    const buttons = [...document.querySelectorAll("button")]
-      .map((button) => button.getAttribute("aria-label") ?? button.textContent ?? "")
-      .filter((name) => /GPT|Opus|Codex|Claude/.test(name));
-    const dialogs = [...document.querySelectorAll("[role=dialog],[role=alertdialog]")].map((d) =>
-      d.textContent?.slice(0, 120),
-    );
-    console.info(
-      `[handoff-diag] ${name} :: items=${JSON.stringify(items)} buttons=${JSON.stringify(buttons)} dialogs=${JSON.stringify(dialogs)} active=${document.activeElement?.tagName}`,
-    );
-  };
   const thread = coldClaudeThread();
   using _environment = installFakeEnvironment([thread], {
     acceptCommands: true,
@@ -106,33 +91,27 @@ it("sends a Codex follow-up on a cold Claude thread without compacting first", a
     createMemoryHistory({ initialEntries: [`/${ENVIRONMENT_ID}/${thread.id}`] }),
   );
   await router.load();
-  step("router.load");
   await using _app = await render(<AppRoot router={router} />, {
     // AppRoot brings its own router.
     router: false,
   });
   await expect.element(page.getByText(`Answer 2 for ${thread.id}.`)).toBeVisible();
-  step("history visible");
   // fork:begin fork-resume-compaction-banner — see .fork/customizations.yaml#fork-resume-compaction-banner
   // The fork offers compaction as the resume card, not a compact-send button, and its
-  // picker is a menu whose rows drop the provider name.
+  // picker is a menu whose rows drop the provider name. A row's centre can land on its favorite
+  // star, which keeps the click, so the pick clicks the model's name.
   const compactAndSend = page.getByText("Resume with less context");
   await expect.element(compactAndSend).toBeVisible();
-  step("resume card visible");
 
   await page.getByRole("button", { name: /Opus 4\.6/ }).click();
-  step("picker opened");
   await userEvent.type(page.getByPlaceholder("Search models"), "GPT-5.4");
-  step("search typed");
   await page
     .getByRole("menuitem", { name: /GPT-5\.4/ })
     .first()
+    .getByText("GPT-5.4", { exact: true })
     .click();
-  step("menuitem clicked");
   await expect.element(page.getByRole("button", { name: /GPT-5\.4/ })).toBeVisible();
-  step("gpt button visible");
   await expect.element(compactAndSend).not.toBeInTheDocument();
-  step("resume card gone");
   // fork:end fork-resume-compaction-banner
   // Picking a model leaves the composer's settings menu open.
   await userEvent.keyboard("{Escape}");
@@ -141,7 +120,6 @@ it("sends a Codex follow-up on a cold Claude thread without compacting first", a
   await userEvent.click(editor);
   await userEvent.type(editor, "keep going");
   await userEvent.keyboard("{Enter}");
-  step("enter pressed");
 
   const messages = () =>
     dispatchedCommands().flatMap((command) =>
