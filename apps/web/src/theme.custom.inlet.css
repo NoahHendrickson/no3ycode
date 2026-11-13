@@ -202,19 +202,18 @@
     --fork-inlet-panel-top: var(--fork-inlet-margin);
   }
 
-  /* The inline right panel is below the band too, so its tab bar keeps no
-     room for the caption buttons, and the panel controls ChatView pins at the
-     workspace root (only while that panel is present) drop onto its tab line. */
+  /* The inline right panel is below the band too, and the panel controls
+     ChatView pins at the workspace root (only while that panel is present)
+     drop onto its tab line, laid out as on macOS: the tab bar's caption inset
+     plus its w-24 spacer reserve the controls the pr-28 they get there. */
   &
     :is(
       [data-preview-panel-mode="inline"],
       [data-fork-workspace-root] > [data-workspace-titlebar-controls]
     ) {
     --workspace-controls-top: var(--fork-inlet-panel-top);
-    --workspace-controls-right: calc(
-      env(safe-area-inset-right) + var(--fork-inlet-margin) + 0.75rem
-    );
-    --workspace-native-controls-inset: 0px;
+    --workspace-controls-right: calc(env(safe-area-inset-right) + 0.75rem);
+    --workspace-native-controls-inset: 1rem;
   }
 
   & [data-slot="sidebar-inset"] > [data-fork-stage-card] {

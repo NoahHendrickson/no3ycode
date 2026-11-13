@@ -241,7 +241,7 @@ describe("fork guard: fork-inlet-theme", () => {
       /\.wco\[data-fork-theme="inlet"\]:not\(\s*\[data-fork-has-thread-tabs\]\s*\)\s*\{\s*--fork-inlet-panel-top: var\(--workspace-topbar-height\);/u,
     );
     expect(inlet).toMatch(
-      /\[data-preview-panel-mode="inline"\],\s*\[data-fork-workspace-root\] > \[data-workspace-titlebar-controls\]\s*\) \{\s*--workspace-controls-top: var\(--fork-inlet-panel-top\);[\s\S]*?--workspace-native-controls-inset: 0px;/u,
+      /\[data-preview-panel-mode="inline"\],\s*\[data-fork-workspace-root\] > \[data-workspace-titlebar-controls\]\s*\) \{\s*--workspace-controls-top: var\(--fork-inlet-panel-top\);[\s\S]*?--workspace-native-controls-inset: 1rem;/u,
     );
     expect(column).toMatch(/border-radius:\s*var\(--fork-inlet-radius\)/u);
     const modal = ruleBodyFor(inletRules, [TEMPLATE, "[data-app-modal]"]);
