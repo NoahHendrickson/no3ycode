@@ -42,7 +42,7 @@ function columnStampRef(attribute: string) {
 export const forkDockedDetailsRef = columnStampRef("data-fork-has-docked-details");
 export const forkFindBarRef = columnStampRef("data-fork-has-find-bar");
 
-/** Usage's and Automations' stage card. */
+/** Usage's, Automations' and Pull requests' stage card. */
 export const forkStageCardRef = rootStampRef("data-fork-has-stage-card");
 export const forkThreadTabsRef = rootStampRef("data-fork-has-thread-tabs");
 

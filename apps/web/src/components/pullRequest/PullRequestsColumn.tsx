@@ -14,6 +14,9 @@ import {
 import { WorkspacePageContainer } from "../WorkspacePageContainer";
 import { WorkspacePageHeader } from "../WorkspacePageHeader";
 import { workspaceAreaProps } from "../../lib/workspaceFocus";
+/* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+import { forkStageCardRef } from "~/custom/forkStageStamps";
+/* fork:end fork-stage-stamps */
 import { PullRequestCompactFilterMenu } from "./PullRequestCompactFilterMenu";
 import type { PullRequestFilterOption } from "./PullRequestListFilters";
 import { INVOLVEMENT_TABS, STATE_TABS } from "./pullRequestListOptions";
@@ -162,6 +165,10 @@ export function PullRequestsColumn({
     <div
       {...contentArea}
       inert={maximizedAway}
+      /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
+      ref={forkStageCardRef}
+      data-fork-stage-card=""
+      /* fork:end fork-stage-stamps */
       className={cn(
         "@container/pr-list flex min-h-0 min-w-0 flex-col overflow-x-hidden bg-background",
         maximizedAway ? "w-0 flex-none" : "flex-1",

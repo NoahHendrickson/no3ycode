@@ -256,7 +256,7 @@
     --workspace-native-controls-inset: 1rem;
   }
 
-  & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
+  & [data-slot="sidebar-inset"] [data-fork-stage-card] {
     --workspace-native-controls-inset: 0px;
   }
 
@@ -780,12 +780,12 @@
   background-color: var(--sidebar-row-hover);
 }
 
-/* The utility pages (Usage, Automations) are panels as well: their stage
+/* The utility pages (Usage, Automations, Pull requests) are panels as well: their stage
    card is set into the frame the way the chat column is. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-slot="sidebar-inset"]
-  > [data-fork-stage-card] {
+  [data-fork-stage-card] {
   --background: var(--fork-inlet-panel);
   margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
@@ -827,7 +827,7 @@
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
     ) {
-    & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
+    & [data-slot="sidebar-inset"] [data-fork-stage-card] {
       margin-left: 0;
     }
 

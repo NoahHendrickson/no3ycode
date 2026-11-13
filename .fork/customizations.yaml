@@ -6740,6 +6740,7 @@
     - apps/web/src/components/chat/ThreadDetailsCard.tsx
     - apps/web/src/components/chat/ThreadFindBar.tsx
     - apps/web/src/components/usage/UsagePage.tsx
+    - apps/web/src/components/pullRequest/PullRequestsColumn.tsx
   verify:
     - apps/web/src/__fork_guards__/forkStageStamps.test.ts
     - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts

@@ -73,7 +73,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   :is(
     [data-app-modal],
-    [data-slot="sidebar-inset"] > [data-fork-stage-card],
+    [data-slot="sidebar-inset"] [data-fork-stage-card],
     [data-composer-drawer-layer]
   ) {
   --background: #f6f4e4;
@@ -158,7 +158,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   [data-slot="sidebar-inset"]
-  > [data-fork-stage-card] {
+  [data-fork-stage-card] {
   --background: #f2f0d8;
   background: var(--background);
 }
@@ -169,7 +169,7 @@
       [data-fork-sidebar-overlay="true"]
     )
     [data-slot="sidebar-inset"]
-    > [data-fork-stage-card] {
+    [data-fork-stage-card] {
     margin-left: var(--fork-inlet-margin);
   }
 }

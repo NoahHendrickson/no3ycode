@@ -185,6 +185,7 @@ const STAMPS: ReadonlyArray<{
     producers: [
       ["components/usage/UsagePage.tsx", "ref={forkStageCardRef}"],
       ["custom/scheduled/ScheduledPage.tsx", "ref={forkStageCardRef}"],
+      ["components/pullRequest/PullRequestsColumn.tsx", "ref={forkStageCardRef}"],
     ],
   },
   {
