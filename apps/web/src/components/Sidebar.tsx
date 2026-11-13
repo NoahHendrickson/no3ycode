@@ -1055,6 +1055,10 @@ type SidebarThreadRowProps = {
   // it; the hover card carries the names. Slim rows only take the pill.
   compact?: boolean;
   /* fork:end sidebar-v2-compact-cards */
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  // Sits on an open split pair, whose row paints the open fill.
+  onOpenSplitPair?: boolean;
+  /* fork:end fork-split-threads */
   /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
   // The status section the card paints under, when status grouping is on.
   statusSection?: SidebarV2StatusBucket | undefined;
@@ -1515,6 +1519,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
       shape: threadRowShape({ variant, compact: props.compact === true }),
       /* fork:end sidebar-v2-compact-cards */
+      /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+      onOpenPair: props.onOpenSplitPair === true,
+      /* fork:end fork-split-threads */
     }),
     // Upstream #13344: keyboard focus draws the same inset ring on every row.
     // Additive for the same reason as the file-drag ring below — focus is
@@ -5066,6 +5073,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
                         readonly statusSection?: SidebarV2StatusBucket;
                         /* fork:end sidebar-v2-status-grouping */
+                        /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+                        readonly onOpenSplitPair?: boolean;
+                        /* fork:end fork-split-threads */
                       } = {},
                     ) => {
                       const { sortable, statusSection } = options;
@@ -5124,6 +5134,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
                           compact={compactCards}
                           /* fork:end sidebar-v2-compact-cards */
+                          /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+                          onOpenSplitPair={options.onOpenSplitPair === true}
+                          /* fork:end fork-split-threads */
                           /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
                           statusSection={statusSection}
                           inStatusSection={
@@ -5233,28 +5246,27 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       if (splitRow === undefined) {
                         return renderOneThreadRow(thread, section, options);
                       }
+                      const pairOpen =
+                        routeRowThreadKey !== null &&
+                        splitRow.memberKeys.includes(routeRowThreadKey);
                       return (
                         <SidebarSplitPairRow
                           key={splitRow.key}
                           projectSection={options.underProjectHeader === true}
-                          compact={compactCards}
-                          active={[splitRow.left, splitRow.right].some(
-                            (card) =>
-                              scopedThreadKey(scopeThreadRef(card.environmentId, card.id)) ===
-                              routeRowThreadKey,
-                          )}
+                          shape={threadRowShape({ variant: "card", compact: compactCards })}
+                          active={pairOpen}
                         >
                           {[splitRow.left, splitRow.right].map((card) =>
-                            renderOneThreadRow(
-                              card,
-                              section,
+                            renderOneThreadRow(card, section, {
+                              ...options,
                               // A partner from another project keeps its repo
                               // line: the header above names the other project.
-                              card.environmentId === thread.environmentId &&
-                                card.projectId === thread.projectId
-                                ? options
-                                : { ...options, underProjectHeader: false },
-                            ),
+                              ...(card.environmentId === thread.environmentId &&
+                              card.projectId === thread.projectId
+                                ? {}
+                                : { underProjectHeader: false }),
+                              onOpenSplitPair: pairOpen,
+                            }),
                           )}
                         </SidebarSplitPairRow>
                       );

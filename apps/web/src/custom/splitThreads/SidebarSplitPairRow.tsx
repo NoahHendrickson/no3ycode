@@ -7,12 +7,13 @@ import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
+import { threadRowOpenSurfaceClassName, type ThreadRowShape } from "../sidebarV2RowPolicy";
 
 export function SidebarSplitPairRow(props: {
   /** Under a project header: joins the header's run of cards (hover reveal, drop edge). */
   readonly projectSection: boolean;
-  /** Compact cards are pills, so the pair's fill is one too. */
-  readonly compact: boolean;
+  /** Its cards' shape, which the pair's fill takes. */
+  readonly shape: ThreadRowShape;
   /** One of the pair holds the route: the pair wears the open fill for both cards. */
   readonly active: boolean;
   readonly children: ReactNode;
@@ -29,9 +30,7 @@ export function SidebarSplitPairRow(props: {
         className={cn(
           "grid grid-cols-2",
           SIDEBAR_V2_CARD_ALIGNMENT.listGap,
-          props.compact ? "rounded-full" : "rounded-[16px]",
-          props.active &&
-            "bg-sidebar-row-active light:ring-1 light:ring-inset light:ring-sidebar-border/70",
+          props.active && threadRowOpenSurfaceClassName(props.shape),
         )}
       >
         {props.children}

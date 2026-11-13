@@ -445,21 +445,13 @@
 }
 
 /* An open split pair (fork-split-threads) is one item: its row is the shape
-   that joins the panel, and its cards sit square inside it. */
+   that joins the panel. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active]
   > ul {
   border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
-  box-shadow: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-sidebar-version="v2"]
-  li[data-fork-split-pair][data-active]
-  [data-testid="sidebar-row-card"] {
-  border-radius: 0;
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
