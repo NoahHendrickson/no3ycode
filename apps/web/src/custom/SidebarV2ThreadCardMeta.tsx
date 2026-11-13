@@ -100,17 +100,14 @@ export function SidebarV2ProjectFolderMark(props: { readonly className?: string 
   return <FolderIcon aria-hidden className={props.className} />;
 }
 
-/** Which checkout a thread is on: the worktree or branch mark, the branch name
-    (drawn, or for assistive tech only), and the dev-server pulse hook. Callers draw
-    it only when the thread has a worktree or a branch — see the repo line for
-    why the worktree mark replaces the branch mark rather than joining it. */
+/** Which checkout a thread is on: the worktree or branch mark, the branch
+    name, and the dev-server pulse hook. The repo line draws it only when the
+    thread has a worktree or a branch, and says why the worktree mark replaces
+    the branch mark rather than joining it. */
 function SidebarV2CheckoutMark(props: {
   readonly branch: string | null;
   readonly hasWorktree: boolean;
   readonly devServerPort: number | null;
-  /** "visible" draws the name beside the mark; "sr-only" keeps it for
-      assistive tech where the line has no room for it. */
-  readonly branchName: "visible" | "sr-only";
   readonly className: string;
 }) {
   const Mark = props.hasWorktree ? WorktreeIcon : GitBranchIcon;
@@ -125,11 +122,7 @@ function SidebarV2CheckoutMark(props: {
       {props.devServerPort == null ? null : (
         <Mark aria-hidden data-fork-dev-server-fade="" className={MARK} />
       )}
-      {props.branch ? (
-        <span className={props.branchName === "visible" ? "truncate whitespace-nowrap" : "sr-only"}>
-          {props.branch}
-        </span>
-      ) : null}
+      {props.branch ? <span className="truncate whitespace-nowrap">{props.branch}</span> : null}
       {props.devServerPort != null ? (
         <span className="sr-only">{`Server listening on port ${props.devServerPort}`}</span>
       ) : null}
@@ -213,7 +206,6 @@ export function SidebarV2ThreadCardMeta(props: SidebarV2ThreadCardMetaProps) {
               branch={props.branch}
               hasWorktree={props.hasWorktree === true}
               devServerPort={props.devServerPort ?? null}
-              branchName="visible"
               className="flex min-w-0 flex-1 items-center gap-0.5"
             />
           ) : null}

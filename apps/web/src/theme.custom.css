@@ -2897,12 +2897,15 @@
 
 /* ── Sidebar resize rail (fork-sidebar-rail-accent) ─────────────────────────
    The drag line and its tooltip take the new-agent texture's blue
-   (custom/pixelTexture's #44aaf8), so the grab target reads on every
-   palette; the tooltip text is Inlet Black's cream panel.
-   Under Inlet the tooltip rule reads --fork-inlet-tooltip, so the popup
-   restates those tokens rather than outranking that rule. */
+   (custom/pixelTexture's leaf highlight), so the grab target reads on every
+   palette; the tooltip text is Inlet Black's cream panel. The deep shade is
+   the same hue at 4.5:1 on Inlet's cream. Under Inlet the tooltip rule reads
+   --fork-inlet-tooltip, so the popup restates those tokens rather than
+   outranking that rule. */
 :root[data-fork="noahhendrickson-t3code"] {
-  --fork-sidebar-rail-accent: #44aaf8;
+  --fork-texture-blue: #44aaf8;
+  --fork-texture-blue-deep: #1670b5;
+  --fork-sidebar-rail-accent: var(--fork-texture-blue);
   --fork-sidebar-rail-accent-ink: #f8f3d8;
 }
 
@@ -2914,8 +2917,6 @@
   [data-slot="tooltip-popup"][data-fork-sidebar-rail-tooltip] {
   --fork-inlet-tooltip: var(--fork-sidebar-rail-accent);
   --fork-inlet-tooltip-foreground: var(--fork-sidebar-rail-accent-ink);
-  --popover-foreground: var(--fork-sidebar-rail-accent-ink);
-  --foreground: var(--fork-sidebar-rail-accent-ink);
   border-color: transparent;
   background: var(--fork-sidebar-rail-accent);
   color: var(--fork-sidebar-rail-accent-ink);

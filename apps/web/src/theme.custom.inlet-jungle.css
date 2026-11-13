@@ -184,7 +184,7 @@
     [data-fork-inlet-color="black"]
   )
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"]) {
+  [data-fork-thread-row] {
   border-radius: 10px;
 
   &[aria-current="page"] {

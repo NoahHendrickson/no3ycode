@@ -26,7 +26,8 @@ describe("fork guard: fork-sidebar-rail-accent", () => {
   });
 
   it("paints the line and the tooltip in the texture blue", () => {
-    expect(theme).toContain("--fork-sidebar-rail-accent: #44aaf8;");
+    expect(theme).toContain("--fork-texture-blue: #44aaf8;");
+    expect(theme).toContain("--fork-sidebar-rail-accent: var(--fork-texture-blue);");
     expect(theme).toMatch(
       /\[data-slot="sidebar-rail"\]:is\(:hover, :active\)::after \{\s*background-color: var\(--fork-sidebar-rail-accent\);/u,
     );

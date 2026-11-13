@@ -2478,6 +2478,11 @@
     as a tab: the row takes the card's fill and goes square on the right, and
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.
+    When Base UI flips the card end-aligned near the window's bottom, the same
+    ::after is flipped (scale: 1 -1) to curve into the row's top instead. Both
+    row shapes, card and slim, carry data-fork-thread-row (fenced in
+    Sidebar.tsx), and every Inlet and palette row rule keys on it rather than
+    on test ids, so a row rule cannot miss a shape.
     The collapsed sidebar's peek card hangs from its toggle as a tab (the
     card and toggle take a fill one step off the frame, padded 4px; the card drops 4px below it with a
     concave corner), and the toggle's tooltip (data-fork-peek-tooltip, in the

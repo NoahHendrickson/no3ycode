@@ -109,7 +109,7 @@ export type SidebarV2ListSection<TThread> =
   | SidebarV2StatusSection<TThread>;
 
 const isStatusSectionKey = (key: string): key is SidebarV2StatusSectionKey =>
-  key !== "snoozed" && key !== "settled" && key in SIDEBAR_V2_STATUS_SECTION_LABELS;
+  key === "pinned" || SIDEBAR_V2_STATUS_BUCKET_ORDER.some((bucket) => bucket === key);
 
 export function useSidebarV2CollapsedStatusSections() {
   return useSidebarV2CollapsedKeys(

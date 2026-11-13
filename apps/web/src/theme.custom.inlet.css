@@ -397,7 +397,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  [data-fork-thread-row][aria-current="page"] {
   --foreground: var(--fork-inlet-panel-foreground);
   --sidebar-foreground: var(--fork-inlet-panel-foreground);
   --muted-foreground: var(--fork-inlet-panel-muted);
@@ -422,7 +422,7 @@
     [data-fork-inlet-color="black"]
   )
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  [data-fork-thread-row][aria-current="page"] {
   --sidebar-v2-status-working: #047857;
   --sidebar-v2-status-done: #1d4ed8;
   --sidebar-v2-status-approval: #b45309;
@@ -434,7 +434,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
-  :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"] {
+  [data-fork-thread-row][aria-current="page"] {
   border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
 }
 
@@ -474,10 +474,7 @@
     /* The open row's item. content-visibility: auto implies paint containment,
        which would clip the bridge to the item's box; one visible item costs
        nothing. */
-    &
-      li[data-thread-item]:has(
-        :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]
-      ) {
+    & li[data-thread-item]:has([data-fork-thread-row][aria-current="page"]) {
       position: relative;
       content-visibility: visible;
     }
@@ -486,10 +483,7 @@
        one fillet above and below it. The fillets are the panel's fill outside
        a circle centred off the corner, so the row's top and bottom edges curve
        into the panel's side. */
-    &
-      li[data-thread-item]:has(
-        :is([data-testid="sidebar-row-card"], [data-testid="sidebar-row-slim"])[aria-current="page"]
-      )::after {
+    & li[data-thread-item]:has([data-fork-thread-row][aria-current="page"])::after {
       content: "";
       position: absolute;
       pointer-events: none;

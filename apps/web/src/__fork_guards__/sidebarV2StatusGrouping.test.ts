@@ -74,7 +74,9 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
     expect(sidebar).toContain(
       "const snoozedSectionShown = statusGrouped && snoozedThreads.length > 0;",
     );
-    expect(sidebar).toMatch(/snoozedThreads\.length > 0 &&[\s\S]{0,200}?!snoozedSectionShown/u);
+    expect(sidebar).toMatch(
+      /if \(snoozedSectionShown\) \{[\s\S]{0,600}?\} else[\s\S]{0,120}?if \(snoozedThreads\.length > 0\) \{/u,
+    );
     expect(sidebar).toContain('section="snoozed"');
     expect(sidebar).toContain("collapsed={!snoozedShelfExpanded}");
     // Flat and project modes keep the blue shelf header.
@@ -84,7 +86,9 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
   it("gives the settled tail the status header while status grouping is on", () => {
     // settledCount includes older settled threads the server has not sent yet.
     expect(sidebar).toContain("const settledSectionShown = statusGrouped && settledCount > 0;");
-    expect(sidebar).toMatch(/settledCount > 0 &&[\s\S]{0,200}?!settledSectionShown/u);
+    expect(sidebar).toMatch(
+      /if \(settledSectionShown\) \{[\s\S]{0,700}?\} else[\s\S]{0,120}?if \(settledCount > 0\) \{/u,
+    );
     expect(sidebar).toContain('section="settled"');
     expect(sidebar).toContain("count={settledCount}");
     expect(sidebar).toContain("collapsed={!settledShelfExpanded}");
