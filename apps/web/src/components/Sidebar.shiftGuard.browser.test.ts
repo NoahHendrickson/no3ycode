@@ -177,4 +177,35 @@ describe("sidebar shift guard", () => {
     await userEvent.click(list.button("B"));
     expect(list.pressed).toEqual(["B"]);
   });
+
+  // fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation
+  it("keeps rows clickable when a draft the route landed on arrives above them", async () => {
+    await using screen = await render(null);
+    const list = document.createElement("ul");
+    list.style.cssText = "position: relative; margin: 0; padding: 0; list-style: none";
+    const row = (name: string) => {
+      const item = document.createElement("li");
+      item.style.height = "40px";
+      item.dataset.name = name;
+      item.append(Object.assign(document.createElement("button"), { textContent: name }));
+      return item;
+    };
+    list.append(row("A"), row("B"));
+    screen.container.append(list);
+    using guard = Object.assign(
+      createSidebarShiftGuard(list, (item) => item.getAttribute("data-name") === "draft"),
+      { [Symbol.dispose]: () => guard.dispose() },
+    );
+    using _clock = fakeTimers();
+    const pressed: string[] = [];
+    list.addEventListener("click", (event) => {
+      pressed.push((event.target as HTMLElement).textContent ?? "");
+    });
+
+    list.prepend(row("draft"));
+    guard.update();
+    await userEvent.click(list.querySelector<HTMLElement>("[data-name=B] button")!);
+    expect(pressed).toEqual(["B"]);
+  });
+  // fork:end sidebar-v2-list-animation
 });

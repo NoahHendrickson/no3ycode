@@ -34,7 +34,13 @@ function readTops(list: HTMLElement) {
  * to the neighbouring row. Call `update` after each commit that can move rows.
  * The list must be positioned so every direct child's offsetTop shares its origin.
  */
-export function createSidebarShiftGuard(list: HTMLElement) {
+export function createSidebarShiftGuard(
+  list: HTMLElement,
+  /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
+  /** A row whose arrival is the app answering a navigation, such as the landing draft. */
+  isOwnArrival: (row: Element) => boolean = () => false,
+  /* fork:end sidebar-v2-list-animation */
+) {
   const view = list.ownerDocument.defaultView;
   let tops = readTops(list);
   const movedAt = new WeakMap<Element, number>();
@@ -111,7 +117,12 @@ export function createSidebarShiftGuard(list: HTMLElement) {
       const next = readTops(list);
       const now = performance.now();
       // A list filling from empty slid nothing under the pointer.
-      const ownMove = tops.size === 0 || now - lastInputAt < OWN_INPUT_WINDOW_MS;
+      const ownMove =
+        tops.size === 0 ||
+        now - lastInputAt < OWN_INPUT_WINDOW_MS ||
+        // fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation
+        [...next.keys()].some((row) => !tops.has(row) && isOwnArrival(row));
+      // fork:end sidebar-v2-list-animation
       for (const [row, top] of next) {
         const previous = tops.get(row);
         if (previous === top) continue;

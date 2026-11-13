@@ -1289,6 +1289,9 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/components/Sidebar.motion.ts
+    # The shift guard skips rows pushed down by a draft the route landed on.
+    - apps/web/src/components/Sidebar.shiftGuard.ts
+    - apps/web/src/components/Sidebar.shiftGuard.browser.test.ts
   verify:
     - apps/web/src/__fork_guards__/sidebarV2ListAnimation.test.ts
     - apps/web/src/custom/sidebarV2ListAnimation.browser.test.tsx

@@ -4725,7 +4725,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const shiftGuardRef = useRef<ReturnType<typeof createSidebarShiftGuard> | null>(null);
   const attachThreadListRef = useCallback((node: HTMLUListElement) => {
     threadListRef.current = node;
-    const shiftGuard = createSidebarShiftGuard(node);
+    /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation
+       A draft row arrives because the route landed on it (startup's draft, New thread), so the
+       rows it pushes down were not slid under a pointer. */
+    const shiftGuard = createSidebarShiftGuard(node, (row) =>
+      draftIdByThreadKeyRef.current.has(row.getAttribute("data-thread-item") ?? ""),
+    );
+    /* fork:end sidebar-v2-list-animation */
     shiftGuardRef.current = shiftGuard;
     /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
     // Rows grow in and shrink out while their neighbours slide.
