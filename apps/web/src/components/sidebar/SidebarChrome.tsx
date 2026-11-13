@@ -13,7 +13,6 @@ import {
 } from "../../navigationHistory";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { cn } from "../../lib/utils";
-import { usePullRequestsSupported } from "../../state/environments";
 import {
   resolveEnvironmentIdentificationPillLabel,
   useEnvironmentStageLabel,
@@ -33,12 +32,10 @@ import {
   useSidebar,
 } from "../ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
 import { isSidebarUtilityPage, useNavigateToMainApp } from "./mainAppLocation";
 import { SidebarThreadUndoNotice } from "./SidebarThreadUndoNotice";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
 import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUpdatePill";
-import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { observeResize } from "~/lib/observeResize";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
@@ -259,14 +256,12 @@ function SidebarUtilityItem({
 
 const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-     The V2 sidebar carries Usage and Pull requests as labeled chrome rows, so
-     its footer drops those icons rather than offering each door twice. Surfaces
-     without the rows (the split-threads pane) keep them. */
+     The V2 sidebar carries Usage as a labeled row in its chrome, so its footer
+     drops the icon rather than offering the same door twice. Surfaces without
+     that row (the split-threads pane) keep it. */
   hideUsage = false,
-  hidePullRequests = false,
 }: {
   hideUsage?: boolean;
-  hidePullRequests?: boolean;
   /* fork:end fork-sidebar-chrome */
 } = {}) {
   const navigate = useNavigate();
@@ -275,18 +270,10 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
   const isOnUtilityPage = useLocation({
     select: (location) => isSidebarUtilityPage(location.pathname),
   });
-  const pullRequestsSupported = usePullRequestsSupported();
   const closeMobileSidebar = () => {
     if (isMobile) {
       setOpenMobile(false);
     }
-  };
-  const handlePullRequestsClick = () => {
-    closeMobileSidebar();
-    void navigate({
-      to: "/pull-requests",
-      search: readPullRequestListPreferences(),
-    });
   };
   const handleSettingsClick = () => {
     closeMobileSidebar();
@@ -321,14 +308,9 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
             label="Settings"
             onClick={handleSettingsClick}
           />
-          {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
-          {pullRequestsSupported && !hidePullRequests ? (
-            <SidebarUtilityItem
-              icon={<PullRequestGlyph.pullRequest />}
-              label="Pull requests"
-              onClick={handlePullRequestsClick}
-            />
-          ) : null}
+          {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+              Upstream's Pull requests icon is gone: the chrome's labeled row
+              (custom/SidebarV2ChromeRows) is its only door. */}
           {/* fork:end fork-sidebar-chrome */}
           {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
           {hideUsage ? null : (
@@ -350,10 +332,8 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
 export const SidebarChromeFooter = memo(function SidebarChromeFooter({
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
   hideUsage = false,
-  hidePullRequests = false,
 }: {
   hideUsage?: boolean;
-  hidePullRequests?: boolean;
   /* fork:end fork-sidebar-chrome */
 }) {
   return (
@@ -361,7 +341,7 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter({
       <SidebarProviderUpdatePill />
       <SidebarUpdateArchitectureWarning />
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
-      <SidebarUtilityMenu hideUsage={hideUsage} hidePullRequests={hidePullRequests} />
+      <SidebarUtilityMenu hideUsage={hideUsage} />
       {/* fork:end fork-sidebar-chrome */}
     </SidebarFooter>
   );

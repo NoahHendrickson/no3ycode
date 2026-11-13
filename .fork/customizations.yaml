@@ -2709,10 +2709,11 @@
     stacked 2px apart inside the panel's 8px inset and flush under the header.
     No shortcut chips; the shortcut rides the accessible name. Usage opens the
     /usage page (fork-usage-page) and Pull requests opens /pull-requests under
-    Automations; the V2 sidebar's footer hides its own Usage and Pull requests
-    icons so the rows are the one door there; the footer takes hideUsage and
-    hidePullRequests flags rather than losing the items, so upstream's default
-    footer keeps them. Upstream always
+    Automations. The V2 sidebar's footer hides its own Usage icon so the row is
+    the one door there; the footer takes a hideUsage flag rather than losing the
+    item, so upstream's default footer keeps it. Upstream's footer Pull requests
+    icon is deleted outright: the V2 sidebar is the footer's only consumer, so
+    the labeled row is the one owner. Upstream always
     shows the undo notice in the footer's utility menu (#26874). Type is literal 0.875rem so the panel's 13px text-xs remap cannot
     shrink it.
 

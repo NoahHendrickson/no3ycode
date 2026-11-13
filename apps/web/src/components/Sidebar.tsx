@@ -5724,7 +5724,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
           Usage is a labeled row in the chrome above, so the footer does not
           repeat it as an icon. */}
-      <SidebarChromeFooter hideUsage hidePullRequests />
+      <SidebarChromeFooter hideUsage />
       {/* fork:end fork-sidebar-chrome */}
     </>
   );

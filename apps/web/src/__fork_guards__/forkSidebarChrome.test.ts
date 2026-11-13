@@ -181,17 +181,15 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // The Usage row navigates itself; Sidebar passes it no handler.
     expect(sidebarV2).not.toContain("onUsage=");
     expect(sidebarV2).not.toContain('void router.navigate({ to: "/usage" });');
-    // One door, not two: the footer hides its Usage and Pull requests icons
-    // since the rows above open the same pages. Upstream always shows the undo
-    // notice in its utility menu.
-    expect(sidebarV2).toContain("<SidebarChromeFooter hideUsage hidePullRequests />");
-    expect(chrome).toContain("pullRequestsSupported && !hidePullRequests ? (");
+    // One door, not two: the footer hides its Usage icon and drops upstream's
+    // Pull requests icon, since the rows above open the same pages. Upstream
+    // always shows the undo notice in its utility menu.
+    expect(sidebarV2).toContain("<SidebarChromeFooter hideUsage />");
+    expect(chrome).not.toContain('label="Pull requests"');
     expect(chrome).toMatch(
       /hideUsage \? null : \(\s*<SidebarUtilityItem\s+icon=\{<ChartNoAxesColumnIcon/u,
     );
-    expect(chrome).toContain(
-      "<SidebarUtilityMenu hideUsage={hideUsage} hidePullRequests={hidePullRequests} />",
-    );
+    expect(chrome).toContain("<SidebarUtilityMenu hideUsage={hideUsage} />");
   });
 
   it("draws the action rows as the design system's ghost button", () => {
