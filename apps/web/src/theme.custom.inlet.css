@@ -256,7 +256,7 @@
     --workspace-native-controls-inset: 1rem;
   }
 
-  & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
+  & [data-slot="sidebar-inset"] [data-fork-stage-card] {
     --workspace-native-controls-inset: 0px;
   }
 
@@ -808,12 +808,12 @@
   background-color: var(--sidebar-row-hover);
 }
 
-/* The utility pages (Usage, Automations) are panels as well: their stage
-   card is set into the frame the way the chat column is. */
+/* The stage-card pages are panels as well: their stage card is set into
+   the frame the way the chat column is. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-slot="sidebar-inset"]
-  > [data-fork-stage-card] {
+  [data-fork-stage-card] {
   --background: var(--fork-inlet-panel);
   margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
@@ -831,7 +831,7 @@
   background: var(--fork-inlet-frame);
 }
 
-/* A chrome row (Usage, Automations) lit for its open page is the panel's
+/* A chrome row lit for its open page is the panel's
    colour, like the open thread's row, so it takes the panel's ink. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
@@ -855,7 +855,7 @@
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
     ) {
-    & [data-slot="sidebar-inset"] > [data-fork-stage-card] {
+    & [data-slot="sidebar-inset"] [data-fork-stage-card] {
       margin-left: 0;
     }
 
@@ -878,8 +878,8 @@
 }
 
 /* A lit chrome row runs into the panel beside it, as the open thread's row
-   does: New agent into the new-agent screen's chat column, Usage and
-   Automations into their stage card. Both blocks above move the frame's gap
+   does: New agent into the new-agent screen's chat column, the stage-card
+   pages' rows into their card. Both blocks above move the frame's gap
    into the sidebar's end padding, which the bridge crosses. */
 
 @media (min-width: 768px) {
