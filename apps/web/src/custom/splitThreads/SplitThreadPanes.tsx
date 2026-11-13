@@ -546,7 +546,7 @@ export function SplitThreadPanes(props: {
         {split ? (
           <div
             aria-hidden
-            // Glass's stage cards frame each pane, so its sheet drops this line.
+            // Themes that frame each pane on its own card hide this line.
             data-fork-split-divider=""
             data-fork-float-behind={floatShown || undefined}
             className="order-1 w-px shrink-0 bg-border"
