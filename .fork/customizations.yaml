@@ -2702,21 +2702,24 @@
     one leaves the other subtracting from a stale number, and the cards drift
     off the chrome icons' axis with nothing failing.
 
-    Action rows (Search, New agent, Add a project, Usage) are the design
+    Action rows (Search, New agent, Usage, Automations, Pull requests) are the design
     system's ghost Button at its default size (Figma 364:11246 / 364:10544):
     32px tall, 10px corners, 12px inline padding, a 16px icon 6px from a
     Label/14 Regular label, icon and label alike at the panel's foreground,
     stacked 2px apart inside the panel's 8px inset and flush under the header.
     No shortcut chips; the shortcut rides the accessible name. Usage opens the
-    /usage page (fork-usage-page); the V2 sidebar's footer hides its own Usage icon so
-    the row is the one door there; the footer takes a hideUsage flag rather than
-    losing the item, so upstream's default footer keeps it. Upstream always
+    /usage page (fork-usage-page) and Pull requests opens /pull-requests under
+    Automations; the V2 sidebar's footer hides its own Usage and Pull requests
+    icons so the rows are the one door there; the footer takes hideUsage and
+    hidePullRequests flags rather than losing the items, so upstream's default
+    footer keeps them. Upstream always
     shows the undo notice in the footer's utility menu (#26874). Type is literal 0.875rem so the panel's 13px text-xs remap cannot
     shrink it.
 
     The Threads row (368:21211, drawn there as "Projects") takes the project
-    headers' shape on the same inset: a static muted label (13px semibold, matching the status-section labels), then two 32px icon buttons on the
-    list edge — a sort menu (ArrowsDownUp) over the same
+    headers' shape on the same inset: a static muted label (13px semibold, matching the status-section labels), then 32px icon buttons on the
+    list edge — Add a project (FolderPlus, opening the palette's add-project
+    page; shown even before the first project, when sort and filter are not), a sort menu (ArrowsDownUp) over the same
     sidebarProjectSortOrder client setting the legacy sidebar's sort menu and
     Settings edit, and the menu button (a gear) that owns the scope,
     grouping and density menu. Switching that menu to Manual writes the on-screen
@@ -2752,9 +2755,10 @@
     used to supply it; without the inline flex the block-level mark pushed the
     name below the header. The lockup is a fixed 55px and both halves are
     shrink-0; the link may still shrink so a 208px sidebar cannot overflow the
-    header. Search, New agent, Add a project and Usage remain labeled action
-    rows; Projects remains a static label whose trailing sort and filter
-    buttons own the sort order and the scope / group-by menu.
+    header. Search, New agent, Usage, Automations and Pull requests remain
+    labeled action rows; Threads remains a static label whose trailing add,
+    sort and filter buttons own adding a project, the sort order and the
+    scope / group-by menu.
     Foreground, hover, pill, and focus treatments resolve through sidebar
     tokens so the flat header remains legible in Light, Dark, and Westworld.
 

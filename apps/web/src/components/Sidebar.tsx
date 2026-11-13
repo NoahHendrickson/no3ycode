@@ -4922,7 +4922,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}
               /* fork:end fork-new-agent-draft */
               onNewThread={handleNewThreadClick}
-              onAddProject={openAddProjectCommandPalette}
             />
             <SidebarV2ProjectScopeRow
               projectGroups={projectGroups}
@@ -4951,6 +4950,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 }
                 void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
               }}
+              onAddProject={openAddProjectCommandPalette}
               // An option that visibly does nothing teaches nothing. Where headers
               // are suppressed — one project on screen, by scope or by having only
               // one — it says so instead of quietly ignoring the click.
@@ -5724,7 +5724,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
           Usage is a labeled row in the chrome above, so the footer does not
           repeat it as an icon. */}
-      <SidebarChromeFooter hideUsage />
+      <SidebarChromeFooter hideUsage hidePullRequests />
       {/* fork:end fork-sidebar-chrome */}
     </>
   );

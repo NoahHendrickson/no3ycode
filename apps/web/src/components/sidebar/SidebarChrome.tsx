@@ -259,12 +259,14 @@ function SidebarUtilityItem({
 
 const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-     The V2 sidebar carries Usage as a labeled row in its chrome, so its footer
-     drops the icon rather than offering the same door twice. Surfaces without
-     that row (the split-threads pane) keep it. */
+     The V2 sidebar carries Usage and Pull requests as labeled chrome rows, so
+     its footer drops those icons rather than offering each door twice. Surfaces
+     without the rows (the split-threads pane) keep them. */
   hideUsage = false,
+  hidePullRequests = false,
 }: {
   hideUsage?: boolean;
+  hidePullRequests?: boolean;
   /* fork:end fork-sidebar-chrome */
 } = {}) {
   const navigate = useNavigate();
@@ -319,13 +321,15 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
             label="Settings"
             onClick={handleSettingsClick}
           />
-          {pullRequestsSupported ? (
+          {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
+          {pullRequestsSupported && !hidePullRequests ? (
             <SidebarUtilityItem
               icon={<PullRequestGlyph.pullRequest />}
               label="Pull requests"
               onClick={handlePullRequestsClick}
             />
           ) : null}
+          {/* fork:end fork-sidebar-chrome */}
           {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
           {hideUsage ? null : (
             <SidebarUtilityItem
@@ -346,8 +350,10 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
 export const SidebarChromeFooter = memo(function SidebarChromeFooter({
   /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
   hideUsage = false,
+  hidePullRequests = false,
 }: {
   hideUsage?: boolean;
+  hidePullRequests?: boolean;
   /* fork:end fork-sidebar-chrome */
 }) {
   return (
@@ -355,7 +361,7 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter({
       <SidebarProviderUpdatePill />
       <SidebarUpdateArchitectureWarning />
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
-      <SidebarUtilityMenu hideUsage={hideUsage} />
+      <SidebarUtilityMenu hideUsage={hideUsage} hidePullRequests={hidePullRequests} />
       {/* fork:end fork-sidebar-chrome */}
     </SidebarFooter>
   );
