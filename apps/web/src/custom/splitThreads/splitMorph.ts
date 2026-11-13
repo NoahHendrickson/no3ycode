@@ -1,12 +1,7 @@
 /**
  * Pairing and unpairing morph — see `.fork/customizations.yaml#fork-split-threads`.
- *
- * A view transition: the involved sidebar cards (or collapsed tabs) morph from
- * where they were to where they land, and a pair's row fades in or out under
- * them. The other rows on screen slide to their new places, so nothing jumps
- * under a moving card; the rest of the page changes at once (theme.custom.css).
- * Names are set only for the transition, since a named element gets its own
- * surface and that breaks backdrop-filter on Glass.
+ * Names live only for the transition: a named element gets its own surface,
+ * which breaks backdrop-filter on Glass.
  */
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
@@ -26,9 +21,13 @@ const onScreen = (element: Element) => {
   return rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
 };
 
-const nameAs = (element: HTMLElement, name: string, kind: "morph" | "row") => {
+const nameAs = (
+  element: HTMLElement,
+  name: string,
+  kind: "fork-split-morph" | "fork-split-row",
+) => {
   element.style.viewTransitionName = name;
-  element.style.setProperty("view-transition-class", `fork-split-${kind}`);
+  element.style.setProperty("view-transition-class", kind);
 };
 
 const unname = (element: HTMLElement) => {
@@ -46,7 +45,7 @@ function nameRows(keys: readonly string[]): HTMLElement[] {
       !row.parentElement?.closest(PAIR_SELECTOR) &&
       onScreen(row),
   );
-  rows.forEach((row, index) => nameAs(row, `fork-split-row-${index}`, "row"));
+  rows.forEach((row, index) => nameAs(row, `fork-split-row-${index}`, "fork-split-row"));
   return rows;
 }
 
@@ -63,7 +62,7 @@ function nameInvolved(keys: readonly string[]): HTMLElement[] {
     // One name per key: the sidebar and the tab strip both carry it, but only one shows.
     if (index < 0 || seen.has(keys[index]!) || !onScreen(element)) continue;
     seen.add(keys[index]!);
-    nameAs(element, `fork-split-item-${index}`, "morph");
+    nameAs(element, `fork-split-item-${index}`, "fork-split-morph");
     named.push(element);
     const pairRow = element.closest<HTMLElement>(PAIR_SELECTOR);
     if (pairRow && !named.includes(pairRow)) {
@@ -71,7 +70,7 @@ function nameInvolved(keys: readonly string[]): HTMLElement[] {
       const members = [...pairRow.querySelectorAll(`[${ITEM_ATTRIBUTE}]`)]
         .map((member) => keys.indexOf(member.getAttribute(ITEM_ATTRIBUTE) ?? ""))
         .join("-");
-      nameAs(pairRow, `fork-split-pair-${members}`, "morph");
+      nameAs(pairRow, `fork-split-pair-${members}`, "fork-split-morph");
       named.push(pairRow);
     }
   }
