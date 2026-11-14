@@ -183,6 +183,7 @@ export function SidebarV2BotsRow(props: {
                         className={PROJECTS_ROW_BUTTON}
                         aria-label="Bot view options"
                         data-testid="sidebar-v2-bots-options"
+                        data-fork-tab-trigger=""
                       />
                     }
                   />
@@ -192,7 +193,12 @@ export function SidebarV2BotsRow(props: {
               </TooltipTrigger>
               <TooltipPopup side="right">View options</TooltipPopup>
             </Tooltip>
-            <MenuPopup align="end" data-fork-glass-rim className="min-w-48">
+            <MenuPopup
+              align="end"
+              data-fork-glass-rim
+              data-fork-tab-menu="sidebar"
+              className="min-w-48"
+            >
               <OptionCheckboxItem
                 checked={props.compactCards}
                 onCheckedChange={props.onCompactCardsChange}

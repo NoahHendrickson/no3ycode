@@ -9,7 +9,9 @@ import { useState, type ReactNode } from "react";
 
 import { AgentElapsed } from "./AgentElapsed";
 import { SubagentTooltipContent } from "./SubagentTooltipContent";
-import { ThreadHoverCardPopup } from "../ThreadHoverCard";
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { SubagentRowHoverCardPopup } from "~/custom/SubagentRowHoverCardPopup";
+/* fork:end fork-inlet-theme */
 import { ThreadRelationshipIcon } from "./ThreadRelationshipIcon";
 import type { ProviderInstanceEntry } from "../../providerInstances";
 import { cn } from "../../lib/utils";
@@ -76,6 +78,9 @@ function WorkflowMemberRow({
           render={
             <ThreadDetailsControl
               part="row"
+              /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+              data-fork-row-hover-trigger=""
+              /* fork:end fork-inlet-theme */
               aria-label={`Open ${member.title} chat`}
               disabled={!canOpen}
               onClick={() => canOpen && onOpen(threadId)}
@@ -96,7 +101,7 @@ function WorkflowMemberRow({
             </span>
           ) : null}
         </TooltipTrigger>
-        <ThreadHoverCardPopup side="left">
+        <SubagentRowHoverCardPopup>
           <SubagentTooltipContent
             title={member.title}
             model={member.model}
@@ -111,7 +116,7 @@ function WorkflowMemberRow({
             result={member.result ?? member.error}
             progress={member.progress}
           />
-        </ThreadHoverCardPopup>
+        </SubagentRowHoverCardPopup>
       </Tooltip>
     </li>
   );

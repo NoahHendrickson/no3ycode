@@ -16,6 +16,10 @@ import * as Schema from "effect/Schema";
 export const FORK_BOT_THREAD_TAG = "bot";
 /** Enough for the card's first line; the transcript has the rest. */
 export const FORK_BOT_REPORT_CHARS = 280;
+/** How many of a bot's newest assistant replies the report is looked for in, progress replies
+    and a running wake's included, so the wakes it spans depend on how chatty each is. A report
+    older than that has gone stale, and the bound keeps each shell read constant. */
+export const FORK_BOT_REPORT_LOOKBACK = 1000;
 /** A run whose final reply can be a report. Rolled-back runs never report. */
 export const FORK_BOT_SETTLED_RUN_STATUSES: ReadonlyArray<OrchestrationV2RunStatus> = [
   "completed",

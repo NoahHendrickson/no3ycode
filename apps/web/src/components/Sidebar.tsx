@@ -388,6 +388,7 @@ import {
   withBotWorkAttention,
 } from "~/custom/bots/botWork";
 import { botWorkRowThreadId } from "~/custom/bots/botWorkRoster";
+import { openBotThreadsPanel } from "~/custom/bots/botThreadsPanelStore";
 /* fork:end fork-bot-work-threads */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
@@ -2423,6 +2424,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const botThreads = listSidebarBots(threads);
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
   const botWorkAttention = botWorkAttentionByBot(threads);
+  // Picking a bot whose work needs you opens its Threads panel, so that work is in view.
+  const openBotWorkOnPick = useStableCallback((threadRef: ScopedThreadRef) => {
+    if (botWorkAttention.has(scopedThreadKey(threadRef))) openBotThreadsPanel(threadRef);
+  });
   /* fork:end fork-bot-work-threads */
   const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
   const botsSectionCollapsed = isListSectionCollapsed("bots");
@@ -3421,6 +3426,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     },
     [clearSelection, isMobile, router, setOpenMobile, setSelectionAnchor],
   );
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  const activateThreadRow = useStableCallback((threadRef: ScopedThreadRef) => {
+    openBotWorkOnPick(threadRef);
+    return navigateToThread(threadRef);
+  });
+  /* fork:end fork-bot-work-threads */
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
   // Stable, so the handlers built in render never hold navigateToThread's ref reads.
   const openDroppedThread = useStableCallback((threadRef: ScopedThreadRef) =>
@@ -3535,9 +3546,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       if (isTrailingDoubleClick(event.detail)) {
         return;
       }
+      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+      openBotWorkOnPick(threadRef);
+      /* fork:end fork-bot-work-threads */
       navigateToThread(threadRef);
     },
-    [navigateToThread, rangeSelectTo, toggleThreadSelection],
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+    [navigateToThread, openBotWorkOnPick, rangeSelectTo, toggleThreadSelection],
+    /* fork:end fork-bot-work-threads */
   );
 
   // A settle per thread at a time: double clicks and repeated menu picks
@@ -5207,7 +5223,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         }
         timestampFormat={timestampFormat}
         onThreadClick={handleThreadClick}
-        onThreadActivate={navigateToThread}
+        /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+        onThreadActivate={activateThreadRow}
+        /* fork:end fork-bot-work-threads */
         onStartRename={startThreadRename}
         onRenameTitleChange={setRenamingTitle}
         onCommitRename={commitThreadRename}

@@ -120,6 +120,9 @@ function setup(input: {
   state.folder = input.folder;
   state.pullRequests = input.pullRequests ?? [];
   useRightPanelStore.setState({ threadPanelVisibilityByThreadKey: {} });
+  // fork:begin fork-details-card-closed — the docked card starts closed; these read it open
+  useRightPanelStore.getState().setThreadPanelOpen(threadRef, "inline", true);
+  // fork:end fork-details-card-closed
   const anchor = document.createElement("div");
   document.body.append(anchor);
   return {

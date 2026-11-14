@@ -12,6 +12,8 @@ import { resolveStorage } from "~/lib/storage";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "~/rightPanelLayout";
 import { useRightPanelStore } from "~/rightPanelStore";
 
+import { restoreMaximizedRightPanel } from "../stageColumns/restoreMaximizedRightPanel";
+
 import type { BotWorkFilter, BotWorkGroupKey, BotWorkSort } from "./botWork";
 import { stageFitsBothPanels, stageRowOf } from "./stagePanels";
 
@@ -67,14 +69,31 @@ export function toggleBotThreadsPanel(input: {
   const fitsBoth = stageHoldsBothPanels(input.trigger);
   const rightPanel = useRightPanelStore.getState();
   const rightPanelOpen = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)]?.isOpen === true;
-  // Set open but displaced by the right panel (the window narrowed with both open): show it.
-  if (useBotThreadsPanelStore.getState().openByBotKey[botKey] === true) {
-    if (!fitsBoth && rightPanelOpen) rightPanel.close(input.threadRef);
-    else setOpen(botKey, false);
+  // Set open, it can still be hidden: held by a maximized right panel, or displaced by one where
+  // both do not fit. A visible panel closes; a hidden one shows, making room.
+  const held = restoreMaximizedRightPanel(input.threadRef);
+  const visible =
+    useBotThreadsPanelStore.getState().openByBotKey[botKey] === true &&
+    !held &&
+    (fitsBoth || !rightPanelOpen);
+  if (visible) {
+    setOpen(botKey, false);
     return;
   }
   setOpen(botKey, true);
   if (!fitsBoth) rightPanel.close(input.threadRef);
+}
+
+/** Opened from the bot's sidebar card. Not where the panel would be a sheet over the bot's
+    conversation; a right panel already open there keeps the stage as the toggle's does. */
+export function openBotThreadsPanel(botRef: ScopedThreadRef): void {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia(RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY).matches
+  ) {
+    return;
+  }
+  setOpen(scopedThreadKey(botRef), true);
 }
 
 // The right panel opening where both do not fit closes the Threads panel beside it, wherever it

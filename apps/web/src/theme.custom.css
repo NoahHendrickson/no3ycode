@@ -1809,8 +1809,8 @@
   }
 }
 
-/* Working marks (rain and helix, `custom/SidebarV2StatusIndicator.tsx`): each
-   mark bakes one loop of frames into an SVG mask, stacked top to bottom, and
+/* Working marks (rain, helix and bead ring, `custom/SidebarV2StatusIndicator.tsx`):
+   each mark bakes one loop of frames into a mask, stacked top to bottom, and
    this steps a strip through it under `steps(frames)`. Transform is the one
    property the compositor animates off the main thread; per-cell opacity
    keyframes would repaint every mark on the main thread each vsync. */
@@ -2384,11 +2384,24 @@
    in the same card, and no Tailwind group name is a contract. Upstream
    stacks a group tint under a segment tint so the hovered half of a split
    control reads darker; the lift stacks the same way (4% + 4%). Upstream's
-   utilities are `!important` (`hover:!bg-…`), so this is too. */
-:root[data-fork="noahhendrickson-t3code"].dark
-  [data-thread-details-card]
-  .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open], :has([data-popup-open])) {
-  background-color: var(--fork-outline-hover-bg) !important;
+   utilities are `!important` (`hover:!bg-…`) in `@layer utilities`, and a
+   layered !important outranks any unlayered one, so this joins that layer
+   and wins there on specificity. Inlet Black's card is the sidebar's charcoal
+   and takes the same lift (its --fork-outline-hover-bg is the sidebar's
+   hover step). Under Inlet a subagent row whose hover card is out as a tab
+   is painted by the tab alone (theme.custom.inlet-menus.css). */
+@layer utilities {
+  :root[data-fork="noahhendrickson-t3code"]:is(
+      .dark,
+      [data-fork-theme="inlet"][data-fork-inlet-color="black"]
+    )
+    [data-thread-details-card]
+    .fork-thread-details-lift:not(
+      [data-fork-theme="inlet"][data-fork-inlet-color]
+        [data-fork-row-hover-trigger][data-popup-open]
+    ):is(:hover, [data-pressed], [data-popup-open], :has([data-popup-open])) {
+    background-color: var(--fork-outline-hover-bg) !important;
+  }
 }
 
 /* Section dividers take the vessel hairline, so the card's inner lines match

@@ -3,8 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { makeThreadFixture } from "../../test-fixtures";
 import type { Thread } from "../../types";
-import { BOT_WORK_TAG_PREFIX } from "../bots/botWorkRoster";
-import { stageHeaderParent } from "./stageHeaderParent";
+import { BOT_WORK_TAG_PREFIX, threadParentOf } from "../bots/botWorkRoster";
 
 function thread(
   tags: ReadonlyArray<string>,
@@ -25,7 +24,7 @@ function thread(
   return { ...fixture, source: { ...fixture.source, tags } };
 }
 
-describe("stageHeaderParent", () => {
+describe("threadParentOf", () => {
   it.each([
     ["a bot's work leads to its bot", thread([`${BOT_WORK_TAG_PREFIX}ops-bot`]), "ops-bot", "bot"],
     [
@@ -41,12 +40,12 @@ describe("stageHeaderParent", () => {
       "subagent",
     ],
   ] as const)("%s", (_name, open, threadId, kind) => {
-    expect(stageHeaderParent(open)).toEqual({ threadId, kind });
+    expect(threadParentOf(open)).toEqual({ threadId, kind });
   });
 
   it("gives any other thread no parent to go back to", () => {
-    expect(stageHeaderParent(thread([]))).toBeNull();
+    expect(threadParentOf(thread([]))).toBeNull();
     // A fork is a thread of its own, not a child to go back from.
-    expect(stageHeaderParent(thread([], { id: "original", relationship: "fork" }))).toBeNull();
+    expect(threadParentOf(thread([], { id: "original", relationship: "fork" }))).toBeNull();
   });
 });

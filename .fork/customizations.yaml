@@ -2505,8 +2505,18 @@
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.
     When Base UI flips the card end-aligned near the window's bottom, the same
-    ::after is flipped (scale: 1 -1) to curve into the row's top instead. Both
-    row shapes, card and slim, carry data-fork-thread-row (fenced in
+    ::after is flipped (scale: 1 -1) to curve into the row's top instead. The
+    thread details card's subagent rows (lineage rows and workflow members)
+    open theirs the same way to the left through custom/SubagentRowHoverCardPopup
+    (left, top-aligned, data-fork-row-hover-card), swapped in and the row marked
+    data-fork-row-hover-trigger (fenced) in components/chat/ThreadRelationshipsControl.tsx
+    and ThreadLineageWorkflowRow.tsx. Side and alignment each flip the one
+    ::after drawing and square corner through their own custom property
+    (--fork-row-tab-x/-y, --fork-row-tab-top/-bottom). The open row's fill sits
+    in @layer utilities, since the panel row's hover fill is an !important
+    utility that outranks any unlayered !important, and it alone paints an
+    open row: the card lift (theme.custom.css, layered for the same reason,
+    shared by dark and Inlet Black) excludes it. Both row shapes, card and slim, carry data-fork-thread-row (fenced in
     Sidebar.tsx), and every Inlet and palette row rule keys on it rather than
     on test ids, so a row rule cannot miss a shape.
     The collapsed sidebar's peek card hangs from its toggle as a tab (the
@@ -2518,12 +2528,16 @@
     bridges into the panel the way the open thread row does. On Jungle Art the
     whole stage is the row green, to the window's edges, round a frame-cream card.
     The Threads header's sort and settings menus (data-fork-tab-menu, their
-    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), and a
+    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), the Bots
+    section's view options menu (custom/bots/SidebarV2BotsSection.tsx), and a
     bot's Threads panel's filter and sort menus (custom/bots/
     BotThreadsPanelControls.tsx, their 28px buttons in the panel header,
     data-fork-bot-threads-header) hang from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
-    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    left side. On Black the bot panel's two (data-fork-tab-menu="bot-threads") and
+    their open buttons are the sidebar's #141414 ink, since they open over the
+    cream panel, and the sidebar headers' menus (data-fork-tab-menu="sidebar") are the
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -2609,6 +2623,7 @@
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/custom/forkActivePalette.ts
     - apps/web/src/custom/ForkInletColorPicker.tsx
+    - apps/web/src/custom/SubagentRowHoverCardPopup.tsx
     - apps/web/src/custom/inletMenuMorph.ts
     - apps/web/src/custom/anchoredContextMenu.ts
     - apps/web/src/localApi.ts
@@ -2639,6 +2654,8 @@
     - apps/web/src/custom/icons/lucide-phosphor.tsx
     - apps/web/src/components/ui/tooltip.tsx
     - apps/web/src/components/ThreadHoverCard.tsx
+    - apps/web/src/components/chat/ThreadRelationshipsControl.tsx
+    - apps/web/src/components/chat/ThreadLineageWorkflowRow.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/projectIconColors.ts
@@ -4621,8 +4638,9 @@
     dropdown-glass on an inner data-thread-details-card rather than on the
     popover popup, so that card is a branch of the one rule; the panel's own
     additions are the composer vessel's radius, the 4% lift on its rows and
-    split groups (upstream's hover utilities are !important, so the lift is
-    too; it keys on fork-thread-details-lift, a hook fenced onto upstream's
+    split groups (upstream's hover utilities are !important in @layer
+    utilities, so the lift is !important in that layer too, where it wins on
+    specificity; Inlet Black's charcoal card shares it; it keys on fork-thread-details-lift, a hook fenced onto upstream's
     two hover-surface class strings in threadDetailsPanelStyles.ts, so it
     reaches exactly the surfaces that compose it and not the automations
     Switch in the same card) and the vessel hairline on its section
@@ -5306,19 +5324,28 @@
     Settings → Appearance → Interface → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
     transcript working row, the composer liveness pill, subagent members):
-    the pixel rain or a 7x7 DNA helix from the "Sequencing" thinking chip.
-    The helix is the default. The choice is device-local (localStorage), not a
-    contracts setting, and Restore defaults resets it. Each mark bakes one
-    loop of frames into an SVG mask once, and a single stepped transform
+    the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
+    the bead ring (custom/beadRing: a line round a ring whose tail stretches
+    into beads and merges back). Until one is picked, Inlet draws the bead
+    ring and every other palette the helix. The choice is device-local
+    (localStorage), not a contracts setting, and Restore defaults clears it
+    back to the palette's default. Each mark bakes one loop of frames into a
+    mask once (rain and helix an SVG, the bead ring a canvas drawn once), and a single stepped transform
     animation per strip plays it with a per-thread phase offset, so the
     compositor runs it — never per-cell opacity keyframes (a core of
     renderer CPU with a few working threads on screen), a per-frame canvas
     or a requestAnimationFrame loop. Both keep a still frame under reduced
-    motion. The helix is drawn at 12px because the
-    card status box is 12px wide and clips.
+    motion. The bead ring's steady spin is set so a loop turns exactly once
+    and repeats as drawn: a rotation layer to make up a part turn doubled its
+    GPU cost (40 marks: 28% of a core against the helix's 15%). The
+    helix is drawn at 12px for the card's 12px status box. The bead ring is
+    12px across (a step past the 10px status dots) in a 15px box held to the
+    12x14 slot by negative margins; the ring itself fits inside the clipping
+    status boxes.
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingMark.ts
+    - apps/web/src/custom/beadRing.ts
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
     - apps/web/src/theme.custom.css
   shadows: []
@@ -6813,6 +6840,27 @@
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
 
+- id: fork-details-card-closed
+  intent: >
+    A thread's details card (docked, or its popover where there is no room)
+    starts closed, so moving to another thread never opens it. Upstream opens
+    the docked card by default and remembers the threads it was closed on;
+    the fork flips the default in rightPanelStore (DEFAULT_THREAD_PANEL_VISIBILITY,
+    the map pruning, partialize and migrate) and remembers the threads it was
+    opened on instead. Persisted closed entries from before read as the
+    default, so nothing reopens.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/rightPanelStore.ts
+    - apps/web/src/rightPanelStore.test.ts
+    - apps/web/src/components/chat/ThreadDetailsCard.browser.test.tsx
+    - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkDetailsCardClosed.test.ts
+    - apps/web/src/rightPanelStore.test.ts
+
 - id: fork-chat-mode
   intent: >
     The sidebar header switches between Code and Chat (Figma t3-fork
@@ -6963,8 +7011,9 @@
     280 characters of the final reply of its latest settled run that did not
     end on the quiet reply "Nothing to report." (orchestration-v2/forkBotReport,
     a tag-gated subquery in the shell rows that walks the messages' indexed
-    (thread_id, created_at) order from the newest; progress replies before a
-    run's final one never count). The shell built from a full projection
+    (thread_id, created_at) order from the newest, at most its newest 1000
+    assistant replies (progress replies included), so quiet wakes never grow
+    it; progress replies before a run's final one never count as the report). The shell built from a full projection
     keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
     than its last visit, server clock on both sides and the same on every
     device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
@@ -7124,7 +7173,7 @@
     archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
     routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
     its header names the bot where a subagent names its parent, one click back (ChatView
-    headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
+    headerParentThreadLink, via botWorkRoster's threadParentOf). Notifications are
     unchanged.
 
     A bot's card says when its unpinned work needs the owner (custom/bots/botWork
@@ -7135,14 +7184,17 @@
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
     bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary
-    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId,
+    which share threadParentOf with the header's back link): its own column in the stage
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
     close motion), 320px by default and at least 280, with a header the height of the others
     (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its yarn toggle sits after the details toggle, pressed while open, there and
     nowhere else. Its open state is one per bot, remembered on this device
-    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads, and
-    the row of the thread on screen is marked current (aria-current, the sidebar's open-row
+    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads;
+    opening a bot from its sidebar card while its work needs the owner opens it (Sidebar
+    openBotThreadsPanel, closing the bot's right panel where both do not fit); and
+    the row of the thread on screen is marked current (aria-current, in the rows' own hover
     fill). Its header is "Threads", its search, filter and sort buttons (below), and the
     close button every stage panel's has (fork-stage-columns).
     With one panel open nothing changes. With both open inline the conversation keeps 480px:
@@ -7215,8 +7267,7 @@
     A thread's stage reads as the owner's frame (Figma t3-fork 698:7880): the conversation, a
     bot's Threads panel and the right panel are columns side by side, each with its own header
     row. The panel controls (pane actions, details, threads, terminal, right panel) are
-    one cluster at the right end of the conversation's header, in its flow, in every state and
-    every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
+    one cluster at the right end of the conversation's header, in its flow, in every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
     never split between that header and a panel's, and nothing else is drawn over them. A
     toggle shows pressed while its panel is open. What acts on one panel's content stays in that
     panel's header: the right panel's tabs and new-tab button, then its maximize toggle and a
@@ -7232,19 +7283,22 @@
     conversation's while no panel is open, else the Threads panel's or the right panel's); every
     header is a drag region with its controls marked no-drag, and since the cluster now sits in
     the conversation header's own flow, no later drag region overlaps it. With the right panel
-    maximized the conversation and its header are hidden; the panel's own header keeps the
-    restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
+    maximized the conversation and its header are hidden, so the cluster moves into the panel's
+    header, before its restore and close buttons, and the terminal and Threads toggles (button or
+    keybinding) restore the panel first so what they open shows. Under Inlet the stage is one card (fork-inlet-theme); Glass and
     the stock theme keep their surfaces.
   tier: 3
   files:
     - apps/web/src/custom/stageColumns/StageHeaderControls.tsx
     - apps/web/src/custom/stageColumns/StagePanelCloseButton.tsx
+    - apps/web/src/custom/stageColumns/restoreMaximizedRightPanel.ts
   shadows: []
   watch:
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ChatHeader.tsx
     - apps/web/src/components/chat/ChatRightPanel.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/components/chat/useChatTerminalActions.ts
     - apps/web/src/theme.custom.inlet.css
     - apps/web/src/theme.custom.css
     - knip.jsonc
@@ -7269,8 +7323,8 @@
     parent crumbs stay hidden. A thread with a parent has a back button just left of the title
     (custom/stageColumns/StageHeaderBackButton, the cluster's ghost size, "Back to <parent>"),
     which opens the parent in one click. The parent is a subagent's spawning thread (upstream's
-    link), else the bot a bot's work belongs to (stageHeaderParent, the one source of ChatView's
-    headerParentThreadLink). On stock and Glass the breadcrumb's parent crumb does the same in
+    link), else the bot a bot's work belongs to (custom/bots/botWorkRoster threadParentOf, the
+    one source of ChatView's headerParentThreadLink and of whose Threads panel a thread shows). On stock and Glass the breadcrumb's parent crumb does the same in
     one click, so they get no back button.
   tier: 3
   files:

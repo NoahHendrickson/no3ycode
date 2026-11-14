@@ -7,7 +7,8 @@
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
-import { ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { type EnvironmentId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
@@ -24,12 +25,17 @@ import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { BOT_WORK_TAG_PREFIX, botWorkRowThreadId } from "../custom/bots/botWorkRoster";
 import { BOT_THREAD_TAG } from "../custom/bots/botThreads";
 import {
+  toggleBotThreadsPanel,
+  useBotThreadsPanelStore,
+} from "../custom/bots/botThreadsPanelStore";
+import {
   BOT_THREADS_PANEL_MIN_WIDTH,
   CONVERSATION_MIN_BESIDE_TWO_PANELS,
   inlinePanelRoom,
   stageFitsBothPanels,
 } from "../custom/bots/stagePanels";
 import { resolveSidebarV2CardStatus } from "../custom/sidebarV2CardStatus";
+import { useRightPanelStore } from "../rightPanelStore";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
 
@@ -38,6 +44,7 @@ function readSibling(relativePath: string): string {
 }
 
 const chatView = readSibling("../components/ChatView.tsx");
+const sidebar = readSibling("../components/Sidebar.tsx");
 const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
 const launch = readSibling("../../../server/src/orchestration-v2/ThreadLaunchService.ts");
@@ -290,6 +297,7 @@ describe("fork guard: fork-bot-work-threads", () => {
     // The bot's own limits stop at the bot, so each prompt has to carry them.
     expect(rules?.contents).toContain("Your limits do not travel with it");
     expect(chatView).toContain("<BotThreadsPanel");
+    expect(sidebar).toContain("openBotWorkOnPick(threadRef);");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.
     expect(inlineSize).toContain("otherInlinePanelsWidth(row, host, options.otherPanels)");
@@ -316,7 +324,7 @@ describe("fork guard: fork-bot-work-threads", () => {
   });
 
   it("shows a bot's panel on the bot and on each of its threads, and nowhere else", () => {
-    const isBot = (id: string) => id === "mail";
+    const mail = bot("mail");
     const subagentOf = (parent: string) =>
       makeThreadFixture({
         id: "helper" as Thread["id"],
@@ -326,14 +334,49 @@ describe("fork guard: fork-bot-work-threads", () => {
           relationshipToParent: "subagent",
         },
       });
-    expect(botThreadsPanelBotId(bot("mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(work("fix", "mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(work("kept", "mail", { pinnedAt: AT }), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(subagentOf("mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(subagentOf("plain"), isBot)).toBeNull();
-    expect(botThreadsPanelBotId(work("orphan", "gone"), isBot)).toBeNull();
+    expect(botThreadsPanelBotId(mail, null)).toBe("mail");
+    expect(botThreadsPanelBotId(work("fix", "mail"), mail)).toBe("mail");
+    expect(botThreadsPanelBotId(work("kept", "mail", { pinnedAt: AT }), mail)).toBe("mail");
+    expect(botThreadsPanelBotId(subagentOf("mail"), mail)).toBe("mail");
     expect(
-      botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), isBot),
+      botThreadsPanelBotId(subagentOf("plain"), makeThreadFixture({ id: "plain" as Thread["id"] })),
     ).toBeNull();
+    expect(botThreadsPanelBotId(work("orphan", "gone"), null)).toBeNull();
+    // An archived bot's threads are ordinary threads again.
+    expect(botThreadsPanelBotId(work("fix", "mail"), bot("mail", { archivedAt: AT }))).toBeNull();
+    expect(
+      botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), null),
+    ).toBeNull();
+  });
+
+  it("restores a maximized right panel so the Threads toggle always shows the panel", () => {
+    const botRef = scopeThreadRef("env-1" as EnvironmentId, ThreadId.make("mail"));
+    const threadRef = scopeThreadRef("env-1" as EnvironmentId, ThreadId.make("fix"));
+    const rightPanel = () => useRightPanelStore.getState().byThreadKey[scopedThreadKey(threadRef)];
+    const botOpen = () =>
+      useBotThreadsPanelStore.getState().openByBotKey[scopedThreadKey(botRef)] === true;
+    const toggle = () => toggleBotThreadsPanel({ botRef, threadRef, trigger: null });
+    useRightPanelStore.setState({ byThreadKey: {} });
+    useBotThreadsPanelStore.setState({ openByBotKey: {} });
+    useRightPanelStore.getState().open(threadRef, "diff");
+
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    toggle();
+    expect(botOpen()).toBe(true);
+    expect(rightPanel()?.maximized).toBeUndefined();
+    // Already set open, held shut by the maximized panel: restoring shows it, not a close.
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    toggle();
+    expect(botOpen()).toBe(true);
+    expect(rightPanel()?.maximized).toBeUndefined();
+    toggle();
+    expect(botOpen()).toBe(false);
+    // A closed right panel can keep a stale `maximized`: it holds nothing, so the toggle acts.
+    toggle();
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    useRightPanelStore.getState().close(threadRef);
+    expect(rightPanel()?.maximized).toBe(true);
+    toggle();
+    expect(botOpen()).toBe(false);
   });
 });

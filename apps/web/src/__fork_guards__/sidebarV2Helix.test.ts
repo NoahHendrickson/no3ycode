@@ -2,7 +2,7 @@
 /**
  * Fork guard — see `.fork/customizations.yaml#fork-working-mark`.
  *
- * Both working marks play a baked film: one transform animation per strip,
+ * Every working mark plays a baked film: one transform animation per strip,
  * which the compositor runs off the main thread. Per-cell opacity keyframes
  * cost about a CPU core with a handful of working threads on screen, so this
  * pins the film. It also pins the Appearance row that switches between the
@@ -15,6 +15,31 @@ import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 import { helixAlpha } from "~/custom/SidebarV2StatusIndicator";
+import { BEAD_RING_PERIOD, drawBeadRing } from "~/custom/beadRing";
+
+/** Every point and arc drawBeadRing emits, as [angle, radius] around the ring's centre. */
+function recordBeadRing(t: number): Array<[number, number]> {
+  const points: Array<[number, number]> = [];
+  const polar = (x: number, y: number): [number, number] => [
+    Math.atan2(y - 28, x - 28),
+    Math.hypot(x - 28, y - 28),
+  ];
+  const ctx = {
+    beginPath() {},
+    fill() {},
+    stroke() {},
+    lineTo(x: number, y: number) {
+      points.push(polar(x, y));
+    },
+    arc(_x: number, _y: number, radius: number, start: number, end: number) {
+      points.push([start, radius], [end, radius]);
+    },
+  };
+  drawBeadRing(t, ctx as unknown as CanvasRenderingContext2D, "#000");
+  return points;
+}
+
+const angleDelta = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
 const webRoot = NodePath.resolve(NodeURL.fileURLToPath(new URL(".", import.meta.url)), "../..");
 
@@ -48,6 +73,23 @@ describe("fork guard: working mark film", () => {
   });
 });
 
+describe("fork guard: bead ring film", () => {
+  it("repeats every loop as drawn", () => {
+    // The film bakes one loop and plays it alone (a rotation layer doubled its GPU cost), so a
+    // loop must turn exactly once or the ring would jump at the seam.
+    for (const t of [0.05, 0.4, 0.9, 1.2, 1.7]) {
+      const now = recordBeadRing(t);
+      const next = recordBeadRing(t + BEAD_RING_PERIOD);
+      expect(next.length).toBe(now.length);
+      next.forEach(([angle, radius], index) => {
+        const [nowAngle, nowRadius] = now[index]!;
+        expect(radius).toBeCloseTo(nowRadius, 6);
+        expect(angleDelta(angle, nowAngle)).toBeCloseTo(0, 6);
+      });
+    }
+  });
+});
+
 describe("fork guard: working indicator setting", () => {
   const panels = read("src/components/settings/SettingsPanels.tsx");
   const appearance = read("src/components/settings/AppearanceSettingsPanel.tsx");
@@ -55,6 +97,6 @@ describe("fork guard: working indicator setting", () => {
   it("offers the switch under Appearance and resets it with Restore defaults", () => {
     expect(appearance).toContain('title="Working indicator"');
     expect(panels).toContain('["Working indicator"]');
-    expect(panels).toContain("setWorkingMark(DEFAULT_FORK_WORKING_MARK)");
+    expect(panels).toContain("setWorkingMark(null)");
   });
 });

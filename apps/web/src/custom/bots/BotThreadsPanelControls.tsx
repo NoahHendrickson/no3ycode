@@ -2,7 +2,7 @@
  * The search, filter and sort buttons in a bot's Threads panel header, beside its close button —
  * see `.fork/customizations.yaml#fork-bot-work-threads`. The filter and sort menus hang from their
  * buttons as the sidebar Threads header's sort and settings menus do (data-fork-tab-trigger /
- * data-fork-tab-menu, `.fork/customizations.yaml#fork-inlet-theme`).
+ * data-fork-tab-menu="bot-threads", `.fork/customizations.yaml#fork-inlet-theme`).
  */
 import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "lucide-react";
 
@@ -93,7 +93,12 @@ export function BotThreadsPanelControls(props: {
           </TooltipTrigger>
           <TooltipPopup side="bottom">{filterLabel}</TooltipPopup>
         </Tooltip>
-        <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="" className="min-w-48">
+        <MenuPopup
+          align="end"
+          data-fork-glass-rim
+          data-fork-tab-menu="bot-threads"
+          className="min-w-48"
+        >
           <MenuGroup>
             <MenuGroupLabel>Status</MenuGroupLabel>
             {BOT_WORK_GROUPS.map((group) => (
@@ -162,7 +167,7 @@ export function BotThreadsPanelControls(props: {
           align="end"
           data-fork-glass-rim
           data-fork-thread-sort
-          data-fork-tab-menu=""
+          data-fork-tab-menu="bot-threads"
           className="min-w-40"
         >
           <MenuRadioGroup

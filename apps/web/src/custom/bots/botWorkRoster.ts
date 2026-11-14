@@ -6,8 +6,9 @@
  * No runtime imports from the sidebar here: Sidebar.logic depends on this module.
  */
 import type { OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 
-import { BOT_THREAD_TAG } from "./botThreads";
+import { isListedBot } from "./botThreads";
 
 /** Must match the server's `FORK_BOT_WORK_TAG_PREFIX`. */
 export const BOT_WORK_TAG_PREFIX = "bot-work:";
@@ -18,6 +19,21 @@ type TaggedShell = { readonly source: Pick<OrchestrationV2ThreadShell, "tags"> }
 export function botWorkOwnerId(shell: Pick<OrchestrationV2ThreadShell, "tags">): ThreadId | null {
   const tag = shell.tags?.find((candidate) => candidate.startsWith(BOT_WORK_TAG_PREFIX));
   return tag === undefined ? null : (tag.slice(BOT_WORK_TAG_PREFIX.length) as ThreadId);
+}
+
+/** The thread a thread belongs under: a subagent's parent, else the bot a bot's work names. The
+    one answer for the header's back link and for whose Threads panel a thread shows. */
+export function threadParentOf(
+  thread: Pick<EnvironmentThreadShell, "lineage"> & {
+    readonly source: Pick<EnvironmentThreadShell["source"], "tags">;
+  },
+): { readonly threadId: ThreadId; readonly kind: "subagent" | "bot" } | null {
+  const { lineage } = thread;
+  if (lineage.relationshipToParent === "subagent" && lineage.parentThreadId !== null) {
+    return { threadId: lineage.parentThreadId, kind: "subagent" };
+  }
+  const bot = botWorkOwnerId(thread.source);
+  return bot === null ? null : { threadId: bot, kind: "bot" };
 }
 
 /** The bots the sidebar lists, as `environmentId:threadId`. One pass per roster. */
@@ -32,7 +48,7 @@ export function listedBotKeys(
 ): ReadonlySet<string> {
   const keys = new Set<string>();
   for (const thread of threads) {
-    if (thread.archivedAt === null && thread.source.tags?.includes(BOT_THREAD_TAG) === true) {
+    if (isListedBot(thread)) {
       keys.add(`${thread.environmentId}:${thread.id}`);
     }
   }
@@ -79,10 +95,7 @@ export function botWorkRowThreadId<
   if (owner === null) return rowThreadId;
   const bot = threads.find(
     (candidate) =>
-      candidate.id === owner &&
-      candidate.environmentId === environmentId &&
-      candidate.archivedAt === null &&
-      candidate.source.tags?.includes(BOT_THREAD_TAG) === true,
+      candidate.id === owner && candidate.environmentId === environmentId && isListedBot(candidate),
   );
   return bot?.id ?? rowThreadId;
 }

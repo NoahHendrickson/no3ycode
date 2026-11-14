@@ -195,6 +195,45 @@
     background: var(--fork-inlet-model-shell);
   }
 
+  /* The sidebar's Threads header menus (sort and settings) are the panel's
+     cream over the dark sidebar, and so are their open buttons; a hovered or
+     chosen row is black at 8% on that cream, flattened. */
+
+  & [data-sidebar-version="v2"] [data-fork-tab-trigger][aria-expanded="true"],
+  & [data-slot="menu-popup"][data-fork-tab-menu="sidebar"] {
+    --popover: var(--fork-inlet-panel);
+  }
+
+  & [data-slot="menu-popup"][data-fork-tab-menu="sidebar"] {
+    --accent: #e4e0c7;
+
+    & [data-slot="menu-radio-item"][data-checked] {
+      background-color: #e4e0c7;
+    }
+  }
+
+  /* A bot's Threads panel heads the cream panel, so its filter and sort menus
+     and their open buttons are the sidebar's #141414 in its light ink, as the
+     composer's are (theme.custom.palettes.css maps the menus' inks). A checked
+     box is the ink with a dark tick; an unchecked one an outline at 24%. */
+
+  & [data-fork-bot-threads-header] [data-fork-tab-trigger][aria-expanded="true"] {
+    --popover: var(--fork-inlet-black-surface);
+    --popover-foreground: var(--fork-inlet-black-ink);
+  }
+
+  & [data-slot="menu-popup"][data-fork-tab-menu="bot-threads"] {
+    --primary: var(--fork-inlet-black-ink);
+    --primary-foreground: var(--fork-inlet-black-surface);
+
+    & [data-slot="menu-checkbox-item"] > [data-unchecked] {
+      /* The light ink at 24% over #141414, flattened. */
+      border-color: #474747;
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+
   /* The model menu's controls on the shell: the reasoning slider a recessed
      well with a light thumb, and a segmented trait (Service Tier) in the mode
      segments' language. Their utilities (bg-background, bg-input) resolve to
@@ -304,17 +343,13 @@
 
   /* Inlet Black's thread details card is the sidebar's #141414 too, its
      hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
-     it, rows lift as the sidebar's rows hover (upstream's light-mode black
-     wash vanishes on #141414, and is !important, so this is too), and the
-     editor marks drawn black-on-light take their dark-mode fills. */
+     it, rows lift as the sidebar's rows hover (theme.custom.css's card lift
+     reads --fork-outline-hover-bg), and the editor marks drawn black-on-light
+     take their dark-mode fills. */
 
   & [data-thread-details-card] {
     --fork-inlet-black-step: var(--fork-inlet-black-step-hover);
     --fork-outline-hover-bg: var(--fork-inlet-black-step-hover);
-
-    & .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
-      background-color: var(--fork-outline-hover-bg) !important;
-    }
 
     & svg[class~="fill-[#26251E]"] {
       fill: #edecec;

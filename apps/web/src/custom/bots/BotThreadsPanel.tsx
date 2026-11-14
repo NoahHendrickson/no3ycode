@@ -30,7 +30,6 @@ import { useUiStateStore } from "~/uiStateStore";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
-import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
@@ -316,8 +315,7 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         }}
         className={cn(
           "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          // The sidebar's open row, so the thread on screen reads the same in both lists.
-          props.current ? threadRowOpenSurfaceClassName("shelf") : "hover:bg-accent",
+          props.current ? "bg-accent" : "hover:bg-accent",
         )}
         data-testid="bot-threads-row"
       >

@@ -27,6 +27,14 @@ export function isBotThread(shell: Pick<BotShell, "tags">): boolean {
   return shell.tags?.includes(BOT_THREAD_TAG) === true;
 }
 
+/** A bot the sidebar lists: an archived bot's work is ordinary threads again, everywhere. */
+export function isListedBot(thread: {
+  readonly archivedAt: string | null;
+  readonly source: Pick<BotShell, "tags">;
+}): boolean {
+  return thread.archivedAt === null && isBotThread(thread.source);
+}
+
 /** Whether a bot's latest report arrived after the thread was last opened. Server clock on both
     sides, so every device agrees. Never opened reads as read, like other threads. */
 export function hasUnreadBotReport(shell: BotShell, lastVisitedAt: string | undefined): boolean {
@@ -58,7 +66,7 @@ export function listSidebarBots<
   },
 >(threads: ReadonlyArray<T>): T[] {
   return threads
-    .filter((thread) => thread.archivedAt === null && isBotThread(thread.source))
+    .filter(isListedBot)
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 
