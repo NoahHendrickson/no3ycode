@@ -1,25 +1,34 @@
 /**
  * Working indicator choice — see `.fork/customizations.yaml#fork-working-mark`.
  *
- * Which mark a running agent draws everywhere the fork shows one: the pixel
- * rain or the DNA helix. Device-local, like the palette: a contracts field
- * would put a fork key in a schema upstream owns.
+ * Which mark a running agent draws everywhere the fork shows one; Inlet
+ * defaults to the bead ring, other palettes to the helix. Device-local, like
+ * the palette: a contracts field would put a fork key in a schema upstream owns.
  */
 import * as Schema from "effect/Schema";
 import { useSyncExternalStore } from "react";
 
-import { getLocalStorageItem, setLocalStorageItem } from "~/hooks/useLocalStorage";
+import {
+  getLocalStorageItem,
+  removeLocalStorageItem,
+  setLocalStorageItem,
+} from "~/hooks/useLocalStorage";
+
+import { useIsInletActive } from "./forkActivePalette";
 
 const STORAGE_KEY = "t3code:fork:working-mark:v1";
 
-export const FORK_WORKING_MARKS = ["helix", "rain"] as const;
+export const FORK_WORKING_MARKS = ["helix", "rain", "bead"] as const;
 export type ForkWorkingMark = (typeof FORK_WORKING_MARKS)[number];
 
-export const DEFAULT_FORK_WORKING_MARK: ForkWorkingMark = "helix";
+function defaultForkWorkingMark(inlet: boolean): ForkWorkingMark {
+  return inlet ? "bead" : "helix";
+}
 
 export const FORK_WORKING_MARK_LABELS: Record<ForkWorkingMark, string> = {
   helix: "DNA helix",
   rain: "Pixel rain",
+  bead: "Bead ring",
 };
 
 const ForkWorkingMarkSchema = Schema.Literals(FORK_WORKING_MARKS);
@@ -31,18 +40,19 @@ export const isForkWorkingMark = Schema.is(ForkWorkingMarkSchema);
 // two re-render on every streamed chunk. This decodes storage once per change
 // and holds one window listener however many marks are mounted.
 const listeners = new Set<() => void>();
-let snapshot: ForkWorkingMark | undefined;
+/** The picked mark, or null while none is (the palette's default then). */
+let snapshot: ForkWorkingMark | null | undefined;
 
-function readWorkingMark(): ForkWorkingMark {
+function readWorkingMark(): ForkWorkingMark | null {
   try {
-    return getLocalStorageItem(STORAGE_KEY, ForkWorkingMarkSchema) ?? DEFAULT_FORK_WORKING_MARK;
+    return getLocalStorageItem(STORAGE_KEY, ForkWorkingMarkSchema);
   } catch {
-    return DEFAULT_FORK_WORKING_MARK;
+    return null;
   }
 }
 
-function getSnapshot(): ForkWorkingMark {
-  snapshot ??= readWorkingMark();
+function getSnapshot(): ForkWorkingMark | null {
+  if (snapshot === undefined) snapshot = readWorkingMark();
   return snapshot;
 }
 
@@ -64,9 +74,11 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-function setForkWorkingMark(mark: ForkWorkingMark): void {
+/** null clears the pick, so the palette's default applies again. */
+function setForkWorkingMark(mark: ForkWorkingMark | null): void {
   try {
-    setLocalStorageItem(STORAGE_KEY, mark, ForkWorkingMarkSchema);
+    if (mark === null) removeLocalStorageItem(STORAGE_KEY);
+    else setLocalStorageItem(STORAGE_KEY, mark, ForkWorkingMarkSchema);
   } catch (error) {
     console.error("[fork-working-mark] Could not store the working indicator.", error);
   }
@@ -75,7 +87,14 @@ function setForkWorkingMark(mark: ForkWorkingMark): void {
   notify();
 }
 
-export function useForkWorkingMark(): [ForkWorkingMark, (mark: ForkWorkingMark) => void] {
-  const mark = useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_FORK_WORKING_MARK);
-  return [mark, setForkWorkingMark];
+/** The mark to draw, its setter (null restores the default), and whether one is picked, for
+    Settings' reset buttons: a pick that matches today's default still pins it across palettes. */
+export function useForkWorkingMark(): [
+  ForkWorkingMark,
+  (mark: ForkWorkingMark | null) => void,
+  boolean,
+] {
+  const picked = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const fallback = defaultForkWorkingMark(useIsInletActive());
+  return [picked ?? fallback, setForkWorkingMark, picked !== null];
 }

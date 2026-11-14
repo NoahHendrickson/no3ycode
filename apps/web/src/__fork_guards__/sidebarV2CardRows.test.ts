@@ -378,9 +378,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // The box is the design's 10px dot wide by the rain's 14px tall, taken
     // from the shared alignment module; the marks inside keep their own sizes
     // and centre in it.
-    expect(sidebarV2).toContain(
-      "pointer-events-none flex shrink-0 items-center justify-center overflow-hidden",
-    );
+    expect(sidebarV2).toContain("pointer-events-none flex shrink-0 items-center justify-center");
     expect(sidebarV2).toContain("SIDEBAR_V2_CARD_ALIGNMENT.statusBox");
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.statusBoxWidth).toBe(12);
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.statusBoxHeight).toBe(14);

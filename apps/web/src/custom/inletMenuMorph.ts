@@ -371,8 +371,11 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
         release(popup, owner);
         return;
       }
-      // Above its button (the composer's menus) the shadow would fall on the button's row.
-      if (!below) svg.style.filter = "none";
+      // Above its button the shadow lifts away from it; the composer's padded controls cast
+      // none, since it would still shade the composer round them.
+      if (!below) {
+        svg.style.filter = pad > 0 ? "none" : "drop-shadow(0 -8px 12px rgb(0 0 0 / 14%))";
+      }
     }
     // Every scroll in the page redraws; one that moved neither box changes nothing.
     const geometry = [triggerBox.left, triggerBox.top, triggerBox.width, triggerBox.height]
@@ -380,9 +383,12 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
       .join(",");
     if (geometry === drawn) return;
     drawn = geometry;
+    // The open button's free side is its face's radius; the stylesheet squares one side for a
+    // menu below, whichever way this one opened.
     const buttonRadius =
-      Number.parseFloat(
-        below ? triggerStyle.borderTopLeftRadius : triggerStyle.borderBottomLeftRadius,
+      Math.max(
+        Number.parseFloat(triggerStyle.borderTopLeftRadius) || 0,
+        Number.parseFloat(triggerStyle.borderBottomLeftRadius) || 0,
       ) + pad || 8;
     path.setAttribute(
       "d",

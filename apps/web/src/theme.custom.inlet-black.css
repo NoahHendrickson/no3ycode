@@ -195,6 +195,44 @@
     background: var(--fork-inlet-model-shell);
   }
 
+  /* The sidebar's Threads header menus (sort and settings) are the panel's
+     cream over the dark sidebar, and so are their open buttons; a hovered or
+     chosen row is black at 8% on that cream, flattened. */
+
+  & [data-sidebar-version="v2"] [data-fork-tab-trigger][aria-expanded="true"],
+  & [data-slot="menu-popup"][data-fork-sidebar-menu] {
+    --popover: var(--fork-inlet-panel);
+  }
+
+  & [data-slot="menu-popup"][data-fork-sidebar-menu] {
+    --accent: #e4e0c7;
+
+    & [data-slot="menu-radio-item"][data-checked] {
+      background-color: #e4e0c7;
+    }
+  }
+
+  /* A bot's Threads panel heads the cream panel, so its filter and sort menus
+     and their open buttons are the sidebar's #141414 in its light ink, as the
+     composer's are (theme.custom.palettes.css maps the menus' inks). A checked
+     box is the ink with a dark tick; an unchecked one an outline at 24%. */
+
+  & [data-fork-bot-threads-header] [data-fork-tab-trigger][aria-expanded="true"] {
+    --popover: var(--fork-inlet-black-surface);
+    --popover-foreground: var(--fork-inlet-black-ink);
+  }
+
+  & [data-slot="menu-popup"][data-fork-bot-threads-menu] {
+    --primary: var(--fork-inlet-black-ink);
+    --primary-foreground: var(--fork-inlet-black-surface);
+
+    & [data-slot="menu-checkbox-item"] > [data-unchecked] {
+      border-color: color-mix(in srgb, currentColor 24%, transparent);
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+
   /* The model menu's controls on the shell: the reasoning slider a recessed
      well with a light thumb, and a segmented trait (Service Tier) in the mode
      segments' language. Their utilities (bg-background, bg-input) resolve to

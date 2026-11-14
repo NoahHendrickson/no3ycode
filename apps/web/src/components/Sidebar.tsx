@@ -388,6 +388,7 @@ import {
   withBotWorkAttention,
 } from "~/custom/bots/botWork";
 import { botWorkRowThreadId } from "~/custom/bots/botWorkRoster";
+import { openBotThreadsPanel } from "~/custom/bots/botThreadsPanelStore";
 /* fork:end fork-bot-work-threads */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
@@ -1400,7 +1401,23 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     />
   );
 
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     Opening a bot whose work needs you opens its Threads panel, so that work is in view. */
+  const openBotWork = () => {
+    if (props.botWork != null) openBotThreadsPanel(threadRef);
+  };
+  /* fork:end fork-bot-work-threads */
   const handleClick = (event: ReactMouseEvent) => {
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+    if (
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !isSidebarNestedLinkClick(event.target)
+    ) {
+      openBotWork();
+    }
+    /* fork:end fork-bot-work-threads */
     onThreadClick(event, threadRef);
   };
   const handleAcknowledgeWokeClick = (event: ReactMouseEvent) => {
@@ -1417,6 +1434,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     if (event.target !== event.currentTarget) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+    openBotWork();
+    /* fork:end fork-bot-work-threads */
     onThreadActivate(threadRef);
   };
   const handleDoubleClick = (event: ReactMouseEvent) => {
@@ -1827,7 +1847,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 The 14px slot renders only when a mark draws, so mark-less rows
                 sit tight; a mark that comes or goes shifts the title 24px. */}
             {topStatus === null && !showDiscardDraft ? null : (
-              <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center overflow-hidden">
+              <span className="pointer-events-none flex size-[14px] shrink-0 items-center justify-center">
                 <SidebarV2StatusMark status={topStatus} seed={threadKey} idle="draft" />
               </span>
             )}
@@ -2134,7 +2154,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     never hit-test above the actions. */}
         <span
           className={cn(
-            "pointer-events-none flex shrink-0 items-center justify-center overflow-hidden",
+            "pointer-events-none flex shrink-0 items-center justify-center",
             SIDEBAR_V2_CARD_ALIGNMENT.statusBox,
             SIDEBAR_V2_TRAILING_OFFSET.cardStatus,
             isSwept && "hidden",

@@ -2518,12 +2518,16 @@
     bridges into the panel the way the open thread row does. On Jungle Art the
     whole stage is the row green, to the window's edges, round a frame-cream card.
     The Threads header's sort and settings menus (data-fork-tab-menu, their
-    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), and a
+    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), the Bots
+    section's view options menu (custom/bots/SidebarV2BotsSection.tsx), and a
     bot's Threads panel's filter and sort menus (custom/bots/
     BotThreadsPanelControls.tsx, their 28px buttons in the panel header,
     data-fork-bot-threads-header) hang from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
-    left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    left side. On Black the bot panel's two (data-fork-bot-threads-menu) and
+    their open buttons are the sidebar's #141414 ink, since they open over the
+    cream panel, and the sidebar headers' menus (data-fork-sidebar-menu) are the
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -5306,19 +5310,28 @@
     Settings → Appearance → Interface → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
     transcript working row, the composer liveness pill, subagent members):
-    the pixel rain or a 7x7 DNA helix from the "Sequencing" thinking chip.
-    The helix is the default. The choice is device-local (localStorage), not a
-    contracts setting, and Restore defaults resets it. Each mark bakes one
-    loop of frames into an SVG mask once, and a single stepped transform
+    the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
+    the bead ring (custom/beadRing: a line round a ring whose tail stretches
+    into beads and merges back). Until one is picked, Inlet draws the bead
+    ring and every other palette the helix. The choice is device-local
+    (localStorage), not a contracts setting, and Restore defaults clears it
+    back to the palette's default. Each mark bakes one loop of frames into a
+    mask once (rain and helix an SVG, the bead ring a canvas drawn once), and a single stepped transform
     animation per strip plays it with a per-thread phase offset, so the
     compositor runs it — never per-cell opacity keyframes (a core of
     renderer CPU with a few working threads on screen), a per-frame canvas
     or a requestAnimationFrame loop. Both keep a still frame under reduced
-    motion. The helix is drawn at 12px because the
-    card status box is 12px wide and clips.
+    motion. The bead ring's steady spin is set so a loop turns exactly once
+    and repeats as drawn: a rotation layer to make up a part turn doubled its
+    GPU cost (40 marks: 28% of a core against the helix's 15%). The
+    helix is drawn at 12px for the card's 12px status box. The bead ring is
+    12px across (a step past the 10px status dots) in a 15px box held to the
+    12x14 slot by negative margins, so the sidebar's status boxes do not
+    clip.
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingMark.ts
+    - apps/web/src/custom/beadRing.ts
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
     - apps/web/src/theme.custom.css
   shadows: []
@@ -6813,6 +6826,25 @@
     - apps/web/src/__fork_guards__/forkDetailsCardOverlay.test.ts
     - apps/web/src/components/chat/chatCanvasLayout.test.ts
 
+- id: fork-details-card-closed
+  intent: >
+    A thread's details card (docked, or its popover where there is no room)
+    starts closed, so moving to another thread never opens it. Upstream opens
+    the docked card by default and remembers the threads it was closed on;
+    the fork flips the default in rightPanelStore (DEFAULT_THREAD_PANEL_VISIBILITY,
+    the map pruning, partialize and migrate) and remembers the threads it was
+    opened on instead. Persisted closed entries from before read as the
+    default, so nothing reopens.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/rightPanelStore.ts
+    - apps/web/src/rightPanelStore.test.ts
+    - apps/web/src/components/chat/ThreadDetailsCard.browser.test.tsx
+  verify:
+    - apps/web/src/rightPanelStore.test.ts
+
 - id: fork-chat-mode
   intent: >
     The sidebar header switches between Code and Chat (Figma t3-fork
@@ -7151,8 +7183,10 @@
     close motion), 320px by default and at least 280, with a header the height of the others
     (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its yarn toggle sits after the details toggle, pressed while open, there and
     nowhere else. Its open state is one per bot, remembered on this device
-    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads, and
-    the row of the thread on screen is marked current (aria-current, the sidebar's open-row
+    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads;
+    opening a bot from its sidebar card while its work needs the owner opens it (Sidebar
+    openBotThreadsPanel, closing the bot's right panel where both do not fit); and
+    the row of the thread on screen is marked current (aria-current, in the rows' own hover
     fill). Its header is "Threads", its search, filter and sort buttons (below), and the
     close button every stage panel's has (fork-stage-columns).
     With one panel open nothing changes. With both open inline the conversation keeps 480px:

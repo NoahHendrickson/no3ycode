@@ -11,6 +11,7 @@ import {
   PenLineIcon,
 } from "./icons/lucide-phosphor";
 import { cn } from "~/lib/utils";
+import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
 import { useForkWorkingMark } from "./forkWorkingMark";
 
 /** The trailing slot of a Sidebar V2 card row's title line, and this module
@@ -331,15 +332,41 @@ function SidebarV2WorkingHelix({ seed }: { seed: string }) {
   );
 }
 
+/** ~60 fps over the 1.9s loop. */
+const BEAD_RING_FRAMES = 114;
+/** Baked at 3x the 15px box, so it stays sharp on any display up to 3x. */
+const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
+
+/** One film strip, as the helix: the ring is 12px across, a step past the 10px status dots, in
+    a 15px box held to the 12x14 slot. */
+function SidebarV2WorkingBeadRing({ seed }: { seed: string }) {
+  return (
+    <span
+      aria-hidden
+      className="relative -mx-[1.5px] -my-[0.5px] block size-[15px] shrink-0 overflow-hidden"
+    >
+      <FilmStrip
+        film={beadRingFilm()}
+        frames={BEAD_RING_FRAMES}
+        period={BEAD_RING_PERIOD}
+        startSeconds={workingMarkOffsetSeconds(seed)}
+      />
+    </span>
+  );
+}
+
 /** The working mark every surface draws — sidebar rows, the chat working row,
     the composer pill — in the form picked under Settings → Appearance. */
 export function SidebarV2WorkingMark({ seed }: { seed: string }) {
   const [mark] = useForkWorkingMark();
-  return mark === "helix" ? (
-    <SidebarV2WorkingHelix seed={seed} />
-  ) : (
-    <SidebarV2WorkingRain seed={seed} />
-  );
+  switch (mark) {
+    case "bead":
+      return <SidebarV2WorkingBeadRing seed={seed} />;
+    case "helix":
+      return <SidebarV2WorkingHelix seed={seed} />;
+    case "rain":
+      return <SidebarV2WorkingRain seed={seed} />;
+  }
 }
 
 /** The settled counterpart to the rain. Done is the design's 10px dot; the

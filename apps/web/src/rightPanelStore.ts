@@ -214,10 +214,13 @@ const EMPTY_THREAD_STATE: ThreadRightPanelState = {
   surfaces: [],
 };
 
+/* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed
+   A thread's details card starts closed; the store keeps the threads it was opened on. */
 const DEFAULT_THREAD_PANEL_VISIBILITY: ThreadPanelVisibility = {
-  inlineOpen: true,
+  inlineOpen: false,
   popoverOpen: false,
 };
+/* fork:end fork-details-card-closed */
 
 const singletonSurface = (
   kind: Exclude<RightPanelKind, "file" | "preview" | "terminal" | "pull-request" | "side-chat">,
@@ -358,7 +361,9 @@ const updateThreadPanelVisibilityMap = (
 ): Record<string, ThreadPanelVisibility> => {
   const current = byThreadKey[threadKey] ?? DEFAULT_THREAD_PANEL_VISIBILITY;
   const next = updater(current);
-  if (next.inlineOpen && !next.popoverOpen) {
+  /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
+  if (!next.inlineOpen && !next.popoverOpen) {
+    /* fork:end fork-details-card-closed */
     if (!(threadKey in byThreadKey)) return byThreadKey;
     const { [threadKey]: _removed, ...rest } = byThreadKey;
     return rest;
@@ -635,9 +640,11 @@ export function migratePersistedRightPanelState(persistedState: unknown): {
             persistedState.threadPanelVisibilityByThreadKey as Record<string, unknown>,
           ).flatMap(([threadKey, value]) => {
             if (!value || typeof value !== "object" || !("inlineOpen" in value)) return [];
-            return value.inlineOpen === false
-              ? [[threadKey, { inlineOpen: false, popoverOpen: false }]]
+            /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
+            return value.inlineOpen === true
+              ? [[threadKey, { inlineOpen: true, popoverOpen: false }]]
               : [];
+            /* fork:end fork-details-card-closed */
           }),
         )
       : {};
@@ -1216,7 +1223,9 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
         threadPanelVisibilityByThreadKey: Object.fromEntries(
           Object.entries(state.threadPanelVisibilityByThreadKey).flatMap(
             ([threadKey, visibility]) =>
-              visibility.inlineOpen ? [] : [[threadKey, { inlineOpen: false, popoverOpen: false }]],
+              /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
+              visibility.inlineOpen ? [[threadKey, { inlineOpen: true, popoverOpen: false }]] : [],
+            /* fork:end fork-details-card-closed */
           ),
         ),
       }),

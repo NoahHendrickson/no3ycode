@@ -93,7 +93,13 @@ export function BotThreadsPanelControls(props: {
           </TooltipTrigger>
           <TooltipPopup side="bottom">{filterLabel}</TooltipPopup>
         </Tooltip>
-        <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="" className="min-w-48">
+        <MenuPopup
+          align="end"
+          data-fork-glass-rim
+          data-fork-tab-menu=""
+          data-fork-bot-threads-menu=""
+          className="min-w-48"
+        >
           <MenuGroup>
             <MenuGroupLabel>Status</MenuGroupLabel>
             {BOT_WORK_GROUPS.map((group) => (
@@ -163,6 +169,7 @@ export function BotThreadsPanelControls(props: {
           data-fork-glass-rim
           data-fork-thread-sort
           data-fork-tab-menu=""
+          data-fork-bot-threads-menu=""
           className="min-w-40"
         >
           <MenuRadioGroup

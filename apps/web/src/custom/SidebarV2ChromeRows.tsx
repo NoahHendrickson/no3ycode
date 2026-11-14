@@ -703,6 +703,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                   data-fork-glass-rim
                   data-fork-thread-sort
                   data-fork-tab-menu=""
+                  data-fork-sidebar-menu=""
                   className="min-w-48"
                 >
                   <MenuRadioGroup
@@ -754,6 +755,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                   align="end"
                   data-fork-glass-rim
                   data-fork-tab-menu=""
+                  data-fork-sidebar-menu=""
                   className="min-w-56"
                 >
                   {/* Above the scope list, not below it: with enough projects the

@@ -1809,8 +1809,8 @@
   }
 }
 
-/* Working marks (rain and helix, `custom/SidebarV2StatusIndicator.tsx`): each
-   mark bakes one loop of frames into an SVG mask, stacked top to bottom, and
+/* Working marks (rain, helix and bead ring, `custom/SidebarV2StatusIndicator.tsx`):
+   each mark bakes one loop of frames into a mask, stacked top to bottom, and
    this steps a strip through it under `steps(frames)`. Transform is the one
    property the compositor animates off the main thread; per-cell opacity
    keyframes would repaint every mark on the main thread each vsync. */

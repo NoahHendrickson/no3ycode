@@ -77,6 +77,16 @@ export function toggleBotThreadsPanel(input: {
   if (!fitsBoth) rightPanel.close(input.threadRef);
 }
 
+/** Opened from the bot's sidebar card, before its conversation is on the stage: the stage on
+    screen stands in for its width, and where both do not fit the bot's right panel closes. */
+export function openBotThreadsPanel(botRef: ScopedThreadRef): void {
+  setOpen(scopedThreadKey(botRef), true);
+  if (typeof document === "undefined") return;
+  if (!stageHoldsBothPanels(document.querySelector("[data-fork-workspace-root]"))) {
+    useRightPanelStore.getState().close(botRef);
+  }
+}
+
 // The right panel opening where both do not fit closes the Threads panel beside it, wherever it
 // was opened from (its toggle, a keybinding, a link that opens a surface).
 useRightPanelStore.subscribe((next, previous) => {

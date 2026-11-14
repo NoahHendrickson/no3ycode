@@ -846,7 +846,8 @@
   :is(
     [data-slot="menu-popup"]:has([data-fork-model-picker]),
     [data-slot="menu-popup"]:has([data-composer-permissions]),
-    [data-slot="popover-popup"][data-fork-tab-menu]
+    [data-slot="popover-popup"][data-fork-tab-menu],
+    [data-slot="menu-popup"][data-fork-bot-threads-menu]
   ) {
   --foreground: var(--fork-inlet-black-ink);
   --muted-foreground: var(--fork-inlet-black-ink-muted);
@@ -895,7 +896,8 @@
   :is(
     [data-slot="menu-popup"]:has([data-fork-model-picker]),
     [data-slot="menu-popup"]:has([data-composer-permissions]),
-    [data-slot="popover-popup"][data-fork-tab-menu]
+    [data-slot="popover-popup"][data-fork-tab-menu],
+    [data-slot="menu-popup"][data-fork-bot-threads-menu]
   ) {
   --popover: var(--fork-inlet-black-surface);
   --popover-foreground: var(--fork-inlet-black-ink);
