@@ -61,6 +61,8 @@ const chatView = readSibling("../components/ChatView.tsx");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
+const botStatusLineSource = readSibling("../custom/bots/BotCardStatusLine.tsx");
+const relativeLabelSource = readSibling("../custom/scheduled/ScheduledRelativeLabel.tsx");
 
 /** A bot whose shell carries `report` as its latest report, as the server fills it. */
 function bot(
@@ -206,6 +208,14 @@ describe("fork guard: fork-bots", () => {
     expect(line(report, "approval")).toEqual({ text: "Needs your approval" });
     expect(line(report, "failed")).toEqual({ text: "Last run failed" });
     expect(line(bot("new"))).toEqual({ text: "Tell it what its job is" });
+  });
+
+  it("labels the next check without bundling the settings page into the sidebar", () => {
+    expect(botStatusLineSource).toContain(
+      'import { ScheduledRelativeLabel } from "~/custom/scheduled/ScheduledRelativeLabel";',
+    );
+    expect(botStatusLineSource).not.toMatch(/from "[^"]*components\/settings\//);
+    expect(relativeLabelSource).not.toMatch(/from "[^"]*components\/settings\//);
   });
 
   it("draws a bot card as one kind, chosen once per row", () => {

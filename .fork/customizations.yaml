@@ -7063,6 +7063,7 @@
     - apps/web/src/custom/bots/useSetBotMascot.ts
     - apps/web/src/custom/bots/BotMascotDetailsSection.tsx
     - apps/web/src/custom/bots/BotCardStatusLine.tsx
+    - apps/web/src/custom/scheduled/ScheduledRelativeLabel.tsx
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
@@ -7075,6 +7076,8 @@
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    # ScheduledRelativeLabel moved out so bot cards do not pull the page into startup.
+    - apps/web/src/components/settings/ScheduledTasksSettings.tsx
     # Upstream's test mocks a partial shell; the Mascot section reads its tags.
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx

@@ -2,7 +2,7 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
-import { ScheduledRelativeLabel } from "~/components/settings/ScheduledTasksSettings";
+import { ScheduledRelativeLabel } from "~/custom/scheduled/ScheduledRelativeLabel";
 import { useEnvironmentQuery } from "~/state/query";
 import { serverEnvironment } from "~/state/server";
 
