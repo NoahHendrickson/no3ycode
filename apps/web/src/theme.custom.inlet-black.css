@@ -304,17 +304,13 @@
 
   /* Inlet Black's thread details card is the sidebar's #141414 too, its
      hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
-     it, rows lift as the sidebar's rows hover (upstream's light-mode black
-     wash vanishes on #141414, and is !important, so this is too), and the
-     editor marks drawn black-on-light take their dark-mode fills. */
+     it, rows lift as the sidebar's rows hover (theme.custom.css's card lift
+     reads --fork-outline-hover-bg), and the editor marks drawn black-on-light
+     take their dark-mode fills. */
 
   & [data-thread-details-card] {
     --fork-inlet-black-step: var(--fork-inlet-black-step-hover);
     --fork-outline-hover-bg: var(--fork-inlet-black-step-hover);
-
-    & .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
-      background-color: var(--fork-outline-hover-bg) !important;
-    }
 
     & svg[class~="fill-[#26251E]"] {
       fill: #edecec;

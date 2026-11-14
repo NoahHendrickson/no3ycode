@@ -340,10 +340,12 @@ describe("fork guard: fork-popup-surface", () => {
     );
     expect(flat(frost?.selector ?? "")).toContain("[data-thread-details-card].dropdown-glass");
     const lift = cssRules(theme).find((candidate) =>
-      flat(candidate.selector).includes("[data-thread-details-card] .fork-thread-details-lift:is("),
+      flat(candidate.selector).includes("[data-thread-details-card] .fork-thread-details-lift:"),
     );
     expect(lift?.selector).toContain(MARKER);
     expect(lift?.selector).toContain(".dark");
+    // Inlet Black's charcoal card takes the same lift, from its own token.
+    expect(lift?.selector).toContain('[data-fork-inlet-color="black"]');
     expect(lift?.body).toContain("background-color: var(--fork-outline-hover-bg) !important;");
     expect(theme).not.toContain("group/thread-details-");
     for (const candidate of cssRules(theme)) {

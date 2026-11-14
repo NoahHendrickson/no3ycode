@@ -74,14 +74,32 @@
   }
 }
 
-/* Near the window's bottom Base UI flips the card to end-aligned, its
-   bottom on the row's bottom, so the join mirrors: square bottom-left
-   corner, concave corner into the row's top edge. */
+/* The thread details card's subagent rows open theirs to the left the same
+   way (custom/SubagentRowHoverCardPopup). The row is a panel control whose
+   hover fill is a !important utility, so its open fill joins the utilities
+   layer to outrank it; the card lift steps aside for it (theme.custom.css). */
+
+@layer utilities {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-thread-details-card]
+    [data-fork-row-hover-trigger][data-popup-open] {
+    background-color: var(--fork-inlet-row-card) !important;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
+/* The join is drawn once, for a right-hand, start-aligned card, and each
+   axis flips it on its own: near the window's bottom Base UI flips the card
+   end-aligned (bottom on the row's bottom), so the join curves into the
+   row's top; a card left of its row mirrors it across. The square corner
+   follows the same two axes. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]):not(
-    [data-fork-on-open-pair]
-  ) {
+  [data-fork-row-hover-card]:is([data-side="right"], [data-side="left"]):is(
+    [data-align="start"],
+    [data-align="end"]
+  ):not([data-fork-on-open-pair]) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);
@@ -91,6 +109,10 @@
   --contrast-secondary-label: var(--fork-inlet-row-card-muted);
   --contrast-icon-muted: var(--fork-inlet-row-card-muted);
   --contrast-border: var(--fork-inlet-row-card-line);
+  --fork-row-tab-x: 1;
+  --fork-row-tab-y: 1;
+  --fork-row-tab-top: var(--fork-inlet-menu-radius);
+  --fork-row-tab-bottom: var(--fork-inlet-menu-radius);
   background: var(--fork-inlet-row-card);
   border-color: transparent;
   box-shadow: none;
@@ -112,20 +134,37 @@
         left bottom / 100% var(--fork-inlet-fillet) no-repeat,
       linear-gradient(var(--fork-inlet-row-card), var(--fork-inlet-row-card)) right top / 4px
         var(--anchor-height) no-repeat;
+    scale: var(--fork-row-tab-x) var(--fork-row-tab-y);
   }
 
   &[data-align="start"] {
-    border-top-left-radius: 0;
+    --fork-row-tab-top: 0;
   }
 
   &[data-align="end"] {
-    border-bottom-left-radius: 0;
+    --fork-row-tab-y: -1;
+    --fork-row-tab-bottom: 0;
   }
 
   &[data-align="end"]::after {
     top: auto;
     bottom: -1px;
-    scale: 1 -1;
+  }
+
+  &[data-side="right"] {
+    border-top-left-radius: var(--fork-row-tab-top);
+    border-bottom-left-radius: var(--fork-row-tab-bottom);
+  }
+
+  &[data-side="left"] {
+    --fork-row-tab-x: -1;
+    border-top-right-radius: var(--fork-row-tab-top);
+    border-bottom-right-radius: var(--fork-row-tab-bottom);
+  }
+
+  &[data-side="left"]::after {
+    right: auto;
+    left: calc(100% + 1px);
   }
 }
 
