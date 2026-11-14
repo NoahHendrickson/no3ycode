@@ -71,12 +71,8 @@ import { useEnvironmentQuery } from "~/state/query";
 import { serverEnvironment } from "~/state/server";
 import { readEnvironmentScope } from "~/state/session";
 import { useAtomCommand } from "~/state/use-atom-command";
-import {
-  matchesTaskQuery,
-  relativeLabel,
-  scheduleLabel,
-  shortModelName,
-} from "./scheduledPage.logic";
+import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
+import { matchesTaskQuery, relativeLabel, shortModelName } from "./scheduledPage.logic";
 import { ScheduledCard, useConnectedEnvironments } from "./scheduledPageChrome";
 import { ScheduledRunRows, ScheduledRunsHeader } from "./ScheduledRunsTable";
 import { ScheduledTaskDetail } from "./ScheduledTaskDetail";
@@ -344,13 +340,24 @@ function EnvironmentTaskRows(props: {
           {props.query.trim() ? "No automations match your search." : "No automations yet."}
         </TaskNoticeRow>
       ) : (
-        tasks.map((task) => <TaskRow key={task.id} environmentId={environmentId} task={task} />)
+        tasks.map((task) => (
+          <TaskRow
+            key={task.id}
+            environmentId={environmentId}
+            task={task}
+            timeZone={tasksQuery.data?.timeZone}
+          />
+        ))
       )}
     </TableBody>
   );
 }
 
-function TaskRow(props: { readonly environmentId: EnvironmentId; readonly task: ScheduledTask }) {
+function TaskRow(props: {
+  readonly environmentId: EnvironmentId;
+  readonly task: ScheduledTask;
+  readonly timeZone: string | undefined;
+}) {
   const { environmentId, task } = props;
   const navigate = useNavigate();
   const projects = useProjects();
@@ -435,7 +442,7 @@ function TaskRow(props: { readonly environmentId: EnvironmentId; readonly task: 
         <div className="flex flex-col">
           <span className="inline-flex items-center gap-1.5">
             <TriggerIcon className="size-3.5 text-muted-foreground" aria-hidden />
-            {scheduleLabel(task.schedule)}
+            {scheduleLabel(task.schedule, props.timeZone, task.nextRunAt)}
           </span>
           <span className="text-muted-foreground">
             {!task.enabled
