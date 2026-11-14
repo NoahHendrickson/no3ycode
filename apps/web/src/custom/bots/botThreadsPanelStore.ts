@@ -77,6 +77,18 @@ export function toggleBotThreadsPanel(input: {
   if (!fitsBoth) rightPanel.close(input.threadRef);
 }
 
+/** Opened from the bot's sidebar card. Not where the panel would be a sheet over the bot's
+    conversation; a right panel already open there keeps the stage as the toggle's does. */
+export function openBotThreadsPanel(botRef: ScopedThreadRef): void {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia(RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY).matches
+  ) {
+    return;
+  }
+  setOpen(scopedThreadKey(botRef), true);
+}
+
 // The right panel opening where both do not fit closes the Threads panel beside it, wherever it
 // was opened from (its toggle, a keybinding, a link that opens a surface).
 useRightPanelStore.subscribe((next, previous) => {

@@ -305,8 +305,10 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   const glassStyle = getComputedStyle(glass);
   const fill = glassStyle.backgroundColor;
   const menuRadius = Number.parseFloat(glassStyle.borderBottomLeftRadius) || 8;
-  const pad =
-    Number.parseFloat(getComputedStyle(popup).getPropertyValue("--fork-inlet-tab-pad")) || 0;
+  const popupStyle = getComputedStyle(popup);
+  const pad = Number.parseFloat(popupStyle.getPropertyValue("--fork-inlet-tab-pad")) || 0;
+  // A menu that sets its own shadow (a header menu flipped above its button) keeps it.
+  const shadow = popupStyle.getPropertyValue("--fork-inlet-morph-shadow").trim();
   const triggerStyle = getComputedStyle(trigger);
 
   setMorphState(popup, trigger, "on");
@@ -372,7 +374,8 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
         return;
       }
       // Above its button (the composer's menus) the shadow would fall on the button's row.
-      if (!below) svg.style.filter = "none";
+      if (shadow !== "") svg.style.filter = shadow;
+      else if (!below) svg.style.filter = "none";
     }
     // Every scroll in the page redraws; one that moved neither box changes nothing.
     const geometry = [triggerBox.left, triggerBox.top, triggerBox.width, triggerBox.height]
@@ -380,9 +383,12 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
       .join(",");
     if (geometry === drawn) return;
     drawn = geometry;
+    // The open button's free side is its face's radius; the stylesheet squares one side for a
+    // menu below, whichever way this one opened.
     const buttonRadius =
-      Number.parseFloat(
-        below ? triggerStyle.borderTopLeftRadius : triggerStyle.borderBottomLeftRadius,
+      Math.max(
+        Number.parseFloat(triggerStyle.borderTopLeftRadius) || 0,
+        Number.parseFloat(triggerStyle.borderBottomLeftRadius) || 0,
       ) + pad || 8;
     path.setAttribute(
       "d",

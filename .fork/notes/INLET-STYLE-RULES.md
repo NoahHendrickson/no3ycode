@@ -116,8 +116,11 @@ look like it. While open:
 3. A concave corner curves from the menu's edge into the trigger's free side.
 4. Menu, join and trigger **sample as the same hex.** No shadow may land on the trigger: cast it
    away, and clip it at the join. A menu hung above its trigger (the composer's) casts none,
-   or it falls on the chips beside the trigger.
-5. A thin trigger gets padded fill (4px each side), so the menu never hangs off a sliver.
+   or it falls on the chips beside the trigger. A header menu flipped above its button (a short
+   window) casts its shadow upward, so it never melts into a cream row it covers.
+5. A thin trigger gets padded fill (4px each side), so the menu never hangs off a sliver. Only
+   the composer's controls are thin; a header button keeps its own 10px corners, flipped too
+   (in the morph; the reduced-motion static look still squares a flipped button's free side).
 
 ### H4. Geometry
 

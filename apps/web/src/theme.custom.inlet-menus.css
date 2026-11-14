@@ -329,16 +329,29 @@
    the other way up: square bottom-right, the gap and the concave corner
    below it. */
 
+/* The composer's controls are 20px text ghosts, too slight to hang a menu
+   from; the open one pads its fill out by this much on every side (see
+   below), and the menu steps right by as much to keep its edge on the fill's.
+   A header button's menu flipped above it (a short window) hangs unpadded. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu="composer"][data-side="top"][data-align="end"] {
+  --fork-inlet-tab-pad: 4px;
+}
+
+/* A header menu flipped above its button casts its shadow upward, away from the button, so it
+   never melts into a cream row it covers (custom/inletMenuMorph.ts draws it). */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu]:not([data-fork-tab-menu="composer"])[data-side="top"] {
+  --fork-inlet-morph-shadow: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-tab-menu][data-side="top"][data-align="end"] {
-  /* The composer's controls are 20px text ghosts, too slight to hang a menu
-     from; the open one pads its fill out by this much on every side (see
-     below), and the menu steps right by as much to keep its edge on the
-     fill's. */
-  --fork-inlet-tab-pad: 4px;
   border-color: transparent;
   border-bottom-right-radius: 0;
-  translate: var(--fork-inlet-tab-pad) 0;
+  translate: var(--fork-inlet-tab-pad, 0px) 0;
   /* Upstream's drop shadow falls downward, straight onto the button it hangs
      from, and shades it off the menu's colour. This one lifts up and out
      instead, and as a filter it follows the outline the tab and its concave
@@ -357,7 +370,9 @@
     pointer-events: none;
     right: -1px;
     top: calc(100% + 1px);
-    width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad) + var(--fork-inlet-fillet));
+    width: calc(
+      var(--anchor-width) + 2 * var(--fork-inlet-tab-pad, 0px) + var(--fork-inlet-fillet)
+    );
     height: var(--fork-inlet-fillet);
     background:
       radial-gradient(
@@ -370,7 +385,7 @@
           var(--fork-inlet-tab-fill, var(--popover)),
           var(--fork-inlet-tab-fill, var(--popover))
         )
-        right top / calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad))
+        right top / calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad, 0px))
         var(--fork-inlet-fillet) no-repeat;
   }
 }

@@ -700,7 +700,9 @@ describe("rightPanelStore", () => {
     ).toEqual({
       byThreadKey: {},
       threadPanelVisibilityByThreadKey: {
-        "env-1:thread-A": { inlineOpen: false, popoverOpen: false },
+        // fork:begin fork-details-card-closed — closed is the default, so only an open card persists
+        "env-1:thread-B": { inlineOpen: true, popoverOpen: false },
+        // fork:end fork-details-card-closed
       },
     });
   });
@@ -714,7 +716,9 @@ describe("rightPanelStore", () => {
         useRightPanelStore.getState().threadPanelVisibilityByThreadKey,
         refA,
       ),
-    ).toEqual({ inlineOpen: true, popoverOpen: false });
+      // fork:begin fork-details-card-closed — the docked card starts closed
+    ).toEqual({ inlineOpen: false, popoverOpen: false });
+    // fork:end fork-details-card-closed
   });
 
   it("keeps an open popover visible by promoting it to inline when the real panel closes", () => {
