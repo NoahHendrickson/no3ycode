@@ -9,6 +9,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import {
   selectActiveRightPanel,
+  selectThreadRightPanelState,
   type ThreadRightPanelState,
   useRightPanelStore,
 } from "~/rightPanelStore";
@@ -60,41 +61,30 @@ export function useRightPanelWidthKey(threadWidthKey: string): string {
 const hasMusic = (state: ThreadRightPanelState): boolean =>
   state.surfaces.some((surface) => surface.kind === "music");
 
-const showsMusic = (state: ThreadRightPanelState | undefined): boolean =>
-  state?.isOpen === true &&
+const showsMusic = (state: ThreadRightPanelState): boolean =>
+  state.isOpen &&
   state.surfaces.some(
     (surface) => surface.kind === "music" && surface.id === state.activeSurfaceId,
   );
 
-// However Music came to show or to close on a thread (its button, its tab, the panel's own
-// toggle), that is its state everywhere. Another tab taking the panel over is not a close.
-useRightPanelStore.subscribe((next, previous) => {
-  if (next.byThreadKey === previous.byThreadKey) return;
-  for (const [threadKey, state] of Object.entries(next.byThreadKey)) {
-    const before = previous.byThreadKey[threadKey];
-    if (state === before) continue;
-    if (showsMusic(state)) setMusicKeepOpen(true);
-    else if (showsMusic(before) && (!state.isOpen || !hasMusic(state))) setMusicKeepOpen(false);
-  }
-});
-
-/** The thread and state last brought in line; module-level, since a view can remount on one thread. */
-let synced: string | null = null;
+/** The state each thread was last brought in line with; module-level, since a view can remount
+    on one thread, and per thread, since split panes mount several views at once. */
+const synced = new Map<string, boolean>();
 
 /**
- * Brings each thread the user arrives on in line with Music's state, and the thread in view
- * when that state changes. A thread is arrived on once it can show a panel (a new agent's
- * draft waits for its first message); picking another tab there afterwards is left alone.
+ * Keeps one thread in view and Music's shared state in step, both ways. The thread follows the
+ * state when the user arrives on it and when the state changes; the state follows what the user
+ * does to this thread's panel. A thread is arrived on once it can show a panel (a new agent's
+ * draft waits for its first message); a tab picked there afterwards is left alone.
  */
 export function useMusicKeepOpenCarry(threadRef: ScopedThreadRef | null, ready: boolean): void {
   const threadKey = threadRef === null ? null : scopedThreadKey(threadRef);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- brings the thread's panel in line with Music's shared state; the panel store is per thread
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- keeps the thread's panel and Music's shared state in step; the panel store is per thread
   useEffect(() => {
     if (threadRef === null || threadKey === null || !ready) return;
     const sync = () => {
-      const arrival = `${threadKey}:${keepOpen}`;
-      if (arrival === synced) return;
-      synced = arrival;
+      if (synced.get(threadKey) === keepOpen) return;
+      synced.set(threadKey, keepOpen);
       if (readMusicBridge() === null) return;
       const panels = useRightPanelStore.getState();
       const showing = selectActiveRightPanel(panels.byThreadKey, threadRef) === "music";
@@ -102,6 +92,31 @@ export function useMusicKeepOpenCarry(threadRef: ScopedThreadRef | null, ready: 
       else if (!keepOpen && showing) panels.close(threadRef);
     };
     sync();
-    return subscribe(sync);
+    const stopFollowingState = subscribe(sync);
+    const stopFollowingPanel = useRightPanelStore.subscribe((next, previous) => {
+      // Only what the user did here: a deleted thread drops its revision, and the app revealing
+      // another tab never moves it.
+      const revision = next.userActionRevisionByThreadKey[threadKey];
+      if (
+        revision === undefined ||
+        revision === previous.userActionRevisionByThreadKey[threadKey]
+      ) {
+        return;
+      }
+      const before = selectThreadRightPanelState(previous.byThreadKey, threadRef);
+      const after = selectThreadRightPanelState(next.byThreadKey, threadRef);
+      if (after === before) return;
+      if (showsMusic(after)) {
+        if (!showsMusic(before)) setMusicKeepOpen(true);
+        // Closed: its tab went, in front or behind another, or the panel showing it was closed.
+        // Another tab taking the panel over is neither.
+      } else if ((hasMusic(before) && !hasMusic(after)) || (showsMusic(before) && !after.isOpen)) {
+        setMusicKeepOpen(false);
+      }
+    });
+    return () => {
+      stopFollowingState();
+      stopFollowingPanel();
+    };
   }, [threadKey, threadRef, ready]);
 }

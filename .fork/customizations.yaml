@@ -6882,10 +6882,14 @@
     setting: however it comes to show on a thread (its button, its tab, the
     right panel's own toggle) it is open, and closing the panel that shows
     it or closing its tab closes it; another tab taking the panel over is
-    not a close. Arriving at a thread brings its right panel in line, opening
-    it on Music or closing a panel still showing Music (ChatView's
-    useMusicKeepOpenCarry), while the view remounting on the same thread
-    leaves a tab picked there alone.
+    not a close. One effect (ChatView's useMusicKeepOpenCarry) keeps the thread
+    in view and that state in step both ways: arriving at a thread, or the
+    state changing, opens its right panel on Music or closes a panel still
+    showing Music, once per thread and state, so a tab picked there stays
+    through remounts and return visits; and only what the user does to the
+    panel of a thread in view moves the state (the store's user-action
+    revision), never a thread off screen, a deleted thread, or a tab the app
+    reveals.
     A new agent's draft is not arrived at until its first message starts it
     (it keeps its id), so picking a project does not open Music.
     While it is open, the right panel keeps one shared width instead of each
