@@ -18,6 +18,9 @@ import type {
   ThreadId,
   TurnItemId,
 } from "@t3tools/contracts";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { forkSubagentTags } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-bots */
 import { backgroundWorkHoldsCompletion } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
 import { runRanAfter } from "@t3tools/shared/orchestrationV2ThreadError";
 import * as DateTime from "effect/DateTime";
@@ -74,6 +77,9 @@ export function makeSubagentChildThread(input: {
     /* fork:begin fork-scheduled-runs-off-sidebar — see .fork/customizations.yaml#fork-scheduled-runs-off-sidebar */
     scheduledTaskId: undefined,
     /* fork:end fork-scheduled-runs-off-sidebar */
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    tags: forkSubagentTags(input.parentThread.tags),
+    /* fork:end fork-bots */
     providerInstanceId: input.providerInstanceId,
     modelSelection: input.modelSelection,
     activeProviderThreadId: input.activeProviderThreadId,

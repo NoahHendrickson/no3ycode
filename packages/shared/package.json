@@ -383,6 +383,10 @@
       "types": "./src/devHome.ts",
       "import": "./src/devHome.ts"
     },
+    "./forkBotTags": {
+      "types": "./src/forkBotTags.ts",
+      "import": "./src/forkBotTags.ts"
+    },
     "./forkDesignProps": {
       "types": "./src/forkDesignProps.ts",
       "import": "./src/forkDesignProps.ts"

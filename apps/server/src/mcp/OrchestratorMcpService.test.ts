@@ -3362,14 +3362,30 @@ describe("OrchestratorMcpService provider resolution", () => {
         mcp: OrchestratorMcpService.OrchestratorMcpService["Service"],
         bound: ScheduledTask,
       ) => Effect.Effect<unknown, OrchestratorMcpFailure>,
+      /** The root thread's tags, making the caller its subagent. */
+      rootTags?: ReadonlyArray<string>,
     ) =>
       Effect.gen(function* () {
         const saved = yield* Ref.make<ReadonlyArray<ScheduledTaskUpsertInput>>([]);
+        const rootThreadId = ThreadId.make("thread:bot-root");
         const shell: OrchestrationV2ThreadShell = {
           ...liveThreadShell(botThreadId),
           providerInstanceId: claudeInstanceId,
           modelSelection: opus,
           tags,
+          ...(rootTags === undefined
+            ? {}
+            : {
+                lineage: {
+                  parentThreadId: rootThreadId,
+                  relationshipToParent: "subagent",
+                  rootThreadId,
+                },
+              }),
+        };
+        const root: OrchestrationV2ThreadShell = {
+          ...liveThreadShell(rootThreadId),
+          tags: rootTags ?? [],
         };
         const bound: ScheduledTask = {
           id: ScheduledTaskId.make("scheduled-task:bot"),
@@ -3404,7 +3420,8 @@ describe("OrchestratorMcpService provider resolution", () => {
                   NodeServices.layer,
                   NodeCrypto.layer,
                   Layer.mock(ThreadManagementService.ThreadManagementService)({
-                    getThreadShell: () => Effect.succeed(shell),
+                    getThreadShell: (threadId) =>
+                      Effect.succeed(threadId === rootThreadId ? root : shell),
                     getThreadRecords: () => Effect.succeed(idleThreadProjection(shell)),
                   }),
                   ServerSettings.layerTest(),
@@ -3463,6 +3480,19 @@ describe("OrchestratorMcpService provider resolution", () => {
         );
         assert.include(String(updated.exit), "at most every 15 minutes");
         assert.deepEqual(updated.saved, []);
+
+        const subagent = yield* run(
+          [],
+          (mcp) =>
+            mcp.scheduleTask(scope, {
+              prompt: "Check mail",
+              schedule: everyFiveMinutes,
+              bindToCurrentThread: false,
+            }),
+          ["bot"],
+        );
+        assert.include(String(subagent.exit), "at most every 15 minutes");
+        assert.deepEqual(subagent.saved, []);
 
         const other = yield* run([], (mcp, bound) =>
           mcp.updateScheduledTask(scope, { scheduledTaskId: bound.id, schedule: everyFiveMinutes }),

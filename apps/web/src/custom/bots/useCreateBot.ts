@@ -14,6 +14,7 @@ import {
   type ModelSelection,
   type ScopedThreadRef,
 } from "@t3tools/contracts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useRouter } from "@tanstack/react-router";
 import { useContext } from "react";
@@ -36,7 +37,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import type { BotMascotShape } from "./botMascotArt";
 import { botMascotTag } from "./botMascotTags";
 import { botSeedFiles } from "./botSeedFiles";
-import { BOT_FOLDERS_DIRECTORY, BOT_THREAD_TAG, botFolderName, botFolderPath } from "./botThreads";
+import { BOT_FOLDERS_DIRECTORY, botFolderName, botFolderPath } from "./botThreads";
 
 const FAILURE_TITLE = "Could not create the bot";
 
@@ -156,7 +157,7 @@ export function useCreateBot(): (
     // write would leave a stray No-project thread, so that thread goes again.
     const taggedBot = await run(threadEnvironment.setTag, {
       environmentId,
-      input: { threadId, tag: BOT_THREAD_TAG, tagged: true },
+      input: { threadId, tag: FORK_BOT_THREAD_TAG, tagged: true },
     });
     if (failed(taggedBot)) {
       await run(threadEnvironment.delete, { environmentId, input: { threadId } });

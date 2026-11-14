@@ -12,8 +12,6 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-/** Must match the web client's `BOT_THREAD_TAG` (custom/bots/botThreads). */
-export const FORK_BOT_THREAD_TAG = "bot";
 /** Enough for the card's first line; the transcript has the rest. */
 export const FORK_BOT_REPORT_CHARS = 280;
 /** How many of a bot's newest assistant replies the report is looked for in, progress replies

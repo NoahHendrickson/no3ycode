@@ -2,6 +2,8 @@
  * A bot's mascot as thread tags, and how its face reads the thread — see
  * `.fork/customizations.yaml#fork-bots`. The mascot is a second tag, `mascot:<Shape>`.
  */
+import { FORK_BOT_MASCOT_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
+
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 
 import {
@@ -10,19 +12,19 @@ import {
   type BotMascotShape,
   isBotMascotShape,
 } from "./botMascotArt";
-import { BOT_THREAD_TAG_PREFIX_MASCOT, type BotShell } from "./botThreads";
+import type { BotShell } from "./botThreads";
 
 type MascotShell = Pick<BotShell, "tags"> & { readonly id: string };
 
 export function botMascotTag(shape: BotMascotShape): string {
-  return `${BOT_THREAD_TAG_PREFIX_MASCOT}${shape}`;
+  return `${FORK_BOT_MASCOT_TAG_PREFIX}${shape}`;
 }
 
 /** The mascot a bot was given, or one picked from its id so an untagged bot still has a face. */
 export function botMascotShape(shell: MascotShell): BotMascotShape {
   for (const tag of shell.tags ?? []) {
-    const name = tag.startsWith(BOT_THREAD_TAG_PREFIX_MASCOT)
-      ? tag.slice(BOT_THREAD_TAG_PREFIX_MASCOT.length)
+    const name = tag.startsWith(FORK_BOT_MASCOT_TAG_PREFIX)
+      ? tag.slice(FORK_BOT_MASCOT_TAG_PREFIX.length)
       : "";
     if (isBotMascotShape(name)) return name;
   }
@@ -47,7 +49,7 @@ export function botMascotTagWrites(
   return [
     ...(tags.includes(next) ? [] : [{ tag: next, tagged: true }]),
     ...tags
-      .filter((tag) => tag.startsWith(BOT_THREAD_TAG_PREFIX_MASCOT) && tag !== next)
+      .filter((tag) => tag.startsWith(FORK_BOT_MASCOT_TAG_PREFIX) && tag !== next)
       .map((tag) => ({ tag, tagged: false })),
   ];
 }

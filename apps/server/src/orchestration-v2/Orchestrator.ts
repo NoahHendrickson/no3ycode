@@ -199,7 +199,7 @@ import { planThreadDeletion } from "./ThreadDeletion.ts";
 import type * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
 import * as ServerSettings from "../serverSettings.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { FORK_BOT_THREAD_TAG } from "./forkBotReport.ts";
+import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
 
 const isMessageQuestionAnswer = Schema.is(
@@ -6789,7 +6789,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       !isNativeMaintenanceCommand(command) &&
       /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
          A bot keeps the name it was given, from every client: its messages are its job. */
-      projection.thread.tags?.includes(FORK_BOT_THREAD_TAG) !== true &&
+      !isForkBotThread(projection.thread.tags) &&
       /* fork:end fork-bots */
       ((command.titleSeed !== undefined &&
         (yield* projectionStore

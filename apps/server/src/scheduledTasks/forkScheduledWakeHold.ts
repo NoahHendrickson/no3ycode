@@ -14,7 +14,7 @@ import * as Effect from "effect/Effect";
 import type * as SqlClient from "effect/sql/SqlClient";
 import { ScheduledTaskError } from "@t3tools/contracts";
 
-import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import { escapeGlobPrefix } from "./forkScheduledTaskRuns.ts";
 
 /** Must match the message ids ScheduledTaskService mints for each fire. */
@@ -116,7 +116,7 @@ export const forkScheduledFireHold = Effect.fn("ScheduledTaskService.forkSchedul
     const threadId = task.threadId;
     if (threadId === null || task.schedule.type === "once") return "run";
     const shell = yield* input.getThreadShell(threadId);
-    if (shell?.tags?.includes(FORK_BOT_THREAD_TAG) !== true) return "run";
+    if (!isForkBotThread(shell?.tags)) return "run";
     if (isUsageLimitedUntilLater(shell, nowMs)) return "skip";
     if (yield* hasUnfinishedScheduledRun(sql, task.id, threadId)) return "skip";
     return (yield* isInChat(sql, task.id, threadId, nowMs)) ? "defer" : "run";
