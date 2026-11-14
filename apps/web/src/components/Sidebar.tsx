@@ -5288,6 +5288,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 )}
               {namingBot ? (
                 <SidebarV2NewBotRow
+                  compact={compactBots}
                   initialMascot={nextBotMascotShape(
                     botThreads.map((bot) => botMascotShape(bot.source)),
                   )}
