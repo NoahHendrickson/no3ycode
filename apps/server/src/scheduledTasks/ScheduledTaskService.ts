@@ -86,9 +86,6 @@ import { listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
 /* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
 import { forkDeferScheduledFire, forkScheduledFireHold } from "./forkScheduledWakeHold.ts";
 /* fork:end fork-scheduled-wake-hold */
-/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { forkBotTaskPrompt } from "./forkBotTasks.ts";
-/* fork:end fork-bots */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
 const isScheduledTaskError = Schema.is(ScheduledTaskError);
@@ -1066,11 +1063,6 @@ export const layer = Layer.effect(
         const prompt = webhook?.prompt ?? active.prompt;
         const threadMode = scheduledTaskThreadMode(active);
 
-        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-           A bot's wake runs on its task's model, not on whatever the conversation was switched to.
-           Only a bot's task carries the wake marker (the MCP tools stamp it), so no lookup per fire. */
-        const botWake = forkBotTaskPrompt(active.prompt);
-        /* fork:end fork-bots */
         // A bound thread can move to another project (No project to a project) while
         // this fires. Follow it; one move needs at most two retries. Same ids replay safely.
         const sendBound = (
@@ -1089,9 +1081,6 @@ export const layer = Layer.effect(
               attachments: [],
               mode: "queue",
               ...(threadMode === "fresh_session" ? { freshContext: true } : {}),
-              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-              ...(botWake ? { modelSelection: active.modelSelection } : {}),
-              /* fork:end fork-bots */
               createdBy: active.createdBy,
               creationSource: active.creationSource,
             })

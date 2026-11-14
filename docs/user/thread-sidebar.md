@@ -428,11 +428,10 @@ scheduled tasks. Its tasks are listed with the rest under **Automations**.
 
 Bots need the **No project** workspace and Claude. A new bot starts on Claude
 Sonnet, since every scheduled wake uses your plan even when there is nothing to
-report; change its model in its conversation for a harder question. The wakes
-it schedules for itself run on Sonnet even after you switch its conversation to
-another model, at most every 15 minutes, and a few minutes later while you are
-chatting with it; change the model or interval for a task under
-**Automations**. Scheduled wakes only run while the environment is running, so keep it on or install the
+report. Its wakes use whatever model its conversation is set to, so changing
+the model there changes it for its wakes too. The wakes it schedules for itself
+run at most every 15 minutes, and a few minutes later while you are chatting
+with it; change the interval for a task under **Automations**. Scheduled wakes only run while the environment is running, so keep it on or install the
 background service for a bot that should wake while the app is closed. Both
 section headings fold their section.
 

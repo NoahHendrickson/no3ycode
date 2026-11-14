@@ -104,11 +104,8 @@ it.effect(
         );
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(1);
-        // A marked wake runs on its task's model, not on whatever the conversation was switched to.
-        expect((yield* Ref.get(sentInputs))[0]?.modelSelection).toEqual({
-          instanceId: "claudeAgent",
-          model: "claude-haiku-5-5",
-        });
+        // A wake runs on the conversation's model, so it never switches the conversation's model.
+        expect((yield* Ref.get(sentInputs))[0]).not.toHaveProperty("modelSelection");
 
         // Two more intervals pass while the first wake is still waiting: nothing queues behind it.
         yield* fire;

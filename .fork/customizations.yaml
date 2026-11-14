@@ -6998,19 +6998,18 @@
     a bot needs Claude (its memory is CLAUDE.md, JOB.md and the folder's
     hooks) and starts on the newest non-legacy Sonnet of its Claude instance,
     without the owner's default options (useCreateBot botModelSelection); a
-    task a bot schedules for its own thread defaults to a fresh session and to
-    the same Sonnet, without options (OrchestratorMcpService.scheduleTask, mcp/
-    forkBotWakes), so a forgotten flag cannot resume its long session every
-    wake and a chat on a pricier model does not carry into every wake; and
-    schedule_task refuses a bot an interval under 15 minutes, on create and on
-    a schedule change. The interval and the Sonnet default hold for a task the
-    bot leaves unbound too, or unbinding would be the way round. The owner changes
-    either for a task under Automations, which never goes through
-    schedule_task. A task bound to the bot also has "Scheduled wake:" in front
-    of its prompt (scheduledTasks/forkBotTasks, kept through edits). That
-    marker tells the bot a wake from its owner, and tells ScheduledTaskService
-    to send each wake with the task's model, since a bound send otherwise runs
-    on whatever the thread was switched to (the thread's picker follows). The
+    task a bot schedules for its own thread defaults to a fresh session
+    (OrchestratorMcpService.scheduleTask), so a forgotten flag cannot resume
+    its long session every wake; and schedule_task refuses a bot an interval
+    under 15 minutes, on create and on a schedule change (mcp/forkBotWakes).
+    The interval holds for a task the bot leaves unbound too, or unbinding
+    would be the way round. The owner changes it for a task under Automations,
+    which never goes through schedule_task. Its wakes run on whatever model the
+    bot's conversation is set to: a task is saved with the thread's model and a
+    bound wake sends none, as upstream does, so a wake never switches the
+    conversation's model. A task bound to the bot also has "Scheduled wake:" in
+    front of its prompt (scheduledTasks/forkBotTasks, kept through edits). That
+    marker tells the bot a wake from its owner. The
     seeded CLAUDE.md asks for the slowest schedule and says
     the scheduler refuses one under 15 minutes, webhook coalescing
     for event jobs, tail reads of the conversation (t3_thread_read pages from
@@ -7111,7 +7110,6 @@
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
-    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts

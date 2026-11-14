@@ -3031,17 +3031,7 @@ describe("OrchestratorMcpService provider resolution", () => {
       status: "ready",
       auth: { status: "authenticated" },
       checkedAt: "2026-11-13T00:00:00.000Z",
-      models: [
-        { slug: "claude-opus-5-5", name: "Opus", isCustom: false, capabilities: null },
-        {
-          slug: "claude-sonnet-4-6",
-          name: "Old Sonnet",
-          isCustom: false,
-          isLegacy: true,
-          capabilities: null,
-        },
-        { slug: "claude-sonnet-5-5", name: "Sonnet", isCustom: false, capabilities: null },
-      ],
+      models: [{ slug: "claude-opus-5-5", name: "Opus", isCustom: false, capabilities: null }],
       slashCommands: [],
       skills: [],
     };
@@ -3169,29 +3159,6 @@ describe("OrchestratorMcpService provider resolution", () => {
           mcp.updateScheduledTask(scope, { scheduledTaskId: bound.id, schedule: everyFiveMinutes }),
         );
         assert.isTrue(Exit.isSuccess(other.exit));
-      }),
-    );
-
-    it.effect("default to the current Sonnet, and any other thread to its own model", () =>
-      Effect.gen(function* () {
-        const scheduled = yield* run(["bot"], (mcp) =>
-          mcp.scheduleTask(scope, {
-            prompt: "Check mail",
-            schedule: { type: "interval", everyMs: 15 * 60_000 },
-          }),
-        );
-        assert.isTrue(Exit.isSuccess(scheduled.exit));
-        assert.deepEqual(scheduled.saved[0]?.modelSelection, {
-          instanceId: claudeInstanceId,
-          model: "claude-sonnet-5-5",
-        });
-
-        // Any other thread keeps its own model and any interval.
-        const other = yield* run([], (mcp) =>
-          mcp.scheduleTask(scope, { prompt: "Check mail", schedule: everyFiveMinutes }),
-        );
-        assert.isTrue(Exit.isSuccess(other.exit));
-        assert.deepEqual(other.saved[0]?.modelSelection, opus);
       }),
     );
   });
