@@ -37,8 +37,14 @@ export function inlinePanelRoom(input: {
   );
 }
 
-/** The combined width of the row's inline panels other than `host`. */
-export function otherInlinePanelsWidth(row: HTMLElement, host: HTMLElement): number {
+/** The combined width of the row's inline panels other than `host`. Counted at `"minimum"` for
+    the Threads panel, which keeps its width while the right panel beside it yields: counting both
+    at their current widths lets the wider right panel squeeze the list to its floor. */
+export function otherInlinePanelsWidth(
+  row: HTMLElement,
+  host: HTMLElement,
+  count: "current" | "minimum" = "current",
+): number {
   let width = 0;
   for (const child of row.children) {
     if (
@@ -46,7 +52,10 @@ export function otherInlinePanelsWidth(row: HTMLElement, host: HTMLElement): num
       child instanceof HTMLElement &&
       child.dataset.previewPanelMode === "inline"
     ) {
-      width += child.offsetWidth;
+      width +=
+        count === "minimum"
+          ? Math.min(child.offsetWidth, RIGHT_PANEL_MIN_WIDTH)
+          : child.offsetWidth;
     }
   }
   return width;

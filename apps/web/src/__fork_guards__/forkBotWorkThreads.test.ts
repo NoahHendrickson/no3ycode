@@ -214,7 +214,8 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(launchTool).toContain("{ launchedBy: caller.id }");
     expect(chatView).toContain("<BotThreadsPanel");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
-    expect(inlineSize).toContain("otherPanelsWidth: otherInlinePanelsWidth(row, host),");
+    // The Threads panel counts the right panel at its minimum, so the list keeps its width.
+    expect(inlineSize).toContain('options.floorWidth === undefined ? "current" : "minimum"');
     expect(inlineSize).toContain("readonly floorWidth?: number | undefined;");
     // The window's panel controls get the same room over whichever column is rightmost.
     expect(rightPanelTabs).toContain('? TITLEBAR_CONTROLS_INSET_CLASS : "pr-3"');

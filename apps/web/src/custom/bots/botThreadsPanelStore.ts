@@ -61,11 +61,17 @@ export function toggleBotThreadsPanel(input: {
   readonly trigger: Element | null;
 }): void {
   const botKey = scopedThreadKey(input.botRef);
-  const open = useBotThreadsPanelStore.getState().openByBotKey[botKey] !== true;
-  setOpen(botKey, open);
-  if (open && !stageHoldsBothPanels(input.trigger)) {
-    useRightPanelStore.getState().close(input.threadRef);
+  const fitsBoth = stageHoldsBothPanels(input.trigger);
+  const rightPanel = useRightPanelStore.getState();
+  const rightPanelOpen = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)]?.isOpen === true;
+  // Set open but displaced by the right panel (the window narrowed with both open): show it.
+  if (useBotThreadsPanelStore.getState().openByBotKey[botKey] === true) {
+    if (!fitsBoth && rightPanelOpen) rightPanel.close(input.threadRef);
+    else setOpen(botKey, false);
+    return;
   }
+  setOpen(botKey, true);
+  if (!fitsBoth) rightPanel.close(input.threadRef);
 }
 
 // The right panel opening where both do not fit closes the Threads panel beside it, wherever it

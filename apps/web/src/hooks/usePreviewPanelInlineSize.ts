@@ -85,7 +85,11 @@ export function usePreviewPanelInlineSize(
             ? undefined
             : inlinePanelRoom({
                 rowWidth: row.clientWidth,
-                otherPanelsWidth: otherInlinePanelsWidth(row, host),
+                otherPanelsWidth: otherInlinePanelsWidth(
+                  row,
+                  host,
+                  options.floorWidth === undefined ? "current" : "minimum",
+                ),
                 siblingMinWidth: SIBLING_COLUMN_MIN_WIDTH,
               }),
           floorWidth,
