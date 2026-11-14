@@ -131,6 +131,11 @@ overrides:
   app-builder-lib: 26.16.1
   electron-updater: 6.8.9
   expo-modules-core: 58.0.30
+  # fork:begin ci-runners — see .fork/customizations.yaml#ci-runners
+  # @cloudflare/unenv-preset peers on exactly this release, and a lockfile-free install
+  # (Release Smoke) resolves the range above it to the next one. Drop with upstream's own fix.
+  unenv: 2.0.0-rc.24
+  # fork:end ci-runners
   # Keep jsdom's optional peer consistent so Vite+ has one test-runner instance.
   "@exodus/bytes>@noble/hashes": "1.8.0"
   # Earlier React Navigation declarations create a circular type alias in TypeScript 7.
