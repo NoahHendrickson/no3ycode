@@ -7,7 +7,8 @@
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
-import { ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { type EnvironmentId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
@@ -24,12 +25,17 @@ import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { BOT_WORK_TAG_PREFIX, botWorkRowThreadId } from "../custom/bots/botWorkRoster";
 import { BOT_THREAD_TAG } from "../custom/bots/botThreads";
 import {
+  toggleBotThreadsPanel,
+  useBotThreadsPanelStore,
+} from "../custom/bots/botThreadsPanelStore";
+import {
   BOT_THREADS_PANEL_MIN_WIDTH,
   CONVERSATION_MIN_BESIDE_TWO_PANELS,
   inlinePanelRoom,
   stageFitsBothPanels,
 } from "../custom/bots/stagePanels";
 import { resolveSidebarV2CardStatus } from "../custom/sidebarV2CardStatus";
+import { useRightPanelStore } from "../rightPanelStore";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
 
@@ -335,5 +341,27 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(
       botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), isBot),
     ).toBeNull();
+  });
+
+  it("restores a maximized right panel so the Threads toggle always shows the panel", () => {
+    const botRef = scopeThreadRef("env-1" as EnvironmentId, ThreadId.make("mail"));
+    const threadRef = scopeThreadRef("env-1" as EnvironmentId, ThreadId.make("fix"));
+    const rightPanel = () => useRightPanelStore.getState().byThreadKey[scopedThreadKey(threadRef)];
+    const botOpen = () =>
+      useBotThreadsPanelStore.getState().openByBotKey[scopedThreadKey(botRef)] === true;
+    const toggle = () => toggleBotThreadsPanel({ botRef, threadRef, trigger: null });
+    useRightPanelStore.getState().open(threadRef, "diff");
+
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    toggle();
+    expect(botOpen()).toBe(true);
+    expect(rightPanel()?.maximized).toBeUndefined();
+    // Already set open, held shut by the maximized panel: restoring shows it, not a close.
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    toggle();
+    expect(botOpen()).toBe(true);
+    expect(rightPanel()?.maximized).toBeUndefined();
+    toggle();
+    expect(botOpen()).toBe(false);
   });
 });

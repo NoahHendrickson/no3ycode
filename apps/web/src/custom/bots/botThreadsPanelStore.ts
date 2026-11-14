@@ -66,11 +66,16 @@ export function toggleBotThreadsPanel(input: {
   const botKey = scopedThreadKey(input.botRef);
   const fitsBoth = stageHoldsBothPanels(input.trigger);
   const rightPanel = useRightPanelStore.getState();
-  const rightPanelOpen = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)]?.isOpen === true;
-  // Set open but displaced by the right panel (the window narrowed with both open): show it.
+  const rightPanelState = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)];
+  const rightPanelOpen = rightPanelState?.isOpen === true;
+  // A maximized right panel holds this one shut: restore it so the panel shows.
+  const maximized = rightPanelState?.maximized === true;
+  if (maximized) rightPanel.setMaximized(input.threadRef, false);
+  // Set open but held or displaced by the right panel (the window narrowed with both open):
+  // show it.
   if (useBotThreadsPanelStore.getState().openByBotKey[botKey] === true) {
     if (!fitsBoth && rightPanelOpen) rightPanel.close(input.threadRef);
-    else setOpen(botKey, false);
+    else if (!maximized) setOpen(botKey, false);
     return;
   }
   setOpen(botKey, true);

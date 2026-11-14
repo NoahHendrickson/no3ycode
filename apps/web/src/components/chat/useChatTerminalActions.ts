@@ -142,6 +142,14 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
   const setTerminalOpenStable = useStableCallback(setTerminalOpen);
   const toggleTerminalVisibility = () => {
     if (!activeThreadRef) return;
+    /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+       A maximized right panel covers the drawer: restore it, and an open drawer simply shows. */
+    const rightPanel = useRightPanelStore.getState();
+    if (selectThreadRightPanelState(rightPanel.byThreadKey, activeThreadRef).maximized === true) {
+      rightPanel.setMaximized(activeThreadRef, false);
+      if (terminalUiState.terminalOpen) return;
+    }
+    /* fork:end fork-stage-columns */
     const nextOpen = !terminalUiState.terminalOpen;
     if (
       nextOpen &&

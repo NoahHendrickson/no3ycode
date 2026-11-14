@@ -7244,7 +7244,8 @@
     header is a drag region with its controls marked no-drag, and since the cluster now sits in
     the conversation header's own flow, no later drag region overlaps it. With the right panel
     maximized the conversation and its header are hidden, so the cluster moves into the panel's
-    header, before its restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
+    header, before its restore and close buttons, and the terminal and Threads toggles (button or
+    keybinding) restore the panel first so what they open shows. Under Inlet the stage is one card (fork-inlet-theme); Glass and
     the stock theme keep their surfaces.
   tier: 3
   files:
@@ -7256,6 +7257,7 @@
     - apps/web/src/components/chat/ChatHeader.tsx
     - apps/web/src/components/chat/ChatRightPanel.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/components/chat/useChatTerminalActions.ts
     - apps/web/src/theme.custom.inlet.css
     - apps/web/src/theme.custom.css
     - knip.jsonc
