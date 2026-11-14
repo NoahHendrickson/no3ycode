@@ -3,15 +3,14 @@
  * bot launched carries `bot-work:<bot id>` (the server's orchestration-v2/forkBotWork) and lists in
  * the bot's Threads panel instead of the sidebar, unless pinned or its bot no longer lists.
  *
- * No imports from the sidebar here: Sidebar.logic depends on this module.
+ * No runtime imports from the sidebar here: Sidebar.logic depends on this module.
  */
 import type { OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
 
+import { BOT_THREAD_TAG } from "./botThreads";
+
 /** Must match the server's `FORK_BOT_WORK_TAG_PREFIX`. */
 export const BOT_WORK_TAG_PREFIX = "bot-work:";
-
-/** Same as `BOT_THREAD_TAG` (custom/bots/botThreads), which imports the sidebar. */
-const BOT_TAG = "bot";
 
 type TaggedShell = { readonly source: Pick<OrchestrationV2ThreadShell, "tags"> };
 
@@ -33,7 +32,7 @@ export function listedBotKeys(
 ): ReadonlySet<string> {
   const keys = new Set<string>();
   for (const thread of threads) {
-    if (thread.archivedAt === null && thread.source.tags?.includes(BOT_TAG) === true) {
+    if (thread.archivedAt === null && thread.source.tags?.includes(BOT_THREAD_TAG) === true) {
       keys.add(`${thread.environmentId}:${thread.id}`);
     }
   }
@@ -83,7 +82,7 @@ export function botWorkRowThreadId<
       candidate.id === owner &&
       candidate.environmentId === environmentId &&
       candidate.archivedAt === null &&
-      candidate.source.tags?.includes(BOT_TAG) === true,
+      candidate.source.tags?.includes(BOT_THREAD_TAG) === true,
   );
   return bot?.id ?? rowThreadId;
 }

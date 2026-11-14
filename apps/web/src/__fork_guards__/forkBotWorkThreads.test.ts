@@ -136,10 +136,26 @@ describe("fork guard: fork-bot-work-threads", () => {
       work("broke", "mail", { runtime: runtime("failed") }),
       work("pinned", "mail", { hasPendingApprovals: true, pinnedAt: AT }),
       work("settled", "mail", { runtime: runtime("failed"), settledOverride: "settled" }),
+      // Settled, then blocked on the owner again: it counts. A failure opened since does not.
+      work("asks-again", "mail", { hasPendingUserInput: true, settledOverride: "settled" }),
+      work("read", "mail", {
+        runtime: runtime("failed"),
+        updatedAt: "2026-11-14T10:00:00.000Z",
+        lastVisitedAt: AT,
+      }),
     ];
     const attention = botWorkAttentionByBot(threads).get("environment-test:mail");
-    expect(attention).toEqual({ status: "approval", count: 3 });
-    expect(botWorkStatusText(attention!)).toBe("3 threads need you");
+    expect(attention).toEqual({ status: "approval", count: 4 });
+    expect(botWorkStatusText(attention!)).toBe("4 threads need you");
+    const sections = new Map(
+      groupBotWork(
+        threads,
+        { environmentId: "environment-test", threadId: "mail" },
+        () => undefined,
+      ).map((group) => [group.key, ids(group.rows.map((row) => row.thread))]),
+    );
+    expect(sections.get("settled")).toEqual(["settled"]);
+    expect(sections.get("input")).toContain("asks-again");
     expect(botWorkStatusText({ status: "failed", count: 1 })).toBe("A thread failed");
 
     const idle = resolveSidebarV2CardStatus(bot("mail"), {
@@ -276,7 +292,8 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(chatView).toContain("<BotThreadsPanel");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.
-    expect(inlineSize).toContain('options.floorWidth === undefined ? "current" : "minimum"');
+    expect(inlineSize).toContain("otherInlinePanelsWidth(row, host, options.otherPanels)");
+    expect(readSibling("../custom/bots/BotThreadsPanel.tsx")).toContain('otherPanels: "minimum"');
     expect(inlineSize).toContain("readonly floorWidth?: number | undefined;");
   });
 

@@ -7129,13 +7129,15 @@
     headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
     unchanged.
 
-    A bot's card says when its unpinned, unsettled work needs the owner (approval, an answer, or
-    failed; custom/bots/botWork botWorkAttentionByBot, one pass over the shells the sidebar
-    holds): the mark and status line take it over the bot's own idle, waiting or unread states,
+    A bot's card says when its unpinned work needs the owner (custom/bots/botWork
+    botWorkAttentionByBot, one pass over the shells the sidebar holds): approval or an answer,
+    from a settled thread too, since one can ask again; and a failure, until the owner has
+    opened the thread or settled it, so a read failure does not hold the card: the mark and status line take it over the bot's own idle, waiting or unread states,
     never over the bot working or blocked itself.
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
-    bot's Threads panel (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary
+    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
     close motion), 320px by default and at least 280, with a header the height of the others

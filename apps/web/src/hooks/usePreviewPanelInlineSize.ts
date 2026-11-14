@@ -36,6 +36,9 @@ export function usePreviewPanelInlineSize(
     /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
        The panel's own minimum: a bot's Threads panel is a list, narrower than the right panel. */
     readonly floorWidth?: number | undefined;
+    /** How the row's other inline panel counts against this one's room: at its width now, or at
+        its minimum, which lets a narrow list keep its width beside a wide right panel. */
+    readonly otherPanels?: "current" | "minimum" | undefined;
     /* fork:end fork-bot-work-threads */
   } = {},
 ): PreviewPanelInlineSize {
@@ -85,11 +88,7 @@ export function usePreviewPanelInlineSize(
             ? undefined
             : inlinePanelRoom({
                 rowWidth: row.clientWidth,
-                otherPanelsWidth: otherInlinePanelsWidth(
-                  row,
-                  host,
-                  options.floorWidth === undefined ? "current" : "minimum",
-                ),
+                otherPanelsWidth: otherInlinePanelsWidth(row, host, options.otherPanels),
                 siblingMinWidth: SIBLING_COLUMN_MIN_WIDTH,
               }),
           floorWidth,

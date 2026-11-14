@@ -64,24 +64,34 @@ function attentionStatus(status: SidebarThreadStatus): BotWorkAttention["status"
   }
 }
 
+/** Blocked on the owner now, which a settled thread can become again. */
+function asksOwner(status: SidebarThreadStatus | SidebarV2CardStatus["kind"]): boolean {
+  return status === "approval" || status === "input" || status === "request";
+}
+
+/** A failure the owner has opened since is read: it stops holding the bot's card. */
+function failureUnread(thread: EnvironmentThreadShell): boolean {
+  if (!thread.lastVisitedAt) return true;
+  const failedAt = Date.parse(thread.latestRun?.completedAt ?? thread.updatedAt);
+  const visitedAt = Date.parse(thread.lastVisitedAt);
+  return Number.isNaN(failedAt) || Number.isNaN(visitedAt) || failedAt > visitedAt;
+}
+
 /** Per bot (`environmentId:threadId`), its unpinned launched threads that need the owner.
-    Settled and archived threads are put away, so they never hold a bot's card. */
+    Archived threads are put away, and so are settled ones unless they ask for the owner again;
+    a failure counts until the owner has opened it. */
 export function botWorkAttentionByBot(
   threads: ReadonlyArray<EnvironmentThreadShell>,
 ): ReadonlyMap<string, BotWorkAttention> {
   const byBot = new Map<string, BotWorkAttention>();
   for (const thread of threads) {
     const owner = botWorkOwnerId(thread.source);
-    if (
-      owner === null ||
-      thread.archivedAt !== null ||
-      thread.pinnedAt !== null ||
-      thread.settledOverride === "settled"
-    ) {
-      continue;
-    }
+    if (owner === null || thread.archivedAt !== null || thread.pinnedAt !== null) continue;
     const status = attentionStatus(resolveSidebarThreadStatus(thread));
     if (status === null) continue;
+    if (status === "failed" && (thread.settledOverride === "settled" || !failureUnread(thread))) {
+      continue;
+    }
     const key = `${thread.environmentId}:${owner}`;
     const previous = byBot.get(key);
     byBot.set(key, {
@@ -228,8 +238,9 @@ export function groupBotWork(
       wokeAt: null,
     });
     const bucket = sidebarV2StatusBucketForKind(card.kind);
+    // Settled is put away, a settled failure too, unless the thread is working or asks again.
     const key: BotWorkGroupKey =
-      thread.settledOverride === "settled" && bucket !== "input" && bucket !== "working"
+      thread.settledOverride === "settled" && bucket !== "working" && !asksOwner(card.kind)
         ? "settled"
         : bucket === "drafts"
           ? "idle"

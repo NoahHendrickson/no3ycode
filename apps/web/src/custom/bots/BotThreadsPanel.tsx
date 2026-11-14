@@ -90,6 +90,7 @@ export function BotThreadsPanel(props: {
     widthStorageKey: `t3code:fork:bot-threads-panel-width:${botKey}`,
     defaultWidth: BOT_THREADS_PANEL_DEFAULT_WIDTH,
     floorWidth: BOT_THREADS_PANEL_MIN_WIDTH,
+    otherPanels: "minimum",
   });
   if (!presence.present) return null;
   // Rightmost inline, its header is the one under Windows' caption buttons.

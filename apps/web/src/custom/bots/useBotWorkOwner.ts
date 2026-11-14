@@ -22,7 +22,12 @@ export function useBotThreadsPanelBot(ref: ScopedThreadRef | null): ScopedThread
   if (ref === null || shell === null) return null;
   const botId = botThreadsPanelBotId(
     shell,
-    (threadId) => candidate !== null && candidate.id === threadId && isBotThread(candidate.source),
+    // An archived bot's threads are ordinary threads again, in the sidebar and here.
+    (threadId) =>
+      candidate !== null &&
+      candidate.id === threadId &&
+      candidate.archivedAt === null &&
+      isBotThread(candidate.source),
   );
   if (botId === null) return null;
   return botId === shell.id ? ref : scopeThreadRef(ref.environmentId, botId as ThreadId);
