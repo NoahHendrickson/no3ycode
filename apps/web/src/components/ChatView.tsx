@@ -313,9 +313,14 @@ import {
   PanelLayoutControls,
   type PanelLayoutControlsProps,
   RightPanelMaximizeControl,
-  ThreadPanelHeaderControl,
-  WorkspaceTitlebarControls,
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     Upstream's window-pinned controls and the header's lone details toggle are unused here. */
+  /* fork:end fork-stage-columns */
 } from "./chat/PanelLayoutControls";
+/* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns */
+import { StageHeaderControls } from "~/custom/stageColumns/StageHeaderControls";
+import { StagePanelCloseButton } from "~/custom/stageColumns/StagePanelCloseButton";
+/* fork:end fork-stage-columns */
 import type { ExpandedImagePreview } from "./chat/ExpandedImagePreview";
 import { ThreadDetailsPanel } from "./chat/ThreadDetailsPanel";
 import { NoActiveThreadState } from "./NoActiveThreadState";
@@ -434,6 +439,13 @@ import { useIsChatThread } from "~/custom/useChatMode";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { BotThreadsPanel } from "~/custom/bots/BotThreadsPanel";
+import { useBotThreadsPanelBot, useBotThreadsPanelOpen } from "~/custom/bots/useBotWorkOwner";
+/* fork:end fork-bot-work-threads */
+/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
+import { useStageHeaderParent } from "~/custom/stageColumns/stageHeaderParent";
+/* fork:end fork-stage-header */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -1017,12 +1029,13 @@ export default function ChatView(props: ChatViewProps) {
   })();
   // The header's breadcrumb opens a parent in this environment only.
   const headerParentThreadLink =
-    parentSubagentThreadRef === null
-      ? null
-      : {
-          threadId: parentSubagentThreadRef.threadId,
-          title: parentSubagentThread?.title ?? "Parent thread",
-        };
+    /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header
+       A subagent's parent as upstream had it, else a bot's work's bot (fork-bot-work-threads):
+       the breadcrumb's parent crumb and Inlet's back button both lead there. */
+    useStageHeaderParent(
+      activeThread ? scopeThreadRef(activeThread.environmentId, activeThread.id) : null,
+    );
+  /* fork:end fork-stage-header */
   const threadError = isServerThread
     ? (localServerError ?? serverRuntime?.lastError ?? null)
     : localDraftError;
@@ -1183,9 +1196,10 @@ export default function ChatView(props: ChatViewProps) {
     panelAnimationDurationMs,
   );
   const rightPanelPresent = rightPanelPresence.present;
-  const rightPanelControlsInPanel =
-    shouldUsePlanSidebarSheet && rightPanelPresent && rightPanelOpen;
-  const rightPanelControlsAtRoot = rightPanelPresent && !shouldUsePlanSidebarSheet;
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     Upstream chose here whether the panel controls sat at the root, in the header or in the
+     sheet; they always sit in the header now (panelLayoutControls). */
+  /* fork:end fork-stage-columns */
   const renderedRightPanelSurface = rightPanelPresence.value?.activeSurface ?? null;
   const renderedRightPanelSurfaces = rightPanelPresence.value?.surfaces ?? [];
   const previewMiniPlayerVisible = shouldRenderPreviewMiniPlayer(
@@ -1197,6 +1211,16 @@ export default function ChatView(props: ChatViewProps) {
   const rightPanelMaximized =
     !embedded && canMaximizeRightPanel && rightPanelState.maximized === true;
   const inlineRightPanelOwnsTitleBar = rightPanelOpen && !shouldUsePlanSidebarSheet;
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     A bot's Threads panel is a column of its own: held shut while the right panel is maximized,
+     the pane floats, or the right panel holds the one sheet slot. A bot and each of its threads
+     show the bot's panel. */
+  const forkBotThreadsBot = useBotThreadsPanelBot(embedded ? null : activeThreadRef);
+  const forkBotThreadsHeld =
+    rightPanelMaximized || splitPane.floating || (prefersPlanSidebarSheet && rightPanelOpen);
+  const forkBotThreadsInline =
+    useBotThreadsPanelOpen(forkBotThreadsBot) && !forkBotThreadsHeld && !prefersPlanSidebarSheet;
+  /* fork:end fork-bot-work-threads */
   const [threadPanelPopoverHandle] = useState(PopoverCreateHandle);
   const [chatCanvasStore] = useState(createChatCanvasStore);
 
@@ -3571,22 +3595,16 @@ export default function ChatView(props: ChatViewProps) {
     /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
     musicThreadRef: activeThreadRef,
     /* fork:end fork-music-panel */
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+    botThreadsThreadRef: activeThreadRef,
+    /* fork:end fork-bot-work-threads */
   } satisfies PanelLayoutControlsProps;
-  const panelToggleControls = (
-    <PanelLayoutControls
-      {...panelToggleControlProps}
-      showThreadPanelControl={!inlineRightPanelOwnsTitleBar}
-    />
-  );
-  const threadPanelHeaderControl = <ThreadPanelHeaderControl {...panelToggleControlProps} />;
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     One cluster, details toggle included, at the conversation header's end in every state:
+     not pinned to the window, and never split between the header and a panel. */
+  const panelToggleControls = <PanelLayoutControls {...panelToggleControlProps} />;
   const panelLayoutControls = (
-    <WorkspaceTitlebarControls
-      showMaximizeControl={!shouldUsePlanSidebarSheet}
-      rightPanelOpen={rightPanelOpen}
-      animationsActive={panelAnimationsActive}
-      maximized={rightPanelMaximized}
-      onToggleMaximized={toggleRightPanelMaximizedStable}
-    >
+    <StageHeaderControls>
       {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
       <SplitPaneHeaderControls
         panelToggleControls={panelToggleControls}
@@ -3594,8 +3612,9 @@ export default function ChatView(props: ChatViewProps) {
         threadRef={activeThreadRef}
       />
       {/* fork:end fork-split-threads */}
-    </WorkspaceTitlebarControls>
+    </StageHeaderControls>
   );
+  /* fork:end fork-stage-columns */
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
   // A draft chooses (or changes) its project from the first chip in the
@@ -3739,7 +3758,9 @@ export default function ChatView(props: ChatViewProps) {
           state={deviceState}
         />
       )}
-      {rightPanelControlsAtRoot && !embedded ? panelLayoutControls : null}
+      {/* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+          The panel controls are no longer pinned at the root; the header holds them. */}
+      {/* fork:end fork-stage-columns */}
       <div
         className={cn(
           "flex min-h-0 min-w-0 flex-col overflow-x-hidden",
@@ -3771,6 +3792,10 @@ export default function ChatView(props: ChatViewProps) {
                     "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center px-3 sm:px-5",
                     reserveTitleBarControlInset &&
                       !inlineRightPanelOwnsTitleBar &&
+                      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+                         The Threads panel's header keeps clear of the native controls instead. */
+                      !forkBotThreadsInline &&
+                      /* fork:end fork-bot-work-threads */
                       /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
                       // Native window controls sit over the right pane only,
                       // and never over the floating window.
@@ -3787,17 +3812,11 @@ export default function ChatView(props: ChatViewProps) {
                 COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS,
             )}
           >
-            {isElectron && rightPanelControlsAtRoot ? (
-              <span
-                aria-hidden
-                className="pointer-events-none fixed top-[var(--workspace-controls-top)] right-[var(--workspace-controls-right)] h-[var(--workspace-topbar-height)] w-28 [-webkit-app-region:no-drag]"
-              />
-            ) : null}
+            {/* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+                Upstream drew a window-fixed no-drag rect here for the window-pinned controls;
+                the controls now sit in this header's own flow, after the title. */}
+            {/* fork:end fork-stage-columns */}
             {/* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */}
-            {!rightPanelControlsAtRoot && !rightPanelControlsInPanel && !forkProjectlessDraft
-              ? panelLayoutControls
-              : null}
-            {inlineRightPanelOwnsTitleBar ? threadPanelHeaderControl : null}
             {forkProjectlessDraft ? null : (
               <ChatHeader
                 activeThreadEnvironmentId={activeThread.environmentId}
@@ -3817,6 +3836,9 @@ export default function ChatView(props: ChatViewProps) {
               />
             )}
             {/* fork:end fork-new-agent-draft */}
+            {/* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns */}
+            {forkProjectlessDraft ? null : panelLayoutControls}
+            {/* fork:end fork-stage-columns */}
           </header>
         )}
 
@@ -4445,6 +4467,20 @@ export default function ChatView(props: ChatViewProps) {
         )}
       </div>
 
+      {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
+      {forkBotThreadsBot !== null && activeThreadRef ? (
+        <BotThreadsPanel
+          botRef={forkBotThreadsBot}
+          threadRef={activeThreadRef}
+          workspaceLayoutElement={workspaceLayoutElement}
+          sheet={prefersPlanSidebarSheet}
+          held={forkBotThreadsHeld}
+          rightPanelInline={inlineRightPanelOwnsTitleBar}
+          animationsActive={panelAnimationsActive}
+          animationDurationMs={panelAnimationDurationMs}
+        />
+      ) : null}
+      {/* fork:end fork-bot-work-threads */}
       {rightPanelPresent && activeThreadRef && !embedded ? (
         <ChatRightPanel
           sheet={shouldUsePlanSidebarSheet}
@@ -4461,14 +4497,21 @@ export default function ChatView(props: ChatViewProps) {
           maximized={rightPanelMaximized}
           layoutControls={
             rightPanelOpen ? (
-              <div className="mr-px flex items-center gap-1">
+              /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+                 The panel's own controls, beside its close button: the toggles stay in the
+                 conversation's header. In flow, so the header's drag region needs no-drag here. */
+              <div className="mr-px flex items-center gap-1 [-webkit-app-region:no-drag]">
                 <RightPanelMaximizeControl
                   maximized={rightPanelMaximized}
                   onToggle={toggleRightPanelMaximizedStable}
                 />
-                {panelToggleControls}
+                <StagePanelCloseButton
+                  label="Close right panel"
+                  onClose={closePreviewPanelStable}
+                />
               </div>
-            ) : null
+            ) : /* fork:end fork-stage-columns */
+            null
           }
           surfaces={renderedRightPanelSurfaces}
           environmentId={activeThreadRef.environmentId}

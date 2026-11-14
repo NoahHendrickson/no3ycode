@@ -1,0 +1,263 @@
+/**
+ * A bot's work, read from the shells already in memory — see
+ * `.fork/customizations.yaml#fork-bot-work-threads`: the threads it launched and its subagents,
+ * grouped for its Threads panel, and what of it needs the owner, for its sidebar card.
+ */
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+
+import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "~/components/Sidebar.logic";
+
+import {
+  resolveSidebarV2CardStatus,
+  sidebarV2CardTopStatus,
+  type SidebarV2CardStatus,
+} from "../sidebarV2CardStatus";
+import {
+  SIDEBAR_V2_STATUS_SECTION_LABELS,
+  sidebarV2StatusBucketForKind,
+  type SidebarV2StatusBucket,
+} from "../sidebarV2StatusGrouping";
+import { isBotThread } from "./botThreads";
+import { botWorkOwnerId } from "./botWorkRoster";
+
+/** Whose work a thread may be: the bot its tag names, or the parent of a subagent. */
+function botWorkOf(thread: Pick<EnvironmentThreadShell, "source" | "lineage">): string | null {
+  const owner = botWorkOwnerId(thread.source);
+  if (owner !== null) return owner;
+  return thread.lineage.relationshipToParent === "subagent" ? thread.lineage.parentThreadId : null;
+}
+
+/** Whose Threads panel a thread shows: a bot its own, a bot's work (a launched thread, or a
+    subagent) its bot's, and nothing for any other thread. */
+export function botThreadsPanelBotId(
+  thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
+  isBot: (threadId: string) => boolean,
+): string | null {
+  if (isBotThread(thread.source)) return thread.id;
+  const owner = botWorkOf(thread);
+  return owner !== null && isBot(owner) ? owner : null;
+}
+
+/** The part of a bot's hidden work that needs its owner, the most pressing kind first. */
+export interface BotWorkAttention {
+  readonly status: "approval" | "input" | "failed";
+  readonly count: number;
+}
+
+const ATTENTION_RANK: Record<BotWorkAttention["status"], number> = {
+  approval: 0,
+  input: 1,
+  failed: 2,
+};
+
+function attentionStatus(status: SidebarThreadStatus): BotWorkAttention["status"] | null {
+  switch (status) {
+    case "approval":
+      return "approval";
+    case "input":
+    case "request":
+      return "input";
+    case "failed":
+      return "failed";
+    default:
+      return null;
+  }
+}
+
+/** Blocked on the owner now, which a settled thread can become again. */
+function asksOwner(status: SidebarThreadStatus | SidebarV2CardStatus["kind"]): boolean {
+  return status === "approval" || status === "input" || status === "request";
+}
+
+/** A failure the owner has opened since is read: it stops holding the bot's card. */
+function failureUnread(thread: EnvironmentThreadShell): boolean {
+  if (!thread.lastVisitedAt) return true;
+  const failedAt = Date.parse(thread.latestRun?.completedAt ?? thread.updatedAt);
+  const visitedAt = Date.parse(thread.lastVisitedAt);
+  return Number.isNaN(failedAt) || Number.isNaN(visitedAt) || failedAt > visitedAt;
+}
+
+/** Per bot (`environmentId:threadId`), its unpinned launched threads that need the owner.
+    Archived threads are put away, and so are settled ones unless they ask for the owner again;
+    a failure counts until the owner has opened it. */
+export function botWorkAttentionByBot(
+  threads: ReadonlyArray<EnvironmentThreadShell>,
+): ReadonlyMap<string, BotWorkAttention> {
+  const byBot = new Map<string, BotWorkAttention>();
+  for (const thread of threads) {
+    const owner = botWorkOwnerId(thread.source);
+    if (owner === null || thread.archivedAt !== null || thread.pinnedAt !== null) continue;
+    const status = attentionStatus(resolveSidebarThreadStatus(thread));
+    if (status === null) continue;
+    if (status === "failed" && (thread.settledOverride === "settled" || !failureUnread(thread))) {
+      continue;
+    }
+    const key = `${thread.environmentId}:${owner}`;
+    const previous = byBot.get(key);
+    byBot.set(key, {
+      status:
+        previous === undefined || ATTENTION_RANK[status] < ATTENTION_RANK[previous.status]
+          ? status
+          : previous.status,
+      count: (previous?.count ?? 0) + 1,
+    });
+  }
+  return byBot;
+}
+
+/** A bot card's status with its work's: what needs the owner outranks a bot that is idle or has
+    only a report to read; a bot working or blocked itself keeps its own. */
+export function withBotWorkAttention(
+  card: SidebarV2CardStatus,
+  attention: BotWorkAttention | null | undefined,
+): SidebarV2CardStatus & { readonly botWork: BotWorkAttention | null } {
+  if (attention == null || (card.status !== "ready" && card.status !== "waiting")) {
+    return { ...card, botWork: null };
+  }
+  return {
+    ...card,
+    status: attention.status,
+    kind: attention.status,
+    topStatus: sidebarV2CardTopStatus(attention.status, { goalActive: false }),
+    botWork: attention,
+  };
+}
+
+/** A bot card's status line for its work. */
+export function botWorkStatusText(attention: BotWorkAttention): string {
+  if (attention.count > 1) return `${attention.count} threads need you`;
+  switch (attention.status) {
+    case "approval":
+      return "A thread needs your approval";
+    case "input":
+      return "A thread is waiting for your reply";
+    case "failed":
+      return "A thread failed";
+  }
+}
+
+export type BotWorkGroupKey = Exclude<SidebarV2StatusBucket, "drafts"> | "settled";
+
+const BOT_WORK_GROUP_ORDER: ReadonlyArray<BotWorkGroupKey> = [
+  "input",
+  "done",
+  "working",
+  "idle",
+  "settled",
+];
+
+/** Every section the panel can show, in its order, for the filter menu. */
+export const BOT_WORK_GROUPS: ReadonlyArray<{
+  readonly key: BotWorkGroupKey;
+  readonly label: string;
+}> = BOT_WORK_GROUP_ORDER.map((key) => ({ key, label: SIDEBAR_V2_STATUS_SECTION_LABELS[key] }));
+
+export interface BotWorkRow {
+  readonly thread: EnvironmentThreadShell;
+  readonly card: SidebarV2CardStatus;
+}
+
+export interface BotWorkGroup {
+  readonly key: BotWorkGroupKey;
+  readonly label: string;
+  readonly rows: ReadonlyArray<BotWorkRow>;
+}
+
+function activityAt(thread: EnvironmentThreadShell): string {
+  return thread.latestUserMessageAt ?? thread.updatedAt;
+}
+
+/** How the rows inside each section are ordered. */
+export type BotWorkSort = "activity" | "newest" | "oldest" | "title";
+
+export const BOT_WORK_SORTS: ReadonlyArray<BotWorkSort> = ["activity", "newest", "oldest", "title"];
+
+export const BOT_WORK_SORT_LABELS: Record<BotWorkSort, string> = {
+  activity: "Last activity",
+  newest: "Newest",
+  oldest: "Oldest",
+  title: "Title",
+};
+
+const BOT_WORK_COMPARE: Record<BotWorkSort, (left: BotWorkRow, right: BotWorkRow) => number> = {
+  activity: (left, right) => activityAt(right.thread).localeCompare(activityAt(left.thread)),
+  newest: (left, right) => right.thread.createdAt.localeCompare(left.thread.createdAt),
+  oldest: (left, right) => left.thread.createdAt.localeCompare(right.thread.createdAt),
+  title: (left, right) =>
+    left.thread.title.localeCompare(right.thread.title, undefined, { sensitivity: "base" }),
+};
+
+/** What the Threads panel is narrowed to; an empty set or query narrows nothing. */
+export interface BotWorkFilter {
+  readonly query: string;
+  readonly groups: ReadonlySet<BotWorkGroupKey>;
+  readonly projectIds: ReadonlySet<string>;
+}
+
+/** The sections and rows a filter keeps: a query matches a title or a branch. Sections left
+    with no row are dropped, and an untouched section keeps its identity. */
+export function filterBotWork(
+  groups: ReadonlyArray<BotWorkGroup>,
+  filter: BotWorkFilter,
+): ReadonlyArray<BotWorkGroup> {
+  const query = filter.query.trim().toLowerCase();
+  if (query === "" && filter.groups.size === 0 && filter.projectIds.size === 0) return groups;
+  return groups.flatMap((group) => {
+    if (filter.groups.size > 0 && !filter.groups.has(group.key)) return [];
+    const rows = group.rows.filter(
+      ({ thread }) =>
+        (filter.projectIds.size === 0 || filter.projectIds.has(thread.projectId)) &&
+        (query === "" ||
+          thread.title.toLowerCase().includes(query) ||
+          (thread.branch?.toLowerCase().includes(query) ?? false)),
+    );
+    if (rows.length === 0) return [];
+    return [rows.length === group.rows.length ? group : { ...group, rows }];
+  });
+}
+
+/** A bot's work in the sidebar's status sections, what needs the owner first, ordered by `sort`
+    in each; empty sections are left out. Read state is the sidebar's (`lastVisitedAt`). */
+export function groupBotWork(
+  threads: ReadonlyArray<EnvironmentThreadShell>,
+  bot: { readonly environmentId: string; readonly threadId: string },
+  lastVisitedAt: (thread: EnvironmentThreadShell) => string | undefined,
+  sort: BotWorkSort = "activity",
+): ReadonlyArray<BotWorkGroup> {
+  const byGroup = new Map<BotWorkGroupKey, BotWorkRow[]>();
+  for (const thread of threads) {
+    if (
+      thread.environmentId !== bot.environmentId ||
+      thread.archivedAt !== null ||
+      botWorkOf(thread) !== bot.threadId
+    ) {
+      continue;
+    }
+    const card = resolveSidebarV2CardStatus(thread, {
+      lastVisitedAt: lastVisitedAt(thread),
+      wokeAt: null,
+    });
+    const bucket = sidebarV2StatusBucketForKind(card.kind);
+    // Settled is put away, a settled failure too, unless the thread is working or asks again.
+    const key: BotWorkGroupKey =
+      thread.settledOverride === "settled" && bucket !== "working" && !asksOwner(card.kind)
+        ? "settled"
+        : bucket === "drafts"
+          ? "idle"
+          : bucket;
+    const rows = byGroup.get(key) ?? [];
+    rows.push({ thread, card });
+    byGroup.set(key, rows);
+  }
+  return BOT_WORK_GROUP_ORDER.flatMap((key) => {
+    const rows = byGroup.get(key);
+    if (rows === undefined) return [];
+    return [
+      {
+        key,
+        label: SIDEBAR_V2_STATUS_SECTION_LABELS[key],
+        rows: rows.toSorted(BOT_WORK_COMPARE[sort]),
+      },
+    ];
+  });
+}

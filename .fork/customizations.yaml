@@ -2447,14 +2447,16 @@
 - id: fork-inlet-theme
   intent: >
     Appearance offers Inlet alongside the other fork palettes: a template with
-    a colour. Every colour is a frame (window, sidebar, gutter) with the chat
-    column set into it as a flat panel: a real 8px margin and 8px radius on
-    the chat column, which restates --background as the panel so the header,
-    transcript and composer floor paint it; app modals (Settings) restate it
-    too. The right panel is a second panel set into the frame the same way,
-    8px from the chat column, in the panel's fill and inks (its content
-    wrapper carries the margin, since the panel itself collapses to no width);
-    on a narrow window its sheet is inset 8px with a ring of the frame round
+    a colour. Every colour is a frame (window, sidebar, gutter) with a
+    thread's stage set into it as one flat panel: a real 8px margin and 8px
+    radius on the stage row (data-fork-workspace-root), which restates
+    --background as the panel so the header, transcript, composer floor and
+    panels paint it; app modals (Settings) restate it too. The chat column, a
+    bot's Threads panel and the right panel are columns of that one card
+    (fork-stage-columns), each divided from the one on its left by its 1px
+    border alone, in the panel's fill and inks, and every column's header row
+    carries the same bottom line (the chat column's is drawn here, except on
+    the new-agent screen); on a narrow window the right panel's sheet is inset 8px with a ring of the frame round
     it. The open thread's row (aria-current="page") takes the panel's fill
     and ink, goes square on its right end, and runs into the panel through a
     bridge with two 9px concave corners, drawn as the open row's list item
@@ -2516,8 +2518,10 @@
     bridges into the panel the way the open thread row does. On Jungle Art the
     whole stage is the row green, to the window's edges, round a frame-cream card.
     The Threads header's sort and settings menus (data-fork-tab-menu, their
-    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
-    from their button the same way: the open button takes the menu's fill,
+    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), and a
+    bot's Threads panel's filter and sort menus (custom/bots/
+    BotThreadsPanelControls.tsx, their 28px buttons in the panel header,
+    data-fork-bot-threads-header) hang from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
     left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
@@ -2531,7 +2535,7 @@
     tab with no clip unfold; what they hang from eases its fill
     and corners over 160ms; the sidebar's open row and its bridge land at
     once, like a tab switch.
-    Every hung menu goes further (the Threads header, tab strip, composer
+    Every hung menu goes further (the Threads header, a bot's Threads panel, tab strip, composer
     chips, model, mode and usage menus, and the thread details card, popover
     or docked; the docked card stays mounted through its close via
     useInletMorphPresence, fenced in ThreadDetailsCard.tsx):
@@ -3074,7 +3078,6 @@
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/ThreadLaunchService.ts
-    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
     - apps/server/src/orchestration-v2/ThreadForkService.ts
     - packages/provider-core/src/server/subagentProjection.ts
     - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
@@ -7077,6 +7080,7 @@
     - apps/web/src/custom/bots/useSetBotMascot.ts
     - apps/web/src/custom/bots/BotMascotDetailsSection.tsx
     - apps/web/src/custom/bots/BotCardStatusLine.tsx
+    - apps/web/src/custom/scheduled/ScheduledRelativeLabel.tsx
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
@@ -7089,6 +7093,8 @@
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    # ScheduledRelativeLabel moved out so bot cards do not pull the page into startup.
+    - apps/web/src/components/settings/ScheduledTasksSettings.tsx
     # Upstream's test mocks a partial shell; the Mascot section reads its tags.
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
@@ -7105,6 +7111,190 @@
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - apps/server/src/scheduledTasks/forkBotTasks.test.ts
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
+- id: fork-bot-work-threads
+  intent: >
+    What a bot starts is its work, kept out of the sidebar and shown on the bot's own
+    conversation. A top-level thread a bot launches (t3_thread_launch, create_threads), and one
+    launched by such a thread or by a bot's subagent, carries the thread tag
+    bot-work:<bot thread id>, written on the server at launch before its first message
+    (orchestration-v2/forkBotWork, called from ThreadLaunchService.launch with launchedBy and
+    from OrchestratorMcpService.createThreads). The tag is its own command after the thread is
+    created, so the sidebar can list the thread for the one event in between.
+    Best effort: a failed tag only lists the thread like any other. No contract field.
+    Automation runs are not linked, a GitHub task's included: a task launches its runs unbound
+    and does not record which thread made it.
+    A bot's seeded CLAUDE.md (custom/bots/botSeedFiles, "Work goes in its own thread") tells it to
+    launch a thread for work that changes a project or outlasts the reply, to stay inline for
+    lookups, and to track what it started in STATE.md. Only bots read it: the instructions every
+    other thread gets (provider-core orchestrationInstructions) still launch a thread only when
+    asked.
+
+    While its bot lists (a live, unarchived bot), such a thread is off the thread list
+    (filterSidebarV2VisibleThreads, one set lookup per thread), unless pinned; deleting or
+    archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
+    routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
+    its header names the bot where a subagent names its parent, one click back (ChatView
+    headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
+    unchanged.
+
+    A bot's card says when its unpinned work needs the owner (custom/bots/botWork
+    botWorkAttentionByBot, one pass over the shells the sidebar holds): approval or an answer,
+    from a settled thread too, since one can ask again; and a failure, until the owner has
+    opened the thread or settled it, so a read failure does not hold the card: the mark and status line take it over the bot's own idle, waiting or unread states,
+    never over the bot working or blocked itself.
+
+    A bot's conversation and each of its threads (a launched thread, or a subagent) have the
+    bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary
+    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    between the conversation and the right panel, never a right panel tab. It is the right panel's
+    shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
+    close motion), 320px by default and at least 280, with a header the height of the others
+    (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its yarn toggle sits after the details toggle, pressed while open, there and
+    nowhere else. Its open state is one per bot, remembered on this device
+    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads, and
+    the row of the thread on screen is marked current (aria-current, the sidebar's open-row
+    fill). Its header is "Threads", its search, filter and sort buttons (below), and the
+    close button every stage panel's has (fork-stage-columns).
+    With one panel open nothing changes. With both open inline the conversation keeps 480px:
+    each panel's widest is the row less the other panel and 480 (usePreviewPanelInlineSize, via
+    stagePanels inlinePanelRoom, re-measured when the conversation column resizes); a capped
+    width is not saved. Where the right panel is a sheet, or the row is under 1120px (480 + 360 +
+    280), the two do not fit: the panel opened last wins and the other closes, and a row that
+    narrows below that with both open keeps the right panel while this one waits. It is held
+    shut, not forgotten, while the right panel is maximized or the split pane floats. It lists
+    the bot's launched threads and subagents in the sidebar's status sections (Needs input,
+    Completed, Working, Idle, Settled), in the chosen order (last activity first by default),
+    pinned ones too, empty sections left out,
+    one plain line when there is none; a row opens its thread. A row is two lines, always: the
+    sidebar's status mark (its working animation included, by the maintainer's request on
+    2026-11-14) with the title and time, then the pull request in its state colour, leftmost,
+    and the sidebar card's checkout mark (SidebarV2CheckoutMark: branch or worktree). No
+    device mark, project or model: a bot's threads are read under the bot. The status is the mark
+    and the section, never a sentence.
+    Its header carries search, filter and sort buttons before the close button
+    (BotThreadsPanelControls). Search swaps the title for a field and matches a title or a
+    branch; Escape or the button closes it. Filter narrows to chosen status sections and, where
+    the bot's threads span more than one, to chosen projects; a filtered button draws pressed.
+    The filter and sort menus are the sidebar Threads header's sort and settings menus over
+    again: hung from their buttons on Inlet with the one-shape morph (fork-inlet-theme), the
+    glass rim on Glass, and the sort menu shaped as the sidebar's (data-fork-thread-sort).
+    Search and filter are held per bot for the session only (botThreadsPanelStore
+    useBotThreadsViewStore), outside the panel because it remounts as the bot's threads open, and
+    never saved, so a filter cannot hide threads after a restart. Sort orders the rows inside
+    each section (last activity, newest, oldest, title; botWork groupBotWork) and is one saved
+    setting for every bot. Sections that match nothing are dropped, and a list narrowed to
+    nothing offers to clear.
+    The search field takes focus only when its button opens it, never when the panel remounts
+    with search still open. The collapsed tab strip lists no bots, so it keeps a bot's work as
+    tabs (filterSidebarV2VisibleThreads botWorkInPanel false). Mobile is not aware of any of it.
+  tier: 4
+  files:
+    - apps/server/src/orchestration-v2/forkBotWork.ts
+    - apps/web/src/custom/bots/botWork.ts
+    - apps/web/src/custom/bots/botWorkRoster.ts
+    - apps/web/src/custom/bots/botThreadsPanelStore.ts
+    - apps/web/src/custom/bots/BotThreadsPanel.tsx
+    - apps/web/src/custom/bots/BotThreadsPanelControls.tsx
+    - apps/web/src/custom/bots/BotThreadsPanelToggle.tsx
+    - apps/web/src/custom/bots/useBotWorkOwner.ts
+    - apps/web/src/custom/bots/stagePanels.ts
+    - apps/web/src/custom/bots/stagePanelResizeHandles.browser.test.tsx
+  shadows: []
+  watch:
+    - apps/server/src/orchestration-v2/ThreadLaunchService.ts
+    - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
+    - apps/server/src/mcp/OrchestratorMcpService.ts
+    - apps/server/src/mcp/toolkits/project/handlers.ts
+    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/routeReveal.ts
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/hooks/usePreviewPanelInlineSize.ts
+    # A stable drag start: the Threads panel's drag moves the right panel's cap every frame.
+    - apps/web/src/hooks/useResizeDrag.ts
+    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - docs/user/thread-sidebar.md
+  verify:
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+    - apps/web/src/custom/bots/stagePanelResizeHandles.browser.test.tsx
+    - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
+- id: fork-stage-columns
+  intent: >
+    A thread's stage reads as the owner's frame (Figma t3-fork 698:7880): the conversation, a
+    bot's Threads panel and the right panel are columns side by side, each with its own header
+    row. The panel controls (pane actions, details, threads, music, terminal, right panel) are
+    one cluster at the right end of the conversation's header, in its flow, in every state and
+    every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
+    never split between that header and a panel's, and nothing else is drawn over them. A
+    toggle shows pressed while its panel is open. What acts on one panel's content stays in that
+    panel's header: the right panel's tabs and new-tab button, then its maximize toggle and a
+    close button (StagePanelCloseButton, the right panel's close action); the Threads panel's
+    title and close button. The right panel takes those controls inline as well as in its sheet
+    (ChatRightPanel), so its header reserves no room for window-pinned controls, and the
+    conversation's header (ChatHeader) reserves none either. Upstream's window-pinned cluster
+    (WorkspaceTitlebarControls) and lone details toggle (ThreadPanelHeaderControl) stay on disk,
+    unrendered.
+
+    Window chrome: the macOS traffic lights keep the headers' collapsed-sidebar inset as before;
+    on Windows the rightmost column's header keeps clear of the caption buttons (the
+    conversation's while no panel is open, else the Threads panel's or the right panel's); every
+    header is a drag region with its controls marked no-drag, and since the cluster now sits in
+    the conversation header's own flow, no later drag region overlaps it. With the right panel
+    maximized the conversation and its header are hidden; the panel's own header keeps the
+    restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
+    the stock theme keep their surfaces.
+  tier: 3
+  files:
+    - apps/web/src/custom/stageColumns/StageHeaderControls.tsx
+    - apps/web/src/custom/stageColumns/StagePanelCloseButton.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/ChatHeader.tsx
+    - apps/web/src/components/chat/ChatRightPanel.tsx
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.css
+    - knip.jsonc
+  verify:
+    - apps/web/src/__fork_guards__/forkStageColumns.test.ts
+    - apps/web/src/__fork_guards__/forkInletTheme.test.ts
+    - apps/web/src/__fork_guards__/forkNewAgentDraft.test.ts
+- id: fork-stage-header
+  intent: >
+    On Inlet the stage's header rows (the conversation's, a bot's Threads panel's and the right
+    panel's) are 36px, as the owner's frame draws them (Figma t3-fork 698:7880), against the
+    window's 52px top bar, which the sidebar's header and everything outside the stage keep. The
+    stage row restates --workspace-topbar-height from --fork-inlet-stage-header-height, so only
+    what sits inside it moves; --fork-inlet-panel-top resolves at :root, so the card still starts
+    below Windows' caption band, and the details card's rise (portaled out of the stage) reads the
+    token itself. The macOS traffic lights centre at y 26 (fork-sidebar-chrome), which is the
+    36px row's own centre under the card's 8px top inset, and the header's collapsed-sidebar
+    inset keeps them clear of the title and the back button. Stock and Glass keep 52px.
+
+    Inlet's conversation header names the thread by its title alone (the bot's name on a bot's
+    conversation), the header's own title button with its thread-actions menu: the project and
+    parent crumbs stay hidden. A thread with a parent has a back button just left of the title
+    (custom/stageColumns/StageHeaderBackButton, the cluster's ghost size, "Back to <parent>"),
+    which opens the parent in one click. The parent is a subagent's spawning thread (upstream's
+    link), else the bot a bot's work belongs to (stageHeaderParent, the one source of ChatView's
+    headerParentThreadLink). On stock and Glass the breadcrumb's parent crumb does the same in
+    one click, so they get no back button.
+  tier: 3
+  files:
+    - apps/web/src/custom/stageColumns/stageHeaderParent.ts
+    - apps/web/src/custom/stageColumns/StageHeaderBackButton.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/ChatHeader.tsx
+    - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.inlet-menus.css
+  verify:
+    - apps/web/src/__fork_guards__/forkStageHeader.test.ts
+    - apps/web/src/custom/stageColumns/stageHeaderParent.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
     A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)

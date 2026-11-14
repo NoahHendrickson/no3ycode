@@ -43,6 +43,9 @@ import { useClientSettings } from "../../hooks/useSettings";
 /* fork:begin fork-scheduled-runs-off-sidebar — see .fork/customizations.yaml#fork-scheduled-runs-off-sidebar */
 import { AutomationRunBackButton } from "~/custom/scheduled/AutomationRunBackButton";
 /* fork:end fork-scheduled-runs-off-sidebar */
+/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
+import { StageHeaderBackButton } from "~/custom/stageColumns/StageHeaderBackButton";
+/* fork:end fork-stage-header */
 import { GuestShareIndicator } from "./GuestShareControls";
 
 interface ChatHeaderProps {
@@ -79,7 +82,10 @@ export const ChatHeader = memo(function ChatHeader({
   activeProject,
   parentThreadLink,
   onOpenThread,
-  rightPanelOpen,
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     It only chose the room held for window-pinned controls (below). */
+  rightPanelOpen: _rightPanelOpen,
+  /* fork:end fork-stage-columns */
   onNewThreadInProject,
   onOpenProjectSettings,
   onFindInThread,
@@ -251,13 +257,21 @@ export const ChatHeader = memo(function ChatHeader({
       ref={breadcrumbContainerRef}
       className={cn(
         "flex min-w-0 flex-1 items-center gap-2 sm:gap-3",
-        rightPanelOpen ? "pr-10" : "pr-24",
+        /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+           The panel controls follow the title in the header's flow, so no room is held for
+           window-pinned ones (upstream: pr-10 beside an open right panel, else pr-24). */
+        "pr-2",
+        /* fork:end fork-stage-columns */
       )}
       onContextMenu={handleHeaderContextMenu}
     >
       {/* fork:begin fork-scheduled-runs-off-sidebar — see .fork/customizations.yaml#fork-scheduled-runs-off-sidebar */}
       <AutomationRunBackButton />
       {/* fork:end fork-scheduled-runs-off-sidebar */}
+      {/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header
+          Inlet hides the parent crumb, so the way back is a button beside the title. */}
+      <StageHeaderBackButton parent={parentThreadLink} onOpen={onOpenThread} />
+      {/* fork:end fork-stage-header */}
       <WorkspaceBreadcrumb
         ariaLabel="Thread breadcrumb"
         className="flex-1 overflow-clip [overflow-clip-margin:2px]"

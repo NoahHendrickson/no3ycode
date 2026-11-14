@@ -49,7 +49,18 @@ export function ChatRightPanel(props: ChatRightPanelProps) {
     /* fork:end fork-design-mode */
   });
   if (!sheet) {
-    return <RightPanelTabs {...tabs} mode="inline" maximized={maximized} inlineSize={inlineSize} />;
+    return (
+      <RightPanelTabs
+        {...tabs}
+        mode="inline"
+        maximized={maximized}
+        inlineSize={inlineSize}
+        /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+           Inline too, the panel's header holds its own controls (maximize, close). */
+        layoutControls={layoutControls}
+        /* fork:end fork-stage-columns */
+      />
+    );
   }
   return (
     <RightPanelSheet

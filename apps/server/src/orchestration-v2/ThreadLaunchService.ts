@@ -60,6 +60,9 @@ import { makeProviderFailure } from "@t3tools/provider-core/server/failure";
 import { randomUuidV4 } from "@t3tools/provider-core/server/randomUuid";
 import { DispatchModeLimit } from "./DispatchModeLimit.ts";
 import * as ThreadManagement from "./ThreadManagementService.ts";
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { linkForkBotWork } from "./forkBotWork.ts";
+/* fork:end fork-bot-work-threads */
 
 export type ThreadLaunchWorkspaceStrategy =
   | { readonly type: "root"; readonly branch?: string | undefined }
@@ -114,6 +117,10 @@ export interface ThreadLaunchInput {
   /** Marks the thread as an automation run the roster hides; distinct from the message's stamp. */
   readonly scheduledTaskId?: ScheduledTaskId;
   /* fork:end fork-scheduled-runs-off-sidebar */
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  /** The thread whose agent or task launched this one; a bot's work inherits its link. */
+  readonly launchedBy?: ThreadId;
+  /* fork:end fork-bot-work-threads */
 }
 
 type PreparationInput = Pick<
@@ -1197,6 +1204,16 @@ const make = Effect.gen(function* () {
         if (project.id !== input.projectId) {
           return yield* mapError(input, "resolve-project", threadId)("Project identity changed.");
         }
+        /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+           Tagged before the first message; the sidebar can list it for the one event in between. */
+        if (input.launchedBy !== undefined && input.reuseExistingThread !== true) {
+          yield* linkForkBotWork(threads, {
+            commandId: input.commandId,
+            threadId,
+            launchedBy: input.launchedBy,
+          });
+        }
+        /* fork:end fork-bot-work-threads */
         let runId: RunId | null = null;
         let messageSequence: number | undefined;
         let messageWasAlreadyAccepted = false;

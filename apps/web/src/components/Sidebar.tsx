@@ -381,6 +381,14 @@ import {
 import { useCreateBot } from "~/custom/bots/useCreateBot";
 import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import {
+  type BotWorkAttention,
+  botWorkAttentionByBot,
+  withBotWorkAttention,
+} from "~/custom/bots/botWork";
+import { botWorkRowThreadId } from "~/custom/bots/botWorkRoster";
+/* fork:end fork-bot-work-threads */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
   SIDEBAR_V2_ICON_BUTTON_CLASS,
@@ -1062,6 +1070,10 @@ type SidebarThreadRowProps = {
   sweepAction: SidebarSweepAction | null;
   snoozeWakeLabelText: string | null;
   wokeAt: string | null;
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  /** A bot card's launched threads that need the owner (custom/bots/botWork). */
+  botWork?: BotWorkAttention | null;
+  /* fork:end fork-bot-work-threads */
   isActive: boolean;
   // Unlike isActive, never true for the ancestor standing in for an open
   // subagent: drafts and PR clicks care about which composer is on screen.
@@ -1234,10 +1246,19 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
      are one derivation. Upstream computes isUnread and isWoke inline here; the
      semantics (never-visited reads as read, timer wakes survive a visit, a
      settled thread never wakes) are documented with the shared function. */
-  const { status, isUnread, isWoke, topStatus } = resolveSidebarV2CardStatus(thread, {
-    lastVisitedAt,
-    wokeAt: props.wokeAt,
-  });
+  const { status, isUnread, isWoke, topStatus, botWork } =
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+       A bot's card says so when its launched threads, off the sidebar, need you. */
+    withBotWorkAttention(
+      /* fork:end fork-bot-work-threads */
+      resolveSidebarV2CardStatus(thread, {
+        lastVisitedAt,
+        wokeAt: props.wokeAt,
+      }),
+      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+      props.botWork,
+    );
+  /* fork:end fork-bot-work-threads */
   /* fork:end sidebar-v2-status-grouping */
   // Upstream's slim-shelf recede rule: who owns the NEXT move, folded with
   // read/woke state. CARDS DO NOT READ THIS — the component set draws Working
@@ -2228,6 +2249,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               shell={thread.source}
               status={status}
               isUnread={isUnread}
+              /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+              work={botWork}
+              /* fork:end fork-bot-work-threads */
               mood={botMood}
               title={title}
               trailing={trailingGroup}
@@ -2397,6 +2421,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
      Bots list in their own section above the threads, in Code only: Chat lists chats alone. */
   const botThreads = listSidebarBots(threads);
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  const botWorkAttention = botWorkAttentionByBot(threads);
+  /* fork:end fork-bot-work-threads */
   const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
   const botsSectionCollapsed = isListSectionCollapsed("bots");
   const [compactBots, setCompactBots] = useSidebarV2CompactBots();
@@ -2566,11 +2593,20 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       : scopedThreadKey(
           scopeThreadRef(
             routeThreadRef.environmentId,
-            resolveSidebarRowThreadId(
-              routeThreadRef.threadId,
+            /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+               A bot's work has no row either; its bot's card stands in for it. */
+            botWorkRowThreadId(
+              /* fork:end fork-bot-work-threads */
+              resolveSidebarRowThreadId(
+                routeThreadRef.threadId,
+                routeThreadRef.environmentId,
+                threads,
+              ),
+              /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
               routeThreadRef.environmentId,
               threads,
             ),
+            /* fork:end fork-bot-work-threads */
           ),
         );
   // Post-settle navigation validates against the CURRENT route, not the one
@@ -5047,6 +5083,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                            The Bots section's own density, apart from the threads' Compact cards. */
       readonly compact?: boolean;
       /* fork:end fork-bots */
+      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+      readonly botWork?: BotWorkAttention | null;
+      /* fork:end fork-bot-work-threads */
     } = {},
   ) => {
     const { sortable, statusSection } = options;
@@ -5137,6 +5176,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         // the wake signal must survive the trip. Still-snoozed
         // rows resolve to null on their own.
         wokeAt={threadWokeAt(thread, { now: snoozeNow })}
+        /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+        botWork={options.botWork ?? null}
+        /* fork:end fork-bot-work-threads */
         isActive={routeRowThreadKey === threadKey}
         revealRef={routeRowThreadKey === threadKey ? revealActiveRow : undefined}
         isRouteThread={routeThreadKey === threadKey}
@@ -5239,9 +5281,20 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     routeRowThreadKey ===
                       scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
                 )
-                .map((bot) => renderOneThreadRow(bot, "active", { compact: compactBots }))}
+                .map((bot) =>
+                  renderOneThreadRow(bot, "active", {
+                    compact: compactBots,
+                    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+                    botWork:
+                      botWorkAttention.get(
+                        scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
+                      ) ?? null,
+                    /* fork:end fork-bot-work-threads */
+                  }),
+                )}
               {namingBot ? (
                 <SidebarV2NewBotRow
+                  compact={compactBots}
                   initialMascot={nextBotMascotShape(
                     botThreads.map((bot) => botMascotShape(bot.source)),
                   )}

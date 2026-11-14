@@ -2896,8 +2896,10 @@
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-thread-tabs] + [data-fork-thread-panes] {
   --workspace-titlebar-content-left: var(--workspace-gutter-start);
-  /* The native window controls (Windows/Linux overlay) sit over the strip, not the panes. */
-  --workspace-native-controls-inset: 0px;
+  /* The native window controls (Windows/Linux overlay) sit over the strip, not the panes, so a
+     header's end keeps only the panel header's own padding (fork-stage-columns: the panel
+     controls sit at its end now, not pinned to the window). */
+  --workspace-native-controls-inset: 0.75rem;
   --workspace-controls-right: calc(env(safe-area-inset-right) + 0.75rem);
 }
 

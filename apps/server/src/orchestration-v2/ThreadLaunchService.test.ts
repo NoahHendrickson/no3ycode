@@ -3065,3 +3065,48 @@ it.effect("keeps a reused thread's recorded branch without reading the checkout"
   }),
 );
 /* fork:end server-local-thread-branch */
+
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+it.effect("links a launched thread to the bot that launched it, through its own launches", () => {
+  const harness = makeHarness();
+  return Effect.gen(function* () {
+    const launches = yield* ThreadLaunch.ThreadLaunchService;
+    const threads = yield* ThreadManagement.ThreadManagementService;
+    const tagsOf = (threadId: ThreadId) =>
+      threads.getThreadShell(threadId).pipe(Effect.map((shell) => shell?.tags ?? []));
+    const bot = yield* launches.launch(launchInput({ command: "command:bot", thread: "bot-1" }));
+    yield* threads.dispatch({
+      type: "thread.tag.set",
+      commandId: CommandId.make("command:bot:tag"),
+      threadId: bot.threadId,
+      tag: "bot",
+      tagged: true,
+    });
+    const work = yield* launches.launch({
+      ...launchInput({ command: "command:work", thread: "work-1", message: "Fix it" }),
+      launchedBy: bot.threadId,
+    });
+    const nested = yield* launches.launch({
+      ...launchInput({ command: "command:nested", thread: "nested-1" }),
+      launchedBy: work.threadId,
+    });
+    const plain = yield* launches.launch(
+      launchInput({ command: "command:plain", thread: "plain-1" }),
+    );
+    const unrelated = yield* launches.launch({
+      ...launchInput({ command: "command:unrelated", thread: "unrelated-1" }),
+      launchedBy: plain.threadId,
+    });
+    assert.deepStrictEqual(yield* tagsOf(work.threadId), ["bot-work:bot-1"]);
+    assert.deepStrictEqual(yield* tagsOf(nested.threadId), ["bot-work:bot-1"]);
+    assert.deepStrictEqual(yield* tagsOf(unrelated.threadId), []);
+    // A retry replays the tag command rather than failing on it.
+    const retried = yield* launches.launch({
+      ...launchInput({ command: "command:work", thread: "work-1", message: "Fix it" }),
+      launchedBy: bot.threadId,
+    });
+    assert.isTrue(retried.resumed);
+    assert.deepStrictEqual(yield* tagsOf(work.threadId), ["bot-work:bot-1"]);
+  }).pipe(Effect.provide(harness.layer));
+});
+/* fork:end fork-bot-work-threads */

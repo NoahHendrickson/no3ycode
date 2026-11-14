@@ -530,8 +530,11 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color] {
   --fork-inlet-details-gap: 4px;
   --fork-inlet-details-rise: calc(
-    (var(--workspace-topbar-height, 52px) - var(--workspace-titlebar-control-size, 28px)) / 2 -
-      var(--fork-inlet-details-gap)
+    /* The stage's header row (fork-stage-header): the popover is portaled out of the stage,
+       so it cannot read the row's own --workspace-topbar-height. */ (
+        var(--fork-inlet-stage-header-height) - var(--workspace-titlebar-control-size, 28px)
+      ) /
+      2 - var(--fork-inlet-details-gap)
   );
 }
 

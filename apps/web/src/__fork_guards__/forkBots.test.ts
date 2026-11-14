@@ -61,6 +61,8 @@ const chatView = readSibling("../components/ChatView.tsx");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
+const botStatusLineSource = readSibling("../custom/bots/BotCardStatusLine.tsx");
+const relativeLabelSource = readSibling("../custom/scheduled/ScheduledRelativeLabel.tsx");
 
 /** A bot whose shell carries `report` as its latest report, as the server fills it. */
 function bot(
@@ -208,6 +210,14 @@ describe("fork guard: fork-bots", () => {
     expect(line(bot("new"))).toEqual({ text: "Tell it what its job is" });
   });
 
+  it("labels the next check without bundling the settings page into the sidebar", () => {
+    expect(botStatusLineSource).toContain(
+      'import { ScheduledRelativeLabel } from "~/custom/scheduled/ScheduledRelativeLabel";',
+    );
+    expect(botStatusLineSource).not.toMatch(/from "[^"]*components\/settings\//);
+    expect(relativeLabelSource).not.toMatch(/from "[^"]*components\/settings\//);
+  });
+
   it("draws a bot card as one kind, chosen once per row", () => {
     expect(sidebarV2CardKind(bot("b").source, false)).toBe("bot");
     expect(sidebarV2CardKind(bot("b").source, true)).toBe("bot-compact");
@@ -226,7 +236,7 @@ describe("fork guard: fork-bots", () => {
 
   it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
-    expect(sidebar).toContain('renderOneThreadRow(bot, "active", { compact: compactBots })');
+    expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+compact: compactBots,/);
     expect(sidebar).toContain("options.compact ??");
     expect(sidebar).not.toContain("createPortal");
     expect(sidebar).toContain('onToggleCollapsed={() => toggleListSectionCollapsed("threads")}');
@@ -321,9 +331,7 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("a wake writes STATE.md only");
     // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
     expect(rules).toContain("refuses an interval under 15 minutes");
-    expect(rules).toContain(
-      "`afterPosition` set to `itemCount` minus 21 when `itemCount` is over 20",
-    );
+    expect(rules).toContain("Reads return the newest messages first, so read with `limit: 20`");
     expect(rules).toContain("Keep at most 30 lines");
     expect(rules).toContain('model: "haiku"');
     expect(rules).toContain("A wake never creates, changes or deletes scheduled tasks");

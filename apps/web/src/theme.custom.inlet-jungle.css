@@ -531,8 +531,9 @@
   }
 }
 
-/* Jungle Art's other hung menus (the Threads header's sort and settings)
-   take the model menu's green too, inked white, and so do their buttons.
+/* Jungle Art's other hung menus (the Threads header's sort and settings, a
+   bot's Threads panel's filter and sort) take the model menu's green too,
+   inked white, and so do their buttons.
    Restating --popover moves the fill, the tab and the controls' wells with
    it; the model menu keeps its own shell and cream list. */
 
@@ -597,7 +598,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  :is([data-sidebar-version="v2"], [data-fork-thread-tabs])
+  :is([data-sidebar-version="v2"], [data-fork-thread-tabs], [data-fork-bot-threads-header])
   [data-fork-tab-trigger][aria-expanded="true"] {
   background-color: var(--fork-inlet-model-shell);
   color: #ffffff;

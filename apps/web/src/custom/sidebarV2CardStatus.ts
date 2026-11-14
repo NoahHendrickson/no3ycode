@@ -96,7 +96,7 @@ export function resolveSidebarV2CardStatusKind(input: {
     leading mark — so they survive as the accessible names of aria-hidden
     marks. Limited takes the amber dot: it is waiting on you the way approval
     and input are. */
-function sidebarV2CardTopStatus(
+export function sidebarV2CardTopStatus(
   kind: SidebarV2CardStatusKind | null,
   options: { readonly goalActive: boolean },
 ): SidebarV2CardTopStatus {

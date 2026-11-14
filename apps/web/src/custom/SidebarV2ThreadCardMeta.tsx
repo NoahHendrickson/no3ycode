@@ -104,7 +104,7 @@ export function SidebarV2ProjectFolderMark(props: { readonly className?: string 
     name, and the dev-server pulse hook. The repo line draws it only when the
     thread has a worktree or a branch, and says why the worktree mark replaces
     the branch mark rather than joining it. */
-function SidebarV2CheckoutMark(props: {
+export function SidebarV2CheckoutMark(props: {
   readonly branch: string | null;
   readonly hasWorktree: boolean;
   readonly devServerPort: number | null;

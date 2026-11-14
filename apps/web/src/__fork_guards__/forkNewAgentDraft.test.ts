@@ -80,9 +80,8 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(chatView).toContain(
       "const forkProjectlessDraft = isLocalDraftThread && activeProject === null;",
     );
-    expect(chatView).toMatch(
-      /!rightPanelControlsAtRoot && !rightPanelControlsInPanel && !forkProjectlessDraft\s*\?\s*panelLayoutControls/u,
-    );
+    // fork-stage-columns: the controls sit after the header's title, and wait for the project too.
+    expect(chatView).toContain("{forkProjectlessDraft ? null : panelLayoutControls}");
     expect(chatView).toMatch(/\{forkProjectlessDraft \? null : \(\s*<ChatHeader/u);
     expect(chatView).toMatch(
       /\{forkProjectlessDraft(?: \|\| splitPane\.floating)? \? null : \(\s*<ThreadDetailsPanel\b/u,

@@ -165,7 +165,8 @@ function useTabSource() {
   const localLastVisitedAtById = useUiStateStore((store) => store.threadLastVisitedAtById);
   const routeTarget = useShownThreadRouteTarget().shownTarget;
   return {
-    threads: filterSidebarV2VisibleThreads(threads, null, delegatedUnderParent),
+    // A bot's work keeps its tabs: the strip lists no bots, so nothing else would show it.
+    threads: filterSidebarV2VisibleThreads(threads, null, delegatedUnderParent, undefined, false),
     localLastVisitedAtById,
     // The minute re-reads it for hold expiry, the wake clock at each snooze deadline.
     now: preciseNow(useNowMinute(), useSnoozeWakeClock(threads)),

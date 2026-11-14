@@ -54,8 +54,11 @@ export function useSidebarV2CompactBots(): [boolean, (value: boolean) => void] {
   return useLocalStorage(COMPACT_BOTS_STORAGE_KEY, false, Schema.Boolean);
 }
 
-/** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. */
+/** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. Drawn
+    as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
+    34px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
+  readonly compact: boolean;
   /** The mascot offered first; the button beside the name steps through the rest. */
   readonly initialMascot: BotMascotShape;
   readonly onCreate: (name: string, mascot: BotMascotShape) => Promise<unknown>;
@@ -87,7 +90,15 @@ export function SidebarV2NewBotRow(props: {
     }
   };
   return (
-    <li data-thread-selection-safe className="flex list-none items-center gap-1 px-1">
+    <li
+      data-thread-selection-safe
+      className={cn(
+        "flex list-none items-center gap-x-2",
+        props.compact ? "h-[34px]" : "h-11",
+        SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
+      )}
+    >
+      {/* The card's 22px mascot column; the 36px button overhangs it evenly. */}
       <button
         type="button"
         disabled={creating}
@@ -103,9 +114,13 @@ export function SidebarV2NewBotRow(props: {
               ] ?? current,
           )
         }
-        className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60"
+        className="-mx-[7px] flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60"
       >
-        <BotMascot shape={mascot} mood="Idle" />
+        {props.compact ? (
+          <BotMascot shape={mascot} mood="Idle" />
+        ) : (
+          <BotMascot shape={mascot} mood="Idle" fit={22} />
+        )}
       </button>
       <input
         autoFocus
@@ -120,7 +135,11 @@ export function SidebarV2NewBotRow(props: {
         placeholder="Name your bot"
         aria-label="Bot name"
         data-testid="sidebar-v2-new-bot-name"
-        className="h-9 min-w-0 flex-1 rounded-md border border-sidebar-border bg-transparent px-2 text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-muted-foreground/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60"
+        // Where the card's title sits, and as tall as the row allows.
+        className={cn(
+          "min-w-0 flex-1 rounded-md border border-sidebar-border bg-transparent px-2 text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-muted-foreground/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
+          props.compact ? "h-7" : "h-8",
+        )}
       />
     </li>
   );
@@ -204,7 +223,12 @@ export function SidebarV2BotsRow(props: {
       </div>
       {/* The thread list's tooltip timing, so a bot card's hover card opens like a thread's. */}
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
-        <ul role="presentation" className={cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}>
+        {/* 4px under the header row, so the first card never meets its buttons; none when
+            folded away to nothing or empty. */}
+        <ul
+          role="presentation"
+          className={cn("mt-1 flex flex-col empty:mt-0", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}
+        >
           {props.children}
         </ul>
       </TooltipProvider>

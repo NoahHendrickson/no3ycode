@@ -276,6 +276,8 @@ import {
   RepeatOnce as PhRepeatOnce,
   SkipBack as PhSkipBack,
   SkipForward as PhSkipForward,
+  // fork-bot-work-threads: the bot Threads panel toggle.
+  Yarn as PhYarn,
 } from "@phosphor-icons/react";
 import type { FC, ReactElement, SVGProps } from "react";
 import { createElement } from "react";
@@ -696,6 +698,7 @@ export const Gamepad2Icon = icon("gamepad-2", PhGameController, "duotone");
 export const Layers3Icon = icon("layers-3", PhStack, "duotone");
 export const Layers3 = Layers3Icon;
 export const MusicIcon = icon("music", PhMusicNotes, "duotone");
+export const YarnIcon = icon("yarn", PhYarn, "duotone");
 export const ShoppingBagIcon = icon("shopping-bag", PhShoppingBag, "duotone");
 export const VideoIcon = icon("video", PhVideoCamera, "duotone");
 export const ChevronLeft = ChevronLeftIcon;

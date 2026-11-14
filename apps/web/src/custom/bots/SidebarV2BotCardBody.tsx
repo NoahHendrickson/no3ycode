@@ -15,6 +15,7 @@ import { BotMascot } from "./BotMascot";
 import type { BotMascotMood } from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
 import { type BotShell, isBotThread } from "./botThreads";
+import type { BotWorkAttention } from "./botWork";
 
 /** Which body a sidebar card draws, chosen once per row. */
 export type SidebarV2CardKind = "card" | "compact" | "bot" | "bot-compact";
@@ -33,6 +34,7 @@ export function SidebarV2BotCardBody(props: {
   readonly shell: BotShell & { readonly id: string };
   readonly status: SidebarThreadStatus;
   readonly isUnread: boolean;
+  readonly work: BotWorkAttention | null;
   readonly mood: BotMascotMood;
   readonly title: ReactNode;
   readonly trailing: ReactNode;
@@ -56,6 +58,7 @@ export function SidebarV2BotCardBody(props: {
         shell={props.shell}
         status={props.status}
         isUnread={props.isUnread}
+        work={props.work}
       />
     </div>
   );
