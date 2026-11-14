@@ -3027,3 +3027,14 @@
   }
 }
 /* fork:end fork-music-panel */
+
+/* The composer's limits list scrolls without a scrollbar: a classic one
+   paints the light theme's thumb down the dark shell and pushes the panels
+   off centre. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-usage-scroller] {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
