@@ -6261,8 +6261,11 @@
     # Find keeps one attached timeline per thread, so split panes do not steal it.
     - apps/web/src/components/chat/threadFindStore.ts
     - apps/web/src/components/chat/threadFindStore.test.ts
-    # Fenced: the route thread's split layout and SplitThreadPanes in place of {view}.
+    # Fenced: the route thread's split layout and SplitThreadPanes in place of {view},
+    # and useOpenThreadFamily exported so a pane holds its own thread's family too.
     - apps/web/src/components/ThreadRouteView.tsx
+    # Fenced: the other pane's older settled thread loads its shell row.
+    - apps/web/src/components/ChatView.browser.test.tsx
     # Fenced: focused-pane gates, titlebar insets per pane, the pill, the
     # header controls and the floating window's hidden panels.
     - apps/web/src/components/ChatView.tsx

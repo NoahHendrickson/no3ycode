@@ -34,6 +34,7 @@ import {
 } from "react";
 
 import ChatView from "~/components/ChatView";
+import { useOpenThreadFamily } from "~/components/ThreadRouteView";
 import type { ChatComposerHandle } from "~/components/chat/ChatComposer";
 import { CollapsedThreadTabs } from "~/custom/CollapsedThreadTabs";
 import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandleContext";
@@ -157,9 +158,11 @@ function usePaneRoute(ref: ScopedThreadRef | null): {
     unlistedRef?.environmentId ?? null,
     unlistedRef?.threadId ?? null,
   );
+  const bootstrapComplete = isThreadRouteSnapshotAuthoritative(shellStatus);
+  useOpenThreadFamily(ref, bootstrapComplete && unlistedRef !== null);
   if (ref === null) return { route: null, missing: false };
   const renderState = resolveThreadRouteRenderState({
-    bootstrapComplete: isThreadRouteSnapshotAuthoritative(shellStatus),
+    bootstrapComplete,
     serverThreadExists: shell !== null,
     serverThreadDeleted: shell?.deletedAt != null,
     unlistedThreadDetail,

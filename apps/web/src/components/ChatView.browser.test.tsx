@@ -14,6 +14,10 @@ import { DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { selectThreadDiffPanelSelection, useDiffPanelStore } from "~/diffPanelStore";
 import { __setClientSettingsForTests } from "~/hooks/useSettings";
 import { useRightPanelStore } from "~/rightPanelStore";
+/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+import { useSplitThreadStore } from "~/custom/splitThreads/splitThreadStore";
+import { readThreadShell } from "~/state/entities";
+/* fork:end fork-split-threads */
 import { getRouter } from "~/router";
 import {
   ENVIRONMENT_ID,
@@ -95,6 +99,44 @@ it("opens the thread actions menu for an older settled thread the shell leaves o
     .element(page.getByRole("menuitem", { name: "Rename thread" }), { timeout: 5_000 })
     .toBeVisible();
 });
+
+/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+it("loads the shell row of an older settled thread in the other split pane", async () => {
+  const routeThread = threadWithHistory("split-route", 1);
+  const paneThread = {
+    ...threadWithHistory("split-older-settled", 1),
+    olderSettled: true as const,
+  };
+  using _environment = installFakeEnvironment([routeThread, paneThread]);
+  __setClientSettingsForTests({
+    ...DEFAULT_CLIENT_SETTINGS,
+    onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
+  });
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  // The split shows only on a wide column.
+  await page.viewport(1600, 900);
+  await using _viewport = {
+    [Symbol.asyncDispose]: () => page.viewport(viewport.width, viewport.height),
+  };
+  const paneRef = scopeThreadRef(ENVIRONMENT_ID, paneThread.id);
+  useSplitThreadStore.getState().pair(scopeThreadRef(ENVIRONMENT_ID, routeThread.id), paneRef);
+  using _split = { [Symbol.dispose]: () => useSplitThreadStore.getState().unpair(paneRef) };
+
+  const router = getRouter(
+    createMemoryHistory({ initialEntries: [`/${ENVIRONMENT_ID}/${routeThread.id}`] }),
+  );
+  await router.load();
+  await using _app = await render(<AppRoot router={router} />, {
+    // AppRoot brings its own router.
+    router: false,
+  });
+  await expect.element(page.getByText("split-older-settled: question 0")).toBeVisible();
+
+  // The pane's thread actions menu reads this row; the route stays on the other thread.
+  await vi.waitFor(() => expect(readThreadShell(paneRef)).not.toBeNull());
+  expect(router.state.location.pathname).toBe(`/${ENVIRONMENT_ID}/${routeThread.id}`);
+});
+/* fork:end fork-split-threads */
 
 it("retains each thread's diff selection when returning from another thread or Settings", async () => {
   const a = threadWithHistory("diff-selection-a", 1);
