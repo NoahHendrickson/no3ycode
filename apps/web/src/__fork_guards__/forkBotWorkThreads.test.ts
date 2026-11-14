@@ -19,6 +19,7 @@ import {
   groupBotWork,
   withBotWorkAttention,
 } from "../custom/bots/botWork";
+import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { BOT_WORK_TAG_PREFIX, botWorkRowThreadId } from "../custom/bots/botWorkRoster";
 import { BOT_THREAD_TAG } from "../custom/bots/botThreads";
 import {
@@ -211,6 +212,10 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(launch).toContain("yield* linkForkBotWork(threads, {");
     expect(mcp).toContain("yield* linkForkBotWork(threadManagement, {");
     expect(launchTool).toContain("{ launchedBy: caller.id }");
+    // A bot's own rules send real work to a thread it launches; no other thread reads them.
+    const rules = botSeedFiles({ name: "Mail Bot", today: "2026-11-14", threadId: "mail" })[0];
+    expect(rules?.relativePath).toBe("CLAUDE.md");
+    expect(rules?.contents).toContain("**Start a thread** with `t3_thread_launch`");
     expect(chatView).toContain("<BotThreadsPanel");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.

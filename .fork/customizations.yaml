@@ -7104,6 +7104,11 @@
     ThreadLaunchService.launch with launchedBy and from OrchestratorMcpService.createThreads).
     Best effort: a failed tag only lists the thread like any other. No contract field.
     Automation runs of an unbound task are not linked: a task does not record which thread made it.
+    A bot's seeded CLAUDE.md (custom/bots/botSeedFiles, "Work goes in its own thread") tells it to
+    launch a thread for work that changes a project or outlasts the reply, to stay inline for
+    lookups, and to track what it started in STATE.md. Only bots read it: the instructions every
+    other thread gets (provider-core orchestrationInstructions) still launch a thread only when
+    asked.
 
     While its bot lists (a live, unarchived bot), such a thread is off the thread list
     (filterSidebarV2VisibleThreads, one set lookup per thread), unless pinned; deleting or
