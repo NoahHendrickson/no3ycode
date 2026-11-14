@@ -1,9 +1,10 @@
 import { ThreadId } from "@t3tools/contracts";
+import { FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { makeThreadFixture } from "../../test-fixtures";
 import type { Thread } from "../../types";
-import { BOT_WORK_TAG_PREFIX, threadParentOf } from "../bots/botWorkRoster";
+import { threadParentOf } from "../bots/botWorkRoster";
 
 function thread(
   tags: ReadonlyArray<string>,
@@ -26,7 +27,12 @@ function thread(
 
 describe("threadParentOf", () => {
   it.each([
-    ["a bot's work leads to its bot", thread([`${BOT_WORK_TAG_PREFIX}ops-bot`]), "ops-bot", "bot"],
+    [
+      "a bot's work leads to its bot",
+      thread([`${FORK_BOT_WORK_TAG_PREFIX}ops-bot`]),
+      "ops-bot",
+      "bot",
+    ],
     [
       "a subagent leads to the thread that spawned it",
       thread([], { id: "spawner", relationship: "subagent" }),
@@ -35,7 +41,7 @@ describe("threadParentOf", () => {
     ],
     [
       "a subagent of a bot's work leads to its own parent first",
-      thread([`${BOT_WORK_TAG_PREFIX}ops-bot`], { id: "spawner", relationship: "subagent" }),
+      thread([`${FORK_BOT_WORK_TAG_PREFIX}ops-bot`], { id: "spawner", relationship: "subagent" }),
       "spawner",
       "subagent",
     ],

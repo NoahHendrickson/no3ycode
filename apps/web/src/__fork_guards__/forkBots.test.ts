@@ -8,6 +8,7 @@
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { MessageId } from "@t3tools/contracts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -37,7 +38,6 @@ import { botFailureSignature, createBotFailureAlerts } from "../custom/bots/botF
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import {
   BOT_QUIET_REPLY,
-  BOT_THREAD_TAG,
   botFolderName,
   botFolderPath,
   botStatusLine,
@@ -61,6 +61,9 @@ const chatView = readSibling("../components/ChatView.tsx");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
+const subagentProjection = readSibling(
+  "../../../../packages/provider-core/src/server/subagentProjection.ts",
+);
 const botStatusLineSource = readSibling("../custom/bots/BotCardStatusLine.tsx");
 const relativeLabelSource = readSibling("../custom/scheduled/ScheduledRelativeLabel.tsx");
 
@@ -76,7 +79,7 @@ function bot(
     ...thread,
     source: {
       ...thread.source,
-      tags: [BOT_THREAD_TAG, ...extraTags],
+      tags: [FORK_BOT_THREAD_TAG, ...extraTags],
       latestVisibleMessage:
         report === undefined
           ? null
@@ -244,8 +247,12 @@ describe("fork guard: fork-bots", () => {
     expect(chatView).toContain("isForkChatThread || isForkBotThread");
   });
 
+  it("never makes a bot's subagent another bot", () => {
+    expect(subagentProjection).toContain("tags: forkSubagentTags(input.parentThread.tags),");
+  });
+
   it("tags a new bot `bot` before its mascot", () => {
-    expect(createBot).toContain("input: { threadId, tag: BOT_THREAD_TAG, tagged: true },");
+    expect(createBot).toContain("input: { threadId, tag: FORK_BOT_THREAD_TAG, tagged: true },");
     expect(createBot).toContain(
       "await run(threadEnvironment.delete, { environmentId, input: { threadId } });",
     );

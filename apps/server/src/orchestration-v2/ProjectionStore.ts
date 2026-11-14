@@ -122,9 +122,9 @@ import {
   FORK_BOT_REPORT_CHARS,
   FORK_BOT_REPORT_LOOKBACK,
   FORK_BOT_SETTLED_RUN_STATUSES,
-  FORK_BOT_THREAD_TAG,
   forkBotReportFromRow,
 } from "./forkBotReport.ts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
 
 export class ProjectionStoreApplyEventError extends Schema.TaggedError<ProjectionStoreApplyEventError>()(

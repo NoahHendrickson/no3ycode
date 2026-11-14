@@ -9,6 +9,7 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { type EnvironmentId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
+import { FORK_BOT_THREAD_TAG, FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
@@ -22,8 +23,7 @@ import {
   withBotWorkAttention,
 } from "../custom/bots/botWork";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
-import { BOT_WORK_TAG_PREFIX, botWorkRowThreadId } from "../custom/bots/botWorkRoster";
-import { BOT_THREAD_TAG } from "../custom/bots/botThreads";
+import { botWorkRowThreadId } from "../custom/bots/botWorkRoster";
 import {
   toggleBotThreadsPanel,
   useBotThreadsPanelStore,
@@ -69,13 +69,15 @@ function withTags(thread: Thread, tags: ReadonlyArray<string>): Thread {
 }
 
 function bot(id: string, overrides: Partial<Thread> = {}): Thread {
-  return withTags(makeThreadFixture({ id: id as Thread["id"], ...overrides }), [BOT_THREAD_TAG]);
+  return withTags(makeThreadFixture({ id: id as Thread["id"], ...overrides }), [
+    FORK_BOT_THREAD_TAG,
+  ]);
 }
 
 /** A thread the bot `owner` launched. */
 function work(id: string, owner: string, overrides: Partial<Thread> = {}): Thread {
   return withTags(makeThreadFixture({ id: id as Thread["id"], ...overrides }), [
-    `${BOT_WORK_TAG_PREFIX}${owner}`,
+    `${FORK_BOT_WORK_TAG_PREFIX}${owner}`,
   ]);
 }
 

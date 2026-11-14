@@ -131,9 +131,9 @@ import * as SecretRequests from "../secrets/SecretRequests.ts";
 import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import { forkBotWakePrompt } from "../scheduledTasks/forkBotTasks.ts";
-import { forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
+import { forkBotScheduleRefusal } from "./forkBotWakes.ts";
 /* fork:end fork-bots */
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
 import { linkForkBotWork } from "../orchestration-v2/forkBotWork.ts";
@@ -2153,9 +2153,12 @@ const make = Effect.gen(function* () {
          A bot's own wakes start clean and at most every 15 minutes, so a forgotten flag cannot
          carry into every wake. The interval holds for an unbound task too, or unbinding would be
          the way round a refusal. */
-      const forkBotCaller = parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
-      const forkBotWake = bindToCurrentThread && forkBotCaller;
-      const forkBotRefusal = forkBotCaller ? forkBotWakeScheduleRefusal(input.schedule) : null;
+      const forkBotWake = bindToCurrentThread && isForkBotThread(parent?.thread.tags);
+      const forkBotRefusal = yield* forkBotScheduleRefusal(
+        threadManagement,
+        parent?.thread.id,
+        input.schedule,
+      ).pipe(Effect.mapError(threadManagementFailure));
       if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
       /* fork:end fork-bots */
       const modelSelection =
@@ -2260,10 +2263,13 @@ const make = Effect.gen(function* () {
               : null;
         /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
         const forkBotRefusal =
-          input.schedule !== undefined &&
-          parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
-            ? forkBotWakeScheduleRefusal(input.schedule)
-            : null;
+          input.schedule === undefined
+            ? null
+            : yield* forkBotScheduleRefusal(
+                threadManagement,
+                parent?.thread.id,
+                input.schedule,
+              ).pipe(Effect.mapError(threadManagementFailure));
         if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
         /* fork:end fork-bots */
         // Reset the workspace only when the binding flips, so unbinding cannot leave runs in the shared checkout.
@@ -2279,7 +2285,7 @@ const make = Effect.gen(function* () {
           prompt:
             threadId !== null &&
             parent?.thread.id === threadId &&
-            parent.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+            isForkBotThread(parent.thread.tags)
               ? forkBotWakePrompt(input.prompt ?? existing.prompt)
               : (input.prompt ?? existing.prompt),
           /* fork:end fork-bots */
