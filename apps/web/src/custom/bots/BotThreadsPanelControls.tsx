@@ -1,6 +1,8 @@
 /**
  * The search, filter and sort buttons in a bot's Threads panel header, beside its close button —
- * see `.fork/customizations.yaml#fork-bot-work-threads`.
+ * see `.fork/customizations.yaml#fork-bot-work-threads`. The filter and sort menus hang from their
+ * buttons as the sidebar Threads header's sort and settings menus do (data-fork-tab-trigger /
+ * data-fork-tab-menu, `.fork/customizations.yaml#fork-inlet-theme`).
  */
 import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "lucide-react";
 
@@ -77,6 +79,7 @@ export function BotThreadsPanelControls(props: {
                     size="icon-sm"
                     variant={filtered ? "secondary" : "ghost"}
                     data-testid="bot-threads-filter"
+                    data-fork-tab-trigger=""
                   />
                 }
               />
@@ -86,7 +89,7 @@ export function BotThreadsPanelControls(props: {
           </TooltipTrigger>
           <TooltipPopup side="bottom">{filterLabel}</TooltipPopup>
         </Tooltip>
-        <MenuPopup align="end" className="min-w-48">
+        <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="" className="min-w-48">
           <MenuGroup>
             <MenuGroupLabel>Status</MenuGroupLabel>
             {BOT_WORK_GROUPS.map((group) => (
@@ -141,6 +144,7 @@ export function BotThreadsPanelControls(props: {
                     size="icon-sm"
                     variant="ghost"
                     data-testid="bot-threads-sort"
+                    data-fork-tab-trigger=""
                   />
                 }
               />
@@ -150,13 +154,24 @@ export function BotThreadsPanelControls(props: {
           </TooltipTrigger>
           <TooltipPopup side="bottom">{sortLabel}</TooltipPopup>
         </Tooltip>
-        <MenuPopup align="end" className="min-w-40">
+        <MenuPopup
+          align="end"
+          data-fork-glass-rim
+          data-fork-thread-sort
+          data-fork-tab-menu=""
+          className="min-w-40"
+        >
           <MenuRadioGroup
             value={sort}
             onValueChange={(value) => setBotThreadsSort(value as BotWorkSort)}
           >
             {BOT_WORK_SORTS.map((option) => (
-              <MenuRadioItem key={option} value={option} closeOnClick>
+              <MenuRadioItem
+                key={option}
+                value={option}
+                closeOnClick
+                className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+              >
                 {BOT_WORK_SORT_LABELS[option]}
               </MenuRadioItem>
             ))}

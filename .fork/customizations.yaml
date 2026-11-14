@@ -2510,8 +2510,10 @@
     bridges into the panel the way the open thread row does. On Jungle Art the
     whole stage is the row green, to the window's edges, round a frame-cream card.
     The Threads header's sort and settings menus (data-fork-tab-menu, their
-    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx) hang
-    from their button the same way: the open button takes the menu's fill,
+    buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), and a
+    bot's Threads panel's filter and sort menus (custom/bots/
+    BotThreadsPanelControls.tsx, their 28px buttons in the panel header,
+    data-fork-bot-threads-header) hang from their button the same way: the open button takes the menu's fill,
     and the end-aligned menu fills the 4px gap and curves into the button's
     left side. Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons: the lucide→Phosphor shim (custom/icons/lucide-phosphor.tsx, useForkIconWeight) swaps duotone for fill while data-fork-theme is inlet, and the hand-drawn worktree mark's wash goes solid. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
@@ -2525,7 +2527,7 @@
     tab with no clip unfold; what they hang from eases its fill
     and corners over 160ms; the sidebar's open row and its bridge land at
     once, like a tab switch.
-    Every hung menu goes further (the Threads header, tab strip, composer
+    Every hung menu goes further (the Threads header, a bot's Threads panel, tab strip, composer
     chips, model, mode and usage menus, and the thread details card, popover
     or docked; the docked card stays mounted through its close via
     useInletMorphPresence, fenced in ThreadDetailsCard.tsx):
@@ -7153,6 +7155,9 @@
     (BotThreadsPanelControls). Search swaps the title for a field and matches a title or a
     branch; Escape or the button closes it. Filter narrows to chosen status sections and, where
     the bot's threads span more than one, to chosen projects; a filtered button draws pressed.
+    The filter and sort menus are the sidebar Threads header's sort and settings menus over
+    again: hung from their buttons on Inlet with the one-shape morph (fork-inlet-theme), the
+    glass rim on Glass, and the sort menu shaped as the sidebar's (data-fork-thread-sort).
     Search and filter are held per bot for the session only (botThreadsPanelStore
     useBotThreadsViewStore), outside the panel because it remounts as the bot's threads open, and
     never saved, so a filter cannot hide threads after a restart. Sort orders the rows inside
