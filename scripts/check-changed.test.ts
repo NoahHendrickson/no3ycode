@@ -22,9 +22,6 @@ import {
   gitLines,
   runSteps,
   splitTests,
-  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-  vitestStep,
-  /* fork:end check-changed-budget */
   type Step,
 } from "./check-changed.ts";
 import { decide, readWorkspace } from "../.github/scripts/ci-changes.cjs";
@@ -87,14 +84,8 @@ describe("check:changed", () => {
             step("heavy", { weight: 5 }),
             step("pair", { weight: 2 }),
             step("light 2"),
-            /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-            ...["test 1", "test 2"].map((name) =>
-              vitestStep(name, ["a.test.ts", "b.test.ts"], 3, (args) => {
-                const workers = Number(args[args.indexOf("--maxWorkers") + 1]);
-                return step(name, { weight: workers, serial: true }).run;
-              }),
-            ),
-            /* fork:end check-changed-budget */
+            step("test 1", { serial: true }),
+            step("test 2", { serial: true }),
           ],
           { concurrency: 3, timeoutSeconds: 60 },
         ).pipe(Effect.forkChild);
@@ -159,15 +150,9 @@ describe("check:changed", () => {
         ".github/scripts/ci-changes.test.cjs",
         ".github\\scripts\\thread-transfer-report.test.cjs",
         "scripts/check-changed.test.ts",
-        /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-        "apps/web/src/Menu.browser.test.tsx",
-        /* fork:end check-changed-budget */
       ]),
       {
         vitestTests: ["apps/server/src/ws.test.ts", "scripts/check-changed.test.ts"],
-        /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-        browserTests: ["apps/web/src/Menu.browser.test.tsx"],
-        /* fork:end check-changed-budget */
         nodeTests: [
           ".github/scripts/ci-changes.test.cjs",
           ".github\\scripts\\thread-transfer-report.test.cjs",
@@ -175,29 +160,6 @@ describe("check:changed", () => {
       },
     );
   });
-
-  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-  it.effect.each([
-    { concurrency: 1, files: 4, workers: 1 },
-    { concurrency: 3, files: 4, workers: 3 },
-    { concurrency: 8, files: 2, workers: 2 },
-  ])("caps Vitest workers and reserves their slots: %o", ({ concurrency, files, workers }) =>
-    Effect.gen(function* () {
-      const step = vitestStep(
-        "react compiler",
-        Array.from({ length: files }, (_, index) => `${index}.test.ts`),
-        concurrency,
-        (args) => Effect.succeed({ ok: true, output: args.join(" ") }),
-        ["-t", "compiles file$"],
-      );
-      assert.strictEqual(step.weight, workers);
-      assert.isTrue(step.serial);
-      const result = yield* step.run;
-      expect(result.output).toContain(`--maxWorkers ${workers}`);
-      expect(result.output).toContain("-t compiles file$");
-    }),
-  );
-  /* fork:end check-changed-budget */
 
   it.effect("fails instead of returning an empty file list when git exits nonzero", () => {
     const spawner = (exitCode: number) =>
@@ -368,9 +330,11 @@ it("compares against an explicit ref instead of the closest remote main", async 
   assert.strictEqual(result.ref, "origin/main");
 });
 
-/* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-function launcherFixture(initialFiles: Readonly<Record<string, string>> = {}) {
+function launcherFixture(
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  initialFiles: Readonly<Record<string, string>> = {},
   /* fork:end check-changed-budget */
+) {
   const root = NodeFS.realpathSync(
     NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3 checks & (fixture) ")),
   );
@@ -461,7 +425,7 @@ function launcherFixture(initialFiles: Readonly<Record<string, string>> = {}) {
     source,
     write,
     /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-    run(failStep = "", args: ReadonlyArray<string> = ["--concurrency", "1"]) {
+    run(failStep = "", args: ReadonlyArray<string> = []) {
       return NodeChildProcess.spawnSync(
         process.execPath,
         ["scripts/check-changed.ts", "HEAD", ...args],
@@ -522,8 +486,13 @@ it.each([1, 3])("keeps test runner pools within --concurrency %s", (concurrency)
   using project = launcherFixture({
     "pnpm-workspace.yaml": "packages:\n  - packages/*\n  - apps/*\n",
     "apps/web/package.json": JSON.stringify({ name: "@t3tools/web" }),
+    "apps/mobile/package.json": JSON.stringify({ name: "@t3tools/mobile" }),
   });
-  const unit = ["apps/web/src/A.test.ts", "apps/web/src/B.test.ts"];
+  const unit = [
+    "apps/mobile/src/features/devices/device-stream.browser.test.ts",
+    "apps/web/src/A.test.ts",
+    "apps/web/src/B.test.ts",
+  ];
   const browser = ["apps/web/src/A.browser.test.tsx", "apps/web/src/B.browser.test.tsx"];
   const node = [".github/scripts/a.test.cjs", ".github/scripts/b.test.cjs"];
   for (const file of [...unit, ...browser, ...node, "apps/web/src/A.tsx"]) project.write(file, "");
@@ -537,7 +506,7 @@ it.each([1, 3])("keeps test runner pools within --concurrency %s", (concurrency)
     "test",
     "run",
     "--maxWorkers",
-    workers,
+    String(Math.min(concurrency, unit.length)),
     "--passWithNoTests",
     ...unit,
   ]);
@@ -564,11 +533,12 @@ it.each([1, 3])("keeps test runner pools within --concurrency %s", (concurrency)
 it("checks the fork guards for a manifest-only change without unrelated package checks", () => {
   const guards = ["customizationsManifest.test.ts", "forkLintCleanliness.test.ts"];
   using project = launcherFixture({
-    "packages/web/package.json": JSON.stringify({ name: "@t3tools/web" }),
+    "pnpm-workspace.yaml": "packages:\n  - packages/*\n  - apps/*\n",
+    "apps/web/package.json": JSON.stringify({ name: "@t3tools/web" }),
     ...Object.fromEntries(guards.map((guard) => [`apps/web/src/__fork_guards__/${guard}`, ""])),
   });
   project.write(".fork/customizations.yaml", "# manifest-only change\n");
-  const result = project.run();
+  const result = project.run("", ["--concurrency", "1"]);
   expect(result.status, result.stdout + result.stderr).toBe(0);
   const commands = project.calls().map(({ args }) => args);
   expect(commands.find((args) => args[0] === "test")).toEqual([
@@ -582,7 +552,18 @@ it("checks the fork guards for a manifest-only change without unrelated package 
   expect(
     commands.some((args) => args.includes("apps/server/src/provider/AgentContextBudget.test.ts")),
   ).toBe(false);
-  expect(result.stderr).not.toContain("Runs everything: .fork/customizations.yaml");
+  expect(commands.find((args) => args.includes("typecheck"))).toEqual([
+    "run",
+    "--cache",
+    "--parallel",
+    "--concurrency-limit",
+    "1",
+    "--filter",
+    "@t3tools/scripts",
+    "--filter",
+    "@t3tools/web",
+    "typecheck",
+  ]);
 });
 /* fork:end check-changed-budget */
 

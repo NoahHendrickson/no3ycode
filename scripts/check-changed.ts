@@ -186,34 +186,13 @@ const CODE = /\.(?:[cm]?[jt]sx?|astro)$/;
 const TEST = /\.test\.[cm]?[jt]sx?$/;
 // CI runs the .github/scripts tests with `node --test`; vitest passes a failing node:test file.
 const NODE_TEST = /^\.github[/\\]scripts[/\\]/;
-/* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-const BROWSER_TEST = /\.browser\.test\.[cm]?[jt]sx?$/;
 export const splitTests = (tests: Iterable<string>) => {
   const all = [...tests];
   return {
-    // Vitest budgets its Node and browser pools separately, even with --maxWorkers.
-    vitestTests: all.filter((file) => !NODE_TEST.test(file) && !BROWSER_TEST.test(file)),
-    browserTests: all.filter((file) => !NODE_TEST.test(file) && BROWSER_TEST.test(file)),
+    vitestTests: all.filter((file) => !NODE_TEST.test(file)),
     nodeTests: all.filter((file) => NODE_TEST.test(file)),
   };
 };
-
-export const vitestStep = <R>(
-  name: string,
-  files: ReadonlyArray<string>,
-  concurrency: number,
-  run: (args: ReadonlyArray<string>) => Step<R>["run"],
-  args: ReadonlyArray<string> = [],
-) => {
-  const workers = Math.min(concurrency, files.length);
-  return {
-    name,
-    run: run(["test", "run", "--maxWorkers", String(workers), ...args, ...files]),
-    weight: workers,
-    serial: true,
-  };
-};
-/* fork:end check-changed-budget */
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // A flag wins over its environment variable; either must be a positive integer.
@@ -367,9 +346,7 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
   /* fork:end check-changed-budget */
   // It reads files other than the ones beside it, so no changed file selects it.
   if (affected.includes("t3")) tests.add("apps/server/src/provider/AgentContextBudget.test.ts");
-  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-  const { vitestTests, browserTests, nodeTests } = splitTests(tests);
-  /* fork:end check-changed-budget */
+  const { vitestTests, nodeTests } = splitTests(tests);
 
   // React Compiler coverage compiles every client source file, so run only the
   // changed files' cases, in one extra step: a -t filter in the main test step
@@ -506,6 +483,25 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
   const typecheckWorkers = Math.min(concurrency, affected.length);
   const command = (name: string, args: ReadonlyArray<string>) => ({ name, run: vp(args) });
   const compilerFiles = compilerApps.reduce((count, app) => count + app.names.length, 0);
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  // Only web's .browser.test files use Vitest's independently budgeted browser pool.
+  const browserPattern = /^apps[/\\]web[/\\].*\.browser\.test\.[cm]?[jt]sx?$/;
+  const browserTests = vitestTests.filter((file) => browserPattern.test(file));
+  const unitTests = vitestTests.filter((file) => !browserPattern.test(file));
+  const nodeWorkers = Math.min(concurrency, nodeTests.length);
+  const vitestPool = (
+    name: string,
+    files: ReadonlyArray<string>,
+    extra: ReadonlyArray<string> = [],
+  ) => {
+    const workers = Math.min(concurrency, files.length);
+    return {
+      ...command(name, ["test", "run", "--maxWorkers", String(workers), ...extra, ...files]),
+      weight: workers,
+      serial: true,
+    };
+  };
+  /* fork:end check-changed-budget */
 
   const steps: Array<Step<never>> = [
     ...(runPatchCheck ? [{ name: "unused patches", run: checkPatches }] : []),
@@ -540,19 +536,16 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
         ]
       : []),
     /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
-    // From the repo root, the root vite.config.ts hands each file to its package's config.
-    ...[
-      { name: "test", files: vitestTests },
-      { name: "browser test", files: browserTests },
-    ].flatMap(({ name, files }) =>
-      files.length > 0
-        ? [
-            vitestStep(`${name} (${files.length} files)`, files, concurrency, vp, [
-              "--passWithNoTests",
-            ]),
-          ]
-        : [],
-    ),
+    ...(unitTests.length > 0
+      ? [vitestPool(`test (${unitTests.length} files)`, unitTests, ["--passWithNoTests"])]
+      : []),
+    ...(browserTests.length > 0
+      ? [
+          vitestPool(`browser test (${browserTests.length} files)`, browserTests, [
+            "--passWithNoTests",
+          ]),
+        ]
+      : []),
     ...(nodeTests.length > 0
       ? [
           {
@@ -560,20 +553,18 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
               "exec",
               "node",
               "--test",
-              `--test-concurrency=${Math.min(concurrency, nodeTests.length)}`,
+              `--test-concurrency=${nodeWorkers}`,
               ...nodeTests,
             ]),
-            weight: Math.min(concurrency, nodeTests.length),
+            weight: nodeWorkers,
           },
         ]
       : []),
     ...(compilerApps.length > 0
       ? [
-          vitestStep(
+          vitestPool(
             `react compiler (${compilerFiles} files)`,
             compilerApps.map((app) => app.test),
-            concurrency,
-            vp,
             ["-t", compilerApps.flatMap((app) => app.pattern).join("|")],
           ),
         ]

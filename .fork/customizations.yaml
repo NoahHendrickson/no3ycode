@@ -145,8 +145,9 @@
   intent: >
     check:changed caps Vitest, browser, React Compiler, and native Node test
     workers by its existing concurrency budget and reserves matching scheduler
-    slots. Node and browser Vitest pools run in separate serial steps because
-    Vitest budgets those pools independently. Manifest-only edits select the
+    slots. Node and web browser Vitest pools run in separate serial steps because
+    Vitest budgets those pools independently; mobile jsdom tests remain in the
+    Node pool regardless of their filename. Manifest-only edits select the
     fork guard suite locally and web checks in CI, including the manifest and
     fence guards, without selecting unrelated packages. Mixed changes retain
     their usual dependents and global configs still run everything. Passing
@@ -158,6 +159,7 @@
     - scripts/check-changed.ts
     - scripts/check-changed.test.ts
     - .github/scripts/ci-changes.cjs
+    - docs/operations/development.md
   verify:
     - apps/web/src/__fork_guards__/checkChangedBudget.test.ts
     - scripts/check-changed.test.ts
