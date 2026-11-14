@@ -2505,7 +2505,13 @@
     the card's ::after fills the 4px gap and curves into the row's bottom
     through a concave corner; an open row's panel bridge steps aside meanwhile.
     When Base UI flips the card end-aligned near the window's bottom, the same
-    ::after is flipped (scale: 1 -1) to curve into the row's top instead. Both
+    ::after is flipped (scale: 1 -1) to curve into the row's top instead. The
+    thread details card's subagent rows open theirs the same way to the left
+    (fenced data-fork-row-hover-trigger and align="start" in
+    components/chat/ThreadRelationshipsControl.tsx), the ::after mirrored
+    across (scale: -1 1); the open row's fill sits in @layer utilities, since
+    the panel row's hover fill is an !important utility that outranks any
+    unlayered !important. Inlet Black's details-row lift does the same. Both
     row shapes, card and slim, carry data-fork-thread-row (fenced in
     Sidebar.tsx), and every Inlet and palette row rule keys on it rather than
     on test ids, so a row rule cannot miss a shape.
@@ -2639,6 +2645,7 @@
     - apps/web/src/custom/icons/lucide-phosphor.tsx
     - apps/web/src/components/ui/tooltip.tsx
     - apps/web/src/components/ThreadHoverCard.tsx
+    - apps/web/src/components/chat/ThreadRelationshipsControl.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/projectIconColors.ts

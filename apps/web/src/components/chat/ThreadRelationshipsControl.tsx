@@ -850,13 +850,23 @@ export function ThreadRelationshipsPanel(props: {
               size="sm"
               variant="ghost"
               part={workflowGroup ? "primary" : "row"}
+              /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+              data-fork-row-hover-trigger={agent ? "" : undefined}
+              /* fork:end fork-inlet-theme */
               onClick={() => openThread(threadId)}
             />
           }
         >
           {relationshipContent}
         </TooltipTrigger>
-        <RelationshipPopup side="left">{relationshipTooltip}</RelationshipPopup>
+        <RelationshipPopup
+          side="left"
+          /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+          {...(agent ? { align: "start" as const, "data-fork-row-hover-card": "" } : {})}
+          /* fork:end fork-inlet-theme */
+        >
+          {relationshipTooltip}
+        </RelationshipPopup>
       </Tooltip>
     );
     if (workflowGroup && agent) {

@@ -400,7 +400,11 @@ describe("fork guard: fork-inlet-theme", () => {
       inletRules.find(
         (rule) =>
           rule.selector.includes("[data-fork-row-hover-card]") &&
-          rule.selector.replace(/\(\s+/gu, "(").replace(/\s+\)/gu, ")").endsWith(suffix),
+          rule.selector
+            .replace(/\s+/gu, " ")
+            .replace(/\(\s+/gu, "(")
+            .replace(/\s+\)/gu, ")")
+            .endsWith(suffix),
       )?.body;
     const tab = hoverCardAfter(
       ':is([data-align="start"], [data-align="end"]):not([data-fork-on-open-pair])::after',

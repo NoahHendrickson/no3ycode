@@ -74,14 +74,30 @@
   }
 }
 
+/* The thread details card's subagent rows open theirs to the left the same
+   way. The row is a panel control whose hover fill is a !important utility,
+   so its open fill joins the utilities layer to outrank it. */
+
+@layer utilities {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    [data-thread-details-card]
+    [data-fork-row-hover-trigger][data-popup-open] {
+    background-color: var(--fork-inlet-row-card) !important;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
 /* Near the window's bottom Base UI flips the card to end-aligned, its
    bottom on the row's bottom, so the join mirrors: square bottom-left
-   corner, concave corner into the row's top edge. */
+   corner, concave corner into the row's top edge. A card left of its row
+   mirrors the whole drawing across. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-row-hover-card][data-side="right"]:is([data-align="start"], [data-align="end"]):not(
-    [data-fork-on-open-pair]
-  ) {
+  [data-fork-row-hover-card]:is([data-side="right"], [data-side="left"]):is(
+    [data-align="start"],
+    [data-align="end"]
+  ):not([data-fork-on-open-pair]) {
   --foreground: var(--fork-inlet-row-card-foreground);
   --muted-foreground: var(--fork-inlet-row-card-muted);
   --popover-foreground: var(--fork-inlet-row-card-foreground);
@@ -114,11 +130,11 @@
         var(--anchor-height) no-repeat;
   }
 
-  &[data-align="start"] {
+  &[data-side="right"][data-align="start"] {
     border-top-left-radius: 0;
   }
 
-  &[data-align="end"] {
+  &[data-side="right"][data-align="end"] {
     border-bottom-left-radius: 0;
   }
 
@@ -126,6 +142,26 @@
     top: auto;
     bottom: -1px;
     scale: 1 -1;
+  }
+
+  &[data-side="left"] {
+    &[data-align="start"] {
+      border-top-right-radius: 0;
+    }
+
+    &[data-align="end"] {
+      border-bottom-right-radius: 0;
+    }
+
+    &::after {
+      right: auto;
+      left: calc(100% + 1px);
+      scale: -1 1;
+    }
+
+    &[data-align="end"]::after {
+      scale: -1 -1;
+    }
   }
 }
 
