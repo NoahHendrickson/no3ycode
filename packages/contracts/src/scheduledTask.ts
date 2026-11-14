@@ -158,10 +158,45 @@ const ScheduledTaskWebhookFilters = Schema.Array(ScheduledTaskWebhookFilter)
     description: "All must match. Max 16. Omitted: keep stored. [] clears.",
   });
 
+/* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+const SCHEDULED_TASK_THREAD_EVENT_KINDS = ["finished", "failed", "needs_you"] as const;
+export type ScheduledTaskThreadEventKind = (typeof SCHEDULED_TASK_THREAD_EVENT_KINDS)[number];
+
+export const ScheduledTaskThreadEvents = Schema.Struct({
+  events: Schema.Array(Schema.Literals(SCHEDULED_TASK_THREAD_EVENT_KINDS)).check(
+    Schema.isMinLength(1),
+  ),
+  projectIds: Schema.optional(Schema.Array(ProjectId)),
+}).annotate({
+  description: "Also run on T3 thread events. Body: {event, threadId, title, error?}.",
+});
+export type ScheduledTaskThreadEvents = typeof ScheduledTaskThreadEvents.Type;
+
+const THREAD_EVENT_VERBS: Record<ScheduledTaskThreadEventKind, string> = {
+  finished: "finish",
+  failed: "fail",
+  needs_you: "need you",
+};
+
+/** A task's thread-event trigger in words, e.g. "When threads fail or need you, in 2 projects". */
+export function scheduledTaskThreadEventsLabel(threadEvents: ScheduledTaskThreadEvents): string {
+  const verbs = SCHEDULED_TASK_THREAD_EVENT_KINDS.filter((kind) =>
+    threadEvents.events.includes(kind),
+  ).map((kind) => THREAD_EVENT_VERBS[kind]);
+  const joined =
+    verbs.length <= 1 ? (verbs[0] ?? "") : `${verbs.slice(0, -1).join(", ")} or ${verbs.at(-1)}`;
+  const projects = threadEvents.projectIds?.length ?? 0;
+  return `When threads ${joined}${projects === 0 ? "" : `, in ${projects} project${projects === 1 ? "" : "s"}`}`;
+}
+/* fork:end fork-bot-event-wakes */
+
 const ScheduledTaskWebhookSchedule = Schema.Struct({
   /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation */
   github: Schema.optional(Schema.NullOr(GitHubPrAutomation)),
   /* fork:end fork-github-pr-automation */
+  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+  threadEvents: Schema.optional(Schema.NullOr(ScheduledTaskThreadEvents)),
+  /* fork:end fork-bot-event-wakes */
   type: Schema.Literal("webhook"),
   signature: Schema.NullOr(ScheduledTaskWebhookSignature),
   maxDeliveryAgeMinutes: Schema.optional(Schema.NullOr(WebhookMaxDeliveryAgeMinutes)),
@@ -175,6 +210,9 @@ const ScheduledTaskUpsertWebhookSchedule = Schema.Struct({
   /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation */
   github: Schema.optional(Schema.NullOr(GitHubPrAutomation)),
   /* fork:end fork-github-pr-automation */
+  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+  threadEvents: Schema.optional(Schema.NullOr(ScheduledTaskThreadEvents)),
+  /* fork:end fork-bot-event-wakes */
   type: Schema.Literal("webhook"),
   signature: Schema.optional(
     Schema.NullOr(

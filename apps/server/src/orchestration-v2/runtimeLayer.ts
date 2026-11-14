@@ -62,6 +62,9 @@ import * as ThreadLaunchService from "./ThreadLaunchService.ts";
 import * as ThreadForkService from "./ThreadForkService.ts";
 import * as TurnItemPositionStore from "./TurnItemPositionStore.ts";
 import * as ScheduledTaskService from "../scheduledTasks/ScheduledTaskService.ts";
+/* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+import * as ForkThreadEventWakesWorker from "../scheduledTasks/forkThreadEventWakesWorker.ts";
+/* fork:end fork-bot-event-wakes */
 import * as SecretRequests from "../secrets/SecretRequests.ts";
 
 export const layerEventInfrastructure = Layer.mergeAll(
@@ -412,6 +415,11 @@ export const layerProduction = Layer.mergeAll(
       ),
     ),
   ),
+  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+  ForkThreadEventWakesWorker.layer.pipe(
+    Layer.provide(Layer.mergeAll(layerOrchestratorProvided, layerScheduledTaskProvided)),
+  ),
+  /* fork:end fork-bot-event-wakes */
   layerProviderContinuationWorkerProvided,
   layerAgentSessionImporterProvided,
   EffectOutbox.layerPruneWorker.pipe(Layer.provide(EffectOutbox.layer)),

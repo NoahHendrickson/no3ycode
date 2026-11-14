@@ -422,6 +422,11 @@ scheduled wake starts a fresh session there. That keeps it consistent however
 long it runs. Send `/clear` in a bot's conversation to give your next message a
 fresh session too; the bot keeps its job and notes.
 
+A bot can also watch your other threads: tell it, for example, "let me know when
+a thread in my site project fails". It wakes when a thread finishes, fails or
+needs you, never for its own thread or another bot's. A bot that keeps failing
+with the same error alerts you once, not on every wake.
+
 A wake that finds nothing replies "Nothing to report." and stays silent: no
 notification and no unread mark. Deleting a bot's conversation also deletes its
 scheduled tasks. Its tasks are listed with the rest under **Automations**.

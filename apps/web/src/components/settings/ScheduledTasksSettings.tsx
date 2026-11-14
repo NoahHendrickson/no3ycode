@@ -32,6 +32,9 @@ import type {
   ScheduledTaskWebhookDeliverySummary,
   ThreadId,
 } from "@t3tools/contracts";
+/* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+import { scheduledTaskThreadEventsLabel } from "@t3tools/contracts";
+/* fork:end fork-bot-event-wakes */
 import {
   DEFAULT_WEBHOOK_PROMPT,
   emptyWebhookFilterDraft,
@@ -310,6 +313,10 @@ const ONCE_FORMATTER = new Intl.DateTimeFormat(undefined, {
 });
 
 export function scheduleLabel(schedule: ScheduledTaskSchedule): string {
+  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
+  if (schedule.type === "webhook" && schedule.threadEvents != null)
+    return scheduledTaskThreadEventsLabel(schedule.threadEvents);
+  /* fork:end fork-bot-event-wakes */
   /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation */
   if (schedule.type === "webhook") return schedule.github ? "GitHub PR opened" : "On webhook";
   /* fork:end fork-github-pr-automation */
