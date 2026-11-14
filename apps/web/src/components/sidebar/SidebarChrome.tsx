@@ -36,6 +36,10 @@ import { isSidebarUtilityPage, useNavigateToMainApp } from "./mainAppLocation";
 import { SidebarThreadUndoNotice } from "./SidebarThreadUndoNotice";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
 import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUpdatePill";
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+import { SidebarMusicButton } from "../../custom/music/SidebarMusicButton";
+import { SidebarMusicStrip } from "../../custom/music/MusicStrip";
+/* fork:end fork-music-panel */
 /* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates */
 import { SidebarProviderUpdatesButton } from "~/custom/SidebarProviderUpdatesButton";
 /* fork:end fork-separate-provider-updates */
@@ -326,6 +330,9 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
           {/* fork:end fork-sidebar-chrome */}
         </>
       )}
+      {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
+      <SidebarMusicButton />
+      {/* fork:end fork-music-panel */}
       <SidebarThreadUndoNotice />
       {/* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates */}
       <SidebarProviderUpdatesButton />
@@ -346,6 +353,9 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter({
     <SidebarFooter>
       <SidebarProviderUpdatePill />
       <SidebarUpdateArchitectureWarning />
+      {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
+      <SidebarMusicStrip />
+      {/* fork:end fork-music-panel */}
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
       <SidebarUtilityMenu hideUsage={hideUsage} />
       {/* fork:end fork-sidebar-chrome */}

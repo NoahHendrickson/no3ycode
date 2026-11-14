@@ -6940,34 +6940,27 @@
 
 - id: fork-music-panel
   intent: >
-    In the desktop app, a music button beside the right panel toggle opens
-    the right panel on a Music tab: what is playing with its artwork,
-    a playback bar (position and length, dragged to seek on release), then
-    shuffle, previous, play or pause, next, repeat (off, all, one) and a
-    volume slider, then Songs, Playlists,
-    Artists and Up Next tabs. Playlists are a grid of covers (one Apple did
+    In the desktop app, a music button beside Settings in the sidebar footer
+    shows or hides a strip floating directly above that row: the song's cover,
+    previous, play or pause, next, a volume button (its slider opens above
+    it), and an expand button. Expanded, the strip grows upward into a card
+    with what is playing, a playback bar (position and length, dragged to seek
+    on release), shuffle and repeat (off, all, one), then Songs, Playlists,
+    Artists and Up Next tabs over a list of fixed height, so the transport row
+    stays put at the bottom. Folded or expanded and shown or hidden are
+    remembered on this device. While the sidebar is collapsed (and not
+    peeking) the strip unmounts, so nothing follows ah ahh for a hidden card.
+    Music used to be a right panel tab: the right panel and closed-view stores
+    carry fenced version bumps past upstream so their own migrations drop the
+    persisted tab (a panel showing it moves to its next tab, as for upstream's
+    retired kinds) and closed Music tabs, which could no longer reopen.
+    Playlists are a grid of covers (one Apple did
     not give art takes its first song's, read one row at a time, a few at
     once); an artist opens on a grid of its albums, an album on its songs.
     Each tab is a stack whose root is its own listing, read the first time it
     shows (and again after ah ahh restarts) page by page, artists by name only,
     since their photos come from the catalog at many times the payload. Song
-    rows and the queue show lazily loaded covers. Music is open or
-    closed on every thread at once (remembered on this device), with no
-    setting: however it comes to show on a thread (its button, its tab, the
-    right panel's own toggle) it is open, and closing the panel that shows
-    it or closing its tab closes it; another tab taking the panel over is
-    not a close. One effect (ChatView's useMusicKeepOpenCarry) keeps the thread
-    in view and that state in step both ways: arriving at a thread, or the
-    state changing, opens its right panel on Music or closes a panel still
-    showing Music, once per thread and state, so a tab picked there stays
-    through remounts and return visits; and only what the user does to the
-    panel of a thread in view moves the state (the store's user-action
-    revision), never a thread off screen, a deleted thread, or a tab the app
-    reveals.
-    A new agent's draft is not arrived at until its first message starts it
-    (it keeps its id), so picking a project does not open Music.
-    While it is open, the right panel keeps one shared width instead of each
-    thread's own, so it does not change size as threads change.
+    rows and the queue show lazily loaded covers.
     It is a remote for ah ahh, the maintainer's own
     Apple Music player (NoahHendrickson/ah-ahh), running on the same
     computer, exactly as ah ahh's iPhone app is. ah ahh keeps MusicKit, the
@@ -6980,22 +6973,22 @@
     the user sits at rather than to the environment a thread runs in. ah
     ahh's JSON is checked once, in the desktop's client, and the fork's own
     forkDesktopBridge key carries one typed method per operation; with no
-    music entry on it (the web, mobile) the button is not rendered at all.
+    music entry on it (the web, mobile) neither the button nor the strip renders.
     Nothing polls: the bar runs on from the last position ah ahh reported, ticking
     once a second straight to the DOM while a song plays, and the ten-second
     heartbeat is dropped unless its position jumped (a seek). The desktop
     stamps each state with when it received it (positionAt), so a page joining
     an open stream reads the cached state's position from that.
     The main process holds ah ahh's state stream open only
-    while a page has the panel mounted (a reload or a crash counts as
-    unmounting), drops the ten-second position heartbeats the panel has no
+    while a page has the strip mounted (a reload or a crash counts as
+    unmounting), drops the ten-second position heartbeats the strip has no
     use for, and reports once when the stream ends. A closed ah ahh shows as
     that, with a retry that also runs when the window regains focus. The
-    click on the music button that opens the panel also asks the desktop to
+    click on the music button that shows the strip also asks the desktop to
     make sure ah ahh is up: it looks first, and on macOS starts a closed one
-    hidden and behind this app, then waits (bounded) for its player. A panel
-    remounting on a thread switch never asks, so an ah ahh quit on purpose
-    stays quit until the panel's Open button. Up Next is ah ahh's real
+    hidden and behind this app, then waits (bounded) for its player. A strip
+    remounting (a reload) never asks, so an ah ahh quit on purpose
+    stays quit until the strip's Open button. Up Next is ah ahh's real
     queue. Songs play by id from the list shown, so what plays is what was
     clicked even if the playlist changed since; a list stops at 500 rows,
     the most ah ahh takes in one play command (artist and playlist lists are
@@ -7007,26 +7000,23 @@
     - apps/desktop/src/fork/ForkMusicClient.ts
     - apps/web/src/custom/music/musicBridge.ts
     - apps/web/src/custom/music/musicStore.ts
-    - apps/web/src/custom/music/MusicPanel.tsx
-    - apps/web/src/custom/music/MusicPanelToggle.tsx
-    - apps/web/src/custom/music/musicKeepOpen.ts
-    # The glyphs the panel uses, added to the fork's lucide shim.
+    - apps/web/src/custom/music/musicStripMode.ts
+    - apps/web/src/custom/music/MusicStrip.tsx
+    - apps/web/src/custom/music/SidebarMusicButton.tsx
+    # The strip's fill, shared with its button while the strip is open.
+    - apps/web/src/theme.custom.css
+    # The glyphs the strip uses, added to the fork's lucide shim.
     - apps/web/src/custom/icons/lucide-phosphor.tsx
   shadows: []
   watch:
     - apps/desktop/src/preload.ts
     - apps/desktop/src/ipc/DesktopIpcHandlers.ts
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
     - apps/web/src/rightPanelStore.ts
     - apps/web/src/closedViewStore.ts
-    - apps/web/src/components/RightPanelTabs.tsx
-    - apps/web/src/components/ChatView.tsx
-    - apps/web/src/components/chat/PanelLayoutControls.tsx
-    - apps/web/src/components/chat/RightPanelSurfaceContent.tsx
-    - apps/web/src/components/chat/ChatRightPanel.tsx
   verify:
     - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
     - apps/desktop/src/fork/ForkMusicClient.test.ts
-    - apps/web/src/custom/music/musicKeepOpen.browser.test.tsx
 
 - id: fork-bots
   intent: >
@@ -7299,7 +7289,7 @@
   intent: >
     A thread's stage reads as the owner's frame (Figma t3-fork 698:7880): the conversation, a
     bot's Threads panel and the right panel are columns side by side, each with its own header
-    row. The panel controls (pane actions, details, threads, music, terminal, right panel) are
+    row. The panel controls (pane actions, details, threads, terminal, right panel) are
     one cluster at the right end of the conversation's header, in its flow, in every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
     never split between that header and a panel's, and nothing else is drawn over them. A
     toggle shows pressed while its panel is open. What acts on one panel's content stays in that

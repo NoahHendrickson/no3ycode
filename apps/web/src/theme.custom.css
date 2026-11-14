@@ -2991,3 +2991,39 @@
   background: var(--fork-sidebar-rail-accent);
   color: var(--fork-sidebar-rail-accent-ink);
 }
+
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
+   The music strip (custom/music/MusicStrip) is a step off the sidebar toward its ink, and restates
+   every ink its controls read (the contrast ones too, which text utilities use) from the sidebar's
+   own pair, so a sidebar of the opposite polarity to the panel (Inlet Black, Cream) inks it to
+   match. Its button takes the fill while the strip is open, so the two read as one piece. */
+:root[data-fork="noahhendrickson-t3code"] [data-slot="sidebar-footer"] {
+  --fork-music-ink: var(--sidebar-foreground);
+  --fork-music-card: color-mix(in srgb, var(--fork-music-ink) 7%, var(--sidebar));
+
+  & [data-fork-music-strip] {
+    --fork-music-step: color-mix(in srgb, var(--fork-music-ink) 14%, var(--sidebar));
+    --fork-music-muted: color-mix(in srgb, var(--fork-music-ink) 65%, var(--sidebar));
+    --foreground: var(--fork-music-ink);
+    --contrast-foreground: var(--fork-music-ink);
+    --accent-foreground: var(--fork-music-ink);
+    --muted-foreground: var(--fork-music-muted);
+    --contrast-muted-foreground: var(--fork-music-muted);
+    --accent: var(--fork-music-step);
+    --muted: var(--fork-music-step);
+    --border: var(--fork-music-step);
+    --contrast-border: var(--fork-music-step);
+    --background: var(--sidebar);
+    background-color: var(--fork-music-card);
+  }
+
+  & [data-fork-music-toggle][aria-pressed="true"] {
+    background-color: var(--fork-music-card);
+    color: var(--fork-music-ink);
+
+    & > svg {
+      color: var(--fork-music-ink);
+    }
+  }
+}
+/* fork:end fork-music-panel */

@@ -49,9 +49,6 @@ import {
   Volume2Icon,
   VolumeOffIcon,
 } from "lucide-react";
-/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-import { MusicIcon } from "lucide-react";
-/* fork:end fork-music-panel */
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
@@ -599,10 +596,6 @@ function surfaceTitle(
       return surface.title ?? surface.target?.name ?? "Device";
     case "side-chat":
       return "Side chat";
-    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-    case "music":
-      return "Music";
-    /* fork:end fork-music-panel */
     case "preview": {
       const snapshot = surface.resourceId ? sessions[surface.resourceId] : null;
       if (!snapshot || snapshot.navStatus._tag === "Idle") return "Browser";
@@ -693,10 +686,6 @@ function SurfaceIcon({
       return <PullRequestGlyph.link className="size-3 shrink-0" />;
     case "side-chat":
       return <SideChatTabIcon environmentId={environmentId} threadId={surface.threadId} />;
-    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-    case "music":
-      return <MusicIcon className="size-3 shrink-0" />;
-    /* fork:end fork-music-panel */
     case "device":
       return surface.target?.platform === "ios" ? (
         <AppleIcon className="size-3 shrink-0" />

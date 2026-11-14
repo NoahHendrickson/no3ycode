@@ -63,9 +63,6 @@ const isClosedViewEntry = (entry: unknown): entry is ClosedViewEntry => {
     case "diff":
     case "files":
     case "pull-requests":
-    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-    case "music":
-      /* fork:end fork-music-panel */
       return surface.id === surface.kind;
     case "preview":
       return surface.resourceId === null || typeof surface.resourceId === "string";
@@ -132,7 +129,10 @@ export const useClosedViewStore = create<ClosedViewStoreState>()(
       storage: createJSONStorage(() =>
         resolveStorage(typeof window !== "undefined" ? window.localStorage : undefined),
       ),
-      version: 2,
+      /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
+         Bumped past upstream so migrate drops closed Music tabs, which no longer reopen. */
+      version: 3,
+      /* fork:end fork-music-panel */
       migrate: (persisted) => {
         const entries = (persisted as Partial<Pick<ClosedViewStoreState, "entries">> | null)
           ?.entries;
