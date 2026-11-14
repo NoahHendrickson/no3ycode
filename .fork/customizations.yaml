@@ -7143,7 +7143,11 @@
     shut, not forgotten, while the right panel is maximized or the split pane floats. It lists
     the bot's launched threads and subagents in the sidebar's status sections (Needs input,
     Completed, Working, Idle, Settled), newest first, pinned ones too, empty sections left out,
-    one plain line when there is none; a row opens its thread. It draws no working animation.
+    one plain line when there is none; a row opens its thread. A row is two lines, always: the
+    sidebar's status mark (its working animation included, by the maintainer's request on
+    2026-11-14) with the title and time, then the sidebar card's own repo line
+    (SidebarV2ThreadCardMeta: project, branch or worktree, pull request in its state colour, no
+    model). The status is the mark and the section, never a sentence.
     Mobile and the collapsed tab strip are not aware of it.
   tier: 4
   files:

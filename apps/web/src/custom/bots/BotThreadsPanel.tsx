@@ -3,8 +3,11 @@
  * between the conversation and the right panel, in the right panel's shell (a sheet where that is
  * one), on the bot's conversation and on each of its threads, listing its work by status.
  */
-import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import {
+  scopedThreadKey,
+  scopeProjectRef,
+  scopeThreadRef,
+} from "@t3tools/client-runtime/environment";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
@@ -12,7 +15,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
+import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
+import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { isElectron } from "~/env";
@@ -21,13 +26,15 @@ import { usePreviewPanelInlineSize } from "~/hooks/usePreviewPanelInlineSize";
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
 import { usePanelPresence } from "~/panelAnimations";
-import { useQuietThreadShells } from "~/state/entities";
+import { useProject, useQuietThreadShells } from "~/state/entities";
+import { usePrimaryEnvironmentId } from "~/state/environments";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
+import { SidebarV2ThreadCardMeta } from "../SidebarV2ThreadCardMeta";
 import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { type BotWorkGroupKey, type BotWorkRow, groupBotWork } from "./botWork";
@@ -192,29 +199,17 @@ function BotThreadsList(props: {
   );
 }
 
-/** What the thread needs from the owner, in words, where the group alone does not say it. */
-function rowDetail(thread: EnvironmentThreadShell, row: BotWorkRow): string | null {
-  switch (row.card.status) {
-    case "approval":
-      return "Needs your approval";
-    case "input":
-    case "request":
-      return "Waiting for your reply";
-    case "limited":
-      return "Hit a usage limit";
-    case "failed":
-      return thread.source.lastError?.split("\n")[0]?.trim() || "The last run failed";
-    default:
-      return null;
-  }
-}
-
+/** A row is the sidebar card in small: status mark and title, then the card's own repo line. */
 function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: boolean }) {
   const { thread, card } = props.row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
-  const detail = rowDetail(thread, props.row);
+  const project = useProject(scopeProjectRef(thread.environmentId, thread.projectId));
+  const primaryEnvironmentId = usePrimaryEnvironmentId();
   const pullRequest = resolveThreadCurrentPullRequestLink(thread.pullRequests);
+  const pullRequestState =
+    pullRequest?.snapshot == null ? null : resolvePullRequestState(pullRequest.snapshot);
+  const PullRequestIcon = pullRequestState?.Icon ?? PullRequestGlyph.pullRequest;
   const time = formatRelativeTimeLabel(
     thread.latestUserMessageAt ?? thread.updatedAt,
     Date.parse(`${nowMinute}:00.000Z`),
@@ -237,28 +232,48 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         data-testid="bot-threads-row"
       >
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">
-          {/* A static mark: the panel never paints the working animation. */}
-          <SidebarV2StatusMark
-            status={card.topStatus}
-            seed={scopedThreadKey(ref)}
-            idle="dot"
-            workingMark={false}
-          />
+          <SidebarV2StatusMark status={card.topStatus} seed={scopedThreadKey(ref)} idle="dot" />
         </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm leading-5 text-foreground">{thread.title}</span>
-          {detail === null ? null : (
-            <span className="truncate text-xs leading-4 text-muted-foreground">{detail}</span>
-          )}
-          {pullRequest === null ? null : (
-            <span className="flex items-center gap-1 text-xs leading-4 text-muted-foreground">
-              <PullRequestGlyph.pullRequest aria-hidden className="size-3 shrink-0" />#
-              {pullRequest.number}
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm leading-5 text-foreground">
+              {thread.title}
             </span>
-          )}
-        </span>
-        <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-          {time}
+            <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
+              {time}
+            </span>
+          </span>
+          <SidebarV2ThreadCardMeta
+            projectTitle={project?.title ?? null}
+            projectIconSlot={
+              project === null ? null : <ProjectFavicon project={project} className="size-3" />
+            }
+            branch={thread.branch}
+            hasWorktree={thread.worktreePath !== null}
+            terminalSlot={null}
+            prSlot={
+              pullRequest === null ? null : (
+                <span
+                  className={cn(
+                    "flex shrink-0 items-center gap-1",
+                    pullRequestState?.toneClassName,
+                  )}
+                >
+                  <PullRequestIcon aria-hidden className="size-3 shrink-0" />
+                  <span className="sr-only">
+                    {pullRequestState === null
+                      ? "Pull request"
+                      : `${pullRequestState.label} pull request`}
+                  </span>
+                  {pullRequest.number}
+                </span>
+              )
+            }
+            modelLabel={null}
+            isRemote={
+              primaryEnvironmentId !== null && thread.environmentId !== primaryEnvironmentId
+            }
+          />
         </span>
       </button>
     </li>
