@@ -6,7 +6,7 @@
 import { CommandId, type OrchestrationV2ThreadShell, type ThreadId } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 
-import { FORK_BOT_THREAD_TAG } from "./forkBotReport.ts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import type { ThreadManagementService } from "./ThreadManagementService.ts";
 
 /** Must match the web client's `BOT_WORK_TAG_PREFIX` (custom/bots/botWork). */

@@ -131,7 +131,7 @@ import * as SecretRequests from "../secrets/SecretRequests.ts";
 import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { forkBotWakePrompt } from "../scheduledTasks/forkBotTasks.ts";
 import { forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
 /* fork:end fork-bots */

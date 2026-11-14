@@ -3,15 +3,10 @@
  * that runs in its own folder; the folder, not the transcript, holds what it knows.
  */
 import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
-
-/** The server-side tag that makes a thread a bot (the server's `FORK_BOT_THREAD_TAG`). */
-export const BOT_THREAD_TAG = "bot";
-
-/** A second tag names the bot's mascot, e.g. `mascot:Sakura` (custom/bots/botMascotTags). */
-export const BOT_THREAD_TAG_PREFIX_MASCOT = "mascot:";
 
 /** Where bot folders live, relative to the No-project workspace root. */
 export const BOT_FOLDERS_DIRECTORY = "bots";
@@ -24,7 +19,7 @@ export const BOT_QUIET_REPLY = "Nothing to report.";
 export type BotShell = Pick<OrchestrationV2ThreadShell, "tags" | "latestVisibleMessage">;
 
 export function isBotThread(shell: Pick<BotShell, "tags">): boolean {
-  return shell.tags?.includes(BOT_THREAD_TAG) === true;
+  return shell.tags?.includes(FORK_BOT_THREAD_TAG) === true;
 }
 
 /** A bot the sidebar lists: an archived bot's work is ordinary threads again, everywhere. */

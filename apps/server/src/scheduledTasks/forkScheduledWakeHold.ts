@@ -14,7 +14,7 @@ import * as Effect from "effect/Effect";
 import type * as SqlClient from "effect/sql/SqlClient";
 import { ScheduledTaskError } from "@t3tools/contracts";
 
-import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { escapeGlobPrefix } from "./forkScheduledTaskRuns.ts";
 
 /** Must match the message ids ScheduledTaskService mints for each fire. */

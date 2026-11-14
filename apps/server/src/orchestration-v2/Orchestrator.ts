@@ -199,7 +199,7 @@ import { planThreadDeletion } from "./ThreadDeletion.ts";
 import type * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
 import * as ServerSettings from "../serverSettings.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { FORK_BOT_THREAD_TAG } from "./forkBotReport.ts";
+import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
 
 const isMessageQuestionAnswer = Schema.is(

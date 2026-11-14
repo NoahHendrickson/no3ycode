@@ -7124,10 +7124,15 @@
     bot conversation shows the mascot large. The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
+    The tag names live in @t3tools/shared/forkBotTags, read by server, web and
+    provider-core. A subagent copies its parent thread (provider-core
+    subagentProjection) but drops the bot's identity tags (`bot`, mascot:*)
+    there and inherits every other tag, so a bot's subagent is never a bot.
     The collapsed tab strip and mobile are not bot-aware, and mobile lists bots
     as No-project threads.
   tier: 4
   files:
+    - packages/shared/src/forkBotTags.ts
     - apps/web/src/custom/bots/botThreads.ts
     - apps/web/src/custom/bots/botFailureAlerts.ts
     - apps/server/src/orchestration-v2/forkBotReport.ts
@@ -7166,8 +7171,11 @@
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
+    - packages/provider-core/src/server/subagentProjection.ts
+    - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
+    - packages/shared/src/forkBotTags.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
