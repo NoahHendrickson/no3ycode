@@ -15,7 +15,10 @@ import {
   filterSidebarV2VisibleThreads,
   type SidebarThreadStatus,
 } from "../components/Sidebar.logic";
-import { createThreadNotificationGate } from "../components/ThreadNotificationCoordinator.logic";
+import {
+  createThreadNotificationGate,
+  type ThreadNotificationObservation,
+} from "../components/ThreadNotificationCoordinator.logic";
 import {
   BOT_MASCOT_MOODS,
   BOT_MASCOT_SHAPES,
@@ -130,8 +133,10 @@ describe("fork guard: fork-bots", () => {
     const gate = createThreadNotificationGate<string>((_key, kind) => notified.push(kind));
     const step = (settled: boolean, completedAt: number | null) => ({
       attention: null,
+      requestId: null,
       settled,
       completedAt,
+      backgroundWake: false,
     });
     const quiet = isQuietBotCompletion(news, run);
     gate.observe("mail", undefined, step(false, null), { archived: false, quiet });
@@ -148,9 +153,7 @@ describe("fork guard: fork-bots", () => {
     const alerts = createBotFailureAlerts<string>();
     const notified: Array<string> = [];
     const gate = createThreadNotificationGate<string>((_key, kind) => notified.push(kind));
-    let prior:
-      | { attention: string | null; settled: boolean; completedAt: number | null }
-      | undefined;
+    let prior: ThreadNotificationObservation | undefined;
     const wake = (run: string, outcome: "failed" | "completed" | "working", error?: string) => {
       const next = {
         attention: alerts.attention("bot", {
@@ -159,8 +162,10 @@ describe("fork guard: fork-bots", () => {
           succeeded: outcome === "completed",
           error: error ?? null,
         }),
+        requestId: null,
         settled: outcome === "completed",
         completedAt: outcome === "working" ? null : Number(run),
+        backgroundWake: false,
       };
       gate.observe("bot", prior, next, { archived: false, quiet: true });
       prior = next;

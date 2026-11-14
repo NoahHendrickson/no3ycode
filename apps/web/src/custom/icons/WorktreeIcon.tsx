@@ -22,6 +22,9 @@ import type { SVGProps } from "react";
 export function WorktreeIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
+      // Lucide's default size, as the Phosphor shim keeps; a size class overrides it.
+      width={24}
+      height={24}
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

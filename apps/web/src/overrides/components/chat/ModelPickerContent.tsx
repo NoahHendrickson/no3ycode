@@ -31,7 +31,8 @@ import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { Heart } from "@phosphor-icons/react";
 import { CheckIcon, ChevronDownIcon, SearchIcon, StarIcon } from "lucide-react";
 import { getProviderStatusMessage, hasProviderSetup } from "./ProviderStatusBanner";
-import { rankModelPickerSearch } from "./modelPickerSearch";
+import { useProviderWorkspaceSnapshotRefresh } from "./useProviderWorkspaceSnapshotRefresh";
+import { rankModelPickerSearch } from "@t3tools/client-runtime/model-search";
 import { getDisplayModelName, ModelEsque } from "./providerIconUtils";
 import { MenuItem } from "../ui/menu";
 import { Badge } from "../ui/badge";
@@ -108,7 +109,9 @@ function shouldIncludeModelPickerOption(input: {
   if (isProviderInstancePickerReady(input.entry)) return true;
   return (
     input.entry.enabled &&
-    (input.entry.driverKind === "opencode" || input.entry.driverKind === "antigravity") &&
+    (input.entry.driverKind === "opencode" ||
+      input.entry.driverKind === "antigravity" ||
+      input.entry.driverKind === "cursor") &&
     input.entry.instanceId === input.activeInstanceId &&
     input.option.slug === input.activeModel &&
     input.option.isUnavailable === true
@@ -204,6 +207,8 @@ const TOOLTIP_CLASS = "max-w-64 text-balance font-normal leading-snug";
 
 export const ModelPickerContent = memo(function ModelPickerContent(props: {
   environmentId: EnvironmentId | null;
+  /** Keeps the open provider tab's catalog fresh for this directory. */
+  workspaceCwd?: string | null;
   activeInstanceId: ProviderInstanceId;
   model: string;
   selectedModels?: ReadonlyArray<{ instanceId: ProviderInstanceId; model: string }>;
@@ -401,6 +406,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     );
   })();
   const scope = scopeEntry === "favorites" ? "favorites" : scopeEntry.instanceId;
+  const { scanning: workspaceModelsScanning } = useProviderWorkspaceSnapshotRefresh({
+    environmentId: props.environmentId,
+    gitCwd: props.workspaceCwd ?? null,
+    instanceId: scope === "favorites" ? undefined : scope,
+  });
 
   const isLegacyModel = (model: ModelPickerItem) =>
     model.isLegacy === true && !favoritesSet.has(providerModelKey(model.instanceId, model.slug));
@@ -916,7 +926,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           </div>
         ) : null}
         {current.length === 0 && legacy.length === 0 && !needsSetup ? (
-          <p className="px-2 py-2 text-xs text-muted-foreground">No models</p>
+          <p className="px-2 py-2 text-xs text-muted-foreground">
+            {workspaceModelsScanning ? "Searching project models..." : "No models"}
+          </p>
         ) : null}
         {renderUpdateRequiredNotices([entry])}
       </>

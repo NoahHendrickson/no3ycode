@@ -124,6 +124,13 @@ describe("draftTriggerLabel", () => {
     );
   });
 
+  it("names the server's zone on a fixed time, as the saved row does", () => {
+    expect(draftTriggerLabel(draft, "Etc/UTC")).toBe("Daily at 09:00 UTC");
+    expect(draftTriggerLabel({ ...draft, scheduleMode: "interval" }, "Etc/UTC")).toBe(
+      "Every 30 min",
+    );
+  });
+
   it("names an interval only while the typed minutes are usable", () => {
     expect(draftTriggerLabel({ ...draft, scheduleMode: "interval" })).toBe("Every 30 min");
     expect(draftTriggerLabel({ ...draft, scheduleMode: "interval", intervalMinutes: "" })).toBe(

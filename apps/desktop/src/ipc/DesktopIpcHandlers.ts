@@ -40,6 +40,7 @@ import {
   installRelayTelemetryEnabled,
   getSystemLocale,
   getPreferredSystemLanguages,
+  getPrimaryPasteEnabled,
   getWindowFullscreenState,
   openExternal,
   readMedia,
@@ -52,6 +53,7 @@ import {
   pickProjectFavicon,
   pickThemeFiles,
   setTheme,
+  syncHtmlFullscreen,
   showContextMenu,
 } from "./methods/window.ts";
 import {
@@ -80,6 +82,7 @@ import {
   getCliCommandState,
   installCliCommand,
   uninstallCliCommand,
+  addCliCommandToPath,
 } from "./methods/cliCommand.ts";
 /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
 import { setForkSidebarVibrancy } from "../fork/ForkSidebarVibrancy.ts";
@@ -106,6 +109,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* installRelayTelemetryEnabled();
   yield* ipc.handleSync(getSystemLocale);
   yield* ipc.handleSync(getPreferredSystemLanguages);
+  yield* ipc.handleSync(getPrimaryPasteEnabled);
   yield* ipc.handleSync(getWindowFullscreenState);
   yield* ipc.handleSync(getLocalEnvironmentBootstraps);
   yield* ipc.handleSync(getLocalEnvironmentEnabled);
@@ -162,6 +166,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* ipc.handle(checkSystemPermission);
   yield* ipc.handle(pasteAsText);
   yield* ipc.handle(revealWindow);
+  yield* ipc.handle(syncHtmlFullscreen);
   yield* ipc.handle(probeRemoteEditors);
   yield* ipc.handle(getUpdateState);
   yield* ipc.handle(setUpdateChannel);
@@ -171,6 +176,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* ipc.handle(getCliCommandState);
   yield* ipc.handle(installCliCommand);
   yield* ipc.handle(uninstallCliCommand);
+  yield* ipc.handle(addCliCommandToPath);
   for (const previewMethod of PreviewIpc.methods) {
     // Explicit types preserve the error/service union of these heterogeneous preview methods.
     yield* ipc.handle<

@@ -34,6 +34,7 @@ import {
   Alarm as PhAlarm,
   Archive as PhArchive,
   ArrowCircleUp as PhArrowCircleUp,
+  ArrowBendUpLeft as PhArrowBendUpLeft,
   ArrowClockwise as PhArrowClockwise,
   ArrowCounterClockwise as PhArrowCounterClockwise,
   ArrowDown as PhArrowDown,
@@ -142,6 +143,7 @@ import {
   Link as PhLink,
   LinkSimple as PhLinkSimple,
   LinkBreak as PhLinkBreak,
+  ListPlus as PhListPlus,
   ListChecks as PhListChecks,
   ListMagnifyingGlass as PhListMagnifyingGlass,
   Lock as PhLock,
@@ -168,11 +170,13 @@ import {
   PlusCircle as PhPlusCircle,
   PencilSimple as PhPencilSimple,
   Prohibit as PhProhibit,
+  Scroll as PhScroll,
   PuzzlePiece as PhPuzzlePiece,
   ShieldCheck as PhShieldCheck,
   Smiley as PhSmiley,
   SpeakerHigh as PhSpeakerHigh,
   SpeakerSlash as PhSpeakerSlash,
+  Sparkle as PhSparkle,
   Square as PhSquare,
   Tag as PhTag,
   Pulse as PhPulse,
@@ -187,7 +191,6 @@ import {
   Sidebar as PhSidebar,
   SidebarSimple as PhSidebarSimple,
   SignIn as PhSignIn,
-  Sparkle as PhSparkle,
   Stack as PhStack,
   SquareHalf as PhSquareHalf,
   SquareHalfBottom as PhSquareHalfBottom,
@@ -518,6 +521,7 @@ export const BotIcon = icon("bot", PhRobot, "duotone");
 export const Bot = icon("bot", PhRobot, "duotone");
 export const Braces = icon("braces", PhBracketsCurly, "duotone");
 export const LightbulbIcon = icon("lightbulb", PhLightbulb, "duotone");
+// oxlint-disable-next-line t3code/no-sparkles-icon -- a user-picked project icon resolves "sparkles" by name
 export const SparklesIcon = icon("sparkles", PhSparkle, "duotone");
 export const ZapIcon = icon("zap", PhLightning, "duotone");
 export const StarIcon = icon("star", PhStar, "duotone");
@@ -741,6 +745,15 @@ export const Unlink2Icon = Unlink2;
 export const UserCheckIcon = icon("user-check", PhUserCheck, "duotone");
 export const UserRoundXIcon = icon("user-round-x", PhUserMinus, "duotone");
 export const Plug2Icon = icon("plug-2", PhPlug, "duotone");
+export const PlugIcon = icon("plug", PhPlug, "duotone");
+export const Volume2Icon = Volume2;
+export const VolumeOffIcon = VolumeOff;
+export const ReplyIcon = icon("reply", PhArrowBendUpLeft, "duotone");
+export const ListPlusIcon = icon("list-plus", PhListPlus, "duotone");
+export const Table2Icon = Table2;
+export const ScrollTextIcon = icon("scroll-text", PhScroll, "duotone");
+export const OctagonXIcon = icon("octagon-x", PhXCircle, "duotone");
+export const UnlinkIcon = icon("unlink", PhLinkBreak, "duotone");
 export const UserLockIcon = icon("user-lock", PhUserFocus, "duotone");
 
 /**

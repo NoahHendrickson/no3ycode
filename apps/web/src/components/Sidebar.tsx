@@ -40,7 +40,10 @@ import {
   QUEUED_TURN_START_GRACE_MS,
   threadWokeAt,
 } from "@t3tools/client-runtime/state/thread-settled";
-import { createInboxReturnTracker } from "@t3tools/client-runtime/state/thread-inbox";
+import {
+  asLaunchingThread,
+  createInboxReturnTracker,
+} from "@t3tools/client-runtime/state/thread-inbox";
 import {
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping
      The pinned block's own drop planner. Upstream moved it out of
@@ -146,15 +149,11 @@ import { isElectron } from "../env";
 import {
   resolveShortcutCommand,
   shortcutLabelForCommand,
-  shouldShowThreadJumpHintsForModifiers,
   threadJumpCommandForIndex,
   threadJumpIndexFromCommand,
   threadTraversalDirectionFromCommand,
 } from "../keybindings";
-import { useShortcutModifierState } from "../shortcutModifierState";
-import { isTerminalFocused } from "../lib/terminalFocus";
 import { isModelPickerOpen } from "../modelPickerVisibility";
-import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../terminalUiStateStore";
 import { isMacPlatform } from "~/lib/utils";
 import { useOpenPrLink } from "../lib/openPullRequestLink";
 /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows
@@ -166,6 +165,7 @@ import { releaseComposerDraftUploads } from "../lib/composerDraftUploads";
 import { readLocalApi } from "../localApi";
 import { configuredHostedAppUrl } from "../hostedPairing";
 import { useSidebarPendingFileDropStore } from "../sidebarPendingFileDropStore";
+import { SidebarFolderDrop } from "./sidebar/SidebarFolderDrop";
 import {
   /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
   getProjectOrderKey,
@@ -197,7 +197,6 @@ import {
 } from "../hooks/useThreadActions";
 import { useHandleNewThread } from "../hooks/useHandleNewThread";
 import { useSidebarProjectGroups } from "../hooks/useSidebarProjectGroups";
-import { useTerminalFocus } from "../hooks/useTerminalFocus";
 /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
 import { snapshotVisibleProjectOrderAsManual } from "~/custom/sidebarV2ProjectSort";
 import { useScrollGutterWidth } from "~/custom/useScrollGutterWidth";
@@ -308,11 +307,13 @@ import {
   useSidebarRowSubscriptionLease,
   setFileDragActive,
   useSnoozeWakeClock,
+  threadShortcutContext,
   useThreadJumpHintsVisible,
   type SidebarSection,
   resolveSidebarRowThreadId,
 } from "./Sidebar.logic";
 import { SidebarPointerSensor } from "./Sidebar.pointer";
+import { createSidebarShiftGuard } from "./Sidebar.shiftGuard";
 import { resolveLocalCheckoutBranchMismatch } from "./BranchToolbar.logic";
 import {
   ThreadPullRequestBadgeControl,
@@ -451,6 +452,7 @@ import {
 } from "../providerInstances";
 import { useThreadRunningTerminalIds } from "../state/terminalSessions";
 import { stackedThreadToast, toastManager } from "./ui/toast";
+import { titleRegenerationToast } from "./threadTitleRegenerationToast";
 import { copyThreadReference } from "../lib/copyThreadReference";
 import { threadChipCopyTarget } from "@t3tools/client-runtime/thread-reference";
 import { InlineButton } from "./ui/button";
@@ -459,8 +461,12 @@ import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrom
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuShortcut, MenuTrigger } from "./ui/menu";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { MiddleTruncate } from "./ui/middle-truncate";
-import { useComposerDraftStore, useThreadHasUnsentDraft } from "../composerDraftStore";
-import { useThreadRouteTarget } from "../hooks/useThreadRouteTarget";
+import {
+  useComposerDraftStore,
+  usePromotingDraftThreadKeys,
+  useThreadHasUnsentDraft,
+} from "../composerDraftStore";
+import { useShownThreadRouteTarget } from "../hooks/useShownThreadRouteTarget";
 /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
 import { SidebarSplitPairRow } from "~/custom/splitThreads/SidebarSplitPairRow";
 import {
@@ -672,6 +678,7 @@ function JumpHintBadge(props: { label: string }) {
   return (
     <span
       aria-hidden
+      data-jump-hint
       className="pointer-events-none absolute right-1.5 top-1/2 z-10 inline-flex h-5 -translate-y-1/2 items-center rounded-full border border-border/80 bg-background/95 px-1.5 font-mono text-3xs font-medium tracking-tight text-foreground shadow-sm"
     >
       {props.label}
@@ -1113,7 +1120,7 @@ type SidebarThreadRowProps = {
   onThreadActivate: (threadRef: ScopedThreadRef) => void;
   onStartRename: (threadRef: ScopedThreadRef, title: string) => void;
   onRenameTitleChange: (title: string) => void;
-  onCommitRename: (threadRef: ScopedThreadRef, title: string, originalTitle: string) => void;
+  onCommitRename: (threadRef: ScopedThreadRef, title: string) => void;
   onCancelRename: () => void;
   isRenaming: boolean;
   renamingTitle: string;
@@ -1448,7 +1455,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     if (event.key === "Enter") {
       event.preventDefault();
       renameCommittedRef.current = true;
-      onCommitRename(threadRef, renamingTitle, thread.title);
+      onCommitRename(threadRef, renamingTitle);
     } else if (event.key === "Escape") {
       event.preventDefault();
       renameCommittedRef.current = true;
@@ -1457,7 +1464,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   };
   const handleRenameBlur = () => {
     if (!renameCommittedRef.current) {
-      onCommitRename(threadRef, renamingTitle, thread.title);
+      onCommitRename(threadRef, renamingTitle);
     }
   };
   const handleSettleClick = (event: ReactMouseEvent) => {
@@ -2390,6 +2397,21 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end sidebar-v2-project-grouping */
   // Quiet: held through streaming ticks, and already without threads tagged to hide (#29053).
   const threads = useQuietThreadShells();
+  const promotingDraftThreadKeys = usePromotingDraftThreadKeys();
+  // A draft being sent reads as launching, so its row moves from draft to Working in one step.
+  const listedThreads = useMemo(
+    () =>
+      promotingDraftThreadKeys.length === 0
+        ? threads
+        : threads.map((thread) =>
+            promotingDraftThreadKeys.includes(
+              scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+            )
+              ? asLaunchingThread(thread)
+              : thread,
+          ),
+    [promotingDraftThreadKeys, threads],
+  );
   /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
   const modePolicy = useSidebarModePolicy();
   // Read off the policy: the memoized menu handler below depends on the callee itself.
@@ -2470,6 +2492,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const updateThreadMetadata = useOrchestrationCommand(threadEnvironment.updateMetadata, {
     reportFailure: false,
   });
+  const regenerateThreadTitle = useOrchestrationCommand(threadEnvironment.regenerateTitle, {
+    reportFailure: false,
+  });
   const { copyToClipboard: copyPathToClipboard } = useCopyToClipboard<{ path: string }>({
     onCopy: ({ path }) => {
       toastManager.add({
@@ -2539,22 +2564,26 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const toggleThreadSelection = useThreadSelectionStore((s) => s.toggleThread);
   const rangeSelectTo = useThreadSelectionStore((s) => s.rangeSelectTo);
   const acknowledgeWoke = useAcknowledgeThreadWoke();
-  const routeTarget = useThreadRouteTarget();
+  // A Settings or Usage modal keeps the thread behind it current.
+  const routeTarget = useShownThreadRouteTarget().shownTarget;
   const routeDraftThread = useComposerDraftStore((store) =>
     routeTarget?.kind === "draft" ? store.getDraftSession(routeTarget.draftId) : null,
+  );
+  const routeDraftRedirect = useComposerDraftStore((store) =>
+    routeTarget?.kind === "draft" ? store.getPromotedDraftRedirect(routeTarget.draftId) : null,
   );
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
   // Upstream only resolves a draft route after promotion. Unpromoted drafts
   // still own a reserved thread id — use it so the sidebar card highlights
   // and keyboard order treat the draft the same as any other open thread.
   const routeThreadRef = useMemo(() => {
-    const promoted = resolveActiveThreadRouteRef(routeTarget, routeDraftThread);
+    const promoted = resolveActiveThreadRouteRef(routeTarget, routeDraftThread, routeDraftRedirect);
     if (promoted) return promoted;
     if (routeTarget?.kind === "draft" && routeDraftThread) {
       return scopeThreadRef(routeDraftThread.environmentId, routeDraftThread.threadId);
     }
     return null;
-  }, [routeDraftThread, routeTarget]);
+  }, [routeDraftRedirect, routeDraftThread, routeTarget]);
   /* fork:end sidebar-v2-draft-rows */
   const routeThreadKey = routeThreadRef ? scopedThreadKey(routeThreadRef) : null;
   // An open subagent has no row of its own; the ancestor row stands in for it.
@@ -2848,7 +2877,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     // Subagent child threads live in the parent's Agents surface, not the
     // sidebar roster (v2 models them as real threads with lineage).
     const visible = filterSidebarV2VisibleThreads(
-      threads,
+      listedThreads,
       scopedProjectKeys,
       delegatedUnderParent,
       /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
@@ -2859,7 +2888,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
        Status grouping orders its sections by return too, and draws its own
        Working section, so the beta shelf stands down while it is on. */
     const inboxObservation = inboxReturns.observe(
-      workingShelfEnabled || statusGrouped ? threads : null,
+      workingShelfEnabled || statusGrouped ? listedThreads : null,
     );
     const workingShelfActive = workingShelfEnabled && !statusGrouped;
     /* fork:end sidebar-v2-status-grouping */
@@ -2947,7 +2976,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
          Every mode's: the server's older-settled counts hold chats and Code threads alike. */
       visibleThreads: modePolicy.chat
         ? visible
-        : filterSidebarV2VisibleThreads(threads, scopedProjectKeys, delegatedUnderParent),
+        : filterSidebarV2VisibleThreads(listedThreads, scopedProjectKeys, delegatedUnderParent),
       /* fork:end fork-chat-mode */
     };
   }, [
@@ -2964,7 +2993,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
     statusGrouped,
     /* fork:end sidebar-v2-status-grouping */
-    threads,
+    listedThreads,
     workingShelfEnabled,
     /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
     modePolicy.listsThread,
@@ -3432,6 +3461,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   );
   const [renamingThreadKey, setRenamingThreadKey] = useState<string | null>(null);
   const [renamingTitle, setRenamingTitle] = useState("");
+  const renamingOriginalTitleRef = useRef("");
   const startThreadRename = useCallback(
     (threadRef: ScopedThreadRef, title: string) => {
       if (!readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope)) return;
@@ -3448,6 +3478,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       /* fork:end fork-collapsed-thread-tabs */
       setRenamingThreadKey(scopedThreadKey(threadRef));
       setRenamingTitle(title);
+      renamingOriginalTitleRef.current = title;
       /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
     },
     [isMobile, setSidebarOpen],
@@ -3455,7 +3486,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end fork-collapsed-thread-tabs */
   const cancelThreadRename = useCallback(() => setRenamingThreadKey(null), []);
   const commitThreadRename = useCallback(
-    (threadRef: ScopedThreadRef, title: string, originalTitle: string) => {
+    (threadRef: ScopedThreadRef, title: string) => {
+      const originalTitle = renamingOriginalTitleRef.current;
       void (async () => {
         if (!readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope)) return;
         const trimmed = title.trim();
@@ -4125,7 +4157,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     children: [
                       ...snoozePresets.map((preset) => ({
                         id: `snooze:${preset.id}`,
-                        label: `${preset.label} (${preset.whenLabel})`,
+                        label: preset.label,
+                        detail: preset.whenLabel,
                         disabled: !canOperateThreads(selectedThreads),
                       })),
                       {
@@ -4230,25 +4263,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         return;
       }
       if (clicked.value === "regenerate-title") {
-        for (const thread of regeneratableTitleThreads) {
-          const result = await updateThreadMetadata({
-            environmentId: thread.environmentId,
-            input: { threadId: thread.id, regenerateTitle: true },
-          });
-          if (result._tag === "Success") continue;
-          if (!isAtomCommandInterrupted(result)) {
-            const error = squashAtomCommandFailure(result);
-            toastManager.add(
-              stackedThreadToast({
-                type: "error",
-                title: "Failed to regenerate thread titles",
-                description: error instanceof Error ? error.message : "An error occurred.",
-              }),
-            );
-          }
-          return;
-        }
         clearSelection();
+        const toast = titleRegenerationToast(
+          await Promise.all(
+            regeneratableTitleThreads.map((thread) =>
+              regenerateThreadTitle({
+                environmentId: thread.environmentId,
+                input: { threadId: thread.id },
+              }),
+            ),
+          ),
+        );
+        if (toast) toastManager.add(toast);
         return;
       }
       if (clicked.value === "settle") {
@@ -4324,6 +4350,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       deleteThread,
       markThreadUnread,
       performSnooze,
+      regenerateThreadTitle,
       removeFromSelection,
       serverConfigs,
       settleThreads,
@@ -4629,20 +4656,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             return;
           case "regenerate-title": {
             if (isRegeneratingTitle) return;
-            const result = await updateThreadMetadata({
-              environmentId: threadRef.environmentId,
-              input: { threadId: threadRef.threadId, regenerateTitle: true },
-            });
-            if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-              const error = squashAtomCommandFailure(result);
-              toastManager.add(
-                stackedThreadToast({
-                  type: "error",
-                  title: "Failed to regenerate thread title",
-                  description: error instanceof Error ? error.message : "An error occurred.",
-                }),
-              );
-            }
+            const toast = titleRegenerationToast([
+              await regenerateThreadTitle({
+                environmentId: threadRef.environmentId,
+                input: { threadId: threadRef.threadId },
+              }),
+            ]);
+            if (toast) toastManager.add(toast);
             return;
           }
           case "mark-unread":
@@ -4756,6 +4776,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       openProjectSettings,
       projectScopeKeys,
       projectByKey,
+      regenerateThreadTitle,
       serverConfigs,
       setThreadAutoSettle,
       startThreadRename,
@@ -4778,11 +4799,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
 
   // Thread jump (cmd+1..9) and prev/next traversal reuse the same commands as
   // v1 — the keybinding layer is shared, only the ordered list differs.
-  const routeTerminalOpen = useTerminalUiStateStore((state) =>
-    routeThreadRef
-      ? selectThreadTerminalUiState(state.terminalUiStateByThreadKey, routeThreadRef).terminalOpen
-      : false,
-  );
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- subscribes to window keydown for thread navigation shortcuts using the current thread list
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -4791,13 +4807,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       }
       const command = resolveShortcutCommand(event, keybindings, {
         platform: navigator.platform,
-        context: {
-          terminalFocus: isTerminalFocused(),
-          terminalOpen: routeTerminalOpen,
-          modelPickerOpen: isModelPickerOpen(),
-          isWeb: !isElectron,
-          isDesktop: isElectron,
-        },
+        context: threadShortcutContext(routeThreadRef),
       });
       const navigateToThreadKey = (targetThreadKey: string | null) => {
         if (!targetThreadKey) return false;
@@ -4830,38 +4840,31 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     navigateToThread,
     orderedThreadKeys,
     routeRowThreadKey,
-    routeTerminalOpen,
+    routeThreadRef,
     threadByKey,
   ]);
 
   // Same predicate as v1: hints show only while the held modifiers exactly
   // match a thread-jump binding. Adding Shift (screenshots) or Alt no
   // longer matches ⌘1..9, so the overlay hides for chords like ⌘⇧4.
-  const shortcutModifiers = useShortcutModifierState();
-  const terminalFocused = useTerminalFocus();
-  const shouldShowJumpHintsNow = shouldShowThreadJumpHintsForModifiers(
-    shortcutModifiers,
-    keybindings,
-    {
-      platform: navigator.platform,
-      context: {
-        terminalFocus: terminalFocused,
-        terminalOpen: routeTerminalOpen,
-        modelPickerOpen: isModelPickerOpen(),
-        isWeb: !isElectron,
-        isDesktop: isElectron,
-      },
-    },
-  );
-  const showJumpHints = useThreadJumpHintsVisible(shouldShowJumpHintsNow);
+  const showJumpHints = useThreadJumpHintsVisible(keybindings, routeThreadRef);
 
   /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
   const listMotionRef = useRef<ReturnType<typeof createSidebarV2ListMotion> | null>(null);
   // A project header drag holds the motion: its own transform is dnd-kit's until the drop.
   const [projectDragActive, setProjectDragActive] = useState(false);
   /* fork:end sidebar-v2-list-animation */
+  const shiftGuardRef = useRef<ReturnType<typeof createSidebarShiftGuard> | null>(null);
   const attachThreadListRef = useCallback((node: HTMLUListElement) => {
     threadListRef.current = node;
+    /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation
+       A draft row arrives because the route landed on it (startup's draft, New thread), so the
+       rows it pushes down were not slid under a pointer. */
+    const shiftGuard = createSidebarShiftGuard(node, (row) =>
+      draftIdByThreadKeyRef.current.has(row.getAttribute("data-thread-item") ?? ""),
+    );
+    /* fork:end sidebar-v2-list-animation */
+    shiftGuardRef.current = shiftGuard;
     /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
     // Rows grow in and shrink out while their neighbours slide.
     const motion = createSidebarV2ListMotion(node);
@@ -4869,14 +4872,17 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     motion.update(false);
     return () => {
       motion.dispose();
+      shiftGuard.dispose();
       if (listMotionRef.current === motion) listMotionRef.current = null;
+      if (shiftGuardRef.current === shiftGuard) shiftGuardRef.current = null;
       if (threadListRef.current === node) threadListRef.current = null;
     };
     /* fork:end sidebar-v2-list-animation */
   }, []);
   /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- after each commit the list motion measures its rows and animates the ones that came, went or moved
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- after each commit the shift guard records moved rows and the list motion animates the ones that came, went or moved
   useLayoutEffect(() => {
+    shiftGuardRef.current?.update();
     listMotionRef.current?.update(!projectDragActive);
   });
   /* fork:end sidebar-v2-list-animation */
@@ -5225,7 +5231,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     );
   };
   return (
-    <>
+    <SidebarFolderDrop>
       <SidebarChromeHeader
         isElectron={isElectron}
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
@@ -5368,6 +5374,50 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           className="min-h-0 flex-1 overflow-y-auto pb-1 [--sidebar-list-pad:--spacing(2)] ps-(--sidebar-list-pad) pe-[calc(var(--sidebar-list-pad)-var(--sidebar-list-gutter,0px))] [scrollbar-gutter:stable]"
         >
           {/* fork:end fork-sidebar-chrome */}
+          {/* A scope can hide every active thread; say so even when its project still has settled ones. */}
+          {pinnedThreads.length +
+            activeThreads.length +
+            workingThreads.length +
+            snoozedThreads.length ===
+            0 &&
+          (settledCount === 0 || scopedProjectsLabel !== null) ? (
+            <div className="flex flex-col items-center gap-2 px-2 py-6 text-center text-xs text-muted-foreground/60">
+              {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+                  The scope names one project or a count, so the copy reads
+                  "No threads in 2 projects yet" as well as one project's name. */}
+              {projects.length === 0 ? (
+                <>
+                  <span>No projects yet</span>
+                  <button
+                    type="button"
+                    onClick={openAddProjectCommandPalette}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sidebar-border px-2.5 py-1 text-2xs font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
+                  >
+                    <PlusIcon className="-mx-0.5 size-3" />
+                    Add project
+                  </button>
+                </>
+              ) : scopedProjectsLabel !== null ? (
+                <>
+                  <span>
+                    {`No ${settledCount > 0 ? "active threads" : "threads"} in ${scopedProjectsLabel}${
+                      settledCount > 0 ? "" : " yet"
+                    }`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setProjectScopeKeys(EMPTY_PROJECT_SCOPE)}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sidebar-border px-2.5 py-1 text-2xs font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
+                  >
+                    Show all projects
+                  </button>
+                </>
+              ) : (
+                "No threads yet"
+              )}
+              {/* fork:end fork-sidebar-chrome */}
+            </div>
+          ) : null}
           <TooltipProvider
             key="sidebar-thread-tooltips-150"
             delay={150}
@@ -5899,12 +5949,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     >
                       <button
                         type="button"
-                        disabled={olderSettledShelf.loading}
+                        aria-disabled={olderSettledShelf.loading}
                         onClick={() => {
+                          if (olderSettledShelf.loading) return;
                           olderSettledShelf.retry();
                           showMoreSettled();
                         }}
-                        className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground disabled:cursor-default"
+                        className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground aria-disabled:cursor-default"
                       >
                         <PlusIcon aria-hidden className="size-4 shrink-0" />
                         {olderSettledShelf.loading
@@ -5921,36 +5972,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             </DndContext>
             {/* fork:end sidebar-v2-project-grouping */}
           </TooltipProvider>
-          {pinnedThreads.length +
-            activeThreads.length +
-            workingThreads.length +
-            snoozedThreads.length +
-            settledCount ===
-          0 ? (
-            <div className="flex flex-col items-center gap-2 px-2 py-6 text-center text-xs text-muted-foreground/60">
-              {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-                  The scope names one project or a count, so the copy reads
-                  "No threads in 2 projects yet" as well as one project's name. */}
-              {projects.length === 0 ? (
-                <>
-                  <span>No projects yet</span>
-                  <button
-                    type="button"
-                    onClick={openAddProjectCommandPalette}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sidebar-border px-2.5 py-1 text-2xs font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
-                  >
-                    <PlusIcon className="-mx-0.5 size-3" />
-                    Add project
-                  </button>
-                </>
-              ) : scopedProjectsLabel !== null ? (
-                `No threads in ${scopedProjectsLabel} yet`
-              ) : (
-                "No threads yet"
-              )}
-              {/* fork:end fork-sidebar-chrome */}
-            </div>
-          ) : null}
         </SidebarGroup>
       </SidebarContent>
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
@@ -5958,6 +5979,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           repeat it as an icon. */}
       <SidebarChromeFooter hideUsage />
       {/* fork:end fork-sidebar-chrome */}
-    </>
+    </SidebarFolderDrop>
   );
 }

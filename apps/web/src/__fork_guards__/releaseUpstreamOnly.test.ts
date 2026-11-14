@@ -64,7 +64,8 @@ describe("fork guard: release-upstream-only", () => {
       .map((job) => job.id);
     // relay_public_config runs alongside preflight since upstream #7975, so
     // it carries the gate itself instead of inheriting it.
-    expect(gated).toEqual(["resolve_commit", "preflight", "relay_public_config"]);
+    // update_feed (upstream) also carries the gate, ahead of its own nightly checks.
+    expect(gated).toEqual(["resolve_commit", "preflight", "relay_public_config", "update_feed"]);
   });
 
   it("leaves no job able to run without the gate", () => {
