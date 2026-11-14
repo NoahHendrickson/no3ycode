@@ -331,14 +331,6 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
           </span>
           {/* Always drawn, so every row is the same height with or without a branch. */}
           <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-            {thread.branch !== null || thread.worktreePath !== null ? (
-              <SidebarV2CheckoutMark
-                branch={thread.branch}
-                hasWorktree={thread.worktreePath !== null}
-                devServerPort={null}
-                className="flex min-w-0 items-center gap-0.5"
-              />
-            ) : null}
             {pullRequest === null ? null : (
               <span
                 className={cn("flex shrink-0 items-center gap-1", pullRequestState?.toneClassName)}
@@ -352,6 +344,14 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
                 {pullRequest.number}
               </span>
             )}
+            {thread.branch !== null || thread.worktreePath !== null ? (
+              <SidebarV2CheckoutMark
+                branch={thread.branch}
+                hasWorktree={thread.worktreePath !== null}
+                devServerPort={null}
+                className="flex min-w-0 items-center gap-0.5"
+              />
+            ) : null}
           </span>
         </span>
       </button>
