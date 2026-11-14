@@ -6967,3 +6967,195 @@
     - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
     - apps/desktop/src/fork/ForkMusicClient.test.ts
     - apps/web/src/custom/music/musicKeepOpen.browser.test.tsx
+
+- id: fork-bots
+  intent: >
+    Bots are long-running agents with one ongoing conversation each, listed in
+    their own sidebar section. A bot is a No-project thread tagged `bot` (the
+    server's existing thread tags) whose checkout is its own folder under the
+    No-project workspace (bots/<name>-<id>). Creating one is the existing
+    file-write, thread.create and thread.tag.set commands (`bot` first, then
+    the mascot tag), and its routines are ordinary scheduled tasks the bot
+    makes for itself and binds to its conversation (fork-scheduled-wake-hold
+    keeps those from piling up).
+
+    The server owns what a bot reported. A thread shell carries no message
+    bodies, but a bot-tagged one carries, as latestVisibleMessage, the first
+    280 characters of the final reply of its latest settled run that did not
+    end on the quiet reply "Nothing to report." (orchestration-v2/forkBotReport,
+    a tag-gated subquery in the shell rows that walks the messages' indexed
+    (thread_id, created_at) order from the newest; progress replies before a
+    run's final one never count). The shell built from a full projection
+    keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
+    than its last visit, server clock on both sides and the same on every
+    device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
+    notifies only when the report changed. A bot that keeps failing the same
+    way alerts once (custom/bots/botFailureAlerts: the error's wording without
+    ids, timestamps and long numbers); it alerts again when the error changes
+    or after a wake succeeds. That memory is per client session.
+
+    Usage limits, because every wake (even a quiet one) is a full model turn:
+    a bot needs Claude (its memory is CLAUDE.md, JOB.md and the folder's
+    hooks) and starts on the newest non-legacy Sonnet of its Claude instance,
+    without the owner's default options (useCreateBot botModelSelection); a
+    task a bot schedules for its own thread defaults to a fresh session
+    (OrchestratorMcpService.scheduleTask), so a forgotten flag cannot resume
+    its long session every wake; and schedule_task refuses a bot an interval
+    under 15 minutes, on create and on a schedule change (mcp/forkBotWakes).
+    The interval holds for a task the bot leaves unbound too, or unbinding
+    would be the way round. The owner changes it for a task under Automations,
+    which never goes through schedule_task. Its wakes run on whatever model the
+    bot's conversation is set to: a task is saved with the thread's model and a
+    bound wake sends none, as upstream does, so a wake never switches the
+    conversation's model. A task bound to the bot also has "Scheduled wake:" in
+    front of its prompt (scheduledTasks/forkBotTasks, kept through edits). That
+    marker tells the bot a wake from its owner. The
+    seeded CLAUDE.md asks for the slowest schedule and says
+    the scheduler refuses one under 15 minutes, webhook coalescing
+    for event jobs, tail reads of the conversation (t3_thread_read pages from
+    the oldest item), a Log of at most 30 meaningful lines, Haiku subagents,
+    and no task changes or self-sends during a wake; SessionStart prints at
+    most 8 KB of STATE.md. Not limited: total wakes per bot, a per-wake turn
+    budget, and webhook wakes queueing behind an unfinished one.
+
+    The folder is what keeps a bot coherent over months, so it is seeded before
+    the thread exists (custom/bots/botSeedFiles). CLAUDE.md holds the bot's
+    standing instructions; Claude Code reloads it from disk at every session
+    start and after every compaction, and the folder's settings deny the bot
+    edits to it. The job the bot keeps lives in JOB.md, which CLAUDE.md imports
+    (@JOB.md) in its Job section, so a bot rewriting its job cannot rewrite its
+    rules. STATE.md holds its
+    cursor, open items and a dated log; a SessionStart hook shows it to the bot
+    whenever its context is new (startup, /clear, compact), and a PreCompact
+    hook tells the summariser to write history with a Handoff section rather
+    than restate rules. The instructions tell the bot to reply with exactly
+    "Nothing to report." when a wake found nothing. A fresh wake drops the chat
+    that came before it, silently, so CLAUDE.md carries the bot's own thread id
+    and tells it how to read the conversation's tail when its owner refers to
+    something it cannot see. A promise of later work becomes a one-time
+    scheduled task in the same turn, since nothing wakes a bot to keep a
+    promise written only in STATE.md. Only the owner changes JOB.md; a wake
+    (a message starting "Scheduled wake:") writes STATE.md alone. The folder's
+    settings turn Claude Code's auto memory off, compact at 150K tokens, deny
+    the bot edits to .claude and CLAUDE.md, and stamp each turn with the time.
+
+    In Code, a Bots row sits above the Threads row and in its shape (custom/
+    bots/SidebarV2BotsSection): the label, a count, a caret that folds the
+    section, a view-options gear with the bots' own Compact cards (per device,
+    off by default, apart from sidebar-v2-compact-cards), and a plus that names
+    a new bot in place. Its cards are its children, one per bot, oldest first,
+    built by the same row factory as the threads; a folded Bots section keeps
+    the open bot's card. Chat lists chats alone, so it has no Bots row. Bots
+    never appear among the threads (filterSidebarV2VisibleThreads).
+
+    A sidebar row picks its card kind once (card, compact, bot, bot-compact;
+    custom/bots/SidebarV2BotCardBody sidebarV2CardKind). A bot card draws
+    SidebarV2BotCardBody: a 44px grid (6 + 16 + 2 + 14 + 6) with the mascot in
+    a 22px column beside both lines, scaled into a 22px box so the smallest
+    faces grow most, the title, the row's trailing group (time, actions, pin,
+    status mark) centred on both lines, and a status line in words instead of
+    model, folder and branch: what it is doing or needs from you, its unread
+    report's first line, else when it next checks (its bound scheduled tasks'
+    nextRunAt). A compact bot card keeps the mascot at one pixel per cell before
+    the title. The mascot's mood follows the thread: Thinking while it works,
+    Happy with an unread report, Error after a failed run, Sleeping between
+    wakes, Idle while it is open or waiting on you; so a bot card draws no
+    working mark (helix or rain). A bot's conversation is the composer alone,
+    as a chat's is (it sets the chat column's data-fork-chat-thread).
+
+    Each bot wears one of the leaf and petal bots on the Noey Brand file's
+    "bots" page (custom/bots/botMascotArt draws them by that file's generator's
+    rules, cell for cell), kept as the thread tag mascot:<Shape>
+    (botMascotTags); a bot without one gets a face from its id. It is chosen
+    while naming the bot and changed later in the bot's thread details card (a
+    Mascot grid; BotMascotDetailsSection) or the card's context menu
+    (botMascotMenu); the new tag is set before the old one is cleared. An empty
+    bot conversation shows the mascot large. The mascots do not animate. A bot
+    keeps the name it was given from every client: the orchestrator never
+    starts a title regeneration for a thread tagged `bot`.
+    The collapsed tab strip and mobile are not bot-aware, and mobile lists bots
+    as No-project threads.
+  tier: 4
+  files:
+    - apps/web/src/custom/bots/botThreads.ts
+    - apps/web/src/custom/bots/botFailureAlerts.ts
+    - apps/server/src/orchestration-v2/forkBotReport.ts
+    - apps/server/src/mcp/forkBotWakes.ts
+    - apps/server/src/scheduledTasks/forkBotTasks.ts
+    - apps/web/src/custom/bots/botMascotArt.ts
+    - apps/web/src/custom/bots/botMascotTags.ts
+    - apps/web/src/custom/bots/botMascotMenu.ts
+    - apps/web/src/custom/bots/BotMascot.tsx
+    - apps/web/src/custom/bots/botSeedFiles.ts
+    - apps/web/src/custom/bots/useCreateBot.ts
+    - apps/web/src/custom/bots/useSetBotMascot.ts
+    - apps/web/src/custom/bots/BotMascotDetailsSection.tsx
+    - apps/web/src/custom/bots/BotCardStatusLine.tsx
+    - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
+    - apps/web/src/custom/bots/useIsBotThread.ts
+    - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
+    - apps/web/src/custom/SidebarV2SectionLabel.tsx
+    - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    - apps/web/src/custom/sidebarV2CardStatus.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    - apps/web/src/components/ThreadNotificationCoordinator.tsx
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - docs/user/thread-sidebar.md
+    - apps/server/src/orchestration-v2/ProjectionStore.ts
+    - apps/server/src/orchestration-v2/Orchestrator.ts
+    - apps/server/src/mcp/OrchestratorMcpService.ts
+    - apps/server/src/mcp/OrchestratorMcpService.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkBots.test.ts
+    - apps/server/src/orchestration-v2/forkBotReport.test.ts
+    - apps/server/src/orchestration-v2/runtimeLayer.test.ts
+    - apps/server/src/mcp/OrchestratorMcpService.test.ts
+    - apps/server/src/scheduledTasks/forkBotTasks.test.ts
+    - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
+- id: fork-scheduled-wake-hold
+  intent: >
+    A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)
+    is skipped (rescheduled to its next fire, logged at info) while an earlier
+    wake of the same task is still queued or running in that thread, or while
+    the thread is usage-limited until a known reset still ahead (an unknown
+    reset never holds). It is deferred 5 minutes instead while its owner is in
+    a chat with it: any run of the thread is unfinished, or the owner wrote in
+    the last 10 minutes (a user-authored message whose id is not a wake's, as a
+    wake of an owner-made task is authored by `user` too). Deferring rather
+    than skipping keeps a daily bot's only wake. A bound task queues each fire
+    behind whatever its thread is doing, so without this a bot held up for a
+    day collects a wake per interval and runs them back to back, a limited one
+    hits the limit every interval, and a wake during a chat starts a fresh
+    session under the owner's next message. Other bound tasks keep upstream's
+    queueing. One-time, manual and webhook runs are never held. The check is forkScheduledFireHold
+    (scheduledTasks/forkScheduledWakeHold), called once from
+    ScheduledTaskService's due-task loop with forkDeferScheduledFire.
+  tier: 3
+  files:
+    - apps/server/src/scheduledTasks/forkScheduledWakeHold.ts
+  shadows: []
+  watch:
+    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
+  verify:
+    - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
+- id: sidebar-v2-threads-fold
+  intent: >
+    The Threads row's label folds the whole thread list under it, with a
+    caret shown on hover or while folded (custom/SidebarV2SectionLabel, shared
+    with the Bots row and the status section headers). Per device; Chat never
+    folds. The collapse state shares one store with the Bots section
+    (custom/bots/SidebarV2BotsSection useSidebarV2CollapsedListSections).
+  tier: 4
+  files:
+    - apps/web/src/custom/SidebarV2SectionLabel.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkBots.test.ts

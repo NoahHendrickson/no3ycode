@@ -128,6 +128,11 @@ import { isLiveCallerShell, threadNotFound } from "./threadAccess.ts";
 import * as SecretRequests from "../secrets/SecretRequests.ts";
 import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { forkBotWakePrompt } from "../scheduledTasks/forkBotTasks.ts";
+import { forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
+/* fork:end fork-bots */
 
 const DEFAULT_WAIT_TIMEOUT_MS = 10 * 60 * 1_000;
 const MAX_WAIT_TIMEOUT_MS = 60 * 60 * 1_000;
@@ -2002,6 +2007,15 @@ const make = Effect.gen(function* () {
             : "bindToCurrentThread binds to this thread, which belongs to a different project.",
         );
       }
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         A bot's own wakes start clean and at most every 15 minutes, so a forgotten flag cannot
+         carry into every wake. The interval holds for an unbound task too, or unbinding would be
+         the way round a refusal. */
+      const forkBotCaller = parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
+      const forkBotWake = bindToCurrentThread && forkBotCaller;
+      const forkBotRefusal = forkBotCaller ? forkBotWakeScheduleRefusal(input.schedule) : null;
+      if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
+      /* fork:end fork-bots */
       const modelSelection =
         parent?.thread.modelSelection ?? (yield* projectDefaultModelSelection(project));
       const derivedTitle = input.prompt.split("\n")[0]?.trim() ?? "";
@@ -2009,16 +2023,19 @@ const make = Effect.gen(function* () {
         input.title ?? (derivedTitle.length > 0 ? derivedTitle.slice(0, 80) : "Scheduled task");
       const upsertInput: ScheduledTaskUpsertInput = {
         title,
-        prompt: input.prompt,
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        prompt: forkBotWake ? forkBotWakePrompt(input.prompt) : input.prompt,
+        /* fork:end fork-bots */
         enabled: input.enabled ?? true,
         schedule: input.schedule,
         projectId,
         threadId: bindToCurrentThread && parent !== undefined ? parent.thread.id : null,
-        threadMode: input.freshSession
-          ? "fresh_session"
-          : bindToCurrentThread
-            ? "continue"
-            : "new_thread",
+        threadMode:
+          (input.freshSession ?? forkBotWake)
+            ? "fresh_session"
+            : bindToCurrentThread
+              ? "continue"
+              : "new_thread",
         workspaceStrategy: yield* scheduledTaskWorkspaceStrategy(bindToCurrentThread, projectId),
         modelSelection,
         runtimeMode: limits.runtimeMode,
@@ -2099,6 +2116,14 @@ const make = Effect.gen(function* () {
             : input.bindToCurrentThread && parent !== undefined
               ? parent.thread.id
               : null;
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        const forkBotRefusal =
+          input.schedule !== undefined &&
+          parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+            ? forkBotWakeScheduleRefusal(input.schedule)
+            : null;
+        if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
+        /* fork:end fork-bots */
         // Update workspace strategy on rebinding so unbound root tasks cannot run in the shared checkout.
         const workspaceStrategy =
           input.bindToCurrentThread === undefined
@@ -2107,7 +2132,15 @@ const make = Effect.gen(function* () {
         const upsertInput: ScheduledTaskUpsertInput = {
           id: existing.id,
           title: input.title ?? existing.title,
-          prompt: input.prompt ?? existing.prompt,
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+             A bot's own task keeps the wake marker through edits. */
+          prompt:
+            threadId !== null &&
+            parent?.thread.id === threadId &&
+            parent.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+              ? forkBotWakePrompt(input.prompt ?? existing.prompt)
+              : (input.prompt ?? existing.prompt),
+          /* fork:end fork-bots */
           enabled: input.enabled ?? existing.enabled,
           schedule: input.schedule ?? existing.schedule,
           projectId: existing.projectId,

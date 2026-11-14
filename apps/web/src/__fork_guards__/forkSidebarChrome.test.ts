@@ -490,8 +490,10 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // headings read as one family.
     expect(rows).toContain("CHROME_TYPE");
     expect(rows.split("CHROME_TYPE").length - 1).toBeGreaterThanOrEqual(2);
-    expect(rows).toMatch(
-      /text-\[0\.8125rem\] leading-4 font-semibold text-muted-foreground"\s*>\s*Threads/u,
+    // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
+    expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
+    expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
+      '"text-[0.8125rem] leading-4 font-semibold text-muted-foreground"',
     );
   });
 

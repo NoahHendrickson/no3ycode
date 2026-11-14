@@ -43,6 +43,9 @@ import {
   type ScheduledRunRosterFields,
 } from "../custom/scheduledRunsOffSidebar";
 /* fork:end fork-scheduled-runs-off-sidebar */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { type BotShell, isBotThread } from "../custom/bots/botThreads";
+/* fork:end fork-bots */
 /* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
 import { scopedProjectKey } from "@t3tools/client-runtime/environment";
 import type { ScopedProjectRef } from "@t3tools/contracts";
@@ -604,7 +607,10 @@ export function resolveSidebarRowThreadId(
 export function filterSidebarV2VisibleThreads<
   T extends Pick<SidebarThreadSummary, "archivedAt" | "environmentId" | "id" | "lineage"> & {
     projectId: string;
-  } & ScheduledRunRosterFields,
+  } & ScheduledRunRosterFields &
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    { readonly source: Pick<BotShell, "tags"> },
+  /* fork:end fork-bots */
 >(
   threads: readonly T[],
   scopedProjectKeys: ReadonlySet<string> | null,
@@ -629,6 +635,10 @@ export function filterSidebarV2VisibleThreads<
          Automation runs live on the Automations page unless pinned. */
       !isScheduledRunOffSidebar(thread) &&
       /* fork:end fork-scheduled-runs-off-sidebar */
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         Bots list in the sidebar's Bots section, never among the threads. */
+      !isBotThread(thread.source) &&
+      /* fork:end fork-bots */
       (scopedProjectKeys === null ||
         scopedProjectKeys.has(`${thread.environmentId}:${thread.projectId}`)),
   );
@@ -1358,7 +1368,10 @@ export function rankRecentProjectEntries<
 export function sortSidebarV2ProjectGroups<
   TProject extends LogicalSidebarProject,
   TThread extends ScopedSidebarThread &
-    Pick<SidebarThreadSummary, "environmentId" | "id" | "lineage">,
+    Pick<SidebarThreadSummary, "environmentId" | "id" | "lineage"> &
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    { readonly source: Pick<BotShell, "tags"> },
+  /* fork:end fork-bots */
 >(
   projects: readonly TProject[],
   threads: readonly TThread[],

@@ -55,6 +55,7 @@ import { ProjectFavicon, type ProjectFaviconProject } from "~/components/Project
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
+import { SidebarV2SectionLabel } from "./SidebarV2SectionLabel";
 import { useQuietThreadShells } from "~/state/entities";
 import { usePullRequestsSupported } from "~/state/environments";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
@@ -86,7 +87,7 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
  *  custom/sidebarV2TrailingColumn, which records the derivation. The inset
  *  carries no scrollbar term: the list gives its reserved gutter back out of
  *  its own end padding, so a gutter term here would double-count it. */
-const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
+export const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
 /** Displaces sidebarMenuButtonVariants' base icon pair (muted-foreground at
     opacity-60, upstream v0.0.30): parent-level [&>svg] selectors outweigh the
     icon's own class, so without this the fork's tint on the glyph is dead and
@@ -110,7 +111,7 @@ const CHROME_TYPE =
     box the project headers' plus and settings buttons draw. Icon tint is
     overridden to muted here (CHROME_ROW_ICON_TINT lifts it to foreground for
     the action rows), lifting back to foreground on hover. */
-const PROJECTS_ROW_BUTTON = cn(
+export const PROJECTS_ROW_BUTTON = cn(
   "relative size-8 shrink-0 justify-center rounded-[10px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
   CHROME_ROW_ICON_TINT,
   "[&>svg]:text-current",
@@ -523,7 +524,7 @@ function FullWidthMenuSeparator() {
 const OPTION_ITEM = cn(SCOPE_ITEM, "justify-between gap-4");
 const OPTION_RADIO = "inline-flex size-4 shrink-0 items-center justify-center rounded-full border";
 
-function OptionCheckboxItem(props: {
+export function OptionCheckboxItem(props: {
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
   readonly testId: string;
@@ -607,6 +608,9 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
   readonly projectSortOrder: SidebarProjectSortOrder;
   readonly onProjectSortOrderChange: (sortOrder: SidebarProjectSortOrder) => void;
   readonly onAddProject: () => void;
+  /** Folds the whole list under this row — see `fork-bots`. Omitted where the row cannot fold. */
+  readonly collapsed?: boolean;
+  readonly onToggleCollapsed?: () => void;
 }) {
   const hasProjects = props.projectGroups.length > 0;
   const isScoped = props.projectScopeKeys.size > 0;
@@ -637,12 +641,14 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     // project headers and the card meta lines together (theme.custom.palettes.css).
     <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
       <div className="flex h-8 items-center gap-1.5 px-3">
-        <span
-          role="heading"
-          aria-level={2}
-          className="min-w-0 flex-1 truncate text-left text-[0.8125rem] leading-4 font-semibold text-muted-foreground"
-        >
-          Threads
+        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
+          <SidebarV2SectionLabel
+            collapsed={props.collapsed === true}
+            onToggle={props.onToggleCollapsed}
+            testId="sidebar-v2-threads-section-toggle"
+          >
+            Threads
+          </SidebarV2SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
           <Tooltip>
