@@ -81,6 +81,17 @@ export function toggleBotThreadsPanel(input: {
 // was opened from (its toggle, a keybinding, a link that opens a surface).
 useRightPanelStore.subscribe((next, previous) => {
   if (next.byThreadKey === previous.byThreadKey || typeof document === "undefined") return;
+  let opened = false;
+  for (const threadKey in next.byThreadKey) {
+    if (
+      next.byThreadKey[threadKey]?.isOpen === true &&
+      previous.byThreadKey[threadKey]?.isOpen !== true
+    ) {
+      opened = true;
+      break;
+    }
+  }
+  if (!opened) return;
   for (const header of document.querySelectorAll(`[${BOT_THREADS_PANEL_THREAD_ATTRIBUTE}]`)) {
     const threadKey = header.getAttribute(BOT_THREADS_PANEL_THREAD_ATTRIBUTE) ?? "";
     const botKey = header.getAttribute(BOT_THREADS_PANEL_BOT_ATTRIBUTE) ?? "";
@@ -124,6 +135,21 @@ export function updateBotThreadsView(botKey: string, patch: Partial<BotThreadsVi
       [botKey]: { ...(state.byBotKey[botKey] ?? EMPTY_BOT_THREADS_VIEW), ...patch },
     },
   }));
+}
+
+/** Set by the search button, read once by the field: a panel that remounts with search open
+    must not take focus from the composer. */
+let searchFocusRequested = false;
+
+export function openBotThreadsSearch(botKey: string): void {
+  searchFocusRequested = true;
+  updateBotThreadsView(botKey, { query: "" });
+}
+
+export function takeBotThreadsSearchFocus(): boolean {
+  const requested = searchFocusRequested;
+  searchFocusRequested = false;
+  return requested;
 }
 
 export function clearBotThreadsFilters(botKey: string): void {

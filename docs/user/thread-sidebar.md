@@ -440,8 +440,9 @@ section headings fold their section.
 
 Threads a bot starts for its work stay out of your thread list. The yarn button
 in the bot's conversation, or in any of its threads, shows the bot's **Threads**
-beside the conversation, grouped by what needs you, what is done, and what is
-still working. It stays open as you move between them, with the one you are in
+beside the conversation, grouped by what needs you, what is done, what is still
+working, what is idle, and what you have settled. Search, filter and sort it
+from the buttons at the top. It stays open as you move between them, with the one you are in
 marked. When the window is too narrow for it and the right panel together, the
 one you opened last stays open. When one of the bot's threads needs your
 approval or an answer, or fails, the bot's card says so. A bot's thread names

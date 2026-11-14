@@ -1205,7 +1205,7 @@ const make = Effect.gen(function* () {
           return yield* mapError(input, "resolve-project", threadId)("Project identity changed.");
         }
         /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
-           Tagged before the first message, so a bot's work never lists in the sidebar. */
+           Tagged before the first message; the sidebar can list it for the one event in between. */
         if (input.launchedBy !== undefined && input.reuseExistingThread !== true) {
           yield* linkForkBotWork(threads, {
             commandId: input.commandId,

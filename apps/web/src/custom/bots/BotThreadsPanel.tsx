@@ -38,6 +38,7 @@ import {
   clearBotThreadsFilters,
   closeBotThreadsPanel,
   EMPTY_BOT_THREADS_VIEW,
+  takeBotThreadsSearchFocus,
   updateBotThreadsView,
   useBotThreadsPanelStore,
   useBotThreadsViewStore,
@@ -164,7 +165,6 @@ function BotThreadsBody(props: {
           <h2 className="sr-only">Threads</h2>
           <input
             aria-label="Search threads"
-            autoFocus
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none [-webkit-app-region:no-drag] placeholder:text-muted-foreground"
             data-testid="bot-threads-search-input"
             onChange={(event) => updateBotThreadsView(botKey, { query: event.target.value })}
@@ -174,6 +174,9 @@ function BotThreadsBody(props: {
               updateBotThreadsView(botKey, { query: null });
             }}
             placeholder="Search threads"
+            ref={(field) => {
+              if (field !== null && takeBotThreadsSearchFocus()) field.focus();
+            }}
             type="text"
             value={view.query}
           />

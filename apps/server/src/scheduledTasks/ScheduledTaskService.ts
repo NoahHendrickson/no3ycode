@@ -1220,12 +1220,6 @@ export const layer = Layer.effect(
                     /* fork:begin fork-automation-runs-in-sidebar — see .fork/customizations.yaml#fork-automation-runs-in-sidebar */
                     ...(active.showInSidebar === true ? {} : { scheduledTaskId: active.id }),
                     /* fork:end fork-automation-runs-in-sidebar */
-                    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
-                       A GitHub task bound to a thread runs each event in its own thread, as that thread's work. */
-                    ...(active.threadId === null
-                      ? {}
-                      : { launchedBy: ThreadId.make(active.threadId) }),
-                    /* fork:end fork-bot-work-threads */
                   })
                   .pipe(
                     Effect.map((launched) => launched.threadId),

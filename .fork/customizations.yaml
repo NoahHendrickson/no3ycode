@@ -3070,7 +3070,6 @@
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/ThreadLaunchService.ts
-    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
     - apps/server/src/orchestration-v2/ThreadForkService.ts
     - packages/provider-core/src/server/subagentProjection.ts
     - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
@@ -7099,13 +7098,15 @@
 - id: fork-bot-work-threads
   intent: >
     What a bot starts is its work, kept out of the sidebar and shown on the bot's own
-    conversation. A top-level thread a bot launches (t3_thread_launch, create_threads), one
-    launched by such a thread or by a bot's subagent, and the thread each event of a GitHub task
-    bound to a bot runs in, carries the thread tag bot-work:<bot thread id>, written on the server
-    at launch before its first message (orchestration-v2/forkBotWork, called from
-    ThreadLaunchService.launch with launchedBy and from OrchestratorMcpService.createThreads).
+    conversation. A top-level thread a bot launches (t3_thread_launch, create_threads), and one
+    launched by such a thread or by a bot's subagent, carries the thread tag
+    bot-work:<bot thread id>, written on the server at launch before its first message
+    (orchestration-v2/forkBotWork, called from ThreadLaunchService.launch with launchedBy and
+    from OrchestratorMcpService.createThreads). The tag is its own command after the thread is
+    created, so the sidebar can list the thread for the one event in between.
     Best effort: a failed tag only lists the thread like any other. No contract field.
-    Automation runs of an unbound task are not linked: a task does not record which thread made it.
+    Automation runs are not linked, a GitHub task's included: a task launches its runs unbound
+    and does not record which thread made it.
     A bot's seeded CLAUDE.md (custom/bots/botSeedFiles, "Work goes in its own thread") tells it to
     launch a thread for work that changes a project or outlasts the reply, to stay inline for
     lookups, and to track what it started in STATE.md. Only bots read it: the instructions every
@@ -7129,13 +7130,13 @@
     bot's Threads panel (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
-    close motion), 320px by default and at least 280, with a 36px header whose bottom line meets
-    the others. Its yarn toggle sits after the details toggle, pressed while open, there and
+    close motion), 320px by default and at least 280, with a header the height of the others
+    (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its yarn toggle sits after the details toggle, pressed while open, there and
     nowhere else. Its open state is one per bot, remembered on this device
     (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads, and
     the row of the thread on screen is marked current (aria-current, the sidebar's open-row
-    fill). Its header is "Threads" and a close button, as every stage panel's is
-    (fork-stage-columns).
+    fill). Its header is "Threads", its search, filter and sort buttons (below), and the
+    close button every stage panel's has (fork-stage-columns).
     With one panel open nothing changes. With both open inline the conversation keeps 480px:
     each panel's widest is the row less the other panel and 480 (usePreviewPanelInlineSize, via
     stagePanels inlinePanelRoom, re-measured when the conversation column resizes); a capped
@@ -7144,7 +7145,8 @@
     narrows below that with both open keeps the right panel while this one waits. It is held
     shut, not forgotten, while the right panel is maximized or the split pane floats. It lists
     the bot's launched threads and subagents in the sidebar's status sections (Needs input,
-    Completed, Working, Idle, Settled), newest first, pinned ones too, empty sections left out,
+    Completed, Working, Idle, Settled), in the chosen order (last activity first by default),
+    pinned ones too, empty sections left out,
     one plain line when there is none; a row opens its thread. A row is two lines, always: the
     sidebar's status mark (its working animation included, by the maintainer's request on
     2026-11-14) with the title and time, then the pull request in its state colour, leftmost,
@@ -7164,7 +7166,9 @@
     each section (last activity, newest, oldest, title; botWork groupBotWork) and is one saved
     setting for every bot. Sections that match nothing are dropped, and a list narrowed to
     nothing offers to clear.
-    Mobile and the collapsed tab strip are not aware of it.
+    The search field takes focus only when its button opens it, never when the panel remounts
+    with search still open. The collapsed tab strip lists no bots, so it keeps a bot's work as
+    tabs (filterSidebarV2VisibleThreads botWorkInPanel false). Mobile is not aware of any of it.
   tier: 4
   files:
     - apps/server/src/orchestration-v2/forkBotWork.ts

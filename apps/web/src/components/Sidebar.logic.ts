@@ -625,6 +625,10 @@ export function resolveSidebarRowThreadId(
  * `delegatedUnderParent` holds the tasks linked environments run for a thread
  * the sidebar lists, by thread key; they show under that thread, as subagents do.
  */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+const NO_LISTED_BOTS: ReadonlySet<string> = new Set();
+/* fork:end fork-bot-work-threads */
+
 export function filterSidebarV2VisibleThreads<
   T extends Pick<SidebarThreadSummary, "archivedAt" | "environmentId" | "id" | "lineage"> & {
     projectId: string;
@@ -640,9 +644,13 @@ export function filterSidebarV2VisibleThreads<
      The open sidebar mode's threads: Chat's, or Code's. */
   listedInMode: (thread: T) => boolean = () => true,
   /* fork:end fork-chat-mode */
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     False where no bot card stands in for its work: the collapsed tab strip lists no bots. */
+  botWorkInPanel = true,
+  /* fork:end fork-bot-work-threads */
 ): T[] {
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-  const listedBots = listedBotKeys(threads);
+  const listedBots = botWorkInPanel ? listedBotKeys(threads) : NO_LISTED_BOTS;
   /* fork:end fork-bot-work-threads */
   return threads.filter(
     (thread) =>

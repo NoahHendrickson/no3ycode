@@ -91,6 +91,14 @@ describe("fork guard: fork-bot-work-threads", () => {
       "retired-fix",
       "orphan-fix",
     ]);
+    // The collapsed tab strip lists no bots, so there a bot's work keeps its tabs.
+    expect(ids(filterSidebarV2VisibleThreads(threads, null, new Set(), undefined, false))).toEqual([
+      "mine",
+      "mail-fix",
+      "mail-kept",
+      "retired-fix",
+      "orphan-fix",
+    ]);
   });
 
   it("never widens the project scope for work the sidebar leaves out", () => {
@@ -263,6 +271,8 @@ describe("fork guard: fork-bot-work-threads", () => {
     const rules = botSeedFiles({ name: "Mail Bot", today: "2026-11-14", threadId: "mail" })[0];
     expect(rules?.relativePath).toBe("CLAUDE.md");
     expect(rules?.contents).toContain("**Start a thread** with `t3_thread_launch`");
+    // The bot's own limits stop at the bot, so each prompt has to carry them.
+    expect(rules?.contents).toContain("Your limits do not travel with it");
     expect(chatView).toContain("<BotThreadsPanel");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.

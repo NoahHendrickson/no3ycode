@@ -331,9 +331,7 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("a wake writes STATE.md only");
     // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
     expect(rules).toContain("refuses an interval under 15 minutes");
-    expect(rules).toContain(
-      "`afterPosition` set to `itemCount` minus 21 when `itemCount` is over 20",
-    );
+    expect(rules).toContain("Reads return the newest messages first, so read with `limit: 20`");
     expect(rules).toContain("Keep at most 30 lines");
     expect(rules).toContain('model: "haiku"');
     expect(rules).toContain("A wake never creates, changes or deletes scheduled tasks");

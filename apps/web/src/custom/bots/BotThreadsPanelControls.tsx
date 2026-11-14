@@ -25,6 +25,7 @@ import { BOT_WORK_GROUPS, BOT_WORK_SORT_LABELS, BOT_WORK_SORTS, type BotWorkSort
 import {
   type BotThreadsView,
   clearBotThreadsFilters,
+  openBotThreadsSearch,
   setBotThreadsSort,
   updateBotThreadsView,
   useBotThreadsPanelStore,
@@ -46,7 +47,6 @@ export function BotThreadsPanelControls(props: {
   const sort = useBotThreadsPanelStore((state) => state.sort);
   const searching = view.query !== null;
   const filtered = view.groups.size > 0 || view.projectIds.size > 0;
-  const searchLabel = searching ? "Close search" : "Search threads";
   const filterLabel = filtered ? "Filter threads (filtered)" : "Filter threads";
   const sortLabel = `Sort threads: ${BOT_WORK_SORT_LABELS[sort]}`;
   return (
@@ -55,9 +55,13 @@ export function BotThreadsPanelControls(props: {
         <TooltipTrigger
           render={
             <Button
-              aria-label={searchLabel}
+              aria-label="Search threads"
               aria-pressed={searching}
-              onClick={() => updateBotThreadsView(botKey, { query: searching ? null : "" })}
+              onClick={() =>
+                searching
+                  ? updateBotThreadsView(botKey, { query: null })
+                  : openBotThreadsSearch(botKey)
+              }
               size="icon-sm"
               variant={searching ? "secondary" : "ghost"}
               data-testid="bot-threads-search"
@@ -66,7 +70,7 @@ export function BotThreadsPanelControls(props: {
         >
           <SearchIcon className="size-4" />
         </TooltipTrigger>
-        <TooltipPopup side="bottom">{searchLabel}</TooltipPopup>
+        <TooltipPopup side="bottom">{searching ? "Close search" : "Search threads"}</TooltipPopup>
       </Tooltip>
       <Menu>
         <Tooltip>
