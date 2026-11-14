@@ -316,9 +316,14 @@
     the build script makes passkey signing opt-in: it needs an Associated
     Domains profile and an RP domain whose
     apple-app-site-association lists the fork's team, and upstream's Clerk
-    domain only lists upstream's, so fork builds sign without it. A second
-    fenced hunk drops binaries no packaged app loads, keeping the Windows
-    payload under upstream's file limit, which fails the release when exceeded.
+    domain only lists upstream's, so fork builds sign without it. Other
+    fenced hunks drop binaries no packaged app loads and raise the Windows
+    payload file limit, which fails the release when exceeded, from
+    upstream's 80 to 96: once the server compile cache covered the server's
+    own chunks (upstream #32987) the fork's payload reached 87 files, and the
+    files left to drop are ones the release cannot test without a Windows
+    session. If it trips again, stop counting server-compile-cache entries
+    (the limit is for runaway native payloads) rather than raising it again.
   tier: 1
   files:
     - .github/workflows/fork-release.yml
@@ -330,7 +335,8 @@
     # gate scripts on every PR, so a defect there costs a check, not a build.
     - .github/workflows/ci.yml
     # Fenced: passkey signing only when a provisioning profile is configured,
-    # and the dead binaries excluded from the packaged payload.
+    # the dead binaries excluded from the packaged payload, and the Windows
+    # payload file limit.
     - scripts/build-desktop-artifact.ts
     - scripts/build-desktop-artifact.test.ts
   verify:

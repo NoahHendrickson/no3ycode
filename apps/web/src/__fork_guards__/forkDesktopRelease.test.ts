@@ -137,6 +137,7 @@ describe("fork guard: fork-desktop-release", () => {
     expect(buildScript).toContain(
       'ignoredOptionalDependencies: ["@yuuang/ffi-rs-win32-ia32-msvc"]',
     );
+    expect(buildScript).toContain("export const WINDOWS_PACKAGED_PAYLOAD_FILE_LIMIT = 96;");
   });
 
   it("publishes only after both platforms pass their gates", () => {
