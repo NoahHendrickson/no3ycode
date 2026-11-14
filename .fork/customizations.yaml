@@ -6995,7 +6995,8 @@
     or after a wake succeeds. That memory is per client session.
 
     Usage limits, because every wake (even a quiet one) is a full model turn:
-    a new bot starts on the newest non-legacy Sonnet of its Claude instance,
+    a bot needs Claude (its memory is CLAUDE.md, JOB.md and the folder's
+    hooks) and starts on the newest non-legacy Sonnet of its Claude instance,
     without the owner's default options (useCreateBot botModelSelection); a
     task a bot schedules for its own thread defaults to a fresh session and to
     the same Sonnet, without options (OrchestratorMcpService.scheduleTask, mcp/
@@ -7005,7 +7006,12 @@
     a schedule change. The interval and the Sonnet default hold for a task the
     bot leaves unbound too, or unbinding would be the way round. The owner changes
     either for a task under Automations, which never goes through
-    schedule_task. The seeded CLAUDE.md asks for the slowest schedule and says
+    schedule_task. A task bound to the bot also has "Scheduled wake:" in front
+    of its prompt (scheduledTasks/forkBotTasks, kept through edits). That
+    marker tells the bot a wake from its owner, and tells ScheduledTaskService
+    to send each wake with the task's model, since a bound send otherwise runs
+    on whatever the thread was switched to (the thread's picker follows). The
+    seeded CLAUDE.md asks for the slowest schedule and says
     the scheduler refuses one under 15 minutes, webhook coalescing
     for event jobs, tail reads of the conversation (t3_thread_read pages from
     the oldest item), a Log of at most 30 meaningful lines, Haiku subagents,
@@ -7015,8 +7021,11 @@
 
     The folder is what keeps a bot coherent over months, so it is seeded before
     the thread exists (custom/bots/botSeedFiles). CLAUDE.md holds the bot's
-    standing instructions and its Job section; Claude Code reloads it from disk
-    at every session start and after every compaction. STATE.md holds its
+    standing instructions; Claude Code reloads it from disk at every session
+    start and after every compaction, and the folder's settings deny the bot
+    edits to it. The job the bot keeps lives in JOB.md, which CLAUDE.md imports
+    (@JOB.md) in its Job section, so a bot rewriting its job cannot rewrite its
+    rules. STATE.md holds its
     cursor, open items and a dated log; a SessionStart hook shows it to the bot
     whenever its context is new (startup, /clear, compact), and a PreCompact
     hook tells the summariser to write history with a Handoff section rather
@@ -7026,10 +7035,10 @@
     and tells it how to read the conversation's tail when its owner refers to
     something it cannot see. A promise of later work becomes a one-time
     scheduled task in the same turn, since nothing wakes a bot to keep a
-    promise written only in STATE.md. Only the owner changes the Job section;
-    a wake writes STATE.md alone. The folder's settings turn Claude Code's auto memory
-    off, compact at 150K tokens, deny the bot edits to .claude, and stamp each
-    turn with the time.
+    promise written only in STATE.md. Only the owner changes JOB.md; a wake
+    (a message starting "Scheduled wake:") writes STATE.md alone. The folder's
+    settings turn Claude Code's auto memory off, compact at 150K tokens, deny
+    the bot edits to .claude and CLAUDE.md, and stamp each turn with the time.
 
     In Code, a Bots row sits above the Threads row and in its shape (custom/
     bots/SidebarV2BotsSection): the label, a count, a caret that folds the
@@ -7073,6 +7082,7 @@
     - apps/web/src/custom/bots/botFailureAlerts.ts
     - apps/server/src/orchestration-v2/forkBotReport.ts
     - apps/server/src/mcp/forkBotWakes.ts
+    - apps/server/src/scheduledTasks/forkBotTasks.ts
     - apps/web/src/custom/bots/botMascotArt.ts
     - apps/web/src/custom/bots/botMascotTags.ts
     - apps/web/src/custom/bots/botMascotMenu.ts
@@ -7101,11 +7111,14 @@
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
+    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
+    - apps/server/src/scheduledTasks/forkBotTasks.test.ts
+    - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
     A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)

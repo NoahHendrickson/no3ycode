@@ -307,7 +307,10 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("# Mail Bot");
     expect(rules).toContain("freshSession: true");
     expect(rules).toContain(`reply with exactly \`${BOT_QUIET_REPLY}\``);
-    expect(rules).toContain("## Job");
+    // The rules are locked; the job the bot keeps lives in JOB.md, loaded from them.
+    expect(rules).toContain("## Job\n\n@JOB.md");
+    expect(files.get("JOB.md")).toContain("# Job");
+    expect(rules).toContain("A message that starts with `Scheduled wake:` is a wake");
     // A fresh wake drops the chat, so the bot is told where its own conversation is.
     expect(rules).toContain("thread id `thread-1`");
     expect(rules).toContain("a wake writes STATE.md only");
@@ -335,7 +338,7 @@ describe("fork guard: fork-bots", () => {
     };
     expect(settings.autoMemoryEnabled).toBe(false);
     expect(settings.autoCompactWindow).toBe(150_000);
-    expect(settings.permissions.deny).toContain("Edit(.claude/**)");
+    expect(settings.permissions.deny).toEqual(["Edit(.claude/**)", "Edit(CLAUDE.md)"]);
     expect(settings.hooks.UserPromptSubmit[0]?.hooks[0]?.command).toContain("date ");
     expect(settings.hooks.PreCompact[0]?.hooks[0]?.command).toContain("compact-instructions.md");
     expect(settings.hooks.SessionStart[0]?.matcher).toBe("startup|clear|compact");

@@ -44,9 +44,13 @@ it.effect(
               }) as never,
           ),
         );
+      const sentInputs = yield* Ref.make<
+        ReadonlyArray<ThreadManagementService.ThreadManagementSendInput>
+      >([]);
       // Each wake leaves a run the thread has not finished, as a bot held up on a question would.
-      const sendToThread = (input: { readonly messageId: string }) =>
+      const sendToThread = (input: ThreadManagementService.ThreadManagementSendInput) =>
         Effect.gen(function* () {
+          yield* Ref.update(sentInputs, (inputs) => [...inputs, input]);
           const ordinal = (yield* Ref.updateAndGet(sent, (ids) => [...ids, input.messageId]))
             .length;
           yield* sql`INSERT INTO orchestration_v2_projection_runs ${sql.insert({
@@ -82,7 +86,8 @@ it.effect(
         yield* service.upsert(
           yield* decodeUpsertInput({
             title: "Morning check",
-            prompt: "Run the morning check.",
+            // As the MCP tools save a bot's own task.
+            prompt: "Scheduled wake: Run the morning check.",
             enabled: true,
             schedule: { type: "interval", everyMs: 60_000 },
             projectId: "project-bots",
@@ -99,6 +104,11 @@ it.effect(
         );
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(1);
+        // A marked wake runs on its task's model, not on whatever the conversation was switched to.
+        expect((yield* Ref.get(sentInputs))[0]?.modelSelection).toEqual({
+          instanceId: "claudeAgent",
+          model: "claude-haiku-5-5",
+        });
 
         // Two more intervals pass while the first wake is still waiting: nothing queues behind it.
         yield* fire;

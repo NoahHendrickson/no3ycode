@@ -130,6 +130,7 @@ import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { forkBotWakePrompt } from "../scheduledTasks/forkBotTasks.ts";
 import { forkBotWakeModelSelection, forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
 /* fork:end fork-bots */
 
@@ -2026,7 +2027,9 @@ const make = Effect.gen(function* () {
         input.title ?? (derivedTitle.length > 0 ? derivedTitle.slice(0, 80) : "Scheduled task");
       const upsertInput: ScheduledTaskUpsertInput = {
         title,
-        prompt: input.prompt,
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        prompt: forkBotWake ? forkBotWakePrompt(input.prompt) : input.prompt,
+        /* fork:end fork-bots */
         enabled: input.enabled ?? true,
         schedule: input.schedule,
         projectId,
@@ -2133,7 +2136,15 @@ const make = Effect.gen(function* () {
         const upsertInput: ScheduledTaskUpsertInput = {
           id: existing.id,
           title: input.title ?? existing.title,
-          prompt: input.prompt ?? existing.prompt,
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+             A bot's own task keeps the wake marker through edits. */
+          prompt:
+            threadId !== null &&
+            parent?.thread.id === threadId &&
+            parent.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+              ? forkBotWakePrompt(input.prompt ?? existing.prompt)
+              : (input.prompt ?? existing.prompt),
+          /* fork:end fork-bots */
           enabled: input.enabled ?? existing.enabled,
           schedule: input.schedule ?? existing.schedule,
           projectId: existing.projectId,
