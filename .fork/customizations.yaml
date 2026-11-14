@@ -6989,7 +6989,10 @@
     keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
     than its last visit, server clock on both sides and the same on every
     device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
-    notifies only when the report changed.
+    notifies only when the report changed. A bot that keeps failing the same
+    way alerts once (custom/bots/botFailureAlerts: the error's wording without
+    ids, timestamps and long numbers); it alerts again when the error changes
+    or after a wake succeeds. That memory is per client session.
 
     Usage limits, because every wake (even a quiet one) is a full model turn:
     a new bot starts on the newest non-legacy Sonnet of its Claude instance,
@@ -7021,8 +7024,10 @@
     "Nothing to report." when a wake found nothing. A fresh wake drops the chat
     that came before it, silently, so CLAUDE.md carries the bot's own thread id
     and tells it how to read the conversation's tail when its owner refers to
-    something it cannot see. Only the owner changes the Job section; a wake
-    writes STATE.md alone. The folder's settings turn Claude Code's auto memory
+    something it cannot see. A promise of later work becomes a one-time
+    scheduled task in the same turn, since nothing wakes a bot to keep a
+    promise written only in STATE.md. Only the owner changes the Job section;
+    a wake writes STATE.md alone. The folder's settings turn Claude Code's auto memory
     off, compact at 150K tokens, deny the bot edits to .claude, and stamp each
     turn with the time.
 
@@ -7065,6 +7070,7 @@
   tier: 4
   files:
     - apps/web/src/custom/bots/botThreads.ts
+    - apps/web/src/custom/bots/botFailureAlerts.ts
     - apps/server/src/orchestration-v2/forkBotReport.ts
     - apps/server/src/mcp/forkBotWakes.ts
     - apps/web/src/custom/bots/botMascotArt.ts

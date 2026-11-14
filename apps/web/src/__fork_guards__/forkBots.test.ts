@@ -30,6 +30,7 @@ import {
   botMascotTagWrites,
   nextBotMascotShape,
 } from "../custom/bots/botMascotTags";
+import { botFailureSignature, createBotFailureAlerts } from "../custom/bots/botFailureAlerts";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import {
   BOT_QUIET_REPLY,
@@ -137,6 +138,44 @@ describe("fork guard: fork-bots", () => {
     gate.observe("mail", step(false, null), step(false, 1), { archived: false, quiet });
     gate.observe("mail", step(false, 1), step(true, 1), { archived: false, quiet });
     expect(notified).toEqual(["completion"]);
+  });
+
+  it("alerts once for a bot that keeps failing the same way", () => {
+    expect(botFailureSignature("Token expired at 2026-11-13T08:00:00Z (req 1234567)")).toBe(
+      botFailureSignature("token expired at 2026-11-14T08:15:00Z (req 7654321)"),
+    );
+    expect(botFailureSignature("HTTP 401")).not.toBe(botFailureSignature("HTTP 429"));
+    const alerts = createBotFailureAlerts<string>();
+    const notified: Array<string> = [];
+    const gate = createThreadNotificationGate<string>((_key, kind) => notified.push(kind));
+    let prior:
+      | { attention: string | null; settled: boolean; completedAt: number | null }
+      | undefined;
+    const wake = (run: string, outcome: "failed" | "completed" | "working", error?: string) => {
+      const next = {
+        attention: alerts.attention("bot", {
+          attention: outcome === "failed" ? `${run}:failed` : null,
+          failed: outcome === "failed",
+          succeeded: outcome === "completed",
+          error: error ?? null,
+        }),
+        settled: outcome === "completed",
+        completedAt: outcome === "working" ? null : Number(run),
+      };
+      gate.observe("bot", prior, next, { archived: false, quiet: true });
+      prior = next;
+    };
+    wake("0", "working");
+    wake("1", "failed", "Token expired at 2026-11-13T08:00:00Z");
+    wake("2", "working");
+    wake("2", "failed", "Token expired at 2026-11-13T08:15:00Z");
+    expect(notified).toEqual(["input"]);
+    wake("3", "failed", "HTTP 429 Too Many Requests");
+    expect(notified).toEqual(["input", "input"]);
+    wake("4", "completed");
+    wake("5", "failed", "HTTP 429 Too Many Requests");
+    expect(notified).toEqual(["input", "input", "input"]);
+    expect(notifications).toContain("entry.botFailures.attention(rawThread.id, {");
   });
 
   it("says what a bot is doing, its unread news, or when it next checks", () => {
@@ -280,6 +319,7 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("Keep at most 30 lines");
     expect(rules).toContain('model: "haiku"');
     expect(rules).toContain("A wake never creates, changes or deletes scheduled tasks");
+    expect(rules).toContain("A promise written only in STATE.md never happens");
     expect(files.get("STATE.md")).toContain("- 2026-11-13: Created.");
     expect(files.get(".claude/compact-instructions.md")).toContain("NOT YET SAVED");
     const settings = JSON.parse(files.get(".claude/settings.json") ?? "{}") as {
