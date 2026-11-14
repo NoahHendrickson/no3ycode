@@ -38,6 +38,9 @@ it.effect(
           Effect.map(
             ([threadTags, resetAt]) =>
               ({
+                projectId: "project-bots",
+                archivedAt: null,
+                deletedAt: null,
                 tags: threadTags,
                 lastErrorClass: resetAt === null ? null : "usage_limit",
                 usageLimitResetAt: resetAt,
@@ -78,6 +81,8 @@ it.effect(
         Layer.mock(ThreadManagementService.ThreadManagementService)({
           sendToThread,
           getThreadShell,
+          // No wake here is ever "queued", so upstream's queued-occurrence skip stays out of it.
+          getThreadRecords: () => Effect.succeed({ runs: [], messages: [] } as never),
         }),
         Layer.mock(SecretRequests.SecretRequests)({}),
       );

@@ -40,7 +40,6 @@ describe("controlled model traits", () => {
     modelOptions: [{ id: "effort", value: "max" }],
     promptUltrathink: "none",
     onPromptEdit: () => {},
-    planModeEnabled: false,
   };
 
   it("offers the same effort levels and selected value for tasks as conversation drafts", () => {

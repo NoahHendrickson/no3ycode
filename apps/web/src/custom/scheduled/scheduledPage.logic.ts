@@ -12,10 +12,10 @@ import {
   type ScheduledTask,
   type ScheduledTaskRun,
   type ScheduledTaskRunTrigger,
-  type ScheduledTaskSchedule,
   type ScheduledTaskWebhookDeliveryOutcome,
 } from "@t3tools/contracts";
 
+import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
 import { formatRelativeTime } from "~/timestampFormat";
 
 export type ScheduledPageTab = "settings" | "runs";
@@ -203,50 +203,27 @@ export const SCHEDULED_STARTERS: ReadonlyArray<ScheduledStarter> = [
   },
 ];
 
-/** JS day-of-week (0 = Sunday). */
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
 const ONCE_FORMATTER = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",
 });
 
-/** Mirrors upstream's settings label so the two pages never disagree on a trigger. */
-export function scheduleLabel(schedule: ScheduledTaskSchedule): string {
-  if (schedule.type === "webhook") return schedule.github ? "GitHub PR opened" : "On webhook";
-  if (schedule.type === "once") return `Once, ${ONCE_FORMATTER.format(new Date(schedule.runAt))}`;
-  if (schedule.type === "interval") {
-    const minutes = schedule.everyMs / 60_000;
-    return Number.isInteger(minutes)
-      ? `Every ${minutes} min`
-      : `Every ${Math.round(schedule.everyMs / 1000)} sec`;
-  }
-  return fixedTimeLabel(schedule.timeOfDay, schedule.weekdays ?? []);
-}
-
-function fixedTimeLabel(timeOfDay: string, weekdays: ReadonlyArray<number>): string {
-  const days =
-    weekdays.length === 0
-      ? "Daily"
-      : weekdays.length === 5 && weekdays.every((day) => day >= 1 && day <= 5)
-        ? "Weekdays"
-        : weekdays.map((day) => WEEKDAY_LABELS[day]).join(", ");
-  return `${days} at ${timeOfDay}`;
-}
-
 /**
  * The composer's trigger pill: an unsaved draft summarised the way the task
- * list's Trigger column reads the saved row. Days run Monday-first, as the
- * day picker draws them.
+ * list's Trigger column (upstream's scheduleLabel) reads the saved row. Days
+ * run Monday-first, as the day picker draws them.
  */
-export function draftTriggerLabel(draft: {
-  readonly githubPrOpened?: boolean | undefined;
-  readonly scheduleMode: "interval" | "fixed" | "webhook" | "once";
-  readonly runAt?: string;
-  readonly intervalMinutes: string;
-  readonly timeOfDay: string;
-  readonly weekdays: ReadonlySet<number>;
-}): string {
+export function draftTriggerLabel(
+  draft: {
+    readonly githubPrOpened?: boolean | undefined;
+    readonly scheduleMode: "interval" | "fixed" | "webhook" | "once";
+    readonly runAt?: string;
+    readonly intervalMinutes: string;
+    readonly timeOfDay: string;
+    readonly weekdays: ReadonlySet<number>;
+  },
+  timeZone?: string,
+): string {
   if (draft.githubPrOpened) return "GitHub PR opened";
   if (draft.scheduleMode === "webhook") return "On webhook";
   if (draft.scheduleMode === "once") {
@@ -266,7 +243,7 @@ export function draftTriggerLabel(draft: {
     draft.weekdays.size === 7
       ? []
       : [...draft.weekdays].toSorted((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
-  return fixedTimeLabel(draft.timeOfDay, weekdays);
+  return scheduleLabel({ type: "fixed_time", timeOfDay: draft.timeOfDay, weekdays }, timeZone);
 }
 
 /** Past instants read "5m ago"; future ones (a next run) read "in 5m". */

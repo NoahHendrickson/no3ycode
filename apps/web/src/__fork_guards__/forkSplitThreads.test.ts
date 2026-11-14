@@ -50,7 +50,10 @@ describe("fork guard: fork-split-threads", () => {
     );
     // The timeline scroll keys moved to timelineViewport's registerCommands observer,
     // which only releases live follow; both panes may hear it harmlessly.
-    expect(chatView.match(/if \(!splitPane\.focused\) return;/gu)?.length).toBe(3);
+    expect(chatView.match(/if \(!splitPane\.focused\) return;/gu)?.length).toBe(2);
+    // Thread-open focus moved into upstream's useFocusComposerOnThreadOpen; the pane
+    // check rides the callback so focus moving into a pane never re-runs the restore.
+    expect(chatView).toContain("if (splitPane.focused) focusComposerStable();");
     expect(chatView).toContain(
       "usePasteToFocusComposer(splitPane.focused && !embedded ? activeThreadId : null, composerRef);",
     );

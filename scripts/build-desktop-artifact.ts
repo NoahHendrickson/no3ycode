@@ -2896,6 +2896,12 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
         // fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name
         NSLocalNetworkUsageDescription:
           "no3y Code connects to devices on your local network for remote environments and commands run by terminals and coding agents.",
+        NSCalendarsUsageDescription:
+          "Commands you run in no3y Code may need access to your calendars.",
+        NSCalendarsFullAccessUsageDescription:
+          "Commands you run in no3y Code may need to read and write your calendar events.",
+        NSCalendarsWriteOnlyAccessUsageDescription:
+          "Commands you run in no3y Code may need to add events to your calendars.",
         NSScreenCaptureUsageDescription:
           "no3y Code captures the active window when you use the window capture shortcut.",
         NSCameraUsageDescription:
@@ -2996,10 +3002,9 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       desktop: {
         entry: {
           // fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity
-          // Must match the runtime `class` switch (DesktopEnvironment
-          // .linuxWmClass, "t3code-fork" for packaged builds) or window
-          // grouping breaks.
-          StartupWMClass: "t3code-fork",
+          // Match Electron's WM_CLASS from setDesktopName (the fork's
+          // com.t3tools.T3Code.Fork.desktop) so docks use this launcher.
+          StartupWMClass: "com.t3tools.T3Code.Fork",
           // fork:end fork-app-identity
         },
       },
@@ -3653,6 +3658,34 @@ export const validateMacPackagedPayload = Effect.fn("desktopArtifact.validateMac
   },
 );
 
+export class LinuxPackagedAppMissingError extends Schema.TaggedError<LinuxPackagedAppMissingError>()(
+  "LinuxPackagedAppMissingError",
+  { stageDistDir: Schema.String },
+) {
+  override get message(): string {
+    return `Expected electron-builder to leave resources/app.asar under ${this.stageDistDir}/linux*-unpacked.`;
+  }
+}
+
+export const validateLinuxPackagedPayload = Effect.fn(
+  "desktopArtifact.validateLinuxPackagedPayload",
+)(function* (input: { readonly stageDistDir: string; readonly verbose?: boolean }) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const asarPaths = (yield* fs.readDirectory(input.stageDistDir))
+    .filter((entry) => entry.startsWith("linux") && entry.endsWith("-unpacked"))
+    .map((entry) => path.join(input.stageDistDir, entry, "resources/app.asar"));
+  if (asarPaths.length === 0) {
+    return yield* new LinuxPackagedAppMissingError({ stageDistDir: input.stageDistDir });
+  }
+  for (const asarPath of asarPaths) {
+    yield* verifyPackagedBundleIsSelfContained({ asarPath, verbose: input.verbose ?? false });
+  }
+  yield* Effect.log(
+    `[desktop-artifact] Validated Linux payload (${String(asarPaths.length)} app bundle(s)).`,
+  );
+});
+
 const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(function* (
   options: ResolvedBuildOptions,
 ) {
@@ -4179,6 +4212,14 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
       }),
       verbose: options.verbose,
     });
+  }
+  // The probe runs on the host Node, so a cross-arch build skips it.
+  if (
+    options.platform === "linux" &&
+    hostPlatform === "linux" &&
+    options.arch === (yield* HostProcess.Architecture)
+  ) {
+    yield* validateLinuxPackagedPayload({ stageDistDir, verbose: options.verbose });
   }
   // x64 builds on arm64 runners; the arm64 check covers the shared JS bundle.
   if (options.platform === "mac" && options.arch === "arm64" && hostPlatform === "darwin") {

@@ -83,6 +83,7 @@ import {
 } from "~/providerInstances";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/models";
 import { useEnvironment, useEnvironmentHttpBaseUrl } from "~/state/environments";
+import { useEnvironmentQuery } from "~/state/query";
 import { EMPTY_SERVER_PROVIDERS, serverEnvironment } from "~/state/server";
 import { useAtomCommand } from "~/state/use-atom-command";
 import { draftTriggerLabel } from "./scheduledPage.logic";
@@ -285,6 +286,9 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
  * portals out of the detail's disabled fieldset, so it carries its own.
  */
 function TriggerPill(props: ScheduledTaskEditorProps) {
+  const timeZone = useEnvironmentQuery(
+    serverEnvironment.scheduledTasksLive({ environmentId: props.environmentId, input: {} }),
+  ).data?.timeZone;
   const { draft } = props;
   const TriggerIcon = draft.githubPrOpened
     ? PullRequestGlyph.pullRequest
@@ -308,7 +312,7 @@ function TriggerPill(props: ScheduledTaskEditorProps) {
         render={<ComposerControl size="xs" className="min-w-0 shrink" />}
       >
         <TriggerIcon aria-hidden />
-        <span className="shrink-0">{draftTriggerLabel(draft)}</span>
+        <span className="shrink-0">{draftTriggerLabel(draft, timeZone)}</span>
         {repositories ? <span className="min-w-0 truncate">/ {repositories}</span> : null}
       </PopoverTrigger>
       <PopoverPopup align="start" className="w-[min(32rem,calc(100vw-2rem))]">

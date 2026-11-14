@@ -5,10 +5,7 @@ import { expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
-/* fork:begin server-repository-identity-base-remote — see .fork/customizations.yaml#server-repository-identity-base-remote */
-import * as Layer from "effect/Layer";
-import { ChildProcessSpawner } from "effect/process";
-/* fork:end server-repository-identity-base-remote */
+import { vi } from "vite-plus/test";
 
 import * as ProcessRunner from "../processRunner.ts";
 import * as RepositoryIdentityResolver from "./RepositoryIdentityResolver.ts";
@@ -98,31 +95,51 @@ it.layer(NodeServices.layer)("RepositoryIdentityResolverLive", (it) => {
     }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
   );
 
-  it.effect("returns the git top-level root path when resolving from a nested workspace", () =>
+  it.effect("resolves a remote whose URL contains a space", () =>
     Effect.gen(function* () {
       const fileSystem = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const repoRoot = yield* fileSystem.makeTempDirectoryScoped({
-        prefix: "t3-repository-identity-nested-root-test-",
+      const cwd = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-spaced-url-test-",
       });
-      const nestedWorkspace = path.join(repoRoot, "packages", "web");
 
-      yield* fileSystem.makeDirectory(nestedWorkspace, { recursive: true });
-      yield* git(repoRoot, ["init"]);
-      yield* git(repoRoot, ["remote", "add", "origin", "git@github.com:T3Tools/t3code.git"]);
+      yield* git(cwd, ["init"]);
+      yield* git(cwd, ["remote", "add", "origin", "ssh://git@git.example.test/team repos/app.git"]);
 
       const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
-      const identity = yield* resolver.resolve(nestedWorkspace);
-      const resolvedIdentityRoot =
-        identity?.rootPath === undefined ? "" : NodeFS.realpathSync.native(identity.rootPath);
-      const resolvedRepoRoot = NodeFS.realpathSync.native(repoRoot);
-
-      expect(identity).not.toBeNull();
-      expect(identity?.canonicalKey).toBe("github.com/t3tools/t3code");
-      expect(normalizeResolvedPath(resolvedIdentityRoot)).toBe(
-        normalizeResolvedPath(resolvedRepoRoot),
-      );
+      const identity = yield* resolver.resolve(cwd);
+      expect(identity?.locator.remoteUrl).toBe("ssh://git@git.example.test/team repos/app.git");
+      expect(identity?.locator.remoteName).toBe("origin");
     }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
+  );
+
+  it.effect.each(["repo", "repo "] as const)(
+    "returns the git top-level root path when resolving from a nested workspace in %j",
+    (rootName) =>
+      Effect.gen(function* () {
+        const fileSystem = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const tempDir = yield* fileSystem.makeTempDirectoryScoped({
+          prefix: "t3-repository-identity-nested-root-test-",
+        });
+        const repoRoot = path.join(tempDir, rootName);
+        const nestedWorkspace = path.join(repoRoot, "packages", "web");
+
+        yield* fileSystem.makeDirectory(nestedWorkspace, { recursive: true });
+        yield* git(repoRoot, ["init"]);
+        yield* git(repoRoot, ["remote", "add", "origin", "git@github.com:T3Tools/t3code.git"]);
+
+        const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
+        const identity = yield* resolver.resolve(nestedWorkspace);
+        const resolvedIdentityRoot =
+          identity?.rootPath === undefined ? "" : NodeFS.realpathSync.native(identity.rootPath);
+        const resolvedRepoRoot = NodeFS.realpathSync.native(repoRoot);
+
+        expect(identity).not.toBeNull();
+        expect(identity?.canonicalKey).toBe("github.com/t3tools/t3code");
+        expect(normalizeResolvedPath(resolvedIdentityRoot)).toBe(
+          normalizeResolvedPath(resolvedRepoRoot),
+        );
+      }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
   );
 
   it.effect.each(["bare clone", "dot-bare"] as const)(
@@ -283,86 +300,6 @@ it.layer(NodeServices.layer)("RepositoryIdentityResolverLive", (it) => {
       }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
   );
 
-  /* fork:begin server-repository-identity-base-remote — see .fork/customizations.yaml#server-repository-identity-base-remote */
-  it.effect("prefers the remote gh marked as the base repository over upstream", () =>
-    Effect.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const cwd = yield* fileSystem.makeTempDirectoryScoped({
-        prefix: "t3-repository-identity-base-remote-test-",
-      });
-
-      yield* git(cwd, ["init"]);
-      yield* git(cwd, ["remote", "add", "origin", "git@github.com:julius/t3code.git"]);
-      yield* git(cwd, ["remote", "add", "upstream", "git@github.com:T3Tools/t3code.git"]);
-      yield* git(cwd, ["config", "remote.origin.gh-resolved", "base"]);
-
-      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
-      const identity = yield* resolver.resolve(cwd);
-
-      expect(identity?.locator.remoteName).toBe("origin");
-      expect(identity?.canonicalKey).toBe("github.com/julius/t3code");
-      expect(identity?.displayName).toBe("julius/t3code");
-    }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
-  );
-
-  it.effect("falls back to upstream when the gh base marker names a missing remote", () =>
-    Effect.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const cwd = yield* fileSystem.makeTempDirectoryScoped({
-        prefix: "t3-repository-identity-stale-base-remote-test-",
-      });
-
-      yield* git(cwd, ["init"]);
-      yield* git(cwd, ["remote", "add", "origin", "git@github.com:julius/t3code.git"]);
-      yield* git(cwd, ["remote", "add", "upstream", "git@github.com:T3Tools/t3code.git"]);
-      yield* git(cwd, ["config", "remote.fork.gh-resolved", "base"]);
-
-      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
-      const identity = yield* resolver.resolve(cwd);
-
-      expect(identity?.locator.remoteName).toBe("upstream");
-      expect(identity?.canonicalKey).toBe("github.com/t3tools/t3code");
-    }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
-  );
-
-  it.effect("skips the gh base lookup for a checkout with one remote", () => {
-    const calls: Array<ReadonlyArray<string>> = [];
-    const processRunner = Layer.succeed(ProcessRunner.ProcessRunner, {
-      run: (input) =>
-        Effect.sync(() => {
-          calls.push(input.args);
-          return {
-            stdout: input.args.includes("rev-parse")
-              ? "/repo\n"
-              : "origin\tgit@github.com:T3Tools/t3code.git (fetch)\n",
-            stderr: "",
-            code: ChildProcessSpawner.ExitCode(0),
-            timedOut: false,
-            stdoutTruncated: false,
-            stderrTruncated: false,
-            stdoutInvalidUtf8: false,
-            stderrInvalidUtf8: false,
-          };
-        }),
-    });
-    const resolverLayer = Layer.effect(
-      RepositoryIdentityResolver.RepositoryIdentityResolver,
-      RepositoryIdentityResolver.make(),
-    ).pipe(Layer.provide(processRunner));
-
-    return Effect.gen(function* () {
-      // The resolver stats the folder before probing git, so it must exist.
-      const cwd = yield* (yield* FileSystem.FileSystem).makeTempDirectoryScoped({
-        prefix: "t3-repository-identity-test-",
-      });
-      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
-      const identity = yield* resolver.resolve(cwd);
-      expect(identity?.canonicalKey).toBe("github.com/t3tools/t3code");
-      expect(calls.map((args) => args[2])).toEqual(["rev-parse", "remote"]);
-    }).pipe(Effect.provide(resolverLayer));
-  });
-  /* fork:end server-repository-identity-base-remote */
-
   it.effect("reports a fork's own remote as origin next to the upstream identity", () =>
     Effect.gen(function* () {
       const fileSystem = yield* FileSystem.FileSystem;
@@ -384,6 +321,95 @@ it.layer(NodeServices.layer)("RepositoryIdentityResolverLive", (it) => {
         remoteUrl: "git@github.com:julius/t3code-fork.git",
         displayName: "julius/t3code-fork",
       });
+    }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
+  );
+
+  it.effect("uses the fork as the identity when gh repo set-default points at it", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const cwd = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-gh-default-test-",
+      });
+
+      yield* git(cwd, ["init"]);
+      yield* git(cwd, ["remote", "add", "origin", "git@github.com:julius/t3code-fork.git"]);
+      yield* git(cwd, ["remote", "add", "upstream", "git@github.com:T3Tools/t3code.git"]);
+      yield* git(cwd, ["config", "remote.origin.gh-resolved", "base"]);
+
+      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
+      const identity = yield* resolver.resolve(cwd);
+
+      expect(identity?.canonicalKey).toBe("github.com/julius/t3code-fork");
+      expect(identity?.locator.remoteName).toBe("origin");
+    }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
+  );
+
+  it.effect("follows an OWNER/REPO mark only to a remote that fetches that repository", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const cwd = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-gh-parent-test-",
+      });
+      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
+      const resolveFresh = () => resolver.resolve(cwd, { refresh: true });
+
+      yield* git(cwd, ["init"]);
+      yield* git(cwd, ["remote", "add", "fork", "https://github.com/julius/t3code-fork.git"]);
+      yield* git(cwd, ["remote", "add", "main", "https://github.com/T3Tools/t3code.git"]);
+      yield* git(cwd, ["remote", "add", "upstream", "https://github.com/other/t3code.git"]);
+      yield* git(cwd, ["config", "remote.fork.gh-resolved", "t3tools/t3code"]);
+      const parent = yield* resolveFresh();
+      expect(parent?.canonicalKey).toBe("github.com/t3tools/t3code");
+      expect(parent?.locator).toEqual({
+        source: "git-remote",
+        remoteName: "main",
+        remoteUrl: "https://github.com/T3Tools/t3code.git",
+      });
+
+      // No remote fetches the marked repository, and several marks leave gh's choice unknown.
+      yield* git(cwd, ["config", "remote.fork.gh-resolved", "someone/else"]);
+      expect((yield* resolveFresh())?.locator.remoteName).toBe("upstream");
+      yield* git(cwd, ["config", "remote.fork.gh-resolved", "base"]);
+      yield* git(cwd, ["config", "remote.main.gh-resolved", "base"]);
+      expect((yield* resolveFresh())?.locator.remoteName).toBe("upstream");
+
+      // The same path on another HTTPS port is a different server.
+      yield* git(cwd, ["config", "--unset", "remote.fork.gh-resolved"]);
+      yield* git(cwd, ["config", "--unset", "remote.main.gh-resolved"]);
+      yield* git(cwd, ["remote", "add", "backup", "https://ghe.example.com:9443/acme/web.git"]);
+      yield* git(cwd, ["remote", "add", "ghe-fork", "https://ghe.example.com:8443/me/web.git"]);
+      yield* git(cwd, ["remote", "add", "ghe-parent", "https://ghe.example.com:8443/acme/web.git"]);
+      yield* git(cwd, ["config", "remote.ghe-fork.gh-resolved", "acme/web"]);
+      expect((yield* resolveFresh())?.locator.remoteName).toBe("ghe-parent");
+    }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
+  );
+
+  it.effect("reads the project's gh default when the server inherited GIT_DIR", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const cwd = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-gh-default-git-dir-",
+      });
+      const other = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-repository-identity-inherited-git-dir-",
+      });
+
+      yield* git(cwd, ["init"]);
+      yield* git(cwd, ["remote", "add", "origin", "git@github.com:julius/t3code-fork.git"]);
+      yield* git(cwd, ["remote", "add", "upstream", "git@github.com:T3Tools/t3code.git"]);
+      yield* git(cwd, ["config", "remote.origin.gh-resolved", "base"]);
+      yield* git(other, ["init"]);
+      yield* git(other, ["config", "remote.upstream.gh-resolved", "base"]);
+
+      vi.stubEnv("GIT_DIR", path.join(other, ".git"));
+      yield* Effect.addFinalizer(() => Effect.sync(() => vi.unstubAllEnvs()));
+
+      const resolver = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
+      const identity = yield* resolver.resolve(cwd);
+
+      expect(identity?.canonicalKey).toBe("github.com/julius/t3code-fork");
+      expect(identity?.locator.remoteName).toBe("origin");
     }).pipe(Effect.provide(RepositoryIdentityResolver.layer)),
   );
 
