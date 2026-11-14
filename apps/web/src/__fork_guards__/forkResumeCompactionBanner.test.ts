@@ -41,6 +41,8 @@ describe("fork-resume-compaction-banner", () => {
     expect(banner.slice(0, banner.indexOf("});"))).toContain(
       'serverRuntime.lastErrorClass === "usage_limit"',
     );
+    // A handoff destination is a new conversation, so it never inherits the offer (upstream).
+    expect(banner.slice(0, banner.indexOf("});"))).toContain("pendingHandoff !== null ||");
     expect(chatView.match(/\.\.\.resumeCompactionItems,/gu)).toHaveLength(2);
     expect(card).toContain('title: "Resume with less context"');
     expect(card).toContain('dismissLabel: "Keep full history"');

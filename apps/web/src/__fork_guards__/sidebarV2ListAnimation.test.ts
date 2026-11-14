@@ -24,7 +24,7 @@ describe("fork guard: sidebar-v2-list-animation", () => {
     expect(sidebar).toContain("motion.dispose();");
     expect(sidebar).toContain("ref={attachThreadListRef}");
     expect(sidebar).toMatch(
-      /useLayoutEffect\(\(\) => \{\s*listMotionRef\.current\?\.update\(!projectDragActive\);\s*\}\);/u,
+      /useLayoutEffect\(\(\) => \{\s*shiftGuardRef\.current\?\.update\(\);\s*listMotionRef\.current\?\.update\(!projectDragActive\);\s*\}\);/u,
     );
     // The leaving rows' stand-ins are placed against the list.
     expect(sidebar).toContain('"relative flex flex-col",');

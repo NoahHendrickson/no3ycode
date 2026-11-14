@@ -81,7 +81,9 @@ describe("fork local dictation", () => {
     expect(primary).toMatch(
       /if \(forkDictationButton\) \{\s*return \(\s*<>\s*\{forkDictationButton\}\s*\{renderStopGenerationButton\(false\)\}\s*<\/>/u,
     );
-    expect(primary).toMatch(/if \(forkDictationButton\) \{\s*return forkDictationButton;\s*\}/u);
+    expect(primary).toMatch(
+      /if \(forkDictationButton\) \{\s*return withStopButton\(forkDictationButton\);\s*\}/u,
+    );
     // The mic and check are the send button in every respect but glyph and
     // click: they wear its class list and its fork tone attribute, so the flat
     // white fill in dark applies to them as it does to send. That look is the
@@ -194,7 +196,11 @@ describe("fork local dictation", () => {
     expect(composer).toMatch(
       /if \(dictationLive && !dictationControlsVisible\) settleDictationWithoutControls\(\);/u,
     );
-    expect(composer).toMatch(/const dictationControlsVisible =[^;]*showPlanFollowUpPrompt/u);
+    // Upstream removed plan mode, so no plan follow-up takes the slot any more.
+    expect(composer).not.toMatch(/showPlanFollowUpPrompt/u);
+    expect(composer).toMatch(
+      /const dictationControlsVisible =[^;]*activePendingApproval === null/u,
+    );
     // A pending question takes the slot on every viewport (ComposerPrimaryActions
     // returns its pending-action branch before the send slot), so the gate is
     // the pending action itself, not the mobile-only answer strip: a desktop
@@ -207,11 +213,9 @@ describe("fork local dictation", () => {
     expect(composer).not.toMatch(
       /const dictationControlsVisible =[^;]*showMobilePendingAnswerActions/u,
     );
-    expect(composer).toMatch(/const forkDictationStartBlocked =[^;]*showPlanFollowUpPrompt/u);
+    expect(composer).toMatch(/const forkDictationStartBlocked =[^;]*promptLockedForProject/u);
     // Fork start gates stay out of upstream's `disabled`, which also cancels a live recording.
-    expect(composer).not.toMatch(
-      /const dictationDisabled =[^;]*(?:isSendBusy|showPlanFollowUpPrompt)/u,
-    );
+    expect(composer).not.toMatch(/const dictationDisabled =[^;]*isSendBusy/u);
     // A live session keeps stop beside the check while a turn runs.
     expect(composer).toContain("hasSendableContent={composerSendState.hasSendableContent}");
     // The mic follows the editor's gate, not send's: an unassigned new-agent

@@ -36,7 +36,6 @@ export function ScheduledTaskModelPicker({
         onModelOptionsChange: (options) =>
           onSelectionChange(scheduledTaskModelWithOptions(selection, options)),
         triggerLabelSeparator: " ",
-        planModeEnabled: false,
       }}
     />
   );

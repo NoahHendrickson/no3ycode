@@ -23,6 +23,7 @@ import { type ComponentProps, type KeyboardEvent, type ReactNode, useState } fro
 // Through the alias: a relative import type-checks against upstream's module,
 // not the shadow that adds `traits` and `combined`.
 import { ProviderModelPicker } from "~/components/chat/ProviderModelPicker";
+import { useApplyThreadModelPick } from "~/components/chat/useApplyThreadModelPick";
 import { Checkbox } from "../components/ui/checkbox";
 import { useComposerDraftStore } from "../composerDraftStore";
 import { cn } from "~/lib/utils";
@@ -219,6 +220,7 @@ function ComposerModelTraitsPanel(props: {
   const { input, traits } = props;
   const { descriptors, effortDescriptor, primarySelectId } = traits;
   const setProviderModelOptions = useComposerDraftStore((store) => store.setProviderModelOptions);
+  const applyThreadModelPick = useApplyThreadModelPick();
 
   const updateDescriptors = (next: ReadonlyArray<ProviderOptionDescriptor>) => {
     const options = buildProviderOptionSelectionsFromDescriptors(next);
@@ -233,6 +235,8 @@ function ComposerModelTraitsPanel(props: {
       model: input.model,
       persistSticky: true,
     });
+    // A thread's pick reaches the server now, as upstream's TraitsPicker does; a draft's waits for send.
+    if (input.threadRef) void applyThreadModelPick(input.threadRef);
   };
 
   // Upstream's select semantics: Ultrathink is a prompt prefix, not a stored

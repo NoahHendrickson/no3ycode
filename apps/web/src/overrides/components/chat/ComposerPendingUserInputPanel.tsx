@@ -173,6 +173,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
               text={activeQuestion.question}
               cwd={cwd}
               threadRef={threadRef}
+              lineBreaks
               className={cn("font-medium text-foreground", questionTextAlign)}
             />
             <p className="font-normal text-muted-foreground">
@@ -191,50 +192,61 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
                 (!customAnswerActive && progress.selectedOptionValues.includes(optionValue));
               const digitShortcut = index < 9 ? String(index + 1) : undefined;
 
+              // The preview sits outside the button: it can hold links, and a click on a single-select option advances.
               return (
-                <button
-                  key={`${activeQuestion.id}:${optionValue}`}
-                  type="button"
-                  role={multiSelect ? "checkbox" : "radio"}
-                  aria-checked={isSelected}
-                  aria-keyshortcuts={digitShortcut}
-                  disabled={interactionDisabled}
-                  onClick={() => {
-                    handleOptionSelection(activeQuestion.id, optionValue);
-                  }}
-                  className={cn(
-                    questionTextAlign,
-                    "group flex w-full flex-col gap-1 rounded-lg border p-2 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/40",
-                    isSelected
-                      ? "border-foreground/24 bg-foreground/8 text-foreground"
-                      : "border-transparent hover:bg-foreground/4",
-                    interactionDisabled && "cursor-not-allowed opacity-50",
-                    !interactionDisabled && "cursor-pointer",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <OptionControl multiSelect={multiSelect} selected={isSelected} />
-                    <span
-                      className="text-sm font-medium text-foreground"
-                      dir={textDirection(option.label)}
-                    >
-                      {option.label}
-                    </span>
-                  </div>
-                  {option.description && option.description !== option.label ? (
-                    <div className="flex w-full items-center pl-6">
+                <div key={`${activeQuestion.id}:${optionValue}`} className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    role={multiSelect ? "checkbox" : "radio"}
+                    aria-checked={isSelected}
+                    aria-keyshortcuts={digitShortcut}
+                    disabled={interactionDisabled}
+                    onClick={() => {
+                      handleOptionSelection(activeQuestion.id, optionValue);
+                    }}
+                    className={cn(
+                      questionTextAlign,
+                      "group flex w-full flex-col gap-1 rounded-lg border p-2 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/40",
+                      isSelected
+                        ? "border-foreground/24 bg-foreground/8 text-foreground"
+                        : "border-transparent hover:bg-foreground/4",
+                      interactionDisabled && "cursor-not-allowed opacity-50",
+                      !interactionDisabled && "cursor-pointer",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <OptionControl multiSelect={multiSelect} selected={isSelected} />
                       <span
-                        className={cn(
-                          "flex-1 text-sm font-normal",
-                          isSelected ? "text-foreground/80" : "text-muted-foreground",
-                        )}
-                        dir={textDirection(option.description)}
+                        className="text-sm font-medium text-foreground"
+                        dir={textDirection(option.label)}
                       >
-                        {option.description}
+                        {option.label}
                       </span>
                     </div>
+                    {option.description && option.description !== option.label ? (
+                      <div className="flex w-full items-center pl-6">
+                        <span
+                          className={cn(
+                            "flex-1 text-sm font-normal",
+                            isSelected ? "text-foreground/80" : "text-muted-foreground",
+                          )}
+                          dir={textDirection(option.description)}
+                        >
+                          {option.description}
+                        </span>
+                      </div>
+                    ) : null}
+                  </button>
+                  {option.preview ? (
+                    <ChatMarkdown
+                      text={option.preview}
+                      cwd={cwd}
+                      threadRef={threadRef}
+                      lineBreaks
+                      className="ps-8 pe-2 text-xs text-muted-foreground"
+                    />
                   ) : null}
-                </button>
+                </div>
               );
             })}
           </div>

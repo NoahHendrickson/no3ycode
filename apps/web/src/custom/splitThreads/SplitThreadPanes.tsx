@@ -34,10 +34,10 @@ import {
 } from "react";
 
 import ChatView from "~/components/ChatView";
+import { useOpenThreadFamily } from "~/components/ThreadRouteView";
 import type { ChatComposerHandle } from "~/components/chat/ChatComposer";
 import { CollapsedThreadTabs } from "~/custom/CollapsedThreadTabs";
 import { ComposerHandleContext, useComposerHandleContext } from "~/composerHandleContext";
-import { threadShellHasStarted } from "~/components/ChatView.logic";
 import { useComposerDraftStore, type DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { useResizeDrag } from "~/hooks/useResizeDrag";
@@ -158,15 +158,21 @@ function usePaneRoute(ref: ScopedThreadRef | null): {
     unlistedRef?.environmentId ?? null,
     unlistedRef?.threadId ?? null,
   );
+  const bootstrapComplete = isThreadRouteSnapshotAuthoritative(shellStatus);
+  useOpenThreadFamily(ref, bootstrapComplete && unlistedRef !== null);
   if (ref === null) return { route: null, missing: false };
   const renderState = resolveThreadRouteRenderState({
-    bootstrapComplete: isThreadRouteSnapshotAuthoritative(shellStatus),
+    bootstrapComplete,
     serverThreadExists: shell !== null,
     serverThreadDeleted: shell?.deletedAt != null,
     unlistedThreadDetail,
     draftThreadExists: draftId !== null,
   });
-  if (draftId !== null && !threadShellHasStarted(shell)) {
+  // Upstream dropped threadShellHasStarted; a draft stays one until its first run.
+  const shellStarted =
+    shell != null &&
+    (shell.latestRun !== null || shell.latestUserMessageAt !== null || shell.runtime !== null);
+  if (draftId !== null && !shellStarted) {
     return { route: { kind: "draft", draftId }, missing: false };
   }
   if (renderState !== "ready" && !(renderState === "loading" && shell !== null)) {

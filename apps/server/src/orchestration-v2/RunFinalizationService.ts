@@ -11,8 +11,11 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as FiberMap from "effect/FiberMap";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import * as ProjectEnrichment from "../project/ProjectEnrichmentService.ts";
+import * as ProjectService from "../project/ProjectService.ts";
 import * as PullRequestService from "../pullRequest/PullRequestService.ts";
 import * as VcsStatusBroadcaster from "../vcs/VcsStatusBroadcaster.ts";
 import * as WorkspaceEntries from "../workspace/WorkspaceEntries.ts";
@@ -129,7 +132,32 @@ export const layerObserver = Layer.effect(
     const vcsStatus = yield* VcsStatusBroadcaster.VcsStatusBroadcaster;
     const projections = yield* ProjectionStore.ProjectionStoreV2;
     const pullRequests = yield* PullRequestService.PullRequestService;
+    const projects = yield* ProjectService.ProjectService;
+    const enrichment = yield* ProjectEnrichment.ProjectEnrichmentService;
     const pullRequestLookups = yield* FiberMap.make<string>();
+    const identityRefreshes = yield* FiberMap.make<ProjectId>();
+    // A turn can add the first remote (`git remote add`, `gh repo create --push`), which the
+    // enrichment and resolver caches would otherwise keep reporting as missing for a minute.
+    const refreshMissingRepositoryIdentity = Effect.fn(
+      "RunFinalizationService.refreshMissingRepositoryIdentity",
+    )(
+      function* (projectId: ProjectId) {
+        const project = yield* projects.getById(projectId);
+        if (Option.isNone(project)) return;
+        const { workspaceRoot } = project.value;
+        if ((yield* enrichment.readRepositoryIdentity(workspaceRoot)) !== null) return;
+        yield* enrichment.refreshRepositoryIdentity(workspaceRoot);
+      },
+      (effect, projectId) =>
+        effect.pipe(
+          Effect.catch((error) =>
+            Effect.logWarning("failed to refresh repository identity after run completion", {
+              projectId,
+              detail: error.message,
+            }),
+          ),
+        ),
+    );
     return {
       refreshAfterTurn: pullRequests.refreshAfterTurn,
       refresh: Effect.fn("RunFinalizationService.refresh")(
@@ -140,9 +168,14 @@ export const layerObserver = Layer.effect(
           );
           /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
              Every exit returns the status read above; see the observer shape. */
-          if (local.refName === null || local.isDefaultRef) return local;
           const thread = yield* projections.getThreadShell(threadId);
-          if (!thread || thread.branch !== local.refName) return local;
+          if (!thread) return local;
+          // Forge discovery probes can take seconds; like the PR lookup, the next turn must not wait.
+          yield* refreshMissingRepositoryIdentity(thread.projectId).pipe(
+            FiberMap.run(identityRefreshes, thread.projectId),
+          );
+          if (local.refName === null || local.isDefaultRef) return local;
+          if (thread.branch !== local.refName) return local;
           if (thread.activeRunId !== null && thread.activeRunId !== runId) return local;
           /* fork:end server-local-checkout-branch-follow */
           // The forge CLI can take minutes, so the next turn must not wait for it. A newer

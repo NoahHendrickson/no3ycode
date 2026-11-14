@@ -44,7 +44,7 @@ import { isInletActive } from "./forkActivePalette";
 import { useRightPanelStore } from "~/rightPanelStore";
 import { useSnoozeWakeClock } from "~/components/Sidebar.logic";
 import { useSidebarProjectGroups } from "~/hooks/useSidebarProjectGroups";
-import { useThreadRouteTarget } from "~/hooks/useThreadRouteTarget";
+import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
 import { useComposerDraftStore, type DraftId, type DraftSessionState } from "~/composerDraftStore";
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
 import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
@@ -163,7 +163,7 @@ function useTabSource() {
   const delegatedUnderParent = useDelegatedUnderParent();
   const serverConfigs = useServerConfigs();
   const localLastVisitedAtById = useUiStateStore((store) => store.threadLastVisitedAtById);
-  const routeTarget = useThreadRouteTarget();
+  const routeTarget = useShownThreadRouteTarget().shownTarget;
   return {
     threads: filterSidebarV2VisibleThreads(threads, null, delegatedUnderParent),
     localLastVisitedAtById,
@@ -283,7 +283,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   };
   // The open draft (the plus lands on one) gets the first tab until its first send turns it into
   // a thread, whatever the project filter.
-  const routeTarget = useThreadRouteTarget();
+  const routeTarget = useShownThreadRouteTarget().shownTarget;
   const openDraftId = routeTarget?.kind === "draft" ? routeTarget.draftId : null;
   const openDraft = useComposerDraftStore((store) =>
     openDraftId === null ? null : store.getDraftSession(openDraftId),

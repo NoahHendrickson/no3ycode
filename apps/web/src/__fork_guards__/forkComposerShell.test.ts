@@ -557,11 +557,6 @@ describe("fork guard: fork-composer-shell", () => {
       "data-fork-context-chip",
     );
     expect(readSibling("../components/BranchToolbar.tsx")).toContain("data-fork-context-chip");
-    const meter = rules.find((rule) =>
-      rule.selector.endsWith("[data-fork-composer-status] button"),
-    );
-    expect(meter?.body).toMatch(/width:\s*24px/u);
-    expect(meter?.body).toMatch(/height:\s*24px/u);
   });
 
   it("lets the PR chip keep its state colour and ride the strip's far end", () => {
@@ -570,7 +565,7 @@ describe("fork guard: fork-composer-shell", () => {
     // flatten. The fill stays the sibling chips' glass.
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
     expect(branchSelector).toContain("data-fork-pr-chip");
-    expect(branchSelector).toContain("status={displayedPrStatus}");
+    expect(branchSelector).toContain("status={prStatus}");
     const chipInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&

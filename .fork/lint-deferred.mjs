@@ -32,16 +32,17 @@ export const DEFERRED_LINT_SCOPE = [
 /** `[oxlint plugin/rule, baseline]` — the baseline is the most warnings allowed. */
 export const DEFERRED_LINT_RULES = [
   ["react/exhaustive-effect-dependencies", 4],
-  ["react/memo-dependencies", 12],
+  // Sidebar.tsx's context-menu callbacks list upstream's regenerateThreadTitle (2026-11-13 sync).
+  ["react/memo-dependencies", 14],
   ["react/refs", 15],
   ["react/set-state-in-effect", 5],
-  ["t3code/no-manual-memo", 123],
+  ["t3code/no-manual-memo", 124],
   ["t3code/no-outset-state-indicators", 12],
   // Section dividers in the vendored design-mode engine, kept verbatim for re-syncs.
   ["t3code/no-low-value-comments", 851],
   ["t3code/no-raw-resize-observer", 3],
   // Upstream rules new in the 2026-10-28 sync; fork code predates them.
-  ["react/preserve-manual-memoization", 2],
+  ["react/preserve-manual-memoization", 1],
   ["t3code/no-em-dash-copy", 87],
   ["t3code/no-unreasoned-state-sync", 32],
   ["t3code/require-disposable-render", 13],

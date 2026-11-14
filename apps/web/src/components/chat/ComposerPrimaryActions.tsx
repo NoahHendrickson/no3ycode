@@ -1,7 +1,19 @@
-import { memo, type MouseEventHandler, type PointerEventHandler } from "react";
-import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, Minimize2Icon, PlayIcon } from "lucide-react";
-import { CornerUpRight, ListPlus } from "lucide";
-import { MorphIcon } from "~/components/MorphIcon";
+import {
+  memo,
+  useEffect,
+  useState,
+  type MouseEventHandler,
+  type PointerEventHandler,
+  type ReactNode,
+} from "react";
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  Minimize2Icon,
+  PlayIcon,
+  CornerUpRightIcon,
+  ListPlusIcon,
+} from "lucide-react";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { StopSquareIcon } from "~/custom/StopSquareIcon";
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
@@ -18,10 +30,8 @@ import { cn, isMacPlatform } from "~/lib/utils";
 import { useShortcutModifierState } from "../../shortcutModifierState";
 import { StageBackdropButtonArt, useSidebarStageBackdropVariant } from "../SidebarStageBackdrop";
 import { Button } from "../ui/button";
-import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Spinner } from "../ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { composerFloatingLayerProps } from "./composerEventScope";
 import {
   alternateComposerDispatchAction,
   resolveComposerDispatchMode,
@@ -36,16 +46,17 @@ interface PendingActionState {
 }
 
 interface ComposerPrimaryActionsProps {
+  /** Footer controls (dictation) that always sit right before the primary button. */
+  children?: ReactNode;
   compact: boolean;
   canOperateThread: boolean;
   pendingAction: PendingActionState | null;
   isRunning: boolean;
   canInterrupt: boolean;
+  runId?: string | null;
   followUpBehavior?: "queue" | "steer";
   canSteer?: boolean;
   alternateShortcutLabel?: string | null;
-  showPlanFollowUpPrompt: boolean;
-  promptHasText: boolean;
   /** Dictation is running; Send finishes it and submits once the transcript lands. */
   voiceInputActive?: boolean;
   isSendBusy: boolean;
@@ -65,8 +76,8 @@ interface ComposerPrimaryActionsProps {
   onResume?: () => void;
   onPreviousPendingQuestion: () => void;
   onInterrupt: () => void;
-  onImplementPlanInNewThread: () => void;
   compactBeforeSendTokens?: number | null;
+  hideCompactToggle?: boolean;
   keepFullHistory?: boolean;
   onToggleKeepFullHistory?: () => void;
 }
@@ -89,6 +100,10 @@ const formatPendingPrimaryActionLabel = (input: {
   return input.questionIndex > 0 ? "Submit answers" : "Submit answer";
 };
 
+const STOP_PENDING_MAX_MS = 10_000;
+// The action that takes Stop's place ignores clicks this long, so repeat Stop clicks can't resume.
+const STOP_LANDED_CLICK_GUARD_MS = 500;
+
 const messageActionPillClassName =
   "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-message-action font-medium text-base text-message-action-foreground shadow-xs shadow-message-action/24 outline-none hover:bg-message-action-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-64 disabled:shadow-none sm:text-sm";
 
@@ -96,17 +111,143 @@ const preventPointerFocus: PointerEventHandler<HTMLElement> = (event) => {
   event.preventDefault();
 };
 
+type StopPhase = "pending" | "timedOut" | "landed" | null;
+
+function useStopPhase(input: {
+  runId: string | null;
+  canInterrupt: boolean;
+  canOperateThread: boolean;
+}) {
+  const { runId, canInterrupt, canOperateThread } = input;
+  const [stopPhase, setStopPhase] = useState<StopPhase>(null);
+  const [stopRunId, setStopRunId] = useState(runId);
+  if (runId !== null && stopRunId !== runId) {
+    setStopRunId(runId);
+    setStopPhase(null);
+  } else if (canOperateThread) {
+    // Losing permission also clears canInterrupt; it does not acknowledge the stop.
+    if ((stopPhase === "pending" || stopPhase === "timedOut") && !canInterrupt)
+      setStopPhase("landed");
+    else if (stopPhase === "landed" && canInterrupt) setStopPhase(null);
+  }
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- timers that re-enable an unsettled Stop and end the landed click guard
+  useEffect(() => {
+    if (stopPhase === "pending") {
+      const timeout = setTimeout(() => setStopPhase("timedOut"), STOP_PENDING_MAX_MS);
+      return () => clearTimeout(timeout);
+    }
+    if (stopPhase === "landed") {
+      const timeout = setTimeout(() => setStopPhase(null), STOP_LANDED_CLICK_GUARD_MS);
+      return () => clearTimeout(timeout);
+    }
+  }, [stopPhase]);
+  return [stopPhase, setStopPhase] as const;
+}
+
+function StopGenerationButton({
+  stopPhase,
+  canOperateThread,
+  insidePendingAction,
+  preserveComposerFocusOnPointerDown,
+  onStopRequested,
+  onInterrupt,
+}: {
+  stopPhase: StopPhase;
+  canOperateThread: boolean;
+  insidePendingAction: boolean;
+  preserveComposerFocusOnPointerDown: boolean;
+  onStopRequested: () => void;
+  onInterrupt: () => void;
+}) {
+  const isStopDisabled = stopPhase === "pending";
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+            data-fork-composer-action="stop"
+            /* fork:end fork-composer-shell */
+            className={cn(
+              "flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-destructive/90 text-white shadow-xs shadow-destructive/24 inset-shadow-control-highlight transition-colors duration-150 hover:bg-destructive active:inset-shadow-control-pressed active:shadow-none disabled:cursor-default disabled:opacity-64 disabled:hover:bg-destructive/90 [&_svg]:pointer-events-none",
+              insidePendingAction ? "size-8 sm:size-7" : "size-8 sm:h-8 sm:w-8",
+            )}
+            onPointerDown={preserveComposerFocusOnPointerDown ? preventPointerFocus : undefined}
+            disabled={!canOperateThread || isStopDisabled}
+            onClick={() => {
+              if (!canOperateThread || isStopDisabled) return;
+              onStopRequested();
+              onInterrupt();
+            }}
+            aria-label={stopPhase === "pending" ? "Stopping" : "Stop generation"}
+          />
+        }
+      >
+        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
+        <StopSquareIcon />
+        {/* fork:end fork-composer-shell */}
+      </TooltipTrigger>
+      <TooltipPopup>{stopPhase === "pending" ? "Stopping…" : "Interrupt"}</TooltipPopup>
+    </Tooltip>
+  );
+}
+
+/** The collapsed mobile composer's Stop, shown in place of `children` while a turn can be stopped. */
+export function CollapsedComposerStopAction({
+  children,
+  canOperateThread,
+  canInterrupt,
+  runId,
+  hasSendableContent,
+  isEditingQueuedMessage,
+  onInterrupt,
+}: {
+  children: ReactNode;
+  canOperateThread: boolean;
+  canInterrupt: boolean;
+  runId: string | null;
+  hasSendableContent: boolean;
+  isEditingQueuedMessage: boolean;
+  onInterrupt: () => void;
+}) {
+  const [stopPhase, setStopPhase] = useStopPhase({ runId, canInterrupt, canOperateThread });
+  if (
+    !(canInterrupt || stopPhase === "pending" || stopPhase === "timedOut") ||
+    hasSendableContent ||
+    isEditingQueuedMessage
+  ) {
+    return children;
+  }
+  return (
+    <span
+      data-chat-composer-transition-actions="true"
+      data-chat-composer-collapsed-controls="true"
+      className="flex shrink-0"
+    >
+      <StopGenerationButton
+        stopPhase={stopPhase}
+        canOperateThread={canOperateThread}
+        insidePendingAction={false}
+        preserveComposerFocusOnPointerDown
+        onStopRequested={() => setStopPhase("pending")}
+        onInterrupt={onInterrupt}
+      />
+    </span>
+  );
+}
+
 export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
+  children,
   compact,
   canOperateThread,
   pendingAction,
   isRunning,
   canInterrupt,
+  runId = null,
   followUpBehavior = "steer",
   canSteer = true,
   alternateShortcutLabel = null,
-  showPlanFollowUpPrompt,
-  promptHasText,
   voiceInputActive = false,
   isSendBusy,
   sendDisabledReason,
@@ -123,11 +264,12 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   onResume,
   onPreviousPendingQuestion,
   onInterrupt,
-  onImplementPlanInNewThread,
   compactBeforeSendTokens = null,
+  hideCompactToggle = false,
   keepFullHistory = false,
   onToggleKeepFullHistory,
 }: ComposerPrimaryActionsProps) {
+  const [stopPhase, setStopPhase] = useStopPhase({ runId, canInterrupt, canOperateThread });
   const pointerFocusProps = preserveComposerFocusOnPointerDown
     ? { onPointerDown: preventPointerFocus }
     : undefined;
@@ -146,39 +288,30 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   const stageBackdropVariant = useSidebarStageBackdropVariant(environmentIdentificationMode);
 
   const renderStopGenerationButton = (insidePendingAction: boolean) => (
-    <Tooltip key="interrupt">
-      <TooltipTrigger
-        render={
-          <button
-            type="button"
-            /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-            data-fork-composer-action="stop"
-            /* fork:end fork-composer-shell */
-            className={cn(
-              "flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-destructive/90 text-white shadow-xs shadow-destructive/24 inset-shadow-control-highlight transition-colors duration-150 hover:bg-destructive active:inset-shadow-control-pressed active:shadow-none [&_svg]:pointer-events-none",
-              insidePendingAction ? "size-8 sm:size-7" : "size-8 sm:h-8 sm:w-8",
-            )}
-            {...pointerFocusProps}
-            disabled={!canOperateThread}
-            onClick={() => {
-              if (canOperateThread) onInterrupt();
-            }}
-            aria-label="Stop generation"
-          />
-        }
-      >
-        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
-        <StopSquareIcon />
-        {/* fork:end fork-composer-shell */}
-      </TooltipTrigger>
-      <TooltipPopup>Interrupt</TooltipPopup>
-    </Tooltip>
+    <StopGenerationButton
+      key="interrupt"
+      stopPhase={stopPhase}
+      canOperateThread={canOperateThread}
+      insidePendingAction={insidePendingAction}
+      preserveComposerFocusOnPointerDown={preserveComposerFocusOnPointerDown}
+      onStopRequested={() => setStopPhase("pending")}
+      onInterrupt={onInterrupt}
+    />
+  );
+
+  // Keep the clicked target at the right edge even if typing changes the primary action.
+  const withStopButton = (action: ReactNode) => (
+    <>
+      {action}
+      {stopPhase === "pending" || stopPhase === "timedOut"
+        ? renderStopGenerationButton(false)
+        : null}
+    </>
   );
 
   if (pendingAction) {
     return (
       <div className={cn("flex items-center justify-end", compact ? "gap-1.5" : "gap-2")}>
-        {canInterrupt ? renderStopGenerationButton(true) : null}
         {pendingAction.questionIndex > 0 ? (
           compact ? (
             <Button
@@ -209,6 +342,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
             </Button>
           )
         ) : null}
+        {children}
         <button
           type="submit"
           className={cn(messageActionPillClassName, "h-8 sm:h-7", compact ? "px-3" : "px-4")}
@@ -216,6 +350,9 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
           data-fork-pending-user-input-action="advance"
           /* fork:end fork-pending-user-input */
           {...pointerFocusProps}
+          onClick={(event) => {
+            if (stopPhase === "landed") event.preventDefault();
+          }}
           disabled={
             !canOperateThread ||
             isEnvironmentUnavailable ||
@@ -234,64 +371,9 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
             questionIndex: pendingAction.questionIndex,
           })}
         </button>
-      </div>
-    );
-  }
-
-  if (showPlanFollowUpPrompt && (promptHasText || !canResume)) {
-    if (promptHasText) {
-      return (
-        <button
-          type="submit"
-          className={cn(messageActionPillClassName, "h-9 sm:h-8", compact ? "px-3" : "px-4")}
-          {...pointerFocusProps}
-          disabled={isSendBusy || isSendDisabled || isEnvironmentUnavailable}
-        >
-          {isSendBusy ? "Sending..." : "Refine"}
-        </button>
-      );
-    }
-
-    return (
-      <div data-chat-composer-implement-actions="true" className="flex items-center justify-end">
-        <button
-          type="submit"
-          className={cn(messageActionPillClassName, "h-9 rounded-r-none px-4 sm:h-8")}
-          {...pointerFocusProps}
-          disabled={isSendBusy || isSendDisabled || isEnvironmentUnavailable}
-        >
-          {isSendBusy ? "Sending..." : "Implement"}
-        </button>
-        <Menu>
-          <MenuTrigger
-            render={
-              <button
-                type="button"
-                className={cn(
-                  messageActionPillClassName,
-                  "h-9 rounded-l-none border-l border-message-action-foreground/20 px-2 sm:h-8",
-                )}
-                aria-label="Implementation actions"
-                onMouseDown={
-                  preserveComposerFocusOnPointerDown ? (event) => event.preventDefault() : undefined
-                }
-                disabled={isSendBusy || isSendDisabled || isEnvironmentUnavailable}
-              />
-            }
-          >
-            <ChevronDownIcon className="size-3.5" />
-          </MenuTrigger>
-          <MenuPopup align="end" side="top" {...composerFloatingLayerProps}>
-            <MenuItem
-              disabled={isSendBusy || isSendDisabled || isEnvironmentUnavailable}
-              onClick={() => {
-                if (canOperateThread) onImplementPlanInNewThread();
-              }}
-            >
-              Implement in a new thread
-            </MenuItem>
-          </MenuPopup>
-        </Menu>
+        {canInterrupt || stopPhase === "pending" || stopPhase === "timedOut"
+          ? renderStopGenerationButton(true)
+          : null}
       </div>
     );
   }
@@ -311,7 +393,11 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   ) : null;
   /* fork:end fork-local-dictation */
 
-  if (canInterrupt && !hasSendableContent && !isEditingQueuedMessage) {
+  if (
+    (canInterrupt || stopPhase === "pending" || stopPhase === "timedOut") &&
+    !hasSendableContent &&
+    !isEditingQueuedMessage
+  ) {
     /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
        A live session sits to stop's left, so stop keeps the right edge: the
        session's X and check grow leftward without moving it. */
@@ -324,7 +410,12 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
       );
     }
     /* fork:end fork-local-dictation */
-    return renderStopGenerationButton(false);
+    return (
+      <>
+        {children}
+        {renderStopGenerationButton(false)}
+      </>
+    );
   }
 
   const showResume = canResume && !hasSendableContent && !isEditingQueuedMessage;
@@ -376,7 +467,14 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
       className={sendButtonClassName}
       /* fork:end fork-local-dictation */
       {...pointerFocusProps}
-      onClick={showResume ? onResume : onSubmitMessage}
+      onClick={(event) => {
+        if (stopPhase === "landed") {
+          event.preventDefault();
+          return;
+        }
+        if (showResume) onResume?.();
+        else onSubmitMessage?.(event);
+      }}
       disabled={
         isSendBusy ||
         isSendDisabled ||
@@ -405,8 +503,10 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
         <PlayIcon className="size-4 fill-current" aria-hidden="true" />
       ) : isEditingQueuedMessage ? (
         <CheckIcon className="size-4" aria-hidden="true" />
+      ) : isRunning && isQueuing ? (
+        <ListPlusIcon className="size-4" aria-hidden="true" />
       ) : isRunning ? (
-        <MorphIcon className="size-4" icon={isQueuing ? ListPlus : CornerUpRight} />
+        <CornerUpRightIcon className="size-4" aria-hidden="true" />
       ) : (
         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
         <ForkReturnGlyph />
@@ -419,7 +519,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
      The dictation button carries its own labels, so it takes the slot bare
      rather than under the send tooltip. */
   if (forkDictationButton) {
-    return forkDictationButton;
+    return withStopButton(forkDictationButton);
   }
   /* fork:end fork-local-dictation */
   const submit = (
@@ -428,9 +528,16 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
       <TooltipPopup>{submitTooltip}</TooltipPopup>
     </Tooltip>
   );
-  if (compactTokens === null) return submit;
+  if (compactTokens === null || hideCompactToggle) {
+    return withStopButton(
+      <>
+        {children}
+        {submit}
+      </>,
+    );
+  }
 
-  return (
+  return withStopButton(
     <div data-chat-composer-compact-send="true" className="flex items-center gap-2">
       <Tooltip>
         <TooltipTrigger
@@ -461,7 +568,8 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
           <div>{keepFullHistory ? "Click to compact first" : "Click to keep full history"}</div>
         </TooltipPopup>
       </Tooltip>
+      {children}
       {submit}
-    </div>
+    </div>,
   );
 });

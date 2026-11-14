@@ -287,8 +287,9 @@ export function ForkQueuedRunsBanner({
                   ? `${designChanges.blocks.length} design change${designChanges.blocks.length === 1 ? "" : "s"}`
                   : null;
               const previewText = assistantCitationsToPlainText(
-                replaceComposerContextReferences(designChanges.promptText, (reference) =>
-                  reference.kind === "image" && item.thumbnails.length > 0 ? "" : reference.label,
+                replaceComposerContextReferences(
+                  designChanges.promptText,
+                  (reference) => reference.label,
                 ),
               ).trim();
               const rowRunId = item.runId;
