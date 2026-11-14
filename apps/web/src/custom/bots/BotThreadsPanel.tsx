@@ -3,11 +3,7 @@
  * between the conversation and the right panel, in the right panel's shell (a sheet where that is
  * one), on the bot's conversation and on each of its threads, listing its work by status.
  */
-import {
-  scopedThreadKey,
-  scopeProjectRef,
-  scopeThreadRef,
-} from "@t3tools/client-runtime/environment";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
@@ -15,7 +11,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
-import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
@@ -26,15 +21,14 @@ import { usePreviewPanelInlineSize } from "~/hooks/usePreviewPanelInlineSize";
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
 import { usePanelPresence } from "~/panelAnimations";
-import { useProject, useQuietThreadShells } from "~/state/entities";
-import { usePrimaryEnvironmentId } from "~/state/environments";
+import { useQuietThreadShells } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
-import { SidebarV2ThreadCardMeta } from "../SidebarV2ThreadCardMeta";
+import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { type BotWorkGroupKey, type BotWorkRow, groupBotWork } from "./botWork";
@@ -199,13 +193,12 @@ function BotThreadsList(props: {
   );
 }
 
-/** A row is the sidebar card in small: status mark and title, then the card's own repo line. */
+/** Status mark and title, then which checkout the thread is on and its pull request. The
+    project is left out: a bot's threads are read under the bot, which already places them. */
 function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: boolean }) {
   const { thread, card } = props.row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
-  const project = useProject(scopeProjectRef(thread.environmentId, thread.projectId));
-  const primaryEnvironmentId = usePrimaryEnvironmentId();
   const pullRequest = resolveThreadCurrentPullRequestLink(thread.pullRequests);
   const pullRequestState =
     pullRequest?.snapshot == null ? null : resolvePullRequestState(pullRequest.snapshot);
@@ -243,37 +236,30 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
               {time}
             </span>
           </span>
-          <SidebarV2ThreadCardMeta
-            projectTitle={project?.title ?? null}
-            projectIconSlot={
-              project === null ? null : <ProjectFavicon project={project} className="size-3" />
-            }
-            branch={thread.branch}
-            hasWorktree={thread.worktreePath !== null}
-            terminalSlot={null}
-            prSlot={
-              pullRequest === null ? null : (
-                <span
-                  className={cn(
-                    "flex shrink-0 items-center gap-1",
-                    pullRequestState?.toneClassName,
-                  )}
-                >
-                  <PullRequestIcon aria-hidden className="size-3 shrink-0" />
-                  <span className="sr-only">
-                    {pullRequestState === null
-                      ? "Pull request"
-                      : `${pullRequestState.label} pull request`}
-                  </span>
-                  {pullRequest.number}
+          {/* Always drawn, so every row is the same height with or without a branch. */}
+          <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
+            {thread.branch !== null || thread.worktreePath !== null ? (
+              <SidebarV2CheckoutMark
+                branch={thread.branch}
+                hasWorktree={thread.worktreePath !== null}
+                devServerPort={null}
+                className="flex min-w-0 items-center gap-0.5"
+              />
+            ) : null}
+            {pullRequest === null ? null : (
+              <span
+                className={cn("flex shrink-0 items-center gap-1", pullRequestState?.toneClassName)}
+              >
+                <PullRequestIcon aria-hidden className="size-3 shrink-0" />
+                <span className="sr-only">
+                  {pullRequestState === null
+                    ? "Pull request"
+                    : `${pullRequestState.label} pull request`}
                 </span>
-              )
-            }
-            modelLabel={null}
-            isRemote={
-              primaryEnvironmentId !== null && thread.environmentId !== primaryEnvironmentId
-            }
-          />
+                {pullRequest.number}
+              </span>
+            )}
+          </span>
         </span>
       </button>
     </li>
