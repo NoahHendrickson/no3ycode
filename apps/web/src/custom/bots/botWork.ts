@@ -136,6 +136,12 @@ const BOT_WORK_GROUP_ORDER: ReadonlyArray<BotWorkGroupKey> = [
   "settled",
 ];
 
+/** Every section the panel can show, in its order, for the filter menu. */
+export const BOT_WORK_GROUPS: ReadonlyArray<{
+  readonly key: BotWorkGroupKey;
+  readonly label: string;
+}> = BOT_WORK_GROUP_ORDER.map((key) => ({ key, label: SIDEBAR_V2_STATUS_SECTION_LABELS[key] }));
+
 export interface BotWorkRow {
   readonly thread: EnvironmentThreadShell;
   readonly card: SidebarV2CardStatus;
@@ -151,12 +157,62 @@ function activityAt(thread: EnvironmentThreadShell): string {
   return thread.latestUserMessageAt ?? thread.updatedAt;
 }
 
-/** A bot's work in the sidebar's status sections, what needs the owner first, newest first in
-    each; empty sections are left out. Read state is the sidebar's (`lastVisitedAt`). */
+/** How the rows inside each section are ordered. */
+export type BotWorkSort = "activity" | "newest" | "oldest" | "title";
+
+export const BOT_WORK_SORTS: ReadonlyArray<BotWorkSort> = ["activity", "newest", "oldest", "title"];
+
+export const BOT_WORK_SORT_LABELS: Record<BotWorkSort, string> = {
+  activity: "Last activity",
+  newest: "Newest",
+  oldest: "Oldest",
+  title: "Title",
+};
+
+const BOT_WORK_COMPARE: Record<BotWorkSort, (left: BotWorkRow, right: BotWorkRow) => number> = {
+  activity: (left, right) => activityAt(right.thread).localeCompare(activityAt(left.thread)),
+  newest: (left, right) => right.thread.createdAt.localeCompare(left.thread.createdAt),
+  oldest: (left, right) => left.thread.createdAt.localeCompare(right.thread.createdAt),
+  title: (left, right) =>
+    left.thread.title.localeCompare(right.thread.title, undefined, { sensitivity: "base" }),
+};
+
+/** What the Threads panel is narrowed to; an empty set or query narrows nothing. */
+export interface BotWorkFilter {
+  readonly query: string;
+  readonly groups: ReadonlySet<BotWorkGroupKey>;
+  readonly projectIds: ReadonlySet<string>;
+}
+
+/** The sections and rows a filter keeps: a query matches a title or a branch. Sections left
+    with no row are dropped, and an untouched section keeps its identity. */
+export function filterBotWork(
+  groups: ReadonlyArray<BotWorkGroup>,
+  filter: BotWorkFilter,
+): ReadonlyArray<BotWorkGroup> {
+  const query = filter.query.trim().toLowerCase();
+  if (query === "" && filter.groups.size === 0 && filter.projectIds.size === 0) return groups;
+  return groups.flatMap((group) => {
+    if (filter.groups.size > 0 && !filter.groups.has(group.key)) return [];
+    const rows = group.rows.filter(
+      ({ thread }) =>
+        (filter.projectIds.size === 0 || filter.projectIds.has(thread.projectId)) &&
+        (query === "" ||
+          thread.title.toLowerCase().includes(query) ||
+          (thread.branch?.toLowerCase().includes(query) ?? false)),
+    );
+    if (rows.length === 0) return [];
+    return [rows.length === group.rows.length ? group : { ...group, rows }];
+  });
+}
+
+/** A bot's work in the sidebar's status sections, what needs the owner first, ordered by `sort`
+    in each; empty sections are left out. Read state is the sidebar's (`lastVisitedAt`). */
 export function groupBotWork(
   threads: ReadonlyArray<EnvironmentThreadShell>,
   bot: { readonly environmentId: string; readonly threadId: string },
   lastVisitedAt: (thread: EnvironmentThreadShell) => string | undefined,
+  sort: BotWorkSort = "activity",
 ): ReadonlyArray<BotWorkGroup> {
   const byGroup = new Map<BotWorkGroupKey, BotWorkRow[]>();
   for (const thread of threads) {
@@ -189,9 +245,7 @@ export function groupBotWork(
       {
         key,
         label: SIDEBAR_V2_STATUS_SECTION_LABELS[key],
-        rows: rows.toSorted((left, right) =>
-          activityAt(right.thread).localeCompare(activityAt(left.thread)),
-        ),
+        rows: rows.toSorted(BOT_WORK_COMPARE[sort]),
       },
     ];
   });

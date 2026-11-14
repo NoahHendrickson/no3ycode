@@ -16,6 +16,7 @@ import {
   botThreadsPanelBotId,
   botWorkAttentionByBot,
   botWorkStatusText,
+  filterBotWork,
   groupBotWork,
   withBotWorkAttention,
 } from "../custom/bots/botWork";
@@ -206,6 +207,52 @@ describe("fork guard: fork-bot-work-threads", () => {
         () => undefined,
       ),
     ).toEqual([]);
+  });
+
+  it("orders each section by the chosen sort, and narrows by search, status and project", () => {
+    const at = (minute: number) => `2026-11-14T10:${String(minute).padStart(2, "0")}:00.000Z`;
+    const row = (id: string, created: number, active: number, extra: Partial<Thread> = {}) =>
+      work(id, "mail", {
+        title: id,
+        createdAt: at(created),
+        updatedAt: at(active),
+        latestUserMessageAt: at(active),
+        runtime: runtime("running"),
+        ...extra,
+      });
+    const threads = [
+      bot("mail"),
+      row("Beta", 1, 30),
+      row("alpha", 2, 10, { branch: "t3/Retry-Webhooks" }),
+      row("gamma", 3, 20, { projectId: "other" as Thread["projectId"] }),
+      row("asks", 4, 40, { runtime: null, hasPendingUserInput: true }),
+    ];
+    const mail = { environmentId: "environment-test", threadId: "mail" };
+    const working = (sort: Parameters<typeof groupBotWork>[3]) =>
+      ids(
+        groupBotWork(threads, mail, () => undefined, sort)
+          .find((group) => group.key === "working")!
+          .rows.map((entry) => entry.thread),
+      );
+    expect(working(undefined)).toEqual(["Beta", "gamma", "alpha"]);
+    expect(working("newest")).toEqual(["gamma", "alpha", "Beta"]);
+    expect(working("oldest")).toEqual(["Beta", "alpha", "gamma"]);
+    expect(working("title")).toEqual(["alpha", "Beta", "gamma"]);
+
+    const groups = groupBotWork(threads, mail, () => undefined);
+    const none = { query: "", groups: new Set<never>(), projectIds: new Set<string>() };
+    const kept = (filter: Partial<Parameters<typeof filterBotWork>[1]>) =>
+      filterBotWork(groups, { ...none, ...filter }).map((group) => [
+        group.key,
+        ids(group.rows.map((entry) => entry.thread)),
+      ]);
+    expect(filterBotWork(groups, none)).toBe(groups);
+    // A query matches a title or a branch, in any case; a section left empty is dropped.
+    expect(kept({ query: " BET " })).toEqual([["working", ["Beta"]]]);
+    expect(kept({ query: "webhooks" })).toEqual([["working", ["alpha"]]]);
+    expect(kept({ groups: new Set(["input"] as const) })).toEqual([["input", ["asks"]]]);
+    expect(kept({ projectIds: new Set(["other"]) })).toEqual([["working", ["gamma"]]]);
+    expect(kept({ query: "nothing" })).toEqual([]);
   });
 
   it("keeps the server's link at launch and the panel in the stage", () => {

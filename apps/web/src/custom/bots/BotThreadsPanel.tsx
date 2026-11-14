@@ -19,9 +19,10 @@ import { isElectron } from "~/env";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { usePreviewPanelInlineSize } from "~/hooks/usePreviewPanelInlineSize";
 import { observeResize } from "~/lib/observeResize";
+import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { usePanelPresence } from "~/panelAnimations";
-import { useQuietThreadShells } from "~/state/entities";
+import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
@@ -31,8 +32,16 @@ import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
-import { type BotWorkGroupKey, type BotWorkRow, groupBotWork } from "./botWork";
-import { closeBotThreadsPanel } from "./botThreadsPanelStore";
+import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
+import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
+import {
+  clearBotThreadsFilters,
+  closeBotThreadsPanel,
+  EMPTY_BOT_THREADS_VIEW,
+  updateBotThreadsView,
+  useBotThreadsPanelStore,
+  useBotThreadsViewStore,
+} from "./botThreadsPanelStore";
 import {
   BOT_THREADS_PANEL_DEFAULT_WIDTH,
   BOT_THREADS_PANEL_MIN_WIDTH,
@@ -85,29 +94,11 @@ export function BotThreadsPanel(props: {
   // Rightmost inline, its header is the one under Windows' caption buttons.
   const rightmost = !props.sheet && !props.rightPanelInline;
   const body = (
-    <>
-      <div
-        className={cn(
-          "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
-          "pr-2",
-          isElectron && "drag-region",
-          isElectron && rightmost && "wco:pr-(--workspace-native-controls-inset)",
-        )}
-        data-fork-bot-threads-header=""
-        // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
-        data-fork-bot-threads-bot={botKey}
-        data-fork-bot-threads-thread={scopedThreadKey(props.threadRef)}
-      >
-        <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
-        <span className="flex shrink-0 [-webkit-app-region:no-drag]">
-          <StagePanelCloseButton
-            label="Close threads panel"
-            onClose={() => closeBotThreadsPanel(props.botRef)}
-          />
-        </span>
-      </div>
-      <BotThreadsList botRef={props.botRef} currentThreadRef={props.threadRef} />
-    </>
+    <BotThreadsBody
+      botRef={props.botRef}
+      currentThreadRef={props.threadRef}
+      rightmost={rightmost}
+    />
   );
   if (props.sheet) {
     return (
@@ -127,14 +118,21 @@ export function BotThreadsPanel(props: {
   );
 }
 
-function BotThreadsList(props: {
+/** The panel's header and its list, which read the same search, filter and order. */
+function BotThreadsBody(props: {
   readonly botRef: ScopedThreadRef;
   readonly currentThreadRef: ScopedThreadRef;
+  /** Its header is the one under Windows' caption buttons. */
+  readonly rightmost: boolean;
 }) {
+  const botKey = scopedThreadKey(props.botRef);
   const threads = useQuietThreadShells();
+  const projects = useProjects();
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
+  const sort = useBotThreadsPanelStore((state) => state.sort);
+  const view = useBotThreadsViewStore((state) => state.byBotKey[botKey]) ?? EMPTY_BOT_THREADS_VIEW;
   const [folded, setFolded] = useState<ReadonlySet<BotWorkGroupKey>>(() => new Set());
-  const groups = groupBotWork(
+  const all = groupBotWork(
     threads,
     { environmentId: props.botRef.environmentId, threadId: props.botRef.threadId },
     (thread) =>
@@ -142,14 +140,115 @@ function BotThreadsList(props: {
         thread.lastVisitedAt,
         localVisits[scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id))],
       ),
+    sort,
+  );
+  const groups = filterBotWork(all, { ...view, query: view.query ?? "" });
+  const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
+  const header = (
+    <div
+      className={cn(
+        "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
+        "pr-2",
+        isElectron && "drag-region",
+        isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
+      )}
+      data-fork-bot-threads-header=""
+      // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
+      data-fork-bot-threads-bot={botKey}
+      data-fork-bot-threads-thread={scopedThreadKey(props.currentThreadRef)}
+    >
+      {view.query === null ? (
+        <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
+      ) : (
+        <>
+          <h2 className="sr-only">Threads</h2>
+          <input
+            aria-label="Search threads"
+            autoFocus
+            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none [-webkit-app-region:no-drag] placeholder:text-muted-foreground"
+            data-testid="bot-threads-search-input"
+            onChange={(event) => updateBotThreadsView(botKey, { query: event.target.value })}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape") return;
+              event.stopPropagation();
+              updateBotThreadsView(botKey, { query: null });
+            }}
+            placeholder="Search threads"
+            type="text"
+            value={view.query}
+          />
+        </>
+      )}
+      <span className="flex shrink-0 items-center [-webkit-app-region:no-drag]">
+        <BotThreadsPanelControls
+          botKey={botKey}
+          view={view}
+          projects={projects
+            .filter(
+              (project) =>
+                project.environmentId === props.botRef.environmentId && projectIds.has(project.id),
+            )
+            .map((project) => ({ id: project.id, title: project.title }))}
+        />
+        <StagePanelCloseButton
+          label="Close threads panel"
+          onClose={() => closeBotThreadsPanel(props.botRef)}
+        />
+      </span>
+    </div>
   );
   if (groups.length === 0) {
     return (
-      <p className="px-3.5 py-3 text-sm text-muted-foreground">
-        This bot has not started any threads.
-      </p>
+      <>
+        {header}
+        {all.length === 0 ? (
+          <p className="px-3.5 py-3 text-sm text-muted-foreground">
+            This bot has not started any threads.
+          </p>
+        ) : (
+          <div className="flex flex-col items-start gap-2 px-3.5 py-3">
+            <p className="text-sm text-muted-foreground">No threads match.</p>
+            <Button
+              onClick={() => {
+                clearBotThreadsFilters(botKey);
+                if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
+              }}
+              size="xs"
+              variant="outline"
+            >
+              Clear search and filters
+            </Button>
+          </div>
+        )}
+      </>
     );
   }
+  return (
+    <>
+      {header}
+      <BotThreadsList
+        groups={groups}
+        folded={folded}
+        onToggle={(key) =>
+          setFolded((previous) => {
+            const next = new Set(previous);
+            if (!next.delete(key)) next.add(key);
+            return next;
+          })
+        }
+        currentThreadRef={props.currentThreadRef}
+      />
+    </>
+  );
+}
+
+function BotThreadsList(props: {
+  readonly groups: ReturnType<typeof filterBotWork>;
+  readonly folded: ReadonlySet<BotWorkGroupKey>;
+  readonly onToggle: (key: BotWorkGroupKey) => void;
+  readonly currentThreadRef: ScopedThreadRef;
+}) {
+  const { groups, folded } = props;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
       {groups.map((group) => {
@@ -160,13 +259,7 @@ function BotThreadsList(props: {
               <SidebarV2SectionLabel
                 count={group.rows.length}
                 collapsed={collapsed}
-                onToggle={() =>
-                  setFolded((previous) => {
-                    const next = new Set(previous);
-                    if (!next.delete(group.key)) next.add(group.key);
-                    return next;
-                  })
-                }
+                onToggle={() => props.onToggle(group.key)}
                 testId={`bot-threads-group-${group.key}`}
               >
                 {group.label}

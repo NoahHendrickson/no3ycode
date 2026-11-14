@@ -12,15 +12,18 @@ import { resolveStorage } from "~/lib/storage";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "~/rightPanelLayout";
 import { useRightPanelStore } from "~/rightPanelStore";
 
+import type { BotWorkFilter, BotWorkGroupKey, BotWorkSort } from "./botWork";
 import { stageFitsBothPanels, stageRowOf } from "./stagePanels";
 
 interface BotThreadsPanelState {
   /** By the bot's scoped thread key. */
   readonly openByBotKey: Readonly<Record<string, true>>;
+  /** One order for every bot's panel, as the sidebar keeps one. */
+  readonly sort: BotWorkSort;
 }
 
 export const useBotThreadsPanelStore = create<BotThreadsPanelState>()(
-  persist((): BotThreadsPanelState => ({ openByBotKey: {} }), {
+  persist((): BotThreadsPanelState => ({ openByBotKey: {}, sort: "activity" }), {
     name: "t3code:fork:bot-threads-panel:v2",
     version: 1,
     storage: createJSONStorage(() =>
@@ -90,3 +93,39 @@ useRightPanelStore.subscribe((next, previous) => {
     }
   }
 });
+
+export function setBotThreadsSort(sort: BotWorkSort): void {
+  useBotThreadsPanelStore.setState({ sort });
+}
+
+/** What a bot's panel is searched and narrowed to. `query` is null while the search field is
+    closed. Held for the session only, so a filter never hides threads after a restart. */
+export interface BotThreadsView extends Omit<BotWorkFilter, "query"> {
+  readonly query: string | null;
+}
+
+const NO_GROUPS: ReadonlySet<BotWorkGroupKey> = new Set();
+const NO_PROJECTS: ReadonlySet<string> = new Set();
+export const EMPTY_BOT_THREADS_VIEW: BotThreadsView = {
+  query: null,
+  groups: NO_GROUPS,
+  projectIds: NO_PROJECTS,
+};
+
+/** By the bot's scoped thread key; outside the panel, which remounts as its bot's threads open. */
+export const useBotThreadsViewStore = create<{
+  readonly byBotKey: Readonly<Record<string, BotThreadsView>>;
+}>()(() => ({ byBotKey: {} }));
+
+export function updateBotThreadsView(botKey: string, patch: Partial<BotThreadsView>): void {
+  useBotThreadsViewStore.setState((state) => ({
+    byBotKey: {
+      ...state.byBotKey,
+      [botKey]: { ...(state.byBotKey[botKey] ?? EMPTY_BOT_THREADS_VIEW), ...patch },
+    },
+  }));
+}
+
+export function clearBotThreadsFilters(botKey: string): void {
+  updateBotThreadsView(botKey, { groups: NO_GROUPS, projectIds: NO_PROJECTS });
+}

@@ -7149,6 +7149,16 @@
     (SidebarV2CheckoutMark: branch or worktree) and the pull request in its state colour. No
     device mark, project or model: a bot's threads are read under the bot. The status is the mark
     and the section, never a sentence.
+    Its header carries search, filter and sort buttons before the close button
+    (BotThreadsPanelControls). Search swaps the title for a field and matches a title or a
+    branch; Escape or the button closes it. Filter narrows to chosen status sections and, where
+    the bot's threads span more than one, to chosen projects; a filtered button draws pressed.
+    Search and filter are held per bot for the session only (botThreadsPanelStore
+    useBotThreadsViewStore), outside the panel because it remounts as the bot's threads open, and
+    never saved, so a filter cannot hide threads after a restart. Sort orders the rows inside
+    each section (last activity, newest, oldest, title; botWork groupBotWork) and is one saved
+    setting for every bot. Sections that match nothing are dropped, and a list narrowed to
+    nothing offers to clear.
     Mobile and the collapsed tab strip are not aware of it.
   tier: 4
   files:
@@ -7157,6 +7167,7 @@
     - apps/web/src/custom/bots/botWorkRoster.ts
     - apps/web/src/custom/bots/botThreadsPanelStore.ts
     - apps/web/src/custom/bots/BotThreadsPanel.tsx
+    - apps/web/src/custom/bots/BotThreadsPanelControls.tsx
     - apps/web/src/custom/bots/BotThreadsPanelToggle.tsx
     - apps/web/src/custom/bots/useBotWorkOwner.ts
     - apps/web/src/custom/bots/stagePanels.ts
