@@ -7135,7 +7135,7 @@
     archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
     routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
     its header names the bot where a subagent names its parent, one click back (ChatView
-    headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
+    headerParentThreadLink, via botWorkRoster's threadParentOf). Notifications are
     unchanged.
 
     A bot's card says when its unpinned work needs the owner (custom/bots/botWork
@@ -7146,7 +7146,8 @@
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
     bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary
-    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId,
+    which share threadParentOf with the header's back link): its own column in the stage
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
     close motion), 320px by default and at least 280, with a header the height of the others
@@ -7279,8 +7280,8 @@
     parent crumbs stay hidden. A thread with a parent has a back button just left of the title
     (custom/stageColumns/StageHeaderBackButton, the cluster's ghost size, "Back to <parent>"),
     which opens the parent in one click. The parent is a subagent's spawning thread (upstream's
-    link), else the bot a bot's work belongs to (stageHeaderParent, the one source of ChatView's
-    headerParentThreadLink). On stock and Glass the breadcrumb's parent crumb does the same in
+    link), else the bot a bot's work belongs to (custom/bots/botWorkRoster threadParentOf, the
+    one source of ChatView's headerParentThreadLink and of whose Threads panel a thread shows). On stock and Glass the breadcrumb's parent crumb does the same in
     one click, so they get no back button.
   tier: 3
   files:
