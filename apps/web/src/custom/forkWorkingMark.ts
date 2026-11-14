@@ -16,7 +16,9 @@ import {
 
 import { useIsInletActive } from "./forkActivePalette";
 
-const STORAGE_KEY = "t3code:fork:working-mark:v1";
+const STORAGE_KEY = "t3code:fork:working-mark:v2";
+/** v1 stored "helix" for a reset as well as a pick, so only its other picks carry over. */
+const LEGACY_STORAGE_KEY = "t3code:fork:working-mark:v1";
 
 export const FORK_WORKING_MARKS = ["helix", "rain", "bead"] as const;
 export type ForkWorkingMark = (typeof FORK_WORKING_MARKS)[number];
@@ -45,7 +47,10 @@ let snapshot: ForkWorkingMark | null | undefined;
 
 function readWorkingMark(): ForkWorkingMark | null {
   try {
-    return getLocalStorageItem(STORAGE_KEY, ForkWorkingMarkSchema);
+    const picked = getLocalStorageItem(STORAGE_KEY, ForkWorkingMarkSchema);
+    if (picked !== null) return picked;
+    const legacy = getLocalStorageItem(LEGACY_STORAGE_KEY, ForkWorkingMarkSchema);
+    return legacy === "helix" ? null : legacy;
   } catch {
     return null;
   }
@@ -62,7 +67,9 @@ function notify(): void {
 }
 
 function handleStorage(event: StorageEvent): void {
-  if (event.key === STORAGE_KEY || event.key === null) notify();
+  if (event.key === STORAGE_KEY || event.key === LEGACY_STORAGE_KEY || event.key === null) {
+    notify();
+  }
 }
 
 function subscribe(listener: () => void): () => void {
@@ -77,6 +84,7 @@ function subscribe(listener: () => void): () => void {
 /** null clears the pick, so the palette's default applies again. */
 function setForkWorkingMark(mark: ForkWorkingMark | null): void {
   try {
+    removeLocalStorageItem(LEGACY_STORAGE_KEY);
     if (mark === null) removeLocalStorageItem(STORAGE_KEY);
     else setLocalStorageItem(STORAGE_KEY, mark, ForkWorkingMarkSchema);
   } catch (error) {
@@ -87,14 +95,17 @@ function setForkWorkingMark(mark: ForkWorkingMark | null): void {
   notify();
 }
 
-/** The mark to draw, its setter (null restores the default), and whether one is picked, for
-    Settings' reset buttons: a pick that matches today's default still pins it across palettes. */
-export function useForkWorkingMark(): [
-  ForkWorkingMark,
+/** The stored pick, null while none is, and its setter (null restores the palette's default). */
+export function useForkWorkingMarkPick(): [
+  ForkWorkingMark | null,
   (mark: ForkWorkingMark | null) => void,
-  boolean,
 ] {
-  const picked = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  return [useSyncExternalStore(subscribe, getSnapshot, () => null), setForkWorkingMark];
+}
+
+/** The mark to draw: the pick, else the palette's default. */
+export function useForkWorkingMark(): ForkWorkingMark {
+  const [picked] = useForkWorkingMarkPick();
   const fallback = defaultForkWorkingMark(useIsInletActive());
-  return [picked ?? fallback, setForkWorkingMark, picked !== null];
+  return picked ?? fallback;
 }

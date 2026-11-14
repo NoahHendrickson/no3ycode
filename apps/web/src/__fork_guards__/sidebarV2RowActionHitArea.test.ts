@@ -241,7 +241,9 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // the mark back in the crossfade cell. The card's box comes from the
     // shared alignment module (custom/sidebarV2CardAlignment); the slim shelf
     // row's stays a literal 14px.
-    expect(sidebarV2).toContain("pointer-events-none flex shrink-0 items-center justify-center");
+    expect(sidebarV2).toContain(
+      "pointer-events-none flex shrink-0 items-center justify-center overflow-hidden",
+    );
     expect(sidebarV2).toContain("SIDEBAR_V2_CARD_ALIGNMENT.statusBox");
     expect(sidebarV2).toContain(
       "pointer-events-none flex size-[14px] shrink-0 items-center justify-center",

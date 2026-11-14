@@ -71,7 +71,7 @@ import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPictu
 import { DEFAULT_FORK_GLASS_3D_MODE, useForkGlass3d } from "../../custom/forkGlass3d";
 /* fork:end fork-glass-3d */
 /* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */
-import { useForkWorkingMark } from "../../custom/forkWorkingMark";
+import { useForkWorkingMarkPick } from "../../custom/forkWorkingMark";
 /* fork:end fork-working-mark */
 /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
 import { ForkUpstreamCreditRow } from "../../custom/ForkUpstreamCreditRow";
@@ -481,7 +481,8 @@ export function useSettingsRestore(onRestored?: () => void) {
   const glass3dChanged = appearance === COOL_DARKER_THEME && glass3d !== DEFAULT_FORK_GLASS_3D_MODE;
   /* fork:end fork-glass-3d */
   /* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */
-  const [, setWorkingMark, workingMarkChanged] = useForkWorkingMark();
+  const [workingMarkPick, setWorkingMark] = useForkWorkingMarkPick();
+  const workingMarkChanged = workingMarkPick !== null;
   /* fork:end fork-working-mark */
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();

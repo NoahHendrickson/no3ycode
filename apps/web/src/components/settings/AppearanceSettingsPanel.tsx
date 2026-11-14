@@ -66,6 +66,7 @@ import {
   FORK_WORKING_MARKS,
   isForkWorkingMark,
   useForkWorkingMark,
+  useForkWorkingMarkPick,
 } from "../../custom/forkWorkingMark";
 /* fork:end fork-working-mark */
 import { ThreadDetailsItemsRow } from "./ThreadDetailsItemsRow";
@@ -153,7 +154,8 @@ export function AppearanceSettingsPanel() {
   const [glass3d, setGlass3d] = useForkGlass3d();
   /* fork:end fork-glass-3d */
   /* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */
-  const [workingMark, setWorkingMark, workingMarkChanged] = useForkWorkingMark();
+  const workingMark = useForkWorkingMark();
+  const [workingMarkPick, setWorkingMark] = useForkWorkingMarkPick();
   /* fork:end fork-working-mark */
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
@@ -335,7 +337,7 @@ export function AppearanceSettingsPanel() {
           title="Working indicator"
           description="The mark shown while an agent is working."
           resetAction={
-            workingMarkChanged ? (
+            workingMarkPick !== null ? (
               <SettingResetButton label="working indicator" onClick={() => setWorkingMark(null)} />
             ) : null
           }

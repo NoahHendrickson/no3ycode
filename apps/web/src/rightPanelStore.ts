@@ -361,8 +361,12 @@ const updateThreadPanelVisibilityMap = (
 ): Record<string, ThreadPanelVisibility> => {
   const current = byThreadKey[threadKey] ?? DEFAULT_THREAD_PANEL_VISIBILITY;
   const next = updater(current);
-  /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
-  if (!next.inlineOpen && !next.popoverOpen) {
+  /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed
+     Kept only while it differs from the default, whichever way the default opens. */
+  if (
+    next.inlineOpen === DEFAULT_THREAD_PANEL_VISIBILITY.inlineOpen &&
+    next.popoverOpen === DEFAULT_THREAD_PANEL_VISIBILITY.popoverOpen
+  ) {
     /* fork:end fork-details-card-closed */
     if (!(threadKey in byThreadKey)) return byThreadKey;
     const { [threadKey]: _removed, ...rest } = byThreadKey;
@@ -641,8 +645,9 @@ export function migratePersistedRightPanelState(persistedState: unknown): {
           ).flatMap(([threadKey, value]) => {
             if (!value || typeof value !== "object" || !("inlineOpen" in value)) return [];
             /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
-            return value.inlineOpen === true
-              ? [[threadKey, { inlineOpen: true, popoverOpen: false }]]
+            return typeof value.inlineOpen === "boolean" &&
+              value.inlineOpen !== DEFAULT_THREAD_PANEL_VISIBILITY.inlineOpen
+              ? [[threadKey, { inlineOpen: value.inlineOpen, popoverOpen: false }]]
               : [];
             /* fork:end fork-details-card-closed */
           }),
@@ -1224,7 +1229,9 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
           Object.entries(state.threadPanelVisibilityByThreadKey).flatMap(
             ([threadKey, visibility]) =>
               /* fork:begin fork-details-card-closed — see .fork/customizations.yaml#fork-details-card-closed */
-              visibility.inlineOpen ? [[threadKey, { inlineOpen: true, popoverOpen: false }]] : [],
+              visibility.inlineOpen === DEFAULT_THREAD_PANEL_VISIBILITY.inlineOpen
+                ? []
+                : [[threadKey, { inlineOpen: visibility.inlineOpen, popoverOpen: false }]],
             /* fork:end fork-details-card-closed */
           ),
         ),

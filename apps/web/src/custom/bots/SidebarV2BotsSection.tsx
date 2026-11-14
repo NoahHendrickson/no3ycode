@@ -196,8 +196,7 @@ export function SidebarV2BotsRow(props: {
             <MenuPopup
               align="end"
               data-fork-glass-rim
-              data-fork-tab-menu=""
-              data-fork-sidebar-menu=""
+              data-fork-tab-menu="sidebar"
               className="min-w-48"
             >
               <OptionCheckboxItem

@@ -296,11 +296,16 @@
    A header button's menu flipped above it (a short window) hangs unpadded. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  :is(
-    [data-slot="menu-popup"]:has([data-fork-model-picker]),
-    [data-slot="popover-popup"][data-fork-tab-menu]
-  )[data-side="top"][data-align="end"] {
+  [data-fork-tab-menu="composer"][data-side="top"][data-align="end"] {
   --fork-inlet-tab-pad: 4px;
+}
+
+/* A header menu flipped above its button casts its shadow upward, away from the button, so it
+   never melts into a cream row it covers (custom/inletMenuMorph.ts draws it). */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-tab-menu]:not([data-fork-tab-menu="composer"])[data-side="top"] {
+  --fork-inlet-morph-shadow: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]

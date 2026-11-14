@@ -420,7 +420,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           ? { side: "top" as const, collisionAvoidance: { side: "none" as const } }
           : {})}
         className={props.combined ? "w-72" : "w-64"}
-        data-fork-tab-menu={props.isComposerOwned ? "" : undefined}
+        data-fork-tab-menu={props.isComposerOwned ? "composer" : undefined}
       >
         <ModelPickerContent
           searchInputRef={searchInputRef}

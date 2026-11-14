@@ -415,7 +415,7 @@ describe("fork guard: fork-inlet-theme", () => {
     // The Threads header's icon menus hang from their buttons the same way.
     const chrome = readSibling("../custom/SidebarV2ChromeRows.tsx");
     expect(chrome.match(/data-fork-tab-trigger=""/gu)).toHaveLength(2);
-    expect(chrome.match(/data-fork-tab-menu=""/gu)).toHaveLength(2);
+    expect(chrome.match(/data-fork-tab-menu="sidebar"/gu)).toHaveLength(2);
     // So do the collapsed sidebar tab strip's status and More menus, one start-aligned, and
     // a tab's "…" thread menu (the in-page context menu, marked when it opens).
     const strip = readSibling("../custom/CollapsedThreadTabs.tsx");
@@ -465,7 +465,7 @@ describe("fork guard: fork-inlet-theme", () => {
     }
     // The usage readout beside it hangs from its bar the same way.
     const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
-    expect(usage).toContain('data-fork-tab-menu=""');
+    expect(usage).toContain('data-fork-tab-menu="composer"');
     expect(usage).toContain('data-fork-tab-trigger=""');
     const upward = inletRules.find(
       (rule) => rule.selector.includes('[data-side="top"]') && rule.selector.endsWith("::after"),

@@ -119,7 +119,8 @@ look like it. While open:
    or it falls on the chips beside the trigger. A header menu flipped above its button (a short
    window) casts its shadow upward, so it never melts into a cream row it covers.
 5. A thin trigger gets padded fill (4px each side), so the menu never hangs off a sliver. Only
-   the composer's controls are thin; a header button keeps its own 10px corners, flipped too.
+   the composer's controls are thin; a header button keeps its own 10px corners, flipped too
+   (in the morph; the reduced-motion static look still squares a flipped button's free side).
 
 ### H4. Geometry
 

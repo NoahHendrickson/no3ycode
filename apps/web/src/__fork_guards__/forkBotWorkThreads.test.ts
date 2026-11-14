@@ -291,7 +291,7 @@ describe("fork guard: fork-bot-work-threads", () => {
     // The bot's own limits stop at the bot, so each prompt has to carry them.
     expect(rules?.contents).toContain("Your limits do not travel with it");
     expect(chatView).toContain("<BotThreadsPanel");
-    expect(sidebar).toContain("if (props.botWork != null) openBotThreadsPanel(threadRef);");
+    expect(sidebar).toContain("openBotWorkOnPick(threadRef);");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.
     expect(inlineSize).toContain("otherInlinePanelsWidth(row, host, options.otherPanels)");

@@ -358,7 +358,7 @@ function SidebarV2WorkingBeadRing({ seed }: { seed: string }) {
 /** The working mark every surface draws — sidebar rows, the chat working row,
     the composer pill — in the form picked under Settings → Appearance. */
 export function SidebarV2WorkingMark({ seed }: { seed: string }) {
-  const [mark] = useForkWorkingMark();
+  const mark = useForkWorkingMark();
   switch (mark) {
     case "bead":
       return <SidebarV2WorkingBeadRing seed={seed} />;

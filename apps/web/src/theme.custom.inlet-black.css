@@ -200,11 +200,11 @@
      chosen row is black at 8% on that cream, flattened. */
 
   & [data-sidebar-version="v2"] [data-fork-tab-trigger][aria-expanded="true"],
-  & [data-slot="menu-popup"][data-fork-sidebar-menu] {
+  & [data-slot="menu-popup"][data-fork-tab-menu="sidebar"] {
     --popover: var(--fork-inlet-panel);
   }
 
-  & [data-slot="menu-popup"][data-fork-sidebar-menu] {
+  & [data-slot="menu-popup"][data-fork-tab-menu="sidebar"] {
     --accent: #e4e0c7;
 
     & [data-slot="menu-radio-item"][data-checked] {
@@ -222,12 +222,13 @@
     --popover-foreground: var(--fork-inlet-black-ink);
   }
 
-  & [data-slot="menu-popup"][data-fork-bot-threads-menu] {
+  & [data-slot="menu-popup"][data-fork-tab-menu="bot-threads"] {
     --primary: var(--fork-inlet-black-ink);
     --primary-foreground: var(--fork-inlet-black-surface);
 
     & [data-slot="menu-checkbox-item"] > [data-unchecked] {
-      border-color: color-mix(in srgb, currentColor 24%, transparent);
+      /* The light ink at 24% over #141414, flattened. */
+      border-color: #474747;
       background: transparent;
       box-shadow: none;
     }

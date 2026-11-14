@@ -305,8 +305,10 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   const glassStyle = getComputedStyle(glass);
   const fill = glassStyle.backgroundColor;
   const menuRadius = Number.parseFloat(glassStyle.borderBottomLeftRadius) || 8;
-  const pad =
-    Number.parseFloat(getComputedStyle(popup).getPropertyValue("--fork-inlet-tab-pad")) || 0;
+  const popupStyle = getComputedStyle(popup);
+  const pad = Number.parseFloat(popupStyle.getPropertyValue("--fork-inlet-tab-pad")) || 0;
+  // A menu that sets its own shadow (a header menu flipped above its button) keeps it.
+  const shadow = popupStyle.getPropertyValue("--fork-inlet-morph-shadow").trim();
   const triggerStyle = getComputedStyle(trigger);
 
   setMorphState(popup, trigger, "on");
@@ -371,11 +373,9 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
         release(popup, owner);
         return;
       }
-      // Above its button the shadow lifts away from it; the composer's padded controls cast
-      // none, since it would still shade the composer round them.
-      if (!below) {
-        svg.style.filter = pad > 0 ? "none" : "drop-shadow(0 -8px 12px rgb(0 0 0 / 14%))";
-      }
+      // Above its button (the composer's menus) the shadow would fall on the button's row.
+      if (shadow !== "") svg.style.filter = shadow;
+      else if (!below) svg.style.filter = "none";
     }
     // Every scroll in the page redraws; one that moved neither box changes nothing.
     const geometry = [triggerBox.left, triggerBox.top, triggerBox.width, triggerBox.height]
