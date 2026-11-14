@@ -1,7 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard — see `.fork/README.md` §4b and `.fork/customizations.yaml#fork-stage-columns`.
- * The panel controls live in the conversation's header in every state, each panel's header holds
+ * The panel controls live in the conversation's header (a maximized right panel's while it hides
+ * the conversation), each panel's header holds
  * its own close button, and under Inlet the stage is one card whose columns a border divides.
  */
 
@@ -29,6 +30,15 @@ describe("fork guard: fork-stage-columns", () => {
     expect(chatView).not.toContain("<ThreadPanelHeaderControl");
     expect(chatView).not.toContain("showThreadPanelControl=");
     expect(headerControls).not.toMatch(/\bfixed\b/u);
+  });
+
+  it("moves the cluster into a maximized right panel's header", () => {
+    expect(chatView).toMatch(
+      /const panelLayoutControls = rightPanelMaximized \? null : stageControlCluster;/u,
+    );
+    expect(chatView).toMatch(
+      /layoutControls=\{[\s\S]*?\{rightPanelMaximized \? stageControlCluster : null\}\s*<RightPanelMaximizeControl/u,
+    );
   });
 
   it("gives each panel's header its own close button", () => {

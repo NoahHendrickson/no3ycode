@@ -3600,10 +3600,11 @@ export default function ChatView(props: ChatViewProps) {
     /* fork:end fork-bot-work-threads */
   } satisfies PanelLayoutControlsProps;
   /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
-     One cluster, details toggle included, at the conversation header's end in every state:
-     not pinned to the window, and never split between the header and a panel. */
+     One cluster, details toggle included, at the conversation header's end: not pinned to the
+     window, and never split between the header and a panel. A maximized right panel hides the
+     conversation, so the cluster moves into that panel's header. */
   const panelToggleControls = <PanelLayoutControls {...panelToggleControlProps} />;
-  const panelLayoutControls = (
+  const stageControlCluster = (
     <StageHeaderControls>
       {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
       <SplitPaneHeaderControls
@@ -3614,6 +3615,7 @@ export default function ChatView(props: ChatViewProps) {
       {/* fork:end fork-split-threads */}
     </StageHeaderControls>
   );
+  const panelLayoutControls = rightPanelMaximized ? null : stageControlCluster;
   /* fork:end fork-stage-columns */
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
@@ -4501,6 +4503,7 @@ export default function ChatView(props: ChatViewProps) {
                  The panel's own controls, beside its close button: the toggles stay in the
                  conversation's header. In flow, so the header's drag region needs no-drag here. */
               <div className="mr-px flex items-center gap-1 [-webkit-app-region:no-drag]">
+                {rightPanelMaximized ? stageControlCluster : null}
                 <RightPanelMaximizeControl
                   maximized={rightPanelMaximized}
                   onToggle={toggleRightPanelMaximizedStable}

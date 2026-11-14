@@ -7225,8 +7225,7 @@
     A thread's stage reads as the owner's frame (Figma t3-fork 698:7880): the conversation, a
     bot's Threads panel and the right panel are columns side by side, each with its own header
     row. The panel controls (pane actions, details, threads, music, terminal, right panel) are
-    one cluster at the right end of the conversation's header, in its flow, in every state and
-    every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
+    one cluster at the right end of the conversation's header, in its flow, in every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
     never split between that header and a panel's, and nothing else is drawn over them. A
     toggle shows pressed while its panel is open. What acts on one panel's content stays in that
     panel's header: the right panel's tabs and new-tab button, then its maximize toggle and a
@@ -7242,8 +7241,8 @@
     conversation's while no panel is open, else the Threads panel's or the right panel's); every
     header is a drag region with its controls marked no-drag, and since the cluster now sits in
     the conversation header's own flow, no later drag region overlaps it. With the right panel
-    maximized the conversation and its header are hidden; the panel's own header keeps the
-    restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
+    maximized the conversation and its header are hidden, so the cluster moves into the panel's
+    header, before its restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
     the stock theme keep their surfaces.
   tier: 3
   files:
