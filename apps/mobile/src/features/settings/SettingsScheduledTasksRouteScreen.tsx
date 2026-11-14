@@ -5,9 +5,6 @@ import {
   clampManagedRuntimeMode,
   managedCapabilityDenial,
   resolveProjectProviderInstanceEnabled,
-  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-  scheduledTaskThreadEventsLabel,
-  /* fork:end fork-bot-event-wakes */
 } from "@t3tools/contracts";
 import { readEnvironmentScope } from "../../state/session";
 import type {
@@ -118,10 +115,6 @@ const THREAD_MODE_LABELS: Record<ScheduledTaskThreadMode, string> = {
 };
 
 function describeSchedule(task: ScheduledTask): string {
-  /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-  if (task.schedule.type === "webhook" && task.schedule.threadEvents != null)
-    return scheduledTaskThreadEventsLabel(task.schedule.threadEvents);
-  /* fork:end fork-bot-event-wakes */
   if (task.schedule.type === "webhook") return "On webhook";
   if (task.schedule.type === "once") {
     const runAt = new Date(task.schedule.runAt);

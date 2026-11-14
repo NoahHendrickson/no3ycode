@@ -8,7 +8,6 @@ import {
   EnvironmentId,
   githubPrRunContext,
   ScheduledTaskId,
-  scheduledTaskThreadEventsLabel,
   type OrchestrationV2RunStatus,
   type ScheduledTask,
   type ScheduledTaskRun,
@@ -214,8 +213,6 @@ const ONCE_FORMATTER = new Intl.DateTimeFormat(undefined, {
 
 /** Mirrors upstream's settings label so the two pages never disagree on a trigger. */
 export function scheduleLabel(schedule: ScheduledTaskSchedule): string {
-  if (schedule.type === "webhook" && schedule.threadEvents != null)
-    return scheduledTaskThreadEventsLabel(schedule.threadEvents);
   if (schedule.type === "webhook") return schedule.github ? "GitHub PR opened" : "On webhook";
   if (schedule.type === "once") return `Once, ${ONCE_FORMATTER.format(new Date(schedule.runAt))}`;
   if (schedule.type === "interval") {

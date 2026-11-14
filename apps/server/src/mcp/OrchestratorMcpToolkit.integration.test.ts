@@ -194,9 +194,6 @@ const layerUnusedScheduledTaskStub = Layer.succeed(
     listRuns: () => Effect.die("unused in this test"),
     /* fork:end fork-scheduled-page */
     triggerWebhook: () => Effect.die("unused in this test"),
-    /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-    deliverThreadEvent: () => Effect.void,
-    /* fork:end fork-bot-event-wakes */
   }),
 );
 

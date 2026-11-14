@@ -323,7 +323,6 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain('model: "haiku"');
     expect(rules).toContain("A wake never creates, changes or deletes scheduled tasks");
     expect(rules).toContain("A promise written only in STATE.md never happens");
-    expect(rules).toContain("use a webhook schedule with `threadEvents`");
     expect(files.get("STATE.md")).toContain("- 2026-11-13: Created.");
     expect(files.get(".claude/compact-instructions.md")).toContain("NOT YET SAVED");
     const settings = JSON.parse(files.get(".claude/settings.json") ?? "{}") as {

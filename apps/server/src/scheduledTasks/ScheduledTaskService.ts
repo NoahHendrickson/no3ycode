@@ -89,15 +89,6 @@ import { forkDeferScheduledFire, forkScheduledFireHold } from "./forkScheduledWa
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { forkBotTaskPrompt } from "./forkBotTasks.ts";
 /* fork:end fork-bots */
-/* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-import {
-  FORK_AUTOMATION_MESSAGE_GLOB,
-  type ForkThreadEvent,
-  forkThreadEventDelivery,
-  forkThreadEventsToStore,
-  forkThreadEventWakes,
-} from "./forkThreadEventWakes.ts";
-/* fork:end fork-bot-event-wakes */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
 const isScheduledTaskError = Schema.is(ScheduledTaskError);
@@ -334,12 +325,6 @@ export class ScheduledTaskService extends Context.Service<
     readonly triggerWebhook: (
       request: WebhookTriggerRequest,
     ) => Effect.Effect<WebhookTriggerResult, ScheduledTaskError>;
-    /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-    /** Posts a T3 thread event to every enabled webhook task whose thread events match it. */
-    readonly deliverThreadEvent: (
-      event: ForkThreadEvent,
-    ) => Effect.Effect<void, ScheduledTaskError>;
-    /* fork:end fork-bot-event-wakes */
   }
 >()("t3/scheduledTasks/ScheduledTaskService") {}
 
@@ -1526,37 +1511,11 @@ export const layer = Layer.effect(
                     ? existingTask.schedule.filters
                     : undefined),
               ),
-              /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes
-                 Omitted keeps the stored thread events, as for filters; null clears them. */
-              ...forkThreadEventsToStore(
-                input.schedule.threadEvents,
-                existingTask?.schedule.type === "webhook"
-                  ? existingTask.schedule.threadEvents
-                  : undefined,
-              ),
-              /* fork:end fork-bot-event-wakes */
             }
           : input.schedule.type === "once"
             ? { type: "once", runAt: iso(DateTime.makeUnsafe(input.schedule.runAt)) }
             : input.schedule;
       /* fork:end fork-github-pr-automation */
-      /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes
-         T3 posts thread events itself, unsigned, and a GitHub trigger only takes PR events.
-         Refused before a signing secret's one-time reference is spent below. */
-      if (
-        schedule.type === "webhook" &&
-        schedule.threadEvents != null &&
-        (schedule.signature !== null ||
-          (input.schedule.type === "webhook" && input.schedule.github !== undefined
-            ? input.schedule.github != null
-            : existingTask?.schedule.type === "webhook" && existingTask.schedule.github != null))
-      ) {
-        return yield* taskError(
-          "Thread events can't be combined with a signature check or a GitHub trigger.",
-          { taskId: id },
-        );
-      }
-      /* fork:end fork-bot-event-wakes */
       /* fork:begin fork-github-pr-automation — see .fork/customizations.yaml#fork-github-pr-automation */
       let webhook =
         input.schedule.type === "webhook"
@@ -2819,68 +2778,6 @@ export const layer = Layer.effect(
       );
     });
 
-    /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes
-       Each matching task gets the event through its own hook, so it runs exactly like a
-       request: filters, coalescing, rate limit and delivery log. The delivery id claims it once. */
-    const deliverThreadEvent = Effect.fn("ScheduledTaskService.deliverThreadEvent")(function* (
-      event: ForkThreadEvent,
-    ) {
-      const rows = (yield* selectAllRows().pipe(
-        Effect.mapError((cause) => taskError("Could not list schedule tasks.", { cause })),
-      )).filter((row) => row.enabled === 1 && row.webhook_token !== null);
-      if (rows.length === 0) return;
-      const watching = yield* Effect.forEach(rows, (row) =>
-        decodeRow(row).pipe(
-          Effect.map((task) => ({ row, task })),
-          Effect.orElseSucceed(() => null),
-        ),
-      );
-      const candidates = watching.filter(
-        (entry) =>
-          entry !== null &&
-          entry.task.schedule.type === "webhook" &&
-          entry.task.schedule.threadEvents != null,
-      );
-      if (candidates.length === 0) return;
-      const shell = yield* threadManagement
-        .getThreadShell(event.threadId)
-        .pipe(Effect.orElseSucceed(() => null));
-      // A thread any automation has posted into (its own runs, a bound thread, their
-      // continuations, questions and approvals) never wakes one, so none can loop.
-      const automationThread =
-        (yield* sql<{ readonly found: number }>`
-          SELECT 1 AS found FROM orchestration_v2_projection_messages
-          WHERE thread_id = ${event.threadId} AND message_id GLOB ${FORK_AUTOMATION_MESSAGE_GLOB}
-          LIMIT 1
-        `.pipe(
-          NodeSqliteClient.readOnly,
-          Effect.mapError((cause) =>
-            taskError("Could not check the thread's messages.", { cause }),
-          ),
-        )).length > 0;
-      for (const entry of candidates) {
-        if (entry === null || shell === null || entry.row.webhook_token === null) continue;
-        if (!forkThreadEventWakes(entry.task, shell, event, { automationThread })) continue;
-        const delivery = forkThreadEventDelivery(entry.task, shell, event);
-        yield* triggerWebhook({
-          hookId: entry.task.id,
-          token: entry.row.webhook_token,
-          method: "POST",
-          path: "/t3/thread-events",
-          query: "",
-          headers: { "content-type": "application/json" },
-          bodyText: delivery.bodyText,
-          body: new TextEncoder().encode(delivery.bodyText),
-          relayDeliveryId: delivery.relayDeliveryId,
-        }).pipe(
-          Effect.catch((cause) =>
-            Effect.logWarning("Thread event delivery failed", { taskId: entry.task.id, cause }),
-          ),
-        );
-      }
-    });
-    /* fork:end fork-bot-event-wakes */
-
     const dispatchPending = Effect.fn("ScheduledTaskService.dispatchPendingWebhooks")(function* () {
       const now = DateTime.toEpochMillis(yield* localNow);
       if (yield* pendingWebhooks.isIdle(now)) return;
@@ -3027,9 +2924,6 @@ export const layer = Layer.effect(
       ),
       /* fork:end fork-scheduled-page */
       triggerWebhook,
-      /* fork:begin fork-bot-event-wakes — see .fork/customizations.yaml#fork-bot-event-wakes */
-      deliverThreadEvent,
-      /* fork:end fork-bot-event-wakes */
     });
   }),
 );
