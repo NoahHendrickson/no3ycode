@@ -7110,9 +7110,10 @@
     nextRunAt). A compact bot card keeps the mascot at one pixel per cell before
     the title. The mascot's mood follows the thread: Thinking while it works,
     Happy with an unread report, Error after a failed run, Sleeping between
-    wakes, Idle while it is open or waiting on you; so a bot card draws no
-    working mark (helix or rain). A bot's conversation is the composer alone,
-    as a chat's is (it sets the chat column's data-fork-chat-thread).
+    wakes, Idle while it is open or waiting on you; so a working bot card
+    breathes the monitoring dot in place of the working mark (helix or rain).
+    A bot's conversation is the composer alone, as a chat's is (it sets the
+    chat column's data-fork-chat-thread).
 
     Each bot wears one of the leaf and petal bots on the Noey Brand file's
     "bots" page (custom/bots/botMascotArt draws them by that file's generator's
