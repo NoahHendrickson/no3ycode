@@ -1,8 +1,7 @@
 /**
- * A bot's Threads panel — see `.fork/customizations.yaml#fork-bot-work-threads`. Its own column in
- * the stage, between the conversation and the right panel, drawn by the right panel's own shell
- * (PreviewPanelShell: divider, resize handle, remembered width, open and close) and a sheet where
- * the right panel is one. It lists the bot's work in the sidebar's status sections.
+ * A bot's Threads panel — see `.fork/customizations.yaml#fork-bot-work-threads`: a stage column
+ * between the conversation and the right panel, in the right panel's shell (a sheet where that is
+ * one), on the bot's conversation and on each of its threads, listing its work by status.
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
@@ -11,7 +10,7 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
 import { XIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
@@ -21,6 +20,7 @@ import { Button } from "~/components/ui/button";
 import { isElectron } from "~/env";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { usePreviewPanelInlineSize } from "~/hooks/usePreviewPanelInlineSize";
+import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
 import { usePanelPresence } from "~/panelAnimations";
 import { useQuietThreadShells } from "~/state/entities";
@@ -30,13 +30,28 @@ import { useUiStateStore } from "~/uiStateStore";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
+import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
+import { TITLEBAR_CONTROLS_INSET_CLASS, TitlebarControlsReserve } from "../titlebarControlsReserve";
 import { type BotWorkGroupKey, type BotWorkRow, groupBotWork } from "./botWork";
-import { closeBotThreadsPanel, useBotThreadsPanelStore } from "./botThreadsPanelStore";
+import { closeBotThreadsPanel } from "./botThreadsPanelStore";
+import {
+  BOT_THREADS_PANEL_DEFAULT_WIDTH,
+  BOT_THREADS_PANEL_MIN_WIDTH,
+  stageFitsBothPanels,
+} from "./stagePanels";
+import { useBotThreadsPanelOpen } from "./useBotWorkOwner";
 
-/** The right panel's own minimum, so the two panels open at the same width. */
-const BOT_THREADS_PANEL_DEFAULT_WIDTH = 360;
+/** Whether the stage row holds the conversation and both panels, kept current as it resizes. */
+function useStageFitsBothPanels(row: HTMLElement | null): boolean {
+  return useSyncExternalStore(
+    (onChange) => (row === null ? () => {} : observeResize(row, onChange)),
+    () => row === null || stageFitsBothPanels(row.clientWidth),
+  );
+}
 
 export function BotThreadsPanel(props: {
+  readonly botRef: ScopedThreadRef;
+  /** The thread on screen: the bot's conversation, or one of its threads. */
   readonly threadRef: ScopedThreadRef;
   readonly workspaceLayoutElement: HTMLElement | null;
   /** Where the right panel is a sheet, this is one too. */
@@ -44,50 +59,71 @@ export function BotThreadsPanel(props: {
   /** Held closed without forgetting it is open: a maximized right panel, a floating pane, or
       the right panel holding the one sheet slot. */
   readonly held: boolean;
-  /** Nothing to its right, so it keeps clear of native window controls. */
-  readonly rightmost: boolean;
+  /** The right panel is open inline to its right; else this is the rightmost column. */
+  readonly rightPanelInline: boolean;
   readonly animationsActive: boolean;
   readonly animationDurationMs: PanelAnimationDurationMs;
 }) {
-  const threadKey = scopedThreadKey(props.threadRef);
+  const botKey = scopedThreadKey(props.botRef);
+  const fitsBoth = useStageFitsBothPanels(props.workspaceLayoutElement);
+  // A row narrowed below both panels keeps the right panel; this one waits for room.
   const open =
-    useBotThreadsPanelStore((state) => state.openByThreadKey[threadKey] === true) && !props.held;
+    useBotThreadsPanelOpen(props.botRef) && !props.held && !(props.rightPanelInline && !fitsBoth);
   const presence = usePanelPresence(
     open,
-    threadKey,
+    botKey,
     props.animationsActive,
-    threadKey,
+    botKey,
     props.animationDurationMs,
   );
   const inlineSize = usePreviewPanelInlineSize({
     container: props.workspaceLayoutElement,
-    widthStorageKey: `t3code:fork:bot-threads-panel-width:${threadKey}`,
+    widthStorageKey: `t3code:fork:bot-threads-panel-width:${botKey}`,
     defaultWidth: BOT_THREADS_PANEL_DEFAULT_WIDTH,
+    floorWidth: BOT_THREADS_PANEL_MIN_WIDTH,
   });
   if (!presence.present) return null;
+  // Rightmost inline, the window's panel controls sit over this header: it leaves them their
+  // room, and their pressed yarn toggle is its close button.
+  const ownsTitleBarControls = !props.sheet && !props.rightPanelInline;
   const body = (
     <>
       <div
         className={cn(
-          "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pr-2 pl-3.5",
+          "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
+          ownsTitleBarControls ? TITLEBAR_CONTROLS_INSET_CLASS : "pr-2",
           isElectron && "drag-region",
-          isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
+          isElectron && ownsTitleBarControls && "wco:pr-(--workspace-native-controls-inset)",
         )}
         data-fork-bot-threads-header=""
+        // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
+        data-fork-bot-threads-bot={botKey}
+        data-fork-bot-threads-thread={scopedThreadKey(props.threadRef)}
       >
-        <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
-        <span className="flex shrink-0 [-webkit-app-region:no-drag]">
-          <Button
-            aria-label="Close threads panel"
-            onClick={() => closeBotThreadsPanel(props.threadRef)}
-            size="icon-xs"
-            variant="ghost"
-          >
-            <XIcon />
-          </Button>
-        </span>
+        <h2
+          className={cn(
+            "min-w-0 truncate text-sm font-normal text-foreground",
+            !ownsTitleBarControls && "flex-1",
+          )}
+        >
+          Threads
+        </h2>
+        {ownsTitleBarControls ? (
+          <TitlebarControlsReserve spacer />
+        ) : (
+          <span className="flex shrink-0 [-webkit-app-region:no-drag]">
+            <Button
+              aria-label="Close threads panel"
+              onClick={() => closeBotThreadsPanel(props.botRef)}
+              size="icon-xs"
+              variant="ghost"
+            >
+              <XIcon />
+            </Button>
+          </span>
+        )}
       </div>
-      <BotThreadsList botRef={props.threadRef} />
+      <BotThreadsList botRef={props.botRef} currentThreadRef={props.threadRef} />
     </>
   );
   if (props.sheet) {
@@ -95,7 +131,7 @@ export function BotThreadsPanel(props: {
       <RightPanelSheet
         animationDurationMs={props.animationsActive ? props.animationDurationMs : 0}
         open={open}
-        onClose={() => closeBotThreadsPanel(props.threadRef)}
+        onClose={() => closeBotThreadsPanel(props.botRef)}
       >
         <PreviewPanelShell mode="sheet">{body}</PreviewPanelShell>
       </RightPanelSheet>
@@ -108,7 +144,10 @@ export function BotThreadsPanel(props: {
   );
 }
 
-function BotThreadsList(props: { readonly botRef: ScopedThreadRef }) {
+function BotThreadsList(props: {
+  readonly botRef: ScopedThreadRef;
+  readonly currentThreadRef: ScopedThreadRef;
+}) {
   const threads = useQuietThreadShells();
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
   const [folded, setFolded] = useState<ReadonlySet<BotWorkGroupKey>>(() => new Set());
@@ -153,7 +192,14 @@ function BotThreadsList(props: { readonly botRef: ScopedThreadRef }) {
             {collapsed ? null : (
               <ul className="flex flex-col gap-0.5">
                 {group.rows.map((row) => (
-                  <BotThreadsRow key={row.thread.id} row={row} />
+                  <BotThreadsRow
+                    key={row.thread.id}
+                    row={row}
+                    current={
+                      row.thread.id === props.currentThreadRef.threadId &&
+                      row.thread.environmentId === props.currentThreadRef.environmentId
+                    }
+                  />
                 ))}
               </ul>
             )}
@@ -181,7 +227,7 @@ function rowDetail(thread: EnvironmentThreadShell, row: BotWorkRow): string | nu
   }
 }
 
-function BotThreadsRow(props: { readonly row: BotWorkRow }) {
+function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: boolean }) {
   const { thread, card } = props.row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
@@ -196,10 +242,16 @@ function BotThreadsRow(props: { readonly row: BotWorkRow }) {
     <li>
       <button
         type="button"
+        aria-current={props.current ? "page" : undefined}
         onClick={() => {
+          if (props.current) return;
           void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
         }}
-        className="flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className={cn(
+          "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          // The sidebar's open row, so the thread on screen reads the same in both lists.
+          props.current ? threadRowOpenSurfaceClassName("shelf") : "hover:bg-accent",
+        )}
         data-testid="bot-threads-row"
       >
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">

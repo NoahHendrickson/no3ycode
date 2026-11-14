@@ -1,10 +1,12 @@
-/** The bot a thread works for, for its header's way back — see
+/** A thread's bot, for its header's way back and its Threads panel — see
     `.fork/customizations.yaml#fork-bot-work-threads`. */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 
 import { useQuietThreadShell } from "~/state/entities";
 
+import { botThreadsPanelBotId } from "./botWork";
+import { isBotThread } from "./botThreads";
 import { useBotThreadsPanelStore } from "./botThreadsPanelStore";
 import { botWorkOwnerId } from "./botWorkRoster";
 
@@ -19,9 +21,29 @@ export function useBotWorkOwner(
   return bot === null ? null : { threadId: bot.id, title: bot.title };
 }
 
-/** Whether the thread's Threads panel is set open (a held panel still counts). */
-export function useBotThreadsPanelOpen(ref: ScopedThreadRef | null): boolean {
+/** The bot whose Threads panel the thread shows, or null: a bot shows its own, a bot's launched
+    thread or subagent shows its bot's. */
+export function useBotThreadsPanelBot(ref: ScopedThreadRef | null): ScopedThreadRef | null {
+  const shell = useQuietThreadShell(ref);
+  const candidateId =
+    shell === null || isBotThread(shell.source) ? null : botThreadsPanelBotId(shell, () => true);
+  const candidate = useQuietThreadShell(
+    ref === null || candidateId === null
+      ? null
+      : scopeThreadRef(ref.environmentId, candidateId as ThreadId),
+  );
+  if (ref === null || shell === null) return null;
+  const botId = botThreadsPanelBotId(
+    shell,
+    (threadId) => candidate !== null && candidate.id === threadId && isBotThread(candidate.source),
+  );
+  if (botId === null) return null;
+  return botId === shell.id ? ref : scopeThreadRef(ref.environmentId, botId as ThreadId);
+}
+
+/** Whether the bot's Threads panel is set open (a held panel still counts). */
+export function useBotThreadsPanelOpen(botRef: ScopedThreadRef | null): boolean {
   return useBotThreadsPanelStore(
-    (state) => ref !== null && state.openByThreadKey[scopedThreadKey(ref)] === true,
+    (state) => botRef !== null && state.openByBotKey[scopedThreadKey(botRef)] === true,
   );
 }

@@ -7140,20 +7140,29 @@
     holds): the mark and status line take it over the bot's own idle, waiting or unread states,
     never over the bot working or blocked itself.
 
-    A bot's conversation has a Threads panel: its own column in the stage between the
-    conversation and the right panel, never a right panel tab. It is the right panel's shell
-    (PreviewPanelShell: left divider, resize handle, width remembered per thread, open and close
-    motion) with a 36px header ("Threads", close) whose bottom line meets the others. Its yarn
-    toggle sits after the details toggle on bot conversations only, pressed while open; its open
-    state is remembered per thread on this device (botThreadsPanelStore). Inline, each panel's
-    widest is the row less the other panel and the conversation's 360px
-    (usePreviewPanelInlineSize subtracts the row's other inline panel and re-measures when the
-    conversation column resizes). Where the right panel is a sheet, so is this, and the panel
-    opened last wins the one slot, the other closes. It is held shut, not forgotten, while the
-    right panel is maximized or the split pane floats. It lists the bot's launched threads and
-    subagents in the sidebar's status sections (Needs input, Completed, Working, Idle, Settled),
-    newest first, empty sections left out, one plain line when there is none; a row opens its
-    thread. It draws no working animation. Mobile and the collapsed tab strip are not aware of it.
+    A bot's conversation and each of its threads (a launched thread, or a subagent) have the
+    bot's Threads panel (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    between the conversation and the right panel, never a right panel tab. It is the right panel's
+    shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
+    close motion), 320px by default and at least 280, with a 36px header whose bottom line meets
+    the others. Its yarn toggle sits after the details toggle, pressed while open, there and
+    nowhere else. Its open state is one per bot, remembered on this device
+    (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads, and
+    the row of the thread on screen is marked current (aria-current, the sidebar's open-row
+    fill). As the middle column its header is "Threads" and a close button; as the rightmost it
+    leaves the window's panel controls the right panel's own room (custom/titlebarControlsReserve,
+    shared with RightPanelTabs) and has no close button, the pressed yarn toggle above being one.
+    With one panel open nothing changes. With both open inline the conversation keeps 480px:
+    each panel's widest is the row less the other panel and 480 (usePreviewPanelInlineSize, via
+    stagePanels inlinePanelRoom, re-measured when the conversation column resizes); a capped
+    width is not saved. Where the right panel is a sheet, or the row is under 1120px (480 + 360 +
+    280), the two do not fit: the panel opened last wins and the other closes, and a row that
+    narrows below that with both open keeps the right panel while this one waits. It is held
+    shut, not forgotten, while the right panel is maximized or the split pane floats. It lists
+    the bot's launched threads and subagents in the sidebar's status sections (Needs input,
+    Completed, Working, Idle, Settled), newest first, pinned ones too, empty sections left out,
+    one plain line when there is none; a row opens its thread. It draws no working animation.
+    Mobile and the collapsed tab strip are not aware of it.
   tier: 4
   files:
     - apps/server/src/orchestration-v2/forkBotWork.ts
@@ -7164,6 +7173,7 @@
     - apps/web/src/custom/bots/BotThreadsPanelToggle.tsx
     - apps/web/src/custom/bots/useBotWorkOwner.ts
     - apps/web/src/custom/bots/stagePanels.ts
+    - apps/web/src/custom/titlebarControlsReserve.tsx
   shadows: []
   watch:
     - apps/server/src/orchestration-v2/ThreadLaunchService.ts
@@ -7177,6 +7187,7 @@
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/hooks/usePreviewPanelInlineSize.ts
+    - apps/web/src/components/RightPanelTabs.tsx
     - apps/web/src/custom/icons/lucide-phosphor.tsx
     - docs/user/thread-sidebar.md
   verify:

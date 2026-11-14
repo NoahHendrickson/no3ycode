@@ -429,7 +429,11 @@ import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
 import { BotThreadsPanel } from "~/custom/bots/BotThreadsPanel";
-import { useBotThreadsPanelOpen, useBotWorkOwner } from "~/custom/bots/useBotWorkOwner";
+import {
+  useBotThreadsPanelBot,
+  useBotThreadsPanelOpen,
+  useBotWorkOwner,
+} from "~/custom/bots/useBotWorkOwner";
 /* fork:end fork-bot-work-threads */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
@@ -1197,13 +1201,13 @@ export default function ChatView(props: ChatViewProps) {
   const inlineRightPanelOwnsTitleBar = rightPanelOpen && !shouldUsePlanSidebarSheet;
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
      A bot's Threads panel is a column of its own: held shut while the right panel is maximized,
-     the pane floats, or the right panel holds the one sheet slot. */
+     the pane floats, or the right panel holds the one sheet slot. A bot and each of its threads
+     show the bot's panel. */
+  const forkBotThreadsBot = useBotThreadsPanelBot(embedded ? null : activeThreadRef);
   const forkBotThreadsHeld =
     rightPanelMaximized || splitPane.floating || (prefersPlanSidebarSheet && rightPanelOpen);
   const forkBotThreadsInline =
-    useBotThreadsPanelOpen(isForkBotThread && !embedded ? activeThreadRef : null) &&
-    !forkBotThreadsHeld &&
-    !prefersPlanSidebarSheet;
+    useBotThreadsPanelOpen(forkBotThreadsBot) && !forkBotThreadsHeld && !prefersPlanSidebarSheet;
   /* fork:end fork-bot-work-threads */
   const [threadPanelPopoverHandle] = useState(PopoverCreateHandle);
   const [chatCanvasStore] = useState(createChatCanvasStore);
@@ -4473,13 +4477,14 @@ export default function ChatView(props: ChatViewProps) {
       </div>
 
       {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
-      {isForkBotThread && activeThreadRef && !embedded ? (
+      {forkBotThreadsBot !== null && activeThreadRef ? (
         <BotThreadsPanel
+          botRef={forkBotThreadsBot}
           threadRef={activeThreadRef}
           workspaceLayoutElement={workspaceLayoutElement}
           sheet={prefersPlanSidebarSheet}
           held={forkBotThreadsHeld}
-          rightmost={!inlineRightPanelOwnsTitleBar}
+          rightPanelInline={inlineRightPanelOwnsTitleBar}
           animationsActive={panelAnimationsActive}
           animationDurationMs={panelAnimationDurationMs}
         />

@@ -435,13 +435,15 @@ with it; change the interval for a task under **Automations**. Scheduled wakes o
 background service for a bot that should wake while the app is closed. Both
 section headings fold their section.
 
-Threads a bot starts for its work stay out of your thread list. Open them from
-the yarn button in the bot's conversation, which shows the bot's **Threads**
+Threads a bot starts for its work stay out of your thread list. The yarn button
+in the bot's conversation, or in any of its threads, shows the bot's **Threads**
 beside the conversation, grouped by what needs you, what is done, and what is
-still working. When one of them needs your approval or an answer, or fails, the
-bot's card says so. A bot's thread names the bot at the top, so one click takes
-you back. Pin a thread to keep it in your list; deleting or archiving the bot
-puts its threads back there too.
+still working. It stays open as you move between them, with the one you are in
+marked. When the window is too narrow for it and the right panel together, the
+one you opened last stays open. When one of the bot's threads needs your
+approval or an answer, or fails, the bot's card says so. A bot's thread names
+the bot at the top, so one click takes you back. Pin a thread to keep it in
+your list; deleting or archiving the bot puts its threads back there too.
 
 <!-- fork:end fork-bots -->
 

@@ -17,13 +17,25 @@ import {
   sidebarV2StatusBucketForKind,
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
+import { isBotThread } from "./botThreads";
 import { botWorkOwnerId } from "./botWorkRoster";
 
-/** Whose work a thread is: a bot's launched thread, or its subagent. Null for anything else. */
-function botWorkOf(thread: EnvironmentThreadShell): string | null {
+/** Whose work a thread may be: the bot its tag names, or the parent of a subagent. */
+function botWorkOf(thread: Pick<EnvironmentThreadShell, "source" | "lineage">): string | null {
   const owner = botWorkOwnerId(thread.source);
   if (owner !== null) return owner;
   return thread.lineage.relationshipToParent === "subagent" ? thread.lineage.parentThreadId : null;
+}
+
+/** Whose Threads panel a thread shows: a bot its own, a bot's work (a launched thread, or a
+    subagent) its bot's, and nothing for any other thread. */
+export function botThreadsPanelBotId(
+  thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
+  isBot: (threadId: string) => boolean,
+): string | null {
+  if (isBotThread(thread.source)) return thread.id;
+  const owner = botWorkOf(thread);
+  return owner !== null && isBot(owner) ? owner : null;
 }
 
 /** The part of a bot's hidden work that needs its owner, the most pressing kind first. */

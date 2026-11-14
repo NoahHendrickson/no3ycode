@@ -13,6 +13,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import { resolveSidebarRouteReveal } from "../components/sidebar/routeReveal";
 import {
+  botThreadsPanelBotId,
   botWorkAttentionByBot,
   botWorkStatusText,
   groupBotWork,
@@ -20,6 +21,12 @@ import {
 } from "../custom/bots/botWork";
 import { BOT_WORK_TAG_PREFIX, botWorkRowThreadId } from "../custom/bots/botWorkRoster";
 import { BOT_THREAD_TAG } from "../custom/bots/botThreads";
+import {
+  BOT_THREADS_PANEL_MIN_WIDTH,
+  CONVERSATION_MIN_BESIDE_TWO_PANELS,
+  inlinePanelRoom,
+  stageFitsBothPanels,
+} from "../custom/bots/stagePanels";
 import { resolveSidebarV2CardStatus } from "../custom/sidebarV2CardStatus";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
@@ -34,6 +41,7 @@ const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
 const launch = readSibling("../../../server/src/orchestration-v2/ThreadLaunchService.ts");
 const mcp = readSibling("../../../server/src/mcp/OrchestratorMcpService.ts");
 const launchTool = readSibling("../../../server/src/mcp/toolkits/project/handlers.ts");
+const rightPanelTabs = readSibling("../components/RightPanelTabs.tsx");
 
 const AT = "2026-11-14T12:00:00.000Z";
 
@@ -206,6 +214,49 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(launchTool).toContain("{ launchedBy: caller.id }");
     expect(chatView).toContain("<BotThreadsPanel");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
-    expect(inlineSize).toContain("row.clientWidth - otherInlinePanelsWidth(row, host)");
+    expect(inlineSize).toContain("otherPanelsWidth: otherInlinePanelsWidth(row, host),");
+    expect(inlineSize).toContain("readonly floorWidth?: number | undefined;");
+    // The window's panel controls get the same room over whichever column is rightmost.
+    expect(rightPanelTabs).toContain('? TITLEBAR_CONTROLS_INSET_CLASS : "pr-3"');
+  });
+
+  it("keeps the conversation widest with both panels open, and holds one panel where both do not fit", () => {
+    // The sizing hook keeps 360px of the room for the conversation, and caps a panel at the rest.
+    const cap = (rowWidth: number, otherPanelsWidth: number, floor: number) =>
+      Math.max(floor, inlinePanelRoom({ rowWidth, otherPanelsWidth, siblingMinWidth: 360 }) - 360);
+    // One panel alone: the row less 360, as on custom.
+    expect(inlinePanelRoom({ rowWidth: 1184, otherPanelsWidth: 0, siblingMinWidth: 360 })).toBe(
+      1184,
+    );
+    // Both open, the conversation keeps 480: the right panel beside a 320px Threads panel.
+    expect(cap(1184, 320, 360)).toBe(384);
+    expect(1184 - 320 - cap(1184, 320, 360)).toBe(CONVERSATION_MIN_BESIDE_TWO_PANELS);
+    expect(cap(1440, 320, 360)).toBe(640);
+    // The Threads panel beside the right panel goes down to its own 280.
+    expect(cap(1184, 540, BOT_THREADS_PANEL_MIN_WIDTH)).toBe(BOT_THREADS_PANEL_MIN_WIDTH);
+    expect(stageFitsBothPanels(1120)).toBe(true);
+    expect(stageFitsBothPanels(1119)).toBe(false);
+  });
+
+  it("shows a bot's panel on the bot and on each of its threads, and nowhere else", () => {
+    const isBot = (id: string) => id === "mail";
+    const subagentOf = (parent: string) =>
+      makeThreadFixture({
+        id: "helper" as Thread["id"],
+        lineage: {
+          rootThreadId: ThreadId.make(parent),
+          parentThreadId: ThreadId.make(parent),
+          relationshipToParent: "subagent",
+        },
+      });
+    expect(botThreadsPanelBotId(bot("mail"), isBot)).toBe("mail");
+    expect(botThreadsPanelBotId(work("fix", "mail"), isBot)).toBe("mail");
+    expect(botThreadsPanelBotId(work("kept", "mail", { pinnedAt: AT }), isBot)).toBe("mail");
+    expect(botThreadsPanelBotId(subagentOf("mail"), isBot)).toBe("mail");
+    expect(botThreadsPanelBotId(subagentOf("plain"), isBot)).toBeNull();
+    expect(botThreadsPanelBotId(work("orphan", "gone"), isBot)).toBeNull();
+    expect(
+      botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), isBot),
+    ).toBeNull();
   });
 });
