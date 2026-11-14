@@ -257,16 +257,19 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   const composerIconClassName =
     props.isComposerOwned &&
     (size === "xs" ? "hidden @max-[640px]/composer-surface:inline-flex" : "hidden");
-  // Inlet's open composer menu hangs from this button as a tab, so its label
-  // holds while the menu is open and catches up on close; the menu shows the
-  // live choice. Otherwise a new effort resizes the button and the tab with it.
+  // Inlet's open composer menu hangs from this button as a tab, so a new effort
+  // holds its label until close rather than resize the button and the tab with
+  // it. A new model is a deliberate pick, so it re-takes the label at once.
   const liveLabel = {
     model: props.triggerLabel ?? multipleLabel ?? triggerTitle,
     traits: props.traits?.label,
   };
   const [heldLabel, setHeldLabel] = useState<typeof liveLabel | null>(null);
   const holdsLabel = useIsInletActive() && props.isComposerOwned === true && isMenuOpen;
-  if (holdsLabel !== (heldLabel !== null)) setHeldLabel(holdsLabel ? liveLabel : null);
+  const heldIsCurrent = heldLabel !== null && heldLabel.model === liveLabel.model;
+  if (holdsLabel ? !heldIsCurrent : heldLabel !== null) {
+    setHeldLabel(holdsLabel ? liveLabel : null);
+  }
   const shownLabel = heldLabel ?? liveLabel;
 
   return (
