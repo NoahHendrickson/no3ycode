@@ -17,7 +17,10 @@ import {
   threadWithHistory,
   type FakeDriver,
 } from "../../test/fakeEnvironment";
-import { act, render } from "../../test/render";
+/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+import { act, fakeTimers, render } from "../../test/render";
+import { THREAD_JUMP_HINT_SHOW_DELAY_MS } from "./Sidebar.logic";
+/* fork:end sidebar-v2-card-rows */
 
 // The socket is the only fake layer; see test/appScenarios.renders.tsx.
 vi.mock("../../../../packages/client-runtime/src/connection/driver.ts", async (importOriginal) => {
@@ -73,13 +76,15 @@ it("leaves thread shortcuts and their hints to the preview when their rules excl
   const press = () => userEvent.keyboard("{Control>}{Shift>}]{/Shift}{/Control}");
   const jumpHint = () => document.querySelector("[data-jump-hint]");
   const whileHoldingControl = async (assertJumpHints: () => void) => {
-    // Every deadline reads as due on subscribe, so hints skip the hold delay.
-    let now = Date.parse("2026-01-01T00:00:00.000Z");
-    using _clock = vi.spyOn(Date, "now").mockImplementation(() => (now += 1000));
+    /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+       Hold for the delay on fake timers. A Date.now that makes every deadline due on
+       subscribe never notifies once the previous combination has held 200ms of real time. */
+    using _timers = fakeTimers();
     await userEvent.keyboard("{Control>}");
-    await act(() => {});
+    await act(() => vi.advanceTimersByTime(THREAD_JUMP_HINT_SHOW_DELAY_MS));
     await vi.waitFor(assertJumpHints);
     await userEvent.keyboard("{/Control}");
+    /* fork:end sidebar-v2-card-rows */
   };
   const firstPath = `/${ENVIRONMENT_ID}/${first.id}`;
 

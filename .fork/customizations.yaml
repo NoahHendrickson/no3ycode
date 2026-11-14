@@ -839,6 +839,9 @@
     - apps/web/src/components/Sidebar.browser.test.tsx
     # Upstream's Sidebar.drag.browser.test.tsx is deleted, not ported: it drags a search
     # result out of the boring sidebar's folders, and the fork renders neither.
+    # The card's JumpHintBadge carries the test's [data-jump-hint]; the test holds for
+    # the hint delay on fake timers instead of a Date.now that reads every deadline as due.
+    - apps/web/src/components/Sidebar.shortcuts.browser.test.tsx
     # The fork customizes upstream's canonical Sidebar V2 implementation in place.
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/index.css
