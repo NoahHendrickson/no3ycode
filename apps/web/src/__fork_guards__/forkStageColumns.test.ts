@@ -37,7 +37,7 @@ describe("fork guard: fork-stage-columns", () => {
       /const panelLayoutControls = rightPanelMaximized \? null : stageControlCluster;/u,
     );
     expect(chatView).toMatch(
-      /layoutControls=\{[\s\S]*?\{rightPanelMaximized \? stageControlCluster : null\}\s*<RightPanelMaximizeControl/u,
+      /layoutControls=\{[\s\S]*?\{forkControlsInRightPanel \? stageControlCluster : null\}\s*<RightPanelMaximizeControl/u,
     );
   });
 

@@ -6,7 +6,7 @@ import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useQuietThreadShell } from "~/state/entities";
 
 import { botThreadsPanelBotId } from "./botWork";
-import { isBotThread, isListedBot } from "./botThreads";
+import { isBotThread } from "./botThreads";
 import { useBotThreadsPanelStore } from "./botThreadsPanelStore";
 import { threadParentOf } from "./botWorkRoster";
 
@@ -19,10 +19,7 @@ export function useBotThreadsPanelBot(ref: ScopedThreadRef | null): ScopedThread
     ref === null || parentId === null ? null : scopeThreadRef(ref.environmentId, parentId.threadId),
   );
   if (ref === null || shell === null) return null;
-  const botId = botThreadsPanelBotId(
-    shell,
-    (threadId) => parent !== null && parent.id === threadId && isListedBot(parent),
-  );
+  const botId = botThreadsPanelBotId(shell, parent);
   if (botId === null) return null;
   return botId === shell.id ? ref : scopeThreadRef(ref.environmentId, botId);
 }

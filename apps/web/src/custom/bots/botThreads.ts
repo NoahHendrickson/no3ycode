@@ -66,7 +66,7 @@ export function listSidebarBots<
   },
 >(threads: ReadonlyArray<T>): T[] {
   return threads
-    .filter((thread) => thread.archivedAt === null && isBotThread(thread.source))
+    .filter(isListedBot)
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 

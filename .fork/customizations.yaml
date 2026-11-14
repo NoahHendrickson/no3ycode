@@ -6974,8 +6974,8 @@
     end on the quiet reply "Nothing to report." (orchestration-v2/forkBotReport,
     a tag-gated subquery in the shell rows that walks the messages' indexed
     (thread_id, created_at) order from the newest, at most its newest 1000
-    replies, so quiet wakes never grow it; progress replies before a run's
-    final one never count). The shell built from a full projection
+    assistant replies (progress replies included), so quiet wakes never grow
+    it; progress replies before a run's final one never count as the report). The shell built from a full projection
     keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
     than its last visit, server clock on both sides and the same on every
     device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
@@ -7251,6 +7251,7 @@
   files:
     - apps/web/src/custom/stageColumns/StageHeaderControls.tsx
     - apps/web/src/custom/stageColumns/StagePanelCloseButton.tsx
+    - apps/web/src/custom/stageColumns/restoreMaximizedRightPanel.ts
   shadows: []
   watch:
     - apps/web/src/components/ChatView.tsx

@@ -17,18 +17,19 @@ import {
   sidebarV2StatusBucketForKind,
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
-import { isBotThread } from "./botThreads";
+import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
 /** Whose Threads panel a thread shows: a bot its own, a bot's work (a launched thread, or a
     subagent) its bot's, and nothing for any other thread. */
 export function botThreadsPanelBotId(
   thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
-  isBot: (threadId: string) => boolean,
+  parent: Pick<EnvironmentThreadShell, "id" | "source" | "archivedAt"> | null,
 ) {
   if (isBotThread(thread.source)) return thread.id;
-  const owner = threadParentOf(thread)?.threadId ?? null;
-  return owner !== null && isBot(owner) ? owner : null;
+  return parent !== null && parent.id === threadParentOf(thread)?.threadId && isListedBot(parent)
+    ? parent.id
+    : null;
 }
 
 /** The part of a bot's hidden work that needs its owner, the most pressing kind first. */

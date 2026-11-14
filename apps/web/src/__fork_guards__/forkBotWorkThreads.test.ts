@@ -322,7 +322,7 @@ describe("fork guard: fork-bot-work-threads", () => {
   });
 
   it("shows a bot's panel on the bot and on each of its threads, and nowhere else", () => {
-    const isBot = (id: string) => id === "mail";
+    const mail = bot("mail");
     const subagentOf = (parent: string) =>
       makeThreadFixture({
         id: "helper" as Thread["id"],
@@ -332,14 +332,18 @@ describe("fork guard: fork-bot-work-threads", () => {
           relationshipToParent: "subagent",
         },
       });
-    expect(botThreadsPanelBotId(bot("mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(work("fix", "mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(work("kept", "mail", { pinnedAt: AT }), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(subagentOf("mail"), isBot)).toBe("mail");
-    expect(botThreadsPanelBotId(subagentOf("plain"), isBot)).toBeNull();
-    expect(botThreadsPanelBotId(work("orphan", "gone"), isBot)).toBeNull();
+    expect(botThreadsPanelBotId(mail, null)).toBe("mail");
+    expect(botThreadsPanelBotId(work("fix", "mail"), mail)).toBe("mail");
+    expect(botThreadsPanelBotId(work("kept", "mail", { pinnedAt: AT }), mail)).toBe("mail");
+    expect(botThreadsPanelBotId(subagentOf("mail"), mail)).toBe("mail");
     expect(
-      botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), isBot),
+      botThreadsPanelBotId(subagentOf("plain"), makeThreadFixture({ id: "plain" as Thread["id"] })),
+    ).toBeNull();
+    expect(botThreadsPanelBotId(work("orphan", "gone"), null)).toBeNull();
+    // An archived bot's threads are ordinary threads again.
+    expect(botThreadsPanelBotId(work("fix", "mail"), bot("mail", { archivedAt: AT }))).toBeNull();
+    expect(
+      botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), null),
     ).toBeNull();
   });
 
@@ -361,6 +365,13 @@ describe("fork guard: fork-bot-work-threads", () => {
     toggle();
     expect(botOpen()).toBe(true);
     expect(rightPanel()?.maximized).toBeUndefined();
+    toggle();
+    expect(botOpen()).toBe(false);
+    // A closed right panel can keep a stale `maximized`: it holds nothing, so the toggle acts.
+    toggle();
+    useRightPanelStore.getState().setMaximized(threadRef, true);
+    useRightPanelStore.getState().close(threadRef);
+    expect(rightPanel()?.maximized).toBe(true);
     toggle();
     expect(botOpen()).toBe(false);
   });

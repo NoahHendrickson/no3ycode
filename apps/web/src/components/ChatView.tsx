@@ -3621,6 +3621,7 @@ export default function ChatView(props: ChatViewProps) {
     </StageHeaderControls>
   );
   const panelLayoutControls = rightPanelMaximized ? null : stageControlCluster;
+  const forkControlsInRightPanel = rightPanelMaximized && !forkProjectlessDraft;
   /* fork:end fork-stage-columns */
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
@@ -4370,7 +4371,9 @@ export default function ChatView(props: ChatViewProps) {
                     /* fork:end fork-popup-surface */
                     anchor={
                       /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns */
-                      rightPanelMaximized ? forkMaximizedHeaderRef : threadPanelPopoverAnchorRef
+                      forkControlsInRightPanel
+                        ? forkMaximizedHeaderRef
+                        : threadPanelPopoverAnchorRef
                       /* fork:end fork-stage-columns */
                     }
                     handle={threadPanelPopoverHandle}
@@ -4518,7 +4521,7 @@ export default function ChatView(props: ChatViewProps) {
                     node?.closest<HTMLElement>("[data-right-panel-tabbar]") ?? null;
                 }}
               >
-                {rightPanelMaximized ? stageControlCluster : null}
+                {forkControlsInRightPanel ? stageControlCluster : null}
                 <RightPanelMaximizeControl
                   maximized={rightPanelMaximized}
                   onToggle={toggleRightPanelMaximizedStable}

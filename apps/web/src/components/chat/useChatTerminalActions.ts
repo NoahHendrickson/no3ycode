@@ -30,6 +30,9 @@ import {
 } from "../../rightPanelStore";
 import { openUrlInPreview } from "../../browser/openFileInPreview";
 import { isPreviewAvailableFor } from "../../browser/previewRuntime";
+/* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns */
+import { restoreMaximizedRightPanel } from "../../custom/stageColumns/restoreMaximizedRightPanel";
+/* fork:end fork-stage-columns */
 import { resolveDiscoveredServerUrl } from "../../browser/browserTargetResolver";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import { confirmTerminalClose } from "../../lib/terminalCloseConfirm";
@@ -142,14 +145,6 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
   const setTerminalOpenStable = useStableCallback(setTerminalOpen);
   const toggleTerminalVisibility = () => {
     if (!activeThreadRef) return;
-    /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
-       A maximized right panel covers the drawer: restore it, and an open drawer simply shows. */
-    const rightPanel = useRightPanelStore.getState();
-    if (selectThreadRightPanelState(rightPanel.byThreadKey, activeThreadRef).maximized === true) {
-      rightPanel.setMaximized(activeThreadRef, false);
-      if (terminalUiState.terminalOpen) return;
-    }
-    /* fork:end fork-stage-columns */
     const nextOpen = !terminalUiState.terminalOpen;
     if (
       nextOpen &&
@@ -157,6 +152,13 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
       !hasTerminalWriteAccess()
     )
       return;
+    /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+       A maximized right panel covers the drawer: restoring it shows a drawer already open. */
+    if (restoreMaximizedRightPanel(activeThreadRef) && !nextOpen) {
+      focusActiveDrawerTerminal(activeThreadRef);
+      return;
+    }
+    /* fork:end fork-stage-columns */
     if (nextOpen && hasTerminalWriteAccess() && terminalUiState.terminalIds.length === 0) {
       // Server-created setup terminals exist before this client's drawer mounts.
       // Reuse them before allocating a shell from the still-empty UI state.

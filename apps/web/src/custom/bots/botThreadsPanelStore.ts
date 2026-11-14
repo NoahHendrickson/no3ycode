@@ -12,6 +12,8 @@ import { resolveStorage } from "~/lib/storage";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "~/rightPanelLayout";
 import { useRightPanelStore } from "~/rightPanelStore";
 
+import { restoreMaximizedRightPanel } from "../stageColumns/restoreMaximizedRightPanel";
+
 import type { BotWorkFilter, BotWorkGroupKey, BotWorkSort } from "./botWork";
 import { stageFitsBothPanels, stageRowOf } from "./stagePanels";
 
@@ -66,16 +68,16 @@ export function toggleBotThreadsPanel(input: {
   const botKey = scopedThreadKey(input.botRef);
   const fitsBoth = stageHoldsBothPanels(input.trigger);
   const rightPanel = useRightPanelStore.getState();
-  const rightPanelState = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)];
-  const rightPanelOpen = rightPanelState?.isOpen === true;
-  // A maximized right panel holds this one shut: restore it so the panel shows.
-  const maximized = rightPanelState?.maximized === true;
-  if (maximized) rightPanel.setMaximized(input.threadRef, false);
-  // Set open but held or displaced by the right panel (the window narrowed with both open):
-  // show it.
-  if (useBotThreadsPanelStore.getState().openByBotKey[botKey] === true) {
-    if (!fitsBoth && rightPanelOpen) rightPanel.close(input.threadRef);
-    else if (!maximized) setOpen(botKey, false);
+  const rightPanelOpen = rightPanel.byThreadKey[scopedThreadKey(input.threadRef)]?.isOpen === true;
+  // Set open, it can still be hidden: held by a maximized right panel, or displaced by one where
+  // both do not fit. A visible panel closes; a hidden one shows, making room.
+  const held = restoreMaximizedRightPanel(input.threadRef);
+  const visible =
+    useBotThreadsPanelStore.getState().openByBotKey[botKey] === true &&
+    !held &&
+    (fitsBoth || !rightPanelOpen);
+  if (visible) {
+    setOpen(botKey, false);
     return;
   }
   setOpen(botKey, true);
