@@ -7150,6 +7150,7 @@
     - apps/web/src/custom/bots/BotThreadsPanelToggle.tsx
     - apps/web/src/custom/bots/useBotWorkOwner.ts
     - apps/web/src/custom/bots/stagePanels.ts
+    - apps/web/src/custom/bots/stagePanelResizeHandles.browser.test.tsx
   shadows: []
   watch:
     - apps/server/src/orchestration-v2/ThreadLaunchService.ts
@@ -7163,10 +7164,13 @@
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/hooks/usePreviewPanelInlineSize.ts
+    # A stable drag start: the Threads panel's drag moves the right panel's cap every frame.
+    - apps/web/src/hooks/useResizeDrag.ts
     - apps/web/src/custom/icons/lucide-phosphor.tsx
     - docs/user/thread-sidebar.md
   verify:
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+    - apps/web/src/custom/bots/stagePanelResizeHandles.browser.test.tsx
     - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
 - id: fork-stage-columns
   intent: >

@@ -1,5 +1,9 @@
 import { type PointerEvent, useState } from "react";
 
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { useStableCallback } from "./useStableCallback";
+/* fork:end fork-bot-work-threads */
+
 export interface ResizeBounds {
   readonly min: number;
   readonly max: number;
@@ -137,5 +141,10 @@ export function useResizeDrag<T extends HTMLElement>(
   // Created once: `ref` must keep its identity, or a re-render mid-drag would run its cleanup.
   const [drag] = useState(createResizeDrag<T>);
   const { begin, ...rest } = drag;
-  return { ...rest, onPointerDown: (event: PointerEvent<T>) => begin(event, start) };
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     A stable start, so new bounds alone (the other inline panel resizing) keep the handlers and
+     leave the panel's content unrendered. `start` still runs at pointer-down with the latest. */
+  const startDrag = useStableCallback(start);
+  return { ...rest, onPointerDown: (event: PointerEvent<T>) => begin(event, startDrag) };
+  /* fork:end fork-bot-work-threads */
 }
