@@ -120,6 +120,7 @@ import {
 import {
   FORK_BOT_QUIET_REPLIES,
   FORK_BOT_REPORT_CHARS,
+  FORK_BOT_REPORT_LOOKBACK,
   FORK_BOT_SETTLED_RUN_STATUSES,
   FORK_BOT_THREAD_TAG,
   forkBotReportFromRow,
@@ -7797,7 +7798,8 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
               -- fork:begin fork-bots
               -- A cheap text check first, so a thread that is not a bot never parses its tags.
               -- The report walks the indexed (thread_id, created_at) order from the newest
-              -- message and stops at the first settled, non-quiet final reply.
+              -- message and stops at the first settled, non-quiet final reply, looking back
+              -- at most FORK_BOT_REPORT_LOOKBACK replies so quiet wakes cannot grow the walk.
               CASE WHEN instr(t.payload_json, ${`"${FORK_BOT_THREAD_TAG}"`}) > 0 AND EXISTS (
                 SELECT 1 FROM json_each(t.payload_json, '$.tags') tag
                 WHERE tag.value = ${FORK_BOT_THREAD_TAG}
@@ -7807,13 +7809,19 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                   'text', substr(json_extract(message.payload_json, '$.text'), 1, ${FORK_BOT_REPORT_CHARS}),
                   'updatedAt', message.updated_at
                 )
-                FROM orchestration_v2_projection_messages message
+                FROM (
+                  SELECT recent.message_id, recent.thread_id, recent.run_id, recent.created_at,
+                    recent.updated_at, recent.payload_json
+                  FROM orchestration_v2_projection_messages recent
+                  WHERE recent.thread_id = t.thread_id
+                    AND recent.role = 'assistant'
+                    AND recent.streaming = 0
+                  ORDER BY recent.created_at DESC, recent.message_id DESC
+                  LIMIT ${FORK_BOT_REPORT_LOOKBACK}
+                ) message
                 JOIN orchestration_v2_projection_runs report_run
                   ON report_run.run_id = message.run_id
-                WHERE message.thread_id = t.thread_id
-                  AND message.role = 'assistant'
-                  AND message.streaming = 0
-                  AND report_run.status IN ${sql.in([...FORK_BOT_SETTLED_RUN_STATUSES])}
+                WHERE report_run.status IN ${sql.in([...FORK_BOT_SETTLED_RUN_STATUSES])}
                   AND NOT EXISTS (
                     SELECT 1 FROM orchestration_v2_projection_messages later
                     WHERE later.thread_id = message.thread_id

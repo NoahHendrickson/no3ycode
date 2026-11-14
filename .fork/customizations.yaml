@@ -7021,8 +7021,9 @@
     280 characters of the final reply of its latest settled run that did not
     end on the quiet reply "Nothing to report." (orchestration-v2/forkBotReport,
     a tag-gated subquery in the shell rows that walks the messages' indexed
-    (thread_id, created_at) order from the newest; progress replies before a
-    run's final one never count). The shell built from a full projection
+    (thread_id, created_at) order from the newest, at most its newest 1000
+    assistant replies (progress replies included), so quiet wakes never grow
+    it; progress replies before a run's final one never count as the report). The shell built from a full projection
     keeps upstream's null: its only reader checks usage limits. So a bot is unread while that report is newer
     than its last visit, server clock on both sides and the same on every
     device (custom/bots/botThreads hasUnreadBotReport), and a finished wake
@@ -7182,7 +7183,7 @@
     archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
     routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
     its header names the bot where a subagent names its parent, one click back (ChatView
-    headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
+    headerParentThreadLink, via botWorkRoster's threadParentOf). Notifications are
     unchanged.
 
     A bot's card says when its unpinned work needs the owner (custom/bots/botWork
@@ -7193,7 +7194,8 @@
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
     bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary
-    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId): its own column in the stage
+    threads again; their header still names the bot) (useBotThreadsPanelBot, botThreadsPanelBotId,
+    which share threadParentOf with the header's back link): its own column in the stage
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
     close motion), 320px by default and at least 280, with a header the height of the others
@@ -7275,8 +7277,7 @@
     A thread's stage reads as the owner's frame (Figma t3-fork 698:7880): the conversation, a
     bot's Threads panel and the right panel are columns side by side, each with its own header
     row. The panel controls (pane actions, details, threads, music, terminal, right panel) are
-    one cluster at the right end of the conversation's header, in its flow, in every state and
-    every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
+    one cluster at the right end of the conversation's header, in its flow, in every palette (custom/stageColumns/StageHeaderControls): never pinned to the window's corner,
     never split between that header and a panel's, and nothing else is drawn over them. A
     toggle shows pressed while its panel is open. What acts on one panel's content stays in that
     panel's header: the right panel's tabs and new-tab button, then its maximize toggle and a
@@ -7292,19 +7293,22 @@
     conversation's while no panel is open, else the Threads panel's or the right panel's); every
     header is a drag region with its controls marked no-drag, and since the cluster now sits in
     the conversation header's own flow, no later drag region overlaps it. With the right panel
-    maximized the conversation and its header are hidden; the panel's own header keeps the
-    restore and close buttons. Under Inlet the stage is one card (fork-inlet-theme); Glass and
+    maximized the conversation and its header are hidden, so the cluster moves into the panel's
+    header, before its restore and close buttons, and the terminal and Threads toggles (button or
+    keybinding) restore the panel first so what they open shows. Under Inlet the stage is one card (fork-inlet-theme); Glass and
     the stock theme keep their surfaces.
   tier: 3
   files:
     - apps/web/src/custom/stageColumns/StageHeaderControls.tsx
     - apps/web/src/custom/stageColumns/StagePanelCloseButton.tsx
+    - apps/web/src/custom/stageColumns/restoreMaximizedRightPanel.ts
   shadows: []
   watch:
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ChatHeader.tsx
     - apps/web/src/components/chat/ChatRightPanel.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/components/chat/useChatTerminalActions.ts
     - apps/web/src/theme.custom.inlet.css
     - apps/web/src/theme.custom.css
     - knip.jsonc
@@ -7329,8 +7333,8 @@
     parent crumbs stay hidden. A thread with a parent has a back button just left of the title
     (custom/stageColumns/StageHeaderBackButton, the cluster's ghost size, "Back to <parent>"),
     which opens the parent in one click. The parent is a subagent's spawning thread (upstream's
-    link), else the bot a bot's work belongs to (stageHeaderParent, the one source of ChatView's
-    headerParentThreadLink). On stock and Glass the breadcrumb's parent crumb does the same in
+    link), else the bot a bot's work belongs to (custom/bots/botWorkRoster threadParentOf, the
+    one source of ChatView's headerParentThreadLink and of whose Threads panel a thread shows). On stock and Glass the breadcrumb's parent crumb does the same in
     one click, so they get no back button.
   tier: 3
   files:
