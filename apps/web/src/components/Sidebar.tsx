@@ -2148,7 +2148,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
                        A working bot's mascot is already thinking, so the mark
                        is the monitoring breath, not the rain. */
-            workingMark={cardKind !== "bot" && cardKind !== "bot-compact"}
+            quietWorking={cardKind === "bot" || cardKind === "bot-compact"}
             /* fork:end fork-bots */
           />
         </span>

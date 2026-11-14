@@ -55,6 +55,7 @@ function readSibling(relativePath: string): string {
 }
 
 const sidebar = readSibling("../components/Sidebar.tsx");
+const indicator = readSibling("../custom/SidebarV2StatusIndicator.tsx");
 const notifications = readSibling("../components/ThreadNotificationCoordinator.tsx");
 const cardStatus = readSibling("../custom/sidebarV2CardStatus.ts");
 const chatView = readSibling("../components/ChatView.tsx");
@@ -230,7 +231,11 @@ describe("fork guard: fork-bots", () => {
     expect(sidebar).toContain("<SidebarV2BotCardBody");
     // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
     expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
-    expect(sidebar).toContain('workingMark={cardKind !== "bot" && cardKind !== "bot-compact"}');
+    expect(sidebar).toContain('quietWorking={cardKind === "bot" || cardKind === "bot-compact"}');
+    // A working bot card breathes the monitoring dot; an empty status slot was the bug.
+    expect(indicator).toMatch(
+      /status\.mark === "monitoring" \|\|\s+\(status\.mark === "working" && props\.quietWorking === true\) \? \(\s+<SidebarV2MonitoringMark \/>/,
+    );
     expect(sidebar).toContain("<BotMascotLead");
   });
 
