@@ -1090,7 +1090,11 @@ export function resolveWindowsServerAsarIgnoreGlobs(arch: typeof BuildArch.Type)
   ];
 }
 
-export const WINDOWS_PACKAGED_PAYLOAD_FILE_LIMIT = 80;
+// fork:begin fork-desktop-release — see .fork/customizations.yaml#fork-desktop-release
+// Upstream's 80 leaves the fork no room once the server compile cache covers the server's own
+// chunks (87 files at v0.1.87); a runaway count still trips this.
+export const WINDOWS_PACKAGED_PAYLOAD_FILE_LIMIT = 96;
+// fork:end fork-desktop-release
 export const WINDOWS_SERVER_RESOURCE_SOURCE_DIR = "apps/desktop/prod-resources/windows-server";
 export const WINDOWS_SERVER_EXTRA_RESOURCES = [
   {
