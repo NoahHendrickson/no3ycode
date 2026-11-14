@@ -3149,6 +3149,16 @@ describe("OrchestratorMcpService provider resolution", () => {
         assert.include(String(created.exit), "under Automations");
         assert.deepEqual(created.saved, []);
 
+        const unbound = yield* run(["bot"], (mcp) =>
+          mcp.scheduleTask(scope, {
+            prompt: "Check mail",
+            schedule: everyFiveMinutes,
+            bindToCurrentThread: false,
+          }),
+        );
+        assert.include(String(unbound.exit), "at most every 15 minutes");
+        assert.deepEqual(unbound.saved, []);
+
         const updated = yield* run(["bot"], (mcp, bound) =>
           mcp.updateScheduledTask(scope, { scheduledTaskId: bound.id, schedule: everyFiveMinutes }),
         );

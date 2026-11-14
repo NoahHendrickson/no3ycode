@@ -2008,15 +2008,16 @@ const make = Effect.gen(function* () {
       }
       /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
          A bot's own wakes start clean, on Sonnet, at most every 15 minutes, so a forgotten
-         flag or a chat on a pricier model cannot carry into every wake. */
-      const forkBotWake =
-        bindToCurrentThread && parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
-      const forkBotRefusal = forkBotWake ? forkBotWakeScheduleRefusal(input.schedule) : null;
+         flag or a chat on a pricier model cannot carry into every wake. The interval and the
+         model hold for an unbound task too, or unbinding would be the way round a refusal. */
+      const forkBotCaller = parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
+      const forkBotWake = bindToCurrentThread && forkBotCaller;
+      const forkBotRefusal = forkBotCaller ? forkBotWakeScheduleRefusal(input.schedule) : null;
       if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
       /* fork:end fork-bots */
       const modelSelection =
         /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-        forkBotWake && parent !== undefined
+        forkBotCaller && parent !== undefined
           ? forkBotWakeModelSelection(parent.thread.modelSelection, yield* loadProviders)
           : /* fork:end fork-bots */
             (parent?.thread.modelSelection ?? (yield* projectDefaultModelSelection(project)));
@@ -2119,9 +2120,7 @@ const make = Effect.gen(function* () {
         /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
         const forkBotRefusal =
           input.schedule !== undefined &&
-          threadId !== null &&
-          threadId === parent?.thread.id &&
-          parent.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+          parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
             ? forkBotWakeScheduleRefusal(input.schedule)
             : null;
         if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);

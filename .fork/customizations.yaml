@@ -6998,8 +6998,9 @@
     the same Sonnet, without options (OrchestratorMcpService.scheduleTask, mcp/
     forkBotWakes), so a forgotten flag cannot resume its long session every
     wake and a chat on a pricier model does not carry into every wake; and
-    schedule_task refuses a bot an interval under 15 minutes for a task bound
-    to its own thread, on create and on a schedule change. The owner changes
+    schedule_task refuses a bot an interval under 15 minutes, on create and on
+    a schedule change. The interval and the Sonnet default hold for a task the
+    bot leaves unbound too, or unbinding would be the way round. The owner changes
     either for a task under Automations, which never goes through
     schedule_task. The seeded CLAUDE.md asks for the slowest schedule and says
     the scheduler refuses one under 15 minutes, webhook coalescing
