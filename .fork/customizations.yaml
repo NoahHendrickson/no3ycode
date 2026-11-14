@@ -161,6 +161,13 @@
     property carried one until the orchestrator-V2 sync (2026-10-05) deleted
     the file. No guard asserts these hunks; losing one turns CI red by
     itself, which is the enforcement.
+
+    The required Release Smoke check installs without the lockfile, so a
+    dependency reached only through a range moves the day a new release ships.
+    pnpm-workspace.yaml overrides pins unenv to 2.0.0-rc.24 (2026-11-14):
+    @cloudflare/unenv-preset peers on exactly that release, and rc.25 broke the
+    install on every open pull request. Drop the pin when upstream pins or
+    moves it.
   tier: 4
   files: []
   shadows: []
@@ -168,6 +175,7 @@
     - .github/workflows/ci.yml
     - .github/workflows/mobile-fingerprint-check.yml
     - apps/web/src/lib/imageCompression.test.ts
+    - pnpm-workspace.yaml
   verify:
     - apps/web/src/__fork_guards__/ciRunners.test.ts
 

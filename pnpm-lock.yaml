@@ -297,6 +297,7 @@ overrides:
   app-builder-lib: 26.16.1
   electron-updater: 6.8.9
   expo-modules-core: 58.0.30
+  unenv: 2.0.0-rc.24
   '@exodus/bytes>@noble/hashes': 1.8.0
   '@react-navigation/core': 7.24.0
   dbus-next>usocket: '-'
