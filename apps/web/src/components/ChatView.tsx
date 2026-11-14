@@ -805,6 +805,11 @@ export default function ChatView(props: ChatViewProps) {
   const isCoarsePointer = useMediaQuery({ pointer: "coarse" });
   const [workspaceLayoutElement, setWorkspaceLayoutElement] = useState<HTMLDivElement | null>(null);
   const threadPanelPopoverAnchorRef = useRef<HTMLElement | null>(null);
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     A maximized right panel's tab bar, for the details popover: the conversation's header is
+     collapsed then, and the popover takes its width from its anchor. */
+  const forkMaximizedHeaderRef = useRef<HTMLElement | null>(null);
+  /* fork:end fork-stage-columns */
   const [terminalUiLaunchContext, setTerminalUiLaunchContext] =
     useState<TerminalLaunchContext | null>(null);
   // Overrides chosen before a server thread's first turn; they belong to that thread only.
@@ -4363,7 +4368,11 @@ export default function ChatView(props: ChatViewProps) {
                     /* fork:begin fork-popup-surface — see .fork/customizations.yaml#fork-popup-surface */
                     forkGlassPopup={!isDraftHeroState}
                     /* fork:end fork-popup-surface */
-                    anchor={threadPanelPopoverAnchorRef}
+                    anchor={
+                      /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns */
+                      rightPanelMaximized ? forkMaximizedHeaderRef : threadPanelPopoverAnchorRef
+                      /* fork:end fork-stage-columns */
+                    }
                     handle={threadPanelPopoverHandle}
                     forceNewWorktree={multipleModelSelections !== null}
                     environmentId={activeThread.environmentId}
@@ -4502,7 +4511,13 @@ export default function ChatView(props: ChatViewProps) {
               /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
                  The panel's own controls, beside its close button: the toggles stay in the
                  conversation's header. In flow, so the header's drag region needs no-drag here. */
-              <div className="mr-px flex items-center gap-1 [-webkit-app-region:no-drag]">
+              <div
+                className="mr-px flex items-center gap-1 [-webkit-app-region:no-drag]"
+                ref={(node) => {
+                  forkMaximizedHeaderRef.current =
+                    node?.closest<HTMLElement>("[data-right-panel-tabbar]") ?? null;
+                }}
+              >
                 {rightPanelMaximized ? stageControlCluster : null}
                 <RightPanelMaximizeControl
                   maximized={rightPanelMaximized}
