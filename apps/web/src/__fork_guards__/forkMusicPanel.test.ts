@@ -22,8 +22,7 @@ import {
   showMusicTab,
   subscribeMusic,
 } from "../custom/music/musicStore";
-import { withoutRetiredMusicTabs } from "../custom/music/musicStripMode";
-import type { ThreadRightPanelState } from "../rightPanelStore";
+import { migratePersistedRightPanelState } from "../rightPanelStore";
 
 function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -33,6 +32,7 @@ const desktopMethod = readSibling("../../../desktop/src/fork/ForkMusic.ts");
 const desktopHandlers = readSibling("../../../desktop/src/ipc/DesktopIpcHandlers.ts");
 const desktopPreload = readSibling("../../../desktop/src/preload.ts");
 const rightPanelStore = readSibling("../rightPanelStore.ts");
+const closedViewStore = readSibling("../closedViewStore.ts");
 const sidebarChrome = readSibling("../components/sidebar/SidebarChrome.tsx");
 const button = readSibling("../custom/music/SidebarMusicButton.tsx");
 const customizations = readSibling("../../../../.fork/customizations.yaml");
@@ -107,32 +107,38 @@ describe("fork guard: fork-music-panel", () => {
       sidebarChrome.indexOf("<SidebarMusicButton />"),
     );
     expect(button).toContain("if (readMusicBridge() === null) return null;");
-    // No longer a right panel tab.
-    expect(rightPanelStore).not.toContain('"music"');
   });
 
-  it("drops the Music tabs threads kept from when it was a right panel tab", () => {
-    const panel = (surfaces: ReadonlyArray<string>, active: string, isOpen = true) =>
-      ({
-        isOpen,
-        activeSurfaceId: active,
-        surfaces: surfaces.map((id) => ({ id, kind: id })),
-      }) as unknown as ThreadRightPanelState;
-    const kept = panel(["diff"], "diff");
-    expect(withoutRetiredMusicTabs({ a: kept })).toBeNull();
-    expect(
-      withoutRetiredMusicTabs({
-        showing: panel(["diff", "music"], "music"),
-        behind: panel(["music", "files"], "files"),
-        alone: panel(["music"], "music"),
-        kept,
-      }),
-    ).toEqual({
-      showing: panel(["diff"], "diff", false),
-      behind: panel(["files"], "files"),
-      alone: { isOpen: false, activeSurfaceId: null, surfaces: [] },
-      kept,
+  it("retires the Music tab through the stores' own migrations", () => {
+    // Versions bumped past upstream, so both stores migrate what was persisted with Music in it.
+    expect(rightPanelStore).toMatch(fenced("const RIGHT_PANEL_STORAGE_VERSION = 15;"));
+    expect(rightPanelStore).toMatch(fenced('if \\(kind === "music"\\) return \\[\\];'));
+    expect(closedViewStore).toMatch(fenced("version: 3,"));
+    // closedViewStore's migrate keeps only the kinds isClosedViewEntry knows, which no longer include it.
+    expect(closedViewStore).not.toContain('case "music"');
+    const { byThreadKey } = migratePersistedRightPanelState({
+      byThreadKey: {
+        showing: {
+          isOpen: true,
+          activeSurfaceId: "music",
+          surfaces: [
+            { id: "diff", kind: "diff" },
+            { id: "music", kind: "music" },
+          ],
+        },
+        alone: {
+          isOpen: true,
+          activeSurfaceId: "music",
+          surfaces: [{ id: "music", kind: "music" }],
+        },
+      },
     });
+    expect(byThreadKey.showing).toMatchObject({
+      isOpen: true,
+      activeSurfaceId: "diff",
+      surfaces: [{ id: "diff", kind: "diff" }],
+    });
+    expect(byThreadKey.alone).toMatchObject({ isOpen: false, activeSurfaceId: null, surfaces: [] });
   });
 
   it("offers nothing without the desktop bridge", () => {

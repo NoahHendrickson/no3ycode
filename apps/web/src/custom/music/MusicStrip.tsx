@@ -26,10 +26,12 @@ import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } fro
 import { Button } from "~/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { Toggle } from "~/components/ui/toggle";
+import { useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
 import { SegmentedTab, SegmentedTabs } from "../SegmentedTabs";
+import { useSidebarPeekState } from "../sidebarPeek";
 import {
   type MusicQueueEntry,
   type MusicRepeat,
@@ -43,6 +45,7 @@ import {
   getMusicSnapshot,
   type ListKind,
   type MusicListing,
+  type MusicSnapshot,
   type MusicTab,
   openMusic,
   openMusicRow,
@@ -347,7 +350,7 @@ function Transport(props: { state: ReadyState; volume: number; expanded: boolean
           >
             {expanded ? <Minimize2Icon /> : <Maximize2Icon />}
           </TooltipTrigger>
-          <TooltipPopup side="top">{expanded ? "Collapse" : "Playlists and queue"}</TooltipPopup>
+          <TooltipPopup side="top">{expanded ? "Collapse music" : "Expand music"}</TooltipPopup>
         </Tooltip>
       </div>
     </div>
@@ -558,20 +561,9 @@ const TABS: ReadonlyArray<{ readonly value: MusicTab; readonly label: string }> 
   { value: "upNext", label: "Up Next" },
 ];
 
-/**
- * The card is a step off the sidebar toward its ink, and restates every ink its controls read (the
- * contrast ones too, which text utilities use) from the sidebar's own pair, so palettes whose
- * sidebar is the opposite of their panel ink it to match.
- */
+/** Its colours live in theme.custom.css ([data-fork-music-strip]), beside its button's. */
 const CARD_CLASS = cn(
-  "[--fork-music-ink:var(--sidebar-foreground)]",
-  "[--fork-music-muted:color-mix(in_srgb,var(--fork-music-ink)_65%,var(--sidebar))]",
-  "[--fork-music-step:color-mix(in_srgb,var(--fork-music-ink)_14%,var(--sidebar))]",
-  "[--foreground:var(--fork-music-ink)] [--contrast-foreground:var(--fork-music-ink)] [--accent-foreground:var(--fork-music-ink)]",
-  "[--muted-foreground:var(--fork-music-muted)] [--contrast-muted-foreground:var(--fork-music-muted)]",
-  "[--accent:var(--fork-music-step)] [--muted:var(--fork-music-step)] [--border:var(--fork-music-step)] [--contrast-border:var(--fork-music-step)]",
-  "[--background:var(--sidebar)]",
-  "@container/strip flex min-w-0 flex-col overflow-hidden rounded-xl bg-(--fork-music-card) text-foreground shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
+  "@container/strip flex min-w-0 flex-col overflow-hidden rounded-xl text-foreground shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
   "transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0 motion-reduce:transition-none",
 );
 
@@ -579,40 +571,19 @@ const CARD_CLASS = cn(
 const TAB_CLASS =
   "min-w-0 flex-1 px-1 dark:data-pressed:bg-background dark:data-pressed:text-foreground";
 
-/** Mounted only while the strip shows, so ah ahh is followed only then. */
-function MusicStripCard({ expanded }: { expanded: boolean }) {
-  const snapshot = useSyncExternalStore(subscribeMusic, getMusicSnapshot);
-  const { state, sentVolume, upNext, tab, stacks, opening, openFailed } = snapshot;
-  if (state === null || state.status !== "ready") {
-    // ah ahh answers within a frame or two; a spinner would only flash.
-    if (state === null && !opening) return null;
-    return (
-      <div className={CARD_CLASS} data-fork-music-strip="">
-        <MusicUnavailable
-          openFailed={openFailed}
-          opening={opening}
-          status={state === null ? "closed" : state.status}
-        />
-      </div>
-    );
-  }
-  const volume = sentVolume ?? state.volume;
-  if (!expanded) {
-    return (
-      <div className={CARD_CLASS} data-fork-music-strip="">
-        <Transport expanded={false} state={state} volume={volume} />
-      </div>
-    );
-  }
+/** Expanded: what is playing, the library's lists, then the transport where the folded strip has it. */
+function Library(props: { snapshot: MusicSnapshot; state: ReadyState; volume: number }) {
+  const { snapshot, state, volume } = props;
+  const { upNext, tab, stacks } = snapshot;
   const stack = tab === "upNext" ? null : stacks[tab];
   const top = stack?.at(-1) ?? null;
   return (
-    <div className={CARD_CLASS} data-fork-music-strip="expanded">
+    <>
       <NowPlaying state={state} />
       <div className="flex shrink-0 border-t px-2 py-2">
         <SegmentedTabs
           aria-label="Music lists"
-          className="w-full"
+          className="w-full dark:bg-muted"
           onValueChange={(value) => {
             const next = TABS.find((entry) => entry.value === value[0]);
             if (next) showMusicTab(next.value);
@@ -628,18 +599,50 @@ function MusicStripCard({ expanded }: { expanded: boolean }) {
       </div>
       {stack !== null && top !== null && stack.length > 1 ? <SourceHeader opened={top} /> : null}
       {/* A fixed height, so switching lists never moves the strip's controls. */}
-      <div className="h-[min(20rem,40vh)] min-h-0 overflow-y-auto px-1 pb-1">
+      <div className="h-[min(20rem,30vh)] min-h-0 overflow-y-auto px-1 pb-1">
         {top === null ? <UpNext upNext={upNext} /> : <Listing listing={top} state={state} />}
       </div>
       <div className="border-t">
         <Transport expanded state={state} volume={volume} />
       </div>
+    </>
+  );
+}
+
+/** Mounted only while the strip shows, so ah ahh is followed only then. */
+function MusicStripCard({ expanded }: { expanded: boolean }) {
+  const snapshot = useSyncExternalStore(subscribeMusic, getMusicSnapshot);
+  const { state, sentVolume, opening, openFailed } = snapshot;
+  // ah ahh answers within a frame or two; a spinner would only flash.
+  if (state === null && !opening) return null;
+  const ready = state?.status === "ready" ? state : null;
+  const volume = sentVolume ?? ready?.volume ?? 0;
+  return (
+    <div
+      className={CARD_CLASS}
+      data-fork-music-strip={ready !== null && expanded ? "expanded" : ""}
+    >
+      {ready === null ? (
+        <MusicUnavailable
+          openFailed={openFailed}
+          opening={opening}
+          status={state === null || state.status === "ready" ? "closed" : state.status}
+        />
+      ) : expanded ? (
+        <Library snapshot={snapshot} state={ready} volume={volume} />
+      ) : (
+        <Transport expanded={false} state={ready} volume={volume} />
+      )}
     </div>
   );
 }
 
 export function SidebarMusicStrip() {
   const mode = useMusicStripMode();
-  if (mode === "closed" || readMusicBridge() === null) return null;
+  const { isMobile, state } = useSidebar();
+  const peek = useSidebarPeekState();
+  // A collapsed sidebar stays mounted, off screen; the strip goes so nothing follows ah ahh for it.
+  const hidden = !isMobile && state === "collapsed" && peek !== "open";
+  if (mode === "closed" || hidden || readMusicBridge() === null) return null;
   return <MusicStripCard expanded={mode === "expanded"} />;
 }

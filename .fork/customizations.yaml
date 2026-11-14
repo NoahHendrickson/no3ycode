@@ -6877,9 +6877,12 @@
     on release), shuffle and repeat (off, all, one), then Songs, Playlists,
     Artists and Up Next tabs over a list of fixed height, so the transport row
     stays put at the bottom. Folded or expanded and shown or hidden are
-    remembered on this device. Music used to be a right panel tab; threads
-    that still persist one have it dropped once at load (custom/music/musicStripMode),
-    a panel showing it closing.
+    remembered on this device. While the sidebar is collapsed (and not
+    peeking) the strip unmounts, so nothing follows ah ahh for a hidden card.
+    Music used to be a right panel tab: the right panel and closed-view stores
+    carry fenced version bumps past upstream so their own migrations drop the
+    persisted tab (a panel showing it moves to its next tab, as for upstream's
+    retired kinds) and closed Music tabs, which could no longer reopen.
     Playlists are a grid of covers (one Apple did
     not give art takes its first song's, read one row at a time, a few at
     once); an artist opens on a grid of its albums, an album on its songs.
@@ -6938,6 +6941,8 @@
     - apps/desktop/src/preload.ts
     - apps/desktop/src/ipc/DesktopIpcHandlers.ts
     - apps/web/src/components/sidebar/SidebarChrome.tsx
+    - apps/web/src/rightPanelStore.ts
+    - apps/web/src/closedViewStore.ts
   verify:
     - apps/web/src/__fork_guards__/forkMusicPanel.test.ts
     - apps/desktop/src/fork/ForkMusicClient.test.ts

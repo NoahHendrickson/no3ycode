@@ -81,7 +81,10 @@ export type RightPanelSurface =
   | { id: `side-chat:${string}`; kind: "side-chat"; threadId: ThreadId };
 
 const RIGHT_PANEL_STORAGE_KEY = "t3code:right-panel-state:v2";
-const RIGHT_PANEL_STORAGE_VERSION = 14;
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
+   Bumped past upstream so the migrator below drops the retired Music tab. */
+const RIGHT_PANEL_STORAGE_VERSION = 15;
+/* fork:end fork-music-panel */
 
 export const PULL_REQUESTS_PANEL_REF = scopeThreadRef(
   EnvironmentId.make("pull-requests-panel"),
@@ -503,6 +506,9 @@ export function migratePersistedRightPanelState(persistedState: unknown): {
                 ? validThreadState.surfaces.flatMap<RightPanelSurface>((surface) => {
                     const kind = (surface as { kind?: string }).kind;
                     if (kind === "plan" || kind === "agents") return [];
+                    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
+                    if (kind === "music") return [];
+                    /* fork:end fork-music-panel */
                     if (
                       (surface.kind === "file" || surface.kind === "files") &&
                       "folderTrail" in surface &&
