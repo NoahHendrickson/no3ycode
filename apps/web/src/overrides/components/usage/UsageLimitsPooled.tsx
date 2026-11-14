@@ -22,7 +22,7 @@ import {
   resetCreditChoices,
 } from "@t3tools/shared/usageLimits";
 import type { Popover as PopoverPrimitive } from "@base-ui/react/popover";
-import { AlertTriangleIcon, ExternalLinkIcon, TicketIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronRightIcon, ExternalLinkIcon, TicketIcon } from "lucide-react";
 import {
   createContext,
   Fragment,
@@ -44,6 +44,7 @@ import { RedactedSensitiveText } from "../settings/RedactedSensitiveText";
 import { Button } from "../ui/button";
 import { OpenAI } from "../Icons";
 import { Alert, AlertTitle } from "../ui/alert";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import { Popover, PopoverCreateHandle, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { ScheduledCard } from "~/custom/scheduled/scheduledPageChrome";
 import { UsageMeter } from "~/custom/UsageMeter";
@@ -453,10 +454,14 @@ function PoolWindowRow({
   );
 }
 
+/** The composer's limits menu opens these providers; every other one starts collapsed. */
+const COMPACT_EXPANDED_DRIVERS: ReadonlySet<string> = new Set(["codex", "claudeAgent"]);
+
 /**
  * One card per provider: the provider's mark and name, banked reset credits
  * across its accounts, then one compact row per window. Compact (the
- * composer's limits menu) drops the card for a divider between providers.
+ * composer's limits menu) drops the card for a divider between providers,
+ * and folds each provider to its header, Codex and Claude starting open.
  */
 function PoolSection({
   pool,
@@ -473,46 +478,78 @@ function PoolSection({
     (total, account) => total + (account.limits.resetCredits?.availableCount ?? 0),
     0,
   );
-  return (
-    <LimitsCard compact={compact} className={cn("flex flex-col", compact ? "gap-2" : "gap-3")}>
-      <h2
-        className={cn(
-          "flex items-center gap-2 font-medium text-foreground",
-          compact ? "text-xs" : "text-sm",
-        )}
-      >
-        <ProviderInstanceIcon
-          driverKind={pool.driver}
-          displayName={label}
-          indicatorBackground={compact ? "var(--popover)" : "var(--background)"}
-          className={compact ? "size-4" : "size-5"}
-          iconClassName={cn(compact ? "size-3.5" : "size-4", "text-foreground/80")}
-        />
-        {label}
+  const header = (
+    <>
+      <ProviderInstanceIcon
+        driverKind={pool.driver}
+        displayName={label}
+        indicatorBackground={compact ? "var(--popover)" : "var(--background)"}
+        className={compact ? "size-4" : "size-5"}
+        iconClassName={cn(compact ? "size-3.5" : "size-4", "text-foreground/80")}
+      />
+      {label}
+      <span className="ms-auto flex items-center gap-1 text-xs font-normal text-muted-foreground tabular-nums">
         {credits ? (
-          <span className="ms-auto inline-flex items-center gap-1 text-xs font-normal text-muted-foreground tabular-nums">
+          <span className="inline-flex items-center gap-1">
             <TicketIcon className="size-3.5" aria-hidden />
             {credits}
             <span className="sr-only">reset {credits === 1 ? "credit" : "credits"} banked</span>
           </span>
         ) : null}
-      </h2>
-      <div className={cn("flex flex-col", compact ? "gap-2" : "gap-3")}>
-        {windows.map((window) => {
-          const details =
-            pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
-          return (
-            <PoolWindowRow
-              key={`${window.kind}:${window.id}`}
-              pool={window}
-              now={now}
-              label={details?.label}
-              description={details?.description}
-              compact={compact}
+        {compact ? (
+          <>
+            {/* collectLimitAccounts drops accounts with no windows, so a pool always has one. */}
+            <span className="group-data-panel-open/provider:hidden">
+              {Math.min(...windows.map((window) => window.remainingPercent))}%
+              <span className="sr-only"> left</span>
+            </span>
+            <ChevronRightIcon
+              className="size-3.5 group-data-panel-open/provider:rotate-90"
+              aria-hidden
             />
-          );
-        })}
-      </div>
+          </>
+        ) : null}
+      </span>
+    </>
+  );
+  const rows = (
+    <div className={cn("flex flex-col", compact ? "gap-2" : "gap-3")}>
+      {windows.map((window) => {
+        const details =
+          pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
+        return (
+          <PoolWindowRow
+            key={`${window.kind}:${window.id}`}
+            pool={window}
+            now={now}
+            label={details?.label}
+            description={details?.description}
+            compact={compact}
+          />
+        );
+      })}
+    </div>
+  );
+  return compact ? (
+    <LimitsCard compact>
+      <Collapsible
+        className="flex flex-col"
+        defaultOpen={COMPACT_EXPANDED_DRIVERS.has(pool.driver)}
+      >
+        <h2>
+          <CollapsibleTrigger className="group/provider flex w-full items-center gap-2 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+            {header}
+          </CollapsibleTrigger>
+        </h2>
+        <CollapsiblePanel animate={false}>
+          <div className="pt-2">{rows}</div>
+        </CollapsiblePanel>
+      </Collapsible>
+    </LimitsCard>
+  ) : (
+    <LimitsCard compact={false} className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">{header}</h2>
+      {rows}
     </LimitsCard>
   );
 }
