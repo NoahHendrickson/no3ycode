@@ -3027,3 +3027,17 @@
   }
 }
 /* fork:end fork-music-panel */
+
+/* The composer's limits menu scrolls without a scrollbar: a classic one
+   paints the light theme's thumb down the dark shell and pushes the panels
+   off centre. Both layers can scroll, the list and the popover's viewport
+   around it, so both hide it. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-usage-limits-menu]
+  :is([data-slot="popover-viewport"], [data-fork-usage-scroller]) {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -47,6 +47,7 @@ export const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReado
         width="sm"
         padding="none"
         data-fork-tab-menu="composer"
+        data-fork-usage-limits-menu=""
       >
         <ComposerLimitsMenu now={openedAt} />
       </PopoverPopup>

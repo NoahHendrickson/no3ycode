@@ -508,12 +508,6 @@
     margin-bottom: 5px;
     border-bottom-width: 0;
   }
-
-  /* A classic scrollbar would paint its track down the shell and push the
-     panels off centre; the list still scrolls, as the sidebar's does. */
-  & [data-fork-usage-scroller] {
-    scrollbar-width: none;
-  }
 }
 
 /* A provider's package icon (Grok's) fills for the app's appearance, but these

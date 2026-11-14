@@ -2980,7 +2980,9 @@
     upstream's limitsNotice, not copied, so a rewording cannot bring it
     back. A compact mode, used by
     the composer's limits menu (fork-composer-usage-limits), drops the cards
-    for dividers between providers and steps the type and meter down.
+    for dividers between providers and steps the type and meter down;
+    there every provider but Codex and Claude starts collapsed to its header
+    (mark, name, lowest share left, chevron) and expands on click.
     The card is the Scheduled page's (fork-scheduled-page owns it).
   tier: 4
   files:
@@ -3006,13 +3008,16 @@
     adds no wire data or polling. Clicking it opens a 16rem popover with
     every provider's limits across all environments: the Usage view's list
     in its compact mode (providers split by edge-to-edge dividers, no cards, text-xs, a
-    4px meter), its clock taken on open. The list subscribes to the
+    4px meter), its clock taken on open. It scrolls with no visible
+    scrollbar on either the list or the popover viewport
+    (theme.custom.css, data-fork-usage-limits-menu). The list subscribes to the
     environment presentations only while the menu is open. Hidden when the
     provider reports no session window and when the mode row collapses to ⋯.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/UsageMeter.tsx
+    - apps/web/src/theme.custom.css
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
