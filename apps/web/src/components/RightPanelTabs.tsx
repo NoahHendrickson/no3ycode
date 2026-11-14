@@ -50,7 +50,6 @@ import {
 import { Volume2, VolumeOff } from "lucide";
 /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
 import { MusicIcon } from "lucide-react";
-import { MusicTabPin } from "../custom/music/MusicTabPin";
 /* fork:end fork-music-panel */
 import {
   type KeyboardEvent as ReactKeyboardEvent,
@@ -1008,9 +1007,6 @@ function RightPanelTab(
           </TooltipPopup>
         </Tooltip>
       )}
-      {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
-      {surface.kind === "music" ? <MusicTabPin /> : null}
-      {/* fork:end fork-music-panel */}
     </>
   );
   return (

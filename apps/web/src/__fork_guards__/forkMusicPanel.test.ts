@@ -102,16 +102,15 @@ describe("fork guard: fork-music-panel", () => {
     expect(rightPanelStore).toMatch(fenced('"music",'));
     expect(rightPanelStore).toMatch(fenced('return \\{ id: "music", kind \\};'));
     expect(surfaceContent).toMatch(fenced('case "music":\\s*return <MusicPanel />;'));
-    // The keep-open pin rides in the Music tab itself.
-    expect(rightPanelTabs).toMatch(fenced('surface.kind === "music" \\? <MusicTabPin /> : null'));
-    // Kept open, it is one panel across threads, so it keeps one width.
+    expect(rightPanelTabs).toMatch(fenced('case "music":\\s*return <MusicIcon'));
+    // Open, it is one panel across threads, so it keeps one width.
     expect(chatRightPanel).toMatch(fenced("widthStorageKey: sharedWidthKey,"));
     expect(layoutControls).toMatch(fenced("<MusicPanelToggle"));
     expect(layoutControls.indexOf("<MusicPanelToggle")).toBeLessThan(
       layoutControls.indexOf("data-right-panel-toggle"),
     );
     expect(chatView).toMatch(fenced("musicThreadRef: activeThreadRef,"));
-    // Arriving on a thread carries a kept-open Music; the view, not the button, owns that.
+    // Music is open or closed on every thread at once; the view, not the button, owns that.
     expect(chatView).toMatch(fenced("useMusicKeepOpenCarry\\(activeThreadRef, isServerThread"));
     expect(toggle).toContain("if (readMusicBridge() === null) return null;");
     expect(toggle).toContain('.toggle(threadRef, "music")');
