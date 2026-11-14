@@ -330,7 +330,11 @@ it("compares against an explicit ref instead of the closest remote main", async 
   assert.strictEqual(result.ref, "origin/main");
 });
 
-function launcherFixture() {
+function launcherFixture(
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  initialFiles: Readonly<Record<string, string>> = {},
+  /* fork:end check-changed-budget */
+) {
   const root = NodeFS.realpathSync(
     NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3 checks & (fixture) ")),
   );
@@ -394,6 +398,9 @@ function launcherFixture() {
       "junction",
     );
   }
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  for (const [file, content] of Object.entries(initialFiles)) write(file, content);
+  /* fork:end check-changed-budget */
   const git = (...args: Array<string>) =>
     NodeChildProcess.execFileSync("git", args, { cwd: root, stdio: "pipe", env });
   git("init");
@@ -417,13 +424,19 @@ function launcherFixture() {
     root,
     source,
     write,
-    run(failStep = "") {
-      return NodeChildProcess.spawnSync(process.execPath, ["scripts/check-changed.ts", "HEAD"], {
-        cwd: root,
-        encoding: "utf8",
-        env: { ...env, TEMP: NodeOS.tmpdir(), RECORDS: records, FAIL_STEP: failStep },
-      });
+    /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+    run(failStep = "", args: ReadonlyArray<string> = []) {
+      return NodeChildProcess.spawnSync(
+        process.execPath,
+        ["scripts/check-changed.ts", "HEAD", ...args],
+        {
+          cwd: root,
+          encoding: "utf8",
+          env: { ...env, TEMP: NodeOS.tmpdir(), RECORDS: records, FAIL_STEP: failStep },
+        },
+      );
     },
+    /* fork:end check-changed-budget */
     calls: (): Array<{ args: Array<string>; cwd: string }> =>
       NodeFS.readdirSync(records).map((file) =>
         JSON.parse(NodeFS.readFileSync(NodePath.join(records, file), "utf8")),
@@ -467,6 +480,92 @@ it("lints an Astro component and runs knip when only it changed", () => {
   expect(commands).toContainEqual(["exec", "knip", "--include", "files"]);
   expect(commands).toContainEqual(["exec", "knip", "--exports"]);
 });
+
+/* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+it.each([1, 3])("keeps test runner pools within --concurrency %s", (concurrency) => {
+  using project = launcherFixture({
+    "pnpm-workspace.yaml": "packages:\n  - packages/*\n  - apps/*\n",
+    "apps/web/package.json": JSON.stringify({ name: "@t3tools/web" }),
+    "apps/mobile/package.json": JSON.stringify({ name: "@t3tools/mobile" }),
+  });
+  const unit = [
+    "apps/mobile/src/features/devices/device-stream.browser.test.ts",
+    "apps/web/src/A.test.ts",
+    "apps/web/src/B.test.ts",
+  ];
+  const browser = ["apps/web/src/A.browser.test.tsx", "apps/web/src/B.browser.test.tsx"];
+  const node = [".github/scripts/a.test.cjs", ".github/scripts/b.test.cjs"];
+  for (const file of [...unit, ...browser, ...node, "apps/web/src/A.tsx"]) project.write(file, "");
+  const result = project.run("", ["--concurrency", String(concurrency)]);
+  expect(result.status, result.stdout + result.stderr).toBe(0);
+  const commands = project.calls().map(({ args }) => args);
+  const workers = String(Math.min(concurrency, 2));
+  const vitest = commands.filter((args) => args[0] === "test");
+  expect(vitest).toHaveLength(3);
+  expect(vitest).toContainEqual([
+    "test",
+    "run",
+    "--maxWorkers",
+    String(Math.min(concurrency, unit.length)),
+    "--passWithNoTests",
+    ...unit,
+  ]);
+  expect(vitest).toContainEqual([
+    "test",
+    "run",
+    "--maxWorkers",
+    workers,
+    "--passWithNoTests",
+    ...browser,
+  ]);
+  const compiler = vitest.find((args) => args.includes("-t"));
+  expect(compiler?.slice(0, 4)).toEqual(["test", "run", "--maxWorkers", "1"]);
+  expect(compiler).toContain("apps/web/src/reactCompilerCoverage.test.ts");
+  expect(commands).toContainEqual([
+    "exec",
+    "node",
+    "--test",
+    `--test-concurrency=${workers}`,
+    ...node,
+  ]);
+});
+
+it("checks the fork guards for a manifest-only change without unrelated package checks", () => {
+  const guards = ["customizationsManifest.test.ts", "forkLintCleanliness.test.ts"];
+  using project = launcherFixture({
+    "pnpm-workspace.yaml": "packages:\n  - packages/*\n  - apps/*\n",
+    "apps/web/package.json": JSON.stringify({ name: "@t3tools/web" }),
+    ...Object.fromEntries(guards.map((guard) => [`apps/web/src/__fork_guards__/${guard}`, ""])),
+  });
+  project.write(".fork/customizations.yaml", "# manifest-only change\n");
+  const result = project.run("", ["--concurrency", "1"]);
+  expect(result.status, result.stdout + result.stderr).toBe(0);
+  const commands = project.calls().map(({ args }) => args);
+  expect(commands.find((args) => args[0] === "test")).toEqual([
+    "test",
+    "run",
+    "--maxWorkers",
+    "1",
+    "--passWithNoTests",
+    ...guards.map((guard) => `apps/web/src/__fork_guards__/${guard}`),
+  ]);
+  expect(
+    commands.some((args) => args.includes("apps/server/src/provider/AgentContextBudget.test.ts")),
+  ).toBe(false);
+  expect(commands.find((args) => args.includes("typecheck"))).toEqual([
+    "run",
+    "--cache",
+    "--parallel",
+    "--concurrency-limit",
+    "1",
+    "--filter",
+    "@t3tools/scripts",
+    "--filter",
+    "@t3tools/web",
+    "typecheck",
+  ]);
+});
+/* fork:end check-changed-budget */
 
 it.each(["install", "lint"])("reports a failing %s step with its output", (step) => {
   using project = launcherFixture();

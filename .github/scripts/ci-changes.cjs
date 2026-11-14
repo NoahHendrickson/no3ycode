@@ -29,6 +29,10 @@ const EXTRA_OWNERS = [
   [/^native\/libghostty-vt\//, ["@t3tools/web"]],
   // apps/server/src/cloud/ConnectReachability.test.ts checks the guide's headings.
   [/^docs\/user\/t3-connect-troubleshooting\.md$/, ["t3"]],
+  // fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget
+  // Web's fork guards read the manifest; lint-owned also runs in CI's unconditional Lint job.
+  [/^\.fork\/customizations\.yaml$/, ["@t3tools/web"]],
+  // fork:end check-changed-budget
 ];
 const RUST = /^native\/(resource-monitor|kde-snap-shot|hyprland-snap-shot)\//;
 

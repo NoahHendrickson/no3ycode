@@ -211,10 +211,17 @@ test suites and the jobs the summary lists, so a local pass does not promise a g
 
 <!-- fork:end ci-on-custom -->
 
-The steps run side by side, as many at once as the machine allows: one per two cores and per 6 GiB
-of available memory. On a large machine a run takes about as long as its slowest step, usually
-knip's exports pass at about 10 s. Pass `--concurrency <n>` or set `CHECK_CHANGED_CONCURRENCY` to
-change the limit (`1` runs the steps one by one). A step that runs past `--timeout <seconds>` or
+<!-- fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget -->
+
+Steps share a budget of one slot per two cores and per 6 GiB of available memory. Typecheck and
+test workers each reserve a slot; browser and Node Vitest pools run in separate steps. Pass
+`--concurrency <n>` or set `CHECK_CHANGED_CONCURRENCY` to change the budget. `1` runs steps and
+test files one at a time, which reduces peak load but can take longer. Each invocation has its own
+budget, so concurrent worktrees can still compete for CPU.
+
+<!-- fork:end check-changed-budget -->
+
+A step that runs past `--timeout <seconds>` or
 `CHECK_CHANGED_TIMEOUT` (default 900) is killed with every process it started and reported as
 `TIMEOUT`, not as a failing check. When the files are exactly those of the last passing run, it prints that
 run's summary instead of running again. Any change to a file, the install, or a generated file runs

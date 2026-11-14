@@ -336,6 +336,14 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
     }
   }
   for (const test of docReaderTests(files)) tests.add(test);
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  if (files.includes(".fork/customizations.yaml")) {
+    const guards = "apps/web/src/__fork_guards__";
+    for (const entry of yield* fs.readDirectory(inRoot(guards))) {
+      if (TEST.test(entry)) tests.add(path.join(guards, entry));
+    }
+  }
+  /* fork:end check-changed-budget */
   // It reads files other than the ones beside it, so no changed file selects it.
   if (affected.includes("t3")) tests.add("apps/server/src/provider/AgentContextBudget.test.ts");
   const { vitestTests, nodeTests } = splitTests(tests);
@@ -475,6 +483,25 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
   const typecheckWorkers = Math.min(concurrency, affected.length);
   const command = (name: string, args: ReadonlyArray<string>) => ({ name, run: vp(args) });
   const compilerFiles = compilerApps.reduce((count, app) => count + app.names.length, 0);
+  /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+  // Only web's .browser.test files use Vitest's independently budgeted browser pool.
+  const browserPattern = /^apps[/\\]web[/\\].*\.browser\.test\.[cm]?[jt]sx?$/;
+  const browserTests = vitestTests.filter((file) => browserPattern.test(file));
+  const unitTests = vitestTests.filter((file) => !browserPattern.test(file));
+  const nodeWorkers = Math.min(concurrency, nodeTests.length);
+  const vitestPool = (
+    name: string,
+    files: ReadonlyArray<string>,
+    extra: ReadonlyArray<string> = [],
+  ) => {
+    const workers = Math.min(concurrency, files.length);
+    return {
+      ...command(name, ["test", "run", "--maxWorkers", String(workers), ...extra, ...files]),
+      weight: workers,
+      serial: true,
+    };
+  };
+  /* fork:end check-changed-budget */
 
   const steps: Array<Step<never>> = [
     ...(runPatchCheck ? [{ name: "unused patches", run: checkPatches }] : []),
@@ -508,44 +535,41 @@ const checkChanged = Effect.fn("checkChanged")(function* (input: {
           },
         ]
       : []),
-    // From the repo root, the root vite.config.ts hands each file to its package's config.
-    ...(vitestTests.length > 0
+    /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+    ...(unitTests.length > 0
+      ? [vitestPool(`test (${unitTests.length} files)`, unitTests, ["--passWithNoTests"])]
+      : []),
+    ...(browserTests.length > 0
       ? [
-          {
-            ...command(`test (${vitestTests.length} files)`, [
-              "test",
-              "run",
-              "--passWithNoTests",
-              ...vitestTests,
-            ]),
-            serial: true,
-          },
+          vitestPool(`browser test (${browserTests.length} files)`, browserTests, [
+            "--passWithNoTests",
+          ]),
         ]
       : []),
     ...(nodeTests.length > 0
       ? [
-          command(`node --test (${nodeTests.length} files)`, [
-            "exec",
-            "node",
-            "--test",
-            ...nodeTests,
-          ]),
+          {
+            ...command(`node --test (${nodeTests.length} files)`, [
+              "exec",
+              "node",
+              "--test",
+              `--test-concurrency=${nodeWorkers}`,
+              ...nodeTests,
+            ]),
+            weight: nodeWorkers,
+          },
         ]
       : []),
     ...(compilerApps.length > 0
       ? [
-          {
-            ...command(`react compiler (${compilerFiles} files)`, [
-              "test",
-              "run",
-              ...compilerApps.map((app) => app.test),
-              "-t",
-              compilerApps.flatMap((app) => app.pattern).join("|"),
-            ]),
-            serial: true,
-          },
+          vitestPool(
+            `react compiler (${compilerFiles} files)`,
+            compilerApps.map((app) => app.test),
+            ["-t", compilerApps.flatMap((app) => app.pattern).join("|")],
+          ),
         ]
       : []),
+    /* fork:end check-changed-budget */
   ];
 
   const results = yield* runSteps(steps, { concurrency, timeoutSeconds });
@@ -596,7 +620,9 @@ export const checkChangedCommand = Command.make(
     ),
     concurrency: Flag.Int("concurrency").pipe(
       Flag.withDescription(
-        "Budget of parallel steps and typecheck workers; also CHECK_CHANGED_CONCURRENCY. Defaults to one per two cores and per 6 GiB of available memory.",
+        /* fork:begin check-changed-budget — see .fork/customizations.yaml#check-changed-budget */
+        "Budget of parallel steps, typecheck workers, and test workers; also CHECK_CHANGED_CONCURRENCY. Defaults to one per two cores and per 6 GiB of available memory.",
+        /* fork:end check-changed-budget */
       ),
       Flag.optional,
     ),
