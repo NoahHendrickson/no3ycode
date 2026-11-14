@@ -17,6 +17,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import * as SqlitePersistence from "../persistence/Sqlite.ts";
+import { FORK_BOT_REPORT_LOOKBACK } from "./forkBotReport.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 
 const layerTest = Layer.mergeAll(
@@ -213,6 +214,20 @@ it.layer(layerTest)("fork-bots shell report", (it) => {
         });
         yield* run(bot, 3, "completed");
         assert.equal((yield* store.getThreadShell(bot))?.latestVisibleMessage?.text, "Rent is due");
+
+        // A report further back than the lookback has gone stale and leaves the card.
+        yield* run(bot, 4, "running");
+        for (let index = 0; index < FORK_BOT_REPORT_LOOKBACK; index++) {
+          yield* message(bot, `long-${String(index).padStart(4, "0")}`, {
+            role: "assistant",
+            text: index === FORK_BOT_REPORT_LOOKBACK - 1 ? "Nothing to report." : "Checking",
+            streaming: false,
+            at: 100 + index,
+            run: 4,
+          });
+        }
+        yield* run(bot, 4, "completed");
+        assert.isNull((yield* store.getThreadShell(bot))?.latestVisibleMessage ?? null);
       }),
   );
 });
