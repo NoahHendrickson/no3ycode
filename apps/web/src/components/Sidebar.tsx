@@ -362,6 +362,25 @@ import {
   useSidebarModePolicy,
 } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { BotMascotLead } from "~/custom/bots/BotMascot";
+import {
+  botMascotFromMenuId,
+  botMascotMenuItem,
+  isBotMascotMenuId,
+} from "~/custom/bots/botMascotMenu";
+import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots/botMascotTags";
+import { isBotThread, listSidebarBots } from "~/custom/bots/botThreads";
+import { SidebarV2BotCardBody, sidebarV2CardKind } from "~/custom/bots/SidebarV2BotCardBody";
+import {
+  SidebarV2BotsRow,
+  SidebarV2NewBotRow,
+  useSidebarV2CollapsedListSections,
+  useSidebarV2CompactBots,
+} from "~/custom/bots/SidebarV2BotsSection";
+import { useCreateBot } from "~/custom/bots/useCreateBot";
+import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
+/* fork:end fork-bots */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
   SIDEBAR_V2_ICON_BUTTON_CLASS,
@@ -1561,6 +1580,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     projectDisplayName: props.projectTitle,
     isActive: props.isActive,
   });
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     The card's kind is chosen once: a bot's card draws its own body, led by a mascot whose
+     face follows what the bot is doing. */
+  const cardKind = sidebarV2CardKind(thread.source, props.compact === true);
+  const botMood = botMascotMood({ status, isUnread, resting: !props.isActive });
+  /* fork:end fork-bots */
 
   const title =
     isRenaming && canOperateThread ? (
@@ -1901,6 +1926,215 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     );
   }
 
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     The trailing group is a value so the bot body can place it beside both lines. */
+  const trailingGroup = (
+    <>
+      {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                  Trailing group (Figma 364:18276): the elapsed time / hover
+                  actions cell, the pinned glyph, then the status mark flush
+                  with the card's content edge. Status is a cell of its own,
+                  after the actions, on purpose: it used to share their
+                  crossfade cell, went to opacity-0 on hover, became a stacking
+                  context and hit-tested above settle. The PR badge moved down
+                  to the repo line (364:14308), so nothing here is a link. */}
+      <span className={cn("flex shrink-0 items-center", SIDEBAR_V2_CARD_ALIGNMENT.trailingGap)}>
+        {/* fork:end sidebar-v2-card-rows */}
+        {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
+                    The repo line's facts as marks, leading the trailing group
+                    so the title truncates against them. */}
+        {props.compact === true ? (
+          <SidebarV2ThreadCardCompactMarks
+            isRemote={isRemote}
+            terminalSlot={terminalStatusIcon}
+            prSlot={prBadge}
+          />
+        ) : null}
+        {/* fork:end sidebar-v2-compact-cards */}
+        {/* Elapsed while working, hover actions when offered.
+                    Stacked and right-aligned so the title truncates against
+                    whichever child is showing. */}
+        {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */}
+        {/* h-6, not the line's 18px: the hover actions share this
+                    cell and a 24px target cannot fit in an 18px one. The cell
+                    is centred in the title line, so it overhangs 3px into the
+                    py-2 above and through the 4px row gap below — flush with,
+                    never over, the repo line. 0px of clearance is what the
+                    design's 54px leaves once the hit target holds its 24px
+                    WCAG floor (see custom/sidebarV2TrailingColumn — that
+                    floor is design-wide, not this cell's private call).
+                    Shrinking the cell to buy clearance would trade a visual
+                    seam for a sub-minimum target. */}
+        {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
+        {hasHoverActions ||
+        /* fork:end sidebar-v2-draft-rows */
+        status === "working" ? (
+          <span
+            className={cn(
+              "grid h-6 shrink-0 grid-cols-1 items-center justify-items-end",
+              isSwept && "hidden",
+            )}
+          >
+            {/* fork:end sidebar-v2-row-action-hit-area */}
+            {status === "working" ? (
+              <span
+                className={cn(
+                  "pointer-events-none col-start-1 row-start-1 flex items-center pr-1",
+                  // The fade exists to yield the cell to the hover
+                  // actions. When neither action is offered there is
+                  // nothing to yield to, and an unconditional fade
+                  // blanks the timer on hover with nothing in its place.
+                  /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+                  hasHoverActions &&
+                    /* fork:end sidebar-v2-draft-rows */
+                    "transition-opacity group-any-hover/v2-row:opacity-0",
+                  snoozeMenuOpen && "opacity-0",
+                )}
+              >
+                <span
+                  aria-hidden
+                  // oxlint-disable-next-line shadcn/no-arbitrary-values -- the drawn 11/15 duration
+                  className="text-[11px] leading-[15px] text-foreground tabular-nums"
+                >
+                  <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
+                </span>
+              </span>
+            ) : null}
+            {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
+            {hasHoverActions ? (
+              /* fork:end sidebar-v2-draft-rows */
+              <span
+                /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
+                data-fork-thread-card-actions=""
+                /* fork:end fork-cool-darker-theme */
+                className={cn(
+                  // Zero-width at rest so a settled row's title still runs
+                  // the full width of the card when nothing is pointing at
+                  // it; the column only widens once the actions are
+                  // actually showing, and the title re-truncates to match.
+                  // fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
+                  // focus-within:overflow-visible, because the clip that
+                  // collapses this to zero width also cuts the focus ring:
+                  // it is a box-shadow 4px outside a button the wrapper
+                  // hugs exactly, so a keyboard user got no indicator at
+                  // all on the one control the ring was added for. Only
+                  // lifted while focus is inside, which is the same
+                  // condition that widens the wrapper.
+                  //
+                  // The offset is derived in custom/sidebarV2TrailingColumn
+                  // with the rest of the column's; `relative` keeps the
+                  // actions in the positioned layer with any opacity
+                  // crossfade sibling (elapsed) that shares this cell.
+                  // fork:end sidebar-v2-row-action-hit-area
+                  SIDEBAR_V2_TRAILING_OFFSET.cardActions,
+                  "relative col-start-1 row-start-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-opacity focus-within:w-auto focus-within:overflow-visible focus-within:opacity-100 group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",
+                  snoozeMenuOpen && "w-auto opacity-100",
+                )}
+              >
+                {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
+                          Pin leads the cell, ahead of snooze: the two literal
+                          labels are separate branches on purpose — the hit-area
+                          guard counts each label's call sites. */}
+                {props.pinningSupported && canOperateThread ? (
+                  props.isPinned ? (
+                    <button
+                      type="button"
+                      aria-label="Unpin thread"
+                      onClick={handleUnpinClick}
+                      className={SIDEBAR_V2_ICON_BUTTON_CLASS}
+                    >
+                      <PinOffIcon className="size-3" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label="Pin thread"
+                      onClick={handlePinClick}
+                      className={SIDEBAR_V2_ICON_BUTTON_CLASS}
+                    >
+                      <PinIcon className="size-3" />
+                    </button>
+                  )
+                ) : null}
+                {/* fork:end sidebar-v2-row-action-hit-area */}
+                {showSnoozeButton ? (
+                  <SnoozeMenuButton
+                    open={snoozeMenuOpen}
+                    onOpenChange={setSnoozeMenuOpen}
+                    onSnooze={handleSnoozePreset}
+                    timestampFormat={props.timestampFormat}
+                    environmentId={thread.environmentId}
+                  />
+                ) : null}
+                {props.settlementSupported ? (
+                  <button
+                    type="button"
+                    aria-label="Settle thread"
+                    onClick={handleSettleClick}
+                    onPointerDown={handleActionPointerDown}
+                    /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                    className={SIDEBAR_V2_ICON_BUTTON_CLASS}
+                    /* fork:end sidebar-v2-row-action-hit-area */
+                  >
+                    {/* Icon-only in v2: at 282px the "Settle" text pushed the
+                              hover actions over the title, which now shares their
+                              line. `aria-label` carries the name. */}
+                    <CheckIcon className="size-3" />
+                  </button>
+                ) : null}
+                {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
+                {showDiscardDraft ? (
+                  <button
+                    type="button"
+                    aria-label="Discard draft"
+                    onClick={handleDiscardDraftClick}
+                    className={SIDEBAR_V2_ICON_BUTTON_CLASS}
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                ) : null}
+                {/* fork:end sidebar-v2-draft-rows */}
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+        {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
+                    Pinned state rides the title line as a 12px glyph beside
+                    the status mark: the pinned block above the divider
+                    carries the grouping, the glyph names the state per card. */}
+        {pinIndicator}
+        {/* fork:end sidebar-v2-row-action-hit-area */}
+        {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                    The status box (Figma 364:17299 `Vector`, 9.75px): the
+                    design's 10px wide by the rain's 14 tall, pulled 2px past
+                    the content edge so it centres on the trailing axis. The
+                    marks inside keep their own sizes and centre in it.
+                    pointer-events-none: a mark is never a target, and it must
+                    never hit-test above the actions. */}
+        <span
+          className={cn(
+            "pointer-events-none flex shrink-0 items-center justify-center overflow-hidden",
+            SIDEBAR_V2_CARD_ALIGNMENT.statusBox,
+            SIDEBAR_V2_TRAILING_OFFSET.cardStatus,
+            isSwept && "hidden",
+          )}
+        >
+          <SidebarV2StatusMark
+            status={topStatus}
+            seed={threadKey}
+            idle={showDiscardDraft ? "draft" : "dot"}
+            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                       A working bot's mascot is already thinking. */
+            workingMark={cardKind !== "bot" && cardKind !== "bot-compact"}
+            /* fork:end fork-bots */
+          />
+        </span>
+        {/* fork:end sidebar-v2-card-rows */}
+        {isSwept ? sweepBadge : null}
+      </span>
+    </>
+  );
+  /* fork:end fork-bots */
   return (
     <li
       data-thread-item={threadKey}
@@ -1943,7 +2177,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         props.compact === true
           ? "[contain-intrinsic-size:auto_34px]"
           : /* fork:end sidebar-v2-compact-cards */
-            "[contain-intrinsic-size:auto_54px]",
+            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+               A bot's avatar card: 6 + 16 + 2 + 14 + 6 = 44 (custom/bots/SidebarV2BotCardBody). */
+            cardKind === "bot"
+            ? "[contain-intrinsic-size:auto_44px]"
+            : /* fork:end fork-bots */
+              "[contain-intrinsic-size:auto_54px]",
         /* fork:end sidebar-v2-card-rows */
       )}
     >
@@ -1981,301 +2220,125 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               Figma 364:17299: px-12 py-8, 4px between the rows — every value
               from custom/sidebarV2CardAlignment. List pad 8 + px-12 puts the
               prompt on the 20px edge the project header's folder mark shares. */}
-          <div
-            className={cn(
-              "relative z-10 flex flex-col",
-              SIDEBAR_V2_CARD_ALIGNMENT.rowGap,
-              SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
-              SIDEBAR_V2_CARD_ALIGNMENT.cardPadY,
-            )}
-          >
-            {/* fork:end sidebar-v2-card-rows */}
-            {/* Title line is 18px tall — the 14px prompt's own line box, and
+          {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+          {cardKind === "bot" ? (
+            <SidebarV2BotCardBody
+              environmentId={thread.environmentId}
+              threadId={thread.id}
+              shell={thread.source}
+              status={status}
+              isUnread={isUnread}
+              mood={botMood}
+              title={title}
+              trailing={trailingGroup}
+            />
+          ) : (
+            /* fork:end fork-bots */
+            <div
+              className={cn(
+                "relative z-10 flex flex-col",
+                SIDEBAR_V2_CARD_ALIGNMENT.rowGap,
+                SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
+                SIDEBAR_V2_CARD_ALIGNMENT.cardPadY,
+              )}
+            >
+              {/* fork:end sidebar-v2-card-rows */}
+              {/* Title line is 18px tall — the 14px prompt's own line box, and
                 one of the terms the card's 54 is measured from (see
                 custom/sidebarV2CardAlignment). */}
-            {/* No overflow-hidden on the row: the trailing settle/X cell is
+              {/* No overflow-hidden on the row: the trailing settle/X cell is
                 h-6 and must overhang into py-2. Clipping here cut the 24px
                 hover fill into a short rectangle. Rain clips itself in the
                 status slot below. */}
-            <div
-              className={cn(
-                "flex h-[18px] min-h-[18px] min-w-0 items-center",
-                SIDEBAR_V2_CARD_ALIGNMENT.titleGap,
-              )}
-            >
-              {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
+              <div
+                className={cn(
+                  "flex h-[18px] min-h-[18px] min-w-0 items-center",
+                  SIDEBAR_V2_CARD_ALIGNMENT.titleGap,
+                )}
+              >
+                {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                  A compact bot card has one line, so the mascot leads its title. */}
+                {cardKind === "bot-compact" ? (
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <BotMascotLead shape={botMascotShape(thread.source)} mood={botMood} />
+                    {title}
+                  </span>
+                ) : /* fork:end fork-bots */
+                /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
                   A compact card has no repo line to name its project, so the
                   favicon leads the title instead, as on the slim rows. Under a
-                  project header the header already names it. */}
-              {props.compact === true &&
-              props.projectTitleHidden !== true &&
-              /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-              props.hideProjectMark !== true ? (
-                /* fork:end fork-chat-mode */
-                <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <SidebarV2CompactCardLead project={props.project} />
-                  {title}
-                </span>
-              ) : (
-                /* fork:end sidebar-v2-compact-cards */
-                title
-              )}
-              {isRegeneratingTitle ? (
-                <span role="status" className="sr-only">
-                  Regenerating title
-                </span>
-              ) : null}
-              {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                  Trailing group (Figma 364:18276): the elapsed time / hover
-                  actions cell, the pinned glyph, then the status mark flush
-                  with the card's content edge. Status is a cell of its own,
-                  after the actions, on purpose: it used to share their
-                  crossfade cell, went to opacity-0 on hover, became a stacking
-                  context and hit-tested above settle. The PR badge moved down
-                  to the repo line (364:14308), so nothing here is a link. */}
-              <span
-                className={cn("flex shrink-0 items-center", SIDEBAR_V2_CARD_ALIGNMENT.trailingGap)}
-              >
-                {/* fork:end sidebar-v2-card-rows */}
-                {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
-                    The repo line's facts as marks, leading the trailing group
-                    so the title truncates against them. */}
-                {props.compact === true ? (
-                  <SidebarV2ThreadCardCompactMarks
-                    isRemote={isRemote}
-                    terminalSlot={terminalStatusIcon}
-                    prSlot={prBadge}
-                  />
-                ) : null}
-                {/* fork:end sidebar-v2-compact-cards */}
-                {/* Elapsed while working, hover actions when offered.
-                    Stacked and right-aligned so the title truncates against
-                    whichever child is showing. */}
-                {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */}
-                {/* h-6, not the line's 18px: the hover actions share this
-                    cell and a 24px target cannot fit in an 18px one. The cell
-                    is centred in the title line, so it overhangs 3px into the
-                    py-2 above and through the 4px row gap below — flush with,
-                    never over, the repo line. 0px of clearance is what the
-                    design's 54px leaves once the hit target holds its 24px
-                    WCAG floor (see custom/sidebarV2TrailingColumn — that
-                    floor is design-wide, not this cell's private call).
-                    Shrinking the cell to buy clearance would trade a visual
-                    seam for a sub-minimum target. */}
-                {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
-                {hasHoverActions ||
-                /* fork:end sidebar-v2-draft-rows */
-                status === "working" ? (
-                  <span
-                    className={cn(
-                      "grid h-6 shrink-0 grid-cols-1 items-center justify-items-end",
-                      isSwept && "hidden",
-                    )}
-                  >
-                    {/* fork:end sidebar-v2-row-action-hit-area */}
-                    {status === "working" ? (
-                      <span
-                        className={cn(
-                          "pointer-events-none col-start-1 row-start-1 flex items-center pr-1",
-                          // The fade exists to yield the cell to the hover
-                          // actions. When neither action is offered there is
-                          // nothing to yield to, and an unconditional fade
-                          // blanks the timer on hover with nothing in its place.
-                          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                          hasHoverActions &&
-                            /* fork:end sidebar-v2-draft-rows */
-                            "transition-opacity group-any-hover/v2-row:opacity-0",
-                          snoozeMenuOpen && "opacity-0",
-                        )}
-                      >
-                        <span
-                          aria-hidden
-                          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the drawn 11/15 duration
-                          className="text-[11px] leading-[15px] text-foreground tabular-nums"
-                        >
-                          <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
-                        </span>
-                      </span>
-                    ) : null}
-                    {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
-                    {hasHoverActions ? (
-                      /* fork:end sidebar-v2-draft-rows */
-                      <span
-                        /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
-                        data-fork-thread-card-actions=""
-                        /* fork:end fork-cool-darker-theme */
-                        className={cn(
-                          // Zero-width at rest so a settled row's title still runs
-                          // the full width of the card when nothing is pointing at
-                          // it; the column only widens once the actions are
-                          // actually showing, and the title re-truncates to match.
-                          // fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                          // focus-within:overflow-visible, because the clip that
-                          // collapses this to zero width also cuts the focus ring:
-                          // it is a box-shadow 4px outside a button the wrapper
-                          // hugs exactly, so a keyboard user got no indicator at
-                          // all on the one control the ring was added for. Only
-                          // lifted while focus is inside, which is the same
-                          // condition that widens the wrapper.
-                          //
-                          // The offset is derived in custom/sidebarV2TrailingColumn
-                          // with the rest of the column's; `relative` keeps the
-                          // actions in the positioned layer with any opacity
-                          // crossfade sibling (elapsed) that shares this cell.
-                          // fork:end sidebar-v2-row-action-hit-area
-                          SIDEBAR_V2_TRAILING_OFFSET.cardActions,
-                          "relative col-start-1 row-start-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-opacity focus-within:w-auto focus-within:overflow-visible focus-within:opacity-100 group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",
-                          snoozeMenuOpen && "w-auto opacity-100",
-                        )}
-                      >
-                        {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                          Pin leads the cell, ahead of snooze: the two literal
-                          labels are separate branches on purpose — the hit-area
-                          guard counts each label's call sites. */}
-                        {props.pinningSupported && canOperateThread ? (
-                          props.isPinned ? (
-                            <button
-                              type="button"
-                              aria-label="Unpin thread"
-                              onClick={handleUnpinClick}
-                              className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                            >
-                              <PinOffIcon className="size-3" />
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              aria-label="Pin thread"
-                              onClick={handlePinClick}
-                              className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                            >
-                              <PinIcon className="size-3" />
-                            </button>
-                          )
-                        ) : null}
-                        {/* fork:end sidebar-v2-row-action-hit-area */}
-                        {showSnoozeButton ? (
-                          <SnoozeMenuButton
-                            open={snoozeMenuOpen}
-                            onOpenChange={setSnoozeMenuOpen}
-                            onSnooze={handleSnoozePreset}
-                            timestampFormat={props.timestampFormat}
-                            environmentId={thread.environmentId}
-                          />
-                        ) : null}
-                        {props.settlementSupported ? (
-                          <button
-                            type="button"
-                            aria-label="Settle thread"
-                            onClick={handleSettleClick}
-                            onPointerDown={handleActionPointerDown}
-                            /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                            className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                            /* fork:end sidebar-v2-row-action-hit-area */
-                          >
-                            {/* Icon-only in v2: at 282px the "Settle" text pushed the
-                              hover actions over the title, which now shares their
-                              line. `aria-label` carries the name. */}
-                            <CheckIcon className="size-3" />
-                          </button>
-                        ) : null}
-                        {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
-                        {showDiscardDraft ? (
-                          <button
-                            type="button"
-                            aria-label="Discard draft"
-                            onClick={handleDiscardDraftClick}
-                            className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                          >
-                            <XIcon className="size-3" />
-                          </button>
-                        ) : null}
-                        {/* fork:end sidebar-v2-draft-rows */}
-                      </span>
-                    ) : null}
+                  project header the header already names it. */
+                props.compact === true &&
+                  props.projectTitleHidden !== true &&
+                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                  props.hideProjectMark !== true ? (
+                  /* fork:end fork-chat-mode */
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <SidebarV2CompactCardLead project={props.project} />
+                    {title}
+                  </span>
+                ) : (
+                  /* fork:end sidebar-v2-compact-cards */
+                  title
+                )}
+                {isRegeneratingTitle ? (
+                  <span role="status" className="sr-only">
+                    Regenerating title
                   </span>
                 ) : null}
-                {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                    Pinned state rides the title line as a 12px glyph beside
-                    the status mark: the pinned block above the divider
-                    carries the grouping, the glyph names the state per card. */}
-                {pinIndicator}
-                {/* fork:end sidebar-v2-row-action-hit-area */}
-                {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                    The status box (Figma 364:17299 `Vector`, 9.75px): the
-                    design's 10px wide by the rain's 14 tall, pulled 2px past
-                    the content edge so it centres on the trailing axis. The
-                    marks inside keep their own sizes and centre in it.
-                    pointer-events-none: a mark is never a target, and it must
-                    never hit-test above the actions. */}
-                <span
-                  className={cn(
-                    "pointer-events-none flex shrink-0 items-center justify-center overflow-hidden",
-                    SIDEBAR_V2_CARD_ALIGNMENT.statusBox,
-                    SIDEBAR_V2_TRAILING_OFFSET.cardStatus,
-                    isSwept && "hidden",
-                  )}
-                >
-                  <SidebarV2StatusMark
-                    status={topStatus}
-                    seed={threadKey}
-                    idle={showDiscardDraft ? "draft" : "dot"}
-                  />
-                </span>
-                {/* fork:end sidebar-v2-card-rows */}
-                {isSwept ? sweepBadge : null}
-              </span>
-            </div>
-            {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */}
-            {props.compact === true ? null : (
-              /* fork:end sidebar-v2-compact-cards */
-              <SidebarV2ThreadCardMeta
-                projectTitle={props.projectTitle}
-                /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
-                projectTitleHidden={
-                  props.projectTitleHidden === true ||
-                  /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-                  props.hideProjectMark === true
-                  /* fork:end fork-chat-mode */
-                }
-                /* fork:end sidebar-v2-project-grouping */
-                /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                {trailingGroup}
+              </div>
+              {/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */}
+              {props.compact === true ? null : (
+                /* fork:end sidebar-v2-compact-cards */
+                <SidebarV2ThreadCardMeta
+                  projectTitle={props.projectTitle}
+                  /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
+                  projectTitleHidden={
+                    props.projectTitleHidden === true ||
+                    /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+                    props.hideProjectMark === true
+                    /* fork:end fork-chat-mode */
+                  }
+                  /* fork:end sidebar-v2-project-grouping */
+                  /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                  The project favicon, pre-built above beside the terminal glyph. */
-                projectIconSlot={projectIcon}
-                /* fork:end sidebar-v2-card-rows */
-                branch={thread.branch}
-                // fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                // The same predicate the row already uses to pick its git cwd and
-                // env mode above, so the mark cannot claim a worktree the rest of
-                // the row is not treating as one.
-                // fork:end sidebar-v2-card-rows
-                hasWorktree={thread.worktreePath !== null}
-                /* fork:begin sidebar-v2-dev-server-pulse — see .fork/customizations.yaml#sidebar-v2-dev-server-pulse */
-                devServerPort={devServerPort}
-                /* fork:end sidebar-v2-dev-server-pulse */
-                /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                  projectIconSlot={projectIcon}
+                  /* fork:end sidebar-v2-card-rows */
+                  branch={thread.branch}
+                  // fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                  // The same predicate the row already uses to pick its git cwd and
+                  // env mode above, so the mark cannot claim a worktree the rest of
+                  // the row is not treating as one.
+                  // fork:end sidebar-v2-card-rows
+                  hasWorktree={thread.worktreePath !== null}
+                  /* fork:begin sidebar-v2-dev-server-pulse — see .fork/customizations.yaml#sidebar-v2-dev-server-pulse */
+                  devServerPort={devServerPort}
+                  /* fork:end sidebar-v2-dev-server-pulse */
+                  /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                  Upstream's terminal-status glyph (#4712), pre-built above and
                  handed in as a slot so the fork card keeps upstream's
                  after-the-branch reading order without upstream state crossing
                  the component boundary. */
-                terminalSlot={terminalStatusIcon}
-                /* fork:end sidebar-v2-card-rows */
-                /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+                  terminalSlot={terminalStatusIcon}
+                  /* fork:end sidebar-v2-card-rows */
+                  /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                  The PR badge, pre-built above: a link with upstream's tone and
                  click routing, so it stays on the row's side of the seam.
                  The card shows no provider icon, so the model is named the way
                  the iconless picker trigger names it: "Opus 5.5" for Claude,
                  "Cursor Opus 5.5" for Cursor. The tooltip keeps modelLabel
                  beside its icon. */
-                prSlot={prBadge}
-                modelLabel={triggerModelName(modelLabel, providerEntry, { iconShown: false })}
-                /* fork:end sidebar-v2-card-rows */
-                isRemote={isRemote}
-              />
-              /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-            )}
-            {/* fork:end sidebar-v2-compact-cards */}
-          </div>
+                  prSlot={prBadge}
+                  modelLabel={triggerModelName(modelLabel, providerEntry, { iconShown: false })}
+                  /* fork:end sidebar-v2-card-rows */
+                  isRemote={isRemote}
+                />
+                /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+              )}
+              {/* fork:end sidebar-v2-compact-cards */}
+            </div>
+          )}
           {props.jumpLabel ? <JumpHintBadge label={props.jumpLabel} /> : null}
         </TooltipTrigger>
         {detailsTooltip}
@@ -2331,6 +2394,19 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const moveThreadToMode = modePolicy.moveThread;
   /* fork:end fork-chat-mode */
   const delegatedUnderParent = useDelegatedUnderParent();
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     Bots list in their own section above the threads, in Code only: Chat lists chats alone. */
+  const botThreads = listSidebarBots(threads);
+  const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
+  const botsSectionCollapsed = isListSectionCollapsed("bots");
+  const [compactBots, setCompactBots] = useSidebarV2CompactBots();
+  const [namingBot, setNamingBot] = useState(false);
+  const createBot = useCreateBot();
+  const setBotMascot = useSetBotMascot();
+  /* fork:end fork-bots */
+  /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
+  const threadsSectionCollapsed = !modePolicy.chat && isListSectionCollapsed("threads");
+  /* fork:end sidebar-v2-threads-fold */
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4389,6 +4465,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 },
                 snoozePresets,
               }),
+              /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+              ...(isBotThread(thread.source)
+                ? [
+                    botMascotMenuItem(
+                      thread.source,
+                      readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+                    ),
+                  ]
+                : []),
+              /* fork:end fork-bots */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(
                 thread,
@@ -4400,6 +4486,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           ),
         );
         if (clicked._tag === "Failure" || clicked.value === null) return;
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        if (isBotMascotMenuId(clicked.value)) {
+          const mascot = botMascotFromMenuId(clicked.value);
+          if (mascot !== null && checkThreadOperations([thread])) void setBotMascot(thread, mascot);
+          return;
+        }
+        /* fork:end fork-bots */
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
           if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
@@ -4658,6 +4751,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       moveThreadToMode,
       modePolicy.projectControls,
       /* fork:end fork-chat-mode */
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+      setBotMascot,
+      /* fork:end fork-bots */
     ],
   );
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4925,6 +5021,173 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      palette shortcut. */
   const commandPaletteShortcutLabel = shortcutLabelForCommand(keybindings, "commandPalette.toggle");
   /* fork:end fork-sidebar-chrome */
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     The row factory sits above both lists, so the Bots section renders its own cards. */
+  /* fork:end fork-bots */
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+                       renderOneThreadRow is upstream's renderThreadRow; the
+                       name now belongs to the split-aware wrapper below. */
+  const renderOneThreadRow = (
+    /* fork:end fork-split-threads */
+    thread: EnvironmentThreadShell,
+    section: SidebarSection,
+    options: {
+      /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
+      // Set by the one caller painting under a project header.
+      readonly underProjectHeader?: boolean;
+      /* fork:end sidebar-v2-project-grouping */
+      readonly sortable?: SortableThreadRowBag;
+      /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
+      readonly statusSection?: SidebarV2StatusBucket;
+      /* fork:end sidebar-v2-status-grouping */
+      /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+      readonly onOpenSplitPair?: boolean;
+      /* fork:end fork-split-threads */
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+                           The Bots section's own density, apart from the threads' Compact cards. */
+      readonly compact?: boolean;
+      /* fork:end fork-bots */
+    } = {},
+  ) => {
+    const { sortable, statusSection } = options;
+    const underProjectHeader = options.underProjectHeader ?? false;
+    const threadKey = scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
+    /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+    // Drafts are not on the server yet — settle/snooze would fail.
+    const draftCaps = sidebarDraftRowCapabilities(draftIdByThreadKey.has(threadKey));
+    /* fork:end sidebar-v2-draft-rows */
+    // Settled and snoozed are the ONLY things that collapse a
+    // row: every other thread is a full card. Density comes
+    // from users (or the auto rules) actually parking work,
+    // not from the sidebar second-guessing what still matters.
+    // Working rows stay cards so their live status shows.
+    const isCard = section === "active" || section === "pinned" || section === "working";
+    const rowVariant = isCard ? "card" : "slim";
+    return (
+      <SidebarThreadRow
+        // Keyed per variant on purpose: when a thread settles,
+        // the card fades out in place and the slim row fades
+        // in at its settled position instead of one element
+        // FLIP-sliding through every row in between (rows here
+        // are translucent, so a crossing row reads as text
+        // painted over text).
+        key={`${threadKey}:${rowVariant}`}
+        thread={thread}
+        variant={rowVariant}
+        // Snoozed rows wake, settled rows un-settle, and cards settle.
+        variantAction={
+          section === "snoozed" ? "unsnooze" : section === "settled" ? "unsettle" : "settle"
+        }
+        settlementSupported={
+          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+          draftCaps.canSettle &&
+          /* fork:end sidebar-v2-draft-rows */
+          serverConfigs.get(thread.environmentId)?.environment.capabilities.threadSettlement ===
+            true
+        }
+        snoozeSupported={
+          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+          draftCaps.canSnooze &&
+          /* fork:end sidebar-v2-draft-rows */
+          serverConfigs.get(thread.environmentId)?.environment.capabilities.threadSnooze === true
+        }
+        isPinned={thread.pinnedAt != null}
+        /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+        compact={
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+          options.compact ??
+          /* fork:end fork-bots */
+          compactCards
+        }
+        /* fork:end sidebar-v2-compact-cards */
+        /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+        onOpenSplitPair={options.onOpenSplitPair === true}
+        /* fork:end fork-split-threads */
+        /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
+        statusSection={statusSection}
+        inStatusSection={
+          statusSection !== undefined ||
+          (section === "snoozed" && snoozedSectionShown) ||
+          (section === "settled" && settledSectionShown)
+        }
+        /* fork:end sidebar-v2-status-grouping */
+        sortable={sortable}
+        sweepAction={actionSweep?.keys.has(threadKey) ? actionSweep.action : null}
+        /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+        pinningSupported={
+          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+          draftCaps.canPin &&
+          /* fork:end sidebar-v2-draft-rows */
+          isCard &&
+          serverConfigs.get(thread.environmentId)?.environment.capabilities.threadPinning === true
+        }
+        onPin={attemptPin}
+        onUnpin={attemptUnpin}
+        /* fork:end sidebar-v2-row-action-hit-area */
+        snoozeWakeLabelText={
+          section === "snoozed" && thread.snoozedUntil != null
+            ? snoozeWakeLabel(thread.snoozedUntil, {
+                // oxlint-disable-next-line react/purity -- the label re-renders on the minute clock
+                now: new Date().toISOString(),
+              })
+            : null
+        }
+        // All sections: a woken thread can classify straight
+        // into the settled tail (PR merged while snoozed), and
+        // the wake signal must survive the trip. Still-snoozed
+        // rows resolve to null on their own.
+        wokeAt={threadWokeAt(thread, { now: snoozeNow })}
+        isActive={routeRowThreadKey === threadKey}
+        revealRef={routeRowThreadKey === threadKey ? revealActiveRow : undefined}
+        isRouteThread={routeThreadKey === threadKey}
+        openPullRequestsInRightPanel={routeThreadRef !== null}
+        jumpLabel={showJumpHints ? (jumpLabelByKey.get(threadKey) ?? null) : null}
+        currentEnvironmentId={primaryEnvironmentId}
+        environmentLabel={environmentLabelById.get(thread.environmentId) ?? null}
+        environmentMachine={environmentMachineById.get(thread.environmentId) ?? "server"}
+        project={projectByKey.get(`${thread.environmentId}:${thread.projectId}`) ?? null}
+        projectTitle={
+          projectDisplayNameByKey.get(`${thread.environmentId}:${thread.projectId}`) ?? null
+        }
+        /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
+        // Under a project header the card's repo line would only
+        // repeat the header two rows up, once per card, so the
+        // branch — what actually tells two threads on one project
+        // apart — takes the whole line. Hidden rather than
+        // dropped: assistive tech has no "two rows up".
+        projectTitleHidden={underProjectHeader}
+        /* fork:end sidebar-v2-project-grouping */
+        /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+        hideProjectMark={!modePolicy.projectControls}
+        /* fork:end fork-chat-mode */
+        providerEntryByInstanceId={
+          providerEntriesByEnvironment.get(thread.environmentId) ?? EMPTY_PROVIDER_ENTRIES
+        }
+        timestampFormat={timestampFormat}
+        onThreadClick={handleThreadClick}
+        onThreadActivate={navigateToThread}
+        onStartRename={startThreadRename}
+        onRenameTitleChange={setRenamingTitle}
+        onCommitRename={commitThreadRename}
+        onCancelRename={cancelThreadRename}
+        isRenaming={renamingThreadKey === threadKey}
+        renamingTitle={renamingThreadKey === threadKey ? renamingTitle : ""}
+        onContextMenu={handleThreadContextMenu}
+        /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+        onDiscardDraft={draftCaps.showDiscard ? discardDraftThread : null}
+        /* fork:end sidebar-v2-draft-rows */
+        onSettle={attemptSettle}
+        onActionSweepStart={startActionSweep}
+        onUnsettle={attemptUnsettle}
+        onSnooze={attemptSnooze}
+        onUnsnooze={attemptUnsnooze}
+        onAcknowledgeWoke={acknowledgeWoke}
+        /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+        onFileDropThreads={draftCaps.canReceiveFileDrop ? handleThreadFileDrop : undefined}
+        /* fork:end sidebar-v2-draft-rows */
+      />
+    );
+  };
   return (
     <SidebarFolderDrop>
       <SidebarChromeHeader
@@ -4956,7 +5219,43 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               /* fork:end fork-new-agent-draft */
               onNewThread={handleNewThreadClick}
             />
+            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+            <SidebarV2BotsRow
+              count={botThreads.length}
+              collapsed={botsSectionCollapsed}
+              onToggleCollapsed={() => toggleListSectionCollapsed("bots")}
+              onNewBot={() => {
+                setNamingBot(true);
+                if (botsSectionCollapsed) toggleListSectionCollapsed("bots");
+              }}
+              compactCards={compactBots}
+              onCompactCardsChange={setCompactBots}
+            >
+              {/* A folded Bots section keeps the open bot's card. */}
+              {botThreads
+                .filter(
+                  (bot) =>
+                    !botsSectionCollapsed ||
+                    routeRowThreadKey ===
+                      scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
+                )
+                .map((bot) => renderOneThreadRow(bot, "active", { compact: compactBots }))}
+              {namingBot ? (
+                <SidebarV2NewBotRow
+                  initialMascot={nextBotMascotShape(
+                    botThreads.map((bot) => botMascotShape(bot.source)),
+                  )}
+                  onCreate={createBot}
+                  onDone={() => setNamingBot(false)}
+                />
+              ) : null}
+            </SidebarV2BotsRow>
+            {/* fork:end fork-bots */}
             <SidebarV2ProjectScopeRow
+              /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
+              collapsed={threadsSectionCollapsed}
+              onToggleCollapsed={() => toggleListSectionCollapsed("threads")}
+              /* fork:end sidebar-v2-threads-fold */
               projectGroups={projectGroups}
               projectScopeKeys={projectScopeKeys}
               scopedProjectDisplayName={scopedProjectsLabel}
@@ -5127,181 +5426,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 >
                   {/* fork:end sidebar-v2-card-rows */}
                   {(() => {
-                    /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-                       renderOneThreadRow is upstream's renderThreadRow; the
-                       name now belongs to the split-aware wrapper below. */
-                    const renderOneThreadRow = (
-                      /* fork:end fork-split-threads */
-                      thread: EnvironmentThreadShell,
-                      section: SidebarSection,
-                      options: {
-                        /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
-                        // Set by the one caller painting under a project header.
-                        readonly underProjectHeader?: boolean;
-                        /* fork:end sidebar-v2-project-grouping */
-                        readonly sortable?: SortableThreadRowBag;
-                        /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
-                        readonly statusSection?: SidebarV2StatusBucket;
-                        /* fork:end sidebar-v2-status-grouping */
-                        /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-                        readonly onOpenSplitPair?: boolean;
-                        /* fork:end fork-split-threads */
-                      } = {},
-                    ) => {
-                      const { sortable, statusSection } = options;
-                      const underProjectHeader = options.underProjectHeader ?? false;
-                      const threadKey = scopedThreadKey(
-                        scopeThreadRef(thread.environmentId, thread.id),
-                      );
-                      /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                      // Drafts are not on the server yet — settle/snooze would fail.
-                      const draftCaps = sidebarDraftRowCapabilities(
-                        draftIdByThreadKey.has(threadKey),
-                      );
-                      /* fork:end sidebar-v2-draft-rows */
-                      // Settled and snoozed are the ONLY things that collapse a
-                      // row: every other thread is a full card. Density comes
-                      // from users (or the auto rules) actually parking work,
-                      // not from the sidebar second-guessing what still matters.
-                      // Working rows stay cards so their live status shows.
-                      const isCard =
-                        section === "active" || section === "pinned" || section === "working";
-                      const rowVariant = isCard ? "card" : "slim";
-                      return (
-                        <SidebarThreadRow
-                          // Keyed per variant on purpose: when a thread settles,
-                          // the card fades out in place and the slim row fades
-                          // in at its settled position instead of one element
-                          // FLIP-sliding through every row in between (rows here
-                          // are translucent, so a crossing row reads as text
-                          // painted over text).
-                          key={`${threadKey}:${rowVariant}`}
-                          thread={thread}
-                          variant={rowVariant}
-                          // Snoozed rows wake, settled rows un-settle, and cards settle.
-                          variantAction={
-                            section === "snoozed"
-                              ? "unsnooze"
-                              : section === "settled"
-                                ? "unsettle"
-                                : "settle"
-                          }
-                          settlementSupported={
-                            /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                            draftCaps.canSettle &&
-                            /* fork:end sidebar-v2-draft-rows */
-                            serverConfigs.get(thread.environmentId)?.environment.capabilities
-                              .threadSettlement === true
-                          }
-                          snoozeSupported={
-                            /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                            draftCaps.canSnooze &&
-                            /* fork:end sidebar-v2-draft-rows */
-                            serverConfigs.get(thread.environmentId)?.environment.capabilities
-                              .threadSnooze === true
-                          }
-                          isPinned={thread.pinnedAt != null}
-                          /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-                          compact={compactCards}
-                          /* fork:end sidebar-v2-compact-cards */
-                          /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-                          onOpenSplitPair={options.onOpenSplitPair === true}
-                          /* fork:end fork-split-threads */
-                          /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
-                          statusSection={statusSection}
-                          inStatusSection={
-                            statusSection !== undefined ||
-                            (section === "snoozed" && snoozedSectionShown) ||
-                            (section === "settled" && settledSectionShown)
-                          }
-                          /* fork:end sidebar-v2-status-grouping */
-                          sortable={sortable}
-                          sweepAction={actionSweep?.keys.has(threadKey) ? actionSweep.action : null}
-                          /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                          pinningSupported={
-                            /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                            draftCaps.canPin &&
-                            /* fork:end sidebar-v2-draft-rows */
-                            isCard &&
-                            serverConfigs.get(thread.environmentId)?.environment.capabilities
-                              .threadPinning === true
-                          }
-                          onPin={attemptPin}
-                          onUnpin={attemptUnpin}
-                          /* fork:end sidebar-v2-row-action-hit-area */
-                          snoozeWakeLabelText={
-                            section === "snoozed" && thread.snoozedUntil != null
-                              ? snoozeWakeLabel(thread.snoozedUntil, {
-                                  // oxlint-disable-next-line react/purity -- the label re-renders on the minute clock
-                                  now: new Date().toISOString(),
-                                })
-                              : null
-                          }
-                          // All sections: a woken thread can classify straight
-                          // into the settled tail (PR merged while snoozed), and
-                          // the wake signal must survive the trip. Still-snoozed
-                          // rows resolve to null on their own.
-                          wokeAt={threadWokeAt(thread, { now: snoozeNow })}
-                          isActive={routeRowThreadKey === threadKey}
-                          revealRef={routeRowThreadKey === threadKey ? revealActiveRow : undefined}
-                          isRouteThread={routeThreadKey === threadKey}
-                          openPullRequestsInRightPanel={routeThreadRef !== null}
-                          jumpLabel={showJumpHints ? (jumpLabelByKey.get(threadKey) ?? null) : null}
-                          currentEnvironmentId={primaryEnvironmentId}
-                          environmentLabel={environmentLabelById.get(thread.environmentId) ?? null}
-                          environmentMachine={
-                            environmentMachineById.get(thread.environmentId) ?? "server"
-                          }
-                          project={
-                            projectByKey.get(`${thread.environmentId}:${thread.projectId}`) ?? null
-                          }
-                          projectTitle={
-                            projectDisplayNameByKey.get(
-                              `${thread.environmentId}:${thread.projectId}`,
-                            ) ?? null
-                          }
-                          /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
-                          // Under a project header the card's repo line would only
-                          // repeat the header two rows up, once per card, so the
-                          // branch — what actually tells two threads on one project
-                          // apart — takes the whole line. Hidden rather than
-                          // dropped: assistive tech has no "two rows up".
-                          projectTitleHidden={underProjectHeader}
-                          /* fork:end sidebar-v2-project-grouping */
-                          /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
-                          hideProjectMark={!modePolicy.projectControls}
-                          /* fork:end fork-chat-mode */
-                          providerEntryByInstanceId={
-                            providerEntriesByEnvironment.get(thread.environmentId) ??
-                            EMPTY_PROVIDER_ENTRIES
-                          }
-                          timestampFormat={timestampFormat}
-                          onThreadClick={handleThreadClick}
-                          onThreadActivate={navigateToThread}
-                          onStartRename={startThreadRename}
-                          onRenameTitleChange={setRenamingTitle}
-                          onCommitRename={commitThreadRename}
-                          onCancelRename={cancelThreadRename}
-                          isRenaming={renamingThreadKey === threadKey}
-                          renamingTitle={renamingThreadKey === threadKey ? renamingTitle : ""}
-                          onContextMenu={handleThreadContextMenu}
-                          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                          onDiscardDraft={draftCaps.showDiscard ? discardDraftThread : null}
-                          /* fork:end sidebar-v2-draft-rows */
-                          onSettle={attemptSettle}
-                          onActionSweepStart={startActionSweep}
-                          onUnsettle={attemptUnsettle}
-                          onSnooze={attemptSnooze}
-                          onUnsnooze={attemptUnsnooze}
-                          onAcknowledgeWoke={acknowledgeWoke}
-                          /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                          onFileDropThreads={
-                            draftCaps.canReceiveFileDrop ? handleThreadFileDrop : undefined
-                          }
-                          /* fork:end sidebar-v2-draft-rows */
-                        />
-                      );
-                    };
                     /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
                        A split pair paints as one row at its first member;
                        splitModel (custom/splitThreads/sidebarSplitRows) decides. */
@@ -5754,9 +5878,16 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     for (const thread of renderedSettledThreads) {
                       items.push(renderThreadRow(thread, "settled"));
                     }
-                    return items;
+                    /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold
+                       The Threads row's label folds the whole list under it. */
+                    return threadsSectionCollapsed ? [] : items;
+                    /* fork:end sidebar-v2-threads-fold */
                   })()}
-                  {settledShelfExpanded && hiddenSettledCount > 0 ? (
+                  {settledShelfExpanded &&
+                  hiddenSettledCount > 0 &&
+                  /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
+                  !threadsSectionCollapsed ? (
+                    /* fork:end sidebar-v2-threads-fold */
                     <li
                       /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping */
                       data-fork-status-section={settledSectionShown ? "" : undefined}

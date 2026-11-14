@@ -9775,6 +9775,60 @@ it.layer(layerSharedApplicationDataPlaneTest)("snooze projection", (it) => {
     }),
   );
 
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  it.effect("never retitles a bot, whatever client sends its first message", () =>
+    Effect.gen(function* () {
+      const projects = yield* ProjectService.ProjectService;
+      const orchestrator = yield* Orchestrator.OrchestratorV2;
+      const projectId = ProjectId.make("runtime-layer-bot-project");
+      const threadId = ThreadId.make("runtime-layer-bot-thread");
+      yield* projects.create({
+        commandId: CommandId.make("runtime-layer-bot-project-create"),
+        projectId,
+        title: "Bots",
+        workspaceRoot: "/tmp/runtime-layer-bot-project",
+      });
+      yield* orchestrator.dispatch({
+        type: "thread.create",
+        createdBy: "user",
+        creationSource: "web",
+        commandId: CommandId.make("runtime-layer-bot-thread-create"),
+        threadId,
+        projectId,
+        title: "Inbox Bot",
+        modelSelection,
+        runtimeMode: "full-access",
+        interactionMode: "default",
+        branch: null,
+        worktreePath: null,
+      });
+      yield* orchestrator.dispatch({
+        type: "thread.tag.set",
+        commandId: CommandId.make("runtime-layer-bot-thread-tag"),
+        threadId,
+        tag: "bot",
+        tagged: true,
+      });
+      yield* orchestrator.dispatch({
+        type: "message.dispatch",
+        createdBy: "user",
+        creationSource: "mobile",
+        commandId: CommandId.make("runtime-layer-bot-message"),
+        threadId,
+        messageId: MessageId.make("runtime-layer-bot-message"),
+        text: "Check my inbox every morning.",
+        titleSeed: "Check my inbox every morning.",
+        attachments: [],
+        modelSelection,
+        dispatchMode: { type: "start_immediately" },
+      });
+      const bot = yield* orchestrator.getThreadProjection(threadId);
+      assert.equal(bot.thread.title, "Inbox Bot");
+      assert.isNull(bot.thread.titleRegeneration ?? null);
+    }),
+  );
+  /* fork:end fork-bots */
+
   it.effect("moves a thread into a project rooted at its own folder", () =>
     Effect.gen(function* () {
       const projects = yield* ProjectService.ProjectService;

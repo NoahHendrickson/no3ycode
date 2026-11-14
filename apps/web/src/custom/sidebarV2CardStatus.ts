@@ -32,6 +32,8 @@ import {
 } from "~/components/Sidebar.logic";
 import { parseTimestampDate } from "~/timestampFormat";
 
+import { hasUnreadBotReport, isBotThread } from "./bots/botThreads";
+
 import type { SidebarV2DotTone } from "./SidebarV2StatusIndicator";
 
 /** Every mark a card can draw, before labels. */
@@ -133,7 +135,10 @@ export function resolveSidebarV2CardStatus(
   input: { readonly lastVisitedAt: string | undefined; readonly wokeAt: string | null },
 ): SidebarV2CardStatus {
   const status = resolveSidebarThreadStatus(thread);
-  const isUnread = hasUnseenCompletion({ ...thread, lastVisitedAt: input.lastVisitedAt });
+  // A bot is unread while its latest report (never a quiet wake) is newer than your last visit.
+  const isUnread = isBotThread(thread.source)
+    ? hasUnreadBotReport(thread.source, input.lastVisitedAt)
+    : hasUnseenCompletion({ ...thread, lastVisitedAt: input.lastVisitedAt });
   const lastVisitedDate =
     input.lastVisitedAt === undefined ? null : parseTimestampDate(input.lastVisitedAt);
   const wokeAtDate = input.wokeAt === null ? null : parseTimestampDate(input.wokeAt);

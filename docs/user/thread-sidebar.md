@@ -404,6 +404,42 @@ side chats.
 On mobile, a thread lists its side chats above the composer. Tap one to open it and
 answer its questions.
 
+<!-- fork:begin fork-bots — see .fork/customizations.yaml#fork-bots -->
+
+## Bots
+
+A bot is a long-running agent with one ongoing conversation, such as one that
+checks your inbox each morning or watches a repository. Bots have their own
+section above **Threads** in the sidebar and never appear among your threads.
+
+Press the plus beside **Bots**, name the bot, and tell it its job in plain
+words. It writes the job down, schedules its own wake-ups, and asks for anything
+it needs, such as access to an account. Change the job later the same way, by
+telling it. To give a bot a different mascot, pick one under **Mascot** in its
+thread details, or right-click its card in the sidebar. The gear beside
+**Bots** has its own **Compact cards** option, separate from the one for
+threads.
+
+A bot keeps what it knows in its own folder, not in the conversation, and each
+scheduled wake starts a fresh session there. That keeps it consistent however
+long it runs. Send `/clear` in a bot's conversation to give your next message a
+fresh session too; the bot keeps its job and notes.
+
+A wake that finds nothing replies "Nothing to report." and stays silent: no
+notification and no unread mark. Deleting a bot's conversation also deletes its
+scheduled tasks. Its tasks are listed with the rest under **Automations**.
+
+Bots need the **No project** workspace and Claude. A new bot starts on Claude
+Sonnet, since every scheduled wake uses your plan even when there is nothing to
+report. Its wakes use whatever model its conversation is set to, so changing
+the model there changes it for its wakes too. The wakes it schedules for itself
+run at most every 15 minutes, and a few minutes later while you are chatting
+with it; change the interval for a task under **Automations**. Scheduled wakes only run while the environment is running, so keep it on or install the
+background service for a bot that should wake while the app is closed. Both
+section headings fold their section.
+
+<!-- fork:end fork-bots -->
+
 ## Snooze until later
 
 To change the choices in the snooze menu, open **Settings → Threads → Snooze options**.

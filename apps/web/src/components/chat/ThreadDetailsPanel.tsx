@@ -44,6 +44,9 @@ import {
   THREAD_DETAILS_PANEL_LABEL_CLASS,
 } from "./threadDetailsPanelStyles";
 import { Menu, MenuPopup } from "../ui/menu";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { BotMascotDetailsSection } from "../../custom/bots/BotMascotDetailsSection";
+/* fork:end fork-bots */
 
 const GitActionsControl = memo(BaseGitActionsControl);
 
@@ -290,6 +293,12 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                   showSideChats={visible.sideChats}
                 />
               ) : null}
+
+              {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+              {density !== "essential" && !props.draftId ? (
+                <BotMascotDetailsSection threadRef={activeThreadRef} />
+              ) : null}
+              {/* fork:end fork-bots */}
 
               {visible.usage ? <ThreadDetailsUsage {...props.usage} /> : null}
 

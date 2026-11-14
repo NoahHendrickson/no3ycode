@@ -23,6 +23,7 @@
 import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
+import { SidebarV2SectionCaret } from "./SidebarV2SectionLabel";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 import {
   SIDEBAR_V2_STATUS_SECTION_LABELS,
@@ -63,25 +64,14 @@ export function SidebarV2StatusSectionHeader(props: {
         <span className="shrink-0 font-semibold text-muted-foreground/60 tabular-nums">
           {props.count}
         </span>
-        <svg
-          aria-hidden
+        <SidebarV2SectionCaret
           data-fork-status-section-caret=""
-          viewBox="0 0 14 14"
-          fill="currentColor"
-          stroke="currentColor"
-          strokeWidth={1}
-          strokeLinejoin="round"
+          collapsed={props.collapsed}
           className={cn(
             "ms-auto size-3.5 shrink-0 text-muted-foreground",
             SIDEBAR_V2_TRAILING_OFFSET.statusCaret,
-            !props.collapsed && "rotate-180",
           )}
-        >
-          {/* An 11 x 5.5 caret, inset half the stroke so the round joins soften
-              the corners without growing it. Centred on the box, so the 180°
-              flip stays in place and the trailing offset still holds. */}
-          <path d="M2.71 4.75H11.29L7 9.04Z" />
-        </svg>
+        />
       </button>
     </li>
   );

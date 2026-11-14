@@ -39,6 +39,10 @@ import {
   type ThreadNotificationObservation,
 } from "./ThreadNotificationCoordinator.logic";
 import { toastManager } from "./ui/toast";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { createBotFailureAlerts } from "~/custom/bots/botFailureAlerts";
+import { isBotThread, isQuietBotCompletion } from "~/custom/bots/botThreads";
+/* fork:end fork-bots */
 
 interface NotificationState extends ThreadNotificationObservation {
   readonly raw: OrchestrationV2ThreadShell;
@@ -54,6 +58,9 @@ interface WatchedEnvironment {
   previous: Map<ThreadId, NotificationState>;
   reconnecting: boolean;
   readonly gate: ReturnType<typeof createThreadNotificationGate<ThreadId>>;
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  readonly botFailures: ReturnType<typeof createBotFailureAlerts<ThreadId>>;
+  /* fork:end fork-bots */
 }
 
 /**
@@ -274,11 +281,22 @@ export function startThreadNotifications(
       const requestId = needsAttention ? resolveBackgroundThreadRequest(thread).requestId : null;
       // Queued messages become the latest run while a request stays pending, so a request
       // with an id is keyed by that id alone and announces once.
-      const attention = !needsAttention
+      let attention = !needsAttention
         ? null
         : requestId !== null
           ? `${status}:${requestId}`
           : `${thread.latestRun?.runId ?? ""}:${status}`;
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         A bot that keeps failing the same way alerts once, not on every wake. */
+      if (isBotThread(rawThread)) {
+        attention = entry.botFailures.attention(rawThread.id, {
+          attention,
+          failed: status === "failed" || status === "limited",
+          succeeded: status === "ready" && thread.latestRun?.status === "completed",
+          error: rawThread.lastError ?? null,
+        });
+      }
+      /* fork:end fork-bots */
       const completed = status === "ready" && thread.latestRun?.status === "completed";
       const settled = completed && !monitorHoldsWakeCompletion(rawThread);
       const parsedCompletedAt = Date.parse(thread.latestRun?.completedAt ?? "");
@@ -300,10 +318,19 @@ export function startThreadNotifications(
     entry.reconnecting = false;
     entry.previous = next;
     entry.gate.retain(new Set(next.keys()));
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    entry.botFailures.retain(new Set(next.keys()));
+    /* fork:end fork-bots */
     for (const [prior, state] of changed) {
       entry.gate.observe(state.thread.id, prior, state, {
         archived: state.thread.archivedAt !== null,
-        quiet: state.raw.latestRunStopRequested === true,
+        quiet:
+          state.raw.latestRunStopRequested === true ||
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+             A bot's wake that brought no new report (the server's report skips quiet
+             replies) stays silent. */
+          (isBotThread(state.raw) && isQuietBotCompletion(state.raw, state.thread.latestRun)),
+        /* fork:end fork-bots */
       });
     }
   };
@@ -317,6 +344,9 @@ export function startThreadNotifications(
         const state = entry.previous.get(threadId);
         if (state) present(environmentId, state, kind);
       }),
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+      botFailures: createBotFailureAlerts<ThreadId>(),
+      /* fork:end fork-bots */
     };
     let threads: ReadonlyArray<OrchestrationV2ThreadShell> | null = null;
     const unsubscribeShell = registry.subscribe(

@@ -84,6 +84,9 @@ import { constantTimeEquals, verifyWebhookSignature } from "./webhookVerificatio
 import type { ScheduledTaskListRunsInput, ScheduledTaskListRunsResult } from "@t3tools/contracts";
 import { listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
 /* fork:end fork-scheduled-page */
+/* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
+import { forkDeferScheduledFire, forkScheduledFireHold } from "./forkScheduledWakeHold.ts";
+/* fork:end fork-scheduled-wake-hold */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
 const isScheduledTaskError = Schema.is(ScheduledTaskError);
@@ -1411,15 +1414,33 @@ export const layer = Layer.effect(
       yield* Effect.forEach(
         due,
         ({ task, dueAt }) =>
-          Effect.suspend(() =>
-            isMissedFixedTimeRun(task.schedule, dueAt, now)
-              ? rescheduleMissedRun(
-                  task,
-                  now,
-                  "missed",
-                  "Missed a scheduled run because the server was not running at that time.",
-                )
-              : runTask(task, "scheduled"),
+          Effect.suspend(
+            () =>
+              isMissedFixedTimeRun(task.schedule, dueAt, now)
+                ? rescheduleMissedRun(
+                    task,
+                    now,
+                    "missed",
+                    "Missed a scheduled run because the server was not running at that time.",
+                  )
+                : /* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
+                  forkScheduledFireHold({
+                    sql,
+                    task,
+                    nowMs,
+                    getThreadShell: threadManagement.getThreadShell,
+                  }).pipe(
+                    Effect.flatMap((hold) =>
+                      hold === "skip"
+                        ? rescheduleMissedRun(task, now)
+                        : hold === "defer"
+                          ? forkDeferScheduledFire(sql, task, nowMs).pipe(
+                              Effect.andThen(notifyChanged),
+                            )
+                          : runTask(task, "scheduled"),
+                    ),
+                  ),
+            /* fork:end fork-scheduled-wake-hold */
           ).pipe(
             Effect.catch((cause) =>
               Effect.logWarning("Scheduled task run failed", { taskId: task.id, cause }),
