@@ -1,11 +1,14 @@
 /**
- * The right panel's Music tab: a remote for ah ahh on this computer. What is playing, the
- * transport, the volume, the library's songs, playlists and artists, and ah ahh's queue. ah ahh does the
- * playing; nothing here streams audio. See .fork/customizations.yaml#fork-music-panel.
+ * The music strip floating above the sidebar footer: a remote for ah ahh on this computer. Folded,
+ * it is the transport and the volume; expanded, it adds what is playing and the library's songs,
+ * playlists and artists, and ah ahh's queue. ah ahh does the playing; nothing here streams audio.
+ * See .fork/customizations.yaml#fork-music-panel.
  */
 import {
   ChevronLeftIcon,
   ListMusicIcon,
+  Maximize2Icon,
+  Minimize2Icon,
   MusicIcon,
   PauseIcon,
   PlayIcon,
@@ -16,18 +19,14 @@ import {
   SkipForwardIcon,
   UserRoundIcon,
   Volume2,
+  VolumeOff,
 } from "lucide-react";
 import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Button } from "~/components/ui/button";
+import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { Toggle } from "~/components/ui/toggle";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "~/components/ui/empty";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
 import { SegmentedTab, SegmentedTabs } from "../SegmentedTabs";
@@ -54,6 +53,7 @@ import {
   showMusicTab,
   subscribeMusic,
 } from "./musicStore";
+import { setMusicStripMode, useMusicStripMode } from "./musicStripMode";
 
 type ReadyState = Extract<MusicState, { status: "ready" }>;
 
@@ -81,24 +81,22 @@ function MusicUnavailable(props: {
             description: "Your music shows up here once it's running.",
           };
   return (
-    <Empty size="compact">
-      <EmptyMedia variant="icon">
-        <MusicIcon />
-      </EmptyMedia>
-      <EmptyHeader>
-        <EmptyTitle>{copy.title}</EmptyTitle>
-        <EmptyDescription>{copy.description}</EmptyDescription>
-      </EmptyHeader>
+    <div className="flex min-w-0 items-center gap-2 p-1.5">
+      <Artwork src={null} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs font-medium">{copy.title}</div>
+        <div className="truncate text-xs text-muted-foreground">{copy.description}</div>
+      </div>
       {props.opening ? null : canOpen ? (
-        <Button size="sm" variant="outline" onClick={() => void openMusic()}>
-          Open ah ahh
+        <Button size="xs" variant="outline" onClick={() => void openMusic()}>
+          Open
         </Button>
       ) : (
-        <Button size="sm" variant="outline" onClick={retryMusic}>
+        <Button size="xs" variant="outline" onClick={retryMusic}>
           Try again
         </Button>
       )}
-    </Empty>
+    </div>
   );
 }
 
@@ -204,18 +202,27 @@ function PlaybackBar(props: {
 const nextRepeat = { 0: 2, 2: 1, 1: 0 } as const satisfies Record<MusicRepeat, MusicRepeat>;
 const repeatLabel = { 0: "Repeat off", 2: "Repeat all", 1: "Repeat one" } as const;
 
-function NowPlaying(props: { state: ReadyState; volume: number }) {
-  const { state, volume } = props;
+/** The song's cover, or a note when there is none; the strip's leading mark. */
+function Artwork({ src }: { src: string | null }) {
+  return src === null ? (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <MusicIcon className="size-4" />
+    </span>
+  ) : (
+    <img
+      alt=""
+      className="size-8 shrink-0 rounded-md bg-muted object-cover"
+      draggable={false}
+      src={src}
+    />
+  );
+}
+
+/** Expanded only: what is playing, where it is, shuffle and repeat. */
+function NowPlaying({ state }: { state: ReadyState }) {
   return (
-    <div className="flex shrink-0 flex-col gap-2 p-3">
-      <div className="flex min-w-0 items-center gap-2.5">
-        {state.artwork === null ? (
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            <MusicIcon className="size-4" />
-          </span>
-        ) : (
-          <img alt="" className="size-10 shrink-0 rounded-md object-cover" src={state.artwork} />
-        )}
+    <div className="flex shrink-0 flex-col gap-2 p-2.5">
+      <div className="flex min-w-0 items-center gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium">{state.title ?? "Nothing playing"}</div>
           <div className="truncate text-xs text-muted-foreground">
@@ -224,16 +231,6 @@ function NowPlaying(props: { state: ReadyState; volume: number }) {
               : [state.artist, state.album].filter(Boolean).join(" · ")}
           </div>
         </div>
-      </div>
-      {state.title !== null && state.durationMs > 0 ? (
-        <PlaybackBar
-          durationMs={state.durationMs}
-          playing={state.playing}
-          positionAt={state.positionAt}
-          positionMs={state.positionMs}
-        />
-      ) : null}
-      <div className="flex min-w-0 items-center gap-1">
         <Toggle
           aria-label={state.shuffle ? "Shuffle on" : "Shuffle off"}
           onPressedChange={(shuffle) => sendMusic({ action: "shuffle", value: shuffle })}
@@ -243,30 +240,6 @@ function NowPlaying(props: { state: ReadyState; volume: number }) {
         >
           <ShuffleIcon className="size-3.5" />
         </Toggle>
-        <Button
-          aria-label="Previous"
-          size="icon-xs"
-          variant="ghost"
-          onClick={() => sendMusic({ action: "previous" })}
-        >
-          <SkipBackIcon />
-        </Button>
-        <Button
-          aria-label={state.playing ? "Pause" : "Play"}
-          size="icon-xs"
-          variant="ghost"
-          onClick={() => sendMusic({ action: "toggle" })}
-        >
-          {state.playing ? <PauseIcon /> : <PlayIcon />}
-        </Button>
-        <Button
-          aria-label="Next"
-          size="icon-xs"
-          variant="ghost"
-          onClick={() => sendMusic({ action: "next" })}
-        >
-          <SkipForwardIcon />
-        </Button>
         <Toggle
           aria-label={repeatLabel[state.repeat]}
           onPressedChange={() => sendMusic({ action: "repeat", value: nextRepeat[state.repeat] })}
@@ -280,17 +253,102 @@ function NowPlaying(props: { state: ReadyState; volume: number }) {
             <RepeatIcon className="size-3.5" />
           )}
         </Toggle>
-        <Volume2 className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
-        <input
-          aria-label="Volume"
-          className={SLIDER_CLASS}
-          max={100}
-          min={0}
-          onChange={(event) => setMusicVolume(Number(event.currentTarget.value) / 100)}
-          style={{ "--fill": `${Math.round(volume * 100)}%` } as CSSProperties}
-          type="range"
-          value={Math.round(volume * 100)}
+      </div>
+      {state.title !== null && state.durationMs > 0 ? (
+        <PlaybackBar
+          durationMs={state.durationMs}
+          playing={state.playing}
+          positionAt={state.positionAt}
+          positionMs={state.positionMs}
         />
+      ) : null}
+    </div>
+  );
+}
+
+function VolumeButton({ volume }: { volume: number }) {
+  const percent = Math.round(volume * 100);
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<Button aria-label={`Volume ${percent}%`} size="icon-sm" variant="ghost" />}
+      >
+        {percent === 0 ? <VolumeOff /> : <Volume2 />}
+      </PopoverTrigger>
+      <PopoverPopup align="end" padding="compact" side="top">
+        <div className="flex w-40 items-center gap-2">
+          <input
+            aria-label="Volume"
+            className={SLIDER_CLASS}
+            max={100}
+            min={0}
+            onChange={(event) => setMusicVolume(Number(event.currentTarget.value) / 100)}
+            style={{ "--fill": `${percent}%` } as CSSProperties}
+            type="range"
+            value={percent}
+          />
+          <span className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+            {percent}
+          </span>
+        </div>
+      </PopoverPopup>
+    </Popover>
+  );
+}
+
+/** The strip itself, folded or not: cover, previous, play or pause, next, volume, expand. */
+function Transport(props: { state: ReadyState; volume: number; expanded: boolean }) {
+  const { state, volume, expanded } = props;
+  return (
+    // Equal side columns, so the transport centres on the card rather than between the cover and the
+    // two buttons on the right. A sidebar too narrow for that (it goes down to 208px) drops the cover.
+    <div className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-1 p-1.5 @max-[14.5rem]/strip:grid-cols-[auto_1fr]">
+      <div className="@max-[14.5rem]/strip:hidden">
+        <Artwork src={state.artwork} />
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          aria-label="Previous"
+          size="icon-sm"
+          variant="ghost"
+          onClick={() => sendMusic({ action: "previous" })}
+        >
+          <SkipBackIcon />
+        </Button>
+        <Button
+          aria-label={state.playing ? "Pause" : "Play"}
+          size="icon-sm"
+          variant="ghost"
+          onClick={() => sendMusic({ action: "toggle" })}
+        >
+          {state.playing ? <PauseIcon /> : <PlayIcon />}
+        </Button>
+        <Button
+          aria-label="Next"
+          size="icon-sm"
+          variant="ghost"
+          onClick={() => sendMusic({ action: "next" })}
+        >
+          <SkipForwardIcon />
+        </Button>
+      </div>
+      <div className="flex items-center justify-end gap-1">
+        <VolumeButton volume={volume} />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label={expanded ? "Collapse music" : "Expand music"}
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setMusicStripMode(expanded ? "open" : "expanded")}
+              />
+            }
+          >
+            {expanded ? <Minimize2Icon /> : <Maximize2Icon />}
+          </TooltipTrigger>
+          <TooltipPopup side="top">{expanded ? "Collapse" : "Playlists and queue"}</TooltipPopup>
+        </Tooltip>
       </div>
     </div>
   );
@@ -500,28 +558,61 @@ const TABS: ReadonlyArray<{ readonly value: MusicTab; readonly label: string }> 
   { value: "upNext", label: "Up Next" },
 ];
 
-export function MusicPanel() {
+/**
+ * The card is a step off the sidebar toward its ink, and restates every ink its controls read (the
+ * contrast ones too, which text utilities use) from the sidebar's own pair, so palettes whose
+ * sidebar is the opposite of their panel ink it to match.
+ */
+const CARD_CLASS = cn(
+  "[--fork-music-ink:var(--sidebar-foreground)]",
+  "[--fork-music-muted:color-mix(in_srgb,var(--fork-music-ink)_65%,var(--sidebar))]",
+  "[--fork-music-step:color-mix(in_srgb,var(--fork-music-ink)_14%,var(--sidebar))]",
+  "[--foreground:var(--fork-music-ink)] [--contrast-foreground:var(--fork-music-ink)] [--accent-foreground:var(--fork-music-ink)]",
+  "[--muted-foreground:var(--fork-music-muted)] [--contrast-muted-foreground:var(--fork-music-muted)]",
+  "[--accent:var(--fork-music-step)] [--muted:var(--fork-music-step)] [--border:var(--fork-music-step)] [--contrast-border:var(--fork-music-step)]",
+  "[--background:var(--sidebar)]",
+  "@container/strip flex min-w-0 flex-col overflow-hidden rounded-xl bg-(--fork-music-card) text-foreground shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
+  "transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0 motion-reduce:transition-none",
+);
+
+/** The selected tab is the sidebar's own fill in its ink; the tabs' dark-mode white would vanish on a light sidebar. */
+const TAB_CLASS =
+  "min-w-0 flex-1 px-1 dark:data-pressed:bg-background dark:data-pressed:text-foreground";
+
+/** Mounted only while the strip shows, so ah ahh is followed only then. */
+function MusicStripCard({ expanded }: { expanded: boolean }) {
   const snapshot = useSyncExternalStore(subscribeMusic, getMusicSnapshot);
   const { state, sentVolume, upNext, tab, stacks, opening, openFailed } = snapshot;
   if (state === null || state.status !== "ready") {
     // ah ahh answers within a frame or two; a spinner would only flash.
     if (state === null && !opening) return null;
     return (
-      <MusicUnavailable
-        openFailed={openFailed}
-        opening={opening}
-        status={state === null ? "closed" : state.status}
-      />
+      <div className={CARD_CLASS} data-fork-music-strip="">
+        <MusicUnavailable
+          openFailed={openFailed}
+          opening={opening}
+          status={state === null ? "closed" : state.status}
+        />
+      </div>
+    );
+  }
+  const volume = sentVolume ?? state.volume;
+  if (!expanded) {
+    return (
+      <div className={CARD_CLASS} data-fork-music-strip="">
+        <Transport expanded={false} state={state} volume={volume} />
+      </div>
     );
   }
   const stack = tab === "upNext" ? null : stacks[tab];
   const top = stack?.at(-1) ?? null;
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col" data-fork-music-panel="">
-      <NowPlaying state={state} volume={sentVolume ?? state.volume} />
-      <div className="flex shrink-0 border-t px-3 py-2">
+    <div className={CARD_CLASS} data-fork-music-strip="expanded">
+      <NowPlaying state={state} />
+      <div className="flex shrink-0 border-t px-2 py-2">
         <SegmentedTabs
           aria-label="Music lists"
+          className="w-full"
           onValueChange={(value) => {
             const next = TABS.find((entry) => entry.value === value[0]);
             if (next) showMusicTab(next.value);
@@ -529,16 +620,26 @@ export function MusicPanel() {
           value={[tab]}
         >
           {TABS.map((entry) => (
-            <SegmentedTab key={entry.value} value={entry.value}>
+            <SegmentedTab className={TAB_CLASS} key={entry.value} value={entry.value}>
               {entry.label}
             </SegmentedTab>
           ))}
         </SegmentedTabs>
       </div>
       {stack !== null && top !== null && stack.length > 1 ? <SourceHeader opened={top} /> : null}
-      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
+      {/* A fixed height, so switching lists never moves the strip's controls. */}
+      <div className="h-[min(20rem,40vh)] min-h-0 overflow-y-auto px-1 pb-1">
         {top === null ? <UpNext upNext={upNext} /> : <Listing listing={top} state={state} />}
+      </div>
+      <div className="border-t">
+        <Transport expanded state={state} volume={volume} />
       </div>
     </div>
   );
+}
+
+export function SidebarMusicStrip() {
+  const mode = useMusicStripMode();
+  if (mode === "closed" || readMusicBridge() === null) return null;
+  return <MusicStripCard expanded={mode === "expanded"} />;
 }

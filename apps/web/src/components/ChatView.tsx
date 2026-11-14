@@ -211,9 +211,6 @@ import { SplitPaneHeaderControls } from "~/custom/splitThreads/SplitPaneHeaderCo
 import { toastManager } from "./ui/toast";
 import { projectScriptIdFromCommand } from "~/projectScripts";
 import { newMessageId } from "~/lib/utils";
-/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-import { useMusicKeepOpenCarry } from "~/custom/music/musicKeepOpen";
-/* fork:end fork-music-panel */
 /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
 import { useDesignPanelRoom } from "~/custom/designMode/designPanelRoom";
 /* fork:end fork-design-mode */
@@ -1232,9 +1229,6 @@ export default function ChatView(props: ChatViewProps) {
       ? scopeProjectRef(activeThreadEnvironmentId, activeThreadProjectId)
       : null;
   const activeProject = useProject(activeProjectRef);
-  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-  useMusicKeepOpenCarry(activeThreadRef, isServerThread && activeProject !== null && !embedded);
-  /* fork:end fork-music-panel */
   const activeProjectSettings = resolveProjectSettings(
     settings,
     activeProject?.id ?? null,
@@ -3592,9 +3586,6 @@ export default function ChatView(props: ChatViewProps) {
     onToggleTerminal: toggleTerminalVisibilityStable,
     onToggleThreadPanel: toggleThreadPanelStable,
     onToggleRightPanel: toggleRightPanelStable,
-    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-    musicThreadRef: activeThreadRef,
-    /* fork:end fork-music-panel */
     /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
     botThreadsThreadRef: activeThreadRef,
     /* fork:end fork-bot-work-threads */

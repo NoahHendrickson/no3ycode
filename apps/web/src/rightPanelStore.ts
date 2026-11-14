@@ -22,9 +22,6 @@ const RIGHT_PANEL_KINDS = [
   "pull-request",
   "pull-requests",
   "side-chat",
-  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-  "music",
-  /* fork:end fork-music-panel */
 ] as const;
 export type RightPanelKind = (typeof RIGHT_PANEL_KINDS)[number];
 
@@ -81,10 +78,7 @@ export type RightPanelSurface =
       detailTab?: PullRequestDetailTab;
     }
   | { id: "pull-requests"; kind: "pull-requests" }
-  | { id: `side-chat:${string}`; kind: "side-chat"; threadId: ThreadId }
-  /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-  | { id: "music"; kind: "music" };
-/* fork:end fork-music-panel */
+  | { id: `side-chat:${string}`; kind: "side-chat"; threadId: ThreadId };
 
 const RIGHT_PANEL_STORAGE_KEY = "t3code:right-panel-state:v2";
 const RIGHT_PANEL_STORAGE_VERSION = 14;
@@ -231,10 +225,6 @@ const singletonSurface = (
       return { id: "pull-requests", kind };
     case "device":
       return { id: "device", kind };
-    /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
-    case "music":
-      return { id: "music", kind };
-    /* fork:end fork-music-panel */
   }
 };
 

@@ -2978,3 +2978,20 @@
   background: var(--fork-sidebar-rail-accent);
   color: var(--fork-sidebar-rail-accent-ink);
 }
+
+/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel
+   The music strip's fill, a step off the sidebar toward its ink (custom/music/MusicStrip). Its
+   button takes that fill and ink while the strip is open, so the two read as one piece. */
+:root[data-fork="noahhendrickson-t3code"] [data-slot="sidebar-footer"] {
+  --fork-music-card: color-mix(in srgb, var(--sidebar-foreground) 7%, var(--sidebar));
+
+  & [data-fork-music-toggle][aria-pressed="true"] {
+    background-color: var(--fork-music-card);
+    color: var(--sidebar-foreground);
+
+    & > svg {
+      color: var(--sidebar-foreground);
+    }
+  }
+}
+/* fork:end fork-music-panel */

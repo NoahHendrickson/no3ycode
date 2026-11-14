@@ -1,7 +1,7 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard for .fork/customizations.yaml#fork-music-panel. Pins the joins a sync could
- * drop (two channels, one surface kind, the button) and runs the store against a fake
+ * drop (two channels, the sidebar footer's button and strip) and runs the store against a fake
  * bridge. The desktop's client for ah ahh has its own test beside it.
  */
 
@@ -22,6 +22,8 @@ import {
   showMusicTab,
   subscribeMusic,
 } from "../custom/music/musicStore";
+import { withoutRetiredMusicTabs } from "../custom/music/musicStripMode";
+import type { ThreadRightPanelState } from "../rightPanelStore";
 
 function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -31,12 +33,8 @@ const desktopMethod = readSibling("../../../desktop/src/fork/ForkMusic.ts");
 const desktopHandlers = readSibling("../../../desktop/src/ipc/DesktopIpcHandlers.ts");
 const desktopPreload = readSibling("../../../desktop/src/preload.ts");
 const rightPanelStore = readSibling("../rightPanelStore.ts");
-const surfaceContent = readSibling("../components/chat/RightPanelSurfaceContent.tsx");
-const rightPanelTabs = readSibling("../components/RightPanelTabs.tsx");
-const chatRightPanel = readSibling("../components/chat/ChatRightPanel.tsx");
-const layoutControls = readSibling("../components/chat/PanelLayoutControls.tsx");
-const chatView = readSibling("../components/ChatView.tsx");
-const toggle = readSibling("../custom/music/MusicPanelToggle.tsx");
+const sidebarChrome = readSibling("../components/sidebar/SidebarChrome.tsx");
+const button = readSibling("../custom/music/SidebarMusicButton.tsx");
 const customizations = readSibling("../../../../.fork/customizations.yaml");
 
 const fenced = (body: string) =>
@@ -91,29 +89,50 @@ describe("fork guard: fork-music-panel", () => {
     expect(desktopMethod).toContain('AH_AHH_BUNDLE_ID = "dev.noey.ahahh"');
     expect(desktopMethod).toContain('["-g", "-j", "-b", AH_AHH_BUNDLE_ID]');
     expect(desktopPreload).toMatch(fenced('canOpen: clientPlatform === "darwin",'));
-    expect(toggle).toContain("if (!open) void openMusic();");
+    expect(button).toContain("if (!open) void openMusic();");
     // The last panel to close ends the stream, a reloaded page counts as closed, nothing polls.
     expect(desktopMethod).toMatch(/if \(followers\.size > 0\) return;\s*stopStream\?\.\(\);/u);
     expect(desktopMethod).toContain('contents.on("did-start-navigation"');
     expect(desktopMethod).not.toMatch(/setInterval|setTimeout/u);
   });
 
-  it("is a right panel tab opened from a button beside the right panel toggle", () => {
-    expect(rightPanelStore).toMatch(fenced('"music",'));
-    expect(rightPanelStore).toMatch(fenced('return \\{ id: "music", kind \\};'));
-    expect(surfaceContent).toMatch(fenced('case "music":\\s*return <MusicPanel />;'));
-    expect(rightPanelTabs).toMatch(fenced('case "music":\\s*return <MusicIcon'));
-    // Open, it is one panel across threads, so it keeps one width.
-    expect(chatRightPanel).toMatch(fenced("widthStorageKey: sharedWidthKey,"));
-    expect(layoutControls).toMatch(fenced("<MusicPanelToggle"));
-    expect(layoutControls.indexOf("<MusicPanelToggle")).toBeLessThan(
-      layoutControls.indexOf("data-right-panel-toggle"),
+  it("is a strip above the sidebar footer, opened from a button beside Settings", () => {
+    expect(sidebarChrome).toMatch(fenced("<SidebarMusicStrip />"));
+    expect(sidebarChrome).toMatch(fenced("<SidebarMusicButton />"));
+    // The strip sits directly above the footer's icon row, the button right after Settings.
+    expect(sidebarChrome.indexOf("<SidebarMusicStrip />")).toBeLessThan(
+      sidebarChrome.indexOf("<SidebarUtilityMenu hideUsage={hideUsage} />"),
     );
-    expect(chatView).toMatch(fenced("musicThreadRef: activeThreadRef,"));
-    // Music is open or closed on every thread at once; the view, not the button, owns that.
-    expect(chatView).toMatch(fenced("useMusicKeepOpenCarry\\(activeThreadRef, isServerThread"));
-    expect(toggle).toContain("if (readMusicBridge() === null) return null;");
-    expect(toggle).toContain('.toggle(threadRef, "music")');
+    expect(sidebarChrome.indexOf('label="Settings"')).toBeLessThan(
+      sidebarChrome.indexOf("<SidebarMusicButton />"),
+    );
+    expect(button).toContain("if (readMusicBridge() === null) return null;");
+    // No longer a right panel tab.
+    expect(rightPanelStore).not.toContain('"music"');
+  });
+
+  it("drops the Music tabs threads kept from when it was a right panel tab", () => {
+    const panel = (surfaces: ReadonlyArray<string>, active: string, isOpen = true) =>
+      ({
+        isOpen,
+        activeSurfaceId: active,
+        surfaces: surfaces.map((id) => ({ id, kind: id })),
+      }) as unknown as ThreadRightPanelState;
+    const kept = panel(["diff"], "diff");
+    expect(withoutRetiredMusicTabs({ a: kept })).toBeNull();
+    expect(
+      withoutRetiredMusicTabs({
+        showing: panel(["diff", "music"], "music"),
+        behind: panel(["music", "files"], "files"),
+        alone: panel(["music"], "music"),
+        kept,
+      }),
+    ).toEqual({
+      showing: panel(["diff"], "diff", false),
+      behind: panel(["files"], "files"),
+      alone: { isOpen: false, activeSurfaceId: null, surfaces: [] },
+      kept,
+    });
   });
 
   it("offers nothing without the desktop bridge", () => {
