@@ -133,6 +133,9 @@ import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
 import { forkBotWakePrompt } from "../scheduledTasks/forkBotTasks.ts";
 import { forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { linkForkBotWork } from "../orchestration-v2/forkBotWork.ts";
+/* fork:end fork-bot-work-threads */
 
 const DEFAULT_WAIT_TIMEOUT_MS = 10 * 60 * 1_000;
 const MAX_WAIT_TIMEOUT_MS = 60 * 60 * 1_000;
@@ -2933,6 +2936,13 @@ const make = Effect.gen(function* () {
                     ),
                   ),
                 );
+              /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+              yield* linkForkBotWork(threadManagement, {
+                commandId,
+                threadId,
+                launchedBy: scope.thread.threadId,
+              });
+              /* fork:end fork-bot-work-threads */
               // A receipt can appear after target resolution; use the committed thread's selection.
               const resolvedModelSelection = (yield* threadManagement
                 .getThreadRecords(threadId, [])
