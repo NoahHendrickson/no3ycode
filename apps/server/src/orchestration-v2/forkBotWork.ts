@@ -4,21 +4,32 @@
  * a bot's subagent) inherits it, so clients keep the bot's work off the sidebar and in its panel.
  */
 import { CommandId, type OrchestrationV2ThreadShell, type ThreadId } from "@t3tools/contracts";
+import { FORK_BOT_WORK_TAG_PREFIX, isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as Effect from "effect/Effect";
 
-import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import type { ThreadManagementService } from "./ThreadManagementService.ts";
 
-/** Must match the web client's `BOT_WORK_TAG_PREFIX` (custom/bots/botWork). */
-const FORK_BOT_WORK_TAG_PREFIX = "bot-work:";
 /** The thread tag schema's limit (contracts threadTags). */
 const THREAD_TAG_MAX_LENGTH = 64;
+
+/** The thread `threadId` acts for: a subagent or side chat stands in for the thread it runs
+    under, so a bot's subagent acts for the bot. */
+export const forkBotActingShell = Effect.fn("ThreadLaunchService.forkBotActingShell")(function* (
+  threads: ThreadManagementService["Service"],
+  threadId: ThreadId,
+) {
+  const caller = yield* threads.getThreadShell(threadId);
+  return caller === null ||
+    (caller.lineage.relationshipToParent !== "subagent" && caller.lineage.sideChat !== true)
+    ? caller
+    : yield* threads.getThreadShell(caller.lineage.rootThreadId);
+});
 
 /** The tag a thread launched by `launcher` carries, or null when the launcher is no bot's. */
 function forkBotWorkTag(launcher: Pick<OrchestrationV2ThreadShell, "id" | "tags">): string | null {
   const inherited = launcher.tags?.find((tag) => tag.startsWith(FORK_BOT_WORK_TAG_PREFIX));
   if (inherited !== undefined) return inherited;
-  if (launcher.tags?.includes(FORK_BOT_THREAD_TAG) !== true) return null;
+  if (!isForkBotThread(launcher.tags)) return null;
   const tag = `${FORK_BOT_WORK_TAG_PREFIX}${launcher.id}`;
   // Bots are made with uuid ids (43 characters here); a longer id simply goes unlinked.
   return tag.length <= THREAD_TAG_MAX_LENGTH ? tag : null;
@@ -35,13 +46,7 @@ export const linkForkBotWork = Effect.fn("ThreadLaunchService.linkForkBotWork")(
       readonly launchedBy: ThreadId;
     },
   ) {
-    const caller = yield* threads.getThreadShell(input.launchedBy);
-    // A subagent or side chat stands in for the thread it runs under.
-    const launcher =
-      caller === null ||
-      (caller.lineage.relationshipToParent !== "subagent" && caller.lineage.sideChat !== true)
-        ? caller
-        : yield* threads.getThreadShell(caller.lineage.rootThreadId);
+    const launcher = yield* forkBotActingShell(threads, input.launchedBy);
     const tag = launcher === null ? null : forkBotWorkTag(launcher);
     if (tag === null) return;
     yield* threads.dispatch({

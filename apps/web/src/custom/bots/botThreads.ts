@@ -3,7 +3,7 @@
  * that runs in its own folder; the folder, not the transcript, holds what it knows.
  */
 import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
-import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
+import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
@@ -19,7 +19,7 @@ export const BOT_QUIET_REPLY = "Nothing to report.";
 export type BotShell = Pick<OrchestrationV2ThreadShell, "tags" | "latestVisibleMessage">;
 
 export function isBotThread(shell: Pick<BotShell, "tags">): boolean {
-  return shell.tags?.includes(FORK_BOT_THREAD_TAG) === true;
+  return isForkBotThread(shell.tags);
 }
 
 /** A bot the sidebar lists: an archived bot's work is ordinary threads again, everywhere. */

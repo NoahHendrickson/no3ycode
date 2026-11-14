@@ -7,18 +7,16 @@
  */
 import type { OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import { FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
 
 import { isListedBot } from "./botThreads";
-
-/** Must match the server's `FORK_BOT_WORK_TAG_PREFIX`. */
-export const BOT_WORK_TAG_PREFIX = "bot-work:";
 
 type TaggedShell = { readonly source: Pick<OrchestrationV2ThreadShell, "tags"> };
 
 /** The id of the bot a thread works for, or null for every other thread. */
 export function botWorkOwnerId(shell: Pick<OrchestrationV2ThreadShell, "tags">): ThreadId | null {
-  const tag = shell.tags?.find((candidate) => candidate.startsWith(BOT_WORK_TAG_PREFIX));
-  return tag === undefined ? null : (tag.slice(BOT_WORK_TAG_PREFIX.length) as ThreadId);
+  const tag = shell.tags?.find((candidate) => candidate.startsWith(FORK_BOT_WORK_TAG_PREFIX));
+  return tag === undefined ? null : (tag.slice(FORK_BOT_WORK_TAG_PREFIX.length) as ThreadId);
 }
 
 /** The thread a thread belongs under: a subagent's parent, else the bot a bot's work names. The
