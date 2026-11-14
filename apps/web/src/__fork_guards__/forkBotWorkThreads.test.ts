@@ -354,6 +354,8 @@ describe("fork guard: fork-bot-work-threads", () => {
     const botOpen = () =>
       useBotThreadsPanelStore.getState().openByBotKey[scopedThreadKey(botRef)] === true;
     const toggle = () => toggleBotThreadsPanel({ botRef, threadRef, trigger: null });
+    useRightPanelStore.setState({ byThreadKey: {} });
+    useBotThreadsPanelStore.setState({ openByBotKey: {} });
     useRightPanelStore.getState().open(threadRef, "diff");
 
     useRightPanelStore.getState().setMaximized(threadRef, true);

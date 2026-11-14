@@ -16,6 +16,7 @@ function readSibling(relativePath: string): string {
 
 const chatView = readSibling("../components/ChatView.tsx");
 const chatRightPanel = readSibling("../components/chat/ChatRightPanel.tsx");
+const rightPanelTabs = readSibling("../components/RightPanelTabs.tsx");
 const headerControls = readSibling("../custom/stageColumns/StageHeaderControls.tsx");
 const threadsPanel = readSibling("../custom/bots/BotThreadsPanel.tsx");
 const inlet = readSibling("../theme.custom.inlet.css");
@@ -39,6 +40,9 @@ describe("fork guard: fork-stage-columns", () => {
     expect(chatView).toMatch(
       /layoutControls=\{[\s\S]*?\{forkControlsInRightPanel \? stageControlCluster : null\}\s*<RightPanelMaximizeControl/u,
     );
+    // The details popover hangs from the tab bar the panel's controls sit in.
+    expect(chatView).toContain('closest<HTMLElement>("[data-right-panel-tabbar]")');
+    expect(rightPanelTabs).toMatch(/data-right-panel-tabbar[\s\S]*?\{props\.layoutControls\}/u);
   });
 
   it("gives each panel's header its own close button", () => {
