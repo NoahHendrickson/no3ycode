@@ -427,6 +427,10 @@ import { useIsChatThread } from "~/custom/useChatMode";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { BotThreadsPanel } from "~/custom/bots/BotThreadsPanel";
+import { useBotThreadsPanelOpen, useBotWorkOwner } from "~/custom/bots/useBotWorkOwner";
+/* fork:end fork-bot-work-threads */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -988,11 +992,18 @@ export default function ChatView(props: ChatViewProps) {
           }),
     };
   })();
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     A bot's work names its bot where a subagent names its parent, one click back. */
+  const forkBotWorkOwner = useBotWorkOwner(
+    activeThread ? scopeThreadRef(activeThread.environmentId, activeThread.id) : null,
+  );
+  /* fork:end fork-bot-work-threads */
   // The header's breadcrumb opens a parent in this environment only.
   const headerParentThreadLink =
     parentSubagentThreadRef === null
-      ? null
-      : {
+      ? /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+        forkBotWorkOwner
+      : /* fork:end fork-bot-work-threads */ {
           threadId: parentSubagentThreadRef.threadId,
           title: parentSubagentThread?.title ?? "Parent thread",
         };
@@ -1184,6 +1195,16 @@ export default function ChatView(props: ChatViewProps) {
   const rightPanelMaximized =
     !embedded && canMaximizeRightPanel && rightPanelState.maximized === true;
   const inlineRightPanelOwnsTitleBar = rightPanelOpen && !shouldUsePlanSidebarSheet;
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     A bot's Threads panel is a column of its own: held shut while the right panel is maximized,
+     the pane floats, or the right panel holds the one sheet slot. */
+  const forkBotThreadsHeld =
+    rightPanelMaximized || splitPane.floating || (prefersPlanSidebarSheet && rightPanelOpen);
+  const forkBotThreadsInline =
+    useBotThreadsPanelOpen(isForkBotThread && !embedded ? activeThreadRef : null) &&
+    !forkBotThreadsHeld &&
+    !prefersPlanSidebarSheet;
+  /* fork:end fork-bot-work-threads */
   const [threadPanelPopoverHandle] = useState(PopoverCreateHandle);
   const [chatCanvasStore] = useState(createChatCanvasStore);
 
@@ -3560,6 +3581,9 @@ export default function ChatView(props: ChatViewProps) {
     /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
     musicThreadRef: activeThreadRef,
     /* fork:end fork-music-panel */
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+    botThreadsThreadRef: activeThreadRef,
+    /* fork:end fork-bot-work-threads */
   } satisfies PanelLayoutControlsProps;
   const panelToggleControls = (
     <PanelLayoutControls
@@ -3760,6 +3784,10 @@ export default function ChatView(props: ChatViewProps) {
                     "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center px-3 sm:px-5",
                     reserveTitleBarControlInset &&
                       !inlineRightPanelOwnsTitleBar &&
+                      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+                         The Threads panel's header keeps clear of the native controls instead. */
+                      !forkBotThreadsInline &&
+                      /* fork:end fork-bot-work-threads */
                       /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
                       // Native window controls sit over the right pane only,
                       // and never over the floating window.
@@ -4444,6 +4472,19 @@ export default function ChatView(props: ChatViewProps) {
         )}
       </div>
 
+      {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
+      {isForkBotThread && activeThreadRef && !embedded ? (
+        <BotThreadsPanel
+          threadRef={activeThreadRef}
+          workspaceLayoutElement={workspaceLayoutElement}
+          sheet={prefersPlanSidebarSheet}
+          held={forkBotThreadsHeld}
+          rightmost={!inlineRightPanelOwnsTitleBar}
+          animationsActive={panelAnimationsActive}
+          animationDurationMs={panelAnimationDurationMs}
+        />
+      ) : null}
+      {/* fork:end fork-bot-work-threads */}
       {rightPanelPresent && activeThreadRef && !embedded ? (
         <ChatRightPanel
           sheet={shouldUsePlanSidebarSheet}

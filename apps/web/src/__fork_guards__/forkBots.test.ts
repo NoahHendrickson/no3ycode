@@ -221,7 +221,7 @@ describe("fork guard: fork-bots", () => {
 
   it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
-    expect(sidebar).toContain('renderOneThreadRow(bot, "active", { compact: compactBots })');
+    expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+compact: compactBots,/);
     expect(sidebar).toContain("options.compact ??");
     expect(sidebar).not.toContain("createPortal");
     expect(sidebar).toContain('onToggleCollapsed={() => toggleListSectionCollapsed("threads")}');

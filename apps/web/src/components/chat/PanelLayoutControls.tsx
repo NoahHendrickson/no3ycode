@@ -13,6 +13,9 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { MusicPanelToggle } from "../../custom/music/MusicPanelToggle";
 /* fork:end fork-music-panel */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { BotThreadsPanelToggle } from "../../custom/bots/BotThreadsPanelToggle";
+/* fork:end fork-bot-work-threads */
 
 export interface PanelLayoutControlsProps {
   showThreadPanelControl?: boolean;
@@ -36,6 +39,10 @@ export interface PanelLayoutControlsProps {
      The thread whose right panel the music button opens; omitted, the button is not offered. */
   musicThreadRef?: ScopedThreadRef | null;
   /* fork:end fork-music-panel */
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     The thread whose Threads panel the yarn toggle opens; it shows on a bot's conversation only. */
+  botThreadsThreadRef?: ScopedThreadRef | null;
+  /* fork:end fork-bot-work-threads */
 }
 
 export const PanelLayoutControls = memo(function PanelLayoutControls({
@@ -59,6 +66,9 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
   /* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */
   musicThreadRef,
   /* fork:end fork-music-panel */
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  botThreadsThreadRef,
+  /* fork:end fork-bot-work-threads */
 }: PanelLayoutControlsProps) {
   const threadPanelToggle = (
     <Toggle
@@ -101,6 +111,11 @@ export const PanelLayoutControls = memo(function PanelLayoutControls({
       data-panel-layout-controls
     >
       {showThreadPanelControl ? threadPanelControl : null}
+      {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
+      {showRightPanelControl && botThreadsThreadRef !== undefined ? (
+        <BotThreadsPanelToggle threadRef={botThreadsThreadRef} />
+      ) : null}
+      {/* fork:end fork-bot-work-threads */}
       {showTerminalControl ? (
         <Tooltip>
           {/* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage

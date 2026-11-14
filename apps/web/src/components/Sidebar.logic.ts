@@ -46,6 +46,9 @@ import {
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { type BotShell, isBotThread } from "../custom/bots/botThreads";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { isBotWorkOffSidebar, listedBotKeys } from "../custom/bots/botWorkRoster";
+/* fork:end fork-bot-work-threads */
 /* fork:begin fork-draft-project-quick-picks — see .fork/customizations.yaml#fork-draft-project-quick-picks */
 import { scopedProjectKey } from "@t3tools/client-runtime/environment";
 import type { ScopedProjectRef } from "@t3tools/contracts";
@@ -620,6 +623,9 @@ export function filterSidebarV2VisibleThreads<
   listedInMode: (thread: T) => boolean = () => true,
   /* fork:end fork-chat-mode */
 ): T[] {
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+  const listedBots = listedBotKeys(threads);
+  /* fork:end fork-bot-work-threads */
   return threads.filter(
     (thread) =>
       thread.archivedAt === null &&
@@ -639,6 +645,10 @@ export function filterSidebarV2VisibleThreads<
          Bots list in the sidebar's Bots section, never among the threads. */
       !isBotThread(thread.source) &&
       /* fork:end fork-bots */
+      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+         While its bot lists, a bot's work lists in the bot's Threads panel unless pinned. */
+      !isBotWorkOffSidebar(thread, listedBots) &&
+      /* fork:end fork-bot-work-threads */
       (scopedProjectKeys === null ||
         scopedProjectKeys.has(`${thread.environmentId}:${thread.projectId}`)),
   );

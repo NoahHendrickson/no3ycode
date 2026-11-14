@@ -7,6 +7,7 @@ import { useEnvironmentQuery } from "~/state/query";
 import { serverEnvironment } from "~/state/server";
 
 import { type BotShell, botStatusLine } from "./botThreads";
+import { type BotWorkAttention, botWorkStatusText } from "./botWork";
 
 export function BotCardStatusLine(props: {
   readonly environmentId: EnvironmentId;
@@ -14,6 +15,8 @@ export function BotCardStatusLine(props: {
   readonly shell: BotShell;
   readonly status: SidebarThreadStatus;
   readonly isUnread: boolean;
+  /** Its launched threads' need of the owner, when that outranks its own state (botWork). */
+  readonly work: BotWorkAttention | null;
 }) {
   // One live list per environment, shared with the details card's Automations.
   const tasks = useEnvironmentQuery(
@@ -27,12 +30,15 @@ export function BotCardStatusLine(props: {
           : [],
       )
       .toSorted()[0] ?? null;
-  const line = botStatusLine({
-    shell: props.shell,
-    status: props.status,
-    isUnread: props.isUnread,
-    nextWakeAt,
-  });
+  const line =
+    props.work !== null
+      ? { text: botWorkStatusText(props.work) }
+      : botStatusLine({
+          shell: props.shell,
+          status: props.status,
+          isUnread: props.isUnread,
+          nextWakeAt,
+        });
   return (
     <div
       data-testid="sidebar-v2-bot-status-line"

@@ -2,6 +2,9 @@ import { useState } from "react";
 
 import { type ResizableWidthHandlers, useResizableWidth } from "./useResizableWidth";
 import { observeResize } from "../lib/observeResize";
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { otherInlinePanelsWidth, stageChatColumn } from "../custom/bots/stagePanels";
+/* fork:end fork-bot-work-threads */
 
 export interface PreviewPanelInlineSize {
   readonly width: number;
@@ -50,7 +53,15 @@ export function usePreviewPanelInlineSize(
     // flash on mount. Only the derived cap is stored: the row resizes every frame
     // of a sidebar drag, but an unchanged cap skips re-rendering the owner.
     const measure = () => {
-      setMaxWidth(getPreviewPanelMaxWidth(window.innerWidth, row?.clientWidth));
+      setMaxWidth(
+        getPreviewPanelMaxWidth(
+          window.innerWidth,
+          /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+             The row's other inline panel (a bot's Threads panel, or the right panel) is not room. */
+          row === null ? undefined : row.clientWidth - otherInlinePanelsWidth(row, host),
+          /* fork:end fork-bot-work-threads */
+        ),
+      );
     };
     measure();
     let frame = 0;
@@ -63,10 +74,18 @@ export function usePreviewPanelInlineSize(
     };
     window.addEventListener("resize", onResize);
     const stopObserving = row ? observeResize(row, measure) : undefined;
+    /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+       The other panel opening or resizing moves only the conversation column, not the row. */
+    const chatColumn = row === null ? null : stageChatColumn(row);
+    const stopObservingChat = chatColumn ? observeResize(chatColumn, measure) : undefined;
+    /* fork:end fork-bot-work-threads */
     return () => {
       window.removeEventListener("resize", onResize);
       if (frame !== 0) window.cancelAnimationFrame(frame);
       stopObserving?.();
+      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+      stopObservingChat?.();
+      /* fork:end fork-bot-work-threads */
     };
   };
   return { width, handlers, observeRow };

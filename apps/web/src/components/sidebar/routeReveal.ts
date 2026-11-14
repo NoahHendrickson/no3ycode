@@ -1,6 +1,9 @@
 import { useRef } from "react";
 
 import { filterSidebarV2VisibleThreads } from "../Sidebar.logic";
+/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+import { withOwningBot } from "../../custom/bots/botWorkRoster";
+/* fork:end fork-bot-work-threads */
 
 // AppSidebarLayout owns this so drawer and Settings remounts preserve the chosen project scope.
 // Only route changes may widen that scope; scroll position is lost on remount.
@@ -63,10 +66,17 @@ export function resolveSidebarRouteReveal<T extends RevealableThread>(input: {
   const pendingKey = pendingSidebarRouteReveal(reveal, routeKey);
   // Search results replace the thread list; the reveal waits for it to return.
   const thread = pendingKey === null || isSearching ? undefined : findThread(pendingKey);
-  const widensScope =
+  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
+     With its bot beside it, a bot's work the sidebar leaves out never widens the scope. */
+  const lists = (keys: ReadonlySet<string> | null): boolean =>
     thread !== undefined &&
-    scopedProjectKeys !== null &&
-    filterSidebarV2VisibleThreads([thread], scopedProjectKeys, delegatedUnderParent).length === 0 &&
-    filterSidebarV2VisibleThreads([thread], null, delegatedUnderParent).length === 1;
+    filterSidebarV2VisibleThreads(
+      withOwningBot(thread, findThread),
+      keys,
+      delegatedUnderParent,
+    ).includes(thread);
+  const widensScope =
+    thread !== undefined && scopedProjectKeys !== null && !lists(scopedProjectKeys) && lists(null);
+  /* fork:end fork-bot-work-threads */
   return { pendingKey, widensScope };
 }

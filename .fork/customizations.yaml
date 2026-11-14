@@ -7117,6 +7117,71 @@
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - apps/server/src/scheduledTasks/forkBotTasks.test.ts
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
+- id: fork-bot-work-threads
+  intent: >
+    What a bot starts is its work, kept out of the sidebar and shown on the bot's own
+    conversation. A top-level thread a bot launches (t3_thread_launch, create_threads), one
+    launched by such a thread or by a bot's subagent, and the thread each event of a GitHub task
+    bound to a bot runs in, carries the thread tag bot-work:<bot thread id>, written on the server
+    at launch before its first message (orchestration-v2/forkBotWork, called from
+    ThreadLaunchService.launch with launchedBy and from OrchestratorMcpService.createThreads).
+    Best effort: a failed tag only lists the thread like any other. No contract field.
+    Automation runs of an unbound task are not linked: a task does not record which thread made it.
+
+    While its bot lists (a live, unarchived bot), such a thread is off the thread list
+    (filterSidebarV2VisibleThreads, one set lookup per thread), unless pinned; deleting or
+    archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
+    routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
+    its header names the bot where a subagent names its parent, one click back (ChatView
+    headerParentThreadLink). Notifications are unchanged.
+
+    A bot's card says when its unpinned, unsettled work needs the owner (approval, an answer, or
+    failed; custom/bots/botWork botWorkAttentionByBot, one pass over the shells the sidebar
+    holds): the mark and status line take it over the bot's own idle, waiting or unread states,
+    never over the bot working or blocked itself.
+
+    A bot's conversation has a Threads panel: its own column in the stage between the
+    conversation and the right panel, never a right panel tab. It is the right panel's shell
+    (PreviewPanelShell: left divider, resize handle, width remembered per thread, open and close
+    motion) with a 36px header ("Threads", close) whose bottom line meets the others. Its yarn
+    toggle sits after the details toggle on bot conversations only, pressed while open; its open
+    state is remembered per thread on this device (botThreadsPanelStore). Inline, each panel's
+    widest is the row less the other panel and the conversation's 360px
+    (usePreviewPanelInlineSize subtracts the row's other inline panel and re-measures when the
+    conversation column resizes). Where the right panel is a sheet, so is this, and the panel
+    opened last wins the one slot, the other closes. It is held shut, not forgotten, while the
+    right panel is maximized or the split pane floats. It lists the bot's launched threads and
+    subagents in the sidebar's status sections (Needs input, Completed, Working, Idle, Settled),
+    newest first, empty sections left out, one plain line when there is none; a row opens its
+    thread. It draws no working animation. Mobile and the collapsed tab strip are not aware of it.
+  tier: 4
+  files:
+    - apps/server/src/orchestration-v2/forkBotWork.ts
+    - apps/web/src/custom/bots/botWork.ts
+    - apps/web/src/custom/bots/botWorkRoster.ts
+    - apps/web/src/custom/bots/botThreadsPanelStore.ts
+    - apps/web/src/custom/bots/BotThreadsPanel.tsx
+    - apps/web/src/custom/bots/BotThreadsPanelToggle.tsx
+    - apps/web/src/custom/bots/useBotWorkOwner.ts
+    - apps/web/src/custom/bots/stagePanels.ts
+  shadows: []
+  watch:
+    - apps/server/src/orchestration-v2/ThreadLaunchService.ts
+    - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
+    - apps/server/src/mcp/OrchestratorMcpService.ts
+    - apps/server/src/mcp/toolkits/project/handlers.ts
+    - apps/server/src/scheduledTasks/ScheduledTaskService.ts
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/sidebar/routeReveal.ts
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/PanelLayoutControls.tsx
+    - apps/web/src/hooks/usePreviewPanelInlineSize.ts
+    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - docs/user/thread-sidebar.md
+  verify:
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+    - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
     A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)
