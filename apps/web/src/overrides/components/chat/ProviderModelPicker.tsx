@@ -257,20 +257,20 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   const composerIconClassName =
     props.isComposerOwned &&
     (size === "xs" ? "hidden @max-[640px]/composer-surface:inline-flex" : "hidden");
-  // Inlet's open composer menu hangs from this button as a tab, so a new effort
-  // holds its label until close rather than resize the button and the tab with
-  // it. A new model is a deliberate pick, so it re-takes the label at once.
-  const liveLabel = {
-    model: props.triggerLabel ?? multipleLabel ?? triggerTitle,
-    traits: props.traits?.label,
-  };
-  const [heldLabel, setHeldLabel] = useState<typeof liveLabel | null>(null);
-  const holdsLabel = useIsInletActive() && props.isComposerOwned === true && isMenuOpen;
-  const heldIsCurrent = heldLabel !== null && heldLabel.model === liveLabel.model;
-  if (holdsLabel ? !heldIsCurrent : heldLabel !== null) {
-    setHeldLabel(holdsLabel ? liveLabel : null);
+  // Inlet's open composer menu hangs from this button as a tab, so effort holds
+  // its label until close rather than resize the button and the tab with it.
+  // The hold is keyed by model: a new pick is deliberate and re-takes it at once.
+  const modelLabel = props.triggerLabel ?? multipleLabel ?? triggerTitle;
+  const holdKey =
+    useIsInletActive() && props.isComposerOwned === true && isMenuOpen ? modelLabel : null;
+  const [heldTraits, setHeldTraits] = useState<{
+    key: string;
+    label: string | undefined;
+  } | null>(null);
+  if ((heldTraits?.key ?? null) !== holdKey) {
+    setHeldTraits(holdKey === null ? null : { key: holdKey, label: props.traits?.label });
   }
-  const shownLabel = heldLabel ?? liveLabel;
+  const traitsLabel = heldTraits ? heldTraits.label : props.traits?.label;
 
   return (
     <Menu
@@ -369,7 +369,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
                 />
               }
             >
-              {shownLabel.model}
+              {modelLabel}
             </TooltipTrigger>
             <TooltipPopup side="top">
               {triggerTooltipContent}
@@ -389,7 +389,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               below 640px, so the traits label collapses there with the model
               name. Elsewhere it truncates rather than spill past the trigger's
               max width. Fast mode is part of the label text (upstream #16069). */}
-          {shownLabel.traits ? (
+          {traitsLabel ? (
             <span
               className={cn(
                 "min-w-0 truncate text-muted-foreground",
@@ -397,7 +397,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               )}
               data-chat-provider-model-picker-traits="true"
             >
-              {shownLabel.traits}
+              {traitsLabel}
             </span>
           ) : null}
         </span>
