@@ -2506,13 +2506,17 @@
     through a concave corner; an open row's panel bridge steps aside meanwhile.
     When Base UI flips the card end-aligned near the window's bottom, the same
     ::after is flipped (scale: 1 -1) to curve into the row's top instead. The
-    thread details card's subagent rows open theirs the same way to the left
-    (fenced data-fork-row-hover-trigger and align="start" in
-    components/chat/ThreadRelationshipsControl.tsx), the ::after mirrored
-    across (scale: -1 1); the open row's fill sits in @layer utilities, since
-    the panel row's hover fill is an !important utility that outranks any
-    unlayered !important. Inlet Black's details-row lift does the same. Both
-    row shapes, card and slim, carry data-fork-thread-row (fenced in
+    thread details card's subagent rows (lineage rows and workflow members)
+    open theirs the same way to the left through custom/SubagentRowHoverCardPopup
+    (left, top-aligned, data-fork-row-hover-card), swapped in and the row marked
+    data-fork-row-hover-trigger (fenced) in components/chat/ThreadRelationshipsControl.tsx
+    and ThreadLineageWorkflowRow.tsx. Side and alignment each flip the one
+    ::after drawing and square corner through their own custom property
+    (--fork-row-tab-x/-y, --fork-row-tab-top/-bottom). The open row's fill sits
+    in @layer utilities, since the panel row's hover fill is an !important
+    utility that outranks any unlayered !important, and it alone paints an
+    open row: the card lift (theme.custom.css, layered for the same reason,
+    shared by dark and Inlet Black) excludes it. Both row shapes, card and slim, carry data-fork-thread-row (fenced in
     Sidebar.tsx), and every Inlet and palette row rule keys on it rather than
     on test ids, so a row rule cannot miss a shape.
     The collapsed sidebar's peek card hangs from its toggle as a tab (the
@@ -2615,6 +2619,7 @@
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/custom/forkActivePalette.ts
     - apps/web/src/custom/ForkInletColorPicker.tsx
+    - apps/web/src/custom/SubagentRowHoverCardPopup.tsx
     - apps/web/src/custom/inletMenuMorph.ts
     - apps/web/src/custom/anchoredContextMenu.ts
     - apps/web/src/localApi.ts
@@ -2646,6 +2651,7 @@
     - apps/web/src/components/ui/tooltip.tsx
     - apps/web/src/components/ThreadHoverCard.tsx
     - apps/web/src/components/chat/ThreadRelationshipsControl.tsx
+    - apps/web/src/components/chat/ThreadLineageWorkflowRow.tsx
     - apps/web/src/components/AppSidebarLayout.tsx
     - apps/web/src/components/chat/PanelLayoutControls.tsx
     - apps/web/src/projectIconColors.ts
@@ -4628,8 +4634,9 @@
     dropdown-glass on an inner data-thread-details-card rather than on the
     popover popup, so that card is a branch of the one rule; the panel's own
     additions are the composer vessel's radius, the 4% lift on its rows and
-    split groups (upstream's hover utilities are !important, so the lift is
-    too; it keys on fork-thread-details-lift, a hook fenced onto upstream's
+    split groups (upstream's hover utilities are !important in @layer
+    utilities, so the lift is !important in that layer too, where it wins on
+    specificity; Inlet Black's charcoal card shares it; it keys on fork-thread-details-lift, a hook fenced onto upstream's
     two hover-surface class strings in threadDetailsPanelStyles.ts, so it
     reaches exactly the surfaces that compose it and not the automations
     Switch in the same card) and the vessel hairline on its section

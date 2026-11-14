@@ -388,8 +388,20 @@ describe("fork guard: fork-inlet-theme", () => {
       "../components/Sidebar.tsx",
       "../components/sidebar/SidebarThreadRow.tsx",
       "../custom/SidebarV2AutomationsHoverCard.tsx",
+      "../custom/SubagentRowHoverCardPopup.tsx",
     ]) {
       expect(readSibling(site), site).toContain('data-fork-row-hover-card=""');
+    }
+    // The details card's subagent rows (lineage rows and workflow members) hang theirs
+    // through the one fork popup, and mark the row the tab fills while it is out.
+    for (const site of [
+      "../components/chat/ThreadRelationshipsControl.tsx",
+      "../components/chat/ThreadLineageWorkflowRow.tsx",
+    ]) {
+      const source = readSibling(site);
+      expect(source, site).toContain("SubagentRowHoverCardPopup");
+      expect(source, site).not.toContain("ThreadHoverCardPopup");
+      expect(source, site).toContain("data-fork-row-hover-trigger=");
     }
     // Both row shapes carry one styling hook, so a row rule can't miss a shape.
     expect(
@@ -411,11 +423,14 @@ describe("fork guard: fork-inlet-theme", () => {
     );
     expect(tab).toContain("var(--anchor-height)");
     expect(tab).toContain("radial-gradient");
-    // Near the window's bottom the card flips end-aligned; the join is the same
-    // drawing flipped, never a second copy of it.
-    const flipped = hoverCardAfter('[data-align="end"]::after');
-    expect(flipped).toContain("scale: 1 -1");
-    expect(flipped).not.toContain("gradient");
+    // Near the window's bottom the card flips end-aligned, and a card left of its row
+    // mirrors across; each axis flips the one drawing, never a second copy of it.
+    expect(tab).toContain("scale: var(--fork-row-tab-x) var(--fork-row-tab-y)");
+    expect(hoverCardAfter('[data-align="end"]')).toContain("--fork-row-tab-y: -1");
+    expect(hoverCardAfter('[data-side="left"]')).toContain("--fork-row-tab-x: -1");
+    for (const suffix of ['[data-align="end"]::after', '[data-side="left"]::after']) {
+      expect(hoverCardAfter(suffix), suffix).not.toMatch(/gradient|scale/u);
+    }
     // The Threads header's icon menus hang from their buttons the same way.
     const chrome = readSibling("../custom/SidebarV2ChromeRows.tsx");
     expect(chrome.match(/data-fork-tab-trigger=""/gu)).toHaveLength(2);

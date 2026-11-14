@@ -304,9 +304,9 @@
 
   /* Inlet Black's thread details card is the sidebar's #141414 too, its
      hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
-     it, rows lift as the sidebar's rows hover (the layered rule after this
-     block), and the editor marks drawn black-on-light take their dark-mode
-     fills. */
+     it, rows lift as the sidebar's rows hover (theme.custom.css's card lift
+     reads --fork-outline-hover-bg), and the editor marks drawn black-on-light
+     take their dark-mode fills. */
 
   & [data-thread-details-card] {
     --fork-inlet-black-step: var(--fork-inlet-black-step-hover);
@@ -372,18 +372,5 @@
     & [data-provider-package-icon] [data-icon-detail] {
       fill: var(--path-dark);
     }
-  }
-}
-
-/* The details card's rows lift as the sidebar's rows hover. Upstream's
-   light-mode black wash vanishes on #141414 and is an !important utility,
-   which outranks any unlayered !important, so the lift joins the utilities
-   layer, where its specificity wins. */
-
-@layer utilities {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-    [data-thread-details-card]
-    .fork-thread-details-lift:is(:hover, [data-pressed], [data-popup-open]) {
-    background-color: var(--fork-outline-hover-bg) !important;
   }
 }

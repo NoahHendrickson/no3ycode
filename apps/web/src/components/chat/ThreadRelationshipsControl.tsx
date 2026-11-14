@@ -1,7 +1,9 @@
 import { useAtomValue } from "@effect/atom-react";
 import { threadKey } from "@t3tools/client-runtime/state/entities";
 import { ThreadDetailsControl } from "./ThreadDetailsControl";
-import { ThreadHoverCardPopup } from "../ThreadHoverCard";
+/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+import { SubagentRowHoverCardPopup } from "~/custom/SubagentRowHoverCardPopup";
+/* fork:end fork-inlet-theme */
 import { ThreadDetailsSection } from "./ThreadDetailsSection";
 import { SectionHeaderStatus } from "../ui/collapsible-section-header";
 import { SubagentTooltipContent } from "./SubagentTooltipContent";
@@ -782,7 +784,11 @@ export function ThreadRelationshipsPanel(props: {
       : "";
     const project = projects.find((project) => project.id === node?.thread?.projectId);
     const relationshipHint = `Open ${relationship.toLowerCase()} in this chat`;
-    const RelationshipPopup = agent ? ThreadHoverCardPopup : TooltipPopup;
+    const RelationshipPopup = agent
+      ? /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+        SubagentRowHoverCardPopup
+      : /* fork:end fork-inlet-theme */
+        TooltipPopup;
     const relationshipTooltip = agent ? (
       <SubagentTooltipContent
         title={threadTitle}
@@ -859,14 +865,7 @@ export function ThreadRelationshipsPanel(props: {
         >
           {relationshipContent}
         </TooltipTrigger>
-        <RelationshipPopup
-          side="left"
-          /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-          {...(agent ? { align: "start" as const, "data-fork-row-hover-card": "" } : {})}
-          /* fork:end fork-inlet-theme */
-        >
-          {relationshipTooltip}
-        </RelationshipPopup>
+        <RelationshipPopup side="left">{relationshipTooltip}</RelationshipPopup>
       </Tooltip>
     );
     if (workflowGroup && agent) {
