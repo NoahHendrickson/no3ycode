@@ -234,7 +234,10 @@ describe("fork guard: fork-inlet-theme", () => {
   it("sets the chat column into the frame as a rounded panel on either appearance", () => {
     const column = ruleBodyFor(inletRules, [TEMPLATE, "[data-chat-column-maximized-away]"]);
     expect(column).toContain("--background: var(--fork-inlet-panel)");
-    expect(column).toMatch(
+    // One card holds the stage's columns (fork-stage-columns): the stage row is set into the frame.
+    const stage = ruleBodyFor(inletRules, [TEMPLATE, "[data-fork-workspace-root]"]);
+    expect(stage).toContain("--background: var(--fork-inlet-panel)");
+    expect(stage).toMatch(
       /margin:\s*var\(--fork-inlet-panel-top\) var\(--fork-inlet-margin\) var\(--fork-inlet-margin\)/u,
     );
     // On Windows panels start below the caption buttons, the right panel too.
@@ -244,7 +247,9 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(inlet).toMatch(
       /\[data-preview-panel-mode="inline"\],\s*\[data-fork-workspace-root\] > \[data-workspace-titlebar-controls\]\s*\) \{\s*--workspace-controls-top: var\(--fork-inlet-panel-top\);[\s\S]*?--workspace-native-controls-inset: 1rem;/u,
     );
-    expect(column).toMatch(/border-radius:\s*var\(--fork-inlet-radius\)/u);
+    expect(stage).toMatch(/border-radius:\s*var\(--fork-inlet-radius\)/u);
+    // The conversation is a column of that card, not a card of its own.
+    expect(column).not.toMatch(/margin|border-radius/u);
     const modal = ruleBodyFor(inletRules, [TEMPLATE, "[data-app-modal]"]);
     expect(modal).toContain("--background: var(--fork-inlet-panel)");
     // The column's own controls offset would otherwise lift them into the tab strip.

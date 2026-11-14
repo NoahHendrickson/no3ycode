@@ -81,7 +81,10 @@ export const ChatHeader = memo(function ChatHeader({
   activeProject,
   parentThreadLink,
   onOpenThread,
-  rightPanelOpen,
+  /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+     It only chose the room held for window-pinned controls (below). */
+  rightPanelOpen: _rightPanelOpen,
+  /* fork:end fork-stage-columns */
   onNewThreadInProject,
   onOpenProjectSettings,
   onFindInThread,
@@ -286,7 +289,11 @@ export const ChatHeader = memo(function ChatHeader({
       ref={breadcrumbContainerRef}
       className={cn(
         "flex min-w-0 flex-1 items-center gap-2 sm:gap-3",
-        rightPanelOpen ? "pr-10" : "pr-24",
+        /* fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+           The panel controls follow the title in the header's flow, so no room is held for
+           window-pinned ones (upstream: pr-10 beside an open right panel, else pr-24). */
+        "pr-2",
+        /* fork:end fork-stage-columns */
       )}
       onContextMenu={handleHeaderContextMenu}
     >

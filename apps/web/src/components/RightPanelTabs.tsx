@@ -99,12 +99,6 @@ import {
 } from "~/state/pullRequests";
 import { useEnvironmentQuery } from "~/state/query";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
-/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-import {
-  TITLEBAR_CONTROLS_INSET_CLASS,
-  TitlebarControlsReserve,
-} from "~/custom/titlebarControlsReserve";
-/* fork:end fork-bot-work-threads */
 
 import { PreviewPanelShell, type PreviewPanelMode } from "./preview/PreviewPanelShell";
 import { FaviconImage } from "./preview/PreviewFaviconIcon";
@@ -1355,10 +1349,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       <div
         className={cn(
           "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-1 pl-2",
-          /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
-             The controls' room is shared with a rightmost Threads panel. */
-          props.mode === "inline" && !props.layoutControls ? TITLEBAR_CONTROLS_INSET_CLASS : "pr-3",
-          /* fork:end fork-bot-work-threads */
+          props.mode === "inline" && !props.layoutControls ? "pr-28" : "pr-3",
           ownsDesktopTitleBar && "drag-region",
           ownsDesktopTitleBar && "wco:pr-(--workspace-native-controls-inset)",
           props.mode === "inline" && props.maximized && COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS,
@@ -1535,9 +1526,15 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
           </div>
         ) : null}
         {props.layoutControls}
-        {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
-        {ownsDesktopTitleBar ? <TitlebarControlsReserve spacer={!props.layoutControls} /> : null}
-        {/* fork:end fork-bot-work-threads */}
+        {ownsDesktopTitleBar && !props.layoutControls ? (
+          <span aria-hidden className="hidden w-24 shrink-0 wco:block" />
+        ) : null}
+        {ownsDesktopTitleBar ? (
+          <span
+            aria-hidden
+            className="pointer-events-none fixed top-[var(--workspace-controls-top)] right-[var(--workspace-controls-right)] h-[var(--workspace-topbar-height)] w-28 [-webkit-app-region:no-drag]"
+          />
+        ) : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col" data-right-panel-surface-content>
         {props.activeSurfaceId === null ? (

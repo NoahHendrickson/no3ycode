@@ -43,31 +43,48 @@
   );
 }
 
-/* The panel. A real margin rather than a painted card, so the header, the
-   transcript's scrollbar and the composer all sit inside it. The column
-   already clips (overflow-x hidden), so the radius clips its children too.
-   Restating --background here is what turns every bg-background inside the
-   column (header, transcript wrapper, composer floor) into the panel. Its ink
-   too: the body carries the frame's (index.html), which any currentColor
-   glyph inside would otherwise take. */
+/* The panel. One card set into the frame holds a thread's stage: the
+   conversation, a bot's Threads panel and the right panel are its columns,
+   each set off from the one on its left by its own 1px border and nothing
+   else (fork-stage-columns). A real margin on the stage row rather than a
+   painted card, so headers, the transcript's scrollbar and the composer all
+   sit inside it; the row already clips (overflow hidden), so the radius clips
+   every column. Restating --background on the row is what turns every
+   bg-background inside it (header, transcript wrapper, composer floor, a
+   panel's surface) into the panel. Its ink too: the body carries the frame's
+   (index.html), which any currentColor glyph inside would otherwise take.
+   The conversation keeps its own fill, which the Jungle colours paint over. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-workspace-root] {
+  --background: var(--fork-inlet-panel);
+  color: var(--fork-inlet-panel-foreground);
+  margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
+  border-radius: var(--fork-inlet-radius);
+}
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-column-maximized-away] {
   --background: var(--fork-inlet-panel);
   color: var(--fork-inlet-panel-foreground);
-  margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
-  border-radius: var(--fork-inlet-radius);
   background: var(--background);
 }
 
-/* The right panel is a second panel set into the frame beside the chat
-   column, in the panel's colour and inks: its tabs (Music, the launcher's
-   rows) set no colour of their own and would take the frame's. The inline
-   panel collapses to no width when closed, so a margin on it would leave a
-   gap: its content wrapper is the panel, and the content pinned to the
-   panel's width gives back the margin. On a narrow window the right panel is
-   a sheet over the chat column, set into the window the same way. The sheet's
-   :has() argument is its own direct child, so it is checked only there. */
+/* Every column's header row carries the same bottom line, so it runs across
+   the card: the panels' headers draw theirs, the conversation's draws it here.
+   The new-agent screen (a draft hero) has no columns beside it and keeps none. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-chat-column-maximized-away]:not([data-fork-draft-hero])
+  > [data-chat-header] {
+  border-bottom: 1px solid var(--border);
+}
+
+/* An inline panel is a column of that card, in the panel's colour and inks:
+   its tabs (Music, the launcher's rows) set no colour of their own and would
+   take the frame's. It keeps upstream's left border as its divider and its
+   square edges. On a narrow window the right panel is a sheet over the
+   conversation, set into the window as a card of its own. The sheet's :has()
+   argument is its own direct child, so it is checked only there. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   & [data-preview-panel-mode="inline"] > :last-child,
@@ -80,30 +97,12 @@
     --contrast-secondary-label: var(--fork-inlet-panel-muted);
     --contrast-icon-muted: var(--fork-inlet-panel-muted);
     color: var(--fork-inlet-panel-foreground);
-    overflow: clip;
-    border-radius: var(--fork-inlet-radius);
     background: var(--background);
   }
 
-  & [data-preview-panel-mode="inline"] {
-    border-width: 0;
-    background: transparent;
-
-    & > :last-child {
-      width: auto;
-      margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin) 0;
-    }
-
-    & > :last-child > [style*="--resizable-width"] {
-      width: calc(var(--resizable-width) - var(--fork-inlet-margin)) !important;
-    }
-
-    &[data-preview-panel-maximized="true"] > :last-child {
-      margin-left: var(--fork-inlet-margin);
-    }
-  }
-
   & [data-slot="sheet-popup"]:has(> [data-preview-panel-mode="sheet"]) {
+    overflow: clip;
+    border-radius: var(--fork-inlet-radius);
     height: auto;
     margin: var(--fork-inlet-margin);
     border-width: 0;
@@ -125,7 +124,7 @@
    while it is hovered or dragged. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
-  & [data-fork-split-threads] > [data-fork-split-side="right"] [data-chat-column-maximized-away] {
+  & [data-fork-split-threads] > [data-fork-split-side="right"] [data-fork-workspace-root] {
     margin-left: 0;
   }
 
@@ -220,10 +219,10 @@
    in the right panel: neither has a frame to be set into. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-side-chat="true"][data-fork-theme="inlet"]
-  [data-chat-column-maximized-away],
+  [data-fork-workspace-root],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-side-chat-pane]
-  [data-chat-column-maximized-away] {
+  [data-fork-workspace-root] {
   margin: 0;
   border-radius: 0;
 }
@@ -289,7 +288,9 @@
   [data-chat-column-maximized-away] {
   --workspace-controls-top: var(--fork-inlet-panel-top);
   --workspace-controls-right: calc(env(safe-area-inset-right) + var(--fork-inlet-margin) + 8px);
-  --workspace-native-controls-inset: 0px;
+  /* The panel is below the caption buttons: the header's end keeps a panel header's padding
+     for the controls in its flow (fork-stage-columns). */
+  --workspace-native-controls-inset: 0.75rem;
 }
 
 /* The pane actions and panel toggles (the controls' one div; the maximize toggle is a span)
@@ -470,7 +471,7 @@
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
       [data-fork-sidebar-overlay="true"]
     ) {
-    & [data-chat-column-maximized-away] {
+    & [data-fork-workspace-root] {
       margin-left: 0;
     }
 

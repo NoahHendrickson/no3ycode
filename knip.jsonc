@@ -176,6 +176,11 @@
         "src/components/chat/ComposerFooterControls.tsx": ["exports"],
         "src/components/chat/composerProviderState.tsx": ["exports"],
         // fork:end fork-composer-shell
+        // fork:begin fork-stage-columns — see .fork/customizations.yaml#fork-stage-columns
+        // The panel controls sit in the conversation's header, so nothing renders upstream's
+        // window-pinned cluster or the header's lone details toggle.
+        "src/components/chat/PanelLayoutControls.tsx": ["exports"],
+        // fork:end fork-stage-columns
         // fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode
         // Vendored verbatim from NoahHendrickson/the-forge and kept whole so
         // re-syncs diff cleanly, the same standing upstream gives _generated/.

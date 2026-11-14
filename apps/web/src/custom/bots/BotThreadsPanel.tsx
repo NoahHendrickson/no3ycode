@@ -9,14 +9,12 @@ import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thr
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
-import { XIcon } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
-import { Button } from "~/components/ui/button";
 import { isElectron } from "~/env";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { usePreviewPanelInlineSize } from "~/hooks/usePreviewPanelInlineSize";
@@ -31,7 +29,7 @@ import { useUiStateStore } from "~/uiStateStore";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { threadRowOpenSurfaceClassName } from "../sidebarV2RowPolicy";
-import { TITLEBAR_CONTROLS_INSET_CLASS, TitlebarControlsReserve } from "../titlebarControlsReserve";
+import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { type BotWorkGroupKey, type BotWorkRow, groupBotWork } from "./botWork";
 import { closeBotThreadsPanel } from "./botThreadsPanelStore";
 import {
@@ -83,45 +81,29 @@ export function BotThreadsPanel(props: {
     floorWidth: BOT_THREADS_PANEL_MIN_WIDTH,
   });
   if (!presence.present) return null;
-  // Rightmost inline, the window's panel controls sit over this header: it leaves them their
-  // room, and their pressed yarn toggle is its close button.
-  const ownsTitleBarControls = !props.sheet && !props.rightPanelInline;
+  // Rightmost inline, its header is the one under Windows' caption buttons.
+  const rightmost = !props.sheet && !props.rightPanelInline;
   const body = (
     <>
       <div
         className={cn(
           "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
-          ownsTitleBarControls ? TITLEBAR_CONTROLS_INSET_CLASS : "pr-2",
+          "pr-2",
           isElectron && "drag-region",
-          isElectron && ownsTitleBarControls && "wco:pr-(--workspace-native-controls-inset)",
+          isElectron && rightmost && "wco:pr-(--workspace-native-controls-inset)",
         )}
         data-fork-bot-threads-header=""
         // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
         data-fork-bot-threads-bot={botKey}
         data-fork-bot-threads-thread={scopedThreadKey(props.threadRef)}
       >
-        <h2
-          className={cn(
-            "min-w-0 truncate text-sm font-normal text-foreground",
-            !ownsTitleBarControls && "flex-1",
-          )}
-        >
-          Threads
-        </h2>
-        {ownsTitleBarControls ? (
-          <TitlebarControlsReserve spacer />
-        ) : (
-          <span className="flex shrink-0 [-webkit-app-region:no-drag]">
-            <Button
-              aria-label="Close threads panel"
-              onClick={() => closeBotThreadsPanel(props.botRef)}
-              size="icon-xs"
-              variant="ghost"
-            >
-              <XIcon />
-            </Button>
-          </span>
-        )}
+        <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
+        <span className="flex shrink-0 [-webkit-app-region:no-drag]">
+          <StagePanelCloseButton
+            label="Close threads panel"
+            onClose={() => closeBotThreadsPanel(props.botRef)}
+          />
+        </span>
       </div>
       <BotThreadsList botRef={props.botRef} currentThreadRef={props.threadRef} />
     </>

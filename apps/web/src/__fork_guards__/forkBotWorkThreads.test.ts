@@ -41,7 +41,6 @@ const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
 const launch = readSibling("../../../server/src/orchestration-v2/ThreadLaunchService.ts");
 const mcp = readSibling("../../../server/src/mcp/OrchestratorMcpService.ts");
 const launchTool = readSibling("../../../server/src/mcp/toolkits/project/handlers.ts");
-const rightPanelTabs = readSibling("../components/RightPanelTabs.tsx");
 
 const AT = "2026-11-14T12:00:00.000Z";
 
@@ -217,8 +216,6 @@ describe("fork guard: fork-bot-work-threads", () => {
     // The Threads panel counts the right panel at its minimum, so the list keeps its width.
     expect(inlineSize).toContain('options.floorWidth === undefined ? "current" : "minimum"');
     expect(inlineSize).toContain("readonly floorWidth?: number | undefined;");
-    // The window's panel controls get the same room over whichever column is rightmost.
-    expect(rightPanelTabs).toContain('? TITLEBAR_CONTROLS_INSET_CLASS : "pr-3"');
   });
 
   it("keeps the conversation widest with both panels open, and holds one panel where both do not fit", () => {
