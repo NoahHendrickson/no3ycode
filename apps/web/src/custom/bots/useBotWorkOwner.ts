@@ -1,4 +1,4 @@
-/** A thread's bot, for its header's way back and its Threads panel — see
+/** A thread's bot, for its Threads panel — see
     `.fork/customizations.yaml#fork-bot-work-threads`. */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef, ThreadId } from "@t3tools/contracts";
@@ -8,19 +8,6 @@ import { useQuietThreadShell } from "~/state/entities";
 import { botThreadsPanelBotId } from "./botWork";
 import { isBotThread } from "./botThreads";
 import { useBotThreadsPanelStore } from "./botThreadsPanelStore";
-import { botWorkOwnerId } from "./botWorkRoster";
-
-export function useBotWorkOwner(
-  ref: ScopedThreadRef | null,
-): { readonly threadId: ThreadId; readonly title: string } | null {
-  const shell = useQuietThreadShell(ref);
-  const ownerId = shell === null ? null : botWorkOwnerId(shell.source);
-  const bot = useQuietThreadShell(
-    ref === null || ownerId === null ? null : scopeThreadRef(ref.environmentId, ownerId),
-  );
-  return bot === null ? null : { threadId: bot.id, title: bot.title };
-}
-
 /** The bot whose Threads panel the thread shows, or null: a bot shows its own, a bot's launched
     thread or subagent shows its bot's. */
 export function useBotThreadsPanelBot(ref: ScopedThreadRef | null): ScopedThreadRef | null {

@@ -43,6 +43,9 @@ import { useClientSettings } from "../../hooks/useSettings";
 /* fork:begin fork-scheduled-runs-off-sidebar — see .fork/customizations.yaml#fork-scheduled-runs-off-sidebar */
 import { AutomationRunBackButton } from "~/custom/scheduled/AutomationRunBackButton";
 /* fork:end fork-scheduled-runs-off-sidebar */
+/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
+import { StageHeaderBackButton } from "~/custom/stageColumns/StageHeaderBackButton";
+/* fork:end fork-stage-header */
 import { GuestShareIndicator } from "./GuestShareControls";
 
 interface ChatHeaderProps {
@@ -300,6 +303,10 @@ export const ChatHeader = memo(function ChatHeader({
       {/* fork:begin fork-scheduled-runs-off-sidebar — see .fork/customizations.yaml#fork-scheduled-runs-off-sidebar */}
       <AutomationRunBackButton />
       {/* fork:end fork-scheduled-runs-off-sidebar */}
+      {/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header
+          Inlet hides the parent crumb, so the way back is a button beside the title. */}
+      <StageHeaderBackButton parent={parentThreadLink} onOpen={onOpenThread} />
+      {/* fork:end fork-stage-header */}
       <WorkspaceBreadcrumb
         ariaLabel="Thread breadcrumb"
         className="flex-1 overflow-clip [overflow-clip-margin:2px]"

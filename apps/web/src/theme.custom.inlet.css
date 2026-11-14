@@ -15,6 +15,9 @@
   /* A panel's top inset: the margin, or the caption band on Windows below. */
   --fork-inlet-panel-top: var(--fork-inlet-margin);
   --fork-inlet-radius: 8px;
+  /* The stage's header rows (fork-stage-header), thinner than the window's 52px top bar
+     the sidebar's header keeps. */
+  --fork-inlet-stage-header-height: 36px;
   /* Every menu and popover's corners; panels set into one run parallel. */
   --fork-inlet-menu-radius: 10px;
   /* The Questions card's fill, which the / and @ menu shares: the card on
@@ -57,6 +60,9 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-workspace-root] {
   --background: var(--fork-inlet-panel);
+  /* Every column's header row (fork-stage-header); --fork-inlet-panel-top resolves at :root,
+     so the card's inset below Windows' caption band keeps the window's top bar. */
+  --workspace-topbar-height: var(--fork-inlet-stage-header-height);
   color: var(--fork-inlet-panel-foreground);
   margin: var(--fork-inlet-panel-top) var(--fork-inlet-margin) var(--fork-inlet-margin);
   border-radius: var(--fork-inlet-radius);
@@ -1057,14 +1063,16 @@
   --sidebar-icon-color: rgb(0 0 0 / 65%);
 }
 
-/* Inlet's chat header carries no breadcrumb (project / thread title): the
-   open row says which thread this is. Hidden rather than removed, so the
-   header keeps its height and its window-drag area. */
+/* Inlet's chat header names the thread by its title alone, with the title's
+   actions menu (fork-stage-header): the project crumb stays hidden (the open
+   row names the project) and so does the parent crumb, whose way back is the
+   back button beside the title. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-chat-header]
-  nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input)) {
-  visibility: hidden;
+  nav
+  li:not([aria-current="page"]) {
+  display: none;
 }
 
 /* A standalone page (the error screen, pairing) sits outside the chat

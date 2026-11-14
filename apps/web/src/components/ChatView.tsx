@@ -434,12 +434,11 @@ import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
 import { BotThreadsPanel } from "~/custom/bots/BotThreadsPanel";
-import {
-  useBotThreadsPanelBot,
-  useBotThreadsPanelOpen,
-  useBotWorkOwner,
-} from "~/custom/bots/useBotWorkOwner";
+import { useBotThreadsPanelBot, useBotThreadsPanelOpen } from "~/custom/bots/useBotWorkOwner";
 /* fork:end fork-bot-work-threads */
+/* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
+import { useStageHeaderParent } from "~/custom/stageColumns/stageHeaderParent";
+/* fork:end fork-stage-header */
 import { useLocalDispatchState } from "./chat/useLocalDispatchState";
 import { draftFanoutSelectionsAtom, draftSendState } from "./chat/chatViewSend";
 import {
@@ -1001,21 +1000,15 @@ export default function ChatView(props: ChatViewProps) {
           }),
     };
   })();
-  /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
-     A bot's work names its bot where a subagent names its parent, one click back. */
-  const forkBotWorkOwner = useBotWorkOwner(
-    activeThread ? scopeThreadRef(activeThread.environmentId, activeThread.id) : null,
-  );
-  /* fork:end fork-bot-work-threads */
   // The header's breadcrumb opens a parent in this environment only.
   const headerParentThreadLink =
-    parentSubagentThreadRef === null
-      ? /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-        forkBotWorkOwner
-      : /* fork:end fork-bot-work-threads */ {
-          threadId: parentSubagentThreadRef.threadId,
-          title: parentSubagentThread?.title ?? "Parent thread",
-        };
+    /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header
+       A subagent's parent as upstream had it, else a bot's work's bot (fork-bot-work-threads):
+       the breadcrumb's parent crumb and Inlet's back button both lead there. */
+    useStageHeaderParent(
+      activeThread ? scopeThreadRef(activeThread.environmentId, activeThread.id) : null,
+    );
+  /* fork:end fork-stage-header */
   const threadError = isServerThread
     ? (localServerError ?? serverRuntime?.lastError ?? null)
     : localDraftError;

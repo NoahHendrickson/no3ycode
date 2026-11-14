@@ -7135,7 +7135,8 @@
     archiving the bot brings its work back. Opening one lights its bot's card (Sidebar
     routeRowThreadKey via botWorkRowThreadId), never widens the project scope (routeReveal), and
     its header names the bot where a subagent names its parent, one click back (ChatView
-    headerParentThreadLink). Notifications are unchanged.
+    headerParentThreadLink, via fork-stage-header's stageHeaderParent). Notifications are
+    unchanged.
 
     A bot's card says when its unpinned, unsettled work needs the owner (approval, an answer, or
     failed; custom/bots/botWork botWorkAttentionByBot, one pass over the shells the sidebar
@@ -7234,6 +7235,39 @@
     - apps/web/src/__fork_guards__/forkStageColumns.test.ts
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/__fork_guards__/forkNewAgentDraft.test.ts
+- id: fork-stage-header
+  intent: >
+    On Inlet the stage's header rows (the conversation's, a bot's Threads panel's and the right
+    panel's) are 36px, as the owner's frame draws them (Figma t3-fork 698:7880), against the
+    window's 52px top bar, which the sidebar's header and everything outside the stage keep. The
+    stage row restates --workspace-topbar-height from --fork-inlet-stage-header-height, so only
+    what sits inside it moves; --fork-inlet-panel-top resolves at :root, so the card still starts
+    below Windows' caption band, and the details card's rise (portaled out of the stage) reads the
+    token itself. The macOS traffic lights centre at y 26 (fork-sidebar-chrome), which is the
+    36px row's own centre under the card's 8px top inset, and the header's collapsed-sidebar
+    inset keeps them clear of the title and the back button. Stock and Glass keep 52px.
+
+    Inlet's conversation header names the thread by its title alone (the bot's name on a bot's
+    conversation), the header's own title button with its thread-actions menu: the project and
+    parent crumbs stay hidden. A thread with a parent has a back button just left of the title
+    (custom/stageColumns/StageHeaderBackButton, the cluster's ghost size, "Back to <parent>"),
+    which opens the parent in one click. The parent is a subagent's spawning thread (upstream's
+    link), else the bot a bot's work belongs to (stageHeaderParent, the one source of ChatView's
+    headerParentThreadLink). On stock and Glass the breadcrumb's parent crumb does the same in
+    one click, so they get no back button.
+  tier: 3
+  files:
+    - apps/web/src/custom/stageColumns/stageHeaderParent.ts
+    - apps/web/src/custom/stageColumns/StageHeaderBackButton.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/ChatHeader.tsx
+    - apps/web/src/theme.custom.inlet.css
+    - apps/web/src/theme.custom.inlet-menus.css
+  verify:
+    - apps/web/src/__fork_guards__/forkStageHeader.test.ts
+    - apps/web/src/custom/stageColumns/stageHeaderParent.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
     A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)

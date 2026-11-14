@@ -142,12 +142,7 @@ const BARE_SUBJECT_KNOWN: ReadonlyArray<{ readonly sheet: string; readonly compo
   { sheet: "theme.custom.css", compound: ':has([data-testid="composer-editor"])' },
   { sheet: "theme.custom.westworld.css", compound: ':has(> [data-testid="composer-editor"])' },
   { sheet: "custom/ComposerShell.css", compound: ":has(> [data-composer-control-chevron])" },
-  // Inlet's breadcrumb, and Glass's header breadcrumb list.
-  {
-    sheet: "theme.custom.inlet.css",
-    compound: 'nav:has([data-slot="workspace-breadcrumb-text"]):not(:has(input))',
-  },
-  { sheet: "theme.custom.inlet.css", compound: ":has(input)" },
+  // Glass's header breadcrumb list.
   { sheet: "theme.custom.glass.css", compound: 'ol:has([data-slot="workspace-breadcrumb-text"])' },
   // Glass's focus ring on the composer row's chips: one option of its subject is any button.
   {
