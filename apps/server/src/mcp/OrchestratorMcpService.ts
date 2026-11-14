@@ -130,6 +130,7 @@ import * as PeerForwarding from "../peer/PeerForwarding.ts";
 import * as RemoteDelegation from "../peer/RemoteDelegation.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { FORK_BOT_THREAD_TAG } from "../orchestration-v2/forkBotReport.ts";
+import { forkBotWakeModelSelection, forkBotWakeScheduleRefusal } from "./forkBotWakes.ts";
 /* fork:end fork-bots */
 
 const DEFAULT_WAIT_TIMEOUT_MS = 10 * 60 * 1_000;
@@ -2005,17 +2006,23 @@ const make = Effect.gen(function* () {
             : "bindToCurrentThread binds to this thread, which belongs to a different project.",
         );
       }
+      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+         A bot's own wakes start clean, on Sonnet, at most every 15 minutes, so a forgotten
+         flag or a chat on a pricier model cannot carry into every wake. */
+      const forkBotWake =
+        bindToCurrentThread && parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
+      const forkBotRefusal = forkBotWake ? forkBotWakeScheduleRefusal(input.schedule) : null;
+      if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
+      /* fork:end fork-bots */
       const modelSelection =
-        parent?.thread.modelSelection ?? (yield* projectDefaultModelSelection(project));
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        forkBotWake && parent !== undefined
+          ? forkBotWakeModelSelection(parent.thread.modelSelection, yield* loadProviders)
+          : /* fork:end fork-bots */
+            (parent?.thread.modelSelection ?? (yield* projectDefaultModelSelection(project)));
       const derivedTitle = input.prompt.split("\n")[0]?.trim() ?? "";
       const title =
         input.title ?? (derivedTitle.length > 0 ? derivedTitle.slice(0, 80) : "Scheduled task");
-      /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-         A bot's own wakes start clean unless it asks otherwise, so a forgotten flag
-         cannot make every wake resume its long session. */
-      const forkBotFreshSession =
-        bindToCurrentThread && parent?.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true;
-      /* fork:end fork-bots */
       const upsertInput: ScheduledTaskUpsertInput = {
         title,
         prompt: input.prompt,
@@ -2024,7 +2031,7 @@ const make = Effect.gen(function* () {
         projectId,
         threadId: bindToCurrentThread && parent !== undefined ? parent.thread.id : null,
         threadMode:
-          (input.freshSession ?? forkBotFreshSession)
+          (input.freshSession ?? forkBotWake)
             ? "fresh_session"
             : bindToCurrentThread
               ? "continue"
@@ -2109,6 +2116,16 @@ const make = Effect.gen(function* () {
             : input.bindToCurrentThread && parent !== undefined
               ? parent.thread.id
               : null;
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        const forkBotRefusal =
+          input.schedule !== undefined &&
+          threadId !== null &&
+          threadId === parent?.thread.id &&
+          parent.thread.tags?.includes(FORK_BOT_THREAD_TAG) === true
+            ? forkBotWakeScheduleRefusal(input.schedule)
+            : null;
+        if (forkBotRefusal !== null) return yield* failure("invalid_request", forkBotRefusal);
+        /* fork:end fork-bots */
         // Update workspace strategy on rebinding so unbound root tasks cannot run in the shared checkout.
         const workspaceStrategy =
           input.bindToCurrentThread === undefined

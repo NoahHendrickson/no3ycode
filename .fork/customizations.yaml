@@ -6994,10 +6994,15 @@
     Usage limits, because every wake (even a quiet one) is a full model turn:
     a new bot starts on the newest non-legacy Sonnet of its Claude instance,
     without the owner's default options (useCreateBot botModelSelection); a
-    task a bot schedules for its own thread defaults to a fresh session
-    (OrchestratorMcpService.scheduleTask), so a forgotten flag cannot resume
-    its long session every wake. The seeded CLAUDE.md asks for the slowest
-    schedule (15 minutes or slower unless the owner asks), webhook coalescing
+    task a bot schedules for its own thread defaults to a fresh session and to
+    the same Sonnet, without options (OrchestratorMcpService.scheduleTask, mcp/
+    forkBotWakes), so a forgotten flag cannot resume its long session every
+    wake and a chat on a pricier model does not carry into every wake; and
+    schedule_task refuses a bot an interval under 15 minutes for a task bound
+    to its own thread, on create and on a schedule change. The owner changes
+    either for a task under Automations, which never goes through
+    schedule_task. The seeded CLAUDE.md asks for the slowest schedule and says
+    the scheduler refuses one under 15 minutes, webhook coalescing
     for event jobs, tail reads of the conversation (t3_thread_read pages from
     the oldest item), a Log of at most 30 meaningful lines, Haiku subagents,
     and no task changes or self-sends during a wake; SessionStart prints at
@@ -7060,6 +7065,7 @@
   files:
     - apps/web/src/custom/bots/botThreads.ts
     - apps/server/src/orchestration-v2/forkBotReport.ts
+    - apps/server/src/mcp/forkBotWakes.ts
     - apps/web/src/custom/bots/botMascotArt.ts
     - apps/web/src/custom/bots/botMascotTags.ts
     - apps/web/src/custom/bots/botMascotMenu.ts
@@ -7087,23 +7093,30 @@
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
+    - apps/server/src/mcp/OrchestratorMcpService.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
+    - apps/server/src/mcp/OrchestratorMcpService.test.ts
 - id: fork-scheduled-wake-hold
   intent: >
     A bot's scheduled wake (a recurring task bound to a thread tagged `bot`)
-    is held (rescheduled to its next fire, logged at info) while an earlier
+    is skipped (rescheduled to its next fire, logged at info) while an earlier
     wake of the same task is still queued or running in that thread, or while
     the thread is usage-limited until a known reset still ahead (an unknown
-    reset never holds). A bound task queues each fire behind whatever its
-    thread is doing, so without this a bot held up for a day collects a wake
-    per interval and runs them back to back, and a limited one hits the limit
-    every interval. Other bound tasks keep upstream's queueing. One-time,
-    manual and webhook runs are never held. The check is forkScheduledFireHeld
+    reset never holds). It is deferred 5 minutes instead while its owner is in
+    a chat with it: any run of the thread is unfinished, or the owner wrote in
+    the last 10 minutes (a user-authored message whose id is not a wake's, as a
+    wake of an owner-made task is authored by `user` too). Deferring rather
+    than skipping keeps a daily bot's only wake. A bound task queues each fire
+    behind whatever its thread is doing, so without this a bot held up for a
+    day collects a wake per interval and runs them back to back, a limited one
+    hits the limit every interval, and a wake during a chat starts a fresh
+    session under the owner's next message. Other bound tasks keep upstream's
+    queueing. One-time, manual and webhook runs are never held. The check is forkScheduledFireHold
     (scheduledTasks/forkScheduledWakeHold), called once from
-    ScheduledTaskService's due-task loop.
+    ScheduledTaskService's due-task loop with forkDeferScheduledFire.
   tier: 3
   files:
     - apps/server/src/scheduledTasks/forkScheduledWakeHold.ts

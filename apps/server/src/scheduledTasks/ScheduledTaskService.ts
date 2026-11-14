@@ -84,7 +84,7 @@ import type { ScheduledTaskListRunsInput, ScheduledTaskListRunsResult } from "@t
 import { listScheduledTaskRuns } from "./forkScheduledTaskRuns.ts";
 /* fork:end fork-scheduled-page */
 /* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
-import { forkScheduledFireHeld } from "./forkScheduledWakeHold.ts";
+import { forkDeferScheduledFire, forkScheduledFireHold } from "./forkScheduledWakeHold.ts";
 /* fork:end fork-scheduled-wake-hold */
 
 export const WEBHOOK_ROUTE_PREFIX = "/api/hooks";
@@ -1314,14 +1314,20 @@ export const layer = Layer.effect(
               isMissedFixedTimeRun(task.schedule, dueAt, now)
                 ? rescheduleMissedRun(task, now)
                 : /* fork:begin fork-scheduled-wake-hold — see .fork/customizations.yaml#fork-scheduled-wake-hold */
-                  forkScheduledFireHeld({
+                  forkScheduledFireHold({
                     sql,
                     task,
-                    nowMs: DateTime.toEpochMillis(now),
+                    nowMs,
                     getThreadShell: threadManagement.getThreadShell,
                   }).pipe(
-                    Effect.flatMap((held) =>
-                      held ? rescheduleMissedRun(task, now) : runTask(task, "scheduled"),
+                    Effect.flatMap((hold) =>
+                      hold === "skip"
+                        ? rescheduleMissedRun(task, now)
+                        : hold === "defer"
+                          ? forkDeferScheduledFire(sql, task, nowMs).pipe(
+                              Effect.andThen(notifyChanged),
+                            )
+                          : runTask(task, "scheduled"),
                     ),
                   ),
             /* fork:end fork-scheduled-wake-hold */

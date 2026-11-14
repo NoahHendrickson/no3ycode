@@ -273,7 +273,7 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("thread id `thread-1`");
     expect(rules).toContain("a wake writes STATE.md only");
     // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
-    expect(rules).toContain("never wake more often than every 15 minutes");
+    expect(rules).toContain("refuses an interval under 15 minutes");
     expect(rules).toContain(
       "`afterPosition` set to `itemCount` minus 21 when `itemCount` is over 20",
     );

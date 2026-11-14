@@ -4,6 +4,8 @@
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { expect, it } from "@effect/vitest";
 import { ScheduledTaskUpsertInput } from "@t3tools/contracts";
+import * as Clock from "effect/Clock";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
@@ -24,7 +26,7 @@ const decodeUpsertInput = Schema.decodeUnknownEffect(ScheduledTaskUpsertInput);
 const THREAD_ID = "thread-bot";
 
 it.effect(
-  "skips a bot's wake while its earlier wake is unfinished or it is limited, and only a bot's",
+  "holds a bot's wake while its earlier wake is unfinished, it is limited or its owner chats with it, and only a bot's",
   () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
@@ -125,6 +127,65 @@ it.effect(
         yield* Ref.set(tags, []);
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(4);
+
+        // A bot in a chat defers its wake a few minutes instead of skipping to its next slot.
+        yield* Ref.set(tags, ["bot"]);
+        yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
+        const insertMessage = (messageId: string) =>
+          Clock.currentTimeMillis.pipe(
+            Effect.flatMap((nowMs) => {
+              const at = DateTime.formatIso(DateTime.makeUnsafe(nowMs));
+              return sql`INSERT INTO orchestration_v2_projection_messages ${sql.insert({
+                message_id: messageId,
+                thread_id: THREAD_ID,
+                run_id: null,
+                node_id: null,
+                role: "user",
+                streaming: 0,
+                created_at: at,
+                updated_at: at,
+                payload_json: JSON.stringify({ createdBy: "user" }),
+              })}`;
+            }),
+          );
+        // An owner-made task's wake is authored by `user` too, but it is no chat.
+        yield* insertMessage("scheduled-task-message:other-task:1");
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(5);
+
+        yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
+        yield* insertMessage("message:owner");
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(5);
+        const deferredTo = Date.parse((yield* service.list()).tasks[0]?.nextRunAt ?? "");
+        const now = yield* Clock.currentTimeMillis;
+        // Past the next 60-second slot a skip would have picked, and within the 5-minute deferral.
+        expect(deferredTo).toBeGreaterThan(now + 60_000);
+        expect(deferredTo).toBeLessThanOrEqual(now + 5 * 60_000);
+
+        // Ten minutes after the owner's message, the deferred wake goes out.
+        yield* TestClock.adjust("11 minutes");
+        expect(yield* Ref.get(sent)).toHaveLength(6);
+
+        // Any unfinished run of the bot, such as the owner's own turn, defers it too.
+        yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
+        yield* sql`INSERT INTO orchestration_v2_projection_runs ${sql.insert({
+          run_id: "run:owner",
+          thread_id: THREAD_ID,
+          ordinal: 100,
+          provider: "claudeAgent",
+          provider_thread_id: null,
+          status: "running",
+          requested_at: "2026-11-13T00:00:00.000Z",
+          completed_at: null,
+          payload_json: JSON.stringify({ userMessageId: "message:owner-2" }),
+        })}`;
+        yield* fire;
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(6);
+        yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
+        yield* TestClock.adjust("5 minutes");
+        expect(yield* Ref.get(sent)).toHaveLength(7);
       }).pipe(Effect.provide(ScheduledTaskService.layer.pipe(Layer.provide(dependencies))));
     }).pipe(Effect.provide(SqlitePersistence.layerMemory)),
 );

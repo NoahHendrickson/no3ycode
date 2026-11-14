@@ -10,6 +10,7 @@ import {
   NodeId,
   ORCHESTRATOR_MCP_RUNNING_TASK_NEXT,
   type OrchestratorMcpCapabilitiesResult,
+  type OrchestratorMcpFailure,
   OrchestratorMcpTarget,
   type OrchestrationV2ThreadShell,
   type ScheduledTask,
@@ -31,6 +32,7 @@ import { checkpointWorkspace } from "@t3tools/provider-testing/replayWorkspace";
 import * as DateTime from "effect/DateTime";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
 import * as Layer from "effect/Layer";
 import * as Queue from "effect/Queue";
@@ -3014,6 +3016,176 @@ describe("OrchestratorMcpService provider resolution", () => {
       }),
     );
   });
+
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  describe("a bot's own wakes", () => {
+    const botThreadId = ThreadId.make("thread:bot");
+    const claudeInstanceId = ProviderInstanceId.make("claudeAgent");
+    const opus = { instanceId: claudeInstanceId, model: "claude-opus-5-5" };
+    const claude: ServerProvider = {
+      instanceId: claudeInstanceId,
+      driver: ProviderDriverKind.make("claudeAgent"),
+      enabled: true,
+      installed: true,
+      version: "test",
+      status: "ready",
+      auth: { status: "authenticated" },
+      checkedAt: "2026-11-13T00:00:00.000Z",
+      models: [
+        { slug: "claude-opus-5-5", name: "Opus", isCustom: false, capabilities: null },
+        {
+          slug: "claude-sonnet-4-6",
+          name: "Old Sonnet",
+          isCustom: false,
+          isLegacy: true,
+          capabilities: null,
+        },
+        { slug: "claude-sonnet-5-5", name: "Sonnet", isCustom: false, capabilities: null },
+      ],
+      slashCommands: [],
+      skills: [],
+    };
+    const scope: McpInvocationScope = {
+      environmentId: EnvironmentId.make("environment:bot"),
+      requestNamespace: "provider:bot",
+      thread: {
+        threadId: botThreadId,
+        providerSessionId: "provider:bot",
+        providerInstanceId: claudeInstanceId,
+      },
+      client: undefined,
+      capabilities: new Set(["orchestration"]),
+      issuedAt: 1,
+    };
+    const run = (
+      tags: ReadonlyArray<string>,
+      use: (
+        mcp: OrchestratorMcpService.OrchestratorMcpService["Service"],
+        bound: ScheduledTask,
+      ) => Effect.Effect<unknown, OrchestratorMcpFailure>,
+    ) =>
+      Effect.gen(function* () {
+        const saved = yield* Ref.make<ReadonlyArray<ScheduledTaskUpsertInput>>([]);
+        const shell: OrchestrationV2ThreadShell = {
+          ...liveThreadShell(botThreadId),
+          providerInstanceId: claudeInstanceId,
+          modelSelection: opus,
+          tags,
+        };
+        const bound: ScheduledTask = {
+          id: ScheduledTaskId.make("scheduled-task:bot"),
+          title: "Check mail",
+          prompt: "Check mail",
+          enabled: true,
+          schedule: { type: "interval", everyMs: 3_600_000 },
+          projectId: shell.projectId,
+          threadId: botThreadId,
+          threadMode: "fresh_session",
+          workspaceStrategy: { type: "root" },
+          modelSelection: opus,
+          runtimeMode: "full-access",
+          interactionMode: "default",
+          createdBy: "agent",
+          creationSource: "mcp",
+          createdAt: "2026-11-13T00:00:00.000Z",
+          updatedAt: "2026-11-13T00:00:00.000Z",
+          nextRunAt: null,
+          lastRunAt: null,
+          lastRunStatus: "never",
+          lastRunError: null,
+          runCount: 0,
+        };
+        const exit = yield* OrchestratorMcpService.OrchestratorMcpService.pipe(
+          Effect.flatMap((mcp) => use(mcp, bound)),
+          Effect.exit,
+          Effect.provide(
+            layerOrchestratorService.pipe(
+              Layer.provide(
+                Layer.mergeAll(
+                  NodeServices.layer,
+                  NodeCrypto.layer,
+                  Layer.mock(ThreadManagementService.ThreadManagementService)({
+                    getThreadShell: () => Effect.succeed(shell),
+                    getThreadRecords: () => Effect.succeed(idleThreadProjection(shell)),
+                  }),
+                  ServerSettings.layerTest(),
+                  Layer.mock(ProviderRegistry.ProviderRegistry)({
+                    getProviders: Effect.succeed([claude]),
+                  }),
+                  Layer.mock(ProviderAdapterRegistry.ProviderAdapterRegistryV2)({
+                    list: () => Effect.succeed([]),
+                  }),
+                  Layer.mock(ProjectService.ProjectService)({
+                    getById: () =>
+                      Effect.succeedSome({
+                        id: shell.projectId,
+                        workspaceRoot: "/bots",
+                        defaultModelSelection: opus,
+                      } as never),
+                  }),
+                  Layer.mock(SecretRequests.SecretRequests)({}),
+                  Layer.mock(RemoteDelegation.RemoteDelegation)({}),
+                  Layer.mock(ScheduledTaskService.ScheduledTaskService)({
+                    list: () => Effect.succeed({ tasks: [bound] }),
+                    upsert: (input) =>
+                      Ref.update(saved, (all) => [...all, input]).pipe(Effect.as({ task: bound })),
+                  }),
+                ),
+              ),
+            ),
+          ),
+        );
+        return { exit, saved: yield* Ref.get(saved) };
+      });
+    const everyFiveMinutes = { type: "interval", everyMs: 5 * 60_000 } as const;
+
+    it.effect("wake no more than every 15 minutes, and any other thread on any interval", () =>
+      Effect.gen(function* () {
+        const created = yield* run(["bot"], (mcp) =>
+          mcp.scheduleTask(scope, { prompt: "Check mail", schedule: everyFiveMinutes }),
+        );
+        assert.isTrue(Exit.isFailure(created.exit));
+        assert.include(String(created.exit), "at most every 15 minutes");
+        assert.include(String(created.exit), "under Automations");
+        assert.deepEqual(created.saved, []);
+
+        const updated = yield* run(["bot"], (mcp, bound) =>
+          mcp.updateScheduledTask(scope, { scheduledTaskId: bound.id, schedule: everyFiveMinutes }),
+        );
+        assert.include(String(updated.exit), "at most every 15 minutes");
+        assert.deepEqual(updated.saved, []);
+
+        const other = yield* run([], (mcp, bound) =>
+          mcp.updateScheduledTask(scope, { scheduledTaskId: bound.id, schedule: everyFiveMinutes }),
+        );
+        assert.isTrue(Exit.isSuccess(other.exit));
+      }),
+    );
+
+    it.effect("default to the current Sonnet, and any other thread to its own model", () =>
+      Effect.gen(function* () {
+        const scheduled = yield* run(["bot"], (mcp) =>
+          mcp.scheduleTask(scope, {
+            prompt: "Check mail",
+            schedule: { type: "interval", everyMs: 15 * 60_000 },
+          }),
+        );
+        assert.isTrue(Exit.isSuccess(scheduled.exit));
+        assert.deepEqual(scheduled.saved[0]?.modelSelection, {
+          instanceId: claudeInstanceId,
+          model: "claude-sonnet-5-5",
+        });
+
+        // Any other thread keeps its own model and any interval.
+        const other = yield* run([], (mcp) =>
+          mcp.scheduleTask(scope, { prompt: "Check mail", schedule: everyFiveMinutes }),
+        );
+        assert.isTrue(Exit.isSuccess(other.exit));
+        assert.deepEqual(other.saved[0]?.modelSelection, opus);
+      }),
+    );
+  });
+  /* fork:end fork-bots */
   it.effect(
     "reports the child run's selection after a restart and the thread selection before launch",
     () =>
