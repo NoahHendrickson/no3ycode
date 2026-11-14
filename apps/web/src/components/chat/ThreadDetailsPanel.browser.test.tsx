@@ -41,6 +41,10 @@ vi.mock(import("~/state/entities"), async (importOriginal) => ({
           worktreePath: state.folder,
           branch: null,
           pullRequests: state.pullRequests,
+          /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+             The details card's Mascot section reads the shell's tags. */
+          source: { tags: [] },
+          /* fork:end fork-bots */
         }) as never,
   useServerConfigs: (() =>
     new Map(

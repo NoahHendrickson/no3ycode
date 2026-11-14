@@ -7070,6 +7070,8 @@
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    # Upstream's test mocks a partial shell; the Mascot section reads its tags.
+    - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - docs/user/thread-sidebar.md
