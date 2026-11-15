@@ -42,6 +42,19 @@ function columnStampRef(attribute: string) {
 export const forkDockedDetailsRef = columnStampRef("data-fork-has-docked-details");
 export const forkFindBarRef = columnStampRef("data-fork-has-find-bar");
 
+/** A stable ref that stamps its element's workspace panel with `attribute` while mounted. */
+function panelStampRef(attribute: string) {
+  return (element: HTMLElement | null) => {
+    const panel = element?.closest("[data-preview-panel-mode]");
+    if (!panel) return;
+    panel.setAttribute(attribute, "");
+    return () => panel.removeAttribute(attribute);
+  };
+}
+
+/** The petal Threads panel (fork-bot-work-threads), a list where every other panel is read. */
+export const forkBotThreadsPanelRef = panelStampRef("data-fork-bot-threads-panel");
+
 /** The stage-card pages' card (the guard lists its producers). */
 export const forkStageCardRef = rootStampRef("data-fork-has-stage-card");
 export const forkThreadTabsRef = rootStampRef("data-fork-has-thread-tabs");

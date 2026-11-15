@@ -321,6 +321,44 @@
     padding-inline: 4px;
   }
 
+  /* The music strip (fork-music-panel) is a card on the panel: the popups'
+     halo, sheens and glint ring over its own drop shadow. Its open button
+     takes the chips' rim, so the two still read as one piece. */
+  &.dark[data-fork-theme="cool-darker"] [data-slot="sidebar-footer"] {
+    & [data-fork-music-strip] {
+      position: relative;
+      box-shadow:
+        0 12px 32px -18px rgb(0 0 0 / 45%),
+        var(--fork-glass-halo),
+        var(--fork-glass-sheen);
+    }
+
+    & [data-fork-music-strip]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      padding: 0.5px;
+      border-radius: inherit;
+      background: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 22%),
+        rgb(255 255 255 / 0%) 8px calc(100% - 8px),
+        rgb(255 255 255 / 10%)
+      );
+      mask:
+        linear-gradient(#000 0 0) content-box exclude,
+        linear-gradient(#000 0 0);
+      pointer-events: none;
+    }
+
+    & [data-fork-music-toggle][aria-pressed="true"] {
+      box-shadow:
+        var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+        var(--fork-glass-rim);
+    }
+  }
+
   /* The popups the chips open and the composer's model, effort and mode
      menus: every composer popup carries data-chat-composer-floating-layer
      (useComposerMenuProps), and the fork's own popups that are not composer
@@ -781,6 +819,49 @@
     }
   }
   /* fork:end fork-collapsed-thread-tabs */
+
+  /* The sidebar's Code / Chat switch (fork-chat-mode): its chosen mode is a
+     selected item too, so it wears the same selected glass in place of its
+     own sidebar fill and opaque border, which read as a dark disc. The extra
+     marker outranks the SegmentedTab rule above. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-sidebar-mode-tabs]
+    [data-fork-segmented-tab][data-pressed] {
+    position: relative;
+    border-color: transparent;
+    background-color: var(--sidebar-row-active);
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--fork-glass-selected-shadow);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      box-shadow: var(--fork-glass-selected-glint);
+      pointer-events: none;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      padding: 1px;
+      border-radius: inherit;
+      background: var(--fork-glass-dark-edge);
+      mask:
+        linear-gradient(#000 0 0) content-box exclude,
+        linear-gradient(#000 0 0);
+      pointer-events: none;
+    }
+  }
+
+  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+    [data-fork-sidebar-mode-tabs]
+    [data-fork-segmented-tab][data-pressed] {
+    background-color: rgb(255 255 255 / 6%);
+  }
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
      The model picker's rail tab for the open scope is a selected item, so it

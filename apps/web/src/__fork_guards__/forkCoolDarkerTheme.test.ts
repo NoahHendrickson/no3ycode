@@ -165,7 +165,7 @@ describe("fork guard: fork-cool-darker-theme", () => {
     expect(
       ruleBodyFor(themeRules, [
         ...DARKER_PANEL,
-        ":is( [data-fork-projects-row], [data-fork-project-section-header], [data-fork-status-section-header], [data-fork-thread-card-meta], [data-fork-thread-card-actions], [data-fork-idle-mark] )",
+        ":is( [data-fork-projects-row], [data-fork-bots-row], [data-fork-project-section-header], [data-fork-status-section-header], [data-fork-thread-card-meta], [data-fork-thread-card-actions], [data-fork-idle-mark] )",
       ]),
     ).toMatch(new RegExp(`--contrast-muted-foreground${quietInk.source}`, "u"));
     // The draft pencil is drawn at muted/70, so it takes the ink directly.
@@ -179,6 +179,7 @@ describe("fork guard: fork-cool-darker-theme", () => {
     // Every hook has to exist for the rule to land on anything.
     for (const [file, hook] of [
       ["../custom/SidebarV2ChromeRows.tsx", "data-fork-projects-row"],
+      ["../custom/bots/SidebarV2BotsSection.tsx", "data-fork-bots-row"],
       ["../custom/SidebarV2ProjectGroupHeader.tsx", "data-fork-project-section-header"],
       ["../custom/SidebarV2StatusSectionHeader.tsx", "data-fork-status-section-header"],
       ["../custom/SidebarV2ThreadCardMeta.tsx", "data-fork-thread-card-meta"],

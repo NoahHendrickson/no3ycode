@@ -301,6 +301,15 @@
       linear-gradient(rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%);
   }
 
+  /* The petal Threads panel is a thread list like the sidebar, not a reading
+     surface, so it takes neither: it reads at the gutter's alpha, which is
+     the sidebar's. */
+  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"][data-fork-has-chat-column]
+    [data-slot="sidebar-inset"]
+    [data-preview-panel-mode="inline"][data-fork-bot-threads-panel] {
+    background-image: none;
+  }
+
   /* Beside a docked sidebar the card stands 3px off it rather than 8px, and
      the sidebar's groups give up their right padding, so a row's space to the
      card comes as near the 8px it keeps from the window as the layout allows:
