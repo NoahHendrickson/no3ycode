@@ -295,7 +295,7 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(rules?.contents).toContain(
       "**CREW.md holds the rules every thread you start follows.**",
     );
-    expect(launch).toContain("text: yield* withForkBotCrewRules(");
+    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(mcp).toContain("yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt)");
     // Its threads report back, so it no longer polls them on each wake.
     expect(rules?.contents).toContain("**Your threads report to you.**");
@@ -311,11 +311,11 @@ describe("fork guard: fork-bot-work-threads", () => {
   // fork-bot-work-reports, fork-bot-crew-rules, fork-bot-digest, fork-bot-crew.
   it("reports a bot's work back to it, carries its crew rules, shows its digest and moves threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
-    expect(launch).toContain("text: yield* withForkBotCrewRules(");
+    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
     expect(threadsPanel).toContain("<BotDigest bot={bot} />");
     expect(threadsPanel).toContain("openSidebarThreadMenu(ref, {");
-    expect(sidebar).toContain("botCrewMenuItem(");
+    expect(sidebar).toContain("...botCrewMenuItems(");
     expect(sidebar).toContain("void setBotWork(thread, botId);");
     // Bots made before these rules get them.
     expect(sidebar).toContain("useRefreshBotRules(botThreads);");

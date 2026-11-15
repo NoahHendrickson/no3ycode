@@ -382,13 +382,9 @@ import { useCreateBot } from "~/custom/bots/useCreateBot";
 import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
 /* fork:end fork-bots */
 /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
-import {
-  botCrewMenuItem,
-  botFromCrewMenuId,
-  canJoinBotWork,
-  isBotCrewMenuId,
-} from "~/custom/bots/botCrew";
-import { readListedBots, useSetBotWork } from "~/custom/bots/useSetBotWork";
+import { botCrewMenuItems, botFromCrewMenuId, isBotCrewMenuId } from "~/custom/bots/botCrew";
+import { readListedBots } from "~/custom/bots/readListedBots";
+import { useSetBotWork } from "~/custom/bots/useSetBotWork";
 /* fork:end fork-bot-crew */
 /* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
 import { useRefreshBotRules } from "~/custom/bots/useRefreshBotRules";
@@ -4547,23 +4543,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 : []),
               /* fork:end fork-bots */
               /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
-              ...(() => {
-                const bots = canJoinBotWork(thread.source)
-                  ? readListedBots(threadRef.environmentId)
-                  : [];
-                return bots.length === 0
-                  ? []
-                  : [
-                      botCrewMenuItem(
-                        thread.source,
-                        bots,
-                        readEnvironmentScope(
-                          threadRef.environmentId,
-                          AuthOrchestrationOperateScope,
-                        ),
-                      ),
-                    ];
-              })(),
+              ...botCrewMenuItems(
+                thread.source,
+                readListedBots(threadRef.environmentId),
+                readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+              ),
               /* fork:end fork-bot-crew */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(

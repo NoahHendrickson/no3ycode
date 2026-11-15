@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { BOT_RULES_MARKER, botSeedFiles } from "./botSeedFiles";
-import { BOT_PREVIOUS_RULES_FILE, refreshBotRules } from "./refreshBotRules";
+import { botPreviousRulesFile, refreshBotRules } from "./refreshBotRules";
 
 function folder(initial: Record<string, string>, failOn?: string) {
   const files = new Map(Object.entries(initial));
@@ -31,7 +31,8 @@ describe("refreshBotRules", () => {
       "DIGEST.md": "# Digest\n\n## Needs you\n\n- Already written by the bot",
     });
     expect(await refreshBotRules(old.io, bot)).toBe(true);
-    expect(old.files.get(BOT_PREVIOUS_RULES_FILE)).toBe("# Scout\n\nOld rules.");
+    // Rules from before the marker are version 1, kept under that version's own name.
+    expect(old.files.get(botPreviousRulesFile(1))).toBe("# Scout\n\nOld rules.");
     expect(old.files.get("CLAUDE.md")?.startsWith(BOT_RULES_MARKER)).toBe(true);
     expect(old.files.get("CLAUDE.md")).toContain("thread id `thread-scout`");
     expect(old.files.get("CREW.md")).toContain("Do not push");
@@ -65,6 +66,12 @@ describe("refreshBotRules", () => {
     for (const path of ["CLAUDE.md", "AGENTS.md", "CREW.md", "DIGEST.md"]) {
       expect(fresh.files.get(path)).toBe(seeded.get(path));
     }
-    expect(fresh.files.has(BOT_PREVIOUS_RULES_FILE)).toBe(false);
+    expect([...fresh.files.keys()].some((path) => path.startsWith(".claude/"))).toBe(false);
+  });
+
+  it("leaves rules a newer client wrote alone, so clients never roll each other back", async () => {
+    const newer = folder({ "CLAUDE.md": "<!-- petal-rules: 99 -->\n# Scout\n\nNewer rules." });
+    expect(await refreshBotRules(newer.io, bot)).toBe(false);
+    expect(newer.writes).toEqual([]);
   });
 });

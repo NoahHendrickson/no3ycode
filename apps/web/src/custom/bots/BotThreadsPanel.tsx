@@ -8,7 +8,7 @@ import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thr
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
@@ -25,7 +25,6 @@ import { usePanelPresence } from "~/panelAnimations";
 import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
-import { useThreadSelectionStore } from "~/threadSelectionStore";
 import { useUiStateStore } from "~/uiStateStore";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
@@ -207,54 +206,48 @@ function BotThreadsBody(props: {
       </span>
     </div>
   );
-  // The digest and the list scroll as one.
-  const scroll = (content: ReactNode) => (
+  const content =
+    groups.length > 0 ? (
+      <BotThreadsList
+        groups={groups}
+        folded={folded}
+        onToggle={(key) =>
+          setFolded((previous) => {
+            const next = new Set(previous);
+            if (!next.delete(key)) next.add(key);
+            return next;
+          })
+        }
+        currentThreadRef={props.currentThreadRef}
+      />
+    ) : all.length === 0 ? (
+      <p className="px-3.5 py-3 text-sm text-muted-foreground">
+        This petal has not started any threads.
+      </p>
+    ) : (
+      <div className="flex flex-col items-start gap-2 px-3.5 py-3">
+        <p className="text-sm text-muted-foreground">No threads match.</p>
+        <Button
+          onClick={() => {
+            clearBotThreadsFilters(botKey);
+            if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
+          }}
+          size="xs"
+          variant="outline"
+        >
+          Clear search and filters
+        </Button>
+      </div>
+    );
+  return (
     <>
       {header}
+      {/* The digest and the list scroll as one. */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {bot === undefined ? null : <BotDigest bot={bot} />}
         {content}
       </div>
     </>
-  );
-  if (groups.length === 0) {
-    return scroll(
-      <>
-        {all.length === 0 ? (
-          <p className="px-3.5 py-3 text-sm text-muted-foreground">
-            This petal has not started any threads.
-          </p>
-        ) : (
-          <div className="flex flex-col items-start gap-2 px-3.5 py-3">
-            <p className="text-sm text-muted-foreground">No threads match.</p>
-            <Button
-              onClick={() => {
-                clearBotThreadsFilters(botKey);
-                if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
-              }}
-              size="xs"
-              variant="outline"
-            >
-              Clear search and filters
-            </Button>
-          </div>
-        )}
-      </>,
-    );
-  }
-  return scroll(
-    <BotThreadsList
-      groups={groups}
-      folded={folded}
-      onToggle={(key) =>
-        setFolded((previous) => {
-          const next = new Set(previous);
-          if (!next.delete(key)) next.add(key);
-          return next;
-        })
-      }
-      currentThreadRef={props.currentThreadRef}
-    />,
   );
 }
 
@@ -329,8 +322,6 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
         onContextMenu={(event) => {
           event.preventDefault();
-          const selection = useThreadSelectionStore.getState();
-          if (selection.hasSelection()) selection.clearSelection();
           openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
         }}
         className={cn(

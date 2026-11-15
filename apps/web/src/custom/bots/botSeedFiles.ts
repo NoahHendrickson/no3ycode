@@ -3,6 +3,8 @@
  * Claude Code reloads CLAUDE.md from disk at session start and after compaction; the hooks
  * re-show STATE.md whenever context is new and shape the compaction summary.
  */
+import { FORK_BOT_CREW_FILE } from "@t3tools/shared/forkBotTags";
+
 import { BOT_QUIET_REPLY } from "./botThreads";
 
 export interface BotSeedFile {
@@ -10,8 +12,8 @@ export interface BotSeedFile {
   readonly contents: string;
 }
 
-/** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (useRefreshBotRules). */
-const BOT_RULES_VERSION = 2;
+/** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
+export const BOT_RULES_VERSION = 2;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -202,20 +204,28 @@ const CLAUDE_SETTINGS = {
   },
 };
 
+type BotIdentity = { readonly name: string; readonly threadId: string };
+
+const rulesFile = (bot: BotIdentity): BotSeedFile => ({
+  relativePath: "CLAUDE.md",
+  contents: instructions(bot.name, bot.threadId),
+});
+// Providers that load AGENTS.md instead of CLAUDE.md, and run no hooks.
+const AGENTS_FILE: BotSeedFile = { relativePath: "AGENTS.md", contents: AGENTS_POINTER };
+const CREW_FILE: BotSeedFile = { relativePath: FORK_BOT_CREW_FILE, contents: CREW };
+const DIGEST_FILE: BotSeedFile = { relativePath: BOT_DIGEST_FILE, contents: DIGEST };
+
 /** `today` is a plain date (YYYY-MM-DD) for the first log line; `threadId` is the bot's own conversation. */
-export function botSeedFiles(input: {
-  readonly name: string;
-  readonly today: string;
-  readonly threadId: string;
-}): ReadonlyArray<BotSeedFile> {
+export function botSeedFiles(
+  input: BotIdentity & { readonly today: string },
+): ReadonlyArray<BotSeedFile> {
   return [
-    { relativePath: "CLAUDE.md", contents: instructions(input.name, input.threadId) },
+    rulesFile(input),
     { relativePath: "JOB.md", contents: JOB },
-    // Providers that load AGENTS.md instead of CLAUDE.md, and run no hooks.
-    { relativePath: "AGENTS.md", contents: AGENTS_POINTER },
+    AGENTS_FILE,
     { relativePath: "STATE.md", contents: state(input.today) },
-    { relativePath: "CREW.md", contents: CREW },
-    { relativePath: BOT_DIGEST_FILE, contents: DIGEST },
+    CREW_FILE,
+    DIGEST_FILE,
     { relativePath: ".claude/compact-instructions.md", contents: COMPACT_INSTRUCTIONS },
     {
       relativePath: ".claude/settings.json",
@@ -224,20 +234,13 @@ export function botSeedFiles(input: {
   ];
 }
 
-/** What an existing bot's folder gets when its CLAUDE.md predates `BOT_RULES_MARKER`: the files
-    only T3 Code writes are replaced, and files the bot keeps are added only where missing. JOB.md,
-    STATE.md and the folder's settings are never touched. */
-export function botRulesRefresh(input: { readonly name: string; readonly threadId: string }): {
+/** What an existing bot's folder gets when its rules are older than `BOT_RULES_VERSION`: the
+    files only T3 Code writes are replaced, and files the bot keeps are added only where missing.
+    JOB.md, STATE.md and the folder's settings are never touched. */
+export function botRulesRefresh(bot: BotIdentity): {
   readonly replace: ReadonlyArray<BotSeedFile>;
   readonly addIfMissing: ReadonlyArray<BotSeedFile>;
 } {
-  const files = new Map(
-    botSeedFiles({ ...input, today: "" }).map((file) => [file.relativePath, file] as const),
-  );
-  const pick = (paths: ReadonlyArray<string>) => paths.flatMap((path) => files.get(path) ?? []);
-  return {
-    // CLAUDE.md last: its marker is what says the refresh finished.
-    replace: pick(["AGENTS.md", "CLAUDE.md"]),
-    addIfMissing: pick(["CREW.md", BOT_DIGEST_FILE]),
-  };
+  // CLAUDE.md last: its marker is what says the refresh finished.
+  return { replace: [AGENTS_FILE, rulesFile(bot)], addIfMissing: [CREW_FILE, DIGEST_FILE] };
 }

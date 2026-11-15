@@ -13,6 +13,7 @@ Some preamble the bot wrote.
 
 - **Approve** the migration in [Fix billing](t3://thread/abc)
 1. Pick a release day
+#412 waiting on your review
 
 ## New
 
@@ -26,7 +27,11 @@ Nothing.
     ).toEqual([
       {
         title: "Needs you",
-        items: ["Approve the migration in Fix billing", "Pick a release day"],
+        items: [
+          "Approve the migration in Fix billing",
+          "Pick a release day",
+          "#412 waiting on your review",
+        ],
         needsYou: true,
       },
       { title: "In progress", items: ["Flaky test fix: running the suite"], needsYou: false },

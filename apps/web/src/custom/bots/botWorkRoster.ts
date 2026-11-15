@@ -5,9 +5,9 @@
  *
  * No runtime imports from the sidebar here: Sidebar.logic depends on this module.
  */
-import type { OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
+import { type OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import { FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
+import { forkBotWorkOwner } from "@t3tools/shared/forkBotTags";
 
 import { isListedBot } from "./botThreads";
 
@@ -15,8 +15,8 @@ type TaggedShell = { readonly source: Pick<OrchestrationV2ThreadShell, "tags"> }
 
 /** The id of the bot a thread works for, or null for every other thread. */
 export function botWorkOwnerId(shell: Pick<OrchestrationV2ThreadShell, "tags">): ThreadId | null {
-  const tag = shell.tags?.find((candidate) => candidate.startsWith(FORK_BOT_WORK_TAG_PREFIX));
-  return tag === undefined ? null : (tag.slice(FORK_BOT_WORK_TAG_PREFIX.length) as ThreadId);
+  const owner = forkBotWorkOwner(shell.tags);
+  return owner === null ? null : ThreadId.make(owner);
 }
 
 /** The thread a thread belongs under: a subagent's parent, else the bot a bot's work names. The

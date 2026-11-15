@@ -61,7 +61,7 @@ import { randomUuidV4 } from "@t3tools/provider-core/server/randomUuid";
 import { DispatchModeLimit } from "./DispatchModeLimit.ts";
 import * as ThreadManagement from "./ThreadManagementService.ts";
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-import { linkForkBotWork, makeForkBotCrewRules } from "./forkBotWork.ts";
+import { linkForkBotWork, withForkBotCrewRules } from "./forkBotWork.ts";
 /* fork:end fork-bot-work-threads */
 /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
 import * as FileSystem from "effect/FileSystem";
@@ -242,8 +242,9 @@ export class ThreadLaunchService extends Context.Service<
     >;
     readonly prepareRun: (input: ThreadLaunchPreparationInput) => Effect.Effect<void>;
     /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
-    /** `text` with the bot's CREW.md after it, for a thread created outside `launch`. */
-    readonly withForkBotCrewRules: (botId: ThreadId | null, text: string) => Effect.Effect<string>;
+    /** The bot's CREW.md after `text`, for a thread linked outside `launch` (create_threads); it
+        reads through this service's file access. Call it only for a linked thread. */
+    readonly withForkBotCrewRules: (botId: ThreadId, text: string) => Effect.Effect<string>;
     /* fork:end fork-bot-crew-rules */
   }
 >()("t3/orchestration-v2/ThreadLaunchService") {}
@@ -275,7 +276,11 @@ const make = Effect.gen(function* () {
   const eventSink = yield* EventSink.EventSinkV2;
   const managedFolders = yield* ManagedProjectFolders.ManagedProjectFolders;
   /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
-  const withForkBotCrewRules = makeForkBotCrewRules(threads, yield* FileSystem.FileSystem);
+  const fileSystem = yield* FileSystem.FileSystem;
+  // The span is withForkBotCrewRules' own.
+  const forkBotCrewRules = Effect.fnUntraced(function* (botId: ThreadId, text: string) {
+    return yield* withForkBotCrewRules(threads, fileSystem, botId, text);
+  });
   /* fork:end fork-bot-crew-rules */
   // A project-folder launch that names no branch records the folder's checkout, as the composer does.
   const launchBranch = (strategy: ThreadLaunchWorkspaceStrategy, workspaceRoot: string) =>
@@ -1244,7 +1249,10 @@ const make = Effect.gen(function* () {
               threadId,
               messageId,
               /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
-              text: yield* withForkBotCrewRules(forkBotId, input.initialMessage.text),
+              text:
+                forkBotId === null
+                  ? input.initialMessage.text
+                  : yield* forkBotCrewRules(forkBotId, input.initialMessage.text),
               /* fork:end fork-bot-crew-rules */
               ...(input.initialMessage.scheduledTaskId === undefined
                 ? {}
@@ -1431,7 +1439,7 @@ const make = Effect.gen(function* () {
     retryPreparation,
     prepareRun,
     /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
-    withForkBotCrewRules,
+    withForkBotCrewRules: forkBotCrewRules,
     /* fork:end fork-bot-crew-rules */
   });
 });

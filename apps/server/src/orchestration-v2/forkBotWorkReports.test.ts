@@ -187,7 +187,6 @@ it.effect(
       });
       assert.equal(first?.message.createdBy, "agent");
 
-      // The queued notice already sends the bot to look at all of its work.
       const question = {
         id: EventId.make("event:question"),
         type: "runtime-request.updated",
@@ -209,20 +208,10 @@ it.effect(
           resolvedAt: null,
         },
       } satisfies OrchestrationV2DomainEvent;
+      // The queued notice already sends the bot to look at all of its work, so a later turn adds
+      // nothing; someone waiting on an answer is always said outright.
       yield* reactor.handle(settled(botRun, "failed"));
-      yield* reactor.handle(question);
       assert.lengthOf(yield* reports, 1);
-
-      // Once that notice is gone, the next one goes out.
-      const firstRun = (yield* projections.getThreadRecords(botId, ["runs"])).runs.find(
-        (run) => run.userMessageId === first!.message.id,
-      )!;
-      yield* orchestrator.dispatch({
-        type: "queued-run.cancel",
-        commandId: CommandId.make("cancel-first-report"),
-        threadId: botId,
-        runId: firstRun.id,
-      });
       yield* reactor.handle(question);
       const second = (yield* reports).find((report) => report.message.id !== first!.message.id);
       assert.equal(second?.status, "queued");
@@ -230,15 +219,15 @@ it.effect(
       assert.equal(second?.message.notification?.summary, "Fix the flaky test has a question");
 
       // An owner turn that settles after they left the thread reports once the grace is up.
-      const secondRun = (yield* projections.getThreadRecords(botId, ["runs"])).runs.find(
-        (run) => run.userMessageId === second!.message.id,
-      )!;
-      yield* orchestrator.dispatch({
-        type: "queued-run.cancel",
-        commandId: CommandId.make("cancel-second-report"),
-        threadId: botId,
-        runId: secondRun.id,
-      });
+      const { runs: botRuns } = yield* projections.getThreadRecords(botId, ["runs"]);
+      for (const notice of [first!, second!]) {
+        yield* orchestrator.dispatch({
+          type: "queued-run.cancel",
+          commandId: CommandId.make(`cancel:${notice.message.id}`),
+          threadId: botId,
+          runId: botRuns.find((run) => run.userMessageId === notice.message.id)!.id,
+        });
+      }
       yield* reactor.handle(settled(ownerRun, "failed", yield* DateTime.now));
       assert.lengthOf(yield* reports, 2);
       yield* TestClock.adjust(ForkBotWorkReports.FORK_BOT_OWNER_WATCH_GRACE);

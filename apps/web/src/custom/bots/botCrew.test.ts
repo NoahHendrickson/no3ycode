@@ -1,17 +1,17 @@
-import type { ThreadId } from "@t3tools/contracts";
+import { ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  botCrewMenuItem,
+  botCrewMenuItems,
   botFromCrewMenuId,
   botWorkTagWrites,
   canJoinBotWork,
   isBotCrewMenuId,
 } from "./botCrew";
 
-const scout = "bot-scout" as ThreadId;
-const mail = "bot-mail" as ThreadId;
-const lineage = { parentThreadId: null, relationshipToParent: null, rootThreadId: "t" as ThreadId };
+const scout = ThreadId.make("bot-scout");
+const mail = ThreadId.make("bot-mail");
+const lineage = { parentThreadId: null, relationshipToParent: null, rootThreadId: scout };
 
 describe("botWorkTagWrites", () => {
   it("tags the new bot before clearing the old, and leaves other tags alone", () => {
@@ -42,14 +42,19 @@ describe("the Petal submenu", () => {
       { id: scout, title: "Scout" },
       { id: mail, title: "Mail" },
     ];
-    const item = botCrewMenuItem({ tags: ["bot-work:bot-mail"] }, bots, true);
-    expect(item.children.map((child) => [child.label, child.checked])).toEqual([
+    const [item] = botCrewMenuItems({ tags: ["bot-work:bot-mail"], lineage }, bots, true);
+    expect(item?.children.map((child) => [child.label, child.checked])).toEqual([
       ["Scout", false],
       ["Mail", true],
       ["None", false],
     ]);
-    expect(botCrewMenuItem({ tags: [] }, bots, true).children.at(-1)?.checked).toBe(true);
-    const [scoutId, , noneId] = item.children.map((child) => child.id);
+    expect(botCrewMenuItems({ tags: [], lineage }, bots, true)[0]?.children.at(-1)?.checked).toBe(
+      true,
+    );
+    // Nothing to offer: no bot lists, or the thread is a bot itself.
+    expect(botCrewMenuItems({ tags: [], lineage }, [], true)).toEqual([]);
+    expect(botCrewMenuItems({ tags: ["bot"], lineage }, bots, true)).toEqual([]);
+    const [scoutId, , noneId] = item!.children.map((child) => child.id);
     expect(isBotCrewMenuId(scoutId!)).toBe(true);
     expect(isBotCrewMenuId("bot-mascot:Classic")).toBe(false);
     expect(botFromCrewMenuId(scoutId!)).toBe(scout);

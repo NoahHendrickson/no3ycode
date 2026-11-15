@@ -3073,6 +3073,7 @@ const make = Effect.gen(function* () {
                       index,
                     }),
                     /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+                    // Only a linked thread asks the launch service, which tests often stub.
                     text:
                       forkBotId === null
                         ? request.prompt

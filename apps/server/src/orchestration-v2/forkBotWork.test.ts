@@ -2,20 +2,36 @@
  * Fork-owned — see `.fork/customizations.yaml#fork-bot-crew-rules`.
  */
 import { assert, it } from "@effect/vitest";
-import { ThreadId } from "@t3tools/contracts";
+import { CommandId, ThreadId } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 
 import type { ThreadManagementService } from "./ThreadManagementService.ts";
-import { makeForkBotCrewRules } from "./forkBotWork.ts";
+import { linkForkBotWork, withForkBotCrewRules } from "./forkBotWork.ts";
 
-const botId = ThreadId.make("thread:bot");
+const botId = ThreadId.make("bot");
 
-function threadsWith(shell: { tags: ReadonlyArray<string>; worktreePath: string | null } | null) {
-  return {
-    getThreadShell: () =>
-      Effect.succeed(shell === null ? null : { title: "Scout", id: botId, ...shell }),
+type Shell = { readonly tags: ReadonlyArray<string>; readonly worktreePath?: string | null };
+
+function threadsWith(shells: Record<string, Shell>) {
+  const tagged: Array<string> = [];
+  const threads = {
+    getThreadShell: (id: string) =>
+      Effect.succeed(
+        id in shells
+          ? {
+              id,
+              title: "Scout",
+              worktreePath: null,
+              lineage: { relationshipToParent: null, rootThreadId: id },
+              ...shells[id],
+            }
+          : null,
+      ),
+    dispatch: (command: { readonly tag: string }) =>
+      Effect.sync(() => void tagged.push(command.tag)),
   } as unknown as ThreadManagementService["Service"];
+  return { threads, tagged };
 }
 
 function filesWith(files: Record<string, string>) {
@@ -25,52 +41,69 @@ function filesWith(files: Record<string, string>) {
   });
 }
 
+const launchedBy = (id: string) => ({
+  commandId: CommandId.make("command:launch"),
+  threadId: ThreadId.make("thread:new"),
+  launchedBy: ThreadId.make(id),
+});
+
+it.effect("links a thread to the bot that launched it, or to its launcher's bot", () =>
+  Effect.gen(function* () {
+    const { threads, tagged } = threadsWith({
+      bot: { tags: ["bot"] },
+      work: { tags: ["bot-work:bot"] },
+      plain: { tags: [] },
+    });
+    assert.equal(yield* linkForkBotWork(threads, launchedBy("bot")), botId);
+    assert.equal(yield* linkForkBotWork(threads, launchedBy("work")), botId);
+    assert.isNull(yield* linkForkBotWork(threads, launchedBy("plain")));
+    assert.deepEqual(tagged, ["bot-work:bot", "bot-work:bot"]);
+  }),
+);
+
 it.effect("adds the bot's CREW.md to the first message of a thread it launched", () =>
   Effect.gen(function* () {
-    const bot = threadsWith({ tags: ["bot"], worktreePath: "/bots/scout" });
+    const { threads } = threadsWith({ bot: { tags: ["bot"], worktreePath: "/bots/scout" } });
     const files = filesWith({ "/bots/scout/CREW.md": "Open pull requests as drafts.\n" });
 
-    const text = yield* makeForkBotCrewRules(bot, files)(botId, "Fix the flaky test.");
+    const text = yield* withForkBotCrewRules(threads, files, botId, "Fix the flaky test.");
     assert.isTrue(text.startsWith("Fix the flaky test.\n\n---\n\n"));
     assert.include(text, "Standing rules from Scout");
     assert.include(text, "/bots/scout/CREW.md");
     assert.isTrue(text.endsWith("Open pull requests as drafts."));
 
     // A runaway file is cut, and says so.
-    const long = yield* makeForkBotCrewRules(
-      bot,
+    const long = yield* withForkBotCrewRules(
+      threads,
       filesWith({ "/bots/scout/CREW.md": "x".repeat(20_000) }),
-    )(botId, "Go.");
+      botId,
+      "Go.",
+    );
     assert.isBelow(long.length, 9_000);
     assert.include(long, "The rest was cut.");
   }),
 );
 
-it.effect("leaves the message alone without a bot, a folder, a file or any rules in it", () =>
+it.effect("sends the message as written without a bot, a folder, a file or any rules", () =>
   Effect.gen(function* () {
-    const files = filesWith({ "/bots/scout/CREW.md": "Rules.", "/bots/empty/CREW.md": "  \n" });
-    const cases = [
-      [threadsWith({ tags: ["bot"], worktreePath: "/bots/scout" }), null],
-      [threadsWith(null), botId],
-      [threadsWith({ tags: [], worktreePath: "/bots/scout" }), botId],
-      [threadsWith({ tags: ["bot"], worktreePath: null }), botId],
-      [threadsWith({ tags: ["bot"], worktreePath: "/bots/missing" }), botId],
-      [threadsWith({ tags: ["bot"], worktreePath: "/bots/empty" }), botId],
-    ] as const;
-    for (const [threads, id] of cases) {
-      assert.equal(yield* makeForkBotCrewRules(threads, files)(id, "Go."), "Go.");
+    const files = filesWith({ "/bots/empty/CREW.md": "  \n" });
+    const cases: ReadonlyArray<Record<string, Shell>> = [
+      {},
+      { bot: { tags: [], worktreePath: "/bots/empty" } },
+      { bot: { tags: ["bot"], worktreePath: null } },
+      { bot: { tags: ["bot"], worktreePath: "/bots/missing" } },
+      { bot: { tags: ["bot"], worktreePath: "/bots/empty" } },
+    ];
+    for (const shells of cases) {
+      const { threads } = threadsWith(shells);
+      assert.equal(yield* withForkBotCrewRules(threads, files, botId, "Go."), "Go.");
     }
     // An unreadable file never fails the launch.
+    const { threads } = threadsWith({ bot: { tags: ["bot"], worktreePath: "/bots/x" } });
     const broken = FileSystem.makeNoop({
       exists: () => Effect.succeed(true),
       readFileString: () => Effect.fail("unreadable" as never),
     });
-    assert.equal(
-      yield* makeForkBotCrewRules(
-        threadsWith({ tags: ["bot"], worktreePath: "/bots/scout" }),
-        broken,
-      )(botId, "Go."),
-      "Go.",
-    );
+    assert.equal(yield* withForkBotCrewRules(threads, broken, botId, "Go."), "Go.");
   }),
 );

@@ -36,7 +36,8 @@ export function parseBotDigest(contents: string): ReadonlyArray<BotDigestSection
       sections.push(current);
       continue;
     }
-    if (current === null || line === "" || line.startsWith("#")) continue;
+    // Skips a level-one heading; a "#" with no space after it starts an item.
+    if (current === null || line === "" || /^#\s/.test(line)) continue;
     const item = plainItem(line);
     // A repeated line says nothing new, and each line keys its row.
     if (item !== "" && !EMPTY_ITEM.test(item) && !current.items.includes(item)) {

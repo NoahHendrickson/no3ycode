@@ -13,7 +13,7 @@ import {
   ThreadId,
   isListedThreadLineage,
 } from "@t3tools/contracts";
-import { FORK_BOT_WORK_TAG_PREFIX, isForkBotThread } from "@t3tools/shared/forkBotTags";
+import { forkBotWorkOwner, isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as Context from "effect/Context";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -27,7 +27,6 @@ import * as Orchestrator from "./Orchestrator.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 
 const REPORT_MESSAGE_PREFIX = "message:fork-bot-work-report:";
-/** A turn the owner watched: the bot updates its files and replies quietly. */
 const SEEN_MESSAGE_PREFIX = "message:fork-bot-work-seen:";
 
 /** How long after a turn the owner started a client still on the thread has to record a visit.
@@ -51,44 +50,66 @@ export function forkBotWorkOwnerId(
 ): ThreadId | null {
   // A subagent or side chat inherits its parent's tags; its parent reports for it.
   if (!isListedThreadLineage(thread.lineage)) return null;
-  const tag = thread.tags?.find((candidate) => candidate.startsWith(FORK_BOT_WORK_TAG_PREFIX));
-  return tag === undefined ? null : ThreadId.make(tag.slice(FORK_BOT_WORK_TAG_PREFIX.length));
+  const owner = forkBotWorkOwner(thread.tags);
+  return owner === null ? null : ThreadId.make(owner);
 }
 
 type Report =
-  | { readonly kind: "settled"; readonly run: OrchestrationV2Run; readonly seen?: boolean }
+  | { readonly kind: "settled"; readonly run: OrchestrationV2Run }
+  /** A turn the owner watched settle: the bot updates its files and says nothing. */
+  | { readonly kind: "watched"; readonly run: OrchestrationV2Run }
   | { readonly kind: "request"; readonly request: OrchestrationV2RuntimeRequest };
 
-function reportText(work: OrchestrationV2AppThread, report: Report): string {
-  const named = `your thread "${work.title}" (${work.id})`;
-  if (report.kind === "settled" && report.seen === true) {
-    return `Work report: your owner just watched ${named} ${report.run.status === "failed" ? "fail" : "finish"} a turn they started. Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.
-
-This notice comes from T3 Code, not from your owner. They have already seen it, so do not report it. Your other threads may have changed too, so check them as well. Update STATE.md and DIGEST.md to match all of them, then reply with exactly "Nothing to report." unless another thread has something your owner has not seen.`;
-  }
-  const header =
-    report.kind === "request"
-      ? report.request.kind === "user_input"
-        ? `Work report: ${named} asked a question and is waiting for an answer. Read it with t3_pending_request action read, threadId ${work.id}, requestId ${report.request.id}. Answer it with action respond only when JOB.md or CREW.md already settle it; otherwise tell your owner what it asks. If it is no longer pending, it was answered.`
-        : `Work report: ${named} is waiting for your owner to approve an action. You cannot approve it: tell your owner what it wants to do.`
-      : report.run.status === "failed"
-        ? `Work report: ${named} failed its latest turn. Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.`
-        : `Work report: ${named} finished a turn. Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.`;
-  return `${header}
-
-This notice comes from T3 Code, not from your owner. Handle it like a scheduled wake: update STATE.md (and DIGEST.md), then report only what needs your owner, or reply with exactly "Nothing to report." Your other threads may have changed too, so check them while you are at it.`;
+interface Notice {
+  readonly prefix: string;
+  /** Queued notices that already send the bot to all of its work, so this one adds nothing. */
+  readonly coveredBy: ReadonlyArray<string>;
+  readonly text: string;
+  readonly summary: string;
+  readonly outcome: "failed" | "updated";
 }
 
-function reportSummary(work: OrchestrationV2AppThread, report: Report): string {
-  if (report.kind === "request") {
-    return report.request.kind === "user_input"
-      ? `${work.title} has a question`
-      : `${work.title} needs an approval`;
+const CHECK_THE_REST = `This notice comes from T3 Code, not from your owner. Handle it like a scheduled wake: update STATE.md (and DIGEST.md), then report only what needs your owner, or reply with exactly "Nothing to report." Your other threads may have changed too, so check them while you are at it.`;
+
+function notice(work: OrchestrationV2AppThread, report: Report): Notice {
+  const named = `your thread "${work.title}" (${work.id})`;
+  const read = `Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.`;
+  switch (report.kind) {
+    case "settled": {
+      const failed = report.run.status === "failed";
+      return {
+        prefix: REPORT_MESSAGE_PREFIX,
+        coveredBy: [REPORT_MESSAGE_PREFIX],
+        text: `Work report: ${named} ${failed ? "failed its latest turn" : "finished a turn"}. ${read}\n\n${CHECK_THE_REST}`,
+        summary: `${work.title} ${failed ? "failed" : "finished"}`,
+        outcome: failed ? "failed" : "updated",
+      };
+    }
+    case "watched": {
+      const failed = report.run.status === "failed";
+      return {
+        prefix: SEEN_MESSAGE_PREFIX,
+        // A queued quiet notice tells the bot to say nothing, so it never covers a real report.
+        coveredBy: [REPORT_MESSAGE_PREFIX, SEEN_MESSAGE_PREFIX],
+        text: `Work report: your owner just watched ${named} ${failed ? "fail" : "finish"} a turn they started. ${read}\n\nThis notice comes from T3 Code, not from your owner. They have already seen it, so do not report it. Your other threads may have changed too, so check them as well. Update STATE.md and DIGEST.md to match all of them, then reply with exactly "Nothing to report." unless another thread has something your owner has not seen.`,
+        summary: `${work.title} ${failed ? "failed" : "finished"} while you watched`,
+        outcome: failed ? "failed" : "updated",
+      };
+    }
+    case "request": {
+      const question = report.request.kind === "user_input";
+      return {
+        prefix: REPORT_MESSAGE_PREFIX,
+        // Someone is waiting: always said outright, never left to a notice about other work.
+        coveredBy: [],
+        text: question
+          ? `Work report: ${named} asked a question and is waiting for an answer. Read it with t3_pending_request action read, threadId ${work.id}, requestId ${report.request.id}. Answer it with action respond only when JOB.md or CREW.md already settle it; otherwise tell your owner what it asks. If it is no longer pending, it was answered.\n\n${CHECK_THE_REST}`
+          : `Work report: ${named} is waiting for your owner to approve an action. You cannot approve it: tell your owner what it wants to do.\n\n${CHECK_THE_REST}`,
+        summary: `${work.title} ${question ? "has a question" : "needs an approval"}`,
+        outcome: "updated",
+      };
+    }
   }
-  const outcome = report.run.status === "failed" ? "failed" : "finished";
-  return report.seen === true
-    ? `${work.title} ${outcome} while you watched`
-    : `${work.title} ${outcome}`;
 }
 
 export class ForkBotWorkReports extends Context.Service<
@@ -102,11 +123,13 @@ export class ForkBotWorkReports extends Context.Service<
 const make = Effect.gen(function* () {
   const engine = yield* Orchestrator.OrchestratorV2;
   const projections = yield* ProjectionStore.ProjectionStoreV2;
-
   // Owner turns wait out the grace off the event stream, for as long as the server runs.
   const graceScope = yield* Effect.scope;
   // Grace fibers and the stream report at once; one at a time, each sees the others' notices.
   const reportLock = yield* Semaphore.make(1);
+
+  const logFailure = (threadId: ThreadId) => (cause: unknown) =>
+    Effect.logWarning("fork-bot-work-report.failed", { threadId, cause });
 
   /** Who started `run`: T3 Code compacting an idle thread (never reported), the owner from the
       work thread, or anyone else (the bot, an agent, a wake). */
@@ -115,7 +138,7 @@ const make = Effect.gen(function* () {
       messageIds: [run.userMessageId],
     });
     const message = messages[0];
-    if (message?.idleCompaction !== undefined) return "quiet" as const;
+    if (message?.idleCompaction !== undefined) return "compaction" as const;
     return message?.createdBy === "user" ? ("owner" as const) : ("other" as const);
   });
 
@@ -139,25 +162,23 @@ const make = Effect.gen(function* () {
     ) {
       return;
     }
-    // A queued notice tells the bot to look at all of its work, so it covers this one; a quiet
-    // one covers only another quiet one, since it tells the bot to say nothing.
-    const seen = value.kind === "settled" && value.seen === true;
-    const covering = seen ? [REPORT_MESSAGE_PREFIX, SEEN_MESSAGE_PREFIX] : [REPORT_MESSAGE_PREFIX];
-    if (bot.runs.some((run) => covering.some((prefix) => run.userMessageId.startsWith(prefix)))) {
+    const next = notice(work, value);
+    if (
+      bot.runs.some((run) => next.coveredBy.some((prefix) => run.userMessageId.startsWith(prefix)))
+    ) {
       return;
     }
-    const text = reportText(work, value);
     yield* engine.dispatch({
       type: "message.dispatch",
-      commandId: CommandId.make(`server:fork-bot-work-${seen ? "seen" : "report"}:${key}`),
+      commandId: CommandId.make(`server:${next.prefix.slice("message:".length)}${key}`),
       threadId: botId,
-      messageId: MessageId.make(`${seen ? SEEN_MESSAGE_PREFIX : REPORT_MESSAGE_PREFIX}${key}`),
-      text,
+      messageId: MessageId.make(`${next.prefix}${key}`),
+      text: next.text,
       notification: {
         source: { kind: "system" },
-        outcome: value.kind === "settled" && value.run.status === "failed" ? "failed" : "updated",
-        summary: reportSummary(work, value),
-        detail: text,
+        outcome: next.outcome,
+        summary: next.summary,
+        detail: next.text,
       },
       attachments: [],
       dispatchMode: { type: "queue_after_active" },
@@ -165,6 +186,22 @@ const make = Effect.gen(function* () {
       creationSource: "server",
     });
   }, reportLock.withPermits(1));
+
+  /** For a turn the owner started: waits out the grace off the event stream, then sends what
+      `decide` makes of what the owner saw, if anything. */
+  const afterOwnerGrace = (
+    work: OrchestrationV2AppThread,
+    botId: ThreadId,
+    key: string,
+    decide: Effect.Effect<Report | null, ProjectionStore.ProjectionStoreV2Error>,
+  ) =>
+    Effect.sleep(FORK_BOT_OWNER_WATCH_GRACE).pipe(
+      Effect.andThen(decide),
+      Effect.flatMap((value) => (value === null ? Effect.void : report(work, botId, key, value))),
+      Effect.catchCause(logFailure(work.id)),
+      Effect.forkIn(graceScope),
+      Effect.asVoid,
+    );
 
   // Runs for every domain event; most return before reading anything.
   const handle: ForkBotWorkReports["Service"]["handle"] = Effect.fnUntraced(
@@ -176,17 +213,16 @@ const make = Effect.gen(function* () {
         const botId = forkBotWorkOwnerId(work);
         if (botId === null) return;
         const origin = yield* runOrigin(work.id, run);
-        if (origin === "quiet") return;
+        if (origin === "compaction") return;
         const key = `${work.id}:${run.id}:${run.status}`;
         if (origin === "other") return yield* report(work, botId, key, { kind: "settled", run });
-        const settledAt = run.completedAt ?? event.occurredAt;
-        yield* Effect.sleep(FORK_BOT_OWNER_WATCH_GRACE).pipe(
-          Effect.andThen(ownerWasThere(work.id, settledAt)),
-          Effect.flatMap((seen) => report(work, botId, key, { kind: "settled", run, seen })),
-          Effect.catchCause((cause) =>
-            Effect.logWarning("fork-bot-work-report.failed", { threadId: work.id, cause }),
+        yield* afterOwnerGrace(
+          work,
+          botId,
+          key,
+          ownerWasThere(work.id, run.completedAt ?? event.occurredAt).pipe(
+            Effect.map((seen) => ({ kind: seen ? "watched" : "settled", run }) as const),
           ),
-          Effect.forkIn(graceScope),
         );
         return;
       }
@@ -202,33 +238,27 @@ const make = Effect.gen(function* () {
             : (yield* projections.getThreadRecords(work.id, ["runs"], { runIds: [event.runId] }))
                 .runs[0];
         const origin = run === undefined ? "other" : yield* runOrigin(work.id, run);
-        if (origin === "quiet") return;
-        const send = report(work, botId, `${work.id}:${request.id}`, { kind: "request", request });
-        if (origin === "other") return yield* send;
-        // Still waiting, and no one was on the thread to see it ask.
-        yield* Effect.sleep(FORK_BOT_OWNER_WATCH_GRACE).pipe(
-          Effect.andThen(
-            Effect.all([
-              projections.getRuntimeRequest(work.id, request.id),
-              ownerWasThere(work.id, request.createdAt),
-            ]),
+        if (origin === "compaction") return;
+        const key = `${work.id}:${request.id}`;
+        const value: Report = { kind: "request", request };
+        if (origin === "other") return yield* report(work, botId, key, value);
+        // The owner answers it there if they saw it ask, and nothing is sent once it is answered.
+        yield* afterOwnerGrace(
+          work,
+          botId,
+          key,
+          Effect.all([
+            projections.getRuntimeRequest(work.id, request.id),
+            ownerWasThere(work.id, request.createdAt),
+          ]).pipe(
+            Effect.map(([current, watched]) =>
+              current?.status !== "pending" || watched ? null : value,
+            ),
           ),
-          Effect.flatMap(([current, watched]) =>
-            current?.status !== "pending" || watched ? Effect.void : send,
-          ),
-          Effect.catchCause((cause) =>
-            Effect.logWarning("fork-bot-work-report.failed", { threadId: work.id, cause }),
-          ),
-          Effect.forkIn(graceScope),
         );
       }
     },
-    (effect, event) =>
-      effect.pipe(
-        Effect.catchCause((cause) =>
-          Effect.logWarning("fork-bot-work-report.failed", { threadId: event.threadId, cause }),
-        ),
-      ),
+    (effect, event) => effect.pipe(Effect.catchCause(logFailure(event.threadId))),
   );
 
   const start: ForkBotWorkReports["Service"]["start"] = () =>

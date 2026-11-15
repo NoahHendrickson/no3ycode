@@ -2,12 +2,11 @@
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { ThreadId } from "@t3tools/contracts";
 import { newMessageId } from "~/lib/utils";
-import { readThreadShell, readThreadShells } from "~/state/entities";
+import { readThreadShell } from "~/state/entities";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
 import { botCrewMessage, botWorkTagWrites } from "./botCrew";
-import { listSidebarBots } from "./botThreads";
 import { botWorkOwnerId } from "./botWorkRoster";
 
 /** Moves `thread` to `botId`'s work (null: to no bot's) and tells each bot what changed. */
@@ -51,13 +50,4 @@ export function useSetBotWork(): (
       await tell(thread.environmentId, previous, botCrewMessage(thread, "taken"));
     if (botId !== null) await tell(thread.environmentId, botId, botCrewMessage(thread, "given"));
   };
-}
-
-/** The bots `environmentId`'s sidebar lists, oldest first, for the Petal submenu. */
-export function readListedBots(
-  environmentId: EnvironmentThreadShell["environmentId"],
-): ReadonlyArray<{ readonly id: ThreadId; readonly title: string }> {
-  return listSidebarBots(
-    readThreadShells().filter((thread) => thread.environmentId === environmentId),
-  ).map((bot) => ({ id: bot.id, title: bot.title }));
 }

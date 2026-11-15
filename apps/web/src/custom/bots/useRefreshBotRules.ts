@@ -16,8 +16,12 @@ interface RefreshableBot {
   readonly worktreePath: string | null;
 }
 
-/** Bots this session already looked at, refreshed or not, so a sidebar render never retries. */
+/** Bots this session refreshed, found current, or is refreshing now. */
 const checked = new Set<string>();
+/** When a bot's last attempt failed. A connection still coming up fails once and is retried;
+    a client that cannot read or write the host's files keeps failing, once a minute at most. */
+const failedAt = new Map<string, number>();
+const RETRY_AFTER_MS = 60_000;
 
 const QUIET = { reportFailure: false, reportDefect: false } as const;
 
@@ -53,17 +57,20 @@ function folderFiles(
 
 export function useRefreshBotRules(bots: ReadonlyArray<RefreshableBot>): void {
   const registry = useContext(RegistryContext);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes the listed bots' rule files on their host, once per bot per session
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes the listed bots' rule files on their host, once per bot per session unless it failed
   useEffect(() => {
     for (const bot of bots) {
       const key = `${bot.environmentId}:${bot.id}`;
       if (bot.worktreePath === null || checked.has(key)) continue;
+      if (Date.now() - (failedAt.get(key) ?? -Infinity) < RETRY_AFTER_MS) continue;
       checked.add(key);
-      // A client that cannot read or write the host's files leaves it to one that can.
       void refreshBotRules(folderFiles(registry, bot.environmentId, bot.worktreePath), {
         name: bot.title,
         threadId: bot.id,
-      }).catch(() => {});
+      }).catch(() => {
+        checked.delete(key);
+        failedAt.set(key, Date.now());
+      });
     }
   }, [bots, registry]);
 }

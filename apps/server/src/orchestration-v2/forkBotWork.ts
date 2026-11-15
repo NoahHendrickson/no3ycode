@@ -5,7 +5,12 @@
  * a bot's subagent) inherits it, so clients keep the bot's work off the sidebar and in its panel.
  */
 import { CommandId, type OrchestrationV2ThreadShell, ThreadId } from "@t3tools/contracts";
-import { FORK_BOT_WORK_TAG_PREFIX, isForkBotThread } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_BOT_CREW_FILE,
+  forkBotWorkOwner,
+  forkBotWorkTag,
+  isForkBotThread,
+} from "@t3tools/shared/forkBotTags";
 import * as Effect from "effect/Effect";
 import type * as FileSystem from "effect/FileSystem";
 import * as NodePath from "node:path";
@@ -14,6 +19,8 @@ import type { ThreadManagementService } from "./ThreadManagementService.ts";
 
 /** The thread tag schema's limit (contracts threadTags). */
 const THREAD_TAG_MAX_LENGTH = 64;
+/** Rules past this are cut, so a runaway file cannot crowd out the task itself. */
+const FORK_BOT_CREW_MAX_CHARS = 8_000;
 
 /** The thread `threadId` acts for: a subagent or side chat stands in for the thread it runs
     under, so a bot's subagent acts for the bot. */
@@ -28,14 +35,14 @@ export const forkBotActingShell = Effect.fn("ThreadLaunchService.forkBotActingSh
     : yield* threads.getThreadShell(caller.lineage.rootThreadId);
 });
 
-/** The tag a thread launched by `launcher` carries, or null when the launcher is no bot's. */
-function forkBotWorkTag(launcher: Pick<OrchestrationV2ThreadShell, "id" | "tags">): string | null {
-  const inherited = launcher.tags?.find((tag) => tag.startsWith(FORK_BOT_WORK_TAG_PREFIX));
-  if (inherited !== undefined) return inherited;
+/** The bot a thread launched by `launcher` works for: the launcher's own bot, or the launcher
+    when it is a bot. Null when it is no bot's, or its id is too long for a tag. */
+function launcherBotId(launcher: Pick<OrchestrationV2ThreadShell, "id" | "tags">): string | null {
+  const inherited = forkBotWorkOwner(launcher.tags);
+  if (inherited !== null) return inherited;
   if (!isForkBotThread(launcher.tags)) return null;
-  const tag = `${FORK_BOT_WORK_TAG_PREFIX}${launcher.id}`;
   // Bots are made with uuid ids (43 characters here); a longer id simply goes unlinked.
-  return tag.length <= THREAD_TAG_MAX_LENGTH ? tag : null;
+  return forkBotWorkTag(launcher.id).length <= THREAD_TAG_MAX_LENGTH ? launcher.id : null;
 }
 
 /** Tags a newly launched thread as its launcher's bot's work, and returns that bot's id. Best
@@ -51,59 +58,55 @@ export const linkForkBotWork = Effect.fn("ThreadLaunchService.linkForkBotWork")(
     },
   ) {
     const launcher = yield* forkBotActingShell(threads, input.launchedBy);
-    const tag = launcher === null ? null : forkBotWorkTag(launcher);
-    if (tag === null) return null;
+    const botId = launcher === null ? null : launcherBotId(launcher);
+    if (botId === null) return null;
     yield* threads.dispatch({
       type: "thread.tag.set",
       commandId: CommandId.make(`${input.commandId}:bot-work`),
       threadId: input.threadId,
-      tag,
+      tag: forkBotWorkTag(botId),
       tagged: true,
     });
-    return ThreadId.make(tag.slice(FORK_BOT_WORK_TAG_PREFIX.length));
+    return ThreadId.make(botId);
   },
   Effect.catch((error) =>
     Effect.logWarning("fork-bot-work.link-failed", { error }).pipe(Effect.as(null)),
   ),
 );
 
-/** The rules file in a bot's folder that every thread it launches follows. */
-const FORK_BOT_CREW_FILE = "CREW.md";
-/** Rules past this are cut, so a runaway file cannot crowd out the task itself. */
-const FORK_BOT_CREW_MAX_CHARS = 8_000;
-
-/** `text` with the bot's CREW.md after it, for the first message of a thread the bot launched.
-    No hook gives every provider a thread's standing rules, so they travel in that message. Best
-    effort: no bot, no folder, no file or an empty one leaves `text` as it is. */
-export const makeForkBotCrewRules = (
-  threads: ThreadManagementService["Service"],
-  fileSystem: FileSystem.FileSystem,
-) =>
-  Effect.fn("ThreadLaunchService.withForkBotCrewRules")(
-    function* (botId: ThreadId | null, text: string) {
-      if (botId === null) return text;
-      const bot = yield* threads.getThreadShell(botId);
-      if (bot === null || !isForkBotThread(bot.tags) || bot.worktreePath === null) return text;
-      const path = NodePath.join(bot.worktreePath, FORK_BOT_CREW_FILE);
-      if (!(yield* fileSystem.exists(path))) return text;
-      const rules = (yield* fileSystem.readFileString(path)).trim();
-      if (rules === "") return text;
-      const kept =
-        rules.length > FORK_BOT_CREW_MAX_CHARS
-          ? `${rules.slice(0, FORK_BOT_CREW_MAX_CHARS)}\n\n(The rest was cut. Read the whole file.)`
-          : rules;
-      return `${text}
+/** `text` with the CREW.md of the bot `botId` after it, for the first message of a thread
+    linkForkBotWork linked (`fork-bot-crew-rules`). No hook gives every provider a thread's
+    standing rules, so they travel in that message. Best effort: no bot, folder, file or rules,
+    or a failed read, leaves `text` as it is. */
+export const withForkBotCrewRules = Effect.fn("ThreadLaunchService.withForkBotCrewRules")(
+  function* (
+    threads: ThreadManagementService["Service"],
+    fileSystem: FileSystem.FileSystem,
+    botId: ThreadId,
+    text: string,
+  ) {
+    const bot = yield* threads.getThreadShell(botId);
+    if (bot === null || !isForkBotThread(bot.tags) || bot.worktreePath === null) return text;
+    const path = NodePath.join(bot.worktreePath, FORK_BOT_CREW_FILE);
+    if (!(yield* fileSystem.exists(path))) return text;
+    const rules = (yield* fileSystem.readFileString(path)).trim();
+    if (rules === "") return text;
+    const kept =
+      rules.length > FORK_BOT_CREW_MAX_CHARS
+        ? `${rules.slice(0, FORK_BOT_CREW_MAX_CHARS)}\n\n(The rest was cut. Read the whole file.)`
+        : rules;
+    return `${text}
 
 ---
 
 Standing rules from ${bot.title}, the Petal that started this thread. They are its CREW.md, at ${path}. Follow them on every turn. If ${bot.title} tells you they changed, read that file again.
 
 ${kept}`;
-    },
-    (effect, _botId, text) =>
-      effect.pipe(
-        Effect.catch((error) =>
-          Effect.logWarning("fork-bot-work.crew-rules-failed", { error }).pipe(Effect.as(text)),
-        ),
+  },
+  (effect, _threads, _fileSystem, _botId, text) =>
+    effect.pipe(
+      Effect.catch((error) =>
+        Effect.logWarning("fork-bot-work.crew-rules-failed", { error }).pipe(Effect.as(text)),
       ),
-  );
+    ),
+);
