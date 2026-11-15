@@ -321,6 +321,23 @@
     padding-inline: 4px;
   }
 
+  /* The music strip (fork-music-panel) and its open button wear the chips'
+     rim, the strip over its own drop shadow, so the two read as one piece.
+     Neither has a border, so the rim's inset light lands on the edge. */
+  &.dark[data-fork-theme="cool-darker"] [data-slot="sidebar-footer"] {
+    & [data-fork-music-strip] {
+      box-shadow:
+        0 12px 32px -18px rgb(0 0 0 / 45%),
+        var(--fork-glass-rim);
+    }
+
+    & [data-fork-music-toggle][aria-pressed="true"] {
+      box-shadow:
+        var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+        var(--fork-glass-rim);
+    }
+  }
+
   /* The popups the chips open and the composer's model, effort and mode
      menus: every composer popup carries data-chat-composer-floating-layer
      (useComposerMenuProps), and the fork's own popups that are not composer
@@ -694,9 +711,10 @@
      The collapsed sidebar's tab row: the open thread's tab and the chosen
      project wear the selected thread card's glass, not the generic segmented
      chip, so the row reads as the sidebar's list laid sideways. The extra
-     marker outranks the SegmentedTab rule above. */
+     marker outranks the SegmentedTab rule above. The Code / Chat
+     switch's chosen mode is a selected item too, so the rules take it as well. */
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
     position: relative;
     background-color: var(--sidebar-row-active);
@@ -706,7 +724,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is(
       [data-fork-thread-tab][data-active="true"],
       [data-fork-segmented-tab][data-pressed]
@@ -720,7 +738,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is(
       [data-fork-thread-tab][data-active="true"],
       [data-fork-segmented-tab][data-pressed]
@@ -739,7 +757,7 @@
 
   /* Figma's 6% white, under real glass only. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
     background-color: rgb(255 255 255 / 6%);
   }
@@ -781,6 +799,26 @@
     }
   }
   /* fork:end fork-collapsed-thread-tabs */
+
+  /* The sidebar's Code / Chat switch (fork-chat-mode) shares that selected glass
+     (above). Its tab keeps a 1px border, transparent here in place of its opaque
+     one, so the glint and the dark edge step out onto the border box. Its track
+     is the tab's own height and clips, so it gives the halo room to show. */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-sidebar-mode-tabs] {
+    overflow-clip-margin: 3px;
+
+    & [data-fork-segmented-tab][data-pressed] {
+      border-color: transparent;
+
+      &::before {
+        inset: -1px;
+      }
+
+      &::after {
+        inset: -2px;
+      }
+    }
+  }
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
      The model picker's rail tab for the open scope is a selected item, so it

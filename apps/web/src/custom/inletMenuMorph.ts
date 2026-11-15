@@ -333,7 +333,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   const path = document.createElementNS(SVG_NS, "path");
   path.setAttribute("fill", fill);
   svg.append(path);
-  const face = cloneWithStyles(trigger);
+  let face = cloneWithStyles(trigger);
   layer.append(svg, face);
   if (docked) popup.before(layer);
   else document.body.append(layer);
@@ -488,6 +488,17 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   });
   const column = docked ? popup.parentElement : null;
   removal.observe(column ?? document.body, { childList: true });
+  // The face copies the button, so a pick that relabels it (a new model in the composer's menu)
+  // copies it again.
+  const relabel = new MutationObserver(() => {
+    const next = cloneWithStyles(owner);
+    next.style.opacity = face.style.opacity;
+    face.replaceWith(next);
+    face = next;
+    drawn = "";
+    redraw();
+  });
+  relabel.observe(trigger, { childList: true, characterData: true, subtree: true });
   const stopResize = observeResize(glass, redraw);
   const stopColumnResize = column ? observeResize(column, redraw) : () => {};
   window.addEventListener("scroll", redraw, true);
@@ -509,6 +520,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
     closing.disconnect();
     placement.disconnect();
     removal.disconnect();
+    relabel.disconnect();
     moveTarget.removeEventListener("transitionrun", onMoveStart);
     moveTarget.removeEventListener("transitionend", onMoveEnd);
     moveTarget.removeEventListener("transitioncancel", onMoveEnd);

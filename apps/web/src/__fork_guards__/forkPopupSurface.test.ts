@@ -71,6 +71,15 @@ describe("fork guard: fork-popup-surface", () => {
     );
   });
 
+  it("leaves the composer's context strip bare", () => {
+    const rule = cssRules(palettes).find(
+      (candidate) =>
+        candidate.selector.replace(/\s+/gu, " ") ===
+        `${GLASS_GATE} [data-fork-composer-context-row] [data-slot="composer-context-strip"].surface-glass`,
+    );
+    expect(rule?.body).toMatch(/background:\s*none/u);
+  });
+
   it("keeps the overlays' floor opaque", () => {
     // The surface-glass overlays sit over transcript inside #root, where the
     // popup cutout cannot clear, so their floor must be an opaque rgb()

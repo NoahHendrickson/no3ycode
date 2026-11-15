@@ -279,7 +279,7 @@
    circle — rests on the quiet ink instead of the panel's #8a8a8a, so the
    labels, marks, carets and icon buttons tint with the surface under them.
    This is an allowlist: anything not named here or below keeps the opaque
-   ink.
+   ink. The Bots row is the Projects row's twin, so it rests on the same ink.
 
    The derived token, not --muted-foreground: index.css computes
    --contrast-muted-foreground on [data-app-sidebar] and a descendant inherits
@@ -289,6 +289,7 @@
   [data-sidebar-version="v2"]
   :is(
     [data-fork-projects-row],
+    [data-fork-bots-row],
     [data-fork-project-section-header],
     [data-fork-status-section-header],
     [data-fork-thread-card-meta],
@@ -1570,6 +1571,15 @@
   border-color: rgb(255 255 255 / 8%);
 }
 
+/* The composer's context strip is surface-glass too (upstream #34846), but the
+   cutoff ends the transcript above it, so here it stays bare: the opaque fill
+   painted a band behind the chips. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-context-row]
+  [data-slot="composer-context-strip"].surface-glass {
+  background: none;
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   button.surface-glass:is(:hover, [data-pressed]) {
   background:
@@ -1795,6 +1805,19 @@
   /* The panel's own block restates the palette's opaque --accent, which the
      chrome rows' pressed toggle and hover fills read; same slab, same wash. */
   --accent: rgb(255 255 255 / 8%);
+}
+
+/* The music strip and its open button (fork-music-panel) mix their fill from
+   --sidebar, which here is the translucent panel: the mix landed as a flat
+   grey slab over the material. They take the row washes' white instead, so
+   the wallpaper carries through like every other pane on the panel. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-footer"] {
+  --fork-music-card: rgb(255 255 255 / 6%);
+
+  & [data-fork-music-strip] {
+    --fork-music-step: rgb(255 255 255 / 8%);
+  }
 }
 
 /* The pinned divider and the Working / Settled shelf rules break the opaque

@@ -157,15 +157,6 @@
       );
   }
 
-  /* Upstream's embedded side chat sits in the right panel, which already supplies the
-     card's tint and wash (below), so its own card paints no fill. After the ramp, which
-     it matches in weight. */
-  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-side-chat-pane]
-    [data-chat-column-maximized-away]::before {
-    background: none;
-  }
-
   /* The gutter: the inset round a chat view takes the panel's fill. Two rules
      because the two clients paint it differently — an opaque colour, or a
      gradient over the inset the vibrancy block has already cleared. Settings,
@@ -253,8 +244,9 @@
      below the window's top. */
   &.dark[data-fork-theme="cool-darker"] {
     --fork-thread-tabs-overlap: var(--fork-glass-card-inset);
-    /* The white wash that lifts the card level with the panel; the right
-       panel beside the card takes it too. */
+    /* The white wash that lifts the card level with the panel. The right panels
+       beside the card take neither it nor the card's tint, by request: they
+       read at the gutter's alpha, which is the sidebar's. */
     --fork-glass-card-wash: rgb(255 255 255 / 4%);
   }
 
@@ -285,20 +277,6 @@
   &.dark[data-fork-theme="cool-darker"] [data-chat-composer-overlay="true"]:not([data-draft-hero]) {
     padding-bottom: 4px;
     background: none;
-  }
-
-  /* The right panel sits in the gutter beside the card, not on it, so under
-     the desktop glass it would read at the gutter's alpha: below the reading
-     value text panels keep. It adds the card's alpha of the same tint and
-     composites back to the stage's, and the card's wash so it reads level
-     with the card beside it. As an image, under the vibrancy block's clear of
-     its colour. */
-  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"][data-fork-has-chat-column]
-    [data-slot="sidebar-inset"]
-    [data-preview-panel-mode="inline"] {
-    background-image:
-      linear-gradient(var(--fork-glass-card-wash) 0 100%),
-      linear-gradient(rgb(var(--fork-glass-tint) / var(--fork-glass-card-alpha)) 0 100%);
   }
 
   /* Beside a docked sidebar the card stands 3px off it rather than 8px, and

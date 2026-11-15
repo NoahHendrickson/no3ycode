@@ -2,7 +2,11 @@
  * thread panes, filtered by project, the overflow behind More, New agent last. See
  * `.fork/customizations.yaml#fork-collapsed-thread-tabs`. Renders only while collapsed. */
 import { useAtomValue } from "@effect/atom-react";
-import { scopeThreadRef, scopedThreadKey } from "@t3tools/client-runtime/environment";
+import {
+  parseScopedThreadKey,
+  scopeThreadRef,
+  scopedThreadKey,
+} from "@t3tools/client-runtime/environment";
 import { threadWokeAt } from "@t3tools/client-runtime/state/thread-settled";
 import {
   resolveThreadCurrentPullRequestLink,
@@ -115,6 +119,7 @@ import {
 } from "./sidebarV2StatusGrouping";
 import { useStartNewAgentDraft } from "./useNewAgentDraft";
 import { forkThreadTabsRef } from "./forkStageStamps";
+import { CollapsedPetalTabs } from "./bots/CollapsedPetalTabs";
 
 const STATUSES_STORAGE_KEY = "t3code:fork:collapsed-thread-tabs-statuses:v1";
 const StoredStatuses = Schema.Array(Schema.Literals(COLLAPSED_TAB_STATUSES));
@@ -549,6 +554,16 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           </ProjectTab>
         ))}
       </SegmentedTabs>
+      <CollapsedPetalTabs
+        openThreadRef={openThreadKey === null ? null : parseScopedThreadKey(openThreadKey)}
+        onOpen={(threadRef) => {
+          clearSidebarSelection();
+          void router.navigate({
+            to: "/$environmentId/$threadId",
+            params: buildThreadRouteParams(threadRef),
+          });
+        }}
+      />
       <span className="flex shrink-0 items-center gap-1">
         <Menu>
           <Tooltip>
