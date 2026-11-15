@@ -877,6 +877,18 @@
   --workspace-controls-top: 0px;
 }
 
+/* The strip ends where the last tab's outer flare still lands on the panel's
+   straight top edge: the panel's margin and corner, plus the flare. The
+   window gutter it keeps otherwise ran the flare off the panel's corner. */
+
+:root[data-fork="noahhendrickson-t3code"]:not(.wco)[data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-thread-tabs] {
+  padding-inline-end: calc(
+    env(safe-area-inset-right) + var(--fork-inlet-margin) + var(--fork-inlet-radius) +
+      var(--fork-inlet-tab-fillet)
+  );
+}
+
 /* ── Tab strip: connective tabs ──────────────────────────────────────────────
    The strip's own controls (project switcher, status menu, new agent, More)
    take Inlet's 8px corners over the default pills, the switcher's track 10px,
