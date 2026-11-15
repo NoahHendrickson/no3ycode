@@ -321,35 +321,14 @@
     padding-inline: 4px;
   }
 
-  /* The music strip (fork-music-panel) is a card on the panel: the popups'
-     halo, sheens and glint ring over its own drop shadow. Its open button
-     takes the chips' rim, so the two still read as one piece. */
+  /* The music strip (fork-music-panel) and its open button wear the chips'
+     rim, the strip over its own drop shadow, so the two read as one piece.
+     Neither has a border, so the rim's inset light lands on the edge. */
   &.dark[data-fork-theme="cool-darker"] [data-slot="sidebar-footer"] {
     & [data-fork-music-strip] {
-      position: relative;
       box-shadow:
         0 12px 32px -18px rgb(0 0 0 / 45%),
-        var(--fork-glass-halo),
-        var(--fork-glass-sheen);
-    }
-
-    & [data-fork-music-strip]::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      padding: 0.5px;
-      border-radius: inherit;
-      background: linear-gradient(
-        to bottom,
-        rgb(255 255 255 / 22%),
-        rgb(255 255 255 / 0%) 8px calc(100% - 8px),
-        rgb(255 255 255 / 10%)
-      );
-      mask:
-        linear-gradient(#000 0 0) content-box exclude,
-        linear-gradient(#000 0 0);
-      pointer-events: none;
+        var(--fork-glass-rim);
     }
 
     & [data-fork-music-toggle][aria-pressed="true"] {
@@ -732,9 +711,10 @@
      The collapsed sidebar's tab row: the open thread's tab and the chosen
      project wear the selected thread card's glass, not the generic segmented
      chip, so the row reads as the sidebar's list laid sideways. The extra
-     marker outranks the SegmentedTab rule above. */
+     marker outranks the SegmentedTab rule above. The Code / Chat
+     switch's chosen mode is a selected item too, so the rules take it as well. */
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
     position: relative;
     background-color: var(--sidebar-row-active);
@@ -744,7 +724,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is(
       [data-fork-thread-tab][data-active="true"],
       [data-fork-segmented-tab][data-pressed]
@@ -758,7 +738,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is(
       [data-fork-thread-tab][data-active="true"],
       [data-fork-segmented-tab][data-pressed]
@@ -777,7 +757,7 @@
 
   /* Figma's 6% white, under real glass only. */
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
+    :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
     background-color: rgb(255 255 255 / 6%);
   }
@@ -820,47 +800,24 @@
   }
   /* fork:end fork-collapsed-thread-tabs */
 
-  /* The sidebar's Code / Chat switch (fork-chat-mode): its chosen mode is a
-     selected item too, so it wears the same selected glass in place of its
-     own sidebar fill and opaque border, which read as a dark disc. The extra
-     marker outranks the SegmentedTab rule above. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-sidebar-mode-tabs]
-    [data-fork-segmented-tab][data-pressed] {
-    position: relative;
-    border-color: transparent;
-    background-color: var(--sidebar-row-active);
-    box-shadow:
-      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-      var(--fork-glass-selected-shadow);
+  /* The sidebar's Code / Chat switch (fork-chat-mode) shares that selected glass
+     (above). Its tab keeps a 1px border, transparent here in place of its opaque
+     one, so the glint and the dark edge step out onto the border box. Its track
+     is the tab's own height and clips, so it gives the halo room to show. */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-sidebar-mode-tabs] {
+    overflow-clip-margin: 3px;
 
-    &::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      box-shadow: var(--fork-glass-selected-glint);
-      pointer-events: none;
+    & [data-fork-segmented-tab][data-pressed] {
+      border-color: transparent;
+
+      &::before {
+        inset: -1px;
+      }
+
+      &::after {
+        inset: -2px;
+      }
     }
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: -2px;
-      padding: 1px;
-      border-radius: inherit;
-      background: var(--fork-glass-dark-edge);
-      mask:
-        linear-gradient(#000 0 0) content-box exclude,
-        linear-gradient(#000 0 0);
-      pointer-events: none;
-    }
-  }
-
-  &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-    [data-fork-sidebar-mode-tabs]
-    [data-fork-segmented-tab][data-pressed] {
-    background-color: rgb(255 255 255 / 6%);
   }
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker

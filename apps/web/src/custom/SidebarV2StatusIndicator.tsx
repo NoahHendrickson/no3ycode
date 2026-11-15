@@ -458,6 +458,7 @@ export type SidebarV2TopStatusMark =
 /** One mark renderer for card and slim rows so monitoring is never a second path. */
 export function SidebarV2StatusMark(props: {
   readonly status: SidebarV2TopStatusMark | null;
+  /** The rain's phase, and the Done celebration's key: rows pass their scoped thread key. */
   readonly seed: string;
   /** Card rows draw the idle dot; without one an idle mark draws nothing.
       Unpromoted drafts use the pencil as their idle glyph. */
@@ -468,11 +469,7 @@ export function SidebarV2StatusMark(props: {
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
-  useDoneCelebration(
-    props.seed,
-    status === null ? "idle" : status.mark === "dot" ? status.tone : status.mark,
-    dot,
-  );
+  useDoneCelebration(props.seed, status, dot);
   if (status === null) {
     if (props.idle === "draft") {
       return (

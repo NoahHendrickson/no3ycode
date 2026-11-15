@@ -7435,12 +7435,13 @@
     celebrates once, in every theme: two rings in the Done dot's colour pulse
     off it, and a petal's mascot in the same row gives one small hop. The
     transition is remembered per thread across remounts (a finished row moves
-    out of the Working group), but only briefly, so a row scrolled away while
-    working that comes back Done stays still. Reduced motion skips it.
+    out of the Working group), but only briefly, so a row unmounted while
+    working (a folded section) that comes back Done stays still. Reduced motion skips it.
   tier: 1
   files:
     - apps/web/src/custom/doneCelebration.ts
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    - apps/web/src/theme.custom.css
   shadows: []
   watch: []
   verify:

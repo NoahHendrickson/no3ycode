@@ -4,46 +4,65 @@
  */
 import { type RefObject, useEffect } from "react";
 
+import type { SidebarV2TopStatusMark } from "./SidebarV2StatusIndicator";
+
 /** How long after a mark last showed Working a Done still counts as that thread finishing. */
 const FRESH_MS = 1500;
+
+type MarkKind = "working" | "done" | "other";
 
 /**
  * Each thread's last mark, outliving the row that drew it: a finished thread moves out of the
  * Working group, so the row showing Done is often a fresh mount. Leaving a mark stamps it, so a
- * row scrolled away long ago that comes back Done is stale and stays still.
+ * row unmounted long ago that comes back Done is stale and stays still.
  */
 export function createDoneTransitions() {
-  const seen = new Map<string, { readonly kind: string; readonly at: number }>();
+  const seen = new Map<string, { readonly kind: MarkKind; readonly at: number }>();
   return {
-    /** Record `kind` for `seed`; true when it is a Done that just followed Working. */
-    enter(seed: string, kind: string, now: number): boolean {
-      const previous = seen.get(seed);
-      seen.set(seed, { kind, at: now });
-      return kind === "done" && previous?.kind === "working" && now - previous.at <= FRESH_MS;
+    /** Whether `key` left Working just now, so a Done mark for it is that thread finishing. */
+    leftWorking(key: string, now: number): boolean {
+      const previous = seen.get(key);
+      return previous?.kind === "working" && now - previous.at <= FRESH_MS;
     },
-    leave(seed: string, kind: string, now: number) {
-      if (seen.get(seed)?.kind === kind) seen.set(seed, { kind, at: now });
+    enter(key: string, kind: MarkKind, now: number) {
+      seen.set(key, { kind, at: now });
+    },
+    leave(key: string, kind: MarkKind, now: number) {
+      if (seen.get(key)?.kind === kind) seen.set(key, { kind, at: now });
     },
   };
 }
 
 const transitions = createDoneTransitions();
 
-/** Plays the celebration on `dot` when `seed`'s mark turns from Working to Done. */
-export function useDoneCelebration(seed: string, kind: string, dot: RefObject<HTMLElement | null>) {
+/** Plays the celebration on `dot` when the mark keyed `threadKey` turns from Working to Done. */
+export function useDoneCelebration(
+  threadKey: string,
+  status: SidebarV2TopStatusMark | null,
+  dot: RefObject<HTMLElement | null>,
+) {
+  const kind: MarkKind =
+    status?.mark === "working"
+      ? "working"
+      : status?.mark === "dot" && status.tone === "done"
+        ? "done"
+        : "other";
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the DOM when the mark's status changes, keyed across remounts
   useEffect(() => {
     const element = dot.current;
+    const now = performance.now();
+    const finished = kind === "done" && transitions.leftWorking(threadKey, now);
     // A hidden copy (a collapsed tab while the sidebar is open) must not take the transition
-    // from the copy on screen.
-    if (kind !== "done" || (element !== null && isOnScreen(element))) {
-      if (transitions.enter(seed, kind, performance.now()) && element !== null) {
+    // from the copy on screen. Measured only once a transition is waiting.
+    if (!finished || (element !== null && isOnScreen(element))) {
+      transitions.enter(threadKey, kind, now);
+      if (finished && element !== null) {
         const row = element.closest("[data-thread-item], [data-fork-thread-tab]");
         celebrateDone(element, row?.querySelector<SVGElement>("svg[data-fork-bot-mascot]") ?? null);
       }
     }
-    return () => transitions.leave(seed, kind, performance.now());
-  }, [seed, kind, dot]);
+    return () => transitions.leave(threadKey, kind, performance.now());
+  }, [threadKey, kind, dot]);
 }
 
 /** Drawn, and its centre inside every box that clips it: the rings sit on the page, above the clips. */
@@ -61,6 +80,7 @@ function isOnScreen(element: HTMLElement): boolean {
   return true;
 }
 
+/** The rings' look is in theme.custom.css ([data-fork-done-ring]). */
 function celebrateDone(dot: HTMLElement, mascot: SVGElement | null) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -69,20 +89,13 @@ function celebrateDone(dot: HTMLElement, mascot: SVGElement | null) {
   const color = getComputedStyle(dot).backgroundColor;
   for (const [index, delay] of [0, 320].entries()) {
     const ring = document.createElement("div");
+    ring.setAttribute("data-fork-done-ring", index === 0 ? "flash" : "");
+    ring.style.setProperty("--fork-done-ring-color", color);
     Object.assign(ring.style, {
-      position: "fixed",
       left: `${box.left}px`,
       top: `${box.top + box.height / 2 - box.width / 2}px`,
       width: `${box.width}px`,
       height: `${box.width}px`,
-      borderRadius: "50%",
-      border: `2px solid ${color}`,
-      boxSizing: "border-box",
-      // The first ring carries a faint fill, so the pulse reads as a flash, not just a line.
-      background: index === 0 ? `color-mix(in srgb, ${color} 22%, transparent)` : "transparent",
-      pointerEvents: "none",
-      zIndex: "2147483000",
-      opacity: "0",
     });
     document.documentElement.append(ring);
     ring.animate(

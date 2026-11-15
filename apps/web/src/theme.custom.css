@@ -3038,3 +3038,22 @@
     display: none;
   }
 }
+
+/* fork:begin fork-done-celebration — see .fork/customizations.yaml#fork-done-celebration
+   The rings a finished thread's Done dot pulses (custom/doneCelebration.ts), on the page so no
+   clip cuts them and above every layer; the script places, colours and animates each. The first
+   ring carries a faint fill, so the pulse reads as a flash, not just a line. */
+:root[data-fork="noahhendrickson-t3code"] > [data-fork-done-ring] {
+  position: fixed;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  border: 2px solid var(--fork-done-ring-color);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"] > [data-fork-done-ring="flash"] {
+  background: color-mix(in srgb, var(--fork-done-ring-color) 22%, transparent);
+}
+/* fork:end fork-done-celebration */

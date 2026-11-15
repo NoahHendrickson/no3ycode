@@ -29,31 +29,28 @@ function rootStampRef(attribute: string) {
   return (element: HTMLElement | null) => (element === null ? undefined : retain(attribute));
 }
 
-/** A stable ref that stamps its element's chat column with `attribute` while mounted. */
-function columnStampRef(attribute: string) {
+/** A stable ref that stamps the closest `selector` around its element with `attribute` while mounted. */
+function closestStampRef(selector: string, attribute: string) {
   return (element: HTMLElement | null) => {
-    const column = element?.closest("[data-chat-column]");
-    if (!column) return;
-    column.setAttribute(attribute, "");
-    return () => column.removeAttribute(attribute);
+    const target = element?.closest(selector);
+    if (!target) return;
+    target.setAttribute(attribute, "");
+    return () => target.removeAttribute(attribute);
   };
 }
+
+const columnStampRef = (attribute: string) => closestStampRef("[data-chat-column]", attribute);
 
 export const forkDockedDetailsRef = columnStampRef("data-fork-has-docked-details");
 export const forkFindBarRef = columnStampRef("data-fork-has-find-bar");
 
-/** A stable ref that stamps its element's workspace panel with `attribute` while mounted. */
-function panelStampRef(attribute: string) {
-  return (element: HTMLElement | null) => {
-    const panel = element?.closest("[data-preview-panel-mode]");
-    if (!panel) return;
-    panel.setAttribute(attribute, "");
-    return () => panel.removeAttribute(attribute);
-  };
-}
-
-/** The petal Threads panel (fork-bot-work-threads), a list where every other panel is read. */
-export const forkBotThreadsPanelRef = panelStampRef("data-fork-bot-threads-panel");
+/** The petal Threads panel (fork-bot-work-threads), a list where every other panel is read.
+    BotThreadsPanel renders that shell itself, but it is upstream's PreviewPanelShell, so the
+    panel's header tags it. */
+export const forkBotThreadsPanelRef = closestStampRef(
+  "[data-preview-panel-mode]",
+  "data-fork-bot-threads-panel",
+);
 
 /** The stage-card pages' card (the guard lists its producers). */
 export const forkStageCardRef = rootStampRef("data-fork-has-stage-card");

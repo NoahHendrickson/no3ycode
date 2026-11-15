@@ -232,7 +232,7 @@ const STAMPS: ReadonlyArray<{
   {
     stamp: "data-fork-bot-threads-panel",
     producers: [
-      ["custom/forkStageStamps.ts", 'panelStampRef("data-fork-bot-threads-panel")'],
+      ["custom/forkStageStamps.ts", '"data-fork-bot-threads-panel",'],
       ["custom/bots/BotThreadsPanel.tsx", "ref={forkBotThreadsPanelRef}"],
     ],
   },
