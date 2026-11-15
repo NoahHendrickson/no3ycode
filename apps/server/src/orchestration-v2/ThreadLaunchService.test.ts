@@ -249,6 +249,9 @@ function makeHarness(options: HarnessOptions = {}) {
     Layer.provide(
       Layer.mergeAll(
         layerExternalServices,
+        /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+        NodeServices.layer,
+        /* fork:end fork-bot-crew-rules */
         layerThreadManagement,
         layerReceipts,
         layerOrchestrator,
@@ -2218,6 +2221,9 @@ it.effect("shared intake preserves durable attachment bytes after a lost launch 
         checkWorktreeBase: launches.checkWorktreeBase,
         retryPreparation: launches.retryPreparation,
         prepareRun: launches.prepareRun,
+        /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+        withForkBotCrewRules: launches.withForkBotCrewRules,
+        /* fork:end fork-bot-crew-rules */
       }),
       Effect.flip,
     );

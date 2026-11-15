@@ -452,6 +452,23 @@ it. A petal's thread names
 the petal at the top, so one click takes you back. Pin a thread to keep it in
 your list; deleting or archiving the petal puts its threads back there too.
 
+A petal hears from its threads. When one finishes a turn, fails, or waits for an
+answer or an approval, a notice arrives in the petal's conversation and the
+petal reports what needs you. A turn you watched finish in the thread still
+reaches the petal, so its notes stay current, but it does not ping you about it. It can answer a
+thread's questions when its job already settles them, but never approves an
+action for one. A petal keeps a digest of what needs you, what is new and what
+is in progress; it shows at the top of its **Threads**. Rules every thread it
+starts should follow, such as "open pull requests as drafts", go in the petal's
+crew rules: tell the petal, and each thread it starts afterwards gets them.
+
+To hand one of your own threads to a petal, right-click it and pick the petal
+under **Petal**; pick **None** to take it back. The petal is told either way.
+Archiving a petal also stops its scheduled wakes until you unarchive it.
+
+When T3 Code updates how petals work, your existing petals get the new rules the
+next time the app opens. Their jobs and notes stay as they are.
+
 <!-- fork:end fork-bots -->
 
 ## Snooze until later

@@ -8,7 +8,7 @@ import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thr
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
-import { useState, useSyncExternalStore } from "react";
+import { type ReactNode, useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
@@ -25,12 +25,15 @@ import { usePanelPresence } from "~/panelAnimations";
 import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
+import { useThreadSelectionStore } from "~/threadSelectionStore";
 import { useUiStateStore } from "~/uiStateStore";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
+import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
+import { BotDigest } from "./BotDigest";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {
@@ -144,6 +147,10 @@ function BotThreadsBody(props: {
     sort,
   );
   const groups = filterBotWork(all, { ...view, query: view.query ?? "" });
+  const bot = threads.find(
+    (thread) =>
+      thread.id === props.botRef.threadId && thread.environmentId === props.botRef.environmentId,
+  );
   const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
   const header = (
     <div
@@ -200,10 +207,19 @@ function BotThreadsBody(props: {
       </span>
     </div>
   );
+  // The digest and the list scroll as one.
+  const scroll = (content: ReactNode) => (
+    <>
+      {header}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {bot === undefined ? null : <BotDigest bot={bot} />}
+        {content}
+      </div>
+    </>
+  );
   if (groups.length === 0) {
-    return (
+    return scroll(
       <>
-        {header}
         {all.length === 0 ? (
           <p className="px-3.5 py-3 text-sm text-muted-foreground">
             This petal has not started any threads.
@@ -223,25 +239,22 @@ function BotThreadsBody(props: {
             </Button>
           </div>
         )}
-      </>
+      </>,
     );
   }
-  return (
-    <>
-      {header}
-      <BotThreadsList
-        groups={groups}
-        folded={folded}
-        onToggle={(key) =>
-          setFolded((previous) => {
-            const next = new Set(previous);
-            if (!next.delete(key)) next.add(key);
-            return next;
-          })
-        }
-        currentThreadRef={props.currentThreadRef}
-      />
-    </>
+  return scroll(
+    <BotThreadsList
+      groups={groups}
+      folded={folded}
+      onToggle={(key) =>
+        setFolded((previous) => {
+          const next = new Set(previous);
+          if (!next.delete(key)) next.add(key);
+          return next;
+        })
+      }
+      currentThreadRef={props.currentThreadRef}
+    />,
   );
 }
 
@@ -253,7 +266,7 @@ function BotThreadsList(props: {
 }) {
   const { groups, folded } = props;
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+    <div className="px-2 pb-3">
       {groups.map((group) => {
         const collapsed = folded.has(group.key);
         return (
@@ -312,6 +325,13 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         onClick={() => {
           if (props.current) return;
           void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
+        }}
+        // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
+        onContextMenu={(event) => {
+          event.preventDefault();
+          const selection = useThreadSelectionStore.getState();
+          if (selection.hasSelection()) selection.clearSelection();
+          openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
         }}
         className={cn(
           "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",

@@ -97,9 +97,9 @@ function isUsageLimitedUntilLater(
 }
 
 /** Whether this scheduled fire of `task` is held. Only a recurring task bound to a bot is: it
-    skips while the bot still runs an earlier wake of it or is usage-limited, and defers while the
-    owner is in a chat with the bot. Other bound tasks queue behind an earlier run as upstream's
-    do. A one-time run has no later fire to make up for a skip. */
+    skips while the bot is archived, still runs an earlier wake of it or is usage-limited, and
+    defers while the owner is in a chat with the bot. Other bound tasks queue behind an earlier run
+    as upstream's do. A one-time run has no later fire to make up for a skip. */
 export const forkScheduledFireHold = Effect.fn("ScheduledTaskService.forkScheduledFireHold")(
   function* <E>(input: {
     readonly sql: SqlClient.SqlClient;
@@ -108,7 +108,10 @@ export const forkScheduledFireHold = Effect.fn("ScheduledTaskService.forkSchedul
     readonly getThreadShell: (
       threadId: NonNullable<ScheduledTask["threadId"]>,
     ) => Effect.Effect<
-      Pick<OrchestrationV2ThreadShell, "tags" | "lastErrorClass" | "usageLimitResetAt"> | null,
+      Pick<
+        OrchestrationV2ThreadShell,
+        "tags" | "archivedAt" | "lastErrorClass" | "usageLimitResetAt"
+      > | null,
       E
     >;
   }): Effect.fn.Return<ForkScheduledFireHold, ScheduledTaskError | E> {
@@ -117,6 +120,8 @@ export const forkScheduledFireHold = Effect.fn("ScheduledTaskService.forkSchedul
     if (threadId === null || task.schedule.type === "once") return "run";
     const shell = yield* input.getThreadShell(threadId);
     if (!isForkBotThread(shell?.tags)) return "run";
+    // An archived bot is asleep: its fires would only fail on the archived thread.
+    if (shell?.archivedAt != null) return "skip";
     if (isUsageLimitedUntilLater(shell, nowMs)) return "skip";
     if (yield* hasUnfinishedScheduledRun(sql, task.id, threadId)) return "skip";
     return (yield* isInChat(sql, task.id, threadId, nowMs)) ? "defer" : "run";

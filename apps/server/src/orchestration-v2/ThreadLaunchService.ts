@@ -61,8 +61,11 @@ import { randomUuidV4 } from "@t3tools/provider-core/server/randomUuid";
 import { DispatchModeLimit } from "./DispatchModeLimit.ts";
 import * as ThreadManagement from "./ThreadManagementService.ts";
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-import { linkForkBotWork } from "./forkBotWork.ts";
+import { linkForkBotWork, makeForkBotCrewRules } from "./forkBotWork.ts";
 /* fork:end fork-bot-work-threads */
+/* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+import * as FileSystem from "effect/FileSystem";
+/* fork:end fork-bot-crew-rules */
 
 export type ThreadLaunchWorkspaceStrategy =
   | { readonly type: "root"; readonly branch?: string | undefined }
@@ -238,6 +241,10 @@ export class ThreadLaunchService extends Context.Service<
       | ThreadManagement.ThreadManagementProviderInstanceDisabledError
     >;
     readonly prepareRun: (input: ThreadLaunchPreparationInput) => Effect.Effect<void>;
+    /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+    /** `text` with the bot's CREW.md after it, for a thread created outside `launch`. */
+    readonly withForkBotCrewRules: (botId: ThreadId | null, text: string) => Effect.Effect<string>;
+    /* fork:end fork-bot-crew-rules */
   }
 >()("t3/orchestration-v2/ThreadLaunchService") {}
 
@@ -267,6 +274,9 @@ const make = Effect.gen(function* () {
   const threads = yield* ThreadManagement.ThreadManagementService;
   const eventSink = yield* EventSink.EventSinkV2;
   const managedFolders = yield* ManagedProjectFolders.ManagedProjectFolders;
+  /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+  const withForkBotCrewRules = makeForkBotCrewRules(threads, yield* FileSystem.FileSystem);
+  /* fork:end fork-bot-crew-rules */
   // A project-folder launch that names no branch records the folder's checkout, as the composer does.
   const launchBranch = (strategy: ThreadLaunchWorkspaceStrategy, workspaceRoot: string) =>
     strategy.type === "root" && strategy.branch === undefined
@@ -1206,13 +1216,14 @@ const make = Effect.gen(function* () {
         }
         /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
            Tagged before the first message; the sidebar can list it for the one event in between. */
-        if (input.launchedBy !== undefined && input.reuseExistingThread !== true) {
-          yield* linkForkBotWork(threads, {
-            commandId: input.commandId,
-            threadId,
-            launchedBy: input.launchedBy,
-          });
-        }
+        const forkBotId =
+          input.launchedBy !== undefined && input.reuseExistingThread !== true
+            ? yield* linkForkBotWork(threads, {
+                commandId: input.commandId,
+                threadId,
+                launchedBy: input.launchedBy,
+              })
+            : null;
         /* fork:end fork-bot-work-threads */
         let runId: RunId | null = null;
         let messageSequence: number | undefined;
@@ -1232,7 +1243,9 @@ const make = Effect.gen(function* () {
               commandId: messageCommandId,
               threadId,
               messageId,
-              text: input.initialMessage.text,
+              /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+              text: yield* withForkBotCrewRules(forkBotId, input.initialMessage.text),
+              /* fork:end fork-bot-crew-rules */
               ...(input.initialMessage.scheduledTaskId === undefined
                 ? {}
                 : { scheduledTaskId: input.initialMessage.scheduledTaskId }),
@@ -1412,7 +1425,15 @@ const make = Effect.gen(function* () {
     );
   });
 
-  return ThreadLaunchService.of({ launch, checkWorktreeBase, retryPreparation, prepareRun });
+  return ThreadLaunchService.of({
+    launch,
+    checkWorktreeBase,
+    retryPreparation,
+    prepareRun,
+    /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+    withForkBotCrewRules,
+    /* fork:end fork-bot-crew-rules */
+  });
 });
 
 export const layer = Layer.effect(ThreadLaunchService, make);

@@ -50,6 +50,9 @@ const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
 const launch = readSibling("../../../server/src/orchestration-v2/ThreadLaunchService.ts");
 const mcp = readSibling("../../../server/src/mcp/OrchestratorMcpService.ts");
 const launchTool = readSibling("../../../server/src/mcp/toolkits/project/handlers.ts");
+const server = readSibling("../../../server/src/server.ts");
+const wakeHold = readSibling("../../../server/src/scheduledTasks/forkScheduledWakeHold.ts");
+const threadsPanel = readSibling("../custom/bots/BotThreadsPanel.tsx");
 
 const AT = "2026-11-14T12:00:00.000Z";
 
@@ -288,8 +291,14 @@ describe("fork guard: fork-bot-work-threads", () => {
     const rules = botSeedFiles({ name: "Mail Bot", today: "2026-11-14", threadId: "mail" })[0];
     expect(rules?.relativePath).toBe("CLAUDE.md");
     expect(rules?.contents).toContain("**Start a thread** with `t3_thread_launch`");
-    // The bot's own limits stop at the bot, so each prompt has to carry them.
-    expect(rules?.contents).toContain("Your limits do not travel with it");
+    // The bot's limits for its threads live in CREW.md, which the server adds to each launch.
+    expect(rules?.contents).toContain(
+      "**CREW.md holds the rules every thread you start follows.**",
+    );
+    expect(launch).toContain("text: yield* withForkBotCrewRules(");
+    expect(mcp).toContain("yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt)");
+    // Its threads report back, so it no longer polls them on each wake.
+    expect(rules?.contents).toContain("**Your threads report to you.**");
     expect(chatView).toContain("<BotThreadsPanel");
     expect(sidebar).toContain("openBotWorkOnPick(threadRef);");
     expect(panelControls).toContain("<BotThreadsPanelToggle threadRef={botThreadsThreadRef} />");
@@ -297,6 +306,23 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(inlineSize).toContain("otherInlinePanelsWidth(row, host, options.otherPanels)");
     expect(readSibling("../custom/bots/BotThreadsPanel.tsx")).toContain('otherPanels: "minimum"');
     expect(inlineSize).toContain("readonly floorWidth?: number | undefined;");
+  });
+
+  // fork-bot-work-reports, fork-bot-crew-rules, fork-bot-digest, fork-bot-crew.
+  it("reports a bot's work back to it, carries its crew rules, shows its digest and moves threads", () => {
+    expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
+    expect(launch).toContain("text: yield* withForkBotCrewRules(");
+    expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
+    expect(threadsPanel).toContain("<BotDigest bot={bot} />");
+    expect(threadsPanel).toContain("openSidebarThreadMenu(ref, {");
+    expect(sidebar).toContain("botCrewMenuItem(");
+    expect(sidebar).toContain("void setBotWork(thread, botId);");
+    // Bots made before these rules get them.
+    expect(sidebar).toContain("useRefreshBotRules(botThreads);");
+    const files = botSeedFiles({ name: "Mail Bot", today: "2026-11-15", threadId: "mail" });
+    expect(files.map((file) => file.relativePath)).toEqual(
+      expect.arrayContaining(["CREW.md", "DIGEST.md"]),
+    );
   });
 
   it("keeps the conversation widest with both panels open, and holds one panel where both do not fit", () => {

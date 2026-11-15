@@ -381,6 +381,18 @@ import {
 import { useCreateBot } from "~/custom/bots/useCreateBot";
 import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
 /* fork:end fork-bots */
+/* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
+import {
+  botCrewMenuItem,
+  botFromCrewMenuId,
+  canJoinBotWork,
+  isBotCrewMenuId,
+} from "~/custom/bots/botCrew";
+import { readListedBots, useSetBotWork } from "~/custom/bots/useSetBotWork";
+/* fork:end fork-bot-crew */
+/* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
+import { useRefreshBotRules } from "~/custom/bots/useRefreshBotRules";
+/* fork:end fork-bot-rules-refresh */
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
 import {
   type BotWorkAttention,
@@ -2423,6 +2435,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
      Bots list in their own section above the threads, in Code only: Chat lists chats alone. */
   const botThreads = listSidebarBots(threads);
+  /* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
+  useRefreshBotRules(botThreads);
+  /* fork:end fork-bot-rules-refresh */
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
   const botWorkAttention = botWorkAttentionByBot(threads);
   // Picking a bot whose work needs you opens its Threads panel, so that work is in view.
@@ -2437,6 +2452,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const createBot = useCreateBot();
   const setBotMascot = useSetBotMascot();
   /* fork:end fork-bots */
+  /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
+  const setBotWork = useSetBotWork();
+  /* fork:end fork-bot-crew */
   /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
   const threadsSectionCollapsed = !modePolicy.chat && isListSectionCollapsed("threads");
   /* fork:end sidebar-v2-threads-fold */
@@ -4528,6 +4546,25 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                   ]
                 : []),
               /* fork:end fork-bots */
+              /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
+              ...(() => {
+                const bots = canJoinBotWork(thread.source)
+                  ? readListedBots(threadRef.environmentId)
+                  : [];
+                return bots.length === 0
+                  ? []
+                  : [
+                      botCrewMenuItem(
+                        thread.source,
+                        bots,
+                        readEnvironmentScope(
+                          threadRef.environmentId,
+                          AuthOrchestrationOperateScope,
+                        ),
+                      ),
+                    ];
+              })(),
+              /* fork:end fork-bot-crew */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(
                 thread,
@@ -4546,6 +4583,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           return;
         }
         /* fork:end fork-bots */
+        /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
+        if (isBotCrewMenuId(clicked.value)) {
+          const botId = botFromCrewMenuId(clicked.value);
+          if (botId !== undefined && checkThreadOperations([thread]))
+            void setBotWork(thread, botId);
+          return;
+        }
+        /* fork:end fork-bot-crew */
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
           if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
@@ -4807,6 +4852,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
       setBotMascot,
       /* fork:end fork-bots */
+      /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
+      setBotWork,
+      /* fork:end fork-bot-crew */
     ],
   );
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */

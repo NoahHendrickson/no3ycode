@@ -7078,7 +7078,8 @@
     the oldest item), a Log of at most 30 meaningful lines, Haiku subagents,
     and no task changes or self-sends during a wake; SessionStart prints at
     most 8 KB of STATE.md. Not limited: total wakes per bot, a per-wake turn
-    budget, and webhook wakes queueing behind an unfinished one.
+    budget, and webhook wakes queueing behind an unfinished one. Work reports
+    (fork-bot-work-reports) are wakes too, with their own limits.
 
     The folder is what keeps a bot coherent over months, so it is seeded before
     the thread exists (custom/bots/botSeedFiles). CLAUDE.md holds the bot's
@@ -7096,8 +7097,9 @@
     and tells it how to read the conversation's tail when its owner refers to
     something it cannot see. A promise of later work becomes a one-time
     scheduled task in the same turn, since nothing wakes a bot to keep a
-    promise written only in STATE.md. Only the owner changes JOB.md; a wake
-    (a message starting "Scheduled wake:") writes STATE.md alone. The folder's
+    promise written only in STATE.md. Only the owner changes JOB.md and CREW.md
+    (fork-bot-crew-rules); a wake (a message starting "Scheduled wake:" or "Work
+    report:") writes STATE.md and DIGEST.md (fork-bot-digest) alone. The folder's
     settings turn Claude Code's auto memory off, compact at 150K tokens, deny
     the bot edits to .claude and CLAUDE.md, and stamp each turn with the time.
 
@@ -7214,7 +7216,9 @@
     and does not record which thread made it.
     A bot's seeded CLAUDE.md (custom/bots/botSeedFiles, "Work goes in its own thread") tells it to
     launch a thread for work that changes a project or outlasts the reply, to stay inline for
-    lookups, and to track what it started in STATE.md. Only bots read it: the instructions every
+    lookups, to track what it started in STATE.md, and that its threads report back to it
+    (fork-bot-work-reports) and carry CREW.md (fork-bot-crew-rules). The owner can give it a
+    thread too (fork-bot-crew). Only bots read it: the instructions every
     other thread gets (provider-core orchestrationInstructions) still launch a thread only when
     asked.
 
@@ -7409,6 +7413,8 @@
     queueing. One-time, manual and webhook runs are never held. The check is forkScheduledFireHold
     (scheduledTasks/forkScheduledWakeHold), called once from
     ScheduledTaskService's due-task loop with forkDeferScheduledFire.
+    An archived bot sleeps: its recurring fires skip (moved to their next slot) until it is
+    unarchived, rather than each failing on the archived thread.
   tier: 3
   files:
     - apps/server/src/scheduledTasks/forkScheduledWakeHold.ts
@@ -7417,6 +7423,138 @@
     - apps/server/src/scheduledTasks/ScheduledTaskService.ts
   verify:
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
+- id: fork-bot-work-reports
+  intent: >
+    A bot hears from its work instead of polling it (Capy's Captains wake on their crew the same
+    way). When a top-level thread tagged bot-work:<bot> (never a subagent or side chat, which
+    inherit the tag) settles a run as completed or failed, or raises a pending question or
+    approval, the server queues a notice in the bot's conversation
+    (orchestration-v2/forkBotWorkReports, a domain-event reactor started in server.ts beside
+    DelegatedTaskQuestionReactor): message.dispatch with queue_after_active, createdBy agent,
+    creationSource server, a system notification, ids keyed by thread and run or request so a
+    replayed event never sends twice. Its text starts "Work report:", names the thread, says
+    it comes from T3 Code and not the owner, and says to handle it as a wake (update STATE.md
+    and DIGEST.md, report or reply "Nothing to report."), so bots seeded before this read it
+    safely too. A question tells the bot it may answer with t3_pending_request when JOB.md or
+    CREW.md settles it; an approval tells it it cannot approve (the tool refuses permission
+    requests) and must tell the owner.
+    A bot always knows what its work did, but pings the owner only about what they did not see
+    (maintainer's request, 2026-11-15). A run the owner started from the work thread (its
+    message is user-authored) waits 30 seconds after it settles, then checks the thread's
+    lastVisitedAt (an open thread records a visit on every update, every 10 seconds while it
+    streams): if a client was on the thread then, the bot gets a quiet notice instead
+    (message:fork-bot-work-seen:…, telling it the owner saw it, to update STATE.md and DIGEST.md
+    and reply "Nothing to report.", which keeps the wake silent). A question or approval on such a
+    run sends nothing if the owner was there or it is no longer pending. The wait runs off the
+    event stream and is lost if the server stops during it. Runs anyone else started report at
+    once.
+    Cost: every notice is a bot turn, so none goes out for an idle compaction or for an archived
+    or deleted bot; and while a notice is still queued, later events add none, since it tells the
+    bot to check all of its work. A queued quiet notice covers only another quiet one. Reports
+    are sent one at a time (a semaphore), so concurrent grace waits cannot both miss the other's
+    queued notice. Notices resume the bot's
+    conversation (no fresh session) and are not held by fork-scheduled-wake-hold. Work-thread
+    notifications are unchanged.
+  tier: 3
+  files:
+    - apps/server/src/orchestration-v2/forkBotWorkReports.ts
+  shadows: []
+  watch:
+    - apps/server/src/server.ts
+  verify:
+    - apps/server/src/orchestration-v2/forkBotWorkReports.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+- id: fork-bot-crew-rules
+  intent: >
+    A bot's CREW.md (seeded in its folder with the owner's default limits: no push, pull
+    request, comment, send, delete or payment unless the task says the owner approved it) is
+    the rules every thread it launches follows. ThreadLaunchService appends it, under a "---"
+    and a line naming the bot and the file's path, to the first message of a thread
+    linkForkBotWork linked to a bot (a nested launch's bot too), cut at 8,000 characters
+    (orchestration-v2/forkBotWork makeForkBotCrewRules). create_threads, which links its
+    threads without launch, appends it through ThreadLaunchService's withForkBotCrewRules, so
+    OrchestratorMcpService needs no file access of its own. No hook gives every provider a
+    thread's standing rules per turn, so they travel in that message; an edited CREW.md reaches
+    threads launched after it, and the line tells a thread to reread the file when its bot
+    says so. Best effort: no bot, folder or file, an empty file or a failed read sends the
+    message as written. The seeded CLAUDE.md tells the bot to keep the owner's rules for its
+    threads there and that only the owner changes it, like JOB.md.
+  tier: 3
+  files:
+    - apps/server/src/orchestration-v2/forkBotWork.ts
+  shadows: []
+  watch:
+    - apps/server/src/orchestration-v2/ThreadLaunchService.ts
+    - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
+    - apps/server/src/mcp/OrchestratorMcpService.ts
+  verify:
+    - apps/server/src/orchestration-v2/forkBotWork.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+- id: fork-bot-rules-refresh
+  intent: >
+    Bots made before the rules changed get them. CLAUDE.md starts with a version marker
+    (botSeedFiles BOT_RULES_MARKER, raised whenever its text changes). Once a client session,
+    for each bot the sidebar lists (useRefreshBotRules, called from Sidebar beside
+    listSidebarBots), a client reads the bot's CLAUDE.md through projects.readFile; one without
+    the current marker is copied to .claude/CLAUDE.previous.md (its owner may have edited it),
+    CREW.md and DIGEST.md are written where missing, and AGENTS.md then CLAUDE.md are rewritten
+    from the current template with the bot's current title and id (refreshBotRules). JOB.md,
+    STATE.md and the folder's settings are never touched. CLAUDE.md goes last, so a failed read
+    or write leaves its old marker and a later session tries again; a client that cannot read
+    or write the host's files gives up quietly. A running session keeps its loaded rules until
+    Claude Code reloads CLAUDE.md (a new session or a compaction).
+  tier: 4
+  files:
+    - apps/web/src/custom/bots/refreshBotRules.ts
+    - apps/web/src/custom/bots/useRefreshBotRules.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+  verify:
+    - apps/web/src/custom/bots/refreshBotRules.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+- id: fork-bot-digest
+  intent: >
+    A bot keeps DIGEST.md in its folder (Needs you, New, In progress; seeded empty, rewritten by
+    the bot as its work changes, per the seeded CLAUDE.md), and its Threads panel shows it
+    above the thread list, in one scroll with it (custom/bots/BotDigest): each section that holds
+    an item, as the panel's section labels with a count, one plain line per item (list marks,
+    emphasis and link targets dropped; "Nothing." left out; custom/bots/botDigestSections),
+    Needs you in the foreground colour and the rest muted, with a full-width rule below. It is
+    read with projects.readFile from the bot's folder (allowMissing) and read again whenever
+    the bot's latest run starts or ends (revisionedQuery keyed by its run id and status). An
+    empty, missing or unreadable digest draws nothing.
+  tier: 4
+  files:
+    - apps/web/src/custom/bots/BotDigest.tsx
+    - apps/web/src/custom/bots/botDigestSections.ts
+  shadows: []
+  watch: []
+  verify:
+    - apps/web/src/custom/bots/botDigestSections.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+- id: fork-bot-crew
+  intent: >
+    The owner moves a thread into a bot's work and back out. A listed thread that is no bot
+    (never a subagent or side chat) has a Petal submenu in its context menu while any bot lists
+    in its environment (custom/bots/botCrew botCrewMenuItem): the listed bots, ticked at the one
+    it works for, and None. Picking one sets bot-work:<bot> before clearing any other bot-work
+    tag, so the thread never lists in the sidebar between the writes; None clears it
+    (custom/bots/useSetBotWork). Each bot that gained or lost the thread is told in its
+    conversation, as a queued owner message, so its STATE.md keeps up (botCrewMessage). A row in
+    a bot's Threads panel opens the thread's own sidebar menu (sidebarActionsBridge), which is
+    where a bot's work is moved or taken back. Promoting a thread into a bot is not offered: a
+    bot is a No-project thread whose checkout is its own folder.
+  tier: 4
+  files:
+    - apps/web/src/custom/bots/botCrew.ts
+    - apps/web/src/custom/bots/useSetBotWork.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+  verify:
+    - apps/web/src/custom/bots/botCrew.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: sidebar-v2-threads-fold
   intent: >
     The Threads row's label folds the whole thread list under it, with a
