@@ -1,3 +1,5 @@
+import { type RefObject, useRef } from "react";
+
 // Imported through the shim's own path rather than the `lucide-react` alias.
 // This file is fork-owned, so there is no upstream import site to preserve —
 // the alias exists to keep *upstream's* imports untouched, not this one.
@@ -12,6 +14,7 @@ import {
 } from "./icons/lucide-phosphor";
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
+import { useDoneCelebration } from "./doneCelebration";
 import { useForkWorkingMark } from "./forkWorkingMark";
 
 /** The trailing slot of a Sidebar V2 card row's title line, and this module
@@ -376,7 +379,13 @@ export function SidebarV2WorkingMark({ seed }: { seed: string }) {
     from "finished" and "broke" by form. The glyphs are 12px because Phosphor
     inks a circle on ~81% of its grid: that is the design's 9.75px, and the
     same visual weight as the 10px dot beside it. */
-function SidebarV2StatusDot({ tone }: { tone: SidebarV2DotTone }) {
+function SidebarV2StatusDot({
+  tone,
+  dotRef,
+}: {
+  tone: SidebarV2DotTone;
+  dotRef: RefObject<HTMLSpanElement | null>;
+}) {
   return (
     <span aria-hidden className={cn(MARK_SLOT_CLASS, TONE_TEXT_CLASS[tone])}>
       {tone === "approval" || tone === "input" ? (
@@ -384,7 +393,7 @@ function SidebarV2StatusDot({ tone }: { tone: SidebarV2DotTone }) {
       ) : tone === "failed" ? (
         <CircleAlertIcon weight="fill" className="size-3" />
       ) : (
-        <span className="size-2.5 rounded-full bg-current" />
+        <span ref={dotRef} className="size-2.5 rounded-full bg-current" />
       )}
     </span>
   );
@@ -458,6 +467,12 @@ export function SidebarV2StatusMark(props: {
   readonly quietWorking?: boolean;
 }) {
   const status = props.status;
+  const dot = useRef<HTMLSpanElement>(null);
+  useDoneCelebration(
+    props.seed,
+    status === null ? "idle" : status.mark === "dot" ? status.tone : status.mark,
+    dot,
+  );
   if (status === null) {
     if (props.idle === "draft") {
       return (
@@ -490,7 +505,7 @@ export function SidebarV2StatusMark(props: {
       ) : status.mark === "woke" ? (
         <SidebarV2WokeMark />
       ) : (
-        <SidebarV2StatusDot tone={status.tone} />
+        <SidebarV2StatusDot tone={status.tone} dotRef={dot} />
       )}
     </>
   );

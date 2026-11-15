@@ -401,7 +401,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(marks).toMatch(
       /tone === "failed" \? \(\s*<CircleAlertIcon weight="fill" className="size-3" \/>/u,
     );
-    expect(marks).toContain('<span className="size-2.5 rounded-full bg-current" />');
+    expect(marks).toContain('<span ref={dotRef} className="size-2.5 rounded-full bg-current" />');
     // Idle is the hollow twin of the Done dot, per Noey (2026-09-09).
     expect(marks).toContain(
       '<span className="size-2.5 rounded-full border border-muted-foreground" />',
