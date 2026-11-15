@@ -441,8 +441,8 @@
   :is([data-fork-thread-row][aria-current="page"], li[data-fork-split-pair][data-active]) {
   --sidebar-v2-status-working: #047857;
   --sidebar-v2-status-done: #1d4ed8;
-  --sidebar-v2-status-approval: #b45309;
-  --sidebar-v2-status-input: #b45309;
+  --sidebar-v2-status-approval: #e0a526;
+  --sidebar-v2-status-input: #e0a526;
   --sidebar-v2-status-failed: #b91c1c;
 }
 
