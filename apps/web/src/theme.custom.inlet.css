@@ -430,7 +430,8 @@
 
 /* On a cream panel beside a dark sidebar (Green, Jungle Light, Black), the
    open row's status marks take deep shades: the sidebar's bright ones, tuned
-   for its dark fill, vanish on the cream. */
+   for its dark fill, vanish on the cream. Needs-attention stays a mid gold so
+   it reads as the same amber as the other rows; keep it off burnt orange. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
     [data-fork-inlet-color="green"],

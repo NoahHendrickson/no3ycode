@@ -154,7 +154,8 @@ look like it. While open:
 - Faint text, labels and muted icons on cream frames: **black at 65%**.
 - Unchecked checkbox in a menu: an outline only, in menu ink at **24%**.
 - Anything you read reaches **4.5:1** (disabled controls are exempt). On light surfaces, status
-  colours use deep shades.
+  colours use deep shades, except the needs-attention mark, which keeps the sidebar's gold hue
+  (`#e0a526` on the open row's cream panel) so it reads as one amber everywhere.
 
 ### H7. Icons
 
