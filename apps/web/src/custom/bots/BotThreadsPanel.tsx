@@ -30,7 +30,9 @@ import { useUiStateStore } from "~/uiStateStore";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
+import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
+import { BotDigest } from "./BotDigest";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {
@@ -144,6 +146,10 @@ function BotThreadsBody(props: {
     sort,
   );
   const groups = filterBotWork(all, { ...view, query: view.query ?? "" });
+  const bot = threads.find(
+    (thread) =>
+      thread.id === props.botRef.threadId && thread.environmentId === props.botRef.environmentId,
+  );
   const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
   const header = (
     <div
@@ -200,35 +206,8 @@ function BotThreadsBody(props: {
       </span>
     </div>
   );
-  if (groups.length === 0) {
-    return (
-      <>
-        {header}
-        {all.length === 0 ? (
-          <p className="px-3.5 py-3 text-sm text-muted-foreground">
-            This petal has not started any threads.
-          </p>
-        ) : (
-          <div className="flex flex-col items-start gap-2 px-3.5 py-3">
-            <p className="text-sm text-muted-foreground">No threads match.</p>
-            <Button
-              onClick={() => {
-                clearBotThreadsFilters(botKey);
-                if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
-              }}
-              size="xs"
-              variant="outline"
-            >
-              Clear search and filters
-            </Button>
-          </div>
-        )}
-      </>
-    );
-  }
-  return (
-    <>
-      {header}
+  const content =
+    groups.length > 0 ? (
       <BotThreadsList
         groups={groups}
         folded={folded}
@@ -241,6 +220,33 @@ function BotThreadsBody(props: {
         }
         currentThreadRef={props.currentThreadRef}
       />
+    ) : all.length === 0 ? (
+      <p className="px-3.5 py-3 text-sm text-muted-foreground">
+        This petal has not started any threads.
+      </p>
+    ) : (
+      <div className="flex flex-col items-start gap-2 px-3.5 py-3">
+        <p className="text-sm text-muted-foreground">No threads match.</p>
+        <Button
+          onClick={() => {
+            clearBotThreadsFilters(botKey);
+            if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
+          }}
+          size="xs"
+          variant="outline"
+        >
+          Clear search and filters
+        </Button>
+      </div>
+    );
+  return (
+    <>
+      {header}
+      {/* The digest and the list scroll as one. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {bot === undefined ? null : <BotDigest bot={bot} />}
+        {content}
+      </div>
     </>
   );
 }
@@ -253,7 +259,7 @@ function BotThreadsList(props: {
 }) {
   const { groups, folded } = props;
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+    <div className="px-2 pb-3">
       {groups.map((group) => {
         const collapsed = folded.has(group.key);
         return (
@@ -312,6 +318,11 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         onClick={() => {
           if (props.current) return;
           void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
+        }}
+        // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
+        onContextMenu={(event) => {
+          event.preventDefault();
+          openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
         }}
         className={cn(
           "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",

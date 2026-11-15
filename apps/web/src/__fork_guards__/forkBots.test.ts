@@ -340,7 +340,11 @@ describe("fork guard: fork-bots", () => {
     expect(rules).toContain("A message that starts with `Scheduled wake:` is a wake");
     // A fresh wake drops the chat, so the bot is told where its own conversation is.
     expect(rules).toContain("thread id `thread-1`");
-    expect(rules).toContain("a wake writes STATE.md only");
+    expect(rules).toContain("a wake writes STATE.md and DIGEST.md only");
+    // A work report from T3 Code is a wake, never the owner talking.
+    expect(rules).toContain("A message that starts with `Work report:`");
+    expect(files.get("CREW.md")).toContain("Do not push, open or merge a pull request");
+    expect(files.get("DIGEST.md")).toContain("## Needs you");
     // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
     expect(rules).toContain("refuses an interval under 15 minutes");
     expect(rules).toContain("Reads return the newest messages first, so read with `limit: 20`");

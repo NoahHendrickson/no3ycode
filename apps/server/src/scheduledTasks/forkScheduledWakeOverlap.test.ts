@@ -33,13 +33,14 @@ it.effect(
       const sent = yield* Ref.make<ReadonlyArray<string>>([]);
       const usageLimitResetAt = yield* Ref.make<string | null>(null);
       const tags = yield* Ref.make<ReadonlyArray<string>>(["bot"]);
+      const archivedAt = yield* Ref.make<string | null>(null);
       const getThreadShell = () =>
-        Effect.all([Ref.get(tags), Ref.get(usageLimitResetAt)]).pipe(
+        Effect.all([Ref.get(tags), Ref.get(usageLimitResetAt), Ref.get(archivedAt)]).pipe(
           Effect.map(
-            ([threadTags, resetAt]) =>
+            ([threadTags, resetAt, archived]) =>
               ({
                 projectId: "project-bots",
-                archivedAt: null,
+                archivedAt: archived,
                 deletedAt: null,
                 tags: threadTags,
                 lastErrorClass: resetAt === null ? null : "usage_limit",
@@ -134,11 +135,21 @@ it.effect(
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(3);
 
-        // A thread that is not a bot keeps upstream's queueing: its fire goes out behind the
-        // still-waiting third wake.
-        yield* Ref.set(tags, []);
+        // An archived bot sleeps: its fires skip instead of failing on the archived thread.
+        yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
+        yield* Ref.set(archivedAt, "2026-11-13T00:00:00.000Z");
+        yield* fire;
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(3);
+        yield* Ref.set(archivedAt, null);
         yield* fire;
         expect(yield* Ref.get(sent)).toHaveLength(4);
+
+        // A thread that is not a bot keeps upstream's queueing: its fire goes out behind the
+        // still-waiting fourth wake.
+        yield* Ref.set(tags, []);
+        yield* fire;
+        expect(yield* Ref.get(sent)).toHaveLength(5);
 
         // A bot in a chat defers its wake a few minutes instead of skipping to its next slot.
         yield* Ref.set(tags, ["bot"]);
@@ -163,12 +174,12 @@ it.effect(
         // An owner-made task's wake is authored by `user` too, but it is no chat.
         yield* insertMessage("scheduled-task-message:other-task:1");
         yield* fire;
-        expect(yield* Ref.get(sent)).toHaveLength(5);
+        expect(yield* Ref.get(sent)).toHaveLength(6);
 
         yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
         yield* insertMessage("message:owner");
         yield* fire;
-        expect(yield* Ref.get(sent)).toHaveLength(5);
+        expect(yield* Ref.get(sent)).toHaveLength(6);
         const deferredTo = Date.parse((yield* service.list()).tasks[0]?.nextRunAt ?? "");
         const now = yield* Clock.currentTimeMillis;
         // Past the next 60-second slot a skip would have picked, and within the 5-minute deferral.
@@ -177,7 +188,7 @@ it.effect(
 
         // Ten minutes after the owner's message, the deferred wake goes out.
         yield* TestClock.adjust("11 minutes");
-        expect(yield* Ref.get(sent)).toHaveLength(6);
+        expect(yield* Ref.get(sent)).toHaveLength(7);
 
         // Any unfinished run of the bot, such as the owner's own turn, defers it too.
         yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
@@ -194,10 +205,10 @@ it.effect(
         })}`;
         yield* fire;
         yield* fire;
-        expect(yield* Ref.get(sent)).toHaveLength(6);
+        expect(yield* Ref.get(sent)).toHaveLength(7);
         yield* sql`UPDATE orchestration_v2_projection_runs SET status = 'completed'`;
         yield* TestClock.adjust("5 minutes");
-        expect(yield* Ref.get(sent)).toHaveLength(7);
+        expect(yield* Ref.get(sent)).toHaveLength(8);
       }).pipe(Effect.provide(ScheduledTaskService.layer.pipe(Layer.provide(dependencies))));
     }).pipe(Effect.provide(SqlitePersistence.layerMemory)),
 );

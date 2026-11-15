@@ -3043,7 +3043,7 @@ const make = Effect.gen(function* () {
                   ),
                 );
               /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-              yield* linkForkBotWork(threadManagement, {
+              const forkBotId = yield* linkForkBotWork(threadManagement, {
                 commandId,
                 threadId,
                 launchedBy: scope.thread.threadId,
@@ -3072,7 +3072,13 @@ const make = Effect.gen(function* () {
                       requestKey: key,
                       index,
                     }),
-                    text: request.prompt,
+                    /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
+                    // Only a linked thread asks the launch service, which tests often stub.
+                    text:
+                      forkBotId === null
+                        ? request.prompt
+                        : yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt),
+                    /* fork:end fork-bot-crew-rules */
                     attachments: [],
                     modelSelection: resolvedModelSelection,
                     dispatchMode: { type: "start_immediately" },

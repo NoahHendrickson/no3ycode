@@ -763,11 +763,8 @@ function ThreadTab(props: {
     useRightPanelStore.getState().open(threadRef, "pull-requests");
     if (!props.routed) props.onOpen();
   };
-  // A tab's menu is for its one thread, never a selection made in the sidebar.
-  const openMenu = (position: { x: number; y: number }) => {
-    clearSidebarSelection();
+  const openMenu = (position: { x: number; y: number }) =>
     openSidebarThreadMenu(threadRef, position);
-  };
   return (
     <div
       data-fork-thread-tab=""

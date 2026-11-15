@@ -10,6 +10,19 @@ export const FORK_BOT_THREAD_TAG = "bot";
 export const FORK_BOT_MASCOT_TAG_PREFIX = "mascot:";
 /** A bot's work carries `bot-work:<bot thread id>`. */
 export const FORK_BOT_WORK_TAG_PREFIX = "bot-work:";
+/** The rules file in a bot's folder that every thread it launches carries. */
+export const FORK_BOT_CREW_FILE = "CREW.md";
+
+/** The tag that makes a thread `botId`'s work. */
+export function forkBotWorkTag(botId: string): string {
+  return `${FORK_BOT_WORK_TAG_PREFIX}${botId}`;
+}
+
+/** The id of the bot whose work `tags` mark, or null. */
+export function forkBotWorkOwner(tags: ReadonlyArray<string> | undefined): string | null {
+  const tag = tags?.find((candidate) => candidate.startsWith(FORK_BOT_WORK_TAG_PREFIX));
+  return tag === undefined ? null : tag.slice(FORK_BOT_WORK_TAG_PREFIX.length);
+}
 
 export function isForkBotThread(tags: ReadonlyArray<string> | undefined): boolean {
   return tags?.includes(FORK_BOT_THREAD_TAG) === true;
