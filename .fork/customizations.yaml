@@ -7144,8 +7144,10 @@
     (`bot`, mascot:*) there and inherits every other tag, so a bot's subagent
     is never a bot. Subagents made before that fix keep the copied tags and
     list as bots until archived; there is no migration.
-    The collapsed tab strip and mobile are not bot-aware, and mobile lists bots
-    as No-project threads.
+    The collapsed tab strip lists bots as a track of mascots beside its project
+    switcher (custom/bots/CollapsedPetalTabs), never as tabs: the bot on screen, or
+    whose work is, is pressed, and picking one opens its conversation. Mobile is
+    not bot-aware and lists bots as No-project threads.
   tier: 4
   files:
     - packages/shared/src/forkBotTags.ts
@@ -7167,6 +7169,7 @@
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
+    - apps/web/src/custom/bots/CollapsedPetalTabs.tsx
     - apps/web/src/custom/SidebarV2SectionLabel.tsx
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
     - apps/web/src/custom/sidebarV2CardStatus.ts
@@ -7274,8 +7277,9 @@
     setting for every bot. Sections that match nothing are dropped, and a list narrowed to
     nothing offers to clear.
     The search field takes focus only when its button opens it, never when the panel remounts
-    with search still open. The collapsed tab strip shows neither bots nor their work, as the
-    thread list does not. Mobile is not aware of any of it.
+    with search still open. The collapsed tab strip shows no bot work as tabs, as the thread
+    list does not; its bots are a mascot track beside the project switcher (fork-bots).
+    Mobile is not aware of any of it.
   tier: 4
   files:
     - packages/shared/src/forkBotTags.ts

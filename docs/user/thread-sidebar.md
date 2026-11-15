@@ -411,6 +411,8 @@ answer its questions.
 A petal is a long-running agent with one ongoing conversation, such as one that
 checks your inbox each morning or watches a repository. Petals have their own
 section above **Threads** in the sidebar and never appear among your threads.
+With the sidebar collapsed, their mascots sit beside the project switcher at the
+top; pick one to open that petal.
 
 Press the plus beside **Petals**, name the petal, and tell it its job in plain
 words. It writes the job down, schedules its own wake-ups, and asks for anything
