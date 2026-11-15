@@ -39,7 +39,7 @@ import { botMascotTag } from "./botMascotTags";
 import { botSeedFiles } from "./botSeedFiles";
 import { BOT_FOLDERS_DIRECTORY, botFolderName, botFolderPath } from "./botThreads";
 
-const FAILURE_TITLE = "Could not create the bot";
+const FAILURE_TITLE = "Could not create the petal";
 
 /** Claude only: a bot's memory rides on Claude Code reloading CLAUDE.md and JOB.md and running
     the folder's hooks, which no other provider does. Every wake, even a quiet one, is a full
@@ -80,7 +80,7 @@ export function useCreateBot(): (
     const scratchRoot = scratchWorkspaceRootFor(environmentId);
     if (environmentId === null || scratchRoot === null) {
       reportFailure(
-        "Bots run in the No-project workspace, on the primary machine or the only connected machine that has one. It is off while T3 Code's data folder is inside a git repository.",
+        "Petals run in the No-project workspace, on the primary machine or the only connected machine that has one. It is off while T3 Code's data folder is inside a git repository.",
       );
       return null;
     }
@@ -118,7 +118,7 @@ export function useCreateBot(): (
       ),
     );
     if (modelSelection === null) {
-      reportFailure("Bots run on Claude. Sign in to Claude in Settings first.");
+      reportFailure("Petals run on Claude. Sign in to Claude in Settings first.");
       return null;
     }
 
