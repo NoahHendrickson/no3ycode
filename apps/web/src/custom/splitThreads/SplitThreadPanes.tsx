@@ -93,7 +93,7 @@ function SplitResizeHandle(props: {
       const row = handle.parentElement;
       if (row === null) return null;
       const style = getComputedStyle(handle);
-      // The room the handle takes from the panes (Inlet lays it over a margin, so none).
+      // The room the handle takes from the panes.
       const handleSpace =
         handle.offsetWidth +
         Number.parseFloat(style.marginLeft) +
