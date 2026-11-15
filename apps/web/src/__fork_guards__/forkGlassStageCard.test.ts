@@ -116,16 +116,17 @@ describe("fork guard: fork-glass-stage-card", () => {
     expect(Math.abs(composite - stage)).toBeLessThanOrEqual(1);
   });
 
-  it("paints an embedded side chat's material once, from the right panel", () => {
-    // The card rules would add a second tint and wash over the panel's own.
-    const nested = rules.find(
-      (rule) =>
-        rule.selector.includes(VIBRANCY) &&
-        compact(rule.selector).endsWith(`[data-side-chat-pane]${CHAT}::before`),
-    );
-    expect(flat(nested?.body)).toBe("background: none;");
-    const ramp = rules.findIndex((rule) => rule.selector.includes(":has(.fork-timeline-cutoff)"));
-    expect(rules.indexOf(nested!)).toBeGreaterThan(ramp);
+  it("paints an embedded side chat's material once, from its own card", () => {
+    // The right panels read at the gutter's alpha, like the sidebar, so they paint no tint
+    // of their own, and the side chat's card keeps the card's fill.
+    expect(
+      rules.filter(
+        (rule) =>
+          rule.selector.includes('[data-preview-panel-mode="inline"]') &&
+          rule.body.includes("background"),
+      ),
+    ).toEqual([]);
+    expect(rules.filter((rule) => rule.selector.includes("[data-side-chat-pane]"))).toEqual([]);
   });
 
   it("dithers the stage ramp, or it bands under the desktop glass", () => {

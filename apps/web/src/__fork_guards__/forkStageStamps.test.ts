@@ -230,13 +230,6 @@ const STAMPS: ReadonlyArray<{
     ],
   },
   {
-    stamp: "data-fork-bot-threads-panel",
-    producers: [
-      ["custom/forkStageStamps.ts", '"data-fork-bot-threads-panel",'],
-      ["custom/bots/BotThreadsPanel.tsx", "ref={forkBotThreadsPanelRef}"],
-    ],
-  },
-  {
     stamp: "data-fork-morph-failed",
     producers: [["custom/inletMenuMorph.ts", 'trigger.dataset.forkMorphFailed = ""']],
   },

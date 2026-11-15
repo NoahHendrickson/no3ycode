@@ -27,7 +27,6 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
-import { forkBotThreadsPanelRef } from "../forkStageStamps";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
@@ -154,7 +153,6 @@ function BotThreadsBody(props: {
         isElectron && "drag-region",
         isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
       )}
-      ref={forkBotThreadsPanelRef}
       data-fork-bot-threads-header=""
       // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
       data-fork-bot-threads-bot={botKey}
