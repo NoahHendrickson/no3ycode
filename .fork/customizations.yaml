@@ -7110,6 +7110,8 @@
     built by the same row factory as the threads; a folded Bots section keeps
     the open bot's card. Chat lists chats alone, so it has no Bots row. Bots
     never appear among the threads (filterSidebarV2VisibleThreads).
+    Every label the user sees calls them Petals (the section, its buttons,
+    toasts and the user docs); code, tags, folders and storage keep `bot`.
 
     A sidebar row picks its card kind once (card, compact, bot, bot-compact;
     custom/bots/SidebarV2BotCardBody sidebarV2CardKind). A bot card draws
