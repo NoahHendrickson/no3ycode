@@ -206,7 +206,7 @@ function BotThreadsBody(props: {
         {header}
         {all.length === 0 ? (
           <p className="px-3.5 py-3 text-sm text-muted-foreground">
-            This bot has not started any threads.
+            This petal has not started any threads.
           </p>
         ) : (
           <div className="flex flex-col items-start gap-2 px-3.5 py-3">

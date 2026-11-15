@@ -62,6 +62,7 @@ const chatView = readSibling("../components/ChatView.tsx");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
+const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
 const subagentProjection = readSibling(
   "../../../../packages/provider-core/src/server/subagentProjection.ts",
 );
@@ -250,6 +251,9 @@ describe("fork guard: fork-bots", () => {
     expect(sidebar).toContain('onToggleCollapsed={() => toggleListSectionCollapsed("threads")}');
     expect(sidebar).toContain("return threadsSectionCollapsed ? [] : items;");
     expect(chatView).toContain("isForkChatThread || isForkBotThread");
+    // Bots are branded "Petals" in every label the user sees; code keeps the `bot` name.
+    expect(botsSection).toMatch(/>\s+Petals\s+</);
+    expect(botsSection).toContain('aria-label="New petal"');
   });
 
   it("never makes a bot's subagent another bot", () => {

@@ -132,8 +132,8 @@ export function SidebarV2NewBotRow(props: {
           if (!creating && name.trim() === "") props.onDone();
         }}
         maxLength={80}
-        placeholder="Name your bot"
-        aria-label="Bot name"
+        placeholder="Name your petal"
+        aria-label="Petal name"
         data-testid="sidebar-v2-new-bot-name"
         // Where the card's title sits, and as tall as the row allows.
         className={cn(
@@ -167,7 +167,7 @@ export function SidebarV2BotsRow(props: {
             onToggle={props.onToggleCollapsed}
             testId="sidebar-v2-bots-section-toggle"
           >
-            Bots
+            Petals
           </SidebarV2SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
@@ -181,7 +181,7 @@ export function SidebarV2BotsRow(props: {
                         size="sm"
                         type="button"
                         className={PROJECTS_ROW_BUTTON}
-                        aria-label="Bot view options"
+                        aria-label="Petal view options"
                         data-testid="sidebar-v2-bots-options"
                         data-fork-tab-trigger=""
                       />
@@ -215,7 +215,7 @@ export function SidebarV2BotsRow(props: {
                   size="sm"
                   type="button"
                   className={PROJECTS_ROW_BUTTON}
-                  aria-label="New bot"
+                  aria-label="New petal"
                   data-testid="sidebar-v2-new-bot"
                   onClick={props.onNewBot}
                 />
@@ -223,7 +223,7 @@ export function SidebarV2BotsRow(props: {
             >
               <PlusIcon className="size-4 shrink-0" />
             </TooltipTrigger>
-            <TooltipPopup side="right">New bot</TooltipPopup>
+            <TooltipPopup side="right">New petal</TooltipPopup>
           </Tooltip>
         </div>
       </div>
