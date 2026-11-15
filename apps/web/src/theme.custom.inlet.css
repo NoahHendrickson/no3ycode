@@ -122,47 +122,26 @@
   }
 }
 
-/* A split's panes are each their own panel, so the line between them
-   (fork-split-threads) goes and the divider is the frame's gap: the right
-   pane drops its leading margin and the divider lies over the left pane's
-   trailing one, so the panes stand one margin apart, as a panel stands from
-   the right panel beside it. A bar of the panel's fill shows in the gap
-   while it is hovered or dragged. */
+/* A split's panes share one panel: each pane's card goes square and
+   marginless where they meet, and the line between them (fork-split-threads)
+   runs inside the panel's top and bottom insets, as the stage's columns are
+   divided. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  & [data-fork-split-threads] > [data-fork-split-side="left"] [data-fork-workspace-root] {
+    margin-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
   & [data-fork-split-threads] > [data-fork-split-side="right"] [data-fork-workspace-root] {
     margin-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
   }
 
   & [data-fork-split-divider] {
-    width: var(--fork-inlet-margin);
-    margin-left: calc(-1 * var(--fork-inlet-margin));
-    background: transparent;
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      width: 4px;
-      height: 40px;
-      border-radius: 9999px;
-      background: var(--fork-inlet-panel);
-      opacity: 0;
-      transition: opacity 150ms ease-out;
-      pointer-events: none;
-    }
-
-    &:is(:hover, [data-dragging])::after {
-      opacity: 1;
-    }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-    [data-fork-split-divider]::after {
-    transition: none;
+    margin-block: var(--fork-inlet-panel-top) var(--fork-inlet-margin);
   }
 }
 

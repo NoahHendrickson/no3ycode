@@ -2495,11 +2495,10 @@
     the row; the thread list drops its native scrollbar (it still scrolls)
     because the gutter would clip the bridge, and the open item drops
     content-visibility paint containment. Other thread cards are unchanged.
-    A split's panes are each such a panel, so the line between them
-    (fork-split-threads) is hidden and the divider becomes the frame's gap:
-    the right pane drops its leading margin, so split panes and the right
-    panel all stand one margin apart. A bar of the panel's fill shows in the
-    gap while it is hovered or dragged.
+    A split's panes share one panel: the left pane's card goes square and
+    marginless on its right, the right pane's on its left, and the line
+    between them (fork-split-threads) runs between the panel's top and bottom
+    insets, as the stage's columns are divided.
 
     The colour lives in t3code:fork-inlet-color, stamped as
     data-fork-inlet-color while Inlet is active; Settings → Appearance shows
@@ -7273,8 +7272,8 @@
     setting for every bot. Sections that match nothing are dropped, and a list narrowed to
     nothing offers to clear.
     The search field takes focus only when its button opens it, never when the panel remounts
-    with search still open. The collapsed tab strip lists no bots, so it keeps a bot's work as
-    tabs (filterSidebarV2VisibleThreads botWorkInPanel false). Mobile is not aware of any of it.
+    with search still open. The collapsed tab strip shows neither bots nor their work, as the
+    thread list does not. Mobile is not aware of any of it.
   tier: 4
   files:
     - packages/shared/src/forkBotTags.ts

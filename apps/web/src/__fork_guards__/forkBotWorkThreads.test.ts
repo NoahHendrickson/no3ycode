@@ -100,14 +100,6 @@ describe("fork guard: fork-bot-work-threads", () => {
       "retired-fix",
       "orphan-fix",
     ]);
-    // The collapsed tab strip lists no bots, so there a bot's work keeps its tabs.
-    expect(ids(filterSidebarV2VisibleThreads(threads, null, new Set(), undefined, false))).toEqual([
-      "mine",
-      "mail-fix",
-      "mail-kept",
-      "retired-fix",
-      "orphan-fix",
-    ]);
   });
 
   it("never widens the project scope for work the sidebar leaves out", () => {

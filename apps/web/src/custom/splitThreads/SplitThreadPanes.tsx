@@ -92,13 +92,7 @@ function SplitResizeHandle(props: {
       const handle = event.currentTarget;
       const row = handle.parentElement;
       if (row === null) return null;
-      const style = getComputedStyle(handle);
-      // The room the handle takes from the panes (Inlet lays it over a margin, so none).
-      const handleSpace =
-        handle.offsetWidth +
-        Number.parseFloat(style.marginLeft) +
-        Number.parseFloat(style.marginRight);
-      const span = row.getBoundingClientRect().width - handleSpace;
+      const span = row.getBoundingClientRect().width - handle.offsetWidth;
       if (span <= 0) return null;
       const stored = Number.parseFloat(row.style.getPropertyValue(SPLIT_RATIO_VAR));
       const startRatio = Number.isFinite(stored) ? stored : DEFAULT_SPLIT_RATIO;
