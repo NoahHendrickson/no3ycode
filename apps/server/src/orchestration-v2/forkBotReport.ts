@@ -25,9 +25,6 @@ export const FORK_BOT_SETTLED_RUN_STATUSES: ReadonlyArray<OrchestrationV2RunStat
   "failed",
   "cancelled",
 ];
-/** A wake that found nothing ends on this reply (the client seeds it as `BOT_QUIET_REPLY`).
-    Lowercased and trimmed, with and without its full stop, for the shell query to compare. */
-export const FORK_BOT_QUIET_REPLIES = ["nothing to report", "nothing to report."];
 
 const decodeReportRow = Schema.decodeUnknownEffect(
   Schema.fromJsonString(

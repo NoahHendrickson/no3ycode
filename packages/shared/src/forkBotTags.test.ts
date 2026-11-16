@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { forkBotWorkOwner, forkBotWorkTag, forkSubagentTags } from "./forkBotTags.ts";
+import {
+  forkBotWorkOwner,
+  forkBotWorkTag,
+  forkSubagentTags,
+  isForkBotQuietReply,
+} from "./forkBotTags.ts";
 
 describe("bot-work tags", () => {
   it("name the bot a thread works for, in one spelling", () => {
@@ -19,5 +24,15 @@ describe("forkSubagentTags", () => {
       "triage",
     ]);
     expect(forkSubagentTags(undefined)).toBeUndefined();
+  });
+});
+
+describe("isForkBotQuietReply", () => {
+  it("reads the quiet reply loosely, trimming only what the server's report trims", () => {
+    for (const reply of ["Nothing to report.", " nothing to report\n", "NOTHING TO REPORT"]) {
+      expect(isForkBotQuietReply(reply)).toBe(true);
+    }
+    expect(isForkBotQuietReply("Nothing to report. ")).toBe(false);
+    expect(isForkBotQuietReply("Nothing to report. Rent is due.")).toBe(false);
   });
 });

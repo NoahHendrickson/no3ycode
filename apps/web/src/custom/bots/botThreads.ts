@@ -11,9 +11,6 @@ import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 /** Where bot folders live, relative to the No-project workspace root. */
 export const BOT_FOLDERS_DIRECTORY = "bots";
 
-/** What a bot replies when a wake found nothing; the server's report skips it. */
-export const BOT_QUIET_REPLY = "Nothing to report.";
-
 /** The part of a thread shell bots read. Its `latestVisibleMessage` is the bot's latest report:
     the server fills it for bots only, skipping quiet wakes (orchestration-v2/forkBotReport). */
 export type BotShell = Pick<OrchestrationV2ThreadShell, "tags" | "latestVisibleMessage">;

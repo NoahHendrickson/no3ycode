@@ -148,6 +148,7 @@ import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
 /* fork:end fork-stage-stamps */
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { BotEmptyConversation } from "~/custom/bots/BotMascot";
+import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
 
 function timelineListStateFor(identity: string): {
@@ -491,6 +492,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
     setExpandedAttemptIds(paintedExpandedAttemptIds);
   }
   const citationThreadRef = parseScopedThreadKey(routeThreadKey);
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  const forkIsBotThread = useIsBotThread(citationThreadRef);
+  /* fork:end fork-bots */
   const openPullRequest = useOpenPrLink(citationThreadRef ?? undefined);
   const [minimapStripMap] = useState(() => new Map<string, HTMLSpanElement>());
   const normalizedFindQuery = findQuery.trim();
@@ -767,6 +771,10 @@ const ConversationTimeline = memo(function ConversationTimeline({
     worktreeSetup,
     toolCallVisibility,
     revealedMessageId,
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+       Find searches every run, so quiet wakes show while it is open. */
+    hideQuietBotWakes: forkIsBotThread && !findActive,
+    /* fork:end fork-bots */
   });
   const rows = useStableRows(rawRows, listIdentityKey);
   /* fork:begin fork-transcript-row-motion — see .fork/customizations.yaml#fork-transcript-row-motion */

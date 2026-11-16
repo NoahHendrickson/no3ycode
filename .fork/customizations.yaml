@@ -7157,6 +7157,17 @@
     linked to its own thread or a long idle no longer settles it, and its
     conversation never shows the settled card (useThreadLifecycle). A message
     still unsettles a bot settled by hand.
+    A bot's conversation leaves out its wakes that found nothing: a run whose
+    attempt completed without a failure, where the owner sent no message and
+    answered no question or approval, and whose final reply is the quiet reply
+    (custom/bots/quietBotWakes; the reply and its predicate live in
+    @t3tools/shared/forkBotTags, which the server's report reads too). The hide
+    happens where MessagesTimeline.logic picks the entries it shows
+    (timelineRowEntries), so rewind targets, which read every entry, still count
+    the hidden runs. Find shows them while it is open, and a cited reply's run
+    always shows. A run hides from its prompt on, so a resumed subagent card
+    listed earlier stays in its turn. ChatView's text-less entries (prompt history, follow) still
+    hold them, as they cannot tell a quiet reply apart.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
     by server, web and provider-core. A subagent copies its parent thread
     (provider-core subagentProjection) but drops the bot's identity tags
@@ -7187,6 +7198,7 @@
     - apps/web/src/custom/scheduled/ScheduledRelativeLabel.tsx
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
+    - apps/web/src/custom/bots/quietBotWakes.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
     - apps/web/src/custom/bots/CollapsedPetalTabs.tsx
     - apps/web/src/custom/SidebarV2SectionLabel.tsx
@@ -7206,6 +7218,7 @@
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - apps/web/src/components/chat/useThreadLifecycle.tsx
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
@@ -7217,6 +7230,7 @@
     - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
+    - apps/web/src/custom/bots/quietBotWakes.test.ts
     - packages/shared/src/forkBotTags.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
