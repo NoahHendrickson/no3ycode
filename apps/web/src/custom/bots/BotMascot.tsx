@@ -4,6 +4,7 @@
  * to scale it into a square box, so faces of every size read alike (a small one grows most).
  */
 import { parseScopedThreadKey } from "@t3tools/client-runtime/environment";
+import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
@@ -68,4 +69,11 @@ export function BotEmptyConversation(props: {
       <p className="text-sm text-muted-foreground">Tell {shell.title} what its job is.</p>
     </div>
   );
+}
+
+/** A bot's mascot before its title in the stage header. Other threads get nothing. */
+export function BotHeaderMascot(props: { readonly threadRef: ScopedThreadRef }) {
+  const shell = useQuietThreadShell(props.threadRef);
+  if (shell === null || !isBotThread(shell.source)) return null;
+  return <BotMascot shape={botMascotShape(shell.source)} mood="Idle" fit={18} className="mr-2" />;
 }

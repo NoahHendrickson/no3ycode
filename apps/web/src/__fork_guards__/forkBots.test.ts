@@ -61,6 +61,7 @@ const cardStatus = readSibling("../custom/sidebarV2CardStatus.ts");
 const chatView = readSibling("../components/ChatView.tsx");
 const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
 const detailsPanel = readSibling("../components/chat/ThreadDetailsPanel.tsx");
+const chatHeader = readSibling("../components/chat/ChatHeader.tsx");
 const createBot = readSibling("../custom/bots/useCreateBot.ts");
 const subagentProjection = readSibling(
   "../../../../packages/provider-core/src/server/subagentProjection.ts",
@@ -321,6 +322,7 @@ describe("fork guard: fork-bots", () => {
     expect(mood("ready", false, false)).toBe("Idle");
     expect(mood("input")).toBe("Idle");
     expect(timeline).toContain("<BotEmptyConversation");
+    expect(chatHeader).toContain("<BotHeaderMascot threadRef={activeThreadRef} />");
   });
 
   it("seeds a bot's folder with rules, state and the compaction hooks", () => {
