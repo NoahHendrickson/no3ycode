@@ -116,12 +116,16 @@ export async function loadQueuedImage(input: {
   return new File([await response.blob()], image.name, { type: image.mimeType });
 }
 
+// Removing the run deletes the server's copy, so an image the stash cannot keep keeps the run queued.
 async function queuedRunStashEntry(input: {
   readonly text: string;
   readonly records: ReadonlyArray<ComposerContextRecord>;
   readonly attachments: ReadonlyArray<ChatAttachment>;
   readonly loadImage: (image: ChatImageAttachment) => Promise<File>;
-}): Promise<PromptStashEntry> {
+}): Promise<
+  | { readonly entry: PromptStashEntry; readonly unsavedImageNames?: never }
+  | { readonly entry?: never; readonly unsavedImageNames: ReadonlyArray<string> }
+> {
   const { prompt, records, imageIdByAttachmentId } = queuedRunStashContent(input);
   const images = input.attachments.filter(
     (attachment): attachment is ChatImageAttachment => attachment.type === "image",
@@ -133,13 +137,10 @@ async function queuedRunStashEntry(input: {
     }),
   );
   const candidates: PersistedComposerImageAttachment[] = [];
-  const oversizedImageNames: string[] = [];
-  const unreadableImageNames: string[] = [];
+  const unsavedImageNames: string[] = [];
   for (const { image, result } of results) {
     if (!result?.ok) {
-      (result?.reason === "too-large" ? oversizedImageNames : unreadableImageNames).push(
-        image.name,
-      );
+      unsavedImageNames.push(image.name);
       continue;
     }
     candidates.push({
@@ -154,18 +155,23 @@ async function queuedRunStashEntry(input: {
     });
   }
   const { kept, droppedNames } = partitionStashAttachments(candidates);
+  unsavedImageNames.push(...droppedNames);
+  if (unsavedImageNames.length > 0) return { unsavedImageNames };
   return {
-    id: randomUUID(),
-    createdAt: new Date().toISOString(),
-    prompt,
-    attachments: kept,
-    droppedImageNames: [...oversizedImageNames, ...droppedNames],
-    unreadableImageNames,
-    ...(records.length > 0 ? { records: [...records] } : {}),
+    entry: {
+      id: randomUUID(),
+      createdAt: new Date().toISOString(),
+      prompt,
+      attachments: kept,
+      droppedImageNames: [],
+      unreadableImageNames: [],
+      ...(records.length > 0 ? { records: [...records] } : {}),
+    },
   };
 }
 
 export type QueuedRunStashOutcome =
+  | { readonly _tag: "ImagesFailed"; readonly imageNames: ReadonlyArray<string> }
   | { readonly _tag: "WriteFailed" }
   | { readonly _tag: "CancelFailed" }
   | { readonly _tag: "Moved"; readonly durable: boolean; readonly evicted: boolean };
@@ -179,7 +185,8 @@ export async function moveQueuedRunToStash(input: {
   /** Resolves true once the run has left the queue. */
   readonly cancel: () => Promise<boolean>;
 }): Promise<QueuedRunStashOutcome> {
-  const entry = await queuedRunStashEntry(input);
+  const { entry, unsavedImageNames } = await queuedRunStashEntry(input);
+  if (!entry) return { _tag: "ImagesFailed", imageNames: unsavedImageNames };
   const { written, durable, evicted } = usePromptStashStore.getState().stashEntry(entry);
   if (!written) return { _tag: "WriteFailed" };
   if (!(await input.cancel())) {

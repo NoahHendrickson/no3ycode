@@ -6445,7 +6445,8 @@
     prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
     takes it back, with any entry it evicted, if removing the run fails
     (promptStashStore.unstashEntry, fenced). Messages with files, design changes,
-    or from guests are not stashable. ChatView mounts it in the composer dock, not the
+    or from guests are not stashable. An image the stash cannot keep aborts the move,
+    since removing the run deletes the server copy. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
     Mobile keeps upstream's queue.
   tier: 4
@@ -6464,6 +6465,8 @@
     - apps/web/src/components/chat/QueuedRunsControl.tsx
     # Carries the fenced unstashEntry rollback for move-to-stash.
     - apps/web/src/promptStashStore.ts
+    # stashQueuedRun.ts copies its image pipeline and entry shape.
+    - apps/web/src/components/chat/useComposerStash.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
   verify:

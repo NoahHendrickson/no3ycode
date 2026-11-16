@@ -152,11 +152,11 @@ export function ForkQueuedRunsBanner({
       editable: context?.guest === undefined,
       attachments,
       records: context?.records ?? [],
-      stashBlockedReason: queuedRunStashBlockReason({
-        text,
-        attachments,
-        guest: context?.guest !== undefined,
-      }),
+      // Without its message the row shows a placeholder, and stashing it would lose the real one.
+      stashBlockedReason:
+        message === undefined
+          ? "This message is still loading"
+          : queuedRunStashBlockReason({ text, attachments, guest: context?.guest !== undefined }),
       thumbnails: attachments
         .filter((attachment) => attachment.type === "image")
         .map<QueuedRowThumbnail>((attachment) => ({
@@ -289,6 +289,14 @@ export function ForkQueuedRunsBanner({
         )._tag === "Success",
     });
     setBusyRunId(null);
+    if (outcome._tag === "ImagesFailed") {
+      toastManager.add({
+        type: "error",
+        title: "Could not stash this message",
+        description: `${outcome.imageNames.join(", ")} could not be saved to the stash, so the message stays queued.`,
+        data: { hideCopyButton: true },
+      });
+    }
     if (outcome._tag === "WriteFailed") {
       toastManager.add({
         type: "error",

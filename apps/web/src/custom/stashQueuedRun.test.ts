@@ -6,7 +6,7 @@ import {
   type ImageContextRecord,
 } from "@t3tools/contracts";
 import { toKindScopedComposerContextId } from "@t3tools/shared/composerContextReferences";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import {
   environmentContextRecord,
@@ -84,7 +84,30 @@ describe("queuedRunStashBlockReason", () => {
 });
 
 describe("moveQueuedRunToStash", () => {
-  it("restores a full stash, evicted entry included, when the run cannot be removed", async () => {
+  const image = {
+    type: "image" as const,
+    id: "thread-1-image-1",
+    name: "shot.png",
+    mimeType: "image/png",
+    sizeBytes: 10,
+  };
+
+  it.each([
+    {
+      name: "restores a full stash, evicted entry included, when the run cannot be removed",
+      attachments: [],
+      cancelled: false,
+      expected: { _tag: "CancelFailed" },
+      cancelCalls: 1,
+    },
+    {
+      name: "keeps the run queued when an image cannot be saved",
+      attachments: [image],
+      cancelled: true,
+      expected: { _tag: "ImagesFailed", imageNames: ["shot.png"] },
+      cancelCalls: 0,
+    },
+  ])("$name", async ({ attachments, cancelled, expected, cancelCalls }) => {
     const entries = Array.from({ length: MAX_STASH_ENTRIES }, (_, index) => ({
       id: `entry-${index}`,
       createdAt: "2026-11-16T00:00:00.000Z",
@@ -93,16 +116,18 @@ describe("moveQueuedRunToStash", () => {
       droppedImageNames: [],
     }));
     writePromptStashStorageForTest(JSON.stringify({ version: 2, state: { entries } }));
+    const cancel = vi.fn(() => Promise.resolve(cancelled));
 
     const outcome = await moveQueuedRunToStash({
       text: "queued",
       records: [],
-      attachments: [],
-      loadImage: () => Promise.reject(new Error("no images")),
-      cancel: () => Promise.resolve(false),
+      attachments,
+      loadImage: () => Promise.reject(new Error("connection dropped")),
+      cancel,
     });
 
-    expect(outcome).toEqual({ _tag: "CancelFailed" });
+    expect(outcome).toEqual(expected);
+    expect(cancel).toHaveBeenCalledTimes(cancelCalls);
     expect(usePromptStashStore.getState().entries.map((entry) => entry.id)).toEqual(
       entries.map((entry) => entry.id),
     );
