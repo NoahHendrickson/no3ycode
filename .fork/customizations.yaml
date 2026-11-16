@@ -7137,7 +7137,8 @@
     while naming the bot and changed later in the bot's thread details card (a
     Mascot grid; BotMascotDetailsSection) or the card's context menu
     (botMascotMenu); the new tag is set before the old one is cleared. An empty
-    bot conversation shows the mascot large. The mascots do not animate. A bot
+    bot conversation shows the mascot large, and the stage header puts it before
+    the bot's title (ChatHeader). The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
@@ -7181,6 +7182,7 @@
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    - apps/web/src/components/chat/ChatHeader.tsx
     # ScheduledRelativeLabel moved out so bot cards do not pull the page into startup.
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
     # Upstream's test mocks a partial shell; the Mascot section reads its tags.
