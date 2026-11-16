@@ -430,6 +430,9 @@ import { useDraftHeroLayoutTransition } from "./chat/useDraftHeroLayoutTransitio
 /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
 import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
 /* fork:end fork-inlet-black-texture */
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+import { BasicNewAgentTexture } from "~/custom/BasicNewAgentTexture";
+/* fork:end fork-basic-theme */
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
 import { useIsChatThread } from "~/custom/useChatMode";
 /* fork:end fork-chat-mode */
@@ -3775,11 +3778,17 @@ export default function ChatView(props: ChatViewProps) {
            fork-bots: a bot's conversation is the composer alone too. */
         data-fork-chat-thread={isForkChatThread || isForkBotThread ? "" : undefined}
         /* fork:end fork-chat-mode */
+        /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+        data-fork-thread-started={isLocalDraftThread ? undefined : ""}
+        /* fork:end fork-basic-theme */
         inert={rightPanelMaximized}
       >
         {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
         <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
         {/* fork:end fork-inlet-black-texture */}
+        {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
+        <BasicNewAgentTexture shown={isDraftHeroState && !embedded} />
+        {/* fork:end fork-basic-theme */}
         {embedded ? null : (
           <header
             ref={threadPanelPopoverAnchorRef}

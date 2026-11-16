@@ -282,7 +282,7 @@ import {
 import type { FC, ReactElement, SVGProps } from "react";
 import { createElement } from "react";
 
-import { useIsInletActive } from "../forkActivePalette";
+import { forkPaletteFillsIcons, useActiveForkPalette } from "../forkActivePalette";
 
 /**
  * Phosphor's own `IconProps` declares its optionals without `| undefined`,
@@ -320,10 +320,10 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
   return pascalKebab === lucideName ? classes : `${classes} lucide-${pascalKebab}`;
 }
 
-/** Duotone, or Inlet's fill in its place (see `.fork/customizations.yaml#fork-inlet-theme`).
-    Every other weight passes through. */
+/** Duotone, or fill in its place under Inlet and Basic (see `.fork/customizations.yaml#fork-inlet-theme`
+    and `#fork-basic-theme`). Every other weight passes through. */
 export function useForkIconWeight(weight: IconWeight): IconWeight {
-  const fills = useIsInletActive();
+  const fills = forkPaletteFillsIcons(useActiveForkPalette());
   return weight === "duotone" && fills ? "fill" : weight;
 }
 

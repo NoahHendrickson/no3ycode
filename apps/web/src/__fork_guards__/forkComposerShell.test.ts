@@ -37,7 +37,7 @@ function readSibling(relativePath: string): string {
 const MARKER = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
 const theme = readSibling("../theme.custom.css");
 const shellCss = readSibling("../custom/ComposerShell.css");
-const palettes = readSibling("../theme.custom.palettes.css");
+const palettes = `${readSibling("../theme.custom.palettes.css")}\n${readSibling("../theme.custom.basic.css")}`;
 const styles = `${theme}\n${shellCss}`;
 const rules = cssRules(styles);
 const paletteRules = cssRules(palettes);
@@ -453,7 +453,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(hover?.selector).toContain(":not([data-fork-composer-mode-chip])");
     // The rule reads a per-palette token, so every palette has to declare one
     // on its stage block or that theme falls back to the default dark lift.
-    for (const palette of ["cool-dark", "cool-darker", "neutral-dark", "neutral-darker", "inlet"]) {
+    for (const palette of ["basic", "cool-darker", "inlet"]) {
       const stage = paletteRules.find(
         (rule) =>
           rule.selector.includes(`[data-fork-theme="${palette}"]`) &&

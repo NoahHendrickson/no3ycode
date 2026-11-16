@@ -54,7 +54,9 @@ describe("fork guard: fork-changed-files-card", () => {
     // fill has to be set on the element: --color-message is declared on
     // :root, so a token retarget computes var(--card) at the root, while the
     // card reads the --card rescoped under [data-sidebar-version="v2"].
-    const bubble = cssRules(theme).find((rule) => rule.selector === `${MARKER}.dark .bg-message`);
+    const bubble = cssRules(theme).find(
+      (rule) => rule.selector === `${MARKER}:is(.dark, [data-fork-theme="basic"]) .bg-message`,
+    );
     expect(bubble?.body).toMatch(/background-color:\s*var\(--card\)/u);
     expect(theme).not.toMatch(/--message-surface:/u);
     expect(readSibling("../components/chat/TimelineUserMessageRow.tsx")).toContain("bg-message ");
@@ -64,7 +66,7 @@ describe("fork guard: fork-changed-files-card", () => {
     const rules = cssRules(theme);
     const hover = rules.find(
       (rule) =>
-        rule.selector.includes("[data-changed-files-state] button:hover") &&
+        rule.selector.replace(/\s+/gu, " ").includes("[data-changed-files-state] button:hover") &&
         rule.body.includes("--fork-outline-hover-bg"),
     );
     expect(hover?.selector).toContain(MARKER);
@@ -91,7 +93,7 @@ describe("fork guard: fork-changed-files-card", () => {
     // foreground ink but must not be pulled into the outline recipe, which
     // would recolour their transparent border into a visible one.
     const button = cssRules(theme).find((rule) =>
-      rule.selector.includes("[data-changed-files-header] > div button"),
+      rule.selector.replace(/\s+/gu, " ").includes("[data-changed-files-header] > div button"),
     );
     expect(button?.selector).toContain(MARKER);
     expect(button?.selector).toContain(".dark");

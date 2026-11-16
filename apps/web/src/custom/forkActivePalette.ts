@@ -29,3 +29,15 @@ function subscribe(listener: () => void): () => void {
 export function useIsInletActive(): boolean {
   return useSyncExternalStore(subscribe, isInletActive, () => false);
 }
+
+const readActive = () => active;
+
+/** The palette painted now, null while an imported or built-in upstream theme is on. */
+export function useActiveForkPalette(): ForkPalettePreference {
+  return useSyncExternalStore(subscribe, readActive, () => null);
+}
+
+/** Inlet and Basic draw Phosphor's fill where the other palettes draw duotone. */
+export function forkPaletteFillsIcons(palette: ForkPalettePreference): boolean {
+  return palette === "inlet" || palette === "basic";
+}

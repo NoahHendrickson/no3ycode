@@ -36,14 +36,12 @@ import { AdvancedSettings } from "./AdvancedSettings";
 import { PanelAnimationsPreview } from "./PanelAnimationsPreview";
 import { TypographySection } from "./TypographySettings";
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-import {
-  COOL_DARKER_THEME,
-  FORK_PALETTE_LABELS,
-  FORK_PALETTES,
-  isForkPalette,
-  useForkAppearance,
-} from "../../custom/forkTheme";
+import { COOL_DARKER_THEME, useForkAppearance } from "../../custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+import { BASIC_THEME, BASIC_TONE_OPTIONS, DEFAULT_BASIC_TONES } from "../../custom/forkTheme";
+import { ForkBasicTonePicker, ForkThemePicker } from "../../custom/ForkThemePicker";
+/* fork:end fork-basic-theme */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
 import { ForkInletColorPicker } from "../../custom/ForkInletColorPicker";
@@ -107,16 +105,6 @@ function environmentIdentificationOptions(
   ];
 }
 
-/* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme
-   One derived option per fork palette (Westworld, Glass, Neutral Dark,
-   Neutral Darker, …) — the palette list and its labels live in custom/forkTheme.ts,
-   so adding a palette never edits this file. */
-const FORK_PALETTE_OPTIONS = [
-  { value: "dark", label: "Default Dark" },
-  ...FORK_PALETTES.map((palette) => ({ value: palette, label: FORK_PALETTE_LABELS[palette] })),
-] as const;
-/* fork:end fork-cool-dark-theme */
-
 const CHAT_WIDTH_LABELS: Record<ChatWidth, string> = {
   comfortable: "Comfortable",
   wide: "Wide",
@@ -142,10 +130,9 @@ export function AppearanceSettingsPanel() {
   const customThemes = useCustomThemes();
   const [isImportThemeOpen, setIsImportThemeOpen] = useState(false);
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-  const { appearance, setAppearance, inletColor, setInletColor } = useForkAppearance(
-    theme,
-    setTheme,
-  );
+  const { appearance, setAppearance, inletColor, setInletColor, basicTone, setBasicTone } =
+    useForkAppearance(setTheme);
+  const defaultBasicTone = DEFAULT_BASIC_TONES[BASIC_TONE_OPTIONS[basicTone].appearance];
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
@@ -204,59 +191,32 @@ export function AppearanceSettingsPanel() {
 
   return (
     <SettingsPageContainer>
-      <SettingsSection id="appearance" title="Colors & themes" variant="plain" hideTitle>
-        <div id={searchableSetting("theme").id}>
-          <ThemeLibrary
-            appearanceMode={appearanceMode}
-            customThemes={customThemes}
-            initialAppearance={resolvedTheme}
-            refreshTheme={refreshTheme}
-            isImportOpen={isImportThemeOpen}
-            setAppearanceMode={setAppearanceMode}
-            setTheme={setTheme}
-            setThemeHalf={setThemeHalf}
-            theme={theme}
-            themeHalves={themeHalves}
-            onImportOpenChange={setIsImportThemeOpen}
+      {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
+      <SettingsSection id="appearance-fork-theme" title="Theme">
+        <div className="p-4">
+          <ForkThemePicker
+            value={appearance}
+            basicTone={basicTone}
+            inletColor={inletColor}
+            onChange={setAppearance}
           />
         </div>
-      </SettingsSection>
-
-      <SettingsSection id="appearance-interface" title="Interface">
-        {/* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */}
-        <SettingsRow
-          title="Fork palette"
-          description="Use one of the fork's alternate palettes."
-          resetAction={
-            isForkPalette(appearance) ? (
-              <SettingResetButton label="fork palette" onClick={() => setAppearance("dark")} />
-            ) : null
-          }
-          control={
-            <Select
-              value={isForkPalette(appearance) ? appearance : "dark"}
-              onValueChange={(value) => {
-                if (value === "dark" || isForkPalette(value)) {
-                  setAppearance(value);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Fork palette">
-                <SelectValue>
-                  {isForkPalette(appearance) ? FORK_PALETTE_LABELS[appearance] : "Default Dark"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectPopup align="end" alignItemWithTrigger={false}>
-                {FORK_PALETTE_OPTIONS.map((option) => (
-                  <SelectItem hideIndicator key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectPopup>
-            </Select>
-          }
-        />
-        {/* fork:end fork-cool-dark-theme */}
+        {appearance === BASIC_THEME ? (
+          <SettingsRow
+            title="Tone"
+            description="The colour everything in Basic is built from."
+            resetAction={
+              basicTone === defaultBasicTone ? null : (
+                <SettingResetButton
+                  label="Basic tone"
+                  onClick={() => setBasicTone(defaultBasicTone)}
+                />
+              )
+            }
+            control={<ForkBasicTonePicker value={basicTone} onChange={setBasicTone} />}
+          />
+        ) : null}
+        {/* fork:end fork-basic-theme */}
         {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */}
         {appearance === INLET_THEME ? (
           <SettingsRow
@@ -332,6 +292,29 @@ export function AppearanceSettingsPanel() {
           />
         ) : null}
         {/* fork:end fork-glass-3d */}
+        {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
+      </SettingsSection>
+      {/* fork:end fork-basic-theme */}
+
+      <SettingsSection id="appearance" title="Colors & themes" variant="plain" hideTitle>
+        <div id={searchableSetting("theme").id}>
+          <ThemeLibrary
+            appearanceMode={appearanceMode}
+            customThemes={customThemes}
+            initialAppearance={resolvedTheme}
+            refreshTheme={refreshTheme}
+            isImportOpen={isImportThemeOpen}
+            setAppearanceMode={setAppearanceMode}
+            setTheme={setTheme}
+            setThemeHalf={setThemeHalf}
+            theme={theme}
+            themeHalves={themeHalves}
+            onImportOpenChange={setIsImportThemeOpen}
+          />
+        </div>
+      </SettingsSection>
+
+      <SettingsSection id="appearance-interface" title="Interface">
         {/* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */}
         <SettingsRow
           title="Working indicator"

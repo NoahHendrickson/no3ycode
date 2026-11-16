@@ -56,7 +56,7 @@ describe("fork guard: fork-marker", () => {
     // other. Nested @media / @layer rules are leaves too and are covered.
     for (const file of [
       "../theme.custom.palettes.css",
-      "../theme.custom.westworld.css",
+      "../theme.custom.basic.css",
       "../theme.custom.glass.css",
     ]) {
       const rules = cssRules(readSibling(file));

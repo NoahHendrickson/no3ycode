@@ -55,9 +55,9 @@ import {
 } from "../../hooks/useTheme";
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import {
+  BASIC_THEME,
   COOL_DARKER_THEME,
   FORK_PALETTE_LABELS,
-  isForkPalette,
   useForkAppearance,
 } from "../../custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
@@ -461,10 +461,15 @@ export function useSettingsRestore(onRestored?: () => void) {
     themeHalves,
   } = useTheme();
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-  const { appearance, setAppearance, inletColor, setInletColor } = useForkAppearance(
-    theme,
-    setTheme,
-  );
+  // Basic is the default; a tone off its default counts on either appearance, shown or not.
+  const {
+    appearance,
+    setAppearance,
+    inletColor,
+    setInletColor,
+    basicTonesChanged,
+    resetBasicTones,
+  } = useForkAppearance(setTheme);
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
   // Only while Inlet shows the row, as with Glass's picture below.
@@ -496,7 +501,8 @@ export function useSettingsRestore(onRestored?: () => void) {
   const changedSettingLabels = [
     ...(theme !== "system" ? ["Theme"] : []),
     /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-    ...(isForkPalette(appearance) ? [FORK_PALETTE_LABELS[appearance]] : []),
+    ...(appearance !== null && appearance !== BASIC_THEME ? [FORK_PALETTE_LABELS[appearance]] : []),
+    ...(basicTonesChanged ? ["Basic tone"] : []),
     /* fork:end fork-cool-dark-theme */
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
     ...(inletColorChanged ? ["Inlet colour"] : []),
@@ -669,7 +675,8 @@ export function useSettingsRestore(onRestored?: () => void) {
     if (inletColorChanged) setInletColor(DEFAULT_INLET_COLOR);
     /* fork:end fork-inlet-theme */
     /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-    if (isForkPalette(appearance)) setAppearance("dark");
+    if (basicTonesChanged) resetBasicTones();
+    if (appearance !== null && appearance !== BASIC_THEME) setAppearance(BASIC_THEME);
     /* fork:end fork-cool-dark-theme */
     /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
     if (glassNewAgentPictureChanged) setGlassNewAgentPicture(true);

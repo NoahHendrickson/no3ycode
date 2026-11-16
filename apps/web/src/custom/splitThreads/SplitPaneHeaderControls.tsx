@@ -13,15 +13,10 @@ import type { ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
-import {
-  composerDraftHasUserContent,
-  useComposerDraftStore,
-  type DraftId,
-} from "~/composerDraftStore";
-import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
+import type { DraftId } from "~/composerDraftStore";
 
+import { closeSplitDraft } from "./splitPaneNavigation";
 import { useSplitPane } from "./splitPaneContext";
-import { useSplitThreadStore } from "./splitThreadStore";
 
 function PaneActionButton(props: {
   readonly label: string;
@@ -59,23 +54,10 @@ export function SplitPaneHeaderControls(props: {
 }) {
   const { draftId, threadRef } = props;
   const splitPane = useSplitPane();
-  const unpair = useSplitThreadStore((state) => state.unpair);
   const { windowAction } = splitPane;
 
-  const close = (draft: DraftId, ref: ScopedThreadRef) => {
-    // Off the draft's route first: clearing the draft under it would send the
-    // route home instead of to the thread beside it.
-    void splitPane.focusPartner().then((left) => {
-      if (!left) return;
-      unpair(ref);
-      // Only an empty draft is discarded, as "Split agent" left it. One the
-      // user has written in, or paired from the sidebar, stays a draft of its own.
-      const drafts = useComposerDraftStore.getState();
-      if (composerDraftHasUserContent(drafts.getComposerDraft(draft))) return;
-      releaseComposerDraftUploads(draft);
-      drafts.clearDraftThread(draft);
-    });
-  };
+  const close = (draft: DraftId, ref: ScopedThreadRef) =>
+    void closeSplitDraft(splitPane.focusPartner, ref, draft);
 
   return (
     <>

@@ -88,7 +88,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
         flat(candidate.selector).endsWith(HOOKS) &&
         candidate.body.includes("--chat-composer-attached-surface"),
     );
-    expect(rule?.selector).toContain(`${MARKER}.dark`);
+    expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
     expect(rule?.body).toMatch(/--chat-composer-attached-surface:\s*var\(--fork-composer-bg\)/u);
     expect(rule?.body).not.toContain("backdrop-filter");
   });
@@ -126,7 +126,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
     // translucent, so the rule paints nothing and only clears the tuck.
     const [rule, ...rest] = cardRules(() => true);
     expect(rest).toHaveLength(0);
-    expect(rule?.selector).toContain(`${MARKER}.dark`);
+    expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
     expect(rule?.selector).not.toContain("[data-composer-shoulder-tab]");
     expect(rule?.body).toMatch(/--chat-composer-attachment-overlap:\s*0px/u);
     for (const painted of ["background", "border", "box-shadow"]) {
@@ -154,7 +154,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
     );
     expect(widened).toHaveLength(1);
     const [rule] = widened;
-    expect(rule?.selector).toContain(`${MARKER}.dark`);
+    expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
     // By descendant and with no tab carve-out: the dock reaches the tasks row
     // only through its column, so a child match or a `:not` on the shoulder
     // tab sends the tasks-only dock back under the prompt box.
@@ -177,7 +177,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
     const rule = rules.find((candidate) =>
       flat(candidate.selector).endsWith("[data-fork-composer-vessel] [data-composer-shoulder-tab]"),
     );
-    expect(rule?.selector).toContain(`${MARKER}.dark`);
+    expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
     expect(rule?.body).toMatch(/--composer-banner-padding-block:\s*calc\(var\(--spacing\) \* 1\)/u);
   });
 

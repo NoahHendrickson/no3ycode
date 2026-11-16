@@ -140,7 +140,6 @@ const BARE_SUBJECT_KNOWN: ReadonlyArray<{ readonly sheet: string; readonly compo
   // The editor's wrapper is upstream markup with nothing to key on.
   { sheet: "theme.custom.css", compound: ':has(> [data-testid="composer-editor"])' },
   { sheet: "theme.custom.css", compound: ':has([data-testid="composer-editor"])' },
-  { sheet: "theme.custom.westworld.css", compound: ':has(> [data-testid="composer-editor"])' },
   { sheet: "custom/ComposerShell.css", compound: ":has(> [data-composer-control-chevron])" },
   // Glass's header breadcrumb list.
   { sheet: "theme.custom.glass.css", compound: 'ol:has([data-slot="workspace-breadcrumb-text"])' },

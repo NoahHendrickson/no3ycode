@@ -140,8 +140,8 @@ describe("fork guard: fork-glass-popup-cutout", () => {
   });
 
   it.each([
-    ["an older disable answers after a newer enable", "cool-dark", "cool-darker", true],
-    ["an older enable answers after a newer disable", "cool-darker", "cool-dark", false],
+    ["an older disable answers after a newer enable", "basic", "cool-darker", true],
+    ["an older enable answers after a newer disable", "cool-darker", "basic", false],
   ])("matches the glass actually on when %s", async (_label, first, second, expected) => {
     // Palette flips fire the vibrancy IPC without waiting, so answers can
     // land out of order. The cutout must follow the newest palette, never a
@@ -175,6 +175,7 @@ describe("fork guard: fork-glass-popup-cutout", () => {
     });
     vi.stubGlobal("document", { documentElement: root });
     vi.doMock("../hooks/useTheme", () => ({
+      readThemeHalves: () => null,
       readThemePreference: () => values.get("t3code:theme") ?? "system",
       subscribeToThemeChanges: vi.fn(() => () => {}),
       syncBrowserChromeTheme: vi.fn(),
@@ -195,8 +196,8 @@ describe("fork guard: fork-glass-popup-cutout", () => {
     };
 
     const { setForkAppearance } = await import("../custom/forkTheme");
-    setForkAppearance(first as "cool-dark" | "cool-darker", () => true);
-    setForkAppearance(second as "cool-dark" | "cool-darker", () => true);
+    setForkAppearance(first as "basic" | "cool-darker", () => true);
+    setForkAppearance(second as "basic" | "cool-darker", () => true);
     expect(answers).toHaveLength(2);
 
     // The newer request answers first, the superseded one last.

@@ -12,9 +12,8 @@
    the chat view a stacking context to paint under, a name the frost can
    anchor to, and the tokens the draft rules read.
 
-   Same structure as Westworld's stage (theme.custom.westworld.css) and kept
-   apart from it for the same reason that file is apart from the palettes
-   sheet: the palettes sheet is a token table, and these are rules. Imported
+   Kept apart from the palettes sheet: that sheet is a token table, and
+   these are rules. Imported
    from the top of that sheet, so these land BEFORE the palette rules in
    source order and every rule here that overrides one of them wins on
    specificity alone. Every selector is marker- and palette-scoped, so no
@@ -240,8 +239,8 @@
 }
 
 /* No seam while the gutter matches the panel: the card's edge is the only
-   line the frame draws. Same container rule Westworld and the glass seam
-   target, read off the :root stamp because the panel is the inset's
+   line the frame draws. Same container rule the glass seam
+   targets, read off the :root stamp because the panel is the inset's
    sibling, not the draft's ancestor. The panel's own colour, not
    transparent: the panel tint paints inside the container, so under the
    desktop glass a transparent border is a 1px strip of raw wallpaper down
@@ -256,7 +255,7 @@
 }
 
 /* The draft composer's fills, restated on the overlay every composer element
-   descends from, the way Westworld's draft does. The frame draws them
+   descends from. The frame draws them
    heavier (vessel white 16%, 517:18680; well rgb(30 30 30) at 50%,
    517:18681); on screen, over the frost below, they settled lighter: a white
    5% wash on the vessel, none on the pills (8% on hover), a black 41% on the

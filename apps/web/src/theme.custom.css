@@ -715,10 +715,10 @@
   --fork-composer-border-focus: #474747;
 }
 
-/* Outer vessel: prompt surface + control row share one 8px floor. Dark-only,
-   honouring the section contract above — a light fork build keeps upstream's
-   unpainted flow, so the vessel token is declared solely in `.dark` tiers. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-vessel] {
+/* Outer vessel: prompt surface + control row share one 8px floor. Dark, and Basic's
+   light tones; any other light build keeps upstream's unpainted flow. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-fork-composer-vessel] {
   border-radius: var(--fork-composer-radius);
   background: var(--fork-composer-vessel-bg);
 }
@@ -780,7 +780,7 @@
    here keeps the drop target legible and keeps the hairline in the same
    shadow, so the box does not gain a second one.
 
-   Use the chip-hover lift, not `--accent`: on Westworld / Glass,
+   Use the chip-hover lift, not `--accent`: on Glass,
    `--accent` is bit-identical to `--fork-composer-bg`, so a drag would show
    only the outline. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-drag-over] {
@@ -925,7 +925,7 @@
 }
 
 /* Hover / open fill. Upstream's ghost variant paints `--accent`, which is the
-   wrong channel on this row: on Westworld and Glass `--accent` is
+   wrong channel on this row: on Glass `--accent` is
    bit-identical to `--fork-composer-bg`, so hovering the model or effort
    trigger lands it on a fill the composer already wears rather than lifting it
    off the vessel — the same trap the drag-over state hit above.
@@ -1190,6 +1190,14 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
   color: #ffffff;
+}
+
+/* Basic's light tones ink them in the foreground, as dark does in white: a locked
+   readout is not disabled, it simply has no caret (fork-basic-theme). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  color: var(--foreground);
 }
 
 /* The PR chip is the one context chip that carries a state: upstream inks
@@ -1951,19 +1959,20 @@
 }
 
 /* True outline (dark only): upstream outline still paints dark:bg-input/32. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-pending-user-input-action="previous"] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-fork-pending-user-input-action="previous"] {
   background: transparent;
   border-color: var(--fork-outline-border);
   color: var(--foreground);
   box-shadow: none;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-pending-user-input-action="previous"]::before {
   display: none;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-pending-user-input-action="previous"]:is(:hover, [data-pressed]) {
   background: var(--fork-outline-hover-bg);
   border-color: var(--fork-outline-border-hover);
@@ -1976,11 +1985,14 @@
    (fork-changed-files-card). Selected as `button`, not `[data-slot="button"]`
    — see fork-workspace-header note: TooltipTrigger stamps
    data-slot="tooltip-trigger" over Button. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-changed-files-header] > div button {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-header]
+  > div
+  button {
   color: var(--foreground);
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-pending-user-input-action="previous"]:not([aria-label="Previous question"]) {
   padding-inline: 8px;
 }
@@ -2003,13 +2015,13 @@
    section below. What stays here is only what this panel does differently:
    the drawer hands its padding to the panel, and the panel paints the card
    itself, so the collapsible header and the option list can own the inset. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
   padding: 0;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-chat-composer-top-drawer]
   > [data-fork-pending-user-input] {
@@ -2026,7 +2038,7 @@
    hairline is on the panel, not on the drawer around it, so the recolour
    targets the panel directly. A notice above the card is unpainted floor,
    so the card keeps its own top edge under it. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]:has([data-fork-composer-surface]:focus-within)
   [data-chat-composer-top-drawer]
   > [data-fork-pending-user-input] {
@@ -2037,7 +2049,7 @@
    the frame's radius, so the frame's longhands do both. Only this panel fuses
    with the prompt that way — a notice is vessel floor above a prompt box that
    keeps all four of its corners. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]:has([data-chat-composer-top-drawer] > [data-fork-pending-user-input])
   [data-fork-composer-box] {
   border-top-left-radius: 0;
@@ -2096,7 +2108,8 @@
   border-color: var(--fork-composer-border);
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-composer-banner-surface] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-composer-banner-surface] {
   --chat-composer-attached-surface: var(--fork-composer-bg);
 }
 
@@ -2107,7 +2120,7 @@
    the vessel's top edge, and like the banners they are vessel floor instead.
    The match is by descendant so the dock also goes flush around the tasks row
    nested in its column, whether or not the stash tab is showing. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]
@@ -2119,7 +2132,7 @@
 
 /* A full-width card would squeeze the stash tab sharing the dock row. Stack
    the dock instead: the tab is a floor row above the card, right-aligned. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(> [data-composer-shoulder-tab]):has(
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
@@ -2130,7 +2143,7 @@
   align-items: stretch;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
@@ -2142,7 +2155,7 @@
   align-self: flex-end;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner"][data-composer-banner-surface="attached"]::before {
   display: none;
@@ -2155,7 +2168,7 @@
    translucent, and would stop tracking it the moment one of them changed.
    Zeroing the overlap is all that is left to do: it is the variable upstream
    measures its tuck in, and the Root reserves bottom padding for it. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
   --chat-composer-attachment-overlap: 0px;
@@ -2165,7 +2178,7 @@
    both shoulder tabs take the drawer's default density: toggling tasks only
    adds or removes the list beneath it, and a stash tab sharing the dock row
    keeps the same text line. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-composer-shoulder-tab] {
   --composer-banner-padding-block: calc(var(--spacing) * 1);
@@ -2338,7 +2351,7 @@
   -webkit-app-region: no-drag;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   :is(
     :is(
       [data-slot="menu-popup"],
@@ -2370,7 +2383,8 @@
    cards on the stage; upstream's 22px read as a different object. Under
    Glass the popup rim (theme.custom.glass-surfaces.css) rounds it to 12px
    and drops its border, with the other glass popups. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-thread-details-card].dropdown-glass {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-thread-details-card].dropdown-glass {
   border-radius: var(--fork-composer-radius);
 }
 
@@ -2407,14 +2421,16 @@
 
 /* Section dividers take the vessel hairline, so the card's inner lines match
    its own edge per palette instead of --border/65. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-thread-details-card] section {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-thread-details-card]
+  section {
   border-color: var(--fork-composer-border);
 }
 
 /* ── Subagent spawn tree (fork-subagent-spawn-card) ─────────────────────────
    Member rows are plain text on the stage, no card; a row that opens its
    subagent's thread takes the same 4% lift every outline action does. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-subagent-tree]
   button[data-fork-subagent-member]:hover {
   background-color: var(--fork-outline-hover-bg);
@@ -2664,19 +2680,20 @@
 
 /* ── Changed-files card in the chat column ───────────────────────────────────
    Upstream paints `dark:bg-input/32` — a translucent wash of --input. On every
-   fork dark palette --input is the border grey (Westworld's is #33343a), so
-   that wash lands the card on a smeared border tint over the stage instead of
-   the palette's own card step (Westworld: --card #303137 over the #26272c
-   stage; --secondary #393f44 is the chip step, not a card). Freeze the card to
+   fork dark palette --input is the border grey, so that wash lands the card
+   on a smeared border tint over the stage instead of the palette's own card
+   step (--secondary is the chip step, not a card). Freeze the card to
    --card so each palette's stage tokens actually show. Hairline uses
    --fork-composer-border so the card matches the vessel per palette. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-changed-files-state] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-state] {
   background: var(--card);
   border-color: var(--fork-composer-border);
   border-radius: 8px;
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark [data-changed-files-header] {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-header] {
   background: var(--card);
 }
 
@@ -2694,7 +2711,7 @@
    Keyed on the utility class: the bubble carries no data attribute, and the
    guard pins `bg-message` on MessagesTimeline's bubble. bg-message has that
    one consumer; the send button's message-action tokens are untouched. */
-:root[data-fork="noahhendrickson-t3code"].dark .bg-message {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
   background-color: var(--card);
 }
 
@@ -2705,7 +2722,9 @@
    the same 4% white the outline actions already use. Every button in the
    card takes it (header toggle, tree rows, file chips, show-more); the
    outline actions' own rule sets the same value. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-changed-files-state] button:hover {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-state]
+  button:hover {
   background-color: var(--fork-outline-hover-bg);
 }
 
@@ -2718,7 +2737,9 @@
    utility rather than every button, because `hover:bg-accent/50` in the same
    file sits on a `bg-card/50` tile and a white-only hover there would darken
    it. Scoped to the fork-stamped transcript scroller, dark only. */
-:root[data-fork="noahhendrickson-t3code"].dark .fork-timeline-cutoff .hover\:bg-accent\/20:hover {
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  .fork-timeline-cutoff
+  .hover\:bg-accent\/20:hover {
   background-color: var(--fork-outline-hover-bg);
 }
 
@@ -2728,7 +2749,7 @@
    full-strength version of the smudge above. It has no utility to key on,
    so this reaches it through the footer upstream stamps on that row. The
    same 4% lift, hover and pressed alike so the press does not snap dark. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   .fork-timeline-cutoff
   [data-user-message-footer]
   > button:is(:hover, [data-pressed]) {
@@ -2739,7 +2760,7 @@
    hint (that span is also `.truncate`). Scope to siblings of the header.
    A long name renders through MiddleTruncate as a truncating head plus a
    shrink-0 tail; both halves take the ink, or the name reads in two tones. */
-:root[data-fork="noahhendrickson-t3code"].dark
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state]
   > :not([data-changed-files-header])
   :is(span.truncate, span.truncate + span.shrink-0) {

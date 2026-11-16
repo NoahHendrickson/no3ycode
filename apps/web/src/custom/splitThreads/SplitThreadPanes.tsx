@@ -45,11 +45,7 @@ import { useStableCallback } from "~/hooks/useStableCallback";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentShellStatus } from "~/state/shell";
 import { useEnvironmentThread } from "~/state/threads";
-import {
-  buildThreadRouteParams,
-  isThreadRouteSnapshotAuthoritative,
-  resolveThreadRouteRenderState,
-} from "~/threadRoutes";
+import { isThreadRouteSnapshotAuthoritative, resolveThreadRouteRenderState } from "~/threadRoutes";
 
 import { FLOAT_WINDOW_CLASS, useDockOnPanelOpen, useFloatWindow } from "./floatWindow";
 import {
@@ -65,6 +61,7 @@ import {
   type SplitPaneSlots,
 } from "./splitPaneSlots";
 import { DEFAULT_SPLIT_RATIO, sameThread } from "./splitThreadPairs";
+import { navigateToPane } from "./splitPaneNavigation";
 import { useSplitThreadStore, type PaneRoute, type SplitLayout } from "./splitThreadStore";
 
 /** Below this the column is too narrow for two transcripts, so only the
@@ -215,21 +212,6 @@ function paneViewKey(route: PaneRoute | null): string | null {
 }
 
 type ComposerRef = RefObject<ChatComposerHandle | null>;
-
-/** Puts a pane's thread on the route (replace): how focus moves between panes. */
-function navigateToPane(
-  navigate: ReturnType<typeof useNavigate>,
-  threadRef: ScopedThreadRef,
-  route: PaneRoute,
-): Promise<void> {
-  return route.kind === "draft"
-    ? navigate({ to: "/draft/$draftId", params: { draftId: route.draftId }, replace: true })
-    : navigate({
-        to: "/$environmentId/$threadId",
-        params: buildThreadRouteParams(threadRef),
-        replace: true,
-      });
-}
 
 /** Controls that act on their own pane (close, float) must not first focus it. */
 const PANE_ACTION_SELECTOR = "[data-split-pane-action]";

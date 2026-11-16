@@ -17,7 +17,6 @@ import {
   INLET_THEME,
   forkPaletteAppearance,
   resolveActiveForkPalette,
-  resolveAppearanceOption,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { PULL_REQUEST_STATE_PRESENTATION } from "../components/pullRequest/pullRequestIcons";
@@ -101,9 +100,18 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(forkPaletteAppearance(INLET_THEME, "green")).toBe("light");
     expect(forkPaletteAppearance(INLET_THEME, "cream")).toBe("dark");
     expect(forkPaletteAppearance(INLET_THEME, "black")).toBe("light");
-    expect(forkPaletteAppearance("cool-dark", "green")).toBe("dark");
-    expect(resolveAppearanceOption("dark", INLET_THEME, "charcoal")).toBe(INLET_THEME);
-    expect(resolveAppearanceOption("light", INLET_THEME, "green")).toBe(INLET_THEME);
+    expect(forkPaletteAppearance("cool-darker", "green")).toBe("dark");
+    expect(
+      resolveActiveForkPalette({ theme: "dark", palette: INLET_THEME, inletColor: "charcoal" }),
+    ).toBe(INLET_THEME);
+    expect(
+      resolveActiveForkPalette({
+        theme: "light",
+        palette: INLET_THEME,
+        isDark: false,
+        inletColor: "green",
+      }),
+    ).toBe(INLET_THEME);
     expect(
       resolveActiveForkPalette({
         theme: "dark",
