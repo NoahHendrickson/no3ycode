@@ -10,9 +10,6 @@ import {
   timelineHasEphemeralPreviewUrls,
 } from "../ChatView.logic";
 import { MessagesTimeline } from "./MessagesTimeline";
-/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { useWithoutQuietBotWakes } from "~/custom/bots/useWithoutQuietBotWakes";
-/* fork:end fork-bots */
 
 /**
  * The timeline with the streamed text. ChatView reads the thread through its quiet
@@ -38,13 +35,7 @@ export function ThreadTimeline({
   syncing: boolean;
   detailLoading: boolean;
 }) {
-  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-     A bot's wakes that found nothing stay out of its conversation. */
-  const visibleTurnItems = useWithoutQuietBotWakes(
-    threadDetailRef,
-    useTimelineVisibleTurnItems(threadDetailRef),
-  );
-  /* fork:end fork-bots */
+  const visibleTurnItems = useTimelineVisibleTurnItems(threadDetailRef);
   const serverEntries = useIncrementalTimelineEntries(activeThreadKey, {
     ...entriesInput,
     visibleTurnItems,

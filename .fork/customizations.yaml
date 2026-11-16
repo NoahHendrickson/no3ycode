@@ -7143,11 +7143,8 @@
     A bot is never put away: automatic settlement skips it
     (ThreadSettlementService isAutoSettlementCandidate), so a merged PR it
     linked to its own thread or a long idle no longer settles it, and its
-    conversation never shows the settled card (useThreadLifecycle). Its
-    conversation also leaves out the wakes that found nothing: a run its owner
-    did not type (an automation, a scheduled wake or a work report) whose
-    final reply is the quiet reply (custom/bots/botThreads withoutQuietBotWakes,
-    applied in ThreadTimeline). The owner's own turns always show, quiet or not.
+    conversation never shows the settled card (useThreadLifecycle). A message
+    still unsettles a bot settled by hand.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
     by server, web and provider-core. A subagent copies its parent thread
     (provider-core subagentProjection) but drops the bot's identity tags
@@ -7178,7 +7175,6 @@
     - apps/web/src/custom/scheduled/ScheduledRelativeLabel.tsx
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
-    - apps/web/src/custom/bots/useWithoutQuietBotWakes.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
     - apps/web/src/custom/bots/CollapsedPetalTabs.tsx
     - apps/web/src/custom/SidebarV2SectionLabel.tsx
@@ -7196,7 +7192,7 @@
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
-    - apps/web/src/components/chat/ThreadTimeline.tsx
+    - apps/web/src/components/chat/useThreadLifecycle.tsx
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
