@@ -208,22 +208,24 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
           <RunsInPills {...props} />
         </div>
         <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
-          <div data-fork-composer-surface="true">
-            <textarea
-              id="scheduled-task-prompt"
-              aria-label="Agent instructions"
-              className="block max-h-[60vh] min-h-32 w-full resize-none bg-transparent px-3 py-2.5 text-sm text-foreground outline-none field-sizing-content placeholder:text-muted-foreground"
-              placeholder={
-                !draft.githubPrOpened && draft.scheduleMode === "webhook"
-                  ? "What should the agent do with each request? Use {{body.path}} to pull values out of it."
-                  : "What should the agent do each time this runs?"
-              }
-              value={draft.prompt}
-              disabled={props.disabled}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, prompt: event.target.value }))
-              }
-            />
+          <div data-fork-composer-box="true">
+            <div data-fork-composer-surface="true">
+              <textarea
+                id="scheduled-task-prompt"
+                aria-label="Agent instructions"
+                className="block max-h-[60vh] min-h-32 w-full resize-none bg-transparent px-3 py-2.5 text-sm text-foreground outline-none field-sizing-content placeholder:text-muted-foreground"
+                placeholder={
+                  !draft.githubPrOpened && draft.scheduleMode === "webhook"
+                    ? "What should the agent do with each request? Use {{body.path}} to pull values out of it."
+                    : "What should the agent do each time this runs?"
+                }
+                value={draft.prompt}
+                disabled={props.disabled}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, prompt: event.target.value }))
+                }
+              />
+            </div>
           </div>
           <div
             data-fork-composer-control-row="true"
