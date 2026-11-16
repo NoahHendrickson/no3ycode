@@ -129,7 +129,11 @@ describe("fork guard: fork-scheduled-page", () => {
     // The composer stamps carry every palette's composer paint; a restyle
     // that drops them leaves a card that no longer matches the composer.
     expect(editor).toContain('data-fork-composer-vessel="true"');
-    expect(editor).toContain('data-fork-composer-surface="true"');
+    // The box is what Inlet insets inside the vessel; without it the prompt
+    // sits flush and loses the vessel's ring.
+    expect(editor).toMatch(
+      /data-fork-composer-box="true">\s*<div data-fork-composer-surface="true">\s*<textarea/,
+    );
     expect(editor).toContain('data-fork-composer-model-controls="true"');
     // Where it runs rides the context row as chips; the trigger opens from
     // the control row's leading slot, where the chat keeps its mode.
