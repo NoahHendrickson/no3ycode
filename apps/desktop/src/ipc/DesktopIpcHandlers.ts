@@ -87,6 +87,9 @@ import {
 /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
 import { setForkSidebarVibrancy } from "../fork/ForkSidebarVibrancy.ts";
 /* fork:end fork-cool-darker-sidebar-vibrancy */
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+import { setForkTopbarHeight } from "../fork/ForkTopbarHeight.ts";
+/* fork:end fork-basic-theme */
 /* fork:begin fork-glass-floor-color — see .fork/customizations.yaml#fork-glass-floor-color */
 import { installForkGlassFloorColorIpc } from "../fork/ForkGlassFloorColor.ts";
 /* fork:end fork-glass-floor-color */
@@ -190,6 +193,9 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
   yield* ipc.handle(setForkSidebarVibrancy);
   /* fork:end fork-cool-darker-sidebar-vibrancy */
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  yield* ipc.handle(setForkTopbarHeight);
+  /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-floor-color — see .fork/customizations.yaml#fork-glass-floor-color */
   yield* installForkGlassFloorColorIpc();
   /* fork:end fork-glass-floor-color */

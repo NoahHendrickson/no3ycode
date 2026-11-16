@@ -1583,140 +1583,38 @@
 
 - id: fork-cool-dark-theme
   intent: >
-    Appearance offers Westworld as an optional palette alongside upstream's
-    modular theme library. Westworld is a blue-black dark palette (barely
-    cool, not blue-slate) drawn in Figma t3-fork node 416:7408 that coexists
-    with the default fork Dark — selecting it must not replace or alter Dark's
-    #191919 / #1e1e1e fills.
+    The fork's theme machinery. The fork has three themes — Basic, Glass and
+    Inlet — and Settings › Appearance leads with them as cards, above
+    upstream's theme library. Each is a CSS palette overlay, not an upstream
+    theme definition: upstream t3code:theme may hold a standard, built-in or
+    imported theme id, and custom/forkTheme.ts owns t3code:fork-theme
+    (basic | cool-darker | inlet) and the data-fork-theme attribute on :root.
 
-    The label is Westworld; the storage id and every fence id stay
-    "cool-dark". The id is a persisted user preference (t3code:fork-theme) and
-    the legacy t3code:theme migration reads it, so the rename touched the
-    label and the tokens, never the key. Glass (fork-cool-darker-theme) keeps
-    "cool-darker" for the same reason.
+    The id predates the current set: it was Westworld's ("cool-dark"), and
+    every fence in index.html, main.tsx, SettingsPanels and the Appearance
+    panel that carries the palette plumbing is named after it, so the id
+    stays. Westworld, Neutral Dark and Neutral Darker were retired into
+    Basic's tones (fork-basic-theme); their stored ids migrate there.
 
-    Westworld is a fork palette overlay, not an upstream theme definition.
-    Upstream t3code:theme may hold a standard, built-in, or imported theme id.
-    The palette is persisted separately in t3code:fork-theme
-    (cool-dark | cool-darker | neutral-dark | neutral-darker | absent) by
-    custom/forkTheme.ts — Glass / Neutral Dark / Neutral Darker share
-    that key (see fork-cool-darker-theme, fork-neutral-dark-theme,
-    fork-neutral-darker-theme). Selecting Westworld sets upstream theme to dark
-    and stamps data-fork-theme="cool-dark" on :root; selecting another built-in
-    or imported theme clears that attribute.
-    A legacy t3code:theme=cool-dark value migrates to theme=dark plus the
-    palette key. main.tsx starts one document-level owner after the fork marker
-    is stamped; it subscribes to upstream same-tab theme writes and reconciles
-    storage events in every route, while React subscriptions only report the
-    stored preference. Palette snapshots never migrate or write during render.
-    No useTheme override.
-
-    Palette tokens live in theme.custom.palettes.css under
-    :root[data-fork].dark[data-fork-theme="cool-dark"] (stage) and the same
-    selector plus [data-sidebar-version="v2"] (panel) — the doubled selector is
-    required for the same upstream re-declaration reason as fork-surface-palette.
-    Stage, header and sidebar panel are one #26272c surface: the stage card
-    below, not a darker panel, is what separates the work from the chrome,
-    so the panel container's full-height border-r is transparent (the same
-    container rule Glass uses to soften its seam; the pill rings inside the
-    panel keep --sidebar-border).
-    Active / selected rows and the control surface are #333438 (the drawn
-    active row), row hover #2e2f34, menus and popovers #303137 (one step
-    above the surface), borders #33343a, muted text #8a8a8a, primary
-    #fcfcf5. The composer is glass over the art, in two frames. A started
-    thread (Figma 423:13864) is white glass: vessel white 8% with a 20px
-    backdrop blur, context chips white 12% (unblurred: they sit on the vessel's
-    blur, and one per chip re-ran as the transcript moved), an opaque #1f1f1f prompt
-    surface behind a white 12% hairline (white 22% on focus, one quiet step
-    up rather than the palette's opaque grey), and the flat white send. The
-    new-agent draft (Figma 447:16789) is dark glass: one rgb(47 47 47) fill
-    at 50% for the vessel (16px blur) and chips and 60% for the prompt,
-    behind a white 24% hairline (white 45% on focus, one quiet step up in the
-    same family rather than the palette's opaque grey, which read as a dull
-    ring over the art), and a #1877f2 send (the working token's blue). The
-    draft placeholder takes white 70% for the same reason the control row
-    takes #e8e8e8 — the well is transparent there, and #8a8a8a sank into the
-    portrait behind it; a started thread's opaque well keeps it. The thread
-    values live on the palette root; the draft restates the same tokens —
-    fills plus the two blur-radius tokens — on the draft-hero overlay, which
-    every composer element descends from, so one set of rules resolves either
-    frame and the send rule is scoped to that overlay. The blur is the fork's
-    one deliberate exception to its no-backdrop-blur composer — everywhere
-    else the backdrop is the vessel's own opaque fill and a blur is pure GPU
-    cost; here the backdrop is the picture and the blur is what keeps the
-    prompt readable over a dither. Palette-scoped, so Glass's vibrancy guard,
-    which must keep filters out of the composer, never sees them. The model
-    and effort triggers on that glass row take the foreground white
-    (#e8e8e8) instead of the shared #a6a6a6 ghost ink, which sank into the
-    blue. Header split pills round to 8px with the drawn #333333 outline.
-    index.html pre-paints #26272c so the load flash matches the stage.
-
-    The chat column is the stage card (Figma "Frame 56"): 8px in from the
-    header and the edges, 10px radius (drawn at 8; 10 sits concentric with
-    the window corner 8px further out), a 1px white 12% hairline and the
-    drawn stage drop shadow (Figma 423:13864: a left cast, a contact shadow
-    and a bloom, drawn at -4px 0 24px black 24%, 1px 1px 8px black 40% and
-    0 0 24px #141416 30%, scaled here to -2px 0 6px / 1px 1px 4px / 0 0 8px
-    because the 8px gutter's containers clip at the sidebar seam and the
-    window edges and a 24px blur was truncated into a visible line),
-    clipped to its corners. It is ChatView's [data-chat-workspace-drop-target]
-    wrapper — the nearest element that is already position:relative and
-    holds exactly the transcript and composer — isolated so the artwork's
-    z-index -1 sits above the root's opaque fill and below every child. The
-    right panel, when open, sits beside the card; menus and popovers are
-    portaled, so the clip trims only the art and the docked composer's
-    corners.
-
-    One fill and one artwork, Westworld-only, one per state, on the
-    wrapper's two pseudo-elements at z-index -1. The ::before is the started
-    thread (Figma 447:15858): the #1e1f22 card with the frame's
-    "blobditherbluepurp" export (layer 447:15859) rising from its left edge,
-    all under a frosted overlay (452:17308, white 10% with a glass blur), so
-    the card reads #353639 and the dither becomes a soft glow. The overlay
-    is a fixed blur over a static picture, so it is baked: the asset is the
-    frame's window lightened onto #1e1f22, blurred at 55px and blended
-    toward white to land on the frame's #353639 and re-based onto #222325
-    for the darker stage Noey wanted, cropped to a `left top / auto 100%`
-    strip at 1×, and the rule paints #222325 as the base, so it scales with
-    the card and the rest stays flat. The ::after is the
-    new-agent draft (Figma 416:8420, layer 421:12528): the blue portrait at
-    full strength under a left-to-right rgb(24 119 242) 40% → 10% wash, cover
-    at 66% 50% (the drawn crop, the figure on the card's right third); the
-    glass composer carries its own legibility, so there is no halo. The draft
-    state is read off the overlay's own data-draft-hero stamp
-    (fork-new-agent-draft, the same isDraftHeroState that centres the
-    composer) through `:has(> …)` on the wrapper — the overlay is its direct
-    child — so nothing in ChatView is stamped for the theme; that state swaps
-    which pseudo-element is at opacity 1.
-    Both are always painted and only their opacity moves — a pseudo-element
-    that appears cannot fade — so the first send crossfades them over 400ms on
-    the same clock and curve as the composer's slide and fold
-    (fork-new-agent-draft's draftHeroTransition shadow). The composer backing
-    gradient paints nothing under Westworld so the art runs on behind the
-    vessel as drawn; the cutoff mask already ends the transcript above it.
-    Assets at custom/assets/westworld-hero.png (123 KB, the Figma export
-    quantized to 256 colours, with the export's soft cutout shadow and rim
-    hardened to a crisp silhouette) and westworld-thread.png (68 KB, the
-    frosted glow strip, truecolour because any palette contours the gradient).
-
-    Working status is Figma's #1877f2 rather than the shared green: the
-    stage and v2 panel blocks restate --sidebar-v2-status-working, which is
-    the one token the status dot, the pixel rain everywhere it appears and
-    the dev-server pulse read. The sidebar mark's eight arm colours come from
-    Figma 412:31179 through the --fork-brand-mark-* variables that
-    custom/SidebarBrandMark.tsx (fork-sidebar-chrome) fills from; the mark
-    became an inline SVG for exactly this, since an <img> cannot be
-    recoloured. Its outline stays black.
+    Basic is the default: an absent, unknown or retired id reads as Basic,
+    which paints whenever upstream is on its standard theme (Light / Dark /
+    System) without a mix half. Glass and Inlet name an appearance (Glass
+    dark, Inlet its colour's); once upstream moves off it, the stored
+    palette is cleared back to Basic. An imported or built-in upstream theme
+    turns every palette off. Picking Glass or Inlet moves the mode when it
+    has to and remembers the mode it moved the user off; picking Basic puts
+    it back unless the user changed it since. A legacy t3code:theme=cool-dark
+    migrates too. main.tsx starts one document-level owner after the fork
+    marker is stamped; it subscribes to upstream same-tab theme writes and
+    reconciles storage events in every route, while React subscriptions only
+    report the stored preference. Palette snapshots never migrate or write
+    during render. No useTheme override. index.html mirrors the resolution
+    so the pre-paint matches the palette's stage.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
-    - apps/web/src/custom/assets/westworld-hero.png
-    - apps/web/src/custom/assets/westworld-thread.png
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
-    # Westworld's card, artwork, glass and ink rules; the palettes sheet
-    # stays a token table and @imports this at its top.
-    - apps/web/src/theme.custom.westworld.css
   watch:
     - apps/web/src/main.tsx
     - apps/web/src/hooks/useTheme.ts
@@ -1725,7 +1623,70 @@
     - apps/web/index.html
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
   verify:
-    - apps/web/src/__fork_guards__/forkCoolDarkTheme.test.ts
+    - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
+    - apps/web/src/custom/forkTheme.test.ts
+
+- id: fork-basic-theme
+  intent: >
+    Basic (Figma t3-fork 720:21870) is the fork's default theme, replacing
+    default Dark, Westworld, Neutral Dark and Neutral Darker. It is one
+    colour per tone, with every other surface derived from it: white over
+    the base on dark tones and black on light ones — 4% hover, 8% selection,
+    hairlines and raised fills, 12% chips, 16% the strongest lift. The
+    sidebar, header and stage are one surface separated by 8% hairlines.
+
+    Five tones: Light #f7f7f7, Cream #f8f3d8, Neutral Dark #2b2b2b, Cool Dark
+    #272a30, Darker #131313. Changing temperature changes only --basic-base
+    (and Cream's warm text); theme.custom.basic.css derives the lifts with
+    color-mix. Surfaces that float over content (menus, composer, chips) are
+    the ink flattened over the base, so nothing shows through them; hovers,
+    selections and lines stay translucent, as drawn. Menus open flat on the
+    raised fill (no frost, which belongs to Glass).
+
+    Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
+    -light, stamped as data-fork-basic-tone), so under System it follows the
+    OS between them. Picking a tone on the other appearance moves the mode;
+    picking one on the current appearance does not. Westworld migrates to
+    Cool Dark, Neutral Dark to Neutral Dark, Neutral Darker to Darker.
+    Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
+    (custom/ForkThemePicker.tsx) with the picked theme's own rows below:
+    Basic's tone swatches, Inlet's colour, Glass's picture and depth.
+    index.html pre-paints the tone's base.
+    Header rows (workspace, panels, tab strip, sidebar) are 44px rather than 52,
+    and the desktop moves the macOS window buttons onto that axis over the fork's
+    own bridge (forkDesktopBridge.setTopbarHeight, desktop fork/ForkTopbarHeight);
+    DesktopWindow's own repositioning (zoom, leaving full screen) reads the
+    height recorded there. Windows' caption overlay keeps the OS height.
+    The new-agent screen carries Inlet Black's pixel texture on every tone
+    (custom/BasicNewAgentTexture.tsx): in from the column's right edge, below
+    the header, in the tone's base and text colours.
+    Icons draw Phosphor's fill, as under Inlet, not the duotone the other
+    palettes use (custom/forkActivePalette.ts useForkFillsIcons).
+    Light and Cream keep the fork's composer geometry, which other light builds
+    leave to upstream: theme.custom.css scopes those rules (vessel corners, the
+    Questions card fused to the prompt, attached banners, popup fill, the
+    details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.basic.css
+    - apps/web/src/theme.custom.css
+    - apps/web/src/custom/ForkThemePicker.tsx
+    - apps/web/src/custom/ForkInletColorPicker.tsx
+    - apps/web/src/custom/forkTheme.ts
+    - apps/web/src/custom/forkActivePalette.ts
+    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/BasicNewAgentTexture.tsx
+    - apps/web/src/custom/forkTopbarHeight.ts
+    - apps/desktop/src/fork/ForkTopbarHeight.ts
+  watch:
+    - apps/web/index.html
+    - apps/desktop/src/window/DesktopWindow.ts
+    - apps/desktop/src/ipc/DesktopIpcHandlers.ts
+    - apps/desktop/src/preload.ts
+    - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
 
 - id: fork-cool-darker-theme
@@ -2112,7 +2073,6 @@
   verify:
     - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
-    - apps/web/src/__fork_guards__/forkNeutralDarkerTheme.test.ts
 
 - id: fork-glass-new-agent-stage
   intent: >
@@ -2313,7 +2273,6 @@
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
   verify:
     - apps/web/src/__fork_guards__/forkGlassNewAgentStage.test.ts
-    - apps/web/src/__fork_guards__/forkCoolDarkTheme.test.ts
     - apps/web/src/custom/forkRootSetting.test.ts
 
 - id: fork-glass-stage-card
@@ -2405,73 +2364,6 @@
     - apps/web/src/index.css
   verify:
     - apps/web/src/__fork_guards__/forkGlassStageCard.test.ts
-
-- id: fork-neutral-dark-theme
-  intent: >
-    Appearance offers Neutral Dark alongside System, Light, Dark, and Westworld.
-    Neutral Dark is a warm-gray palette keyed off the sidebar #34322f (it began
-    as the true-neutral Figma t3-fork node 264:11816). Selecting it must not
-    replace or alter default Dark (#191919 / #1e1e1e) or Westworld (#26272c).
-
-    Neutral Dark reuses the fork palette overlay in custom/forkTheme.ts
-    (t3code:fork-theme = neutral-dark, upstream theme = dark,
-    data-fork-theme="neutral-dark"). Sidebar panel #34322f, stage #2c2a27 (a
-    darker shade of the sidebar), composer vessel #3c3a37 (a step above the
-    panel), prompt surface #474542 (frosted), context chips #4b4946, row
-    hover/selected as opaque lifts (#42403d / #44423f), borders #494744.
-    Accents stay monochrome (white primary/ring) with neutral muted
-    text. theme.custom.palettes.css uses the same two-block stage + v2 panel
-    pattern as Westworld. index.html pre-paints #2c2a27 so the load flash matches.
-    The sidebar stays opaque solid — wallpaper glass belongs to Neutral Darker.
-    Popups open flat on --popover #403e3b (a step above --card #383633) by
-    overriding the shared frost's tokens (--fork-popup-fill / -border /
-    -filter); the frost (fork-popup-surface) reads as glass, which belongs to
-    Glass. Every unchecked checkbox in the palette is a flat white-16% hairline
-    with no fill, highlight or shadow.
-  tier: 2
-  files:
-    - apps/web/src/custom/forkTheme.ts
-    - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.palettes.css
-  watch:
-    - apps/web/src/components/settings/SettingsPanels.tsx
-    - apps/web/index.html
-  verify:
-    - apps/web/src/__fork_guards__/forkNeutralDarkTheme.test.ts
-    - apps/web/src/custom/forkTheme.test.ts
-
-- id: fork-neutral-darker-theme
-  intent: >
-    Appearance offers Neutral Darker as a true-neutral counterpart to the warm
-    Neutral Dark, pushed down. True-neutral grays only. Chat stage #1a1a1a
-    (well below Neutral Dark's #2c2a27); sidebar #212121 (much darker than
-    Neutral Dark's #34322f, still a step lighter than the stage). Stage
-    --card/--popover match the sidebar (#212121) so menus open at the same lift. Composer vessel sits a
-    step above the sidebar at #252525 so the control row contrasts against the
-    stage; prompt/chips lift from that vessel. Must not alter Neutral Dark,
-    Westworld, or default Dark fills.
-
-    Same fork palette overlay as Westworld / Neutral Dark
-    (t3code:fork-theme = neutral-darker, upstream theme = dark,
-    data-fork-theme="neutral-darker"). theme.custom.palettes.css uses the
-    two-block stage + v2 panel pattern. index.html pre-paints #1a1a1a.
-
-    Sidebar wallpaper glass via Electron vibrancy was attempted and removed
-    without residue: Neutral Darker is a solid opaque panel, the desktop app
-    carries no vibrancy IPC or window plumbing, and the guard asserts the
-    absence. A window can only gain native vibrancy while code sets it, and
-    no shipped build ever did, so there is no leftover state to recover.
-  tier: 2
-  files:
-    - apps/web/src/custom/forkTheme.ts
-    - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.palettes.css
-  watch:
-    - apps/web/src/components/settings/SettingsPanels.tsx
-    - apps/web/index.html
-  verify:
-    - apps/web/src/__fork_guards__/forkNeutralDarkerTheme.test.ts
-    - apps/web/src/custom/forkTheme.test.ts
 
 - id: fork-inlet-theme
   intent: >
@@ -5411,6 +5303,8 @@
     device-local (localStorage) like the palette, and Restore defaults resets
     them. The macOS traffic-light position from #203 is theme-independent and
     stays.
+    Below Full 3D, with no card to edge the column, the collapsed thread tab
+    strip takes a divider along its foot in the sidebar seam's grey.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -6313,6 +6207,7 @@
     - apps/web/src/custom/splitThreads/SplitAgentPill.tsx
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
+    - apps/web/src/custom/splitThreads/releaseSplitDraft.ts
     - apps/web/src/custom/splitThreads/floatFrame.ts
     - apps/web/src/custom/splitThreads/floatWindow.tsx
     - apps/web/src/custom/splitThreads/floatThreads.test.ts

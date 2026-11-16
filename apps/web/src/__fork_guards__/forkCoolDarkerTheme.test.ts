@@ -3,7 +3,7 @@
  * Fork guard — see `.fork/README.md` §4b and
  * `.fork/customizations.yaml#fork-cool-darker-theme`.
  *
- * Glass is a deeper sibling of Westworld. Losing the preference wiring
+ * Glass is the fork's cool, dark palette. Losing the preference wiring
  * leaves the Appearance option as a dead label; losing the CSS attribute
  * selectors silently paints it with default Dark fills.
  */
@@ -13,7 +13,6 @@ import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  COOL_DARK_BACKGROUND,
   COOL_DARKER_BACKGROUND,
   COOL_DARKER_LABEL,
   COOL_DARKER_THEME,
@@ -23,7 +22,6 @@ import {
   FORK_THEME_ATTRIBUTE,
   applyForkPaletteAttribute,
   resolveActiveForkPalette,
-  resolveAppearanceOption,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { cssRules, declarationHex, parseHex, ruleBodyFor } from "./cssRules";
@@ -42,7 +40,8 @@ const indexHtml = readSibling("../../index.html");
 // Upstream #25651 moved the Interface rows to AppearanceSettingsPanel; restore stays in SettingsPanels.
 const settingsPanels =
   readSibling("../components/settings/SettingsPanels.tsx") +
-  readSibling("../components/settings/AppearanceSettingsPanel.tsx");
+  readSibling("../components/settings/AppearanceSettingsPanel.tsx") +
+  readSibling("../custom/ForkThemePicker.tsx");
 const forkTheme = readSibling("../custom/forkTheme.ts");
 const customizations = readSibling("../../../../.fork/customizations.yaml");
 
@@ -61,10 +60,6 @@ const DARKER_PANEL = [
   `${MARKER}.dark[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"]`,
   '[data-sidebar-version="v2"]',
 ];
-const COOL_PANEL = [
-  `${MARKER}.dark[${FORK_THEME_ATTRIBUTE}="cool-dark"]`,
-  '[data-sidebar-version="v2"]',
-];
 
 describe("fork guard: fork-cool-darker-theme", () => {
   it("registers Glass on the shared fork palette key", () => {
@@ -79,8 +74,7 @@ describe("fork guard: fork-cool-darker-theme", () => {
     expect(forkTheme).toMatch(
       /function isForkPalette[\s\S]*?\(FORK_PALETTES as readonly string\[\]\)\.includes\(value\)/u,
     );
-    expect(resolveAppearanceOption("dark", "cool-darker")).toBe("cool-darker");
-    expect(resolveAppearanceOption("system", "cool-darker")).toBe("system");
+    expect(resolveActiveForkPalette({ theme: "dark", palette: "cool-darker" })).toBe("cool-darker");
     expect(resolveActiveForkPalette({ theme: "system", palette: "cool-darker" })).toBeNull();
   });
 
@@ -109,18 +103,13 @@ describe("fork guard: fork-cool-darker-theme", () => {
   it("paints a darker cool stage and a darker sidebar above it", () => {
     const stage = ruleBodyFor(themeRules, DARKER_STAGE);
     const panel = ruleBodyFor(themeRules, DARKER_PANEL);
-    const coolPanel = ruleBodyFor(themeRules, COOL_PANEL);
     const stageBg = declarationHex(stage, "--background");
     const panelBg = declarationHex(panel, "--background");
-    const coolPanelBg = declarationHex(coolPanel, "--background");
 
     expect(stageBg).toBe(COOL_DARKER_BACKGROUND);
-    expect(stageBg).not.toBe(COOL_DARK_BACKGROUND);
-    expect(relativeLuminance(stageBg)).toBeLessThan(relativeLuminance(COOL_DARK_BACKGROUND));
 
     expect(panelBg).toBe("#181b1e");
     expect(panel).toContain("--sidebar: #181b1e");
-    expect(relativeLuminance(panelBg)).toBeLessThan(relativeLuminance(coolPanelBg));
     expect(relativeLuminance(panelBg)).toBeGreaterThan(relativeLuminance(stageBg));
 
     expect(stage).toContain("--fork-composer-vessel-bg: #222629");

@@ -1,0 +1,350 @@
+/* ---------------------------------------------------------------------------
+   Basic — see `.fork/customizations.yaml#fork-basic-theme`.
+
+   Figma t3-fork 720:21870 ("Basic Dark", "Basic Darker"). One colour per tone,
+   and every other surface is that colour with white (dark tones) or black
+   (light tones) laid over it: 4% hover, 8% selection, lines and raised fills,
+   12% chips, 16% the strongest lift. The sidebar, the header and the stage are
+   one surface, separated by 8% hairlines instead of a darker panel.
+
+   A tone sets only --basic-base, --basic-ink and its text; everything below
+   derives from those, so a new temperature is three lines. Surfaces that
+   float over content (menus, the composer, chips) are the ink flattened over
+   the base, so nothing shows through them; hovers, selections and lines stay
+   translucent, as drawn, so they read the same on any of those surfaces. */
+
+/* Header rows (workspace, panels, tab strip, sidebar) are 44px, not 52: the desktop moves
+   the macOS window buttons to match (custom/forkTopbarHeight.ts). Windows' caption overlay
+   (.wco) keeps the height the OS gives it. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.wco) {
+  --workspace-topbar-height: 44px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
+  --basic-lift-1: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-base));
+  --basic-lift-2: color-mix(in srgb, var(--basic-ink) 8%, var(--basic-base));
+  --basic-lift-3: color-mix(in srgb, var(--basic-ink) 12%, var(--basic-base));
+  --basic-lift-4: color-mix(in srgb, var(--basic-ink) 16%, var(--basic-base));
+  --basic-wash-1: color-mix(in srgb, var(--basic-ink) 4%, transparent);
+  --basic-wash-2: color-mix(in srgb, var(--basic-ink) 8%, transparent);
+  --basic-wash-3: color-mix(in srgb, var(--basic-ink) 12%, transparent);
+  --basic-wash-4: color-mix(in srgb, var(--basic-ink) 16%, transparent);
+
+  --background: var(--basic-base);
+  --app-chrome-background: var(--basic-base);
+  --foreground: var(--basic-text);
+  --card: var(--basic-raised-quiet);
+  --card-foreground: var(--basic-text);
+  --popover: var(--basic-raised);
+  --popover-foreground: var(--basic-text);
+  --primary: var(--basic-text-strong);
+  --primary-foreground: var(--basic-base);
+  --ring: var(--basic-text-strong);
+  --secondary: var(--basic-wash-2);
+  --secondary-foreground: var(--basic-text);
+  --muted: var(--basic-wash-2);
+  --muted-foreground: var(--basic-text-muted);
+  --accent: var(--basic-wash-2);
+  --accent-foreground: var(--basic-text);
+  --border: var(--basic-wash-2);
+  --input: var(--basic-wash-3);
+  --message-surface: var(--basic-lift-2);
+  --surface-grain: none;
+  /* Settings' nav and the mobile sheet read the sidebar family from the root. */
+  --sidebar: var(--basic-base);
+  --sidebar-foreground: var(--basic-text);
+  --sidebar-muted-foreground: var(--basic-text-chrome);
+  --sidebar-border: var(--basic-wash-2);
+  --sidebar-stage-fade: var(--basic-base);
+  --sidebar-control-surface: var(--basic-wash-2);
+  --sidebar-row-hover: var(--basic-wash-1);
+  --sidebar-row-active: var(--basic-wash-2);
+  --sidebar-row-selected: var(--basic-wash-2);
+  --fork-pill-border: var(--basic-wash-2);
+  --fork-pill-fg: var(--basic-text);
+  --fork-pill-hover: var(--basic-wash-2);
+  /* The shell is the 8% lift, the prompt 4% more on top of it, both behind an
+     8% hairline (Figma 709:21545 / 709:21546). */
+  --fork-composer-vessel-bg: var(--basic-composer-vessel);
+  --fork-composer-bg: var(--basic-composer-prompt);
+  --fork-composer-border: var(--basic-wash-2);
+  --fork-composer-border-focus: var(--basic-wash-4);
+  --fork-composer-control-hover: var(--basic-wash-1);
+  /* The outline actions (the Questions card's Previous, the changed-files card's
+     buttons) and the composer's dark-mode geometry, which Basic shares in light
+     too (theme.custom.css, `:is(.dark, [data-fork-theme="basic"])`). */
+  --fork-outline-border: color-mix(in srgb, var(--basic-ink) 24%, transparent);
+  --fork-outline-border-hover: color-mix(in srgb, var(--basic-ink) 32%, transparent);
+  --fork-outline-hover-bg: var(--basic-wash-1);
+  --fork-context-chip-bg: var(--basic-lift-3);
+  --fork-context-chip-bg-hover: var(--basic-lift-4);
+  /* Menus open flat on the raised fill behind the shared 8% line: the frost
+     (fork-popup-surface) reads as glass, which belongs to Glass. */
+  --fork-popup-fill: var(--popover);
+  --fork-popup-border: var(--basic-wash-2);
+  --fork-popup-filter: none;
+}
+
+/* Upstream re-declares the surface family on the sidebar element itself
+   (index.css [data-app-sidebar]), so the sidebar, and the collapsed sidebar's
+   tab strip, restate it. Here it is the same surface as the stage. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-app-sidebar], [data-sidebar-version="v2"], [data-fork-thread-tabs]) {
+  --background: var(--basic-base);
+  --foreground: var(--basic-text);
+  --card: var(--basic-base);
+  --card-foreground: var(--basic-text);
+  --sidebar: var(--basic-base);
+  --sidebar-foreground: var(--basic-text);
+  --border: var(--basic-wash-2);
+  --input: var(--basic-wash-3);
+  --sidebar-border: var(--basic-wash-2);
+  --sidebar-stage-fade: var(--basic-base);
+  --muted: var(--basic-wash-2);
+  --accent: var(--basic-wash-2);
+  --accent-foreground: var(--basic-text);
+  --muted-foreground: var(--basic-text-muted);
+  --sidebar-muted-foreground: var(--basic-text-chrome);
+  --fork-sidebar-card-title-receded: var(--basic-text-chrome);
+  --sidebar-control-surface: var(--basic-wash-2);
+  --sidebar-row-hover: var(--basic-wash-1);
+  --sidebar-row-active: var(--basic-wash-2);
+  --sidebar-row-selected: var(--basic-wash-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Tones. Dark tones lay white over the base, light tones black; the raised
+   fills differ because a menu lifts toward white on either. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"].dark {
+  --basic-popup-shadow: 0 1px 2px rgb(0 0 0 / 16%), 0 8px 24px rgb(0 0 0 / 24%);
+  --basic-ink: #ffffff;
+  --basic-text: #e8e8e8;
+  --basic-text-strong: #ffffff;
+  --basic-text-chrome: #b5b5b5;
+  --basic-text-muted: #9a9a9a;
+  --basic-raised: var(--basic-lift-2);
+  --basic-raised-quiet: var(--basic-lift-1);
+  --basic-composer-vessel: var(--basic-lift-2);
+  --basic-composer-prompt: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-lift-2));
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) {
+  --basic-popup-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 6px 20px rgb(0 0 0 / 7%);
+  --basic-ink: #000000;
+  --basic-text: #1a1a1a;
+  --basic-text-strong: #000000;
+  --basic-text-chrome: #4d4d4d;
+  --basic-text-muted: #737373;
+  --basic-raised: color-mix(in srgb, #ffffff 80%, var(--basic-base));
+  --basic-raised-quiet: color-mix(in srgb, #ffffff 60%, var(--basic-base));
+  --basic-composer-vessel: var(--basic-lift-1);
+  --basic-composer-prompt: var(--basic-raised);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="neutral"] {
+  --basic-base: #2b2b2b;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="cool"] {
+  --basic-base: #272a30;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker"] {
+  --basic-base: #131313;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="light"] {
+  --basic-base: #f7f7f7;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="cream"] {
+  --basic-base: #f8f3d8;
+  /* Menus and the sent bubble stay cream, a short step toward white; the prompt
+     well keeps the brighter lift so it still reads as the place to type. */
+  --basic-raised: color-mix(in srgb, #ffffff 25%, var(--basic-base));
+  --basic-raised-quiet: var(--basic-raised);
+  --basic-composer-prompt: color-mix(in srgb, #ffffff 80%, var(--basic-base));
+  /* The context pills take the menus' lift; the composer's shell sits a hair
+     into the page, black 2% over the base. */
+  --basic-composer-vessel: color-mix(in srgb, #000000 2%, var(--basic-base));
+  --fork-context-chip-bg: var(--basic-raised);
+  --fork-context-chip-bg-hover: color-mix(in srgb, #ffffff 50%, var(--basic-base));
+  --basic-text: #1f1c16;
+  --basic-text-strong: #14120d;
+  --basic-text-chrome: #4f493d;
+  --basic-text-muted: #776f60;
+}
+
+/* ---------------------------------------------------------------------------
+   The drawn edges. Basic separates with hairlines rather than fills: under
+   the tab strip, under the chat header once a thread has started (ChatView's
+   data-fork-thread-started, off while it is still a local draft), round
+   the composer shell and the context chips. Corners are 8px throughout. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-thread-started]
+  [data-chat-header] {
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+/* A draft has no header: its breadcrumb and panel controls only mean something once the
+   thread has started. The row stays (it is the window's drag strip) but paints nothing,
+   so the new-agent texture runs up behind it. A split pane's header keeps them: its
+   draft's close button lives there (SplitPaneHeaderControls). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header] {
+  background-color: transparent;
+
+  & > * {
+    visibility: hidden;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-composer-vessel] {
+  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  border: 1px solid var(--basic-wash-2);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+/* The chips are buttons, whose ::before draws upstream's highlight edge; beside the
+   hairline it reads as a second, blurred border. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])::before {
+  box-shadow: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-row] {
+  border-radius: 8px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [aria-label="Sidebar mode"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [aria-label="Sidebar mode"]
+  > button {
+  border-radius: 8px;
+}
+
+/* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
+   heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is(
+    [data-slot="menu-popup"],
+    [data-slot="menu-sub-content"],
+    [data-slot="popover-popup"],
+    [data-slot="preview-card-popup"],
+    [data-slot="tooltip-popup"],
+    .dropdown-glass
+  ) {
+  box-shadow: var(--basic-popup-shadow);
+}
+
+/* The sent bubble on the light tones is the page shaded, black 6% over the base,
+   where the dark tones lift it toward white (theme.custom.css paints it --card). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) {
+  --basic-shade: color-mix(in srgb, #000000 6%, var(--basic-base));
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) .bg-message {
+  background-color: var(--basic-shade);
+}
+
+/* An unchecked box or radio is the surface it sits on, behind its line: upstream
+   fills it with the page and bevels it, which reads as a pale disc on a menu. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not([aria-invalid="true"]) {
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not(
+    [aria-invalid="true"]
+  )::before {
+  box-shadow: none;
+}
+
+/* The mode chip's wash is drawn from its dark-mode hue (amber #ffcd59 at 16%), which
+   vanishes on the light tones, and on Cream above all, being yellow itself. There it
+   takes its own deep ink instead, so the wash and the label are one colour. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-composer-mode-chip] {
+  background: color-mix(in srgb, var(--fork-mode-fg) 14%, transparent);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
+  background: color-mix(in srgb, var(--fork-mode-fg) 22%, transparent);
+}
+
+/* The effort knob keeps upstream's page-coloured fill on the light tones, edged with
+   the controls' 12% line in place of its shadow so it holds against a cream menu. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-effort-thumb] {
+  border: 1px solid var(--basic-wash-3);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-effort-thumb]:not(:focus-visible) {
+  box-shadow: none;
+}
+
+/* The filled run is one 8% step over the track's own 8% (upstream lays 16% on it). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-effort-fill] {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+/* The music strip (fork-music-panel) floats over the sidebar like a popover: the
+   popover's fill, edge and shadow, which its open button shares so the two still
+   read as one piece. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="sidebar-footer"] {
+  --fork-music-card: var(--popover);
+
+  & [data-fork-music-strip] {
+    box-shadow:
+      inset 0 0 0 1px var(--basic-wash-2),
+      var(--basic-popup-shadow);
+  }
+}
+
+/* The new-agent screen draws the pixel texture (custom/BasicNewAgentTexture) behind the
+   column's content, so the workspace and the draft composer's backing stop painting the
+   stage over it, as on Inlet Black; a draft's header is already empty (above). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-chat-column-maximized-away][data-fork-draft-hero] {
+  position: relative;
+
+  & :is([data-workspace-area], [data-timeline-loading]) {
+    background-color: transparent;
+  }
+
+  & [data-chat-composer-overlay][data-draft-hero] {
+    background-image: none;
+  }
+
+  /* Upstream frosts the pills' row (surface-glass), which over the texture reads as a band. */
+  & [data-slot="composer-context-strip"] {
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* A section header's icon button (Threads: add, sort, settings; Petals: view, new) holds the
+   selected row's fill while its menu is open, so the open menu names the button it came from. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-fork-projects-row], [data-fork-bots-row])
+  button[data-popup-open] {
+  background-color: var(--sidebar-row-selected);
+  color: var(--sidebar-foreground);
+}

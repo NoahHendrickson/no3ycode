@@ -467,8 +467,7 @@ const SCOPE_ITEM =
     Light keeps ui/checkbox's border-input, which clears the zinc hover. */
 const SCOPE_CHECKBOX =
   "inline-flex size-4 shrink-0 items-center justify-center rounded-[.25rem] border";
-const SCOPE_CHECKBOX_OFF =
-  "border-input bg-background shadow-xs/5 dark:border-foreground/24 dark:bg-transparent";
+const SCOPE_CHECKBOX_OFF = "border-input bg-transparent dark:border-foreground/24";
 const SCOPE_CHECKBOX_ON = "border-primary bg-primary text-primary-foreground";
 
 const EMPTY_PROJECT_SCOPE: ReadonlySet<string> = new Set();

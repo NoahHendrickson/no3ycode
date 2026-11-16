@@ -109,6 +109,7 @@ import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
 import { SIDEBAR_V2_ICON_BUTTON_CLASS } from "./sidebarV2TrailingColumn";
 import { makeSplitDropHandlers, splitThreadDragSourceProps } from "./splitThreads/splitThreadDrag";
+import { releaseSplitDraft } from "./splitThreads/releaseSplitDraft";
 import { resolveSidebarV2CardStatus } from "./sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
 import { sidebarDraftModelSelection, sidebarDraftTitleFromPrompt } from "./sidebarV2DraftRows";
@@ -384,6 +385,32 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       useComposerDraftStore.getState().clearDraftThread(draftId);
     })();
   };
+  /** Closes a split's new-agent pane from its half of the tab, as the pane's own X does: off the
+      draft's route first, onto the pane beside it, then the pair splits. */
+  const closeSplitDraft = (paneIndex: number, draftId: DraftId) => {
+    const ref = props.paneThreadRefs[paneIndex];
+    const partnerIndex = paneIndex === 0 ? 1 : 0;
+    const partner = props.paneThreadRefs[partnerIndex];
+    if (ref === undefined) return;
+    void (async () => {
+      if (draftId === openDraftId && partner !== undefined) {
+        const partnerDraftId = paneDraftIds[partnerIndex] ?? null;
+        clearSidebarSelection();
+        await (partnerDraftId === null
+          ? router.navigate({
+              to: "/$environmentId/$threadId",
+              params: buildThreadRouteParams(partner),
+              replace: true,
+            })
+          : router.navigate({
+              to: "/draft/$draftId",
+              params: { draftId: partnerDraftId },
+              replace: true,
+            }));
+      }
+      releaseSplitDraft(ref, draftId);
+    })();
+  };
 
   const statusOf = ({ thread, threadKey }: CollapsedThreadTab): TabStatus =>
     resolveSidebarV2CardStatus(thread, {
@@ -463,6 +490,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
   /** `segment`: one half of a split's tab, which wears the selected face for both. */
   const renderEntry = (entry: StripEntry, segment = false) => {
     if (entry.kind === "draft") {
+      // A split's new agent closes its pane from its half of the tab, focused or not.
+      const paneIndex = segment ? paneThreadKeys.indexOf(entry.threadKey) : -1;
       return (
         <DraftTab
           key={entry.threadKey}
@@ -478,6 +507,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           {...(entry.draftId === openDraftId
             ? { routed: true, onDiscard: () => discardDraft(entry.draftId) }
             : { routed: false, onOpen: () => focusDraft(entry.draftId) })}
+          onClose={paneIndex === -1 ? undefined : () => closeSplitDraft(paneIndex, entry.draftId)}
         />
       );
     }
@@ -877,6 +907,8 @@ function DraftTab(
     readonly providerOf: (instanceId: string) => ProviderInstanceEntry | null;
     /** Half of a split's tab, as ThreadTab's. */
     readonly segment: boolean;
+    /** Closes the split's pane this draft fills, in place of discarding or opening it. */
+    readonly onClose: (() => void) | undefined;
   } & (
     | { readonly routed: true; readonly onDiscard: () => void }
     | { readonly routed: false; readonly onOpen: () => void }
@@ -924,13 +956,13 @@ function DraftTab(
           <SidebarV2StatusMark status={null} seed={props.draftId} idle="draft" />
         </span>
       </span>
-      {props.routed ? (
+      {props.routed || props.onClose !== undefined ? (
         <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:pointer-events-auto [@media(any-hover:none)]:opacity-100">
           <button
             type="button"
-            aria-label="Discard draft"
+            aria-label={props.onClose === undefined ? "Discard draft" : "Close new agent"}
             className={TAB_ACTION_CLASS}
-            onClick={props.onDiscard}
+            onClick={props.onClose ?? (props.routed ? props.onDiscard : undefined)}
           >
             <XIcon className="size-3" />
           </button>

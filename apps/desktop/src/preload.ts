@@ -542,6 +542,11 @@ const forkMusic = <T>(request: Record<string, unknown>, fallback: T): Promise<T>
 contextBridge.exposeInMainWorld("forkDesktopBridge", {
   setSidebarVibrancy: (enabled: boolean): Promise<boolean> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  // Mirrored by apps/web/src/custom/forkTopbarHeight.ts; fork/ForkTopbarHeight.ts answers it.
+  setTopbarHeight: (height: number | null): Promise<boolean> =>
+    ipcRenderer.invoke("fork:set-topbar-height", { height }),
+  /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-floor-color — see .fork/customizations.yaml#fork-glass-floor-color */
   // Mirrored by apps/web/src/custom/forkGlassFloorColor.ts. Resolves null off
   // macOS or when the wallpaper cannot be read; the renderer then keeps the

@@ -1,4 +1,4 @@
-@import "./theme.custom.westworld.css";
+@import "./theme.custom.basic.css";
 @import "./theme.custom.glass.css";
 @import "./theme.custom.inlet.css";
 @import "./theme.custom.inlet-composer.css";
@@ -7,165 +7,16 @@
 @import "./theme.custom.inlet-jungle.css";
 @import "./theme.custom.inlet-black.css";
 
-/* Fork dark palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
-   (and sibling palette ids). Kept out of theme.custom.css so a new sibling is a
+/* Fork palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
+   (and each palette's own id). Kept out of theme.custom.css so a new sibling is a
    token table here, not another 60-line clone in the megafile. Loaded after
    theme.custom.css from main.tsx so these win on source order. */
 
 /* ---------------------------------------------------------------------------
-   Westworld — see `.fork/customizations.yaml#fork-cool-dark-theme`.
-
-   Figma t3-fork node 416:7408. One #26272c surface for the stage, the header
-   and the sidebar: what separates the work from the chrome is no longer a
-   darker panel but the stage card below — the chat column sits 8px inside
-   the surface behind a white 12% hairline and a soft shadow. Rows lift to
-   #333438. The composer is glass over the stage art; the vessel token's
-   comment below carries the two glass sets (white glass on a thread, dark
-   glass on a draft). Send is the one saturated
-   control, Figma's #1877f2 — the same blue the working status token takes.
-   Barely cool (B−R ≤ 7), not blue-slate. Storage id stays "cool-dark": the
-   key is a persisted preference and the fences that carry it are named after
-   it, so the label changed and the id did not. Placed after the default dark
-   surface / pill / composer / context-chip tokens so Westworld wins on both
-   specificity and source order. Same two-block pattern (stage + v2 panel)
-   for the upstream re-declaration reason. Keyed on data-fork-theme so Dark
-   and Westworld can coexist; both still carry `.dark` for Tailwind. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"] {
-  --background: #26272c;
-  --app-chrome-background: #26272c;
-  --foreground: #e8e8e8;
-  /* Menus and popovers float one step above the shared surface. */
-  --card: #303137;
-  --card-foreground: #e8e8e8;
-  --popover: #303137;
-  --popover-foreground: #e8e8e8;
-  /* Figma's primary is a warm off-white, not pure white. */
-  --primary: #fcfcf5;
-  --primary-foreground: #26272c;
-  --ring: #fcfcf5;
-  --secondary: #393f44;
-  --secondary-foreground: #e8e8e8;
-  --muted: #393f44;
-  --muted-foreground: #8a8a8a;
-  --accent: #393f44;
-  --accent-foreground: #e8e8e8;
-  --border: #33343a;
-  --input: #33343a;
-  --surface-grain: none;
-  /* Header split pills: 8px corners and the drawn #333333 outline. */
-  --fork-pill-radius: 8px;
-  --fork-pill-border: #333333;
-  --fork-pill-fg: #e8e8e8;
-  --fork-pill-hover: #333438;
-  /* The composer is glass over the stage art — the one palette where the
-     fork's opaque-composer rule yields, because here the backdrop is the
-     picture. These are the started-thread values (Figma 423:13864): white
-     glass — vessel white 8% at 20px, chips white 12% at 18px — over an
-     opaque #1f1f1f prompt surface behind a white 12% hairline. The new-agent draft restates them
-     on its overlay below (Figma 416:8420's dark glass), and the blur radii
-     ride the same two tokens so the rules under the art read one source. */
-  --fork-composer-vessel-bg: rgb(255 255 255 / 8%);
-  --fork-composer-bg: #1f1f1f;
-  --fork-composer-border: rgb(255 255 255 / 12%);
-  /* Focus stays in the hairline's family, one step up from its 12% rest:
-     the palette's opaque grey read as a bright ring on the #222325 card. */
-  --fork-composer-border-focus: rgb(255 255 255 / 22%);
-  --fork-context-chip-bg: rgb(255 255 255 / 12%);
-  --fork-context-chip-bg-hover: rgb(255 255 255 / 17%);
-  --fork-westworld-vessel-blur: 20px;
-  /* Working is Figma's #1877f2 here, not the green every other dark palette
-     uses: the status dot, the pixel rain (sidebar cards, the composer
-     monitoring pill, the spawn row, the transcript) and the dev-server pulse
-     all read this one token. Restated on the v2 panel below because the
-     default block declares it there too. */
-  --sidebar-v2-status-working: #1877f2;
-  /* The sidebar mark's colour runs, Figma 412:31179: each arm's green/orange
-     pair swapped for a blue pair, and black outlines rather than each leaf's
-     dark shade. custom/SidebarBrandMark.tsx reads these. */
-  --fork-brand-mark-top: #00bfff;
-  --fork-brand-mark-top-light: #5ee7ff;
-  --fork-brand-mark-left: #2a72e6;
-  --fork-brand-mark-left-light: #4c90ff;
-  --fork-brand-mark-right: #6c6ee0;
-  --fork-brand-mark-right-light: #a089ff;
-  --fork-brand-mark-bottom: #1aadfc;
-  --fork-brand-mark-bottom-light: #72c4ff;
-  --fork-brand-mark-top-outline: #000000;
-  --fork-brand-mark-left-outline: #000000;
-  --fork-brand-mark-right-outline: #000000;
-  --fork-brand-mark-bottom-outline: #000000;
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"]
-  [data-sidebar-version="v2"] {
-  /* The panel is the stage's own surface: the card, not a darker panel,
-     separates the work from the chrome. */
-  --background: #26272c;
-  --foreground: #e8e8e8;
-  --card: #26272c;
-  --card-foreground: #e8e8e8;
-  --sidebar: #26272c;
-  --sidebar-foreground: #e8e8e8;
-  --border: #33343a;
-  --sidebar-border: #33343a;
-  --sidebar-stage-fade: #26272c;
-  --muted: #393f44;
-  --accent: #393f44;
-  --accent-foreground: #e8e8e8;
-  --muted-foreground: #8a8a8a;
-  --sidebar-muted-foreground: #d5d7da;
-  --fork-sidebar-card-title-receded: #b2b5ba;
-  /* Figma's active row is #333438 (white 6% over the surface, flattened);
-     hover is one step softer so selection still reads over a hovered row. */
-  --sidebar-control-surface: #333438;
-  --sidebar-row-hover: #2e2f34;
-  --sidebar-row-active: #333438;
-  --sidebar-row-selected: #333438;
-  --sidebar-v2-status-working: #1877f2;
-}
-
-/* Westworld's stage card, artwork, glass blur, blue send and control-row ink
-   are rules, not tokens, and live in theme.custom.westworld.css (imported at
-   the top of this file). What stays here is the draft overlay's token set.
-
-   Glass composer. This is the fork's one deliberate exception to its
-   no-backdrop-blur composer: everywhere else the composer's backdrop is its
-   own opaque vessel and blurring a uniform solid is pure GPU cost, but here
-   the backdrop is the picture and the blur is what keeps the prompt readable
-   over a dither. The fills and radii are tokens so the two frames can
-   disagree: a started thread (423:13864) is white glass — vessel white 8% at
-   20px, chips white 12% at 18px, opaque #1f1f1f prompt — declared on the
-   palette root above; the new-agent draft (447:16789) is dark glass — one
-   fill, rgb(47 47 47), at 50% for the vessel and chips and 60% for the prompt
-   behind a white 24% hairline — restated here on the draft overlay, which every
-   composer element descends from, so the same rules resolve either set. The
-   layers are static at rest and only re-blur while the composer slides on
-   the first send. Palette-scoped, so Glass's own vibrancy rules (which must
-   keep filters out of the composer) never see them. Under design-mode canvas
-   the blur is inert and the fills carry. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-dark"]
-  [data-chat-composer-overlay="true"][data-draft-hero] {
-  --fork-composer-vessel-bg: rgb(47 47 47 / 50%);
-  /* The well is the vessel's own fill one step more opaque, not a separate
-     cooler grey: the frame tints both from rgb(47 47 47), so the prompt reads
-     as the glass thickening rather than a second material laid on it. */
-  --fork-composer-bg: rgb(47 47 47 / 60%);
-  /* Focus stays in the hairline's own family, one quiet step up from the drawn
-     24%, instead of the palette's opaque grey — that read as a dull ring over
-     the art with the caret in the field. */
-  --fork-composer-border: rgb(255 255 255 / 24%);
-  --fork-composer-border-focus: rgb(255 255 255 / 45%);
-  --fork-context-chip-bg: rgb(47 47 47 / 50%);
-  --fork-context-chip-bg-hover: rgb(47 47 47 / 68%);
-  --fork-westworld-vessel-blur: 16px;
-}
-
-/* ---------------------------------------------------------------------------
    Glass — see `.fork/customizations.yaml#fork-cool-darker-theme`.
 
-   Deeper sibling of Westworld: same cool-gray family (B ≥ R, low chroma),
-   pushed down. Storage id stays "cool-darker" for the same reason Westworld
-   keeps "cool-dark". Stage #141618 (well below Westworld's #26272c); sidebar #181b1e;
+   A cool-gray family (B ≥ R, low chroma), pushed down. Storage id stays
+   "cool-darker": it is a preference already on disk. Stage #141618; sidebar #181b1e;
    composer vessel #222629 (a step above the sidebar so the control row
    contrasts); prompt/chips #282d30. Stage --card/--popover stay at #1c1f22, one
    step above the sidebar, so menus and popovers read as floating over the panel
@@ -173,8 +24,7 @@
    shifts by the same per-channel amount — so the steps between surfaces are
    fixed and the floor is the only thing that travels. It sits 6 below its
    first cut, having gone 14 down and then 8 back up once the glass sidebar
-   made the stage read as a hole beside it. Must not alter Westworld, Neutral
-   Dark, Neutral Darker, or default Dark fills. */
+   made the stage read as a hole beside it. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"] {
   --background: #141618;
   --app-chrome-background: #141618;
@@ -227,6 +77,22 @@
    picture to match, so it takes the 8px corners it had before the card. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"] {
   --fork-glass-card-radius: 8px;
+}
+
+/* A section header's icon button (Threads: add, sort, settings; Petals: view, new) holds the
+   panel's selected fill while its menu is open, so the menu names the button it came from. */
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-projects-row], [data-fork-bots-row])
+  button[data-popup-open] {
+  background-color: var(--sidebar-row-selected);
+  color: var(--sidebar-foreground);
+}
+
+/* Nor is there a card to edge the column off the collapsed tab strip above it, so the strip
+   takes the sidebar's seam along its foot (below): the same mostly opaque grey, one line. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"]
+  [data-fork-thread-tabs] {
+  box-shadow: inset 0 -1px 0 rgb(64 64 64 / 60%);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
@@ -314,159 +180,6 @@
   [data-sidebar-version="v2"]
   [data-slot="sidebar-footer"] {
   --sidebar-icon-color: var(--fork-glass-quiet-ink);
-}
-
-/* ---------------------------------------------------------------------------
-   Neutral Dark — see `.fork/customizations.yaml#fork-neutral-dark-theme`.
-
-   Warm grays keyed off the sidebar #34322f; the stage is a darker shade of it
-   (#2c2a27). Composer vessel #3c3a37 sits a step above the sidebar, then prompt
-   surface #474542 and context chips #4b4946. Same two-block
-   pattern and data-fork-theme keying as Westworld so Dark / Westworld /
-   Neutral Dark can coexist. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-dark"] {
-  --background: #2c2a27;
-  --app-chrome-background: #2c2a27;
-  --foreground: #e8e8e8;
-  --card: #383633;
-  --card-foreground: #e8e8e8;
-  --popover: #403e3b;
-  --popover-foreground: #e8e8e8;
-  --primary: #ffffff;
-  --primary-foreground: #2c2a27;
-  --ring: #ffffff;
-  --secondary: #42403d;
-  --secondary-foreground: #e8e8e8;
-  --muted: #42403d;
-  --muted-foreground: #9a9a9a;
-  --accent: #42403d;
-  --accent-foreground: #e8e8e8;
-  --border: #494744;
-  --input: #494744;
-  --surface-grain: none;
-  --fork-pill-border: #54524e;
-  --fork-pill-fg: #e8e8e8;
-  --fork-pill-hover: #42403d;
-  /* A step above the sidebar panel: the control row reads as part of the
-     composer rather than as more chrome. */
-  --fork-composer-vessel-bg: #3c3a37;
-  --fork-composer-bg: rgb(71 69 66 / 80%);
-  --fork-composer-border: rgb(255 255 255 / 8%);
-  --fork-composer-border-focus: #5c5a57;
-  /* Opaque sibling of the Neutral Dark composer fill — see default-dark note. */
-  --fork-context-chip-bg: rgb(75 73 70);
-  --fork-context-chip-bg-hover: #54524e;
-  /* Popups open flat rather than on the shared dark frost (fork-popup-surface):
-     over a warm stage the blurred, saturated backdrop read as glass, which
-     belongs to Glass. */
-  --fork-popup-fill: var(--popover);
-  --fork-popup-border: var(--border);
-  --fork-popup-filter: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-dark"]
-  [data-sidebar-version="v2"] {
-  --background: #34322f;
-  --foreground: #e8e8e8;
-  --card: #34322f;
-  --card-foreground: #e8e8e8;
-  --sidebar: #34322f;
-  --sidebar-foreground: #e8e8e8;
-  --border: #494744;
-  --sidebar-border: #494744;
-  --sidebar-stage-fade: #34322f;
-  --muted: #42403d;
-  --accent: #42403d;
-  --accent-foreground: #e8e8e8;
-  --muted-foreground: #9a9a9a;
-  --sidebar-muted-foreground: #d6d6d6;
-  --fork-sidebar-card-title-receded: #b0b0b0;
-  --sidebar-control-surface: #4b4946;
-  --sidebar-row-hover: #42403d;
-  --sidebar-row-active: #44423f;
-  --sidebar-row-selected: #44423f;
-}
-
-/* Every unchecked checkbox in the palette, popups and settings alike, is a
-   flat white hairline: upstream's dark recipe — an --input/32 fill, a white
-   top highlight on ::before and a drop shadow — reads as a raised bevel on
-   Neutral Dark's flat surfaces. Checked, indeterminate and invalid boxes keep
-   upstream's look. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-dark"]
-  [data-slot="checkbox"][data-unchecked]:not([aria-invalid="true"]) {
-  border-color: rgb(255 255 255 / 16%);
-  background: transparent;
-  box-shadow: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-dark"]
-  [data-slot="checkbox"][data-unchecked]:not([aria-invalid="true"])::before {
-  box-shadow: none;
-}
-
-/* ---------------------------------------------------------------------------
-   Neutral Darker — see `.fork/customizations.yaml#fork-neutral-darker-theme`.
-
-   A true-neutral counterpart to Neutral Dark, pushed down: chat stage #1a1a1a
-   (well below Neutral Dark's #2c2a27), sidebar #212121 (much darker than
-   Neutral Dark's #34322f, still a step lighter than the stage). Composer
-   vessel sits a step above the sidebar (#252525) so the control row (mode /
-   model / effort) contrasts against the stage; prompt/chips lift from that
-   vessel. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-darker"] {
-  --background: #1a1a1a;
-  --app-chrome-background: #1a1a1a;
-  --foreground: #e8e8e8;
-  /* Match the sidebar panel so popovers / ⌘K / cards open at the same lift. */
-  --card: #212121;
-  --card-foreground: #e8e8e8;
-  --popover: #212121;
-  --popover-foreground: #e8e8e8;
-  --primary: #ffffff;
-  --primary-foreground: #1a1a1a;
-  --ring: #ffffff;
-  --secondary: #2b2b2b;
-  --secondary-foreground: #e8e8e8;
-  --muted: #2b2b2b;
-  --muted-foreground: #8a8a8a;
-  --accent: #2b2b2b;
-  --accent-foreground: #e8e8e8;
-  --border: #2f2f2f;
-  --input: #2f2f2f;
-  --surface-grain: none;
-  --fork-pill-border: #3a3a3a;
-  --fork-pill-fg: #e8e8e8;
-  --fork-pill-hover: #2b2b2b;
-  /* A step above the sidebar so the control row reads as composer, not chrome. */
-  --fork-composer-vessel-bg: #252525;
-  --fork-composer-bg: rgb(42 42 42 / 80%);
-  --fork-composer-border: rgb(255 255 255 / 8%);
-  --fork-composer-border-focus: #4a4a4a;
-  --fork-context-chip-bg: rgb(48 48 48);
-  --fork-context-chip-bg-hover: #3a3a3a;
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="neutral-darker"]
-  [data-sidebar-version="v2"] {
-  --background: #212121;
-  --foreground: #e8e8e8;
-  --card: #212121;
-  --card-foreground: #e8e8e8;
-  --sidebar: #212121;
-  --sidebar-foreground: #e8e8e8;
-  --border: #2f2f2f;
-  --sidebar-border: #2f2f2f;
-  --sidebar-stage-fade: #212121;
-  --muted: #2b2b2b;
-  --accent: #2b2b2b;
-  --accent-foreground: #e8e8e8;
-  --muted-foreground: #8a8a8a;
-  --sidebar-muted-foreground: #d0d0d0;
-  --fork-sidebar-card-title-receded: #a8a8a8;
-  --sidebar-control-surface: #303030;
-  --sidebar-row-hover: #2b2b2b;
-  --sidebar-row-active: #2e2e2e;
-  --sidebar-row-selected: #2e2e2e;
 }
 
 /* ---------------------------------------------------------------------------

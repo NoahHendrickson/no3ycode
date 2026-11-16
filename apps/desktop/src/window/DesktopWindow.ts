@@ -45,6 +45,9 @@ import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as DesktopRendererHistory from "../telemetry/DesktopRendererHistory.ts";
 import { makeQuitShortcutHandler } from "./QuitHold.ts";
 import { copyContextMenuImage } from "./ContextMenuImage.ts";
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+import { forkTopbarHeight } from "../fork/ForkTopbarHeight.ts";
+/* fork:end fork-basic-theme */
 
 const TITLEBAR_HEIGHT = 40;
 
@@ -87,7 +90,11 @@ function syncMacosWindowButtons(window: Electron.BrowserWindow): void {
     x: MACOS_WINDOW_BUTTON_X,
     /* fork:end fork-sidebar-chrome */
     y: Math.round(
-      (MACOS_WORKSPACE_TOPBAR_HEIGHT * window.webContents.getZoomFactor()) / 2 -
+      /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+      ((forkTopbarHeight(window) ?? MACOS_WORKSPACE_TOPBAR_HEIGHT) *
+        /* fork:end fork-basic-theme */
+        window.webContents.getZoomFactor()) /
+        2 -
         MACOS_WINDOW_BUTTON_RADIUS,
     ),
   });

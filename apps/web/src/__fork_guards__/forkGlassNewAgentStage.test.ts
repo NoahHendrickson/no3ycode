@@ -94,11 +94,10 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     expect(customizations).toContain("apps/web/src/custom/assets/glass-hero-popup-frost.png");
     expect(customizations).toContain("apps/web/src/custom/forkGlassNewAgentPicture.ts");
     expect(customizations).toContain("apps/web/src/components/chat/PanelLayoutControls.tsx");
-    // Both sheets @import before any rule; Westworld's stays first.
-    const westworld = palettes.indexOf('@import "./theme.custom.westworld.css";');
+    // The sheet @imports before any rule.
     const glass = palettes.indexOf('@import "./theme.custom.glass.css";');
-    expect(westworld).toBeGreaterThanOrEqual(0);
-    expect(glass).toBeGreaterThan(westworld);
+    expect(glass).toBeGreaterThanOrEqual(0);
+    expect(glass).toBeLessThan(palettes.indexOf("{"));
     for (const asset of ["glass-hero.png", "glass-hero-frost.png", "glass-hero-popup-frost.png"]) {
       expect(
         NodeFS.existsSync(
@@ -212,7 +211,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       [
         readSibling("../theme.custom.css"),
         palettes,
-        readSibling("../theme.custom.westworld.css"),
+        readSibling("../theme.custom.basic.css"),
         sheet,
       ].join("\n"),
     );

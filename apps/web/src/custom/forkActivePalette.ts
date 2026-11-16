@@ -29,3 +29,20 @@ function subscribe(listener: () => void): () => void {
 export function useIsInletActive(): boolean {
   return useSyncExternalStore(subscribe, isInletActive, () => false);
 }
+
+/** Inlet and Basic draw Phosphor's fill where the other palettes draw duotone. */
+function fillsIcons(): boolean {
+  return active === "inlet" || active === "basic";
+}
+
+export function useForkFillsIcons(): boolean {
+  return useSyncExternalStore(subscribe, fillsIcons, () => false);
+}
+
+function isBasicActive(): boolean {
+  return active === "basic";
+}
+
+export function useIsBasicActive(): boolean {
+  return useSyncExternalStore(subscribe, isBasicActive, () => false);
+}
