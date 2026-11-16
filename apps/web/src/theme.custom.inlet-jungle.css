@@ -166,6 +166,16 @@
   background: var(--background);
 }
 
+/* That cream column is light inside a dark colour, so design mode's panel and rail in
+   it take the light selection and accent (theme.custom.css's .dark set vanishes on cream). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
+  [data-preview-panel-mode="inline"]
+  > :last-child
+  :is([data-fork-design-panel], [data-fork-design-layers]) {
+  --fork-design-selected: var(--background);
+  --fork-design-accent: #0a7d3e;
+}
+
 @media (min-width: 768px) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"][data-fork-has-stage-card]
     [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"]:not(
