@@ -3,7 +3,7 @@
  * that runs in its own folder; the folder, not the transcript, holds what it knows.
  */
 import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
-import { isForkBotThread } from "@t3tools/shared/forkBotTags";
+import { FORK_BOT_QUIET_REPLY, isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
@@ -12,7 +12,7 @@ import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 export const BOT_FOLDERS_DIRECTORY = "bots";
 
 /** What a bot replies when a wake found nothing; the server's report skips it. */
-export const BOT_QUIET_REPLY = "Nothing to report.";
+export const BOT_QUIET_REPLY = FORK_BOT_QUIET_REPLY;
 
 /** The part of a thread shell bots read. Its `latestVisibleMessage` is the bot's latest report:
     the server fills it for bots only, skipping quiet wakes (orchestration-v2/forkBotReport). */

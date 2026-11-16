@@ -7140,6 +7140,15 @@
     bot conversation shows the mascot large. The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
+    A bot's conversation leaves out its wakes that found nothing: a finished,
+    unfailed run nobody typed into whose final reply is the quiet reply
+    (custom/bots/quietBotWakes; the reply and its predicate live in
+    @t3tools/shared/forkBotTags, which the server's report reads too). The hide
+    happens where MessagesTimeline.logic picks the entries it shows
+    (timelineRowEntries), so rewind targets, which read every entry, still count
+    the hidden runs. Find shows them while it is open, and a cited reply's run
+    always shows. ChatView's text-less entries (prompt history, follow) still
+    hold them, as they cannot tell a quiet reply apart.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
     by server, web and provider-core. A subagent copies its parent thread
     (provider-core subagentProjection) but drops the bot's identity tags
@@ -7170,6 +7179,7 @@
     - apps/web/src/custom/scheduled/ScheduledRelativeLabel.tsx
     - apps/web/src/custom/bots/SidebarV2BotCardBody.tsx
     - apps/web/src/custom/bots/useIsBotThread.ts
+    - apps/web/src/custom/bots/quietBotWakes.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
     - apps/web/src/custom/bots/CollapsedPetalTabs.tsx
     - apps/web/src/custom/SidebarV2SectionLabel.tsx
@@ -7187,6 +7197,7 @@
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
@@ -7196,6 +7207,7 @@
     - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkBots.test.ts
+    - apps/web/src/custom/bots/quietBotWakes.test.ts
     - packages/shared/src/forkBotTags.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts

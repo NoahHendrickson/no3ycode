@@ -74,6 +74,9 @@ import {
   formatSearchToolLabel,
 } from "@t3tools/shared/toolActivity";
 import { isWindowsAbsolutePath } from "@t3tools/shared/path";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { quietBotWakeRunIds, withoutRuns } from "~/custom/bots/quietBotWakes";
+/* fork:end fork-bots */
 
 export function timelineEntryRunId(entry: TimelineEntry): RunId | null {
   if (entry.kind === "message") {
@@ -1452,6 +1455,9 @@ function timelineRowEntries(
     | "latestRun"
     | "runningRunId"
     | "pendingApprovalRequestIds"
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    | "hideQuietBotWakes"
+    /* fork:end fork-bots */
   >,
 ) {
   const visibility = input.toolCallVisibility ?? "showAll";
@@ -1487,6 +1493,19 @@ function timelineRowEntries(
         entry.kind !== "work" || !workEntryHiddenByToolCallVisibility(entry.entry, visibility),
     );
   }
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     Decided from every entry, so the visibility filters above never change which runs hide. */
+  if (input.hideQuietBotWakes === true) {
+    shown = withoutRuns(
+      shown,
+      quietBotWakeRunIds(entries, {
+        unsettledRunId: deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null),
+        failedRunIds: failedTimelineRunIds(entries, input.latestRun ?? null),
+        revealedMessageId: input.revealedMessageId,
+      }),
+    );
+  }
+  /* fork:end fork-bots */
   return withoutSubagentDelegationRows(settleSupersededReasoning(shown));
 }
 
@@ -1500,6 +1519,9 @@ function deriveTimelineTurnFolds(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
+    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+    | "hideQuietBotWakes"
+    /* fork:end fork-bots */
   >,
 ) {
   if (input.toolCallVisibility === "zen") return new Map<string, TurnFold>();
@@ -1541,6 +1563,10 @@ export function deriveMessagesTimelineRows(input: {
   worktreeSetup?: WorktreeSetupSnapshot | null;
   toolCallVisibility?: ToolCallVisibility;
   revealedMessageId?: MessageId | null;
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  /** A bot's quiet wakes stay out of the shown rows; see custom/bots/quietBotWakes. */
+  hideQuietBotWakes?: boolean;
+  /* fork:end fork-bots */
 }): MessagesTimelineRow[] {
   const timelineEntries = timelineRowEntries(input);
   const embeddedResultRunIds = new Set<RunId>();

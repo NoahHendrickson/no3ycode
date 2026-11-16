@@ -37,3 +37,16 @@ export function forkSubagentTags(
     (tag) => tag !== FORK_BOT_THREAD_TAG && !tag.startsWith(FORK_BOT_MASCOT_TAG_PREFIX),
   );
 }
+
+/** What a bot replies when a wake found nothing. */
+export const FORK_BOT_QUIET_REPLY = "Nothing to report.";
+/** The quiet reply lowercased, with and without its full stop: the forms a reply is compared in. */
+export const FORK_BOT_QUIET_REPLIES: ReadonlyArray<string> = [
+  "nothing to report",
+  "nothing to report.",
+];
+
+/** Whether a bot's reply is the quiet one, ignoring case and surrounding space. */
+export function isForkBotQuietReply(text: string): boolean {
+  return FORK_BOT_QUIET_REPLIES.includes(text.trim().toLowerCase());
+}
