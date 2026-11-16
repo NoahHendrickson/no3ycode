@@ -136,6 +136,17 @@ function persistedLink(
 }
 
 describe("isAutoSettlementCandidate", () => {
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  it("never settles a bot, even one whose linked PR merged", () => {
+    expect(
+      ThreadSettlementService.isAutoSettlementCandidate(shell({ tags: ["bot"] }), NOW_MS),
+    ).toBe(false);
+    expect(
+      ThreadSettlementService.isAutoSettlementCandidate(shell({ tags: ["bot-work:bot"] }), NOW_MS),
+    ).toBe(true);
+  });
+  /* fork:end fork-bots */
+
   it("settles a thread whose only background work is a command left running", () => {
     expect(
       ThreadSettlementService.isAutoSettlementCandidate(

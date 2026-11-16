@@ -141,6 +141,10 @@ interface PromptStashStoreState {
   };
   /** durable=false means removal was not persisted and reload would restore the entry. */
   takeEntry: (entryId: string) => { entry: PromptStashEntry | null; durable: boolean };
+  /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
+  /** Undoes stashEntry: drops the entry and puts back the one it evicted, as the oldest. */
+  unstashEntry: (entryId: string, evicted: PromptStashEntry | null) => { durable: boolean };
+  /* fork:end fork-queued-runs-banner */
   /** attached=false means the entry disappeared while encoding, so images could not be saved. */
   finalizeEntryImages: (
     entryId: string,
@@ -174,6 +178,18 @@ export const usePromptStashStore = create<PromptStashStoreState>()((set, get) =>
     set(() => ({ entries: nextEntries }));
     return { entry, durable };
   },
+  /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
+  unstashEntry: (entryId, evicted) => {
+    const entries = latestEntries(get().entries).filter((candidate) => candidate.id !== entryId);
+    const nextEntries =
+      evicted && !entries.some((candidate) => candidate.id === evicted.id)
+        ? [...entries, evicted]
+        : entries;
+    const { durable } = persistEntries(nextEntries);
+    set(() => ({ entries: nextEntries }));
+    return { durable };
+  },
+  /* fork:end fork-queued-runs-banner */
   finalizeEntryImages: (entryId, images) => {
     const entries = latestEntries(get().entries);
     const index = entries.findIndex((candidate) => candidate.id === entryId);

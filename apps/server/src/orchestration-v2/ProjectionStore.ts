@@ -237,6 +237,9 @@ export type ProjectionSettlementCandidate = Pick<
   | "pendingRuntimeRequest"
   | "pendingBackgroundTasks"
   | "pendingGuestMessageCount"
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  | "tags"
+  /* fork:end fork-bots */
 > &
   Pick<OrchestrationV2AppThread, "lastSnoozeWakeAt"> & {
     readonly latestUserAuthoredMessageAt: DateTime.Utc | null;

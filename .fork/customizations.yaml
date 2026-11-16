@@ -6441,12 +6441,19 @@
     and keeps upstream's later behavior: Send now starts a held queue when
     idle, guest messages are not editable, and editing is blocked while a
     question is open. Rows name a sender other than the owner (guest name,
-    Agent, Automation, T3 Code). ChatView mounts it in the composer dock, not the
+    Agent, Automation, T3 Code). A bookmark on each row moves the message to the
+    prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
+    takes it back, with any entry it evicted, if removing the run fails
+    (promptStashStore.unstashEntry, fenced). Messages with files, design changes,
+    or from guests are not stashable. An image the stash cannot keep aborts the move,
+    since removing the run deletes the server copy. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
     Mobile keeps upstream's queue.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/stashQueuedRun.ts
+    - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
   shadows: []
   watch:
@@ -6456,6 +6463,10 @@
     - apps/web/src/components/chat/ChatComposer.tsx
     # Upstream's unmounted queue; the banner reuses its handle and edit types.
     - apps/web/src/components/chat/QueuedRunsControl.tsx
+    # Carries the fenced unstashEntry rollback for move-to-stash.
+    - apps/web/src/promptStashStore.ts
+    # stashQueuedRun.ts copies its image pipeline and entry shape.
+    - apps/web/src/components/chat/useComposerStash.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
   verify:
@@ -7137,9 +7148,15 @@
     while naming the bot and changed later in the bot's thread details card (a
     Mascot grid; BotMascotDetailsSection) or the card's context menu
     (botMascotMenu); the new tag is set before the old one is cleared. An empty
-    bot conversation shows the mascot large. The mascots do not animate. A bot
+    bot conversation shows the mascot large, and the stage header puts it before
+    the bot's title (ChatHeader). The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
+    A bot is never put away: automatic settlement skips it
+    (ThreadSettlementService isAutoSettlementCandidate), so a merged PR it
+    linked to its own thread or a long idle no longer settles it, and its
+    conversation never shows the settled card (useThreadLifecycle). A message
+    still unsettles a bot settled by hand.
     A bot's conversation leaves out its wakes that found nothing: a run whose
     attempt completed without a failure, where the owner sent no message and
     answered no question or approval, and whose final reply is the quiet reply
@@ -7193,16 +7210,20 @@
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ThreadDetailsPanel.tsx
+    - apps/web/src/components/chat/ChatHeader.tsx
     # ScheduledRelativeLabel moved out so bot cards do not pull the page into startup.
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
     # Upstream's test mocks a partial shell; the Mascot section reads its tags.
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/useThreadLifecycle.tsx
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - packages/provider-core/src/server/subagentProjection.ts
@@ -7213,6 +7234,7 @@
     - packages/shared/src/forkBotTags.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - apps/server/src/scheduledTasks/forkBotTasks.test.ts
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts

@@ -46,6 +46,9 @@ import { AutomationRunBackButton } from "~/custom/scheduled/AutomationRunBackBut
 /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
 import { StageHeaderBackButton } from "~/custom/stageColumns/StageHeaderBackButton";
 /* fork:end fork-stage-header */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { BotHeaderMascot } from "~/custom/bots/BotMascot";
+/* fork:end fork-bots */
 import { GuestShareIndicator } from "./GuestShareControls";
 
 interface ChatHeaderProps {
@@ -341,6 +344,9 @@ export const ChatHeader = memo(function ChatHeader({
           </>
         ) : null}
         <WorkspaceBreadcrumbItem current className="min-w-10 flex-1">
+          {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+          {isServerThread ? <BotHeaderMascot threadRef={activeThreadRef} /> : null}
+          {/* fork:end fork-bots */}
           {renamingTitle !== null ? (
             <input
               autoFocus

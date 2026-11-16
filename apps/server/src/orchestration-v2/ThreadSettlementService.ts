@@ -5,6 +5,9 @@ import {
 } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { isForkBotThread } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-bots */
 import {
   CommandId,
   isOrchestrationV2WorkActive,
@@ -150,6 +153,10 @@ export function isAutoSettlementCandidate(
   nowMs: number,
 ): boolean {
   if (thread.archivedAt !== null || thread.settledOverride !== null) return false;
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     A bot is never put away, even when a PR it linked merges or it sits idle. */
+  if (isForkBotThread(thread.tags)) return false;
+  /* fork:end fork-bots */
   if (thread.pinnedAt != null || thread.autoSettleDisabledAt != null) return false;
   if (thread.pendingRuntimeRequest !== null) return false;
   // A guest is waiting on the owner; settling would hide the Request.
