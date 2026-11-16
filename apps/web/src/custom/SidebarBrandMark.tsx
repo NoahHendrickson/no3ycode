@@ -6,8 +6,7 @@ import { SidebarBrandMarkLowDensity } from "./SidebarBrandMarkLowDensity";
  * The 21-cell flower from Figma t3-fork 676:42956: one 9x12 leaf, rotated into
  * four, painted bottom, right, top, left so the tips overlap into a pinwheel.
  * Each leaf has a body, a light run and its own dark outline, each filling from
- * a `--fork-brand-mark-*` variable with the design's colour as the fallback;
- * Westworld (theme.custom.palettes.css) restates them for its blues.
+ * a `--fork-brand-mark-*` variable with the design's colour as the fallback.
  *
  * Plain integer rects with crispEdges: a bitmap cannot land 21 cells on a 16px
  * slot without smearing every cell.

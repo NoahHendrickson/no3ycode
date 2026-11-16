@@ -780,7 +780,7 @@
    here keeps the drop target legible and keeps the hairline in the same
    shadow, so the box does not gain a second one.
 
-   Use the chip-hover lift, not `--accent`: on Westworld / Glass,
+   Use the chip-hover lift, not `--accent`: on Glass,
    `--accent` is bit-identical to `--fork-composer-bg`, so a drag would show
    only the outline. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-drag-over] {
@@ -925,7 +925,7 @@
 }
 
 /* Hover / open fill. Upstream's ghost variant paints `--accent`, which is the
-   wrong channel on this row: on Westworld and Glass `--accent` is
+   wrong channel on this row: on Glass `--accent` is
    bit-identical to `--fork-composer-bg`, so hovering the model or effort
    trigger lands it on a fill the composer already wears rather than lifting it
    off the vessel — the same trap the drag-over state hit above.
@@ -2680,10 +2680,9 @@
 
 /* ── Changed-files card in the chat column ───────────────────────────────────
    Upstream paints `dark:bg-input/32` — a translucent wash of --input. On every
-   fork dark palette --input is the border grey (Westworld's is #33343a), so
-   that wash lands the card on a smeared border tint over the stage instead of
-   the palette's own card step (Westworld: --card #303137 over the #26272c
-   stage; --secondary #393f44 is the chip step, not a card). Freeze the card to
+   fork dark palette --input is the border grey, so that wash lands the card
+   on a smeared border tint over the stage instead of the palette's own card
+   step (--secondary is the chip step, not a card). Freeze the card to
    --card so each palette's stage tokens actually show. Hairline uses
    --fork-composer-border so the card matches the vessel per palette. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
