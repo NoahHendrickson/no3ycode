@@ -80,6 +80,9 @@ import { openSideChatTab } from "../../lib/sideChatPane";
 /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards */
 import { useThreadStateBanners } from "~/custom/useThreadStateBanners";
 /* fork:end fork-thread-state-cards */
+/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+import { useIsBotThread } from "~/custom/bots/useIsBotThread";
+/* fork:end fork-bots */
 import type { useLocalDispatchState } from "./useLocalDispatchState";
 const RELATED_THREAD_SHELL_WAIT_MS = 1_000;
 const NO_RUN_STOP_ATOM = Atom.make<RunStopPresentation | null>(null).pipe(
@@ -650,13 +653,18 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
       onAction={acknowledgeActiveThreadWokeStable}
     />
   ) : null;
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     A bot is never put away, so its conversation never asks to unsettle it. */
+  const forkActiveThreadIsBot = useIsBotThread(activeThreadRef);
+  const forkSettledCard = activeThreadSettled && !forkActiveThreadIsBot;
+  /* fork:end fork-bots */
   /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards
      Settled, snoozed and woke stay notice cards above the composer, as before
      upstream moved them into the status line built just above; ChatView reads
      these and leaves threadStatusLine out of the timeline footer. */
   const forkThreadStateBanners = useThreadStateBanners({
     threadId: activeThread?.id ?? null,
-    settled: activeThreadSettled,
+    settled: forkSettledCard,
     snoozed: activeThreadSnoozed,
     wokeVisible: activeThreadWokeVisible,
     canOperateThread,

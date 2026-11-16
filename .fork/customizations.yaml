@@ -7140,6 +7140,11 @@
     bot conversation shows the mascot large. The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
+    A bot is never put away: automatic settlement skips it
+    (ThreadSettlementService isAutoSettlementCandidate), so a merged PR it
+    linked to its own thread or a long idle no longer settles it, and its
+    conversation never shows the settled card (useThreadLifecycle). A message
+    still unsettles a bot settled by hand.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
     by server, web and provider-core. A subagent copies its parent thread
     (provider-core subagentProjection) but drops the bot's identity tags
@@ -7187,9 +7192,12 @@
     - apps/web/src/components/chat/ThreadDetailsPanel.browser.test.tsx
     - apps/web/src/components/ThreadNotificationCoordinator.tsx
     - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/useThreadLifecycle.tsx
     - docs/user/thread-sidebar.md
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/Orchestrator.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - packages/provider-core/src/server/subagentProjection.ts
@@ -7199,6 +7207,7 @@
     - packages/shared/src/forkBotTags.test.ts
     - apps/server/src/orchestration-v2/forkBotReport.test.ts
     - apps/server/src/orchestration-v2/runtimeLayer.test.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - apps/server/src/scheduledTasks/forkBotTasks.test.ts
     - apps/server/src/scheduledTasks/forkScheduledWakeOverlap.test.ts
