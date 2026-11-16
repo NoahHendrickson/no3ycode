@@ -286,6 +286,24 @@ describe("fork guard: design mode", () => {
     expect(host).toContain("fork:begin fork-design-mode");
   });
 
+  it("resolves the panel's surface tokens in its column, not at :root", () => {
+    // A custom property inherits with var() already resolved: declared on :root,
+    // var(--background) is the window frame, so Inlet Black's panel painted #141414
+    // under the cream panel's dark ink.
+    const rules = cssRules(read("src/theme.custom.css"));
+    for (const token of [
+      "--fork-design-surface",
+      "--fork-design-field",
+      "--fork-design-selected",
+    ]) {
+      const declaring = rules.filter((rule) => rule.body.includes(`${token}:`));
+      expect(declaring.length, token).toBeGreaterThan(0);
+      for (const rule of declaring) {
+        expect(rule.selector, token).toContain("[data-fork-design-panel]");
+      }
+    }
+  });
+
   it("hands the page back while the browse modifier is held", () => {
     // The browse policy's module contract (browseHandoff.ts), not its call sites — freezing
     // the engine's handler strings would make the next correct refactor fail this guard.
