@@ -1671,6 +1671,7 @@
     - apps/web/src/theme.custom.basic.css
     - apps/web/src/theme.custom.css
     - apps/web/src/custom/ForkThemePicker.tsx
+    - apps/web/src/custom/ForkSwatchPicker.tsx
     - apps/web/src/custom/ForkInletColorPicker.tsx
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/custom/forkActivePalette.ts
@@ -1678,6 +1679,7 @@
     - apps/web/src/custom/BasicNewAgentTexture.tsx
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
+    - apps/desktop/src/fork/ForkTopbarHeightState.ts
   watch:
     - apps/web/index.html
     - apps/desktop/src/window/DesktopWindow.ts
@@ -6207,7 +6209,7 @@
     - apps/web/src/custom/splitThreads/SplitAgentPill.tsx
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
-    - apps/web/src/custom/splitThreads/releaseSplitDraft.ts
+    - apps/web/src/custom/splitThreads/splitPaneNavigation.ts
     - apps/web/src/custom/splitThreads/floatFrame.ts
     - apps/web/src/custom/splitThreads/floatWindow.tsx
     - apps/web/src/custom/splitThreads/floatThreads.test.ts

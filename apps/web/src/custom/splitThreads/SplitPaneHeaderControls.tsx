@@ -15,7 +15,7 @@ import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import type { DraftId } from "~/composerDraftStore";
 
-import { releaseSplitDraft } from "./releaseSplitDraft";
+import { closeSplitDraft } from "./splitPaneNavigation";
 import { useSplitPane } from "./splitPaneContext";
 
 function PaneActionButton(props: {
@@ -56,13 +56,8 @@ export function SplitPaneHeaderControls(props: {
   const splitPane = useSplitPane();
   const { windowAction } = splitPane;
 
-  const close = (draft: DraftId, ref: ScopedThreadRef) => {
-    // Off the draft's route first: clearing the draft under it would send the
-    // route home instead of to the thread beside it.
-    void splitPane.focusPartner().then((left) => {
-      if (left) releaseSplitDraft(ref, draft);
-    });
-  };
+  const close = (draft: DraftId, ref: ScopedThreadRef) =>
+    void closeSplitDraft(splitPane.focusPartner, ref, draft);
 
   return (
     <>

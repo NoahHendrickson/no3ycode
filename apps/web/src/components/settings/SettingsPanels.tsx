@@ -469,7 +469,7 @@ export function useSettingsRestore(onRestored?: () => void) {
     setInletColor,
     basicTonesChanged,
     resetBasicTones,
-  } = useForkAppearance(theme, setTheme);
+  } = useForkAppearance(setTheme);
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
   // Only while Inlet shows the row, as with Glass's picture below.

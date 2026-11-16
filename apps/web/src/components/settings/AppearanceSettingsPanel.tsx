@@ -131,7 +131,7 @@ export function AppearanceSettingsPanel() {
   const [isImportThemeOpen, setIsImportThemeOpen] = useState(false);
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
   const { appearance, setAppearance, inletColor, setInletColor, basicTone, setBasicTone } =
-    useForkAppearance(theme, setTheme);
+    useForkAppearance(setTheme);
   const defaultBasicTone = DEFAULT_BASIC_TONES[BASIC_TONE_OPTIONS[basicTone].appearance];
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */

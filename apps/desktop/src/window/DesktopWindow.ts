@@ -46,7 +46,7 @@ import * as DesktopRendererHistory from "../telemetry/DesktopRendererHistory.ts"
 import { makeQuitShortcutHandler } from "./QuitHold.ts";
 import { copyContextMenuImage } from "./ContextMenuImage.ts";
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
-import { forkTopbarHeight } from "../fork/ForkTopbarHeight.ts";
+import { forkTopbarHeight } from "../fork/ForkTopbarHeightState.ts";
 /* fork:end fork-basic-theme */
 
 const TITLEBAR_HEIGHT = 40;
@@ -83,7 +83,10 @@ function parseMailtoAddress(rawUrl: string): Option.Option<string> {
   }
 }
 
-function syncMacosWindowButtons(window: Electron.BrowserWindow): void {
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme
+   Exported so the fork's header-height IPC (fork/ForkTopbarHeight) places the buttons here. */
+export function syncMacosWindowButtons(window: Electron.BrowserWindow): void {
+  /* fork:end fork-basic-theme */
   if (window.isDestroyed() || window.isFullScreen()) return;
   window.setWindowButtonPosition({
     /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */

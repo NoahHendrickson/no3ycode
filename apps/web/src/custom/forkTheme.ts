@@ -35,7 +35,7 @@ import {
   subscribeToThemeChanges,
   syncBrowserChromeTheme,
 } from "../hooks/useTheme";
-import { setActiveForkPalette, useIsBasicActive, useIsInletActive } from "./forkActivePalette";
+import { setActiveForkPalette, useActiveForkPalette, useIsInletActive } from "./forkActivePalette";
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
@@ -72,14 +72,20 @@ export type BasicTone = (typeof BASIC_TONES)[number];
 export const BASIC_TONE_OPTIONS: Readonly<
   Record<
     BasicTone,
-    { readonly label: string; readonly base: string; readonly appearance: "dark" | "light" }
+    {
+      readonly label: string;
+      readonly base: string;
+      /** The tone's text, as theme.custom.basic.css sets --basic-text. */
+      readonly text: string;
+      readonly appearance: "dark" | "light";
+    }
   >
 > = {
-  light: { label: "Light", base: "#f7f7f7", appearance: "light" },
-  cream: { label: "Cream", base: "#f8f3d8", appearance: "light" },
-  neutral: { label: "Neutral Dark", base: "#2b2b2b", appearance: "dark" },
-  cool: { label: "Cool Dark", base: "#272a30", appearance: "dark" },
-  darker: { label: "Darker", base: "#131313", appearance: "dark" },
+  light: { label: "Light", base: "#f7f7f7", text: "#1a1a1a", appearance: "light" },
+  cream: { label: "Cream", base: "#f8f3d8", text: "#1f1c16", appearance: "light" },
+  neutral: { label: "Neutral Dark", base: "#2b2b2b", text: "#e8e8e8", appearance: "dark" },
+  cool: { label: "Cool Dark", base: "#272a30", text: "#e8e8e8", appearance: "dark" },
+  darker: { label: "Darker", base: "#131313", text: "#e8e8e8", appearance: "dark" },
 };
 export const DEFAULT_BASIC_TONES = { dark: "neutral", light: "light" } as const satisfies Record<
   "dark" | "light",
@@ -327,10 +333,6 @@ export function resolveActiveForkPalette({
   }
   const appearance = forkPaletteAppearance(palette, inletColor);
   return theme === appearance && isDark === (appearance === "dark") ? palette : null;
-}
-
-function getPaletteSnapshot(): ForkPalette {
-  return readForkPalette();
 }
 
 function subscribePalette(listener: () => void): () => void {
@@ -587,46 +589,32 @@ export function initializeForkTheme(): void {
   });
 }
 
-function readActiveBasicTone(): BasicTone {
-  return readBasicTone(isRenderedDark() ? "dark" : "light");
+/** Both of Basic's tones, and the one the rendered appearance (the root's `dark` class) shows. */
+function useBasicTones() {
+  const isDark = useSyncExternalStore(subscribePalette, isRenderedDark, () => true);
+  const dark = useSyncExternalStore(
+    subscribePalette,
+    readBasicDarkTone,
+    () => DEFAULT_BASIC_TONES.dark,
+  );
+  const light = useSyncExternalStore(
+    subscribePalette,
+    readBasicLightTone,
+    () => DEFAULT_BASIC_TONES.light,
+  );
+  return { shown: isDark ? dark : light, dark, light } as const;
 }
 
-/** Fork theme adapter over the upstream theme and fork palette stores. `appearance` is the
-    palette painted now, or null while an imported or built-in upstream theme is on. */
-export function useForkAppearance(
-  theme: ThemePreference,
-  setTheme: (theme: ThemePreference) => boolean,
-) {
-  const palette = useSyncExternalStore(subscribePalette, getPaletteSnapshot, () => BASIC_THEME);
+/** Fork theme adapter over the fork palette stores. `appearance` is the palette painted now (as
+    the sync pass published it), or null while an imported or built-in upstream theme is on. */
+export function useForkAppearance(setTheme: (theme: ThemePreference) => boolean) {
+  const appearance = useActiveForkPalette();
   const inletColor = useSyncExternalStore(
     subscribePalette,
     readInletColor,
     () => DEFAULT_INLET_COLOR,
   );
-  const isDark = useSyncExternalStore(subscribePalette, isRenderedDark, () => true);
-  const basicTone = useSyncExternalStore(
-    subscribePalette,
-    readActiveBasicTone,
-    () => DEFAULT_BASIC_TONES.dark,
-  );
-  // Both appearances' tones, so Restore defaults sees the one not showing too.
-  const basicDarkTone = useSyncExternalStore(
-    subscribePalette,
-    readBasicDarkTone,
-    () => DEFAULT_BASIC_TONES.dark,
-  );
-  const basicLightTone = useSyncExternalStore(
-    subscribePalette,
-    readBasicLightTone,
-    () => DEFAULT_BASIC_TONES.light,
-  );
-  const appearance = resolveActiveForkPalette({
-    theme,
-    palette,
-    isDark,
-    inletColor,
-    hasHalf: hasThemeHalf(isDark ? "dark" : "light"),
-  });
+  const basicTones = useBasicTones();
 
   const setAppearance = useCallback(
     (next: ForkPalette) => setForkAppearance(next, setTheme),
@@ -638,13 +626,14 @@ export function useForkAppearance(
   return {
     appearance,
     setAppearance,
-    palette,
     inletColor,
     setInletColor,
-    basicTone,
+    basicTone: basicTones.shown,
     setBasicTone,
+    // Both appearances' tones, so Restore defaults sees the one not showing too.
     basicTonesChanged:
-      basicDarkTone !== DEFAULT_BASIC_TONES.dark || basicLightTone !== DEFAULT_BASIC_TONES.light,
+      basicTones.dark !== DEFAULT_BASIC_TONES.dark ||
+      basicTones.light !== DEFAULT_BASIC_TONES.light,
     resetBasicTones: resetForkBasicTones,
   } as const;
 }
@@ -658,11 +647,6 @@ export function useActiveInletColor(): InletColor | null {
 
 /** Basic's tone while Basic is the palette painted, else null. */
 export function useActiveBasicTone(): BasicTone | null {
-  const basicActive = useIsBasicActive();
-  const tone = useSyncExternalStore(
-    subscribePalette,
-    readActiveBasicTone,
-    () => DEFAULT_BASIC_TONES.dark,
-  );
-  return basicActive ? tone : null;
+  const tone = useBasicTones().shown;
+  return useActiveForkPalette() === BASIC_THEME ? tone : null;
 }

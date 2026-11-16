@@ -21,7 +21,7 @@ import {
   INLET_THEME,
   type InletColor,
 } from "./forkTheme";
-import { ForkSwatchPicker } from "./ForkInletColorPicker";
+import { ForkSwatchPicker } from "./ForkSwatchPicker";
 
 const FORK_PALETTE_DESCRIPTIONS = {
   [BASIC_THEME]: "One colour, light borders.",

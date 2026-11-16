@@ -17,6 +17,7 @@ import {
   readForkPalette,
   resolveActiveForkPalette,
 } from "../custom/forkTheme";
+import { forkPaletteFillsIcons } from "../custom/forkActivePalette";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
@@ -67,9 +68,15 @@ describe("fork guard: fork-basic-theme", () => {
 
   it("states each tone's base once, in the sheet and the pre-paint alike", () => {
     for (const tone of BASIC_TONES) {
-      const { base, appearance } = BASIC_TONE_OPTIONS[tone];
+      const { base, text, appearance } = BASIC_TONE_OPTIONS[tone];
       const body = ruleBodyFor(rules, [`${BASIC}[data-fork-basic-tone="${tone}"]`]);
       expect(declarationHex(body, "--basic-base"), tone).toBe(base);
+      // The texture inks from the table; the sheet sets the text per tone or per appearance.
+      const appearanceBody = ruleBodyFor(rules, [
+        appearance === "dark" ? `${BASIC}.dark` : `${BASIC}:not(.dark)`,
+      ]);
+      const sheetText = body.includes("--basic-text:") ? body : appearanceBody;
+      expect(declarationHex(sheetText, "--basic-text"), tone).toBe(text);
       expect(indexHtml, tone).toContain(
         `${tone}: { base: "${base}", appearance: "${appearance}" }`,
       );
@@ -83,11 +90,12 @@ describe("fork guard: fork-basic-theme", () => {
   });
 
   it("draws filled icons, as Inlet does", () => {
-    expect(readSibling("../custom/forkActivePalette.ts")).toMatch(
-      /active === "inlet" \|\| active === "basic"/u,
-    );
-    expect(readSibling("../custom/icons/lucide-phosphor.tsx")).toMatch(
-      /const fills = useForkFillsIcons\(\);/u,
+    expect(forkPaletteFillsIcons(BASIC_THEME)).toBe(true);
+    expect(forkPaletteFillsIcons("inlet")).toBe(true);
+    expect(forkPaletteFillsIcons("cool-darker")).toBe(false);
+    expect(forkPaletteFillsIcons(null)).toBe(false);
+    expect(readSibling("../custom/icons/lucide-phosphor.tsx")).toContain(
+      "forkPaletteFillsIcons(useActiveForkPalette())",
     );
   });
 
