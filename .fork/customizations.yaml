@@ -6441,12 +6441,17 @@
     and keeps upstream's later behavior: Send now starts a held queue when
     idle, guest messages are not editable, and editing is blocked while a
     question is open. Rows name a sender other than the owner (guest name,
-    Agent, Automation, T3 Code). ChatView mounts it in the composer dock, not the
+    Agent, Automation, T3 Code). A bookmark on each row moves the message to the
+    prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
+    takes it back if removing the run fails. Messages with files or from guests
+    are not stashable. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
     Mobile keeps upstream's queue.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/stashQueuedRun.ts
+    - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
   shadows: []
   watch:

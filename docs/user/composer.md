@@ -264,7 +264,9 @@ Queued messages appear above the composer, each with its text and any attached i
 edit or remove them. On web and desktop they sit in a collapsible **Queued** list: drag a message
 by its handle to reorder it, or focus the handle and use the arrow keys. **Steer** sends a message
 into the running turn, and while the queue is held **Send now** starts a turn with it. On mobile,
-**Send now** does either.
+**Send now** does either. On web and desktop, the bookmark on a queued message moves it to the
+[prompt stash](#prompt-stash) with its images, so you can send it later. Messages with attached
+files and messages from guests stay in the queue.
 
 If you stop the agent or the server restarts, queued messages keep their order and are held.
 Press **Resume** in an empty composer to continue. **Resume** also continues a stopped

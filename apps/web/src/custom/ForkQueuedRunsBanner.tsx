@@ -1,4 +1,6 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { resolveAssetUrl } from "@t3tools/client-runtime/state/assets";
+import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import { deriveThreadQueueWorkflowState } from "@t3tools/client-runtime/state/thread-workflows";
 import { resolveUserMessagePresentation } from "@t3tools/client-runtime/user-message";
 import { assistantCitationsToPlainText } from "@t3tools/shared/assistantCitations";
@@ -10,6 +12,7 @@ import type {
   ThreadId,
 } from "@t3tools/contracts";
 import {
+  BookmarkIcon,
   Clock3Icon,
   CornerUpRightIcon,
   GripVerticalIcon,
@@ -19,6 +22,11 @@ import {
 import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
 
 import { useAssetUrls } from "~/assets/assetUrls";
+import { releasePersistedAttachmentUpload } from "~/lib/attachmentUploadQueue";
+import { MAX_STASH_ENTRIES, usePromptStashStore } from "~/promptStashStore";
+import { assetEnvironment } from "~/state/assets";
+import { readPreparedConnection } from "~/state/session";
+import { useAtomQueryRunner } from "~/state/use-atom-query-runner";
 import { threadEnvironment } from "~/state/threads";
 import { useThreadProjection } from "~/state/entities";
 import { useAtomCommand } from "~/state/use-atom-command";
@@ -31,7 +39,9 @@ import type {
 } from "~/components/chat/QueuedRunsControl";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { toastManager } from "~/components/ui/toast";
 import { extractTrailingDesignChanges } from "~/custom/designMode/designChangeTranscript";
+import { queuedRunStashBlockReason, stashQueuedRun } from "~/custom/stashQueuedRun";
 
 interface QueuedRowThumbnail {
   readonly key: string;
@@ -95,6 +105,10 @@ export function ForkQueuedRunsBanner({
   const promote = useAtomCommand(threadEnvironment.promoteQueuedRun);
   const resume = useAtomCommand(threadEnvironment.resumeThreadQueue);
   const cancel = useAtomCommand(threadEnvironment.cancelQueuedRun);
+  const createAssetUrl = useAtomQueryRunner(assetEnvironment.createUrl, {
+    reportFailure: false,
+    refresh: true,
+  });
   const [expanded, setExpanded] = useState(true);
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
@@ -137,6 +151,7 @@ export function ForkQueuedRunsBanner({
       // A guest's message keeps the guest's words; the owner can cancel it, not rewrite it.
       editable: context?.guest === undefined,
       attachments,
+      records: context?.records ?? [],
       thumbnails: attachments
         .filter((attachment) => attachment.type === "image")
         .map<QueuedRowThumbnail>((attachment) => ({
@@ -155,6 +170,7 @@ export function ForkQueuedRunsBanner({
       text: message.text,
       editable: true,
       attachments: [] as ReadonlyArray<ContractChatAttachment>,
+      records: [],
       thumbnails: (message.attachments ?? [])
         .filter(isImageAttachment)
         .map<QueuedRowThumbnail>((attachment) => ({
@@ -248,6 +264,81 @@ export function ForkQueuedRunsBanner({
     setBusyRunId(null);
   };
 
+  const loadQueuedImage = async (image: { id: string; name: string; mimeType: string }) => {
+    const connection = readPreparedConnection(props.environmentId);
+    if (!connection) throw new Error("The environment is not connected.");
+    const result = await createAssetUrl({
+      environmentId: props.environmentId,
+      input: {
+        resource: {
+          _tag: "attachment",
+          attachmentId: image.id,
+          fileName: image.name,
+          mimeType: image.mimeType,
+        },
+      },
+    });
+    if (result._tag === "Failure") throw squashAtomCommandFailure(result);
+    const url = resolveAssetUrl(connection.httpBaseUrl, result.value.relativeUrl);
+    if (url === null) throw new Error("The environment returned an invalid attachment URL.");
+    const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    if (!response.ok) throw new Error(`Could not load ${image.name}`);
+    return new File([await response.blob()], image.name, { type: image.mimeType });
+  };
+
+  // Stash first, then remove: a run that starts in between keeps its message and drops the copy.
+  const stashAndRemove = async (item: (typeof items)[number], runId: RunId) => {
+    const stashed = await stashQueuedRun({
+      text: item.text,
+      records: item.records,
+      attachments: item.attachments,
+      loadImage: loadQueuedImage,
+    });
+    if (!stashed.written) {
+      toastManager.add({
+        type: "error",
+        title: "Could not stash this message",
+        description: "Browser storage rejected the write, so the message stays queued.",
+        data: { hideCopyButton: true },
+      });
+      return;
+    }
+    // Eviction already happened with the write, whether or not the removal succeeds.
+    if (stashed.evicted) {
+      for (const file of stashed.evicted.files ?? []) releasePersistedAttachmentUpload(file);
+      toastManager.add({
+        type: "warning",
+        title: "Oldest stashed prompt discarded",
+        description: `The stash holds ${MAX_STASH_ENTRIES} prompts; the oldest was removed to make room.`,
+        data: { hideCopyButton: true },
+      });
+    }
+    const removed = await cancel({
+      environmentId: props.environmentId,
+      input: { threadId: props.threadId, runId },
+    });
+    if (removed._tag === "Failure") {
+      usePromptStashStore.getState().takeEntry(stashed.entryId);
+      return;
+    }
+    if (!stashed.durable) {
+      toastManager.add({
+        type: "warning",
+        title: "Stashed message will not survive a reload",
+        description:
+          "Browser storage is unavailable, so this stash is kept in memory only for this session.",
+        data: { hideCopyButton: true },
+      });
+    }
+  };
+
+  const stash = async (item: (typeof items)[number]) => {
+    if (item.runId === null) return;
+    setBusyRunId(item.runId);
+    await stashAndRemove(item, item.runId);
+    setBusyRunId(null);
+  };
+
   const sendLabel = workflow?.canSendNow ? "Send now" : "Steer";
 
   return (
@@ -295,6 +386,10 @@ export function ForkQueuedRunsBanner({
               const rowRunId = item.runId;
               const rowServerIndex = item.serverIndex;
               const isEditing = rowRunId !== null && rowRunId === props.editingRunId;
+              const stashBlocked = queuedRunStashBlockReason({
+                attachments: item.attachments,
+                guest: !item.editable,
+              });
               const rowDraggable =
                 rowRunId !== null && rowServerIndex !== null && canReorder && busyRunId === null;
               return (
@@ -477,6 +572,22 @@ export function ForkQueuedRunsBanner({
                             {props.editBlockedReason ??
                               `Edit in the composer${item.serverIndex === queued.length - 1 && props.editShortcutLabel ? ` (${props.editShortcutLabel})` : ""}`}
                           </TooltipPopup>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger render={<span className="flex shrink-0" />}>
+                            <Button
+                              size="icon-xs"
+                              variant="ghost-muted"
+                              aria-label="Move queued message to stash"
+                              disabled={
+                                item.runId === null || busyRunId !== null || stashBlocked !== null
+                              }
+                              onClick={() => void stash(item)}
+                            >
+                              <BookmarkIcon />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipPopup>{stashBlocked ?? "Move to stash"}</TooltipPopup>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger render={<span className="flex shrink-0" />}>
