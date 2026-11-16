@@ -164,7 +164,7 @@ export function SelectRow({
       className="flex h-6 items-center overflow-hidden rounded bg-[var(--fork-design-field)]"
       title={title}
     >
-      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground/70 [&_svg]:size-4">
+      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground [&_svg]:size-4">
         {icon ? <span className="sr-only">{label}</span> : null}
         {icon ?? label}
       </span>

@@ -113,14 +113,14 @@ const LayerRowView = memo(function LayerRowView({
           {...{ [TOGGLE_ATTRIBUTE]: "" }}
           role="button"
           aria-label={expanded ? "Collapse" : "Expand"}
-          className="flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground/70 hover:text-foreground"
+          className="flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
         >
           {expanded ? <ChevronDownIcon className="size-3" /> : <ChevronRight className="size-3" />}
         </span>
       ) : (
         <span className="size-4 shrink-0" />
       )}
-      <LayerTypeIcon tag={node.tag} className="size-3.5 shrink-0 text-muted-foreground/70" />
+      <LayerTypeIcon tag={node.tag} className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="truncate">{node.label}</span>
     </div>
   );
@@ -350,7 +350,7 @@ function LayersRail({ runtimeTabId }: { runtimeTabId: string }) {
       data-fork-design-layers
     >
       <header className="flex h-9 shrink-0 items-center gap-1 border-b border-border pe-1.5 ps-3">
-        <SearchIcon className="size-3.5 shrink-0 text-muted-foreground/70" />
+        <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -430,12 +430,12 @@ function LayersRail({ runtimeTabId }: { runtimeTabId: string }) {
           />
         ))}
         {rows.length === 0 ? (
-          <p className="px-1.5 py-1 text-[10px] text-muted-foreground/70">
+          <p className="px-1.5 py-1 text-[10px] text-muted-foreground">
             {query ? "No layers match." : "No layers yet."}
           </p>
         ) : null}
         {tab.layers.truncated ? (
-          <p className="px-1.5 py-1 text-[10px] text-muted-foreground/70">
+          <p className="px-1.5 py-1 text-[10px] text-muted-foreground">
             Tree truncated — deeper elements aren&apos;t shown.
           </p>
         ) : null}

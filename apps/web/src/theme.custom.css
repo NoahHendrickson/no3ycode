@@ -1832,9 +1832,6 @@
    app's own surface tokens so the panel stays legible outside the dark theme
    the design was authored in. */
 :root[data-fork="noahhendrickson-t3code"] {
-  --fork-design-surface: var(--background);
-  --fork-design-field: var(--muted);
-  --fork-design-selected: var(--accent);
   --fork-design-accent: #0a7d3e;
   --fork-design-accent-bg: rgb(69 255 150 / 16%);
   /* The artboard surround, and NOT theme-derived: canvas mode paints this exact value
@@ -1842,6 +1839,28 @@
      wears, so the host side has to match it literally or the seam shows. A fork guard
      pins the two together. */
   --fork-design-canvas: #3c3c3c;
+}
+
+/* Surface and field follow whatever column the panel docks into, never a pinned value.
+   Declared on the panel and rail, not :root: a custom property inherits with var()
+   already resolved, so on :root var(--background) is the window frame, and Inlet's
+   frames differ from its panel (Black's #141414 under the cream panel's dark ink). */
+:root[data-fork="noahhendrickson-t3code"] :is([data-fork-design-panel], [data-fork-design-layers]) {
+  --fork-design-surface: var(--background);
+  --fork-design-field: var(--muted);
+  --fork-design-selected: var(--accent);
+}
+
+/* Inlet's light colours share one value between --accent and --muted, so a selected
+   segment vanished into its field. It takes the panel's own fill instead, set into the
+   recessed field the way the mode picker's selection is. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
+    [data-fork-inlet-color="green"],
+    [data-fork-inlet-color="jungle-light"],
+    [data-fork-inlet-color="black"]
+  )
+  [data-fork-design-panel] {
+  --fork-design-selected: var(--background);
 }
 
 /* Canvas mode's gray lives on the guest's <html>, inside the webview. At a fixed screen
@@ -1876,19 +1895,16 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark {
-  /* Surface and field follow the THEME, not the palette the Figma file happened to be
-     drawn in: the panel docks inside the workspace, so a pinned #232527 read as a lighter
-     slab bolted onto it — and drifted further with every alternate theme (Westworld's
-     background is #26272c). Deriving them means the panel matches whatever surface it is
-     sitting on, including themes that don't exist yet. */
-  --fork-design-surface: var(--background);
-  --fork-design-field: var(--muted);
+  --fork-design-accent: #45ff96;
+  --fork-design-accent-bg: rgb(69 255 150 / 16%);
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark
+  :is([data-fork-design-panel], [data-fork-design-layers]) {
   /* Deliberately NOT var(--accent): in this theme --accent and --muted are the same value,
      so a selected segment would vanish into the field it sits on. A translucent lift works
      against any surface, which is the whole job of this token. */
   --fork-design-selected: rgb(255 255 255 / 8%);
-  --fork-design-accent: #45ff96;
-  --fork-design-accent-bg: rgb(69 255 150 / 16%);
 }
 
 /* ── Design panel read-only affordance (fork-design-mode) ──────────────────────

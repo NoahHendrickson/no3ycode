@@ -151,7 +151,7 @@ function NumericFieldChrome({
     >
       <span
         className={cn(
-          "flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground/70 [&_svg]:size-4",
+          "flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground [&_svg]:size-4",
           readOnly ? "cursor-default" : "cursor-ew-resize",
         )}
         onPointerDown={onPointerDown}
@@ -177,7 +177,7 @@ function NumericFieldChrome({
         spellCheck={false}
         className={cn(
           "h-full w-full min-w-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground/50",
-          readOnly ? "text-muted-foreground/60" : "text-foreground",
+          readOnly ? "text-muted-foreground" : "text-foreground",
         )}
       />
       {drafted && onRevert ? <FieldRevert onRevert={onRevert} /> : null}
@@ -479,7 +479,7 @@ function SpacingTokenAffordance({
               "me-1 shrink-0 rounded-[3px] px-1 font-mono text-[9px] leading-4 transition-colors",
               matched !== null
                 ? "bg-[var(--fork-design-accent-bg)] text-[var(--fork-design-accent)]"
-                : "text-muted-foreground/50 hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {matched !== null ? matched : "{ }"}
@@ -501,7 +501,7 @@ function SpacingTokenAffordance({
               )}
             >
               <span className="font-mono">{scaleStep}</span>
-              <span className="text-[10px] text-muted-foreground/70">{scaleStep * basePx}px</span>
+              <span className="text-[10px] text-muted-foreground">{scaleStep * basePx}px</span>
             </button>
           ))}
         </div>
@@ -557,7 +557,7 @@ export function ColorField({
       className="flex h-6 items-center gap-1 overflow-hidden rounded bg-[var(--fork-design-field)]"
       title={title}
     >
-      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground/70 [&_svg]:size-4">
+      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground [&_svg]:size-4">
         {icon ? <span className="sr-only">{label}</span> : null}
         {icon ?? label}
       </span>
@@ -615,7 +615,7 @@ export function ValueRow({
       )}
       title={`${title}: ${value}`}
     >
-      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground/70">
+      <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground">
         {label}
       </span>
       <span className="truncate pe-1.5 text-xs text-muted-foreground">{display || "—"}</span>

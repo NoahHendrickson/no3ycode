@@ -44,7 +44,7 @@ export function Expando({ label, children }: { label: string; children: React.Re
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open ? "true" : "false"}
-        className="col-span-full flex h-4 items-center gap-1 text-[10px] text-muted-foreground/70 transition-colors hover:text-foreground"
+        className="col-span-full flex h-4 items-center gap-1 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
       >
         <span className="font-mono">{open ? "−" : "+"}</span>
         {label}
