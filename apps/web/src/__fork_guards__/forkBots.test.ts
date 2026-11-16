@@ -7,7 +7,7 @@
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
-import { MessageId } from "@t3tools/contracts";
+import { MessageId, type OrchestrationV2TurnItem } from "@t3tools/contracts";
 import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
@@ -45,6 +45,7 @@ import {
   isBotThread,
   isQuietBotCompletion,
   listSidebarBots,
+  withoutQuietBotWakes,
 } from "../custom/bots/botThreads";
 import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { makeThreadFixture } from "../test-fixtures";
@@ -125,6 +126,27 @@ describe("fork guard: fork-bots", () => {
     expect(notifications).toContain(
       "isBotThread(state.raw) && isQuietBotCompletion(state.raw, state.thread.latestRun)",
     );
+  });
+
+  it("keeps a wake that found nothing out of the conversation, never the owner's own turn", () => {
+    const row = (runId: string, item: Record<string, unknown>) =>
+      ({ item: { runId, ...item } }) as unknown as { item: OrchestrationV2TurnItem };
+    const turn = (runId: string, ask: Record<string, unknown>, reply: string) => [
+      row(runId, { type: "user_message", ...ask }),
+      row(runId, { type: "reasoning" }),
+      row(runId, { type: "assistant_message", text: reply, streaming: false }),
+    ];
+    const report = turn("report", { createdBy: "system" }, "PR #133 merged.");
+    const wake = turn("wake", { createdBy: "agent", scheduledTaskId: "task" }, BOT_QUIET_REPLY);
+    const owned = turn(
+      "owned",
+      { createdBy: "user", scheduledTaskId: "task" },
+      "nothing to report",
+    );
+    const asked = turn("asked", { createdBy: "user" }, BOT_QUIET_REPLY);
+    const items = [...report, ...wake, ...owned, ...asked];
+    expect(withoutQuietBotWakes(items)).toEqual([...report, ...asked]);
+    expect(withoutQuietBotWakes(report)).toBe(report);
   });
 
   it("notifies a wake that brought a report, even when it settles a step later", () => {

@@ -2,7 +2,7 @@
  * Bots — see `.fork/customizations.yaml#fork-bots`. A bot is a No-project thread tagged `bot`
  * that runs in its own folder; the folder, not the transcript, holds what it knows.
  */
-import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
+import type { OrchestrationV2ThreadShell, OrchestrationV2TurnItem } from "@t3tools/contracts";
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 
@@ -13,6 +13,40 @@ export const BOT_FOLDERS_DIRECTORY = "bots";
 
 /** What a bot replies when a wake found nothing; the server's report skips it. */
 export const BOT_QUIET_REPLY = "Nothing to report.";
+
+/** Whether a reply is the quiet one, read as loosely as the server's report reads it. */
+function isBotQuietReply(text: string): boolean {
+  const reply = text.trim().toLowerCase();
+  const quiet = BOT_QUIET_REPLY.toLowerCase();
+  return reply === quiet || `${reply}.` === quiet;
+}
+
+/** A bot's conversation without the wakes that found nothing: runs its owner did not start
+    whose final reply is the quiet one. The owner's own turns always show, quiet or not. */
+export function withoutQuietBotWakes<T extends { readonly item: OrchestrationV2TurnItem }>(
+  items: ReadonlyArray<T>,
+): ReadonlyArray<T> {
+  const finalReply = new Map<
+    string,
+    Extract<OrchestrationV2TurnItem, { type: "assistant_message" }>
+  >();
+  const ownerRuns = new Set<string>();
+  for (const { item } of items) {
+    if (item.runId === null) continue;
+    if (item.type === "assistant_message") finalReply.set(item.runId, item);
+    if (item.type === "user_message" && item.createdBy === "user" && !item.scheduledTaskId) {
+      ownerRuns.add(item.runId);
+    }
+  }
+  const quietRuns = new Set<string>();
+  for (const [runId, reply] of finalReply) {
+    if (!ownerRuns.has(runId) && !reply.streaming && isBotQuietReply(reply.text)) {
+      quietRuns.add(runId);
+    }
+  }
+  if (quietRuns.size === 0) return items;
+  return items.filter(({ item }) => item.runId === null || !quietRuns.has(item.runId));
+}
 
 /** The part of a thread shell bots read. Its `latestVisibleMessage` is the bot's latest report:
     the server fills it for bots only, skipping quiet wakes (orchestration-v2/forkBotReport). */

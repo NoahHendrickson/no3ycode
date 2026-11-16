@@ -79,6 +79,7 @@ import { environmentThreadDetails } from "../../state/threads";
 import { openSideChatTab } from "../../lib/sideChatPane";
 /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards */
 import { useThreadStateBanners } from "~/custom/useThreadStateBanners";
+import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-thread-state-cards */
 import type { useLocalDispatchState } from "./useLocalDispatchState";
 const RELATED_THREAD_SHELL_WAIT_MS = 1_000;
@@ -654,9 +655,11 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
      Settled, snoozed and woke stay notice cards above the composer, as before
      upstream moved them into the status line built just above; ChatView reads
      these and leaves threadStatusLine out of the timeline footer. */
+  // A bot is never put away, so its conversation never asks to unsettle it (fork-bots).
+  const forkActiveThreadIsBot = useIsBotThread(activeThreadRef);
   const forkThreadStateBanners = useThreadStateBanners({
     threadId: activeThread?.id ?? null,
-    settled: activeThreadSettled,
+    settled: activeThreadSettled && !forkActiveThreadIsBot,
     snoozed: activeThreadSnoozed,
     wokeVisible: activeThreadWokeVisible,
     canOperateThread,
