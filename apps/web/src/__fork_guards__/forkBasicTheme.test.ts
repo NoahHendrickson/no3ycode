@@ -77,8 +77,8 @@ describe("fork guard: fork-basic-theme", () => {
       ]);
       const sheetText = body.includes("--basic-text:") ? body : appearanceBody;
       expect(declarationHex(sheetText, "--basic-text"), tone).toBe(text);
-      expect(indexHtml, tone).toContain(
-        `${tone}: { base: "${base}", appearance: "${appearance}" }`,
+      expect(indexHtml, tone).toMatch(
+        new RegExp(`"?${tone}"?: \\{ base: "${base}", appearance: "${appearance}" \\}`, "u"),
       );
       expect(indexHtml, tone).toMatch(
         new RegExp(
