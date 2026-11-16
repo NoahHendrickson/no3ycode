@@ -118,13 +118,12 @@ import {
 } from "./threadHistoryPaging.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import {
-  FORK_BOT_QUIET_REPLIES,
   FORK_BOT_REPORT_CHARS,
   FORK_BOT_REPORT_LOOKBACK,
   FORK_BOT_SETTLED_RUN_STATUSES,
   forkBotReportFromRow,
 } from "./forkBotReport.ts";
-import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
+import { FORK_BOT_QUIET_REPLIES, FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
 
 export class ProjectionStoreApplyEventError extends Schema.TaggedError<ProjectionStoreApplyEventError>()(

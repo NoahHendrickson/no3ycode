@@ -7140,14 +7140,16 @@
     bot conversation shows the mascot large. The mascots do not animate. A bot
     keeps the name it was given from every client: the orchestrator never
     starts a title regeneration for a thread tagged `bot`.
-    A bot's conversation leaves out its wakes that found nothing: a finished,
-    unfailed run nobody typed into whose final reply is the quiet reply
+    A bot's conversation leaves out its wakes that found nothing: a run whose
+    attempt completed without a failure, where the owner sent no message and
+    answered no question or approval, and whose final reply is the quiet reply
     (custom/bots/quietBotWakes; the reply and its predicate live in
     @t3tools/shared/forkBotTags, which the server's report reads too). The hide
     happens where MessagesTimeline.logic picks the entries it shows
     (timelineRowEntries), so rewind targets, which read every entry, still count
     the hidden runs. Find shows them while it is open, and a cited reply's run
-    always shows. ChatView's text-less entries (prompt history, follow) still
+    always shows. A run hides from its prompt on, so a resumed subagent card
+    listed earlier stays in its turn. ChatView's text-less entries (prompt history, follow) still
     hold them, as they cannot tell a quiet reply apart.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read
     by server, web and provider-core. A subagent copies its parent thread

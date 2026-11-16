@@ -1519,9 +1519,6 @@ function deriveTimelineTurnFolds(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
-    /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-    | "hideQuietBotWakes"
-    /* fork:end fork-bots */
   >,
 ) {
   if (input.toolCallVisibility === "zen") return new Map<string, TurnFold>();

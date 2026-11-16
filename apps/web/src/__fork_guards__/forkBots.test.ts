@@ -8,7 +8,7 @@
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { MessageId } from "@t3tools/contracts";
-import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
+import { FORK_BOT_QUIET_REPLY, FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -37,7 +37,6 @@ import {
 import { botFailureSignature, createBotFailureAlerts } from "../custom/bots/botFailureAlerts";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import {
-  BOT_QUIET_REPLY,
   botFolderName,
   botFolderPath,
   botStatusLine,
@@ -333,7 +332,7 @@ describe("fork guard: fork-bots", () => {
     const rules = files.get("CLAUDE.md") ?? "";
     expect(rules).toContain("# Mail Bot");
     expect(rules).toContain("freshSession: true");
-    expect(rules).toContain(`reply with exactly \`${BOT_QUIET_REPLY}\``);
+    expect(rules).toContain(`reply with exactly \`${FORK_BOT_QUIET_REPLY}\``);
     // The rules are locked; the job the bot keeps lives in JOB.md, loaded from them.
     expect(rules).toContain("## Job\n\n@JOB.md");
     expect(files.get("JOB.md")).toContain("# Job");

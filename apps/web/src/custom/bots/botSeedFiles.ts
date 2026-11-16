@@ -3,9 +3,7 @@
  * Claude Code reloads CLAUDE.md from disk at session start and after compaction; the hooks
  * re-show STATE.md whenever context is new and shape the compaction summary.
  */
-import { FORK_BOT_CREW_FILE } from "@t3tools/shared/forkBotTags";
-
-import { BOT_QUIET_REPLY } from "./botThreads";
+import { FORK_BOT_CREW_FILE, FORK_BOT_QUIET_REPLY } from "@t3tools/shared/forkBotTags";
 
 export interface BotSeedFile {
   readonly relativePath: string;
@@ -84,7 +82,7 @@ A message that starts with \`Scheduled wake:\` is a wake: T3 puts that in front 
 On a wake, do the routine, update STATE.md and DIGEST.md, then report.
 
 - If something is worth your owner's attention, say it plainly and briefly, most important first.
-- If nothing is, reply with exactly \`${BOT_QUIET_REPLY}\` and nothing else. That keeps the wake silent.
+- If nothing is, reply with exactly \`${FORK_BOT_QUIET_REPLY}\` and nothing else. That keeps the wake silent.
 - A wake never creates, changes or deletes scheduled tasks, and never sends messages to this conversation. Only your owner's requests do.
 - Never take an action that cannot be undone or that reaches other people (sending, deleting, paying, posting) unless JOB.md says your owner approved that kind of action. Otherwise propose it and wait.
 - When you do take such an action, write it to the Log straight away, before anything else, and check the Log before repeating one.

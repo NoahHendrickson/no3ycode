@@ -25,8 +25,6 @@ export const FORK_BOT_SETTLED_RUN_STATUSES: ReadonlyArray<OrchestrationV2RunStat
   "failed",
   "cancelled",
 ];
-/** A wake that found nothing ends on this reply; the shell query compares these forms. */
-export { FORK_BOT_QUIET_REPLIES } from "@t3tools/shared/forkBotTags";
 
 const decodeReportRow = Schema.decodeUnknownEffect(
   Schema.fromJsonString(

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
 import type { TimelineAttempt, TimelineEntry } from "~/session-logic";
+import { quietBotWakeRunIds, withoutRuns } from "./quietBotWakes";
 import type { ChatMessage, TurnDiffSummary } from "~/types";
 
 const at = (minute: number) => `2026-11-16T14:${String(minute).padStart(2, "0")}:00.000Z`;
@@ -101,8 +102,13 @@ describe("quiet bot wakes", () => {
   });
 
   it("keeps a wake that is still running, failed, or that the owner typed into", () => {
-    const running = [wake("wake-1", 3), reply("wake-1", 4, "Nothing to report.")];
+    const running = [wake("wake-1", 3), reply("wake-1", 4, "Nothing to report.", "running")];
     expect(messageTexts(rowsFor(running, { runningRunId: "wake-1" }))).toHaveLength(2);
+    // Paged-in history without attempts: only the live run counts as unfinished.
+    const unpaged = [wake("wake-1", 3), { ...reply("wake-1", 4, "Nothing to report.") }];
+    delete (unpaged[1] as { attempt?: unknown }).attempt;
+    expect(messageTexts(rowsFor(unpaged, { runningRunId: "wake-1" }))).toHaveLength(2);
+    expect(messageTexts(rowsFor(unpaged))).toHaveLength(0);
 
     const failed = [wake("wake-1", 3), reply("wake-1", 4, "Nothing to report.", "failed")];
     expect(messageTexts(rowsFor(failed))).toHaveLength(2);
@@ -116,5 +122,46 @@ describe("quiet bot wakes", () => {
 
     const asked = [owner("b", 5, "Anything new?"), reply("b", 6, "Nothing to report.")];
     expect(messageTexts(rowsFor(asked))).toHaveLength(2);
+  });
+
+  const none = { unsettledRunId: null, failedRunIds: new Set<RunId>(), revealedMessageId: null };
+  const item = (runId: string, minute: number, fields: Record<string, unknown>): TimelineEntry => ({
+    id: `${runId}:item:${minute}`,
+    kind: "event",
+    createdAt: at(minute),
+    projectedItem: { item: { runId, parentItemId: null, ...fields } } as never,
+  });
+
+  it("keeps a wake whose question or approval the owner answered, or that hit an error", () => {
+    const quietWake = [wake("wake-1", 3), reply("wake-1", 6, "Nothing to report.")];
+    for (const type of ["user_input_request", "approval_request"]) {
+      const entries = [...quietWake, item("wake-1", 4, { type, status: "completed" })];
+      expect(quietBotWakeRunIds(entries, none).size).toBe(0);
+    }
+    const errored = [
+      ...quietWake,
+      item("wake-1", 5, {
+        type: "error",
+        status: "failed",
+        failure: { class: "provider", message: "Overloaded" },
+      }),
+    ];
+    expect(messageTexts(rowsFor(errored))).toEqual(
+      messageTexts(rowsFor(errored, { hideQuietBotWakes: false })),
+    );
+    expect(messageTexts(rowsFor(errored))).toContain("Nothing to report.");
+  });
+
+  it("drops a quiet wake from its prompt on, keeping a resumed subagent card in the earlier turn", () => {
+    const card = item("wake-1", 2, { type: "subagent", status: "completed" });
+    const entries = [
+      owner("a", 1, "Watch the repo"),
+      card,
+      wake("wake-1", 3),
+      reply("wake-1", 4, "Nothing to report."),
+    ];
+    const quiet = quietBotWakeRunIds(entries, none);
+    expect([...quiet]).toEqual(["wake-1"]);
+    expect(withoutRuns(entries, quiet)).toEqual([entries[0], card]);
   });
 });
