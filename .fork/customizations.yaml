@@ -6443,8 +6443,9 @@
     question is open. Rows name a sender other than the owner (guest name,
     Agent, Automation, T3 Code). A bookmark on each row moves the message to the
     prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
-    takes it back if removing the run fails. Messages with files or from guests
-    are not stashable. ChatView mounts it in the composer dock, not the
+    takes it back, with any entry it evicted, if removing the run fails
+    (promptStashStore.unstashEntry, fenced). Messages with files, design changes,
+    or from guests are not stashable. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
     Mobile keeps upstream's queue.
   tier: 4
@@ -6461,6 +6462,8 @@
     - apps/web/src/components/chat/ChatComposer.tsx
     # Upstream's unmounted queue; the banner reuses its handle and edit types.
     - apps/web/src/components/chat/QueuedRunsControl.tsx
+    # Carries the fenced unstashEntry rollback for move-to-stash.
+    - apps/web/src/promptStashStore.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
   verify:

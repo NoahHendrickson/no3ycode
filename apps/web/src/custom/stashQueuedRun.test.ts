@@ -15,7 +15,16 @@ import {
   responseContextReference,
 } from "~/lib/composerContextRecords";
 import { formatInlineContextReference } from "~/lib/composerContextReferences";
-import { queuedRunStashContent } from "./stashQueuedRun";
+import {
+  MAX_STASH_ENTRIES,
+  usePromptStashStore,
+  writePromptStashStorageForTest,
+} from "~/promptStashStore";
+import {
+  moveQueuedRunToStash,
+  queuedRunStashBlockReason,
+  queuedRunStashContent,
+} from "./stashQueuedRun";
 
 describe("queuedRunStashContent", () => {
   it("moves the reply chip to a record, keeps image chips on their composer id, and keeps a trailing chip parseable", () => {
@@ -59,5 +68,43 @@ describe("queuedRunStashContent", () => {
       records: [reply, machine],
       imageIdByAttachmentId: new Map([["thread-1-attachment-1", "composer-image-1"]]),
     });
+  });
+});
+
+describe("queuedRunStashBlockReason", () => {
+  it("keeps a message with design changes queued", () => {
+    expect(
+      queuedRunStashBlockReason({
+        text: "Tweak it\n\n<design_change_request>\nMake the button blue\n</design_change_request>",
+        attachments: [],
+        guest: false,
+      }),
+    ).toBe("Messages with design changes cannot be stashed");
+  });
+});
+
+describe("moveQueuedRunToStash", () => {
+  it("restores a full stash, evicted entry included, when the run cannot be removed", async () => {
+    const entries = Array.from({ length: MAX_STASH_ENTRIES }, (_, index) => ({
+      id: `entry-${index}`,
+      createdAt: "2026-11-16T00:00:00.000Z",
+      prompt: `prompt ${index}`,
+      attachments: [],
+      droppedImageNames: [],
+    }));
+    writePromptStashStorageForTest(JSON.stringify({ version: 2, state: { entries } }));
+
+    const outcome = await moveQueuedRunToStash({
+      text: "queued",
+      records: [],
+      attachments: [],
+      loadImage: () => Promise.reject(new Error("no images")),
+      cancel: () => Promise.resolve(false),
+    });
+
+    expect(outcome).toEqual({ _tag: "CancelFailed" });
+    expect(usePromptStashStore.getState().entries.map((entry) => entry.id)).toEqual(
+      entries.map((entry) => entry.id),
+    );
   });
 });
