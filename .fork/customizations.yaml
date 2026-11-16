@@ -6441,12 +6441,19 @@
     and keeps upstream's later behavior: Send now starts a held queue when
     idle, guest messages are not editable, and editing is blocked while a
     question is open. Rows name a sender other than the owner (guest name,
-    Agent, Automation, T3 Code). ChatView mounts it in the composer dock, not the
+    Agent, Automation, T3 Code). A bookmark on each row moves the message to the
+    prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
+    takes it back, with any entry it evicted, if removing the run fails
+    (promptStashStore.unstashEntry, fenced). Messages with files, design changes,
+    or from guests are not stashable. An image the stash cannot keep aborts the move,
+    since removing the run deletes the server copy. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
     Mobile keeps upstream's queue.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/stashQueuedRun.ts
+    - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
   shadows: []
   watch:
@@ -6456,6 +6463,10 @@
     - apps/web/src/components/chat/ChatComposer.tsx
     # Upstream's unmounted queue; the banner reuses its handle and edit types.
     - apps/web/src/components/chat/QueuedRunsControl.tsx
+    # Carries the fenced unstashEntry rollback for move-to-stash.
+    - apps/web/src/promptStashStore.ts
+    # stashQueuedRun.ts copies its image pipeline and entry shape.
+    - apps/web/src/components/chat/useComposerStash.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
   verify:

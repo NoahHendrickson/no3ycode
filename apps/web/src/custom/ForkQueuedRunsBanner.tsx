@@ -10,6 +10,7 @@ import type {
   ThreadId,
 } from "@t3tools/contracts";
 import {
+  BookmarkIcon,
   Clock3Icon,
   CornerUpRightIcon,
   GripVerticalIcon,
@@ -19,6 +20,9 @@ import {
 import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
 
 import { useAssetUrls } from "~/assets/assetUrls";
+import { MAX_STASH_ENTRIES } from "~/promptStashStore";
+import { assetEnvironment } from "~/state/assets";
+import { useAtomQueryRunner } from "~/state/use-atom-query-runner";
 import { threadEnvironment } from "~/state/threads";
 import { useThreadProjection } from "~/state/entities";
 import { useAtomCommand } from "~/state/use-atom-command";
@@ -31,7 +35,13 @@ import type {
 } from "~/components/chat/QueuedRunsControl";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { toastManager } from "~/components/ui/toast";
 import { extractTrailingDesignChanges } from "~/custom/designMode/designChangeTranscript";
+import {
+  loadQueuedImage,
+  moveQueuedRunToStash,
+  queuedRunStashBlockReason,
+} from "~/custom/stashQueuedRun";
 
 interface QueuedRowThumbnail {
   readonly key: string;
@@ -95,6 +105,10 @@ export function ForkQueuedRunsBanner({
   const promote = useAtomCommand(threadEnvironment.promoteQueuedRun);
   const resume = useAtomCommand(threadEnvironment.resumeThreadQueue);
   const cancel = useAtomCommand(threadEnvironment.cancelQueuedRun);
+  const createAssetUrl = useAtomQueryRunner(assetEnvironment.createUrl, {
+    reportFailure: false,
+    refresh: true,
+  });
   const [expanded, setExpanded] = useState(true);
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
@@ -137,6 +151,12 @@ export function ForkQueuedRunsBanner({
       // A guest's message keeps the guest's words; the owner can cancel it, not rewrite it.
       editable: context?.guest === undefined,
       attachments,
+      records: context?.records ?? [],
+      // Without its message the row shows a placeholder, and stashing it would lose the real one.
+      stashBlockedReason:
+        message === undefined
+          ? "This message is still loading"
+          : queuedRunStashBlockReason({ text, attachments, guest: context?.guest !== undefined }),
       thumbnails: attachments
         .filter((attachment) => attachment.type === "image")
         .map<QueuedRowThumbnail>((attachment) => ({
@@ -155,6 +175,8 @@ export function ForkQueuedRunsBanner({
       text: message.text,
       editable: true,
       attachments: [] as ReadonlyArray<ContractChatAttachment>,
+      records: [],
+      stashBlockedReason: null,
       thumbnails: (message.attachments ?? [])
         .filter(isImageAttachment)
         .map<QueuedRowThumbnail>((attachment) => ({
@@ -246,6 +268,61 @@ export function ForkQueuedRunsBanner({
       input: { threadId: props.threadId, runId },
     });
     setBusyRunId(null);
+  };
+
+  const stash = async (item: (typeof items)[number]) => {
+    const runId = item.runId;
+    if (runId === null) return;
+    setBusyRunId(runId);
+    const outcome = await moveQueuedRunToStash({
+      text: item.text,
+      records: item.records,
+      attachments: item.attachments,
+      loadImage: (image) =>
+        loadQueuedImage({ image, environmentId: props.environmentId, createAssetUrl }),
+      cancel: async () =>
+        (
+          await cancel({
+            environmentId: props.environmentId,
+            input: { threadId: props.threadId, runId },
+          })
+        )._tag === "Success",
+    });
+    setBusyRunId(null);
+    if (outcome._tag === "ImagesFailed") {
+      toastManager.add({
+        type: "error",
+        title: "Could not stash this message",
+        description: `${outcome.imageNames.join(", ")} could not be saved to the stash, so the message stays queued.`,
+        data: { hideCopyButton: true },
+      });
+    }
+    if (outcome._tag === "WriteFailed") {
+      toastManager.add({
+        type: "error",
+        title: "Could not stash this message",
+        description: "Browser storage rejected the write, so the message stays queued.",
+        data: { hideCopyButton: true },
+      });
+    }
+    if (outcome._tag !== "Moved") return;
+    if (outcome.evicted) {
+      toastManager.add({
+        type: "warning",
+        title: "Oldest stashed prompt discarded",
+        description: `The stash holds ${MAX_STASH_ENTRIES} prompts; the oldest was removed to make room.`,
+        data: { hideCopyButton: true },
+      });
+    }
+    if (!outcome.durable) {
+      toastManager.add({
+        type: "warning",
+        title: "Stashed message will not survive a reload",
+        description:
+          "Browser storage is unavailable, so this stash is kept in memory only for this session.",
+        data: { hideCopyButton: true },
+      });
+    }
   };
 
   const sendLabel = workflow?.canSendNow ? "Send now" : "Steer";
@@ -477,6 +554,24 @@ export function ForkQueuedRunsBanner({
                             {props.editBlockedReason ??
                               `Edit in the composer${item.serverIndex === queued.length - 1 && props.editShortcutLabel ? ` (${props.editShortcutLabel})` : ""}`}
                           </TooltipPopup>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger render={<span className="flex shrink-0" />}>
+                            <Button
+                              size="icon-xs"
+                              variant="ghost-muted"
+                              aria-label="Move queued message to stash"
+                              disabled={
+                                item.runId === null ||
+                                busyRunId !== null ||
+                                item.stashBlockedReason !== null
+                              }
+                              onClick={() => void stash(item)}
+                            >
+                              <BookmarkIcon />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipPopup>{item.stashBlockedReason ?? "Move to stash"}</TooltipPopup>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger render={<span className="flex shrink-0" />}>

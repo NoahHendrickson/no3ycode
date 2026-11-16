@@ -17,6 +17,7 @@ function read(relativePath: string): string {
 const chatView = read("../components/ChatView.tsx");
 const composer = read("../components/chat/ChatComposer.tsx");
 const banner = read("../custom/ForkQueuedRunsBanner.tsx");
+const stashStore = read("../promptStashStore.ts");
 const commands = read("../../../../packages/client-runtime/src/operations/commands.ts");
 const threadCommands = read("../../../../packages/client-runtime/src/state/threadCommands.ts");
 
@@ -33,13 +34,16 @@ describe("fork-queued-runs-banner", () => {
     );
   });
 
-  it("renders the collapsible banner with reorder, steer, edit and remove", () => {
+  it("renders the collapsible banner with reorder, steer, edit, stash and remove", () => {
     expect(banner).toContain("<ComposerBanner.Attachment>");
     expect(banner).toContain("<ComposerBanner.ToggleIcon expanded={expanded} />");
     expect(banner).toContain("useAtomCommand(threadEnvironment.reorderQueuedRun)");
     expect(banner).toContain("<GripVerticalIcon />");
     expect(banner).toContain('aria-label="Edit queued message"');
     expect(banner).toContain('aria-label="Remove queued message"');
+    expect(banner).toContain('aria-label="Move queued message to stash"');
+    expect(banner).toContain("await moveQueuedRunToStash({");
+    expect(stashStore).toContain("unstashEntry: (entryId, evicted) => {");
     expect(banner).toContain('workflow?.canSendNow ? "Send now" : "Steer"');
   });
 
