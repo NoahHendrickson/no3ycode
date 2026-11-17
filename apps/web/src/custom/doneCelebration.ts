@@ -49,6 +49,7 @@ export function useDoneCelebration(
         : "other";
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the DOM when the mark's status changes, keyed across remounts
   useEffect(() => {
+    let live = true;
     const element = dot.current;
     const now = performance.now();
     const finished = kind === "done" && transitions.leftWorking(threadKey, now);
@@ -60,11 +61,14 @@ export function useDoneCelebration(
         const row = element.closest("[data-thread-item], [data-fork-thread-tab]");
         const mascot = row?.querySelector<SVGElement>("svg[data-fork-bot-mascot]") ?? null;
         void landed(element).then(() => {
-          if (element.isConnected && isOnScreen(element)) celebrateDone(element, mascot);
+          if (live && element.isConnected && isOnScreen(element)) celebrateDone(element, mascot);
         });
       }
     }
-    return () => transitions.leave(threadKey, kind, performance.now());
+    return () => {
+      live = false;
+      transitions.leave(threadKey, kind, performance.now());
+    };
   }, [threadKey, kind, dot]);
 }
 
