@@ -21,6 +21,7 @@ import {
   filterBotWork,
   groupBotWork,
   withBotWorkAttention,
+  workingBotKeys,
 } from "../custom/bots/botWork";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { botWorkRowThreadId } from "../custom/bots/botWorkRoster";
@@ -56,7 +57,7 @@ const threadsPanel = readSibling("../custom/bots/BotThreadsPanel.tsx");
 
 const AT = "2026-11-14T12:00:00.000Z";
 
-function runtime(status: "running" | "failed"): NonNullable<Thread["runtime"]> {
+function runtime(status: "running" | "failed" | "idle"): NonNullable<Thread["runtime"]> {
   return {
     status,
     activeRunId: null,
@@ -179,6 +180,51 @@ describe("fork guard: fork-bot-work-threads", () => {
       status: "working",
       botWork: null,
     });
+  });
+
+  it("draws a bot at work as working: its own turn, waiting on a thread too, or its work running", () => {
+    const card = (thread: Thread) =>
+      resolveSidebarV2CardStatus(thread, { lastVisitedAt: undefined, wokeAt: null });
+    const working = (threads: ReadonlyArray<Thread>) =>
+      workingBotKeys(threads).has("environment-test:mail");
+    const waits = bot("mail", { runtime: runtime("running"), blockedOnThreadWait: true });
+    expect(working([waits])).toBe(true);
+    expect(working([bot("mail"), work("runs", "mail", { runtime: runtime("running") })])).toBe(
+      true,
+    );
+    const subagent = makeThreadFixture({
+      id: "sub" as Thread["id"],
+      runtime: runtime("running"),
+      lineage: {
+        rootThreadId: ThreadId.make("mail"),
+        parentThreadId: ThreadId.make("mail"),
+        relationshipToParent: "subagent",
+      },
+    });
+    expect(working([bot("mail"), subagent])).toBe(true);
+    expect(working([bot("mail"), work("idle", "mail")])).toBe(false);
+    expect(
+      working([
+        bot("mail"),
+        work("put-away", "mail", { runtime: runtime("running"), archivedAt: AT }),
+      ]),
+    ).toBe(false);
+
+    expect(withBotWorkAttention(card(waits), null, true)).toMatchObject({
+      status: "working",
+      topStatus: { mark: "working" },
+      botWork: null,
+    });
+    const asks = { status: "approval", count: 1 } as const;
+    expect(withBotWorkAttention(card(waits), asks, true).status).toBe("approval");
+    // Idle with only a roster still alive, nothing of it running: Monitoring.
+    const monitors = bot("mail", {
+      runtime: runtime("idle"),
+      pendingBackgroundTasks: [
+        { taskId: "bg-1", description: "Watch build", kind: "monitor", awaited: true },
+      ],
+    });
+    expect(withBotWorkAttention(card(monitors), null, false).topStatus?.mark).toBe("monitoring");
   });
 
   it("groups a bot's work by the sidebar's status sections, what needs the owner first", () => {

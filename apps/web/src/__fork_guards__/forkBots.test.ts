@@ -234,11 +234,8 @@ describe("fork guard: fork-bots", () => {
     expect(sidebar).toContain("<SidebarV2BotCardBody");
     // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
     expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
-    expect(sidebar).toContain('quietWorking={cardKind === "bot" || cardKind === "bot-compact"}');
-    // A working bot card breathes the monitoring dot; an empty status slot was the bug.
-    expect(indicator).toMatch(
-      /status\.mark === "monitoring" \|\|\s+\(status\.mark === "working" && props\.quietWorking === true\) \? \(\s+<SidebarV2MonitoringMark \/>/,
-    );
+    // A working bot card draws the working mark like any other card, not the monitoring breath.
+    expect(indicator).not.toContain("quietWorking");
     expect(sidebar).toContain("<BotMascotLead");
   });
 

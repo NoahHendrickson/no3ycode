@@ -99,22 +99,60 @@ export function botWorkAttentionByBot(
   return byBot;
 }
 
+/** Running now: a turn under way, or one blocked waiting on a thread it started. */
+function isRunning(thread: EnvironmentThreadShell): boolean {
+  const status = resolveSidebarThreadStatus(thread);
+  return (
+    status === "working" ||
+    status === "preparing" ||
+    (status === "waiting" && thread.runtime?.status === "running")
+  );
+}
+
+/** The bots (`environmentId:threadId`) at work: a turn of their own running, blocked on a thread
+    wait too, or a thread in their Threads panel (launched work or a subagent) running. */
+export function workingBotKeys(
+  threads: ReadonlyArray<EnvironmentThreadShell>,
+): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const thread of threads) {
+    if (thread.archivedAt !== null || !isRunning(thread)) continue;
+    const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
+    if (botId !== undefined) keys.add(`${thread.environmentId}:${botId}`);
+  }
+  return keys;
+}
+
 /** A bot card's status with its work's: what needs the owner outranks a bot that is idle or has
-    only a report to read; a bot working or blocked itself keeps its own. */
+    only a report to read, then a bot at work (workingBotKeys) draws working; a bot working or
+    blocked itself keeps its own. */
 export function withBotWorkAttention(
   card: SidebarV2CardStatus,
   attention: BotWorkAttention | null | undefined,
+  working = false,
 ): SidebarV2CardStatus & { readonly botWork: BotWorkAttention | null } {
-  if (attention == null || (card.status !== "ready" && card.status !== "waiting")) {
+  if (card.status !== "ready" && card.status !== "waiting") {
     return { ...card, botWork: null };
   }
-  return {
-    ...card,
-    status: attention.status,
-    kind: attention.status,
-    topStatus: sidebarV2CardTopStatus(attention.status, { goalActive: false }),
-    botWork: attention,
-  };
+  if (attention != null) {
+    return {
+      ...card,
+      status: attention.status,
+      kind: attention.status,
+      topStatus: sidebarV2CardTopStatus(attention.status, { goalActive: false }),
+      botWork: attention,
+    };
+  }
+  if (working) {
+    return {
+      ...card,
+      status: "working",
+      kind: "working",
+      topStatus: sidebarV2CardTopStatus("working", { goalActive: false }),
+      botWork: null,
+    };
+  }
+  return { ...card, botWork: null };
 }
 
 /** A bot card's status line for its work. */

@@ -7047,8 +7047,8 @@
     nextRunAt). A compact bot card keeps the mascot at one pixel per cell before
     the title. The mascot's mood follows the thread: Thinking while it works,
     Happy with an unread report, Error after a failed run, Sleeping between
-    wakes, Idle while it is open or waiting on you; so a working bot card
-    breathes the monitoring dot in place of the working mark (helix or rain).
+    wakes, Idle while it is open or waiting on you. Its status mark is any card's, so a working
+    bot draws the working mark chosen in Appearance.
     A bot's conversation is the composer alone, as a chat's is (it sets the
     chat column's data-fork-chat-thread).
 
@@ -7182,7 +7182,10 @@
     botWorkAttentionByBot, one pass over the shells the sidebar holds): approval or an answer,
     from a settled thread too, since one can ask again; and a failure, until the owner has
     opened the thread or settled it, so a read failure does not hold the card: the mark and status line take it over the bot's own idle, waiting or unread states,
-    never over the bot working or blocked itself.
+    never over the bot working or blocked itself. Below that, a bot at work draws the working
+    mark (botWork workingBotKeys): its own turn running, waiting on a thread included, or any
+    unarchived thread in its Threads panel running, so a bot waiting on its work never reads as
+    Monitoring.
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
     bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary

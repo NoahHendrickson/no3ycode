@@ -394,6 +394,7 @@ import {
   type BotWorkAttention,
   botWorkAttentionByBot,
   withBotWorkAttention,
+  workingBotKeys,
 } from "~/custom/bots/botWork";
 import { botWorkRowThreadId } from "~/custom/bots/botWorkRoster";
 import { openBotThreadsPanel } from "~/custom/bots/botThreadsPanelStore";
@@ -1082,6 +1083,8 @@ type SidebarThreadRowProps = {
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
   /** A bot card's launched threads that need the owner (custom/bots/botWork). */
   botWork?: BotWorkAttention | null;
+  /** A bot card's own turn or a thread in its Threads panel is running (custom/bots/botWork). */
+  botWorking?: boolean;
   /* fork:end fork-bot-work-threads */
   isActive: boolean;
   // Unlike isActive, never true for the ancestor standing in for an open
@@ -1266,6 +1269,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       }),
       /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
       props.botWork,
+      props.botWorking,
     );
   /* fork:end fork-bot-work-threads */
   /* fork:end sidebar-v2-status-grouping */
@@ -2153,11 +2157,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             status={topStatus}
             seed={threadKey}
             idle={showDiscardDraft ? "draft" : "dot"}
-            /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-                       A working bot's mascot is already thinking, so the mark
-                       is the monitoring breath, not the rain. */
-            quietWorking={cardKind === "bot" || cardKind === "bot-compact"}
-            /* fork:end fork-bots */
           />
         </span>
         {/* fork:end sidebar-v2-card-rows */}
@@ -2436,6 +2435,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end fork-bot-rules-refresh */
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
   const botWorkAttention = botWorkAttentionByBot(threads);
+  const workingBots = workingBotKeys(threads);
   // Picking a bot whose work needs you opens its Threads panel, so that work is in view.
   const openBotWorkOnPick = useStableCallback((threadRef: ScopedThreadRef) => {
     if (botWorkAttention.has(scopedThreadKey(threadRef))) openBotThreadsPanel(threadRef);
@@ -5135,6 +5135,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       /* fork:end fork-bots */
       /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
       readonly botWork?: BotWorkAttention | null;
+      readonly botWorking?: boolean;
       /* fork:end fork-bot-work-threads */
     } = {},
   ) => {
@@ -5228,6 +5229,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         wokeAt={threadWokeAt(thread, { now: snoozeNow })}
         /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
         botWork={options.botWork ?? null}
+        botWorking={options.botWorking === true}
         /* fork:end fork-bot-work-threads */
         isActive={routeRowThreadKey === threadKey}
         revealRef={routeRowThreadKey === threadKey ? revealActiveRow : undefined}
@@ -5341,6 +5343,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       botWorkAttention.get(
                         scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
                       ) ?? null,
+                    botWorking: workingBots.has(
+                      scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
+                    ),
                     /* fork:end fork-bot-work-threads */
                   }),
                 )}
