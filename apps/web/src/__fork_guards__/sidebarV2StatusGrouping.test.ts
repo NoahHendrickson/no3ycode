@@ -25,8 +25,8 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
   it("offers the option beside Group by project, exclusive with it", () => {
     expect(chromeRows).toContain("Group by status");
     // One grouping value, so the two switches cannot both be on.
-    expect(chromeRows).toContain('value="status"');
-    expect(chromeRows).toContain('value="none"');
+    expect(chromeRows).toContain('value: "status"');
+    expect(chromeRows).toContain('value: "none"');
     expect(sidebar).toContain("onGroupingChange={setGrouping}");
     expect(sidebar).toContain('const statusGrouped = grouping === "status";');
   });
@@ -83,17 +83,15 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
     expect(sidebar).toContain('data-testid="sidebar-v2-snoozed-shelf-toggle"');
   });
 
-  it("gives the settled tail the status header while status grouping is on", () => {
+  it("gives the settled tail the status header in every grouping", () => {
     // settledCount includes older settled threads the server has not sent yet.
-    expect(sidebar).toContain("const settledSectionShown = statusGrouped && settledCount > 0;");
+    expect(sidebar).toContain("const settledSectionShown = settledCount > 0;");
     expect(sidebar).toMatch(
       /if \(settledSectionShown\) \{[\s\S]{0,700}?\} else[\s\S]{0,120}?if \(settledCount > 0\) \{/u,
     );
     expect(sidebar).toContain('section="settled"');
     expect(sidebar).toContain("count={settledCount}");
     expect(sidebar).toContain("collapsed={!settledShelfExpanded}");
-    // Flat and project modes keep the hairline shelf header.
-    expect(sidebar).toContain('data-testid="sidebar-v2-settled-shelf-toggle"');
   });
 
   it("keeps the Working shelf beta out of the way while status grouping is on", () => {

@@ -258,7 +258,7 @@ describe("sidebar settled pagination", () => {
     );
     const shelf = screen.container.querySelector<HTMLElement>(
       // fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
-      '[data-testid="sidebar-v2-settled-shelf-toggle"]',
+      '[data-testid="sidebar-v2-status-section-toggle"][data-status="settled"]',
       // fork:end sidebar-v2-status-grouping
     )!;
     if (shelf.getAttribute("aria-expanded") === "false") await act(() => shelf.click());

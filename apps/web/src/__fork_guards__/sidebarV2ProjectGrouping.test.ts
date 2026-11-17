@@ -33,16 +33,17 @@ const chromeRows = readSibling("../custom/SidebarV2ChromeRows.tsx");
 describe("fork guard: sidebar-v2-project-grouping", () => {
   it("offers the option from the Threads filter menu", () => {
     expect(chromeRows).toContain("Group by project");
-    // One radio group over the single grouping value.
+    // One radio group over the single grouping value, drawn as icon tabs.
     expect(chromeRows).toContain("props.onGroupingChange(value as SidebarV2Grouping)");
-    expect(chromeRows).toMatch(/<OptionRadioItem\s+value="project"/u);
+    expect(chromeRows).toContain('value: "project"');
+    expect(chromeRows).toContain("<MenuPrimitive.RadioGroup");
     // Toggling a view preference must not dismiss the menu it lives in.
     expect(chromeRows).toContain("closeOnClick={false}");
     expect(sidebar).toContain("grouping={grouping}");
     expect(sidebar).toContain('const groupByProject = grouping === "project";');
     // Where grouping can draw no header, the switch says so rather than
     // accepting a click that does nothing.
-    expect(chromeRows).toContain("disabled={props.groupByProjectUnavailableReason !== null}");
+    expect(chromeRows).toContain("disabled={unavailableReason !== null}");
     expect(sidebar).toContain("groupByProjectUnavailableReason=");
   });
 

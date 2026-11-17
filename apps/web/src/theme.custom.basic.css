@@ -274,9 +274,10 @@
   border-radius: 8px;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [aria-label="Sidebar mode"],
+/* The Code / Chat switch and the Threads menu's Group by tabs, which share its look. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-sidebar-mode-tabs],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [aria-label="Sidebar mode"]
+  [data-fork-sidebar-mode-tabs]
   > button {
   border-radius: 8px;
 }

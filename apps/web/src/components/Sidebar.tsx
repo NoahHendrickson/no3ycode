@@ -3201,10 +3201,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      shown only while something is pinned, and it collapses the same way: the
      open thread stays visible. Flat and project modes keep the divider. */
   const pinnedSectionShown = statusGrouped && pinnedThreads.length > 0;
-  // The snoozed shelf and the settled tail take the same header in place of
-  // their shelf headers.
+  // The snoozed shelf takes the same header in place of its shelf header while
+  // status grouping is on; the settled tail takes it in every grouping, so it
+  // reads the same however the cards above it are sectioned.
   const snoozedSectionShown = statusGrouped && snoozedThreads.length > 0;
-  const settledSectionShown = statusGrouped && settledCount > 0;
+  const settledSectionShown = settledCount > 0;
   const pinnedCollapsed = pinnedSectionShown && collapsedStatusSections.has("pinned");
   const keepCollapsedPinnedRow = useCallback(
     (thread: EnvironmentThreadShell) =>
@@ -5919,9 +5920,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       items.push(renderThreadRow(thread, "snoozed"));
                     }
                     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
-                       Same header as the status sections. The hairline shelf
-                       below stays for flat and project modes, and the tail's
-                       own expanded flag still decides which rows paint. */
+                       Same header as the status sections in every grouping,
+                       which leaves upstream's hairline shelf below unreached;
+                       the tail's own expanded flag still decides which rows
+                       paint. */
                     if (settledSectionShown) {
                       items.push(
                         <SidebarV2StatusSectionHeader

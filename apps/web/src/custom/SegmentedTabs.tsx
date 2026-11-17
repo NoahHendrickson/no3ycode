@@ -6,7 +6,7 @@
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 
-import { useLayoutEffect, useRef } from "react";
+import { type RefObject, useLayoutEffect, useRef } from "react";
 
 import { cn } from "~/lib/utils";
 
@@ -50,8 +50,9 @@ function settle(glide: Glide) {
   glide.tab.style.removeProperty("z-index");
 }
 
-export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
-  const group = useRef<HTMLDivElement>(null);
+/** Glides the pressed tab of `group` to its new place on every render that moves it. Exported
+    for tab strips built from other primitives, such as menu radio items. */
+export function useSegmentedTabsGlide(group: RefObject<HTMLElement | null>) {
   const shownTab = useRef<HTMLElement | null>(null);
   const running = useRef<Glide | null>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the DOM when the pressed tab moves, reading both positions in one layout before paint
@@ -73,6 +74,11 @@ export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
       () => {},
     );
   });
+}
+
+export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
+  const group = useRef<HTMLDivElement>(null);
+  useSegmentedTabsGlide(group);
 
   return (
     <ToggleGroup
