@@ -1639,7 +1639,7 @@
 
     Eleven tones (Figma t3-fork 729:28816 for the dark ones): Light #f7f7f7,
     Cream #f8f3d8, and three dark depths in three temperatures. Darkest, Darker,
-    Dark: warm #1b1714, #25211d, #2e2a25; cool #16181b, #202226, #2e3138;
+    Dark: warm #1b1714, #2c2a28, #3e3c3a; cool #16181b, #202226, #2e3138;
     neutral #171717, #232323, #2b2b2b. The warm tones sit a step warmer than
     the Figma frames, and Dark Neutral keeps the retired Neutral Dark's
     #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
