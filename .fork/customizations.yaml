@@ -7179,13 +7179,13 @@
     unchanged.
 
     A bot's card says when its unpinned work needs the owner (custom/bots/botWork
-    botWorkAttentionByBot, one pass over the shells the sidebar holds): approval or an answer,
+    botWorkByBot, one pass over the shells the sidebar holds): approval or an answer,
     from a settled thread too, since one can ask again; and a failure, until the owner has
     opened the thread or settled it, so a read failure does not hold the card: the mark and status line take it over the bot's own idle, waiting or unread states,
     never over the bot working or blocked itself. Below that, a bot at work draws the working
-    mark (botWork workingBotKeys): its own turn running, waiting on a thread included, or any
-    unarchived thread in its Threads panel running, so a bot waiting on its work never reads as
-    Monitoring.
+    mark (the same pass): its own turn running, waiting on a thread included, or any unarchived
+    thread in its Threads panel running, pinned or not, so a bot waiting on its work never reads
+    as Monitoring. An unread report or a wake keeps its own mark over running work.
 
     A bot's conversation and each of its threads (a launched thread, or a subagent) have the
     bot's Threads panel, while the bot is not archived (an archived bot's threads are ordinary

@@ -5,7 +5,13 @@
  */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 
-import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "~/components/Sidebar.logic";
+import { THREAD_STATUS_TEXT } from "@t3tools/client-runtime/state/thread-activity-announcement";
+
+import {
+  resolveSidebarThreadStatus,
+  resolveWindowTitleThreadStatus,
+  type SidebarThreadStatus,
+} from "~/components/Sidebar.logic";
 
 import {
   resolveSidebarV2CardStatus,
@@ -71,88 +77,80 @@ function failureUnread(thread: EnvironmentThreadShell): boolean {
   return Number.isNaN(failedAt) || Number.isNaN(visitedAt) || failedAt > visitedAt;
 }
 
-/** Per bot (`environmentId:threadId`), its unpinned launched threads that need the owner.
-    Archived threads are put away, and so are settled ones unless they ask for the owner again;
-    a failure counts until the owner has opened it. */
-export function botWorkAttentionByBot(
+/** What a bot's work says on its card. `attention`: its unpinned launched threads that need
+    the owner (a pinned one shows on its own card). `working`: the bot's own turn, or anything in
+    its Threads panel, pinned or not, is running. */
+export interface BotWork {
+  readonly attention: BotWorkAttention | null;
+  readonly working: boolean;
+}
+
+/** Running now, waiting on a thread included and a guest's message ignored: the window
+    title's rule for "working". */
+function isRunning(thread: EnvironmentThreadShell): boolean {
+  return resolveWindowTitleThreadStatus(thread) === THREAD_STATUS_TEXT.working;
+}
+
+/** Per bot (`environmentId:threadId`), its work in one pass. Archived threads are put away, and
+    so are settled ones unless they ask for the owner again; a failure counts until the owner has
+    opened it. */
+export function botWorkByBot(
   threads: ReadonlyArray<EnvironmentThreadShell>,
-): ReadonlyMap<string, BotWorkAttention> {
-  const byBot = new Map<string, BotWorkAttention>();
+): ReadonlyMap<string, BotWork> {
+  const byBot = new Map<string, { attention: BotWorkAttention | null; working: boolean }>();
+  const entry = (key: string) => {
+    const existing = byBot.get(key);
+    if (existing !== undefined) return existing;
+    const created = { attention: null, working: false };
+    byBot.set(key, created);
+    return created;
+  };
   for (const thread of threads) {
+    if (thread.archivedAt !== null) continue;
+    if (isRunning(thread)) {
+      const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
+      if (botId !== undefined) entry(`${thread.environmentId}:${botId}`).working = true;
+    }
     const owner = botWorkOwnerId(thread.source);
-    if (owner === null || thread.archivedAt !== null || thread.pinnedAt !== null) continue;
+    if (owner === null || thread.pinnedAt !== null) continue;
     const status = attentionStatus(resolveSidebarThreadStatus(thread));
     if (status === null) continue;
     if (status === "failed" && (thread.settledOverride === "settled" || !failureUnread(thread))) {
       continue;
     }
-    const key = `${thread.environmentId}:${owner}`;
-    const previous = byBot.get(key);
-    byBot.set(key, {
+    const work = entry(`${thread.environmentId}:${owner}`);
+    const previous = work.attention;
+    work.attention = {
       status:
-        previous === undefined || ATTENTION_RANK[status] < ATTENTION_RANK[previous.status]
+        previous === null || ATTENTION_RANK[status] < ATTENTION_RANK[previous.status]
           ? status
           : previous.status,
       count: (previous?.count ?? 0) + 1,
-    });
+    };
   }
   return byBot;
 }
 
-/** Running now: a turn under way, or one blocked waiting on a thread it started. */
-function isRunning(thread: EnvironmentThreadShell): boolean {
-  const status = resolveSidebarThreadStatus(thread);
-  return (
-    status === "working" ||
-    status === "preparing" ||
-    (status === "waiting" && thread.runtime?.status === "running")
-  );
-}
-
-/** The bots (`environmentId:threadId`) at work: a turn of their own running, blocked on a thread
-    wait too, or a thread in their Threads panel (launched work or a subagent) running. */
-export function workingBotKeys(
-  threads: ReadonlyArray<EnvironmentThreadShell>,
-): ReadonlySet<string> {
-  const keys = new Set<string>();
-  for (const thread of threads) {
-    if (thread.archivedAt !== null || !isRunning(thread)) continue;
-    const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
-    if (botId !== undefined) keys.add(`${thread.environmentId}:${botId}`);
-  }
-  return keys;
-}
-
-/** A bot card's status with its work's: what needs the owner outranks a bot that is idle or has
-    only a report to read, then a bot at work (workingBotKeys) draws working; a bot working or
-    blocked itself keeps its own. */
+/** A bot card's status with its work's, over the bot's own idle or waiting state only: what
+    needs the owner first, then working, unless an unread report or a wake is news to keep. */
 export function withBotWorkAttention(
   card: SidebarV2CardStatus,
-  attention: BotWorkAttention | null | undefined,
-  working = false,
+  work: BotWork | null | undefined,
 ): SidebarV2CardStatus & { readonly botWork: BotWorkAttention | null } {
-  if (card.status !== "ready" && card.status !== "waiting") {
+  const attention = work?.attention ?? null;
+  const status =
+    attention?.status ??
+    (work?.working === true && card.kind !== "done" && card.kind !== "woke" ? "working" : null);
+  if (status === null || (card.status !== "ready" && card.status !== "waiting")) {
     return { ...card, botWork: null };
   }
-  if (attention != null) {
-    return {
-      ...card,
-      status: attention.status,
-      kind: attention.status,
-      topStatus: sidebarV2CardTopStatus(attention.status, { goalActive: false }),
-      botWork: attention,
-    };
-  }
-  if (working) {
-    return {
-      ...card,
-      status: "working",
-      kind: "working",
-      topStatus: sidebarV2CardTopStatus("working", { goalActive: false }),
-      botWork: null,
-    };
-  }
-  return { ...card, botWork: null };
+  return {
+    ...card,
+    status,
+    kind: status,
+    topStatus: sidebarV2CardTopStatus(status, { goalActive: false }),
+    botWork: attention,
+  };
 }
 
 /** A bot card's status line for its work. */
