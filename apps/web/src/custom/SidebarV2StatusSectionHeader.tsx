@@ -12,9 +12,9 @@
  * click does: up to collapse an open section, down to expand a closed one. It
  * is always laid out, so appearing never shifts the row.
  *
- * The pinned block and the settled tail take the same header while status
- * grouping is on, so every group in the list reads the same way; `section`
- * is "pinned" or "settled" there.
+ * The pinned block takes the same header while status grouping is on, and the
+ * settled tail takes it in every grouping, so every group in the list reads the
+ * same way; `section` is "pinned" or "settled" there.
  *
  * Clicking it collapses the section; the count is already on screen, so a
  * collapsed header needs nothing extra to say how many cards it hides. The

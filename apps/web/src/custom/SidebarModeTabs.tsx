@@ -9,6 +9,13 @@ import type { ForkSidebarMode } from "./chatMode";
 import { CodeIcon, MessageSquareTextIcon } from "./icons/lucide-phosphor";
 import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 
+/** The switch's track and icon tab, whose shape the Threads menu's Group by tabs share.
+    Only this switch carries data-fork-sidebar-mode-tabs, so the themes' dressing stays its own. */
+export const SIDEBAR_ICON_TABS_TRACK =
+  "h-7 shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface";
+export const SIDEBAR_ICON_TAB =
+  "size-7 rounded-xl border border-transparent px-0 text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground";
+
 const MODES = [
   { mode: "code", label: "Code", Icon: CodeIcon },
   { mode: "chat", label: "Chat", Icon: MessageSquareTextIcon },
@@ -27,17 +34,13 @@ export function SidebarModeTabs(props: {
         if (next === "code" || next === "chat") props.onModeChange(next);
       }}
       data-fork-sidebar-mode-tabs=""
-      className="h-7 shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface"
+      className={SIDEBAR_ICON_TABS_TRACK}
     >
       {MODES.map(({ mode, label, Icon }) => (
         <Tooltip key={mode}>
           <TooltipTrigger
             render={
-              <SegmentedTab
-                value={mode}
-                aria-label={label}
-                className="size-7 rounded-xl border border-transparent px-0 text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground"
-              >
+              <SegmentedTab value={mode} aria-label={label} className={SIDEBAR_ICON_TAB}>
                 <Icon className="size-4" />
               </SegmentedTab>
             }

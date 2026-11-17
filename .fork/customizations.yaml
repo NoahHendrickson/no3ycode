@@ -999,7 +999,7 @@
 - id: sidebar-v2-project-grouping
   intent: >
     Sidebar V2's active cards can be grouped under project headers, from the
-    grouping radios at the top of the fork's Threads filter menu. Upstream's flat list
+    Group by tabs at the top of the fork's Threads filter menu. Upstream's flat list
     stays the default, and the preference is device-local (localStorage) rather
     than a field in packages/contracts.
 
@@ -1177,8 +1177,9 @@
 - id: sidebar-v2-status-grouping
   intent: >
     Sidebar V2's active cards can be split by status instead of by project,
-    from a "Group by status" option in the Threads filter menu: one radio
-    group of No grouping, Group by project and Group by status. Grouping is one value (useSidebarV2Grouping: none, project or
+    from the Threads filter menu's Group by row: one icon tab strip
+    (custom/SegmentedTabs) of No grouping, Group by project and Group by status,
+    the last drawn as a still frame of the working mark. Grouping is one value (useSidebarV2Grouping: none, project or
     status), so the two switches cannot both be on; it is still stored as the
     two device-local booleans the original switches shipped with, and project wins if
     both were ever stored on.
@@ -1201,12 +1202,15 @@
     shelf beta stands down and its threads paint in the Working section, the
     pinned block takes a "Pinned" header of the same style in place of its
     divider, shown only while something is pinned and collapsible like the
-    rest (the open thread stays visible), and the snoozed shelf and the settled
-    tail take "Snoozed" and "Settled" headers of that same style in place of
-    their shelf headers. Both still collapse through their own shelf flags
-    (the open thread stays visible, settled paging unchanged) and their rows
-    stay slim. Flat
-    and project modes keep the divider and the shelf header.
+    rest (the open thread stays visible), and the snoozed shelf takes a
+    "Snoozed" header of that same style in place of its shelf header. The
+    settled tail takes a "Settled" header of that style in every grouping, so
+    upstream's hairline settled shelf header is never reached: an upstream
+    change to that shelf lands in dead code, and the guard pins the header, not
+    the shelf. Both still
+    collapse through their own shelf flags (the open thread stays visible,
+    settled paging unchanged) and their rows stay slim. Flat and project modes
+    keep the pinned divider and the snoozed shelf header.
 
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
@@ -1241,7 +1245,7 @@
     # input of threadCardTitleRecedes.
     - apps/web/src/custom/sidebarV2RowPolicy.ts
     # Shared with fork-sidebar-chrome and sidebar-v2-project-grouping; this
-    # entry owns the grouping radio group.
+    # entry owns the Group by tab strip.
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
     # Shared with most fork entries; this entry owns only the status section
     # caret rule.
@@ -1258,7 +1262,7 @@
 - id: sidebar-v2-compact-cards
   intent: >
     Sidebar V2 cards can draw as a single line, from a "Compact cards" checkbox
-    in the Threads filter menu, set apart from the grouping radios. Device-local
+    in the Threads filter menu, set apart from the Group by tabs. Device-local
     (localStorage), default off; the full two-line card is unchanged.
 
     A compact card is the full card's title line alone, in the same padding,
@@ -2827,6 +2831,9 @@
     # Fenced: SidebarTrigger draws the SidebarSimple glyph open or shut, so the
     # toggle does not change shape when the panel collapses.
     - apps/web/src/components/ui/sidebar.tsx
+    # Fenced: MenuSearchInput's underline={false}, so the Threads view menu's
+    # project search can rule itself off edge to edge like its other dividers.
+    - apps/web/src/components/ui/menu.tsx
     # Styles ::-webkit-scrollbar { width: var(--app-scrollbar-width) }, which
     # is what makes the thread list's reserved lane a styled 6px at all — and
     # what the intent's cross-engine argument is anchored to. A retune the

@@ -3,10 +3,11 @@
  * compact rounded track with the selected tab raised. Used by the scheduled
  * trigger picker and the Usage page's metric, period, and breakdown tabs.
  */
+import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 
-import { useLayoutEffect, useRef } from "react";
+import { type RefObject, useLayoutEffect, useRef } from "react";
 
 import { cn } from "~/lib/utils";
 
@@ -50,8 +51,8 @@ function settle(glide: Glide) {
   glide.tab.style.removeProperty("z-index");
 }
 
-export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
-  const group = useRef<HTMLDivElement>(null);
+/** Glides the pressed tab of `group` to its new place on every render that moves it. */
+function useSegmentedTabsGlide(group: RefObject<HTMLElement | null>) {
   const shownTab = useRef<HTMLElement | null>(null);
   const running = useRef<Glide | null>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the DOM when the pressed tab moves, reading both positions in one layout before paint
@@ -73,6 +74,11 @@ export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
       () => {},
     );
   });
+}
+
+export function SegmentedTabs({ className, ...props }: ToggleGroup.Props) {
+  const group = useRef<HTMLDivElement>(null);
+  useSegmentedTabsGlide(group);
 
   return (
     <ToggleGroup
@@ -103,5 +109,52 @@ export function SegmentedTab({
     >
       <span className="inline-flex items-center justify-center">{children}</span>
     </Toggle>
+  );
+}
+
+/** The strip as a menu's radio group, for tabs inside a menu: its items join the menu's
+    keyboard navigation, and picking one leaves the menu open. Unstyled past the glide's needs;
+    the caller dresses the track and tabs. */
+export function SegmentedMenuTabs({
+  className,
+  ...props
+}: Omit<MenuPrimitive.RadioGroup.Props, "className"> & { readonly className?: string }) {
+  const group = useRef<HTMLDivElement>(null);
+  useSegmentedTabsGlide(group);
+
+  return (
+    <MenuPrimitive.RadioGroup
+      {...props}
+      ref={group}
+      data-fork-segmented-tabs
+      className={cn("isolate flex w-max items-center overflow-clip", className)}
+    />
+  );
+}
+
+/** One tab of a SegmentedMenuTabs. data-pressed mirrors the item's checked state, so the glide
+    and the themes' segmented-tab rules read it like a Toggle's. */
+export function SegmentedMenuTab({
+  className,
+  children,
+  ...props
+}: Omit<MenuPrimitive.RadioItem.Props, "className" | "closeOnClick" | "render"> & {
+  readonly className?: string;
+}) {
+  return (
+    <MenuPrimitive.RadioItem
+      {...props}
+      closeOnClick={false}
+      data-fork-segmented-tab
+      render={(itemProps, state) => (
+        <div {...itemProps} data-pressed={state.checked ? "" : undefined} />
+      )}
+      className={cn(
+        "inline-flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-disabled:cursor-default data-disabled:opacity-64",
+        className,
+      )}
+    >
+      <span className="inline-flex items-center justify-center">{children}</span>
+    </MenuPrimitive.RadioItem>
   );
 }

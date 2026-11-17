@@ -196,6 +196,7 @@ function FilmStrip(props: {
   readonly period: number;
   readonly startSeconds: number;
   readonly column?: { readonly left: number; readonly width: number };
+  readonly still?: boolean | undefined;
 }) {
   const start = wrap(props.startSeconds, props.period);
   // The outer modulo only catches floating-point error at the top of the range.
@@ -205,7 +206,11 @@ function FilmStrip(props: {
     ) % props.frames;
   return (
     <span
-      className="absolute inset-x-0 top-0 bg-sidebar-v2-status-working animate-[sidebar-v2-film_linear_infinite] motion-reduce:animate-none"
+      className={
+        props.still
+          ? "absolute inset-x-0 top-0 bg-current"
+          : "absolute inset-x-0 top-0 bg-sidebar-v2-status-working animate-[sidebar-v2-film_linear_infinite] motion-reduce:animate-none"
+      }
       style={{
         height: `${props.frames * 100}%`,
         maskImage: props.film,
@@ -245,7 +250,7 @@ const RAIN_SCALE = SLOT / HEIGHT;
     paint at visibly different widths depending on each one's subpixel offset.
     The SVG keeps the fractional geometry and antialiases it, which is what the
     native Canvas does too, so every drop stays exactly square. */
-function SidebarV2WorkingRain({ seed }: { seed: string }) {
+function SidebarV2WorkingRain({ seed, still }: { seed: string; still?: boolean | undefined }) {
   const offset = workingMarkOffsetSeconds(seed);
   const film = rainFilm();
   return (
@@ -262,6 +267,7 @@ function SidebarV2WorkingRain({ seed }: { seed: string }) {
           period={RAIN_SPAN / column.speed}
           startSeconds={column.phase / column.speed + offset}
           column={{ left: col * PITCH * RAIN_SCALE, width: CELL * RAIN_SCALE }}
+          still={still}
         />
       ))}
     </span>
@@ -322,7 +328,7 @@ const helixFilm = once(() =>
 /** A baked film rather than the chip's per-frame canvas, so a working row
     costs no requestAnimationFrame loop — seeded by the shared per-thread
     offset. */
-function SidebarV2WorkingHelix({ seed }: { seed: string }) {
+function SidebarV2WorkingHelix({ seed, still }: { seed: string; still?: boolean | undefined }) {
   return (
     <span aria-hidden className="relative block size-3 shrink-0 overflow-hidden">
       <FilmStrip
@@ -330,6 +336,7 @@ function SidebarV2WorkingHelix({ seed }: { seed: string }) {
         frames={HELIX_FRAMES}
         period={HELIX_LOOP}
         startSeconds={workingMarkOffsetSeconds(seed)}
+        still={still}
       />
     </span>
   );
@@ -342,7 +349,7 @@ const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
 
 /** One film strip, as the helix: the ring is 12px across, a step past the 10px status dots, in
     a 15px box held to the 12x14 slot. */
-function SidebarV2WorkingBeadRing({ seed }: { seed: string }) {
+function SidebarV2WorkingBeadRing({ seed, still }: { seed: string; still?: boolean | undefined }) {
   return (
     <span
       aria-hidden
@@ -353,22 +360,30 @@ function SidebarV2WorkingBeadRing({ seed }: { seed: string }) {
         frames={BEAD_RING_FRAMES}
         period={BEAD_RING_PERIOD}
         startSeconds={workingMarkOffsetSeconds(seed)}
+        still={still}
       />
     </span>
   );
 }
 
 /** The working mark every surface draws — sidebar rows, the chat working row,
-    the composer pill — in the form picked under Settings → Appearance. */
-export function SidebarV2WorkingMark({ seed }: { seed: string }) {
+    the composer pill — in the form picked under Settings → Appearance. `still`
+    draws one frame in the surrounding text colour, for using the mark as an icon. */
+export function SidebarV2WorkingMark({
+  seed,
+  still,
+}: {
+  seed: string;
+  still?: boolean | undefined;
+}) {
   const mark = useForkWorkingMark();
   switch (mark) {
     case "bead":
-      return <SidebarV2WorkingBeadRing seed={seed} />;
+      return <SidebarV2WorkingBeadRing seed={seed} still={still} />;
     case "helix":
-      return <SidebarV2WorkingHelix seed={seed} />;
+      return <SidebarV2WorkingHelix seed={seed} still={still} />;
     case "rain":
-      return <SidebarV2WorkingRain seed={seed} />;
+      return <SidebarV2WorkingRain seed={seed} still={still} />;
   }
 }
 
