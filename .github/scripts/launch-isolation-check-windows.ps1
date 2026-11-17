@@ -165,3 +165,8 @@ finally {
   Stop-App
   Remove-Item -LiteralPath $work, $scratch -Recurse -Force -ErrorAction SilentlyContinue
 }
+
+# Reached only when every check passed: each failure above exits 1 or throws.
+# The Actions pwsh wrapper exits with $LASTEXITCODE, which taskkill in Stop-App
+# can leave non-zero after a passing run.
+exit 0
