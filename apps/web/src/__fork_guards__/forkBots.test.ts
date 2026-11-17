@@ -322,6 +322,7 @@ describe("fork guard: fork-bots", () => {
     expect(mood("input")).toBe("Idle");
     expect(timeline).toContain("<BotEmptyConversation");
     expect(chatHeader).toContain("<BotHeaderMascot threadRef={activeThreadRef} />");
+    expect(chatHeader).toContain("{activeProject && !isBotThread ? (");
   });
 
   it("seeds a bot's folder with rules, state and the compaction hooks", () => {
