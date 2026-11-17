@@ -76,12 +76,28 @@ function MenuPopup({
 /** A menu's filter field, drawn like `ComboboxSearchInput` so every searchable popup matches. */
 function MenuSearchInput({
   busy = false,
+  /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
+  underline = true,
+  /* fork:end fork-sidebar-chrome */
   onKeyDown,
   ...props
-}: Omit<InputProps, "className" | "size" | "unstyled" | "nativeInput"> & { busy?: boolean }) {
+}: Omit<InputProps, "className" | "size" | "unstyled" | "nativeInput"> & {
+  busy?: boolean;
+  /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+     False for a caller that rules the field off edge to edge itself. */
+  underline?: boolean;
+  /* fork:end fork-sidebar-chrome */
+}) {
   return (
     <div className="min-w-0 shrink-0 px-2 pt-1.5 pb-1">
-      <div className="relative -translate-y-px border-b border-border/70 pb-1.5 transition-colors focus-within:border-ring">
+      <div
+        className={cn(
+          "relative -translate-y-px border-b border-border/70 pb-1.5 transition-colors focus-within:border-ring",
+          /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
+          !underline && "border-b-0 pb-0",
+          /* fork:end fork-sidebar-chrome */
+        )}
+      >
         {busy ? (
           <Spinner
             aria-hidden="true"

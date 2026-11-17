@@ -50,7 +50,14 @@ import {
   ZapIcon,
 } from "./icons/lucide-phosphor";
 import { openCommandPalette } from "~/commandPaletteBus";
-import { Menu, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "~/components/ui/menu";
+import {
+  Menu,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSearchInput,
+  MenuTrigger,
+} from "~/components/ui/menu";
 import { SidebarGroup, SidebarMenuButton, useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
@@ -72,7 +79,7 @@ import {
   SidebarV2WorkingMark,
   type SidebarV2TopStatusMark,
 } from "./SidebarV2StatusIndicator";
-import { useSegmentedTabsGlide } from "./SegmentedTabs";
+import { SegmentedMenuTab, SegmentedMenuTabs } from "./SegmentedTabs";
 import { SIDEBAR_ICON_TAB, SIDEBAR_ICON_TABS_TRACK } from "./SidebarModeTabs";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import { useComposerDraftStore } from "~/composerDraftStore";
@@ -555,12 +562,39 @@ export function OptionCheckboxItem(props: {
 }
 
 const GROUPING_TABS = [
-  { value: "none", label: "No grouping", testId: "sidebar-v2-grouping-none" },
-  { value: "project", label: "Group by project", testId: "sidebar-v2-group-by-project-toggle" },
-  { value: "status", label: "Group by status", testId: "sidebar-v2-group-by-status-toggle" },
-] as const satisfies ReadonlyArray<{ value: SidebarV2Grouping; label: string; testId: string }>;
+  {
+    value: "none",
+    label: "No grouping",
+    testId: "sidebar-v2-grouping-none",
+    icon: <CircleSlashIcon className="size-4" />,
+  },
+  {
+    value: "project",
+    label: "Group by project",
+    testId: "sidebar-v2-group-by-project-toggle",
+    icon: <FoldersIcon className="size-4" />,
+  },
+  {
+    value: "status",
+    label: "Group by status",
+    testId: "sidebar-v2-group-by-status-toggle",
+    icon: <SidebarV2WorkingMark seed="group-by-status" still />,
+  },
+] as const satisfies ReadonlyArray<{
+  value: SidebarV2Grouping;
+  label: string;
+  testId: string;
+  icon: ReactNode;
+}>;
 
-export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProjectGroup>(props: {
+/** The Group by tabs wear the Code / Chat switch's shape, but the pick is cut from the menu's
+    own surface, with the track showing through its border as the switch's ring does. */
+const GROUP_BY_TAB = cn(
+  SIDEBAR_ICON_TAB,
+  "data-highlighted:text-sidebar-foreground data-pressed:border-transparent data-pressed:bg-popover data-pressed:bg-clip-padding dark:data-pressed:bg-popover",
+);
+
+interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectGroup> {
   readonly projectGroups: ReadonlyArray<TProject>;
   /** Project keys the list is scoped to; empty means every project. */
   readonly projectScopeKeys: ReadonlySet<string>;
@@ -588,7 +622,11 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
   /** Folds the whole list under this row — see `fork-bots`. Omitted where the row cannot fold. */
   readonly collapsed?: boolean;
   readonly onToggleCollapsed?: () => void;
-}) {
+}
+
+export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProjectGroup>(
+  props: SidebarV2ProjectScopeRowProps<TProject>,
+) {
   const hasProjects = props.projectGroups.length > 0;
   const isScoped = props.projectScopeKeys.size > 0;
   const filterAriaLabel = isScoped
@@ -597,27 +635,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
   const filterTooltip = isScoped
     ? `Showing ${props.scopedProjectDisplayName ?? "selected projects"}`
     : "Filter projects";
-  const toggleProjectScope = (projectKey: string) => {
-    const next = new Set(props.projectScopeKeys);
-    if (!next.delete(projectKey)) next.add(projectKey);
-    props.onProjectScopeChange(next);
-  };
   const sortTooltip = `Sort projects — ${SORT_ORDER_LABELS[props.projectSortOrder]}`;
-  const [projectQuery, setProjectQuery] = useState("");
-  const groupingTabsRef = useRef<HTMLDivElement>(null);
-  useSegmentedTabsGlide(groupingTabsRef);
-  const normalizedProjectQuery = projectQuery.trim().toLowerCase();
-  const visibleProjectGroups =
-    normalizedProjectQuery === ""
-      ? props.projectGroups
-      : props.projectGroups.filter((project) =>
-          project.displayName.toLowerCase().includes(normalizedProjectQuery),
-        );
-  const handleMenuOpenChange = (open: boolean) => {
-    // Also on open: the project actions button closes the menu without calling this.
-    setProjectQuery("");
-    props.onMenuOpenChange(open);
-  };
 
   return (
     // Figma 368:21211 — the project headers' row shape: a muted label, 13px
@@ -716,7 +734,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                   </MenuRadioGroup>
                 </MenuPopup>
               </Menu>
-              <Menu open={props.menuOpen} onOpenChange={handleMenuOpenChange}>
+              <Menu open={props.menuOpen} onOpenChange={props.onMenuOpenChange}>
                 <Tooltip>
                   <TooltipTrigger
                     render={
@@ -748,151 +766,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
                   data-fork-tab-menu="sidebar"
                   className="min-w-56"
                 >
-                  {/* Above the scope list, not below it: with enough projects the
-                  list scrolls, and a preference that decides how the whole
-                  sidebar reads should not be the thing you have to scroll to.
-                  The tabs are the menu's own radio items, so arrow keys reach
-                  them, dressed as the Code / Chat switch's tabs. */}
-                  <div className={cn(OPTION_ITEM, "cursor-default")}>
-                    <span className="min-w-0 truncate">Group by</span>
-                    <MenuPrimitive.RadioGroup
-                      ref={groupingTabsRef}
-                      aria-label="Group threads by"
-                      value={props.grouping}
-                      onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
-                      data-fork-segmented-tabs=""
-                      data-fork-sidebar-mode-tabs=""
-                      className={cn(
-                        "isolate flex w-max items-center overflow-clip",
-                        SIDEBAR_ICON_TABS_TRACK,
-                      )}
-                    >
-                      {GROUPING_TABS.map((tab) => {
-                        // Disabled rather than inert where grouping by project
-                        // draws no header; the tooltip and the accessible name
-                        // carry the reason.
-                        const unavailableReason =
-                          tab.value === "project" ? props.groupByProjectUnavailableReason : null;
-                        const label =
-                          unavailableReason === null
-                            ? tab.label
-                            : `${tab.label}: ${unavailableReason}`;
-                        return (
-                          <Tooltip key={tab.value}>
-                            <TooltipTrigger
-                              delay={150}
-                              closeDelay={0}
-                              render={
-                                <MenuPrimitive.RadioItem
-                                  value={tab.value}
-                                  closeOnClick={false}
-                                  aria-label={label}
-                                  disabled={unavailableReason !== null}
-                                  data-testid={tab.testId}
-                                  data-fork-segmented-tab=""
-                                  data-pressed={props.grouping === tab.value ? "" : undefined}
-                                  className={cn(
-                                    "inline-flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-disabled:cursor-default data-disabled:opacity-64 data-highlighted:text-sidebar-foreground",
-                                    SIDEBAR_ICON_TAB,
-                                    // The pick is cut from the menu's own surface, and the track
-                                    // shows through its border as the switch's ring does.
-                                    "data-pressed:border-transparent data-pressed:bg-popover data-pressed:bg-clip-padding dark:data-pressed:bg-popover",
-                                  )}
-                                />
-                              }
-                            >
-                              <span className="inline-flex items-center justify-center">
-                                {tab.value === "none" ? (
-                                  <CircleSlashIcon className="size-4" />
-                                ) : tab.value === "project" ? (
-                                  <FoldersIcon className="size-4" />
-                                ) : (
-                                  <SidebarV2WorkingMark seed="group-by-status" still />
-                                )}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipPopup side="top">{label}</TooltipPopup>
-                          </Tooltip>
-                        );
-                      })}
-                    </MenuPrimitive.RadioGroup>
-                  </div>
-                  <FullWidthMenuSeparator />
-                  {/* Set apart from the radios: card density is independent of
-                  grouping and combines with any of the three. */}
-                  <OptionCheckboxItem
-                    checked={props.compactCards}
-                    onCheckedChange={props.onCompactCardsChange}
-                    testId="sidebar-v2-compact-cards-toggle"
-                  >
-                    Compact cards
-                  </OptionCheckboxItem>
-                  <FullWidthMenuSeparator />
-                  {/* Checkboxes, not radios: the scope is a set, so several
-                  projects can be on at once and each toggles independently.
-                  The menu stays open across toggles for the same reason the
-                  options above keep it open — picking three projects should
-                  not take three trips. "All projects" is checked while the
-                  set is empty and clears it when chosen. The list scrolls on its
-                  own under a pinned search, so a long project roster no longer
-                  stretches the menu down the window. */}
-                  {/* Not ui/menu's MenuSearchInput: its underline is inset, and this
-                  menu's dividers run edge to edge. The icon sits on the checkboxes' edge. */}
-                  <label className="flex h-8 cursor-text items-center gap-2 ps-2 pe-1.5">
-                    <SearchIcon aria-hidden className="size-4 shrink-0 text-muted-foreground/55" />
-                    <input
-                      type="text"
-                      value={projectQuery}
-                      onChange={(event) => setProjectQuery(event.currentTarget.value)}
-                      onKeyDown={(event) => {
-                        // Menu typeahead would otherwise take the letters; arrows still reach the items.
-                        if (event.key !== "ArrowDown" && event.key !== "Escape") {
-                          event.stopPropagation();
-                        }
-                      }}
-                      placeholder="Search projects"
-                      aria-label="Search projects"
-                      data-testid="sidebar-v2-project-scope-search"
-                      className="h-8 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/72"
-                    />
-                  </label>
-                  <FullWidthMenuSeparator />
-                  <div className="max-h-60 overflow-y-auto">
-                    <ScopeCheckboxItem
-                      checked={!isScoped}
-                      onCheckedChange={() => props.onProjectScopeChange(EMPTY_PROJECT_SCOPE)}
-                      testId="sidebar-v2-project-scope-all"
-                    >
-                      <FolderIcon className="size-4 shrink-0" />
-                      <span className="min-w-0 truncate text-sm">All projects</span>
-                    </ScopeCheckboxItem>
-                    {visibleProjectGroups.length === 0 ? (
-                      <div className="flex h-8 items-center px-2 text-sm text-muted-foreground">
-                        No matching projects
-                      </div>
-                    ) : null}
-                    {visibleProjectGroups.map((project) => (
-                      <ScopeCheckboxItem
-                        key={project.projectKey}
-                        checked={props.projectScopeKeys.has(project.projectKey)}
-                        onCheckedChange={() => toggleProjectScope(project.projectKey)}
-                      >
-                        <ProjectFavicon project={project} className="size-4 shrink-0" />
-                        <span className="min-w-0 truncate text-sm">{project.displayName}</span>
-                        <button
-                          type="button"
-                          aria-label={`Project actions for ${project.displayName}`}
-                          className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                          // Stopping pointerdown keeps the checkbox item from toggling
-                          // the project as a side effect of reaching its overflow.
-                          onPointerDown={(event) => event.stopPropagation()}
-                          onClick={(event) => props.onProjectActions(event, project)}
-                        >
-                          <EllipsisVerticalIcon className="size-4" />
-                        </button>
-                      </ScopeCheckboxItem>
-                    ))}
-                  </div>
+                  <ThreadsViewMenuContent {...props} />
                 </MenuPopup>
               </Menu>
             </>
@@ -900,5 +774,159 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
         </div>
       </div>
     </SidebarGroup>
+  );
+}
+
+/** The view menu's body. Its own component so it unmounts with the closed popup:
+    the search resets on every close path, and the glide only runs while open. */
+function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
+  props: Pick<
+    SidebarV2ProjectScopeRowProps<TProject>,
+    | "projectGroups"
+    | "projectScopeKeys"
+    | "onProjectScopeChange"
+    | "onProjectActions"
+    | "grouping"
+    | "onGroupingChange"
+    | "groupByProjectUnavailableReason"
+    | "compactCards"
+    | "onCompactCardsChange"
+  >,
+) {
+  const [projectQuery, setProjectQuery] = useState("");
+  const projectListRef = useRef<HTMLDivElement>(null);
+  const isScoped = props.projectScopeKeys.size > 0;
+  const normalizedProjectQuery = projectQuery.trim().toLowerCase();
+  const visibleProjectGroups =
+    normalizedProjectQuery === ""
+      ? props.projectGroups
+      : props.projectGroups.filter((project) =>
+          project.displayName.toLowerCase().includes(normalizedProjectQuery),
+        );
+  const toggleProjectScope = (projectKey: string) => {
+    const next = new Set(props.projectScopeKeys);
+    if (!next.delete(projectKey)) next.add(projectKey);
+    props.onProjectScopeChange(next);
+  };
+
+  return (
+    <>
+      {/* Above the scope list, not below it: with enough projects the
+      list scrolls, and a preference that decides how the whole
+      sidebar reads should not be the thing you have to scroll to. */}
+      <div className={cn(OPTION_ITEM, "cursor-default")}>
+        <span className="min-w-0 truncate">Group by</span>
+        <SegmentedMenuTabs
+          aria-label="Group threads by"
+          value={props.grouping}
+          onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
+          data-fork-group-by-tabs=""
+          className={SIDEBAR_ICON_TABS_TRACK}
+        >
+          {GROUPING_TABS.map((tab) => {
+            // Disabled rather than inert where grouping by project
+            // draws no header; the tooltip and the accessible name
+            // carry the reason.
+            const unavailableReason =
+              tab.value === "project" ? props.groupByProjectUnavailableReason : null;
+            const label =
+              unavailableReason === null ? tab.label : `${tab.label}: ${unavailableReason}`;
+            return (
+              <Tooltip key={tab.value}>
+                <TooltipTrigger
+                  delay={150}
+                  closeDelay={0}
+                  render={
+                    <SegmentedMenuTab
+                      value={tab.value}
+                      aria-label={label}
+                      disabled={unavailableReason !== null}
+                      data-testid={tab.testId}
+                      className={GROUP_BY_TAB}
+                    />
+                  }
+                >
+                  {tab.icon}
+                </TooltipTrigger>
+                <TooltipPopup side="top">{label}</TooltipPopup>
+              </Tooltip>
+            );
+          })}
+        </SegmentedMenuTabs>
+      </div>
+      <FullWidthMenuSeparator />
+      {/* Set apart from the grouping: card density is independent of
+      it and combines with any of the three. */}
+      <OptionCheckboxItem
+        checked={props.compactCards}
+        onCheckedChange={props.onCompactCardsChange}
+        testId="sidebar-v2-compact-cards-toggle"
+      >
+        Compact cards
+      </OptionCheckboxItem>
+      <FullWidthMenuSeparator />
+      <MenuSearchInput
+        underline={false}
+        value={projectQuery}
+        onChange={(event) => setProjectQuery(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown") return;
+          // Into the filtered list, past "All projects" while searching: the
+          // menu's own ArrowDown would start over at the Group by tabs.
+          const items = projectListRef.current?.querySelectorAll<HTMLElement>(
+            '[role="menuitemcheckbox"]',
+          );
+          const target = (normalizedProjectQuery === "" ? undefined : items?.[1]) ?? items?.[0];
+          if (!target) return;
+          event.preventDefault();
+          event.stopPropagation();
+          target.focus();
+        }}
+        placeholder="Search projects"
+        aria-label="Search projects"
+        data-testid="sidebar-v2-project-scope-search"
+      />
+      <FullWidthMenuSeparator />
+      {/* Checkboxes, not radios: the scope is a set, so several
+      projects can be on at once and each toggles independently.
+      The menu stays open across toggles. "All projects" is checked
+      while the set is empty and clears it when chosen. */}
+      <div ref={projectListRef} className="max-h-60 overflow-y-auto">
+        <ScopeCheckboxItem
+          checked={!isScoped}
+          onCheckedChange={() => props.onProjectScopeChange(EMPTY_PROJECT_SCOPE)}
+          testId="sidebar-v2-project-scope-all"
+        >
+          <FolderIcon className="size-4 shrink-0" />
+          <span className="min-w-0 truncate text-sm">All projects</span>
+        </ScopeCheckboxItem>
+        {visibleProjectGroups.length === 0 ? (
+          <div className="flex h-8 items-center px-2 text-sm text-muted-foreground">
+            No matching projects
+          </div>
+        ) : null}
+        {visibleProjectGroups.map((project) => (
+          <ScopeCheckboxItem
+            key={project.projectKey}
+            checked={props.projectScopeKeys.has(project.projectKey)}
+            onCheckedChange={() => toggleProjectScope(project.projectKey)}
+          >
+            <ProjectFavicon project={project} className="size-4 shrink-0" />
+            <span className="min-w-0 truncate text-sm">{project.displayName}</span>
+            <button
+              type="button"
+              aria-label={`Project actions for ${project.displayName}`}
+              className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              // Stopping pointerdown keeps the checkbox item from toggling
+              // the project as a side effect of reaching its overflow.
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => props.onProjectActions(event, project)}
+            >
+              <EllipsisVerticalIcon className="size-4" />
+            </button>
+          </ScopeCheckboxItem>
+        ))}
+      </div>
+    </>
   );
 }

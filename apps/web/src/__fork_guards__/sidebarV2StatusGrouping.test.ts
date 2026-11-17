@@ -86,8 +86,10 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
   it("gives the settled tail the status header in every grouping", () => {
     // settledCount includes older settled threads the server has not sent yet.
     expect(sidebar).toContain("const settledSectionShown = settledCount > 0;");
+    // The header is what paints whenever anything is settled; upstream's hairline
+    // shelf after its else is unreached and free to change or go.
     expect(sidebar).toMatch(
-      /if \(settledSectionShown\) \{[\s\S]{0,700}?\} else[\s\S]{0,120}?if \(settledCount > 0\) \{/u,
+      /if \(settledSectionShown\) \{\s*items\.push\(\s*<SidebarV2StatusSectionHeader\s+key="status-section-header:settled"/u,
     );
     expect(sidebar).toContain('section="settled"');
     expect(sidebar).toContain("count={settledCount}");

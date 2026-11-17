@@ -29,6 +29,7 @@ function readSibling(relativePath: string): string {
 
 const sidebar = readSibling("../components/Sidebar.tsx");
 const chromeRows = readSibling("../custom/SidebarV2ChromeRows.tsx");
+const segmentedTabs = readSibling("../custom/SegmentedTabs.tsx");
 
 describe("fork guard: sidebar-v2-project-grouping", () => {
   it("offers the option from the Threads filter menu", () => {
@@ -36,9 +37,12 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     // One radio group over the single grouping value, drawn as icon tabs.
     expect(chromeRows).toContain("props.onGroupingChange(value as SidebarV2Grouping)");
     expect(chromeRows).toContain('value: "project"');
-    expect(chromeRows).toContain("<MenuPrimitive.RadioGroup");
+    expect(chromeRows).toContain("<SegmentedMenuTabs");
     // Toggling a view preference must not dismiss the menu it lives in.
     expect(chromeRows).toContain("closeOnClick={false}");
+    expect(segmentedTabs).toMatch(
+      /<MenuPrimitive\.RadioItem\s+\{\.\.\.props\}\s+closeOnClick=\{false\}/u,
+    );
     expect(sidebar).toContain("grouping={grouping}");
     expect(sidebar).toContain('const groupByProject = grouping === "project";');
     // Where grouping can draw no header, the switch says so rather than

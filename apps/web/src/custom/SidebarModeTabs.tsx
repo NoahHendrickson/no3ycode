@@ -9,8 +9,8 @@ import type { ForkSidebarMode } from "./chatMode";
 import { CodeIcon, MessageSquareTextIcon } from "./icons/lucide-phosphor";
 import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 
-/** The switch's track and icon tab, shared with the Threads menu's Group by tabs so
-    the two read as one control. data-fork-sidebar-mode-tabs carries the themes' dressing. */
+/** The switch's track and icon tab, whose shape the Threads menu's Group by tabs share.
+    Only this switch carries data-fork-sidebar-mode-tabs, so the themes' dressing stays its own. */
 export const SIDEBAR_ICON_TABS_TRACK =
   "h-7 shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface";
 export const SIDEBAR_ICON_TAB =

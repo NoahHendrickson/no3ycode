@@ -274,11 +274,12 @@
   border-radius: 8px;
 }
 
-/* The Code / Chat switch and the Threads menu's Group by tabs, which share its look. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-sidebar-mode-tabs],
+/* The Code / Chat switch and the Threads menu's Group by tabs, which share its shape. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-sidebar-mode-tabs]
-  > button {
+  :is([data-fork-sidebar-mode-tabs], [data-fork-group-by-tabs]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-fork-sidebar-mode-tabs], [data-fork-group-by-tabs])
+  > [data-fork-segmented-tab] {
   border-radius: 8px;
 }
 
