@@ -317,7 +317,10 @@
 }
 
 /* Jungle Art's menus are its sidebar's hover cream with the sidebar's ink,
-   not the stage's green: inside them the stage's light inks are restated. */
+   not the stage's green: inside them the stage's light inks are restated.
+   The palette, the confirm dialogs and the web context menu (solid popups,
+   theme.custom.inlet-menus.css) join them in :where(), so the rule's weight
+   is unchanged; a tab's anchored menu keeps its own green. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
   :is(
@@ -330,7 +333,14 @@
     ).dropdown-glass,
     [data-slot="select-popup"] > .dropdown-glass,
     .dropdown-glass:has(> [data-slot="combobox-popup"]),
-    [data-thread-details-card].dropdown-glass
+    [data-thread-details-card].dropdown-glass,
+    :where(
+      .dialog-glass,
+      [data-context-menu].dropdown-glass:not(
+          [data-fork-anchored-menu],
+          [data-fork-anchored-submenu]
+        )
+    )
   ) {
   --foreground: #1c1c1a;
   --muted-foreground: #68675d;
@@ -341,6 +351,10 @@
   --secondary-foreground: #1c1c1a;
   --border: #d4d2b9;
   --input: #d4d2b9;
+  /* Outline buttons fill from the contrast input (a dialog's Cancel), and the
+     context menu inks its highlighted row from the contrast accent ink. */
+  --contrast-input: #d4d2b9;
+  --contrast-accent-foreground: #1c1c1a;
   --contrast-foreground: #1c1c1a;
   --contrast-popover-foreground: #1c1c1a;
   --contrast-muted-foreground: #68675d;

@@ -438,6 +438,14 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(readSibling("../components/preview/ThreadPreviewMiniPlayer.tsx")).toContain(
       "data-preview-mini-player={sourceKey}",
     );
+
+    // The terminal paints an opaque canvas from this token; the palette's
+    // near-black drew a slab across the stage, so it takes the on-screen floor.
+    expect(
+      glassRules.some((rule) =>
+        /--terminal-background:\s*var\(--fork-popup-glass-floor\)/u.test(rule.body),
+      ),
+    ).toBe(true);
   });
 
   it("hands the design-mode chrome the stage's own glass", () => {

@@ -187,6 +187,12 @@ describe("fork guard: fork-popup-surface", () => {
     expect(flat(glassPopup?.selector ?? "")).toContain(modalArm);
     expect(FORK_GLASS_POPUP_SELECTOR).toContain(modalArm);
     expect(opening?.selector).toContain(`${modalArm}[data-starting-style]`);
+    // The command palette and confirm dialogs (dialog-glass) take the same
+    // material, hole and full-strength opening, not upstream's opaque slab.
+    const dialogArm = '.dialog-glass:not(.dropdown-glass)[data-slot$="dialog-popup"]';
+    expect(flat(glassPopup?.selector ?? "")).toContain(`:where(${dialogArm})`);
+    expect(FORK_GLASS_POPUP_SELECTOR).toContain(dialogArm);
+    expect(opening?.selector).toContain(`:where(${dialogArm}[data-starting-style])`);
     const routeModal = readSibling("../components/AppRouteModal.tsx");
     expect(routeModal).toContain('data-slot="dialog-popup"');
     expect(routeModal).toContain('data-app-modal=""');

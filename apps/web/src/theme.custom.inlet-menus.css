@@ -35,6 +35,74 @@
   backdrop-filter: none;
 }
 
+/* The command palette and the confirm dialogs (dialog-glass) and the web build's
+   context menu (contextMenuFallback.ts) sit outside those arms and kept upstream's
+   frost: on Green it took the frame's green at 80% under dark ink, unreadable.
+   They are popups like the rest: the solid --popover behind its line, the menus'
+   10px and their faint drop shadow. A Jungle tab's anchored menu keeps its own
+   green (theme.custom.inlet-jungle.css), which outranks this. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  :is(.dialog-glass, [data-context-menu].dropdown-glass) {
+  --background: var(--popover);
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  .dialog-glass {
+  box-shadow: 0 16px 40px -18px rgb(0 0 0 / 55%);
+}
+
+/* Below sm the dialog is a square sheet on the screen's edge. */
+@media (min-width: 640px) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    .dialog-glass {
+    border-radius: var(--fork-inlet-menu-radius);
+
+    & :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+      border-radius: 0 0 calc(var(--fork-inlet-menu-radius) - 1px)
+        calc(var(--fork-inlet-menu-radius) - 1px);
+    }
+  }
+}
+
+/* The command palette never becomes a phone sheet (command.tsx), so its
+   corners follow at every width. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="command-dialog-popup"].dialog-glass {
+  border-radius: var(--fork-inlet-menu-radius);
+
+  & [data-slot="command-footer"] {
+    border-radius: 0 0 calc(var(--fork-inlet-menu-radius) - 1px)
+      calc(var(--fork-inlet-menu-radius) - 1px);
+  }
+}
+
+/* Footers are set off by a line, as the menus' sections are, not a tinted band. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  .dialog-glass
+  :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+  background: transparent;
+  border-color: var(--border);
+}
+
+/* The scrim dims without frosting the app behind it. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  .dialog-backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* The context menu writes its separators inline, inset; dividers run edge to edge. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-context-menu]
+  [data-context-menu-separator] {
+  margin-inline: -0.25rem !important;
+}
+
 /* A sidebar row's hover card opens as a tab pulled out of the row: while it
    is open the row takes the card's fill and ink and goes square on its right
    end, and the card fills the 4px gap (the popup's sideOffset) and curves
@@ -1004,5 +1072,18 @@
         linear-gradient(#000, #000) center bottom / calc(100% - 2 * var(--fork-inlet-tab-fillet))
           calc(var(--fork-inlet-tab-neck-h) + 1px) no-repeat;
     }
+  }
+}
+
+/* Page tabs (Usage, Automations' triggers) are rounded rectangles with parallel
+   corners, not upstream's 4px track around a 2px chip. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  border-radius: 8px;
+
+  & > [data-fork-segmented-tab] {
+    border-radius: 6px;
   }
 }

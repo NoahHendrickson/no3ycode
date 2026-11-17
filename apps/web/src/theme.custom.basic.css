@@ -398,3 +398,120 @@
   background-color: var(--sidebar-row-selected);
   color: var(--sidebar-foreground);
 }
+
+/* ---------------------------------------------------------------------------
+   Floating surfaces outside the menus: dialogs, the command palette, the web
+   context menu, toasts, glass tooltips and the floating pills. Upstream frosts
+   each (dialog-glass, dropdown-glass, surface-glass); Basic opens them flat on
+   the raised fill behind the 8% line, with the menus' quiet shadow and 8px
+   corners. The phone sheet (below sm) keeps its square edge. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] .dropdown-glass,
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] .dialog-glass,
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] button.surface-glass {
+  background: var(--popover);
+  border-color: var(--basic-wash-2);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is(.dialog-glass, [data-slot="dialog-popup"][data-app-modal], button.surface-glass) {
+  box-shadow: var(--basic-popup-shadow);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  button.surface-glass:is(:hover, [data-pressed]) {
+  border-color: var(--basic-wash-3);
+}
+
+@media (min-width: 640px) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+    :is(.dialog-glass, [data-slot="dialog-popup"][data-app-modal]) {
+    border-radius: 8px;
+  }
+
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+    .dialog-glass
+    :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+    border-radius: 0 0 7px 7px;
+  }
+}
+
+/* The command palette never becomes a phone sheet (command.tsx), so its
+   corners follow at every width. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-slot="command-dialog-popup"].dialog-glass {
+  border-radius: 8px;
+
+  & [data-slot="command-footer"] {
+    border-radius: 0 0 7px 7px;
+  }
+}
+
+/* A dialog's footer is set off by the line alone, not a tinted band. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  .dialog-glass
+  :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+  background: transparent;
+  border-color: var(--basic-wash-2);
+}
+
+/* The scrim dims without blurring the app behind it. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] .dialog-backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* The web build's context menu (contextMenuFallback.ts) writes its separators
+   inline, inset; the menus' run edge to edge across the 4px padding. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-context-menu]
+  [data-context-menu-separator] {
+  margin-inline: -0.25rem !important;
+  background: var(--basic-wash-2) !important;
+}
+
+/* The row hover card is a card, at the popups' 8px. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-row-hover-card] {
+  border-radius: 8px;
+}
+
+/* Cards on a page (Settings groups, Usage and Automations) take the 8% line and
+   8px corners, like the composer; upstream draws them at 12px on a fainter line. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-slot="settings-group"], [data-scheduled-card]) {
+  border-radius: 8px;
+  border-color: var(--basic-wash-2);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-slot="settings-group"]
+  > *
+  + * {
+  border-color: var(--basic-wash-2);
+}
+
+/* Segmented tabs on a page (Usage, Automations' triggers) take the Code / Chat
+   switch's language: an 8% track, the chosen tab cut back to the page behind its
+   line, rather than upstream's raised white chip. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not(
+    [data-fork-sidebar-mode-tabs],
+    [data-fork-group-by-tabs],
+    [data-fork-thread-tabs] *
+  ) {
+  border-radius: 8px;
+  background-color: var(--basic-wash-2);
+
+  & > [data-fork-segmented-tab] {
+    border-radius: 6px;
+  }
+
+  & > [data-fork-segmented-tab][data-pressed] {
+    background-color: var(--background);
+    box-shadow: inset 0 0 0 1px var(--basic-wash-2);
+    color: var(--foreground);
+  }
+}
