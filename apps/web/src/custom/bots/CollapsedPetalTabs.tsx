@@ -14,7 +14,7 @@ import { BotMascot } from "./BotMascot";
 import { botMascotShape } from "./botMascotTags";
 import { listSidebarBots } from "./botThreads";
 import { openBotThreadsPanel } from "./botThreadsPanelStore";
-import { botWorkAttentionByBot } from "./botWork";
+import { botWorkByBot } from "./botWork";
 import { useBotThreadsPanelBot } from "./useBotWorkOwner";
 
 export function CollapsedPetalTabs(props: {
@@ -40,7 +40,7 @@ export function CollapsedPetalTabs(props: {
         if (petal === undefined) return;
         const ref = scopeThreadRef(petal.environmentId, petal.id);
         // As in the sidebar: a petal whose work needs you opens with its Threads panel.
-        if (botWorkAttentionByBot(threads).has(key)) openBotThreadsPanel(ref);
+        if (botWorkByBot(threads).get(key)?.attention != null) openBotThreadsPanel(ref);
         if (props.openThreadRef !== null && scopedThreadKey(props.openThreadRef) === key) return;
         props.onOpen(ref);
       }}

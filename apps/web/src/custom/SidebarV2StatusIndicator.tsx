@@ -478,9 +478,6 @@ export function SidebarV2StatusMark(props: {
   /** Card rows draw the idle dot; without one an idle mark draws nothing.
       Unpromoted drafts use the pencil as their idle glyph. */
   readonly idle?: "dot" | "draft";
-  /** Draw a working status as the monitoring breath, where something else already shows the
-      work (a bot's thinking mascot, `fork-bots`). */
-  readonly quietWorking?: boolean;
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
@@ -509,8 +506,7 @@ export function SidebarV2StatusMark(props: {
       <span role="status" className="sr-only">
         {status.label}
       </span>
-      {status.mark === "monitoring" ||
-      (status.mark === "working" && props.quietWorking === true) ? (
+      {status.mark === "monitoring" ? (
         <SidebarV2MonitoringMark />
       ) : status.mark === "working" ? (
         <SidebarV2WorkingMark seed={props.seed} />
