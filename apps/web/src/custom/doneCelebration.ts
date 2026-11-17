@@ -58,11 +58,35 @@ export function useDoneCelebration(
       transitions.enter(threadKey, kind, now);
       if (finished && element !== null) {
         const row = element.closest("[data-thread-item], [data-fork-thread-tab]");
-        celebrateDone(element, row?.querySelector<SVGElement>("svg[data-fork-bot-mascot]") ?? null);
+        const mascot = row?.querySelector<SVGElement>("svg[data-fork-bot-mascot]") ?? null;
+        void landed(element).then(() => {
+          if (element.isConnected && isOnScreen(element)) celebrateDone(element, mascot);
+        });
       }
     }
     return () => transitions.leave(threadKey, kind, performance.now());
   }, [threadKey, kind, dot]);
+}
+
+/** Settles once no finite animation runs on the element's ancestors. A finished row slides from the
+    Working group to Completed, and the rings are pinned where the dot is when they start. A slide
+    cut short by another move is replaced, so it looks again after each wait. */
+async function landed(element: HTMLElement): Promise<void> {
+  for (;;) {
+    const moving: Promise<unknown>[] = [];
+    for (let node = element.parentElement; node !== null; node = node.parentElement) {
+      for (const animation of node.getAnimations()) {
+        if (
+          animation.playState === "running" &&
+          animation.effect?.getComputedTiming().endTime !== Infinity
+        ) {
+          moving.push(animation.finished);
+        }
+      }
+    }
+    if (moving.length === 0) return;
+    await Promise.allSettled(moving);
+  }
 }
 
 /** Drawn, and its centre inside every box that clips it: the rings sit on the page, above the clips. */
