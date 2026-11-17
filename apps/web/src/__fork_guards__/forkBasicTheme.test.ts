@@ -77,9 +77,9 @@ describe("fork guard: fork-basic-theme", () => {
       ]);
       const sheetText = body.includes("--basic-text:") ? body : appearanceBody;
       expect(declarationHex(sheetText, "--basic-text"), tone).toBe(text);
-      expect(indexHtml, tone).toMatch(
-        new RegExp(`"?${tone}"?: \\{ base: "${base}", appearance: "${appearance}" \\}`, "u"),
-      );
+      // An unquoted hyphenated key is a syntax error that stops the whole pre-paint script.
+      const key = /^[a-z]+$/u.test(tone) ? tone : `"${tone}"`;
+      expect(indexHtml, tone).toContain(`${key}: { base: "${base}", appearance: "${appearance}" }`);
       expect(indexHtml, tone).toMatch(
         new RegExp(
           `html\\[data-fork-theme="basic"\\]\\[data-fork-basic-tone="${tone}"\\] body \\{\\s*background: ${base};`,

@@ -207,18 +207,15 @@ export const FORK_PALETTE_LABELS = {
   [INLET_THEME]: INLET_LABEL,
 } as const satisfies Record<ForkPalette, string>;
 
-/** Retired dark tones and the tone each became. */
-const RETIRED_BASIC_TONES: Readonly<Record<string, BasicTone>> = {
-  neutral: "dark-neutral",
-  cool: "dark-cool",
-  darker: "darkest-neutral",
-};
-
-/** Retired palettes and the Basic tone each became. */
-const RETIRED_PALETTE_TONES: Readonly<Record<string, BasicTone>> = {
+/** Retired dark looks and the Basic tone each became: palette ids and tone ids, which never
+    collide, so the palette and the stored dark tone share one lookup. */
+const RETIRED_DARK_LOOKS: Readonly<Record<string, BasicTone>> = {
   "cool-dark": "dark-cool",
   "neutral-dark": "dark-neutral",
   "neutral-darker": "darkest-neutral",
+  cool: "dark-cool",
+  neutral: "dark-neutral",
+  darker: "darkest-neutral",
 };
 
 type AttributeRoot = {
@@ -321,11 +318,11 @@ export function migrateLegacyForkPalettes(): void {
       window.localStorage.setItem(FORK_PALETTE_STORAGE_KEY, "cool-dark");
     }
     const retiredTone =
-      RETIRED_BASIC_TONES[window.localStorage.getItem(BASIC_TONE_STORAGE_KEYS.dark) ?? ""];
+      RETIRED_DARK_LOOKS[window.localStorage.getItem(BASIC_TONE_STORAGE_KEYS.dark) ?? ""];
     if (retiredTone !== undefined) {
       window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.dark, retiredTone);
     }
-    const tone = RETIRED_PALETTE_TONES[window.localStorage.getItem(FORK_PALETTE_STORAGE_KEY) ?? ""];
+    const tone = RETIRED_DARK_LOOKS[window.localStorage.getItem(FORK_PALETTE_STORAGE_KEY) ?? ""];
     if (tone !== undefined) {
       window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.dark, tone);
       window.localStorage.setItem(FORK_PALETTE_STORAGE_KEY, BASIC_THEME);

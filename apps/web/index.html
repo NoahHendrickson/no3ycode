@@ -45,14 +45,13 @@
           "darker-neutral": { base: "#232323", appearance: "dark" },
           "dark-neutral": { base: "#2b2b2b", appearance: "dark" },
         };
-        const forkRetiredPaletteTones = {
+        // Palette ids and tone ids never collide, so one table serves both.
+        const forkRetiredDarkLooks = {
           "cool-dark": "dark-cool",
           "neutral-dark": "dark-neutral",
           "neutral-darker": "darkest-neutral",
-        };
-        const forkRetiredBasicTones = {
-          neutral: "dark-neutral",
           cool: "dark-cool",
+          neutral: "dark-neutral",
           darker: "darkest-neutral",
         };
         /* fork:end fork-basic-theme */
@@ -286,10 +285,10 @@
           // forkTheme.ts writes the migration once React starts; until then a
           // retired palette paints as its tone, and anything else as Basic.
           const forkBasicLegacyTone = Object.prototype.hasOwnProperty.call(
-            forkRetiredPaletteTones,
+            forkRetiredDarkLooks,
             forkPalette,
           )
-            ? forkRetiredPaletteTones[forkPalette]
+            ? forkRetiredDarkLooks[forkPalette]
             : null;
           if (forkPalette !== "cool-darker" && forkPalette !== "inlet") {
             forkPalette = "basic";
@@ -421,9 +420,9 @@
             );
             if (
               isDark &&
-              Object.prototype.hasOwnProperty.call(forkRetiredBasicTones, forkBasicTone)
+              Object.prototype.hasOwnProperty.call(forkRetiredDarkLooks, forkBasicTone)
             ) {
-              forkBasicTone = forkRetiredBasicTones[forkBasicTone];
+              forkBasicTone = forkRetiredDarkLooks[forkBasicTone];
             }
             if (
               !Object.prototype.hasOwnProperty.call(forkBasicTones, forkBasicTone) ||

@@ -16,6 +16,7 @@ import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 import { helixAlpha } from "~/custom/SidebarV2StatusIndicator";
 import { BEAD_RING_PERIOD, drawBeadRing } from "~/custom/beadRing";
+import { FORK_WORKING_MARK_DEFAULTS } from "~/custom/forkWorkingMark";
 
 /** Every point and arc drawBeadRing emits, as [angle, radius] around the ring's centre. */
 function recordBeadRing(t: number): Array<[number, number]> {
@@ -98,5 +99,13 @@ describe("fork guard: working indicator setting", () => {
     expect(appearance).toContain('title="Working indicator"');
     expect(panels).toContain('["Working indicator"]');
     expect(panels).toContain("setWorkingMark(null)");
+  });
+
+  it("defaults Basic and Inlet to the bead ring, Glass to the helix", () => {
+    expect(FORK_WORKING_MARK_DEFAULTS).toEqual({
+      basic: "bead",
+      "cool-darker": "helix",
+      inlet: "bead",
+    });
   });
 });

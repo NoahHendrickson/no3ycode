@@ -1640,13 +1640,13 @@
     Dark: warm #1b1714, #25211d, #2e2a25; cool #16181b, #202226, #2e3138;
     neutral #171717, #232323, #2b2b2b. The warm tones sit a step warmer than
     the Figma frames, and Dark Neutral keeps the retired Neutral Dark's
-    #2b2b2b. Dark Neutral is the default dark tone.
-    Changing temperature changes only --basic-base
-    (and Cream's warm text); theme.custom.basic.css derives the lifts with
-    color-mix. Surfaces that float over content (menus, composer, chips) are
-    the ink flattened over the base, so nothing shows through them; hovers,
-    selections and lines stay translucent, as drawn. Menus open flat on the
-    raised fill (no frost, which belongs to Glass).
+    #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
+    changes only --basic-base (and Cream's warm text); theme.custom.basic.css
+    derives the lifts with color-mix. Surfaces that float over content
+    (menus, composer, chips) are the ink flattened over the base, so nothing
+    shows through them; hovers, selections and lines stay translucent, as
+    drawn. Menus open flat on the raised fill (no frost, which belongs to
+    Glass).
 
     Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
     -light, stamped as data-fork-basic-tone), so under System it follows the
