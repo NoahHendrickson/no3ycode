@@ -92,7 +92,7 @@ describe("fork guard: fork-basic-theme", () => {
   it("draws filled icons, as Inlet does", () => {
     expect(forkPaletteFillsIcons(BASIC_THEME)).toBe(true);
     expect(forkPaletteFillsIcons("inlet")).toBe(true);
-    expect(forkPaletteFillsIcons("cool-darker")).toBe(false);
+    expect(forkPaletteFillsIcons("cool-darker")).toBe(true);
     expect(forkPaletteFillsIcons(null)).toBe(false);
     expect(readSibling("../custom/icons/lucide-phosphor.tsx")).toContain(
       "forkPaletteFillsIcons(useActiveForkPalette())",

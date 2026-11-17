@@ -1708,6 +1708,8 @@
     first cut, having gone 14 down and then 8 back up once the glass sidebar
     made the stage read as a hole beside it. Must not alter Westworld, Neutral
     Dark, Neutral Darker, or default Dark fills.
+    Icons draw Phosphor's fill, as under Inlet and Basic
+    (custom/forkActivePalette.ts forkPaletteFillsIcons).
 
     Same fork palette overlay as Westworld (t3code:fork-theme = cool-darker,
     upstream theme = dark, data-fork-theme="cool-darker"). Palette tokens

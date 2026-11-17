@@ -320,8 +320,8 @@ function withPascalKebabClass(classes: string, lucideName: string): string {
   return pascalKebab === lucideName ? classes : `${classes} lucide-${pascalKebab}`;
 }
 
-/** Duotone, or fill in its place under Inlet and Basic (see `.fork/customizations.yaml#fork-inlet-theme`
-    and `#fork-basic-theme`). Every other weight passes through. */
+/** Duotone, or fill in its place under the fork palettes (`custom/forkActivePalette.ts`
+    forkPaletteFillsIcons). Every other weight passes through. */
 export function useForkIconWeight(weight: IconWeight): IconWeight {
   const fills = forkPaletteFillsIcons(useActiveForkPalette());
   return weight === "duotone" && fills ? "fill" : weight;
