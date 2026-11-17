@@ -88,11 +88,24 @@
   color: var(--sidebar-foreground);
 }
 
-/* Nor is there a card to edge the column off the collapsed tab strip above it, so the strip
-   takes the sidebar's seam along its foot (below): the same mostly opaque grey, one line. */
+/* With no card under the collapsed tab strip, the strip and a started thread's header take the
+   sidebar seam's line along their foot. Under the desktop glass these sit on the stage's tint,
+   not the bare material the seam does, so the seam's 60% grey would land darker: white 13% over
+   the tint lands where the seam does. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"] {
+  --fork-glass-tabs-line: #2f3336;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"] {
+  --fork-glass-tabs-line: rgb(255 255 255 / 13%);
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"]
-  [data-fork-thread-tabs] {
-  box-shadow: inset 0 -1px 0 rgb(64 64 64 / 60%);
+  [data-fork-thread-tabs],
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"]
+  [data-fork-thread-started]
+  [data-chat-header] {
+  box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]

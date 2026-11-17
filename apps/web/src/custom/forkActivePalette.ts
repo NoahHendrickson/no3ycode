@@ -37,7 +37,7 @@ export function useActiveForkPalette(): ForkPalettePreference {
   return useSyncExternalStore(subscribe, readActive, () => null);
 }
 
-/** Inlet and Basic draw Phosphor's fill where the other palettes draw duotone. */
+/** Every fork palette draws Phosphor's fill where upstream themes draw duotone. */
 export function forkPaletteFillsIcons(palette: ForkPalettePreference): boolean {
-  return palette === "inlet" || palette === "basic";
+  return palette !== null;
 }

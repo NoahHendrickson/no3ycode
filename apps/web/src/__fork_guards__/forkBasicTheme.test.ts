@@ -17,7 +17,6 @@ import {
   readForkPalette,
   resolveActiveForkPalette,
 } from "../custom/forkTheme";
-import { forkPaletteFillsIcons } from "../custom/forkActivePalette";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
@@ -87,16 +86,6 @@ describe("fork guard: fork-basic-theme", () => {
         ),
       );
     }
-  });
-
-  it("draws filled icons, as Inlet does", () => {
-    expect(forkPaletteFillsIcons(BASIC_THEME)).toBe(true);
-    expect(forkPaletteFillsIcons("inlet")).toBe(true);
-    expect(forkPaletteFillsIcons("cool-darker")).toBe(false);
-    expect(forkPaletteFillsIcons(null)).toBe(false);
-    expect(readSibling("../custom/icons/lucide-phosphor.tsx")).toContain(
-      "forkPaletteFillsIcons(useActiveForkPalette())",
-    );
   });
 
   it("leads Appearance with the theme cards and Basic's tones", () => {

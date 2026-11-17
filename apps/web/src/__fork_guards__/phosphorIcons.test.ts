@@ -16,6 +16,8 @@ import * as NodeURL from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
+import { forkPaletteFillsIcons } from "~/custom/forkActivePalette";
+import { FORK_PALETTES } from "~/custom/forkTheme";
 import { SearchIcon, XIcon } from "~/custom/icons/lucide-phosphor";
 
 const webRoot = NodePath.resolve(NodeURL.fileURLToPath(new URL(".", import.meta.url)), "../..");
@@ -141,6 +143,12 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(shim).toContain('ArrowUpRightIcon = icon("arrow-up-right", PhArrowUpRight');
     expect(shim).toContain("MoreHorizontalIcon = EllipsisIcon");
     expect(shim).toContain("XCircleIcon = CircleXIcon");
+  });
+
+  it("fills under every fork palette and keeps duotone under upstream themes", () => {
+    for (const palette of FORK_PALETTES) expect(forkPaletteFillsIcons(palette)).toBe(true);
+    expect(forkPaletteFillsIcons(null)).toBe(false);
+    expect(read(SHIM_PATH)).toContain("forkPaletteFillsIcons(useActiveForkPalette())");
   });
 
   it("stamps lucide's class names so upstream icon assertions still pass", () => {
