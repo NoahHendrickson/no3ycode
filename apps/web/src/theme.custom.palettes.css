@@ -88,12 +88,10 @@
   color: var(--sidebar-foreground);
 }
 
-/* Nor is there a card to edge the column off the collapsed tab strip above it, so the strip,
-   and under it a started thread's header, take a line along their foot that reads as the
-   sidebar's seam. A draft's header stays clear over the new-agent picture. On an opaque client
-   that is the seam's own #2f3336. Under the desktop glass the seam (60% #404040, below) sits on
-   the bare material, but these lines sit on the stage's 68% tint, where the same grey lands far
-   darker; white 13% over the tint lands where the seam does, ~78 over the material's ~99. */
+/* With no card under the collapsed tab strip, the strip and a started thread's header take the
+   sidebar seam's line along their foot. Under the desktop glass these sit on the stage's tint,
+   not the bare material the seam does, so the seam's 60% grey would land darker: white 13% over
+   the tint lands where the seam does. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"] {
   --fork-glass-tabs-line: #2f3336;
 }
