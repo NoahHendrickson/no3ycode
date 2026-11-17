@@ -7490,17 +7490,31 @@
 - id: fork-bot-digest
   intent: >
     A bot keeps DIGEST.md in its folder (Needs you, New, In progress; seeded empty, rewritten by
-    the bot as its work changes, per the seeded CLAUDE.md), and its Threads panel shows it
-    above the thread list, in one scroll with it (custom/bots/BotDigest): each section that holds
-    an item, as the panel's section labels with a count, one plain line per item (list marks,
-    emphasis and link targets dropped; "Nothing." left out; custom/bots/botDigestSections),
-    Needs you in the foreground colour and the rest muted, with a full-width rule below. It is
-    read with projects.readFile from the bot's folder (allowMissing) and read again whenever
-    the bot's latest run starts or ends (revisionedQuery keyed by its run id and status). An
-    empty, missing or unreadable digest draws nothing.
+    the bot as its work changes, per the seeded CLAUDE.md, which also has it write each Needs you
+    item as the question itself and end each item with its thread's link from the thread tools and
+    its pull request's URL), and its Threads panel shows
+    it above the thread list (custom/bots/BotDigest): each section that holds an item as a card,
+    the panel's section label with a count, one plain line per item (list marks, emphasis and
+    link targets dropped; links ending a line dropped, so a line reads as its ask; an inline
+    bare pull request URL reads as its number; "Nothing." left out;
+    custom/bots/botDigestSections) in the foreground colour under the muted label. Under a line
+    (custom/bots/BotDigestItem), each thread it links shows its sidebar status mark and
+    title and opens it, and each pull request it links, or a linked thread has, shows its state icon and
+    number and opens it as the sidebar PR badge does (useOpenPrLink). Needs you is its label
+    over one card per request, each with a filled Reply that quotes its source line in the
+    bot's draft and opens the bot; the other sections are one card each. The digest and the
+    list scroll apart; the full-width rule between them drags (or ArrowUp/Down) to set the
+    digest's tallest, one height for every bot in localStorage, never leaving the list under
+    96px, and a shorter digest keeps its own height. A New or In progress card's X dismisses it
+    per device, keyed by its title and lines, so it comes back when the bot changes that section;
+    "Show N dismissed" brings them all back. Needs you cannot be dismissed: it is answered. It is
+    read with projects.readFile from the bot's folder (allowMissing) and read again whenever the
+    bot's latest run starts or ends (revisionedQuery keyed by its run id and status). An empty,
+    missing or unreadable digest draws nothing.
   tier: 4
   files:
     - apps/web/src/custom/bots/BotDigest.tsx
+    - apps/web/src/custom/bots/BotDigestItem.tsx
     - apps/web/src/custom/bots/botDigestSections.ts
   shadows: []
   watch: []

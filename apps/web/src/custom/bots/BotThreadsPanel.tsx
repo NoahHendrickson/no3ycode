@@ -242,10 +242,10 @@ function BotThreadsBody(props: {
   return (
     <>
       {header}
-      {/* The digest and the list scroll as one. */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* The digest and the list scroll apart, split by a rule that resizes the digest. */}
+      <div className="flex min-h-0 flex-1 flex-col">
         {bot === undefined ? null : <BotDigest bot={bot} />}
-        {content}
+        <div className="min-h-24 flex-1 overflow-y-auto">{content}</div>
       </div>
     </>
   );

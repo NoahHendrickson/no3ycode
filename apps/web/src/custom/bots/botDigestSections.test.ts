@@ -4,8 +4,7 @@ import { parseBotDigest } from "./botDigestSections";
 
 describe("parseBotDigest", () => {
   it("keeps the sections with something in them, as plain lines", () => {
-    expect(
-      parseBotDigest(`# Digest
+    const sections = parseBotDigest(`# Digest
 
 Some preamble the bot wrote.
 
@@ -23,7 +22,9 @@ Nothing.
 
 * [ ] Flaky test fix: running the suite
 - Flaky test fix: running the suite
-`),
+`);
+    expect(
+      sections.map((section) => ({ ...section, items: section.items.map((i) => i.text) })),
     ).toEqual([
       {
         title: "Needs you",
@@ -32,9 +33,39 @@ Nothing.
           "Pick a release day",
           "#412 waiting on your review",
         ],
-        needsYou: true,
       },
-      { title: "In progress", items: ["Flaky test fix: running the suite"], needsYou: false },
+      { title: "In progress", items: ["Flaky test fix: running the suite"] },
+    ]);
+  });
+
+  it("keeps the threads and pull requests a line links, each once, leaving the ask as its words", () => {
+    const [section] = parseBotDigest(`## Needs you
+
+- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://v2/env-1/thread-1) ([#482](https://github.com/acme/app/pull/482)).
+- [Fix billing](t3-thread://v2/env-1/thread-2) is ready; merge https://github.com/acme/app/pull/77 first? <t3-thread://v2/env-1/thread-2>
+- See the review on https://github.com/acme/app/pull/12/files#r9.
+`);
+    expect(section?.items).toEqual([
+      {
+        text: "Round split payments half-even or half-up?",
+        source:
+          "Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://v2/env-1/thread-1) ([#482](https://github.com/acme/app/pull/482)).",
+        threads: [{ environmentId: "env-1", threadId: "thread-1" }],
+        pullRequests: [{ url: "https://github.com/acme/app/pull/482", number: 482 }],
+      },
+      {
+        text: "Fix billing is ready; merge #77 first?",
+        source:
+          "[Fix billing](t3-thread://v2/env-1/thread-2) is ready; merge https://github.com/acme/app/pull/77 first? <t3-thread://v2/env-1/thread-2>",
+        threads: [{ environmentId: "env-1", threadId: "thread-2" }],
+        pullRequests: [{ url: "https://github.com/acme/app/pull/77", number: 77 }],
+      },
+      {
+        text: "See the review on",
+        source: "See the review on https://github.com/acme/app/pull/12/files#r9.",
+        threads: [],
+        pullRequests: [{ url: "https://github.com/acme/app/pull/12/files#r9", number: 12 }],
+      },
     ]);
   });
 
