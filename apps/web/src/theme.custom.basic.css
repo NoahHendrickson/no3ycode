@@ -235,12 +235,13 @@
 }
 
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
-   heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card. */
+   heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card.
+   Popovers match through .dropdown-glass: a panel popover's popup is a bare square
+   wrapper around its own rounded card, and must stay unshadowed. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is(
     [data-slot="menu-popup"],
     [data-slot="menu-sub-content"],
-    [data-slot="popover-popup"],
     [data-slot="preview-card-popup"],
     [data-slot="tooltip-popup"],
     .dropdown-glass
