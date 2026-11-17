@@ -51,14 +51,19 @@ Nothing.
         text: "Round split payments half-even or half-up?",
         source:
           "Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://v2/env-1/thread-1) ([#482](https://github.com/acme/app/pull/482)).",
-        threads: [{ environmentId: "env-1", threadId: "thread-1" }],
+        threads: [
+          {
+            link: { environmentId: "env-1", threadId: "thread-1" },
+            label: "Fix invoice rounding",
+          },
+        ],
         pullRequests: [{ url: "https://github.com/acme/app/pull/482", number: 482 }],
       },
       {
         text: "Fix billing is ready; merge #77 first?",
         source:
           "[Fix billing](t3-thread://v2/env-1/thread-2) is ready; merge https://github.com/acme/app/pull/77 first? <t3-thread://v2/env-1/thread-2>",
-        threads: [{ environmentId: "env-1", threadId: "thread-2" }],
+        threads: [{ link: { environmentId: "env-1", threadId: "thread-2" }, label: "Fix billing" }],
         pullRequests: [{ url: "https://github.com/acme/app/pull/77", number: 77 }],
       },
       {

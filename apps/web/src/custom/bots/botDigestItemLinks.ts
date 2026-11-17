@@ -27,6 +27,8 @@ export interface BotPullRequest {
 export interface BotDigestLinks {
   readonly threads: ReadonlyArray<{
     readonly link: ThreadLink;
+    /** The bot's words for it, which name it when it does not resolve. */
+    readonly label: string;
     readonly shell: EnvironmentThreadShell | undefined;
   }>;
   readonly pullRequests: ReadonlyArray<
@@ -70,15 +72,19 @@ export function resolveBotDigestLinks(
   shells: ReadonlyArray<EnvironmentThreadShell>,
   environmentId: EnvironmentId,
 ): BotDigestLinks {
-  const threads = item.threads.map((link) => {
+  const threads: Array<BotDigestLinks["threads"][number]> = [];
+  for (const { link, label } of item.threads) {
     const refs = threadLinkCandidates(link, environmentId);
     const shell = shells.find((candidate) =>
       refs.some(
         (ref) => ref.threadId === candidate.id && ref.environmentId === candidate.environmentId,
       ),
     );
-    return { link, shell };
-  });
+    // One thread written two ways (v1 and v2, escaped and not) is one chip.
+    if (shell === undefined || !threads.some((entry) => entry.shell === shell)) {
+      threads.push({ link, label, shell });
+    }
+  }
   const linked = threads.flatMap(({ shell }) => (shell === undefined ? [] : [shell]));
   const pullRequests: Array<BotPullRequest & { thread: EnvironmentThreadShell | undefined }> = [];
   const listed = (url: string) =>

@@ -85,8 +85,9 @@ export function BotDigest(props: {
       const root = event.currentTarget.parentElement;
       if (!(region instanceof HTMLElement) || root === null) return null;
       const restore = () => region.style.setProperty("max-height", `${height}px`);
+      const start = region.offsetHeight;
       return {
-        width: region.offsetHeight,
+        width: start,
         edge: "bottom",
         bounds: { min: MIN_HEIGHT, max: Math.max(MIN_HEIGHT, root.clientHeight - LIST_MIN_HEIGHT) },
         resize(next) {
@@ -95,8 +96,11 @@ export function BotDigest(props: {
         },
         // A press without a move keeps the saved height, which may be taller than the digest.
         finish(final, moved) {
-          if (moved) setHeight(Math.round(final));
-          else restore();
+          if (!moved) return restore();
+          // Dragging down a digest shorter than the saved height never lowers it.
+          const next = Math.round(final > start ? Math.max(final, height) : final);
+          setHeight(next);
+          region.style.setProperty("max-height", `${next}px`);
         },
         cleanup(committed) {
           if (!committed) restore();

@@ -17,7 +17,8 @@ export interface BotDigestItem {
   readonly text: string;
   /** The line as the bot wrote it, links kept, less its list marker. */
   readonly source: string;
-  readonly threads: ReadonlyArray<ThreadLink>;
+  /** Each thread the line links, with the words the bot gave it, if any. */
+  readonly threads: ReadonlyArray<{ readonly link: ThreadLink; readonly label: string }>;
   readonly pullRequests: ReadonlyArray<BotDigestPullRequest>;
 }
 
@@ -60,7 +61,7 @@ const plain = (segments: ReadonlyArray<Segment>) =>
     label, a bare pull request URL as its number. */
 function parseItem(line: string): BotDigestItem {
   const source = unmarked(line);
-  const threads: ThreadLink[] = [];
+  const threads: Array<{ link: ThreadLink; label: string }> = [];
   const pullRequests: BotDigestPullRequest[] = [];
   const segments: Segment[] = [];
   let at = 0;
@@ -78,13 +79,11 @@ function parseItem(line: string): BotDigestItem {
         ? (sourceControlClients.parseChangeRequestUrl(url)?.link ?? null)
         : null;
     if (thread !== null) {
-      if (
-        !threads.some(
-          (t) => t.threadId === thread.threadId && t.environmentId === thread.environmentId,
-        )
-      ) {
-        threads.push(thread);
-      }
+      const seen = threads.find(
+        (t) => t.link.threadId === thread.threadId && t.link.environmentId === thread.environmentId,
+      );
+      if (seen === undefined) threads.push({ link: thread, label: label?.trim() ?? "" });
+      else if (seen.label === "") seen.label = label?.trim() ?? "";
       segments.push({ kind: "link", text: label ?? "" });
     } else if (pullRequest !== null) {
       if (!pullRequests.some((other) => other.url === url)) {

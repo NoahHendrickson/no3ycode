@@ -59,10 +59,10 @@ export function BotDigestLine(props: {
       {hasRow ? (
         <span className="flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-            {links.threads.map(({ link, shell }) =>
+            {links.threads.map(({ link, label, shell }) =>
               shell === undefined ? (
                 <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
-                  {unknownThreadLinkLabel(link, props.environmentId)}
+                  {label || unknownThreadLinkLabel(link, props.environmentId)}
                 </span>
               ) : (
                 <BotDigestThreadChip

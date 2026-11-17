@@ -36,7 +36,11 @@ describe("resolveBotDigestLinks", () => {
       [billing],
     );
     expect(links.threads).toEqual([
-      { link: { environmentId: "env-1", threadId: "thread-1" }, shell: billing },
+      {
+        link: { environmentId: "env-1", threadId: "thread-1" },
+        label: "Fix billing",
+        shell: billing,
+      },
     ]);
     expect(links.pullRequests).toEqual([
       {
@@ -46,6 +50,20 @@ describe("resolveBotDigestLinks", () => {
         branch: null,
         thread: billing,
       },
+    ]);
+  });
+
+  it("names a thread it cannot find by its label, and one thread written two ways once", () => {
+    const billing = shell("thread-1", {});
+    const links = linksOf(
+      "Ship it? [Fix billing](t3-thread://v1/thread-1) <t3-thread://v2/env-1/thread-1> [Old work](t3-thread://v2/env-1/gone)",
+      [billing],
+    );
+    expect(
+      links.threads.map(({ label, shell }) => ({ label, found: shell !== undefined })),
+    ).toEqual([
+      { label: "Fix billing", found: true },
+      { label: "Old work", found: false },
     ]);
   });
 
