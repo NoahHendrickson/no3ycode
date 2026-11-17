@@ -372,18 +372,6 @@
     --accent: var(--fork-context-chip-bg-hover);
   }
 
-  /* Black's --background is the #141414 frame under the panel's dark ink, so a
-     dialog's glass (index.css dialog-glass) drew dark on dark; dialogs are the
-     cream popover, solid, as the menus are. */
-
-  & .dialog-glass {
-    --background: var(--popover);
-    background: var(--popover);
-    border-color: var(--border);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
   /* The usage panels' and model menu's provider icons take the dark
      appearance's fills on the charcoal (theme.custom.inlet-jungle.css has
      Jungle Art's reverse). */

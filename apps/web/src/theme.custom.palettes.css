@@ -339,6 +339,8 @@
   --accent-foreground: #ffffff;
   --muted-foreground: #a6cdbe;
   --sidebar-muted-foreground: #deece7;
+  /* index.css mixes this at :root from the cream stage's grey (1.2:1 on the green). */
+  --sidebar-icon-color: #deece7;
   --fork-sidebar-card-title-receded: #b1d4c6;
   --sidebar-control-surface: #3c9270;
   --sidebar-row-hover: #338d69;

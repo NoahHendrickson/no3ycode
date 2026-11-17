@@ -1089,18 +1089,6 @@
 }
 /* fork:end fork-chat-mode */
 
-/* On the green frames the footer's icons (Settings) read --sidebar-icon-color,
-   which index.css mixed at :root from the cream stage's grey: #81817b, 1.2:1 on
-   the green. They take the sidebar's own muted ink. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle-light"]
-  )
-  [data-slot="sidebar-footer"] {
-  --sidebar-icon-color: var(--sidebar-muted-foreground);
-}
-
 /* A pressed sidebar control takes --sidebar-row-active, which is the panel's
    fill (the open row reaching into the sidebar). Wherever the panel's
    polarity differs from the frame's, the frame's ink vanished on it while

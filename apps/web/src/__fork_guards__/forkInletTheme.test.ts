@@ -545,10 +545,10 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(bodyOf('[class*="active:bg-sidebar-row-active"]:active')).toMatch(
       /background-color:\s*var\(--sidebar-row-hover\)/u,
     );
-    // Green's footer icons take the sidebar's own muted ink, not :root's grey.
-    expect(
-      bodyOf('[data-fork-inlet-color="jungle-light"]', '[data-slot="sidebar-footer"]'),
-    ).toMatch(/--sidebar-icon-color:\s*var\(--sidebar-muted-foreground\)/u);
+    // Green's sidebar icons take the sidebar's own muted ink, not :root's grey.
+    expect(declarationHex(ruleNaming(paletteRules, [GREEN, FRAME]), "--sidebar-icon-color")).toBe(
+      "#deece7",
+    );
     // The cream panels' faint ink is black 65% (H6).
     expect(declarationHex(ruleNaming(paletteRules, [GREEN]), "--muted-foreground")).toBe("#54544e");
   });
