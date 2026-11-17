@@ -64,7 +64,19 @@ const BASIC_TONE_STORAGE_KEYS = {
   light: "t3code:fork-basic-tone-light",
 } as const;
 export const BASIC_TONE_ATTRIBUTE = "data-fork-basic-tone";
-export const BASIC_TONES = ["light", "cream", "neutral", "cool", "darker"] as const;
+export const BASIC_TONES = [
+  "light",
+  "cream",
+  "darkest-warm",
+  "darker-warm",
+  "dark-warm",
+  "darkest-cool",
+  "darker-cool",
+  "dark-cool",
+  "darkest-neutral",
+  "darker-neutral",
+  "dark-neutral",
+] as const;
 export type BasicTone = (typeof BASIC_TONES)[number];
 /** `base` is the one colour the tone is built from (theme.custom.basic.css derives every other
     surface from it); index.html carries the same table for the pre-paint, so a new tone is a
@@ -83,14 +95,30 @@ export const BASIC_TONE_OPTIONS: Readonly<
 > = {
   light: { label: "Light", base: "#f7f7f7", text: "#1a1a1a", appearance: "light" },
   cream: { label: "Cream", base: "#f8f3d8", text: "#1f1c16", appearance: "light" },
-  neutral: { label: "Neutral Dark", base: "#2b2b2b", text: "#e8e8e8", appearance: "dark" },
-  cool: { label: "Cool Dark", base: "#272a30", text: "#e8e8e8", appearance: "dark" },
-  darker: { label: "Darker", base: "#131313", text: "#e8e8e8", appearance: "dark" },
+  "darkest-warm": { label: "Darkest Warm", base: "#1b1714", text: "#e8e8e8", appearance: "dark" },
+  "darker-warm": { label: "Darker Warm", base: "#25211d", text: "#e8e8e8", appearance: "dark" },
+  "dark-warm": { label: "Dark Warm", base: "#2e2a25", text: "#e8e8e8", appearance: "dark" },
+  "darkest-cool": { label: "Darkest Cool", base: "#16181b", text: "#e8e8e8", appearance: "dark" },
+  "darker-cool": { label: "Darker Cool", base: "#202226", text: "#e8e8e8", appearance: "dark" },
+  "dark-cool": { label: "Dark Cool", base: "#2e3138", text: "#e8e8e8", appearance: "dark" },
+  "darkest-neutral": {
+    label: "Darkest Neutral",
+    base: "#171717",
+    text: "#e8e8e8",
+    appearance: "dark",
+  },
+  "darker-neutral": {
+    label: "Darker Neutral",
+    base: "#232323",
+    text: "#e8e8e8",
+    appearance: "dark",
+  },
+  "dark-neutral": { label: "Dark Neutral", base: "#2b2b2b", text: "#e8e8e8", appearance: "dark" },
 };
-export const DEFAULT_BASIC_TONES = { dark: "neutral", light: "light" } as const satisfies Record<
-  "dark" | "light",
-  BasicTone
->;
+export const DEFAULT_BASIC_TONES = {
+  dark: "dark-neutral",
+  light: "light",
+} as const satisfies Record<"dark" | "light", BasicTone>;
 
 const INLET_COLOR_STORAGE_KEY = "t3code:fork-inlet-color";
 export const INLET_COLOR_ATTRIBUTE = "data-fork-inlet-color";
@@ -179,11 +207,15 @@ export const FORK_PALETTE_LABELS = {
   [INLET_THEME]: INLET_LABEL,
 } as const satisfies Record<ForkPalette, string>;
 
-/** Retired palettes and the Basic tone each became. */
-const RETIRED_PALETTE_TONES: Readonly<Record<string, BasicTone>> = {
-  "cool-dark": "cool",
-  "neutral-dark": "neutral",
-  "neutral-darker": "darker",
+/** Retired dark looks and the Basic tone each became: palette ids and tone ids, which never
+    collide, so the palette and the stored dark tone share one lookup. */
+const RETIRED_DARK_LOOKS: Readonly<Record<string, BasicTone>> = {
+  "cool-dark": "dark-cool",
+  "neutral-dark": "dark-neutral",
+  "neutral-darker": "darkest-neutral",
+  cool: "dark-cool",
+  neutral: "dark-neutral",
+  darker: "darkest-neutral",
 };
 
 type AttributeRoot = {
@@ -277,7 +309,7 @@ function isRenderedDark(): boolean {
 }
 
 /** One-time bridges: Westworld once lived in `t3code:theme`, and the retired palettes become the
-    Basic tone that replaced them. */
+    Basic tone that replaced them. So do the retired dark tones. */
 export function migrateLegacyForkPalettes(): void {
   if (typeof window === "undefined") return;
   try {
@@ -285,7 +317,12 @@ export function migrateLegacyForkPalettes(): void {
       window.localStorage.setItem(UPSTREAM_THEME_STORAGE_KEY, "dark");
       window.localStorage.setItem(FORK_PALETTE_STORAGE_KEY, "cool-dark");
     }
-    const tone = RETIRED_PALETTE_TONES[window.localStorage.getItem(FORK_PALETTE_STORAGE_KEY) ?? ""];
+    const retiredTone =
+      RETIRED_DARK_LOOKS[window.localStorage.getItem(BASIC_TONE_STORAGE_KEYS.dark) ?? ""];
+    if (retiredTone !== undefined) {
+      window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.dark, retiredTone);
+    }
+    const tone = RETIRED_DARK_LOOKS[window.localStorage.getItem(FORK_PALETTE_STORAGE_KEY) ?? ""];
     if (tone !== undefined) {
       window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.dark, tone);
       window.localStorage.setItem(FORK_PALETTE_STORAGE_KEY, BASIC_THEME);

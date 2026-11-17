@@ -110,16 +110,21 @@ describe("fork theme synchronization", () => {
     migrateLegacyForkPalettes();
     expect(values.get("t3code:theme")).toBe("dark");
     expect(values.get("t3code:fork-theme")).toBe("basic");
-    expect(readBasicTone("dark")).toBe("cool");
+    expect(readBasicTone("dark")).toBe("dark-cool");
 
     values.set("t3code:fork-theme", "neutral-darker");
     migrateLegacyForkPalettes();
     expect(readForkPalette()).toBe("basic");
-    expect(readBasicTone("dark")).toBe("darker");
+    expect(readBasicTone("dark")).toBe("darkest-neutral");
     expect(readBasicTone("light")).toBe("light");
 
+    // A retired dark tone becomes the tone that replaced it.
+    values.set("t3code:fork-basic-tone-dark", "cool");
+    migrateLegacyForkPalettes();
+    expect(readBasicTone("dark")).toBe("dark-cool");
+
     // A tone stored for the wrong appearance is not that appearance's tone.
-    values.set("t3code:fork-basic-tone-light", "cool");
+    values.set("t3code:fork-basic-tone-light", "dark-cool");
     expect(readBasicTone("light")).toBe("light");
   });
 
@@ -145,7 +150,7 @@ describe("fork theme synchronization", () => {
       await import("./forkTheme");
     initializeForkTheme();
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("neutral");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("dark-neutral");
 
     // System turns light: Basic follows, onto the light tone.
     values.set("t3code:fork-basic-tone-light", "cream");
@@ -303,11 +308,11 @@ describe("fork theme synchronization", () => {
       setForkBasicTone,
     } = await import("./forkTheme");
     // From an imported theme: Basic takes over upstream's standard theme, keeping the mode.
-    setForkBasicTone("cool", setTheme);
+    setForkBasicTone("dark-cool", setTheme);
     expect(values.get("t3code:theme")).toBe("system");
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("cool");
+    expect(values.get("t3code:fork-basic-tone-dark")).toBe("dark-cool");
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("cool");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("dark-cool");
     expect(setAppearanceMode).not.toHaveBeenCalled();
 
     setForkBasicTone("cream", setTheme);
@@ -315,7 +320,7 @@ describe("fork theme synchronization", () => {
     expect(classes.has("dark")).toBe(false);
     expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("cream");
     // The dark tone is kept for when the user comes back to dark.
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("cool");
+    expect(values.get("t3code:fork-basic-tone-dark")).toBe("dark-cool");
 
     // Restore defaults puts both tones back, the one not showing too, and leaves the mode.
     resetForkBasicTones();

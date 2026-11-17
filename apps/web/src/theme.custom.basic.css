@@ -142,16 +142,40 @@
   --basic-composer-prompt: var(--basic-raised);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="neutral"] {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darkest-warm"] {
+  --basic-base: #1b1714;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker-warm"] {
+  --basic-base: #25211d;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="dark-warm"] {
+  --basic-base: #2e2a25;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darkest-cool"] {
+  --basic-base: #16181b;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker-cool"] {
+  --basic-base: #202226;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="dark-cool"] {
+  --basic-base: #2e3138;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darkest-neutral"] {
+  --basic-base: #171717;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker-neutral"] {
+  --basic-base: #232323;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="dark-neutral"] {
   --basic-base: #2b2b2b;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="cool"] {
-  --basic-base: #272a30;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker"] {
-  --basic-base: #131313;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="light"] {

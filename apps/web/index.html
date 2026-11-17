@@ -30,19 +30,29 @@
         /* fork:end fork-cool-dark-theme */
         /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
         // Basic's tones (custom/forkTheme.ts BASIC_TONE_OPTIONS): the base it
-        // pre-paints and the appearance it belongs to. The retired palettes
-        // read as the tone that replaced them.
+        // pre-paints and the appearance it belongs to. The retired palettes and
+        // dark tones read as the tone that replaced them.
         const forkBasicTones = {
           light: { base: "#f7f7f7", appearance: "light" },
           cream: { base: "#f8f3d8", appearance: "light" },
-          neutral: { base: "#2b2b2b", appearance: "dark" },
-          cool: { base: "#272a30", appearance: "dark" },
-          darker: { base: "#131313", appearance: "dark" },
+          "darkest-warm": { base: "#1b1714", appearance: "dark" },
+          "darker-warm": { base: "#25211d", appearance: "dark" },
+          "dark-warm": { base: "#2e2a25", appearance: "dark" },
+          "darkest-cool": { base: "#16181b", appearance: "dark" },
+          "darker-cool": { base: "#202226", appearance: "dark" },
+          "dark-cool": { base: "#2e3138", appearance: "dark" },
+          "darkest-neutral": { base: "#171717", appearance: "dark" },
+          "darker-neutral": { base: "#232323", appearance: "dark" },
+          "dark-neutral": { base: "#2b2b2b", appearance: "dark" },
         };
-        const forkRetiredPaletteTones = {
-          "cool-dark": "cool",
-          "neutral-dark": "neutral",
-          "neutral-darker": "darker",
+        // Palette ids and tone ids never collide, so one table serves both.
+        const forkRetiredDarkLooks = {
+          "cool-dark": "dark-cool",
+          "neutral-dark": "dark-neutral",
+          "neutral-darker": "darkest-neutral",
+          cool: "dark-cool",
+          neutral: "dark-neutral",
+          darker: "darkest-neutral",
         };
         /* fork:end fork-basic-theme */
         /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
@@ -275,10 +285,10 @@
           // forkTheme.ts writes the migration once React starts; until then a
           // retired palette paints as its tone, and anything else as Basic.
           const forkBasicLegacyTone = Object.prototype.hasOwnProperty.call(
-            forkRetiredPaletteTones,
+            forkRetiredDarkLooks,
             forkPalette,
           )
-            ? forkRetiredPaletteTones[forkPalette]
+            ? forkRetiredDarkLooks[forkPalette]
             : null;
           if (forkPalette !== "cool-darker" && forkPalette !== "inlet") {
             forkPalette = "basic";
@@ -409,10 +419,16 @@
               "t3code:fork-basic-tone-" + forkBasicAppearance,
             );
             if (
+              isDark &&
+              Object.prototype.hasOwnProperty.call(forkRetiredDarkLooks, forkBasicTone)
+            ) {
+              forkBasicTone = forkRetiredDarkLooks[forkBasicTone];
+            }
+            if (
               !Object.prototype.hasOwnProperty.call(forkBasicTones, forkBasicTone) ||
               forkBasicTones[forkBasicTone].appearance !== forkBasicAppearance
             ) {
-              forkBasicTone = isDark ? (forkBasicLegacyTone ?? "neutral") : "light";
+              forkBasicTone = isDark ? (forkBasicLegacyTone ?? "dark-neutral") : "light";
             }
             forkPaletteBackgrounds["basic"] = forkBasicTones[forkBasicTone].base;
             document.documentElement.setAttribute("data-fork-basic-tone", forkBasicTone);
@@ -554,16 +570,40 @@
         background: #f8f3d8;
         color: #1f1c16;
       }
-      html[data-fork-theme="basic"][data-fork-basic-tone="neutral"] body {
+      html[data-fork-theme="basic"][data-fork-basic-tone="darkest-warm"] body {
+        background: #1b1714;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="darker-warm"] body {
+        background: #25211d;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="dark-warm"] body {
+        background: #2e2a25;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="darkest-cool"] body {
+        background: #16181b;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="darker-cool"] body {
+        background: #202226;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="dark-cool"] body {
+        background: #2e3138;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="darkest-neutral"] body {
+        background: #171717;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="darker-neutral"] body {
+        background: #232323;
+        color: #e8e8e8;
+      }
+      html[data-fork-theme="basic"][data-fork-basic-tone="dark-neutral"] body {
         background: #2b2b2b;
-        color: #e8e8e8;
-      }
-      html[data-fork-theme="basic"][data-fork-basic-tone="cool"] body {
-        background: #272a30;
-        color: #e8e8e8;
-      }
-      html[data-fork-theme="basic"][data-fork-basic-tone="darker"] body {
-        background: #131313;
         color: #e8e8e8;
       }
       /* fork:end fork-basic-theme */

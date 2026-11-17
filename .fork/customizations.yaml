@@ -1637,19 +1637,25 @@
     hairlines and raised fills, 12% chips, 16% the strongest lift. The
     sidebar, header and stage are one surface separated by 8% hairlines.
 
-    Five tones: Light #f7f7f7, Cream #f8f3d8, Neutral Dark #2b2b2b, Cool Dark
-    #272a30, Darker #131313. Changing temperature changes only --basic-base
-    (and Cream's warm text); theme.custom.basic.css derives the lifts with
-    color-mix. Surfaces that float over content (menus, composer, chips) are
-    the ink flattened over the base, so nothing shows through them; hovers,
-    selections and lines stay translucent, as drawn. Menus open flat on the
-    raised fill (no frost, which belongs to Glass).
+    Eleven tones (Figma t3-fork 729:28816 for the dark ones): Light #f7f7f7,
+    Cream #f8f3d8, and three dark depths in three temperatures. Darkest, Darker,
+    Dark: warm #1b1714, #25211d, #2e2a25; cool #16181b, #202226, #2e3138;
+    neutral #171717, #232323, #2b2b2b. The warm tones sit a step warmer than
+    the Figma frames, and Dark Neutral keeps the retired Neutral Dark's
+    #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
+    changes only --basic-base (and Cream's warm text); theme.custom.basic.css
+    derives the lifts with color-mix. Surfaces that float over content
+    (menus, composer, chips) are the ink flattened over the base, so nothing
+    shows through them; hovers, selections and lines stay translucent, as
+    drawn. Menus open flat on the raised fill (no frost, which belongs to
+    Glass).
 
     Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
     -light, stamped as data-fork-basic-tone), so under System it follows the
     OS between them. Picking a tone on the other appearance moves the mode;
     picking one on the current appearance does not. Westworld migrates to
-    Cool Dark, Neutral Dark to Neutral Dark, Neutral Darker to Darker.
+    Dark Cool, Neutral Dark to Dark Neutral, Neutral Darker to Darkest Neutral;
+    the retired dark tones Neutral Dark, Cool Dark and Darker move the same way.
     Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
     (custom/ForkThemePicker.tsx) with the picked theme's own rows below:
     Basic's tone swatches, Inlet's colour, Glass's picture and depth.
@@ -5252,8 +5258,8 @@
     transcript working row, the composer liveness pill, subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
-    into beads and merges back). Until one is picked, Inlet draws the bead
-    ring and every other palette the helix. The choice is device-local
+    into beads and merges back). Until one is picked, Inlet and Basic draw the
+    bead ring and every other palette the helix. The choice is device-local
     (localStorage), not a contracts setting, and Restore defaults clears it
     back to the palette's default. Each mark bakes one loop of frames into a
     mask once (rain and helix an SVG, the bead ring a canvas drawn once), and a single stepped transform

@@ -1,9 +1,9 @@
 /**
  * Working indicator choice — see `.fork/customizations.yaml#fork-working-mark`.
  *
- * Which mark a running agent draws everywhere the fork shows one; Inlet
- * defaults to the bead ring, other palettes to the helix. Device-local, like
- * the palette: a contracts field would put a fork key in a schema upstream owns.
+ * Which mark a running agent draws; Inlet and Basic default to the bead ring,
+ * other palettes to the helix. Device-local, like the palette: a contracts
+ * field would put a fork key in a schema upstream owns.
  */
 import * as Schema from "effect/Schema";
 import { useSyncExternalStore } from "react";
@@ -14,7 +14,8 @@ import {
   setLocalStorageItem,
 } from "~/hooks/useLocalStorage";
 
-import { useIsInletActive } from "./forkActivePalette";
+import { useActiveForkPalette } from "./forkActivePalette";
+import type { ForkPalette, ForkPalettePreference } from "./forkTheme";
 
 const STORAGE_KEY = "t3code:fork:working-mark:v2";
 /** v1 stored "helix" for a reset as well as a pick, so only its other picks carry over. */
@@ -23,8 +24,15 @@ const LEGACY_STORAGE_KEY = "t3code:fork:working-mark:v1";
 export const FORK_WORKING_MARKS = ["helix", "rain", "bead"] as const;
 export type ForkWorkingMark = (typeof FORK_WORKING_MARKS)[number];
 
-function defaultForkWorkingMark(inlet: boolean): ForkWorkingMark {
-  return inlet ? "bead" : "helix";
+/** Each palette's mark until one is picked; an upstream theme (no palette) draws the helix. */
+export const FORK_WORKING_MARK_DEFAULTS = {
+  basic: "bead",
+  "cool-darker": "helix",
+  inlet: "bead",
+} as const satisfies Record<ForkPalette, ForkWorkingMark>;
+
+function defaultForkWorkingMark(palette: ForkPalettePreference): ForkWorkingMark {
+  return palette === null ? "helix" : FORK_WORKING_MARK_DEFAULTS[palette];
 }
 
 export const FORK_WORKING_MARK_LABELS: Record<ForkWorkingMark, string> = {
@@ -106,6 +114,6 @@ export function useForkWorkingMarkPick(): [
 /** The mark to draw: the pick, else the palette's default. */
 export function useForkWorkingMark(): ForkWorkingMark {
   const [picked] = useForkWorkingMarkPick();
-  const fallback = defaultForkWorkingMark(useIsInletActive());
+  const fallback = defaultForkWorkingMark(useActiveForkPalette());
   return picked ?? fallback;
 }
