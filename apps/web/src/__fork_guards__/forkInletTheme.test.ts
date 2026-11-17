@@ -534,6 +534,25 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(indexHtml).toContain("fork:begin fork-inlet-theme");
   });
 
+  it("keeps dialogs solid and every pressed, lit and muted ink readable", () => {
+    const bodyOf = (...parts: string[]) =>
+      inletRules.find((rule) => parts.every((part) => rule.selector.includes(part)))?.body ?? "";
+    // The palette, confirm dialogs and the web context menu are solid popups, never frosted.
+    const dialogs = bodyOf(".dialog-glass", "[data-context-menu].dropdown-glass");
+    expect(dialogs).toMatch(/background:\s*var\(--popover\)/u);
+    expect(dialogs).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
+    // A press keeps the hover fill: the panel's fill under the frame's ink vanished.
+    expect(bodyOf('[class*="active:bg-sidebar-row-active"]:active')).toMatch(
+      /background-color:\s*var\(--sidebar-row-hover\)/u,
+    );
+    // Green's sidebar icons take the sidebar's own muted ink, not :root's grey.
+    expect(declarationHex(ruleNaming(paletteRules, [GREEN, FRAME]), "--sidebar-icon-color")).toBe(
+      "#deece7",
+    );
+    // The cream panels' faint ink is black 65% (H6).
+    expect(declarationHex(ruleNaming(paletteRules, [GREEN]), "--muted-foreground")).toBe("#54544e");
+  });
+
   it("keeps every Inlet rule inside the palette scope", () => {
     for (const rule of [...inletRules, ...paletteRules]) {
       if (!rule.body.includes("--fork-inlet-")) continue;

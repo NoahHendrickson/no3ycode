@@ -417,9 +417,12 @@ export function showContextMenuFallback<T extends string>(
       for (const item of entries) {
         if (item.separatorBefore === true && inner.children.length > 0) {
           const separator = document.createElement("div");
-          separator.className = "mx-2 my-1 h-px bg-border";
+          /* fork:begin fork-popup-surface — see .fork/customizations.yaml#fork-popup-surface
+             Dividers run edge to edge across the list's 4px padding. */
+          separator.className = "-mx-1 my-1 h-px bg-border";
           separator.style.cssText =
-            "height:1px;margin:0.25rem 0.5rem;background:var(--contrast-border);";
+            "height:1px;margin:0.25rem -0.25rem;background:var(--contrast-border);";
+          /* fork:end fork-popup-surface */
           separator.dataset.contextMenuSeparator = "true";
           separator.setAttribute("role", "separator");
           inner.appendChild(separator);

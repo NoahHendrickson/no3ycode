@@ -1653,7 +1653,11 @@
     (menus, composer, chips) are the ink flattened over the base, so nothing
     shows through them; hovers, selections and lines stay translucent, as
     drawn. Menus open flat on the raised fill (no frost, which belongs to
-    Glass).
+    Glass), and so do dialogs, the command palette, toasts, the web context
+    menu and the floating glass pills: 8px corners, the 8% line, the menus'
+    quiet shadow, and a dialog scrim that dims without blurring. Page cards
+    (Settings groups, Usage, Automations) and page segmented tabs take the
+    same 8px corners, 8% line and the Code / Chat switch's track.
 
     Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
     -light, stamped as data-fork-basic-tone), so under System it follows the
@@ -1766,6 +1770,8 @@
     Stop shares the glass geometry with red-only rim and inner highlights,
     a translucent red face and white glyph so interrupt remains visually
     distinct from send regardless of the wallpaper.
+    Page segmented tabs (Usage, Automations triggers) use the Code / Chat
+    switch's 12px track with a 10px chip, not upstream's 4px.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -2551,6 +2557,12 @@
     On Windows (.wco) without the tab strip, panels start below the caption
     band (--fork-inlet-panel-top), which drags the window; the inline right
     panel included.
+    The command palette, confirm dialogs and the web context menu are solid
+    popups like the menus (--popover, its line, 10px, no frost; Jungle Art
+    restates its menu inks inside them). A pressed sidebar control keeps the
+    hover fill wherever the panel's polarity differs from the frame's, the
+    cream panels' faint ink is black 65% (H6), Green's footer icons take the
+    sidebar's muted ink, and Cream's lit row keeps the panel ink on its icon.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -4658,6 +4670,8 @@
     - apps/web/src/components/chat/TraitsPicker.tsx
     # Draws the "Start from origin" footer hairline as a border-t.
     - apps/web/src/components/BranchToolbarBranchSelector.tsx
+    # The web build's context menu: its separators run edge to edge (fenced inline style).
+    - apps/web/src/contextMenuFallback.ts
   verify:
     - apps/web/src/__fork_guards__/forkPopupSurface.test.ts
 
@@ -4741,7 +4755,8 @@
   intent: >
     Under Glass, popups (menu, select, combobox, popover, glass tooltip,
     the Usage dialog — the fork-popup-surface arms — upstream's Settings
-    and Usage route modals, and, in a started thread, the thread details
+    and Usage route modals, the command palette and confirm dialogs
+    (dialog-glass), and, in a started thread, the thread details
     card opened as a popover) read as the same live
     glass as the sidebar and the composer's control row, not as an
     estimated solid. While one is open, custom/forkGlassPopupCutout.ts masks

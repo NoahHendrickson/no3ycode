@@ -35,6 +35,32 @@
   backdrop-filter: none;
 }
 
+/* The command palette and the confirm dialogs (dialog-glass) and the web build's
+   context menu (contextMenuFallback.ts) sit outside those arms and kept upstream's
+   frost: on Green it took the frame's green at 80% under dark ink, unreadable.
+   They are popups like the rest: the solid --popover behind its line, the menus'
+   10px and their faint drop shadow. A Jungle tab's anchored menu keeps its own
+   green (theme.custom.inlet-jungle.css), which outranks this. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  :is(.dialog-glass, [data-context-menu].dropdown-glass) {
+  --background: var(--popover);
+  background: var(--popover);
+  border-color: var(--border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  .dialog-glass {
+  box-shadow: 0 16px 40px -18px rgb(0 0 0 / 55%);
+}
+
+/* Dialogs take the menus' 10px (theme.custom.css, --fork-dialog-radius). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  --fork-dialog-radius: var(--fork-inlet-menu-radius);
+}
+
 /* A sidebar row's hover card opens as a tab pulled out of the row: while it
    is open the row takes the card's fill and ink and goes square on its right
    end, and the card fills the 4px gap (the popup's sideOffset) and curves
@@ -1005,4 +1031,15 @@
           calc(var(--fork-inlet-tab-neck-h) + 1px) no-repeat;
     }
   }
+}
+
+/* Page tabs (Usage, Automations' triggers) are rounded rectangles with parallel
+   corners, not upstream's 4px track around a 2px chip. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  /* The chip's corner is calc(var(--radius-sm) - 2px). */
+  --radius-sm: 8px;
+  border-radius: 8px;
 }

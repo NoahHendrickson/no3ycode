@@ -291,7 +291,8 @@
   --foreground: #1c1c1a;
   --fork-inlet-panel: #f1f0e0;
   --fork-inlet-panel-foreground: #1c1c1a;
-  --fork-inlet-panel-muted: #6c6c65;
+  /* Black 65% over the panel, flattened (H6). */
+  --fork-inlet-panel-muted: #54544e;
   --card: #faf9f0;
   --card-foreground: #1c1c1a;
   --popover: #faf9f0;
@@ -302,7 +303,7 @@
   --secondary: #e5e4d5;
   --secondary-foreground: #1c1c1a;
   --muted: #e5e4d5;
-  --muted-foreground: #6c6c65;
+  --muted-foreground: #54544e;
   --accent: #e5e4d5;
   --accent-foreground: #1c1c1a;
   --border: #dbdacc;
@@ -338,6 +339,8 @@
   --accent-foreground: #ffffff;
   --muted-foreground: #a6cdbe;
   --sidebar-muted-foreground: #deece7;
+  /* index.css mixes this at :root from the cream stage's grey (1.2:1 on the green). */
+  --sidebar-icon-color: #deece7;
   --fork-sidebar-card-title-receded: #b1d4c6;
   --sidebar-control-surface: #3c9270;
   --sidebar-row-hover: #338d69;
@@ -508,7 +511,8 @@
   --foreground: #1c1c1a;
   --fork-inlet-panel: #f8f3d8;
   --fork-inlet-panel-foreground: #1c1c1a;
-  --fork-inlet-panel-muted: #6c6a5e;
+  /* Black 65% over the panel, flattened (H6). */
+  --fork-inlet-panel-muted: #57554c;
   --card: #fcfaee;
   --card-foreground: #1c1c1a;
   --popover: #fcfaee;
@@ -519,7 +523,7 @@
   --secondary: #ebe7cd;
   --secondary-foreground: #1c1c1a;
   --muted: #ebe7cd;
-  --muted-foreground: #6c6a5e;
+  --muted-foreground: #57554c;
   --accent: #ebe7cd;
   --accent-foreground: #1c1c1a;
   --border: #e0dcc2;
@@ -1159,6 +1163,7 @@
     [data-slot="select-popup"] > .dropdown-glass,
     .dropdown-glass:has(> [data-slot="combobox-popup"]),
     [data-slot="dialog-popup"][data-app-modal],
+    :where(.dialog-glass:not(.dropdown-glass)[data-slot$="dialog-popup"]),
     :where(
       [data-thread-details-panel="popover"]:is([data-fork-popup], [data-fork-glass-picture="off"] *)
         > [data-thread-details-card].dropdown-glass
@@ -1280,6 +1285,7 @@
     [data-slot="select-popup"][data-starting-style]:has(> .dropdown-glass),
     .dropdown-glass > [data-slot="combobox-popup"][data-starting-style],
     [data-slot="dialog-popup"][data-app-modal][data-starting-style],
+    :where(.dialog-glass:not(.dropdown-glass)[data-slot$="dialog-popup"][data-starting-style]),
     [data-slot="popover-popup"][data-starting-style]:has([data-fork-popup]),
     [data-fork-glass-picture="off"]
       [data-slot="popover-popup"][data-starting-style]:has([data-thread-details-panel="popover"])
@@ -1612,4 +1618,15 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
   border-color: rgb(64 64 64 / 60%);
+}
+
+/* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
+   track whatever the 3D setting, so they sit outside its gates in this sheet. The chip's
+   corner is calc(var(--radius-sm) - 2px), concentric inside the 2px inset; the
+   track's rounded-sm is inlined by @theme inline, so it takes the radius too. */
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  --radius-sm: 12px;
+  border-radius: 12px;
 }

@@ -8,17 +8,6 @@
    several override one another at equal specificity. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"] {
-  /* A press is the open row's cream under the sidebar's light ink, so the
-     label vanishes; a press keeps the hover fill. A lit row stays lit. */
-
-  &
-    [data-sidebar-version="v2"]
-    :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active:not(
-      [data-active="true"]
-    ) {
-    background-color: var(--sidebar-row-hover);
-  }
-
   /* Project icons ink light mode's -600 shades (projectIconColors.ts), dark
      on the charcoal sidebar; there they take dark mode's -400s. The hook is
      the icons' own class, so no other -600 utility in the sidebar moves. */
@@ -381,18 +370,6 @@
     ) {
     --popover: var(--fork-context-chip-bg);
     --accent: var(--fork-context-chip-bg-hover);
-  }
-
-  /* Black's --background is the #141414 frame under the panel's dark ink, so a
-     dialog's glass (index.css dialog-glass) drew dark on dark; dialogs are the
-     cream popover, solid, as the menus are. */
-
-  & .dialog-glass {
-    --background: var(--popover);
-    background: var(--popover);
-    border-color: var(--border);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
 
   /* The usage panels' and model menu's provider icons take the dark

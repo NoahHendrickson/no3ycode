@@ -45,6 +45,8 @@ export const FORK_GLASS_POPUP_SELECTOR = [
   '.dropdown-glass:has(> [data-slot="combobox-popup"])',
   // The Settings and Usage route modals (AppRouteModal), which carry no dropdown-glass.
   '[data-slot="dialog-popup"][data-app-modal]',
+  // The command palette and the confirm dialogs, on dialog-glass.
+  '.dialog-glass:not(.dropdown-glass)[data-slot$="dialog-popup"]',
   // The thread details card, popover-presented where nothing is frosted: the
   // portaled wrapper carries data-fork-popup outside a new agent's draft, and
   // the root attribute stands in for it while the picture is switched off.

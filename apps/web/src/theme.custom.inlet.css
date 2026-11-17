@@ -773,19 +773,6 @@
   }
 }
 
-/* Sidebar menu buttons press in --sidebar-row-active (ui/sidebar.tsx), which
-   on the cream frames is the open row's charcoal under the frame's dark ink;
-   a press keeps the hover cream instead. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
-  [data-sidebar-version="v2"]
-  :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active {
-  background-color: var(--sidebar-row-hover);
-}
-
 /* The stage-card pages are panels as well: their stage card is set into
    the frame the way the chat column is. */
 
@@ -1101,3 +1088,32 @@
   padding-top: var(--fork-inlet-fillet);
 }
 /* fork:end fork-chat-mode */
+
+/* A pressed sidebar control takes --sidebar-row-active, which is the panel's
+   fill (the open row reaching into the sidebar). Wherever the panel's
+   polarity differs from the frame's, the frame's ink vanished on it while
+   held, so a press keeps the hover fill. A lit row stays lit; an open menu's trigger is
+   the morph's to fill. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(
+    [data-fork-inlet-color="charcoal"]
+  )
+  [data-sidebar-version="v2"]
+  [class*="active:bg-sidebar-row-active"]:active:not(
+    [data-active="true"],
+    [data-popup-open],
+    [aria-expanded="true"]
+  ) {
+  background-color: var(--sidebar-row-hover);
+}
+
+/* The lit chrome row's icon takes the panel's ink (above), but on Cream the
+   chrome rows' 65% black icon rule ties it and comes later, leaving a black
+   glyph on the black lit row. The colour attribute outweighs it. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-chrome-row][data-active="true"]
+  svg {
+  color: var(--fork-inlet-panel-foreground);
+}
