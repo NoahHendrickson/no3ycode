@@ -4,15 +4,12 @@
  * one), on the bot's conversation and on each of its threads, listing its work by status.
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
-import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
 import { useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
-import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
-import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { isElectron } from "~/env";
@@ -33,6 +30,8 @@ import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { BotDigest } from "./BotDigest";
+import { botThreadPullRequest } from "./botDigestItemLinks";
+import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {
@@ -101,6 +100,7 @@ export function BotThreadsPanel(props: {
       botRef={props.botRef}
       currentThreadRef={props.threadRef}
       rightmost={rightmost}
+      sheet={props.sheet}
     />
   );
   if (props.sheet) {
@@ -127,6 +127,7 @@ function BotThreadsBody(props: {
   readonly currentThreadRef: ScopedThreadRef;
   /** Its header is the one under Windows' caption buttons. */
   readonly rightmost: boolean;
+  readonly sheet: boolean;
 }) {
   const botKey = scopedThreadKey(props.botRef);
   const threads = useQuietThreadShells();
@@ -242,11 +243,13 @@ function BotThreadsBody(props: {
   return (
     <>
       {header}
-      {/* The digest and the list scroll apart, split by a rule that resizes the digest. */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        {bot === undefined ? null : <BotDigest bot={bot} />}
-        <div className="min-h-24 flex-1 overflow-y-auto">{content}</div>
-      </div>
+      {bot === undefined ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">{content}</div>
+      ) : (
+        <BotDigest bot={bot} threads={{ shells: threads, localVisits }} sheet={props.sheet}>
+          {content}
+        </BotDigest>
+      )}
     </>
   );
 }
@@ -301,10 +304,8 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
   const { thread, card } = props.row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
-  const pullRequest = resolveThreadCurrentPullRequestLink(thread.pullRequests);
-  const pullRequestState =
-    pullRequest?.snapshot == null ? null : resolvePullRequestState(pullRequest.snapshot);
-  const PullRequestIcon = pullRequestState?.Icon ?? PullRequestGlyph.pullRequest;
+  const pullRequest = botThreadPullRequest(thread);
+  const { state: pullRequestState } = useBotPullRequestState(pullRequest, thread.environmentId);
   const time = formatRelativeTimeLabel(
     thread.latestUserMessageAt ?? thread.updatedAt,
     Date.parse(`${nowMinute}:00.000Z`),
@@ -345,17 +346,7 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
           {/* Always drawn, so every row is the same height with or without a branch. */}
           <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
             {pullRequest === null ? null : (
-              <span
-                className={cn("flex shrink-0 items-center gap-1", pullRequestState?.toneClassName)}
-              >
-                <PullRequestIcon aria-hidden className="size-3 shrink-0" />
-                <span className="sr-only">
-                  {pullRequestState === null
-                    ? "Pull request"
-                    : `${pullRequestState.label} pull request`}
-                </span>
-                {pullRequest.number}
-              </span>
+              <BotPullRequestMark number={pullRequest.number} state={pullRequestState} />
             )}
             {thread.branch !== null || thread.worktreePath !== null ? (
               <SidebarV2CheckoutMark

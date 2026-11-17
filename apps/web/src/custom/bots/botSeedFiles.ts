@@ -62,7 +62,7 @@ DIGEST.md is what your owner reads to see where you stand, beside your threads. 
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
 
-End each item with links to what it is about, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…)\`.
+End each item with links to what it is about, after its last sentence, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…)\`.
 
 Drop an item once your owner has answered it or it no longer matters. Leave "Nothing." under an empty section.
 

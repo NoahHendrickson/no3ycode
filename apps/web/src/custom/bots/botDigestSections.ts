@@ -4,7 +4,7 @@
  * them, one line per item, with the threads and pull requests the line links.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import { replaceThreadLinks, type ThreadLink } from "@t3tools/shared/threadLinks";
+import { parseThreadLinkHref, type ThreadLink } from "@t3tools/shared/threadLinks";
 
 export interface BotDigestPullRequest {
   readonly url: string;
@@ -12,7 +12,8 @@ export interface BotDigestPullRequest {
 }
 
 export interface BotDigestItem {
-  /** The line as plain words: list marker, emphasis and link targets dropped. */
+  /** The line as plain words: list marker, emphasis and link targets dropped, and the links
+      appended after its last sentence left to the row under it. */
   readonly text: string;
   /** The line as the bot wrote it, links kept, less its list marker. */
   readonly source: string;
@@ -22,12 +23,24 @@ export interface BotDigestItem {
 
 export interface BotDigestSection {
   readonly title: string;
+  /** Needs you holds what only the owner can settle: answered, never put away. */
+  readonly kind: "needs-you" | "status";
   readonly items: ReadonlyArray<BotDigestItem>;
 }
 
+type Segment =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "link"; readonly text: string };
+
 const EMPTY_ITEM = /^(nothing|none)( yet)?\.?$/i;
-const LABELED_URL = /\[([^\]\n]*)\]\(<?(https?:\/\/[^\s<>()]+)>?\)/g;
-const BARE_URL = /<?(https?:\/\/[^\s<>()[\]]+)>?/g;
+/** A code span, a Markdown link, an autolink, or a bare web URL. */
+const TOKEN =
+  /(`[^`\n]*`)|\[([^\]\n]*)\]\(<?([^\s<>()]+)>?\)|<([a-z][\w+.-]*:\/\/[^\s<>]+)>|(https?:\/\/[^\s<>()[\]]+)/gi;
+/** What may sit between the links that end a line. */
+const BETWEEN_LINKS = /^[\s()[\],;.]*$/;
+/** A line whose words end a sentence before its last links appends them; any other last link
+    belongs to the sentence. */
+const SENTENCE_END = /[?.!:–—-][\s()[\]]*$/;
 
 const unmarked = (line: string) =>
   line
@@ -35,70 +48,76 @@ const unmarked = (line: string) =>
     .replace(/^\[[ xX]\]\s+/, "")
     .trim();
 
-const pullRequestNumber = (url: string) =>
-  sourceControlClients.parseChangeRequestUrl(url)?.link.number ?? null;
+const plain = (segments: ReadonlyArray<Segment>) =>
+  segments
+    .map((segment) => segment.text)
+    .join("")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/\s+/g, " ")
+    .trim();
 
-/** Each link while a line is read: the words it reads as inline, or nothing at the line's end. */
-const LINK_TOKEN = /\{\{link:(\d+)\}\}/g;
-/** One link ending a line, with what separates it from the words before. Links ending a line
-    name what it is about, which the row under it shows instead. */
-const TRAILING_LINK = /[\s,;:\u2013\u2014-]*[([]?\{\{link:\d+\}\}[)\]]?[\s.]*$/;
-
-/** Drops the links that end a line one at a time; one pattern for the run backtracks badly. */
-function withoutTrailingLinks(text: string): string {
-  let rest = text;
-  for (
-    let next = rest.replace(TRAILING_LINK, "");
-    next !== rest;
-    next = rest.replace(TRAILING_LINK, "")
-  ) {
-    rest = next;
-  }
-  return rest;
-}
-
-/** One line as plain words, and the threads and pull requests it links. A link inside the line
-    reads as its label (a bare pull request as its number); the links that end it are dropped. */
+/** One line as plain words, and the threads and pull requests it links. A link reads as its
+    label, a bare pull request URL as its number. */
 function parseItem(line: string): BotDigestItem {
   const source = unmarked(line);
   const threads: ThreadLink[] = [];
   const pullRequests: BotDigestPullRequest[] = [];
-  const words: string[] = [];
-  const token = (inline: string) => `{{link:${words.push(inline) - 1}}}`;
-  const addPullRequest = (url: string, number: number) => {
-    if (!pullRequests.some((pullRequest) => pullRequest.url === url)) {
-      pullRequests.push({ url, number });
+  const segments: Segment[] = [];
+  let at = 0;
+  for (const match of source.matchAll(TOKEN)) {
+    const [written, code, label, labeledHref, autolink, bare] = match;
+    segments.push({ kind: "text", text: source.slice(at, match.index) });
+    at = match.index + written.length;
+    const href = labeledHref ?? autolink;
+    // A sentence's closing punctuation is not part of a bare URL.
+    const url = href ?? bare?.replace(/[.,;:!?]+$/, "") ?? "";
+    const tail = href === undefined && bare !== undefined ? bare.slice(url.length) : "";
+    const thread = code === undefined ? parseThreadLinkHref(url) : null;
+    const pullRequest =
+      code === undefined && thread === null
+        ? (sourceControlClients.parseChangeRequestUrl(url)?.link ?? null)
+        : null;
+    if (thread !== null) {
+      if (
+        !threads.some(
+          (t) => t.threadId === thread.threadId && t.environmentId === thread.environmentId,
+        )
+      ) {
+        threads.push(thread);
+      }
+      segments.push({ kind: "link", text: label ?? "" });
+    } else if (pullRequest !== null) {
+      if (!pullRequests.some((other) => other.url === url)) {
+        pullRequests.push({ url, number: pullRequest.number });
+      }
+      segments.push({ kind: "link", text: label ?? `#${pullRequest.number}` });
+    } else {
+      segments.push({
+        kind: "text",
+        text: label ?? written.slice(0, written.length - tail.length),
+      });
     }
+    if (tail !== "") segments.push({ kind: "text", text: tail });
+  }
+  segments.push({ kind: "text", text: source.slice(at) });
+  // The run of links that ends the line, and what separates them.
+  let end = segments.length;
+  for (
+    let segment = segments[end - 1];
+    segment !== undefined && (segment.kind === "link" || BETWEEN_LINKS.test(segment.text));
+    segment = segments[end - 1]
+  ) {
+    end -= 1;
+  }
+  const words = plain(segments.slice(0, end));
+  const appended =
+    segments.slice(end).some((segment) => segment.kind === "link") && SENTENCE_END.test(words);
+  return {
+    text: appended ? words : plain(segments),
+    source,
+    threads,
+    pullRequests,
   };
-  const linked = replaceThreadLinks(source, (link, label) => {
-    if (
-      !threads.some((t) => t.threadId === link.threadId && t.environmentId === link.environmentId)
-    ) {
-      threads.push(link);
-    }
-    return token(label?.trim() ?? "");
-  })
-    .replace(LABELED_URL, (source: string, label: string, url: string) => {
-      const number = pullRequestNumber(url);
-      if (number === null) return source;
-      addPullRequest(url, number);
-      return token(label);
-    })
-    .replace(BARE_URL, (source: string, written: string) => {
-      // A sentence's closing punctuation is not part of the URL.
-      const url = written.replace(/[.,;:!?]+$/, "");
-      const number = pullRequestNumber(url);
-      if (number === null) return source;
-      addPullRequest(url, number);
-      return token(`#${number}`) + written.slice(url.length);
-    });
-  const text = withoutTrailingLinks(linked)
-    .replace(LINK_TOKEN, (_, index: string) => words[Number(index)] ?? "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/\s+/g, " ")
-    .trim();
-  return { text, source, threads, pullRequests };
 }
 
 /** The sections of a DIGEST.md that hold anything, in the file's order. A level-two or deeper
@@ -127,7 +146,12 @@ export function parseBotDigest(contents: string): ReadonlyArray<BotDigestSection
       current.items.push(item);
     }
   }
-  return sections.filter((section) => section.items.length > 0);
+  return sections
+    .filter((section) => section.items.length > 0)
+    .map((section) => ({
+      ...section,
+      kind: /^needs you$/i.test(section.title) ? ("needs-you" as const) : ("status" as const),
+    }));
 }
 
 /** Names a section as it reads now: a card dismissed under it comes back once its items change. */

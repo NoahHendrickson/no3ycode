@@ -28,13 +28,14 @@ Nothing.
     ).toEqual([
       {
         title: "Needs you",
+        kind: "needs-you",
         items: [
           "Approve the migration in Fix billing",
           "Pick a release day",
           "#412 waiting on your review",
         ],
       },
-      { title: "In progress", items: ["Flaky test fix: running the suite"] },
+      { title: "In progress", kind: "status", items: ["Flaky test fix: running the suite"] },
     ]);
   });
 
@@ -61,11 +62,24 @@ Nothing.
         pullRequests: [{ url: "https://github.com/acme/app/pull/77", number: 77 }],
       },
       {
-        text: "See the review on",
+        text: "See the review on #12.",
         source: "See the review on https://github.com/acme/app/pull/12/files#r9.",
         threads: [],
         pullRequests: [{ url: "https://github.com/acme/app/pull/12/files#r9", number: 12 }],
       },
+    ]);
+  });
+
+  it("keeps an ask written inside its link, or running into it, as words", () => {
+    const [section] = parseBotDigest(`## Needs you
+
+- [Approve production deploy?](t3-thread://v2/env-1/thread-1)
+- Please decide whether to merge [the billing PR](https://github.com/acme/app/pull/9)
+`);
+    expect(section?.kind).toBe("needs-you");
+    expect(section?.items.map((item) => item.text)).toEqual([
+      "Approve production deploy?",
+      "Please decide whether to merge the billing PR",
     ]);
   });
 
