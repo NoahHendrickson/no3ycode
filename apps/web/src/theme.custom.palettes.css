@@ -863,14 +863,6 @@
   --fork-composer-control-ink: rgb(255 255 255 / 65%);
 }
 
-/* The terminal paints its own opaque background (a canvas, read from this token);
-   the palette's #141618 drew a black slab across the bottom of the stage. It takes
-   the stage as it reads on screen instead, and follows the wallpaper estimate:
-   the drawer re-reads its theme when the root's style changes. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"] {
-  --terminal-background: var(--fork-popup-glass-floor);
-}
-
 /* The floating preview's placeholder floats over the transcript, so it is
    the one bg-muted user that must not take the wash above. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
@@ -1624,4 +1616,15 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
   border-color: rgb(64 64 64 / 60%);
+}
+
+/* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
+   track whatever the 3D setting, so they sit outside its gates in this sheet. The chip's
+   corner is calc(var(--radius-sm) - 2px), concentric inside the 2px inset; the
+   track's rounded-sm is inlined by @theme inline, so it takes the radius too. */
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  --radius-sm: 12px;
+  border-radius: 12px;
 }

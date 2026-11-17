@@ -1771,9 +1771,7 @@
     a translucent red face and white glyph so interrupt remains visually
     distinct from send regardless of the wallpaper.
     Page segmented tabs (Usage, Automations triggers) use the Code / Chat
-    switch's 12px track with a 10px chip, not upstream's 4px. Under the
-    desktop glass the terminal's opaque background is the on-screen floor
-    estimate (--fork-popup-glass-floor), not the palette's near-black.
+    switch's 12px track with a 10px chip, not upstream's 4px.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -4672,6 +4670,8 @@
     - apps/web/src/components/chat/TraitsPicker.tsx
     # Draws the "Start from origin" footer hairline as a border-t.
     - apps/web/src/components/BranchToolbarBranchSelector.tsx
+    # The web build's context menu: its separators run edge to edge (fenced inline style).
+    - apps/web/src/contextMenuFallback.ts
   verify:
     - apps/web/src/__fork_guards__/forkPopupSurface.test.ts
 

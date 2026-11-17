@@ -773,21 +773,6 @@
   }
 }
 
-/* Sidebar menu buttons press in --sidebar-row-active (ui/sidebar.tsx), which
-   on the cream frames is the open row's charcoal under the frame's dark ink;
-   a press keeps the hover cream instead. A lit row stays lit. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
-  [data-sidebar-version="v2"]
-  :is([data-slot="sidebar-menu-button"], [data-slot="sidebar-menu-sub-button"]):active:not(
-    [data-active="true"]
-  ) {
-  background-color: var(--sidebar-row-hover);
-}
-
 /* The stage-card pages are panels as well: their stage card is set into
    the frame the way the chat column is. */
 
@@ -1119,8 +1104,7 @@
 /* A pressed sidebar control takes --sidebar-row-active, which is the panel's
    fill (the open row reaching into the sidebar). Wherever the panel's
    polarity differs from the frame's, the frame's ink vanished on it while
-   held, so a press keeps the hover fill, as the menu buttons already do on
-   the cream frames and Black. A lit row stays lit; an open menu's trigger is
+   held, so a press keeps the hover fill. A lit row stays lit; an open menu's trigger is
    the morph's to fill. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(

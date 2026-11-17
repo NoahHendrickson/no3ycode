@@ -2370,6 +2370,34 @@
   backdrop-filter: var(--fork-popup-filter);
 }
 
+/* Basic and Inlet open dialogs (dialog-glass) as unfrosted popups; each theme
+   sheet paints the fill and names --fork-dialog-radius. dialog-styles.ts inlines
+   rounded-2xl (@theme inline), so the radius is set here: at every width for the
+   command palette, which is never a phone sheet, and from sm up for the rest,
+   whose phone sheet stays square. A footer is set off by its line, not a band,
+   and the scrim dims without blurring the app. */
+:root[data-fork="noahhendrickson-t3code"]:is([data-fork-theme="basic"], [data-fork-theme="inlet"]) {
+  & [data-slot="command-dialog-popup"].dialog-glass {
+    border-radius: var(--fork-dialog-radius);
+  }
+
+  @media (min-width: 640px) {
+    & .dialog-glass {
+      border-radius: var(--fork-dialog-radius);
+    }
+  }
+
+  & .dialog-glass :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+    background: transparent;
+    border-color: var(--border);
+  }
+
+  & .dialog-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 /* ── Thread details panel (fork-popup-surface) ──────────────────────────────
    Upstream's thread details card (orchestrator-V2 cycle) is a popover whose
    `variant="panel"` popup carries no glass; the `dropdown-glass` sits on an

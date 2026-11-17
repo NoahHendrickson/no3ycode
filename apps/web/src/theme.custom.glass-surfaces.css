@@ -205,19 +205,6 @@
     overflow-clip-margin: 1px;
   }
 
-  /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
-     track, the chip concentric inside its 2px inset; upstream's 4px read as a
-     square chip beside the rounded rows. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-slot="sidebar-inset"]
-    [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
-    border-radius: 12px;
-
-    & > [data-fork-segmented-tab] {
-      border-radius: 10px;
-    }
-  }
-
   /* The composer as the same glass: the vessel is the pane, with the halo
      round it and the glint, sheens and the popups' top and bottom glows on a
      ::after laid over everything inside. Over, because the prompt well covers

@@ -94,7 +94,15 @@ describe("fork guard: fork-basic-theme", () => {
     const flat = bodyOf(`${BASIC} .dropdown-glass`, `${BASIC} .dialog-glass`);
     expect(flat).toMatch(/background:\s*var\(--popover\)/u);
     expect(flat).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
-    expect(bodyOf(`${BASIC} .dialog-backdrop`)).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
+    // The scrim and dialog radius are shared with Inlet (theme.custom.css).
+    const shared = cssRules(readSibling("../theme.custom.css"));
+    const scrim = shared.find(
+      (rule) =>
+        rule.selector.includes('[data-fork-theme="basic"]') &&
+        rule.selector.includes(".dialog-backdrop"),
+    );
+    expect(scrim?.body).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
+    expect(sheet).toMatch(/--fork-dialog-radius:\s*8px/u);
     expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).toMatch(
       /border-radius:\s*8px/u,
     );

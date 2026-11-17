@@ -56,51 +56,9 @@
   box-shadow: 0 16px 40px -18px rgb(0 0 0 / 55%);
 }
 
-/* Below sm the dialog is a square sheet on the screen's edge. */
-@media (min-width: 640px) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    .dialog-glass {
-    border-radius: var(--fork-inlet-menu-radius);
-
-    & :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
-      border-radius: 0 0 calc(var(--fork-inlet-menu-radius) - 1px)
-        calc(var(--fork-inlet-menu-radius) - 1px);
-    }
-  }
-}
-
-/* The command palette never becomes a phone sheet (command.tsx), so its
-   corners follow at every width. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="command-dialog-popup"].dialog-glass {
-  border-radius: var(--fork-inlet-menu-radius);
-
-  & [data-slot="command-footer"] {
-    border-radius: 0 0 calc(var(--fork-inlet-menu-radius) - 1px)
-      calc(var(--fork-inlet-menu-radius) - 1px);
-  }
-}
-
-/* Footers are set off by a line, as the menus' sections are, not a tinted band. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  .dialog-glass
-  :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
-  background: transparent;
-  border-color: var(--border);
-}
-
-/* The scrim dims without frosting the app behind it. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  .dialog-backdrop {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/* The context menu writes its separators inline, inset; dividers run edge to edge. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-context-menu]
-  [data-context-menu-separator] {
-  margin-inline: -0.25rem !important;
+/* Dialogs take the menus' 10px (theme.custom.css, --fork-dialog-radius). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  --fork-dialog-radius: var(--fork-inlet-menu-radius);
 }
 
 /* A sidebar row's hover card opens as a tab pulled out of the row: while it
@@ -1081,9 +1039,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="sidebar-inset"]
   [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  /* The chip's corner is calc(var(--radius-sm) - 2px). */
+  --radius-sm: 8px;
   border-radius: 8px;
-
-  & > [data-fork-segmented-tab] {
-    border-radius: 6px;
-  }
 }
