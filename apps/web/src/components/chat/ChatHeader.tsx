@@ -48,6 +48,7 @@ import { StageHeaderBackButton } from "~/custom/stageColumns/StageHeaderBackButt
 /* fork:end fork-stage-header */
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { BotHeaderMascot } from "~/custom/bots/BotMascot";
+import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
 import { GuestShareIndicator } from "./GuestShareControls";
 
@@ -104,6 +105,9 @@ export const ChatHeader = memo(function ChatHeader({
     AuthOrchestrationOperateScope,
   );
   const canShareWithGuest = useAtomValue(canShareWithGuestAtom(activeThreadEnvironmentId));
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  const isBotThread = useIsBotThread(activeThreadRef);
+  /* fork:end fork-bots */
   const updateThreadMetadata = useOrchestrationCommand(threadEnvironment.updateMetadata, {
     reportFailure: false,
   });
@@ -283,7 +287,7 @@ export const ChatHeader = memo(function ChatHeader({
             Keep upstream's actionable breadcrumb and thread menu behavior, but
             preserve the fork hierarchy: project semibold without a duplicate
             favicon, thread title regular. */}
-        {activeProject ? (
+        {activeProject && !isBotThread ? (
           <>
             <WorkspaceBreadcrumbItem className="shrink">
               <Tooltip>
