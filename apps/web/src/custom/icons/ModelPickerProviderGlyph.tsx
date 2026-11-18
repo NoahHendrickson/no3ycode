@@ -50,6 +50,17 @@ const FORK_MARK_BY_DRIVER: Partial<Record<ProviderDriverKind, () => JSX.Element>
   [ProviderDriverKind.make("codex")]: CodexMark,
 };
 
+/** True when the fork draws its own mark for a driver (Codex's cloud, Claude's mark). */
+export function hasForkProviderMark(driver: ProviderDriverKind): boolean {
+  return FORK_MARK_BY_DRIVER[driver] !== undefined;
+}
+
+/** The fork's own mark for a driver, sized by --fork-mark-size; nothing for other providers. */
+export function ForkProviderMark(props: { readonly driver: ProviderDriverKind }) {
+  const Mark = FORK_MARK_BY_DRIVER[props.driver];
+  return Mark ? <Mark /> : null;
+}
+
 /** The fork marks' brand colours, for a host that tints a surface behind them. */
 export const FORK_MARK_INK_BY_DRIVER: Partial<Record<ProviderDriverKind, string>> = {
   [ProviderDriverKind.make("claudeAgent")]: CLAUDE_INK,

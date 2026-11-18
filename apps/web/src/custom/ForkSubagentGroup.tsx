@@ -1,18 +1,16 @@
 /**
- * The transcript's subagent spawn group as the Figma tree (t3-fork file, node
- * 376:21366) — see `.fork/customizations.yaml#fork-subagent-spawn-card`.
+ * The transcript's subagents as cards (Basic UI kit, Figma 89:704) — see
+ * `.fork/customizations.yaml#fork-subagent-spawn-card`.
  *
- * Replaces upstream's `V2SubagentGroup` (an avatar stack, a chevron, and a
- * bordered member box) at the one site MessagesTimeline renders a batch of
- * two or more subagents. A list-tree glyph leads "Kicked off N subagents" /
- * "Ran N subagents" with the status summary and, when a member reports a
- * start time, the batch's elapsed span on the line below; the members sit
- * indented underneath, each with the sidebar's status mark (working rain, a
- * settled dot, or the hollow idle circle for idle and stopped), the title,
- * its live activity or result, and the model with its own elapsed time. No
- * borders, no fills: a row is a button only when the member has a thread of
- * its own to open. Upstream's agents panel is gone in V2, so there is no
- * "View agents" door; the rows are the roster.
+ * Every subagent, alone or in a batch, renders here in place of upstream's
+ * lifecycle row and `V2SubagentGroup`. A batch keeps its list-tree lead line
+ * ("Kicked off N subagents", the status summary and the batch's elapsed span)
+ * above one card per member. A card is a header (the provider's mark in a tile
+ * with the status mark in its corner, the title over the status word, the
+ * elapsed time, a chevron) and a well underneath: the task it was given, what
+ * it is doing now or what it found, and the model. The well starts open while
+ * the subagent works and folds once it settles, unless the chevron was used.
+ * The header opens the subagent's thread when it has one.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -21,14 +19,20 @@
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
-import { ListTreeIcon } from "lucide-react";
-import { memo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
+import { type CSSProperties, memo, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import { EnvironmentSubagentAvatar } from "~/components/chat/V2LifecycleRow";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
+import { cn } from "~/lib/utils";
+import { useEnvironment } from "~/state/environments";
 import { environmentThreadDetails } from "~/state/threads";
+import { buildThreadRouteParams } from "~/threadRoutes";
 
+import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import {
   formatForkSubagentModel,
   resolveForkSubagentTree,
@@ -61,95 +65,185 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
         data-fork-subagent-tree=""
         data-subagent-group
         role="group"
-        aria-label={tree.lead}
-        className="flex w-full min-w-0 flex-col items-start gap-3.5 py-1 text-sm leading-5"
+        aria-label={tree.rows.length > 1 ? tree.lead : tree.rows[0]?.title}
+        className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
       >
-        <span className="flex w-full min-w-0 items-start gap-2">
-          <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
-            <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col items-start">
-            <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>
-            <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
-              <span>{tree.summary}</span>
-              {tree.timing ? (
-                <span className="tabular-nums">
-                  <AgentElapsed agent={tree.timing} />
-                </span>
-              ) : null}
+        {tree.rows.length > 1 ? (
+          <span className="flex w-full min-w-0 items-start gap-2 pb-1">
+            <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
+              <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col items-start">
+              <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>
+              <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
+                <span>{tree.summary}</span>
+                {tree.timing ? (
+                  <span className="tabular-nums">
+                    <AgentElapsed agent={tree.timing} />
+                  </span>
+                ) : null}
+              </span>
             </span>
           </span>
-        </span>
-        <span className="flex w-full min-w-0 flex-col items-start gap-2 pl-6">
-          {tree.rows.map((member) => (
-            <ForkSubagentMemberRow key={member.id} member={member} onOpenThread={onOpenThread} />
-          ))}
-        </span>
+        ) : null}
+        {tree.rows.map((member) => (
+          <ForkSubagentCard
+            key={member.id}
+            member={member}
+            environmentId={environmentId}
+            onOpenThread={onOpenThread}
+          />
+        ))}
       </div>
     </WorkLogBlock>
   );
 });
 
-function ForkSubagentMemberRow(props: {
+function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
+  readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { member, onOpenThread } = props;
+  const { member, environmentId, onOpenThread } = props;
+  const [chosenOpen, setChosenOpen] = useState<boolean | null>(null);
+  const open = chosenOpen ?? member.active;
+  const wellId = useId();
+  const remoteEnvironment = useEnvironment(member.remote?.environmentId ?? null);
+  const navigate = useNavigate();
+  const childThreadId = member.childThreadId;
+  const remote = member.remote;
+  // A task in a linked environment opens there, if this client is connected to it.
+  const openThread =
+    childThreadId !== null
+      ? () => onOpenThread(childThreadId)
+      : remote !== undefined && remoteEnvironment !== null
+        ? () =>
+            void navigate({
+              to: "/$environmentId/$threadId",
+              params: buildThreadRouteParams(scopeThreadRef(remote.environmentId, remote.threadId)),
+            })
+        : null;
   const model = formatForkSubagentModel(member.model);
-  const content = (
+  const identity = (
     <>
-      <span aria-hidden className="flex shrink-0 items-center py-1">
-        <SidebarV2StatusMark status={memberStatus(member.mark)} seed={member.id} idle="dot" />
+      <span
+        aria-hidden
+        className="relative flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-border bg-accent"
+      >
+        {hasForkProviderMark(member.driver) ? (
+          <span className="flex" style={MARK_SIZE}>
+            <ForkProviderMark driver={member.driver} />
+          </span>
+        ) : (
+          <EnvironmentSubagentAvatar
+            environmentId={environmentId}
+            providerInstanceId={member.providerInstanceId}
+            driver={member.driver}
+            remote={remote}
+            className="size-5 rounded-none border-0 bg-transparent ring-0"
+            iconClassName="size-5"
+          />
+        )}
+        <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full bg-card">
+          <span className="flex scale-75 items-center justify-center">
+            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
+          </span>
+        </span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col items-start">
-        <span className="w-full min-w-0 truncate text-foreground">{member.title}</span>
-        <span
-          className={
-            member.failed
-              ? "w-full min-w-0 truncate text-destructive"
-              : "w-full min-w-0 truncate text-muted-foreground"
-          }
-        >
-          {member.detail}
+        <span className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground">
+          {member.title}
         </span>
-        <span className="flex items-start gap-3 whitespace-nowrap text-muted-foreground">
-          {model ? <span>{model}</span> : null}
-          {member.startedAt ? (
-            <span className="tabular-nums">
-              <AgentElapsed agent={member} />
-            </span>
-          ) : null}
+        <span
+          className={cn(
+            "w-full min-w-0 truncate text-sm leading-4",
+            member.failed ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {member.statusLabel}
+          {remote !== undefined ? ` · on ${remote.label}` : null}
         </span>
       </span>
     </>
   );
-  const className =
-    "-mx-1.5 flex w-[calc(100%+0.75rem)] min-w-0 items-start gap-2 rounded-md px-1.5 py-0.5 text-left";
-  if (member.childThreadId === null) {
-    return (
-      <span data-fork-subagent-member="" aria-description={member.detail} className={className}>
-        {content}
-      </span>
-    );
-  }
-  const childThreadId = member.childThreadId;
   return (
-    <button
-      type="button"
-      data-fork-subagent-member=""
-      aria-label={`Open ${member.title}`}
-      aria-description={member.detail}
-      className={`${className} cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70`}
-      onClick={() => onOpenThread(childThreadId)}
+    <div
+      data-fork-subagent-card=""
+      className="w-full min-w-0 overflow-clip rounded-[8px] border border-border bg-card"
     >
-      {content}
-    </button>
+      <div className="flex min-h-14 items-center gap-2 px-3 py-2">
+        {openThread === null ? (
+          <span className="flex min-w-0 flex-1 items-center gap-2">{identity}</span>
+        ) : (
+          <button
+            type="button"
+            data-fork-subagent-member=""
+            aria-label={`Open ${member.title}`}
+            onClick={openThread}
+            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+          >
+            {identity}
+          </button>
+        )}
+        {member.startedAt ? (
+          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+            <AgentElapsed agent={member} />
+          </span>
+        ) : null}
+        <button
+          type="button"
+          data-fork-subagent-toggle=""
+          aria-expanded={open}
+          aria-controls={wellId}
+          aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
+          onClick={() => setChosenOpen(!open)}
+          className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+        >
+          <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
+        </button>
+      </div>
+      <dl
+        id={wellId}
+        hidden={!open}
+        data-fork-subagent-well=""
+        className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[7px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
+      >
+        {member.prompt ? (
+          <>
+            <dt className="text-muted-foreground">Task</dt>
+            <dd className="line-clamp-2 text-foreground">{member.prompt}</dd>
+          </>
+        ) : null}
+        <dt className="text-muted-foreground">{member.activity?.label ?? "Now"}</dt>
+        <dd
+          className={cn(
+            "line-clamp-3",
+            member.failed
+              ? "text-destructive"
+              : member.activity
+                ? "text-foreground"
+                : "text-muted-foreground",
+          )}
+        >
+          {member.activity?.text ?? member.statusLabel}
+        </dd>
+        {model ? (
+          <>
+            <dt className="text-muted-foreground">Model</dt>
+            <dd className="truncate text-foreground">{model}</dd>
+          </>
+        ) : null}
+      </dl>
+    </div>
   );
 }
 
-/** The sidebar's mark set by the tree's vocabulary. Idle and stopped both
+/** The tile's provider mark, as the model picker draws Codex's and Claude's (Figma 89:704). */
+const MARK_SIZE = { "--fork-mark-size": "1.25rem" } as CSSProperties;
+
+/** The sidebar's mark set by the card's vocabulary. Idle and stopped both
     settle on the hollow idle circle: nothing pending, nothing to report. */
-function memberStatus(mark: ForkSubagentMark): SidebarV2TopStatusMark | null {
+function markStatus(mark: ForkSubagentMark): SidebarV2TopStatusMark | null {
   switch (mark) {
     case "working":
       return { label: "Working", mark: "working" };

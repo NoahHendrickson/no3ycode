@@ -62,27 +62,33 @@ describe("resolveForkSubagentTree", () => {
     const row = tree.rows[0]!;
     expect(row.status).toBe("completed");
     expect(row.mark).toBe("done");
-    expect(row.detail).toBe("Found three leads in src");
+    expect(row.activity).toEqual({ label: "Result", text: "Found three leads in src" });
     expect(row.model).toBe("claude-opus-5-5");
     expect(row.childThreadId).toBe("thread-child");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
   });
 
-  it("shows live progress while working and the status word when nothing says more", () => {
-    expect(
-      resolveForkSubagentTree([item({ progress: "Running tests" })], null).rows[0]!.detail,
-    ).toBe("Running tests");
-    expect(resolveForkSubagentTree([item()], null).rows[0]!.detail).toBe("Working");
-    expect(
-      resolveForkSubagentTree(
-        [item({ status: "failed", result: "Child task ended with status failed" })],
-        null,
-      ).rows[0]!.detail,
-    ).toBe("Failed");
-    expect(resolveForkSubagentTree([item({ status: "interrupted" })], null).rows[0]!.mark).toBe(
-      "stopped",
-    );
+  it("gives each card its status word, its task, and what it is doing or what it found", () => {
+    const working = resolveForkSubagentTree(
+      [item({ progress: "Running tests", prompt: "Check the [tabs](https://x)\n- under `Basic`" })],
+      null,
+    ).rows[0]!;
+    expect(working.active).toBe(true);
+    expect(working.statusLabel).toBe("Running");
+    expect(working.prompt).toBe("Check the tabs under Basic");
+    expect(working.activity).toEqual({ label: "Now", text: "Running tests" });
+    expect(resolveForkSubagentTree([item()], null).rows[0]!.activity).toBeNull();
+    const failed = resolveForkSubagentTree(
+      [item({ status: "failed", result: "Child task ended with status failed" })],
+      null,
+    ).rows[0]!;
+    expect(failed.active).toBe(false);
+    expect(failed.statusLabel).toBe("Failed");
+    expect(failed.activity).toBeNull();
+    const stopped = resolveForkSubagentTree([item({ status: "interrupted" })], null).rows[0]!;
+    expect(stopped.mark).toBe("stopped");
+    expect(stopped.statusLabel).toBe("Stopped");
   });
 
   it("title-cases Codex task paths through the shared display title", () => {

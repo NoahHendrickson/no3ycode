@@ -13,13 +13,15 @@
  * rendering.
  */
 import type {
+  OrchestrationV2RemoteTaskChild,
   OrchestrationV2Subagent,
   OrchestrationV2TurnItem,
+  ProviderDriverKind,
+  ProviderInstanceId,
   ThreadId,
 } from "@t3tools/contracts";
 import {
   formatSubagentDisplayTitle,
-  subagentDetailPreview,
   subagentGroupSummary,
   summarizeSubagentStatuses,
 } from "@t3tools/client-runtime/state/subagent-display";
@@ -35,13 +37,23 @@ export interface ForkSubagentTreeRow {
   readonly title: string;
   readonly status: ForkSubagentStatus;
   readonly mark: ForkSubagentMark;
-  /** Live activity while working, the result once settled; the status word when neither says more. */
-  readonly detail: string;
   readonly failed: boolean;
   readonly model: string | null;
   readonly startedAt: string | null;
   readonly completedAt: string | null;
   readonly childThreadId: ThreadId | null;
+  /** A thread in a linked environment that runs this task, when it runs there. */
+  readonly remote: OrchestrationV2RemoteTaskChild | undefined;
+  readonly driver: ProviderDriverKind;
+  readonly providerInstanceId: ProviderInstanceId;
+  /** Still working: the card's well starts open. */
+  readonly active: boolean;
+  /** The card's status line: "Running", "Completed", "Stopped". */
+  readonly statusLabel: string;
+  /** The task it was given, as one plain paragraph; null when the server withheld it. */
+  readonly prompt: string | null;
+  /** What it is doing now while it works, its result once settled; null when it has said nothing. */
+  readonly activity: { readonly label: "Now" | "Result"; readonly text: string } | null;
 }
 
 /** The batch's one elapsed span, in the shape `AgentElapsed` ticks. */
@@ -67,17 +79,6 @@ export interface ForkSubagentTree {
   readonly rows: ReadonlyArray<ForkSubagentTreeRow>;
 }
 
-const STATUS_WORD: Record<ForkSubagentStatus, string> = {
-  pending: "Working",
-  running: "Working",
-  waiting: "Working",
-  idle: "Idle",
-  completed: "Completed",
-  failed: "Failed",
-  cancelled: "Stopped",
-  interrupted: "Stopped",
-};
-
 const STATUS_MARK: Record<ForkSubagentStatus, ForkSubagentMark> = {
   pending: "working",
   running: "working",
@@ -87,6 +88,17 @@ const STATUS_MARK: Record<ForkSubagentStatus, ForkSubagentMark> = {
   failed: "failed",
   cancelled: "stopped",
   interrupted: "stopped",
+};
+
+const CARD_STATUS_WORD: Record<ForkSubagentStatus, string> = {
+  pending: "Queued",
+  running: "Running",
+  waiting: "Waiting",
+  idle: "Idle",
+  completed: "Completed",
+  failed: "Failed",
+  cancelled: "Stopped",
+  interrupted: "Stopped",
 };
 
 /** The server's placeholder when a child ends without output; the mark already says it. */
@@ -100,18 +112,6 @@ function plainDetail(text: string): string {
     .replace(/^[ \t]*[-*][ \t]+/gmu, "")
     .replace(/\s+/gu, " ")
     .trim();
-}
-
-/** Upstream's pick (progress while live, result once settled, one line), then
-    the fork's placeholder drop and markdown strip over it. */
-function resolveDetail(input: {
-  readonly status: ForkSubagentStatus;
-  readonly progress: string | undefined;
-  readonly result: string | null;
-}): string {
-  const preview = subagentDetailPreview(input);
-  if (preview === null || GENERIC_CHILD_END.test(preview)) return STATUS_WORD[input.status];
-  return plainDetail(preview) || STATUS_WORD[input.status];
 }
 
 /**
@@ -130,6 +130,22 @@ export function formatForkSubagentModel(model: string | null): string | null {
       .replace(/\s+\d{8}(?=\[|$)/u, "")
       .trim() || null
   );
+}
+
+/** The card's well: live progress while working, the result once settled, whole rather than
+    one line, and nothing when neither says more than the status line. */
+function resolveActivity(input: {
+  readonly active: boolean;
+  readonly progress: string | undefined;
+  readonly result: string | null;
+}): ForkSubagentTreeRow["activity"] {
+  const raw = (
+    input.active ? input.progress || input.result : input.result || input.progress
+  )?.trim();
+  if (!raw || GENERIC_CHILD_END.test(raw)) return null;
+  const text = plainDetail(raw);
+  if (!text) return null;
+  return { label: input.active ? "Now" : "Result", text };
 }
 
 function isoOrNull(value: DateTime.Utc | null | undefined): string | null {
@@ -159,21 +175,27 @@ export function resolveForkSubagentTree(
     } else {
       endUnknown = true;
     }
+    const progress = live?.progress ?? item.progress;
+    const result = live?.result ?? item.result;
+    const active = STATUS_MARK[status] === "working";
+    const prompt = plainDetail(live?.prompt ?? item.prompt);
     rows.push({
       id: item.id,
       title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
       status,
       mark: STATUS_MARK[status],
-      detail: resolveDetail({
-        status,
-        progress: live?.progress ?? item.progress,
-        result: live?.result ?? item.result,
-      }),
       failed: status === "failed",
       model: live?.model ?? null,
       startedAt: isoOrNull(startedAt),
       completedAt: isoOrNull(completedAt),
       childThreadId: live?.childThreadId ?? item.childThreadId,
+      remote: item.remoteChild ?? live?.remoteChild,
+      driver: item.driver,
+      providerInstanceId: item.providerInstanceId,
+      active,
+      statusLabel: CARD_STATUS_WORD[status],
+      prompt: prompt || null,
+      activity: resolveActivity({ active, progress, result }),
     });
   }
   const group = subagentGroupSummary(rows);

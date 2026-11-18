@@ -2,10 +2,9 @@
 /**
  * Fork guard — see `.fork/customizations.yaml#fork-subagent-spawn-card`.
  *
- * The transcript spawn batch renders as the fork-owned tree. A sync that
- * puts upstream's avatar-stack group back at the call site, drops the member
- * rows, or brings back a bordered member box compiles and ships upstream's
- * card.
+ * Every transcript subagent, alone or in a batch, renders as the fork's card.
+ * A sync that puts upstream's lifecycle row or avatar-stack group back at the
+ * call site, or drops the card's well, compiles and ships upstream's look.
  */
 
 import * as NodeFS from "node:fs";
@@ -23,31 +22,35 @@ const model = readSibling("../custom/forkSubagentTree.ts");
 const theme = readSibling("../theme.custom.css");
 
 describe("fork guard: fork-subagent-spawn-card", () => {
-  it("routes the spawn batch through the fork tree", () => {
+  it("routes every subagent, alone or batched, through the fork's cards", () => {
     expect(timeline).toContain('from "~/custom/ForkSubagentGroup"');
-    expect(timeline).toMatch(
-      /\(row\.subagents\?\.length \?\? 1\) > 1\) \{[\s\S]{0,400}?<ForkSubagentGroup[\s\S]{0,200}?onOpenThread=\{ctx\.onOpenThread\}/u,
-    );
+    for (const guard of ["=== 1) {", "> 1) {"]) {
+      const at = timeline.indexOf(`(row.subagents?.length ?? 1) ${guard}`);
+      expect(at).toBeGreaterThan(-1);
+      expect(timeline.slice(at, at + 600)).toMatch(
+        /<ForkSubagentGroup[\s\S]{0,200}?onOpenThread=\{ctx\.onOpenThread\}/u,
+      );
+    }
     expect(timeline).not.toContain("return <V2SubagentGroup key={row.id} row={row} />;");
-    // Upstream deleted its grouped-batch browser cases (#22557), so no fenced skips remain.
   });
 
-  it("keeps the Figma header and member rows", () => {
+  it("draws the Basic kit card: provider tile, status mark, and the task / now / model well", () => {
+    // A batch keeps its lead line above the cards.
     expect(group).toContain('<ListTreeIcon weight="stroke"');
-    // Lead, status wording, the progress-or-result pick and the model's name
-    // come from upstream's shared helpers; the fork owns only the vocabulary.
     expect(model).toContain("subagentGroupSummary(rows)");
     expect(model).toContain("summarizeSubagentStatuses(rows.map((row) => row.status))");
-    expect(model).toContain("subagentDetailPreview(input)");
     expect(model).toContain("formatModelSlugName(slug)");
-    expect(model).not.toContain("isForkSubagentSettled");
-    // Members take the sidebar's status marks, not avatars or a box.
-    expect(group).toContain("<SidebarV2StatusMark status={memberStatus(member.mark)}");
-    expect(group).not.toContain("SubagentAvatar");
-    expect(group).not.toContain("border-border/60");
-    expect(group).not.toContain("bg-card/30");
-    // A member with a thread of its own opens it.
-    expect(group).toContain("onClick={() => onOpenThread(childThreadId)}");
-    expect(theme).toContain("button[data-fork-subagent-member]:hover");
+    expect(group).toContain("<EnvironmentSubagentAvatar");
+    expect(group).toContain("<SidebarV2StatusMark status={markStatus(member.mark)}");
+    expect(group).toContain('data-fork-subagent-well=""');
+    expect(group).toMatch(/<dt[^>]*>Task<\/dt>/u);
+    expect(group).toMatch(/<dt[^>]*>Model<\/dt>/u);
+    // The well is open while the subagent works, unless the chevron was used.
+    expect(group).toContain("const open = chosenOpen ?? member.active;");
+    // A member with a thread of its own opens it from the header.
+    expect(group).toContain("? () => onOpenThread(childThreadId)");
+    expect(theme).toContain(
+      ":is(button[data-fork-subagent-member], button[data-fork-subagent-toggle]):hover",
+    );
   });
 });
