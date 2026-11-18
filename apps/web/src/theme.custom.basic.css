@@ -489,11 +489,11 @@
   border-color: var(--basic-wash-3);
 }
 
-/* The find bars (InputGroup variant="popover") mark focus only by deepening their
-   border, which the line above would hold at rest. */
+/* The find bars (InputGroup variant="popover") have no focus outline and mark focus only by
+   their border, which goes to full strength as every other text field's does. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-slot="input-group"].dropdown-glass:has(:is(input, textarea):focus-visible) {
-  border-color: var(--basic-wash-4);
+  border-color: var(--ring);
 }
 
 /* Dialogs take the popups' 8px (theme.custom.css, --fork-dialog-radius). */

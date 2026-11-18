@@ -82,7 +82,10 @@
       :not(
         [aria-invalid="true"],
         :has([aria-invalid="true"]),
-        :has(input[aria-invalid], textarea[aria-invalid])
+        :has(
+          input[aria-invalid]:not([aria-invalid="false"]),
+          textarea[aria-invalid]:not([aria-invalid="false"])
+        )
       )
     ) {
     outline: none;
