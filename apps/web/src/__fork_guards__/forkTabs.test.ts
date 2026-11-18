@@ -60,4 +60,21 @@ describe("fork-tabs", () => {
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });
+
+  it("draws the scheduled-task weekday pickers as tab strips", () => {
+    // Upstream's outline group marks a picked day with a faint fill; a strip marks it like a tab.
+    for (const path of [
+      "../custom/scheduled/ScheduledTaskEditor.tsx",
+      "../components/settings/ScheduledTasksSettings.tsx",
+    ]) {
+      const source = NodeFS.readFileSync(
+        NodeURL.fileURLToPath(new URL(path, import.meta.url)),
+        "utf8",
+      );
+      expect(source, path).toMatch(
+        /multiple\s+(?:\/\*[^*]*\*\/\s+)?(?:\/\/[^\n]*\n\s+)?variant="segmented"/u,
+      );
+      expect(source, path).not.toMatch(/multiple\s+variant="outline"/u);
+    }
+  });
 });
