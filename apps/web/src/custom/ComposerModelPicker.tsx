@@ -18,7 +18,13 @@ import {
   getProviderOptionCurrentValue,
 } from "@t3tools/shared/model";
 import { Slider } from "@base-ui/react/slider";
-import { type ComponentProps, type KeyboardEvent, type ReactNode, useState } from "react";
+import {
+  type ComponentProps,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+  useState,
+} from "react";
 
 // Through the alias: a relative import type-checks against upstream's module,
 // not the shadow that adds `traits` and `combined`.
@@ -35,6 +41,7 @@ import {
   orderTraitRows,
   resolveComposerModelTraits,
 } from "./composerModelTraits";
+import { EffortDither, type EffortDitherStops, effortDitherStops } from "./EffortDither";
 
 const ULTRATHINK_PROMPT_PREFIX = "Ultrathink:\n";
 /**
@@ -83,6 +90,8 @@ function TraitRow(props: { label: string; children: ReactNode; asLabel?: boolean
 
 function EffortSlider(props: {
   descriptor: SelectDescriptor;
+  /** The fill's colours, from the track's start to the thumb. */
+  fillStops: EffortDitherStops;
   committedIndex: number;
   disabled: boolean;
   onCommit: (optionId: string) => void;
@@ -137,16 +146,7 @@ function EffortSlider(props: {
             data-fork-effort-track
             className="relative h-6 w-full rounded-[6px] bg-foreground/8 [--fork-effort-thumb-width:20px]"
           >
-            <div
-              data-fork-effort-fill
-              className={cn(
-                "pointer-events-none absolute inset-y-0 left-0 rounded-[6px] bg-foreground/16",
-                glideClass && ["transition-[width]", glideClass],
-              )}
-              style={{
-                width: `calc(${THUMB_WIDTH} + ${index / lastIndex} * (100% - ${THUMB_WIDTH}))`,
-              }}
-            />
+            {/* Under the fill, which covers the stops the thumb has passed as it moves. */}
             <div
               className="pointer-events-none absolute inset-y-0"
               style={{ insetInline: `calc(${THUMB_WIDTH} / 2)` }}
@@ -164,6 +164,24 @@ function EffortSlider(props: {
                   style={{ left: `${(stopIndex / lastIndex) * 100}%` }}
                 />
               ))}
+            </div>
+            {/* The dither ends at the thumb's middle; past it, under the rest of the thumb, the
+                fill is the last colour, so a see-through thumb shows one fill. Inlet repaints
+                the fill and hides the dither. */}
+            <div
+              data-fork-effort-fill
+              className={cn(
+                "pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[6px] bg-(--fork-effort-fill-end)",
+                glideClass && ["transition-[width]", glideClass],
+              )}
+              style={
+                {
+                  width: `calc(${THUMB_WIDTH} + ${index / lastIndex} * (100% - ${THUMB_WIDTH}))`,
+                  "--fork-effort-fill-end": props.fillStops.at(-1),
+                } as CSSProperties
+              }
+            >
+              <EffortDither stops={props.fillStops} />
             </div>
             <Slider.Thumb
               aria-label={descriptor.label}
@@ -281,6 +299,7 @@ function ComposerModelTraitsPanel(props: {
         <>
           <EffortSlider
             descriptor={effortDescriptor}
+            fillStops={effortDitherStops(input.provider)}
             committedIndex={effortStopIndex(
               effortDescriptor,
               traits.ultrathinkPromptControlled && effortDescriptor.id === primarySelectId,

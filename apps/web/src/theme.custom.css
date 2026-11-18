@@ -3135,3 +3135,11 @@
   background: color-mix(in srgb, var(--fork-done-ring-color) 22%, transparent);
 }
 /* fork:end fork-done-celebration */
+
+/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+/* A finished turn's "Worked for" row sits flush on the reply, without upstream's
+   rule under it, like the live status line it replaces. */
+:root[data-fork="noahhendrickson-t3code"] [data-timeline-row-kind="turn-fold"] > * {
+  border-bottom-width: 0;
+}
+/* fork:end fork-working-row-last */

@@ -336,22 +336,15 @@
   background: color-mix(in srgb, var(--fork-mode-fg) 22%, transparent);
 }
 
-/* The effort knob keeps upstream's page-coloured fill on the light tones, edged with
-   the controls' 12% line in place of its shadow so it holds against a cream menu. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-effort-thumb] {
-  border: 1px solid var(--basic-wash-3);
+/* The effort knob is edged in 16% black on every tone. The light tones keep upstream's
+   page-coloured fill and drop its shadow, so the edge alone holds it against a cream menu. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-effort-thumb] {
+  border: 1px solid rgb(0 0 0 / 16%);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
   [data-fork-effort-thumb]:not(:focus-visible) {
   box-shadow: none;
-}
-
-/* The filled run is one 8% step over the track's own 8% (upstream lays 16% on it). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-effort-fill] {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* The music strip (fork-music-panel) floats over the sidebar like a popover: the
