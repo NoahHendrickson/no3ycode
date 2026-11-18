@@ -42,17 +42,21 @@ const activityRow = activity
 const model = card.getString("Model");
 
 // The sample times reproduce the card's Elapsed text ("2m 27s"): a working card started that long
-// ago, so its timer keeps ticking from there; a settled one ran exactly that long.
+// before it was first shown, fixed once (a start recomputed per render would reset the timer);
+// a settled one ran exactly that long.
+const parts = [...card.getString("Elapsed").matchAll(/(\d+)\s*([hms])/gu)];
 const elapsedMs =
-  [...card.getString("Elapsed").matchAll(/(\d+)\s*([hms])/gu)].reduce(
-    (sum, [, amount, unit]) =>
-      sum + Number(amount) * (unit === "h" ? 3_600_000 : unit === "m" ? 60_000 : 1_000),
-    0,
-  ) || 147_000;
+  parts.length === 0
+    ? 147_000
+    : parts.reduce(
+        (sum, [, amount, unit]) =>
+          sum + Number(amount) * (unit === "h" ? 3_600_000 : unit === "m" ? 60_000 : 1_000),
+        0,
+      );
 const settledStart = Date.parse("2026-11-18T12:00:00.000Z");
 const startedAt = status.done
   ? JSON.stringify(new Date(settledStart).toISOString())
-  : `new Date(Date.now() - ${elapsedMs}).toISOString()`;
+  : `useState(() => new Date(Date.now() - ${elapsedMs}).toISOString())[0]`;
 const completedAt = status.done
   ? JSON.stringify(new Date(settledStart + elapsedMs).toISOString())
   : "null";
@@ -81,6 +85,7 @@ export default {
   openThread={${hasThread ? "openThread" : "null"}}
 />`,
   imports: [
+    ...(status.done ? [] : ['import { useState } from "react";']),
     'import { ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";',
     'import { ForkSubagentCardView } from "~/custom/ForkSubagentGroup";',
   ],
