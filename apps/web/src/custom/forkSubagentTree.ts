@@ -13,13 +13,15 @@
  * rendering.
  */
 import type {
+  OrchestrationV2RemoteTaskChild,
   OrchestrationV2Subagent,
   OrchestrationV2TurnItem,
+  ProviderDriverKind,
+  ProviderInstanceId,
   ThreadId,
 } from "@t3tools/contracts";
 import {
   formatSubagentDisplayTitle,
-  subagentDetailPreview,
   subagentGroupSummary,
   summarizeSubagentStatuses,
 } from "@t3tools/client-runtime/state/subagent-display";
@@ -34,14 +36,27 @@ export interface ForkSubagentTreeRow {
   readonly id: string;
   readonly title: string;
   readonly status: ForkSubagentStatus;
+  /** The sidebar mark: working, idle, done, failed or stopped. */
   readonly mark: ForkSubagentMark;
-  /** Live activity while working, the result once settled; the status word when neither says more. */
-  readonly detail: string;
-  readonly failed: boolean;
   readonly model: string | null;
   readonly startedAt: string | null;
   readonly completedAt: string | null;
   readonly childThreadId: ThreadId | null;
+  /** A thread in a linked environment that runs this task, when it runs there. */
+  readonly remote: OrchestrationV2RemoteTaskChild | undefined;
+  readonly driver: ProviderDriverKind;
+  readonly providerInstanceId: ProviderInstanceId;
+  /** The card's status line: "Running", "Completed", "Stopped". */
+  readonly statusLabel: string;
+  /** The task it was given, as one plain paragraph; null when the server withheld it. */
+  readonly prompt: string | null;
+  /** What it is doing now while it works, its result once settled; null when it has said nothing. */
+  readonly activity: {
+    readonly label: "Now" | "Result";
+    readonly text: string;
+    /** A bare path (no spaces) truncates in the middle, so it keeps its filename. */
+    readonly shape: "path" | "prose";
+  } | null;
 }
 
 /** The batch's one elapsed span, in the shape `AgentElapsed` ticks. */
@@ -67,26 +82,19 @@ export interface ForkSubagentTree {
   readonly rows: ReadonlyArray<ForkSubagentTreeRow>;
 }
 
-const STATUS_WORD: Record<ForkSubagentStatus, string> = {
-  pending: "Working",
-  running: "Working",
-  waiting: "Working",
-  idle: "Idle",
-  completed: "Completed",
-  failed: "Failed",
-  cancelled: "Stopped",
-  interrupted: "Stopped",
-};
-
-const STATUS_MARK: Record<ForkSubagentStatus, ForkSubagentMark> = {
-  pending: "working",
-  running: "working",
-  waiting: "working",
-  idle: "idle",
-  completed: "done",
-  failed: "failed",
-  cancelled: "stopped",
-  interrupted: "stopped",
+/** Each status as the card shows it: the sidebar mark and the word under the title. */
+const STATUS_PRESENTATION: Record<
+  ForkSubagentStatus,
+  { readonly mark: ForkSubagentMark; readonly word: string }
+> = {
+  pending: { mark: "working", word: "Queued" },
+  running: { mark: "working", word: "Running" },
+  waiting: { mark: "working", word: "Waiting" },
+  idle: { mark: "idle", word: "Idle · resumable" },
+  completed: { mark: "done", word: "Completed" },
+  failed: { mark: "failed", word: "Failed" },
+  cancelled: { mark: "stopped", word: "Stopped" },
+  interrupted: { mark: "stopped", word: "Stopped" },
 };
 
 /** The server's placeholder when a child ends without output; the mark already says it. */
@@ -100,18 +108,6 @@ function plainDetail(text: string): string {
     .replace(/^[ \t]*[-*][ \t]+/gmu, "")
     .replace(/\s+/gu, " ")
     .trim();
-}
-
-/** Upstream's pick (progress while live, result once settled, one line), then
-    the fork's placeholder drop and markdown strip over it. */
-function resolveDetail(input: {
-  readonly status: ForkSubagentStatus;
-  readonly progress: string | undefined;
-  readonly result: string | null;
-}): string {
-  const preview = subagentDetailPreview(input);
-  if (preview === null || GENERIC_CHILD_END.test(preview)) return STATUS_WORD[input.status];
-  return plainDetail(preview) || STATUS_WORD[input.status];
 }
 
 /**
@@ -132,8 +128,36 @@ export function formatForkSubagentModel(model: string | null): string | null {
   );
 }
 
+/** The card's well: live progress while it works, its result once settled, whole rather than one
+    line. Never one standing in for the other, and nothing when the one that applies says nothing. */
+function resolveActivity(input: {
+  readonly active: boolean;
+  readonly progress: string | undefined;
+  readonly result: string | null;
+}): ForkSubagentTreeRow["activity"] {
+  const raw = (input.active ? input.progress : input.result)?.trim();
+  if (!raw || GENERIC_CHILD_END.test(raw)) return null;
+  const text = plainDetail(raw);
+  if (!text) return null;
+  return {
+    label: input.active ? "Now" : "Result",
+    text,
+    shape: text.includes("/") && !text.includes(" ") ? "path" : "prose",
+  };
+}
+
 function isoOrNull(value: DateTime.Utc | null | undefined): string | null {
   return value ? DateTime.formatIso(value) : null;
+}
+
+/** A timeline row's subagent items: its batch, or the row's own item when the batch is empty. */
+export function forkSubagentMembers(row: {
+  readonly subagents?: ReadonlyArray<{ readonly item: OrchestrationV2TurnItem }> | undefined;
+  readonly projectedItem: { readonly item: OrchestrationV2TurnItem };
+}): ReadonlyArray<ForkSubagentItem> {
+  return (row.subagents?.length ? row.subagents : [row.projectedItem]).flatMap(({ item }) =>
+    item.type === "subagent" ? [item] : [],
+  );
 }
 
 export function resolveForkSubagentTree(
@@ -159,21 +183,26 @@ export function resolveForkSubagentTree(
     } else {
       endUnknown = true;
     }
+    const progress = live?.progress ?? item.progress;
+    const result = live?.result ?? item.result;
+    const { mark, word } = STATUS_PRESENTATION[status];
+    const prompt = plainDetail(live?.prompt ?? item.prompt);
     rows.push({
       id: item.id,
       title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
       status,
-      mark: STATUS_MARK[status],
-      detail: resolveDetail({
-        status,
-        progress: live?.progress ?? item.progress,
-        result: live?.result ?? item.result,
-      }),
-      failed: status === "failed",
-      model: live?.model ?? null,
+      mark,
+      // Claude can report the model only through its selection.
+      model: live?.model ?? live?.modelSelection?.model ?? null,
       startedAt: isoOrNull(startedAt),
       completedAt: isoOrNull(completedAt),
       childThreadId: live?.childThreadId ?? item.childThreadId,
+      remote: item.remoteChild ?? live?.remoteChild,
+      driver: item.driver,
+      providerInstanceId: item.providerInstanceId,
+      statusLabel: word,
+      prompt: prompt || null,
+      activity: resolveActivity({ active: mark === "working", progress, result }),
     });
   }
   const group = subagentGroupSummary(rows);

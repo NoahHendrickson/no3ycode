@@ -2462,7 +2462,11 @@
    subagent's thread takes the same 4% lift every outline action does. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-subagent-tree]
-  button[data-fork-subagent-member]:hover {
+  :is(
+    button[data-fork-subagent-member],
+    button[data-fork-subagent-open],
+    button[data-fork-subagent-toggle]
+  ):hover {
   background-color: var(--fork-outline-hover-bg);
 }
 

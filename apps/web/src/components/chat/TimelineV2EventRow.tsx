@@ -22,10 +22,10 @@ import { subagentGroupTiming } from "./TimelineV2EventRow.logic";
 export function V2EventTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "event" }> }) {
   const ctx = use(TimelineRowCtx);
   const { item, visibility } = row.projectedItem;
-  if (item.type === "subagent" && (row.subagents?.length ?? 1) > 1) {
-    /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
-       The batch renders as the fork's Figma tree instead of upstream's
-       avatar-stack group; V2SubagentGroup below stays for the next sync. */
+  /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
+     Every subagent, alone or in a batch, renders as the fork's cards instead of upstream's
+     lifecycle row or avatar-stack group; V2SubagentGroup below stays for the next sync. */
+  if (item.type === "subagent") {
     return (
       <ForkSubagentGroup
         key={row.id}
@@ -34,8 +34,8 @@ export function V2EventTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
         onOpenThread={ctx.onOpenThread}
       />
     );
-    /* fork:end fork-subagent-spawn-card */
   }
+  /* fork:end fork-subagent-spawn-card */
   if (item.type === "secret_request") {
     return (
       <SecretRequestCard

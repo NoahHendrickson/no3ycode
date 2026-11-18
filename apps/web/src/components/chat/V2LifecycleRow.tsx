@@ -220,6 +220,9 @@ function SubagentAvatar({
   showBadge,
   status,
   className,
+  /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+  iconClassName = "size-3.5",
+  /* fork:end fork-subagent-spawn-card */
 }: {
   driver?: ProviderDriverKind | undefined;
   displayName?: string | undefined;
@@ -228,6 +231,10 @@ function SubagentAvatar({
   showBadge: boolean;
   status?: OrchestrationV2TurnItem["status"] | undefined;
   className?: string;
+  /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+  /** The fork's subagent card draws the mark larger, in its own tile. */
+  iconClassName?: string;
+  /* fork:end fork-subagent-spawn-card */
 }) {
   return (
     <span
@@ -246,7 +253,11 @@ function SubagentAvatar({
           showBadge={showBadge}
           size="compact"
           className="z-auto"
-          iconClassName="size-3.5"
+          iconClassName={
+            /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+            iconClassName
+            /* fork:end fork-subagent-spawn-card */
+          }
         />
       ) : (
         <BotIcon className="size-3.5 text-muted-foreground" />
@@ -278,6 +289,10 @@ export function EnvironmentSubagentAvatar({
   /** A task in a linked environment runs a provider instance there; its driver here is only a label. */
   remote?: OrchestrationV2RemoteTaskChild | undefined;
   status?: OrchestrationV2TurnItem["status"] | undefined;
+  /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+  className?: string;
+  iconClassName?: string;
+  /* fork:end fork-subagent-spawn-card */
 }) {
   const providerEnvironmentId = remote?.environmentId ?? environmentId;
   const providersAtom = serverEnvironment.providersValueAtom(providerEnvironmentId);

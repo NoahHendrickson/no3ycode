@@ -367,6 +367,11 @@
   border-top-right-radius: calc(var(--fork-composer-radius) - 1px);
 }
 
+/* The subagent card's well sits on the raised fill (Figma kit), not the composer's prompt. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-subagent-well] {
+  background-color: var(--basic-raised);
+}
+
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
    heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card.
    Popovers match through .dropdown-glass: a panel popover's popup is a bare square

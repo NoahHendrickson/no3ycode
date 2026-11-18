@@ -6,12 +6,7 @@ import { type RefObject, useRef } from "react";
 // CircleAlert is Hugeicons' AlertCircle under its lucide name; the half
 // circle is fork-only. Both are the component set's own status marks (Figma
 // 364:17299 exports them at 9.75px), drawn filled.
-import {
-  AlarmClockIcon,
-  CircleAlertIcon,
-  CircleHalfIcon,
-  PenLineIcon,
-} from "./icons/lucide-hugeicons";
+import { AlarmClockIcon, CircleHalfIcon, PenLineIcon } from "./icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
 import { useDoneCelebration } from "./doneCelebration";
@@ -387,13 +382,11 @@ export function SidebarV2WorkingMark({
   }
 }
 
-/** The settled counterpart to the rain. Done is the design's 10px dot; the
-    two blocked-on-you states draw a half-filled circle — the component set's
-    own glyph, the left half hollow — and Failed the filled warning circle, so
-    a colour-blind reader still tells "waiting on you" from "finished" and
-    "broke" by form. The glyphs are 12px because the half circle inks ~81% of
-    its grid: that is the design's 9.75px, and the same visual weight as the
-    10px dot beside it. */
+/** The settled counterpart to the rain. Done and Failed are the design's 10px
+    dot, blue and red; the two blocked-on-you states draw a half-filled circle
+    (the component set's own glyph, the left half hollow), so "waiting on you"
+    reads apart by form. The glyph is 12px because it inks ~81% of its grid:
+    the same visual weight as the 10px dot. */
 function SidebarV2StatusDot({
   tone,
   dotRef,
@@ -405,8 +398,6 @@ function SidebarV2StatusDot({
     <span aria-hidden className={cn(MARK_SLOT_CLASS, TONE_TEXT_CLASS[tone])}>
       {tone === "approval" || tone === "input" ? (
         <CircleHalfIcon className="size-3" />
-      ) : tone === "failed" ? (
-        <CircleAlertIcon weight="fill" className="size-3" />
       ) : (
         <span ref={dotRef} className="size-2.5 rounded-full bg-current" />
       )}

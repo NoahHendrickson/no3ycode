@@ -389,18 +389,15 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(marks).toContain("const SLOT = 14");
     expect(marks).not.toContain("overflow-visible");
     // The settled forms: a filled dot for Done, the same circle hollow for
-    // Idle, the half-filled circle for the two blocked-on-you states, the
-    // filled warning circle for Failed — so form, not hue alone, separates
-    // waiting from done from nothing.
+    // Idle, the half-filled circle for the two blocked-on-you states, and the
+    // same dot in red for Failed — so form separates waiting from settled.
     expect(marks).toContain(
       'const MARK_SLOT_CLASS = "flex h-[14px] w-[12px] shrink-0 items-center justify-center"',
     );
     expect(marks).toMatch(
       /tone === "approval" \|\| tone === "input" \? \(\s*<CircleHalfIcon className="size-3" \/>/u,
     );
-    expect(marks).toMatch(
-      /tone === "failed" \? \(\s*<CircleAlertIcon weight="fill" className="size-3" \/>/u,
-    );
+    expect(marks).not.toContain("CircleAlertIcon");
     expect(marks).toContain('<span ref={dotRef} className="size-2.5 rounded-full bg-current" />');
     // Idle is the hollow twin of the Done dot, per Noey (2026-09-09).
     expect(marks).toContain(

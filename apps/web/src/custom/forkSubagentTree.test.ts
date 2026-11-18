@@ -2,6 +2,7 @@ import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  forkSubagentMembers,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -62,27 +63,71 @@ describe("resolveForkSubagentTree", () => {
     const row = tree.rows[0]!;
     expect(row.status).toBe("completed");
     expect(row.mark).toBe("done");
-    expect(row.detail).toBe("Found three leads in src");
+    expect(row.activity).toEqual({
+      label: "Result",
+      text: "Found three leads in src",
+      shape: "prose",
+    });
     expect(row.model).toBe("claude-opus-5-5");
     expect(row.childThreadId).toBe("thread-child");
+    expect(
+      resolveForkSubagentTree(
+        [item()],
+        [
+          {
+            id: "node-1",
+            status: "running",
+            model: null,
+            modelSelection: { model: "claude-sonnet-5-5" },
+          } as never,
+        ],
+      ).rows[0]!.model,
+    ).toBe("claude-sonnet-5-5");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
   });
 
-  it("shows live progress while working and the status word when nothing says more", () => {
+  it("gives each card its status word, its task, and what it is doing or what it found", () => {
+    const working = resolveForkSubagentTree(
+      [item({ progress: "Running tests", prompt: "Check the [tabs](https://x)\n- under `Basic`" })],
+      null,
+    ).rows[0]!;
+    expect(working.mark).toBe("working");
+    expect(working.statusLabel).toBe("Running");
+    expect(working.prompt).toBe("Check the tabs under Basic");
+    expect(working.activity).toEqual({ label: "Now", text: "Running tests", shape: "prose" });
     expect(
-      resolveForkSubagentTree([item({ progress: "Running tests" })], null).rows[0]!.detail,
-    ).toBe("Running tests");
-    expect(resolveForkSubagentTree([item()], null).rows[0]!.detail).toBe("Working");
+      resolveForkSubagentTree([item({ progress: "Reading apps/web/src/theme.css" })], null).rows[0]!
+        .activity?.shape,
+    ).toBe("prose");
     expect(
-      resolveForkSubagentTree(
-        [item({ status: "failed", result: "Child task ended with status failed" })],
-        null,
-      ).rows[0]!.detail,
-    ).toBe("Failed");
-    expect(resolveForkSubagentTree([item({ status: "interrupted" })], null).rows[0]!.mark).toBe(
-      "stopped",
+      resolveForkSubagentTree([item({ progress: "apps/web/src/theme.custom.basic.css" })], null)
+        .rows[0]!.activity?.shape,
+    ).toBe("path");
+    expect(resolveForkSubagentTree([item()], null).rows[0]!.activity).toBeNull();
+    const failed = resolveForkSubagentTree(
+      [item({ status: "failed", result: "Child task ended with status failed" })],
+      null,
+    ).rows[0]!;
+    expect(failed.mark).toBe("failed");
+    expect(failed.statusLabel).toBe("Failed");
+    expect(failed.activity).toBeNull();
+    // Never one field standing in for the other.
+    const settledNoResult = resolveForkSubagentTree(
+      [item({ status: "completed", progress: "Reading files", result: null })],
+      null,
+    ).rows[0]!;
+    expect(settledNoResult.activity).toBeNull();
+    expect(
+      resolveForkSubagentTree([item({ progress: undefined, result: "An earlier answer" })], null)
+        .rows[0]!.activity,
+    ).toBeNull();
+    expect(resolveForkSubagentTree([item({ status: "idle" })], null).rows[0]!.statusLabel).toBe(
+      "Idle · resumable",
     );
+    const stopped = resolveForkSubagentTree([item({ status: "interrupted" })], null).rows[0]!;
+    expect(stopped.mark).toBe("stopped");
+    expect(stopped.statusLabel).toBe("Stopped");
   });
 
   it("title-cases Codex task paths through the shared display title", () => {
@@ -128,6 +173,21 @@ describe("resolveForkSubagentTree", () => {
     ).toEqual({ status: "completed", startedAt: "2026-10-05T12:00:10.000Z", completedAt: null });
     // No member reports a start: no span (the provider-native case).
     expect(resolveForkSubagentTree([item(), item({ id: "item-2" })], null).timing).toBeNull();
+  });
+});
+
+describe("forkSubagentMembers", () => {
+  it("takes the batch, or the row's own subagent when the batch is empty", () => {
+    const own = item();
+    const other = item({ id: "item-2", subagentId: "node-2" });
+    expect(
+      forkSubagentMembers({
+        subagents: [{ item: own }, { item: other }],
+        projectedItem: { item: own },
+      }),
+    ).toEqual([own, other]);
+    expect(forkSubagentMembers({ subagents: [], projectedItem: { item: own } })).toEqual([own]);
+    expect(forkSubagentMembers({ projectedItem: { item: own } })).toEqual([own]);
   });
 });
 
