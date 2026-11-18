@@ -7723,7 +7723,7 @@
     set (`// url=`) and maps its Figma properties to the app component's real
     props, so Dev Mode's Inspect panel, and agents reading the file through the
     Figma MCP server, get the app's code instead of generated markup. The kit's
-    272 glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
+    glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
     lucide-react shim export), so a swapped glyph renders through its own
     connection (getInstanceSwap(...).executeTemplate()); Figma drops imports
     nested two levels deep, so glyph imports also ride in template metadata for
@@ -7736,8 +7736,10 @@
     ignores the folder. The Professional plan allows one active library and one
     framework: this kit and React. Publish with
     `FIGMA_ACCESS_TOKEN=… vp run --filter @t3tools/fork-storybook figma:publish`
-    (token scopes: Code Connect write, File content read); the kit's components
-    must be published as a team library first.
+    (token scopes: Code Connect write, File content read). The script fetches the
+    CLI pinned (pnpm dlx @figma/code-connect@2.1.0) rather than installing it in
+    every worktree. Connections publish without the kit being a published team
+    library.
   tier: 1
   files:
     - apps/fork-storybook/figma.config.json

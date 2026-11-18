@@ -18,7 +18,7 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import { defaultInstanceIdForDriver, type EnvironmentId, type ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
 import { type CSSProperties, memo, use, useId, useState } from "react";
@@ -189,7 +189,8 @@ function ForkSubagentCard(props: {
   );
   const open = chosenOpen ?? member.mark === "working";
   const toggle = () => {
-    ctx.onToggleWorkEntry(anchorKey, open);
+    // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
+    ctx.onToggleWorkEntry(anchorKey, open, member.id);
     chosen.delete(open ? openKey : closedKey);
     chosen.add(open ? closedKey : openKey);
     setChosenOpen(!open);
@@ -222,15 +223,19 @@ export function ForkSubagentCardView(props: {
   const remote = member.remote;
   const failed = member.mark === "failed";
   const model = formatForkSubagentModel(member.model);
+  // A subagent that has only just started can have nothing to list yet.
+  const hasDetails = Boolean(member.prompt || member.activity || model);
   const identity = (
     <>
       <span
         aria-hidden
         className="relative flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-border bg-accent"
       >
-        {/* A linked environment's task names its driver only as a label; the avatar resolves
-            the provider that really runs it there. */}
-        {remote === undefined && hasForkProviderMark(member.driver) ? (
+        {/* A linked environment's task names its driver only as a label, and a second instance of
+            a provider needs its instance badge; the avatar resolves both. */}
+        {remote === undefined &&
+        member.providerInstanceId === defaultInstanceIdForDriver(member.driver) &&
+        hasForkProviderMark(member.driver) ? (
           <span className="flex" style={MARK_SIZE}>
             <ForkProviderMark driver={member.driver} />
           </span>
@@ -277,6 +282,7 @@ export function ForkSubagentCardView(props: {
   return (
     <div
       data-fork-subagent-card=""
+      data-work-entry-id={member.id}
       className="w-full min-w-0 overflow-clip rounded-[8px] border border-border bg-card"
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
@@ -330,7 +336,7 @@ export function ForkSubagentCardView(props: {
       </div>
       <dl
         id={wellId}
-        hidden={!open}
+        hidden={!open || !hasDetails}
         data-fork-subagent-well=""
         className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[7px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
       >

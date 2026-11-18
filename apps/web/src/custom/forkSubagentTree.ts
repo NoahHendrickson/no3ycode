@@ -186,7 +186,8 @@ export function resolveForkSubagentTree(
     const progress = live?.progress ?? item.progress;
     const result = live?.result ?? item.result;
     const { mark, word } = STATUS_PRESENTATION[status];
-    const prompt = plainDetail(live?.prompt ?? item.prompt);
+    // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
+    const prompt = plainDetail(live?.prompt || item.prompt);
     rows.push({
       id: item.id,
       title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),

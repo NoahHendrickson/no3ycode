@@ -260,7 +260,13 @@ function SubagentAvatar({
           }
         />
       ) : (
-        <BotIcon className="size-3.5 text-muted-foreground" />
+        <BotIcon
+          className={
+            /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+            cn(iconClassName, "text-muted-foreground")
+            /* fork:end fork-subagent-spawn-card */
+          }
+        />
       )}
       {status ? (
         <span

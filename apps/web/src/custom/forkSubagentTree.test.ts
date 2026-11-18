@@ -83,6 +83,13 @@ describe("resolveForkSubagentTree", () => {
         ],
       ).rows[0]!.model,
     ).toBe("claude-sonnet-5-5");
+    // A deduped live record carries an empty prompt; the item's own task still shows.
+    expect(
+      resolveForkSubagentTree(
+        [item({ prompt: "Check the tabs" })],
+        [{ id: "node-1", status: "running", prompt: "", promptOmitted: true } as never],
+      ).rows[0]!.prompt,
+    ).toBe("Check the tabs");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
   });
