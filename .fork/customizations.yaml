@@ -7506,7 +7506,7 @@
     and number (custom/bots/BotPullRequestMark, shared with the Threads rows; a branch pull
     request's state from the shared summaries) and opens it as the sidebar PR badge does,
     opening its thread when it lands in that thread's right panel. A pull request is matched by
-    host, repository and number, so a deep link and its thread's copy are one. The digest and
+    sourceControlClients.isSameChangeRequest, so a deep link and its thread's copy are one. The digest and
     the list scroll apart; the full-width rule between them drags (useResizeDrag's bottom edge)
     to set the digest's tallest, one height for every bot in localStorage, never leaving the list
     under 96px, and a shorter digest keeps its own height (dragging down never lowers the saved

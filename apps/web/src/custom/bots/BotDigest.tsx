@@ -13,7 +13,11 @@ import { type ReactNode, useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import { useComposerDraftStore } from "~/composerDraftStore";
-import { useLocalStorage } from "~/hooks/useLocalStorage";
+import {
+  readLocalStorageValue,
+  useLocalStorage,
+  writeLocalStorageValue,
+} from "~/hooks/useLocalStorage";
 import { useResizeDrag } from "~/hooks/useResizeDrag";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
@@ -72,11 +76,8 @@ export function BotDigest(props: {
   // The bot rewrites its digest during a turn, so each run it starts or ends reads it again.
   const revision = bot.latestRun === null ? null : `${bot.latestRun.runId}:${bot.latestRun.status}`;
   const result = useAtomValue(revisionedQuery(query, canReadFiles ? revision : undefined));
-  const [dismissed, setDismissed] = useLocalStorage(
-    `t3code:fork:bot-digest-dismissed:${scopedThreadKey(botRef)}`,
-    NO_DISMISSED,
-    DismissedKeys,
-  );
+  const dismissedKey = `t3code:fork:bot-digest-dismissed:${scopedThreadKey(botRef)}`;
+  const [dismissed, setDismissed] = useLocalStorage(dismissedKey, NO_DISMISSED, DismissedKeys);
   const [height, setHeight] = useLocalStorage(HEIGHT_STORAGE_KEY, DEFAULT_HEIGHT, StoredHeight);
   // The rule sits between the digest it sizes and the list, in the split this component draws.
   const { ref, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } =
@@ -96,7 +97,8 @@ export function BotDigest(props: {
         },
         // A press without a move keeps the saved height, which may be taller than the digest.
         finish(final, moved) {
-          if (!moved) return restore();
+          // A drag that ends where it began changes nothing.
+          if (!moved || final === start) return restore();
           // Dragging down a digest shorter than the saved height never lowers it.
           const next = Math.round(final > start ? Math.max(final, height) : final);
           setHeight(next);
@@ -109,13 +111,17 @@ export function BotDigest(props: {
     });
   const file = AsyncResult.getOrElse(result, () => null);
   const sections = file === null || file.exists === false ? [] : parseBotDigest(file.contents);
-  const keys = sections.map(botDigestSectionKey);
-  const kept = dismissed.filter((key) => keys.includes(key));
-  const forget = file !== null && kept.length < dismissed.length;
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- forgets dismissals of sections the bot's latest file no longer has, so one that later reads the same again shows
+  const contents = file === null ? null : file.exists === false ? "" : file.contents;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- when this digest's file changes, forgets dismissals of sections it no longer has, so one that later reads the same again shows; keyed on the file, not on storage, so another window's newer dismissal survives
   useEffect(() => {
-    if (forget) setDismissed(kept);
-  }, [forget, kept, setDismissed]);
+    if (contents === null) return;
+    const current = new Set(parseBotDigest(contents).map(botDigestSectionKey));
+    const stored = readLocalStorageValue(dismissedKey, NO_DISMISSED, DismissedKeys);
+    const kept = stored.filter((key) => current.has(key));
+    if (kept.length < stored.length) {
+      writeLocalStorageValue(dismissedKey, kept, NO_DISMISSED, DismissedKeys);
+    }
+  }, [contents, dismissedKey]);
   if (sections.length === 0) {
     return <div className={LIST_CLASS_NAME}>{props.children}</div>;
   }
@@ -153,7 +159,9 @@ export function BotDigest(props: {
                 section={section}
                 botRef={botRef}
                 threads={props.threads}
-                onDismiss={() => setDismissed([...kept, botDigestSectionKey(section)])}
+                onDismiss={() =>
+                  setDismissed((stored) => [...stored, botDigestSectionKey(section)])
+                }
               />
             ),
           )}

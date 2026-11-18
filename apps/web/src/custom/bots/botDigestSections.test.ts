@@ -80,11 +80,19 @@ Nothing.
 
 - [Approve production deploy?](t3-thread://v2/env-1/thread-1)
 - Please decide whether to merge [the billing PR](https://github.com/acme/app/pull/9)
+- Review [the billing PR](https://github.com/acme/app/pull/9). [Fix billing](t3-thread://v2/env-1/thread-1) <https://github.com/acme/app/pull/9>
+- [Approve production deploy?](t3-thread://v2/env-1/thread-1) https://github.com/acme/app/pull/9
+- The export finished. ([Nightly export](t3-thread://v2/env-1/thread-2))
+- Retry the import? [Retry import](<t3-thread://v2/env-1/work(2)>)
 `);
     expect(section?.kind).toBe("needs-you");
     expect(section?.items.map((item) => item.text)).toEqual([
       "Approve production deploy?",
       "Please decide whether to merge the billing PR",
+      "Review the billing PR.",
+      "Approve production deploy?",
+      "The export finished.",
+      "Retry the import?",
     ]);
   });
 

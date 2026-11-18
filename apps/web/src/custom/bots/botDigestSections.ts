@@ -34,9 +34,10 @@ type Segment =
   | { readonly kind: "link"; readonly text: string };
 
 const EMPTY_ITEM = /^(nothing|none)( yet)?\.?$/i;
-/** A code span, a Markdown link, an autolink, or a bare web URL. */
+/** A code span, a Markdown link (an angle-bracketed destination may hold parentheses), an
+    autolink, or a bare web URL. */
 const TOKEN =
-  /(`[^`\n]*`)|\[([^\]\n]*)\]\(<?([^\s<>()]+)>?\)|<([a-z][\w+.-]*:\/\/[^\s<>]+)>|(https?:\/\/[^\s<>()[\]]+)/gi;
+  /(`[^`\n]*`)|\[([^\]\n]*)\]\((?:<([^<>\n]+)>|([^\s<>()]+))\)|<([a-z][\w+.-]*:\/\/[^\s<>]+)>|(https?:\/\/[^\s<>()[\]]+)/gi;
 /** What may sit between the links that end a line. */
 const BETWEEN_LINKS = /^[\s()[\],;.]*$/;
 /** A line whose words end a sentence before its last links appends them; any other last link
@@ -66,10 +67,10 @@ function parseItem(line: string): BotDigestItem {
   const segments: Segment[] = [];
   let at = 0;
   for (const match of source.matchAll(TOKEN)) {
-    const [written, code, label, labeledHref, autolink, bare] = match;
+    const [written, code, label, angledHref, labeledHref, autolink, bare] = match;
     segments.push({ kind: "text", text: source.slice(at, match.index) });
     at = match.index + written.length;
-    const href = labeledHref ?? autolink;
+    const href = angledHref ?? labeledHref ?? autolink;
     // A sentence's closing punctuation is not part of a bare URL.
     const url = href ?? bare?.replace(/[.,;:!?]+$/, "") ?? "";
     const tail = href === undefined && bare !== undefined ? bare.slice(url.length) : "";
@@ -99,16 +100,22 @@ function parseItem(line: string): BotDigestItem {
     if (tail !== "") segments.push({ kind: "text", text: tail });
   }
   segments.push({ kind: "text", text: source.slice(at) });
-  // The run of links that ends the line, and what separates them.
+  // The run of links that ends the line, and what separates them, back to the sentence end.
   let end = segments.length;
-  for (
-    let segment = segments[end - 1];
-    segment !== undefined && (segment.kind === "link" || BETWEEN_LINKS.test(segment.text));
-    segment = segments[end - 1]
-  ) {
+  let sawLink = false;
+  for (let segment = segments[end - 1]; segment !== undefined; segment = segments[end - 1]) {
+    // Past a link, a sentence end (in the text, or ending a link's label) is where it stops.
+    if (sawLink && /[.?!:]\s*$/.test(segment.kind === "link" ? segment.text : "")) break;
+    if (segment.kind === "text") {
+      if (!BETWEEN_LINKS.test(segment.text)) break;
+      if (sawLink && /[.?!:]/.test(segment.text)) break;
+    } else {
+      sawLink = true;
+    }
     end -= 1;
   }
-  const words = plain(segments.slice(0, end));
+  // An opening bracket the links sat in is theirs, not the sentence's.
+  const words = plain(segments.slice(0, end)).replace(/[\s([]+$/, "");
   const appended =
     segments.slice(end).some((segment) => segment.kind === "link") && SENTENCE_END.test(words);
   return {

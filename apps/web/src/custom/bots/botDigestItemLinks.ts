@@ -5,7 +5,10 @@
  */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
+import {
+  resolveThreadCurrentPullRequestLink,
+  visibleThreadPullRequests,
+} from "@t3tools/client-runtime/thread-pull-requests";
 import type {
   EnvironmentId,
   ThreadLinkedPullRequest,
@@ -49,7 +52,8 @@ export function botThreadPullRequest(shell: EnvironmentThreadShell): BotPullRequ
 }
 
 function pullRequestsOf(shell: EnvironmentThreadShell): ReadonlyArray<BotPullRequest> {
-  const linked = shell.pullRequests.map((pullRequest) => ({
+  // A pull request the owner took off the thread neither belongs to it nor speaks for it.
+  const linked = visibleThreadPullRequests(shell.pullRequests).map((pullRequest) => ({
     url: pullRequest.url,
     number: pullRequest.number,
     snapshot: pullRequest.snapshot,
@@ -62,10 +66,7 @@ function pullRequestsOf(shell: EnvironmentThreadShell): ReadonlyArray<BotPullReq
 }
 
 /** One pull request however its URL is written: a deep link names the same one. */
-function identity(url: string): string {
-  const link = sourceControlClients.parseChangeRequestUrl(url)?.link;
-  return link === undefined ? url : `${link.host}/${link.repository}#${link.number}`;
-}
+const samePullRequest = (a: string, b: string) => sourceControlClients.isSameChangeRequest(a, b);
 
 export function resolveBotDigestLinks(
   item: BotDigestItem,
@@ -88,17 +89,17 @@ export function resolveBotDigestLinks(
   const linked = threads.flatMap(({ shell }) => (shell === undefined ? [] : [shell]));
   const pullRequests: Array<BotPullRequest & { thread: EnvironmentThreadShell | undefined }> = [];
   const listed = (url: string) =>
-    pullRequests.some((pullRequest) => identity(pullRequest.url) === identity(url));
+    pullRequests.some((pullRequest) => samePullRequest(pullRequest.url, url));
   // The pull requests the line names, kept as written so a deep link opens where it points.
   for (const named of item.pullRequests) {
     if (listed(named.url)) continue;
-    const same = (pullRequest: BotPullRequest) => identity(pullRequest.url) === identity(named.url);
+    const same = (pullRequest: BotPullRequest) => samePullRequest(pullRequest.url, named.url);
     const thread = linked.find((shell) => pullRequestsOf(shell).some(same));
+    // The matching thread's own link or branch; another thread's copy only when none matches.
     const known =
-      [...linked, ...shells]
-        .flatMap(pullRequestsOf)
-        .find((pr) => same(pr) && pr.snapshot !== null) ??
-      (thread === undefined ? undefined : pullRequestsOf(thread).find(same));
+      thread === undefined
+        ? shells.flatMap(pullRequestsOf).find((pr) => same(pr) && pr.snapshot !== null)
+        : pullRequestsOf(thread).find(same);
     pullRequests.push({
       url: named.url,
       number: named.number,

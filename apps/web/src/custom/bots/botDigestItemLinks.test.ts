@@ -67,6 +67,17 @@ describe("resolveBotDigestLinks", () => {
     ]);
   });
 
+  it("keeps pull requests on one host but different ports apart", () => {
+    const links = linksOf(
+      "Merge both? http://forge.example:3000/team/repo/pulls/4 http://forge.example:4000/team/repo/pulls/4",
+      [],
+    );
+    expect(links.pullRequests.map((pullRequest) => pullRequest.url)).toEqual([
+      "http://forge.example:3000/team/repo/pulls/4",
+      "http://forge.example:4000/team/repo/pulls/4",
+    ]);
+  });
+
   it("adds a linked thread's branch pull request when it has no linked one", () => {
     const branch = { url: "https://github.com/acme/app/pull/5", number: 5, repository: "acme/app" };
     const docs = shell("thread-2", {

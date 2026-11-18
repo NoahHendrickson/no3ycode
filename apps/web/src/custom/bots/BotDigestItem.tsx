@@ -77,7 +77,7 @@ export function BotDigestLine(props: {
                 key={pullRequest.url}
                 pullRequest={pullRequest}
                 thread={pullRequest.thread}
-                environmentId={props.environmentId}
+                environmentId={pullRequest.thread?.environmentId ?? props.environmentId}
               />
             ))}
           </span>
