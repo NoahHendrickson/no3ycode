@@ -244,8 +244,15 @@ const RAIN_SCALE = SLOT / HEIGHT;
     browsers snap element backgrounds to whole pixels — so the cells would
     paint at visibly different widths depending on each one's subpixel offset.
     The SVG keeps the fractional geometry and antialiases it, which is what the
-    native Canvas does too, so every drop stays exactly square. */
-function SidebarV2WorkingRain({ seed, still }: { seed: string; still?: boolean | undefined }) {
+    native Canvas does too, so every drop stays exactly square.
+    @public — Storybook's Fork/Status mark story draws each working form. */
+export function SidebarV2WorkingRain({
+  seed,
+  still,
+}: {
+  seed: string;
+  still?: boolean | undefined;
+}) {
   const offset = workingMarkOffsetSeconds(seed);
   const film = rainFilm();
   return (
@@ -322,8 +329,15 @@ const helixFilm = once(() =>
 
 /** A baked film rather than the chip's per-frame canvas, so a working row
     costs no requestAnimationFrame loop — seeded by the shared per-thread
-    offset. */
-function SidebarV2WorkingHelix({ seed, still }: { seed: string; still?: boolean | undefined }) {
+    offset.
+    @public — Storybook's Fork/Status mark story draws each working form. */
+export function SidebarV2WorkingHelix({
+  seed,
+  still,
+}: {
+  seed: string;
+  still?: boolean | undefined;
+}) {
   return (
     <span aria-hidden className="relative block size-3 shrink-0 overflow-hidden">
       <FilmStrip
@@ -343,8 +357,15 @@ const BEAD_RING_FRAMES = 114;
 const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
 
 /** One film strip, as the helix: the ring is 12px across, a step past the 10px status dots, in
-    a 15px box held to the 12x14 slot. */
-function SidebarV2WorkingBeadRing({ seed, still }: { seed: string; still?: boolean | undefined }) {
+    a 15px box held to the 12x14 slot.
+    @public — Storybook's Fork/Status mark story draws each working form. */
+export function SidebarV2WorkingBeadRing({
+  seed,
+  still,
+}: {
+  seed: string;
+  still?: boolean | undefined;
+}) {
   return (
     <span
       aria-hidden
