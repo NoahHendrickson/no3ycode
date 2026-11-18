@@ -21,3 +21,11 @@ const PREFERENCES = {
 for (const [key, value] of Object.entries(PREFERENCES)) {
   window.localStorage.setItem(key, value);
 }
+
+// Glass is see-through only once the desktop shell reports its window material
+// (forkSidebarVibrancy.ts). A browser has none, so this stands in for the bridge: the app's own
+// palette sync asks for the material when Glass is picked, and preview-head.html paints a
+// wallpaper where the desktop would show through.
+(window as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
+  setSidebarVibrancy: async (enabled: boolean) => enabled,
+};

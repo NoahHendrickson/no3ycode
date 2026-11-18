@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BASIC_TONE_OPTIONS, BASIC_TONES, type BasicTone } from "~/custom/forkTheme";
 import indexCss from "~/index.css?raw";
 
-import { storyTone } from "../storyTone.ts";
+import { storyBasicTone, storyThemeKey } from "../storyTheme.ts";
 import { type ResolvedColor, readTokenColor } from "./resolveColor.ts";
 import { sweepTones, type ToneTable } from "./toneSweep.ts";
 
@@ -96,8 +96,8 @@ function SwatchRow({ swatch }: { swatch: Swatch }) {
 }
 
 // `@theme inline` emits no --color-* properties at runtime, so each swatch reads the property its
-// registration points at. A tone change re-renders the story in place, so the swatch
-// stories key on the tone: each tone mounts afresh and reads its own values.
+// registration points at. A theme change re-renders the story in place, so the swatch
+// stories key on the theme: each one mounts afresh and reads its own values.
 const TOKEN_ENTRIES = REGISTERED;
 const RAMP_ENTRIES = BASIC_RAMP.map((variable) => ({ name: variable.slice(2), variable }));
 
@@ -206,6 +206,15 @@ function ToneTableView({ tone }: { tone: BasicTone }) {
   );
 }
 
+/** The ramp and the tone table are Basic's own scale; Glass and Inlet have none. */
+function BasicOnly() {
+  return (
+    <p className="text-sm text-muted-foreground">
+      Basic only: pick a Basic tone in the toolbar's Theme menu.
+    </p>
+  );
+}
+
 const meta = {
   title: "Foundations/Colors",
   parameters: { surface: "bare" },
@@ -214,25 +223,31 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Every token components paint with, resolved for the tone in the toolbar. */
+/** Every token components paint with, resolved for the theme in the toolbar. */
 export const Tokens: Story = {
-  render: (_args, { globals }) => <TokenGroups key={storyTone(globals)} sidebar={false} />,
+  render: (_args, { globals }) => <TokenGroups key={storyThemeKey(globals)} sidebar={false} />,
 };
 
 /** The sidebar restates part of the family on its own element, so its values can differ. */
 export const SidebarScope: Story = {
   name: "Tokens in the sidebar",
-  render: (_args, { globals }) => <TokenGroups key={storyTone(globals)} sidebar />,
+  render: (_args, { globals }) => <TokenGroups key={storyThemeKey(globals)} sidebar />,
 };
 
 /** Basic is one base colour plus ink laid over it at 4 / 8 / 12 / 16%. */
 export const BasicRamp: Story = {
   name: "Basic ramp",
-  render: (_args, { globals }) => <Ramp key={storyTone(globals)} />,
+  render: (_args, { globals }) => {
+    const tone = storyBasicTone(globals);
+    return tone === null ? <BasicOnly /> : <Ramp key={tone} />;
+  },
 };
 
 /** Every tone side by side, read from the CSS by sweeping the root through each tone. */
 export const AllTones: Story = {
   name: "All tones",
-  render: (_args, { globals }) => <ToneTableView tone={storyTone(globals)} />,
+  render: (_args, { globals }) => {
+    const tone = storyBasicTone(globals);
+    return tone === null ? <BasicOnly /> : <ToneTableView tone={tone} />;
+  },
 };
