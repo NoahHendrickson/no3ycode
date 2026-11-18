@@ -29,7 +29,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
       /\(row\.subagents\?\.length \?\? 1\) === 1\) \{\s*return \(\s*<ForkSubagentGroup\b/u,
     );
     expect(timeline).toMatch(
-      /\(row\.subagents\?\.length \?\? 1\) > 1\) \{\s*\/\*[\s\S]*?\*\/\s*return \(\s*<ForkSubagentGroup\b/u,
+      /\(row\.subagents\?\.length \?\? 1\) > 1\) \{\s*\/\*(?:(?!\*\/)[\s\S])*\*\/\s*return \(\s*<ForkSubagentGroup\b/u,
     );
     expect(timeline).not.toContain("return <V2SubagentGroup key={row.id} row={row} />;");
   });

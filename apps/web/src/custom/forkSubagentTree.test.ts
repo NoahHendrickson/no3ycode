@@ -65,6 +65,19 @@ describe("resolveForkSubagentTree", () => {
     expect(row.activity).toEqual({ label: "Result", text: "Found three leads in src" });
     expect(row.model).toBe("claude-opus-5-5");
     expect(row.childThreadId).toBe("thread-child");
+    expect(
+      resolveForkSubagentTree(
+        [item()],
+        [
+          {
+            id: "node-1",
+            status: "running",
+            model: null,
+            modelSelection: { model: "claude-sonnet-5-5" },
+          } as never,
+        ],
+      ).rows[0]!.model,
+    ).toBe("claude-sonnet-5-5");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
   });

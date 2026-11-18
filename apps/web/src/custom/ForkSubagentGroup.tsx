@@ -53,12 +53,18 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
   const members = (row.subagents ?? [row.projectedItem]).flatMap(({ item }) =>
     item.type === "subagent" ? [item as ForkSubagentItem] : [],
   );
-  const liveAgents = useAtomValue(
+  // A lone card selects its own agent, so another subagent's progress does not re-render it.
+  const lone = members.length === 1 ? members[0]!.subagentId : null;
+  const selected = useAtomValue(
     environmentThreadDetails.threadAtom(
       scopeThreadRef(environmentId, row.projectedItem.item.threadId),
     ),
-    (thread) => thread?.projection.subagents,
+    (thread) =>
+      lone === null
+        ? thread?.projection.subagents
+        : (thread?.projection.subagents.find((agent) => agent.id === lone) ?? null),
   );
+  const liveAgents = Array.isArray(selected) ? selected : selected ? [selected] : undefined;
   const tree = resolveForkSubagentTree(members, liveAgents);
 
   return (
@@ -183,6 +189,11 @@ function ForkSubagentCard(props: {
           {remote !== undefined ? ` · on ${remote.label}` : null}
         </span>
       </span>
+      {member.startedAt ? (
+        <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+          <AgentElapsed agent={member} />
+        </span>
+      ) : null}
     </>
   );
   return (
@@ -209,11 +220,6 @@ function ForkSubagentCard(props: {
             {identity}
           </button>
         )}
-        {member.startedAt ? (
-          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-            <AgentElapsed agent={member} />
-          </span>
-        ) : null}
         <button
           type="button"
           data-fork-subagent-toggle=""

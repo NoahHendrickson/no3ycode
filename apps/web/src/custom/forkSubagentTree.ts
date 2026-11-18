@@ -182,7 +182,8 @@ export function resolveForkSubagentTree(
       status,
       mark: STATUS_MARK[status],
       failed: status === "failed",
-      model: live?.model ?? null,
+      // Claude can report the model only through its selection.
+      model: live?.model ?? live?.modelSelection?.model ?? null,
       startedAt: isoOrNull(startedAt),
       completedAt: isoOrNull(completedAt),
       childThreadId: live?.childThreadId ?? item.childThreadId,
