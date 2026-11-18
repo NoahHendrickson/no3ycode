@@ -64,6 +64,7 @@ export function MenuIconTab({
 }: ComponentProps<typeof SegmentedMenuTab> & { readonly "aria-label": string }) {
   return (
     <SegmentedMenuTab
+      data-fork-tab="icon"
       {...props}
       className={cn(
         ICON_TAB,

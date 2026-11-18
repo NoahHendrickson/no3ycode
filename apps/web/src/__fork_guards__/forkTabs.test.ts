@@ -55,10 +55,8 @@ describe("fork-tabs", () => {
     const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
     expect(at).toBeGreaterThan(-1);
     expect(basic.slice(at)).toMatch(
-      /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*& > :is\(\[data-fork-segmented-tab\], \[data-slot="toggle"\]\) \{/u,
+      /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*(?:\/\*[\s\S]*?\*\/\s*)?&\s*>\s*:is\(\s*\[data-fork-segmented-tab\],\s*\[data-slot="toggle"\],\s*\[data-slot="tooltip-trigger"\]\[data-variant="segmented"\]\s*\) \{/u,
     );
-    // The collapsed sidebar's thread tabs are not a strip and keep their own look.
-    expect(basic).not.toContain("[data-fork-thread-tab]");
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });

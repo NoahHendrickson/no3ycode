@@ -286,8 +286,13 @@
   border-radius: 8px;
   background-color: var(--basic-wash-2);
 
-  & > :is([data-fork-segmented-tab], [data-slot="toggle"]) {
-    border: 1px solid transparent;
+  /* A tooltip renames a toggle's data-slot, so a segmented toggle is matched by its variant too. */
+  &
+    > :is(
+      [data-fork-segmented-tab],
+      [data-slot="toggle"],
+      [data-slot="tooltip-trigger"][data-variant="segmented"]
+    ) {
     border-radius: 6px;
     background-clip: border-box;
     box-shadow: none;
@@ -313,15 +318,28 @@
   & > [data-fork-tab="word"] {
     padding-inline: 6px;
   }
+
+  /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
+  & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
+    box-shadow: inset 0 0 0 1px var(--basic-wash-2);
+  }
 }
 
 /* A black wash reads as a grey slab on the light tones, so the pick lifts toward white, and
    its line darkens to 16% because 8% vanishes against the white. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])
-  > :is([data-fork-segmented-tab], [data-slot="toggle"])[data-pressed] {
+  > :is(
+    [data-fork-segmented-tab],
+    [data-slot="toggle"],
+    [data-slot="tooltip-trigger"][data-variant="segmented"]
+  )[data-pressed] {
   border-color: var(--basic-wash-4);
   background-color: var(--basic-raised);
+
+  &[data-fork-segmented-tab]:not([data-fork-tab]) {
+    box-shadow: inset 0 0 0 1px var(--basic-wash-4);
+  }
 }
 
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
