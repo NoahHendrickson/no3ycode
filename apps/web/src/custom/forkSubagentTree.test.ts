@@ -176,6 +176,17 @@ describe("resolveForkSubagentTree", () => {
 
   it("title-cases Codex task paths through the shared display title", () => {
     expect(resolveForkSubagentTree([item()], null).rows[0]!.title).toBe("Octopus Research");
+    expect(resolveForkSubagentTree([item()], null).rows[0]!.titled).toBe(true);
+  });
+
+  it("names an untitled subagent by its task before falling back to Subagent", () => {
+    const untitled = (prompt: string) =>
+      forkSubagentRowFromAgent({ id: "node-9", status: "completed", title: null, prompt } as never);
+    expect(untitled("Research **jellyfish**")).toMatchObject({
+      title: "Research jellyfish",
+      titled: false,
+    });
+    expect(untitled("").title).toBe("Subagent");
   });
 
   it("spans the batch from first launch to last settle, ticking while any member works", () => {

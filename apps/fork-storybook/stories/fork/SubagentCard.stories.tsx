@@ -15,6 +15,7 @@ const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).
 const BASE: ForkSubagentTreeRow = {
   id: "subagent-story",
   title: "Sol review r2: tab strips under Basic",
+  titled: true,
   status: "running",
   mark: "working",
   model: "gpt-6.2-sol",

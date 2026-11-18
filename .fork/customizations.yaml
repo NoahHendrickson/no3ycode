@@ -5486,7 +5486,9 @@
     A subagent's completion notice (upstream's SubagentNotificationLink, swapped
     for ForkSubagentNotice in a fenced branch of TimelineWorkEntryRow) is drawn
     as the same card, folded, from the live record (forkSubagentRowFromAgent),
-    so a finished subagent's report reads like its card. Its chevron choice is
+    so a finished subagent's report reads like its card. An untitled record
+    (completion notices often are) takes its child thread's title, else its
+    task, before "Subagent". Its chevron choice is
     kept in the work-group view state under the notice's entry id and reports to
     the group it sits in. A question or progress notice (outcome updated or
     unknown), one whose agent resumed after it, and one whose agent is not on the

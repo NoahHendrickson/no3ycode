@@ -17,7 +17,10 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import { resolveSubagentMetadata } from "@t3tools/client-runtime/state/subagent-display";
+import {
+  formatSubagentDisplayTitle,
+  resolveSubagentMetadata,
+} from "@t3tools/client-runtime/state/subagent-display";
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
@@ -47,6 +50,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
 import { serverEnvironment } from "~/state/server";
+import { useQuietThreadShell } from "~/state/entities";
 import { environmentThreadDetails } from "~/state/threads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
@@ -270,6 +274,13 @@ function ForkSubagentCard(props: {
     setOpen(!open);
   };
   const openThread = useOpenSubagentThread(member, onOpenThread);
+  // An untitled subagent (a completion notice's record often is) takes its child thread's title,
+  // which is generated from the ask; the model falls back to the ask itself.
+  const childTitle = useQuietThreadShell(
+    !member.titled && member.childThreadId !== null
+      ? scopeThreadRef(environmentId, member.childThreadId)
+      : null,
+  )?.source.title;
   // Selected down to the label, so a provider update re-renders only the cards whose effort changed.
   const effort = useAtomValue(serverEnvironment.providersValueAtom(environmentId), (providers) => {
     const provider = providers?.find(
@@ -284,7 +295,7 @@ function ForkSubagentCard(props: {
   });
   return (
     <ForkSubagentCardView
-      member={member}
+      member={childTitle ? { ...member, title: formatSubagentDisplayTitle(childTitle) } : member}
       effort={effort}
       titleId={titleId}
       environmentId={environmentId}

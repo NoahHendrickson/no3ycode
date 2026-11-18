@@ -35,7 +35,10 @@ export type ForkSubagentMark = "working" | "idle" | "done" | "failed" | "stopped
 
 export interface ForkSubagentTreeRow {
   readonly id: string;
+  /** Its own title, else the task it was given, else "Subagent". */
   readonly title: string;
+  /** Whether the record named it; an untitled card may borrow its child thread's title. */
+  readonly titled: boolean;
   readonly status: ForkSubagentStatus;
   /** The sidebar mark: working, idle, done, failed or stopped. */
   readonly mark: ForkSubagentMark;
@@ -204,7 +207,8 @@ function resolveRow(
   const prompt = plainDetail(live?.prompt || item.prompt);
   return {
     id: item.id,
-    title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
+    title: formatSubagentDisplayTitle(live?.title ?? item.title ?? (prompt || "Subagent")),
+    titled: (live?.title ?? item.title) != null,
     status,
     mark,
     // Claude can report the model only through its selection.
