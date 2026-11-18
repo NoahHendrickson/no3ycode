@@ -326,12 +326,13 @@
   background-color: var(--basic-raised);
 }
 
-/* Switches (Figma kit, Nov 18): on is the success green, and the thumb is white in both states,
-   because a grey thumb reads as disabled. Settings whose scopes disagree draw as off rather than
-   half-way; aria-checked="mixed" still tells a screen reader. */
+/* Switches (Figma kit): on is green and the thumb is white in both states, because a grey thumb
+   reads as disabled. The green is emerald 600, not the success token's 500: the white thumb on it
+   and the track against a light page both need 3:1. Settings whose scopes disagree draw as off
+   rather than half-way; aria-checked="mixed" still tells a screen reader. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="switch"] {
   &[data-checked] {
-    background-color: var(--success);
+    background-color: oklch(59.6% 0.145 163.225);
   }
 
   & > [data-slot="switch-thumb"] {
@@ -344,20 +345,13 @@
   }
 }
 
-/* A focused text field shows its edge at full strength, 1px, in place of the outset ring. An
-   invalid one keeps upstream's destructive border. Forced colours repaint borders, so the
-   outline stays there as the only visible focus. */
-@media (forced-colors: none) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-    :is([data-slot="input-control"], [data-slot="textarea-control"]):has(
-      :is(input, textarea):focus-visible
-    ) {
-    outline: none;
-
-    &:not(:has([aria-invalid="true"])) {
-      border-color: var(--ring);
-    }
-  }
+/* The changed-files well is a panel of its own (Figma kit), rounded at the top as well, so its
+   hairline curves down into the card's sides. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-changed-files-header]
+  + div {
+  border-top-left-radius: calc(var(--fork-composer-radius) - 1px);
+  border-top-right-radius: calc(var(--fork-composer-radius) - 1px);
 }
 
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's

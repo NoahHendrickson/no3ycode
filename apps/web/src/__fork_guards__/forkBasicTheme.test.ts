@@ -108,23 +108,14 @@ describe("fork guard: fork-basic-theme", () => {
     );
   });
 
-  it("draws switches green with a white thumb, and focused fields with a full-strength edge", () => {
+  it("draws switches green with a white thumb", () => {
     const switches = sheet.slice(sheet.indexOf(`${BASIC} [data-slot="switch"] {`));
     expect(switches).toMatch(
-      /^[^{]+\{\s*&\[data-checked\] \{\s*background-color: var\(--success\);/u,
+      /^[^{]+\{\s*&\[data-checked\] \{\s*background-color: oklch\(59\.6% 0\.145 163\.225\);/u,
     );
     expect(switches).toMatch(/& > \[data-slot="switch-thumb"\] \{\s*background-color: #fff;/u);
     expect(switches).toMatch(
       /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
-    );
-    const fields = sheet.slice(sheet.indexOf("@media (forced-colors: none) {"));
-    expect(
-      fields.startsWith(
-        `@media (forced-colors: none) {\n  ${BASIC}\n    :is([data-slot="input-control"], [data-slot="textarea-control"]):has(`,
-      ),
-    ).toBe(true);
-    expect(fields).toMatch(
-      /:is\(input, textarea\):focus-visible\s*\) \{\s*outline: none;\s*&:not\(:has\(\[aria-invalid="true"\]\)\) \{\s*border-color: var\(--ring\);/u,
     );
   });
 
