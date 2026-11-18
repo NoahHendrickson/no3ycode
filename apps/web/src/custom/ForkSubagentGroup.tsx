@@ -18,10 +18,11 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { formatSubagentDisplayTitle } from "@t3tools/client-runtime/state/subagent-display";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, memo, type ReactNode, use, useId, useState } from "react";
+import { type CSSProperties, memo, use, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
@@ -36,6 +37,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import {
+  forkSubagentMembers,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -46,33 +48,55 @@ import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "./SidebarV2Sta
 
 type EventRow = Extract<MessagesTimelineRow, { readonly kind: "event" }>;
 
+/** Every subagent of the row renders as a card in one keyed list, so a lone card that gains a
+    neighbour stays mounted (and keeps focus) as the batch's lead line appears above it. */
 export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
   readonly row: EventRow;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { row } = props;
-  const members = (row.subagents?.length ? row.subagents : [row.projectedItem]).flatMap(
-    ({ item }) => (item.type === "subagent" ? [item as ForkSubagentItem] : []),
-  );
+  const { row, environmentId, onOpenThread } = props;
+  const members = forkSubagentMembers(row);
+  const leadId = useId();
   const [first] = members;
   if (first === undefined) return null;
-  return members.length === 1 ? (
-    <LoneSubagent {...props} item={first} />
-  ) : (
-    <SubagentBatch {...props} members={members} />
+  const batch = members.length > 1;
+  return (
+    <WorkLogBlock continues={row.continuesWorkLog}>
+      <div
+        data-fork-subagent-tree=""
+        data-subagent-group
+        role="group"
+        {...(batch
+          ? { "aria-labelledby": leadId }
+          : { "aria-label": formatSubagentDisplayTitle(first.title ?? "Subagent") })}
+        className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
+      >
+        {batch ? (
+          <SubagentBatchLead id={leadId} members={members} environmentId={environmentId} />
+        ) : null}
+        {members.map((item) => (
+          <LiveSubagentCard
+            key={item.id}
+            item={item}
+            anchorKey={row.id}
+            environmentId={environmentId}
+            onOpenThread={onOpenThread}
+          />
+        ))}
+      </div>
+    </WorkLogBlock>
   );
 });
 
-/** One subagent: its own card, and it selects only its own agent, so another subagent's
-    progress does not re-render it. */
-function LoneSubagent(props: {
-  readonly row: EventRow;
+/** One card. It selects only its own agent, so another subagent's progress does not re-render it. */
+const LiveSubagentCard = memo(function LiveSubagentCard(props: {
   readonly item: ForkSubagentItem;
+  readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { row, item, environmentId, onOpenThread } = props;
+  const { item, anchorKey, environmentId, onOpenThread } = props;
   const live = useAtomValue(
     environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
@@ -80,80 +104,47 @@ function LoneSubagent(props: {
   const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
   if (member === undefined) return null;
   return (
-    <SubagentBlock row={row} label={member.title}>
-      <ForkSubagentCard
-        member={member}
-        anchorKey={row.id}
-        environmentId={environmentId}
-        onOpenThread={onOpenThread}
-      />
-    </SubagentBlock>
+    <ForkSubagentCard
+      member={member}
+      anchorKey={anchorKey}
+      environmentId={environmentId}
+      onOpenThread={onOpenThread}
+    />
   );
-}
+});
 
-/** A batch: the lead line above one card per member, from the thread's live roster. */
-function SubagentBatch(props: {
-  readonly row: EventRow;
+/** A batch's lead line: "Kicked off N subagents", the status summary and the batch's span,
+    from the thread's live roster. */
+function SubagentBatchLead(props: {
+  readonly id: string;
   readonly members: ReadonlyArray<ForkSubagentItem>;
   readonly environmentId: EnvironmentId;
-  readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { row, members, environmentId, onOpenThread } = props;
+  const { id, members, environmentId } = props;
   const liveAgents = useAtomValue(
-    environmentThreadDetails.threadAtom(
-      scopeThreadRef(environmentId, row.projectedItem.item.threadId),
-    ),
+    environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, members[0]!.threadId)),
     (thread) => thread?.projection.subagents,
   );
   const tree = resolveForkSubagentTree(members, liveAgents);
   return (
-    <SubagentBlock row={row} label={tree.lead}>
-      <span className="flex w-full min-w-0 items-start gap-2 pb-1">
-        <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
-          <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
+    <span className="flex w-full min-w-0 items-start gap-2 pb-1">
+      <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
+        <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col items-start">
+        <span id={id} className="w-full min-w-0 truncate text-foreground">
+          {tree.lead}
         </span>
-        <span className="flex min-w-0 flex-1 flex-col items-start">
-          <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>
-          <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
-            <span>{tree.summary}</span>
-            {tree.timing ? (
-              <span className="tabular-nums">
-                <AgentElapsed agent={tree.timing} />
-              </span>
-            ) : null}
-          </span>
+        <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
+          <span>{tree.summary}</span>
+          {tree.timing ? (
+            <span className="tabular-nums">
+              <AgentElapsed agent={tree.timing} />
+            </span>
+          ) : null}
         </span>
       </span>
-      {tree.rows.map((member) => (
-        <ForkSubagentCard
-          key={member.id}
-          member={member}
-          anchorKey={row.id}
-          environmentId={environmentId}
-          onOpenThread={onOpenThread}
-        />
-      ))}
-    </SubagentBlock>
-  );
-}
-
-function SubagentBlock(props: {
-  readonly row: EventRow;
-  readonly label: string;
-  readonly children: ReactNode;
-}) {
-  return (
-    <WorkLogBlock continues={props.row.continuesWorkLog}>
-      <div
-        data-fork-subagent-tree=""
-        data-subagent-group
-        role="group"
-        aria-label={props.label}
-        className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
-      >
-        {props.children}
-      </div>
-    </WorkLogBlock>
+    </span>
   );
 }
 

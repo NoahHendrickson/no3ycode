@@ -150,6 +150,16 @@ function isoOrNull(value: DateTime.Utc | null | undefined): string | null {
   return value ? DateTime.formatIso(value) : null;
 }
 
+/** A timeline row's subagent items: its batch, or the row's own item when the batch is empty. */
+export function forkSubagentMembers(row: {
+  readonly subagents?: ReadonlyArray<{ readonly item: OrchestrationV2TurnItem }> | undefined;
+  readonly projectedItem: { readonly item: OrchestrationV2TurnItem };
+}): ReadonlyArray<ForkSubagentItem> {
+  return (row.subagents?.length ? row.subagents : [row.projectedItem]).flatMap(({ item }) =>
+    item.type === "subagent" ? [item] : [],
+  );
+}
+
 export function resolveForkSubagentTree(
   members: ReadonlyArray<ForkSubagentItem>,
   liveAgents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,

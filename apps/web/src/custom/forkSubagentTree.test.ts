@@ -2,6 +2,7 @@ import * as DateTime from "effect/DateTime";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  forkSubagentMembers,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -172,6 +173,21 @@ describe("resolveForkSubagentTree", () => {
     ).toEqual({ status: "completed", startedAt: "2026-10-05T12:00:10.000Z", completedAt: null });
     // No member reports a start: no span (the provider-native case).
     expect(resolveForkSubagentTree([item(), item({ id: "item-2" })], null).timing).toBeNull();
+  });
+});
+
+describe("forkSubagentMembers", () => {
+  it("takes the batch, or the row's own subagent when the batch is empty", () => {
+    const own = item();
+    const other = item({ id: "item-2", subagentId: "node-2" });
+    expect(
+      forkSubagentMembers({
+        subagents: [{ item: own }, { item: other }],
+        projectedItem: { item: own },
+      }),
+    ).toEqual([own, other]);
+    expect(forkSubagentMembers({ subagents: [], projectedItem: { item: own } })).toEqual([own]);
+    expect(forkSubagentMembers({ projectedItem: { item: own } })).toEqual([own]);
   });
 });
 
