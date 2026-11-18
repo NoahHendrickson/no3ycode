@@ -30,8 +30,6 @@ function readSibling(relativePath: string): string {
 
 const MARKER = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
 const TEMPLATE = `${MARKER}[data-fork-theme="${INLET_THEME}"]`;
-// The dark template Cream sits on.
-const DARK = `${MARKER}.dark[data-fork-theme="${INLET_THEME}"]`;
 const BLACK = `${TEMPLATE}[data-fork-inlet-color="black"]`;
 const CREAM = `${TEMPLATE}[data-fork-inlet-color="cream"]`;
 // The frame's tokens: the sidebar, and the collapsed sidebar's tab strip on the frame beside it.
@@ -94,6 +92,7 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(FORK_PALETTE_LABELS[INLET_THEME]).toBe(INLET_LABEL);
     expect(appearancePanel).toContain("<ForkInletColorPicker");
     expect(appearancePanel).toMatch(/appearance === INLET_THEME \?/u);
+    expect(palettes).toContain(INLET_FILES.map((file) => `@import "./${file}";`).join("\n"));
   });
 
   it("offers Cream, the default, and its inverse Black, each on its own appearance", () => {
@@ -136,17 +135,6 @@ describe("fork guard: fork-inlet-theme", () => {
       ...`${palettes}\n${inlet}\n${indexHtml}`.matchAll(/data-fork-inlet-color="([^"]+)"/gu),
     ].map((match) => match[1]);
     expect(new Set(named)).toEqual(new Set(INLET_COLORS));
-  });
-
-  it("paints the dark template Cream sits on as a #232322 frame round a #303235 panel", () => {
-    const stage = ruleBodyFor(paletteRules, [DARK]);
-    const panel = ruleBodyFor(paletteRules, [DARK, FRAME]);
-    expect(declarationHex(stage, "--background")).toBe("#232322");
-    expect(declarationHex(stage, "--fork-inlet-panel")).toBe("#303235");
-    expect(declarationHex(stage, "--fork-context-chip-bg-hover")).toMatch(/^#/u);
-    expect(declarationHex(panel, "--sidebar")).toBe("#232322");
-    expect(declarationHex(panel, "--sidebar-row-selected")).toBe("#303235");
-    expect(palettes).toContain(INLET_FILES.map((file) => `@import "./${file}";`).join("\n"));
   });
 
   it("paints Black as a #141414 frame round a cream panel, on light", () => {
@@ -254,9 +242,9 @@ describe("fork guard: fork-inlet-theme", () => {
   });
 
   it("runs the open row into the panel through concave corners, clipped by the sidebar", () => {
-    // A settled thread's open row is the slim row; it takes the same corners.
+    // A settled thread's open row is the slim row; it takes the same corners, the nav rows' 10px.
     const openSelector = [
-      TEMPLATE,
+      `${TEMPLATE}[data-fork-inlet-color]`,
       '[data-sidebar-version="v2"]',
       '[data-fork-thread-row][aria-current="page"]',
     ].join(" ");
@@ -264,9 +252,7 @@ describe("fork guard: fork-inlet-theme", () => {
       .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === openSelector)
       .map((rule) => rule.body)
       .join("\n");
-    expect(card).toMatch(
-      /border-radius:\s*var\(--fork-inlet-radius\) 0 0 var\(--fork-inlet-radius\)/u,
-    );
+    expect(card).toMatch(/border-radius:\s*10px 0 0 10px/u);
     // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
     // settled thread's open row is the slim row, on the same fill.
     const row = ruleNaming(inletRules, [

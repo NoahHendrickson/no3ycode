@@ -428,6 +428,35 @@
   border-radius: 0 0 6px 6px;
 }
 
+/* The usage readout hangs from the usage bar the same way, in the model
+   menu's shell, with each provider's section set into it as its own panel in
+   the prompt's fill. That replaces the divider, whose colour is the
+   root-resolved --border Tailwind's divide reads: the stage's, not the
+   popup's. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="popover-popup"][data-fork-tab-menu] {
+  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
+  background: var(--fork-inlet-model-shell);
+  border-radius: var(--fork-inlet-menu-radius);
+
+  /* Each provider's section is its own panel, 4px in from the shell on every
+     side (the scroller's 4px block padding gives the top and bottom), with
+     corners concentric to the shell's. */
+  & .divide-y > * {
+    margin-inline: 4px;
+    border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
+    background: var(--fork-composer-bg);
+  }
+
+  & .divide-y > :not(:last-child) {
+    /* The shell shows 5px round the panels (its 1px border, then the 4px
+       inset), so they part by as much. */
+    margin-bottom: 5px;
+    border-bottom-width: 0;
+  }
+}
+
 /* The model picker is Inlet in small: the menu's shell is the recess
    colour, and the model list is a panel set 4px into it, so the provider
    rail is simply the shell down the left; the effort controls below sit on
@@ -852,19 +881,33 @@
   }
 }
 
-/* The usage meter steps aside for the model menu's padded fill in step with
-   the morph. The meter is also the usage popover's button, so the
-   button-fill transition above would otherwise replace its translate; one
-   list carries both. Out on the open's curve; back only once the button's
-   fill starts fading (about 190ms into the 280ms close), so the two never
-   meet. */
+/* The open model button's fill pads 4px past it, onto the usage meter beside
+   it; the meter steps aside while the menu is out. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
+  [data-fork-composer-usage-limits] {
+  translate: -8px 0;
+}
+
+/* The usage meter steps aside in step with the morph, out on the open's
+   curve; it and the model button, which the menus hang from, ease their
+   fills. */
 
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     [data-fork-composer-model-controls]
     [data-fork-composer-usage-limits] {
+    transition: translate 160ms ease-out;
+  }
+
+  /* The button fills in step with it, from the composer's control wash. */
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+    :is(
+      [data-chat-provider-model-picker],
+      [data-fork-composer-usage-limits]
+    )[data-fork-tab-trigger] {
     transition:
-      translate 220ms cubic-bezier(0.37, 0, 0.63, 1) 190ms,
       background-color 160ms ease-out,
       box-shadow 160ms ease-out;
   }
@@ -1030,6 +1073,14 @@
   }
 }
 
+/* The tab's actions show on hover; while their menu is open they stay. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-thread-tab]
+  [data-fork-tab-actions]:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
+  opacity: 1;
+}
+
 /* Page tabs (Usage, Automations' triggers) are rounded rectangles with parallel
    corners, not upstream's 4px track around a 2px chip. */
 
@@ -1039,73 +1090,4 @@
   /* The chip's corner is calc(var(--radius-sm) - 2px). */
   --radius-sm: 8px;
   border-radius: 8px;
-}
-
-/* ── After the menus ─────────────────────────────────────────────────────────
-   These follow every rule above and outrank some at equal weight (the usage
-   meter's transition among them), so they stay last in this file. */
-
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-model-controls]
-    [data-fork-composer-usage-limits] {
-    transition: translate 160ms ease-out;
-  }
-
-  /* The button fills in step with it, from the composer's control wash. */
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      [data-chat-provider-model-picker],
-      [data-fork-composer-usage-limits]
-    )[data-fork-tab-trigger] {
-    transition:
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-}
-
-/* The open model button's fill pads 4px past it, onto the usage meter beside
-   it; the meter steps aside while the menu is out. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
-  [data-fork-composer-usage-limits] {
-  translate: -8px 0;
-}
-
-/* The usage readout hangs from the usage bar the same way, in the model
-   menu's shell, with each provider's section set into it as its own panel in
-   the prompt's fill. That replaces the divider, whose colour is the
-   root-resolved --border Tailwind's divide reads: the stage's, not the
-   popup's. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="popover-popup"][data-fork-tab-menu] {
-  --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
-  background: var(--fork-inlet-model-shell);
-  border-radius: var(--fork-inlet-menu-radius);
-
-  /* Each provider's section is its own panel, 4px in from the shell on every
-     side (the scroller's 4px block padding gives the top and bottom), with
-     corners concentric to the shell's. */
-  & .divide-y > * {
-    margin-inline: 4px;
-    border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
-    background: var(--fork-composer-bg);
-  }
-
-  & .divide-y > :not(:last-child) {
-    /* The shell shows 5px round the panels (its 1px border, then the 4px
-       inset), so they part by as much. */
-    margin-bottom: 5px;
-    border-bottom-width: 0;
-  }
-}
-
-/* The tab's actions show on hover; while their menu is open they stay. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-thread-tab]
-  [data-fork-tab-actions]:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
-  opacity: 1;
 }

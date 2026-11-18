@@ -2441,9 +2441,8 @@
     630:14154): Black is a cream #f8f3d8 panel in a #141414 frame on light,
     and Cream (the default) is a #141414 panel in a cream #f8f3d8 frame
     (--fork-inlet-frame, painted on the inset and the column's wrapper only
-    round a chat column) on dark. Cream sits on the dark template (the .dark
-    token blocks, Figma 619:6610: a #232322 frame round a #303235 panel, its
-    composer) and restates what it changes. Retired colours (Charcoal, Green,
+    round a chat column) on dark; each colour declares its tokens in full, and
+    no Inlet token block keys on .dark. Retired colours (Charcoal, Green,
     Jungle Art, Jungle Light) resolve on every read to the colour on the same
     appearance (Charcoal and Jungle Art to Cream, Green and Jungle Light to
     Black; only the table's own keys, never a prototype name), and index.html

@@ -129,7 +129,8 @@ export type InletColor = (typeof INLET_COLORS)[number];
 export const DEFAULT_INLET_COLOR: InletColor = "cream";
 /** One entry per colour. `frame` is the pre-paint colour; index.html carries the same table, so
     a new colour is a row there too. `chrome` is the native window chrome's appearance, which
-    differs from `appearance` where the frame is light on a dark page. */
+    follows the frame: both colours restyle it (Cream light chrome on a dark page, Black dark
+    chrome on a light page). */
 export const INLET_COLOR_OPTIONS: Readonly<
   Record<
     InletColor,
@@ -142,8 +143,7 @@ export const INLET_COLOR_OPTIONS: Readonly<
     }
   >
 > = {
-  // Inverses of each other: half frame, half panel. A light frame on a dark page asks for light
-  // native chrome, and a dark frame on a light page for dark.
+  // Inverses of each other: half frame, half panel.
   black: {
     label: "Black",
     frame: "#141414",

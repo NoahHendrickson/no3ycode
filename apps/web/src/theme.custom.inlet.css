@@ -419,41 +419,30 @@
   --sidebar-v2-status-failed: #b91c1c;
 }
 
-/* The card is square on the side that joins the panel. */
+/* Rows round to the nav rows' 10px (CHROME_ACTION, custom/SidebarV2ChromeRows),
+   at rest, hovered and open alike; the open card is square on the side that
+   joins the panel. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-thread-row] {
+  border-radius: 10px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [data-fork-thread-row][aria-current="page"] {
-  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+  border-radius: 10px 0 0 10px;
 }
 
 /* An open split pair (fork-split-threads) is one item: its row is the shape
    that joins the panel. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active]
   > ul {
-  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
-}
-
-/* Cream and Black round rows to the nav rows' 10px (CHROME_ACTION,
-   custom/SidebarV2ChromeRows), at rest, hovered and open alike. The open one
-   stays square where it joins the panel. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="cream"],
-    [data-fork-inlet-color="black"]
-  )
-  [data-sidebar-version="v2"] {
-  & [data-fork-thread-row] {
-    border-radius: 10px;
-  }
-
-  & [data-fork-thread-row][aria-current="page"],
-  & li[data-fork-split-pair][data-active] > ul {
-    border-radius: 10px 0 0 10px;
-  }
+  border-radius: 10px 0 0 10px;
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and

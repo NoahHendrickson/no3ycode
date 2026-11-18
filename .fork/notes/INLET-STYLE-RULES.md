@@ -9,7 +9,7 @@ Code: `apps/web/src/theme.custom.inlet.css` (the template), `theme.custom.inlet-
 (hung menus, tooltips, tab strip),
 `theme.custom.inlet-black.css` (Black),
 `theme.custom.palettes.css` (per-colour tokens), `custom/inletMenuMorph.ts` (menu motion). Figma `t3-fork`: 619:6610
-(the dark template Cream sits on), 630:14154 (Cream / Black).
+(the template), 630:14154 (Cream / Black).
 
 ---
 
