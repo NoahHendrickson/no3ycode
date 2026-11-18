@@ -139,7 +139,7 @@ const px = (value: string) => value.replace(/px$/u, "");
 /** Redlines for a two-tab strip: the track's outer size, the picked tab's size, then the spec. */
 function annotateStrip(kind: "icon" | "word") {
   return (frame: HTMLElement) => {
-    const trackElement = frame.querySelector<HTMLElement>("[data-fork-tabs]");
+    const trackElement = frame.querySelector<HTMLElement>("[data-fork-segmented-tabs]");
     const tabElement = frame.querySelector<HTMLElement>("[data-fork-tab][data-pressed]");
     if (!trackElement || !tabElement) return null;
     const track = measureWithin(frame, trackElement);

@@ -30,13 +30,7 @@ export function Tabs({
   size = "sm",
   ...props
 }: ComponentProps<typeof SegmentedTabs> & { readonly size?: TabsSize }) {
-  return (
-    <SegmentedTabs
-      data-fork-tabs=""
-      {...props}
-      className={cn(TRACK, TRACK_HEIGHT[size], className)}
-    />
-  );
+  return <SegmentedTabs {...props} className={cn(TRACK, TRACK_HEIGHT[size], className)} />;
 }
 
 export function Tab({ className, ...props }: ComponentProps<typeof SegmentedTab>) {
@@ -53,7 +47,7 @@ export function IconTab({
 
 /** Icon tabs inside a menu (the Threads menu's Group by): its items join the menu's keyboard
     navigation. The shape is the switch's at `sm`, with the pick cut from the menu's own surface
-    and the track showing through its border. Basic gives them their own corners. */
+    and the track showing through its border; Basic draws every strip alike. */
 export function MenuTabs({ className, ...props }: ComponentProps<typeof SegmentedMenuTabs>) {
   return <SegmentedMenuTabs {...props} className={cn(TRACK, TRACK_HEIGHT.sm, className)} />;
 }
@@ -64,6 +58,7 @@ export function MenuIconTab({
 }: ComponentProps<typeof SegmentedMenuTab> & { readonly "aria-label": string }) {
   return (
     <SegmentedMenuTab
+      data-fork-tab="icon"
       {...props}
       className={cn(
         ICON_TAB,

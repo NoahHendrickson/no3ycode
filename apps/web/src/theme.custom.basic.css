@@ -127,6 +127,8 @@
   --basic-raised-quiet: var(--basic-lift-1);
   --basic-composer-vessel: var(--basic-lift-2);
   --basic-composer-prompt: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-lift-2));
+  --basic-tab-pick: var(--basic-wash-3);
+  --basic-tab-line: var(--basic-wash-2);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) {
@@ -140,6 +142,9 @@
   --basic-raised-quiet: color-mix(in srgb, #ffffff 60%, var(--basic-base));
   --basic-composer-vessel: var(--basic-lift-1);
   --basic-composer-prompt: var(--basic-raised);
+  /* A black wash reads as a grey slab, so a picked tab lifts toward white behind a 16% line. */
+  --basic-tab-pick: var(--basic-raised);
+  --basic-tab-line: var(--basic-wash-4);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darkest-warm"] {
@@ -274,34 +279,39 @@
   border-radius: 8px;
 }
 
-/* The Threads menu's Group by tabs. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-group-by-tabs],
+/* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
+   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
+   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
+   regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
+   height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
+   The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+   Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-group-by-tabs]
-  > [data-fork-segmented-tab] {
-  border-radius: 8px;
-}
-
-/* Tabs (custom/Tabs.tsx, the Code / Chat switch among them), Figma t3-fork 740:1163: an 8%
-   track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink. Tabs.tsx sizes
-   the track and its tabs fill the inside, so icon tabs are 24px squares at sm (28 at md, 32 at
-   lg); word tabs have 6px sides and regular 12px type. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-tabs] {
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
   padding: 2px;
   border-radius: 8px;
   background-color: var(--basic-wash-2);
 
-  & > [data-fork-tab] {
+  & > * {
     border-radius: 6px;
+    background-clip: border-box;
+    box-shadow: none;
     color: var(--basic-text);
+    font-size: 0.75rem;
+    font-weight: 400;
 
-    &:hover:not([data-pressed]) {
+    &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
       background-color: var(--basic-wash-1);
     }
 
+    /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
+    &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
+      background-color: transparent;
+    }
+
     &[data-pressed] {
-      border-color: var(--basic-wash-2);
-      background-color: var(--basic-wash-3);
+      border-color: var(--basic-tab-line);
+      background-color: var(--basic-tab-pick);
     }
 
     /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
@@ -310,20 +320,16 @@
     }
   }
 
-  & > [data-fork-tab="word"] {
+  /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
+     that keep their own width; the music strip's equal-width tabs keep their tight sides. */
+  & > :not([aria-label], [data-fork-music-strip] *) {
     padding-inline: 6px;
-    font-size: 12px;
-    font-weight: 400;
   }
-}
 
-/* A black wash reads as a grey slab on the light tones, so the pick lifts toward white, and
-   its line darkens to 16% because 8% vanishes against the white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-tabs]
-  > [data-fork-tab][data-pressed] {
-  border-color: var(--basic-wash-4);
-  background-color: var(--basic-raised);
+  /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
+  & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
+    box-shadow: inset 0 0 0 1px var(--basic-tab-line);
+  }
 }
 
 /* Switches (Figma kit): on is green and the thumb is white in both states, because a grey thumb
@@ -526,23 +532,4 @@
   > *
   + * {
   border-color: var(--basic-wash-2);
-}
-
-/* Segmented tabs on a page (Usage, Automations' triggers) take the Code / Chat
-   switch's language: an 8% track, the chosen tab cut back to the page behind its
-   line, rather than upstream's raised white chip. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *, [data-fork-tabs]) {
-  /* The chip's corner is calc(var(--radius-sm) - 2px); the track's rounded-sm is
-     inlined by @theme inline, so the track takes the radius directly. */
-  --radius-sm: 8px;
-  border-radius: 8px;
-  background-color: var(--basic-wash-2);
-
-  & > [data-fork-segmented-tab][data-pressed] {
-    background-color: var(--background);
-    box-shadow: inset 0 0 0 1px var(--basic-wash-2);
-    color: var(--foreground);
-  }
 }

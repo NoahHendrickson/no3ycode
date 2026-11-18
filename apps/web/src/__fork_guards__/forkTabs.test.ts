@@ -27,15 +27,15 @@ function strip(size?: "sm" | "md" | "lg"): string {
 describe("fork-tabs", () => {
   it("stamps the markers Basic's tabs rule keys on", () => {
     const html = strip();
-    expect(html).toContain("data-fork-tabs");
+    expect(html).toContain("data-fork-segmented-tabs");
     expect(html).toContain('data-fork-tab="icon"');
     expect(html).toContain('data-fork-tab="word"');
   });
 
   it("sizes the track in every theme and lets its tabs fill it", () => {
-    expect(strip()).toMatch(/data-fork-tabs=""[^>]*class="[^"]*\bh-7\b/u);
-    expect(strip("md")).toMatch(/data-fork-tabs=""[^>]*class="[^"]*\bh-8\b/u);
-    expect(strip("lg")).toMatch(/data-fork-tabs=""[^>]*class="[^"]*\bh-9\b/u);
+    expect(strip()).toMatch(/data-fork-segmented-tabs="true"[^>]*class="[^"]*\bh-7\b/u);
+    expect(strip("md")).toMatch(/data-fork-segmented-tabs="true"[^>]*class="[^"]*\bh-8\b/u);
+    expect(strip("lg")).toMatch(/data-fork-segmented-tabs="true"[^>]*class="[^"]*\bh-9\b/u);
     expect(strip()).toMatch(
       /data-fork-tab="icon"[^>]*class="[^"]*\baspect-square\b[^"]*\bh-full\b/u,
     );
@@ -48,13 +48,16 @@ describe("fork-tabs", () => {
     expect(switcher).toMatch(/<IconTab\b/u);
   });
 
-  it("draws the Figma tabs under Basic and keeps the page rule off them", () => {
+  it("draws every tab strip as the Figma tabs under Basic, menu and upstream ones included", () => {
     const basic = read("../theme.custom.basic.css");
-    expect(basic).toMatch(
-      /\[data-fork-theme="basic"\] \[data-fork-tabs\] \{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);/u,
+    const strips =
+      ':is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])';
+    const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
+    expect(at).toBeGreaterThan(-1);
+    expect(basic.slice(at)).toMatch(
+      /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*0\.75rem;/u,
     );
-    expect(basic).toContain(
-      "[data-fork-segmented-tabs]:not([data-fork-thread-tabs] *, [data-fork-tabs])",
-    );
+    // No strip keeps an older Basic look of its own.
+    expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });
 });
