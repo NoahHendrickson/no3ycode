@@ -8,8 +8,8 @@
  * above one card per member. A card is a header (the provider's mark in a tile
  * with the status mark in its corner, the title over the status word, the
  * elapsed time, a chevron, an open-thread arrow) and a well underneath: the task it was given, what
- * it is doing now or what it found, and the model. The well starts open while
- * the subagent works and folds once it settles, unless the header was used.
+ * it is doing now or what it found, and the model. The well starts folded, whatever the
+ * status, and the header opens it.
  * The header strip, chevron included, opens and folds the well; the arrow opens the thread.
  *
  * Status comes from the thread's live subagent roster where the projection
@@ -123,7 +123,6 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
   if (member === undefined) return null;
   const chosen = ctx.workGroupViewState.expandedEntries;
   const openKey = `subagent-card:open:${member.id}`;
-  const closedKey = `subagent-card:closed:${member.id}`;
   return (
     <ForkSubagentCard
       member={member}
@@ -131,11 +130,8 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
       environmentId={environmentId}
       onOpenThread={onOpenThread}
       disclosure={{
-        chosen: chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
-        remember: (open) => {
-          chosen.delete(open ? closedKey : openKey);
-          chosen.add(open ? openKey : closedKey);
-        },
+        open: chosen.has(openKey),
+        remember: (open) => (open ? chosen.add(openKey) : chosen.delete(openKey)),
         // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
         report: (collapsed) => ctx.onToggleWorkEntry(anchorKey, collapsed, member.id),
         ready: () => ctx.onWorkEntryContentReady?.(anchorKey, member.id),
@@ -180,7 +176,7 @@ export function ForkSubagentNotice(
       environmentId={parentRef.environmentId}
       onOpenThread={notice.onOpenThread}
       disclosure={{
-        chosen: chosen.has(entryId) ? true : null,
+        open: chosen.has(entryId),
         remember: (open) => (open ? chosen.add(entryId) : chosen.delete(entryId)),
         report: (collapsed) =>
           groupView ? groupView.onToggleEntry(collapsed, entryId) : onToggleEntry?.(collapsed),
@@ -244,10 +240,10 @@ function useOpenSubagentThread(
     });
 }
 
-/** Where a card keeps its chevron choice and tells the timeline it opened or folded. */
+/** Where a card keeps whether it is open and tells the timeline it opened or folded. */
 interface ForkSubagentCardDisclosure {
-  /** The choice made before a remount; null until the chevron is used. */
-  readonly chosen: boolean | null;
+  /** Open before a remount; a card starts folded. */
+  readonly open: boolean;
   readonly remember: (open: boolean) => void;
   /** Keeps the timeline's scroll position while the card opens or folds. */
   readonly report: (collapsed: boolean) => void;
@@ -264,13 +260,12 @@ function ForkSubagentCard(props: {
   readonly disclosure: ForkSubagentCardDisclosure;
 }) {
   const { member, titleId, environmentId, onOpenThread, disclosure } = props;
-  const [chosenOpen, setChosenOpen] = useState(disclosure.chosen);
-  const open = chosenOpen ?? member.mark === "working";
+  const [open, setOpen] = useState(disclosure.open);
   const toggle = () => {
     disclosure.report(open);
     if (!open) disclosure.ready();
     disclosure.remember(!open);
-    setChosenOpen(!open);
+    setOpen(!open);
   };
   const openThread = useOpenSubagentThread(member, onOpenThread);
   return (

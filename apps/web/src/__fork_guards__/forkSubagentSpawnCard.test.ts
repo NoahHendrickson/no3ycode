@@ -62,8 +62,8 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toMatch(/details\.length === 0 \? null : \(\s*<dl/u);
     // The fork mark stays for Codex and Claude; upstream's avatar over it draws only the badge.
     expect(group).toContain('iconClassName="hidden"');
-    // The well is open while the subagent works, unless the header strip was used.
-    expect(group).toContain('const open = chosenOpen ?? member.mark === "working";');
+    // Every card starts folded, a working one too; the header strip opens it.
+    expect(group).toContain("const [open, setOpen] = useState(disclosure.open);");
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
     // The header strip, chevron included, is the disclosure…
     expect(group).toMatch(

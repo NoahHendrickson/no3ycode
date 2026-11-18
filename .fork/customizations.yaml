@@ -5473,9 +5473,8 @@
     chevron, and an open-thread arrow; under it a well (the composer's prompt fill; --basic-raised under
     Basic) lists the task the
     subagent was given, what it is doing now (its live progress) or, once
-    settled, its result, and the model. The well starts open while the
-    subagent works and folds once it settles, unless the header was used: the
-    strip (tile through the chevron, one button) opens and folds it. The arrow
+    settled, its result, and the model. The well starts folded whatever the
+    status: the strip (tile through the chevron, one button) opens and folds it. The arrow
     button after it opens the subagent's thread when it has one, here or in a linked
     environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;
     keep the two in step on a sync). One fenced branch in TimelineV2EventRow takes

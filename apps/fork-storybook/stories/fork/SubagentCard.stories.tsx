@@ -124,7 +124,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
-/** Each status, folded and open. The well starts open while the subagent works. */
+/** Each status, folded and open. The well starts folded. */
 export const Statuses: Story = {
   render: () => (
     <Stack gap={3}>
