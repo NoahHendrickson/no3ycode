@@ -193,6 +193,12 @@
         // fork:end fork-design-mode
       },
     },
+    // fork:begin fork-figma-code-connect — see .fork/customizations.yaml#fork-figma-code-connect
+    "apps/fork-storybook": {
+      // Code Connect templates run inside Figma (`import figma from "figma"`); nothing imports them.
+      "ignore": ["code-connect/**"],
+    },
+    // fork:end fork-figma-code-connect
     "apps/marketing": {
       // `astro check` runs from the typecheck task in vite.config.ts, which knip does not read.
       "ignoreDependencies": ["@astrojs/check"],

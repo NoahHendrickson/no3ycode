@@ -7711,6 +7711,28 @@
   verify:
     - apps/web/src/__fork_guards__/forkStorybook.test.ts
 
+- id: fork-figma-code-connect
+  intent: >
+    Figma Code Connect for the Basic UI kit (Figma kUDQTOR0ndxERlBCqgy3nk). Each
+    apps/fork-storybook/code-connect/*.figma.ts template names one kit component
+    set (`// url=`) and maps its Figma properties to the app component's real
+    props, so Dev Mode's Inspect panel, and agents reading the file through the
+    Figma MCP server, get the app's code instead of generated markup. Templates
+    use Figma's maintained template format (the Storybook and React parsers are
+    deprecated) and run inside Figma, so they import only "figma" and knip
+    ignores the folder. The Professional plan allows one active library and one
+    framework: this kit and React. Publish with
+    `FIGMA_ACCESS_TOKEN=… vp run --filter @t3tools/fork-storybook figma:publish`
+    (token scopes: Code Connect write, File content read); the kit's components
+    must be published as a team library first.
+  tier: 1
+  files:
+    - apps/fork-storybook/figma.config.json
+    - apps/fork-storybook/code-connect/
+    - knip.jsonc
+  verify:
+    - apps/web/src/__fork_guards__/forkFigmaCodeConnect.test.ts
+
 - id: fork-tabs
   intent: >
     custom/Tabs.tsx is the fork's tabs component: Tabs (the track), IconTab (one

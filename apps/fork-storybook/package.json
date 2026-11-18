@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "storybook dev --port 6117 --no-open",
     "build": "storybook build --output-dir storybook-static",
-    "typecheck": "effect-tsgo tsrs --noEmit"
+    "typecheck": "effect-tsgo tsrs --noEmit",
+    "figma:parse": "figma connect parse --skip-update-check",
+    "figma:publish": "figma connect publish --skip-update-check"
   },
   "devDependencies": {
+    "@figma/code-connect": "2.1.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@storybook/addon-docs": "10.6.5",
     "@storybook/react-vite": "10.6.5",
