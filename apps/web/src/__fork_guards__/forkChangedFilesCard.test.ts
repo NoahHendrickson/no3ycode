@@ -78,6 +78,12 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(rounded?.body).toMatch(
       /border-top-right-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
     );
+    // Same specificity as the shared last-child shorthand, so it must come after it.
+    expect(rules.indexOf(rounded!)).toBeGreaterThan(
+      rules.findIndex((rule) =>
+        rule.selector.endsWith("[data-changed-files-header] ~ div:last-child"),
+      ),
+    );
   });
 
   it("paints the user's sent bubble from --card too", () => {
