@@ -664,7 +664,10 @@
     theme.custom.css hides the hand-drawn worktree mark's duotone wash, which
     reads as blur beside a 1px anti-aliased outline. Fork code that drew
     Phosphor directly (design mode's panel glyphs, the dictation mic, the
-    subagent group's tree) draws Hugeicons too.
+    subagent group's tree) draws Hugeicons too. The checkbox and the menu's
+    checkbox items draw their own tick and minus inline (components/ui), so their
+    path data is swapped for Hugeicons' check and minus in fenced hunks, keeping
+    each glyph's size and stroke.
   tier: 1
   files:
     - apps/web/src/custom/icons/lucide-hugeicons.tsx
@@ -680,6 +683,8 @@
   watch:
     - apps/web/vite.config.ts
     - apps/web/tsconfig.json
+    - apps/web/src/components/ui/checkbox.tsx
+    - apps/web/src/components/ui/menu.tsx
   verify:
     - apps/web/src/__fork_guards__/lucideIconShim.test.ts
 

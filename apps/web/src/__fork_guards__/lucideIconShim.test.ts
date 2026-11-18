@@ -15,6 +15,7 @@ import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import { createElement } from "react";
+import { CheckIcon as HugeCheck, MinusIcon as HugeMinus } from "@hugeicons/core-free-icons";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 import { forkPaletteFillsIcons } from "~/custom/forkActivePalette";
@@ -226,5 +227,17 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(renderToStaticMarkup(createElement(XIcon, { className: "size-4" }))).toContain(
       "lucide lucide-x size-4",
     );
+  });
+
+  it("draws the checkbox and menu ticks with Hugeicons' own glyphs", () => {
+    // These primitives inline their marks instead of importing lucide, so the alias never
+    // reaches them; the fenced paths are Hugeicons' check and minus, verbatim.
+    const pathOf = (glyph: ReadonlyArray<readonly [string, { readonly [key: string]: unknown }]>) =>
+      String(glyph[0]?.[1]["d"]);
+    const checkbox = read("src/components/ui/checkbox.tsx");
+    const menu = read("src/components/ui/menu.tsx");
+    expect(checkbox).toContain(`<path d="${pathOf(HugeCheck)}" />`);
+    expect(checkbox).toContain(`<path d="${pathOf(HugeMinus)}" />`);
+    expect(menu).toContain(`<path d="${pathOf(HugeCheck)}" />`);
   });
 });

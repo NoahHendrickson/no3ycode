@@ -45,7 +45,9 @@ function Checkbox({
                 width="24"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M5.252 12h13.496" />
+                {/* fork:begin phosphor-duotone-icons — see .fork/customizations.yaml#phosphor-duotone-icons */}
+                <path d="M20.9922 12L2.99219 12" />
+                {/* fork:end phosphor-duotone-icons */}
               </svg>
             ) : (
               <svg
@@ -60,7 +62,9 @@ function Checkbox({
                 width="24"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+                {/* fork:begin phosphor-duotone-icons — see .fork/customizations.yaml#phosphor-duotone-icons */}
+                <path d="M5 13.2592L7.58583 15.9568C8.2525 16.6523 8.58583 17 9.00004 17C9.41425 17 9.74759 16.6523 10.4143 15.9568L19 7" />
+                {/* fork:end phosphor-duotone-icons */}
               </svg>
             )}
           </span>
@@ -99,7 +103,9 @@ function CheckboxMark({
           width="24"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+          {/* fork:begin phosphor-duotone-icons — see .fork/customizations.yaml#phosphor-duotone-icons */}
+          <path d="M5 13.2592L7.58583 15.9568C8.2525 16.6523 8.58583 17 9.00004 17C9.41425 17 9.74759 16.6523 10.4143 15.9568L19 7" />
+          {/* fork:end phosphor-duotone-icons */}
         </svg>
       </span>
     </span>
