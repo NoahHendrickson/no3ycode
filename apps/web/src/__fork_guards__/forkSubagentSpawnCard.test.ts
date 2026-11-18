@@ -54,7 +54,12 @@ describe("fork guard: fork-subagent-spawn-card", () => {
       /\[data-fork-subagent-well\] \{\s*background-color: var\(--basic-raised\);/u,
     );
     expect(group).toContain('term: "Task"');
-    expect(group).toContain('term: "Model"');
+    // The line under the title is the model and effort; the status is the tile's badge.
+    expect(group).toContain("{spec || member.statusLabel}");
+    expect(group).toContain(
+      "formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider })",
+    );
+    expect(group).not.toContain('term: "Model"');
     // One list of rows gates the chevron and the well, so a card with nothing to list offers neither.
     expect(group).toMatch(
       /details\.length === 0 \? \(\s*<span[\s\S]*?\) : \(\s*\/\/[^\n]*\n\s*<button/u,

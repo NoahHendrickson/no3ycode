@@ -13,6 +13,7 @@
  * rendering.
  */
 import type {
+  ModelSelection,
   OrchestrationV2RemoteTaskChild,
   OrchestrationV2Subagent,
   OrchestrationV2TurnItem,
@@ -39,6 +40,8 @@ export interface ForkSubagentTreeRow {
   /** The sidebar mark: working, idle, done, failed or stopped. */
   readonly mark: ForkSubagentMark;
   readonly model: string | null;
+  /** The selection it was launched with, for its reasoning effort. */
+  readonly modelSelection: ModelSelection | undefined;
   readonly startedAt: string | null;
   readonly completedAt: string | null;
   readonly childThreadId: ThreadId | null;
@@ -206,6 +209,7 @@ function resolveRow(
     mark,
     // Claude can report the model only through its selection.
     model: live?.model ?? live?.modelSelection?.model ?? null,
+    modelSelection: live?.modelSelection,
     startedAt: isoOrNull(startedAt),
     completedAt: isoOrNull(completedAt),
     childThreadId: live?.childThreadId ?? item.childThreadId,

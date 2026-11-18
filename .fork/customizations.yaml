@@ -5469,11 +5469,12 @@
     bordered member box). A card is the changed-files card's shape: the card
     fill, a 1px border, 8px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
-    over the status word (Running, Completed, Stopped), the elapsed time, a
+    over its model and reasoning effort ("Opus 5.5 · High", upstream's
+    formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
     chevron, and an open-thread arrow; under it a well (the composer's prompt fill; --basic-raised under
     Basic) lists the task the
     subagent was given, what it is doing now (its live progress) or, once
-    settled, its result, and the model. The well starts folded whatever the
+    settled, its result. The well starts folded whatever the
     status: the strip (tile through the chevron, one button) opens and folds it. The arrow
     button after it opens the subagent's thread when it has one, here or in a linked
     environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;

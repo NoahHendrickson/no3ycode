@@ -6,11 +6,10 @@
  * lifecycle row and `V2SubagentGroup`. A batch keeps its list-tree lead line
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
  * above one card per member. A card is a header (the provider's mark in a tile
- * with the status mark in its corner, the title over the status word, the
+ * with the status mark in its corner, the title over the model and effort, the
  * elapsed time, a chevron, an open-thread arrow) and a well underneath: the task it was given, what
- * it is doing now or what it found, and the model. The well starts folded, whatever the
- * status, and the header opens it.
- * The header strip, chevron included, opens and folds the well; the arrow opens the thread.
+ * it is doing now or what it found. The well starts folded; the header strip, chevron included,
+ * opens and folds it, and the arrow opens the thread.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -18,6 +17,8 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { resolveSubagentMetadata } from "@t3tools/client-runtime/state/subagent-display";
+import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
@@ -45,6 +46,7 @@ import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
+import { serverEnvironment } from "~/state/server";
 import { environmentThreadDetails } from "~/state/threads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
@@ -268,9 +270,22 @@ function ForkSubagentCard(props: {
     setOpen(!open);
   };
   const openThread = useOpenSubagentThread(member, onOpenThread);
+  // Selected down to the label, so a provider update re-renders only the cards whose effort changed.
+  const effort = useAtomValue(serverEnvironment.providersValueAtom(environmentId), (providers) => {
+    const provider = providers?.find(
+      (candidate) => candidate.instanceId === member.providerInstanceId,
+    );
+    const { modelSlug } = resolveSubagentMetadata({
+      model: member.model,
+      modelSelection: member.modelSelection,
+      provider,
+    });
+    return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
+  });
   return (
     <ForkSubagentCardView
       member={member}
+      effort={effort}
       titleId={titleId}
       environmentId={environmentId}
       open={open}
@@ -283,6 +298,8 @@ function ForkSubagentCard(props: {
 /** @public — the card as drawn, without the timeline's state; Storybook renders it on its own. */
 export function ForkSubagentCardView(props: {
   readonly member: ForkSubagentTreeRow;
+  /** The reasoning effort it runs at, in the picker's words; null when none is reported. */
+  readonly effort?: string | null | undefined;
   readonly titleId?: string | undefined;
   readonly environmentId: EnvironmentId;
   readonly open: boolean;
@@ -294,7 +311,8 @@ export function ForkSubagentCardView(props: {
   const wellId = useId();
   const remote = member.remote;
   const failed = member.mark === "failed";
-  const model = formatForkSubagentModel(member.model);
+  // The status is the tile's badge; the line under the title says what it runs on.
+  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
   // One list of rows: a subagent that has only just started can have none yet, and then the card
   // offers no chevron and no well.
   const details: Array<{ readonly term: string; readonly detail: ReactNode }> = [];
@@ -317,9 +335,6 @@ export function ForkSubagentCardView(props: {
         </dd>
       ),
     });
-  }
-  if (model) {
-    details.push({ term: "Model", detail: <dd className="truncate text-foreground">{model}</dd> });
   }
   const identity = (
     <>
@@ -373,10 +388,10 @@ export function ForkSubagentCardView(props: {
         <span
           className={cn(
             "w-full min-w-0 truncate text-xs leading-4",
-            failed ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
+            failed && !spec ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
           )}
         >
-          {member.statusLabel}
+          {spec || member.statusLabel}
           {remote !== undefined ? ` · on ${remote.label}` : null}
         </span>
       </span>
