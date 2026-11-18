@@ -236,6 +236,10 @@ describe("fork guard: fork-bots", () => {
     const cardBody = readSibling("../custom/bots/SidebarV2BotCardBody.tsx");
     expect(cardBody).toContain("grid-cols-[32px_minmax(0,1fr)_auto]");
     expect(cardBody).toContain("<BotMascotTile");
+    // The new-Petal draft previews the card it becomes: the tile, in the same 32px column.
+    const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
+    expect(botsSection).toContain('props.compact ? "-mx-[7px]" : "-mx-[2px]"');
+    expect(botsSection).toContain('<BotMascotTile shape={mascot} mood="Idle" />');
     // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
     expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
     // A working bot card draws the working mark like any other card, not the monitoring breath.

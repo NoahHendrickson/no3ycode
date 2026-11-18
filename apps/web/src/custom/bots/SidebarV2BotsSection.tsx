@@ -17,7 +17,7 @@ import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
 import { CHROME_ROW_INSET, OptionCheckboxItem, PROJECTS_ROW_BUTTON } from "../SidebarV2ChromeRows";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
-import { BotMascot } from "./BotMascot";
+import { BotMascot, BotMascotTile } from "./BotMascot";
 import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
 
 export type SidebarV2ListSection = "bots" | "threads";
@@ -98,7 +98,8 @@ export function SidebarV2NewBotRow(props: {
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
-      {/* The card's 22px mascot column; the 36px button overhangs it evenly. */}
+      {/* The card's mascot column (22px compact, the 32px tile full); the 36px button overhangs it
+          evenly, so the draft's mascot and name sit where the saved card puts them. */}
       <button
         type="button"
         disabled={creating}
@@ -114,12 +115,15 @@ export function SidebarV2NewBotRow(props: {
               ] ?? current,
           )
         }
-        className="-mx-[7px] flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60"
+        className={cn(
+          "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
+          props.compact ? "-mx-[7px]" : "-mx-[2px]",
+        )}
       >
         {props.compact ? (
           <BotMascot shape={mascot} mood="Idle" />
         ) : (
-          <BotMascot shape={mascot} mood="Idle" fit={22} />
+          <BotMascotTile shape={mascot} mood="Idle" />
         )}
       </button>
       <input
