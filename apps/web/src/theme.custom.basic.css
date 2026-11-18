@@ -315,7 +315,14 @@
     }
   }
 
-  & > [data-fork-tab="word"] {
+  /* Word segments take 6px sides in every family. Icon segments carry an aria-label (their only
+     name) and keep their own width. */
+  &
+    > :is(
+      [data-fork-segmented-tab],
+      [data-slot="toggle"],
+      [data-slot="tooltip-trigger"][data-variant="segmented"]
+    ):not([data-fork-tab="icon"], [aria-label]) {
     padding-inline: 6px;
   }
 
