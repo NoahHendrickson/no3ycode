@@ -741,7 +741,7 @@
     fork-working-mark) while the agent runs, a
     10px filled dot for Done and the same circle hollow for Idle, Phosphor's
     half-filled circle for Approval and Input (one amber for both: each means
-    "waiting on you"), the filled warning circle for Failed, a slow white
+    "waiting on you"), the same dot in red for Failed, a slow white
     opacity breath (50% → 20%) while monitoring, a clock for woke — and the
     hue reinforces it: Done is blue,
     so an unread result reads apart from a live agent. The glyph marks are

@@ -237,7 +237,7 @@ function ForkSubagentCard(props: {
         <span
           className={cn(
             "w-full min-w-0 truncate text-sm leading-4",
-            failed ? "text-destructive" : "text-muted-foreground",
+            failed ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
           )}
         >
           {member.statusLabel}
@@ -320,7 +320,12 @@ function ForkSubagentCard(props: {
         {member.activity ? (
           <>
             <dt className="text-muted-foreground">{member.activity.label}</dt>
-            <dd className={cn("min-w-0", failed ? "text-destructive" : "text-foreground")}>
+            <dd
+              className={cn(
+                "min-w-0",
+                failed ? "text-sidebar-v2-status-failed" : "text-foreground",
+              )}
+            >
               {member.activity.shape === "path" ? (
                 <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
               ) : (
