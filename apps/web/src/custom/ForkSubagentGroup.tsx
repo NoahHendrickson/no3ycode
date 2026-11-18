@@ -377,7 +377,7 @@ export function ForkSubagentCardView(props: {
         </span>
         <span
           className={cn(
-            "w-full min-w-0 truncate text-sm leading-4",
+            "w-full min-w-0 truncate text-xs leading-4",
             failed ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
           )}
         >
@@ -385,11 +385,6 @@ export function ForkSubagentCardView(props: {
           {remote !== undefined ? ` · on ${remote.label}` : null}
         </span>
       </span>
-      {member.startedAt ? (
-        <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-          <AgentElapsed agent={member} />
-        </span>
-      ) : null}
     </>
   );
   return (
@@ -412,11 +407,17 @@ export function ForkSubagentCardView(props: {
                 : member.statusLabel
             }
             onClick={openThread}
-            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+            className="-my-1 -ml-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           >
             {identity}
           </button>
         )}
+        {/* Beside the buttons, not in the header's hit area, so the hover fill ends clear of it. */}
+        {member.startedAt ? (
+          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+            <AgentElapsed agent={member} />
+          </span>
+        ) : null}
         {openThread === null ? null : (
           <Tooltip>
             <TooltipTrigger
