@@ -39,25 +39,47 @@ function useOpenThread() {
     });
 }
 
-/** A line's words and the row under them; `action` ends the row. */
+/** A line's words and the row under them; `action` ends the row. An `ask` is drawn as the chat
+    composer, by wearing its stamps: the words in the prompt surface, the row on the vessel floor. */
 export function BotDigestLine(props: {
   readonly item: BotDigestItem;
   readonly environmentId: EnvironmentId;
   readonly threads: BotDigestThreads;
   readonly action?: ReactNode;
+  readonly ask?: boolean;
 }) {
   const { item, threads } = props;
   const links = resolveBotDigestLinks(item, threads.shells, props.environmentId);
   const text = item.text || links.threads.find((entry) => entry.shell)?.shell?.title || "";
   const hasRow =
     links.threads.length > 0 || links.pullRequests.length > 0 || props.action !== undefined;
+  const words =
+    text === "" ? null : (
+      <span
+        className={cn(
+          "text-sm leading-5 break-words text-foreground",
+          props.ask && "block px-3 py-2.5",
+        )}
+      >
+        {text}
+      </span>
+    );
   return (
     <>
-      {text === "" ? null : (
-        <span className="text-sm leading-5 break-words text-foreground">{text}</span>
+      {props.ask && words !== null ? (
+        <div data-fork-composer-box="true">
+          <div data-fork-composer-surface="true">{words}</div>
+        </div>
+      ) : (
+        words
       )}
       {hasRow ? (
-        <span className="flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
+        <span
+          className={cn(
+            "flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground",
+            props.ask && "py-2 pr-2 pl-3",
+          )}
+        >
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
             {links.threads.map(({ link, label, shell }) =>
               shell === undefined ? (

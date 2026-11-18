@@ -210,7 +210,7 @@ function sectionTestId(section: BotDigestSection): string {
   return `bot-digest-${section.title.toLowerCase().replace(/\W+/g, "-")}`;
 }
 
-/** New or In progress: one card, put away with its X. */
+/** New or In progress: its label over one card, put away with the card's X. */
 function BotDigestStatusCard(props: {
   readonly section: BotDigestSection;
   readonly botRef: ScopedThreadRef;
@@ -220,13 +220,24 @@ function BotDigestStatusCard(props: {
   const { section } = props;
   const testId = sectionTestId(section);
   return (
-    <section className={`${CARD_CLASS_NAME} px-3 pt-1.5 pb-2.5`} data-testid={`${testId}-card`}>
-      <div className="flex h-7 items-center gap-2">
-        <span className="min-w-0 flex-1">
-          <SidebarV2SectionLabel count={section.items.length} testId={testId}>
-            {section.title}
-          </SidebarV2SectionLabel>
-        </span>
+    <section className="flex flex-col gap-1" data-testid={`${testId}-card`}>
+      <div className="flex h-7 items-center px-1">
+        <SidebarV2SectionLabel count={section.items.length} testId={testId}>
+          {section.title}
+        </SidebarV2SectionLabel>
+      </div>
+      <div className={`${CARD_CLASS_NAME} flex items-start gap-2 py-2.5 pr-2 pl-3`}>
+        <ul className="flex min-w-0 flex-1 flex-col gap-2">
+          {section.items.map((item) => (
+            <li key={item.source} className="flex flex-col gap-2">
+              <BotDigestLine
+                item={item}
+                environmentId={props.botRef.environmentId}
+                threads={props.threads}
+              />
+            </li>
+          ))}
+        </ul>
         <Button
           aria-label={`Dismiss ${section.title}`}
           onClick={props.onDismiss}
@@ -236,17 +247,6 @@ function BotDigestStatusCard(props: {
           <XIcon />
         </Button>
       </div>
-      <ul className="flex flex-col gap-2">
-        {section.items.map((item) => (
-          <li key={item.source} className="flex flex-col gap-2">
-            <BotDigestLine
-              item={item}
-              environmentId={props.botRef.environmentId}
-              threads={props.threads}
-            />
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
@@ -270,8 +270,13 @@ function BotDigestRequests(props: {
       </div>
       <ul className="flex flex-col gap-2">
         {section.items.map((item) => (
-          <li key={item.source} className={`${CARD_CLASS_NAME} flex flex-col gap-2 px-3 py-2.5`}>
+          <li
+            key={item.source}
+            data-fork-composer-vessel="true"
+            className="flex min-w-0 flex-col rounded-lg"
+          >
             <BotDigestLine
+              ask
               item={item}
               environmentId={botRef.environmentId}
               threads={props.threads}
