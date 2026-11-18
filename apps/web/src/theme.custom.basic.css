@@ -326,6 +326,41 @@
   background-color: var(--basic-raised);
 }
 
+/* Switches (Figma kit): on is green and the thumb is white in both states, because a grey thumb
+   reads as disabled. The green is emerald 600, not the success token's 500: the white thumb on it
+   and the track against a light page both need 3:1. Settings whose scopes disagree draw as off
+   rather than half-way; aria-checked="mixed" still tells a screen reader. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="switch"] {
+  &[data-checked] {
+    background-color: oklch(59.6% 0.145 163.225);
+  }
+
+  & > [data-slot="switch-thumb"] {
+    background-color: #fff;
+  }
+
+  &[data-mixed] > [data-slot="switch-thumb"] {
+    translate: none;
+    opacity: 1;
+  }
+}
+
+/* The changed-files well sits on the raised fill (Figma kit), not the composer's prompt. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-changed-files-header]
+  ~ div {
+  background: var(--basic-raised);
+}
+
+/* The changed-files well is a panel of its own (Figma kit), rounded at the top as well, so its
+   hairline curves down into the card's sides. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-changed-files-header]
+  + div {
+  border-top-left-radius: calc(var(--fork-composer-radius) - 1px);
+  border-top-right-radius: calc(var(--fork-composer-radius) - 1px);
+}
+
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
    heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card.
    Popovers match through .dropdown-glass: a panel popover's popup is a bare square
@@ -461,11 +496,11 @@
   border-color: var(--basic-wash-3);
 }
 
-/* The find bars (InputGroup variant="popover") mark focus only by deepening their
-   border, which the line above would hold at rest. */
+/* The find bars (InputGroup variant="popover") have no focus outline and mark focus only by
+   their border, which goes to full strength as every other text field's does. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-slot="input-group"].dropdown-glass:has(:is(input, textarea):focus-visible) {
-  border-color: var(--basic-wash-4);
+  border-color: var(--ring);
 }
 
 /* Dialogs take the popups' 8px (theme.custom.css, --fork-dialog-radius). */

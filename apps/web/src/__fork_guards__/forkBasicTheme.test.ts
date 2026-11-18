@@ -108,6 +108,17 @@ describe("fork guard: fork-basic-theme", () => {
     );
   });
 
+  it("draws switches green with a white thumb", () => {
+    const switches = sheet.slice(sheet.indexOf(`${BASIC} [data-slot="switch"] {`));
+    expect(switches).toMatch(
+      /^[^{]+\{\s*&\[data-checked\] \{\s*background-color: oklch\(59\.6% 0\.145 163\.225\);/u,
+    );
+    expect(switches).toMatch(/& > \[data-slot="switch-thumb"\] \{\s*background-color: #fff;/u);
+    expect(switches).toMatch(
+      /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
+    );
+  });
+
   it("leads Appearance with the theme cards and Basic's tones", () => {
     const cards = appearancePanel.indexOf("<ForkThemePicker");
     expect(cards).toBeGreaterThanOrEqual(0);

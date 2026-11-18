@@ -2750,7 +2750,8 @@
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-header]
   ~ div:last-child {
-  border-radius: 0 0 calc(var(--fork-composer-radius) - 1px) calc(var(--fork-composer-radius) - 1px);
+  border-bottom-left-radius: calc(var(--fork-composer-radius) - 1px);
+  border-bottom-right-radius: calc(var(--fork-composer-radius) - 1px);
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream

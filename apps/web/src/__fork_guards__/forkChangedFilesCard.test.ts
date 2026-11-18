@@ -66,6 +66,31 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(fill?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
     const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
     expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
+    // The shared rule rounds only the bottom, so Basic's rounded top has nothing to compete with.
+    const bottom = rules.find((rule) =>
+      rule.selector.endsWith("[data-changed-files-header] ~ div:last-child"),
+    );
+    expect(bottom?.body).not.toMatch(/border-radius:/u);
+    const basicRules = cssRules(readSibling("../theme.custom.basic.css")).map((rule) => ({
+      ...rule,
+      selector: rule.selector.replace(/\s+/gu, " "),
+    }));
+    expect(
+      basicRules.find((rule) =>
+        rule.selector.endsWith('[data-fork-theme="basic"] [data-changed-files-header] ~ div'),
+      )?.body,
+    ).toMatch(/background:\s*var\(--basic-raised\)/u);
+    const basic = cssRules(readSibling("../theme.custom.basic.css")).find((rule) =>
+      rule.selector
+        .replace(/\s+/gu, " ")
+        .endsWith('[data-fork-theme="basic"] [data-changed-files-header] + div'),
+    );
+    expect(basic?.body).toMatch(
+      /border-top-left-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
+    );
+    expect(basic?.body).toMatch(
+      /border-top-right-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
+    );
   });
 
   it("paints the user's sent bubble from --card too", () => {

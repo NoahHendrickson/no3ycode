@@ -67,6 +67,32 @@
   border-color: var(--input);
 }
 
+/* Basic (the Figma kit): a focused valid text field (Input, Textarea, InputGroup) shows its own
+   1px edge at full strength instead of the outline. Invalid fields keep the outline and their
+   destructive border. Forced colours repaint borders, so the outline stays there. */
+@media (forced-colors: none) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+    :where(
+      [class*="has-focus-visible:border-ring"]:has(:focus-visible),
+      [class*="has-[input:focus-visible,textarea:focus-visible]:border-ring"]:has(
+        input:focus-visible,
+        textarea:focus-visible
+      )
+    ):where(
+      :not(
+        [aria-invalid="true"],
+        :has([aria-invalid="true"]),
+        :has(
+          input[aria-invalid]:not([aria-invalid="false"]),
+          textarea[aria-invalid]:not([aria-invalid="false"])
+        )
+      )
+    ) {
+    outline: none;
+    border-color: var(--ring);
+  }
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   [class*="focus-visible:outline-"]:focus-visible:not(
     [class*="outline-offset-"],

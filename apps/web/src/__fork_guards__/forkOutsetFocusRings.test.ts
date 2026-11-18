@@ -59,4 +59,20 @@ describe("fork-outset-focus-rings", () => {
       "box-shadow: 0 1px 2px color-mix(in srgb, var(--contrast-foreground) 12%, transparent);",
     );
   });
+
+  it("gives Basic's valid text fields their own full-strength edge instead of the outline", () => {
+    const basic = rules.find(
+      (rule) =>
+        rule.selector.includes('[data-fork-theme="basic"]') &&
+        rule.selector.includes(
+          '[class*="has-[input:focus-visible,textarea:focus-visible]:border-ring"]',
+        ),
+    );
+    expect(basic?.selector).toContain('[class*="has-focus-visible:border-ring"]');
+    expect(basic?.selector).toMatch(/:not\(\s*\[aria-invalid="true"\]/u);
+    expect(basic?.body).toMatch(/outline:\s*none;\s*border-color:\s*var\(--ring\);/u);
+    expect(read(SHEET)).toMatch(
+      /@media \(forced-colors: none\) \{\s*:root\[data-fork="noahhendrickson-t3code"\]\[data-fork-theme="basic"\]/u,
+    );
+  });
 });

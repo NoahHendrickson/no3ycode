@@ -1697,6 +1697,11 @@
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
+    Switches are green when on (emerald 600, for 3:1 against the white thumb and a
+    light page) with a white thumb in both states, and a switch whose scoped
+    settings disagree draws as off; aria-checked="mixed" still reports it. Focused
+    text fields take a full-strength edge instead of the outline
+    (fork-outset-focus-rings).
   tier: 2
   files:
     - apps/web/src/theme.custom.basic.css
@@ -5226,7 +5231,10 @@
     file tree and the "N more files" footer (the header's following sibling
     divs) are a well painted from --fork-composer-bg, edge to edge inside
     the card with a hairline on its top only (the card border is the line
-    elsewhere). Radii come from --fork-composer-radius. Path
+    elsewhere). Radii come from --fork-composer-radius; the shared rule rounds only
+    the well's bottom corners, and Basic rounds its top as well and fills it with
+    --basic-raised (Figma kit, theme.custom.basic.css), so its hairline curves into
+    the card's sides. Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button
@@ -5244,6 +5252,7 @@
   tier: 1
   files:
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
   shadows: []
   watch:
     # Owns data-changed-files-state and data-changed-files-header.
@@ -6712,7 +6721,9 @@
     itself (focus-visible:outline-*, the explicit -outline-offset-1/-2) move
     out the same way. A focus variant that sets ring-0 keeps no ring. A valid
     field keeps its resting border on focus; invalid fields keep upstream's
-    destructive one. Checkbox and radio drop the inner gap that only existed
+    destructive one. Under Basic (the Figma kit) a focused valid text field (Input,
+    Textarea, InputGroup) shows its own 1px edge in --ring instead of the outline,
+    except under forced colours; invalid fields keep the outline. Checkbox and radio drop the inner gap that only existed
     for the inward ring, and the settings slider thumb takes the same outline.
     Scroll-area viewports, F6 workspace areas, and controls with no focus
     styling of their own keep upstream's inward ring, since their outside is
