@@ -59,6 +59,16 @@ describe("createTimelineRowMotion", () => {
     expect(motion.takeEntrance(live.id)).toBe(false);
   });
 
+  it("sees past the trailing working row and a details row before it", () => {
+    const working = { kind: "working", id: "working-indicator-row" } as MessagesTimelineRow;
+    const motion = primed([message("a"), live, details("g"), working]);
+    motion.observe([message("a"), message("b"), live, details("g"), working], "thread", true);
+    expect(motion.takeEntrance("b")).toBe(true);
+    expect(motion.takeEntrance(working.id)).toBe(false);
+    motion.observe([message("a"), message("b"), message("c"), live, working], "thread", true);
+    expect(motion.takeEntrance(live.id)).toBe(false);
+  });
+
   it("primes from the synced rows, not the snapshot shown while syncing", () => {
     const motion = createTimelineRowMotion();
     motion.observe([message("a")], "thread", false);

@@ -9,6 +9,9 @@ import { WorkLogBlock } from "./WorkLog";
 /* fork:begin fork-transcript-row-motion — see .fork/customizations.yaml#fork-transcript-row-motion */
 import { ForkTimelineRowFrame, useTimelineRowMotion } from "~/custom/forkTimelineRowMotion";
 /* fork:end fork-transcript-row-motion */
+/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+import { forkLiveStatusRows } from "~/custom/forkWorkingRowLast";
+/* fork:end fork-working-row-last */
 import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { deriveTimelineMinimapItems } from "./timelineMinimapItems";
@@ -776,7 +779,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
     hideQuietBotWakes: forkIsBotThread && !findActive,
     /* fork:end fork-bots */
   });
-  const rows = useStableRows(rawRows, listIdentityKey);
+  /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+  const rows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
+  /* fork:end fork-working-row-last */
   /* fork:begin fork-transcript-row-motion — see .fork/customizations.yaml#fork-transcript-row-motion */
   const rowMotion = useTimelineRowMotion(rows, listIdentityKey, forkTimelineSynced);
   /* fork:end fork-transcript-row-motion */

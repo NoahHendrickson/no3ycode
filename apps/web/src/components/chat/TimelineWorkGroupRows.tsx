@@ -58,6 +58,10 @@ import { formatWorkingTimerNow } from "./TimelineWorkGroupRows.logic";
 /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain */
 import { SidebarV2WorkingMark } from "~/custom/SidebarV2StatusIndicator";
 /* fork:end fork-chat-working-rain */
+/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
+import { forkStatusLineLiveRow } from "~/custom/forkWorkingRowLast";
+/* fork:end fork-working-row-last */
 
 export const WorkGroupSection = memo(function WorkGroupSection({
   anchorKey,
@@ -296,6 +300,23 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     use(TimelineRowActivityCtx);
   const compacting = row.compacting === true || isCompacting;
   const shimmer = isPreparingWorktree || compacting;
+  /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+  const forkLive = forkStatusLineLiveRow(row);
+  if (forkLive && !shimmer) {
+    return (
+      <ForkLiveStatusLine
+        row={row}
+        live={forkLive}
+        timer={row.createdAt ? <WorkingTimer createdAt={row.createdAt} /> : null}
+        trailing={
+          backgroundWorktreeSetup ? (
+            <BackgroundWorktreeSetupChip snapshot={backgroundWorktreeSetup} />
+          ) : null
+        }
+      />
+    );
+  }
+  /* fork:end fork-working-row-last */
   const label = isPreparingWorktree ? (
     "Setting up worktree…"
   ) : compacting ? (
@@ -308,7 +329,12 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     "Working..."
   );
   return (
-    <div className="border-b border-border/60 pb-2 pt-1">
+    <div
+      /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last
+         Upstream's bottom border divides the turn header from the turn; at the tail it divides nothing. */
+      className="pb-2 pt-1"
+      /* fork:end fork-working-row-last */
+    >
       <div
         /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain
            Upstream's row has no leading mark and baseline-aligns its text; the
