@@ -389,7 +389,7 @@ export function ForkSubagentCardView(props: {
           </span>
         </span>
       </span>
-      <span className="flex min-w-0 flex-1 flex-col items-start">
+      <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
         <span
           id={titleId}
           className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground"
