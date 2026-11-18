@@ -41,8 +41,17 @@ export function SidebarV2SectionLabel(props: {
   readonly children: ReactNode;
 }) {
   const className = "text-[0.8125rem] leading-4 font-semibold text-muted-foreground";
+  const count =
+    props.count === undefined ? null : (
+      <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
+    );
   if (props.onToggle === undefined) {
-    return <span className={className}>{props.children}</span>;
+    return (
+      <span className={cn("inline-flex max-w-full items-center gap-1.5", className)}>
+        <span className="truncate">{props.children}</span>
+        {count}
+      </span>
+    );
   }
   return (
     <button
@@ -56,9 +65,7 @@ export function SidebarV2SectionLabel(props: {
       )}
     >
       <span className="truncate">{props.children}</span>
-      {props.count === undefined ? null : (
-        <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
-      )}
+      {count}
       <SidebarV2SectionCaret
         collapsed={props.collapsed === true}
         className={cn(

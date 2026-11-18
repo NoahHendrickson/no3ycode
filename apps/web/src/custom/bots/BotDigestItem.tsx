@@ -17,7 +17,11 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { resolveSidebarV2CardStatus } from "../sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
-import { type BotPullRequest, resolveBotDigestLinks } from "./botDigestItemLinks";
+import {
+  type BotDigestLinks,
+  type BotPullRequest,
+  resolveBotDigestLinks,
+} from "./botDigestItemLinks";
 import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import type { BotDigestItem } from "./botDigestSections";
 
@@ -39,52 +43,58 @@ function useOpenThread() {
     });
 }
 
-/** A line's words and the row under them; `action` ends the row. */
-export function BotDigestLine(props: {
-  readonly item: BotDigestItem;
+/** A line's links, read against the panel's threads, and its words: the bot's, else the title
+    of the first thread it links. */
+export function resolveBotDigestLine(
+  item: BotDigestItem,
+  threads: BotDigestThreads,
+  environmentId: EnvironmentId,
+) {
+  const links = resolveBotDigestLinks(item, threads.shells, environmentId);
+  const text = item.text || links.threads.find((entry) => entry.shell)?.shell?.title || "";
+  return { text, links };
+}
+
+export function BotDigestWords(props: { readonly text: string }) {
+  return <span className="text-sm leading-5 break-words text-foreground">{props.text}</span>;
+}
+
+/** The threads and pull requests a line links, each opening its target; `action` ends the row. */
+export function BotDigestLinkRow(props: {
+  readonly links: BotDigestLinks;
   readonly environmentId: EnvironmentId;
-  readonly threads: BotDigestThreads;
+  readonly localVisits: BotDigestThreads["localVisits"];
   readonly action?: ReactNode;
 }) {
-  const { item, threads } = props;
-  const links = resolveBotDigestLinks(item, threads.shells, props.environmentId);
-  const text = item.text || links.threads.find((entry) => entry.shell)?.shell?.title || "";
-  const hasRow =
-    links.threads.length > 0 || links.pullRequests.length > 0 || props.action !== undefined;
+  const { links } = props;
+  if (links.threads.length === 0 && links.pullRequests.length === 0 && !props.action) return null;
   return (
-    <>
-      {text === "" ? null : (
-        <span className="text-sm leading-5 break-words text-foreground">{text}</span>
-      )}
-      {hasRow ? (
-        <span className="flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-            {links.threads.map(({ link, label, shell }) =>
-              shell === undefined ? (
-                <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
-                  {label || unknownThreadLinkLabel(link, props.environmentId)}
-                </span>
-              ) : (
-                <BotDigestThreadChip
-                  key={`${shell.environmentId}/${shell.id}`}
-                  shell={shell}
-                  localVisits={threads.localVisits}
-                />
-              ),
-            )}
-            {links.pullRequests.map((pullRequest) => (
-              <BotDigestPullRequestChip
-                key={pullRequest.url}
-                pullRequest={pullRequest}
-                thread={pullRequest.thread}
-                environmentId={pullRequest.thread?.environmentId ?? props.environmentId}
-              />
-            ))}
-          </span>
-          {props.action}
-        </span>
-      ) : null}
-    </>
+    <span className="flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
+      <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+        {links.threads.map(({ link, label, shell }) =>
+          shell === undefined ? (
+            <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
+              {label || unknownThreadLinkLabel(link, props.environmentId)}
+            </span>
+          ) : (
+            <BotDigestThreadChip
+              key={`${shell.environmentId}/${shell.id}`}
+              shell={shell}
+              localVisits={props.localVisits}
+            />
+          ),
+        )}
+        {links.pullRequests.map((pullRequest) => (
+          <BotDigestPullRequestChip
+            key={pullRequest.url}
+            pullRequest={pullRequest}
+            thread={pullRequest.thread}
+            environmentId={pullRequest.thread?.environmentId ?? props.environmentId}
+          />
+        ))}
+      </span>
+      {props.action}
+    </span>
   );
 }
 

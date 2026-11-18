@@ -211,10 +211,11 @@
    the composer's own stack, so the menus, the user's bubble and the effort
    knob, which read the same tokens from :root, stay solid cream. On a thread
    it is a faint white over the charcoal stage, in the stage's light ink, with
-   no blur: there is nothing behind it to blur. */
+   no blur: there is nothing behind it to blur. A bot's digest draws its asks
+   as the composer, so it takes the same fills. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-composer-stack] {
+  :is([data-fork-composer-stack], [data-fork-bot-digest]) {
   --fork-composer-vessel-bg: rgb(255 255 255 / 8%);
   --fork-composer-bg: rgb(255 255 255 / 6%);
   --fork-composer-border: transparent;

@@ -7564,8 +7564,10 @@
     (needs-you or status) and one plain line per item (list marks, emphasis and link targets
     dropped; links that follow a line's last sentence dropped, so it reads as its ask, while a link
     the sentence runs into keeps its words; a bare pull request URL reads as its number;
-    "Nothing." left out). A status section is one card with its label and count; Needs you is
-    its label over one card per request, each with a filled Reply that quotes its source line in
+    "Nothing." left out). A status section is its label and count over one card with a dismiss X; Needs you is
+    its label over one card per request, drawn as the chat composer (it wears the vessel, box and
+    surface stamps, so each theme paints it): the ask in the prompt surface, its links and a filled
+    Reply on the vessel floor beneath. Reply quotes its source line in
     the bot's draft and opens the bot, closing the panel when it is a sheet. Under a line
     (custom/bots/BotDigestItem), each linked thread shows its sidebar status mark and title and
     opens it (one chip however the link spells it; one it cannot find shows the bot's label), and each pull request the line names or a linked thread has (its linked one, else
