@@ -1,4 +1,4 @@
-import { type RefObject, useRef } from "react";
+import { type JSX, type RefObject, useRef } from "react";
 
 // Imported through the shim's own path rather than the `lucide-react` alias.
 // This file is fork-owned, so there is no upstream import site to preserve —
@@ -10,7 +10,7 @@ import { AlarmClockIcon, CircleHalfIcon, PenLineIcon } from "./icons/lucide-huge
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
 import { useDoneCelebration } from "./doneCelebration";
-import { useForkWorkingMark } from "./forkWorkingMark";
+import { type ForkWorkingMark, useForkWorkingMark } from "./forkWorkingMark";
 
 /** The trailing slot of a Sidebar V2 card row's title line, and this module
     owns every status form that can land in it. Every status resolves to one
@@ -239,20 +239,18 @@ const rainFilm = once(() =>
 /** Mark units to CSS px: the 14px slot over the grid's native height. */
 const RAIN_SCALE = SLOT / HEIGHT;
 
+interface WorkingMarkProps {
+  readonly seed: string;
+  readonly still?: boolean | undefined;
+}
+
 /** Cells baked into a mask rather than positioned elements on purpose. A
     2.85px box on a 3.8px pitch never lands on a device-pixel boundary, and
     browsers snap element backgrounds to whole pixels — so the cells would
     paint at visibly different widths depending on each one's subpixel offset.
     The SVG keeps the fractional geometry and antialiases it, which is what the
-    native Canvas does too, so every drop stays exactly square.
-    @public — Storybook's Fork/Status mark story draws each working form. */
-export function SidebarV2WorkingRain({
-  seed,
-  still,
-}: {
-  seed: string;
-  still?: boolean | undefined;
-}) {
+    native Canvas does too, so every drop stays exactly square. */
+function SidebarV2WorkingRain({ seed, still }: WorkingMarkProps) {
   const offset = workingMarkOffsetSeconds(seed);
   const film = rainFilm();
   return (
@@ -329,15 +327,8 @@ const helixFilm = once(() =>
 
 /** A baked film rather than the chip's per-frame canvas, so a working row
     costs no requestAnimationFrame loop — seeded by the shared per-thread
-    offset.
-    @public — Storybook's Fork/Status mark story draws each working form. */
-export function SidebarV2WorkingHelix({
-  seed,
-  still,
-}: {
-  seed: string;
-  still?: boolean | undefined;
-}) {
+    offset. */
+function SidebarV2WorkingHelix({ seed, still }: WorkingMarkProps) {
   return (
     <span aria-hidden className="relative block size-3 shrink-0 overflow-hidden">
       <FilmStrip
@@ -357,15 +348,8 @@ const BEAD_RING_FRAMES = 114;
 const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
 
 /** One film strip, as the helix: the ring is 12px across, a step past the 10px status dots, in
-    a 15px box held to the 12x14 slot.
-    @public — Storybook's Fork/Status mark story draws each working form. */
-export function SidebarV2WorkingBeadRing({
-  seed,
-  still,
-}: {
-  seed: string;
-  still?: boolean | undefined;
-}) {
+    a 15px box held to the 12x14 slot. */
+function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
   return (
     <span
       aria-hidden
@@ -382,25 +366,22 @@ export function SidebarV2WorkingBeadRing({
   );
 }
 
+/** @public — every working form by name; Storybook's Fork/Status mark story maps over it. */
+export const SIDEBAR_V2_WORKING_MARK_FORMS: Record<
+  ForkWorkingMark,
+  (props: WorkingMarkProps) => JSX.Element
+> = {
+  bead: SidebarV2WorkingBeadRing,
+  helix: SidebarV2WorkingHelix,
+  rain: SidebarV2WorkingRain,
+};
+
 /** The working mark every surface draws — sidebar rows, the chat working row,
     the composer pill — in the form picked under Settings → Appearance. `still`
     draws one frame in the surrounding text colour, for using the mark as an icon. */
-export function SidebarV2WorkingMark({
-  seed,
-  still,
-}: {
-  seed: string;
-  still?: boolean | undefined;
-}) {
-  const mark = useForkWorkingMark();
-  switch (mark) {
-    case "bead":
-      return <SidebarV2WorkingBeadRing seed={seed} still={still} />;
-    case "helix":
-      return <SidebarV2WorkingHelix seed={seed} still={still} />;
-    case "rain":
-      return <SidebarV2WorkingRain seed={seed} still={still} />;
-  }
+export function SidebarV2WorkingMark({ seed, still }: WorkingMarkProps) {
+  const Form = SIDEBAR_V2_WORKING_MARK_FORMS[useForkWorkingMark()];
+  return <Form seed={seed} still={still} />;
 }
 
 /** The settled counterpart to the rain. Done and Failed are the design's 10px

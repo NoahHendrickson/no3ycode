@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { RunId } from "@t3tools/contracts";
 import { type ComponentProps, useState } from "react";
 
 import { ChangedFilesCard } from "~/components/chat/ChangedFilesTree";
@@ -29,14 +30,13 @@ const FILES: CardProps["files"] = [
   { path: ".fork/customizations.yaml", kind: "modified", additions: 6, deletions: 4 },
 ];
 
-const totalsOf = (files: CardProps["files"]) =>
-  ({
-    count: files.length,
-    additions: files.reduce((sum, file) => sum + file.additions, 0),
-    deletions: files.reduce((sum, file) => sum + file.deletions, 0),
-  }) as CardProps["totals"];
+const totalsOf = (files: CardProps["files"]) => ({
+  count: files.length,
+  additions: files.reduce((sum, file) => sum + file.additions, 0),
+  deletions: files.reduce((sum, file) => sum + file.deletions, 0),
+});
 
-const runId = "run-story" as CardProps["runId"];
+const runId = RunId.make("run-story");
 const noop = () => {};
 
 function Card({ files, totals }: { files: CardProps["files"]; totals?: CardProps["totals"] }) {
@@ -68,7 +68,7 @@ const meta = {
     onToggleAllDirectories: noop,
     onOpenTurnDiff: noop,
   },
-  decorators: [(Story) => <div className="w-[736px]">{Story()}</div>],
+  decorators: [(Story) => <div className="w-[736px] min-w-0">{Story()}</div>],
 } satisfies Meta<typeof ChangedFilesCard>;
 
 export default meta;
@@ -87,10 +87,5 @@ export const OneFile: Story = {
 /** A turn that changed more files than the card lists says how many more there are. */
 export const MoreThanShown: Story = {
   name: "More than shown",
-  render: () => (
-    <Card
-      files={FILES}
-      totals={{ count: 23, additions: 412, deletions: 96 } as CardProps["totals"]}
-    />
-  ),
+  render: () => <Card files={FILES} totals={{ count: 23, additions: 412, deletions: 96 }} />,
 };

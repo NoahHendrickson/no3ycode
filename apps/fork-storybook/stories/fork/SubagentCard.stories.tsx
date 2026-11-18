@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { EnvironmentId, ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
 import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
@@ -21,9 +22,8 @@ const BASE: ForkSubagentTreeRow = {
   completedAt: null,
   childThreadId: null,
   remote: undefined,
-  // Fixture ids: the card only reads them to pick the provider's mark.
-  driver: "codex" as ForkSubagentTreeRow["driver"],
-  providerInstanceId: "codex" as ForkSubagentTreeRow["providerInstanceId"],
+  driver: ProviderDriverKind.make("codex"),
+  providerInstanceId: ProviderInstanceId.make("codex"),
   statusLabel: "Running",
   prompt:
     "Review the tab strips under Basic against the Storybook Tabs. Do not edit, commit or push; reply with a verdict and findings.",
@@ -39,8 +39,8 @@ const MEMBERS = {
     status: "completed",
     mark: "done",
     statusLabel: "Completed",
-    driver: "claudeAgent" as ForkSubagentTreeRow["driver"],
-    providerInstanceId: "claudeAgent" as ForkSubagentTreeRow["providerInstanceId"],
+    driver: ProviderDriverKind.make("claudeAgent"),
+    providerInstanceId: ProviderInstanceId.make("claudeAgent"),
     model: "claude-opus-5-5",
     startedAt: minutesAgo(10),
     completedAt: minutesAgo(7),
@@ -65,6 +65,19 @@ const MEMBERS = {
       shape: "prose",
     },
   },
+  Idle: {
+    ...BASE,
+    id: "subagent-story-idle",
+    status: "idle",
+    mark: "idle",
+    statusLabel: "Idle · resumable",
+    completedAt: minutesAgo(1.5),
+    activity: {
+      label: "Result",
+      text: "Found two strips that still use the old track; waiting to be resumed.",
+      shape: "prose",
+    },
+  },
   Stopped: {
     ...BASE,
     id: "subagent-story-stopped",
@@ -76,7 +89,7 @@ const MEMBERS = {
   },
 } satisfies Record<string, ForkSubagentTreeRow>;
 
-const environmentId = "story" as CardProps["environmentId"];
+const environmentId = EnvironmentId.make("story");
 const noop = () => {};
 
 function Card({ member, initialOpen }: { member: ForkSubagentTreeRow; initialOpen: boolean }) {
@@ -98,7 +111,7 @@ const meta = {
   tags: ["autodocs"],
   args: { member: BASE, environmentId, open: true, onToggle: noop, openThread: noop },
   argTypes: { open: { control: "boolean" } },
-  decorators: [(Story) => <div className="w-[736px]">{Story()}</div>],
+  decorators: [(Story) => <div className="w-[736px] min-w-0">{Story()}</div>],
   // The chevron moves the `open` control, so the two stay in step.
   render: function Render(args) {
     const [, updateArgs] = useArgs<CardProps>();

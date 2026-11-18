@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { ProviderDriverKind } from "@t3tools/contracts";
 import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
@@ -6,7 +7,6 @@ import { EffortSlider } from "~/custom/ComposerModelPicker";
 import { effortDitherStops } from "~/custom/EffortDither";
 
 type SliderProps = ComponentProps<typeof EffortSlider>;
-type Driver = Parameters<typeof effortDitherStops>[0];
 
 const LEVELS = ["Low", "Medium", "High", "Extra High", "Max", "Ultra"] as const;
 
@@ -26,8 +26,7 @@ function Slider({ driver, initial }: { driver: string; initial: number }) {
   return (
     <EffortSlider
       descriptor={DESCRIPTOR}
-      // Fixture driver ids: the slider only reads them to colour the fill.
-      fillStops={effortDitherStops(driver as Driver)}
+      fillStops={effortDitherStops(ProviderDriverKind.make(driver))}
       committedIndex={index}
       disabled={false}
       onCommit={(id) => setIndex(DESCRIPTOR.options.findIndex((option) => option.id === id))}
@@ -41,7 +40,7 @@ const meta = {
   tags: ["autodocs"],
   args: {
     descriptor: DESCRIPTOR,
-    fillStops: effortDitherStops("codex" as Driver),
+    fillStops: effortDitherStops(ProviderDriverKind.make("codex")),
     committedIndex: 2,
     disabled: false,
     onCommit: () => {},
