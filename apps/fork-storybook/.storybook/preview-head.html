@@ -16,11 +16,14 @@
      so a blurred stand-in wallpaper sits under the canvas instead, and under each docs example. */
   html[data-fork-sidebar-vibrancy="true"] {
     --story-wallpaper:
-      /* macOS lays its dark window material over the blurred desktop. */
-      linear-gradient(rgb(20 22 24 / 0.6), rgb(20 22 24 / 0.6)),
-      radial-gradient(60% 55% at 18% 22%, rgb(232 121 82 / 0.9), transparent 70%),
-      radial-gradient(55% 60% at 82% 30%, rgb(86 112 214 / 0.9), transparent 72%),
-      radial-gradient(70% 60% at 50% 95%, rgb(42 157 143 / 0.85), transparent 70%), #20232a;
+      /* macOS lays its dark window material over the blurred desktop; Glass's own fills (popups at
+         68%, the sidebar at 60%) then sit on top, so the desktop needs colour everywhere a story
+         puts a surface, the middle included, or the glass reads as a flat dark panel. */
+      linear-gradient(rgb(20 22 24 / 0.35), rgb(20 22 24 / 0.35)),
+      radial-gradient(45% 45% at 50% 48%, rgb(176 86 196 / 0.85), transparent 72%),
+      radial-gradient(55% 55% at 15% 20%, rgb(240 128 80 / 0.95), transparent 72%),
+      radial-gradient(55% 60% at 85% 25%, rgb(70 120 235 / 0.95), transparent 72%),
+      radial-gradient(70% 55% at 50% 100%, rgb(40 170 150 / 0.9), transparent 72%), #2a2d3a;
     background: var(--story-wallpaper);
     background-attachment: fixed;
   }
