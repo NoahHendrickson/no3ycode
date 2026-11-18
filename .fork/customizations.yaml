@@ -7720,7 +7720,10 @@
     Figma MCP server, get the app's code instead of generated markup. The kit's
     272 glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
     lucide-react shim export), so a swapped glyph renders through its own
-    connection (getInstanceSwap(...).executeTemplate()). Templates
+    connection (getInstanceSwap(...).executeTemplate()), and the two provider
+    marks are a batch the subagent card reads its driver from (codeConnectId()).
+    Figma drops imports nested two levels deep, so glyph imports also ride in
+    template metadata for the Tabs strip to collect. Templates
     use Figma's maintained template format (the Storybook and React parsers are
     deprecated) and run inside Figma, so they import only "figma" and knip
     ignores the folder. The Professional plan allows one active library and one
@@ -7732,6 +7735,8 @@
   files:
     - apps/fork-storybook/figma.config.json
     - apps/fork-storybook/code-connect/
+    - apps/fork-storybook/package.json
+  watch:
     - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkFigmaCodeConnect.test.ts

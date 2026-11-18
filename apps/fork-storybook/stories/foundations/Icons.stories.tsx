@@ -4,11 +4,16 @@ import * as Icons from "~/custom/icons/lucide-hugeicons";
 import type { ComponentType, SVGProps } from "react";
 import { useState } from "react";
 
-// Everything the lucide-react → Phosphor shim exports: the icon set components can reach. Names
-// are lucide's (what call sites write); the glyph is Phosphor at the shim's weight.
+// Everything the lucide-react → Hugeicons shim exports: the icon set components can reach. Names
+// are lucide's (what call sites write); the glyph is Hugeicons at the shim's weight. Most icons
+// export as both `Name` and `NameIcon`; a few only as `Name`, so those are listed bare.
 const ICONS = Object.entries(Icons)
   .filter(
-    ([name, value]) => /^[A-Z]/.test(name) && name.endsWith("Icon") && typeof value !== "string",
+    ([name, value]) =>
+      // The shim names every glyph it makes (Hugeicon(...) / Lucide(...)); helpers it exports
+      // alongside them, such as HugeGlyph, have no such name.
+      /^(Hugeicon|Lucide)\(/u.test((value as { displayName?: string }).displayName ?? "") &&
+      (name.endsWith("Icon") || !(`${name}Icon` in Icons)),
   )
   .map(([name, value]) => ({ name, Icon: value as ComponentType<SVGProps<SVGSVGElement>> }))
   .toSorted((a, b) => a.name.localeCompare(b.name));

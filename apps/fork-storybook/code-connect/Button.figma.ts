@@ -3,6 +3,9 @@
 // component=Button
 import figma from "figma";
 
+// Editable text goes in as a JS string wherever it would otherwise break the JSX.
+const text = (value: string) => (/[{}<>]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
+
 const button = figma.selectedInstance;
 const variant = button.getEnum("Variant", {
   secondary: "secondary",
@@ -18,7 +21,7 @@ const variant = button.getEnum("Variant", {
 const size = button.getEnum("Size", { xs: "xs", sm: "sm", "sm-pill": "sm-pill", lg: "lg" });
 const disabled = button.getEnum("State", { Disabled: true });
 const iconSide = button.getEnum("Icon", { Left: "left", Right: "right" });
-const label = button.getString("Label");
+const label = text(button.getString("Label"));
 
 // The glyph renders through its own connection (icons.figma.batch.ts), imports included.
 const swapped =

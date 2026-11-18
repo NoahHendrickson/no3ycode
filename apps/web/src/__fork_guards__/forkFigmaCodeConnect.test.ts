@@ -31,7 +31,9 @@ describe("fork guard: fork-figma-code-connect", () => {
       include: ["code-connect/**/*.figma.ts", "code-connect/**/*.figma.batch.json"],
       label: "React",
     });
-    expect(templates.length).toBeGreaterThan(0);
+    // One template per connected kit set, each set once.
+    const nodes = templates.map(({ text }) => /node-id=(\d+-\d+)/u.exec(text)?.[1]).toSorted();
+    expect(nodes).toEqual(["15-3730", "15-3966", "30-72", "40-105", "40-191", "99-1032"]);
   });
 
   it("connects every kit glyph to an export of the app's icon shim", () => {
@@ -44,7 +46,9 @@ describe("fork guard: fork-figma-code-connect", () => {
       "utf8",
     );
     const exported = new Set([...shim.matchAll(/export const (\w+)\b/gu)].map((match) => match[1]));
-    expect(batch.components.length).toBeGreaterThan(0);
+    // Every glyph on the kit's Icons page, each node once.
+    expect(batch.components).toHaveLength(272);
+    expect(new Set(batch.components.map((icon) => icon.url)).size).toBe(272);
     for (const icon of batch.components) {
       expect(icon.url.startsWith(KIT_URL), icon.name).toBe(true);
       expect(exported.has(icon.name), icon.name).toBe(true);
