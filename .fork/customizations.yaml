@@ -2451,9 +2451,10 @@
     Cream, since the old default Charcoal was usually never stored.
     migrateLegacyForkPalettes rewrites the stored value once as best-effort
     persistence (a missing one too while Inlet is the palette), and where
-    Inlet is on under System and the successor restyles the native chrome
+    Inlet shows under System and the successor restyles the native chrome
     where the old colour did not, it pins the mode as picking the colour
-    does, so leaving Inlet restores System. themeBoot.test.ts asserts the
+    does, but only once its record of System (replacing any older one) is
+    kept, so leaving Inlet restores System. themeBoot.test.ts asserts the
     boot script's colour, frame and palette for those stored values. Black's composer is black 16% and white 60% over the
     cream, flattened. Menus, popovers and glass tooltips are each colour's solid --popover, unfrosted. A sidebar row's
     hover card (data-fork-row-hover-card, fenced at its two thread call sites,

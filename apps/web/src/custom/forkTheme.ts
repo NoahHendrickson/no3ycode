@@ -325,9 +325,9 @@ export function migrateLegacyForkPalettes(): void {
 }
 
 /** Rewrites a retired colour to its successor (under Inlet a missing one too: the old default,
-    Charcoal, was rarely stored). Where Inlet is on under System and the successor restyles the
-    native chrome where the old colour did not, the mode is pinned as picking it would, so
-    leaving Inlet restores System. Reads resolve retired colours, so the write is best effort. */
+    Charcoal, was rarely stored). Where Inlet shows under System and the successor restyles the
+    native chrome where the old colour did not, the mode is pinned, as picking it would, once a
+    record that leaving Inlet restores System has been kept. Reads resolve retired colours. */
 function migrateRetiredInletColor(): void {
   const raw = readStorage(INLET_COLOR_STORAGE_KEY);
   const inletOn = readForkPalette() === INLET_THEME;
@@ -335,16 +335,25 @@ function migrateRetiredInletColor(): void {
     raw === null ? (inletOn ? RETIRED_INLET_COLORS.charcoal : undefined) : retiredInletColor(raw);
   if (retired === undefined) return;
   writeStorage(INLET_COLOR_STORAGE_KEY, retired.color);
+  const { appearance } = INLET_COLOR_OPTIONS[retired.color];
   const theme = readUpstreamTheme();
   if (
-    inletOn &&
-    theme === INLET_COLOR_OPTIONS[retired.color].appearance &&
-    readAppearanceModePreference(theme) === "system" &&
-    inletChromeOverride(retired.color) !== retired.chrome
+    !inletOn ||
+    typeof document === "undefined" ||
+    theme !== appearance ||
+    isRenderedDark() !== (appearance === "dark") ||
+    readAppearanceModePreference(theme) !== "system" ||
+    inletChromeOverride(retired.color) === retired.chrome
   ) {
-    // Upstream's theme already sits on the colour's appearance; only the mode moves.
-    settleInletColor(retired.color, () => true);
+    return;
   }
+  // The user is on System now, whatever an older record says.
+  writeStorage(
+    MODE_BEFORE_PALETTE_STORAGE_KEY,
+    JSON.stringify({ before: "system", set: appearance }),
+  );
+  const saved = readModeBeforePalette();
+  if (saved?.before === "system" && saved.set === appearance) setAppearanceMode(appearance);
 }
 
 /** Pure preference read: migration belongs to startup, never React render. */

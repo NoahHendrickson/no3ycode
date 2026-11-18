@@ -250,21 +250,70 @@ describe("fork theme synchronization", () => {
       vi.unstubAllGlobals();
     }
 
-    // A mode the user chose is not System, so migrating leaves it where it is.
-    vi.resetModules();
-    const { storage } = createStorage({
-      "t3code:theme": "dark",
-      "t3code:fork-theme": "inlet",
-      "t3code:fork-inlet-color": "charcoal",
-    });
-    const { classes, root } = createDocumentRoot();
-    classes.add("dark");
-    stubWindow(storage, { addEventListener: vi.fn() });
-    vi.stubGlobal("document", { documentElement: root });
-    const { setAppearanceMode } = mockUseTheme(storage, classes, { mode: "dark" });
-    const { initializeForkTheme } = await import("./forkTheme");
-    initializeForkTheme();
-    expect(setAppearanceMode).not.toHaveBeenCalled();
+    // An older record from a Light the user has since left for System is replaced, so leaving
+    // Inlet restores System, not Light.
+    {
+      vi.resetModules();
+      const { storage, values } = createStorage({
+        "t3code:theme": "dark",
+        "t3code:fork-theme": "inlet",
+        "t3code:fork-inlet-color": "charcoal",
+        "t3code:fork-mode-before-palette": JSON.stringify({ before: "light", set: "dark" }),
+      });
+      const { classes, root } = createDocumentRoot();
+      classes.add("dark");
+      stubWindow(storage, { addEventListener: vi.fn() });
+      vi.stubGlobal("document", { documentElement: root });
+      const { state } = mockUseTheme(storage, classes);
+      const { initializeForkTheme, setForkAppearance } = await import("./forkTheme");
+      initializeForkTheme();
+      expect(values.get("t3code:fork-mode-before-palette")).toBe(
+        JSON.stringify({ before: "system", set: "dark" }),
+      );
+      setForkAppearance("basic", (next) => {
+        storage.setItem("t3code:theme", next);
+        return true;
+      });
+      expect(state.mode).toBe("system");
+      vi.doUnmock("../hooks/useTheme");
+      vi.unstubAllGlobals();
+    }
+
+    // No pin: a mode the user chose; a page System renders light, where Inlet Cream is not
+    // showing; or a restore record storage refuses, without which leaving could not put System
+    // back.
+    for (const [name, options] of [
+      ["explicit dark", { mode: "dark", renderedDark: true, refuseRecord: false }],
+      ["rendered light", { mode: "system", renderedDark: false, refuseRecord: false }],
+      ["record refused", { mode: "system", renderedDark: true, refuseRecord: true }],
+    ] as const) {
+      vi.resetModules();
+      const { storage, values } = createStorage({
+        "t3code:theme": "dark",
+        "t3code:fork-theme": "inlet",
+        "t3code:fork-inlet-color": "charcoal",
+      });
+      if (options.refuseRecord) {
+        storage.setItem = (key, value) => {
+          if (key === "t3code:fork-mode-before-palette") throw new Error("quota");
+          values.set(key, value);
+        };
+      }
+      const { classes, root } = createDocumentRoot();
+      if (options.renderedDark) classes.add("dark");
+      stubWindow(storage, { addEventListener: vi.fn() });
+      vi.stubGlobal("document", { documentElement: root });
+      const { setAppearanceMode } = mockUseTheme(storage, classes, {
+        mode: options.mode,
+        systemDark: options.renderedDark,
+      });
+      const { initializeForkTheme } = await import("./forkTheme");
+      initializeForkTheme();
+      expect(setAppearanceMode, name).not.toHaveBeenCalled();
+      expect(values.has("t3code:fork-mode-before-palette"), name).toBe(false);
+      vi.doUnmock("../hooks/useTheme");
+      vi.unstubAllGlobals();
+    }
   });
 
   it("paints Basic on any standard upstream theme and steps aside for an imported one", async () => {
