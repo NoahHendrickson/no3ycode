@@ -5469,7 +5469,8 @@
     fill, a 1px border, 8px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
     over the status word (Running, Completed, Stopped), the elapsed time, and a
-    chevron; under it a well in the composer's prompt fill lists the task the
+    chevron; under it a well (the composer's prompt fill; --basic-raised under
+    Basic) lists the task the
     subagent was given, what it is doing now (its live progress) or, once
     settled, its result, and the model. The well starts open while the
     subagent works and folds once it settles, unless the chevron was used. The
@@ -5492,6 +5493,7 @@
     - apps/web/src/custom/forkSubagentTree.ts
     - apps/web/src/custom/forkSubagentTree.test.ts
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
   shadows: []
   watch:
     # Fenced import, the swapped render at the batch call site, and the

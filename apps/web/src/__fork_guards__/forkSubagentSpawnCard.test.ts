@@ -20,6 +20,7 @@ const timeline = readSibling("../components/chat/TimelineV2EventRow.tsx");
 const group = readSibling("../custom/ForkSubagentGroup.tsx");
 const model = readSibling("../custom/forkSubagentTree.ts");
 const theme = readSibling("../theme.custom.css");
+const basic = readSibling("../theme.custom.basic.css");
 
 describe("fork guard: fork-subagent-spawn-card", () => {
   it("routes every subagent, alone or batched, through the fork's cards", () => {
@@ -41,6 +42,9 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toContain("<EnvironmentSubagentAvatar");
     expect(group).toContain("<SidebarV2StatusMark status={markStatus(member.mark)}");
     expect(group).toContain('data-fork-subagent-well=""');
+    expect(basic).toMatch(
+      /\[data-fork-subagent-well\] \{\s*background-color: var\(--basic-raised\);/u,
+    );
     expect(group).toMatch(/<dt[^>]*>Task<\/dt>/u);
     expect(group).toMatch(/<dt[^>]*>Model<\/dt>/u);
     // The well is open while the subagent works, unless the chevron was used.
