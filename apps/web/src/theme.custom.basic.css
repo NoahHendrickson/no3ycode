@@ -274,13 +274,56 @@
   border-radius: 8px;
 }
 
-/* The Code / Chat switch and the Threads menu's Group by tabs, which share its shape. */
+/* The Threads menu's Group by tabs. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-group-by-tabs],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-fork-sidebar-mode-tabs], [data-fork-group-by-tabs]),
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-fork-sidebar-mode-tabs], [data-fork-group-by-tabs])
+  [data-fork-group-by-tabs]
   > [data-fork-segmented-tab] {
   border-radius: 8px;
+}
+
+/* Tabs (custom/Tabs.tsx, the Code / Chat switch among them), Figma t3-fork 740:1163: an 8%
+   track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink. Tabs.tsx sizes
+   the track and its tabs fill the inside, so icon tabs are 24px squares at sm (28 at md, 32 at
+   lg); word tabs have 6px sides and regular 12px type. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-tabs] {
+  padding: 2px;
+  border-radius: 8px;
+  background-color: var(--basic-wash-2);
+
+  & > [data-fork-tab] {
+    border-radius: 6px;
+    color: var(--basic-text);
+
+    &:hover:not([data-pressed]) {
+      background-color: var(--basic-wash-1);
+    }
+
+    &[data-pressed] {
+      border-color: var(--basic-wash-2);
+      background-color: var(--basic-wash-3);
+    }
+
+    /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
+    &:focus-visible {
+      outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
+    }
+  }
+
+  & > [data-fork-tab="word"] {
+    padding-inline: 6px;
+    font-size: 12px;
+    font-weight: 400;
+  }
+}
+
+/* A black wash reads as a grey slab on the light tones, so the pick lifts toward white, and
+   its line darkens to 16% because 8% vanishes against the white. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+  [data-fork-tabs]
+  > [data-fork-tab][data-pressed] {
+  border-color: var(--basic-wash-4);
+  background-color: var(--basic-raised);
 }
 
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
@@ -455,7 +498,7 @@
    line, rather than upstream's raised white chip. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *, [data-fork-tabs]) {
   /* The chip's corner is calc(var(--radius-sm) - 2px); the track's rounded-sm is
      inlined by @theme inline, so the track takes the radius directly. */
   --radius-sm: 8px;

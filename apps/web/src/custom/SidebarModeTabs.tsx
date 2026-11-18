@@ -7,14 +7,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
 import type { ForkSidebarMode } from "./chatMode";
 import { CodeIcon, MessageSquareTextIcon } from "./icons/lucide-hugeicons";
-import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
-
-/** The switch's track and icon tab, whose shape the Threads menu's Group by tabs share.
-    Only this switch carries data-fork-sidebar-mode-tabs, so the themes' dressing stays its own. */
-export const SIDEBAR_ICON_TABS_TRACK =
-  "h-7 shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface";
-export const SIDEBAR_ICON_TAB =
-  "size-7 rounded-xl border border-transparent px-0 text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground";
+import { IconTab, Tabs } from "./Tabs";
 
 const MODES = [
   { mode: "code", label: "Code", Icon: CodeIcon },
@@ -26,7 +19,7 @@ export function SidebarModeTabs(props: {
   readonly onModeChange: (mode: ForkSidebarMode) => void;
 }) {
   return (
-    <SegmentedTabs
+    <Tabs
       aria-label="Sidebar mode"
       value={[props.mode]}
       onValueChange={(value) => {
@@ -34,20 +27,19 @@ export function SidebarModeTabs(props: {
         if (next === "code" || next === "chat") props.onModeChange(next);
       }}
       data-fork-sidebar-mode-tabs=""
-      className={SIDEBAR_ICON_TABS_TRACK}
     >
       {MODES.map(({ mode, label, Icon }) => (
         <Tooltip key={mode}>
           <TooltipTrigger
             render={
-              <SegmentedTab value={mode} aria-label={label} className={SIDEBAR_ICON_TAB}>
+              <IconTab value={mode} aria-label={label}>
                 <Icon className="size-4" />
-              </SegmentedTab>
+              </IconTab>
             }
           />
           <TooltipPopup side="bottom">{label}</TooltipPopup>
         </Tooltip>
       ))}
-    </SegmentedTabs>
+    </Tabs>
   );
 }

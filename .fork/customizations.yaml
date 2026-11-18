@@ -7672,3 +7672,56 @@
   watch: []
   verify:
     - apps/web/src/custom/doneCelebration.test.ts
+
+- id: fork-storybook
+  intent: >
+    apps/fork-storybook is the fork's component library for the Basic theme: a
+    Storybook that renders the app's real components (apps/web/src through the
+    override tree, never copies). Its preview stores Basic before any app module
+    loads, loads exactly main.tsx's stylesheets in main.tsx's order, runs
+    main.tsx's theme startup (applyForkMarker, initializeForkTheme,
+    installInletMenuMorph), and offers every Basic tone in the toolbar, moved
+    through setForkBasicTone as Settings › Appearance moves it. Its Vite config
+    adds the same resolution as apps/web's (forkOverrides, brand name, React
+    Compiler, Tailwind scanning apps/web plus the stories, the lucide-react shim
+    alias). Foundations read tokens from the CSS itself (the @theme inline
+    registrations, Basic's ramp swept across every tone), so a token added
+    upstream appears without a story edit. The package touches no upstream file:
+    apps/* already covers it and release smoke copies a fixed package list. The
+    Figma kit "no3y code — Basic UI kit" is captured from these stories.
+  tier: 1
+  files:
+    - apps/fork-storybook/package.json
+    - apps/fork-storybook/tsconfig.json
+    - apps/fork-storybook/.storybook/main.ts
+    - apps/fork-storybook/.storybook/preview.tsx
+    - apps/fork-storybook/.storybook/appearance.ts
+    - apps/fork-storybook/.storybook/manager.ts
+    - apps/fork-storybook/stories/
+  verify:
+    - apps/web/src/__fork_guards__/forkStorybook.test.ts
+
+- id: fork-tabs
+  intent: >
+    custom/Tabs.tsx is the fork's tabs component: Tabs (the track), IconTab (one
+    glyph, named for screen readers) and Tab (one word), built on SegmentedTabs so
+    they glide between choices, plus MenuTabs / MenuIconTab for icon tabs inside a
+    menu (built on SegmentedMenuTabs). The track's size sets its outer height in
+    every theme (28 / 32 / 36px at sm / md / lg) and tabs fill its inside. The
+    sidebar's Code / Chat switch is built from Tabs, and the Threads menu's Group by
+    from MenuTabs. Under Basic, theme.custom.basic.css draws Tabs to Figma t3-fork
+    740:1163: an 8% track inset 2px with 8px corners (so icon tabs are 24 / 28 /
+    32px squares), the pick a 12% wash behind an 8% line at 6px corners (raised
+    toward white behind a 16% line on the light tones), every label at full ink,
+    word tabs with 6px sides and regular 12px type, and the focus ring drawn inside
+    the tab because the track clips. Basic's page-level segmented-tab rule leaves
+    these tabs alone. Glass and Inlet keep their own dressing.
+  tier: 1
+  files:
+    - apps/web/src/custom/Tabs.tsx
+    - apps/web/src/custom/SidebarModeTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    # Shared; this entry owns the Tabs block and the page rule's exclusion.
+    - apps/web/src/theme.custom.basic.css
+  verify:
+    - apps/web/src/__fork_guards__/forkTabs.test.ts

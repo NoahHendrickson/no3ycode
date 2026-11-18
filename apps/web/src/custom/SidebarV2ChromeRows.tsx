@@ -79,8 +79,7 @@ import {
   SidebarV2WorkingMark,
   type SidebarV2TopStatusMark,
 } from "./SidebarV2StatusIndicator";
-import { SegmentedMenuTab, SegmentedMenuTabs } from "./SegmentedTabs";
-import { SIDEBAR_ICON_TAB, SIDEBAR_ICON_TABS_TRACK } from "./SidebarModeTabs";
+import { MenuIconTab, MenuTabs } from "./Tabs";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
@@ -587,13 +586,6 @@ const GROUPING_TABS = [
   icon: ReactNode;
 }>;
 
-/** The Group by tabs wear the Code / Chat switch's shape, but the pick is cut from the menu's
-    own surface, with the track showing through its border as the switch's ring does. */
-const GROUP_BY_TAB = cn(
-  SIDEBAR_ICON_TAB,
-  "data-highlighted:text-sidebar-foreground data-pressed:border-transparent data-pressed:bg-popover data-pressed:bg-clip-padding dark:data-pressed:bg-popover",
-);
-
 interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectGroup> {
   readonly projectGroups: ReadonlyArray<TProject>;
   /** Project keys the list is scoped to; empty means every project. */
@@ -816,12 +808,11 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
       sidebar reads should not be the thing you have to scroll to. */}
       <div className={cn(OPTION_ITEM, "cursor-default")}>
         <span className="min-w-0 truncate">Group by</span>
-        <SegmentedMenuTabs
+        <MenuTabs
           aria-label="Group threads by"
           value={props.grouping}
           onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
           data-fork-group-by-tabs=""
-          className={SIDEBAR_ICON_TABS_TRACK}
         >
           {GROUPING_TABS.map((tab) => {
             // Disabled rather than inert where grouping by project
@@ -837,12 +828,11 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
                   delay={150}
                   closeDelay={0}
                   render={
-                    <SegmentedMenuTab
+                    <MenuIconTab
                       value={tab.value}
                       aria-label={label}
                       disabled={unavailableReason !== null}
                       data-testid={tab.testId}
-                      className={GROUP_BY_TAB}
                     />
                   }
                 >
@@ -852,7 +842,7 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
               </Tooltip>
             );
           })}
-        </SegmentedMenuTabs>
+        </MenuTabs>
       </div>
       <FullWidthMenuSeparator />
       {/* Set apart from the grouping: card density is independent of
