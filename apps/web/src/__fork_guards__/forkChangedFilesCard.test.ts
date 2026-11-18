@@ -71,6 +71,15 @@ describe("fork guard: fork-changed-files-card", () => {
       rule.selector.endsWith("[data-changed-files-header] ~ div:last-child"),
     );
     expect(bottom?.body).not.toMatch(/border-radius:/u);
+    const basicRules = cssRules(readSibling("../theme.custom.basic.css")).map((rule) => ({
+      ...rule,
+      selector: rule.selector.replace(/\s+/gu, " "),
+    }));
+    expect(
+      basicRules.find((rule) =>
+        rule.selector.endsWith('[data-fork-theme="basic"] [data-changed-files-header] ~ div'),
+      )?.body,
+    ).toMatch(/background:\s*var\(--basic-raised\)/u);
     const basic = cssRules(readSibling("../theme.custom.basic.css")).find((rule) =>
       rule.selector
         .replace(/\s+/gu, " ")

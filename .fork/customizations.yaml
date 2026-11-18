@@ -5232,8 +5232,9 @@
     divs) are a well painted from --fork-composer-bg, edge to edge inside
     the card with a hairline on its top only (the card border is the line
     elsewhere). Radii come from --fork-composer-radius; the shared rule rounds only
-    the well's bottom corners, and Basic rounds its top as well (Figma kit,
-    theme.custom.basic.css), so its hairline curves into the card's sides. Path
+    the well's bottom corners, and Basic rounds its top as well and fills it with
+    --basic-raised (Figma kit, theme.custom.basic.css), so its hairline curves into
+    the card's sides. Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button
