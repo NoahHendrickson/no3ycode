@@ -7,10 +7,10 @@
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
  * above one card per member. A card is a header (the provider's mark in a tile
  * with the status mark in its corner, the title over the status word, the
- * elapsed time, a chevron) and a well underneath: the task it was given, what
+ * elapsed time, an open-thread button, a chevron) and a well underneath: the task it was given, what
  * it is doing now or what it found, and the model. The well starts open while
  * the subagent works and folds once it settles, unless the chevron was used.
- * The header opens the subagent's thread when it has one.
+ * The arrow button, and the header itself, open the subagent's thread when it has one.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -20,7 +20,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
 import { type CSSProperties, memo, use, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
@@ -29,6 +29,7 @@ import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { EnvironmentSubagentAvatar } from "~/components/chat/V2LifecycleRow";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
 import { environmentThreadDetails } from "~/state/threads";
@@ -273,6 +274,24 @@ function ForkSubagentCard(props: {
           >
             {identity}
           </button>
+        )}
+        {openThread === null ? null : (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  data-fork-subagent-open=""
+                  aria-label={`Open ${member.title} thread`}
+                  onClick={openThread}
+                  className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+                />
+              }
+            >
+              <ArrowUpRightIcon aria-hidden className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipPopup side="top">Open thread</TooltipPopup>
+          </Tooltip>
         )}
         <button
           type="button"

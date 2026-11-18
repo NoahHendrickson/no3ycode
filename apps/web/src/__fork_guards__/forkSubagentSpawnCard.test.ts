@@ -52,8 +52,10 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
     // A member with a thread of its own opens it from the header.
     expect(group).toContain("return () => onOpenThread(childThreadId);");
-    expect(theme).toContain(
-      ":is(button[data-fork-subagent-member], button[data-fork-subagent-toggle]):hover",
+    // …and from an explicit arrow button beside the chevron.
+    expect(group).toMatch(
+      /data-fork-subagent-open=""[\s\S]*?onClick=\{openThread\}[\s\S]*?<ArrowUpRightIcon/u,
     );
+    expect(theme).toContain("button[data-fork-subagent-open],");
   });
 });
