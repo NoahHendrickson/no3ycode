@@ -10,7 +10,12 @@ import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
 import { useQuietThreadShell } from "~/state/entities";
 
-import { type BotMascotMood, type BotMascotShape, botMascotSprite } from "./botMascotArt";
+import {
+  type BotMascotMood,
+  type BotMascotShape,
+  botMascotBaseColor,
+  botMascotSprite,
+} from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
 import { isBotThread } from "./botThreads";
 
@@ -41,6 +46,25 @@ export function BotMascot(props: {
         <path key={path.fill} d={path.d} fill={path.fill} />
       ))}
     </svg>
+  );
+}
+
+/** The mascot on a 32px tile in its own colour at half strength, behind a 1px 24% edge, white on
+    dark and black on light (Figma Petal card), filling a full card's two text lines. */
+export function BotMascotTile(props: {
+  readonly shape: BotMascotShape;
+  readonly mood: BotMascotMood;
+}) {
+  return (
+    <span
+      data-fork-bot-mascot-tile=""
+      className="flex size-8 shrink-0 items-center justify-center rounded-[8px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
+      style={{
+        backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
+      }}
+    >
+      <BotMascot shape={props.shape} mood={props.mood} fit={22} />
+    </span>
   );
 }
 
