@@ -2436,29 +2436,26 @@
     data-fork-inlet-color while Inlet is active; Settings → Appearance shows
     an Inlet colour swatch row while Inlet is picked. Each colour names the
     upstream appearance it sits on, because Tailwind's dark: variant reaches
-    every descendant of a .dark root and a light panel cannot live under one:
-    Charcoal (Figma 619:6610, #232322 frame, #303235 panel) is dark; Green
-    (Figma 629:8337, #21835c frame with white ink, cream #f1f0e0 panel with
-    dark ink, #dbd5d1 composer and chips, dark mode's bright status colours)
-    is light, and opts into the fork's dark-only composer vessel fill and chip
-    ink. Jungle Art (Figma 630:10946) is dark: a thread is Cream's #141414
-    stage, open row and bridge (and so the right panel), and only the
-    new-agent screen's column (the one holding [data-draft-hero]) shows the
-    picture (custom/assets/inlet-jungle.jpg at 60% over #248f6b, a green fade
-    behind the composer), so no transcript scrolls over a window-pinned
-    background; the column's header, workspace area and new-thread timeline
-    go transparent over the column's fill; the cream #f2f0d8 frame is
-    --fork-inlet-frame, painted on the inset and the column's wrapper only
-    round a chat column; rows are pills; the composer is glass (Figma 630:11828), its fills restated on the composer stack so menus and the user's bubble keep the solid cream: on a thread a faint white over the charcoal in the stage's light ink (vessel 8%, prompt 6%, chips 10%, no blur), over the new-agent picture light glass in dark ink (vessel 40% and chips 20% with a 12px blur, prompt 60%). Its model menu's shell and button, and the Threads header's hung menus and their buttons, are #21835c with white ink. Jungle Light is its inverse:
-    Green's tokens (the palette rules list both colours) with the same art,
-    faded to 22% over #21835c, painted once on the sidebar wrapper behind the
-    sidebar and the frame round the panel, whose own frame fills step aside.
-    Cream and Black (Figma 630:14154)
-    are inverses with half-and-half swatches: Cream is a #141414 panel with
-    Charcoal's composer in a cream #f8f3d8 frame (--fork-inlet-frame, as
-    Jungle Art) on dark; Black is a cream panel with Green's composer
-    construction in a #141414 frame on light. Menus, popovers and glass
-    tooltips are each colour's solid --popover, unfrosted. A sidebar row's
+    every descendant of a .dark root and a light panel cannot live under one.
+    There are two colours, inverses with half-and-half swatches (Figma
+    630:14154): Black is a cream #f8f3d8 panel in a #141414 frame on light,
+    and Cream (the default) is a #141414 panel in a cream #f8f3d8 frame
+    (--fork-inlet-frame, painted on the inset and the column's wrapper only
+    round a chat column) on dark; each colour declares its tokens in full, and
+    no Inlet token block keys on .dark. Retired colours (Charcoal, Green,
+    Jungle Art, Jungle Light) resolve on every read to the colour on the same
+    appearance (Charcoal and Jungle Art to Cream, Green and Jungle Light to
+    Black; only the table's own keys, never a prototype name), and index.html
+    paints them the same way before React starts. A missing colour reads as
+    Cream, since the old default Charcoal was usually never stored.
+    migrateLegacyForkPalettes rewrites the stored value once as best-effort
+    persistence (a missing one too while Inlet is the palette), and where
+    Inlet shows under System and the successor restyles the native chrome
+    where the old colour did not, it pins the mode as picking the colour
+    does, but only once its record of System (replacing any older one) is
+    kept, so leaving Inlet restores System. themeBoot.test.ts asserts the
+    boot script's colour, frame and palette for those stored values. Black's composer is black 16% and white 60% over the
+    cream, flattened. Menus, popovers and glass tooltips are each colour's solid --popover, unfrosted. A sidebar row's
     hover card (data-fork-row-hover-card, fenced at its two thread call sites,
     and on the Automations row's run card) opens
     as a tab: the row takes the card's fill and goes square on the right, and
@@ -2485,8 +2482,7 @@
     fork-sidebar-peek fence of AppSidebarLayout) hides while it is open.
     The utility pages (Usage, Automations) are panels set into the frame as the
     chat column is, flush to a docked sidebar, and the chrome row lit for one
-    bridges into the panel the way the open thread row does. On Jungle Art the
-    whole stage is the row green, to the window's edges, round a frame-cream card.
+    bridges into the panel the way the open thread row does.
     The Threads header's sort and settings menus (data-fork-tab-menu, their
     buttons data-fork-tab-trigger, in custom/SidebarV2ChromeRows.tsx), the Bots
     section's view options menu (custom/bots/SidebarV2BotsSection.tsx), and a
@@ -2497,12 +2493,11 @@
     left side. On Black the bot panel's two (data-fork-tab-menu="bot-threads") and
     their open buttons are the sidebar's #141414 ink, since they open over the
     cream panel, and the sidebar headers' menus (data-fork-tab-menu="sidebar") are the
-    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Jungle Art's tooltips are its menus' green with white ink; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell (white ink and white-wash segments on Jungle Art's green). The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
-    concave corners, and the effort controls sit on the shell. Jungle Art's menus are its sidebar's hover cream with
-    dark ink restated inside them.
+    concave corners, and the effort controls sit on the shell.
     Motion (prefers-reduced-motion: no-preference only, one run per state
     change, nothing loops): hung menus, the chips' menus included, move only
     through the one-shape morph, and one it gives up on opens as its static
@@ -2549,8 +2544,7 @@
     concave corner either side; the card drops its hairline, and the join is
     skipped while the find bar pushes the card down.
     The tab strip's open tab is connective, as a browser's tabs are: it takes
-    the panel's face (Jungle Art's is solid deep green, and the stage under
-    the strip starts in that green and fades into its picture), goes square
+    the panel's face, goes square
     at its foot, and an ::after neck spans the strip's empty foot to the
     panel with a concave corner either side (masked); the nav clips sideways
     only and the strip sits at z 2. A tab's "…" thread menu hangs from the
@@ -2559,8 +2553,7 @@
     a WeakMap keyed by that object, which the sidebar's handler forwards
     unchanged), and under Inlet that call shows
     the in-page menu (contextMenuFallback, fenced) even on desktop, placed
-    below the button and claimed by the morph; Jungle Art fills it with the
-    button's hover green.
+    below the button and claimed by the morph.
     The collapsed sidebar's tab strip (fork-collapsed-thread-tabs) sits on the
     frame: it shares each colour's sidebar token block, its fills come from
     those tokens rather than the appearance's black/white washes, the open tab
@@ -2574,16 +2567,15 @@
     well as its theme, since setTheme keeps the stored mode. Template rules
     never name .dark; colours differ in tokens plus their own scoped rules.
     index.html pre-paints the colour's frame and stamps both attributes from
-    the same table. Colours with a light frame on dark (Jungle Art, Cream) ask the desktop window chrome for light (a fenced override in hooks/useTheme.ts), so macOS draws light traffic lights on the cream. Must not alter any other palette.
+    the same table. A colour whose frame is the other appearance from its page (Cream's light frame on dark, Black's dark frame on light) asks the desktop window chrome to match the frame (a fenced override in hooks/useTheme.ts), so macOS draws traffic lights that read on it. Must not alter any other palette.
     On Windows (.wco) without the tab strip, panels start below the caption
     band (--fork-inlet-panel-top), which drags the window; the inline right
     panel included.
     The command palette, confirm dialogs and the web context menu are solid
-    popups like the menus (--popover, its line, 10px, no frost; Jungle Art
-    restates its menu inks inside them). A pressed sidebar control keeps the
-    hover fill wherever the panel's polarity differs from the frame's, the
-    cream panels' faint ink is black 65% (H6), Green's footer icons take the
-    sidebar's muted ink, and Cream's lit row keeps the panel ink on its icon.
+    popups like the menus (--popover, its line, 10px, no frost). A pressed
+    sidebar control keeps the hover fill, since the panel's polarity differs
+    from the frame's on both colours, Black's cream panel's faint ink is black
+    65% (H6), and Cream's lit row keeps the panel ink on its icon.
   tier: 2
   files:
     - apps/web/src/custom/forkTheme.ts
@@ -2601,9 +2593,7 @@
     - apps/web/src/theme.custom.inlet-composer.css
     - apps/web/src/theme.custom.inlet-menus.css
     - apps/web/src/theme.custom.inlet-peek.css
-    - apps/web/src/theme.custom.inlet-jungle.css
     - apps/web/src/theme.custom.inlet-black.css
-    - apps/web/src/custom/assets/inlet-jungle.jpg
   watch:
     - apps/web/src/components/ui/standalone-page.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
@@ -2627,9 +2617,11 @@
     - apps/web/src/projectIconColors.ts
     - apps/web/src/components/pullRequest/pullRequestIcons.tsx
     - apps/web/src/components/ThreadStatusIndicators.tsx
+    - apps/web/src/themeBoot.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
+    - apps/web/src/themeBoot.test.ts
 
 - id: fork-sidebar-type-size
   intent: >

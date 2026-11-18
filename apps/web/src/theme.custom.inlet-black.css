@@ -229,8 +229,8 @@
      the page's cream and charcoal, not the menu's. */
 
   & [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-    /* Jungle Art's inset geometry (theme.custom.inlet-jungle.css): a 30px well,
-       the fill and a 22px pill thumb set 3px into it. */
+    /* An inset geometry: a 30px well, the fill and a 22px pill thumb set 3px
+       into it. */
     & [data-fork-effort-control] {
       height: 30px;
     }
@@ -372,9 +372,9 @@
     --accent: var(--fork-context-chip-bg-hover);
   }
 
-  /* The usage panels' and model menu's provider icons take the dark
-     appearance's fills on the charcoal (theme.custom.inlet-jungle.css has
-     Jungle Art's reverse). */
+  /* A provider's package icon (Grok's) fills for the app's appearance, but the
+     usage panels and the model menu are charcoal on Black's light one, so
+     they take the dark appearance's fills. */
 
   &
     :is(

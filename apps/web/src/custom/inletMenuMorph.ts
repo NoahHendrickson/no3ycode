@@ -300,8 +300,8 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   // Typed for teardown, a hoisted function the null check does not narrow into.
   const owner: HTMLElement = trigger;
   const glass = glassOf(popup);
-  // Read before the morph clears them: a colour can restate the menu's fill (Jungle Art's green,
-  // the model menu's shell), and the composer's controls pad their open fill out past the button.
+  // Read before the morph clears them: a colour can restate the menu's fill (the model menu's
+  // shell), and the composer's controls pad their open fill out past the button.
   const glassStyle = getComputedStyle(glass);
   const fill = glassStyle.backgroundColor;
   const menuRadius = Number.parseFloat(glassStyle.borderBottomLeftRadius) || 8;

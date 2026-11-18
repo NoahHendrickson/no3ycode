@@ -19,9 +19,10 @@
  * between the user's light tone and their dark tone.
  *
  * Inlet is a template with a colour (`t3code:fork-inlet-color`, stamped as
- * `data-fork-inlet-color`). Each colour names the upstream appearance it sits on: Charcoal is
- * dark, Green is light (its panel is cream with dark ink, and Tailwind's `dark:` variant reaches
- * every descendant of a `.dark` root, so a light panel cannot live under one). Glass is dark.
+ * `data-fork-inlet-color`): Cream (the default) or its inverse, Black. Each colour names the
+ * upstream appearance it sits on: Cream is dark, Black is light (its panel is cream with dark ink, and Tailwind's
+ * `dark:` variant reaches every descendant of a `.dark` root, so a light panel cannot live under
+ * one). Glass is dark.
  */
 
 import { useCallback, useSyncExternalStore } from "react";
@@ -56,8 +57,8 @@ export const COOL_DARKER_BACKGROUND = "#141618";
 
 export const INLET_THEME = "inlet" as const;
 export const INLET_LABEL = "Inlet";
-/** Pre-paint / overscroll colour for Inlet's default colour — the frame, stage `--background`. */
-export const INLET_BACKGROUND = "#232322";
+/** Pre-paint / overscroll colour for Inlet's default colour (Cream): its frame. */
+export const INLET_BACKGROUND = "#f8f3d8";
 
 const BASIC_TONE_STORAGE_KEYS = {
   dark: "t3code:fork-basic-tone-dark",
@@ -122,19 +123,14 @@ export const DEFAULT_BASIC_TONES = {
 
 const INLET_COLOR_STORAGE_KEY = "t3code:fork-inlet-color";
 export const INLET_COLOR_ATTRIBUTE = "data-fork-inlet-color";
-export const INLET_COLORS = [
-  "charcoal",
-  "green",
-  "jungle",
-  "jungle-light",
-  "cream",
-  "black",
-] as const;
+export const INLET_COLORS = ["black", "cream"] as const;
 export type InletColor = (typeof INLET_COLORS)[number];
-export const DEFAULT_INLET_COLOR: InletColor = "charcoal";
+/** Cream, the dark-page successor of Charcoal, the old default that was usually never stored. */
+export const DEFAULT_INLET_COLOR: InletColor = "cream";
 /** One entry per colour. `frame` is the pre-paint colour; index.html carries the same table, so
     a new colour is a row there too. `chrome` is the native window chrome's appearance, which
-    differs from `appearance` where the frame is light on a dark page. */
+    follows the frame: both colours restyle it (Cream light chrome on a dark page, Black dark
+    chrome on a light page). */
 export const INLET_COLOR_OPTIONS: Readonly<
   Record<
     InletColor,
@@ -147,51 +143,20 @@ export const INLET_COLOR_OPTIONS: Readonly<
     }
   >
 > = {
-  charcoal: {
-    label: "Charcoal",
-    frame: INLET_BACKGROUND,
-    swatch: INLET_BACKGROUND,
-    appearance: "dark",
-    chrome: "dark",
-  },
-  green: {
-    label: "Green",
-    frame: "#21835c",
-    swatch: "#21835c",
-    appearance: "light",
-    chrome: "light",
-  },
-  // The panel is a picture, so the swatch shows the cream frame beside its green.
-  jungle: {
-    label: "Jungle Art",
-    frame: "#f2f0d8",
-    swatch: "linear-gradient(135deg, #f2f0d8 50%, #248f6b 50%)",
-    appearance: "dark",
-    chrome: "light",
-  },
-  // Jungle Art turned inside out: Green's stage, the art behind the frame.
-  "jungle-light": {
-    label: "Jungle Light",
-    frame: "#21835c",
-    swatch: "linear-gradient(135deg, #21835c 50%, #f1f0e0 50%)",
-    appearance: "light",
-    chrome: "light",
-  },
   // Inverses of each other: half frame, half panel.
-  cream: {
-    label: "Cream",
-    frame: "#f8f3d8",
-    swatch: "linear-gradient(90deg, #f8f3d8 50%, #141414 50%)",
-    appearance: "dark",
-    chrome: "light",
-  },
-  // Cream's inverse here too: a dark frame on a light page asks for dark native chrome.
   black: {
     label: "Black",
     frame: "#141414",
     swatch: "linear-gradient(90deg, #141414 50%, #f8f3d8 50%)",
     appearance: "light",
     chrome: "dark",
+  },
+  cream: {
+    label: "Cream",
+    frame: INLET_BACKGROUND,
+    swatch: "linear-gradient(90deg, #f8f3d8 50%, #141414 50%)",
+    appearance: "dark",
+    chrome: "light",
   },
 };
 
@@ -206,6 +171,32 @@ export const FORK_PALETTE_LABELS = {
   [COOL_DARKER_THEME]: COOL_DARKER_LABEL,
   [INLET_THEME]: INLET_LABEL,
 } as const satisfies Record<ForkPalette, string>;
+
+/** Retired Inlet colours and the remaining one on the same appearance, so nobody's light/dark
+    flips: the dark ones become Cream, the light ones Black. `chrome` is the native chrome
+    override the retired colour asked for, which decides whether migrating moves the mode. */
+const RETIRED_INLET_COLORS = {
+  charcoal: { color: "cream", chrome: null },
+  jungle: { color: "cream", chrome: "light" },
+  green: { color: "black", chrome: null },
+  "jungle-light": { color: "black", chrome: null },
+} as const satisfies Record<
+  string,
+  { readonly color: InletColor; readonly chrome: "dark" | "light" | null }
+>;
+
+function retiredInletColor(raw: string | null) {
+  return raw !== null && Object.hasOwn(RETIRED_INLET_COLORS, raw)
+    ? RETIRED_INLET_COLORS[raw as keyof typeof RETIRED_INLET_COLORS]
+    : undefined;
+}
+
+/** A stored colour as it paints: a retired one as its successor, so a failed migration write
+    still agrees with index.html's first paint. */
+function resolveInletColor(raw: string | null): InletColor {
+  if (isInletColor(raw)) return raw;
+  return retiredInletColor(raw)?.color ?? DEFAULT_INLET_COLOR;
+}
 
 /** Retired dark looks and the Basic tone each became: palette ids and tone ids, which never
     collide, so the palette and the stored dark tone share one lookup. */
@@ -275,8 +266,7 @@ function writeStorage(key: string, value: string | null): void {
 }
 
 function readInletColor(): InletColor {
-  const raw = readStorage(INLET_COLOR_STORAGE_KEY);
-  return isInletColor(raw) ? raw : DEFAULT_INLET_COLOR;
+  return resolveInletColor(readStorage(INLET_COLOR_STORAGE_KEY));
 }
 
 /** The user's Basic tone for one appearance. */
@@ -309,7 +299,8 @@ function isRenderedDark(): boolean {
 }
 
 /** One-time bridges: Westworld once lived in `t3code:theme`, and the retired palettes become the
-    Basic tone that replaced them. So do the retired dark tones. */
+    Basic tone that replaced them. So do the retired dark tones, and a retired Inlet colour
+    becomes the one on its appearance. */
 export function migrateLegacyForkPalettes(): void {
   if (typeof window === "undefined") return;
   try {
@@ -330,6 +321,39 @@ export function migrateLegacyForkPalettes(): void {
   } catch {
     // Match upstream theme reads: ignore storage failures during bootstrap.
   }
+  migrateRetiredInletColor();
+}
+
+/** Rewrites a retired colour to its successor (under Inlet a missing one too: the old default,
+    Charcoal, was rarely stored). Where Inlet shows under System and the successor restyles the
+    native chrome where the old colour did not, the mode is pinned, as picking it would, once a
+    record that leaving Inlet restores System has been kept. Reads resolve retired colours. */
+function migrateRetiredInletColor(): void {
+  const raw = readStorage(INLET_COLOR_STORAGE_KEY);
+  const inletOn = readForkPalette() === INLET_THEME;
+  const retired =
+    raw === null ? (inletOn ? RETIRED_INLET_COLORS.charcoal : undefined) : retiredInletColor(raw);
+  if (retired === undefined) return;
+  writeStorage(INLET_COLOR_STORAGE_KEY, retired.color);
+  const { appearance } = INLET_COLOR_OPTIONS[retired.color];
+  const theme = readUpstreamTheme();
+  if (
+    !inletOn ||
+    typeof document === "undefined" ||
+    theme !== appearance ||
+    isRenderedDark() !== (appearance === "dark") ||
+    readAppearanceModePreference(theme) !== "system" ||
+    inletChromeOverride(retired.color) === retired.chrome
+  ) {
+    return;
+  }
+  // The user is on System now, whatever an older record says.
+  writeStorage(
+    MODE_BEFORE_PALETTE_STORAGE_KEY,
+    JSON.stringify({ before: "system", set: appearance }),
+  );
+  const saved = readModeBeforePalette();
+  if (saved?.before === "system" && saved.set === appearance) setAppearanceMode(appearance);
 }
 
 /** Pure preference read: migration belongs to startup, never React render. */

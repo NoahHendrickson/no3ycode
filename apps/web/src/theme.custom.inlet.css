@@ -1,7 +1,7 @@
 /* Inlet — see `.fork/customizations.yaml#fork-inlet-theme`.
 
-   The template every Inlet colour shares (Charcoal is Figma t3-fork
-   619:6610, Green 629:8337). The chat column is a flat panel set into the
+   The template every Inlet colour shares (Figma t3-fork 619:6610). The chat
+   column is a flat panel set into the
    frame, 8px in from the window, and the open thread's row runs into
    it: the row takes the panel's fill, its right end goes square, and a bridge
    carries the fill across to the panel with two concave corners where it
@@ -29,7 +29,7 @@
      and 6px more, so the open tab's neck to the panel is short. */
   --fork-thread-tabs-overlap: calc(var(--fork-inlet-margin) + 6px);
   /* A row's hover card and the row while it is open: the popover unless a
-     colour names its own (Jungle Art keeps its sidebar's hover cream). */
+     colour names its own (Black keeps its sidebar's hover fill). */
   --fork-inlet-row-card: var(--popover);
   --fork-inlet-row-card-foreground: var(--popover-foreground);
   --fork-inlet-row-card-muted: color-mix(in srgb, var(--popover-foreground) 65%, var(--popover));
@@ -56,7 +56,7 @@
    bg-background inside it (header, transcript wrapper, composer floor, a
    panel's surface) into the panel. Its ink too: the body carries the frame's
    (index.html), which any currentColor glyph inside would otherwise take.
-   The conversation keeps its own fill, which the Jungle colours paint over. */
+   The conversation keeps its own fill. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-workspace-root] {
   --background: var(--fork-inlet-panel);
@@ -300,13 +300,10 @@
 }
 
 /* The collapsed sidebar's toggle is pinned to the window, beside the tab
-   strip on a light frame (Jungle Art's, Cream's); it takes the strip's ink,
+   strip on a light frame (Cream's); it takes the strip's ink,
    not the page's, which is light for the dark panel. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )[data-fork-has-thread-tabs]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"][data-fork-has-thread-tabs]
   [data-sidebar-control] {
   --foreground: #1c1c1a;
   --muted-foreground: #55544c;
@@ -407,16 +404,12 @@
   color: var(--fork-inlet-panel-foreground);
 }
 
-/* On a cream panel beside a dark sidebar (Green, Jungle Light, Black), the
+/* On a cream panel beside a dark sidebar (Black), the
    open row's status marks take deep shades: the sidebar's bright ones, tuned
    for its dark fill, vanish on the cream. Needs-attention stays a mid gold so
    it reads as the same amber as the other rows; keep it off burnt orange. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle-light"],
-    [data-fork-inlet-color="black"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-sidebar-version="v2"]
   :is([data-fork-thread-row][aria-current="page"], li[data-fork-split-pair][data-active]) {
   --sidebar-v2-status-working: #047857;
@@ -426,22 +419,30 @@
   --sidebar-v2-status-failed: #b91c1c;
 }
 
-/* The card is square on the side that joins the panel. */
+/* Rows round to the nav rows' 10px (CHROME_ACTION, custom/SidebarV2ChromeRows),
+   at rest, hovered and open alike; the open card is square on the side that
+   joins the panel. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-thread-row] {
+  border-radius: 10px;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [data-fork-thread-row][aria-current="page"] {
-  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+  border-radius: 10px 0 0 10px;
 }
 
 /* An open split pair (fork-split-threads) is one item: its row is the shape
    that joins the panel. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active]
   > ul {
-  border-radius: var(--fork-inlet-radius) 0 0 var(--fork-inlet-radius);
+  border-radius: 10px 0 0 10px;
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
@@ -720,51 +721,33 @@
   }
 }
 
-/* Green, Jungle Art and Black draw the mode chip neutral (black 16%, black
-   ink) where Charcoal and Cream keep each mode's hue; the light colours also
-   take the dark palettes' flat red stop button. */
+/* Black draws the mode chip neutral (black 16%, black ink) where Cream keeps
+   each mode's hue, and takes the dark palettes' flat red stop button. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="jungle-light"],
-    [data-fork-inlet-color="black"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-mode-chip] {
   background: rgb(0 0 0 / 16%);
   color: var(--foreground);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="jungle-light"],
-    [data-fork-inlet-color="black"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
   background: rgb(0 0 0 / 22%);
   color: var(--foreground);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="green"],
-    [data-fork-inlet-color="jungle-light"],
-    [data-fork-inlet-color="black"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-action="stop"] {
   background: #ea3150;
   box-shadow: none;
 }
 
-/* A colour whose frame is not --background (Jungle Art's and Cream's cream
-   frames on dark; see theme.custom.palettes.css) names it --fork-inlet-frame,
+/* A colour whose frame is not --background (Cream's cream frame on dark;
+   see theme.custom.palettes.css) names it --fork-inlet-frame,
    and the inset and the column's wrapper paint it — only round a chat column:
    a page without one is inked for the stage. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )[data-fork-has-chat-column]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"][data-fork-has-chat-column]
   [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-frame);
 
@@ -784,14 +767,11 @@
   border-radius: var(--fork-inlet-radius);
   overflow: hidden;
   background: var(--background);
-  /* The body is inked for the frame, which on Green is white. */
+  /* The body is inked for the frame, not the panel. */
   color: var(--foreground);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )[data-fork-has-stage-card]
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"][data-fork-has-stage-card]
   [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-frame);
 }
@@ -939,8 +919,7 @@
 
     /* On close the timeline outlives the session (ForkDictationControl's
        TIMELINE_CLOSE_MS) to retract into the mic, speeding up as it goes; the
-       pill's padding closes with it and its fill (and Jungle Art's white ink)
-       fades as it lands, one move. */
+       pill's padding closes with it and its fill fades as it lands, one move. */
     &[data-fork-dictation-closing] {
       transition:
         background-color 200ms ease-in 100ms,
@@ -1004,14 +983,11 @@
   opacity: 1;
 }
 
-/* On the cream frames the chrome rows' icons (Search, New agent, Add a
+/* On Cream's frame the chrome rows' icons (Search, New agent, Add a
    project, Usage, Automations) are black at 65%, under their full-ink
-   labels. Settings' nav reuses the rows: on Jungle Art it is cream too, but
-   on Cream it sits on the dark panel and keeps the panel's icon ink. */
+   labels. Settings' nav reuses the rows, but there it sits on the dark
+   panel and keeps the panel's icon ink. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="jungle"]
-  [data-fork-chrome-row]
-  svg,
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"]
   [data-sidebar-version="v2"]
   [data-fork-chrome-row]
@@ -1020,12 +996,9 @@
 }
 
 /* The footer's icons (Settings, Pull Requests) ink from
-   --sidebar-icon-color, which the frame's palette tints green; same 65%. */
+   --sidebar-icon-color; same 65%. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:is(
-    [data-fork-inlet-color="jungle"],
-    [data-fork-inlet-color="cream"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"]
   [data-slot="sidebar-footer"] {
   --sidebar-icon-color: rgb(0 0 0 / 65%);
 }
@@ -1095,9 +1068,7 @@
    held, so a press keeps the hover fill. A lit row stays lit; an open menu's trigger is
    the morph's to fill. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(
-    [data-fork-inlet-color="charcoal"]
-  )
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [class*="active:bg-sidebar-row-active"]:active:not(
     [data-active="true"],
@@ -1119,8 +1090,8 @@
 }
 
 /* The effort slider keeps its flat fill and dots on every Inlet colour (INLET-STYLE-RULES:
-   "the original dots and fill"), not the provider dither the other themes draw. Black and
-   Jungle repaint the fill in their own colour over this. */
+   "the original dots and fill"), not the provider dither the other themes draw. Black
+   repaints the fill in its own colour over this. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   & [data-fork-effort-dither] {
     display: none;
