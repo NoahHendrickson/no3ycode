@@ -57,24 +57,26 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toContain('term: "Model"');
     // One list of rows gates the chevron and the well, so a card with nothing to list offers neither.
     expect(group).toMatch(
-      /details\.length === 0 \? null : \(\s*<Tooltip|details\.length === 0 \? null : \(\s*<button/u,
+      /details\.length === 0 \? \(\s*<span[\s\S]*?\) : \(\s*\/\/[^\n]*\n\s*<button/u,
     );
     expect(group).toMatch(/details\.length === 0 \? null : \(\s*<dl/u);
     // The fork mark stays for Codex and Claude; upstream's avatar over it draws only the badge.
     expect(group).toContain('iconClassName="hidden"');
-    // The well is open while the subagent works, unless the chevron was used.
+    // The well is open while the subagent works, unless the header strip was used.
     expect(group).toContain('const open = chosenOpen ?? member.mark === "working";');
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
-    // A member with a thread of its own opens it from the header.
-    expect(group).toContain("return () => onOpenThread(childThreadId);");
-    // …one strip, ending in the arrow; no second button opens it.
+    // The header strip, chevron included, is the disclosure…
     expect(group).toMatch(
-      /data-fork-subagent-member=""[\s\S]*?onClick=\{openThread\}[\s\S]*?<ArrowUpRightIcon[\s\S]*?<\/button>/u,
+      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronRightIcon[\s\S]*?<\/button>/u,
     );
-    expect(group).not.toContain("data-fork-subagent-open");
+    // …and a member with a thread of its own opens it from the arrow after it.
+    expect(group).toContain("return () => onOpenThread(childThreadId);");
+    expect(group).toMatch(
+      /data-fork-subagent-open=""[\s\S]*?onClick=\{openThread\}[\s\S]*?<ArrowUpRightIcon/u,
+    );
     // The buttons' hover is scoped to the card, so a completion notice outside a tree gets it too.
     expect(theme).toMatch(
-      /\[data-fork-subagent-card\]\s*:is\(\s*button\[data-fork-subagent-member\],/u,
+      /\[data-fork-subagent-card\]\s*:is\(\s*button\[data-fork-subagent-toggle\],\s*button\[data-fork-subagent-open\]\)/u,
     );
   });
 });

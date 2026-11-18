@@ -7,10 +7,10 @@
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
  * above one card per member. A card is a header (the provider's mark in a tile
  * with the status mark in its corner, the title over the status word, the
- * elapsed time, an open-thread arrow, a chevron) and a well underneath: the task it was given, what
+ * elapsed time, a chevron, an open-thread arrow) and a well underneath: the task it was given, what
  * it is doing now or what it found, and the model. The well starts open while
- * the subagent works and folds once it settles, unless the chevron was used.
- * The header strip, arrow included, opens the subagent's thread when it has one.
+ * the subagent works and folds once it settles, unless the header was used.
+ * The header strip, chevron included, opens and folds the well; the arrow opens the thread.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -42,6 +42,7 @@ import {
 import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
 import { environmentThreadDetails } from "~/state/threads";
@@ -398,44 +399,51 @@ export function ForkSubagentCardView(props: {
       className="w-full min-w-0 overflow-clip rounded-[8px] border border-border bg-card"
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
-        {openThread === null ? (
+        {details.length === 0 ? (
           <span className="flex min-w-0 flex-1 items-center gap-2">
             {identity}
             {elapsed}
           </span>
         ) : (
-          // One place opens the thread: the strip itself, ending in the arrow that says so.
-          <button
-            type="button"
-            data-fork-subagent-member=""
-            aria-label={`Open ${member.title} thread`}
-            aria-description={
-              remote !== undefined
-                ? `${member.statusLabel} · on ${remote.label}`
-                : member.statusLabel
-            }
-            onClick={openThread}
-            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-          >
-            {identity}
-            {elapsed}
-            <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
-              <ArrowUpRightIcon className="size-3.5" />
-            </span>
-          </button>
-        )}
-        {details.length === 0 ? null : (
+          // The strip opens and folds the well, ending in the chevron that says so.
           <button
             type="button"
             data-fork-subagent-toggle=""
             aria-expanded={open}
             aria-controls={wellId}
             aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
+            aria-description={
+              remote !== undefined
+                ? `${member.statusLabel} · on ${remote.label}`
+                : member.statusLabel
+            }
             onClick={onToggle}
-            className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           >
-            <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
+            {identity}
+            {elapsed}
+            <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
+              <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
+            </span>
           </button>
+        )}
+        {openThread === null ? null : (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  data-fork-subagent-open=""
+                  aria-label={`Open ${member.title} thread`}
+                  onClick={openThread}
+                  className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+                />
+              }
+            >
+              <ArrowUpRightIcon aria-hidden className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipPopup side="top">Open thread</TooltipPopup>
+          </Tooltip>
         )}
       </div>
       {details.length === 0 ? null : (
