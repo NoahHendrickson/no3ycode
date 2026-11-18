@@ -345,15 +345,18 @@
 }
 
 /* A focused text field shows its edge at full strength, 1px, in place of the outset ring. An
-   invalid one keeps upstream's destructive border. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-slot="input-control"], [data-slot="textarea-control"]):has(
-    :is(input, textarea):focus-visible
-  ) {
-  outline: none;
+   invalid one keeps upstream's destructive border. Forced colours repaint borders, so the
+   outline stays there as the only visible focus. */
+@media (forced-colors: none) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+    :is([data-slot="input-control"], [data-slot="textarea-control"]):has(
+      :is(input, textarea):focus-visible
+    ) {
+    outline: none;
 
-  &:not(:has([aria-invalid="true"])) {
-    border-color: var(--ring);
+    &:not(:has([aria-invalid="true"])) {
+      border-color: var(--ring);
+    }
   }
 }
 
