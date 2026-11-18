@@ -67,14 +67,15 @@ describe("fork-tabs", () => {
       "../custom/scheduled/ScheduledTaskEditor.tsx",
       "../components/settings/ScheduledTasksSettings.tsx",
     ]) {
-      const source = NodeFS.readFileSync(
-        NodeURL.fileURLToPath(new URL(path, import.meta.url)),
-        "utf8",
+      const source = read(path);
+      const label = source.indexOf('aria-label="Days to run"');
+      const tag = source.slice(
+        source.lastIndexOf("<ToggleGroup", label),
+        source.indexOf(">", label),
       );
-      expect(source, path).toMatch(
-        /multiple\s+(?:\/\*[^*]*\*\/\s+)?(?:\/\/[^\n]*\n\s+)?variant="segmented"/u,
-      );
-      expect(source, path).not.toMatch(/multiple\s+variant="outline"/u);
+      expect(tag, path).toContain("multiple");
+      // ToggleGroup is a segmented strip at its own size unless a variant or size says otherwise.
+      expect(tag, path).not.toMatch(/variant="(?!segmented")|size=/u);
     }
   });
 });

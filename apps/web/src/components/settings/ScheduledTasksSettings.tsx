@@ -2109,7 +2109,6 @@ function ScheduledTaskEditorForm({
                   /* fork:begin fork-tabs — see .fork/customizations.yaml#fork-tabs */
                   variant="segmented"
                   /* fork:end fork-tabs */
-                  size="sm"
                   aria-label="Days to run"
                   value={[...draft.weekdays].map(String)}
                   onValueChange={(values) => {
