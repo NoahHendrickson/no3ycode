@@ -7598,6 +7598,8 @@
   watch:
     # A vertical edge, so the digest's rule resizes through the shared drag.
     - apps/web/src/hooks/useResizeDrag.ts
+    # Its viewport inherits the max-height the drag sets, and fades the edge the cards run past.
+    - apps/web/src/components/ui/scroll-area.tsx
   verify:
     - apps/web/src/custom/bots/botDigestSections.test.ts
     - apps/web/src/custom/bots/botDigestItemLinks.test.ts

@@ -798,8 +798,10 @@
 
 /* Focus recolours that same hairline rather than adding a ring, so the box
    keeps its 1px weight in both states and nothing reflows when the caret
-   lands. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-surface]:focus-within {
+   lands. A bot digest's ask wears the surface around a Reply button, not a
+   caret, so focusing that button leaves its hairline alone. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-surface]:focus-within:not([data-fork-bot-digest] *) {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border-focus);
 }
 

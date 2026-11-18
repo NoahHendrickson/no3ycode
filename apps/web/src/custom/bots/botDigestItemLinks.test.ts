@@ -2,7 +2,7 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import { EnvironmentId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveBotDigestLinks } from "./botDigestItemLinks";
+import { resolveBotDigestLinks, waitingQuestionThread } from "./botDigestItemLinks";
 import { parseBotDigest } from "./botDigestSections";
 
 const environmentId = EnvironmentId.make("env-1");
@@ -87,5 +87,16 @@ describe("resolveBotDigestLinks", () => {
     expect(links.pullRequests).toEqual([
       { url: branch.url, number: 5, snapshot: null, branch, thread: docs },
     ]);
+  });
+});
+
+describe("waitingQuestionThread", () => {
+  it("picks the linked thread waiting on the owner's answer, and none when no thread waits", () => {
+    const idle = shell("thread-1", { hasPendingUserInput: false });
+    const asking = shell("thread-2", { hasPendingUserInput: true });
+    const line =
+      "Round half-even? [Billing](t3-thread://v2/env-1/thread-1) [Rounding](t3-thread://v2/env-1/thread-2)";
+    expect(waitingQuestionThread(linksOf(line, [idle, asking]))).toBe(asking);
+    expect(waitingQuestionThread(linksOf(line, [idle]))).toBeUndefined();
   });
 });

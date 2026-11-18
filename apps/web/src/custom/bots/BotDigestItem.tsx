@@ -4,7 +4,7 @@
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { EnvironmentId } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinks";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -20,6 +20,7 @@ import {
   type BotDigestLinks,
   type BotPullRequest,
   resolveBotDigestLinks,
+  waitingQuestionThread,
 } from "./botDigestItemLinks";
 import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import type { BotDigestItem } from "./botDigestSections";
@@ -33,13 +34,10 @@ export interface BotDigestThreads {
 const chipClassName =
   "flex min-w-0 cursor-pointer items-center gap-1 rounded-sm hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none";
 
-function useOpenThread() {
+export function useOpenThread() {
   const navigate = useNavigate();
-  return (shell: EnvironmentThreadShell) =>
-    void navigate({
-      to: "/$environmentId/$threadId",
-      params: buildThreadRouteParams(scopeThreadRef(shell.environmentId, shell.id)),
-    });
+  return (ref: ScopedThreadRef) =>
+    void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
 }
 
 /** A line's links, read against the panel's threads, and its words: the bot's, else the title
@@ -51,7 +49,7 @@ export function resolveBotDigestLine(
 ) {
   const links = resolveBotDigestLinks(item, threads.shells, environmentId);
   const text = item.text || links.threads.find((entry) => entry.shell)?.shell?.title || "";
-  return { text, links };
+  return { text, links, question: waitingQuestionThread(links) };
 }
 
 export function BotDigestWords(props: { readonly text: string }) {
@@ -115,7 +113,7 @@ function BotDigestThreadChip(props: {
     <button
       type="button"
       className={cn(chipClassName, "max-w-full")}
-      onClick={() => openThread(shell)}
+      onClick={() => openThread(scopeThreadRef(shell.environmentId, shell.id))}
       data-testid="bot-digest-thread"
     >
       <span className="flex h-4 w-3 shrink-0 items-center justify-center">
@@ -147,8 +145,8 @@ function BotDigestPullRequestChip(props: {
             onClick={(event) => {
               const ref =
                 thread === undefined ? undefined : scopeThreadRef(thread.environmentId, thread.id);
-              if (openPullRequest(event, pullRequest.url, ref) && thread !== undefined) {
-                openThread(thread);
+              if (openPullRequest(event, pullRequest.url, ref) && ref !== undefined) {
+                openThread(ref);
               }
             }}
             data-testid="bot-digest-pull-request"

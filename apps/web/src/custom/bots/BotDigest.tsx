@@ -5,7 +5,6 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
-import { useNavigate } from "@tanstack/react-router";
 import { AsyncResult, Atom } from "effect/reactivity";
 import * as Schema from "effect/Schema";
 import { ReplyIcon, XIcon } from "lucide-react";
@@ -23,7 +22,6 @@ import { useResizeDrag } from "~/hooks/useResizeDrag";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
 import { revisionedQuery } from "~/state/revisionedQuery";
-import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import {
@@ -31,6 +29,7 @@ import {
   type BotDigestThreads,
   BotDigestWords,
   resolveBotDigestLine,
+  useOpenThread,
 } from "./BotDigestItem";
 import {
   type BotDigestItem,
@@ -128,6 +127,7 @@ export function BotDigest(props: {
       writeLocalStorageValue(dismissedKey, kept, NO_DISMISSED, DismissedKeys);
     }
   }, [contents, dismissedKey]);
+  const openThread = useOpenThread();
   if (sections.length === 0) {
     return <div className={LIST_CLASS_NAME}>{props.children}</div>;
   }
@@ -135,14 +135,18 @@ export function BotDigest(props: {
     (section) => section.kind === "needs-you" || !dismissed.includes(botDigestSectionKey(section)),
   );
   const hiddenCount = sections.length - shown.length;
-  // A request whose thread waits on a question opens that thread to answer it instead.
+  // A request whose linked thread waits on a question opens that thread to answer it there.
   const reply = (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => {
     if (props.sheet) closeBotThreadsPanel(botRef);
-    if (question !== undefined) return;
+    if (question !== undefined) {
+      openThread(scopeThreadRef(question.environmentId, question.id));
+      return;
+    }
     const store = useComposerDraftStore.getState();
     const existing = store.getComposerDraft(botRef)?.prompt.trimEnd() ?? "";
     const quote = `> ${item.source}\n\n`;
     store.setPrompt(botRef, existing === "" ? quote : `${existing}\n\n${quote}`);
+    openThread(botRef);
   };
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -304,15 +308,11 @@ function BotDigestRequests(props: {
   readonly onReply: (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => void;
 }) {
   const { section, botRef } = props;
-  const navigate = useNavigate();
   return (
     <BotDigestSectionFrame section={section}>
       <ul className="flex flex-col gap-2">
         {section.items.map((item) => {
           const line = resolveBotDigestLine(item, props.threads, botRef.environmentId);
-          const question = line.links.threads.find(
-            (entry) => entry.shell?.hasPendingUserInput,
-          )?.shell;
           return (
             <li key={item.source}>
               <BotDigestComposerFrame
@@ -320,17 +320,7 @@ function BotDigestRequests(props: {
                 action={
                   <Button
                     size="xs"
-                    onClick={() => {
-                      props.onReply(item, question);
-                      void navigate({
-                        to: "/$environmentId/$threadId",
-                        params: buildThreadRouteParams(
-                          question === undefined
-                            ? botRef
-                            : scopeThreadRef(question.environmentId, question.id),
-                        ),
-                      });
-                    }}
+                    onClick={() => props.onReply(item, line.question)}
                     data-testid="bot-digest-reply"
                   >
                     <ReplyIcon />
