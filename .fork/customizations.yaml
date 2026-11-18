@@ -7716,16 +7716,19 @@
     8% track inset 2px with 8px corners (so Tabs' icon tabs are 24 / 28 / 32px
     squares), the pick a 12% wash behind an 8% line at 6px corners (raised toward
     white behind a 16% line on the light tones), every label at full ink in 12px
-    regular type, word tabs with 6px sides, and the focus ring drawn inside the tab
-    because the track clips. Each strip keeps its own height. The collapsed
-    sidebar's thread tabs are not a strip and keep their own look. Glass and Inlet
-    keep their own dressing.
+    regular type (0.75rem, so the interface font size scales it), word tabs with
+    6px sides (an aria-label marks an icon tab; the music strip's equal-width tabs
+    keep theirs), disabled tabs without the hover fill, and the focus ring drawn
+    inside the tab because the track clips. Each strip keeps its own height. The
+    collapsed sidebar's thread tabs are not a strip and keep their own look, and
+    Design Mode's property fields (SegmentField) keep theirs. Glass and Inlet keep
+    their own dressing.
   tier: 1
   files:
     - apps/web/src/custom/Tabs.tsx
     - apps/web/src/custom/SidebarModeTabs.tsx
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
-    # Shared; this entry owns the Tabs block and the page rule's exclusion.
+    # Shared; this entry owns the tab strip block and its --basic-tab-* tokens.
     - apps/web/src/theme.custom.basic.css
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts

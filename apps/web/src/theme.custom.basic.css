@@ -127,6 +127,8 @@
   --basic-raised-quiet: var(--basic-lift-1);
   --basic-composer-vessel: var(--basic-lift-2);
   --basic-composer-prompt: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-lift-2));
+  --basic-tab-pick: var(--basic-wash-3);
+  --basic-tab-line: var(--basic-wash-2);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) {
@@ -140,6 +142,9 @@
   --basic-raised-quiet: color-mix(in srgb, #ffffff 60%, var(--basic-base));
   --basic-composer-vessel: var(--basic-lift-1);
   --basic-composer-prompt: var(--basic-raised);
+  /* A black wash reads as a grey slab, so a picked tab lifts toward white behind a 16% line. */
+  --basic-tab-pick: var(--basic-raised);
+  --basic-tab-line: var(--basic-wash-4);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darkest-warm"] {
@@ -276,9 +281,10 @@
 
 /* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
    740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
-   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink, 12px
-   regular type. Each strip keeps its own height; Tabs.tsx sizes its track and tabs fill it. The
-   collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
+   regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
+   height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
+   The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
    Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
@@ -286,27 +292,21 @@
   border-radius: 8px;
   background-color: var(--basic-wash-2);
 
-  /* A tooltip renames a toggle's data-slot, so a segmented toggle is matched by its variant too. */
-  &
-    > :is(
-      [data-fork-segmented-tab],
-      [data-slot="toggle"],
-      [data-slot="tooltip-trigger"][data-variant="segmented"]
-    ) {
+  & > * {
     border-radius: 6px;
     background-clip: border-box;
     box-shadow: none;
     color: var(--basic-text);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 400;
 
-    &:hover:not([data-pressed]) {
+    &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
       background-color: var(--basic-wash-1);
     }
 
     &[data-pressed] {
-      border-color: var(--basic-wash-2);
-      background-color: var(--basic-wash-3);
+      border-color: var(--basic-tab-line);
+      background-color: var(--basic-tab-pick);
     }
 
     /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
@@ -315,37 +315,15 @@
     }
   }
 
-  /* Word segments take 6px sides in every family. Icon segments carry an aria-label (their only
-     name) and keep their own width. */
-  &
-    > :is(
-      [data-fork-segmented-tab],
-      [data-slot="toggle"],
-      [data-slot="tooltip-trigger"][data-variant="segmented"]
-    ):not([data-fork-tab="icon"], [aria-label]) {
+  /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
+     that keep their own width; the music strip's equal-width tabs keep their tight sides. */
+  & > :not([aria-label], [data-fork-music-strip] *) {
     padding-inline: 6px;
   }
 
   /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
-    box-shadow: inset 0 0 0 1px var(--basic-wash-2);
-  }
-}
-
-/* A black wash reads as a grey slab on the light tones, so the pick lifts toward white, and
-   its line darkens to 16% because 8% vanishes against the white. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])
-  > :is(
-    [data-fork-segmented-tab],
-    [data-slot="toggle"],
-    [data-slot="tooltip-trigger"][data-variant="segmented"]
-  )[data-pressed] {
-  border-color: var(--basic-wash-4);
-  background-color: var(--basic-raised);
-
-  &[data-fork-segmented-tab]:not([data-fork-tab]) {
-    box-shadow: inset 0 0 0 1px var(--basic-wash-4);
+    box-shadow: inset 0 0 0 1px var(--basic-tab-line);
   }
 }
 
