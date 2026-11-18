@@ -1697,6 +1697,10 @@
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
+    Switches are green when on (--success) with a white thumb in both states, and a
+    switch whose scoped settings disagree draws as off; aria-checked="mixed" still
+    reports it. A focused text field (Input, Textarea) shows a 1px edge in --ring
+    instead of the outset focus ring; an invalid one keeps its destructive border.
   tier: 2
   files:
     - apps/web/src/theme.custom.basic.css

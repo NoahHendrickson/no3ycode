@@ -326,6 +326,37 @@
   background-color: var(--basic-raised);
 }
 
+/* Switches (Figma kit, Nov 18): on is the success green, and the thumb is white in both states,
+   because a grey thumb reads as disabled. Settings whose scopes disagree draw as off rather than
+   half-way; aria-checked="mixed" still tells a screen reader. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="switch"] {
+  &[data-checked] {
+    background-color: var(--success);
+  }
+
+  & > [data-slot="switch-thumb"] {
+    background-color: #fff;
+  }
+
+  &[data-mixed] > [data-slot="switch-thumb"] {
+    translate: none;
+    opacity: 1;
+  }
+}
+
+/* A focused text field shows its edge at full strength, 1px, in place of the outset ring. An
+   invalid one keeps upstream's destructive border. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  :is([data-slot="input-control"], [data-slot="textarea-control"]):has(
+    :is(input, textarea):focus-visible
+  ) {
+  outline: none;
+
+  &:not(:has([aria-invalid="true"])) {
+    border-color: var(--ring);
+  }
+}
+
 /* Popups sit on their 8% line with one soft, quiet shadow in place of upstream's
    heavy ones: menus, popovers, selects, comboboxes, tooltips and the row hover card.
    Popovers match through .dropdown-glass: a panel popover's popup is a bare square
