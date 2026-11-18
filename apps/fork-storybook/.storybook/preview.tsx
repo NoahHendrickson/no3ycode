@@ -66,8 +66,8 @@ const preview: Preview = {
   },
   initialGlobals: { tone: DEFAULT_BASIC_TONES.dark },
   // The tone moves the way Settings › Appearance moves it, so the root carries exactly the
-  // attributes and classes the app would. State grids need their forced copies of the hover and
-  // focus rules, installed here once per sheet rather than from a render.
+  // attributes and classes the app would. State grids force hover and focus
+  // through selectors extended in place, once per sheet rather than from a render.
   beforeEach: ({ globals }) => {
     setForkBasicTone(storyTone(globals), setTheme);
     forceStateStyles();

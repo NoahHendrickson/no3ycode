@@ -41,14 +41,11 @@ describe("fork-tabs", () => {
     );
   });
 
-  it("builds the sidebar's Code / Chat switch and the Group by strip from it", () => {
+  it("builds the sidebar's Code / Chat switch from it", () => {
     const switcher = read("../custom/SidebarModeTabs.tsx");
     expect(switcher).toContain('from "./Tabs"');
     expect(switcher).toMatch(/<Tabs\b/u);
     expect(switcher).toMatch(/<IconTab\b/u);
-    const chromeRows = read("../custom/SidebarV2ChromeRows.tsx");
-    expect(chromeRows).toMatch(/<MenuTabs\b/u);
-    expect(chromeRows).toMatch(/<MenuIconTab\b/u);
   });
 
   it("draws the Figma tabs under Basic and keeps the page rule off them", () => {

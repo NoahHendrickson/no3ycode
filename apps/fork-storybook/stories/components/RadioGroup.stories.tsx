@@ -3,16 +3,10 @@ import { LaptopIcon, ServerIcon } from "lucide-react";
 
 import { Radio, RadioGroup } from "~/components/ui/radio-group";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix } from "../Specimen.tsx";
 
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const VALUES = ["unchecked", "checked", "invalid"] as const;
 
 const meta = {

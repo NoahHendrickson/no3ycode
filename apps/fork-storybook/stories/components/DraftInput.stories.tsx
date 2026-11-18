@@ -5,18 +5,12 @@ import { SettingsGroup } from "~/components/settings/SettingsGroup";
 import { SettingsRow } from "~/components/settings/settingsLayout";
 import { DraftInput, type DraftInputProps } from "~/components/ui/draft-input";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const SIZES = ["sm", "compact", "default", "lg"] as const;
 const FONTS = ["default", "mono"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const CONTENT = ["empty", "saved", "mixed"] as const;
 
 // Commits land in local state, the way a settings update would echo back, so the saved value and

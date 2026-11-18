@@ -4,18 +4,12 @@ import { Columns2Icon, MoonIcon, Rows3Icon, SunIcon } from "lucide-react";
 
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const VARIANTS = ["segmented", "default", "outline", "ghost", "pill"] as const;
 const SIZES = ["segmented", "xs", "compact", "sm", "default", "lg"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 
 const PR_TABS = [
   { value: "summary", label: "Summary" },

@@ -1,49 +1,39 @@
 // One element hovers or holds focus at a time, so each :hover / :focus-visible / :focus-within /
-// :active rule is copied in place with the pseudo-class read as an attribute (same specificity
-// and cascade spot).
+// :active in a selector also accepts an attribute, :is(:hover, [data-story-hover]): same specificity
+// and cascade spot, and real hover and focus keep working (inside :not() as well).
 // An escaped `\:hover` belongs to a Tailwind class name, so it stays.
 const STATES = [
-  { pseudo: /(?<!\\):hover(?![-\w])/g, attribute: "[data-story-hover]" },
-  { pseudo: /(?<!\\):focus-visible(?![-\w])/g, attribute: "[data-story-focus]" },
-  { pseudo: /(?<!\\):focus-within(?![-\w])/g, attribute: "[data-story-focus]" },
-  { pseudo: /(?<!\\):active(?![-\w])/g, attribute: "[data-story-active]" },
+  { pseudo: /(?<!\\):hover(?![-\w])/g, union: ":is(:hover, [data-story-hover])" },
+  { pseudo: /(?<!\\):focus-visible(?![-\w])/g, union: ":is(:focus-visible, [data-story-focus])" },
+  { pseudo: /(?<!\\):focus-within(?![-\w])/g, union: ":is(:focus-within, [data-story-focus])" },
+  { pseudo: /(?<!\\):active(?![-\w])/g, union: ":is(:active, [data-story-active])" },
 ] as const;
 // Quoted strings are attribute values (Tailwind's `[class*="has-[input:focus-visible]…"]`), never
 // pseudo-classes; split on them so only the text between quotes is rewritten.
 const QUOTED = /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/;
 const done = new WeakSet<CSSStyleSheet>();
 
-type RuleOwner = {
-  readonly cssRules: CSSRuleList;
-  insertRule(rule: string, index: number): number;
-};
-
-function forcedCopy(cssText: string): string | null {
-  const copy = cssText
+function forcedSelector(selector: string): string | null {
+  const rewritten = selector
     .split(QUOTED)
     .map((part, index) => {
       if (index % 2 === 1) return part;
-      let rewritten = part;
-      for (const { pseudo, attribute } of STATES) rewritten = rewritten.replace(pseudo, attribute);
-      return rewritten;
+      let next = part;
+      for (const { pseudo, union } of STATES) next = next.replace(pseudo, union);
+      return next;
     })
     .join("");
-  return copy === cssText ? null : copy;
+  return rewritten === selector ? null : rewritten;
 }
 
-function copyStateRules(owner: RuleOwner) {
-  // Backwards, so a copy never shifts a rule still to be read.
-  for (let index = owner.cssRules.length - 1; index >= 0; index--) {
-    const rule = owner.cssRules[index]!;
-    if ("cssRules" in rule && "insertRule" in rule) copyStateRules(rule as unknown as RuleOwner);
-    if (!(rule instanceof CSSStyleRule)) continue;
-    const copy = forcedCopy(rule.cssText);
-    if (!copy) continue;
-    try {
-      owner.insertRule(copy, index + 1);
-    } catch {
-      // A selector the browser will not parse twice is one this page can do without.
+function rewriteStateRules(rules: CSSRuleList) {
+  for (const rule of rules) {
+    if (rule instanceof CSSStyleRule) {
+      const selector = forcedSelector(rule.selectorText);
+      // A selector the browser rejects (a pseudo-element before :is()) is left as it was.
+      if (selector) rule.selectorText = selector;
     }
+    if ("cssRules" in rule) rewriteStateRules(rule.cssRules as CSSRuleList);
   }
 }
 
@@ -54,7 +44,7 @@ export function forceStateStyles() {
     if (done.has(sheet)) continue;
     done.add(sheet);
     try {
-      copyStateRules(sheet);
+      rewriteStateRules(sheet.cssRules);
     } catch {
       // A cross-origin sheet cannot be read; none of the app's are.
     }
