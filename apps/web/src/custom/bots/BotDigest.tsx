@@ -25,7 +25,12 @@ import { revisionedQuery } from "~/state/revisionedQuery";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
-import { BotDigestLine, type BotDigestThreads } from "./BotDigestItem";
+import {
+  BotDigestLinkRow,
+  type BotDigestThreads,
+  BotDigestWords,
+  resolveBotDigestLine,
+} from "./BotDigestItem";
 import {
   type BotDigestItem,
   type BotDigestSection,
@@ -206,19 +211,13 @@ export function BotDigest(props: {
   );
 }
 
-function sectionTestId(section: BotDigestSection): string {
-  return `bot-digest-${section.title.toLowerCase().replace(/\W+/g, "-")}`;
-}
-
-/** New or In progress: its label over one card, put away with the card's X. */
-function BotDigestStatusCard(props: {
+/** A section's label and count above its cards. */
+function BotDigestSectionFrame(props: {
   readonly section: BotDigestSection;
-  readonly botRef: ScopedThreadRef;
-  readonly threads: BotDigestThreads;
-  readonly onDismiss: () => void;
+  readonly children: ReactNode;
 }) {
   const { section } = props;
-  const testId = sectionTestId(section);
+  const testId = `bot-digest-${section.title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
     <section className="flex flex-col gap-1" data-testid={`${testId}-card`}>
       <div className="flex h-7 items-center px-1">
@@ -226,17 +225,57 @@ function BotDigestStatusCard(props: {
           {section.title}
         </SidebarV2SectionLabel>
       </div>
+      {props.children}
+    </section>
+  );
+}
+
+/** Drawn as the chat composer by wearing its stamps, so each theme paints it as its composer:
+    `prompt` in the prompt surface, `children` on the vessel floor beneath. */
+function BotDigestComposerFrame(props: {
+  readonly prompt: ReactNode;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
+      {props.prompt === null ? null : (
+        <div data-fork-composer-box="true">
+          <div data-fork-composer-surface="true" className="px-3 py-2.5">
+            {props.prompt}
+          </div>
+        </div>
+      )}
+      <div className="py-2 pr-2 pl-3">{props.children}</div>
+    </div>
+  );
+}
+
+/** New or In progress: one card, put away with its X. */
+function BotDigestStatusCard(props: {
+  readonly section: BotDigestSection;
+  readonly botRef: ScopedThreadRef;
+  readonly threads: BotDigestThreads;
+  readonly onDismiss: () => void;
+}) {
+  const { section } = props;
+  const { environmentId } = props.botRef;
+  return (
+    <BotDigestSectionFrame section={section}>
       <div className={`${CARD_CLASS_NAME} flex items-start gap-2 py-2.5 pr-2 pl-3`}>
         <ul className="flex min-w-0 flex-1 flex-col gap-2">
-          {section.items.map((item) => (
-            <li key={item.source} className="flex flex-col gap-2">
-              <BotDigestLine
-                item={item}
-                environmentId={props.botRef.environmentId}
-                threads={props.threads}
-              />
-            </li>
-          ))}
+          {section.items.map((item) => {
+            const line = resolveBotDigestLine(item, props.threads, environmentId);
+            return (
+              <li key={item.source} className="flex flex-col gap-2">
+                {line.text === "" ? null : <BotDigestWords text={line.text} />}
+                <BotDigestLinkRow
+                  links={line.links}
+                  environmentId={environmentId}
+                  localVisits={props.threads.localVisits}
+                />
+              </li>
+            );
+          })}
         </ul>
         <Button
           aria-label={`Dismiss ${section.title}`}
@@ -247,11 +286,11 @@ function BotDigestStatusCard(props: {
           <XIcon />
         </Button>
       </div>
-    </section>
+    </BotDigestSectionFrame>
   );
 }
 
-/** Needs you: its label over a card per request, each with a Reply that quotes it to the bot. */
+/** Needs you: a card per request, each with a Reply that quotes it to the bot. */
 function BotDigestRequests(props: {
   readonly section: BotDigestSection;
   readonly botRef: ScopedThreadRef;
@@ -260,46 +299,42 @@ function BotDigestRequests(props: {
 }) {
   const { section, botRef } = props;
   const navigate = useNavigate();
-  const testId = sectionTestId(section);
   return (
-    <section className="flex flex-col gap-1" data-testid={`${testId}-card`}>
-      <div className="flex h-7 items-center px-1">
-        <SidebarV2SectionLabel count={section.items.length} testId={testId}>
-          {section.title}
-        </SidebarV2SectionLabel>
-      </div>
+    <BotDigestSectionFrame section={section}>
       <ul className="flex flex-col gap-2">
-        {section.items.map((item) => (
-          <li
-            key={item.source}
-            data-fork-composer-vessel="true"
-            className="flex min-w-0 flex-col rounded-lg"
-          >
-            <BotDigestLine
-              ask
-              item={item}
-              environmentId={botRef.environmentId}
-              threads={props.threads}
-              action={
-                <Button
-                  size="xs"
-                  onClick={() => {
-                    props.onReply(item);
-                    void navigate({
-                      to: "/$environmentId/$threadId",
-                      params: buildThreadRouteParams(botRef),
-                    });
-                  }}
-                  data-testid="bot-digest-reply"
-                >
-                  <ReplyIcon />
-                  Reply
-                </Button>
-              }
-            />
-          </li>
-        ))}
+        {section.items.map((item) => {
+          const line = resolveBotDigestLine(item, props.threads, botRef.environmentId);
+          return (
+            <li key={item.source}>
+              <BotDigestComposerFrame
+                prompt={line.text === "" ? null : <BotDigestWords text={line.text} />}
+              >
+                <BotDigestLinkRow
+                  links={line.links}
+                  environmentId={botRef.environmentId}
+                  localVisits={props.threads.localVisits}
+                  action={
+                    <Button
+                      size="xs"
+                      onClick={() => {
+                        props.onReply(item);
+                        void navigate({
+                          to: "/$environmentId/$threadId",
+                          params: buildThreadRouteParams(botRef),
+                        });
+                      }}
+                      data-testid="bot-digest-reply"
+                    >
+                      <ReplyIcon />
+                      Reply
+                    </Button>
+                  }
+                />
+              </BotDigestComposerFrame>
+            </li>
+          );
+        })}
       </ul>
-    </section>
+    </BotDigestSectionFrame>
   );
 }
