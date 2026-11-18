@@ -18,7 +18,7 @@ import {
   getProviderOptionCurrentValue,
 } from "@t3tools/shared/model";
 import { Slider } from "@base-ui/react/slider";
-import { type ComponentProps, type KeyboardEvent, type ReactNode, useState } from "react";
+import { type ComponentProps, type KeyboardEvent, type ReactNode, useId, useState } from "react";
 
 // Through the alias: a relative import type-checks against upstream's module,
 // not the shadow that adds `traits` and `combined`.
@@ -42,6 +42,112 @@ const ULTRATHINK_PROMPT_PREFIX = "Ultrathink:\n";
  * alignment keeps half of it inside the track, so the stops inset by as much to sit under it.
  */
 const THUMB_WIDTH = "var(--fork-effort-thumb-width)";
+
+/** An n x n Bayer matrix, n a power of two: the order its cells turn on as the level rises. */
+function bayerMatrix(size: number): ReadonlyArray<ReadonlyArray<number>> {
+  if (size === 1) return [[0]];
+  const half = size / 2;
+  const inner = bayerMatrix(half);
+  return Array.from({ length: size }, (_, y) =>
+    Array.from({ length: size }, (_, x) => {
+      const quadrant = [0, 2, 3, 1][(y < half ? 0 : 2) + (x < half ? 0 : 1)] ?? 0;
+      return (inner[y % half]?.[x % half] ?? 0) * 4 + quadrant;
+    }),
+  );
+}
+
+const DITHER_SIZE = 8;
+/** Each dither cell's side, in CSS pixels. */
+const DITHER_CELL = 2;
+/** One path per level: the cells lit at that level, the first lighting one cell, the last all. */
+const DITHER_LEVEL_PATHS = (() => {
+  const matrix = bayerMatrix(DITHER_SIZE);
+  return Array.from({ length: DITHER_SIZE * DITHER_SIZE }, (_, level) =>
+    matrix
+      .flatMap((row, y) =>
+        row.map((rank, x) =>
+          rank > level
+            ? ""
+            : `M${x * DITHER_CELL} ${y * DITHER_CELL}h${DITHER_CELL}v${DITHER_CELL}h-${DITHER_CELL}z`,
+        ),
+      )
+      .join(""),
+  );
+})();
+
+/** The effort fill's colours from the track's start to the thumb, by provider: its brand colour,
+    Antigravity's arch, and Grok's and Cursor's black and white. Any other provider's runs from
+    the done blue to the working green. */
+const EFFORT_DITHER_STOPS: Readonly<Record<string, ReadonlyArray<string>>> = {
+  claudeAgent: ["#8f3f26", "#d97757", "#f3b38e"],
+  codex: ["#3d36b8", "#8680ff"],
+  antigravity: ["#f43f7f", "#4285f4", "#1ee36e"],
+  grok: ["#ffffff", "#000000"],
+  cursor: ["#ffffff", "#000000"],
+};
+const DEFAULT_EFFORT_DITHER_STOPS = [
+  "var(--sidebar-v2-status-done)",
+  "var(--sidebar-v2-status-working)",
+];
+
+function effortDitherStops(driver: string): ReadonlyArray<string> {
+  return EFFORT_DITHER_STOPS[driver] ?? DEFAULT_EFFORT_DITHER_STOPS;
+}
+
+/** The fill as an ordered dither through `stops`: each span lays a colour and thickens the next
+    over it one band per level, the last solid at the middle of the thumb, so no fill shows past
+    the thumb's rounded corners. Static, so the fill's width is all that moves. */
+function EffortDither(props: { readonly stops: ReadonlyArray<string> }) {
+  const id = `fork-effort-dither${useId().replace(/[^\w-]/g, "")}`;
+  const spans = props.stops.slice(1).map((ink, span) => ({ ink, under: props.stops[span] ?? ink }));
+  const bands = spans.length * DITHER_LEVEL_PATHS.length;
+  return (
+    <svg
+      aria-hidden
+      data-fork-effort-dither=""
+      className="absolute inset-y-0 left-0 h-full w-[calc(100%-var(--fork-effort-thumb-width)/2)]"
+      shapeRendering="crispEdges"
+    >
+      <defs>
+        {spans.map(({ ink, under }, span) => (
+          // Pattern content takes its paint from the pattern's ancestors, not the shape it fills.
+          <g key={`${under}>${ink}`} style={{ fill: ink }}>
+            {DITHER_LEVEL_PATHS.map((path, level) => (
+              <pattern
+                key={path}
+                id={`${id}-${span}-${level}`}
+                width={DITHER_SIZE * DITHER_CELL}
+                height={DITHER_SIZE * DITHER_CELL}
+                patternUnits="userSpaceOnUse"
+              >
+                <path d={path} />
+              </pattern>
+            ))}
+          </g>
+        ))}
+      </defs>
+      {spans.map(({ ink, under }, span) => (
+        <g key={`${under}>${ink}`}>
+          <rect
+            x={`${(span / spans.length) * 100}%`}
+            width={`${100 / spans.length}%`}
+            height="100%"
+            style={{ fill: under }}
+          />
+          {DITHER_LEVEL_PATHS.map((path, level) => (
+            <rect
+              key={path}
+              x={`${((span * DITHER_LEVEL_PATHS.length + level) / bands) * 100}%`}
+              width={`${100 / bands}%`}
+              height="100%"
+              fill={`url(#${id}-${span}-${level})`}
+            />
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
 
 function replaceDescriptorCurrentValue(
   descriptors: ReadonlyArray<ProviderOptionDescriptor>,
@@ -83,6 +189,8 @@ function TraitRow(props: { label: string; children: ReactNode; asLabel?: boolean
 
 function EffortSlider(props: {
   descriptor: SelectDescriptor;
+  /** The provider's driver, whose colours the fill takes. */
+  driver: string;
   committedIndex: number;
   disabled: boolean;
   onCommit: (optionId: string) => void;
@@ -140,13 +248,15 @@ function EffortSlider(props: {
             <div
               data-fork-effort-fill
               className={cn(
-                "pointer-events-none absolute inset-y-0 left-0 rounded-[6px] bg-foreground/16",
+                "pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[6px]",
                 glideClass && ["transition-[width]", glideClass],
               )}
               style={{
                 width: `calc(${THUMB_WIDTH} + ${index / lastIndex} * (100% - ${THUMB_WIDTH}))`,
               }}
-            />
+            >
+              <EffortDither stops={effortDitherStops(props.driver)} />
+            </div>
             <div
               className="pointer-events-none absolute inset-y-0"
               style={{ insetInline: `calc(${THUMB_WIDTH} / 2)` }}
@@ -157,9 +267,9 @@ function EffortSlider(props: {
                   className={cn(
                     "absolute top-1/2 -translate-1/2 rounded-full",
                     stop.isDefault ? "h-2.5 w-0.5" : "size-1",
-                    stopIndex <= index ? "bg-foreground/50" : "bg-foreground/35",
-                    // Glass's thumb is see-through; the stop under it would show.
-                    stopIndex === index && "invisible",
+                    "bg-foreground/35",
+                    // Only the stops ahead of the thumb: the fill covers the rest.
+                    stopIndex <= index && "invisible",
                   )}
                   style={{ left: `${(stopIndex / lastIndex) * 100}%` }}
                 />
@@ -281,6 +391,7 @@ function ComposerModelTraitsPanel(props: {
         <>
           <EffortSlider
             descriptor={effortDescriptor}
+            driver={input.provider}
             committedIndex={effortStopIndex(
               effortDescriptor,
               traits.ultrathinkPromptControlled && effortDescriptor.id === primarySelectId,

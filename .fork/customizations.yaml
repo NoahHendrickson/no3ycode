@@ -5121,7 +5121,11 @@
     `reasoning` or `variant`, when it has two or more levels) is a slider over
     the model's own levels, Ultrathink included as the top stop for Claude;
     dragging previews and writes once on release. It is a 24px bar with a block
-    thumb, dot stops and a short bar at the default level. On/off traits are
+    thumb, dot stops and a short bar at the default level, the stops the thumb
+    has passed hidden under the fill. The fill is an 8x8 Bayer dither through
+    the provider's colours (EFFORT_DITHER_STOPS: Claude, Codex, Antigravity,
+    Grok, Cursor; any other runs from the done blue to the working green), solid
+    at the middle of the thumb. On/off traits are
     checkboxes and other selects are segments. Rows keep one order for every
     provider: the rest in the provider's order, then Fast Mode, then Context
     Window last. Writes match upstream's traits
@@ -6105,12 +6109,13 @@
     setup owns the line, a folded running tool renders its upstream row
     above it. Labels are one rule in forkStatusLineLabel; upstream's thought
     and reasoning previews stay in the open group. The working row has no
-    divider. The fold divider still appears at the turn head once the turn
-    ends.
+    divider, and neither does the turn's fold row ("Worked for …") once the
+    turn ends (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
     - apps/web/src/custom/ForkLiveStatusLine.tsx
+    - apps/web/src/theme.custom.css
   shadows: []
   watch:
     # Fenced import and the fold wrapping useStableRows' result.
