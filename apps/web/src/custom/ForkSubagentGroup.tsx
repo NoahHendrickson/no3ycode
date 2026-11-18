@@ -194,9 +194,32 @@ function ForkSubagentCard(props: {
     chosen.add(open ? closedKey : openKey);
     setChosenOpen(!open);
   };
+  const openThread = useOpenSubagentThread(member, onOpenThread);
+  return (
+    <ForkSubagentCardView
+      member={member}
+      titleId={titleId}
+      environmentId={environmentId}
+      open={open}
+      onToggle={toggle}
+      openThread={openThread}
+    />
+  );
+}
+
+/** @public — the card as drawn, without the timeline's state; Storybook renders it on its own. */
+export function ForkSubagentCardView(props: {
+  readonly member: ForkSubagentTreeRow;
+  readonly titleId?: string | undefined;
+  readonly environmentId: EnvironmentId;
+  readonly open: boolean;
+  readonly onToggle: () => void;
+  /** Null when the subagent has no thread to open. */
+  readonly openThread: (() => void) | null;
+}) {
+  const { member, titleId, environmentId, open, onToggle, openThread } = props;
   const wellId = useId();
   const remote = member.remote;
-  const openThread = useOpenSubagentThread(member, onOpenThread);
   const failed = member.mark === "failed";
   const model = formatForkSubagentModel(member.model);
   const identity = (
@@ -299,7 +322,7 @@ function ForkSubagentCard(props: {
           aria-expanded={open}
           aria-controls={wellId}
           aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
-          onClick={toggle}
+          onClick={onToggle}
           className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
         >
           <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
