@@ -1,6 +1,6 @@
 /** The fork palette painted now, as forkTheme.ts resolved it: stored, and on the appearance it
     sits on. Its own module, importing nothing from the app: the lucide-react shim
-    (custom/icons/lucide-phosphor) reads it, and forkTheme.ts's imports reach that shim. */
+    (custom/icons/lucide-hugeicons) reads it, and forkTheme.ts's imports reach that shim. */
 import { useSyncExternalStore } from "react";
 
 import type { ForkPalettePreference } from "./forkTheme";
@@ -37,7 +37,7 @@ export function useActiveForkPalette(): ForkPalettePreference {
   return useSyncExternalStore(subscribe, readActive, () => null);
 }
 
-/** Every fork palette draws Phosphor's fill where upstream themes draw duotone. */
+/** Every fork palette draws the icons' filled weight where upstream themes draw them stroked. */
 export function forkPaletteFillsIcons(palette: ForkPalettePreference): boolean {
   return palette !== null;
 }

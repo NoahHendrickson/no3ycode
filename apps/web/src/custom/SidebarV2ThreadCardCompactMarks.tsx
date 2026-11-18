@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
 
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 
-import { CloudIcon } from "./icons/lucide-phosphor";
+import { CloudIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2ProjectFolderMark } from "./SidebarV2ThreadCardMeta";
 
 export interface SidebarV2ThreadCardCompactMarksProps {

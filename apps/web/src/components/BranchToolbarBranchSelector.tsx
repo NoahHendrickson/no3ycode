@@ -16,7 +16,7 @@ import {
 } from "@t3tools/contracts";
 import { GitBranchIcon } from "lucide-react";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-import { ChevronDownIcon } from "../custom/icons/lucide-phosphor";
+import { ChevronDownIcon } from "../custom/icons/lucide-hugeicons";
 /* fork:end fork-composer-shell */
 import {
   useEffect,

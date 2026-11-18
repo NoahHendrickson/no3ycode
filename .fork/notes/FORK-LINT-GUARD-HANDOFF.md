@@ -275,7 +275,7 @@ and could not have. That is the same vacuity `FORK-DATA-ISOLATION-HANDOFF.md` di
 A guard that cannot fail is worse than a missing guard, because it consumes the attention a
 missing guard would have left free. Two known instances across 17 guard files, both found by a
 human reading closely, which does not scale. It does not grep out either: `trim()` / `replace()`
-elsewhere in `__fork_guards__` is all legitimate parsing (`cssRules.ts`, `phosphorIcons.test.ts`).
+elsewhere in `__fork_guards__` is all legitimate parsing (`cssRules.ts`, `lucideIconShim.test.ts`).
 
 The check that does find it is mutation: for each guard, break the property it claims to protect
 and confirm the guard goes red. #18 did this by hand for its own three assertions — broken link

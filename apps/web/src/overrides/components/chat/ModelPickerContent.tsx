@@ -28,8 +28,7 @@ import { formatProviderUpdateRequiredNotice } from "@t3tools/client-runtime/prov
 import { useNavigate } from "@tanstack/react-router";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
-import { Heart } from "@phosphor-icons/react";
-import { CheckIcon, ChevronDownIcon, SearchIcon, StarIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, HeartIcon, SearchIcon, StarIcon } from "lucide-react";
 import { getProviderStatusMessage, hasProviderSetup } from "./ProviderStatusBanner";
 import { useProviderWorkspaceSnapshotRefresh } from "./useProviderWorkspaceSnapshotRefresh";
 import { rankModelPickerSearch } from "@t3tools/client-runtime/model-search";
@@ -55,7 +54,6 @@ import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
-import { useForkIconWeight } from "~/custom/icons/lucide-phosphor";
 import {
   isProviderInstancePickerReady,
   isProviderInstancePickerVisible,
@@ -236,7 +234,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     onToggleModel,
   } = props;
   const [searchQuery, setSearchQuery] = useState("");
-  const heartWeight = useForkIconWeight("duotone");
   const contentRef = useRef<HTMLDivElement>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- publishes this picker's mount to global keydown handlers
   useLayoutEffect(() => registerModelPickerContent(), []);
@@ -877,7 +874,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       {renderScopeTab({
         target: "favorites",
         title: "Favorites",
-        icon: <Heart weight={heartWeight} className="size-4 shrink-0" aria-hidden />,
+        icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
       })}
       {providerEntries.map(renderProviderTab)}
     </div>

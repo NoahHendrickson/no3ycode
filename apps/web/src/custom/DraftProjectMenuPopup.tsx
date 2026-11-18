@@ -9,7 +9,7 @@ import {
   MenuSeparator,
 } from "~/components/ui/menu";
 import { cn } from "~/lib/utils";
-import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-phosphor";
+import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-hugeicons";
 import {
   NO_PROJECT_VALUE,
   openAddProject,

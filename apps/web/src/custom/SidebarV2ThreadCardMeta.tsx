@@ -29,7 +29,7 @@ import type { ReactNode } from "react";
 
 // Imported through the shim's own path rather than the `lucide-react` alias —
 // this file is fork-owned, so there is no upstream import site to preserve.
-import { CloudIcon, FolderIcon, GitBranchIcon, LaptopIcon } from "./icons/lucide-phosphor";
+import { CloudIcon, FolderIcon, GitBranchIcon, LaptopIcon } from "./icons/lucide-hugeicons";
 import { WorktreeIcon } from "./icons/WorktreeIcon";
 
 export interface SidebarV2ThreadCardMetaProps {

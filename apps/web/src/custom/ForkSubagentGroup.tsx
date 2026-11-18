@@ -4,7 +4,7 @@
  *
  * Replaces upstream's `V2SubagentGroup` (an avatar stack, a chevron, and a
  * bordered member box) at the one site MessagesTimeline renders a batch of
- * two or more subagents. A Phosphor TreeView leads "Kicked off N subagents" /
+ * two or more subagents. A list-tree glyph leads "Kicked off N subagents" /
  * "Ran N subagents" with the status summary and, when a member reports a
  * start time, the batch's elapsed span on the line below; the members sit
  * indented underneath, each with the sidebar's status mark (working rain, a
@@ -18,10 +18,10 @@
  * keeps it current, falling back to the item's own fields for settled
  * history. Elapsed timers self-tick through `AgentElapsed`'s DOM writes.
  */
-import { TreeView } from "@phosphor-icons/react";
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import { ListTreeIcon } from "lucide-react";
 import { memo } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
@@ -66,7 +66,7 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
       >
         <span className="flex w-full min-w-0 items-start gap-2">
           <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
-            <TreeView weight="regular" className="size-4 text-foreground" />
+            <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col items-start">
             <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>

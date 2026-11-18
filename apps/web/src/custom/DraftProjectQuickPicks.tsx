@@ -12,7 +12,7 @@ import {
   FolderIcon,
   MessageSquareDashedIcon,
   PlusIcon,
-} from "./icons/lucide-phosphor";
+} from "./icons/lucide-hugeicons";
 import { NO_PROJECT_VALUE, type DraftProjectMenuChoices } from "./useDraftProjectChoices";
 
 interface QuickPickEntry {

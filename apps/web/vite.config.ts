@@ -395,12 +395,12 @@ export default defineConfig(() => {
       tsconfigPaths: true,
       dedupe: ["react", "react-dom"],
       alias: {
-        // Fork-only: every `lucide-react` import resolves to the Phosphor
-        // duotone shim, leaving upstream import sites untouched. Mirrored in
+        // Fork-only: every `lucide-react` import resolves to the Hugeicons
+        // shim, leaving upstream import sites untouched. Mirrored in
         // `tsconfig.json` so types agree. See
         // `.fork/customizations.yaml#phosphor-duotone-icons`.
         "lucide-react": NodeURL.fileURLToPath(
-          new URL("./src/custom/icons/lucide-phosphor.tsx", import.meta.url),
+          new URL("./src/custom/icons/lucide-hugeicons.tsx", import.meta.url),
         ),
       },
     },

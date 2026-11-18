@@ -70,7 +70,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { cn } from "~/lib/utils";
 // Fork-only glyph from the shim's own path (this file is fork-owned).
-import { EllipsisVerticalIcon } from "./icons/lucide-phosphor";
+import { EllipsisVerticalIcon } from "./icons/lucide-hugeicons";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import {
   SIDEBAR_V2_ICON_BUTTON_CLASS,

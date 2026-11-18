@@ -22,9 +22,9 @@
       "~/*": ["./src/overrides/*", "./src/*"],
       "~upstream/*": ["./src/*"],
       // Fork-only: mirrors the `lucide-react` alias in `vite.config.ts` so
-      // TypeScript sees the same Phosphor duotone shim the bundler loads.
+      // TypeScript sees the same Hugeicons shim the bundler loads.
       // See `.fork/customizations.yaml#phosphor-duotone-icons`.
-      "lucide-react": ["./src/custom/icons/lucide-phosphor.tsx"]
+      "lucide-react": ["./src/custom/icons/lucide-hugeicons.tsx"]
     },
     "plugins": [
       {

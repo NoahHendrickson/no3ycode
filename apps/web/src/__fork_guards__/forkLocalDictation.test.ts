@@ -103,7 +103,7 @@ describe("fork local dictation", () => {
     expect(control).toContain('data-fork-composer-send-tone="flat"');
     expect(control).toContain('data-fork-dictation-action={busy ? "done" : "dictate"}');
     expect(control).toMatch(/busy \? \(\s*<CheckIcon/u);
-    expect(control).toMatch(/\) : \(\s*<MicrophoneIcon weight="fill"/u);
+    expect(control).toMatch(/\) : \(\s*<MicIcon weight="fill"/u);
     // The mic is a ghost in the control row's left slot, after attach and
     // before the mode controls (Full access). It stays in place while a live
     // session's X and check hold the send slot, finishes a recording as the
@@ -117,7 +117,7 @@ describe("fork local dictation", () => {
     expect(control).toMatch(
       /data-fork-composer-action="dictate"\s*disabled=\{!recording && \(disabled \|\| dictation\.blocksSubmission\)\}[\s\S]*?onClick=\{recording \? dictation\.stop : dictation\.start\}/u,
     );
-    expect(control).toMatch(/icon=\{<MicrophoneIcon weight="fill" \/>\}/u);
+    expect(control).toMatch(/icon=\{<MicIcon weight="fill" \/>\}/u);
     expect(control).toContain(
       "onClick={recording ? dictation.stop : transcribing ? undefined : dictation.start}",
     );

@@ -4,55 +4,42 @@
  * signal a DOM tree has, mapped through the same designer vocabulary the guest's labels use
  * (engine/vendor/layers.ts TAG_LABELS — a div is a Frame).
  */
-import {
-  Article,
-  Cube,
-  CursorText,
-  Image as ImageIcon,
-  Link,
-  ListBullets,
-  Square,
-  Textbox,
-  TextT,
-  type Icon as PhosphorIcon,
-} from "@phosphor-icons/react";
+import * as Hg from "@hugeicons/core-free-icons";
 
-import { glyph } from "./PanelIcons";
+import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
+import { HugeGlyph } from "~/custom/icons/lucide-hugeicons";
 
-const BY_TAG: Record<string, PhosphorIcon> = {
-  a: Link,
-  article: Article,
-  button: CursorText,
-  h1: TextT,
-  h2: TextT,
-  h3: TextT,
-  h4: TextT,
-  h5: TextT,
-  h6: TextT,
-  img: ImageIcon,
-  input: Textbox,
-  li: ListBullets,
-  ol: ListBullets,
-  p: TextT,
-  picture: ImageIcon,
-  select: Textbox,
-  span: TextT,
-  svg: Cube,
-  textarea: Textbox,
-  ul: ListBullets,
-  video: ImageIcon,
+const BY_TAG: Record<string, IconSvgElement> = {
+  a: Hg.Link01Icon,
+  article: Hg.NewsIcon,
+  button: Hg.CursorTextIcon,
+  h1: Hg.TextIcon,
+  h2: Hg.TextIcon,
+  h3: Hg.TextIcon,
+  h4: Hg.TextIcon,
+  h5: Hg.TextIcon,
+  h6: Hg.TextIcon,
+  img: Hg.Image01Icon,
+  input: Hg.InputTextIcon,
+  li: Hg.LeftToRightListBulletIcon,
+  ol: Hg.LeftToRightListBulletIcon,
+  p: Hg.TextIcon,
+  picture: Hg.Image01Icon,
+  select: Hg.InputTextIcon,
+  span: Hg.TextIcon,
+  svg: Hg.CubeIcon,
+  textarea: Hg.InputTextIcon,
+  ul: Hg.LeftToRightListBulletIcon,
+  video: Hg.Image01Icon,
 };
 
-/** One wrapper per distinct glyph, built at load — `glyph()` pins the panel's weight, and
- * a render must pick a component type, never mint one. */
-const WRAPPED = new Map<PhosphorIcon, ReturnType<typeof glyph>>(
-  [...new Set([...Object.values(BY_TAG), Square])].map((Base) => [Base, glyph(Base)]),
-);
-const FALLBACK_GLYPH = WRAPPED.get(Square)!;
-
 export function LayerTypeIcon({ tag, className }: { tag: string; className?: string }) {
-  const Base = BY_TAG[tag];
-  const Glyph = (Base && WRAPPED.get(Base)) ?? FALLBACK_GLYPH;
-  // oxlint-disable-next-line react/static-components -- Glyph is looked up from WRAPPED, built once at load, so a render never mints a component type.
-  return <Glyph className={className} aria-hidden />;
+  return (
+    <HugeGlyph
+      data={BY_TAG[tag] ?? Hg.SquareIcon}
+      filled={false}
+      className={className}
+      aria-hidden
+    />
+  );
 }

@@ -78,7 +78,7 @@ export const SIDEBAR_V2_CARD_ALIGNMENT = {
   /** Between the members of the trailing group. */
   trailingGap: "gap-1.5",
   /** The status box on the trailing end of the title line. Height is the
-      rain's 14px; width is the 12px Phosphor glyph whose inked circle is the
+      rain's 14px; width is the 12px status glyph whose inked circle is the
       design's 9.75px. The marks inside keep their own sizes — a dot is 10px,
       the rain 14 tall — and centre in it. Where the box sits relative to the
       trailing axis is `sidebarV2TrailingColumn`'s `cardStatus`. */

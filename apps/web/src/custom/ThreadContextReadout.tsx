@@ -14,7 +14,7 @@ import { resolveBranchToolbarValue, type EnvMode } from "~/components/BranchTool
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 
 import { READ_ONLY_CONTEXT_CHIP_CLASS_NAME } from "./composerContextStrip";
-import { FolderIcon, GitBranchIcon } from "./icons/lucide-phosphor";
+import { FolderIcon, GitBranchIcon } from "./icons/lucide-hugeicons";
 import { WorktreeIcon } from "./icons/WorktreeIcon";
 
 /**
