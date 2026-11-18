@@ -66,6 +66,18 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(fill?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
     const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
     expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
+    // Basic rounds the well's top too (Figma kit); :is() keeps it ahead of the last-child rule.
+    const rounded = rules.find((rule) =>
+      rule.selector.endsWith(
+        '[data-fork-theme="basic"] [data-changed-files-header] + :is(div, div:last-child)',
+      ),
+    );
+    expect(rounded?.body).toMatch(
+      /border-top-left-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
+    );
+    expect(rounded?.body).toMatch(
+      /border-top-right-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
+    );
   });
 
   it("paints the user's sent bubble from --card too", () => {

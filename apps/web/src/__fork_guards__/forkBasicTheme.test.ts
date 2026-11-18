@@ -118,7 +118,11 @@ describe("fork guard: fork-basic-theme", () => {
       /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
     );
     const fields = sheet.slice(sheet.indexOf("@media (forced-colors: none) {"));
-    expect(fields.startsWith(`@media (forced-colors: none) {\n  ${BASIC}\n`)).toBe(true);
+    expect(
+      fields.startsWith(
+        `@media (forced-colors: none) {\n  ${BASIC}\n    :is([data-slot="input-control"], [data-slot="textarea-control"]):has(`,
+      ),
+    ).toBe(true);
     expect(fields).toMatch(
       /:is\(input, textarea\):focus-visible\s*\) \{\s*outline: none;\s*&:not\(:has\(\[aria-invalid="true"\]\)\) \{\s*border-color: var\(--ring\);/u,
     );

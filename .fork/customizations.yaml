@@ -5230,7 +5230,8 @@
     file tree and the "N more files" footer (the header's following sibling
     divs) are a well painted from --fork-composer-bg, edge to edge inside
     the card with a hairline on its top only (the card border is the line
-    elsewhere). Radii come from --fork-composer-radius. Path
+    elsewhere). Radii come from --fork-composer-radius. Under Basic the well is also
+    rounded at the top (Figma kit, Nov 19), so its hairline curves into the card's sides. Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button

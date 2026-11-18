@@ -2753,6 +2753,16 @@
   border-radius: 0 0 calc(var(--fork-composer-radius) - 1px) calc(var(--fork-composer-radius) - 1px);
 }
 
+/* Basic (Figma kit, Nov 19): the well is a panel of its own, rounded at the top as well, so its
+   hairline curves down into the card's sides. :is() weighs as div:last-child, so this still
+   wins when the tree is the only well. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-changed-files-header]
+  + :is(div, div:last-child) {
+  border-top-left-radius: calc(var(--fork-composer-radius) - 1px);
+  border-top-right-radius: calc(var(--fork-composer-radius) - 1px);
+}
+
 /* The user's sent bubble takes the same fill as the card above it. Upstream
    paints `bg-message` → --message-surface → --accent; on every fork palette
    that is the secondary/hover step (cool #353a3d, neutral dark #42403d), one rung
