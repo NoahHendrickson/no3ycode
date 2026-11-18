@@ -5474,9 +5474,9 @@
     Basic) lists the task the
     subagent was given, what it is doing now (its live progress) or, once
     settled, its result, and the model. The well starts open while the
-    subagent works and folds once it settles, unless the chevron was used. An
-    arrow button before the chevron, and the header itself, open the
-    subagent's thread when it has one, here or in a linked
+    subagent works and folds once it settles, unless the chevron was used. The
+    header strip (tile through the arrow, one button) opens the subagent's
+    thread when it has one, here or in a linked
     environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;
     keep the two in step on a sync). One fenced branch in TimelineV2EventRow takes
     every subagent item; a lone card selects only its own agent. A batch keeps its list-tree lead line ("Kicked off N

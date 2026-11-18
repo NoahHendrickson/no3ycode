@@ -7,10 +7,10 @@
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
  * above one card per member. A card is a header (the provider's mark in a tile
  * with the status mark in its corner, the title over the status word, the
- * elapsed time, an open-thread button, a chevron) and a well underneath: the task it was given, what
+ * elapsed time, an open-thread arrow, a chevron) and a well underneath: the task it was given, what
  * it is doing now or what it found, and the model. The well starts open while
  * the subagent works and folds once it settles, unless the chevron was used.
- * The arrow button, and the header itself, open the subagent's thread when it has one.
+ * The header strip, arrow included, opens the subagent's thread when it has one.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -42,7 +42,6 @@ import {
 import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
 import { environmentThreadDetails } from "~/state/threads";
@@ -387,6 +386,11 @@ export function ForkSubagentCardView(props: {
       </span>
     </>
   );
+  const elapsed = member.startedAt ? (
+    <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+      <AgentElapsed agent={member} />
+    </span>
+  ) : null;
   return (
     <div
       data-fork-subagent-card=""
@@ -395,46 +399,30 @@ export function ForkSubagentCardView(props: {
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
         {openThread === null ? (
-          <span className="flex min-w-0 flex-1 items-center gap-2">{identity}</span>
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            {identity}
+            {elapsed}
+          </span>
         ) : (
+          // One place opens the thread: the strip itself, ending in the arrow that says so.
           <button
             type="button"
             data-fork-subagent-member=""
-            aria-label={`Open ${member.title}`}
+            aria-label={`Open ${member.title} thread`}
             aria-description={
               remote !== undefined
                 ? `${member.statusLabel} · on ${remote.label}`
                 : member.statusLabel
             }
             onClick={openThread}
-            className="-my-1 -ml-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           >
             {identity}
+            {elapsed}
+            <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
+              <ArrowUpRightIcon className="size-3.5" />
+            </span>
           </button>
-        )}
-        {/* Beside the buttons, not in the header's hit area, so the hover fill ends clear of it. */}
-        {member.startedAt ? (
-          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-            <AgentElapsed agent={member} />
-          </span>
-        ) : null}
-        {openThread === null ? null : (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type="button"
-                  data-fork-subagent-open=""
-                  aria-label={`Open ${member.title} thread`}
-                  onClick={openThread}
-                  className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-                />
-              }
-            >
-              <ArrowUpRightIcon aria-hidden className="size-3.5" />
-            </TooltipTrigger>
-            <TooltipPopup side="top">Open thread</TooltipPopup>
-          </Tooltip>
         )}
         {details.length === 0 ? null : (
           <button

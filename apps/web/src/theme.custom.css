@@ -2462,11 +2462,7 @@
    spawn tree and on a completion notice, which sits outside any tree. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-subagent-card]
-  :is(
-    button[data-fork-subagent-member],
-    button[data-fork-subagent-open],
-    button[data-fork-subagent-toggle]
-  ):hover {
+  :is(button[data-fork-subagent-member], button[data-fork-subagent-toggle]):hover {
   background-color: var(--fork-outline-hover-bg);
 }
 
