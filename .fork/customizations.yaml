@@ -5195,8 +5195,13 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card), an 8px radius, and border-color var(--fork-composer-
-    border) so Cool / Neutral palettes keep their own hairline weight. Path
+    paint var(--card), an 8px radius, and a 1px var(--fork-composer-border)
+    border so Cool / Neutral palettes keep their own hairline weight. The card
+    is the composer turned over: the header sits loose on that floor and the
+    file tree (the header's next sibling) is a well painted from
+    --fork-composer-bg, edge to edge inside the card with a hairline on its
+    top only (the card border is the line elsewhere), drawn as a ::before
+    so virtualized rows keep their offsets. Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button

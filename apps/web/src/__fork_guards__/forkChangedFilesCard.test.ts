@@ -45,7 +45,18 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
     expect(card?.body).toMatch(/border-radius:\s*8px/u);
-    expect(card?.body).toMatch(/border-color:\s*var\(--fork-composer-border\)/u);
+    expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
+  });
+
+  it("draws the file tree as the composer's outlined well under a loose header", () => {
+    // The well hangs off the header's next sibling, the tree's wrapper div.
+    expect(changedFiles).toMatch(/<\/div>\s*<ChangedFilesTree\b/u);
+    const well = cssRules(theme).find((rule) =>
+      rule.selector.replace(/\s+/gu, " ").includes("[data-changed-files-header] + div::before"),
+    );
+    expect(well?.selector).toContain(MARKER);
+    expect(well?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
+    expect(well?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
   });
 
   it("paints the user's sent bubble from --card too", () => {
