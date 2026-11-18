@@ -48,13 +48,18 @@ describe("fork-tabs", () => {
     expect(switcher).toMatch(/<IconTab\b/u);
   });
 
-  it("draws the Figma tabs under Basic and keeps the page rule off them", () => {
+  it("draws every tab strip as the Figma tabs under Basic, menu and upstream ones included", () => {
     const basic = read("../theme.custom.basic.css");
-    expect(basic).toMatch(
-      /\[data-fork-theme="basic"\] \[data-fork-tabs\] \{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);/u,
+    const strips =
+      ':is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])';
+    const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
+    expect(at).toBeGreaterThan(-1);
+    expect(basic.slice(at)).toMatch(
+      /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*& > :is\(\[data-fork-segmented-tab\], \[data-slot="toggle"\]\) \{/u,
     );
-    expect(basic).toContain(
-      "[data-fork-segmented-tabs]:not([data-fork-thread-tabs] *, [data-fork-tabs])",
-    );
+    // The collapsed sidebar's thread tabs are not a strip and keep their own look.
+    expect(basic).not.toContain("[data-fork-thread-tab]");
+    // No strip keeps an older Basic look of its own.
+    expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });
 });

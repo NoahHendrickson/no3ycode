@@ -274,26 +274,26 @@
   border-radius: 8px;
 }
 
-/* The Threads menu's Group by tabs. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-group-by-tabs],
+/* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
+   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
+   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink, 12px
+   regular type. Each strip keeps its own height; Tabs.tsx sizes its track and tabs fill it. The
+   collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+   Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-group-by-tabs]
-  > [data-fork-segmented-tab] {
-  border-radius: 8px;
-}
-
-/* Tabs (custom/Tabs.tsx, the Code / Chat switch among them), Figma t3-fork 740:1163: an 8%
-   track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink. Tabs.tsx sizes
-   the track and its tabs fill the inside, so icon tabs are 24px squares at sm (28 at md, 32 at
-   lg); word tabs have 6px sides and regular 12px type. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-tabs] {
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
   padding: 2px;
   border-radius: 8px;
   background-color: var(--basic-wash-2);
 
-  & > [data-fork-tab] {
+  & > :is([data-fork-segmented-tab], [data-slot="toggle"]) {
+    border: 1px solid transparent;
     border-radius: 6px;
+    background-clip: border-box;
+    box-shadow: none;
     color: var(--basic-text);
+    font-size: 12px;
+    font-weight: 400;
 
     &:hover:not([data-pressed]) {
       background-color: var(--basic-wash-1);
@@ -312,16 +312,14 @@
 
   & > [data-fork-tab="word"] {
     padding-inline: 6px;
-    font-size: 12px;
-    font-weight: 400;
   }
 }
 
 /* A black wash reads as a grey slab on the light tones, so the pick lifts toward white, and
    its line darkens to 16% because 8% vanishes against the white. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-tabs]
-  > [data-fork-tab][data-pressed] {
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])
+  > :is([data-fork-segmented-tab], [data-slot="toggle"])[data-pressed] {
   border-color: var(--basic-wash-4);
   background-color: var(--basic-raised);
 }
@@ -491,23 +489,4 @@
   > *
   + * {
   border-color: var(--basic-wash-2);
-}
-
-/* Segmented tabs on a page (Usage, Automations' triggers) take the Code / Chat
-   switch's language: an 8% track, the chosen tab cut back to the page behind its
-   line, rather than upstream's raised white chip. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *, [data-fork-tabs]) {
-  /* The chip's corner is calc(var(--radius-sm) - 2px); the track's rounded-sm is
-     inlined by @theme inline, so the track takes the radius directly. */
-  --radius-sm: 8px;
-  border-radius: 8px;
-  background-color: var(--basic-wash-2);
-
-  & > [data-fork-segmented-tab][data-pressed] {
-    background-color: var(--background);
-    box-shadow: inset 0 0 0 1px var(--basic-wash-2);
-    color: var(--foreground);
-  }
 }

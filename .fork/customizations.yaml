@@ -1672,8 +1672,8 @@
     Glass), and so do dialogs, the command palette, toasts, the web context
     menu and the floating glass pills: 8px corners, the 8% line, the menus'
     quiet shadow, and a dialog scrim that dims without blurring. Page cards
-    (Settings groups, Usage, Automations) and page segmented tabs take the
-    same 8px corners, 8% line and the Code / Chat switch's track.
+    (Settings groups, Usage, Automations) take the same 8px corners and 8% line,
+    and every tab strip draws the Figma tabs (fork-tabs).
 
     Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
     -light, stamped as data-fork-basic-tone), so under System it follows the
@@ -7709,13 +7709,17 @@
     menu (built on SegmentedMenuTabs). The track's size sets its outer height in
     every theme (28 / 32 / 36px at sm / md / lg) and tabs fill its inside. The
     sidebar's Code / Chat switch is built from Tabs, and the Threads menu's Group by
-    from MenuTabs. Under Basic, theme.custom.basic.css draws Tabs to Figma t3-fork
-    740:1163: an 8% track inset 2px with 8px corners (so icon tabs are 24 / 28 /
-    32px squares), the pick a 12% wash behind an 8% line at 6px corners (raised
-    toward white behind a 16% line on the light tones), every label at full ink,
-    word tabs with 6px sides and regular 12px type, and the focus ring drawn inside
-    the tab because the track clips. Basic's page-level segmented-tab rule leaves
-    these tabs alone. Glass and Inlet keep their own dressing.
+    from MenuTabs. Under Basic, theme.custom.basic.css draws every tab strip in the
+    app to Figma t3-fork 740:1163: Tabs, SegmentedTabs (Usage, Automations, the
+    collapsed row's project and Petal strips, the music strip), menu tabs and
+    upstream's segmented ToggleGroup (diffs, pull requests, Settings, dialogs). An
+    8% track inset 2px with 8px corners (so Tabs' icon tabs are 24 / 28 / 32px
+    squares), the pick a 12% wash behind an 8% line at 6px corners (raised toward
+    white behind a 16% line on the light tones), every label at full ink in 12px
+    regular type, word tabs with 6px sides, and the focus ring drawn inside the tab
+    because the track clips. Each strip keeps its own height. The collapsed
+    sidebar's thread tabs are not a strip and keep their own look. Glass and Inlet
+    keep their own dressing.
   tier: 1
   files:
     - apps/web/src/custom/Tabs.tsx

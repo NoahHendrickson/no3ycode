@@ -812,7 +812,6 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
           aria-label="Group threads by"
           value={props.grouping}
           onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
-          data-fork-group-by-tabs=""
         >
           {GROUPING_TABS.map((tab) => {
             // Disabled rather than inert where grouping by project
