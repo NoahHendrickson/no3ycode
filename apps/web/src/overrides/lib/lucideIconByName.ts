@@ -1,11 +1,11 @@
 // Fork shadow of upstream lucideIconByName — see
 // `.fork/customizations.yaml#phosphor-duotone-icons`.
 //
-// "lucide-react" is the Phosphor shim here. Its catalog is every `*Icon` export,
+// "lucide-react" is the Hugeicons shim here. Its catalog is every `*Icon` export,
 // aliases included, as the fork's picker has always offered: a project icon
 // saved under an alias (more-horizontal, x-circle) must keep resolving.
-import * as shim from "~/custom/icons/lucide-phosphor";
-import type { LucideIcon } from "~/custom/icons/lucide-phosphor";
+import * as shim from "~/custom/icons/lucide-hugeicons";
+import type { LucideIcon } from "~/custom/icons/lucide-hugeicons";
 
 const ICONS_BY_PASCAL_NAME: ReadonlyMap<string, LucideIcon> = new Map(
   Object.entries(shim)

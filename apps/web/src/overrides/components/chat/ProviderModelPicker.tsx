@@ -40,7 +40,7 @@ import { Badge } from "../ui/badge";
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "~/lib/utils";
-import { ChevronDownIcon } from "~/custom/icons/lucide-phosphor";
+import { ChevronDownIcon } from "~/custom/icons/lucide-hugeicons";
 import { useIsInletActive } from "~/custom/forkActivePalette";
 import { triggerModelName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerContent, resolveModelPickerSelectedModel } from "./ModelPickerContent";

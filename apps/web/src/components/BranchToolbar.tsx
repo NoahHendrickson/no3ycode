@@ -10,7 +10,7 @@ import { PlusIcon, ScaleIcon } from "lucide-react";
 // Workspace marks match the thread readout: the branch mark for a checkout,
 // the fork's worktree mark for any worktree. Aliased so upstream's call sites
 // stay untouched.
-import { ChevronDownIcon, GitBranchIcon as FolderIcon } from "../custom/icons/lucide-phosphor";
+import { ChevronDownIcon, GitBranchIcon as FolderIcon } from "../custom/icons/lucide-hugeicons";
 import {
   WorktreeIcon as FolderGit2Icon,
   WorktreeIcon as FolderGitIcon,

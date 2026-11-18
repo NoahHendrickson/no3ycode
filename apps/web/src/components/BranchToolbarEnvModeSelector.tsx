@@ -4,7 +4,7 @@ import { ComposerContextLabel } from "./ComposerContextLabel";
 // Workspace marks match the thread readout: the branch mark for a checkout,
 // the fork's worktree mark for any worktree. Aliased so upstream's call sites
 // stay untouched.
-import { GitBranchIcon as FolderIcon } from "../custom/icons/lucide-phosphor";
+import { GitBranchIcon as FolderIcon } from "../custom/icons/lucide-hugeicons";
 import {
   WorktreeIcon as FolderGit2Icon,
   WorktreeIcon as FolderGitIcon,

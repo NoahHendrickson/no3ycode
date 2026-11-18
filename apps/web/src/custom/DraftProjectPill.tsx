@@ -16,7 +16,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   MessageSquareDashedIcon,
-} from "./icons/lucide-phosphor";
+} from "./icons/lucide-hugeicons";
 import {
   openAddProject,
   useDraftProjectChoices,

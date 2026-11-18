@@ -6,7 +6,7 @@
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
 import type { ForkSidebarMode } from "./chatMode";
-import { CodeIcon, MessageSquareTextIcon } from "./icons/lucide-phosphor";
+import { CodeIcon, MessageSquareTextIcon } from "./icons/lucide-hugeicons";
 import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 
 /** The switch's track and icon tab, whose shape the Threads menu's Group by tabs share.

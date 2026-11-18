@@ -26,7 +26,7 @@ const MARKER = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
 const theme = readSibling("../theme.custom.css");
 const upstreamCss = readSibling("../index.css");
 const chatHeader = readSibling("../components/chat/ChatHeader.tsx");
-const iconShim = readSibling("../custom/icons/lucide-phosphor.tsx");
+const iconShim = readSibling("../custom/icons/lucide-hugeicons.tsx");
 
 describe("fork guard: fork-workspace-header", () => {
   it("keeps the header controls marked as pills", () => {
@@ -150,7 +150,7 @@ describe("fork guard: fork-workspace-header", () => {
   it("maps the panel toggles to the design's half-square glyphs", () => {
     // Done in the shim, not at the call site, so upstream's imports stay
     // untouched — see phosphor-duotone-icons.
-    expect(iconShim).toMatch(/PanelRightIcon\s*=\s*icon\("panel-right",\s*PhSquareHalf,/u);
-    expect(iconShim).toMatch(/PanelBottomIcon\s*=\s*icon\("panel-bottom",\s*PhSquareHalfBottom,/u);
+    expect(iconShim).toMatch(/PanelRightIcon\s*=\s*icon\("panel-right",\s*PanelRightHalf,/u);
+    expect(iconShim).toMatch(/PanelBottomIcon\s*=\s*icon\("panel-bottom",\s*PanelBottomHalf,/u);
   });
 });

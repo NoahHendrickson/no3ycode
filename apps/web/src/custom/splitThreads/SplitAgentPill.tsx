@@ -13,7 +13,7 @@ import { useRef, type MouseEvent, type PointerEvent } from "react";
 import { Button } from "~/components/ui/button";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
-import { NavigationArrowIcon } from "../icons/lucide-phosphor";
+import { NavigationArrowIcon } from "../icons/lucide-hugeicons";
 import { useSplitPane, type SplitPaneState } from "./splitPaneContext";
 import { morphSplitPairs } from "./splitMorph";
 import { usePendingSplitStore, useSplitThreadStore } from "./splitThreadStore";

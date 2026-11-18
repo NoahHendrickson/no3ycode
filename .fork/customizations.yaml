@@ -644,25 +644,32 @@
 
 - id: phosphor-duotone-icons
   intent: >
-    The app's iconography is Phosphor at the duotone weight, not lucide.
-    Rather than rewriting ~89 import sites across the hottest upstream files
-    (ChatView, SidebarV2, ChatComposer), "lucide-react" is aliased to a
-    fork-owned shim that re-exports Phosphor under lucide's export names. Call
-    sites keep importing "lucide-react" verbatim, so upstream can add, move, or
-    delete icon usage freely and this fork inherits it. Glyphs with no enclosed
-    area (carets, checks, arrows, spinners) are pinned to the bold weight,
-    since duotone is indistinguishable there and reads too light against
-    lucide's 2px stroke. The shim also reproduces lucide's `lucide lucide-<name>`
-    SVG classes, because upstream tests assert them to identify which icon
-    rendered — honouring the contract keeps those tests passing unmodified
-    instead of forcing Tier 4 edits into upstream test files. Under 1.5x
-    device pixels theme.custom.css hides the duotone wash, which reads as blur
-    beside a 1px anti-aliased outline. Under any fork palette the shim swaps
-    duotone for fill (custom/forkActivePalette.ts forkPaletteFillsIcons);
-    upstream and imported themes keep duotone.
+    The app's iconography is Hugeicons (the free Stroke Rounded set), not
+    lucide; the id predates the move from Phosphor. Rather than rewriting the
+    import sites across the hottest upstream files (ChatView, SidebarV2,
+    ChatComposer), "lucide-react" is aliased to a fork-owned shim that draws
+    Hugeicons under lucide's export names. Call sites keep importing
+    "lucide-react" verbatim, so upstream can add, move, or delete icon usage
+    freely and this fork inherits it. Under any fork palette the shim draws a
+    filled weight in place of duotone (custom/forkActivePalette.ts
+    forkPaletteFillsIcons); upstream and imported themes keep the stroke. The
+    free set has no filled style, so custom/icons/hugeiconsFill.ts derives one:
+    the outermost closed shapes fill, interior detail is cut out through a
+    mask, and a glyph with nothing closed to fill (or only a minor part)
+    keeps its stroke. Glyphs pinned to bold (carets, checks, arrows) never
+    fill. The shim also reproduces lucide's `lucide lucide-<name>` SVG classes,
+    because upstream tests assert them to identify which icon rendered —
+    honouring the contract keeps those tests passing unmodified instead of
+    forcing Tier 4 edits into upstream test files. Under 1.5x device pixels
+    theme.custom.css hides the hand-drawn worktree mark's duotone wash, which
+    reads as blur beside a 1px anti-aliased outline. Fork code that drew
+    Phosphor directly (design mode's panel glyphs, the dictation mic, the
+    subagent group's tree) draws Hugeicons too.
   tier: 1
   files:
-    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/icons/lucide-hugeicons.tsx
+    - apps/web/src/custom/icons/hugeiconsFill.ts
+    - apps/web/src/custom/icons/hugeiconsFill.test.ts
     # Shared; this entry owns only the low-density duotone rule.
     - apps/web/src/theme.custom.css
     # Project icons by name (upstream #9137) resolve from the shim's own
@@ -674,7 +681,7 @@
     - apps/web/vite.config.ts
     - apps/web/tsconfig.json
   verify:
-    - apps/web/src/__fork_guards__/phosphorIcons.test.ts
+    - apps/web/src/__fork_guards__/lucideIconShim.test.ts
 
 - id: sidebar-v2-card-rows
   intent: >
@@ -1690,7 +1697,7 @@
     - apps/web/src/custom/ForkInletColorPicker.tsx
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/custom/forkActivePalette.ts
-    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/icons/lucide-hugeicons.tsx
     - apps/web/src/custom/BasicNewAgentTexture.tsx
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
@@ -2596,7 +2603,7 @@
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/voice/ForkDictationControl.tsx
     - apps/web/src/hooks/useTheme.ts
-    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/icons/lucide-hugeicons.tsx
     - apps/web/src/components/ui/tooltip.tsx
     - apps/web/src/components/ThreadHoverCard.tsx
     - apps/web/src/components/chat/ThreadRelationshipsControl.tsx
@@ -6952,7 +6959,7 @@
     # The strip's fill, shared with its button while the strip is open.
     - apps/web/src/theme.custom.css
     # The glyphs the strip uses, added to the fork's lucide shim.
-    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/icons/lucide-hugeicons.tsx
   shadows: []
   watch:
     - apps/desktop/src/preload.ts
@@ -7278,7 +7285,7 @@
     - apps/web/src/hooks/usePreviewPanelInlineSize.ts
     # A stable drag start: the Threads panel's drag moves the right panel's cap every frame.
     - apps/web/src/hooks/useResizeDrag.ts
-    - apps/web/src/custom/icons/lucide-phosphor.tsx
+    - apps/web/src/custom/icons/lucide-hugeicons.tsx
     - docs/user/thread-sidebar.md
   verify:
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts

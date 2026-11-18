@@ -33,8 +33,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
   });
 
   it("keeps the Figma header and member rows", () => {
-    expect(group).toContain('from "@phosphor-icons/react"');
-    expect(group).toContain('<TreeView weight="regular"');
+    expect(group).toContain('<ListTreeIcon weight="regular"');
     // Lead, status wording, the progress-or-result pick and the model's name
     // come from upstream's shared helpers; the fork owns only the vocabulary.
     expect(model).toContain("subagentGroupSummary(rows)");

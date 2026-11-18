@@ -11,7 +11,7 @@ import {
   CircleAlertIcon,
   CircleHalfIcon,
   PenLineIcon,
-} from "./icons/lucide-phosphor";
+} from "./icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
 import { useDoneCelebration } from "./doneCelebration";

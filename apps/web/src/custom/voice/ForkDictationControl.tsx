@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckIcon, XIcon } from "lucide-react";
-import { MicrophoneIcon } from "@phosphor-icons/react";
+import { CheckIcon, MicIcon, XIcon } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
@@ -175,7 +174,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
             onClick={recording ? dictation.stop : dictation.start}
           />
         }
-        icon={<MicrophoneIcon weight="fill" />}
+        icon={<MicIcon weight="fill" />}
       />
       {live || closing ? <VoiceLevelTimeline level={dictation.level} /> : null}
     </div>
@@ -249,7 +248,7 @@ export function ForkDictationPrimaryButton(props: {
           ) : busy ? (
             <CheckIcon className="size-4" aria-hidden />
           ) : (
-            <MicrophoneIcon weight="fill" className="size-4" aria-hidden />
+            <MicIcon weight="fill" className="size-4" aria-hidden />
           )
         }
       />

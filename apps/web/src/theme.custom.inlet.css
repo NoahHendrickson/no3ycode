@@ -994,9 +994,9 @@
   }
 }
 
-/* Inlet draws filled icons (custom/icons/lucide-phosphor.tsx picks Phosphor's
-   fill weight); the hand-drawn worktree mark has no fill weight, so its
-   duotone wash goes solid instead. */
+/* Inlet draws filled icons (custom/icons/lucide-hugeicons.tsx draws the derived
+   fill); the hand-drawn worktree mark has no fill weight, so its duotone wash
+   goes solid instead. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   svg.lucide-worktree

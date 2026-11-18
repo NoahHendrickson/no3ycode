@@ -12,7 +12,7 @@ import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/compon
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { cn } from "~/lib/utils";
 
-import { SettingsIcon } from "../icons/lucide-phosphor";
+import { SettingsIcon } from "../icons/lucide-hugeicons";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
 import { CHROME_ROW_INSET, OptionCheckboxItem, PROJECTS_ROW_BUTTON } from "../SidebarV2ChromeRows";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";

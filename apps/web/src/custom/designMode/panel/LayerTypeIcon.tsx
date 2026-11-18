@@ -5,50 +5,51 @@
  * (engine/vendor/layers.ts TAG_LABELS — a div is a Frame).
  */
 import {
-  Article,
-  Cube,
-  CursorText,
-  Image as ImageIcon,
-  Link,
-  ListBullets,
-  Square,
-  Textbox,
-  TextT,
-  type Icon as PhosphorIcon,
-} from "@phosphor-icons/react";
+  CubeIcon,
+  CursorTextIcon,
+  Image01Icon,
+  InputTextIcon,
+  LeftToRightListBulletIcon,
+  Link01Icon,
+  NewsIcon,
+  SquareIcon,
+  TextIcon,
+} from "@hugeicons/core-free-icons";
+
+import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
 
 import { glyph } from "./PanelIcons";
 
-const BY_TAG: Record<string, PhosphorIcon> = {
-  a: Link,
-  article: Article,
-  button: CursorText,
-  h1: TextT,
-  h2: TextT,
-  h3: TextT,
-  h4: TextT,
-  h5: TextT,
-  h6: TextT,
-  img: ImageIcon,
-  input: Textbox,
-  li: ListBullets,
-  ol: ListBullets,
-  p: TextT,
-  picture: ImageIcon,
-  select: Textbox,
-  span: TextT,
-  svg: Cube,
-  textarea: Textbox,
-  ul: ListBullets,
-  video: ImageIcon,
+const BY_TAG: Record<string, IconSvgElement> = {
+  a: Link01Icon,
+  article: NewsIcon,
+  button: CursorTextIcon,
+  h1: TextIcon,
+  h2: TextIcon,
+  h3: TextIcon,
+  h4: TextIcon,
+  h5: TextIcon,
+  h6: TextIcon,
+  img: Image01Icon,
+  input: InputTextIcon,
+  li: LeftToRightListBulletIcon,
+  ol: LeftToRightListBulletIcon,
+  p: TextIcon,
+  picture: Image01Icon,
+  select: InputTextIcon,
+  span: TextIcon,
+  svg: CubeIcon,
+  textarea: InputTextIcon,
+  ul: LeftToRightListBulletIcon,
+  video: Image01Icon,
 };
 
 /** One wrapper per distinct glyph, built at load — `glyph()` pins the panel's weight, and
  * a render must pick a component type, never mint one. */
-const WRAPPED = new Map<PhosphorIcon, ReturnType<typeof glyph>>(
-  [...new Set([...Object.values(BY_TAG), Square])].map((Base) => [Base, glyph(Base)]),
+const WRAPPED = new Map<IconSvgElement, ReturnType<typeof glyph>>(
+  [...new Set([...Object.values(BY_TAG), SquareIcon])].map((Base) => [Base, glyph(Base)]),
 );
-const FALLBACK_GLYPH = WRAPPED.get(Square)!;
+const FALLBACK_GLYPH = WRAPPED.get(SquareIcon)!;
 
 export function LayerTypeIcon({ tag, className }: { tag: string; className?: string }) {
   const Base = BY_TAG[tag];

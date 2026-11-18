@@ -5,9 +5,10 @@
  *
  * The icon swap is invisible at every call site: upstream code still imports
  * from "lucide-react", and only the two alias entries redirect that to the
- * Phosphor shim. That is exactly the §4 failure mode — drop either alias in a
+ * Hugeicons shim. That is exactly the §4 failure mode — drop either alias in a
  * sync and the app silently renders lucide again, with no conflict and no
- * error. These tests turn that into a red one.
+ * error. These tests turn that into a red one. The id predates the move from
+ * Phosphor to Hugeicons; the contract is the same.
  */
 
 import * as NodeFS from "node:fs";
@@ -18,11 +19,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 import { forkPaletteFillsIcons } from "~/custom/forkActivePalette";
 import { FORK_PALETTES } from "~/custom/forkTheme";
-import { SearchIcon, XIcon } from "~/custom/icons/lucide-phosphor";
+import { SearchIcon, XIcon } from "~/custom/icons/lucide-hugeicons";
 
 const webRoot = NodePath.resolve(NodeURL.fileURLToPath(new URL(".", import.meta.url)), "../..");
 const repoRoot = NodePath.resolve(webRoot, "../..");
-const SHIM_PATH = "src/custom/icons/lucide-phosphor.tsx";
+const SHIM_PATH = "src/custom/icons/lucide-hugeicons.tsx";
 
 function read(relativePath: string): string {
   return NodeFS.readFileSync(NodePath.join(webRoot, relativePath), "utf8");
@@ -120,9 +121,9 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(importedLucideNames().filter((name) => !exported.has(name))).toEqual([]);
   });
 
-  it("renders Phosphor rather than lucide, defaulting to the duotone weight", () => {
+  it("renders Hugeicons rather than lucide, defaulting to the duotone weight", () => {
     const shim = read(SHIM_PATH);
-    expect(shim).toContain('from "@phosphor-icons/react"');
+    expect(shim).toContain('from "@hugeicons/core-free-icons"');
     expect(shim).toContain('"duotone"');
     const lowDensity = /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(
       read("src/theme.custom.css"),
@@ -135,12 +136,14 @@ describe("fork guard: phosphor-duotone-icons", () => {
 
   it("keeps PR, review-thread, and alias glyphs semantically distinct", () => {
     const shim = read(SHIM_PATH);
-    expect(shim).toContain('CircleDotIcon = icon("circle-dot", PhRecord');
-    expect(shim).toContain('GitPullRequestClosedIcon = icon("git-pull-request-closed", PhProhibit');
-    expect(shim).toContain(
-      'GitPullRequestDraftIcon = icon("git-pull-request-draft", PhCircleDashed',
-    );
-    expect(shim).toContain('ArrowUpRightIcon = icon("arrow-up-right", PhArrowUpRight');
+    const maps = (exportName: string, lucideName: string, glyph: string) =>
+      expect(shim).toMatch(
+        new RegExp(`${exportName} = icon\\(\\s*"${lucideName}",\\s*${glyph},`, "u"),
+      );
+    maps("CircleDotIcon", "circle-dot", "HgCircleDot");
+    maps("GitPullRequestClosedIcon", "git-pull-request-closed", "HgGitPullRequestClosed");
+    maps("GitPullRequestDraftIcon", "git-pull-request-draft", "HgGitPullRequestDraft");
+    maps("ArrowUpRightIcon", "arrow-up-right", "HgArrowUpRight");
     expect(shim).toContain("MoreHorizontalIcon = EllipsisIcon");
     expect(shim).toContain("XCircleIcon = CircleXIcon");
   });
@@ -168,7 +171,8 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const pkg = JSON.parse(read("package.json")) as {
       dependencies?: Record<string, string>;
     };
-    expect(pkg.dependencies?.["@phosphor-icons/react"]).toBeTruthy();
+    expect(pkg.dependencies?.["@hugeicons/core-free-icons"]).toBeTruthy();
+    expect(pkg.dependencies?.["@phosphor-icons/react"]).toBeUndefined();
     // lucide-react stays a dependency on purpose: it is the name every upstream
     // import site resolves through, and dropping it would break `tsc` for any
     // tool that does not read the fork's path mapping. Nothing renders from it.
@@ -213,8 +217,11 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const html = renderToStaticMarkup(createElement(XIcon));
     expect(html).toContain("<svg");
     expect(html).toContain("lucide lucide-x");
-    // The low-density rule in theme.custom.css keys on this attribute.
-    expect(renderToStaticMarkup(createElement(SearchIcon))).toContain('opacity="0.2"');
+    // A filled weight draws the derived body through a mask; a stroke glyph has none.
+    expect(renderToStaticMarkup(createElement(SearchIcon, { weight: "fill" }))).toContain("mask=");
+    expect(renderToStaticMarkup(createElement(SearchIcon, { weight: "regular" }))).not.toContain(
+      "mask=",
+    );
     // A caller's own className must not displace the contract classes.
     expect(renderToStaticMarkup(createElement(XIcon, { className: "size-4" }))).toContain(
       "lucide lucide-x size-4",

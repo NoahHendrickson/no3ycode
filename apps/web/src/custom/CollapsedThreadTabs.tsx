@@ -99,7 +99,7 @@ import {
   LayersIcon,
   PlusIcon,
   XIcon,
-} from "./icons/lucide-phosphor";
+} from "./icons/lucide-hugeicons";
 import {
   FORK_MARK_INK_BY_DRIVER,
   ModelPickerProviderGlyph,

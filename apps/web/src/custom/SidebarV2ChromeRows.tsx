@@ -48,7 +48,7 @@ import {
   NavigationArrowIcon,
   SettingsIcon,
   ZapIcon,
-} from "./icons/lucide-phosphor";
+} from "./icons/lucide-hugeicons";
 import { openCommandPalette } from "~/commandPaletteBus";
 import {
   Menu,

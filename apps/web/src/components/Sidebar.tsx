@@ -92,7 +92,7 @@ import {
 } from "lucide-react";
 /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
 // Own statement: a fence comment inside the lucide brace list is scraped as a
-// binding by phosphorIcons.test.ts (same reason Globe2Icon sits out here).
+// binding by lucideIconShim.test.ts (same reason Globe2Icon sits out here).
 import { XIcon } from "lucide-react";
 /* fork:end sidebar-v2-draft-rows */
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */

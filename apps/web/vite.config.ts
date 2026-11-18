@@ -400,7 +400,7 @@ export default defineConfig(() => {
         // `tsconfig.json` so types agree. See
         // `.fork/customizations.yaml#phosphor-duotone-icons`.
         "lucide-react": NodeURL.fileURLToPath(
-          new URL("./src/custom/icons/lucide-phosphor.tsx", import.meta.url),
+          new URL("./src/custom/icons/lucide-hugeicons.tsx", import.meta.url),
         ),
       },
     },
