@@ -59,7 +59,7 @@
         forkPaletteBackgrounds["cool-darker"] = "#141618";
         /* fork:end fork-cool-darker-theme */
         /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-        forkPaletteBackgrounds["inlet"] = "#141414";
+        forkPaletteBackgrounds["inlet"] = "#f8f3d8";
         // Inlet's colours (custom/forkTheme.ts INLET_COLOR_OPTIONS): the frame it
         // pre-paints and the upstream appearance it sits on.
         const forkInletColors = {
@@ -304,7 +304,7 @@
             forkInletColor = forkRetiredInletColors[forkInletColor];
           }
           if (!Object.prototype.hasOwnProperty.call(forkInletColors, forkInletColor)) {
-            forkInletColor = "black";
+            forkInletColor = "cream";
           }
           const forkPaletteAppearance =
             forkPalette === "inlet" ? forkInletColors[forkInletColor].appearance : "dark";

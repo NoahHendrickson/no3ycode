@@ -148,6 +148,123 @@ describe("fork theme synchronization", () => {
       expect(values.get("t3code:fork-inlet-color")).toBe(next);
       expect(forkPaletteAppearance(INLET_THEME, next)).toBe(appearance);
     }
+
+    // Only the table's own keys migrate: a prototype name is left alone.
+    for (const garbage of ["__proto__", "constructor", "toString"]) {
+      values.set("t3code:fork-inlet-color", garbage);
+      migrateLegacyForkPalettes();
+      expect(values.get("t3code:fork-inlet-color")).toBe(garbage);
+    }
+
+    // A missing colour is the old default, Charcoal, only where Inlet is the palette.
+    values.delete("t3code:fork-inlet-color");
+    migrateLegacyForkPalettes();
+    expect(values.has("t3code:fork-inlet-color")).toBe(false);
+    values.set("t3code:fork-theme", "inlet");
+    migrateLegacyForkPalettes();
+    expect(values.get("t3code:fork-inlet-color")).toBe("cream");
+  });
+
+  it("paints a retired, missing or unknown Inlet colour as its successor when storage refuses the rewrite", async () => {
+    for (const [stored, theme, painted] of [
+      ["charcoal", "dark", "cream"],
+      [undefined, "dark", "cream"],
+      ["__proto__", "dark", "cream"],
+      ["green", "light", "black"],
+      ["jungle-light", "light", "black"],
+    ] as const) {
+      vi.resetModules();
+      const { storage, values } = createStorage(
+        {
+          "t3code:theme": theme,
+          "t3code:fork-theme": "inlet",
+          "t3code:theme-appearance-mode": theme,
+          ...(stored === undefined ? {} : { "t3code:fork-inlet-color": stored }),
+        },
+        {
+          setItem: () => {
+            throw new Error("quota");
+          },
+        },
+      );
+      const { attributes, classes, root } = createDocumentRoot();
+      if (theme === "dark") classes.add("dark");
+      stubWindow(storage, { addEventListener: vi.fn() });
+      vi.stubGlobal("document", { documentElement: root });
+      mockUseTheme(storage, classes, { mode: theme });
+
+      const { FORK_THEME_ATTRIBUTE, INLET_COLOR_ATTRIBUTE, initializeForkTheme } =
+        await import("./forkTheme");
+      initializeForkTheme();
+      expect(values.get("t3code:fork-inlet-color"), String(stored)).toBe(stored);
+      expect(attributes.get(FORK_THEME_ATTRIBUTE), String(stored)).toBe("inlet");
+      expect(attributes.get(INLET_COLOR_ATTRIBUTE), String(stored)).toBe(painted);
+      vi.doUnmock("../hooks/useTheme");
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("pins the mode when migrating an active Inlet colour onto one that restyles the chrome", async () => {
+    for (const [stored, theme, pinned] of [
+      [undefined, "dark", "dark"],
+      ["charcoal", "dark", "dark"],
+      ["green", "light", "light"],
+      ["jungle-light", "light", "light"],
+      // Jungle Art already asked for light chrome, as Cream does: a System it was left on stands.
+      ["jungle", "dark", null],
+    ] as const) {
+      vi.resetModules();
+      const { storage, values } = createStorage({
+        "t3code:theme": theme,
+        "t3code:fork-theme": "inlet",
+        ...(stored === undefined ? {} : { "t3code:fork-inlet-color": stored }),
+      });
+      const { attributes, classes, root } = createDocumentRoot();
+      if (theme === "dark") classes.add("dark");
+      stubWindow(storage, { addEventListener: vi.fn() });
+      vi.stubGlobal("document", { documentElement: root });
+      // System follows an OS that already shows the colour's appearance.
+      const { state, setAppearanceMode } = mockUseTheme(storage, classes, {
+        systemDark: theme === "dark",
+      });
+
+      const { FORK_THEME_ATTRIBUTE, initializeForkTheme, setForkAppearance } =
+        await import("./forkTheme");
+      initializeForkTheme();
+      expect(attributes.get(FORK_THEME_ATTRIBUTE), String(stored)).toBe("inlet");
+      if (pinned === null) {
+        expect(setAppearanceMode, String(stored)).not.toHaveBeenCalled();
+      } else {
+        expect(setAppearanceMode, String(stored)).toHaveBeenCalledWith(pinned);
+        expect(values.get("t3code:fork-mode-before-palette"), String(stored)).toBe(
+          JSON.stringify({ before: "system", set: pinned }),
+        );
+      }
+      // Leaving Inlet puts System back.
+      setForkAppearance("basic", (next) => {
+        storage.setItem("t3code:theme", next);
+        return true;
+      });
+      expect(state.mode, String(stored)).toBe("system");
+      vi.doUnmock("../hooks/useTheme");
+      vi.unstubAllGlobals();
+    }
+
+    // A mode the user chose is not System, so migrating leaves it where it is.
+    vi.resetModules();
+    const { storage } = createStorage({
+      "t3code:theme": "dark",
+      "t3code:fork-theme": "inlet",
+      "t3code:fork-inlet-color": "charcoal",
+    });
+    const { classes, root } = createDocumentRoot();
+    classes.add("dark");
+    stubWindow(storage, { addEventListener: vi.fn() });
+    vi.stubGlobal("document", { documentElement: root });
+    const { setAppearanceMode } = mockUseTheme(storage, classes, { mode: "dark" });
+    const { initializeForkTheme } = await import("./forkTheme");
+    initializeForkTheme();
+    expect(setAppearanceMode).not.toHaveBeenCalled();
   });
 
   it("paints Basic on any standard upstream theme and steps aside for an imported one", async () => {
@@ -376,41 +493,34 @@ describe("fork theme synchronization", () => {
 
     const { FORK_THEME_ATTRIBUTE, INLET_COLOR_ATTRIBUTE, setForkAppearance, setForkInletColor } =
       await import("./forkTheme");
-    // Black, the default colour, sits on light.
+    // Cream, the default colour, sits on dark. Both colours restyle the native chrome, so each
+    // pins the mode even when it already matches (under System, the chrome override would flip
+    // the system appearance it follows).
     setForkAppearance("inlet", setTheme);
-    expect(values.get("t3code:theme")).toBe("light");
-    expect(classes.has("dark")).toBe(false);
-    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
-    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("black");
-
-    setForkInletColor("cream", setTheme);
     expect(values.get("t3code:theme")).toBe("dark");
-    expect(values.get("t3code:fork-inlet-color")).toBe("cream");
     expect(classes.has("dark")).toBe(true);
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
     expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("cream");
+    expect(setAppearanceMode).toHaveBeenCalledWith("dark");
+
+    setForkInletColor("black", setTheme);
+    expect(values.get("t3code:theme")).toBe("light");
+    expect(values.get("t3code:fork-inlet-color")).toBe("black");
+    expect(classes.has("dark")).toBe(false);
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("black");
 
     // Leaving Inlet clears its colour from the DOM but keeps the preference, and puts back the
     // mode the palettes moved the user off: System, here, so the app follows the OS again.
     setForkAppearance("basic", setTheme);
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
     expect(attributes.has(INLET_COLOR_ATTRIBUTE)).toBe(false);
-    expect(values.get("t3code:fork-inlet-color")).toBe("cream");
+    expect(values.get("t3code:fork-inlet-color")).toBe("black");
     expect(state.mode).toBe("system");
     expect(classes.has("dark")).toBe(true);
 
-    // Both colours restyle the native chrome, so each pins the mode even when it already
-    // matches (under System, the chrome override would flip the system appearance it follows),
-    // and leaving puts System back too.
-    setAppearanceMode.mockClear();
-    setForkAppearance("inlet", setTheme);
-    expect(setAppearanceMode).toHaveBeenCalledWith("dark");
-    setForkAppearance("basic", setTheme);
-    expect(state.mode).toBe("system");
-
     // A mode the user picks while on a palette is theirs: leaving leaves it alone.
     setForkAppearance("inlet", setTheme);
-    setForkInletColor("black", setTheme);
     state.mode = "dark";
     setForkAppearance("basic", setTheme);
     expect(state.mode).toBe("dark");

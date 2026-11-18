@@ -34,6 +34,9 @@ type BootResult = {
   backgroundColor: string;
   bootVariables: Record<string, string>;
   metaContent: string | null;
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  forkAttributes: ReadonlyMap<string, string>;
+  /* fork:end fork-inlet-theme */
 };
 
 function runBootScript(options: {
@@ -43,6 +46,9 @@ function runBootScript(options: {
 }): BootResult {
   const classes = new Set<string>();
   const bootVariables: Record<string, string> = {};
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  const forkAttributes = new Map<string, string>();
+  /* fork:end fork-inlet-theme */
   const meta = {
     content: null as string | null,
     setAttribute(_name: string, value: string) {
@@ -52,8 +58,8 @@ function runBootScript(options: {
   const documentElement = {
     dataset: {} as Record<string, string | undefined>,
     /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-    setAttribute: vi.fn(),
-    removeAttribute: vi.fn(),
+    setAttribute: (name: string, value: string) => void forkAttributes.set(name, value),
+    removeAttribute: (name: string) => void forkAttributes.delete(name),
     /* fork:end fork-cool-dark-theme */
     classList: {
       add: (name: string) => void classes.add(name),
@@ -100,6 +106,9 @@ function runBootScript(options: {
     backgroundColor: documentElement.style.backgroundColor,
     bootVariables,
     metaContent: meta.content,
+    /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+    forkAttributes,
+    /* fork:end fork-inlet-theme */
   };
 }
 
@@ -374,6 +383,37 @@ describe("index.html boot script", () => {
     expect(boot.backgroundColor).toBe(DEFAULT_DARK_CHROME);
     expect(boot.metaContent).toBe(DEFAULT_DARK_CHROME);
   });
+
+  /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
+  it("paints a stored legacy Inlet colour as its successor", () => {
+    const cases = [
+      { stored: "charcoal", theme: "dark", color: "cream", frame: "#f8f3d8" },
+      // The old default, Charcoal, was usually never stored.
+      { stored: undefined, theme: "dark", color: "cream", frame: "#f8f3d8" },
+      { stored: "jungle", theme: "dark", color: "cream", frame: "#f8f3d8" },
+      { stored: "green", theme: "light", color: "black", frame: "#141414" },
+      { stored: "jungle-light", theme: "light", color: "black", frame: "#141414" },
+      { stored: "__proto__", theme: "dark", color: "cream", frame: "#f8f3d8" },
+      { stored: "constructor", theme: "dark", color: "cream", frame: "#f8f3d8" },
+    ] as const;
+    for (const { stored, theme, color, frame } of cases) {
+      const boot = runBootScript({
+        storage: {
+          [THEME_STORAGE_KEY]: theme,
+          "t3code:fork-theme": "inlet",
+          ...(stored === undefined ? {} : { "t3code:fork-inlet-color": stored }),
+        },
+        prefersDark: theme === "dark",
+      });
+      const label = String(stored);
+      expect(boot.isDark, label).toBe(theme === "dark");
+      expect(boot.forkAttributes.get("data-fork-theme"), label).toBe("inlet");
+      expect(boot.forkAttributes.get("data-fork-inlet-color"), label).toBe(color);
+      expect(boot.backgroundColor, label).toBe(frame);
+      expect(boot.metaContent, label).toBe(frame);
+    }
+  });
+  /* fork:end fork-inlet-theme */
 
   it("follows the OS appearance when storage is unavailable", () => {
     const light = runBootScript({ storageThrows: true, prefersDark: false });

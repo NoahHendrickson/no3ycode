@@ -96,9 +96,9 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(appearancePanel).toMatch(/appearance === INLET_THEME \?/u);
   });
 
-  it("offers Black, the default, and its inverse Cream, each on its own appearance", () => {
+  it("offers Cream, the default, and its inverse Black, each on its own appearance", () => {
     expect(INLET_COLORS).toEqual(["black", "cream"]);
-    expect(DEFAULT_INLET_COLOR).toBe("black");
+    expect(DEFAULT_INLET_COLOR).toBe("cream");
     expect(forkPaletteAppearance(INLET_THEME, "cream")).toBe("dark");
     expect(forkPaletteAppearance(INLET_THEME, "black")).toBe("light");
     expect(forkPaletteAppearance("cool-darker", "black")).toBe("dark");
@@ -151,16 +151,16 @@ describe("fork guard: fork-inlet-theme", () => {
 
   it("paints Black as a #141414 frame round a cream panel, on light", () => {
     const stage = ruleBodyFor(paletteRules, [BLACK]);
-    expect(BLACK).not.toContain(".dark");
-    expect(INLET_COLOR_OPTIONS.black.frame).toBe(INLET_BACKGROUND);
-    expect(declarationHex(stage, "--background")).toBe(INLET_BACKGROUND);
+    expect(declarationHex(stage, "--background")).toBe(INLET_COLOR_OPTIONS.black.frame);
     expect(declarationHex(stage, "--fork-inlet-panel")).toBe("#f8f3d8");
     const sidebar = paletteRules
       .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === `${BLACK} ${FRAME}`)
       .map((rule) => rule.body)
       .join("\n");
     expect(sidebar).toContain("--sidebar: var(--fork-inlet-black-surface)");
-    expect(declarationHex(stage, "--fork-inlet-black-surface")).toBe(INLET_BACKGROUND);
+    expect(declarationHex(stage, "--fork-inlet-black-surface")).toBe(
+      INLET_COLOR_OPTIONS.black.frame,
+    );
     expect(declarationHex(sidebar, "--sidebar-row-selected")).toBe("#f8f3d8");
   });
 
@@ -170,7 +170,8 @@ describe("fork guard: fork-inlet-theme", () => {
     const frame = paletteRules.find(
       (rule) => rule.selector.trim() === CREAM && rule.body.includes("--fork-inlet-frame:"),
     )?.body;
-    expect(declarationHex(frame ?? "", "--fork-inlet-frame")).toBe(INLET_COLOR_OPTIONS.cream.frame);
+    expect(INLET_COLOR_OPTIONS.cream.frame).toBe(INLET_BACKGROUND);
+    expect(declarationHex(frame ?? "", "--fork-inlet-frame")).toBe(INLET_BACKGROUND);
     expect(declarationHex(ruleBodyFor(paletteRules, [CREAM, FRAME]), "--sidebar")).toBe(
       INLET_COLOR_OPTIONS.cream.frame,
     );
@@ -512,10 +513,6 @@ describe("fork guard: fork-inlet-theme", () => {
         ),
       );
     }
-    // A retired colour paints as the one on its appearance before React rewrites it.
-    expect(indexHtml).toMatch(
-      /forkRetiredInletColors = \{\s*charcoal: "cream",\s*jungle: "cream",\s*green: "black",\s*"jungle-light": "black",\s*\}/u,
-    );
     expect(indexHtml).toContain("fork:begin fork-inlet-theme");
   });
 

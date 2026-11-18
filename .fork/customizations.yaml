@@ -2438,16 +2438,23 @@
     upstream appearance it sits on, because Tailwind's dark: variant reaches
     every descendant of a .dark root and a light panel cannot live under one.
     There are two colours, inverses with half-and-half swatches (Figma
-    630:14154): Black (the default) is a cream #f8f3d8 panel in a #141414
-    frame on light, and Cream is a #141414 panel in a cream #f8f3d8 frame
+    630:14154): Black is a cream #f8f3d8 panel in a #141414 frame on light,
+    and Cream (the default) is a #141414 panel in a cream #f8f3d8 frame
     (--fork-inlet-frame, painted on the inset and the column's wrapper only
     round a chat column) on dark. Cream sits on the dark template (the .dark
     token blocks, Figma 619:6610: a #232322 frame round a #303235 panel, its
     composer) and restates what it changes. Retired colours (Charcoal, Green,
-    Jungle Art, Jungle Light) are rewritten once by migrateLegacyForkPalettes
-    to the colour on the same appearance (Charcoal and Jungle Art to Cream,
-    Green and Jungle Light to Black), and index.html paints them that way
-    before React starts. Black's composer is black 16% and white 60% over the
+    Jungle Art, Jungle Light) resolve on every read to the colour on the same
+    appearance (Charcoal and Jungle Art to Cream, Green and Jungle Light to
+    Black; only the table's own keys, never a prototype name), and index.html
+    paints them the same way before React starts. A missing colour reads as
+    Cream, since the old default Charcoal was usually never stored.
+    migrateLegacyForkPalettes rewrites the stored value once as best-effort
+    persistence (a missing one too while Inlet is the palette), and where
+    Inlet is on under System and the successor restyles the native chrome
+    where the old colour did not, it pins the mode as picking the colour
+    does, so leaving Inlet restores System. themeBoot.test.ts asserts the
+    boot script's colour, frame and palette for those stored values. Black's composer is black 16% and white 60% over the
     cream, flattened. Menus, popovers and glass tooltips are each colour's solid --popover, unfrosted. A sidebar row's
     hover card (data-fork-row-hover-card, fenced at its two thread call sites,
     and on the Automations row's run card) opens
@@ -2610,9 +2617,11 @@
     - apps/web/src/projectIconColors.ts
     - apps/web/src/components/pullRequest/pullRequestIcons.tsx
     - apps/web/src/components/ThreadStatusIndicators.tsx
+    - apps/web/src/themeBoot.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkInletTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
+    - apps/web/src/themeBoot.test.ts
 
 - id: fork-sidebar-type-size
   intent: >
