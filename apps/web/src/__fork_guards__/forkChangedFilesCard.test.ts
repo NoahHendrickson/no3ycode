@@ -44,8 +44,28 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(MARKER);
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
-    expect(card?.body).toMatch(/border-radius:\s*8px/u);
-    expect(card?.body).toMatch(/border-color:\s*var\(--fork-composer-border\)/u);
+    expect(card?.body).toMatch(/border-radius:\s*var\(--fork-composer-radius\)/u);
+    expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
+  });
+
+  it("draws the file tree as the composer's outlined well under a loose header", () => {
+    // The rules hang off the header's following sibling divs: the tree's
+    // root wrapper (a fragment or another tag would drop the well) and the
+    // "N more files" footer.
+    expect(changedFiles).toMatch(/<\/div>\s*<ChangedFilesTree\b/u);
+    expect(changedFiles).toMatch(
+      /function ChangedFilesRows[\s\S]*?return \(\s*<div className="p-2">/u,
+    );
+    expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
+    const rules = cssRules(theme).map((rule) => ({
+      ...rule,
+      selector: rule.selector.replace(/\s+/gu, " "),
+    }));
+    const fill = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div"));
+    expect(fill?.selector).toContain(MARKER);
+    expect(fill?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
+    const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
+    expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
   });
 
   it("paints the user's sent bubble from --card too", () => {
