@@ -31,6 +31,14 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     );
     expect(timeline).not.toContain("row.subagents?.length");
     expect(timeline).not.toContain("return <V2SubagentGroup key={row.id} row={row} />;");
+    // A finished subagent's completion notice is its card too, not upstream's notification row.
+    const workEntryRow = readSibling("../components/chat/TimelineWorkEntryRow.tsx");
+    expect(workEntryRow).toContain("<ForkSubagentNotice");
+    expect(workEntryRow).not.toContain("<SubagentNotificationLink");
+    // …while a question, progress or resumed notice keeps upstream's row.
+    expect(group).toMatch(
+      /if \(!settled \|\| subagentResumedSince\(agent, notice\.createdAt\)\) \{\s*return <SubagentNotificationLink \{\.\.\.notice\} \/>;/u,
+    );
   });
 
   it("draws the Basic kit card: provider tile, status mark, and the task / now / model well", () => {
@@ -46,23 +54,34 @@ describe("fork guard: fork-subagent-spawn-card", () => {
       /\[data-fork-subagent-well\] \{\s*background-color: var\(--basic-raised\);/u,
     );
     expect(group).toContain('term: "Task"');
-    expect(group).toContain('term: "Model"');
+    // The line under the title is the model and effort; the status is the tile's badge.
+    expect(group).toContain("{spec || member.statusLabel}");
+    expect(group).toContain(
+      "formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider })",
+    );
+    expect(group).not.toContain('term: "Model"');
     // One list of rows gates the chevron and the well, so a card with nothing to list offers neither.
     expect(group).toMatch(
-      /details\.length === 0 \? null : \(\s*<Tooltip|details\.length === 0 \? null : \(\s*<button/u,
+      /details\.length === 0 \? \(\s*<span[\s\S]*?\) : \(\s*\/\/[^\n]*\n\s*<button/u,
     );
     expect(group).toMatch(/details\.length === 0 \? null : \(\s*<dl/u);
     // The fork mark stays for Codex and Claude; upstream's avatar over it draws only the badge.
     expect(group).toContain('iconClassName="hidden"');
-    // The well is open while the subagent works, unless the chevron was used.
-    expect(group).toContain('const open = chosenOpen ?? member.mark === "working";');
+    // Every card starts folded, a working one too; the header strip opens it.
+    expect(group).toContain("const [open, setOpen] = useState(disclosure.open);");
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
-    // A member with a thread of its own opens it from the header.
+    // The header strip, chevron included, is the disclosure…
+    expect(group).toMatch(
+      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronDownIcon[\s\S]*?open && "rotate-180"[\s\S]*?<\/button>/u,
+    );
+    // …and a member with a thread of its own opens it from the arrow after it.
     expect(group).toContain("return () => onOpenThread(childThreadId);");
-    // …and from an explicit arrow button beside the chevron.
     expect(group).toMatch(
       /data-fork-subagent-open=""[\s\S]*?onClick=\{openThread\}[\s\S]*?<ArrowUpRightIcon/u,
     );
-    expect(theme).toContain("button[data-fork-subagent-open],");
+    // The buttons' hover is scoped to the card, so a completion notice outside a tree gets it too.
+    expect(theme).toMatch(
+      /\[data-fork-subagent-card\]\s*:is\(\s*button\[data-fork-subagent-toggle\],\s*button\[data-fork-subagent-open\]\)/u,
+    );
   });
 });

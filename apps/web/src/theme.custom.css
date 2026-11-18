@@ -2458,15 +2458,11 @@
 }
 
 /* ── Subagent spawn tree (fork-subagent-spawn-card) ─────────────────────────
-   Member rows are plain text on the stage, no card; a row that opens its
-   subagent's thread takes the same 4% lift every outline action does. */
+   A card's buttons take the same 4% lift every outline action does, in the
+   spawn tree and on a completion notice, which sits outside any tree. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-subagent-tree]
-  :is(
-    button[data-fork-subagent-member],
-    button[data-fork-subagent-open],
-    button[data-fork-subagent-toggle]
-  ):hover {
+  [data-fork-subagent-card]
+  :is(button[data-fork-subagent-toggle], button[data-fork-subagent-open]):hover {
   background-color: var(--fork-outline-hover-bg);
 }
 

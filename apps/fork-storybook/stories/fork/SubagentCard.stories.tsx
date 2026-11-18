@@ -15,9 +15,11 @@ const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).
 const BASE: ForkSubagentTreeRow = {
   id: "subagent-story",
   title: "Sol review r2: tab strips under Basic",
+  titled: true,
   status: "running",
   mark: "working",
   model: "gpt-6.2-sol",
+  modelSelection: undefined,
   startedAt: minutesAgo(2.5),
   completedAt: null,
   childThreadId: null,
@@ -97,6 +99,7 @@ function Card({ member, initialOpen }: { member: ForkSubagentTreeRow; initialOpe
   return (
     <ForkSubagentCardView
       member={member}
+      effort="High"
       environmentId={environmentId}
       open={open}
       onToggle={() => setOpen(!open)}
@@ -109,10 +112,17 @@ const meta = {
   title: "Fork/Subagent card",
   component: ForkSubagentCardView,
   tags: ["autodocs"],
-  args: { member: BASE, environmentId, open: true, onToggle: noop, openThread: noop },
+  args: {
+    member: BASE,
+    effort: "High",
+    environmentId,
+    open: true,
+    onToggle: noop,
+    openThread: noop,
+  },
   argTypes: { open: { control: "boolean" } },
   decorators: [(Story) => <div className="w-[736px] min-w-0">{Story()}</div>],
-  // The chevron moves the `open` control, so the two stay in step.
+  // The header strip moves the `open` control, so the two stay in step.
   render: function Render(args) {
     const [, updateArgs] = useArgs<CardProps>();
     return <ForkSubagentCardView {...args} onToggle={() => updateArgs({ open: !args.open })} />;
@@ -124,7 +134,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
-/** Each status, folded and open. The well starts open while the subagent works. */
+/** Each status, folded and open. The well starts folded. */
 export const Statuses: Story = {
   render: () => (
     <Stack gap={3}>

@@ -46,7 +46,9 @@ import {
 import { cn } from "~/lib/utils";
 import { formatUpcomingTimestamp } from "../../timestampFormat";
 import { FetchedToolOutput, V2ItemInspector } from "./V2ItemInspector";
-import { SubagentNotificationLink } from "./V2LifecycleRow";
+/* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
+/* fork:end fork-subagent-spawn-card */
 import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
@@ -161,7 +163,8 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
     return <WorkEntryLogRow {...props} />;
   }
   return (
-    <SubagentNotificationLink
+    /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+    <ForkSubagentNotice
       parentRef={scopeThreadRef(ctx.activeThreadEnvironmentId, item.threadId)}
       childThreadId={childThreadId}
       taskIds={item.source.kind === "delegated_task" ? item.source.taskIds : undefined}
@@ -169,8 +172,12 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
       createdAt={props.workEntry.createdAt}
       timestampFormat={ctx.timestampFormat}
       onOpenThread={ctx.onOpenThread}
+      entryId={props.workEntry.id}
+      onToggleEntry={props.onToggleEntry}
+      onContentReady={props.onContentReady}
       fallback={<WorkEntryLogRow {...props} />}
     />
+    /* fork:end fork-subagent-spawn-card */
   );
 });
 

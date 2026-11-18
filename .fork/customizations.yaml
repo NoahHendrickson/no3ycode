@@ -5469,19 +5469,30 @@
     bordered member box). A card is the changed-files card's shape: the card
     fill, a 1px border, 8px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
-    over the status word (Running, Completed, Stopped), the elapsed time, an
-    open-thread arrow, and a chevron; under it a well (the composer's prompt fill; --basic-raised under
+    over its model and reasoning effort ("Opus 5.5 · High", upstream's
+    formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
+    chevron, and an open-thread arrow; under it a well (the composer's prompt fill; --basic-raised under
     Basic) lists the task the
     subagent was given, what it is doing now (its live progress) or, once
-    settled, its result, and the model. The well starts open while the
-    subagent works and folds once it settles, unless the chevron was used. An
-    arrow button before the chevron, and the header itself, open the
-    subagent's thread when it has one, here or in a linked
+    settled, its result. The well starts folded whatever the
+    status: the strip (tile through the chevron, one button) opens and folds it. The arrow
+    button after it opens the subagent's thread when it has one, here or in a linked
     environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;
     keep the two in step on a sync). One fenced branch in TimelineV2EventRow takes
     every subagent item; a lone card selects only its own agent. A batch keeps its list-tree lead line ("Kicked off N
     subagents", the status summary, the batch's elapsed span) above one card
     per member.
+
+    A subagent's completion notice (upstream's SubagentNotificationLink, swapped
+    for ForkSubagentNotice in a fenced branch of TimelineWorkEntryRow) is drawn
+    as the same card, folded, from the live record (forkSubagentRowFromAgent),
+    so a finished subagent's report reads like its card. An untitled record
+    (completion notices often are) takes its child thread's title, else its
+    task, before "Subagent". Its chevron choice is
+    kept in the work-group view state under the notice's entry id and reports to
+    the group it sits in. A question or progress notice (outcome updated or
+    unknown), one whose agent resumed after it, and one whose agent is not on the
+    roster keep upstream's row.
 
     It reads the thread's live subagent roster the way upstream's group does;
     lead, summary and the model's name come from upstream's shared helpers,
@@ -5498,6 +5509,9 @@
     - apps/web/src/theme.custom.basic.css
   shadows: []
   watch:
+    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
+    # Upstream's completion-notice test clicks the card's arrow (fenced).
+    - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
     # Fenced import, the swapped render at the batch call site, and the
     # unused-marker on upstream's V2SubagentGroup.
     - apps/web/src/components/chat/MessagesTimeline.tsx

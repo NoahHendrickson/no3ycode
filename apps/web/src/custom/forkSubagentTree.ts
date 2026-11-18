@@ -13,6 +13,7 @@
  * rendering.
  */
 import type {
+  ModelSelection,
   OrchestrationV2RemoteTaskChild,
   OrchestrationV2Subagent,
   OrchestrationV2TurnItem,
@@ -34,11 +35,16 @@ export type ForkSubagentMark = "working" | "idle" | "done" | "failed" | "stopped
 
 export interface ForkSubagentTreeRow {
   readonly id: string;
+  /** Its own title, else the task it was given, else "Subagent". */
   readonly title: string;
+  /** Whether the record named it; an untitled card may borrow its child thread's title. */
+  readonly titled: boolean;
   readonly status: ForkSubagentStatus;
   /** The sidebar mark: working, idle, done, failed or stopped. */
   readonly mark: ForkSubagentMark;
   readonly model: string | null;
+  /** The selection it was launched with, for its reasoning effort. */
+  readonly modelSelection: ModelSelection | undefined;
   readonly startedAt: string | null;
   readonly completedAt: string | null;
   readonly childThreadId: ThreadId | null;
@@ -100,15 +106,25 @@ const STATUS_PRESENTATION: Record<
 /** The server's placeholder when a child ends without output; the mark already says it. */
 const GENERIC_CHILD_END = /^Child task ended with status\b/iu;
 
-/** One line of a markdown result: drop list bullets, code ticks, and link targets. */
+/** One line of a markdown result: drop heading marks, list bullets, emphasis, code ticks, and
+    link targets. Emphasis is only `*` at word edges outside code, so dunders and globs survive. */
 function plainDetail(text: string): string {
   return text
     .replace(/\[([^\]]+)\]\([^)]*\)/gu, "$1")
-    .replace(/`/gu, "")
+    .replace(/^[ \t]*#{1,6}[ \t]+/gmu, "")
     .replace(/^[ \t]*[-*][ \t]+/gmu, "")
+    .split(/(`[^`]*`)/u)
+    .map((part, index) =>
+      index % 2 === 1 ? part : part.replace(EMPHASIS_STRONG, "$1$2").replace(EMPHASIS, "$1$2"),
+    )
+    .join("")
+    .replace(/`/gu, "")
     .replace(/\s+/gu, " ")
     .trim();
 }
+
+const EMPHASIS_STRONG = /(^|[\s(])\*\*(?=\S)(.+?)(?<=\S)\*\*(?=$|[\s).,;:!?])/gu;
+const EMPHASIS = /(^|[\s(])\*(?=[^\s*])([^*]+?)(?<=[^\s*])\*(?=$|[\s).,;:!?])/gu;
 
 /**
  * A model id the way the Figma tree spells it: upstream's shared spelling
@@ -160,6 +176,62 @@ export function forkSubagentMembers(row: {
   );
 }
 
+/** What a row is resolved from: a transcript subagent item, or the live record alone (a completion
+    notice carries only the agent). */
+type ForkSubagentRowSource = { readonly id: string } & Pick<
+  ForkSubagentItem,
+  | "status"
+  | "startedAt"
+  | "completedAt"
+  | "progress"
+  | "result"
+  | "prompt"
+  | "title"
+  | "childThreadId"
+  | "remoteChild"
+  | "driver"
+  | "providerInstanceId"
+>;
+
+function resolveRow(
+  item: ForkSubagentRowSource,
+  live: OrchestrationV2Subagent | undefined,
+): ForkSubagentTreeRow {
+  const status = live?.status ?? item.status;
+  const startedAt = live?.startedAt ?? item.startedAt;
+  const completedAt = live?.completedAt ?? item.completedAt;
+  const progress = live?.progress ?? item.progress;
+  const result = live?.result ?? item.result;
+  const { mark, word } = STATUS_PRESENTATION[status];
+  // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
+  const prompt = plainDetail(live?.prompt || item.prompt);
+  return {
+    id: item.id,
+    title: formatSubagentDisplayTitle(live?.title ?? item.title ?? (prompt || "Subagent")),
+    titled: (live?.title ?? item.title) != null,
+    status,
+    mark,
+    // Claude can report the model only through its selection.
+    model: live?.model ?? live?.modelSelection?.model ?? null,
+    modelSelection: live?.modelSelection,
+    startedAt: isoOrNull(startedAt),
+    completedAt: isoOrNull(completedAt),
+    childThreadId: live?.childThreadId ?? item.childThreadId,
+    remote: item.remoteChild ?? live?.remoteChild,
+    driver: item.driver,
+    providerInstanceId: item.providerInstanceId,
+    statusLabel: word,
+    prompt: prompt || null,
+    activity: resolveActivity({ active: mark === "working", progress, result }),
+  };
+}
+
+/** A subagent's card row from its live record alone, for the completion notice it posts. */
+export function forkSubagentRowFromAgent(agent: OrchestrationV2Subagent): ForkSubagentTreeRow {
+  // The record is the live side too: the model is read from the live record alone.
+  return resolveRow(agent, agent);
+}
+
 export function resolveForkSubagentTree(
   members: ReadonlyArray<ForkSubagentItem>,
   liveAgents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
@@ -170,7 +242,6 @@ export function resolveForkSubagentTree(
   let endUnknown = false;
   for (const item of members) {
     const live = liveAgents?.find((agent) => agent.id === item.subagentId);
-    const status = live?.status ?? item.status;
     const startedAt = live?.startedAt ?? item.startedAt;
     const completedAt = live?.completedAt ?? item.completedAt;
     if (startedAt) {
@@ -183,28 +254,7 @@ export function resolveForkSubagentTree(
     } else {
       endUnknown = true;
     }
-    const progress = live?.progress ?? item.progress;
-    const result = live?.result ?? item.result;
-    const { mark, word } = STATUS_PRESENTATION[status];
-    // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
-    const prompt = plainDetail(live?.prompt || item.prompt);
-    rows.push({
-      id: item.id,
-      title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
-      status,
-      mark,
-      // Claude can report the model only through its selection.
-      model: live?.model ?? live?.modelSelection?.model ?? null,
-      startedAt: isoOrNull(startedAt),
-      completedAt: isoOrNull(completedAt),
-      childThreadId: live?.childThreadId ?? item.childThreadId,
-      remote: item.remoteChild ?? live?.remoteChild,
-      driver: item.driver,
-      providerInstanceId: item.providerInstanceId,
-      statusLabel: word,
-      prompt: prompt || null,
-      activity: resolveActivity({ active: mark === "working", progress, result }),
-    });
+    rows.push(resolveRow(item, live));
   }
   const group = subagentGroupSummary(rows);
   return {

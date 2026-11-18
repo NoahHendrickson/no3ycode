@@ -6,11 +6,10 @@
  * lifecycle row and `V2SubagentGroup`. A batch keeps its list-tree lead line
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
  * above one card per member. A card is a header (the provider's mark in a tile
- * with the status mark in its corner, the title over the status word, the
- * elapsed time, an open-thread button, a chevron) and a well underneath: the task it was given, what
- * it is doing now or what it found, and the model. The well starts open while
- * the subagent works and folds once it settles, unless the chevron was used.
- * The arrow button, and the header itself, open the subagent's thread when it has one.
+ * with the status mark in its corner, the title over the model and effort, the
+ * elapsed time, a chevron, an open-thread arrow) and a well underneath: the task it was given, what
+ * it is doing now or what it found. The well starts folded; the header strip, chevron included,
+ * opens and folds it, and the arrow opens the thread.
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -18,26 +17,47 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import {
+  formatSubagentDisplayTitle,
+  resolveSubagentMetadata,
+} from "@t3tools/client-runtime/state/subagent-display";
+import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, Fragment, memo, type ReactNode, use, useId, useState } from "react";
+import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
+import {
+  type ComponentProps,
+  type CSSProperties,
+  Fragment,
+  memo,
+  type ReactNode,
+  use,
+  useId,
+  useState,
+} from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
-import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
-import { EnvironmentSubagentAvatar } from "~/components/chat/V2LifecycleRow";
+import { TimelineRowCtx, WorkGroupViewCtx } from "~/components/chat/timelineRowContext";
+import {
+  EnvironmentSubagentAvatar,
+  SubagentNotificationLink,
+} from "~/components/chat/V2LifecycleRow";
+import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
+import { serverEnvironment } from "~/state/server";
+import { useQuietThreadShell } from "~/state/entities";
 import { environmentThreadDetails } from "~/state/threads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import {
   forkSubagentMembers,
+  forkSubagentRowFromAgent,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -102,18 +122,75 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
     environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
   );
+  // The chevron's choice lives in the thread's timeline view state, so it survives the row
+  // scrolling out of the virtualised list or its turn folding.
+  const ctx = use(TimelineRowCtx);
   const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
   if (member === undefined) return null;
+  const chosen = ctx.workGroupViewState.expandedEntries;
+  const openKey = `subagent-card:open:${member.id}`;
   return (
     <ForkSubagentCard
       member={member}
       titleId={titleId}
-      anchorKey={anchorKey}
       environmentId={environmentId}
       onOpenThread={onOpenThread}
+      disclosure={{
+        open: chosen.has(openKey),
+        remember: (open) => (open ? chosen.add(openKey) : chosen.delete(openKey)),
+        // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
+        report: (collapsed) => ctx.onToggleWorkEntry(anchorKey, collapsed, member.id),
+        ready: () => ctx.onWorkEntryContentReady?.(anchorKey, member.id),
+      }}
     />
   );
 });
+
+/** A subagent's completion notice drawn as its card, folded, with the result it reported. A
+    question or progress notice, or one whose agent has resumed since, keeps upstream's row. */
+export function ForkSubagentNotice(
+  props: ComponentProps<typeof SubagentNotificationLink> & {
+    readonly entryId: string;
+    readonly onToggleEntry?: ((collapsed: boolean) => void) | undefined;
+    readonly onContentReady?: (() => void) | undefined;
+  },
+) {
+  const { entryId, onToggleEntry, onContentReady, ...notice } = props;
+  const { parentRef, childThreadId, taskIds, outcome } = notice;
+  // Follow-up tasks share a child conversation; the notice reports one task's result.
+  const agent = useAtomValue(
+    environmentThreadDetails.threadAtom(parentRef),
+    (thread) =>
+      thread?.projection.subagents.find((candidate) =>
+        taskIds === undefined
+          ? candidate.childThreadId === childThreadId
+          : taskIds.includes(candidate.id),
+      ) ?? null,
+  );
+  const ctx = use(TimelineRowCtx);
+  // Inside an expanded tool-call group the entry reports to the group, as upstream's rows do.
+  const groupView = use(WorkGroupViewCtx);
+  if (agent === null) return notice.fallback;
+  const settled = outcome === "completed" || outcome === "failed" || outcome === "cancelled";
+  if (!settled || subagentResumedSince(agent, notice.createdAt)) {
+    return <SubagentNotificationLink {...notice} />;
+  }
+  const chosen = groupView?.state.expandedEntries ?? ctx.workGroupViewState.expandedEntries;
+  return (
+    <ForkSubagentCard
+      member={forkSubagentRowFromAgent(agent)}
+      environmentId={parentRef.environmentId}
+      onOpenThread={notice.onOpenThread}
+      disclosure={{
+        open: chosen.has(entryId),
+        remember: (open) => (open ? chosen.add(entryId) : chosen.delete(entryId)),
+        report: (collapsed) =>
+          groupView ? groupView.onToggleEntry(collapsed, entryId) : onToggleEntry?.(collapsed),
+        ready: () => (groupView ? groupView.onContentReady?.(entryId) : onContentReady?.()),
+      }}
+    />
+  );
+}
 
 /** A batch's lead line: "Kicked off N subagents", the status summary and the batch's span,
     from the thread's live roster. */
@@ -169,39 +246,57 @@ function useOpenSubagentThread(
     });
 }
 
+/** Where a card keeps whether it is open and tells the timeline it opened or folded. */
+interface ForkSubagentCardDisclosure {
+  /** Open before a remount; a card starts folded. */
+  readonly open: boolean;
+  readonly remember: (open: boolean) => void;
+  /** Keeps the timeline's scroll position while the card opens or folds. */
+  readonly report: (collapsed: boolean) => void;
+  /** Its details are already in hand, so opening is ready at once; that retires the reveal
+      instead of re-running it on every later list resize. */
+  readonly ready: () => void;
+}
+
 function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
   readonly titleId?: string | undefined;
-  /** The timeline row, which keeps its scroll position while a card opens or folds. */
-  readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
+  readonly disclosure: ForkSubagentCardDisclosure;
 }) {
-  const { member, titleId, anchorKey, environmentId, onOpenThread } = props;
-  // The chevron's choice lives in the thread's timeline view state, so it survives the row
-  // scrolling out of the virtualised list or its turn folding.
-  const ctx = use(TimelineRowCtx);
-  const chosen = ctx.workGroupViewState.expandedEntries;
-  const openKey = `subagent-card:open:${member.id}`;
-  const closedKey = `subagent-card:closed:${member.id}`;
-  const [chosenOpen, setChosenOpen] = useState<boolean | null>(() =>
-    chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
-  );
-  const open = chosenOpen ?? member.mark === "working";
+  const { member, titleId, environmentId, onOpenThread, disclosure } = props;
+  const [open, setOpen] = useState(disclosure.open);
   const toggle = () => {
-    // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
-    ctx.onToggleWorkEntry(anchorKey, open, member.id);
-    // Its details are already in hand, so opening is ready at once; that retires the reveal
-    // instead of re-running it on every later list resize.
-    if (!open) ctx.onWorkEntryContentReady?.(anchorKey, member.id);
-    chosen.delete(open ? openKey : closedKey);
-    chosen.add(open ? closedKey : openKey);
-    setChosenOpen(!open);
+    disclosure.report(open);
+    if (!open) disclosure.ready();
+    disclosure.remember(!open);
+    setOpen(!open);
   };
   const openThread = useOpenSubagentThread(member, onOpenThread);
+  // An untitled subagent (a completion notice's record often is) takes its child thread's title,
+  // which is generated from the ask; the model falls back to the ask itself.
+  const childTitle = useQuietThreadShell(
+    !member.titled && member.childThreadId !== null
+      ? scopeThreadRef(environmentId, member.childThreadId)
+      : null,
+  )?.source.title;
+  // Selected down to the label, so a provider update re-renders only the cards whose effort changed.
+  const effort = useAtomValue(serverEnvironment.providersValueAtom(environmentId), (providers) => {
+    const provider = providers?.find(
+      (candidate) => candidate.instanceId === member.providerInstanceId,
+    );
+    const { modelSlug } = resolveSubagentMetadata({
+      model: member.model,
+      modelSelection: member.modelSelection,
+      provider,
+    });
+    return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
+  });
   return (
     <ForkSubagentCardView
-      member={member}
+      member={childTitle ? { ...member, title: formatSubagentDisplayTitle(childTitle) } : member}
+      effort={effort}
       titleId={titleId}
       environmentId={environmentId}
       open={open}
@@ -214,6 +309,8 @@ function ForkSubagentCard(props: {
 /** @public — the card as drawn, without the timeline's state; Storybook renders it on its own. */
 export function ForkSubagentCardView(props: {
   readonly member: ForkSubagentTreeRow;
+  /** The reasoning effort it runs at, in the picker's words; null when none is reported. */
+  readonly effort?: string | null | undefined;
   readonly titleId?: string | undefined;
   readonly environmentId: EnvironmentId;
   readonly open: boolean;
@@ -225,7 +322,8 @@ export function ForkSubagentCardView(props: {
   const wellId = useId();
   const remote = member.remote;
   const failed = member.mark === "failed";
-  const model = formatForkSubagentModel(member.model);
+  // The status is the tile's badge; the line under the title says what it runs on.
+  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
   // One list of rows: a subagent that has only just started can have none yet, and then the card
   // offers no chevron and no well.
   const details: Array<{ readonly term: string; readonly detail: ReactNode }> = [];
@@ -248,9 +346,6 @@ export function ForkSubagentCardView(props: {
         </dd>
       ),
     });
-  }
-  if (model) {
-    details.push({ term: "Model", detail: <dd className="truncate text-foreground">{model}</dd> });
   }
   const identity = (
     <>
@@ -294,7 +389,7 @@ export function ForkSubagentCardView(props: {
           </span>
         </span>
       </span>
-      <span className="flex min-w-0 flex-1 flex-col items-start">
+      <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
         <span
           id={titleId}
           className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground"
@@ -303,21 +398,21 @@ export function ForkSubagentCardView(props: {
         </span>
         <span
           className={cn(
-            "w-full min-w-0 truncate text-sm leading-4",
-            failed ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
+            "w-full min-w-0 truncate text-xs leading-4",
+            failed && !spec ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
           )}
         >
-          {member.statusLabel}
+          {spec || member.statusLabel}
           {remote !== undefined ? ` · on ${remote.label}` : null}
         </span>
       </span>
-      {member.startedAt ? (
-        <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-          <AgentElapsed agent={member} />
-        </span>
-      ) : null}
     </>
   );
+  const elapsed = member.startedAt ? (
+    <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+      <AgentElapsed agent={member} />
+    </span>
+  ) : null;
   return (
     <div
       data-fork-subagent-card=""
@@ -325,22 +420,35 @@ export function ForkSubagentCardView(props: {
       className="w-full min-w-0 overflow-clip rounded-[8px] border border-border bg-card"
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
-        {openThread === null ? (
-          <span className="flex min-w-0 flex-1 items-center gap-2">{identity}</span>
+        {details.length === 0 ? (
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            {identity}
+            {elapsed}
+          </span>
         ) : (
+          // The strip opens and folds the well, ending in the chevron that says so.
           <button
             type="button"
-            data-fork-subagent-member=""
-            aria-label={`Open ${member.title}`}
+            data-fork-subagent-toggle=""
+            aria-expanded={open}
+            aria-controls={wellId}
+            aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
             aria-description={
               remote !== undefined
                 ? `${member.statusLabel} · on ${remote.label}`
                 : member.statusLabel
             }
-            onClick={openThread}
+            onClick={onToggle}
             className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           >
             {identity}
+            {elapsed}
+            <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
+              {/* The sidebar shelves' trailing chevron: down while folded, up while open. */}
+              <ChevronDownIcon
+                className={cn("size-3 transition-transform", open && "rotate-180")}
+              />
+            </span>
           </button>
         )}
         {openThread === null ? null : (
@@ -360,19 +468,6 @@ export function ForkSubagentCardView(props: {
             </TooltipTrigger>
             <TooltipPopup side="top">Open thread</TooltipPopup>
           </Tooltip>
-        )}
-        {details.length === 0 ? null : (
-          <button
-            type="button"
-            data-fork-subagent-toggle=""
-            aria-expanded={open}
-            aria-controls={wellId}
-            aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
-            onClick={onToggle}
-            className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-          >
-            <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
-          </button>
         )}
       </div>
       {details.length === 0 ? null : (

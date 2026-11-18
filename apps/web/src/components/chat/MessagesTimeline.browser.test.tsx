@@ -440,7 +440,10 @@ describe("MessagesTimeline work rows", () => {
         expect(screen.text()).toContain("Final implementation report");
         expect(screen.text()).toContain("Follow-up explanation");
         expect(screen.text()).not.toContain("Old interrupted progress");
-        await click(screen.buttons("Open Simplify delivery")[0]!);
+        // fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
+        // A settled notice is the fork's subagent card; its arrow button opens the thread.
+        await click(screen.buttons("Open Simplify delivery thread")[0]!);
+        // fork:end fork-subagent-spawn-card
         expect(onOpenThread).toHaveBeenCalledWith(childThreadId);
       } else if (source === "legacy") {
         expect(screen.text()).toContain("Old interrupted progress");
