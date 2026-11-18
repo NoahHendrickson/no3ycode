@@ -36,8 +36,8 @@ export interface ForkSubagentTreeRow {
   readonly id: string;
   readonly title: string;
   readonly status: ForkSubagentStatus;
+  /** The sidebar mark: working, idle, done, failed or stopped. */
   readonly mark: ForkSubagentMark;
-  readonly failed: boolean;
   readonly model: string | null;
   readonly startedAt: string | null;
   readonly completedAt: string | null;
@@ -46,14 +46,17 @@ export interface ForkSubagentTreeRow {
   readonly remote: OrchestrationV2RemoteTaskChild | undefined;
   readonly driver: ProviderDriverKind;
   readonly providerInstanceId: ProviderInstanceId;
-  /** Still working: the card's well starts open. */
-  readonly active: boolean;
   /** The card's status line: "Running", "Completed", "Stopped". */
   readonly statusLabel: string;
   /** The task it was given, as one plain paragraph; null when the server withheld it. */
   readonly prompt: string | null;
   /** What it is doing now while it works, its result once settled; null when it has said nothing. */
-  readonly activity: { readonly label: "Now" | "Result"; readonly text: string } | null;
+  readonly activity: {
+    readonly label: "Now" | "Result";
+    readonly text: string;
+    /** A bare path (no spaces) truncates in the middle, so it keeps its filename. */
+    readonly shape: "path" | "prose";
+  } | null;
 }
 
 /** The batch's one elapsed span, in the shape `AgentElapsed` ticks. */
@@ -79,26 +82,19 @@ export interface ForkSubagentTree {
   readonly rows: ReadonlyArray<ForkSubagentTreeRow>;
 }
 
-const STATUS_MARK: Record<ForkSubagentStatus, ForkSubagentMark> = {
-  pending: "working",
-  running: "working",
-  waiting: "working",
-  idle: "idle",
-  completed: "done",
-  failed: "failed",
-  cancelled: "stopped",
-  interrupted: "stopped",
-};
-
-const CARD_STATUS_WORD: Record<ForkSubagentStatus, string> = {
-  pending: "Queued",
-  running: "Running",
-  waiting: "Waiting",
-  idle: "Idle · resumable",
-  completed: "Completed",
-  failed: "Failed",
-  cancelled: "Stopped",
-  interrupted: "Stopped",
+/** Each status as the card shows it: the sidebar mark and the word under the title. */
+const STATUS_PRESENTATION: Record<
+  ForkSubagentStatus,
+  { readonly mark: ForkSubagentMark; readonly word: string }
+> = {
+  pending: { mark: "working", word: "Queued" },
+  running: { mark: "working", word: "Running" },
+  waiting: { mark: "working", word: "Waiting" },
+  idle: { mark: "idle", word: "Idle · resumable" },
+  completed: { mark: "done", word: "Completed" },
+  failed: { mark: "failed", word: "Failed" },
+  cancelled: { mark: "stopped", word: "Stopped" },
+  interrupted: { mark: "stopped", word: "Stopped" },
 };
 
 /** The server's placeholder when a child ends without output; the mark already says it. */
@@ -142,7 +138,12 @@ function resolveActivity(input: {
   const raw = (input.active ? input.progress : input.result)?.trim();
   if (!raw || GENERIC_CHILD_END.test(raw)) return null;
   const text = plainDetail(raw);
-  return text ? { label: input.active ? "Now" : "Result", text } : null;
+  if (!text) return null;
+  return {
+    label: input.active ? "Now" : "Result",
+    text,
+    shape: text.includes("/") && !text.includes(" ") ? "path" : "prose",
+  };
 }
 
 function isoOrNull(value: DateTime.Utc | null | undefined): string | null {
@@ -174,14 +175,13 @@ export function resolveForkSubagentTree(
     }
     const progress = live?.progress ?? item.progress;
     const result = live?.result ?? item.result;
-    const active = STATUS_MARK[status] === "working";
+    const { mark, word } = STATUS_PRESENTATION[status];
     const prompt = plainDetail(live?.prompt ?? item.prompt);
     rows.push({
       id: item.id,
       title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
       status,
-      mark: STATUS_MARK[status],
-      failed: status === "failed",
+      mark,
       // Claude can report the model only through its selection.
       model: live?.model ?? live?.modelSelection?.model ?? null,
       startedAt: isoOrNull(startedAt),
@@ -190,10 +190,9 @@ export function resolveForkSubagentTree(
       remote: item.remoteChild ?? live?.remoteChild,
       driver: item.driver,
       providerInstanceId: item.providerInstanceId,
-      active,
-      statusLabel: CARD_STATUS_WORD[status],
+      statusLabel: word,
       prompt: prompt || null,
-      activity: resolveActivity({ active, progress, result }),
+      activity: resolveActivity({ active: mark === "working", progress, result }),
     });
   }
   const group = subagentGroupSummary(rows);

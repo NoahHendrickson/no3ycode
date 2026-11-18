@@ -62,7 +62,11 @@ describe("resolveForkSubagentTree", () => {
     const row = tree.rows[0]!;
     expect(row.status).toBe("completed");
     expect(row.mark).toBe("done");
-    expect(row.activity).toEqual({ label: "Result", text: "Found three leads in src" });
+    expect(row.activity).toEqual({
+      label: "Result",
+      text: "Found three leads in src",
+      shape: "prose",
+    });
     expect(row.model).toBe("claude-opus-5-5");
     expect(row.childThreadId).toBe("thread-child");
     expect(
@@ -87,16 +91,24 @@ describe("resolveForkSubagentTree", () => {
       [item({ progress: "Running tests", prompt: "Check the [tabs](https://x)\n- under `Basic`" })],
       null,
     ).rows[0]!;
-    expect(working.active).toBe(true);
+    expect(working.mark).toBe("working");
     expect(working.statusLabel).toBe("Running");
     expect(working.prompt).toBe("Check the tabs under Basic");
-    expect(working.activity).toEqual({ label: "Now", text: "Running tests" });
+    expect(working.activity).toEqual({ label: "Now", text: "Running tests", shape: "prose" });
+    expect(
+      resolveForkSubagentTree([item({ progress: "Reading apps/web/src/theme.css" })], null).rows[0]!
+        .activity?.shape,
+    ).toBe("prose");
+    expect(
+      resolveForkSubagentTree([item({ progress: "apps/web/src/theme.custom.basic.css" })], null)
+        .rows[0]!.activity?.shape,
+    ).toBe("path");
     expect(resolveForkSubagentTree([item()], null).rows[0]!.activity).toBeNull();
     const failed = resolveForkSubagentTree(
       [item({ status: "failed", result: "Child task ended with status failed" })],
       null,
     ).rows[0]!;
-    expect(failed.active).toBe(false);
+    expect(failed.mark).toBe("failed");
     expect(failed.statusLabel).toBe("Failed");
     expect(failed.activity).toBeNull();
     // Never one field standing in for the other.

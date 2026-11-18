@@ -21,7 +21,7 @@ import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, memo, use, useId, useState } from "react";
+import { type CSSProperties, memo, type ReactNode, use, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
@@ -44,69 +44,137 @@ import {
 } from "./forkSubagentTree";
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "./SidebarV2StatusIndicator";
 
+type EventRow = Extract<MessagesTimelineRow, { readonly kind: "event" }>;
+
 export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
-  readonly row: Extract<MessagesTimelineRow, { readonly kind: "event" }>;
+  readonly row: EventRow;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { row, environmentId, onOpenThread } = props;
-  const members = (row.subagents ?? [row.projectedItem]).flatMap(({ item }) =>
-    item.type === "subagent" ? [item as ForkSubagentItem] : [],
+  const { row } = props;
+  const members = (row.subagents?.length ? row.subagents : [row.projectedItem]).flatMap(
+    ({ item }) => (item.type === "subagent" ? [item as ForkSubagentItem] : []),
   );
-  // A lone card selects its own agent, so another subagent's progress does not re-render it.
-  const lone = members.length === 1 ? members[0]!.subagentId : null;
-  const selected = useAtomValue(
+  const [first] = members;
+  if (first === undefined) return null;
+  return members.length === 1 ? (
+    <LoneSubagent {...props} item={first} />
+  ) : (
+    <SubagentBatch {...props} members={members} />
+  );
+});
+
+/** One subagent: its own card, and it selects only its own agent, so another subagent's
+    progress does not re-render it. */
+function LoneSubagent(props: {
+  readonly row: EventRow;
+  readonly item: ForkSubagentItem;
+  readonly environmentId: EnvironmentId;
+  readonly onOpenThread: (threadId: ThreadId) => void;
+}) {
+  const { row, item, environmentId, onOpenThread } = props;
+  const live = useAtomValue(
+    environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
+    (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
+  );
+  const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
+  if (member === undefined) return null;
+  return (
+    <SubagentBlock row={row} label={member.title}>
+      <ForkSubagentCard
+        member={member}
+        anchorKey={row.id}
+        environmentId={environmentId}
+        onOpenThread={onOpenThread}
+      />
+    </SubagentBlock>
+  );
+}
+
+/** A batch: the lead line above one card per member, from the thread's live roster. */
+function SubagentBatch(props: {
+  readonly row: EventRow;
+  readonly members: ReadonlyArray<ForkSubagentItem>;
+  readonly environmentId: EnvironmentId;
+  readonly onOpenThread: (threadId: ThreadId) => void;
+}) {
+  const { row, members, environmentId, onOpenThread } = props;
+  const liveAgents = useAtomValue(
     environmentThreadDetails.threadAtom(
       scopeThreadRef(environmentId, row.projectedItem.item.threadId),
     ),
-    (thread) =>
-      lone === null
-        ? thread?.projection.subagents
-        : (thread?.projection.subagents.find((agent) => agent.id === lone) ?? null),
+    (thread) => thread?.projection.subagents,
   );
-  const liveAgents = Array.isArray(selected) ? selected : selected ? [selected] : undefined;
   const tree = resolveForkSubagentTree(members, liveAgents);
-
   return (
-    <WorkLogBlock continues={row.continuesWorkLog}>
+    <SubagentBlock row={row} label={tree.lead}>
+      <span className="flex w-full min-w-0 items-start gap-2 pb-1">
+        <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
+          <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col items-start">
+          <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>
+          <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
+            <span>{tree.summary}</span>
+            {tree.timing ? (
+              <span className="tabular-nums">
+                <AgentElapsed agent={tree.timing} />
+              </span>
+            ) : null}
+          </span>
+        </span>
+      </span>
+      {tree.rows.map((member) => (
+        <ForkSubagentCard
+          key={member.id}
+          member={member}
+          anchorKey={row.id}
+          environmentId={environmentId}
+          onOpenThread={onOpenThread}
+        />
+      ))}
+    </SubagentBlock>
+  );
+}
+
+function SubagentBlock(props: {
+  readonly row: EventRow;
+  readonly label: string;
+  readonly children: ReactNode;
+}) {
+  return (
+    <WorkLogBlock continues={props.row.continuesWorkLog}>
       <div
         data-fork-subagent-tree=""
         data-subagent-group
         role="group"
-        aria-label={tree.rows.length > 1 ? tree.lead : tree.rows[0]?.title}
+        aria-label={props.label}
         className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
       >
-        {tree.rows.length > 1 ? (
-          <span className="flex w-full min-w-0 items-start gap-2 pb-1">
-            <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
-              <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col items-start">
-              <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>
-              <span className="flex min-w-0 items-start gap-3 whitespace-nowrap text-muted-foreground">
-                <span>{tree.summary}</span>
-                {tree.timing ? (
-                  <span className="tabular-nums">
-                    <AgentElapsed agent={tree.timing} />
-                  </span>
-                ) : null}
-              </span>
-            </span>
-          </span>
-        ) : null}
-        {tree.rows.map((member) => (
-          <ForkSubagentCard
-            key={member.id}
-            member={member}
-            anchorKey={row.id}
-            environmentId={environmentId}
-            onOpenThread={onOpenThread}
-          />
-        ))}
+        {props.children}
       </div>
     </WorkLogBlock>
   );
-});
+}
+
+/** Opens a subagent's thread: its child thread here, or the thread a linked environment runs it
+    in when this client is connected there; null when there is nowhere to go. Mirrors upstream's
+    SubagentLifecycleRow (V2LifecycleRow.tsx), which the card replaces. */
+function useOpenSubagentThread(
+  member: Pick<ForkSubagentTreeRow, "childThreadId" | "remote">,
+  onOpenThread: (threadId: ThreadId) => void,
+): (() => void) | null {
+  const { childThreadId, remote } = member;
+  const remoteEnvironment = useEnvironment(remote?.environmentId ?? null);
+  const navigate = useNavigate();
+  if (childThreadId !== null) return () => onOpenThread(childThreadId);
+  if (remote === undefined || remoteEnvironment === null) return null;
+  return () =>
+    void navigate({
+      to: "/$environmentId/$threadId",
+      params: buildThreadRouteParams(scopeThreadRef(remote.environmentId, remote.threadId)),
+    });
+}
 
 function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
@@ -125,7 +193,7 @@ function ForkSubagentCard(props: {
   const [chosenOpen, setChosenOpen] = useState<boolean | null>(() =>
     chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
   );
-  const open = chosenOpen ?? member.active;
+  const open = chosenOpen ?? member.mark === "working";
   const toggle = () => {
     ctx.onToggleWorkEntry(anchorKey, open);
     chosen.delete(open ? openKey : closedKey);
@@ -133,21 +201,9 @@ function ForkSubagentCard(props: {
     setChosenOpen(!open);
   };
   const wellId = useId();
-  const remoteEnvironment = useEnvironment(member.remote?.environmentId ?? null);
-  const navigate = useNavigate();
-  const childThreadId = member.childThreadId;
   const remote = member.remote;
-  // A task in a linked environment opens there, if this client is connected to it.
-  const openThread =
-    childThreadId !== null
-      ? () => onOpenThread(childThreadId)
-      : remote !== undefined && remoteEnvironment !== null
-        ? () =>
-            void navigate({
-              to: "/$environmentId/$threadId",
-              params: buildThreadRouteParams(scopeThreadRef(remote.environmentId, remote.threadId)),
-            })
-        : null;
+  const openThread = useOpenSubagentThread(member, onOpenThread);
+  const failed = member.mark === "failed";
   const model = formatForkSubagentModel(member.model);
   const identity = (
     <>
@@ -155,7 +211,9 @@ function ForkSubagentCard(props: {
         aria-hidden
         className="relative flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-border bg-accent"
       >
-        {hasForkProviderMark(member.driver) ? (
+        {/* A linked environment's task names its driver only as a label; the avatar resolves
+            the provider that really runs it there. */}
+        {remote === undefined && hasForkProviderMark(member.driver) ? (
           <span className="flex" style={MARK_SIZE}>
             <ForkProviderMark driver={member.driver} />
           </span>
@@ -182,7 +240,7 @@ function ForkSubagentCard(props: {
         <span
           className={cn(
             "w-full min-w-0 truncate text-sm leading-4",
-            member.failed ? "text-destructive" : "text-muted-foreground",
+            failed ? "text-destructive" : "text-muted-foreground",
           )}
         >
           {member.statusLabel}
@@ -247,9 +305,8 @@ function ForkSubagentCard(props: {
         {member.activity ? (
           <>
             <dt className="text-muted-foreground">{member.activity.label}</dt>
-            <dd className={cn("min-w-0", member.failed ? "text-destructive" : "text-foreground")}>
-              {/* A bare path keeps its filename when it is too long for the line. */}
-              {member.activity.text.includes("/") && !member.activity.text.includes(" ") ? (
+            <dd className={cn("min-w-0", failed ? "text-destructive" : "text-foreground")}>
+              {member.activity.shape === "path" ? (
                 <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
               ) : (
                 <span className="line-clamp-3">{member.activity.text}</span>

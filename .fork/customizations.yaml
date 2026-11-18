@@ -5474,7 +5474,9 @@
     settled, its result, and the model. The well starts open while the
     subagent works and folds once it settles, unless the chevron was used. The
     header opens the subagent's thread when it has one, here or in a linked
-    environment. A batch keeps its list-tree lead line ("Kicked off N
+    environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;
+    keep the two in step on a sync). One fenced branch in TimelineV2EventRow takes
+    every subagent item; a lone card selects only its own agent. A batch keeps its list-tree lead line ("Kicked off N
     subagents", the status summary, the batch's elapsed span) above one card
     per member.
 

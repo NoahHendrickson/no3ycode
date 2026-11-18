@@ -23,9 +23,9 @@ export function V2EventTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
   const ctx = use(TimelineRowCtx);
   const { item, visibility } = row.projectedItem;
   /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
-     A lone subagent renders as the fork's card as well, instead of upstream's
-     lifecycle row. */
-  if (item.type === "subagent" && (row.subagents?.length ?? 1) === 1) {
+     Every subagent, alone or in a batch, renders as the fork's cards instead of upstream's
+     lifecycle row or avatar-stack group; V2SubagentGroup below stays for the next sync. */
+  if (item.type === "subagent") {
     return (
       <ForkSubagentGroup
         key={row.id}
@@ -36,20 +36,6 @@ export function V2EventTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     );
   }
   /* fork:end fork-subagent-spawn-card */
-  if (item.type === "subagent" && (row.subagents?.length ?? 1) > 1) {
-    /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
-       The batch renders as the fork's cards instead of upstream's
-       avatar-stack group; V2SubagentGroup below stays for the next sync. */
-    return (
-      <ForkSubagentGroup
-        key={row.id}
-        row={row}
-        environmentId={ctx.activeThreadEnvironmentId}
-        onOpenThread={ctx.onOpenThread}
-      />
-    );
-    /* fork:end fork-subagent-spawn-card */
-  }
   if (item.type === "secret_request") {
     return (
       <SecretRequestCard
