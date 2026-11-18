@@ -2106,8 +2106,9 @@ function ScheduledTaskEditorForm({
                 </div>
                 <ToggleGroup
                   multiple
-                  variant="outline"
-                  size="sm"
+                  /* fork:begin fork-tabs — see .fork/customizations.yaml#fork-tabs */
+                  variant="segmented"
+                  /* fork:end fork-tabs */
                   aria-label="Days to run"
                   value={[...draft.weekdays].map(String)}
                   onValueChange={(values) => {

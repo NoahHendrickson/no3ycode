@@ -7765,7 +7765,10 @@
     inside the tab because the track clips. Each strip keeps its own height. The
     collapsed sidebar's thread tabs are not a strip and keep their own look, and
     Design Mode's property fields (SegmentField) keep theirs. Glass and Inlet keep
-    their own dressing.
+    their own dressing. The scheduled-task weekday pickers (the editor and
+    Settings › Scheduled tasks) are multi-select segmented strips too, at the
+    strip's own size, so a picked day reads like a picked tab instead of
+    upstream's faint outline fill.
   tier: 1
   files:
     - apps/web/src/custom/Tabs.tsx
@@ -7773,5 +7776,10 @@
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
     # Shared; this entry owns the tab strip block and its --basic-tab-* tokens.
     - apps/web/src/theme.custom.basic.css
+    # Shared; this entry owns only the weekday picker's segmented strip.
+    - apps/web/src/custom/scheduled/ScheduledTaskEditor.tsx
+  watch:
+    # The weekday picker's variant (fenced) and the dropped size="sm" beside it.
+    - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts

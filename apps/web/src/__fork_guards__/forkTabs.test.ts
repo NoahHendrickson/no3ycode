@@ -60,4 +60,22 @@ describe("fork-tabs", () => {
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });
+
+  it("draws the scheduled-task weekday pickers as tab strips", () => {
+    // Upstream's outline group marks a picked day with a faint fill; a strip marks it like a tab.
+    for (const path of [
+      "../custom/scheduled/ScheduledTaskEditor.tsx",
+      "../components/settings/ScheduledTasksSettings.tsx",
+    ]) {
+      const source = read(path);
+      const label = source.indexOf('aria-label="Days to run"');
+      const tag = source.slice(
+        source.lastIndexOf("<ToggleGroup", label),
+        source.indexOf(">", label),
+      );
+      expect(tag, path).toContain("multiple");
+      // ToggleGroup is a segmented strip at its own size unless a variant or size says otherwise.
+      expect(tag, path).not.toMatch(/variant="(?!segmented")|size=/u);
+    }
+  });
 });
