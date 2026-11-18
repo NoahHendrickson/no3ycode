@@ -45,8 +45,8 @@ describe("fork guard: fork-figma-code-connect", () => {
       "utf8",
     );
     // Every glyph on the kit's Icons page, each node once.
-    expect(batch.components).toHaveLength(272);
-    expect(new Set(batch.components.map((icon) => icon.url)).size).toBe(272);
+    expect(batch.components).toHaveLength(274);
+    expect(new Set(batch.components.map((icon) => icon.url)).size).toBe(274);
     for (const icon of batch.components) {
       expect(icon.url.startsWith(KIT_URL), icon.component).toBe(true);
       expect(exports(shim, icon.component), icon.component).toBe(true);
