@@ -69,6 +69,9 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toMatch(
       /data-fork-subagent-open=""[\s\S]*?onClick=\{openThread\}[\s\S]*?<ArrowUpRightIcon/u,
     );
-    expect(theme).toContain("button[data-fork-subagent-open],");
+    // The buttons' hover is scoped to the card, so a completion notice outside a tree gets it too.
+    expect(theme).toMatch(
+      /\[data-fork-subagent-card\]\s*:is\(\s*button\[data-fork-subagent-member\],\s*button\[data-fork-subagent-open\],/u,
+    );
   });
 });
