@@ -24,13 +24,13 @@ const theme = readSibling("../theme.custom.css");
 describe("fork guard: fork-subagent-spawn-card", () => {
   it("routes every subagent, alone or batched, through the fork's cards", () => {
     expect(timeline).toContain('from "~/custom/ForkSubagentGroup"');
-    for (const guard of ["=== 1) {", "> 1) {"]) {
-      const at = timeline.indexOf(`(row.subagents?.length ?? 1) ${guard}`);
-      expect(at).toBeGreaterThan(-1);
-      expect(timeline.slice(at, at + 600)).toMatch(
-        /<ForkSubagentGroup[\s\S]{0,200}?onOpenThread=\{ctx\.onOpenThread\}/u,
-      );
-    }
+    // Each branch returns the cards directly: a lone item and a batch.
+    expect(timeline).toMatch(
+      /\(row\.subagents\?\.length \?\? 1\) === 1\) \{\s*return \(\s*<ForkSubagentGroup\b/u,
+    );
+    expect(timeline).toMatch(
+      /\(row\.subagents\?\.length \?\? 1\) > 1\) \{\s*\/\*[\s\S]*?\*\/\s*return \(\s*<ForkSubagentGroup\b/u,
+    );
     expect(timeline).not.toContain("return <V2SubagentGroup key={row.id} row={row} />;");
   });
 
@@ -47,6 +47,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toMatch(/<dt[^>]*>Model<\/dt>/u);
     // The well is open while the subagent works, unless the chevron was used.
     expect(group).toContain("const open = chosenOpen ?? member.active;");
+    expect(group).toContain("ctx.workGroupViewState.expandedEntries");
     // A member with a thread of its own opens it from the header.
     expect(group).toContain("? () => onOpenThread(childThreadId)");
     expect(theme).toContain(

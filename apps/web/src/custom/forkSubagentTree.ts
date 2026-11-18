@@ -94,7 +94,7 @@ const CARD_STATUS_WORD: Record<ForkSubagentStatus, string> = {
   pending: "Queued",
   running: "Running",
   waiting: "Waiting",
-  idle: "Idle",
+  idle: "Idle · resumable",
   completed: "Completed",
   failed: "Failed",
   cancelled: "Stopped",
@@ -132,20 +132,17 @@ export function formatForkSubagentModel(model: string | null): string | null {
   );
 }
 
-/** The card's well: live progress while working, the result once settled, whole rather than
-    one line, and nothing when neither says more than the status line. */
+/** The card's well: live progress while it works, its result once settled, whole rather than one
+    line. Never one standing in for the other, and nothing when the one that applies says nothing. */
 function resolveActivity(input: {
   readonly active: boolean;
   readonly progress: string | undefined;
   readonly result: string | null;
 }): ForkSubagentTreeRow["activity"] {
-  const raw = (
-    input.active ? input.progress || input.result : input.result || input.progress
-  )?.trim();
+  const raw = (input.active ? input.progress : input.result)?.trim();
   if (!raw || GENERIC_CHILD_END.test(raw)) return null;
   const text = plainDetail(raw);
-  if (!text) return null;
-  return { label: input.active ? "Now" : "Result", text };
+  return text ? { label: input.active ? "Now" : "Result", text } : null;
 }
 
 function isoOrNull(value: DateTime.Utc | null | undefined): string | null {

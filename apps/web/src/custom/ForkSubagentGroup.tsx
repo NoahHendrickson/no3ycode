@@ -21,12 +21,14 @@ import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, memo, useId, useState } from "react";
+import { type CSSProperties, memo, use, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { EnvironmentSubagentAvatar } from "~/components/chat/V2LifecycleRow";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
+import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { cn } from "~/lib/utils";
 import { useEnvironment } from "~/state/environments";
 import { environmentThreadDetails } from "~/state/threads";
@@ -90,6 +92,7 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
           <ForkSubagentCard
             key={member.id}
             member={member}
+            anchorKey={row.id}
             environmentId={environmentId}
             onOpenThread={onOpenThread}
           />
@@ -101,12 +104,28 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
 
 function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
+  /** The timeline row, which keeps its scroll position while a card opens or folds. */
+  readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { member, environmentId, onOpenThread } = props;
-  const [chosenOpen, setChosenOpen] = useState<boolean | null>(null);
+  const { member, anchorKey, environmentId, onOpenThread } = props;
+  // The chevron's choice lives in the thread's timeline view state, so it survives the row
+  // scrolling out of the virtualised list or its turn folding.
+  const ctx = use(TimelineRowCtx);
+  const chosen = ctx.workGroupViewState.expandedEntries;
+  const openKey = `subagent-card:open:${member.id}`;
+  const closedKey = `subagent-card:closed:${member.id}`;
+  const [chosenOpen, setChosenOpen] = useState<boolean | null>(() =>
+    chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
+  );
   const open = chosenOpen ?? member.active;
+  const toggle = () => {
+    ctx.onToggleWorkEntry(anchorKey, open);
+    chosen.delete(open ? openKey : closedKey);
+    chosen.add(open ? closedKey : openKey);
+    setChosenOpen(!open);
+  };
   const wellId = useId();
   const remoteEnvironment = useEnvironment(member.remote?.environmentId ?? null);
   const navigate = useNavigate();
@@ -179,6 +198,11 @@ function ForkSubagentCard(props: {
             type="button"
             data-fork-subagent-member=""
             aria-label={`Open ${member.title}`}
+            aria-description={
+              remote !== undefined
+                ? `${member.statusLabel} · on ${remote.label}`
+                : member.statusLabel
+            }
             onClick={openThread}
             className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           >
@@ -196,7 +220,7 @@ function ForkSubagentCard(props: {
           aria-expanded={open}
           aria-controls={wellId}
           aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
-          onClick={() => setChosenOpen(!open)}
+          onClick={toggle}
           className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
         >
           <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
@@ -214,19 +238,19 @@ function ForkSubagentCard(props: {
             <dd className="line-clamp-2 text-foreground">{member.prompt}</dd>
           </>
         ) : null}
-        <dt className="text-muted-foreground">{member.activity?.label ?? "Now"}</dt>
-        <dd
-          className={cn(
-            "line-clamp-3",
-            member.failed
-              ? "text-destructive"
-              : member.activity
-                ? "text-foreground"
-                : "text-muted-foreground",
-          )}
-        >
-          {member.activity?.text ?? member.statusLabel}
-        </dd>
+        {member.activity ? (
+          <>
+            <dt className="text-muted-foreground">{member.activity.label}</dt>
+            <dd className={cn("min-w-0", member.failed ? "text-destructive" : "text-foreground")}>
+              {/* A bare path keeps its filename when it is too long for the line. */}
+              {member.activity.text.includes("/") && !member.activity.text.includes(" ") ? (
+                <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
+              ) : (
+                <span className="line-clamp-3">{member.activity.text}</span>
+              )}
+            </dd>
+          </>
+        ) : null}
         {model ? (
           <>
             <dt className="text-muted-foreground">Model</dt>

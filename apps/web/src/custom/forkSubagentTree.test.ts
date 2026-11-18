@@ -86,6 +86,19 @@ describe("resolveForkSubagentTree", () => {
     expect(failed.active).toBe(false);
     expect(failed.statusLabel).toBe("Failed");
     expect(failed.activity).toBeNull();
+    // Never one field standing in for the other.
+    const settledNoResult = resolveForkSubagentTree(
+      [item({ status: "completed", progress: "Reading files", result: null })],
+      null,
+    ).rows[0]!;
+    expect(settledNoResult.activity).toBeNull();
+    expect(
+      resolveForkSubagentTree([item({ progress: undefined, result: "An earlier answer" })], null)
+        .rows[0]!.activity,
+    ).toBeNull();
+    expect(resolveForkSubagentTree([item({ status: "idle" })], null).rows[0]!.statusLabel).toBe(
+      "Idle · resumable",
+    );
     const stopped = resolveForkSubagentTree([item({ status: "interrupted" })], null).rows[0]!;
     expect(stopped.mark).toBe("stopped");
     expect(stopped.statusLabel).toBe("Stopped");
