@@ -6059,13 +6059,59 @@
     # div. The list must keep recycleItems off.
     - apps/web/src/components/chat/MessagesTimeline.tsx
     # Row order the tail walk assumes: live rows at the end, followed at most
-    # by an expanded group's details row.
+    # by an expanded group's details row and then the working row
+    # (fork-working-row-last).
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     # Passes forkTimelineSynced from the thread sync phase.
     - apps/web/src/components/ChatView.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTranscriptRowMotion.test.ts
     - apps/web/src/custom/forkTimelineRowMotion.test.ts
+
+- id: fork-working-row-last
+  intent: >
+    A live turn shows one status line at the bottom, the way Claude Code
+    does: the working mark, what the agent is doing now ("Thinking",
+    "Running vp", a startup label), the turn's timer, and a chevron that
+    opens the running tool group. Upstream derives the working row at the
+    head of the active turn (the slot the turn's fold divider takes when it
+    ends) with a bottom border, and draws the thinking line or running tool
+    as a second row. The fork reorders and folds useStableRows' output, so
+    upstream's row derivation, row equality and their tests stay untouched:
+    the working row moves to the end, and the turn's latest live row (a
+    plain thinking row, or an active work-live that is not an approval) is
+    removed from wherever it sits and carried on a copy of the working row
+    as `forkLive`, which renders ForkLiveStatusLine. An open group's details
+    and viewed images stay in place above the line, and the line stays
+    mounted while its group is open, so the toggle keeps keyboard focus.
+    Upstream's failed-tool shape, a `thinking` row with a groupId, keeps its
+    own row above a plain "Working for …" line. While compaction or worktree
+    setup owns the line, a folded running tool renders its upstream row
+    above it. Labels are one rule in forkStatusLineLabel; upstream's thought
+    and reasoning previews stay in the open group. The working row has no
+    divider. The fold divider still appears at the turn head once the turn
+    ends.
+  tier: 4
+  files:
+    - apps/web/src/custom/forkWorkingRowLast.ts
+    - apps/web/src/custom/ForkLiveStatusLine.tsx
+  shadows: []
+  watch:
+    # Fenced import and the fold wrapping useStableRows' result.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    # Where upstream places the working and live rows, and its failed-tool
+    # shape (grouped thinking row). The fold runs after the continuesWorkLog
+    # adjacency pass, so the row before a removed live row keeps pb-0; the
+    # status line's pt-1 covers it.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    # Fenced early return to ForkLiveStatusLine, the running-tool row kept
+    # during compaction, and the className dropping WorkingTimelineRow's
+    # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
+    # LiveWorkEntryTimelineRow's labels here.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkWorkingRowLast.test.ts
+    - apps/web/src/custom/forkWorkingRowLast.test.ts
 
 - id: fork-settings-glass
   intent: >
