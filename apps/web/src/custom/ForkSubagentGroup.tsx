@@ -18,7 +18,6 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import { formatSubagentDisplayTitle } from "@t3tools/client-runtime/state/subagent-display";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRightIcon, ListTreeIcon } from "lucide-react";
@@ -67,9 +66,7 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
         data-fork-subagent-tree=""
         data-subagent-group
         role="group"
-        {...(batch
-          ? { "aria-labelledby": leadId }
-          : { "aria-label": formatSubagentDisplayTitle(first.title ?? "Subagent") })}
+        aria-labelledby={leadId}
         className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
       >
         {batch ? (
@@ -79,6 +76,7 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
           <LiveSubagentCard
             key={item.id}
             item={item}
+            titleId={batch ? undefined : leadId}
             anchorKey={row.id}
             environmentId={environmentId}
             onOpenThread={onOpenThread}
@@ -92,11 +90,13 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
 /** One card. It selects only its own agent, so another subagent's progress does not re-render it. */
 const LiveSubagentCard = memo(function LiveSubagentCard(props: {
   readonly item: ForkSubagentItem;
+  /** A lone card's visible title names its group. */
+  readonly titleId?: string | undefined;
   readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { item, anchorKey, environmentId, onOpenThread } = props;
+  const { item, titleId, anchorKey, environmentId, onOpenThread } = props;
   const live = useAtomValue(
     environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
@@ -106,6 +106,7 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
   return (
     <ForkSubagentCard
       member={member}
+      titleId={titleId}
       anchorKey={anchorKey}
       environmentId={environmentId}
       onOpenThread={onOpenThread}
@@ -169,12 +170,13 @@ function useOpenSubagentThread(
 
 function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
+  readonly titleId?: string | undefined;
   /** The timeline row, which keeps its scroll position while a card opens or folds. */
   readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const { member, anchorKey, environmentId, onOpenThread } = props;
+  const { member, titleId, anchorKey, environmentId, onOpenThread } = props;
   // The chevron's choice lives in the thread's timeline view state, so it survives the row
   // scrolling out of the virtualised list or its turn folding.
   const ctx = use(TimelineRowCtx);
@@ -225,7 +227,10 @@ function ForkSubagentCard(props: {
         </span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col items-start">
-        <span className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground">
+        <span
+          id={titleId}
+          className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground"
+        >
           {member.title}
         </span>
         <span
