@@ -280,19 +280,14 @@
 }
 
 /* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
-   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, upstream's segmented ToggleGroup, and
-   the model menu's option strips (Service Tier).
+   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
    An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
    regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
    height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
    The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
    Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is(
-    [data-fork-segmented-tabs],
-    [data-slot="toggle-group"][data-variant="segmented"],
-    [data-fork-segmented-trait]
-  ) {
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
   padding: 2px;
   border-radius: 8px;
   background-color: var(--basic-wash-2);

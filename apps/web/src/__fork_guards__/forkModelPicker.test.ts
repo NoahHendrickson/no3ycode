@@ -330,8 +330,6 @@ describe("fork guard: fork-model-picker", () => {
     expect(composerPicker).toContain(
       'if (event.key !== "Escape" && event.key !== "Tab") event.stopPropagation();',
     );
-    // A select with one option is no choice, so it gets no row.
-    expect(composerPicker).toContain("if (descriptor.options.length < 2) return null;");
   });
 
   it("rounds every picker popup level to 8px, scoped to the picker", () => {

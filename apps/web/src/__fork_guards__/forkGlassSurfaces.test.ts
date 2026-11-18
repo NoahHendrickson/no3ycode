@@ -183,7 +183,8 @@ describe("fork guard: glass surfaces", () => {
     const pickerTraits = readSibling("../custom/ComposerModelPicker.tsx");
     expect(pickerTraits).toContain('data-fork-model-traits="true"');
     expect(pickerTraits).toContain("data-fork-effort-thumb");
-    expect(pickerTraits).toContain("aria-pressed={selected}");
+    // A trait segment is a Tab (a Base UI Toggle), which stamps aria-pressed itself.
+    expect(pickerTraits).toMatch(/<Tab key=\{option\.id\}/u);
     // Send and stop stamps the button rules key on.
     const primaryActions = readSibling("../components/chat/ComposerPrimaryActions.tsx");
     expect(primaryActions).toMatch(

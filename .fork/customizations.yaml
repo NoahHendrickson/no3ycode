@@ -5161,9 +5161,11 @@
     Glass (theme.custom.glass-surfaces.css), the open scope's rail tab wears
     the selected rows' glass unless 3D is off, and at Full the effort thumb
     wears the send button's glass and the selected trait segments are the
-    segmented tabs' glass chips. A select option with a single choice (Cyber
-    Access for a login without Daybreak) shows no row, since it offers nothing
-    to pick.
+    segmented tabs' glass chips. An editable select whose one value is
+    already in force (Cyber Access for a login without Daybreak) offers no
+    choice (composerModelTraits' offersChoice): it gets no row and stays out of
+    the trigger label, the stored selection is untouched, and a model with
+    nothing else to set shows no traits panel.
   tier: 2
   files:
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
@@ -7770,7 +7772,7 @@
     app to Figma t3-fork 740:1163: Tabs, SegmentedTabs (Usage, Automations, the
     collapsed row's project and Petal strips, the music strip), menu tabs and
     upstream's segmented ToggleGroup (diffs, pull requests, Settings, dialogs),
-    and the model menu's option strips (Service Tier). An
+    and the model menu's option strips (Service Tier, built from Tabs). An
     8% track inset 2px with 8px corners (so Tabs' icon tabs are 24 / 28 / 32px
     squares), the pick a 12% wash behind an 8% line at 6px corners (raised toward
     white behind a 16% line on the light tones), every label at full ink in 12px

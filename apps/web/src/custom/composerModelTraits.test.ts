@@ -53,6 +53,31 @@ describe("controlled model traits", () => {
   it("still hides editable traits without a draft or controlled destination", () => {
     expect(resolveComposerModelTraits(input)).toBeNull();
   });
+
+  it("gives no row to a select whose one value is already in force", () => {
+    const cyber: SelectDescriptor = {
+      id: "cyberAccessProgram",
+      label: "Cyber Access",
+      type: "select",
+      options: [{ id: "standard", label: "Standard", isDefault: true }],
+    };
+    const withTraits = (optionDescriptors: ReadonlyArray<ProviderOptionDescriptor>) =>
+      resolveComposerModelTraits({
+        ...input,
+        draftId: DraftId.make("draft"),
+        modelOptions: [],
+        models: [{ ...input.models[0]!, capabilities: { optionDescriptors } }],
+      });
+    const traits = withTraits([claudeEffort, cyber]);
+    expect(traits?.rows).toEqual([]);
+    expect(traits?.descriptors.map((d) => d.id)).toEqual(["effort", "cyberAccessProgram"]);
+    expect(traits?.trigger.label).not.toContain("Standard");
+    // Without a known default, picking the one value still changes the request.
+    const { isDefault: _, ...standard } = cyber.options[0]!;
+    expect(withTraits([claudeEffort, { ...cyber, options: [standard] }])?.rows).toHaveLength(1);
+    // Nothing left to show: no panel at all.
+    expect(withTraits([cyber])).toBeNull();
+  });
 });
 
 describe("findEffortDescriptor", () => {
