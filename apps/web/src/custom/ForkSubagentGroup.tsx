@@ -18,15 +18,28 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, NodeId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, Fragment, memo, type ReactNode, use, useId, useState } from "react";
+import {
+  type ComponentProps,
+  type CSSProperties,
+  Fragment,
+  memo,
+  type ReactNode,
+  use,
+  useId,
+  useState,
+} from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
-import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
-import { EnvironmentSubagentAvatar } from "~/components/chat/V2LifecycleRow";
+import { TimelineRowCtx, WorkGroupViewCtx } from "~/components/chat/timelineRowContext";
+import {
+  EnvironmentSubagentAvatar,
+  SubagentNotificationLink,
+} from "~/components/chat/V2LifecycleRow";
+import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -103,32 +116,45 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
     environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
   );
+  // The chevron's choice lives in the thread's timeline view state, so it survives the row
+  // scrolling out of the virtualised list or its turn folding.
+  const ctx = use(TimelineRowCtx);
   const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
   if (member === undefined) return null;
+  const chosen = ctx.workGroupViewState.expandedEntries;
+  const openKey = `subagent-card:open:${member.id}`;
+  const closedKey = `subagent-card:closed:${member.id}`;
   return (
     <ForkSubagentCard
       member={member}
       titleId={titleId}
-      anchorKey={anchorKey}
       environmentId={environmentId}
       onOpenThread={onOpenThread}
+      disclosure={{
+        chosen: chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
+        remember: (open) => {
+          chosen.delete(open ? closedKey : openKey);
+          chosen.add(open ? openKey : closedKey);
+        },
+        // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
+        report: (collapsed) => ctx.onToggleWorkEntry(anchorKey, collapsed, member.id),
+        ready: () => ctx.onWorkEntryContentReady?.(anchorKey, member.id),
+      }}
     />
   );
 });
 
-/** A subagent's completion notice (upstream's SubagentNotificationLink) drawn as its card, folded,
-    from the live record; the well carries the result it reported. A notice whose agent isn't on
-    the roster keeps upstream's fallback row. */
-export function ForkSubagentNotice(props: {
-  readonly parentRef: ScopedThreadRef;
-  readonly childThreadId: ThreadId;
-  readonly taskIds?: ReadonlyArray<NodeId> | undefined;
-  readonly onOpenThread: (threadId: ThreadId) => void;
-  readonly onToggleEntry?: ((collapsed: boolean) => void) | undefined;
-  readonly onContentReady?: (() => void) | undefined;
-  readonly fallback: ReactNode;
-}) {
-  const { parentRef, childThreadId, taskIds } = props;
+/** A subagent's completion notice drawn as its card, folded, with the result it reported. A
+    question or progress notice, or one whose agent has resumed since, keeps upstream's row. */
+export function ForkSubagentNotice(
+  props: ComponentProps<typeof SubagentNotificationLink> & {
+    readonly entryId: string;
+    readonly onToggleEntry?: ((collapsed: boolean) => void) | undefined;
+    readonly onContentReady?: (() => void) | undefined;
+  },
+) {
+  const { entryId, onToggleEntry, onContentReady, ...notice } = props;
+  const { parentRef, childThreadId, taskIds, outcome } = notice;
   // Follow-up tasks share a child conversation; the notice reports one task's result.
   const agent = useAtomValue(
     environmentThreadDetails.threadAtom(parentRef),
@@ -139,25 +165,27 @@ export function ForkSubagentNotice(props: {
           : taskIds.includes(candidate.id),
       ) ?? null,
   );
-  const [open, setOpen] = useState(false);
-  const member = agent === null ? null : forkSubagentRowFromAgent(agent);
-  const openThread = useOpenSubagentThread(
-    member ?? { childThreadId: null, remote: undefined },
-    props.onOpenThread,
-  );
-  if (member === null) return props.fallback;
+  const ctx = use(TimelineRowCtx);
+  // Inside an expanded tool-call group the entry reports to the group, as upstream's rows do.
+  const groupView = use(WorkGroupViewCtx);
+  if (agent === null) return notice.fallback;
+  const settled = outcome === "completed" || outcome === "failed" || outcome === "cancelled";
+  if (!settled || subagentResumedSince(agent, notice.createdAt)) {
+    return <SubagentNotificationLink {...notice} />;
+  }
+  const chosen = groupView?.state.expandedEntries ?? ctx.workGroupViewState.expandedEntries;
   return (
-    <ForkSubagentCardView
-      member={member}
+    <ForkSubagentCard
+      member={forkSubagentRowFromAgent(agent)}
       environmentId={parentRef.environmentId}
-      open={open}
-      onToggle={() => {
-        props.onToggleEntry?.(open);
-        setOpen(!open);
-        // The result is already in hand, so the opened card is ready at once.
-        if (!open) props.onContentReady?.();
+      onOpenThread={notice.onOpenThread}
+      disclosure={{
+        chosen: chosen.has(entryId) ? true : null,
+        remember: (open) => (open ? chosen.add(entryId) : chosen.delete(entryId)),
+        report: (collapsed) =>
+          groupView ? groupView.onToggleEntry(collapsed, entryId) : onToggleEntry?.(collapsed),
+        ready: () => (groupView ? groupView.onContentReady?.(entryId) : onContentReady?.()),
       }}
-      openThread={openThread}
     />
   );
 }
@@ -216,33 +244,32 @@ function useOpenSubagentThread(
     });
 }
 
+/** Where a card keeps its chevron choice and tells the timeline it opened or folded. */
+interface ForkSubagentCardDisclosure {
+  /** The choice made before a remount; null until the chevron is used. */
+  readonly chosen: boolean | null;
+  readonly remember: (open: boolean) => void;
+  /** Keeps the timeline's scroll position while the card opens or folds. */
+  readonly report: (collapsed: boolean) => void;
+  /** Its details are already in hand, so opening is ready at once; that retires the reveal
+      instead of re-running it on every later list resize. */
+  readonly ready: () => void;
+}
+
 function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
   readonly titleId?: string | undefined;
-  /** The timeline row, which keeps its scroll position while a card opens or folds. */
-  readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: (threadId: ThreadId) => void;
+  readonly disclosure: ForkSubagentCardDisclosure;
 }) {
-  const { member, titleId, anchorKey, environmentId, onOpenThread } = props;
-  // The chevron's choice lives in the thread's timeline view state, so it survives the row
-  // scrolling out of the virtualised list or its turn folding.
-  const ctx = use(TimelineRowCtx);
-  const chosen = ctx.workGroupViewState.expandedEntries;
-  const openKey = `subagent-card:open:${member.id}`;
-  const closedKey = `subagent-card:closed:${member.id}`;
-  const [chosenOpen, setChosenOpen] = useState<boolean | null>(() =>
-    chosen.has(openKey) ? true : chosen.has(closedKey) ? false : null,
-  );
+  const { member, titleId, environmentId, onOpenThread, disclosure } = props;
+  const [chosenOpen, setChosenOpen] = useState(disclosure.chosen);
   const open = chosenOpen ?? member.mark === "working";
   const toggle = () => {
-    // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
-    ctx.onToggleWorkEntry(anchorKey, open, member.id);
-    // Its details are already in hand, so opening is ready at once; that retires the reveal
-    // instead of re-running it on every later list resize.
-    if (!open) ctx.onWorkEntryContentReady?.(anchorKey, member.id);
-    chosen.delete(open ? openKey : closedKey);
-    chosen.add(open ? closedKey : openKey);
+    disclosure.report(open);
+    if (!open) disclosure.ready();
+    disclosure.remember(!open);
     setChosenOpen(!open);
   };
   const openThread = useOpenSubagentThread(member, onOpenThread);

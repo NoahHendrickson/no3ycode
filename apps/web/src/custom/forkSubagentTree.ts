@@ -101,18 +101,24 @@ const STATUS_PRESENTATION: Record<
 const GENERIC_CHILD_END = /^Child task ended with status\b/iu;
 
 /** One line of a markdown result: drop heading marks, list bullets, emphasis, code ticks, and
-    link targets. */
+    link targets. Emphasis is only `*` at word edges outside code, so dunders and globs survive. */
 function plainDetail(text: string): string {
   return text
     .replace(/\[([^\]]+)\]\([^)]*\)/gu, "$1")
-    .replace(/`/gu, "")
     .replace(/^[ \t]*#{1,6}[ \t]+/gmu, "")
     .replace(/^[ \t]*[-*][ \t]+/gmu, "")
-    .replace(/(\*\*|__)(.+?)\1/gu, "$2")
-    .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/gu, "$1$2")
+    .split(/(`[^`]*`)/u)
+    .map((part, index) =>
+      index % 2 === 1 ? part : part.replace(EMPHASIS_STRONG, "$1$2").replace(EMPHASIS, "$1$2"),
+    )
+    .join("")
+    .replace(/`/gu, "")
     .replace(/\s+/gu, " ")
     .trim();
 }
+
+const EMPHASIS_STRONG = /(^|[\s(])\*\*(?=\S)(.+?)(?<=\S)\*\*(?=$|[\s).,;:!?])/gu;
+const EMPHASIS = /(^|[\s(])\*(?=[^\s*])([^*]+?)(?<=[^\s*])\*(?=$|[\s).,;:!?])/gu;
 
 /**
  * A model id the way the Figma tree spells it: upstream's shared spelling
@@ -214,6 +220,7 @@ function resolveRow(
 
 /** A subagent's card row from its live record alone, for the completion notice it posts. */
 export function forkSubagentRowFromAgent(agent: OrchestrationV2Subagent): ForkSubagentTreeRow {
+  // The record is the live side too: the model is read from the live record alone.
   return resolveRow(agent, agent);
 }
 

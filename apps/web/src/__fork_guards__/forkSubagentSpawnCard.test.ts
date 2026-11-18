@@ -34,8 +34,10 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     // A finished subagent's completion notice is its card too, not upstream's notification row.
     const workEntryRow = readSibling("../components/chat/TimelineWorkEntryRow.tsx");
     expect(workEntryRow).toContain("<ForkSubagentNotice");
-    expect(workEntryRow.indexOf("<ForkSubagentNotice")).toBeLessThan(
-      workEntryRow.indexOf("<SubagentNotificationLink"),
+    expect(workEntryRow).not.toContain("<SubagentNotificationLink");
+    // …while a question, progress or resumed notice keeps upstream's row.
+    expect(group).toMatch(
+      /if \(!settled \|\| subagentResumedSince\(agent, notice\.createdAt\)\) \{\s*return <SubagentNotificationLink \{\.\.\.notice\} \/>;/u,
     );
   });
 

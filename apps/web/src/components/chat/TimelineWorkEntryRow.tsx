@@ -46,7 +46,6 @@ import {
 import { cn } from "~/lib/utils";
 import { formatUpcomingTimestamp } from "../../timestampFormat";
 import { FetchedToolOutput, V2ItemInspector } from "./V2ItemInspector";
-import { SubagentNotificationLink } from "./V2LifecycleRow";
 /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
 import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 /* fork:end fork-subagent-spawn-card */
@@ -169,21 +168,14 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
       parentRef={scopeThreadRef(ctx.activeThreadEnvironmentId, item.threadId)}
       childThreadId={childThreadId}
       taskIds={item.source.kind === "delegated_task" ? item.source.taskIds : undefined}
+      outcome={item.outcome}
+      createdAt={props.workEntry.createdAt}
+      timestampFormat={ctx.timestampFormat}
       onOpenThread={ctx.onOpenThread}
+      entryId={props.workEntry.id}
       onToggleEntry={props.onToggleEntry}
       onContentReady={props.onContentReady}
-      fallback={
-        <SubagentNotificationLink
-          parentRef={scopeThreadRef(ctx.activeThreadEnvironmentId, item.threadId)}
-          childThreadId={childThreadId}
-          taskIds={item.source.kind === "delegated_task" ? item.source.taskIds : undefined}
-          outcome={item.outcome}
-          createdAt={props.workEntry.createdAt}
-          timestampFormat={ctx.timestampFormat}
-          onOpenThread={ctx.onOpenThread}
-          fallback={<WorkEntryLogRow {...props} />}
-        />
-      }
+      fallback={<WorkEntryLogRow {...props} />}
     />
     /* fork:end fork-subagent-spawn-card */
   );

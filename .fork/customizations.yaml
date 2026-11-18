@@ -5483,11 +5483,14 @@
     subagents", the status summary, the batch's elapsed span) above one card
     per member.
 
-    A subagent's completion notice (upstream's SubagentNotificationLink, routed
-    from a fenced branch in TimelineWorkEntryRow) is drawn as the same card,
-    folded, from the live record (forkSubagentRowFromAgent), so a finished
-    subagent's report reads like its card; a notice whose agent isn't on the
-    roster falls back to upstream's notification row.
+    A subagent's completion notice (upstream's SubagentNotificationLink, swapped
+    for ForkSubagentNotice in a fenced branch of TimelineWorkEntryRow) is drawn
+    as the same card, folded, from the live record (forkSubagentRowFromAgent),
+    so a finished subagent's report reads like its card. Its chevron choice is
+    kept in the work-group view state under the notice's entry id and reports to
+    the group it sits in. A question or progress notice (outcome updated or
+    unknown), one whose agent resumed after it, and one whose agent is not on the
+    roster keep upstream's row.
 
     It reads the thread's live subagent roster the way upstream's group does;
     lead, summary and the model's name come from upstream's shared helpers,

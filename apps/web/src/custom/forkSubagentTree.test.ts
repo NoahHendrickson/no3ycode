@@ -117,6 +117,18 @@ describe("resolveForkSubagentTree", () => {
       childThreadId: "thread-child",
       activity: { label: "Result", text: "Lionfish brief What they are.", shape: "prose" },
     });
+    // Emphasis is stripped at word edges outside code; dunders, globs and code spans keep theirs.
+    expect(
+      forkSubagentRowFromAgent({
+        id: "node-9",
+        status: "completed",
+        prompt: "Fix `__init__` and `src/*.ts`, then check __tests__ and lib/*.js",
+        result: "*Done*: kept `**kwargs`",
+      } as never),
+    ).toMatchObject({
+      prompt: "Fix __init__ and src/*.ts, then check __tests__ and lib/*.js",
+      activity: { text: "Done: kept **kwargs" },
+    });
   });
 
   it("gives each card its status word, its task, and what it is doing or what it found", () => {
