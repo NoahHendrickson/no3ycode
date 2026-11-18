@@ -37,4 +37,15 @@ describe("fork guard: fork-working-row-last", () => {
       workingRow.slice(0, workingRow.indexOf("function BackgroundWorktreeSetupChip")),
     ).not.toContain("border-b");
   });
+
+  it("drops the finished turn's fold divider, which upstream draws on the row's outer element", () => {
+    const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
+    const start = timeline.indexOf("function TurnFoldTimelineRow");
+    expect(start).toBeGreaterThan(-1);
+    // The theme rule reaches the border through `> *`, so it must stay on the row's root.
+    expect(timeline.slice(start)).toMatch(/return \(\s*<div className="[^"]*\bborder-b\b/u);
+    expect(readSibling("../theme.custom.css")).toMatch(
+      /\[data-timeline-row-kind="turn-fold"\] > \* \{\s*border-bottom-width: 0;/u,
+    );
+  });
 });

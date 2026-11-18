@@ -5121,11 +5121,13 @@
     `reasoning` or `variant`, when it has two or more levels) is a slider over
     the model's own levels, Ultrathink included as the top stop for Claude;
     dragging previews and writes once on release. It is a 24px bar with a block
-    thumb, dot stops and a short bar at the default level, the stops the thumb
-    has passed hidden under the fill. The fill is an 8x8 Bayer dither through
-    the provider's colours (EFFORT_DITHER_STOPS: Claude, Codex, Antigravity,
-    Grok, Cursor; any other runs from the done blue to the working green), solid
-    at the middle of the thumb. On/off traits are
+    thumb, dot stops and a short bar at the default level, drawn under the fill
+    so the stops the thumb has passed are covered as it moves. The fill is an 8x8
+    Bayer dither (custom/EffortDither) through the provider's colours (Claude,
+    Codex, Antigravity, Grok, Cursor; any other runs from the done blue to the
+    working green), solid at the middle of the thumb and its last colour under
+    the rest, so Glass's see-through thumb shows one fill. Inlet keeps a flat
+    fill and hides the dither (theme.custom.inlet.css). On/off traits are
     checkboxes and other selects are segments. Rows keep one order for every
     provider: the rest in the provider's order, then Fast Mode, then Context
     Window last. Writes match upstream's traits
@@ -5168,6 +5170,8 @@
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
     - apps/web/src/overrides/components/chat/ModelPickerContent.tsx
     - apps/web/src/custom/ComposerModelPicker.tsx
+    - apps/web/src/custom/EffortDither.tsx
+    - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - apps/web/src/custom/modelPickerFocus.ts
@@ -5206,6 +5210,7 @@
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
+    - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
 
 - id: fork-changed-files-card
