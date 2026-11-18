@@ -3,34 +3,15 @@
 // component=Button
 import figma from "figma";
 
-// Editable text goes in as a JS string wherever it would otherwise break the JSX.
-const text = (value: string) => (/[{}<>&]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
+import { BUTTON_VARIANTS, glyph, jsxText } from "./shared";
 
 const button = figma.selectedInstance;
-const variant = button.getEnum("Variant", {
-  secondary: "secondary",
-  outline: "outline",
-  ghost: "ghost",
-  "ghost-muted": "ghost-muted",
-  "ghost-destructive": "ghost-destructive",
-  destructive: "destructive",
-  "destructive-outline": "destructive-outline",
-  "warning-outline": "warning-outline",
-  link: "link",
-});
+const variant = button.getEnum("Variant", BUTTON_VARIANTS);
 const size = button.getEnum("Size", { xs: "xs", sm: "sm", "sm-pill": "sm-pill", lg: "lg" });
 const disabled = button.getEnum("State", { Disabled: true });
-const iconSide = button.getEnum("Icon", { Left: "left", Right: "right" });
-const label = text(button.getString("Label"));
-
-// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
-const swapped =
-  iconSide === "left"
-    ? button.getInstanceSwap("Leading glyph")
-    : iconSide === "right"
-      ? button.getInstanceSwap("Trailing glyph")
-      : undefined;
-const icon = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate().example : null;
+const slot = button.getEnum("Icon", { Left: "Leading glyph", Right: "Trailing glyph" });
+const icon = slot ? glyph(button, slot)?.example : null;
+const label = jsxText(button.getString("Label"));
 
 const attrs = [
   variant ? ` variant="${variant}"` : "",
@@ -39,15 +20,14 @@ const attrs = [
 ].join("");
 
 export default {
-  example:
-    icon === null
-      ? figma.tsx`<Button${attrs}>${label}</Button>`
-      : iconSide === "left"
-        ? figma.tsx`<Button${attrs}>
+  example: !icon
+    ? figma.tsx`<Button${attrs}>${label}</Button>`
+    : slot === "Leading glyph"
+      ? figma.tsx`<Button${attrs}>
   ${icon}
   ${label}
 </Button>`
-        : figma.tsx`<Button${attrs}>
+      : figma.tsx`<Button${attrs}>
   ${label}
   ${icon}
 </Button>`,

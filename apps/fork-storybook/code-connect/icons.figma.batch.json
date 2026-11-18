@@ -3,1362 +3,1090 @@
   "components": [
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2484",
-      "name": "ChevronDownIcon",
       "component": "ChevronDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2487",
-      "name": "ChevronUpIcon",
       "component": "ChevronUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2490",
-      "name": "ChevronLeftIcon",
       "component": "ChevronLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2493",
-      "name": "ChevronRightIcon",
       "component": "ChevronRightIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2496",
-      "name": "ChevronsUpDownIcon",
       "component": "ChevronsUpDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2499",
-      "name": "ChevronsDownUpIcon",
       "component": "ChevronsDownUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2502",
-      "name": "ChevronsLeftRightEllipsisIcon",
       "component": "ChevronsLeftRightEllipsisIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2505",
-      "name": "XIcon",
       "component": "XIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2508",
-      "name": "CircleXIcon",
       "component": "CircleXIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2511",
-      "name": "CheckIcon",
       "component": "CheckIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2514",
-      "name": "CircleCheckIcon",
       "component": "CircleCheckIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2517",
-      "name": "CircleIcon",
       "component": "CircleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2520",
-      "name": "CircleDashedIcon",
       "component": "CircleDashedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2523",
-      "name": "CircleDotIcon",
       "component": "CircleDotIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2526",
-      "name": "CheckCircle2Icon",
       "component": "CheckCircle2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2529",
-      "name": "PinIcon",
       "component": "PinIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2532",
-      "name": "PinOffIcon",
       "component": "PinOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2535",
-      "name": "PlusIcon",
       "component": "PlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2538",
-      "name": "CirclePlusIcon",
       "component": "CirclePlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2541",
-      "name": "PlusCircleIcon",
       "component": "PlusCircleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2544",
-      "name": "MinusIcon",
       "component": "MinusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2547",
-      "name": "ArrowUpIcon",
       "component": "ArrowUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2550",
-      "name": "ArrowDownIcon",
       "component": "ArrowDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2553",
-      "name": "ArrowLeftIcon",
       "component": "ArrowLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2556",
-      "name": "ArrowRightIcon",
       "component": "ArrowRightIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2559",
-      "name": "ArrowUpDownIcon",
       "component": "ArrowUpDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2562",
-      "name": "ArrowDownUpIcon",
       "component": "ArrowDownUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2565",
-      "name": "ArrowUpRightIcon",
       "component": "ArrowUpRightIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2568",
-      "name": "ArrowDown01Icon",
       "component": "ArrowDown01Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2571",
-      "name": "ArrowUpCircleIcon",
       "component": "ArrowUpCircleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2574",
-      "name": "CornerLeftUpIcon",
       "component": "CornerLeftUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2577",
-      "name": "Undo2Icon",
       "component": "Undo2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2580",
-      "name": "Redo2Icon",
       "component": "Redo2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2583",
-      "name": "CornerUpRightIcon",
       "component": "CornerUpRightIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2586",
-      "name": "ArrowUpLeftIcon",
       "component": "ArrowUpLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2589",
-      "name": "ArrowRightLeftIcon",
       "component": "ArrowRightLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2592",
-      "name": "CodeIcon",
       "component": "CodeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2595",
-      "name": "GitForkIcon",
       "component": "GitForkIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2598",
-      "name": "MessagesSquareIcon",
       "component": "MessagesSquareIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2601",
-      "name": "Clock3Icon",
       "component": "Clock3Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2604",
-      "name": "CalendarClockIcon",
       "component": "CalendarClockIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2607",
-      "name": "GripVerticalIcon",
       "component": "GripVerticalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2610",
-      "name": "ListOrderedIcon",
       "component": "ListOrderedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2613",
-      "name": "SquareMenuIcon",
       "component": "SquareMenuIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2616",
-      "name": "UnplugIcon",
       "component": "UnplugIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2619",
-      "name": "RouteIcon",
       "component": "RouteIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2622",
-      "name": "RotateCcwIcon",
       "component": "RotateCcwIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2625",
-      "name": "RotateCwIcon",
       "component": "RotateCwIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2628",
-      "name": "RefreshCwIcon",
       "component": "RefreshCwIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2631",
-      "name": "HistoryIcon",
       "component": "HistoryIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2634",
-      "name": "ClockIcon",
       "component": "ClockIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2637",
-      "name": "AlarmClockIcon",
       "component": "AlarmClockIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2640",
-      "name": "AlarmClockCheckIcon",
       "component": "AlarmClockCheckIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2643",
-      "name": "AlarmClockOffIcon",
       "component": "AlarmClockOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2646",
-      "name": "TriangleAlertIcon",
       "component": "TriangleAlertIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2649",
-      "name": "AlertTriangleIcon",
       "component": "AlertTriangleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2652",
-      "name": "CircleAlertIcon",
       "component": "CircleAlertIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2655",
-      "name": "OctagonAlertIcon",
       "component": "OctagonAlertIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2658",
-      "name": "InfoIcon",
       "component": "InfoIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2661",
-      "name": "BugIcon",
       "component": "BugIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2664",
-      "name": "LoaderIcon",
       "component": "LoaderIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2667",
-      "name": "LoaderCircleIcon",
       "component": "LoaderCircleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2670",
-      "name": "Loader2Icon",
       "component": "Loader2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2673",
-      "name": "FileIcon",
       "component": "FileIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2676",
-      "name": "Files",
       "component": "Files"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2679",
-      "name": "FileDiffIcon",
       "component": "FileDiffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2682",
-      "name": "FileJsonIcon",
       "component": "FileJsonIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2685",
-      "name": "FileCode2Icon",
       "component": "FileCode2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2688",
-      "name": "FileSearchIcon",
       "component": "FileSearchIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2691",
-      "name": "TextSearchIcon",
       "component": "TextSearchIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2694",
-      "name": "ClipboardList",
       "component": "ClipboardList"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2697",
-      "name": "CopyIcon",
       "component": "CopyIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2700",
-      "name": "ArchiveIcon",
       "component": "ArchiveIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2703",
-      "name": "ArchiveX",
       "component": "ArchiveX"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2706",
-      "name": "Trash2Icon",
       "component": "Trash2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2709",
-      "name": "FolderIcon",
       "component": "FolderIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2712",
-      "name": "FolderClosedIcon",
       "component": "FolderClosedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2715",
-      "name": "FolderOpenIcon",
       "component": "FolderOpenIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2718",
-      "name": "FolderPlusIcon",
       "component": "FolderPlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2721",
-      "name": "FoldersIcon",
       "component": "FoldersIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2724",
-      "name": "FolderGitIcon",
       "component": "FolderGitIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2727",
-      "name": "FolderGit2Icon",
       "component": "FolderGit2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2730",
-      "name": "FolderTreeIcon",
       "component": "FolderTreeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2733",
-      "name": "GitBranchIcon",
       "component": "GitBranchIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2736",
-      "name": "GitBranchPlusIcon",
       "component": "GitBranchPlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2739",
-      "name": "GitCommitIcon",
       "component": "GitCommitIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2742",
-      "name": "GitCommitHorizontalIcon",
       "component": "GitCommitHorizontalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2745",
-      "name": "GitPullRequestIcon",
       "component": "GitPullRequestIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2748",
-      "name": "GitPullRequestClosedIcon",
       "component": "GitPullRequestClosedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2751",
-      "name": "GitPullRequestDraftIcon",
       "component": "GitPullRequestDraftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2754",
-      "name": "GitMergeIcon",
       "component": "GitMergeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2757",
-      "name": "TerminalIcon",
       "component": "TerminalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2760",
-      "name": "TerminalSquare",
       "component": "TerminalSquare"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2763",
-      "name": "Code2Icon",
       "component": "Code2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2766",
-      "name": "HammerIcon",
       "component": "HammerIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2769",
-      "name": "WrenchIcon",
       "component": "WrenchIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2772",
-      "name": "FlaskConicalIcon",
       "component": "FlaskConicalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2775",
-      "name": "ContainerIcon",
       "component": "ContainerIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2778",
-      "name": "ServerIcon",
       "component": "ServerIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2781",
-      "name": "CloudIcon",
       "component": "CloudIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2784",
-      "name": "CloudUploadIcon",
       "component": "CloudUploadIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2787",
-      "name": "GlobeIcon",
       "component": "GlobeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2790",
-      "name": "Globe2Icon",
       "component": "Globe2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2793",
-      "name": "WifiOffIcon",
       "component": "WifiOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2796",
-      "name": "RadioTower",
       "component": "RadioTower"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2799",
-      "name": "QrCodeIcon",
       "component": "QrCodeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2802",
-      "name": "KeyboardIcon",
       "component": "KeyboardIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2805",
-      "name": "MonitorIcon",
       "component": "MonitorIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2808",
-      "name": "LaptopIcon",
       "component": "LaptopIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2811",
-      "name": "SmartphoneIcon",
       "component": "SmartphoneIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2814",
-      "name": "ActivityIcon",
       "component": "ActivityIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2817",
-      "name": "BatteryIcon",
       "component": "BatteryIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2820",
-      "name": "CpuIcon",
       "component": "CpuIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2823",
-      "name": "DatabaseIcon",
       "component": "DatabaseIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2826",
-      "name": "GaugeIcon",
       "component": "GaugeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2829",
-      "name": "HardDriveIcon",
       "component": "HardDriveIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2832",
-      "name": "MemoryStickIcon",
       "component": "MemoryStickIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2835",
-      "name": "BotIcon",
       "component": "BotIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2838",
-      "name": "BracesIcon",
       "component": "BracesIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2841",
-      "name": "LightbulbIcon",
       "component": "LightbulbIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2844",
-      "name": "SparklesIcon",
       "component": "SparklesIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2847",
-      "name": "ZapIcon",
       "component": "ZapIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2850",
-      "name": "StarIcon",
       "component": "StarIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2853",
-      "name": "BookmarkIcon",
       "component": "BookmarkIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2856",
-      "name": "LockIcon",
       "component": "LockIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2859",
-      "name": "LockOpenIcon",
       "component": "LockOpenIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2862",
-      "name": "LogInIcon",
       "component": "LogInIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2865",
-      "name": "EyeIcon",
       "component": "EyeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2868",
-      "name": "EyeOffIcon",
       "component": "EyeOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2871",
-      "name": "SearchIcon",
       "component": "SearchIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2874",
-      "name": "SettingsIcon",
       "component": "SettingsIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2877",
-      "name": "Settings2Icon",
       "component": "Settings2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2880",
-      "name": "DownloadIcon",
       "component": "DownloadIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2883",
-      "name": "UploadIcon",
       "component": "UploadIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2886",
-      "name": "ExternalLinkIcon",
       "component": "ExternalLinkIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2889",
-      "name": "LinkIcon",
       "component": "LinkIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2892",
-      "name": "Link2Icon",
       "component": "Link2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2895",
-      "name": "MessageSquareIcon",
       "component": "MessageSquareIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2898",
-      "name": "MessageSquareWarningIcon",
       "component": "MessageSquareWarningIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2901",
-      "name": "MessageSquareOffIcon",
       "component": "MessageSquareOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2904",
-      "name": "MessageCircleIcon",
       "component": "MessageCircleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2907",
-      "name": "MessageCircleQuestionIcon",
       "component": "MessageCircleQuestionIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2910",
-      "name": "EllipsisIcon",
       "component": "EllipsisIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2913",
-      "name": "MoreVertical",
       "component": "MoreVertical"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2916",
-      "name": "PlayIcon",
       "component": "PlayIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2919",
-      "name": "ListChecksIcon",
       "component": "ListChecksIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2922",
-      "name": "ListTodoIcon",
       "component": "ListTodoIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2925",
-      "name": "ListFilterIcon",
       "component": "ListFilterIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2928",
-      "name": "Camera",
       "component": "Camera"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2931",
-      "name": "PaperclipIcon",
       "component": "PaperclipIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2934",
-      "name": "SendIcon",
       "component": "SendIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2937",
-      "name": "UserPlusIcon",
       "component": "UserPlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2940",
-      "name": "UsersIcon",
       "component": "UsersIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2943",
-      "name": "LayersIcon",
       "component": "LayersIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2946",
-      "name": "PipetteIcon",
       "component": "PipetteIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2949",
-      "name": "PaletteIcon",
       "component": "PaletteIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2952",
-      "name": "PaintbrushIcon",
       "component": "PaintbrushIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2955",
-      "name": "ScanIcon",
       "component": "ScanIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2958",
-      "name": "FoldHorizontalIcon",
       "component": "FoldHorizontalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2961",
-      "name": "Grid2x2Icon",
       "component": "Grid2x2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2964",
-      "name": "PencilRulerIcon",
       "component": "PencilRulerIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2967",
-      "name": "PenLineIcon",
       "component": "PenLineIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2970",
-      "name": "SquarePenIcon",
       "component": "SquarePenIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2973",
-      "name": "Frame",
       "component": "Frame"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2976",
-      "name": "MousePointerClickIcon",
       "component": "MousePointerClickIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2979",
-      "name": "MousePointer2Icon",
       "component": "MousePointer2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2982",
-      "name": "Maximize2Icon",
       "component": "Maximize2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2985",
-      "name": "Minimize2Icon",
       "component": "Minimize2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2988",
-      "name": "PanelLeftIcon",
       "component": "PanelLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2991",
-      "name": "PanelLeftCloseIcon",
       "component": "PanelLeftCloseIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2994",
-      "name": "PictureInPicture2",
       "component": "PictureInPicture2"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-2997",
-      "name": "Columns2Icon",
       "component": "Columns2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3000",
-      "name": "Rows3Icon",
       "component": "Rows3Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3003",
-      "name": "SquareSplitHorizontal",
       "component": "SquareSplitHorizontal"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3006",
-      "name": "SquareSplitVertical",
       "component": "SquareSplitVertical"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3009",
-      "name": "TextWrapIcon",
       "component": "TextWrapIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3012",
-      "name": "WrapTextIcon",
       "component": "WrapTextIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3015",
-      "name": "PilcrowIcon",
       "component": "PilcrowIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3018",
-      "name": "BookOpenIcon",
       "component": "BookOpenIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3021",
-      "name": "MoonIcon",
       "component": "MoonIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3024",
-      "name": "SunIcon",
       "component": "SunIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3027",
-      "name": "ChartNoAxesColumnIcon",
       "component": "ChartNoAxesColumnIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3030",
-      "name": "Unlink2Icon",
       "component": "Unlink2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3033",
-      "name": "CloudDownloadIcon",
       "component": "CloudDownloadIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3036",
-      "name": "PencilIcon",
       "component": "PencilIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3039",
-      "name": "CircleSlashIcon",
       "component": "CircleSlashIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3042",
-      "name": "SmilePlusIcon",
       "component": "SmilePlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3045",
-      "name": "TagIcon",
       "component": "TagIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3048",
-      "name": "ShieldCheckIcon",
       "component": "ShieldCheckIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3051",
-      "name": "BlocksIcon",
       "component": "BlocksIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3054",
-      "name": "PackageIcon",
       "component": "PackageIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3057",
-      "name": "UserRoundIcon",
       "component": "UserRoundIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3060",
-      "name": "Volume2Icon",
       "component": "Volume2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3063",
-      "name": "VolumeOffIcon",
       "component": "VolumeOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3066",
-      "name": "SkipBackIcon",
       "component": "SkipBackIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3069",
-      "name": "SkipForwardIcon",
       "component": "SkipForwardIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3072",
-      "name": "ListMusicIcon",
       "component": "ListMusicIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3075",
-      "name": "ShuffleIcon",
       "component": "ShuffleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3078",
-      "name": "RepeatIcon",
       "component": "RepeatIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3081",
-      "name": "Repeat1Icon",
       "component": "Repeat1Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3084",
-      "name": "SquareIcon",
       "component": "SquareIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3087",
-      "name": "TargetIcon",
       "component": "TargetIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3090",
-      "name": "MessageSquareTextIcon",
       "component": "MessageSquareTextIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3093",
-      "name": "InboxIcon",
       "component": "InboxIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3096",
-      "name": "FileTextIcon",
       "component": "FileTextIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3099",
-      "name": "FileSpreadsheetIcon",
       "component": "FileSpreadsheetIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3102",
-      "name": "PresentationIcon",
       "component": "PresentationIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3105",
-      "name": "MailIcon",
       "component": "MailIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3108",
-      "name": "ImageIcon",
       "component": "ImageIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3111",
-      "name": "BrainIcon",
       "component": "BrainIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3114",
-      "name": "CalendarArrowDownIcon",
       "component": "CalendarArrowDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3117",
-      "name": "CalendarArrowUpIcon",
       "component": "CalendarArrowUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3120",
-      "name": "NavigationArrowIcon",
       "component": "NavigationArrowIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3123",
-      "name": "ChartDonutIcon",
       "component": "ChartDonutIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3126",
-      "name": "FadersHorizontalIcon",
       "component": "FadersHorizontalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3129",
-      "name": "HeartIcon",
       "component": "HeartIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3132",
-      "name": "EllipsisVerticalIcon",
       "component": "EllipsisVerticalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3135",
-      "name": "ScaleIcon",
       "component": "ScaleIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3138",
-      "name": "MicIcon",
       "component": "MicIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3141",
-      "name": "MicOffIcon",
       "component": "MicOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3144",
-      "name": "KeyRoundIcon",
       "component": "KeyRoundIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3147",
-      "name": "LanguagesIcon",
       "component": "LanguagesIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3150",
-      "name": "AudioLinesIcon",
       "component": "AudioLinesIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3153",
-      "name": "TypeIcon",
       "component": "TypeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3156",
-      "name": "MessageSquarePlusIcon",
       "component": "MessageSquarePlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3159",
-      "name": "EraserIcon",
       "component": "EraserIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3162",
-      "name": "ListTreeIcon",
       "component": "ListTreeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3165",
-      "name": "BuildingIcon",
       "component": "BuildingIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3168",
-      "name": "CircuitBoardIcon",
       "component": "CircuitBoardIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3171",
-      "name": "CloudCogIcon",
       "component": "CloudCogIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3174",
-      "name": "FolderCodeIcon",
       "component": "FolderCodeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3177",
-      "name": "Gamepad2Icon",
       "component": "Gamepad2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3180",
-      "name": "Layers3Icon",
       "component": "Layers3Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3183",
-      "name": "MusicIcon",
       "component": "MusicIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3186",
-      "name": "YarnIcon",
       "component": "YarnIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3189",
-      "name": "ShoppingBagIcon",
       "component": "ShoppingBagIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3192",
-      "name": "VideoIcon",
       "component": "VideoIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3195",
-      "name": "QuoteIcon",
       "component": "QuoteIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3198",
-      "name": "TextIcon",
       "component": "TextIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3201",
-      "name": "PanelsTopLeftIcon",
       "component": "PanelsTopLeftIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3204",
-      "name": "TrendingDownIcon",
       "component": "TrendingDownIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3207",
-      "name": "TrendingUpIcon",
       "component": "TrendingUpIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3210",
-      "name": "TicketIcon",
       "component": "TicketIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3213",
-      "name": "SlidersHorizontalIcon",
       "component": "SlidersHorizontalIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3216",
-      "name": "RocketIcon",
       "component": "RocketIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3219",
-      "name": "WorkflowIcon",
       "component": "WorkflowIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3222",
-      "name": "MessageSquareDashedIcon",
       "component": "MessageSquareDashedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3225",
-      "name": "CalendarIcon",
       "component": "CalendarIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3228",
-      "name": "ShieldIcon",
       "component": "ShieldIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3231",
-      "name": "ShieldOffIcon",
       "component": "ShieldOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3234",
-      "name": "FlaskConicalOffIcon",
       "component": "FlaskConicalOffIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3237",
-      "name": "UserIcon",
       "component": "UserIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3240",
-      "name": "CircleStopIcon",
       "component": "CircleStopIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3243",
-      "name": "PauseIcon",
       "component": "PauseIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3246",
-      "name": "MaximizeIcon",
       "component": "MaximizeIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3249",
-      "name": "CircleDotDashedIcon",
       "component": "CircleDotDashedIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3252",
-      "name": "ShieldQuestionIcon",
       "component": "ShieldQuestionIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3255",
-      "name": "FilmIcon",
       "component": "FilmIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3258",
-      "name": "Home",
       "component": "Home"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3261",
-      "name": "Box",
       "component": "Box"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3264",
-      "name": "Power",
       "component": "Power"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3267",
-      "name": "Table2Icon",
       "component": "Table2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3270",
-      "name": "UserCheckIcon",
       "component": "UserCheckIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3273",
-      "name": "UserRoundXIcon",
       "component": "UserRoundXIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3276",
-      "name": "Plug2Icon",
       "component": "Plug2Icon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3279",
-      "name": "PlugIcon",
       "component": "PlugIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3282",
-      "name": "ReplyIcon",
       "component": "ReplyIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3285",
-      "name": "ListPlusIcon",
       "component": "ListPlusIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3288",
-      "name": "ScrollTextIcon",
       "component": "ScrollTextIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3291",
-      "name": "OctagonXIcon",
       "component": "OctagonXIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3294",
-      "name": "UnlinkIcon",
       "component": "UnlinkIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=4-3297",
-      "name": "UserLockIcon",
       "component": "UserLockIcon"
     }
   ]

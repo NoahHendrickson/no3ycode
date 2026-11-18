@@ -3,10 +3,7 @@
 // component=Tab
 import figma from "figma";
 
-// Editable text goes in as a JS string wherever it would otherwise break the JSX.
-const attr = (value: string) =>
-  /["{}&]/u.test(value) ? `{${JSON.stringify(value)}}` : `"${value}"`;
-const text = (value: string) => (/[{}<>&]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
+import { glyph, jsxAttr, jsxText } from "./shared";
 
 const tab = figma.selectedInstance;
 const word = tab.getEnum("Kind", { Word: true });
@@ -19,17 +16,14 @@ const value =
     .replace(/[^a-z0-9]+/gu, "-")
     .replace(/^-|-$/gu, "") || "tab";
 const off = disabled ? " disabled" : "";
-
-// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
-const swapped = word ? undefined : tab.getInstanceSwap("Glyph");
-const glyph = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate() : null;
-const glyphImports = (glyph?.metadata?.props?.["imports"] as string[] | undefined) ?? [];
+const icon = word ? null : glyph(tab, "Glyph");
+const glyphImports = (icon?.metadata?.props?.["imports"] as string[] | undefined) ?? [];
 
 // The strip reads value, selection and the glyph's import from here (Tabs.figma.ts).
 export default {
   example: word
-    ? figma.tsx`<Tab value="${value}"${off}>${text(label)}</Tab>`
-    : figma.tsx`<IconTab value="${value}" aria-label=${attr(label)}${off}>${glyph?.example ?? []}</IconTab>`,
+    ? figma.tsx`<Tab value="${value}"${off}>${jsxText(label)}</Tab>`
+    : figma.tsx`<IconTab value="${value}" aria-label=${jsxAttr(label)}${off}>${icon?.example ?? []}</IconTab>`,
   imports: word
     ? ['import { Tab } from "~/custom/Tabs";']
     : ['import { IconTab } from "~/custom/Tabs";'],

@@ -3,18 +3,10 @@
 // component=Button
 import figma from "figma";
 
+import { BUTTON_VARIANTS, glyph } from "./shared";
+
 const button = figma.selectedInstance;
-const variant = button.getEnum("Variant", {
-  secondary: "secondary",
-  outline: "outline",
-  ghost: "ghost",
-  "ghost-muted": "ghost-muted",
-  "ghost-destructive": "ghost-destructive",
-  destructive: "destructive",
-  "destructive-outline": "destructive-outline",
-  "warning-outline": "warning-outline",
-  link: "link",
-});
+const variant = button.getEnum("Variant", BUTTON_VARIANTS);
 const size =
   button.getEnum("Size", {
     "icon-xs": "icon-xs",
@@ -24,10 +16,6 @@ const size =
   }) ?? "icon";
 const disabled = button.getEnum("State", { Disabled: true });
 
-// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
-const swapped = button.getInstanceSwap("Glyph");
-const icon = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate().example : null;
-
 const attrs = [
   variant ? ` variant="${variant}"` : "",
   ` size="${size}"`,
@@ -36,7 +24,7 @@ const attrs = [
 
 export default {
   example: figma.tsx`<Button${attrs} aria-label="…">
-  ${icon}
+  ${glyph(button, "Glyph")?.example ?? []}
 </Button>`,
   imports: ['import { Button } from "~/components/ui/button";'],
   id: "icon-button",
