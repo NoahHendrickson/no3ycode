@@ -1,5 +1,5 @@
 /** The per-corner radius glyphs from the t3-fork Figma design (node 180:7739 family) —
- * custom-drawn, no Phosphor equivalent, so they live here instead of the lucide shim.
+ * custom-drawn, no icon-set equivalent, so they live here instead of the lucide shim.
  * Stroke rides currentColor so the field prefix cell's muted tint applies. */
 
 const CORNER_PATHS = {

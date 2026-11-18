@@ -15,12 +15,13 @@ import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import { createElement } from "react";
-import { CheckIcon as HugeCheck, MinusIcon as HugeMinus } from "@hugeicons/core-free-icons";
+import * as Hg from "@hugeicons/core-free-icons";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 import { forkPaletteFillsIcons } from "~/custom/forkActivePalette";
 import { FORK_PALETTES } from "~/custom/forkTheme";
-import { SearchIcon, XIcon } from "~/custom/icons/lucide-hugeicons";
+import { canFill, type IconSvgElement } from "~/custom/icons/hugeiconsFill";
+import { CircleCheckIcon, FolderIcon, XIcon, ZapIcon } from "~/custom/icons/lucide-hugeicons";
 
 const webRoot = NodePath.resolve(NodeURL.fileURLToPath(new URL(".", import.meta.url)), "../..");
 const repoRoot = NodePath.resolve(webRoot, "../..");
@@ -122,10 +123,10 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(importedLucideNames().filter((name) => !exported.has(name))).toEqual([]);
   });
 
-  it("renders Hugeicons rather than lucide, defaulting to the duotone weight", () => {
+  it("renders Hugeicons rather than lucide, filling themed rows under the fork palettes", () => {
     const shim = read(SHIM_PATH);
     expect(shim).toContain('from "@hugeicons/core-free-icons"');
-    expect(shim).toContain('"duotone"');
+    expect(shim).toContain('"themed"');
     const lowDensity = /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(
       read("src/theme.custom.css"),
     );
@@ -139,17 +140,31 @@ describe("fork guard: phosphor-duotone-icons", () => {
     const shim = read(SHIM_PATH);
     const maps = (exportName: string, lucideName: string, glyph: string) =>
       expect(shim).toMatch(
-        new RegExp(`${exportName} = icon\\(\\s*"${lucideName}",\\s*${glyph},`, "u"),
+        new RegExp(`${exportName} = icon\\(\\s*"${lucideName}",\\s*Hg\\.${glyph},`, "u"),
       );
-    maps("CircleDotIcon", "circle-dot", "HgCircleDot");
-    maps("GitPullRequestClosedIcon", "git-pull-request-closed", "HgGitPullRequestClosed");
-    maps("GitPullRequestDraftIcon", "git-pull-request-draft", "HgGitPullRequestDraft");
-    maps("ArrowUpRightIcon", "arrow-up-right", "HgArrowUpRight");
+    maps("CircleDotIcon", "circle-dot", "CircleDotIcon");
+    maps("GitPullRequestClosedIcon", "git-pull-request-closed", "GitPullRequestClosedIcon");
+    maps("GitPullRequestDraftIcon", "git-pull-request-draft", "GitPullRequestDraftIcon");
+    maps("ArrowUpRightIcon", "arrow-up-right", "ArrowUpRightIcon");
     expect(shim).toContain("MoreHorizontalIcon = EllipsisIcon");
     expect(shim).toContain("XCircleIcon = CircleXIcon");
   });
 
-  it("fills under every fork palette and keeps duotone under upstream themes", () => {
+  it("fills every themed and fill row the table names, and only those", () => {
+    // The table is the source of truth for which glyphs fill: a row the derivation cannot fill
+    // must say "stroke", or it would quietly draw stroked under the fork palettes.
+    const rows = [
+      ...read(SHIM_PATH).matchAll(/icon\(\s*"([^"]+)",\s*Hg\.(\w+),\s*"(stroke|themed|fill)"/gu),
+    ];
+    expect(rows.length).toBeGreaterThan(250);
+    const glyphs = Hg as unknown as Record<string, IconSvgElement>;
+    const unfillable = rows
+      .filter(([, , glyph, policy]) => policy !== "stroke" && !canFill(glyphs[glyph!]!))
+      .map(([, name]) => name);
+    expect(unfillable).toEqual([]);
+  });
+
+  it("fills under every fork palette and keeps the stroke under upstream themes", () => {
     for (const palette of FORK_PALETTES) expect(forkPaletteFillsIcons(palette)).toBe(true);
     expect(forkPaletteFillsIcons(null)).toBe(false);
     expect(read(SHIM_PATH)).toContain("forkPaletteFillsIcons(useActiveForkPalette())");
@@ -219,10 +234,20 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(html).toContain("<svg");
     expect(html).toContain("lucide lucide-x");
     // A filled weight draws the derived body through a mask; a stroke glyph has none.
-    expect(renderToStaticMarkup(createElement(SearchIcon, { weight: "fill" }))).toContain("mask=");
-    expect(renderToStaticMarkup(createElement(SearchIcon, { weight: "regular" }))).not.toContain(
+    expect(renderToStaticMarkup(createElement(CircleCheckIcon, { weight: "fill" }))).toContain(
       "mask=",
     );
+    expect(
+      renderToStaticMarkup(createElement(CircleCheckIcon, { weight: "stroke" })),
+    ).not.toContain("mask=");
+    // A fill with nothing to cut out skips the mask (an offscreen pass on every paint).
+    expect(renderToStaticMarkup(createElement(FolderIcon, { weight: "fill" }))).not.toContain(
+      "mask=",
+    );
+    // The stroke lives on the <svg>, so a caller's stroke props reach the glyph (EffortGlyph's halo).
+    const halo = renderToStaticMarkup(createElement(ZapIcon, { strokeWidth: 4 }));
+    expect(halo).toContain('stroke-width="4"');
+    expect(halo.match(/stroke-width=/gu)).toHaveLength(1);
     // A caller's own className must not displace the contract classes.
     expect(renderToStaticMarkup(createElement(XIcon, { className: "size-4" }))).toContain(
       "lucide lucide-x size-4",
@@ -236,8 +261,8 @@ describe("fork guard: phosphor-duotone-icons", () => {
       String(glyph[0]?.[1]["d"]);
     const checkbox = read("src/components/ui/checkbox.tsx");
     const menu = read("src/components/ui/menu.tsx");
-    expect(checkbox).toContain(`<path d="${pathOf(HugeCheck)}" />`);
-    expect(checkbox).toContain(`<path d="${pathOf(HugeMinus)}" />`);
-    expect(menu).toContain(`<path d="${pathOf(HugeCheck)}" />`);
+    expect(checkbox).toContain(`<path d="${pathOf(Hg.CheckIcon)}" />`);
+    expect(checkbox).toContain(`<path d="${pathOf(Hg.MinusIcon)}" />`);
+    expect(menu).toContain(`<path d="${pathOf(Hg.CheckIcon)}" />`);
   });
 });

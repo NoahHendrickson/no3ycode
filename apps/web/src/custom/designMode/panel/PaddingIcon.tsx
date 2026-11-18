@@ -1,6 +1,6 @@
 /** The paired-padding glyphs from the t3-fork Figma design (node 180:7288 family) —
  * a frame with two inner bars: vertical bars = left/right padding, horizontal bars =
- * top/bottom. Custom-drawn (no Phosphor equivalent), stroke rides currentColor so the
+ * top/bottom. Custom-drawn (no icon-set equivalent), stroke rides currentColor so the
  * field prefix cell's muted tint applies. */
 
 const FRAME_PATH =

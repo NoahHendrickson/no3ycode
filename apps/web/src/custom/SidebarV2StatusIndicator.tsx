@@ -3,9 +3,9 @@ import { type RefObject, useRef } from "react";
 // Imported through the shim's own path rather than the `lucide-react` alias.
 // This file is fork-owned, so there is no upstream import site to preserve —
 // the alias exists to keep *upstream's* imports untouched, not this one.
-// CircleAlert is Phosphor's WarningCircle under its lucide name; the half
+// CircleAlert is Hugeicons' AlertCircle under its lucide name; the half
 // circle is fork-only. Both are the component set's own status marks (Figma
-// 364:17299 exports them at 9.75px), drawn at the fill weight.
+// 364:17299 exports them at 9.75px), drawn filled.
 import {
   AlarmClockIcon,
   CircleAlertIcon,
@@ -52,10 +52,10 @@ const TONE_TEXT_CLASS: Record<SidebarV2DotTone, string> = {
 };
 
 /** Every settled mark draws in the same box: the rain's 14px on the tall
-    axis, 12px on the wide one — the Phosphor glyphs pad their 256 grid, so a
-    12px icon draws the design's 9.75px circle, and the 10px dots centre in
-    the same width — so a card's mark sits on its content edge and a slim
-    row's 14px slot centres it. */
+    axis, 12px on the wide one — the glyphs pad their 24 grid, so a 12px icon
+    draws about the design's 9.75px circle, and the 10px dots centre in the
+    same width — so a card's mark sits on its content edge and a slim row's
+    14px slot centres it. */
 const MARK_SLOT_CLASS = "flex h-[14px] w-[12px] shrink-0 items-center justify-center";
 
 // Geometry from PixelSparkleView: a 3x5 grid on a 3.8px pitch with 2.85px cells
@@ -388,12 +388,12 @@ export function SidebarV2WorkingMark({
 }
 
 /** The settled counterpart to the rain. Done is the design's 10px dot; the
-    two blocked-on-you states draw Phosphor's half-filled circle — the
-    component set's own glyph, the left half hollow — and Failed the filled
-    warning circle, so a colour-blind reader still tells "waiting on you"
-    from "finished" and "broke" by form. The glyphs are 12px because Phosphor
-    inks a circle on ~81% of its grid: that is the design's 9.75px, and the
-    same visual weight as the 10px dot beside it. */
+    two blocked-on-you states draw a half-filled circle — the component set's
+    own glyph, the left half hollow — and Failed the filled warning circle, so
+    a colour-blind reader still tells "waiting on you" from "finished" and
+    "broke" by form. The glyphs are 12px because the half circle inks ~81% of
+    its grid: that is the design's 9.75px, and the same visual weight as the
+    10px dot beside it. */
 function SidebarV2StatusDot({
   tone,
   dotRef,

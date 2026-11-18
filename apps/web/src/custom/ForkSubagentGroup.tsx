@@ -66,7 +66,7 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
       >
         <span className="flex w-full min-w-0 items-start gap-2">
           <span aria-hidden className="flex size-4 shrink-0 items-center py-px">
-            <ListTreeIcon weight="regular" className="size-4 text-foreground" />
+            <ListTreeIcon weight="stroke" className="size-4 text-foreground" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col items-start">
             <span className="w-full min-w-0 truncate text-foreground">{tree.lead}</span>

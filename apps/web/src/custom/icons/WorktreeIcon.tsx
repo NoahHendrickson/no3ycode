@@ -1,15 +1,14 @@
 /**
  * The worktree mark — see `.fork/customizations.yaml#sidebar-v2-card-rows`.
  *
- * Drawn in Figma (t3-fork, node 86:6226) rather than taken from Phosphor: no
- * glyph in that set says "this thread has a checkout of its own". The nearest
+ * Drawn in Figma (t3-fork, node 86:6226) rather than taken from the icon set: no
+ * glyph in it says "this thread has a checkout of its own". The nearest
  * candidates are folders, and a folder on the card's repo line reads as the
  * project, which is the one thing this must not be confused with.
  *
- * It composes with the Phosphor duotone set rather than merely sitting beside
- * it. Phosphor draws on a 256 viewBox at stroke 16 and fills its secondary
- * shapes at 20% — this is a 32 viewBox at stroke 2, the same 1:16 ratio, with
- * the same 20% on the two outer nodes. So at `size-3` its strokes land on the
+ * It composes with the icon set rather than merely sitting beside it.
+ * Hugeicons draws on a 24 viewBox at stroke 1.5 — this is a 32 viewBox at
+ * stroke 2, the same 1:16 ratio, with a 20% wash on the two outer nodes. So at `size-3` its strokes land on the
  * same 0.75px as the `GitBranchIcon` it replaces, and the duotone reads as one
  * family. Change the viewBox and the stroke has to move with it.
  *
@@ -22,13 +21,13 @@ import type { SVGProps } from "react";
 export function WorktreeIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      // Lucide's default size, as the Phosphor shim keeps; a size class overrides it.
+      // Lucide's default size, as the icon shim keeps; a size class overrides it.
       width={24}
       height={24}
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      // The lucide class contract the Phosphor shim also keeps: theme.custom.css's
+      // The lucide class contract the icon shim also keeps: theme.custom.css's
       // low-density rule hides the duotone wash through it, and tests identify a
       // rendered icon by it.
       {...props}
