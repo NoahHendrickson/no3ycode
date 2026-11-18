@@ -5514,6 +5514,8 @@
   shadows: []
   watch:
     - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
+    # Upstream's completion-notice test clicks the card's arrow (fenced).
+    - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
     # Fenced import, the swapped render at the batch call site, and the
     # unused-marker on upstream's V2SubagentGroup.
     - apps/web/src/components/chat/MessagesTimeline.tsx
