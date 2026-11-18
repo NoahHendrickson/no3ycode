@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ComponentProps, useState } from "react";
 
 import { ChangedFilesCard } from "~/components/chat/ChangedFilesTree";
+import { useRenderedAppearance } from "~/hooks/useTheme";
 
 type CardProps = ComponentProps<typeof ChangedFilesCard>;
 
@@ -40,7 +41,7 @@ const noop = () => {};
 
 function Card({ files, totals }: { files: CardProps["files"]; totals?: CardProps["totals"] }) {
   const [expanded, setExpanded] = useState(true);
-  const resolvedTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+  const resolvedTheme = useRenderedAppearance();
   return (
     <ChangedFilesCard
       runId={runId}
@@ -75,7 +76,7 @@ type Story = StoryObj<typeof meta>;
 
 /** The card at the end of a turn: the files as a tree, with the folder and diff actions. */
 export const Default: Story = {
-  render: () => <Card files={FILES} />,
+  render: (args) => <Card files={args.files} totals={args.totals} />,
 };
 
 export const OneFile: Story = {

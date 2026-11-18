@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
 import { ForkSubagentCardView } from "~/custom/ForkSubagentGroup";
@@ -98,6 +99,11 @@ const meta = {
   args: { member: BASE, environmentId, open: true, onToggle: noop, openThread: noop },
   argTypes: { open: { control: "boolean" } },
   decorators: [(Story) => <div className="w-[736px]">{Story()}</div>],
+  // The chevron moves the `open` control, so the two stay in step.
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<CardProps>();
+    return <ForkSubagentCardView {...args} onToggle={() => updateArgs({ open: !args.open })} />;
+  },
 } satisfies Meta<typeof ForkSubagentCardView>;
 
 export default meta;
@@ -123,5 +129,14 @@ export const Statuses: Story = {
 export const WithoutThread: Story = {
   name: "Without a thread",
   args: { open: false },
-  render: (args) => <ForkSubagentCardView {...args} openThread={null} />,
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<CardProps>();
+    return (
+      <ForkSubagentCardView
+        {...args}
+        openThread={null}
+        onToggle={() => updateArgs({ open: !args.open })}
+      />
+    );
+  },
 };

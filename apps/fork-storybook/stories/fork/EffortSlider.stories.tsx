@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
 import { EffortSlider } from "~/custom/ComposerModelPicker";
@@ -51,6 +52,23 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/** A pick moves the `committedIndex` control, so the slider keeps the stop it lands on. */
+export const Playground: Story = {
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<SliderProps>();
+    return (
+      <EffortSlider
+        {...args}
+        onCommit={(id) =>
+          updateArgs({
+            committedIndex: args.descriptor.options.findIndex((option) => option.id === id),
+          })
+        }
+      />
+    );
+  },
+};
 
 /** The model picker's effort control: the fill takes the provider's colours. */
 export const Providers: Story = {
