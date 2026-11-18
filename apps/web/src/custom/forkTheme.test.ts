@@ -128,6 +128,28 @@ describe("fork theme synchronization", () => {
     expect(readBasicTone("light")).toBe("light");
   });
 
+  it("migrates a retired Inlet colour to the remaining one on its appearance", async () => {
+    const { storage, values } = createStorage();
+    vi.stubGlobal("window", { localStorage: storage });
+    mockUseTheme(storage, new Set());
+
+    const { INLET_THEME, forkPaletteAppearance, migrateLegacyForkPalettes } =
+      await import("./forkTheme");
+    for (const [retired, appearance, next] of [
+      ["charcoal", "dark", "cream"],
+      ["jungle", "dark", "cream"],
+      ["green", "light", "black"],
+      ["jungle-light", "light", "black"],
+      ["cream", "dark", "cream"],
+      ["black", "light", "black"],
+    ] as const) {
+      values.set("t3code:fork-inlet-color", retired);
+      migrateLegacyForkPalettes();
+      expect(values.get("t3code:fork-inlet-color")).toBe(next);
+      expect(forkPaletteAppearance(INLET_THEME, next)).toBe(appearance);
+    }
+  });
+
   it("paints Basic on any standard upstream theme and steps aside for an imported one", async () => {
     const { storage, values } = createStorage({ "t3code:theme": "system" });
     const { attributes, classes, root } = createDocumentRoot();
@@ -216,7 +238,7 @@ describe("fork theme synchronization", () => {
     // Another window's change lands one key at a time: its palette can arrive before its theme.
     // That window repairs its own state; this one only follows, or it clears the shared key.
     values.set("t3code:fork-theme", "inlet");
-    values.set("t3code:fork-inlet-color", "green");
+    values.set("t3code:fork-inlet-color", "black");
     win.event = { type: "storage" } as Event;
     storageHandler?.({ key: "t3code:fork-inlet-color" } as StorageEvent);
     themeChangeHandler?.();
@@ -354,52 +376,41 @@ describe("fork theme synchronization", () => {
 
     const { FORK_THEME_ATTRIBUTE, INLET_COLOR_ATTRIBUTE, setForkAppearance, setForkInletColor } =
       await import("./forkTheme");
+    // Black, the default colour, sits on light.
     setForkAppearance("inlet", setTheme);
-    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
-    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("charcoal");
-    expect(setAppearanceMode).not.toHaveBeenCalled();
-
-    setForkInletColor("green", setTheme);
     expect(values.get("t3code:theme")).toBe("light");
-    expect(values.get("t3code:fork-inlet-color")).toBe("green");
     expect(classes.has("dark")).toBe(false);
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
-    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("green");
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("black");
 
-    setForkInletColor("charcoal", setTheme);
+    setForkInletColor("cream", setTheme);
+    expect(values.get("t3code:theme")).toBe("dark");
+    expect(values.get("t3code:fork-inlet-color")).toBe("cream");
     expect(classes.has("dark")).toBe(true);
-    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("charcoal");
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("inlet");
+    expect(attributes.get(INLET_COLOR_ATTRIBUTE)).toBe("cream");
 
-    // Leaving Inlet clears its colour from the DOM but keeps the preference.
+    // Leaving Inlet clears its colour from the DOM but keeps the preference, and puts back the
+    // mode the palettes moved the user off: System, here, so the app follows the OS again.
     setForkAppearance("basic", setTheme);
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
     expect(attributes.has(INLET_COLOR_ATTRIBUTE)).toBe(false);
-    expect(values.get("t3code:fork-inlet-color")).toBe("charcoal");
-
-    // Basic after a light colour puts back the mode the palettes moved the user off: System,
-    // here, so the app follows the OS again.
-    setForkAppearance("inlet", setTheme);
-    setForkInletColor("green", setTheme);
-    expect(classes.has("dark")).toBe(false);
-    expect(state.mode).toBe("light");
-    setForkAppearance("basic", setTheme);
+    expect(values.get("t3code:fork-inlet-color")).toBe("cream");
     expect(state.mode).toBe("system");
     expect(classes.has("dark")).toBe(true);
-    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
 
-    // A colour that restyles the native chrome pins the mode even when it already matches
-    // (under System, the chrome override would flip the system appearance it follows), and
-    // leaving puts System back too.
-    setForkAppearance("inlet", setTheme);
+    // Both colours restyle the native chrome, so each pins the mode even when it already
+    // matches (under System, the chrome override would flip the system appearance it follows),
+    // and leaving puts System back too.
     setAppearanceMode.mockClear();
-    setForkInletColor("jungle", setTheme);
+    setForkAppearance("inlet", setTheme);
     expect(setAppearanceMode).toHaveBeenCalledWith("dark");
     setForkAppearance("basic", setTheme);
     expect(state.mode).toBe("system");
 
     // A mode the user picks while on a palette is theirs: leaving leaves it alone.
     setForkAppearance("inlet", setTheme);
-    setForkInletColor("green", setTheme);
+    setForkInletColor("black", setTheme);
     state.mode = "dark";
     setForkAppearance("basic", setTheme);
     expect(state.mode).toBe("dark");

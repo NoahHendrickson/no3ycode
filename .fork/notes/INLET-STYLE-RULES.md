@@ -6,10 +6,10 @@ has signed off on and that new work must follow as written. Change a hard rule o
 then update this file.
 
 Code: `apps/web/src/theme.custom.inlet.css` (the template), `theme.custom.inlet-menus.css`
-(hung menus, tooltips, tab strip), `theme.custom.inlet-jungle.css` (Jungle Art and Jungle Light),
+(hung menus, tooltips, tab strip),
 `theme.custom.inlet-black.css` (Black),
 `theme.custom.palettes.css` (per-colour tokens), `custom/inletMenuMorph.ts` (menu motion). Figma `t3-fork`: 619:6610
-(Charcoal), 629:8337 (Green), 630:10946 (Jungle Art), 630:14154 (Cream / Black).
+(the dark template Cream sits on), 630:14154 (Cream / Black).
 
 ---
 
@@ -42,8 +42,8 @@ panels inside panels feel busy. When in doubt, put content directly on the surfa
 ### Solid and flat
 
 Surfaces are solid colours. Inlet never uses frosted glass or translucency, and shadows are faint
-and only lift a piece off what's behind it. The one exception is Jungle Art's composer, which is glass:
-light glass over the new-agent picture, a faint white over the charcoal stage in a thread. Each surface should be clearly its own colour against
+and only lift a piece off what's behind it. The one exception is Black's draft composer, frosted cream
+over the new-agent texture. Each surface should be clearly its own colour against
 its neighbour, so a menu never melts into the composer it opens over.
 
 ### Quiet ink
@@ -171,14 +171,10 @@ look like it. While open:
 
 Exact tokens live in `theme.custom.palettes.css`; this is the personality of each.
 
-| Colour       | Mode               | Frame / panel                                 | Character                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ------------ | ------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Charcoal     | dark               | `#232322` / `#303235`                         | The original template.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Green        | light              | `#21835c` / cream `#f1f0e0`                   | A saturated frame around a cream stage.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Jungle Art   | dark, light chrome | cream `#f2f0d8` / `#141414`, art on new agent | Cream's charcoal stage, open row and bridge in threads and the docked right panel; the art shows only on the new-agent screen, fading from the charcoal on its left edge, so no transcript scrolls over it. Accent green `#21835c` for menus, tooltips, send and dictation; the composer is glass (see Solid and flat); multi-selected rows `#4a9975`. Settings is cream (`#f6f4e4` page, `#f2f0d8` nav); the Usage and Automations pages are a `#f2f0d8` card set 8px into a charcoal stage that runs to the window's edges (its sidebar-side corners rounded 16px), which the lit row bridges into. |
-| Jungle Light | light              | art behind green / Green's stage              | Jungle Art inside out.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Cream        | dark, light chrome | `#f8f3d8` / `#141414`                         | Black's mirror.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Black        | light              | `#141414` / `#f8f3d8`                         | Cream's mirror.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Colour | Mode               | Frame / panel         | Character       |
+| ------ | ------------------ | --------------------- | --------------- |
+| Cream  | dark, light chrome | `#f8f3d8` / `#141414` | Black's mirror. |
+| Black  | light              | `#141414` / `#f8f3d8` | Cream's mirror. |
 
 ### Current direction (not yet locked)
 
@@ -187,7 +183,7 @@ These look the way Noey wants them to right now, but are still being tuned:
 - **Tooltips:** pill-like 14px corners and 6px / 12px padding. A nub with long, gradual sloping
   shoulders into a round tip (44px wide, 7px deep), landing at the trigger. Tooltips beside their trigger (left or right) have no tail: the pill's round end has no flat edge for one. They grow out of the
   nub. Black's tooltips are ink (`#141414`) over cream and cream over its dark-ink surfaces.
-- **Reasoning slider (Jungle):** the original dots and fill inside a recessed well; a fat 22px
+- **Reasoning slider:** the original dots and fill inside a recessed well; a fat 22px
   cream knob.
 - **Mode picker:** recessed well; the selected segment is a cream fill.
 - **Dictation:** one plain pill that grows right from the mic, and retracts into it in one move, its fill fading as it lands. No spring: a second shrink after the retract read as a stutter.
@@ -206,7 +202,7 @@ These look the way Noey wants them to right now, but are still being tuned:
 - Extra inset panels (behind the reasoning section, or inside the mode menu).
 - A chunky ink-line slider.
 - A mic block fused to the waveform.
-- A loud green hover card on Jungle Art.
+- A loud green hover card.
 - Long connector stems.
 - Shadows that darken their trigger.
 - Fade-only, two-step, or tail-leaving close animations.

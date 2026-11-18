@@ -473,7 +473,7 @@ function SidebarUpdateControl() {
       aria-label={idleTooltip?.detail ? `${tooltip}: ${idleTooltip.detail}` : tooltip}
       aria-disabled={isInteractionDisabled || undefined}
       /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label
-         A palette's hook for the labelled pill (Inlet's Jungle Art paints it green). */
+         A palette's hook for the labelled pill. */
       data-fork-update-label={showUpdateLabel ? "" : undefined}
       /* fork:end fork-sidebar-update-label */
       className={cn(

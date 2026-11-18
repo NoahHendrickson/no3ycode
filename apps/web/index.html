@@ -59,16 +59,20 @@
         forkPaletteBackgrounds["cool-darker"] = "#141618";
         /* fork:end fork-cool-darker-theme */
         /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-        forkPaletteBackgrounds["inlet"] = "#232322";
+        forkPaletteBackgrounds["inlet"] = "#141414";
         // Inlet's colours (custom/forkTheme.ts INLET_COLOR_OPTIONS): the frame it
         // pre-paints and the upstream appearance it sits on.
         const forkInletColors = {
-          charcoal: { frame: "#232322", appearance: "dark" },
-          green: { frame: "#21835c", appearance: "light" },
-          jungle: { frame: "#f2f0d8", appearance: "dark" },
-          "jungle-light": { frame: "#21835c", appearance: "light" },
-          cream: { frame: "#f8f3d8", appearance: "dark" },
           black: { frame: "#141414", appearance: "light" },
+          cream: { frame: "#f8f3d8", appearance: "dark" },
+        };
+        // Retired colours paint as the one on their appearance (forkTheme.ts
+        // RETIRED_INLET_COLORS, which rewrites the stored value once React starts).
+        const forkRetiredInletColors = {
+          charcoal: "cream",
+          jungle: "cream",
+          green: "black",
+          "jungle-light": "black",
         };
         /* fork:end fork-inlet-theme */
         const CUSTOM_THEMES_STORAGE_KEY = "t3code:themes:v1";
@@ -296,8 +300,11 @@
           /* fork:end fork-basic-theme */
           /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
           let forkInletColor = window.localStorage.getItem("t3code:fork-inlet-color");
+          if (Object.prototype.hasOwnProperty.call(forkRetiredInletColors, forkInletColor)) {
+            forkInletColor = forkRetiredInletColors[forkInletColor];
+          }
           if (!Object.prototype.hasOwnProperty.call(forkInletColors, forkInletColor)) {
-            forkInletColor = "charcoal";
+            forkInletColor = "black";
           }
           const forkPaletteAppearance =
             forkPalette === "inlet" ? forkInletColors[forkInletColor].appearance : "dark";
@@ -616,22 +623,6 @@
       /* fork:end fork-cool-darker-theme */
 
       /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-      html.dark[data-fork-theme="inlet"] body {
-        background: #232322;
-        color: #e8e8e8;
-      }
-      html[data-fork-theme="inlet"]:is(
-          [data-fork-inlet-color="green"],
-          [data-fork-inlet-color="jungle-light"]
-        )
-        body {
-        background: #21835c;
-        color: #ffffff;
-      }
-      html[data-fork-theme="inlet"][data-fork-inlet-color="jungle"] body {
-        background: #f2f0d8;
-        color: #1c1c1a;
-      }
       html[data-fork-theme="inlet"][data-fork-inlet-color="cream"] body {
         background: #f8f3d8;
         color: #1c1c1a;
