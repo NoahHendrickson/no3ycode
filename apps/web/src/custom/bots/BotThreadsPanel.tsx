@@ -7,7 +7,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
-import { useState, useSyncExternalStore } from "react";
+import { type ComponentProps, type MouseEvent, useState, useSyncExternalStore } from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
@@ -312,19 +312,51 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
   ).replace(/ ago$/, "");
   const ref = scopeThreadRef(thread.environmentId, thread.id);
   return (
+    <BotThreadsRowView
+      status={card.topStatus}
+      seed={scopedThreadKey(ref)}
+      title={thread.title}
+      time={time}
+      pullRequest={
+        pullRequest === null ? null : { number: pullRequest.number, state: pullRequestState }
+      }
+      branch={thread.branch}
+      hasWorktree={thread.worktreePath !== null}
+      current={props.current}
+      onOpen={() => {
+        if (props.current) return;
+        void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
+      }}
+      // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
+      onContextMenu={(event) => {
+        event.preventDefault();
+        openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
+      }}
+    />
+  );
+}
+
+/** @public — the row as drawn, from plain props; Storybook renders it on its own. */
+export function BotThreadsRowView(props: {
+  readonly status: ComponentProps<typeof SidebarV2StatusMark>["status"];
+  readonly seed: string;
+  readonly title: string;
+  /** Relative time without " ago", as the row shows it. */
+  readonly time: string;
+  readonly pullRequest: ComponentProps<typeof BotPullRequestMark> | null;
+  readonly branch: string | null;
+  readonly hasWorktree: boolean;
+  readonly current: boolean;
+  readonly onOpen: () => void;
+  readonly onContextMenu?: ((event: MouseEvent<HTMLButtonElement>) => void) | undefined;
+}) {
+  return (
     <li>
       <button
         type="button"
         aria-current={props.current ? "page" : undefined}
-        onClick={() => {
-          if (props.current) return;
-          void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
-        }}
-        // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
-        onContextMenu={(event) => {
-          event.preventDefault();
-          openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
-        }}
+        onClick={props.onOpen}
+        onContextMenu={props.onContextMenu}
         className={cn(
           "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           props.current ? "bg-accent" : "hover:bg-accent",
@@ -332,26 +364,29 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
         data-testid="bot-threads-row"
       >
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">
-          <SidebarV2StatusMark status={card.topStatus} seed={scopedThreadKey(ref)} idle="dot" />
+          <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex min-w-0 items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm leading-5 text-foreground">
-              {thread.title}
+              {props.title}
             </span>
             <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-              {time}
+              {props.time}
             </span>
           </span>
           {/* Always drawn, so every row is the same height with or without a branch. */}
           <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-            {pullRequest === null ? null : (
-              <BotPullRequestMark number={pullRequest.number} state={pullRequestState} />
+            {props.pullRequest === null ? null : (
+              <BotPullRequestMark
+                number={props.pullRequest.number}
+                state={props.pullRequest.state}
+              />
             )}
-            {thread.branch !== null || thread.worktreePath !== null ? (
+            {props.branch !== null || props.hasWorktree ? (
               <SidebarV2CheckoutMark
-                branch={thread.branch}
-                hasWorktree={thread.worktreePath !== null}
+                branch={props.branch}
+                hasWorktree={props.hasWorktree}
                 devServerPort={null}
                 className="flex min-w-0 items-center gap-0.5"
               />

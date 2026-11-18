@@ -7694,9 +7694,9 @@
     alias). Foundations read tokens from the CSS itself (the @theme inline
     registrations, Basic's ramp swept across every tone), so a token added
     upstream appears without a story edit. Fork/ stories draw fork components
-    through view exports that take plain props (ForkSubagentCardView, the
-    working-mark forms), marked @public because knip does not follow the
-    stories. The package touches no upstream file:
+    through view exports that take plain props (ForkSubagentCardView,
+    BotThreadsRowView, EffortSlider, the working-mark forms), marked @public
+    because knip does not follow the stories. The package touches no upstream file:
     apps/* already covers it and release smoke copies a fixed package list. The
     Figma kit "no3y code — Basic UI kit" is captured from these stories.
   tier: 1

@@ -88,7 +88,8 @@ function TraitRow(props: { label: string; children: ReactNode; asLabel?: boolean
   );
 }
 
-function EffortSlider(props: {
+/** @public — Storybook's Fork/Effort slider story renders it on its own. */
+export function EffortSlider(props: {
   descriptor: SelectDescriptor;
   /** The fill's colours, from the track's start to the thumb. */
   fillStops: EffortDitherStops;
