@@ -32,10 +32,30 @@ const mark = card.getInstanceSwap("Provider");
 const markId = mark && mark.type === "INSTANCE" ? mark.codeConnectId() : null;
 const driver = markId?.startsWith("provider-") ? markId.slice("provider-".length) : "codex";
 
-const activity = card.getString("Activity");
-// A bare path (no spaces) truncates in the middle; anything else is prose (forkSubagentTree.ts).
-const shape = /\s/u.test(activity) ? "prose" : "path";
-const model = card.getString("Model").toLowerCase().replace(/\s+/gu, "-");
+const activity = card.getString("Activity").trim();
+// A path (a slash, no spaces) truncates in the middle; anything else is prose (forkSubagentTree.ts).
+const shape = activity.includes("/") && !activity.includes(" ") ? "path" : "prose";
+const activityRow = activity
+  ? `{ label: "${status.activity}", text: ${JSON.stringify(activity)}, shape: "${shape}" }`
+  : "null";
+// The model as the card shows it; formatForkSubagentModel passes a display name through.
+const model = card.getString("Model");
+
+// The sample times reproduce the card's Elapsed text ("2m 27s"): a working card started that long
+// ago, so its timer keeps ticking from there; a settled one ran exactly that long.
+const elapsedMs =
+  [...card.getString("Elapsed").matchAll(/(\d+)\s*([hms])/gu)].reduce(
+    (sum, [, amount, unit]) =>
+      sum + Number(amount) * (unit === "h" ? 3_600_000 : unit === "m" ? 60_000 : 1_000),
+    0,
+  ) || 147_000;
+const settledStart = Date.parse("2026-11-18T12:00:00.000Z");
+const startedAt = status.done
+  ? JSON.stringify(new Date(settledStart).toISOString())
+  : `new Date(Date.now() - ${elapsedMs}).toISOString()`;
+const completedAt = status.done
+  ? JSON.stringify(new Date(settledStart + elapsedMs).toISOString())
+  : "null";
 
 export default {
   example: figma.tsx`<ForkSubagentCardView
@@ -46,14 +66,14 @@ export default {
     mark: "${status.mark}",
     statusLabel: "${status.label}",
     model: ${JSON.stringify(model)},
-    startedAt: "2026-11-18T12:00:00.000Z",
-    completedAt: ${status.done ? '"2026-11-18T12:02:27.000Z"' : "null"},
+    startedAt: ${startedAt},
+    completedAt: ${completedAt},
     childThreadId: ${hasThread ? "childThreadId" : "null"},
     remote: undefined,
     driver: ProviderDriverKind.make("${driver}"),
     providerInstanceId: ProviderInstanceId.make("${driver}"),
     prompt: ${JSON.stringify(card.getString("Task"))},
-    activity: { label: "${status.activity}", text: ${JSON.stringify(activity)}, shape: "${shape}" },
+    activity: ${activityRow},
   }}
   environmentId={environmentId}
   open={${open}}

@@ -5,8 +5,8 @@ import figma from "figma";
 
 // Editable text goes in as a JS string wherever it would otherwise break the JSX.
 const attr = (value: string) =>
-  /["{}]/u.test(value) ? `{${JSON.stringify(value)}}` : `"${value}"`;
-const text = (value: string) => (/[{}<>]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
+  /["{}&]/u.test(value) ? `{${JSON.stringify(value)}}` : `"${value}"`;
+const text = (value: string) => (/[{}<>&]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
 
 const tab = figma.selectedInstance;
 const word = tab.getEnum("Kind", { Word: true });

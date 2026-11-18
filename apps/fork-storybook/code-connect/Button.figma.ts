@@ -4,7 +4,7 @@
 import figma from "figma";
 
 // Editable text goes in as a JS string wherever it would otherwise break the JSX.
-const text = (value: string) => (/[{}<>]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
+const text = (value: string) => (/[{}<>&]/u.test(value) ? `{${JSON.stringify(value)}}` : value);
 
 const button = figma.selectedInstance;
 const variant = button.getEnum("Variant", {
