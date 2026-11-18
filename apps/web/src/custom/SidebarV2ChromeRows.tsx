@@ -80,7 +80,7 @@ import {
   type SidebarV2TopStatusMark,
 } from "./SidebarV2StatusIndicator";
 import { SegmentedMenuTab, SegmentedMenuTabs } from "./SegmentedTabs";
-import { SIDEBAR_ICON_TAB, SIDEBAR_ICON_TABS_TRACK } from "./SidebarModeTabs";
+import { ICON_TAB, TABS_TRACK } from "./Tabs";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
@@ -590,7 +590,7 @@ const GROUPING_TABS = [
 /** The Group by tabs wear the Code / Chat switch's shape, but the pick is cut from the menu's
     own surface, with the track showing through its border as the switch's ring does. */
 const GROUP_BY_TAB = cn(
-  SIDEBAR_ICON_TAB,
+  ICON_TAB,
   "data-highlighted:text-sidebar-foreground data-pressed:border-transparent data-pressed:bg-popover data-pressed:bg-clip-padding dark:data-pressed:bg-popover",
 );
 
@@ -821,7 +821,7 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
           value={props.grouping}
           onValueChange={(value) => props.onGroupingChange(value as SidebarV2Grouping)}
           data-fork-group-by-tabs=""
-          className={SIDEBAR_ICON_TABS_TRACK}
+          className={TABS_TRACK}
         >
           {GROUPING_TABS.map((tab) => {
             // Disabled rather than inert where grouping by project
