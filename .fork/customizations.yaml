@@ -7717,7 +7717,10 @@
     apps/fork-storybook/code-connect/*.figma.ts template names one kit component
     set (`// url=`) and maps its Figma properties to the app component's real
     props, so Dev Mode's Inspect panel, and agents reading the file through the
-    Figma MCP server, get the app's code instead of generated markup. Templates
+    Figma MCP server, get the app's code instead of generated markup. The kit's
+    272 glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
+    lucide-react shim export), so a swapped glyph renders through its own
+    connection (getInstanceSwap(...).executeTemplate()). Templates
     use Figma's maintained template format (the Storybook and React parsers are
     deprecated) and run inside Figma, so they import only "figma" and knip
     ignores the folder. The Professional plan allows one active library and one

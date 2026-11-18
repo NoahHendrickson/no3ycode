@@ -8,23 +8,19 @@ const word = tab.getEnum("Kind", { Word: true });
 const label = tab.getString("Label");
 const disabled = tab.getEnum("State", { Disabled: true });
 const value = label.toLowerCase().replace(/\s+/gu, "-");
-
-// The kit's glyphs are `icon/<lucide-name>`, which the app imports as `<PascalName>Icon`.
-const instance = tab.getInstanceSwap("Glyph");
-const name =
-  instance && instance.type === "INSTANCE" ? instance.name.replace(/^icon\//u, "") : "circle";
-const icon = `${name.replace(/(^|-)([a-z0-9])/gu, (_, __, c: string) => c.toUpperCase())}Icon`;
 const off = disabled ? " disabled" : "";
+
+// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
+const swapped = tab.getInstanceSwap("Glyph");
+const icon = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate().example : null;
 
 export default {
   example: word
     ? figma.tsx`<Tab value="${value}"${off}>${label}</Tab>`
-    : figma.tsx`<IconTab value="${value}" aria-label="${label}"${off}>
-  <${icon} />
-</IconTab>`,
+    : figma.tsx`<IconTab value="${value}" aria-label="${label}"${off}>${icon}</IconTab>`,
   imports: word
     ? ['import { Tab } from "~/custom/Tabs";']
-    : ['import { IconTab } from "~/custom/Tabs";', `import { ${icon} } from "lucide-react";`],
+    : ['import { IconTab } from "~/custom/Tabs";'],
   id: "tab",
   metadata: { nestable: true },
 };

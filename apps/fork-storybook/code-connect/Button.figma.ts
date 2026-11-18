@@ -20,38 +20,35 @@ const disabled = button.getEnum("State", { Disabled: true });
 const iconSide = button.getEnum("Icon", { Left: "left", Right: "right" });
 const label = button.getString("Label");
 
-// The kit's glyphs are `icon/<lucide-name>`, which the app imports as `<PascalName>Icon`.
-function glyph(prop: string): string | null {
-  const instance = button.getInstanceSwap(prop);
-  if (!instance || instance.type !== "INSTANCE") return null;
-  const name = instance.name.replace(/^icon\//u, "");
-  return `${name.replace(/(^|-)([a-z0-9])/gu, (_, __, c: string) => c.toUpperCase())}Icon`;
-}
-const icon =
+// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
+const swapped =
   iconSide === "left"
-    ? glyph("Leading glyph")
+    ? button.getInstanceSwap("Leading glyph")
     : iconSide === "right"
-      ? glyph("Trailing glyph")
-      : null;
+      ? button.getInstanceSwap("Trailing glyph")
+      : undefined;
+const icon = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate().example : null;
 
 const attrs = [
   variant ? ` variant="${variant}"` : "",
   size ? ` size="${size}"` : "",
   disabled ? " disabled" : "",
 ].join("");
-const body =
-  icon === null
-    ? label
-    : iconSide === "left"
-      ? `\n  <${icon} />\n  ${label}\n`
-      : `\n  ${label}\n  <${icon} />\n`;
 
 export default {
-  example: figma.tsx`<Button${attrs}>${body}</Button>`,
-  imports: [
-    'import { Button } from "~/components/ui/button";',
-    ...(icon ? [`import { ${icon} } from "lucide-react";`] : []),
-  ],
+  example:
+    icon === null
+      ? figma.tsx`<Button${attrs}>${label}</Button>`
+      : iconSide === "left"
+        ? figma.tsx`<Button${attrs}>
+  ${icon}
+  ${label}
+</Button>`
+        : figma.tsx`<Button${attrs}>
+  ${label}
+  ${icon}
+</Button>`,
+  imports: ['import { Button } from "~/components/ui/button";'],
   id: "button",
   metadata: { nestable: true },
 };

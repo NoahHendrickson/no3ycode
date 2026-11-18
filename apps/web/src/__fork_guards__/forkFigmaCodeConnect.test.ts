@@ -28,10 +28,27 @@ describe("fork guard: fork-figma-code-connect", () => {
       NodeFS.readFileSync(NodePath.join(storybook, "figma.config.json"), "utf8"),
     );
     expect(config.codeConnect).toMatchObject({
-      include: ["code-connect/**/*.figma.ts"],
+      include: ["code-connect/**/*.figma.ts", "code-connect/**/*.figma.batch.json"],
       label: "React",
     });
     expect(templates.length).toBeGreaterThan(0);
+  });
+
+  it("connects every kit glyph to an export of the app's icon shim", () => {
+    const batch = JSON.parse(
+      NodeFS.readFileSync(NodePath.join(templatesDir, "icons.figma.batch.json"), "utf8"),
+    ) as { templateFile: string; components: ReadonlyArray<{ url: string; name: string }> };
+    expect(NodeFS.existsSync(NodePath.join(templatesDir, batch.templateFile))).toBe(true);
+    const shim = NodeFS.readFileSync(
+      NodePath.join(repoRoot, "apps/web/src/custom/icons/lucide-hugeicons.tsx"),
+      "utf8",
+    );
+    const exported = new Set([...shim.matchAll(/export const (\w+)\b/gu)].map((match) => match[1]));
+    expect(batch.components.length).toBeGreaterThan(0);
+    for (const icon of batch.components) {
+      expect(icon.url.startsWith(KIT_URL), icon.name).toBe(true);
+      expect(exported.has(icon.name), icon.name).toBe(true);
+    }
   });
 
   it.each(templates.map((template) => [template.name, template.text] as const))(

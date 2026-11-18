@@ -6,11 +6,18 @@ import figma from "figma";
 const track = figma.selectedInstance;
 // The track's size sets its outer height: 28 / 32 / 36px at sm / md / lg.
 const size = track.getEnum("Kind", { "Icon md": "md", "Icon lg": "lg", Word: "md" });
-const tabs = track.findConnectedInstances(() => true);
+// One tab per line: a plain code section between the tabs' own snippets.
+const tabs = track
+  .findConnectedInstances(() => true)
+  .flatMap((tab, index) => {
+    if (tab.type !== "INSTANCE") return [];
+    const example = tab.executeTemplate().example;
+    return index === 0 ? example : [{ type: "CODE" as const, code: "\n  " }, ...example];
+  });
 
 export default {
   example: figma.tsx`<Tabs aria-label="View"${size ? ` size="${size}"` : ""} defaultValue={["code"]}>
-  ${tabs.map((tab) => (tab.type === "INSTANCE" ? tab.executeTemplate().example : ""))}
+  ${tabs}
 </Tabs>`,
   imports: ['import { Tabs } from "~/custom/Tabs";'],
   id: "tabs",

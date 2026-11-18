@@ -15,35 +15,30 @@ const variant = button.getEnum("Variant", {
   "warning-outline": "warning-outline",
   link: "link",
 });
-const size = button.getEnum("Size", {
-  "icon-xs": "icon-xs",
-  "icon-sm": "icon-sm",
-  "icon-sm-pill": "icon-sm-pill",
-  icon: "icon",
-  "icon-lg": "icon-lg",
-});
+const size =
+  button.getEnum("Size", {
+    "icon-xs": "icon-xs",
+    "icon-sm": "icon-sm",
+    "icon-sm-pill": "icon-sm-pill",
+    "icon-lg": "icon-lg",
+  }) ?? "icon";
 const disabled = button.getEnum("State", { Disabled: true });
 
-// The kit's glyphs are `icon/<lucide-name>`, which the app imports as `<PascalName>Icon`.
-const instance = button.getInstanceSwap("Glyph");
-const name =
-  instance && instance.type === "INSTANCE" ? instance.name.replace(/^icon\//u, "") : "circle";
-const icon = `${name.replace(/(^|-)([a-z0-9])/gu, (_, __, c: string) => c.toUpperCase())}Icon`;
+// The glyph renders through its own connection (icons.figma.batch.ts), imports included.
+const swapped = button.getInstanceSwap("Glyph");
+const icon = swapped && swapped.type === "INSTANCE" ? swapped.executeTemplate().example : null;
 
 const attrs = [
   variant ? ` variant="${variant}"` : "",
-  ` size="${size ?? "icon"}"`,
+  ` size="${size}"`,
   disabled ? " disabled" : "",
 ].join("");
 
 export default {
-  example: figma.tsx`<Button${attrs} aria-label="${name.replace(/-/gu, " ")}">
-  <${icon} />
+  example: figma.tsx`<Button${attrs} aria-label="…">
+  ${icon}
 </Button>`,
-  imports: [
-    'import { Button } from "~/components/ui/button";',
-    `import { ${icon} } from "lucide-react";`,
-  ],
+  imports: ['import { Button } from "~/components/ui/button";'],
   id: "icon-button",
   metadata: { nestable: true },
 };
