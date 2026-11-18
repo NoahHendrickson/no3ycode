@@ -18,10 +18,10 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import { defaultInstanceIdForDriver, type EnvironmentId, type ThreadId } from "@t3tools/contracts";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
-import { type CSSProperties, memo, use, useId, useState } from "react";
+import { type CSSProperties, Fragment, memo, type ReactNode, use, useId, useState } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
@@ -191,6 +191,9 @@ function ForkSubagentCard(props: {
   const toggle = () => {
     // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
     ctx.onToggleWorkEntry(anchorKey, open, member.id);
+    // Its details are already in hand, so opening is ready at once; that retires the reveal
+    // instead of re-running it on every later list resize.
+    if (!open) ctx.onWorkEntryContentReady?.(anchorKey, member.id);
     chosen.delete(open ? openKey : closedKey);
     chosen.add(open ? closedKey : openKey);
     setChosenOpen(!open);
@@ -223,22 +226,58 @@ export function ForkSubagentCardView(props: {
   const remote = member.remote;
   const failed = member.mark === "failed";
   const model = formatForkSubagentModel(member.model);
-  // A subagent that has only just started can have nothing to list yet.
-  const hasDetails = Boolean(member.prompt || member.activity || model);
+  // One list of rows: a subagent that has only just started can have none yet, and then the card
+  // offers no chevron and no well.
+  const details: Array<{ readonly term: string; readonly detail: ReactNode }> = [];
+  if (member.prompt) {
+    details.push({
+      term: "Task",
+      detail: <dd className="line-clamp-2 text-foreground">{member.prompt}</dd>,
+    });
+  }
+  if (member.activity) {
+    details.push({
+      term: member.activity.label,
+      detail: (
+        <dd className={cn("min-w-0", failed ? "text-sidebar-v2-status-failed" : "text-foreground")}>
+          {member.activity.shape === "path" ? (
+            <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
+          ) : (
+            <span className="line-clamp-3">{member.activity.text}</span>
+          )}
+        </dd>
+      ),
+    });
+  }
+  if (model) {
+    details.push({ term: "Model", detail: <dd className="truncate text-foreground">{model}</dd> });
+  }
   const identity = (
     <>
       <span
         aria-hidden
         className="relative flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-border bg-accent"
       >
-        {/* A linked environment's task names its driver only as a label, and a second instance of
-            a provider needs its instance badge; the avatar resolves both. */}
-        {remote === undefined &&
-        member.providerInstanceId === defaultInstanceIdForDriver(member.driver) &&
-        hasForkProviderMark(member.driver) ? (
-          <span className="flex" style={MARK_SIZE}>
-            <ForkProviderMark driver={member.driver} />
-          </span>
+        {/* A linked environment's task names its driver only as a label; the avatar resolves the
+            provider that really runs it there. */}
+        {remote === undefined && hasForkProviderMark(member.driver) ? (
+          <>
+            <span className="flex" style={MARK_SIZE}>
+              <ForkProviderMark driver={member.driver} />
+            </span>
+            {/* As the model picker does: the resolved avatar over the mark, glyph hidden, draws
+                the instance badge alone when shouldShowInstanceBadge asks for one, in the corner
+                the status mark leaves free. */}
+            <EnvironmentSubagentAvatar
+              environmentId={environmentId}
+              providerInstanceId={member.providerInstanceId}
+              driver={member.driver}
+              className="absolute inset-0 size-auto rounded-none border-0 bg-transparent ring-0"
+              providerIconClassName="absolute inset-0"
+              iconClassName="hidden"
+              badgeClassName="top-[-0.3125rem] right-[-0.3125rem] bottom-auto h-3 min-w-3 px-0.5 text-5xs"
+            />
+          </>
         ) : (
           <EnvironmentSubagentAvatar
             environmentId={environmentId}
@@ -322,54 +361,35 @@ export function ForkSubagentCardView(props: {
             <TooltipPopup side="top">Open thread</TooltipPopup>
           </Tooltip>
         )}
-        <button
-          type="button"
-          data-fork-subagent-toggle=""
-          aria-expanded={open}
-          aria-controls={wellId}
-          aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
-          onClick={onToggle}
-          className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-        >
-          <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
-        </button>
+        {details.length === 0 ? null : (
+          <button
+            type="button"
+            data-fork-subagent-toggle=""
+            aria-expanded={open}
+            aria-controls={wellId}
+            aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
+            onClick={onToggle}
+            className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+          >
+            <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
+          </button>
+        )}
       </div>
-      <dl
-        id={wellId}
-        hidden={!open || !hasDetails}
-        data-fork-subagent-well=""
-        className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[7px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
-      >
-        {member.prompt ? (
-          <>
-            <dt className="text-muted-foreground">Task</dt>
-            <dd className="line-clamp-2 text-foreground">{member.prompt}</dd>
-          </>
-        ) : null}
-        {member.activity ? (
-          <>
-            <dt className="text-muted-foreground">{member.activity.label}</dt>
-            <dd
-              className={cn(
-                "min-w-0",
-                failed ? "text-sidebar-v2-status-failed" : "text-foreground",
-              )}
-            >
-              {member.activity.shape === "path" ? (
-                <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
-              ) : (
-                <span className="line-clamp-3">{member.activity.text}</span>
-              )}
-            </dd>
-          </>
-        ) : null}
-        {model ? (
-          <>
-            <dt className="text-muted-foreground">Model</dt>
-            <dd className="truncate text-foreground">{model}</dd>
-          </>
-        ) : null}
-      </dl>
+      {details.length === 0 ? null : (
+        <dl
+          id={wellId}
+          hidden={!open}
+          data-fork-subagent-well=""
+          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[7px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
+        >
+          {details.map(({ term, detail }) => (
+            <Fragment key={term}>
+              <dt className="text-muted-foreground">{term}</dt>
+              {detail}
+            </Fragment>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }

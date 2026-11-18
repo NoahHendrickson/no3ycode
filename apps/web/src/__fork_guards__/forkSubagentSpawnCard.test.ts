@@ -45,8 +45,15 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(basic).toMatch(
       /\[data-fork-subagent-well\] \{\s*background-color: var\(--basic-raised\);/u,
     );
-    expect(group).toMatch(/<dt[^>]*>Task<\/dt>/u);
-    expect(group).toMatch(/<dt[^>]*>Model<\/dt>/u);
+    expect(group).toContain('term: "Task"');
+    expect(group).toContain('term: "Model"');
+    // One list of rows gates the chevron and the well, so a card with nothing to list offers neither.
+    expect(group).toMatch(
+      /details\.length === 0 \? null : \(\s*<Tooltip|details\.length === 0 \? null : \(\s*<button/u,
+    );
+    expect(group).toMatch(/details\.length === 0 \? null : \(\s*<dl/u);
+    // The fork mark stays for Codex and Claude; upstream's avatar over it draws only the badge.
+    expect(group).toContain('iconClassName="hidden"');
     // The well is open while the subagent works, unless the chevron was used.
     expect(group).toContain('const open = chosenOpen ?? member.mark === "working";');
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
