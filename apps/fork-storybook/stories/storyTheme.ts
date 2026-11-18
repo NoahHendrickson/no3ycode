@@ -35,7 +35,10 @@ export const DEFAULT_STORY_THEME = `basic_${DEFAULT_BASIC_TONES.dark}`;
 
 /** The toolbar's theme, the one reader of `globals.theme` for the preview and the stories. */
 export function storyTheme(globals: Readonly<Record<string, unknown>>): StoryTheme {
-  const value = typeof globals["theme"] === "string" ? globals["theme"] : DEFAULT_STORY_THEME;
+  const raw = globals["theme"];
+  const value = STORY_THEME_ITEMS.some((item) => item.value === raw)
+    ? (raw as string)
+    : DEFAULT_STORY_THEME;
   if (value === "glass") return { palette: "glass" };
   const [palette, choice] = value.split("_");
   if (palette === "inlet" && (INLET_COLORS as ReadonlyArray<string>).includes(choice ?? "")) {

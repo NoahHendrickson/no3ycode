@@ -7710,6 +7710,7 @@
     - apps/fork-storybook/.storybook/main.ts
     - apps/fork-storybook/.storybook/preview.tsx
     - apps/fork-storybook/.storybook/appearance.ts
+    - apps/fork-storybook/.storybook/preview-head.html
     - apps/fork-storybook/.storybook/manager.ts
     - apps/fork-storybook/stories/
   verify:

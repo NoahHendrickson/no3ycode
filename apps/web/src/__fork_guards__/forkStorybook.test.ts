@@ -47,12 +47,18 @@ describe("fork-storybook", () => {
     expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${BASIC_THEME}"`);
     expect(preview).toContain("setForkBasicTone(");
     expect(preview).toContain("setForkAppearance(COOL_DARKER_THEME, setTheme)");
-    expect(preview).toContain("setForkInletColor(");
+    expect(preview).toMatch(
+      /setForkInletColor\(theme\.color, setTheme\);\s*setForkAppearance\(INLET_THEME, setTheme\);/u,
+    );
     const themes = read(`${storybook}../stories/storyTheme.ts`);
     expect(themes).toContain("BASIC_TONES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
-    // Glass shows through only once the bridge reports the window material, as on the desktop.
-    expect(appearance).toContain("setSidebarVibrancy: async (enabled: boolean) => enabled");
+    // Glass shows through only once the bridge reports the window material, as on the desktop,
+    // and the wallpaper standing in for the desktop paints only then.
+    expect(appearance).toContain("setSidebarVibrancy:");
+    expect(read(`${storybook}preview-head.html`)).toMatch(
+      /html\[data-fork-sidebar-vibrancy="true"\] \{[^}]*background: var\(--story-wallpaper\)/u,
+    );
   });
 
   it("resolves modules as the app's Vite config does", () => {

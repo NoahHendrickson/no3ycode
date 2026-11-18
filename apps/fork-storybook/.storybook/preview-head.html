@@ -4,18 +4,28 @@
   html body {
     overflow: auto;
   }
+  /* appearance.ts wraps the story mount in the app's #root (the Glass popup cutout masks it);
+     index.css sizes that to a locked window, so here it grows with the story instead. */
+  html body #root {
+    height: auto;
+    overflow: visible;
+  }
 
   /* Glass (data-fork-sidebar-vibrancy, set through appearance.ts's stand-in bridge) is a
      see-through window over the desktop, which macOS blurs. A browser shows nothing behind it,
-     so a blurred stand-in wallpaper sits under the canvas instead. */
+     so a blurred stand-in wallpaper sits under the canvas instead, and under each docs example. */
   html[data-fork-sidebar-vibrancy="true"] {
-    background:
+    --story-wallpaper:
       /* macOS lays its dark window material over the blurred desktop. */
       linear-gradient(rgb(20 22 24 / 0.6), rgb(20 22 24 / 0.6)),
       radial-gradient(60% 55% at 18% 22%, rgb(232 121 82 / 0.9), transparent 70%),
       radial-gradient(55% 60% at 82% 30%, rgb(86 112 214 / 0.9), transparent 72%),
       radial-gradient(70% 60% at 50% 95%, rgb(42 157 143 / 0.85), transparent 70%), #20232a;
+    background: var(--story-wallpaper);
     background-attachment: fixed;
+  }
+  html[data-fork-sidebar-vibrancy="true"] .docs-story {
+    background: var(--story-wallpaper);
   }
   /* The desktop window has no fill of its own under Glass; the story canvas stands in for it, so
      it drops its fill too and the app's translucent surfaces sit on the wallpaper. */

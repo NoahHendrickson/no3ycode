@@ -29,3 +29,14 @@ for (const [key, value] of Object.entries(PREFERENCES)) {
 (window as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
   setSidebarVibrancy: async (enabled: boolean) => enabled,
 };
+
+// The app mounts into #root, and Glass's popup cutout (forkGlassPopupCutout.ts) masks that element
+// when a popup opens over its trigger. Storybook mounts into #storybook-root, so it sits inside a
+// #root here, created before the theme turns Glass on.
+const storyRoot = document.getElementById("storybook-root");
+if (storyRoot !== null && document.getElementById("root") === null) {
+  const appRoot = document.createElement("div");
+  appRoot.id = "root";
+  storyRoot.before(appRoot);
+  appRoot.append(storyRoot);
+}
