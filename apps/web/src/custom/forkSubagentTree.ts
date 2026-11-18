@@ -100,12 +100,16 @@ const STATUS_PRESENTATION: Record<
 /** The server's placeholder when a child ends without output; the mark already says it. */
 const GENERIC_CHILD_END = /^Child task ended with status\b/iu;
 
-/** One line of a markdown result: drop list bullets, code ticks, and link targets. */
+/** One line of a markdown result: drop heading marks, list bullets, emphasis, code ticks, and
+    link targets. */
 function plainDetail(text: string): string {
   return text
     .replace(/\[([^\]]+)\]\([^)]*\)/gu, "$1")
     .replace(/`/gu, "")
+    .replace(/^[ \t]*#{1,6}[ \t]+/gmu, "")
     .replace(/^[ \t]*[-*][ \t]+/gmu, "")
+    .replace(/(\*\*|__)(.+?)\1/gu, "$2")
+    .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/gu, "$1$2")
     .replace(/\s+/gu, " ")
     .trim();
 }
@@ -160,6 +164,59 @@ export function forkSubagentMembers(row: {
   );
 }
 
+/** What a row is resolved from: a transcript subagent item, or the live record alone (a completion
+    notice carries only the agent). */
+type ForkSubagentRowSource = { readonly id: string } & Pick<
+  ForkSubagentItem,
+  | "status"
+  | "startedAt"
+  | "completedAt"
+  | "progress"
+  | "result"
+  | "prompt"
+  | "title"
+  | "childThreadId"
+  | "remoteChild"
+  | "driver"
+  | "providerInstanceId"
+>;
+
+function resolveRow(
+  item: ForkSubagentRowSource,
+  live: OrchestrationV2Subagent | undefined,
+): ForkSubagentTreeRow {
+  const status = live?.status ?? item.status;
+  const startedAt = live?.startedAt ?? item.startedAt;
+  const completedAt = live?.completedAt ?? item.completedAt;
+  const progress = live?.progress ?? item.progress;
+  const result = live?.result ?? item.result;
+  const { mark, word } = STATUS_PRESENTATION[status];
+  // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
+  const prompt = plainDetail(live?.prompt || item.prompt);
+  return {
+    id: item.id,
+    title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
+    status,
+    mark,
+    // Claude can report the model only through its selection.
+    model: live?.model ?? live?.modelSelection?.model ?? null,
+    startedAt: isoOrNull(startedAt),
+    completedAt: isoOrNull(completedAt),
+    childThreadId: live?.childThreadId ?? item.childThreadId,
+    remote: item.remoteChild ?? live?.remoteChild,
+    driver: item.driver,
+    providerInstanceId: item.providerInstanceId,
+    statusLabel: word,
+    prompt: prompt || null,
+    activity: resolveActivity({ active: mark === "working", progress, result }),
+  };
+}
+
+/** A subagent's card row from its live record alone, for the completion notice it posts. */
+export function forkSubagentRowFromAgent(agent: OrchestrationV2Subagent): ForkSubagentTreeRow {
+  return resolveRow(agent, agent);
+}
+
 export function resolveForkSubagentTree(
   members: ReadonlyArray<ForkSubagentItem>,
   liveAgents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
@@ -170,7 +227,6 @@ export function resolveForkSubagentTree(
   let endUnknown = false;
   for (const item of members) {
     const live = liveAgents?.find((agent) => agent.id === item.subagentId);
-    const status = live?.status ?? item.status;
     const startedAt = live?.startedAt ?? item.startedAt;
     const completedAt = live?.completedAt ?? item.completedAt;
     if (startedAt) {
@@ -183,28 +239,7 @@ export function resolveForkSubagentTree(
     } else {
       endUnknown = true;
     }
-    const progress = live?.progress ?? item.progress;
-    const result = live?.result ?? item.result;
-    const { mark, word } = STATUS_PRESENTATION[status];
-    // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
-    const prompt = plainDetail(live?.prompt || item.prompt);
-    rows.push({
-      id: item.id,
-      title: formatSubagentDisplayTitle(live?.title ?? item.title ?? "Subagent"),
-      status,
-      mark,
-      // Claude can report the model only through its selection.
-      model: live?.model ?? live?.modelSelection?.model ?? null,
-      startedAt: isoOrNull(startedAt),
-      completedAt: isoOrNull(completedAt),
-      childThreadId: live?.childThreadId ?? item.childThreadId,
-      remote: item.remoteChild ?? live?.remoteChild,
-      driver: item.driver,
-      providerInstanceId: item.providerInstanceId,
-      statusLabel: word,
-      prompt: prompt || null,
-      activity: resolveActivity({ active: mark === "working", progress, result }),
-    });
+    rows.push(resolveRow(item, live));
   }
   const group = subagentGroupSummary(rows);
   return {

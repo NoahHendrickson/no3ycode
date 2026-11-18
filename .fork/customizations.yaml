@@ -5483,6 +5483,12 @@
     subagents", the status summary, the batch's elapsed span) above one card
     per member.
 
+    A subagent's completion notice (upstream's SubagentNotificationLink, routed
+    from a fenced branch in TimelineWorkEntryRow) is drawn as the same card,
+    folded, from the live record (forkSubagentRowFromAgent), so a finished
+    subagent's report reads like its card; a notice whose agent isn't on the
+    roster falls back to upstream's notification row.
+
     It reads the thread's live subagent roster the way upstream's group does;
     lead, summary and the model's name come from upstream's shared helpers,
     and the fork owns the card, the status vocabulary and the one-line
@@ -5498,6 +5504,7 @@
     - apps/web/src/theme.custom.basic.css
   shadows: []
   watch:
+    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
     # Fenced import, the swapped render at the batch call site, and the
     # unused-marker on upstream's V2SubagentGroup.
     - apps/web/src/components/chat/MessagesTimeline.tsx

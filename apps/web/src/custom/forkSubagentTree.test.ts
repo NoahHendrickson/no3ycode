@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   forkSubagentMembers,
+  forkSubagentRowFromAgent,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -92,6 +93,30 @@ describe("resolveForkSubagentTree", () => {
     ).toBe("Check the tabs");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
+  });
+
+  it("builds a completion notice's card from the live record alone", () => {
+    const row = forkSubagentRowFromAgent({
+      id: "node-9",
+      status: "completed",
+      title: "Lionfish research",
+      prompt: "Research lionfish",
+      model: "gpt-6-luna",
+      result: "## Lionfish brief **What they are.**",
+      childThreadId: "thread-child",
+      driver: "codex",
+      providerInstanceId: "codex",
+      startedAt: at("2026-11-18T17:00:00Z"),
+      completedAt: at("2026-11-18T17:11:00Z"),
+    } as never);
+    expect(row).toMatchObject({
+      id: "node-9",
+      mark: "done",
+      statusLabel: "Completed",
+      prompt: "Research lionfish",
+      childThreadId: "thread-child",
+      activity: { label: "Result", text: "Lionfish brief What they are.", shape: "prose" },
+    });
   });
 
   it("gives each card its status word, its task, and what it is doing or what it found", () => {

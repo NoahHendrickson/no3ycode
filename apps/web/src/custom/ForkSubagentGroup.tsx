@@ -18,7 +18,7 @@
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import type { EnvironmentId, NodeId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
 import { type CSSProperties, Fragment, memo, type ReactNode, use, useId, useState } from "react";
@@ -38,6 +38,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import {
   forkSubagentMembers,
+  forkSubagentRowFromAgent,
   formatForkSubagentModel,
   resolveForkSubagentTree,
   type ForkSubagentItem,
@@ -114,6 +115,52 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
     />
   );
 });
+
+/** A subagent's completion notice (upstream's SubagentNotificationLink) drawn as its card, folded,
+    from the live record; the well carries the result it reported. A notice whose agent isn't on
+    the roster keeps upstream's fallback row. */
+export function ForkSubagentNotice(props: {
+  readonly parentRef: ScopedThreadRef;
+  readonly childThreadId: ThreadId;
+  readonly taskIds?: ReadonlyArray<NodeId> | undefined;
+  readonly onOpenThread: (threadId: ThreadId) => void;
+  readonly onToggleEntry?: ((collapsed: boolean) => void) | undefined;
+  readonly onContentReady?: (() => void) | undefined;
+  readonly fallback: ReactNode;
+}) {
+  const { parentRef, childThreadId, taskIds } = props;
+  // Follow-up tasks share a child conversation; the notice reports one task's result.
+  const agent = useAtomValue(
+    environmentThreadDetails.threadAtom(parentRef),
+    (thread) =>
+      thread?.projection.subagents.find((candidate) =>
+        taskIds === undefined
+          ? candidate.childThreadId === childThreadId
+          : taskIds.includes(candidate.id),
+      ) ?? null,
+  );
+  const [open, setOpen] = useState(false);
+  const member = agent === null ? null : forkSubagentRowFromAgent(agent);
+  const openThread = useOpenSubagentThread(
+    member ?? { childThreadId: null, remote: undefined },
+    props.onOpenThread,
+  );
+  if (member === null) return props.fallback;
+  return (
+    <ForkSubagentCardView
+      member={member}
+      environmentId={parentRef.environmentId}
+      open={open}
+      onToggle={() => {
+        props.onToggleEntry?.(open);
+        setOpen(!open);
+        // The result is already in hand, so the opened card is ready at once.
+        if (!open) props.onContentReady?.();
+      }}
+      openThread={openThread}
+    />
+  );
+}
 
 /** A batch's lead line: "Kicked off N subagents", the status summary and the batch's span,
     from the thread's live roster. */

@@ -31,6 +31,12 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     );
     expect(timeline).not.toContain("row.subagents?.length");
     expect(timeline).not.toContain("return <V2SubagentGroup key={row.id} row={row} />;");
+    // A finished subagent's completion notice is its card too, not upstream's notification row.
+    const workEntryRow = readSibling("../components/chat/TimelineWorkEntryRow.tsx");
+    expect(workEntryRow).toContain("<ForkSubagentNotice");
+    expect(workEntryRow.indexOf("<ForkSubagentNotice")).toBeLessThan(
+      workEntryRow.indexOf("<SubagentNotificationLink"),
+    );
   });
 
   it("draws the Basic kit card: provider tile, status mark, and the task / now / model well", () => {
