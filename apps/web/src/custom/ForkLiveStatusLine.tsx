@@ -5,46 +5,49 @@
 import { ChevronRightIcon } from "lucide-react";
 import { use, type ReactNode } from "react";
 import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
-import {
-  TimelineRowActivityCtx,
-  TimelineRowCtx,
-  type TimelineRow,
-} from "~/components/chat/timelineRowContext";
+import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { threadReadLabel, useThreadReadTarget } from "~/components/chat/TimelineWorkEntryRow";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
-import type { ForkLiveRow } from "./forkWorkingRowLast";
+import {
+  forkStatusLineLabel,
+  type ForkLiveRow,
+  type ForkStatusLineRow,
+} from "./forkWorkingRowLast";
 
-function ThinkingLabel() {
-  const { liveAnswerPreview, providerStartingLabel } = use(TimelineRowActivityCtx);
-  return providerStartingLabel ?? liveAnswerPreview ?? "Thinking";
+function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-live" }> }) {
+  const ctx = use(TimelineRowCtx);
+  const activity = use(TimelineRowActivityCtx);
+  const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
+  const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true);
+  return forkStatusLineLabel(live, activity, threadReadLabel(toolLabel, target)?.text ?? toolLabel);
 }
 
-function WorkLabel({ row }: { row: Extract<ForkLiveRow, { kind: "work-live" }> }) {
-  const ctx = use(TimelineRowCtx);
-  const target = useThreadReadTarget(row.entry, ctx.activeThreadEnvironmentId);
-  if (row.entry.itemType === "reasoning" || row.entry === row.thought) return "Thinking";
-  const label = liveWorkEntryLabel(row.entry, ctx.workspaceRoot, true);
-  return threadReadLabel(label, target)?.text ?? label;
+function StatusLabel({ live }: { live: ForkLiveRow }) {
+  const activity = use(TimelineRowActivityCtx);
+  return live.kind === "work-live" ? (
+    <WorkStatusLabel live={live} />
+  ) : (
+    forkStatusLineLabel(live, activity, "")
+  );
 }
 
 export function ForkLiveStatusLine({
   row,
-  live,
   timer,
   trailing,
 }: {
-  row: Extract<TimelineRow, { kind: "working" }>;
-  live: ForkLiveRow;
+  row: ForkStatusLineRow;
   timer: ReactNode;
   trailing: ReactNode;
 }) {
   const ctx = use(TimelineRowCtx);
+  const live = row.forkLive;
   const groupId = live.groupId;
   const content = (
     <>
       <SidebarV2WorkingMark seed={row.id} />
       <span className="min-w-0 truncate">
-        {live.kind === "thinking" ? <ThinkingLabel /> : <WorkLabel row={live} />}
+        <StatusLabel live={live} />
       </span>
       {timer ? <span className="shrink-0">· {timer}</span> : null}
       {groupId === undefined ? null : (

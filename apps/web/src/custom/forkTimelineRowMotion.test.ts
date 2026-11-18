@@ -59,6 +59,18 @@ describe("createTimelineRowMotion", () => {
     expect(motion.takeEntrance(live.id)).toBe(false);
   });
 
+  it("keeps the status line still when its folded group opens", () => {
+    const working = { kind: "working", id: "working-indicator-row" } as MessagesTimelineRow;
+    const openDetails = {
+      kind: "work",
+      id: "g:details",
+      isExpandedToolGroup: true,
+    } as MessagesTimelineRow;
+    const motion = primed([message("a"), working]);
+    motion.observe([message("a"), openDetails, working], "thread", true);
+    expect(motion.insertedRecently()).toBe(false);
+  });
+
   it("sees past the trailing working row and a details row before it", () => {
     const working = { kind: "working", id: "working-indicator-row" } as MessagesTimelineRow;
     const motion = primed([message("a"), live, details("g"), working]);

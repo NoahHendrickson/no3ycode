@@ -29,6 +29,9 @@ function isLiveRow(row: MessagesTimelineRow): boolean {
     row.kind === "thinking" || row.kind === "working" || (row.kind === "work-live" && row.active)
   );
 }
+function isOpenGroupRow(row: MessagesTimelineRow): boolean {
+  return (row.kind === "work" && row.isExpandedToolGroup) || row.kind === "viewed-images";
+}
 // Settled work rows replace the live line in place, so sliding them in would
 // read as a flicker; only content that is genuinely new enters.
 const ENTERING_ROW_KINDS: ReadonlySet<MessagesTimelineRow["kind"]> = new Set([
@@ -85,12 +88,17 @@ export function createTimelineRowMotion(): TimelineRowMotion {
       const liveIds = new Set<string>();
       const arrived: MessagesTimelineRow[] = [];
       let start = rows.length - 1;
-      // The working row trails everything (fork-working-row-last), that details row included.
+      // The working row trails everything (fork-working-row-last). Opening its
+      // folded group adds details above it, which is expansion, not arrival.
       const working = rows[start];
       if (working?.kind === "working") {
         liveIds.add(working.id);
         if (!thread.liveIds.has(working.id)) arrived.push(working);
         start -= 1;
+        for (let row = rows[start]; row && isOpenGroupRow(row); row = rows[start]) {
+          thread.known.add(row.id);
+          start -= 1;
+        }
       }
       if (start > 0 && !isLiveRow(rows[start]!) && isLiveRow(rows[start - 1]!)) start -= 1;
       for (let index = start; index >= 0; index -= 1) {

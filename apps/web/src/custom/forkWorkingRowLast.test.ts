@@ -1,77 +1,151 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
-import { forkLiveStatusRows, forkStatusLineLiveRow } from "./forkWorkingRowLast";
+import {
+  deriveMessagesTimelineRows,
+  type MessagesTimelineRow,
+} from "~/components/chat/MessagesTimeline.logic";
+import {
+  forkLiveStatusRows,
+  forkStatusLineLabel,
+  isForkStatusLine,
+  type ForkLiveRow,
+} from "./forkWorkingRowLast";
 
-type Working = Extract<MessagesTimelineRow, { kind: "working" }>;
+type Entries = Parameters<typeof deriveMessagesTimelineRows>[0]["timelineEntries"];
 
-const row = (kind: string, id: string, extra: object = {}) =>
-  ({ kind, id, ...extra }) as MessagesTimelineRow;
-const working = () => row("working", "working-indicator-row") as Working;
-const liveTool = (extra: object = {}, entry: object = {}) =>
-  row("work-live", "tool", {
-    active: true,
-    expanded: false,
-    groupId: "g",
-    entry: { id: "e", itemType: "command_execution", toolLifecycleStatus: "inProgress", ...entry },
-    ...extra,
+const at = (second: number) => `2026-01-01T00:00:${String(second).padStart(2, "0")}Z`;
+const command = (id: string, second: number, status: "inProgress" | "failed") => ({
+  id: `${id}-entry`,
+  kind: "work" as const,
+  createdAt: at(second),
+  entry: {
+    id,
+    createdAt: at(second),
+    runId: "turn-1" as never,
+    label: `Running ${id}`,
+    command: `rg ${id}`,
+    requestKind: "command" as const,
+    tone: "tool" as const,
+    toolLifecycleStatus: status,
+  },
+});
+const commentary = (second: number) => ({
+  id: "commentary-entry",
+  kind: "message" as const,
+  createdAt: at(second),
+  message: {
+    id: "commentary" as never,
+    role: "assistant" as const,
+    text: "Starting another command.",
+    runId: "turn-1" as never,
+    createdAt: at(second),
+    updatedAt: at(second),
+    streaming: false,
+  },
+});
+
+function derive(timelineEntries: Entries, expandedWorkGroupIds?: ReadonlySet<string>) {
+  return deriveMessagesTimelineRows({
+    timelineEntries,
+    latestRun: {
+      runId: "turn-1" as never,
+      status: "running",
+      startedAt: at(0),
+      completedAt: null,
+    },
+    isWorking: true,
+    activeTurnStartedAt: at(0),
+    turnDiffSummaries: [],
+    supportsConversationRollback: false,
+    ...(expandedWorkGroupIds ? { expandedWorkGroupIds } : {}),
   });
+}
 
-const ids = (rows: MessagesTimelineRow[]) => rows.map((r) => r.id);
-const statusLine = (rows: MessagesTimelineRow[]) => rows.at(-1) as Working;
+const kinds = (rows: MessagesTimelineRow[]) => rows.map((row) => row.kind);
+function statusLine(rows: MessagesTimelineRow[]) {
+  const last = rows.at(-1);
+  return last?.kind === "working" && isForkStatusLine(last) ? last.forkLive : undefined;
+}
 
 describe("forkLiveStatusRows", () => {
-  it("moves the turn-head working row below the streaming turn", () => {
-    const rows = [row("message", "user"), working(), row("message", "answer")];
-    expect(ids(forkLiveStatusRows(rows))).toEqual(["user", "answer", "working-indicator-row"]);
-    expect(forkStatusLineLiveRow(statusLine(forkLiveStatusRows(rows)))).toBeUndefined();
-  });
-
-  it.each([
-    ["the thinking line", row("thinking", "live")],
-    ["a running tool", liveTool()],
-  ])("folds %s into the status line", (_, live) => {
-    const rows = [row("message", "user"), working(), row("message", "answer"), live];
+  it("folds the thinking line into the bottom status line", () => {
+    const rows = derive([]);
+    expect(kinds(rows)).toEqual(["working", "thinking"]);
     const result = forkLiveStatusRows(rows);
-    expect(ids(result)).toEqual(["user", "answer", "working-indicator-row"]);
-    expect(forkStatusLineLiveRow(statusLine(result))).toBe(live);
+    expect(kinds(result)).toEqual(["working"]);
+    expect(statusLine(result)?.kind).toBe("thinking");
   });
 
-  it.each([
-    [
-      "an open group's details",
-      liveTool({ expanded: true }),
-      "work",
-      { isExpandedToolGroup: true },
-    ],
-    ["a group's viewed images", liveTool(), "viewed-images", {}],
-  ])("folds past %s, leaving them above the line", (_, live, kind, extra) => {
-    const trailing = row(kind, `g:${kind}`, extra);
-    const result = forkLiveStatusRows([working(), live, trailing]);
-    expect(ids(result)).toEqual([trailing.id, "working-indicator-row"]);
-    expect(forkStatusLineLiveRow(statusLine(result))).toBe(live);
+  it("folds the running tool, even past commentary that followed it", () => {
+    const rows = derive([command("first", 5, "inProgress"), commentary(6)]);
+    expect(kinds(rows)).toEqual(["working", "work-live", "message"]);
+    const result = forkLiveStatusRows(rows);
+    expect(kinds(result)).toEqual(["message", "working"]);
+    expect(statusLine(result)?.kind).toBe("work-live");
   });
 
-  it.each([
-    ["failed", liveTool({}, { toolLifecycleStatus: "failed" })],
-    ["an approval", liveTool({}, { projectedItem: { item: { type: "approval_request" } } })],
-  ])("keeps a %s live row on its own line", (_, live) => {
-    const rows = [working(), live];
-    expect(ids(forkLiveStatusRows(rows))).toEqual(["tool", "working-indicator-row"]);
+  it("folds only the latest of separated running tools", () => {
+    const rows = derive([
+      command("first", 5, "inProgress"),
+      commentary(6),
+      command("second", 7, "inProgress"),
+    ]);
+    const result = forkLiveStatusRows(rows);
+    expect(kinds(result)).toEqual(["work-live", "message", "working"]);
+    const live = statusLine(result);
+    expect(live?.kind === "work-live" && live.entry.id).toBe("second");
+  });
+
+  it("keeps an open group's details above the folded line", () => {
+    const groupId = derive([command("first", 5, "inProgress")]).find(
+      (row) => row.kind === "work-live",
+    )?.groupId;
+    const rows = derive([command("first", 5, "inProgress")], new Set([groupId!]));
+    const result = forkLiveStatusRows(rows);
+    expect(kinds(result)).toEqual(["work", "working"]);
+    expect(statusLine(result)?.expanded).toBe(true);
+  });
+
+  it("leaves a failed tool's grouped thinking row on its own line", () => {
+    const rows = derive([command("first", 5, "failed")]);
+    expect(rows.some((row) => row.kind === "thinking" && row.groupId !== undefined)).toBe(true);
+    const result = forkLiveStatusRows(rows);
+    expect(result.at(-2)?.kind).toBe("thinking");
+    expect(statusLine(result)).toBeUndefined();
   });
 
   it("keeps row identity while the stable rows are unchanged", () => {
-    const work = working();
-    const live = row("thinking", "live");
-    const rows = [work, live];
+    const rows = derive([]);
     expect(forkLiveStatusRows(rows)).toBe(forkLiveStatusRows(rows));
-    // A new stable array around the same rows reuses the merged row, so its frame skips a render.
-    expect(statusLine(forkLiveStatusRows([work, live]))).toBe(statusLine(forkLiveStatusRows(rows)));
-    // A changed live row yields a new merged row, so the line re-renders.
-    const next = row("thinking", "live", { expanded: false });
-    expect(statusLine(forkLiveStatusRows([work, next]))).not.toBe(
-      statusLine(forkLiveStatusRows(rows)),
-    );
-    const idle = [row("message", "answer")];
+    // A new array around the same rows reuses the merged row, so its frame skips a render.
+    expect(forkLiveStatusRows([...rows]).at(-1)).toBe(forkLiveStatusRows(rows).at(-1));
+    const idle = derive([]).filter((row) => row.kind !== "working");
     expect(forkLiveStatusRows(idle)).toBe(idle);
+  });
+});
+
+describe("forkStatusLineLabel", () => {
+  const activity = { providerStartingLabel: null, liveAnswerPreview: null };
+  const thinking = { kind: "thinking", id: "live", createdAt: null } as ForkLiveRow;
+  const tool = (itemType: string) =>
+    ({ kind: "work-live", entry: { itemType } }) as unknown as ForkLiveRow;
+
+  it.each([
+    ["the thinking line", thinking, activity, "Thinking"],
+    [
+      "a provider startup",
+      thinking,
+      { ...activity, providerStartingLabel: "Starting session" },
+      "Starting session",
+    ],
+    [
+      "a zen answer preview",
+      thinking,
+      { ...activity, liveAnswerPreview: "Tiger cubs" },
+      "Tiger cubs",
+    ],
+    ["a running tool", tool("command_execution"), activity, "Running rg"],
+    ["live reasoning", tool("reasoning"), activity, "Thinking"],
+  ])("labels %s", (_, live, state, label) => {
+    expect(forkStatusLineLabel(live, state, "Running rg")).toBe(label);
   });
 });
