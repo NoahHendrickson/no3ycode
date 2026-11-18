@@ -2716,42 +2716,39 @@
    The card is the composer turned over: the composer is a floor with an
    outlined prompt well on top and its controls loose below; here the header
    sits loose on the floor and the file tree is the outlined well beneath it,
-   in the prompt's fill and hairline. The whole card takes that hairline too. */
+   in the prompt's fill and hairline. The whole card takes that hairline too.
+   The well strokes only its top: the card border is the line on its other
+   three sides, so a translucent well never stacks two hairlines. Everything
+   under the header is well, including the "N more files" footer. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
   background: var(--card);
   border: 1px solid var(--fork-composer-border);
-  border-radius: 8px;
+  border-radius: var(--fork-composer-radius);
 }
 
-/* 7px: the card's 8px corner measured inside its 1px border. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-header] {
   background: var(--card);
-  border-radius: 7px 7px 0 0;
+  border-radius: calc(var(--fork-composer-radius) - 1px) calc(var(--fork-composer-radius) - 1px) 0 0;
 }
 
-/* The well is a pseudo-element, not the tree's own box: virtualized rows are
-   absolutely positioned against the row container, so padding there would
-   shift them off their measured offsets. It fills the card edge to edge and
-   strokes only its top: the card border is the line on the other three
-   sides, so a translucent well never stacks two hairlines. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-header]
+  ~ div {
+  background: var(--fork-composer-bg);
+}
+
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-header]
   + div {
-  position: relative;
+  box-shadow: inset 0 1px 0 var(--fork-composer-border);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-header]
-  + div::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 0 0 7px 7px;
-  background: var(--fork-composer-bg);
-  box-shadow: inset 0 1px 0 var(--fork-composer-border);
-  pointer-events: none;
+  ~ div:last-child {
+  border-radius: 0 0 calc(var(--fork-composer-radius) - 1px) calc(var(--fork-composer-radius) - 1px);
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream
