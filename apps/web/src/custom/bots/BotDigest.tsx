@@ -12,6 +12,7 @@ import { ReplyIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
+import { ScrollArea } from "~/components/ui/scroll-area";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import {
   readLocalStorageValue,
@@ -134,8 +135,10 @@ export function BotDigest(props: {
     (section) => section.kind === "needs-you" || !dismissed.includes(botDigestSectionKey(section)),
   );
   const hiddenCount = sections.length - shown.length;
-  const reply = (item: BotDigestItem) => {
+  // A request whose thread waits on a question opens that thread to answer it instead.
+  const reply = (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => {
     if (props.sheet) closeBotThreadsPanel(botRef);
+    if (question !== undefined) return;
     const store = useComposerDraftStore.getState();
     const existing = store.getComposerDraft(botRef)?.prompt.trimEnd() ?? "";
     const quote = `> ${item.source}\n\n`;
@@ -143,8 +146,10 @@ export function BotDigest(props: {
   };
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div
-        className="min-h-0 shrink overflow-y-auto"
+      {/* Fades the edge the cards run past, so a cut-off card dissolves into the rule. */}
+      <ScrollArea
+        scrollFade
+        className="h-auto shrink"
         style={{ maxHeight: height }}
         data-fork-bot-digest=""
       >
@@ -183,7 +188,7 @@ export function BotDigest(props: {
             </div>
           )}
         </div>
-      </div>
+      </ScrollArea>
       <div
         role="separator"
         aria-label="Resize digest"
@@ -231,21 +236,21 @@ function BotDigestSectionFrame(props: {
 }
 
 /** Drawn as the chat composer by wearing its stamps, so each theme paints it as its composer:
-    `prompt` in the prompt surface, `children` on the vessel floor beneath. */
+    `prompt` and its `action` in the prompt surface, `children` on the vessel floor beneath. */
 function BotDigestComposerFrame(props: {
   readonly prompt: ReactNode;
+  readonly action: ReactNode;
   readonly children: ReactNode;
 }) {
   return (
     <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
-      {props.prompt === null ? null : (
-        <div data-fork-composer-box="true">
-          <div data-fork-composer-surface="true" className="px-3 py-2.5">
-            {props.prompt}
-          </div>
+      <div data-fork-composer-box="true">
+        <div data-fork-composer-surface="true" className="flex items-end gap-3 py-2 pr-2 pl-3">
+          <div className="min-w-0 flex-1 py-0.5">{props.prompt}</div>
+          {props.action}
         </div>
-      )}
-      <div className="py-2 pr-2 pl-3">{props.children}</div>
+      </div>
+      {props.children}
     </div>
   );
 }
@@ -290,12 +295,13 @@ function BotDigestStatusCard(props: {
   );
 }
 
-/** Needs you: a card per request, each with a Reply that quotes it to the bot. */
+/** Needs you: a card per request, each with a Reply that quotes it to the bot, or opens the
+    thread it links when that thread waits on a question. */
 function BotDigestRequests(props: {
   readonly section: BotDigestSection;
   readonly botRef: ScopedThreadRef;
   readonly threads: BotDigestThreads;
-  readonly onReply: (item: BotDigestItem) => void;
+  readonly onReply: (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => void;
 }) {
   const { section, botRef } = props;
   const navigate = useNavigate();
@@ -304,31 +310,39 @@ function BotDigestRequests(props: {
       <ul className="flex flex-col gap-2">
         {section.items.map((item) => {
           const line = resolveBotDigestLine(item, props.threads, botRef.environmentId);
+          const question = line.links.threads.find(
+            (entry) => entry.shell?.hasPendingUserInput,
+          )?.shell;
           return (
             <li key={item.source}>
               <BotDigestComposerFrame
                 prompt={line.text === "" ? null : <BotDigestWords text={line.text} />}
+                action={
+                  <Button
+                    size="xs"
+                    onClick={() => {
+                      props.onReply(item, question);
+                      void navigate({
+                        to: "/$environmentId/$threadId",
+                        params: buildThreadRouteParams(
+                          question === undefined
+                            ? botRef
+                            : scopeThreadRef(question.environmentId, question.id),
+                        ),
+                      });
+                    }}
+                    data-testid="bot-digest-reply"
+                  >
+                    <ReplyIcon />
+                    Reply
+                  </Button>
+                }
               >
                 <BotDigestLinkRow
+                  className="py-2 pr-2 pl-3"
                   links={line.links}
                   environmentId={botRef.environmentId}
                   localVisits={props.threads.localVisits}
-                  action={
-                    <Button
-                      size="xs"
-                      onClick={() => {
-                        props.onReply(item);
-                        void navigate({
-                          to: "/$environmentId/$threadId",
-                          params: buildThreadRouteParams(botRef),
-                        });
-                      }}
-                      data-testid="bot-digest-reply"
-                    >
-                      <ReplyIcon />
-                      Reply
-                    </Button>
-                  }
                 />
               </BotDigestComposerFrame>
             </li>

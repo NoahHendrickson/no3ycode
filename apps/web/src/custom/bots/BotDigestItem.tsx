@@ -7,7 +7,6 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import type { EnvironmentId } from "@t3tools/contracts";
 import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinks";
 import { useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
 
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -59,41 +58,43 @@ export function BotDigestWords(props: { readonly text: string }) {
   return <span className="text-sm leading-5 break-words text-foreground">{props.text}</span>;
 }
 
-/** The threads and pull requests a line links, each opening its target; `action` ends the row. */
+/** The threads and pull requests a line links, each opening its target. */
 export function BotDigestLinkRow(props: {
   readonly links: BotDigestLinks;
   readonly environmentId: EnvironmentId;
   readonly localVisits: BotDigestThreads["localVisits"];
-  readonly action?: ReactNode;
+  readonly className?: string;
 }) {
   const { links } = props;
-  if (links.threads.length === 0 && links.pullRequests.length === 0 && !props.action) return null;
+  if (links.threads.length === 0 && links.pullRequests.length === 0) return null;
   return (
-    <span className="flex min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-      <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-        {links.threads.map(({ link, label, shell }) =>
-          shell === undefined ? (
-            <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
-              {label || unknownThreadLinkLabel(link, props.environmentId)}
-            </span>
-          ) : (
-            <BotDigestThreadChip
-              key={`${shell.environmentId}/${shell.id}`}
-              shell={shell}
-              localVisits={props.localVisits}
-            />
-          ),
-        )}
-        {links.pullRequests.map((pullRequest) => (
-          <BotDigestPullRequestChip
-            key={pullRequest.url}
-            pullRequest={pullRequest}
-            thread={pullRequest.thread}
-            environmentId={pullRequest.thread?.environmentId ?? props.environmentId}
+    <span
+      className={cn(
+        "flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground",
+        props.className,
+      )}
+    >
+      {links.threads.map(({ link, label, shell }) =>
+        shell === undefined ? (
+          <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
+            {label || unknownThreadLinkLabel(link, props.environmentId)}
+          </span>
+        ) : (
+          <BotDigestThreadChip
+            key={`${shell.environmentId}/${shell.id}`}
+            shell={shell}
+            localVisits={props.localVisits}
           />
-        ))}
-      </span>
-      {props.action}
+        ),
+      )}
+      {links.pullRequests.map((pullRequest) => (
+        <BotDigestPullRequestChip
+          key={pullRequest.url}
+          pullRequest={pullRequest}
+          thread={pullRequest.thread}
+          environmentId={pullRequest.thread?.environmentId ?? props.environmentId}
+        />
+      ))}
     </span>
   );
 }
