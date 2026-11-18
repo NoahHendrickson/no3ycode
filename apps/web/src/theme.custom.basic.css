@@ -304,6 +304,11 @@
       background-color: var(--basic-wash-1);
     }
 
+    /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
+    &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
+      background-color: transparent;
+    }
+
     &[data-pressed] {
       border-color: var(--basic-tab-line);
       background-color: var(--basic-tab-pick);
