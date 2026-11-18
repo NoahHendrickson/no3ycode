@@ -11,7 +11,7 @@ import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
 import { BotCardStatusLine } from "./BotCardStatusLine";
-import { BotMascot } from "./BotMascot";
+import { BotMascotTile } from "./BotMascot";
 import type { BotMascotMood } from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
 import { type BotShell, isBotThread } from "./botThreads";
@@ -42,12 +42,12 @@ export function SidebarV2BotCardBody(props: {
   return (
     <div
       className={cn(
-        "relative z-10 grid grid-cols-[22px_minmax(0,1fr)_auto] grid-rows-[16px_14px] items-center gap-x-2 gap-y-0.5 py-1.5",
+        "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[16px_14px] items-center gap-x-2 gap-y-0.5 py-1.5",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
       <span className="row-span-2 flex items-center justify-center">
-        <BotMascot shape={botMascotShape(props.shell)} mood={props.mood} fit={22} />
+        <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} />
       </span>
       <span className="flex h-4 min-w-0 items-center">{props.title}</span>
       {/* ms-2 on the 8px column gap keeps the title line's 16px to the trailing group. */}

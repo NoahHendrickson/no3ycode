@@ -7137,9 +7137,10 @@
 
     A sidebar row picks its card kind once (card, compact, bot, bot-compact;
     custom/bots/SidebarV2BotCardBody sidebarV2CardKind). A bot card draws
-    SidebarV2BotCardBody: a 44px grid (6 + 16 + 2 + 14 + 6) with the mascot in
-    a 22px column beside both lines, scaled into a 22px box so the smallest
-    faces grow most, the title, the row's trailing group (time, actions, pin,
+    SidebarV2BotCardBody: a 44px grid (6 + 16 + 2 + 14 + 6) with the mascot on
+    a 32px tile beside both lines (BotMascotTile: the mascot's body colour at
+    50%, 8px corners, a 1px white 24% inner edge; Figma Petal card), scaled
+    into a 22px box so the smallest faces grow most, the title, the row's trailing group (time, actions, pin,
     status mark) centred on both lines, and a status line in words instead of
     model, folder and branch: what it is doing or needs from you, its unread
     report's first line, else when it next checks (its bound scheduled tasks'
