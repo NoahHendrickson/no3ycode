@@ -7139,7 +7139,8 @@
     custom/bots/SidebarV2BotCardBody sidebarV2CardKind). A bot card draws
     SidebarV2BotCardBody: a 44px grid (6 + 16 + 2 + 14 + 6) with the mascot on
     a 32px tile beside both lines (BotMascotTile: the mascot's body colour at
-    50%, 8px corners, a 1px white 24% inner edge; Figma Petal card), scaled
+    50%, 8px corners, a 1px 24% inner edge, white on dark and black on light;
+    Figma Petal card), scaled
     into a 22px box so the smallest faces grow most, the title, the row's trailing group (time, actions, pin,
     status mark) centred on both lines, and a status line in words instead of
     model, folder and branch: what it is doing or needs from you, its unread
