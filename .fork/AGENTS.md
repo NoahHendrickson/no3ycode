@@ -55,6 +55,14 @@ fork only ever reads from; there is no valid reason to open one.
   direct child of `MenuPopup` (its scroll wrapper pads 4px), `-mx-2` inside a further `p-1`
   container, and so on.
 
+## Figma kit ↔ code
+
+When you change a component the Figma kit draws ("no3y code — Basic UI kit",
+kUDQTOR0ndxERlBCqgy3nk), look at its Figma component as part of the same change and bring
+whichever side is behind up to date. If its props change, update its Code Connect template in
+`apps/fork-storybook/code-connect/` and run `vp run --filter @t3tools/fork-storybook figma:publish`.
+A weekly scheduled check reports any drift that slips through; nothing else syncs the two.
+
 ## No `:has()` on large ancestors
 
 A `:has()` whose subject is `:root`, the sidebar wrapper, inset or a sidebar group, or the chat
