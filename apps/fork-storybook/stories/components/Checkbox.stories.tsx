@@ -4,17 +4,11 @@ import { useState } from "react";
 import { Checkbox, CheckboxMark } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const VARIANTS = ["default", "contrast"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const VALUES = ["unchecked", "checked", "indeterminate", "invalid"] as const;
 
 const PERMISSIONS = [

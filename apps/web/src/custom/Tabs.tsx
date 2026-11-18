@@ -8,19 +8,23 @@ import type { ComponentProps } from "react";
 
 import { cn } from "~/lib/utils";
 
-import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
+import { SegmentedMenuTab, SegmentedMenuTabs, SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 
-export const TABS_TRACK =
-  "h-7 shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface";
-const TAB =
-  "h-7 rounded-xl border border-transparent text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground";
-export const ICON_TAB = `size-7 px-0 ${TAB}`;
-const WORD_TAB = `px-3 ${TAB}`;
-
-/** Icon tabs are 24px squares at `sm`, 28px at `md` and 32px at `lg`; word tabs keep one
-    height. Set on the track, so every tab in a strip matches. */
+/** The strip's outer height: 28px at `sm`, 32px at `md`, 36px at `lg`. Tabs fill the track's
+    inside, so a theme that insets its track (Basic, 2px) gets tabs that much smaller. */
 export type TabsSize = "sm" | "md" | "lg";
 
+const TRACK_HEIGHT = { sm: "h-7", md: "h-8", lg: "h-9" } as const satisfies Record<
+  TabsSize,
+  string
+>;
+const TRACK = "shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sidebar-control-surface";
+const TAB =
+  "h-full rounded-xl border border-transparent text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground";
+const ICON_TAB = `aspect-square px-0 ${TAB}`;
+const WORD_TAB = `px-3 ${TAB}`;
+
+/** Set on the track, so every tab in a strip matches. */
 export function Tabs({
   className,
   size = "sm",
@@ -29,9 +33,8 @@ export function Tabs({
   return (
     <SegmentedTabs
       data-fork-tabs=""
-      data-fork-tabs-size={size}
       {...props}
-      className={cn(TABS_TRACK, className)}
+      className={cn(TRACK, TRACK_HEIGHT[size], className)}
     />
   );
 }
@@ -46,4 +49,27 @@ export function IconTab({
   ...props
 }: ComponentProps<typeof SegmentedTab> & { readonly "aria-label": string }) {
   return <SegmentedTab data-fork-tab="icon" {...props} className={cn(ICON_TAB, className)} />;
+}
+
+/** Icon tabs inside a menu (the Threads menu's Group by): its items join the menu's keyboard
+    navigation. The shape is the switch's at `sm`, with the pick cut from the menu's own surface
+    and the track showing through its border. Basic gives them their own corners. */
+export function MenuTabs({ className, ...props }: ComponentProps<typeof SegmentedMenuTabs>) {
+  return <SegmentedMenuTabs {...props} className={cn(TRACK, TRACK_HEIGHT.sm, className)} />;
+}
+
+export function MenuIconTab({
+  className,
+  ...props
+}: ComponentProps<typeof SegmentedMenuTab> & { readonly "aria-label": string }) {
+  return (
+    <SegmentedMenuTab
+      {...props}
+      className={cn(
+        ICON_TAB,
+        "data-highlighted:text-sidebar-foreground data-pressed:border-transparent data-pressed:bg-popover data-pressed:bg-clip-padding dark:data-pressed:bg-popover",
+        className,
+      )}
+    />
+  );
 }

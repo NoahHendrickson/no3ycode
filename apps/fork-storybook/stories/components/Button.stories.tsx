@@ -3,7 +3,7 @@ import { ArrowRightIcon, PlusIcon, SettingsIcon } from "lucide-react";
 
 import { Button, InlineButton, type ButtonSize, type ButtonVariant } from "~/components/ui/button";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 // The variants a screen of ordinary UI uses. media-* and overlay sit on photos and video, and
@@ -41,13 +41,7 @@ const ICON_SIZES = [
   "icon-lg",
   "icon-xl",
 ] as const satisfies ReadonlyArray<ButtonSize>;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 
 const meta = {
   title: "Components/Button",

@@ -283,11 +283,10 @@
 }
 
 /* Tabs (custom/Tabs.tsx, the Code / Chat switch among them), Figma t3-fork 740:1163: an 8%
-   track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink. Icon tabs
-   are 24px squares (28px at size md, 32px at lg); word tabs are 28px tall with 6px sides and regular 12px
-   type. */
+   track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink. Tabs.tsx sizes
+   the track and its tabs fill the inside, so icon tabs are 24px squares at sm (28 at md, 32 at
+   lg); word tabs have 6px sides and regular 12px type. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-tabs] {
-  height: auto;
   padding: 2px;
   border-radius: 8px;
   background-color: var(--basic-wash-2);
@@ -303,7 +302,6 @@
     &[data-pressed] {
       border-color: var(--basic-wash-2);
       background-color: var(--basic-wash-3);
-      color: var(--basic-text);
     }
 
     /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
@@ -312,23 +310,7 @@
     }
   }
 
-  & > [data-fork-tab="icon"] {
-    width: 24px;
-    height: 24px;
-  }
-
-  &[data-fork-tabs-size="md"] > [data-fork-tab="icon"] {
-    width: 28px;
-    height: 28px;
-  }
-
-  &[data-fork-tabs-size="lg"] > [data-fork-tab="icon"] {
-    width: 32px;
-    height: 32px;
-  }
-
   & > [data-fork-tab="word"] {
-    height: 28px;
     padding-inline: 6px;
     font-size: 12px;
     font-weight: 400;

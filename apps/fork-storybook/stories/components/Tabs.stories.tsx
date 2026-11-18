@@ -26,6 +26,7 @@ function WordTabs({ labels, initial = 0 }: { labels: ReadonlyArray<string>; init
   return (
     <Tabs
       aria-label="Example"
+      size="md"
       value={[value]}
       onValueChange={(next) => next[0] && setValue(next[0])}
     >
@@ -109,7 +110,7 @@ function StateCell({
     <Tabs
       aria-label={`${kind} ${state}`}
       value={value}
-      size={kind === "icon md" ? "md" : kind === "icon lg" ? "lg" : "sm"}
+      size={kind === "icon lg" ? "lg" : kind === "icon sm" ? "sm" : "md"}
     >
       {kind !== "word" ? (
         <>
@@ -224,8 +225,9 @@ export const Playground: Story = {
   ),
 };
 
-/** Square tabs for one glyph each. `sm` (24px, the sidebar's Code / Chat switch) is the
-    smallest; `md` is 28px and `lg` 32px. */
+/** Square tabs for one glyph each. The size is the strip's height in every theme: `sm` 28px (the
+    sidebar's Code / Chat switch), `md` 32px, `lg` 36px. Basic insets its track 2px, so its tabs
+    are 24, 28 and 32px. */
 export const Icon: Story = {
   name: "Icon tabs",
   render: () => (
@@ -247,7 +249,8 @@ export const Icon: Story = {
   ),
 };
 
-/** The same track and raised pick, each tab sized to its word. */
+/** The same track and raised pick, each tab sized to its word. Word strips sit at `md`, the
+    Figma's 28px word tab under Basic. */
 export const Word: Story = {
   name: "Word tabs",
   render: () => (
@@ -307,7 +310,7 @@ export const Anatomy: Story = {
       ))}
       <AnatomyCard title="Word tabs">
         <Specimen scale={SCALE} width={400} height={230} annotate={annotateWord}>
-          <Tabs aria-label="Mode" value={["code"]}>
+          <Tabs aria-label="Mode" value={["code"]} size="md">
             <Tab value="code">Code</Tab>
             <Tab value="chat">Chat</Tab>
           </Tabs>

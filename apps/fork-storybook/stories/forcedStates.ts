@@ -8,6 +8,9 @@ const STATES = [
   { pseudo: /(?<!\\):focus-within(?![-\w])/g, attribute: "[data-story-focus]" },
   { pseudo: /(?<!\\):active(?![-\w])/g, attribute: "[data-story-active]" },
 ] as const;
+// Quoted strings are attribute values (Tailwind's `[class*="has-[input:focus-visible]…"]`), never
+// pseudo-classes; split on them so only the text between quotes is rewritten.
+const QUOTED = /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/;
 const done = new WeakSet<CSSStyleSheet>();
 
 type RuleOwner = {
@@ -16,8 +19,15 @@ type RuleOwner = {
 };
 
 function forcedCopy(cssText: string): string | null {
-  let copy = cssText;
-  for (const { pseudo, attribute } of STATES) copy = copy.replace(pseudo, attribute);
+  const copy = cssText
+    .split(QUOTED)
+    .map((part, index) => {
+      if (index % 2 === 1) return part;
+      let rewritten = part;
+      for (const { pseudo, attribute } of STATES) rewritten = rewritten.replace(pseudo, attribute);
+      return rewritten;
+    })
+    .join("");
   return copy === cssText ? null : copy;
 }
 
@@ -37,7 +47,8 @@ function copyStateRules(owner: RuleOwner) {
   }
 }
 
-/** Idempotent; call it whenever a state grid mounts, so a stylesheet HMR replaced is covered. */
+/** Idempotent. The preview calls it before every story renders, which also covers a stylesheet
+    HMR replaced. */
 export function forceStateStyles() {
   for (const sheet of document.styleSheets) {
     if (done.has(sheet)) continue;
@@ -50,11 +61,13 @@ export function forceStateStyles() {
   }
 }
 
-export type ForcedState = "default" | "hover" | "focus" | "active" | "disabled";
+/** The columns of a state grid, in reading order. */
+export const FORCED_STATES = ["default", "hover", "active", "focus", "disabled"] as const;
+
+export type ForcedState = (typeof FORCED_STATES)[number];
 
 /** Props that put an element into a forced state; spread them onto the component. */
 export function forcedStateProps(state: ForcedState): Record<string, string | boolean> {
-  forceStateStyles();
   switch (state) {
     case "hover":
       return { "data-story-hover": "" };

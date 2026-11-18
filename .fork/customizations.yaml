@@ -7692,20 +7692,22 @@
   intent: >
     custom/Tabs.tsx is the fork's tabs component: Tabs (the track), IconTab (one
     glyph, named for screen readers) and Tab (one word), built on SegmentedTabs so
-    they glide between choices. The sidebar's Code / Chat switch is built from it,
-    and the Threads menu's Group by tabs take its track and icon-tab classes. Under
-    Basic, theme.custom.basic.css draws it to Figma t3-fork 740:1163: an 8% track
-    inset 2px with 8px corners, the pick a 12% wash behind an 8% line at 6px
-    corners (raised toward white behind a 16% line on the light tones), every
-    label at full ink, icon tabs 24px square (28px at the track's size="md", 32px at "lg"),
-    word tabs 28px tall with 6px sides and regular 12px
-    type, and the focus ring drawn inside the tab because the track clips. Basic's
-    page-level segmented-tab rule leaves these tabs alone. Glass and Inlet keep
-    their own dressing.
+    they glide between choices, plus MenuTabs / MenuIconTab for icon tabs inside a
+    menu (built on SegmentedMenuTabs). The track's size sets its outer height in
+    every theme (28 / 32 / 36px at sm / md / lg) and tabs fill its inside. The
+    sidebar's Code / Chat switch is built from Tabs, and the Threads menu's Group by
+    from MenuTabs. Under Basic, theme.custom.basic.css draws Tabs to Figma t3-fork
+    740:1163: an 8% track inset 2px with 8px corners (so icon tabs are 24 / 28 /
+    32px squares), the pick a 12% wash behind an 8% line at 6px corners (raised
+    toward white behind a 16% line on the light tones), every label at full ink,
+    word tabs with 6px sides and regular 12px type, and the focus ring drawn inside
+    the tab because the track clips. Basic's page-level segmented-tab rule leaves
+    these tabs alone. Glass and Inlet keep their own dressing.
   tier: 1
   files:
     - apps/web/src/custom/Tabs.tsx
     - apps/web/src/custom/SidebarModeTabs.tsx
+    - apps/web/src/custom/SidebarV2ChromeRows.tsx
     # Shared; this entry owns the Tabs block and the page rule's exclusion.
     - apps/web/src/theme.custom.basic.css
   verify:

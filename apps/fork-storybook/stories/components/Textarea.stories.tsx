@@ -3,19 +3,13 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Label } from "~/components/ui/label";
 import { Textarea, type TextareaProps } from "~/components/ui/textarea";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const SIZES = ["sm", "default", "lg"] as const satisfies ReadonlyArray<
   Exclude<TextareaProps["size"], number | undefined>
 >;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const CONTENT = ["placeholder", "filled", "invalid", "read-only"] as const;
 const INSTRUCTIONS = "Keep titles to a few words. Lead with the main subject.";
 

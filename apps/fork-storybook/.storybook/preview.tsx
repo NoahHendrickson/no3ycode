@@ -15,13 +15,14 @@ import {
   BASIC_TONE_OPTIONS,
   BASIC_TONES,
   DEFAULT_BASIC_TONES,
-  type BasicTone,
   initializeForkTheme,
   setForkBasicTone,
 } from "~/custom/forkTheme";
 import { installInletMenuMorph } from "~/custom/inletMenuMorph";
 import { setTheme } from "~/hooks/useTheme";
 
+import { forceStateStyles } from "../stories/forcedStates.ts";
+import { storyTone } from "../stories/storyTone.ts";
 import { StoryRouter } from "../stories/StoryRouter.tsx";
 import { DocsPage } from "./DocsPage.tsx";
 import { Surface, type SurfaceName } from "../stories/Surface.tsx";
@@ -30,9 +31,6 @@ import { Surface, type SurfaceName } from "../stories/Surface.tsx";
 applyForkMarker(document.documentElement);
 initializeForkTheme();
 installInletMenuMorph();
-
-const isBasicTone = (value: unknown): value is BasicTone =>
-  typeof value === "string" && (BASIC_TONES as ReadonlyArray<string>).includes(value);
 
 const withSurface: Decorator = (Story, context) => {
   const surface = (
@@ -68,10 +66,11 @@ const preview: Preview = {
   },
   initialGlobals: { tone: DEFAULT_BASIC_TONES.dark },
   // The tone moves the way Settings › Appearance moves it, so the root carries exactly the
-  // attributes and classes the app would.
+  // attributes and classes the app would. State grids need their forced copies of the hover and
+  // focus rules, installed here once per sheet rather than from a render.
   beforeEach: ({ globals }) => {
-    const tone: unknown = globals["tone"];
-    setForkBasicTone(isBasicTone(tone) ? tone : DEFAULT_BASIC_TONES.dark, setTheme);
+    setForkBasicTone(storyTone(globals), setTheme);
+    forceStateStyles();
   },
   parameters: {
     layout: "fullscreen",

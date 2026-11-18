@@ -1,12 +1,35 @@
 import type { ReactNode } from "react";
 
-import { Sidebar, SidebarContent, SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
 
 export type SurfaceName = "stage" | "sidebar" | "page" | "composer" | "app-sidebar" | "bare";
 
 // Atom canvases carry only the app's scope markers, so a theme's tokens apply without its layout:
 // stage = the chat column and header, sidebar = the sidebar's restated surface family, page =
 // Settings and the utility pages. Composites get the app's real structure.
+const CANVASES: Record<
+  Exclude<SurfaceName, "app-sidebar">,
+  { readonly scope: Readonly<Record<string, string>>; readonly layout: "centred" | "end" | "flow" }
+> = {
+  stage: { scope: { "data-chat-column-maximized-away": "" }, layout: "centred" },
+  sidebar: { scope: { "data-app-sidebar": "", "data-sidebar-version": "v2" }, layout: "centred" },
+  page: { scope: { "data-app-modal": "" }, layout: "centred" },
+  composer: { scope: { "data-chat-column-maximized-away": "" }, layout: "end" },
+  bare: { scope: {}, layout: "flow" },
+};
+
+const LAYOUTS = {
+  centred: "flex items-center justify-center p-10",
+  end: "flex flex-col justify-end p-6",
+  flow: "p-10",
+} as const;
+
 export function Surface({
   name,
   children,
@@ -18,70 +41,29 @@ export function Surface({
   inline?: boolean;
 }) {
   const height = inline ? "min-h-48" : "min-h-screen";
-  const centred = `flex ${height} items-center justify-center p-10`;
-  switch (name) {
-    case "sidebar":
-      return (
-        <div
-          data-app-sidebar=""
-          data-sidebar-version="v2"
-          data-story-canvas=""
-          className={`${centred} bg-background text-foreground`}
-        >
-          {children}
-        </div>
-      );
-    case "page":
-      return (
-        <div
-          data-app-modal=""
-          data-story-canvas=""
-          className={`${centred} bg-background text-foreground`}
-        >
-          {children}
-        </div>
-      );
-    case "composer":
-      return (
-        <div
-          data-chat-column-maximized-away=""
-          data-story-canvas=""
-          className={`flex ${height} flex-col justify-end bg-background p-6 text-foreground`}
-        >
-          {children}
-        </div>
-      );
-    case "app-sidebar":
-      return (
-        <SidebarProvider className={height}>
-          <Sidebar
-            side="left"
-            collapsible="offcanvas"
-            data-app-sidebar=""
-            data-sidebar-version="v2"
-          >
-            <SidebarContent data-story-canvas="" className="pt-6">
-              {children}
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset />
-        </SidebarProvider>
-      );
-    case "bare":
-      return (
-        <div data-story-canvas="" className={`${height} bg-background p-10 text-foreground`}>
-          {children}
-        </div>
-      );
-    default:
-      return (
-        <div
-          data-chat-column-maximized-away=""
-          data-story-canvas=""
-          className={`${centred} bg-background text-foreground`}
-        >
-          {children}
-        </div>
-      );
+  if (name === "app-sidebar") {
+    return (
+      <SidebarProvider className={height}>
+        <Sidebar side="left" collapsible="offcanvas" data-app-sidebar="" data-sidebar-version="v2">
+          <SidebarContent data-story-canvas="" className="pt-6">
+            {children}
+          </SidebarContent>
+        </Sidebar>
+        {/* Below the mobile breakpoint the sidebar is a closed sheet; this opens it. */}
+        <SidebarInset>
+          <SidebarTrigger className="m-3 md:hidden" />
+        </SidebarInset>
+      </SidebarProvider>
+    );
   }
+  const { scope, layout } = CANVASES[name];
+  return (
+    <div
+      {...scope}
+      data-story-canvas=""
+      className={`${LAYOUTS[layout]} ${height} bg-background text-foreground`}
+    >
+      {children}
+    </div>
+  );
 }

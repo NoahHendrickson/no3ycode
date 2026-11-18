@@ -37,7 +37,8 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     // One radio group over the single grouping value, drawn as icon tabs.
     expect(chromeRows).toContain("props.onGroupingChange(value as SidebarV2Grouping)");
     expect(chromeRows).toContain('value: "project"');
-    expect(chromeRows).toContain("<SegmentedMenuTabs");
+    expect(chromeRows).toContain("<MenuTabs");
+    expect(readSibling("../custom/Tabs.tsx")).toContain("<SegmentedMenuTabs");
     // Toggling a view preference must not dismiss the menu it lives in.
     expect(chromeRows).toContain("closeOnClick={false}");
     expect(segmentedTabs).toMatch(

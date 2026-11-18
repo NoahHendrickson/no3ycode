@@ -10,18 +10,12 @@ import {
 import { Button } from "~/components/ui/button";
 import { Group, GroupSeparator } from "~/components/ui/group";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const ORIENTATIONS = ["horizontal", "vertical"] as const;
 const VARIANTS = ["outline", "secondary", "default", "ghost"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 
 const meta = {
   title: "Components/Button Group",

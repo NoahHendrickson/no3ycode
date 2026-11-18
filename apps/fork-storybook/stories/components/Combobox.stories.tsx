@@ -15,17 +15,11 @@ import {
 } from "~/components/ui/combobox";
 import { SelectButton } from "~/components/ui/select";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const SIZES = ["sm", "default", "lg"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const CONTENT = ["placeholder", "filled"] as const;
 
 type SpeechModel = { readonly id: string; readonly name: string };

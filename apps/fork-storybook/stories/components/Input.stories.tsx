@@ -4,20 +4,14 @@ import type { ReactNode } from "react";
 import { Input, type InputProps } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const SIZES = ["sm", "compact", "default", "lg"] as const satisfies ReadonlyArray<
   Exclude<InputProps["size"], number | undefined>
 >;
 const FONTS = ["default", "mono"] as const satisfies ReadonlyArray<InputProps["font"]>;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const CONTENT = ["placeholder", "filled", "invalid", "read-only"] as const;
 
 function Width({ children }: { children: ReactNode }) {

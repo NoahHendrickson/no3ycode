@@ -3,17 +3,11 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 
-import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
+import { FORCED_STATES, forcedStateProps } from "../forcedStates.ts";
 import { Matrix, Row, Stack } from "../Specimen.tsx";
 
 const SIZES = ["default", "sm"] as const;
-const STATES = [
-  "default",
-  "hover",
-  "active",
-  "focus",
-  "disabled",
-] as const satisfies ReadonlyArray<ForcedState>;
+const STATES = FORCED_STATES;
 const VALUES = ["off", "on", "mixed"] as const;
 
 const BACKGROUND_OVERRIDES = [
