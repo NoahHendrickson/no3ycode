@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 2;
+export const BOT_RULES_VERSION = 3;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -58,9 +58,11 @@ You plan, keep track and report. Real work happens in threads you start, where y
 
 DIGEST.md is what your owner reads to see where you stand, beside your threads. Keep three sections, most important first, one short line per item, and rewrite it whenever your work changes:
 
-- **Needs you**: decisions, answers and approvals only your owner can give, each naming its thread.
+- **Needs you**: decisions, answers and approvals only your owner can give. Write each as the question or decision itself, so it can be answered from the line alone.
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
+
+End each item with links to what it is about, after its last sentence, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…)\`.
 
 Drop an item once your owner has answered it or it no longer matters. Leave "Nothing." under an empty section.
 

@@ -7490,22 +7490,47 @@
 - id: fork-bot-digest
   intent: >
     A bot keeps DIGEST.md in its folder (Needs you, New, In progress; seeded empty, rewritten by
-    the bot as its work changes, per the seeded CLAUDE.md), and its Threads panel shows it
-    above the thread list, in one scroll with it (custom/bots/BotDigest): each section that holds
-    an item, as the panel's section labels with a count, one plain line per item (list marks,
-    emphasis and link targets dropped; "Nothing." left out; custom/bots/botDigestSections),
-    Needs you in the foreground colour and the rest muted, with a full-width rule below. It is
-    read with projects.readFile from the bot's folder (allowMissing) and read again whenever
-    the bot's latest run starts or ends (revisionedQuery keyed by its run id and status). An
-    empty, missing or unreadable digest draws nothing.
+    the bot as its work changes, per the seeded CLAUDE.md, which also has it write each Needs you
+    item as the question itself and end each item, after its last sentence, with its thread's
+    link from the thread tools and its pull request's URL). Its Threads panel shows it above the
+    thread list (custom/bots/BotDigest), parsed by custom/bots/botDigestSections: a section's kind
+    (needs-you or status) and one plain line per item (list marks, emphasis and link targets
+    dropped; links that follow a line's last sentence dropped, so it reads as its ask, while a link
+    the sentence runs into keeps its words; a bare pull request URL reads as its number;
+    "Nothing." left out). A status section is one card with its label and count; Needs you is
+    its label over one card per request, each with a filled Reply that quotes its source line in
+    the bot's draft and opens the bot, closing the panel when it is a sheet. Under a line
+    (custom/bots/BotDigestItem), each linked thread shows its sidebar status mark and title and
+    opens it (one chip however the link spells it; one it cannot find shows the bot's label), and each pull request the line names or a linked thread has (its linked one, else
+    its branch's: custom/bots/botDigestItemLinks, also the Threads rows' order) shows its state
+    and number (custom/bots/BotPullRequestMark, shared with the Threads rows; a branch pull
+    request's state from the shared summaries) and opens it as the sidebar PR badge does,
+    opening its thread when it lands in that thread's right panel. A pull request is matched by
+    sourceControlClients.isSameChangeRequest, so a deep link and its thread's copy are one. The digest and
+    the list scroll apart; the full-width rule between them drags (useResizeDrag's bottom edge)
+    to set the digest's tallest, one height for every bot in localStorage, never leaving the list
+    under 96px, and a shorter digest keeps its own height (dragging down never lowers the saved
+    height). A status card's X dismisses it per
+    device, keyed by its title and lines, so it comes back when the bot changes it; a dismissal
+    is forgotten once the file no longer has that section; "Show N dismissed" brings them all
+    back. Needs you cannot be dismissed. The digest takes the panel's threads and visits as
+    props. It is read with projects.readFile from the bot's folder (allowMissing) and read again
+    whenever the bot's latest run starts or ends (revisionedQuery keyed by its run id and
+    status). An empty, missing or unreadable digest draws nothing.
   tier: 4
   files:
     - apps/web/src/custom/bots/BotDigest.tsx
+    - apps/web/src/custom/bots/BotDigestItem.tsx
+    - apps/web/src/custom/bots/BotPullRequestMark.tsx
+    - apps/web/src/custom/bots/botDigestItemLinks.ts
     - apps/web/src/custom/bots/botDigestSections.ts
   shadows: []
-  watch: []
+  watch:
+    # A vertical edge, so the digest's rule resizes through the shared drag.
+    - apps/web/src/hooks/useResizeDrag.ts
   verify:
     - apps/web/src/custom/bots/botDigestSections.test.ts
+    - apps/web/src/custom/bots/botDigestItemLinks.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-crew
   intent: >

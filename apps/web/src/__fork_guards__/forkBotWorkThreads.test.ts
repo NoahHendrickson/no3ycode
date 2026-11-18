@@ -376,7 +376,7 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
     expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
-    expect(threadsPanel).toContain("<BotDigest bot={bot} />");
+    expect(threadsPanel).toContain("<BotDigest bot={bot}");
     expect(threadsPanel).toContain("openSidebarThreadMenu(ref, {");
     expect(sidebar).toContain("...botCrewMenuItems(");
     expect(sidebar).toContain("void setBotWork(thread, botId);");
