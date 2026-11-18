@@ -67,7 +67,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
     // The header strip, chevron included, is the disclosure…
     expect(group).toMatch(
-      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronRightIcon[\s\S]*?<\/button>/u,
+      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronDownIcon[\s\S]*?open && "rotate-180"[\s\S]*?<\/button>/u,
     );
     // …and a member with a thread of its own opens it from the arrow after it.
     expect(group).toContain("return () => onOpenThread(childThreadId);");

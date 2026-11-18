@@ -20,7 +20,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRightIcon, ChevronRightIcon, ListTreeIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
 import {
   type ComponentProps,
   type CSSProperties,
@@ -423,7 +423,10 @@ export function ForkSubagentCardView(props: {
             {identity}
             {elapsed}
             <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
-              <ChevronRightIcon className={cn("size-3", open && "rotate-90")} />
+              {/* The sidebar shelves' trailing chevron: down while folded, up while open. */}
+              <ChevronDownIcon
+                className={cn("size-3 transition-transform", open && "rotate-180")}
+              />
             </span>
           </button>
         )}
