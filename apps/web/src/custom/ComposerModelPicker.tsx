@@ -218,6 +218,7 @@ function SegmentedTrait(props: {
             key={option.id}
             type="button"
             aria-pressed={selected}
+            data-pressed={selected ? "" : undefined}
             className={cn(
               "h-6 cursor-pointer rounded-[4px] px-2 text-xs font-medium text-muted-foreground hover:text-foreground",
               selected && "bg-background text-foreground shadow-xs/10 dark:bg-input/72",
@@ -331,6 +332,8 @@ function ComposerModelTraitsPanel(props: {
             </TraitRow>
           );
         }
+        // One option is no choice (Cyber Access for a login without Daybreak).
+        if (descriptor.options.length < 2) return null;
         return (
           <TraitRow key={descriptor.id} label={descriptor.label}>
             <SegmentedTrait

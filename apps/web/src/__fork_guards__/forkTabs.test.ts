@@ -50,12 +50,19 @@ describe("fork-tabs", () => {
 
   it("draws every tab strip as the Figma tabs under Basic, menu and upstream ones included", () => {
     const basic = read("../theme.custom.basic.css");
-    const strips =
-      ':is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])';
+    const strips = `:is(
+    [data-fork-segmented-tabs],
+    [data-slot="toggle-group"][data-variant="segmented"],
+    [data-fork-segmented-trait]
+  )`;
     const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
     expect(at).toBeGreaterThan(-1);
     expect(basic.slice(at)).toMatch(
       /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*0\.75rem;/u,
+    );
+    // The model menu's option strip marks its pick the way the rule reads it.
+    expect(read("../custom/ComposerModelPicker.tsx")).toContain(
+      'data-pressed={selected ? "" : undefined}',
     );
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
