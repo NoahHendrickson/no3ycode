@@ -67,6 +67,8 @@ const preview: Preview = {
     if (theme.palette === "basic") setForkBasicTone(theme.tone, setTheme);
     else if (theme.palette === "glass") setForkAppearance(COOL_DARKER_THEME, setTheme);
     else {
+      // Colour first, while the palette isn't Inlet yet, so turning Inlet on settles on the new
+      // colour instead of painting the old one for a frame.
       setForkInletColor(theme.color, setTheme);
       setForkAppearance(INLET_THEME, setTheme);
     }

@@ -222,6 +222,8 @@ function SubagentAvatar({
   className,
   /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
   iconClassName = "size-3.5",
+  providerIconClassName,
+  badgeClassName,
   /* fork:end fork-subagent-spawn-card */
 }: {
   driver?: ProviderDriverKind | undefined;
@@ -234,6 +236,9 @@ function SubagentAvatar({
   /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
   /** The fork's subagent card draws the mark larger, in its own tile. */
   iconClassName?: string;
+  /** The card lays this avatar over its own mark with the glyph hidden, for the badge alone. */
+  providerIconClassName?: string;
+  badgeClassName?: string;
   /* fork:end fork-subagent-spawn-card */
 }) {
   return (
@@ -252,7 +257,16 @@ function SubagentAvatar({
           acpRegistryIconUrl={iconUrl}
           showBadge={showBadge}
           size="compact"
-          className="z-auto"
+          className={
+            /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+            cn("z-auto", providerIconClassName)
+            /* fork:end fork-subagent-spawn-card */
+          }
+          badgeClassName={
+            /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+            badgeClassName ?? ""
+            /* fork:end fork-subagent-spawn-card */
+          }
           iconClassName={
             /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
             iconClassName
@@ -260,7 +274,13 @@ function SubagentAvatar({
           }
         />
       ) : (
-        <BotIcon className="size-3.5 text-muted-foreground" />
+        <BotIcon
+          className={
+            /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+            cn(iconClassName, "text-muted-foreground")
+            /* fork:end fork-subagent-spawn-card */
+          }
+        />
       )}
       {status ? (
         <span
@@ -292,6 +312,8 @@ export function EnvironmentSubagentAvatar({
   /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
   className?: string;
   iconClassName?: string;
+  providerIconClassName?: string;
+  badgeClassName?: string;
   /* fork:end fork-subagent-spawn-card */
 }) {
   const providerEnvironmentId = remote?.environmentId ?? environmentId;
