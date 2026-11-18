@@ -30,18 +30,35 @@ describe("fork-storybook", () => {
   });
 
   it("runs main.tsx's theme startup", () => {
-    for (const call of ["applyForkMarker(", "initializeForkTheme()", "installInletMenuMorph()"]) {
+    for (const call of [
+      "applyForkMarker(",
+      "initializeForkTheme()",
+      "initializeForkGlass3d()",
+      "installInletMenuMorph()",
+    ]) {
       expect(mainTsx).toContain(call);
       expect(preview).toContain(call);
     }
   });
 
-  it("stores Basic before any app module loads, and moves tones as Settings does", () => {
+  it("stores Basic before any app module loads, and moves themes as Settings does", () => {
     const appearance = read(`${storybook}appearance.ts`);
     expect(preview.indexOf('import "./appearance.ts"')).toBe(preview.indexOf("import "));
     expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${BASIC_THEME}"`);
     expect(preview).toContain("setForkBasicTone(");
-    expect(preview).toContain("BASIC_TONES.map(");
+    expect(preview).toContain("setForkAppearance(COOL_DARKER_THEME, setTheme)");
+    expect(preview).toMatch(
+      /setForkInletColor\(theme\.color, setTheme\);\s*setForkAppearance\(INLET_THEME, setTheme\);/u,
+    );
+    const themes = read(`${storybook}../stories/storyTheme.ts`);
+    expect(themes).toContain("BASIC_TONES.map(");
+    expect(themes).toContain("INLET_COLORS.map(");
+    // Glass shows through only once the bridge reports the window material, as on the desktop,
+    // and the wallpaper standing in for the desktop paints only then.
+    expect(appearance).toContain("setSidebarVibrancy:");
+    expect(read(`${storybook}preview-head.html`)).toMatch(
+      /html\[data-fork-sidebar-vibrancy="true"\] \{[^}]*background: var\(--story-wallpaper\)/u,
+    );
   });
 
   it("resolves modules as the app's Vite config does", () => {

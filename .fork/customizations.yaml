@@ -7687,8 +7687,12 @@
     override tree, never copies). Its preview stores Basic before any app module
     loads, loads exactly main.tsx's stylesheets in main.tsx's order, runs
     main.tsx's theme startup (applyForkMarker, initializeForkTheme,
-    installInletMenuMorph), and offers every Basic tone in the toolbar, moved
-    through setForkBasicTone as Settings › Appearance moves it. Its Vite config
+    initializeForkGlass3d, installInletMenuMorph), and offers every theme in the
+    toolbar (Basic's tones, Glass, Inlet's colours), moved through
+    setForkBasicTone / setForkAppearance / setForkInletColor as Settings ›
+    Appearance moves them. Glass stands in a desktop bridge that reports the
+    window material (appearance.ts) and a blurred wallpaper under the canvas
+    (preview-head.html), since a browser has no window behind the page. Its Vite config
     adds the same resolution as apps/web's (forkOverrides, brand name, React
     Compiler, Tailwind scanning apps/web plus the stories, the lucide-react shim
     alias). Foundations read tokens from the CSS itself (the @theme inline
@@ -7706,6 +7710,7 @@
     - apps/fork-storybook/.storybook/main.ts
     - apps/fork-storybook/.storybook/preview.tsx
     - apps/fork-storybook/.storybook/appearance.ts
+    - apps/fork-storybook/.storybook/preview-head.html
     - apps/fork-storybook/.storybook/manager.ts
     - apps/fork-storybook/stories/
   verify:

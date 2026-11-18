@@ -289,7 +289,7 @@ export const SidebarMode: Story = {
 };
 
 /** Every size, magnified ×3 with redlines. All numbers are measured from the live component in
-    the toolbar's tone: the track's outer size, the picked tab's size, and the spec below. */
+    the toolbar's theme: the track's outer size, the picked tab's size, and the spec below. */
 export const Anatomy: Story = {
   parameters: { surface: "bare" },
   render: () => (
