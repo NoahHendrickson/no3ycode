@@ -115,3 +115,8 @@ export function resolveBotDigestLinks(
   }
   return { threads, pullRequests };
 }
+
+/** The thread a line links that waits on the owner's answer to one of its questions. */
+export function waitingQuestionThread(links: BotDigestLinks): EnvironmentThreadShell | undefined {
+  return links.threads.find((entry) => entry.shell?.hasPendingUserInput)?.shell;
+}

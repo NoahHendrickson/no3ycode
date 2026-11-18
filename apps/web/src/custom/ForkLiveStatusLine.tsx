@@ -49,7 +49,12 @@ export function ForkLiveStatusLine({
       <span className="min-w-0 truncate">
         <StatusLabel live={live} />
       </span>
-      {timer ? <span className="shrink-0">· {timer}</span> : null}
+      {timer ? (
+        <>
+          <span aria-hidden className="size-[3px] shrink-0 rounded-full bg-current" />
+          <span className="shrink-0">{timer}</span>
+        </>
+      ) : null}
       {groupId === undefined ? null : (
         <ChevronRightIcon
           aria-hidden
