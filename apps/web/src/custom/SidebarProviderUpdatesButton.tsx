@@ -55,7 +55,7 @@ export function SidebarProviderUpdatesButton() {
             <Button
               variant="secondary"
               size="icon-sm-pill"
-              type="button"
+
               aria-label="Update providers"
               onClick={() => void handleUpdate()}
             >

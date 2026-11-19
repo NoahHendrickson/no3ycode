@@ -843,7 +843,7 @@ function ThreadTab(props: {
               <Button
                 variant="ghost-muted"
                 size="icon-micro"
-                type="button"
+
                 aria-label="Settle thread"
                 onClick={() => settleAndAdvance(threadRef)}
               >
@@ -853,7 +853,7 @@ function ThreadTab(props: {
             <Button
               variant="ghost-muted"
               size="icon-micro"
-              type="button"
+
               aria-label="More thread actions"
               aria-haspopup="menu"
               data-fork-tab-trigger=""
@@ -948,7 +948,7 @@ function DraftTab(
           <Button
             variant="ghost-muted"
             size="icon-micro"
-            type="button"
+
             aria-label={props.action.label}
             onClick={props.action.run}
           >

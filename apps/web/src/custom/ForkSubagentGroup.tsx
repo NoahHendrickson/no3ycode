@@ -459,7 +459,6 @@ export function ForkSubagentCardView(props: {
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  type="button"
                   data-fork-subagent-open=""
                   aria-label={`Open ${member.title} thread`}
                   onClick={openThread}

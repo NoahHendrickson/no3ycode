@@ -755,7 +755,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           <Button
             variant="ghost-muted"
             size="icon-xs"
-            type="button"
             tabIndex={-1}
             aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             className={cn(
@@ -763,6 +762,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               // No hover on touch: the star stays shown, or tapping a row's
               // right edge would toggle a favorite the user cannot see.
               "pointer-coarse:opacity-100",
+              // Button's 44px coarse-pointer target would reach into the next row's star.
+              "pointer-coarse:after:hidden",
             )}
             disabled={Boolean(disabledReason)}
             onPointerDown={(event) => event.stopPropagation()}

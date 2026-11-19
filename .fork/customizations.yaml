@@ -1451,15 +1451,16 @@
     edges you cannot see. On an icon-only control the box is the whole target,
     so undersizing it and hiding it are the same bug twice.
 
-    All of them are the Storybook Button at one variant and size, spread from
-    SIDEBAR_V2_ICON_BUTTON ({ variant: "ghost-muted", size: "icon-xs" }), which is
-    the point: they appear in two row variants and three branches of one ternary,
-    and the previous drift between them is exactly what a per-call-site class
-    string produces. The three slim-row branches sit in one placement wrapper
-    (SIDEBAR_V2_SLIM_ROW_ACTION_CLASS on a span: position and reveal, since
-    Button takes no dynamic classes) — they are one control, and three copies is
-    how the set came apart the first time. The project header's ⋯ and + are
-    Buttons at the design's 32px icon size. Every offset below is derived in custom/sidebarV2TrailingColumn
+    All of them are SidebarV2IconButton (custom/SidebarV2IconButton): the
+    Storybook Button, ghost-muted, pinned to the trailing column's fixed boxes at
+    every width (24px for a row action; 32px with 10px corners for the project
+    header's ⋯ and +), since Button's icon sizes grow below sm and the offsets
+    below are derived from those two boxes. That is the point: they appear in two
+    row variants and three branches of one ternary, and the previous drift
+    between them is exactly what a per-call-site class string produces. The
+    three slim-row branches are one SidebarV2SlimRowAction (placement and reveal
+    from SIDEBAR_V2_SLIM_ROW_ACTION_CLASS) — they are one control, and three
+    copies is how the set came apart the first time. Every offset below is derived in custom/sidebarV2TrailingColumn
     with the arithmetic that produced it; call sites name the one meant for them
     rather than spelling a value out.
 
@@ -1538,6 +1539,7 @@
     # trailing glyph on one axis. Split out of sidebarV2RowPolicy, whose subject
     # is title-recede and row surface.
     - apps/web/src/custom/sidebarV2TrailingColumn.ts
+    - apps/web/src/custom/SidebarV2IconButton.tsx
     # Owned by sidebar-v2-project-grouping; this entry owns only its plus
     # button's box and the 2px that puts it on the trailing column's axis.
     - apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx

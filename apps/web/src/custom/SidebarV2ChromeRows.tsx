@@ -63,8 +63,8 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
-import { Button } from "~/components/ui/button";
-import { SIDEBAR_V2_ICON_BUTTON, SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
+import { SidebarV2IconButton } from "./SidebarV2IconButton";
+import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 import { SidebarV2SectionLabel } from "./SidebarV2SectionLabel";
 import { useQuietThreadShells } from "~/state/entities";
 import { usePullRequestsSupported } from "~/state/environments";
@@ -903,18 +903,18 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
           >
             <ProjectFavicon project={project} className="size-4 shrink-0" />
             <span className="min-w-0 truncate text-sm">{project.displayName}</span>
-            <Button
-              {...SIDEBAR_V2_ICON_BUTTON}
-              type="button"
+            <SidebarV2IconButton
               aria-label={`Project actions for ${project.displayName}`}
-              className="ml-auto"
+              // A menu row is shorter than Button's 44px coarse-pointer target, which would reach
+              // into the neighbouring project's row; the visual box is the target here.
+              className="ml-auto pointer-coarse:after:hidden"
               // Stopping pointerdown keeps the checkbox item from toggling
               // the project as a side effect of reaching its overflow.
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => props.onProjectActions(event, project)}
             >
               <EllipsisVerticalIcon className="size-4" />
-            </Button>
+            </SidebarV2IconButton>
           </ScopeCheckboxItem>
         ))}
       </div>

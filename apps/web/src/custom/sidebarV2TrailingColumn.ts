@@ -2,9 +2,9 @@
  * The Sidebar V2 trailing column — see
  * `.fork/customizations.yaml#sidebar-v2-row-action-hit-area`.
  *
- * One file owns two things that were previously spelled out at every call site:
- * the box every icon-only control in the list is drawn in, and the offsets that
- * put their glyphs on a single vertical axis.
+ * One file owns what was previously spelled out at every call site: the offsets
+ * that put the icon-only controls' glyphs on a single vertical axis. Their box is
+ * the Storybook Button, pinned to 24px and 32px by custom/SidebarV2IconButton.
  *
  * ## The axis
  *
@@ -33,13 +33,6 @@
  * row's mark steps out of the column on its own.
  */
 import { cn } from "~/lib/utils";
-
-/** Every icon-only control in the thread list is the Storybook Button at its ghost-muted icon
-    size: 24px (28px under the sm breakpoint), the hover fill that shows where the target ends, an
-    inset focus ring the row surface's overflow cannot clip, and the 44px coarse-pointer target.
-    Props rather than a component, because the call sites are different elements: a plain button,
-    a menu or tooltip trigger's render prop, an absolutely positioned overlay. */
-export const SIDEBAR_V2_ICON_BUTTON = { variant: "ghost-muted", size: "icon-xs" } as const;
 
 /**
  * What each row spends to reach the axis. Derived, never tuned — the comment on
@@ -93,14 +86,14 @@ export const SIDEBAR_V2_TRAILING_OFFSET = {
  * were three copies of this string; the copies are how the set drifted apart
  * the first time.
  *
- * The wrapper the slim-row action sits in: placement and reveal, the box being the Button's.
- * Absolutely positioned rather than in flow, which is also why slim rows never
+ * Placement and reveal for the slim-row action (custom/SidebarV2IconButton's
+ * SidebarV2SlimRowAction). Absolutely positioned rather than in flow, which is also why slim rows never
  * had the card's paint-order bug: an opacity-induced stacking context on the
  * time label they swap with lands in the same layer as this button, and DOM
  * order decides.
  */
 export const SIDEBAR_V2_SLIM_ROW_ACTION_CLASS = cn(
-  "absolute inset-y-0 right-0 opacity-0 focus-within:opacity-100 group-any-hover/v2-row:opacity-100",
+  "absolute inset-y-0 right-0 opacity-0 focus-visible:opacity-100 group-any-hover/v2-row:opacity-100",
   // With no hovering pointer at all nothing reveals it, so it must not take
   // taps either: its 44px coarse hit area sat invisibly over the time label
   // and a tap meant to open the thread woke or un-settled it. Long-press opens

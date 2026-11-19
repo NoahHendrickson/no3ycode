@@ -81,7 +81,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     );
     // The buttons' hover is scoped to the card, so a completion notice outside a tree gets it too.
     expect(theme).toMatch(
-      /\[data-fork-subagent-card\]\s*button\[data-fork-subagent-toggle\]:hover/u,
+      /\[data-fork-subagent-card\]\s*:is\(\s*button\[data-fork-subagent-toggle\],\s*button\[data-fork-subagent-open\]\)/u,
     );
   });
 });

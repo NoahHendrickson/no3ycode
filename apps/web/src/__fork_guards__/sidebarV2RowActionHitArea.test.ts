@@ -30,6 +30,7 @@ const trailingColumn = readSibling("../custom/sidebarV2TrailingColumn.ts");
 const groupHeader = readSibling("../custom/SidebarV2ProjectGroupHeader.tsx");
 const theme = readSibling("../theme.custom.css");
 const button = readSibling("../components/ui/button.tsx");
+const iconButton = readSibling("../custom/SidebarV2IconButton.tsx");
 
 /** Every row action, and how many times each is rendered: "Settle thread" twice
  * because the card and the slim row both offer it. A label that stops appearing
@@ -51,17 +52,11 @@ const ROW_ACTIONS: ReadonlyArray<readonly [label: string, count: number]> = [
  * comfortably covers the longest of the set. */
 const TAG_WINDOW = 400;
 
-/** From the element's opening `<` through a window past its label: the shared props spread
-    ahead of the label. */
+/** Each place a label is rendered (an icon button's `aria-label`, a slim action's `label`),
+    as the opening tag that carries it. */
 function openingTags(label: string): string[] {
-  return [...sidebarV2.matchAll(new RegExp(`aria-label="${label}"`, "gu"))].map((match) =>
-    sidebarV2.slice(
-      Math.max(
-        sidebarV2.lastIndexOf("<Button", match.index),
-        sidebarV2.lastIndexOf("<button", match.index),
-      ),
-      match.index + TAG_WINDOW,
-    ),
+  return [...sidebarV2.matchAll(new RegExp(`(?:aria-)?label="${label}"`, "gu"))].map((match) =>
+    sidebarV2.slice(sidebarV2.lastIndexOf("<", match.index), match.index + TAG_WINDOW),
   );
 }
 
@@ -77,34 +72,35 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
   });
 
   it("sizes the shared action box at 24px with a visible hover surface", () => {
-    // Every icon-only control in the list is the Storybook Button at one variant and size, named
-    // once in a fork-owned module the call sites spread.
-    expect(trailingColumn).toContain(
-      'export const SIDEBAR_V2_ICON_BUTTON = { variant: "ghost-muted", size: "icon-xs" } as const;',
-    );
-    // That size is the 24px target on a fine pointer (sm and up), and the variant's fill is what
-    // makes the target legible; without it the box is bigger but still guesswork.
-    expect(button).toMatch(/"icon-xs":\s*"size-7 sm:size-6/u);
+    // Every icon-only control in the list is the Storybook Button, ghost-muted, pinned to the
+    // trailing column's fixed boxes: Button's icon sizes grow below sm, the column's offsets don't.
+    expect(iconButton).toContain('variant="ghost-muted"');
+    expect(iconButton).toContain('size={box === "header" ? "icon" : "icon-xs"}');
+    expect(iconButton).toContain('box === "header" ? "size-8 rounded-[10px]" : "size-6"');
+    // The variant's fill makes the target legible; without it the box is bigger but still guesswork.
     expect(button).toMatch(/"ghost-muted":\s*"[^"]*\[:hover,\[data-pressed\]\]:bg-accent/u);
-    // The 44px coarse-pointer target and the focus edge come from Button's base, an ::after on
-    // a positioned box.
+    // The 44px coarse-pointer target and the focus edge come from Button's base, an ::after on a
+    // positioned box.
     expect(button).toContain("pointer-coarse:after:min-h-11");
     expect(button).toContain("pointer-coarse:after:min-w-11");
     expect(button).toContain("focus-visible:ring-2");
   });
 
-  it("renders every row action from the shared class", () => {
-    // Card-variant sites name the box directly; the three slim-row actions are
-    // one control in three branches of a ternary and read a single shared
-    // placement constant, which is what stopped them being three copies.
+  it("renders every row action from the shared component", () => {
+    // The card's actions are SidebarV2IconButton; the three slim-row branches are one
+    // SidebarV2SlimRowAction, which is what stopped them being three copies.
     const offenders = ROW_ACTIONS.flatMap(([label]) =>
       openingTags(label)
-        .filter((tag) => !tag.startsWith("<Button") || !tag.includes("{...SIDEBAR_V2_ICON_BUTTON}"))
+        .filter(
+          (tag) =>
+            !tag.startsWith("<SidebarV2IconButton") && !tag.startsWith("<SidebarV2SlimRowAction"),
+        )
         .map(() => label),
     );
     expect(offenders).toEqual([]);
-    // The header's buttons are Buttons too, at the design's 32px icon size.
-    expect(groupHeader).toMatch(/<Button\s+variant="ghost-muted"\s+size="icon"/u);
+    expect(iconButton).toContain("className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}");
+    // The header's buttons are the same component at the design's 32px.
+    expect(groupHeader).toMatch(/<SidebarV2IconButton\s+box="header"/u);
   });
 
   it("keeps every row action on screen", () => {
