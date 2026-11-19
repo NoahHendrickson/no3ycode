@@ -1739,6 +1739,7 @@
     - apps/web/src/custom/assets/basic-new-agent-dither.png
     - apps/web/src/custom/assets/basic-new-agent-mountain.png
     - apps/web/src/custom/ditherLight.ts
+    - apps/web/src/custom/backgroundPausedLoop.ts
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeightState.ts
