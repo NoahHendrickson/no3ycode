@@ -64,6 +64,12 @@ import {
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
 /* fork:end fork-inlet-theme */
+/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+import {
+  DEFAULT_BASIC_NEW_AGENT_BACKDROP,
+  useBasicNewAgentBackdrop,
+} from "../../custom/basicNewAgentBackdropSetting";
+/* fork:end fork-basic-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
 /* fork:end fork-glass-new-agent-stage */
@@ -475,6 +481,11 @@ export function useSettingsRestore(onRestored?: () => void) {
   // Only while Inlet shows the row, as with Glass's picture below.
   const inletColorChanged = appearance === INLET_THEME && inletColor !== DEFAULT_INLET_COLOR;
   /* fork:end fork-inlet-theme */
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  // Counted on any theme, like the tones: restoring defaults lands on Basic, which would show it.
+  const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
+  const basicNewAgentBackdropChanged = basicNewAgentBackdrop !== DEFAULT_BASIC_NEW_AGENT_BACKDROP;
+  /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   // Only while Glass shows the row: elsewhere the switch is hidden and inert.
@@ -504,6 +515,9 @@ export function useSettingsRestore(onRestored?: () => void) {
     ...(appearance !== null && appearance !== BASIC_THEME ? [FORK_PALETTE_LABELS[appearance]] : []),
     ...(basicTonesChanged ? ["Basic tone"] : []),
     /* fork:end fork-cool-dark-theme */
+    /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+    ...(basicNewAgentBackdropChanged ? ["New agent background"] : []),
+    /* fork:end fork-basic-theme */
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
     ...(inletColorChanged ? ["Inlet colour"] : []),
     /* fork:end fork-inlet-theme */
@@ -678,6 +692,9 @@ export function useSettingsRestore(onRestored?: () => void) {
     if (basicTonesChanged) resetBasicTones();
     if (appearance !== null && appearance !== BASIC_THEME) setAppearance(BASIC_THEME);
     /* fork:end fork-cool-dark-theme */
+    /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+    if (basicNewAgentBackdropChanged) setBasicNewAgentBackdrop(DEFAULT_BASIC_NEW_AGENT_BACKDROP);
+    /* fork:end fork-basic-theme */
     /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
     if (glassNewAgentPictureChanged) setGlassNewAgentPicture(true);
     /* fork:end fork-glass-new-agent-stage */

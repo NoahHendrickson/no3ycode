@@ -41,6 +41,13 @@ import { COOL_DARKER_THEME, useForkAppearance } from "../../custom/forkTheme";
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
 import { BASIC_THEME, BASIC_TONE_OPTIONS, DEFAULT_BASIC_TONES } from "../../custom/forkTheme";
 import { ForkBasicTonePicker, ForkThemePicker } from "../../custom/ForkThemePicker";
+import {
+  BASIC_NEW_AGENT_BACKDROP_LABELS,
+  BASIC_NEW_AGENT_BACKDROPS,
+  DEFAULT_BASIC_NEW_AGENT_BACKDROP,
+  useBasicNewAgentBackdrop,
+} from "../../custom/basicNewAgentBackdropSetting";
+import { ForkChoiceSelect } from "../../custom/ForkChoiceSelect";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
@@ -54,7 +61,6 @@ import {
   DEFAULT_FORK_GLASS_3D_MODE,
   FORK_GLASS_3D_MODE_LABELS,
   FORK_GLASS_3D_MODES,
-  isForkGlass3dMode,
   useForkGlass3d,
 } from "../../custom/forkGlass3d";
 /* fork:end fork-glass-3d */
@@ -62,7 +68,6 @@ import {
 import {
   FORK_WORKING_MARK_LABELS,
   FORK_WORKING_MARKS,
-  isForkWorkingMark,
   useForkWorkingMark,
   useForkWorkingMarkPick,
 } from "../../custom/forkWorkingMark";
@@ -134,6 +139,9 @@ export function AppearanceSettingsPanel() {
     useForkAppearance(setTheme);
   const defaultBasicTone = DEFAULT_BASIC_TONES[BASIC_TONE_OPTIONS[basicTone].appearance];
   /* fork:end fork-cool-dark-theme */
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
+  /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   /* fork:end fork-glass-new-agent-stage */
@@ -216,6 +224,29 @@ export function AppearanceSettingsPanel() {
             control={<ForkBasicTonePicker value={basicTone} onChange={setBasicTone} />}
           />
         ) : null}
+        {appearance === BASIC_THEME ? (
+          <SettingsRow
+            title="New agent background"
+            description="What Basic draws behind a new agent."
+            resetAction={
+              basicNewAgentBackdrop === DEFAULT_BASIC_NEW_AGENT_BACKDROP ? null : (
+                <SettingResetButton
+                  label="new agent background"
+                  onClick={() => setBasicNewAgentBackdrop(DEFAULT_BASIC_NEW_AGENT_BACKDROP)}
+                />
+              )
+            }
+            control={
+              <ForkChoiceSelect
+                value={basicNewAgentBackdrop}
+                options={BASIC_NEW_AGENT_BACKDROPS}
+                labels={BASIC_NEW_AGENT_BACKDROP_LABELS}
+                onChange={setBasicNewAgentBackdrop}
+                ariaLabel="New agent background"
+              />
+            }
+          />
+        ) : null}
         {/* fork:end fork-basic-theme */}
         {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */}
         {appearance === INLET_THEME ? (
@@ -271,27 +302,37 @@ export function AppearanceSettingsPanel() {
               )
             }
             control={
-              <Select
+              <ForkChoiceSelect
                 value={glass3d}
-                onValueChange={(value) => {
-                  if (isForkGlass3dMode(value)) setGlass3d(value);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-44" aria-label="3D glass">
-                  <SelectValue>{FORK_GLASS_3D_MODE_LABELS[glass3d]}</SelectValue>
-                </SelectTrigger>
-                <SelectPopup align="end" alignItemWithTrigger={false}>
-                  {FORK_GLASS_3D_MODES.map((mode) => (
-                    <SelectItem hideIndicator key={mode} value={mode}>
-                      {FORK_GLASS_3D_MODE_LABELS[mode]}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
+                options={FORK_GLASS_3D_MODES}
+                labels={FORK_GLASS_3D_MODE_LABELS}
+                onChange={setGlass3d}
+                ariaLabel="3D glass"
+              />
             }
           />
         ) : null}
         {/* fork:end fork-glass-3d */}
+        {/* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */}
+        <SettingsRow
+          title="Working indicator"
+          description="The mark shown while an agent is working."
+          resetAction={
+            workingMarkPick !== null ? (
+              <SettingResetButton label="working indicator" onClick={() => setWorkingMark(null)} />
+            ) : null
+          }
+          control={
+            <ForkChoiceSelect
+              value={workingMark}
+              options={FORK_WORKING_MARKS}
+              labels={FORK_WORKING_MARK_LABELS}
+              onChange={setWorkingMark}
+              ariaLabel="Working indicator"
+            />
+          }
+        />
+        {/* fork:end fork-working-mark */}
         {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
       </SettingsSection>
       {/* fork:end fork-basic-theme */}
@@ -315,37 +356,6 @@ export function AppearanceSettingsPanel() {
       </SettingsSection>
 
       <SettingsSection id="appearance-interface" title="Interface">
-        {/* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */}
-        <SettingsRow
-          title="Working indicator"
-          description="The mark shown while an agent is working."
-          resetAction={
-            workingMarkPick !== null ? (
-              <SettingResetButton label="working indicator" onClick={() => setWorkingMark(null)} />
-            ) : null
-          }
-          control={
-            <Select
-              value={workingMark}
-              onValueChange={(value) => {
-                if (isForkWorkingMark(value)) setWorkingMark(value);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Working indicator">
-                <SelectValue>{FORK_WORKING_MARK_LABELS[workingMark]}</SelectValue>
-              </SelectTrigger>
-              <SelectPopup align="end" alignItemWithTrigger={false}>
-                {FORK_WORKING_MARKS.map((mark) => (
-                  <SelectItem hideIndicator key={mark} value={mark}>
-                    {FORK_WORKING_MARK_LABELS[mark]}
-                  </SelectItem>
-                ))}
-              </SelectPopup>
-            </Select>
-          }
-        />
-        {/* fork:end fork-working-mark */}
-
         <SettingsRow
           {...searchableSetting("setting-appearance-contrast")}
           description="Adjust the contrast of colors and borders across the interface."

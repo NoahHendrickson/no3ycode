@@ -30,8 +30,6 @@ export const FORK_GLASS_3D_MODE_LABELS: Record<ForkGlass3dMode, string> = {
 
 const ForkGlass3dModeSchema = Schema.Literals(FORK_GLASS_3D_MODES);
 
-export const isForkGlass3dMode = Schema.is(ForkGlass3dModeSchema);
-
 export const { initialize: initializeForkGlass3d, useValue: useForkGlass3d } =
   createForkRootSetting({
     storageKey: "t3code:fork:glass-3d:v1",
