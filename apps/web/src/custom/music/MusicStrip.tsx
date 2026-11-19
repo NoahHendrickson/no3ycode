@@ -612,6 +612,17 @@ function Library(props: { snapshot: MusicSnapshot; state: ReadyState; volume: nu
 /** Mounted only while the strip shows, so ah ahh is followed only then. */
 function MusicStripCard({ expanded }: { expanded: boolean }) {
   const snapshot = useSyncExternalStore(subscribeMusic, getMusicSnapshot);
+  return <MusicStripCardView snapshot={snapshot} expanded={expanded} />;
+}
+
+/** @public — the strip as drawn from a snapshot, without following ah ahh; Storybook renders it. */
+export function MusicStripCardView({
+  snapshot,
+  expanded,
+}: {
+  snapshot: MusicSnapshot;
+  expanded: boolean;
+}) {
   const { state, sentVolume, opening, openFailed } = snapshot;
   // ah ahh answers within a frame or two; a spinner would only flash.
   if (state === null && !opening) return null;
