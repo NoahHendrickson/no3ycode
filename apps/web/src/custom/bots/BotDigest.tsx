@@ -202,7 +202,7 @@ function BotDigestAsksFor(props: {
             </Button>
           )}
           {asks.length < 2 ? null : (
-            <span className="flex shrink-0 items-center gap-0.5 tabular-nums">
+            <span className="flex shrink-0 items-center gap-0.5">
               <Button
                 size="icon-micro"
                 variant="ghost"
@@ -212,7 +212,24 @@ function BotDigestAsksFor(props: {
               >
                 <ChevronLeftIcon />
               </Button>
-              {at + 1} of {asks.length}
+              {/* A dot per ask, the one on show a rounded dash; each opens its ask. */}
+              <span className="flex items-center gap-1 px-0.5">
+                {asks.map((ask, index) => (
+                  <button
+                    key={ask.source}
+                    type="button"
+                    aria-label={`Ask ${index + 1} of ${asks.length}`}
+                    aria-current={index === at ? "true" : undefined}
+                    onClick={() => setPage(index)}
+                    className={cn(
+                      "h-1.5 cursor-pointer rounded-full transition-[width,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      index === at
+                        ? "w-3.5 bg-foreground"
+                        : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70",
+                    )}
+                  />
+                ))}
+              </span>
               <Button
                 size="icon-micro"
                 variant="ghost"

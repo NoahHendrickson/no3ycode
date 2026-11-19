@@ -7598,7 +7598,8 @@
     stay in the file for the bot's own memory and draw nothing: its chat messages already say
     what it did. The digest is the chat composer's two layers, worn by its vessel,
     box and surface stamps so each theme paints it as its composer: the vessel's own top strip
-    holds the status line (else "Needs you"), "Show N dismissed" and the "N of M" pager, and the
+    holds the status line (else "Needs you"), "Show N dismissed" and the pager (previous, a dot per
+    ask with the one on show a rounded dash, each opening its ask, next), and the
     ask on show is the surface inside it, led by a 32px tile in its colour: the state of the pull request it is about (its first
     linked pull request, via useBotPullRequestState: open, draft, merged, closed, in the pull
     request tone the rest of the app uses), else the sidebar's needs-input colour with a question
@@ -7610,8 +7611,8 @@
     characters; otherwise the arrow is the line's prose) are outline buttons: a click queues the
     ask, quoted, and the answer as the owner's message to the bot (startTurn, dispatchMode
     queue), and the buttons give way to "Sent" until the bot settles a run after it (a failed
-    send restores them with an error toast). Asks show one at a time: the status row carries
-    "N of M" with previous and next, so the stack never grows with the list. Each card has an X
+    send restores them with an error toast). Asks show one at a time, paged from the strip, so the stack never grows with the
+    list. Each card has an X
     that puts the ask away on this device (localStorage per bot, keyed by the ask as written, so
     one the bot rewrites comes back, and pruned to the asks the digest still has); "Show N
     dismissed" on the status row brings them back. Reply (a ghost
