@@ -1,11 +1,7 @@
 /**
- * The shimmer over Basic's new-agent dither — see `.fork/customizations.yaml#fork-basic-theme`.
- *
- * The picture's own green streaks breathe: each swells and thins in turn, the swell running slowly
- * down its length, and at its fullest its core brightens to mint and white with a cyan rim around
- * it. Everything is drawn the way the art is, by moving the green's local density and re-dithering
- * against the art's ordered thresholds, so the streaks keep their shape and trajectory and nothing
- * lights away from them.
+ * The dither's green streaks breathe — see `.fork/customizations.yaml#fork-basic-theme`. Their local
+ * density swells and thins and is re-dithered against the art's own ordered thresholds, so the
+ * streaks keep their shape and only inked cells near green ever change.
  */
 
 /** The PNG's colours by palette index; DITHER_EMPTY is its transparent ground. */

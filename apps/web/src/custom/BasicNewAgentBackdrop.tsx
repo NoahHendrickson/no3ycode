@@ -1,10 +1,7 @@
 /**
- * Basic's new-agent stage — see `.fork/customizations.yaml#fork-basic-theme`. Inlet Black's pixel
- * texture (custom/InletBlackNewAgentTexture), behind the draft on every Basic tone, inked in that
- * tone's colours, in from the column's right edge; or, picked in Settings › Appearance, the dither
- * picture across the whole column (basicNewAgentDither), with a slow light drifting over its
- * drapes (ditherLight), or the still Mountain Dither covering it. A draft's header is empty
- * (theme.custom.basic.css), so each runs the column's full height.
+ * Basic's new-agent stage — see `.fork/customizations.yaml#fork-basic-theme`: the tone-inked pixel
+ * texture on the column's right half, the breathing dither across it, or the still Mountain Dither
+ * covering it, as picked in Settings › Appearance.
  */
 import { type RefObject, useEffect, useRef, useState } from "react";
 
