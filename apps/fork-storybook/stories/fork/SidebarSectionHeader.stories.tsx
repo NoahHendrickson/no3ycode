@@ -1,24 +1,27 @@
-import { useState } from "react";
+import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useArgs } from "storybook/preview-api";
 
 import { SidebarV2StatusSectionHeader } from "~/custom/SidebarV2StatusSectionHeader";
-import { SIDEBAR_V2_STATUS_SECTION_LABELS } from "~/custom/sidebarV2StatusGrouping";
+import {
+  SIDEBAR_V2_STATUS_SECTION_LABELS,
+  type SidebarV2StatusHeaderKey,
+} from "~/custom/sidebarV2StatusGrouping";
 
-import { Row, Stack } from "../Specimen.tsx";
+import { forcedStateProps } from "../forcedStates.ts";
+import { Matrix, Stack } from "../Specimen.tsx";
 
-type HeaderProps = Parameters<typeof SidebarV2StatusSectionHeader>[0];
+type HeaderProps = ComponentProps<typeof SidebarV2StatusSectionHeader>;
 
-/** The header in the sidebar's list. `hover` forces the hover the caret shows on (the theme keys
-    it on the list item, which the component draws itself). */
+const SECTIONS = Object.keys(SIDEBAR_V2_STATUS_SECTION_LABELS) as SidebarV2StatusHeaderKey[];
+
+/** The header in the sidebar's list. `hover` hovers a row of its section, one of the two triggers
+    theme.custom.css shows the caret on (the header itself is the other). */
 function Header({ hover = false, ...props }: HeaderProps & { readonly hover?: boolean }) {
   return (
-    <ul
-      className="w-64 list-none p-0"
-      ref={(list) => {
-        list?.querySelector("li")?.toggleAttribute("data-story-hover", hover);
-      }}
-    >
+    <ul className="w-64 list-none p-0">
       <SidebarV2StatusSectionHeader {...props} />
+      {hover ? <li data-fork-status-section="" hidden {...forcedStateProps("hover")} /> : null}
     </ul>
   );
 }
@@ -36,38 +39,35 @@ const meta = {
     onToggleCollapsed: () => {},
   },
   argTypes: {
-    section: { control: "select", options: Object.keys(SIDEBAR_V2_STATUS_SECTION_LABELS) },
+    section: { control: "select", options: SECTIONS },
     collapsed: { control: "boolean" },
-  },
-  render: function Render(args) {
-    const [collapsed, setCollapsed] = useState(args.collapsed);
-    return (
-      <Header {...args} collapsed={collapsed} onToggleCollapsed={() => setCollapsed(!collapsed)} />
-    );
   },
 } satisfies Meta<typeof SidebarV2StatusSectionHeader>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+/** Clicking folds and opens it, kept in step with the `collapsed` control. */
+export const Playground: Story = {
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<HeaderProps>();
+    return (
+      <Header {...args} onToggleCollapsed={() => updateArgs({ collapsed: !args.collapsed })} />
+    );
+  },
+};
 
 /** At rest and hovered, open and folded: the caret shows only on hover, pointing at what a click
     does (up to fold, down to open). Matches the Figma kit's Collapsible section header. */
 export const States: Story = {
   render: (args) => (
-    <Stack gap={3}>
-      {([false, true] as const).map((collapsed) =>
-        ([false, true] as const).map((hover) => (
-          <Row
-            key={`${collapsed}-${hover}`}
-            label={`${collapsed ? "Folded" : "Open"}${hover ? ", hovered" : ""}`}
-          >
-            <Header {...args} collapsed={collapsed} hover={hover} />
-          </Row>
-        )),
+    <Matrix
+      rows={["Open", "Folded"]}
+      columns={["rest", "hover"]}
+      cell={(row, column) => (
+        <Header {...args} collapsed={row === "Folded"} hover={column === "hover"} />
       )}
-    </Stack>
+    />
   ),
 };
 
@@ -75,17 +75,9 @@ export const States: Story = {
 export const Sections: Story = {
   render: (args) => (
     <Stack gap={1}>
-      {(Object.keys(SIDEBAR_V2_STATUS_SECTION_LABELS) as Array<HeaderProps["section"]>).map(
-        (section, index) => (
-          <Header
-            key={section}
-            {...args}
-            section={section}
-            count={index + 1}
-            isFirst={index === 0}
-          />
-        ),
-      )}
+      {SECTIONS.map((section, index) => (
+        <Header key={section} {...args} section={section} count={index + 1} isFirst={index === 0} />
+      ))}
     </Stack>
   ),
 };
