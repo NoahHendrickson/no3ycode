@@ -4,7 +4,12 @@
 import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { EnvironmentId, ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
+import type {
+  EnvironmentId,
+  MessageId,
+  ProjectReadFileResult,
+  ScopedThreadRef,
+} from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
 import {
   ChevronLeftIcon,
@@ -21,8 +26,12 @@ import { Button } from "~/components/ui/button";
 import { toastManager } from "~/components/ui/toast";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
-import { cn } from "~/lib/utils";
-import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
+import { cn, newMessageId } from "~/lib/utils";
+import {
+  useQuietThreadProjection,
+  useQuietThreadShell,
+  useQuietThreadShells,
+} from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
 import { revisionedQuery } from "~/state/revisionedQuery";
@@ -35,6 +44,8 @@ import {
   useOpenThread,
 } from "./BotDigestItem";
 import {
+  awaitedBotDigestAsks,
+  botDigestRevision,
   type BotDigestItem,
   parseBotDigest,
   parseBotDigestStatus,
@@ -49,17 +60,14 @@ import { useTellBot } from "./useTellBot";
 const NO_DIGEST = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(false)).pipe(
   Atom.withLabel("bot-digest:none"),
 );
-const NO_ANSWERS: ReadonlyMap<string, string> = new Map();
-type SentAnswers = {
-  readonly revision: string | null;
-  readonly answers: ReadonlyMap<string, string>;
-};
+type SentAnswers = ReadonlyMap<string, MessageId>;
+const NO_ANSWERS: SentAnswers = new Map();
 /** Each bot's sent answers outlive its digest's mount, so leaving the conversation and coming back
     before the bot answers cannot offer the same ask twice. */
 const sentByBot = new Map<string, SentAnswers>();
 const DismissedAsks = Schema.Array(Schema.String);
 const NO_DISMISSED: ReadonlyArray<string> = [];
-const SETTLED_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
+const NO_ASKS: ReadonlySet<string> = new Set();
 
 /** The digest of the open thread when it is a bot, just above its composer: the status line and
     a card per Needs you ask. Nothing draws for any other thread, or while the bot has neither. */
@@ -85,17 +93,21 @@ function BotDigestAsksFor(props: {
           input: { cwd: bot.worktreePath, relativePath: BOT_DIGEST_FILE, allowMissing: true },
         })
       : NO_DIGEST;
-  // The bot rewrites its digest during a turn, so each run it starts or ends reads it again.
-  const revision = bot.latestRun === null ? null : `${bot.latestRun.runId}:${bot.latestRun.status}`;
+  const conversation = useQuietThreadProjection(botRef);
+  // The bot rewrites its digest during a turn, so each run it starts or ends reads it again: read
+  // off the conversation, so a read never lands before the answers it settles.
+  const revision =
+    conversation !== null
+      ? botDigestRevision(conversation.projection.runs)
+      : bot.latestRun === null
+        ? null
+        : `${bot.latestRun.runId}:${bot.latestRun.status}`;
   const result = useAtomValue(revisionedQuery(query, canReadFiles ? revision : undefined));
   const shells = useQuietThreadShells();
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
-  // The answer each ask was given here, until the bot settles a run after it: the digest read then
-  // is the bot's word, and an ask it kept offers its answers again.
+  // The message each ask was answered with here, until the conversation holds it.
   const botKey = scopedThreadKey(botRef);
-  const [sentFor, setSent] = useState<SentAnswers>(
-    () => sentByBot.get(botKey) ?? { revision: null, answers: NO_ANSWERS },
-  );
+  const [sentFor, setSent] = useState<SentAnswers>(() => sentByBot.get(botKey) ?? NO_ANSWERS);
   const setSentFor = (update: SentAnswers | ((previous: SentAnswers) => SentAnswers)) =>
     setSent((previous) => {
       const next = typeof update === "function" ? update(previous) : update;
@@ -112,20 +124,51 @@ function BotDigestAsksFor(props: {
   const [page, setPage] = useState(0);
   const tellBot = useTellBot();
   const openThread = useOpenThread();
+  // The asks answered while the digest in hand was read, and the revision and read it was; see
+  // `hidden` below.
+  const [held, setHeld] = useState<{
+    readonly revision: string | null;
+    readonly readAt: number | null;
+    readonly asks: ReadonlySet<string>;
+  }>(() => ({
+    revision,
+    readAt: AsyncResult.isSuccess(result) ? result.timestamp : null,
+    asks: NO_ASKS,
+  }));
   const file = AsyncResult.getOrElse(result, () => null);
   const contents = file === null || file.exists === false ? null : file.contents;
   const allAsks =
     contents === null
       ? []
       : (parseBotDigest(contents).find((section) => section.kind === "needs-you")?.items ?? []);
-  const asks = allAsks.filter((item) => !dismissed.includes(item.source));
-  const hiddenCount = allAsks.length - asks.length;
   const status = contents === null ? null : parseBotDigestStatus(contents);
-  const settled = bot.latestRun === null || SETTLED_RUN.has(bot.latestRun.status);
-  const expired = sentFor.revision !== revision && settled;
-  // Retired for good once a run settles after them, so the bot's next run cannot bring them back.
-  if (expired && sentFor.answers.size > 0) setSentFor({ revision, answers: NO_ANSWERS });
-  if (allAsks.length === 0 && status === null) return null;
+  // An answered ask goes away until the bot settles the run that reads the answer; one it keeps
+  // in the digest then comes back.
+  const awaited = conversation === null ? NO_ASKS : awaitedBotDigestAsks(conversation.projection);
+  // Once the conversation holds a sent answer, the run that reads it decides.
+  const delivered = (messageId: MessageId) =>
+    conversation?.projection.messages.some((message) => message.id === messageId) ?? false;
+  if ([...sentFor.values()].some(delivered)) {
+    setSentFor((previous) => new Map([...previous].filter(([, id]) => !delivered(id))));
+  }
+  // The digest in hand was read before the bot settled on an answer, so its asks stay hidden
+  // until a successful read lands under the revision that settled it; any read in hand when the
+  // revision moves, even one landing in that same render, predates it.
+  const readAt = AsyncResult.isSuccess(result) ? result.timestamp : held.readAt;
+  const fresh = held.revision === revision && !result.waiting && held.readAt !== readAt;
+  if (held.revision !== revision) {
+    setHeld({ revision, readAt, asks: new Set([...held.asks, ...awaited]) });
+  } else if (fresh) setHeld({ revision, readAt, asks: awaited });
+  else if ([...awaited].some((source) => !held.asks.has(source))) {
+    setHeld({ ...held, asks: new Set([...held.asks, ...awaited]) });
+  }
+  const hidden = fresh ? NO_ASKS : held.asks;
+  const open = allAsks.filter(
+    (item) => !sentFor.has(item.source) && !awaited.has(item.source) && !hidden.has(item.source),
+  );
+  const asks = open.filter((item) => !dismissed.includes(item.source));
+  const hiddenCount = open.length - asks.length;
+  if (open.length === 0 && status === null) return null;
   const at = Math.min(page, Math.max(0, asks.length - 1));
   const item = asks[at];
   // Kept to the asks the digest still has, so the list cannot grow past them.
@@ -134,20 +177,13 @@ function BotDigestAsksFor(props: {
       ...dismissed.filter((kept) => allAsks.some((ask) => ask.source === kept)),
       source,
     ]);
-  const sent = expired ? NO_ANSWERS : sentFor.answers;
   // An answer goes to the bot as the owner's reply, quoting its ask, behind whatever it is doing.
   const answer = async (item: BotDigestItem, choice: string) => {
-    setSentFor((previous) => ({
-      revision,
-      answers: new Map(previous.answers).set(item.source, choice),
-    }));
-    if (await tellBot(botRef, `> ${item.source}\n\n${choice}`)) return;
+    const messageId = newMessageId();
+    setSentFor((previous) => new Map(previous).set(item.source, messageId));
+    if (await tellBot(botRef, `> ${item.source}\n\n${choice}`, messageId)) return;
     // Only this attempt's entry: another card answered meanwhile keeps its own.
-    setSentFor((previous) => {
-      const answers = new Map(previous.answers);
-      answers.delete(item.source);
-      return { ...previous, answers };
-    });
+    setSentFor((previous) => new Map([...previous].filter(([, id]) => id !== messageId)));
     toastManager.add({
       type: "error",
       title: "Could not send your answer",
@@ -170,8 +206,7 @@ function BotDigestAsksFor(props: {
   const line =
     item === undefined ? null : resolveBotDigestLine(item, threads, botRef.environmentId);
   const ask = line === null ? null : splitBotDigestAsk(line.text);
-  const given = item === undefined ? undefined : sent.get(item.source);
-  const offered = item !== undefined && item.answers.length > 0 && given === undefined;
+  const offered = item !== undefined && item.answers.length > 0;
   return (
     <div data-fork-bot-digest="" className="pb-2">
       {/* The composer's two layers, worn by its stamps so each theme paints it as the composer: the
@@ -249,11 +284,6 @@ function BotDigestAsksFor(props: {
             }
             actions={
               <>
-                {given === undefined ? null : (
-                  <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
-                    Sent “{given}”
-                  </span>
-                )}
                 {offered
                   ? item.answers.map((choice) => (
                       <Button

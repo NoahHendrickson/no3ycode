@@ -5,6 +5,7 @@
  * line links and the answers an ask offers.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
+import type { OrchestrationV2ConversationMessage, OrchestrationV2Run } from "@t3tools/contracts";
 import { parseThreadLinkHref, type ThreadLink } from "@t3tools/shared/threadLinks";
 
 export interface BotDigestPullRequest {
@@ -224,4 +225,42 @@ export function splitBotDigestAsk(text: string): {
     .join(" ")
     .trim();
   return { question: sentences[at]!, detail: detail === "" ? null : detail };
+}
+
+/** A run the bot has finished: the digest it leaves is its word on what it still asks. */
+const SETTLED_RUN: ReadonlySet<string> = new Set([
+  "completed",
+  "interrupted",
+  "failed",
+  "cancelled",
+  "rolled_back",
+]);
+
+/** Changes whenever one of the conversation's runs starts or settles, any run, not only its latest. */
+export function botDigestRevision(runs: ReadonlyArray<Pick<OrchestrationV2Run, "status">>): string {
+  const settled = runs.filter((run) => SETTLED_RUN.has(run.status)).length;
+  const begun = runs.filter((run) => run.status !== "preparing" && run.status !== "queued").length;
+  return `${runs.length}:${begun}:${settled}:${runs.at(-1)?.status ?? "none"}`;
+}
+
+/** Each ask an owner message quotes (`> ask`, as Reply and the answers write it) while the run
+    that reads that message is yet to settle: the bot has the answer, its digest does not yet. */
+export function awaitedBotDigestAsks(projection: {
+  readonly messages: ReadonlyArray<
+    Pick<OrchestrationV2ConversationMessage, "role" | "runId" | "text">
+  >;
+  readonly runs: ReadonlyArray<Pick<OrchestrationV2Run, "id" | "status">>;
+}): ReadonlySet<string> {
+  const awaited = new Set<string>();
+  const runs = new Map(projection.runs.map((run) => [run.id, run.status]));
+  for (let at = projection.messages.length - 1; at >= 0; at -= 1) {
+    const message = projection.messages[at]!;
+    if (message.role !== "user") continue;
+    const status = message.runId === null ? undefined : runs.get(message.runId);
+    if (status !== undefined && SETTLED_RUN.has(status)) continue;
+    for (const line of message.text.split(/\r?\n/)) {
+      if (line.startsWith("> ")) awaited.add(line.slice(2).trim());
+    }
+  }
+  return awaited;
 }

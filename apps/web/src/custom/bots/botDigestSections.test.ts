@@ -1,6 +1,13 @@
+import { RunId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseBotDigest, parseBotDigestStatus, splitBotDigestAsk } from "./botDigestSections";
+import {
+  awaitedBotDigestAsks,
+  botDigestRevision,
+  parseBotDigest,
+  parseBotDigestStatus,
+  splitBotDigestAsk,
+} from "./botDigestSections";
 
 describe("parseBotDigest", () => {
   it("keeps the sections with something in them, as plain lines", () => {
@@ -203,5 +210,44 @@ describe("splitBotDigestAsk", () => {
       question: "#22: ask the player where it sits.",
       detail: "Or have me start a read-only thread.",
     });
+  });
+});
+
+describe("awaitedBotDigestAsks", () => {
+  it("holds the asks a reply quotes until the run that reads it settles", () => {
+    const run = (id: string, status: "completed" | "running" | "queued" | "cancelled") => ({
+      id: RunId.make(id),
+      status,
+    });
+    const user = (runId: string | null, text: string) => ({
+      role: "user" as const,
+      runId: runId === null ? null : RunId.make(runId),
+      text,
+    });
+    expect(
+      awaitedBotDigestAsks({
+        runs: [
+          run("r1", "completed"),
+          run("r2", "running"),
+          run("r3", "queued"),
+          run("r4", "cancelled"),
+        ],
+        messages: [
+          user("r1", "> Ship it?\n\nyes"),
+          { role: "assistant", runId: RunId.make("r2"), text: "> Not an answer?" },
+          user("r2", "> Merge #412?\n\nhold off"),
+          user("r3", "> Push | Hold?\n\nPush"),
+          user(null, "> Pick a day?\n\nThursday"),
+          user("r4", "> Cancelled before it ran?\n\nnever mind"),
+        ],
+      }),
+    ).toEqual(new Set(["Merge #412?", "Push | Hold?", "Pick a day?"]));
+    // An earlier run starting or settling behind a later queued one still reads the digest again.
+    const revisions = [
+      botDigestRevision([run("r1", "queued"), run("r2", "queued")]),
+      botDigestRevision([run("r1", "running"), run("r2", "queued")]),
+      botDigestRevision([run("r1", "completed"), run("r2", "queued")]),
+    ];
+    expect(new Set(revisions).size).toBe(3);
   });
 });

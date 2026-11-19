@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 4;
+export const BOT_RULES_VERSION = 5;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -62,11 +62,11 @@ Under the title, keep one status line, \`Status:\` and a few words: where things
 
 Then three sections, most important first, one short line per item:
 
-- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line: the question first, then at most one short sentence of what your owner needs to answer it. The question leads the card your owner sees and the rest shows smaller under it. When a word or two answers it, end the item with those answers after an arrow, after its links, at most four: \`→ Push | Hold\`. Your owner's click sends you the item quoted with the answer they picked.
+- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line: the question first, then at most one short sentence of what your owner needs to answer it. The question leads the card your owner sees and the rest shows smaller under it. End every approval or yes-or-no ask with its answers after an arrow, after its links, the yes naming what you will do so your owner can approve in one click: \`OK to push and open a PR? https://github.com/…/pull/21 → Open PR | Hold\`. Any other ask a word or two answers ends the same way, at most four answers, each a few words. Your owner's click sends you the item quoted with the answer they picked.
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
 
-End each item with links to what it is about, after its last sentence, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…) → Half-even | Half-up\`.
+End each item with links to what it is about, after its last sentence and before any answers, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…) → Half-even | Half-up\`.
 
 Drop an item once your owner has answered it or it no longer matters. Leave "Nothing." under an empty section.
 
