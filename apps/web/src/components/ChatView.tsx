@@ -3790,7 +3790,8 @@ export default function ChatView(props: ChatViewProps) {
         <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
         {/* fork:end fork-inlet-black-texture */}
         {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
-        <BasicNewAgentBackdrop shown={isDraftHeroState && !embedded} />
+        {/* Not behind a maximized right panel, where the column is gone and its animation unseen. */}
+        <BasicNewAgentBackdrop shown={isDraftHeroState && !embedded && !rightPanelMaximized} />
         {/* fork:end fork-basic-theme */}
         {embedded ? null : (
           <header

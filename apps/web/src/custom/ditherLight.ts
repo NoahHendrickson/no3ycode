@@ -4,6 +4,17 @@
  * streaks keep their shape and only inked cells near green ever change.
  */
 
+/** The PNG's inks by name; each value is its palette index. */
+export const DITHER_INK = {
+  white: 0,
+  pink: 1,
+  magenta: 2,
+  blue: 3,
+  green: 4,
+  cyan: 5,
+  mint: 6,
+} as const;
+
 /** The PNG's colours by palette index; DITHER_EMPTY is its transparent ground. */
 export const DITHER_PALETTE = [
   [0xff, 0xff, 0xff],
@@ -15,6 +26,11 @@ export const DITHER_PALETTE = [
   [0x79, 0xea, 0xae],
 ] as const;
 export const DITHER_EMPTY = DITHER_PALETTE.length;
+
+const { white, pink, magenta, blue, green, cyan, mint } = DITHER_INK;
+const isGreen = (v: number) => v === green || v === mint;
+/** The inks green can give way to, read around each cell. */
+const BENEATH = [white, pink, magenta, blue, cyan] as const;
 
 /** The art's 8x8 ordered (Bayer) thresholds; ink sits on the high ones. */
 const BAYER = (() => {
@@ -35,11 +51,6 @@ const BAYER = (() => {
   return m.map((row) => row.map((v) => (v + 0.5) / 64));
 })();
 
-const BLUE = 3;
-const GREEN = 4;
-const CYAN = 5;
-const MINT = 6;
-
 /** One breath, and the length of the swell travelling down a streak, in cells. */
 const PERIOD_S = 9;
 const WAVELENGTH = 220;
@@ -55,34 +66,40 @@ const RIM_LIGHT = 0.25;
 const GREEN_RADIUS = 6;
 const INK_RADIUS = 4;
 
-export interface DitherLight {
-  /** Moves the shimmer to `seconds`, reporting each cell whose colour changes. */
-  readonly step: (seconds: number, onChange: (cell: number, colour: number) => void) => void;
-}
-
-const isGreen = (v: number) => v === GREEN || v === MINT;
-
 /** Neighbouring streaks breathe out of step, so the picture never pulses as one. */
 const offsetAcross = (x: number) =>
   2 * Math.PI * (0.5 * Math.sin(x / 70) + 0.35 * Math.sin(x / 23 + 1.7));
 
-/** `cells` holds a palette index per cell, row by row; DITHER_EMPTY for the ground. */
-export function createDitherLight(cells: Uint8Array, width: number, height: number): DitherLight {
-  // Summed-area tables: green, all ink, and each colour, for neighbourhood counts.
+/** Palette indices for a decoded RGBA image of the PNG, one per pixel. */
+export function cellsFromRgba(rgba: Uint8ClampedArray): Uint8Array {
+  const cells = new Uint8Array(rgba.length / 4);
+  for (let i = 0; i < cells.length; i++) {
+    const o = i * 4;
+    const match = DITHER_PALETTE.findIndex(
+      ([r, g, b]) => rgba[o] === r && rgba[o + 1] === g && rgba[o + 2] === b,
+    );
+    cells[i] = rgba[o + 3] === 0 || match < 0 ? DITHER_EMPTY : match;
+  }
+  return cells;
+}
+
+/** Everything a breath reads about the cells it can touch, fixed once at setup. */
+function analyseDrapes(cells: Uint8Array, width: number, height: number) {
+  // Summed-area tables of each ink green gives way to, then of green, for neighbourhood shares.
+  // They are local, so they are freed once setup returns.
   const stride = width + 1;
-  const GREEN_TABLE = DITHER_EMPTY + 1;
+  const GREEN_TABLE = BENEATH.length;
   const tables = Array.from(
-    { length: DITHER_EMPTY + 2 },
+    { length: GREEN_TABLE + 1 },
     () => new Int32Array(stride * (height + 1)),
   );
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const v = cells[y * width + x]!;
       const o = (y + 1) * stride + x + 1;
-      for (let k = 0; k < tables.length; k++) {
-        const hit =
-          k === GREEN_TABLE ? isGreen(v) : k === DITHER_EMPTY ? v !== DITHER_EMPTY : v === k;
+      for (let k = 0; k <= GREEN_TABLE; k++) {
         const t = tables[k]!;
+        const hit = k === GREEN_TABLE ? isGreen(v) : v === BENEATH[k];
         t[o] = (hit ? 1 : 0) + t[o - 1]! + t[o - stride]! - t[o - stride - 1]!;
       }
     }
@@ -100,67 +117,119 @@ export function createDitherLight(cells: Uint8Array, width: number, height: numb
 
   // The cells a breath can touch: inked, and near green. Empty cells never change, so the green
   // never spills past a drape's edge.
-  const index: number[] = [];
-  const green: number[] = [];
-  const under: number[] = [];
-  const phase: number[] = [];
+  const found: number[] = [];
+  const greenShare: number[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
+      if (cells[i] === DITHER_EMPTY) continue;
       const g = share(GREEN_TABLE, x, y, GREEN_RADIUS);
-      if (g < 0.01 || cells[i] === DITHER_EMPTY) continue;
-      // What shows when green leaves a cell: the commonest other ink around it, else the drape's blue.
-      let best = 0;
-      let beneath = BLUE;
-      for (let k = 0; k < DITHER_EMPTY; k++) {
-        if (isGreen(k)) continue;
-        const n = share(k, x, y, INK_RADIUS);
-        if (n > best) {
-          best = n;
-          beneath = k;
-        }
-      }
-      index.push(i);
-      green.push(g);
-      under.push(beneath);
-      phase.push((2 * Math.PI * y) / WAVELENGTH + offsetAcross(x));
+      if (g < 0.01) continue;
+      found.push(i);
+      greenShare.push(g);
     }
   }
 
+  const n = found.length;
+  const drapes = {
+    index: Int32Array.from(found),
+    x: new Uint16Array(n),
+    y: new Uint16Array(n),
+    green: Float32Array.from(greenShare),
+    /** What shows when green leaves a cell: the commonest other ink around it, else blue. */
+    beneath: new Uint8Array(n),
+    phase: new Float32Array(n),
+    /** Two orderings of the same thresholds: where green grows, and which green leaves first. */
+    grow: new Float32Array(n),
+    fade: new Float32Array(n),
+    core: new Float32Array(n),
+    rim: new Float32Array(n),
+  };
+  for (let c = 0; c < n; c++) {
+    const i = found[c]!;
+    const x = i % width;
+    const y = (i - x) / width;
+    const g = greenShare[c]!;
+    let best = 0;
+    let beneath: number = blue;
+    for (let k = 0; k < BENEATH.length; k++) {
+      const count = share(k, x, y, INK_RADIUS);
+      if (count > best) {
+        best = count;
+        beneath = BENEATH[k]!;
+      }
+    }
+    drapes.x[c] = x;
+    drapes.y[c] = y;
+    drapes.beneath[c] = beneath;
+    drapes.phase[c] = (2 * Math.PI * y) / WAVELENGTH + offsetAcross(x);
+    drapes.grow[c] = BAYER[y & 7]![x & 7]!;
+    drapes.fade[c] = BAYER[(y + 3) & 7]![(x + 5) & 7]!;
+    drapes.core[c] = Math.min(1, g / 0.5);
+    drapes.rim[c] = cells[i] === blue && g < 0.3 ? 1 - Math.abs(g - 0.15) / 0.15 : 0;
+  }
+  return drapes;
+}
+
+export interface DirtyRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface DitherLight {
+  /** Moves the breath to `seconds`, writing changed cells into `rgba`; null when none changed. */
+  readonly step: (seconds: number, rgba: Uint8ClampedArray) => DirtyRect | null;
+}
+
+/** `cells` holds a palette index per cell, row by row; DITHER_EMPTY for the ground. */
+export function createDitherLight(cells: Uint8Array, width: number, height: number): DitherLight {
+  const drapes = analyseDrapes(cells, width, height);
   const shown = Uint8Array.from(cells);
   return {
-    step(seconds, onChange) {
+    step(seconds, rgba) {
       const now = (2 * Math.PI * seconds) / PERIOD_S;
-      for (let n = 0; n < index.length; n++) {
-        const i = index[n]!;
-        const x = i % width;
-        const y = (i - x) / width;
+      let x0: number = width;
+      let y0: number = height;
+      let x1 = -1;
+      let y1 = -1;
+      for (let c = 0; c < drapes.index.length; c++) {
+        const i = drapes.index[c]!;
         const art = cells[i]!;
-        const g = green[n]!;
-        const swell = Math.sin(now - phase[n]!);
-        // Two orderings of the same thresholds: where green grows, and which green leaves first.
-        const grow = BAYER[y & 7]![x & 7]!;
-        const fade = BAYER[(y + 3) & 7]![(x + 5) & 7]!;
+        const g = drapes.green[c]!;
+        const fade = drapes.fade[c]!;
+        const swell = Math.sin(now - drapes.phase[c]!);
         let colour = art;
         if (isGreen(art)) {
-          if (swell < 0 && fade < SWELL * -swell * 0.5) colour = under[n]!;
-          else if (swell > 0 && fade > 1 - CORE_LIGHT * swell * Math.min(1, g / 0.5)) {
-            colour = art === GREEN ? MINT : 0;
+          if (swell < 0 && fade < SWELL * -swell * 0.5) colour = drapes.beneath[c]!;
+          else if (swell > 0 && fade > 1 - CORE_LIGHT * swell * drapes.core[c]!) {
+            colour = art === green ? mint : white;
           }
         } else if (swell > 0) {
           // Capped, so a dense streak widens instead of filling in solid.
           const grown = Math.min(MAX_GREEN, g * (1 + SWELL * swell), g + MAX_GAIN * swell);
-          if (grow > 1 - grown && grow <= 1 - g) colour = GREEN;
-          else if (art === BLUE && g < 0.3) {
-            const rim = 1 - Math.abs(g - 0.15) / 0.15;
-            if (rim > 0 && fade > 1 - RIM_LIGHT * swell * rim) colour = CYAN;
-          }
+          const grow = drapes.grow[c]!;
+          if (grow > 1 - grown && grow <= 1 - g) colour = green;
+          else if (fade > 1 - RIM_LIGHT * swell * drapes.rim[c]!) colour = cyan;
         }
-        if (shown[i] !== colour) {
-          shown[i] = colour;
-          onChange(i, colour);
-        }
+        if (shown[i] === colour) continue;
+        shown[i] = colour;
+        // Candidates are inked, and every colour they take is an ink, so each is opaque.
+        const rgb = DITHER_PALETTE[colour]!;
+        const o = i * 4;
+        rgba[o] = rgb[0];
+        rgba[o + 1] = rgb[1];
+        rgba[o + 2] = rgb[2];
+        rgba[o + 3] = 255;
+        const x = drapes.x[c]!;
+        const y = drapes.y[c]!;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
       }
+      return x1 < 0 ? null : { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
     },
   };
 }

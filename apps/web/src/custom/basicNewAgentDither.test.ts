@@ -7,7 +7,7 @@ const gapCentre = (box: { width: number }, layout: { cell: number; left: number 
 
 describe("ditherLayout", () => {
   it("draws the Figma kit's crop in a MacBook-sized column", () => {
-    expect(ditherLayout({ width: 1184, height: 900 }, 2)).toEqual({ cell: 2, left: -544 });
+    expect(ditherLayout({ width: 1184, height: 900 }, 2)).toEqual({ cell: 2, left: -544, top: 0 });
   });
 
   it("keeps the gap behind the headline in a narrow column", () => {

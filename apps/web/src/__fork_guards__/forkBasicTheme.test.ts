@@ -134,7 +134,7 @@ describe("fork guard: fork-basic-theme", () => {
     );
     expect(BASIC_NEW_AGENT_BACKDROPS).toEqual(["texture", "dither", "mountain"]);
     expect(readSibling("../components/ChatView.tsx")).toContain(
-      "<BasicNewAgentBackdrop shown={isDraftHeroState && !embedded} />",
+      "<BasicNewAgentBackdrop shown={isDraftHeroState && !embedded && !rightPanelMaximized} />",
     );
     for (const [asset, cells] of [
       ["basic-new-agent-dither.png", DITHER_CELLS],

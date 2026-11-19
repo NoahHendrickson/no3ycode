@@ -16,9 +16,10 @@ import {
   MOUNTAIN_CELLS,
   ditherLayout,
   mountainLayout,
-  type DitherLayout,
+  type PictureLayout,
 } from "./basicNewAgentDither";
-import { DITHER_EMPTY, DITHER_PALETTE, createDitherLight } from "./ditherLight";
+import { runWhileFocused } from "./backgroundPausedLoop";
+import { cellsFromRgba, createDitherLight } from "./ditherLight";
 import { BASIC_TONE_OPTIONS, useActiveBasicTone } from "./forkTheme";
 import { PixelTextureBackdrop } from "./pixelTexture/PixelTextureBackdrop";
 
@@ -37,11 +38,11 @@ export function BasicNewAgentBackdrop(props: { readonly shown: boolean }) {
 }
 
 /** Lays a picture out for the box `ref` measures, again whenever the box resizes. */
-function useColumnLayout<T extends DitherLayout & { readonly top?: number }>(
+function useColumnLayout(
   ref: RefObject<HTMLDivElement | null>,
-  layoutFor: (box: { width: number; height: number }, dpr: number) => T,
-): T | null {
-  const [layout, setLayout] = useState<T | null>(null);
+  layoutFor: (box: { width: number; height: number }, dpr: number) => PictureLayout,
+): PictureLayout | null {
+  const [layout, setLayout] = useState<PictureLayout | null>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the column's DOM box and the display's pixel ratio
   useEffect(() => {
     const el = ref.current;
@@ -126,15 +127,13 @@ function DitherBackdrop() {
 /** The light moves slowly and in whole cells, so ten frames a second reads as smooth. */
 const FRAME_GAP_MS = 100;
 
-/** Draws the picture one canvas pixel per cell and, when `animate`, keeps the light moving. */
+/** Draws the picture one canvas pixel per cell and, when `animate`, keeps its streaks breathing. */
 function paintDither(canvas: HTMLCanvasElement, animate: boolean): () => void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return () => {};
   const { width, height } = DITHER_CELLS;
   let cancelled = false;
-  let frame = 0;
-  let timer = 0;
-  let stopListening = () => {};
+  let stop = () => {};
 
   const image = new Image();
   image.src = ditherUrl;
@@ -145,72 +144,19 @@ function paintDither(canvas: HTMLCanvasElement, animate: boolean): () => void {
       ctx.drawImage(image, 0, 0);
       if (!animate) return;
       const pixels = ctx.getImageData(0, 0, width, height);
-      const data = pixels.data;
-      const cells = new Uint8Array(width * height);
-      for (let i = 0; i < cells.length; i++) {
-        const o = i * 4;
-        const match = DITHER_PALETTE.findIndex(
-          ([r, g, b]) => data[o] === r && data[o + 1] === g && data[o + 2] === b,
-        );
-        cells[i] = data[o + 3] === 0 || match < 0 ? DITHER_EMPTY : match;
-      }
-      const light = createDitherLight(cells, width, height);
-
-      const start = performance.now();
-      // Time spent paused in the background, taken off the clock so the light doesn't jump.
-      let pausedFor = 0;
-      let pausedAt: number | null = null;
-      const tick = (time: number) => {
-        let x0: number = width;
-        let y0: number = height;
-        let x1 = -1;
-        let y1 = -1;
-        light.step((time - start - pausedFor) / 1000, (cell, colour) => {
-          const x = cell % width;
-          const y = (cell - x) / width;
-          const rgb = colour === DITHER_EMPTY ? null : DITHER_PALETTE[colour];
-          data.set(rgb ? [rgb[0], rgb[1], rgb[2], 255] : [0, 0, 0, 0], cell * 4);
-          x0 = Math.min(x0, x);
-          y0 = Math.min(y0, y);
-          x1 = Math.max(x1, x);
-          y1 = Math.max(y1, y);
-        });
-        if (x1 >= 0) ctx.putImageData(pixels, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
-        timer = window.setTimeout(() => {
-          frame = requestAnimationFrame(tick);
-        }, FRAME_GAP_MS);
-      };
-      // Holds while the window is in the background, as the pixel texture does.
-      const pause = () => {
-        if (pausedAt !== null) return;
-        pausedAt = performance.now();
-        cancelAnimationFrame(frame);
-        window.clearTimeout(timer);
-      };
-      const resume = () => {
-        if (pausedAt === null) return;
-        pausedFor += performance.now() - pausedAt;
-        pausedAt = null;
-        frame = requestAnimationFrame(tick);
-      };
-      window.addEventListener("blur", pause);
-      window.addEventListener("focus", resume);
-      stopListening = () => {
-        window.removeEventListener("blur", pause);
-        window.removeEventListener("focus", resume);
-      };
-      if (document.hasFocus()) frame = requestAnimationFrame(tick);
-      else pausedAt = performance.now();
+      const light = createDitherLight(cellsFromRgba(pixels.data), width, height);
+      stop = runWhileFocused(FRAME_GAP_MS, (elapsedMs) => {
+        const dirty = light.step(elapsedMs / 1000, pixels.data);
+        if (dirty) ctx.putImageData(pixels, 0, 0, dirty.x, dirty.y, dirty.width, dirty.height);
+      });
     },
     () => {
-      // Unmounted mid-load or the asset failed: nothing is drawn, as with the texture's own failures.
+      // The asset failed to load: nothing is drawn, as with the texture's own failures.
     },
   );
 
   return () => {
     cancelled = true;
-    cancelAnimationFrame(frame);
-    window.clearTimeout(timer);
-    stopListening();
+    stop();
   };
 }
