@@ -204,8 +204,3 @@ export function parseBotDigestStatus(contents: string): string | null {
   }
   return null;
 }
-
-/** Names a section as it reads now: a card dismissed under it comes back once its items change. */
-export function botDigestSectionKey(section: BotDigestSection): string {
-  return [section.title, ...section.items.map((item) => item.source)].join("\n");
-}

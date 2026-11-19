@@ -376,7 +376,11 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
     expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
-    expect(threadsPanel).toContain("<BotDigest bot={bot}");
+    // A Petal's asks sit above its composer in the chat column; the Threads panel lists threads only.
+    expect(chatView).toMatch(
+      /<ChildThreadApprovals threadRef=\{activeThreadRef\} \/>\s*\{\/\* fork:begin fork-bot-digest[\s\S]*?<BotDigestAsks threadRef=\{activeThreadRef \?\? null\} \/>/u,
+    );
+    expect(threadsPanel).not.toContain("BotDigest");
     expect(threadsPanel).toContain("openSidebarThreadMenu(ref, {");
     expect(sidebar).toContain("...botCrewMenuItems(");
     expect(sidebar).toContain("void setBotWork(thread, botId);");
