@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { DITHER_CELLS, ditherLayout } from "./basicNewAgentDither";
+import { DITHER_CELLS, MOUNTAIN_CELLS, ditherLayout, mountainLayout } from "./basicNewAgentDither";
 
 const gapCentre = (box: { width: number }, layout: { cell: number; left: number }) =>
   (box.width / 2 - layout.left) / layout.cell;
@@ -37,6 +37,38 @@ describe("ditherLayout", () => {
       const { cell, left } = ditherLayout({ width: 1184, height: 900 }, dpr);
       expect(Number.isInteger(Math.round(cell * dpr * 1e9) / 1e9), String(dpr)).toBe(true);
       expect(Number.isInteger(Math.round(left * dpr * 1e9) / 1e9), String(dpr)).toBe(true);
+    }
+  });
+});
+
+describe("mountainLayout", () => {
+  it("covers the column at the export's own scale on a MacBook, centred", () => {
+    const box = { width: 1184, height: 900 };
+    const layout = mountainLayout(box, 2);
+    expect(layout.cell).toBe(2.5);
+    expect(layout.left).toBeLessThanOrEqual(0);
+    expect(layout.top).toBeLessThanOrEqual(0);
+    expect(layout.left + MOUNTAIN_CELLS.width * layout.cell).toBeGreaterThanOrEqual(box.width);
+    expect(layout.top + MOUNTAIN_CELLS.height * layout.cell).toBeGreaterThanOrEqual(box.height);
+  });
+
+  it("covers both edges when the column is not a whole number of device pixels", () => {
+    for (const [box, dpr] of [
+      [{ width: 1107, height: 853 }, 1.25],
+      [{ width: 692.39, height: 420 }, 3],
+    ] as const) {
+      const layout = mountainLayout(box, dpr);
+      expect(layout.left + MOUNTAIN_CELLS.width * layout.cell).toBeGreaterThanOrEqual(box.width);
+      expect(layout.top + MOUNTAIN_CELLS.height * layout.cell).toBeGreaterThanOrEqual(box.height);
+    }
+  });
+
+  it("keeps cells and offsets whole in device pixels at fractional scales", () => {
+    for (const dpr of [1, 1.25, 1.5, 2.2]) {
+      const { cell, left, top } = mountainLayout({ width: 1000, height: 777 }, dpr);
+      for (const value of [cell, left, top]) {
+        expect(Number.isInteger(Math.round(value * dpr * 1e9) / 1e9), String(dpr)).toBe(true);
+      }
     }
   });
 });

@@ -1704,8 +1704,15 @@
     pixels, at least 2 CSS px, grown only to reach the column's foot or keep
     the column's centre in the gap between the drapes; the gap is centred when
     the picture still covers the right edge, else the picture sits against it.
-    At 1184 x 900 it is Figma's Block / New agent › Background=Dither. Restore
-    defaults resets the pick.
+    At 1184 x 900 it is Figma's Block / New agent › Background=Dither. It draws
+    on a canvas, masked from full strength at the column's top to 20% at its
+    foot, like real rays, and its green streaks breathe (custom/ditherLight.ts):
+    each swells and thins with the swell running down it, its core brightening
+    at the full, re-dithered against the art's own ordered thresholds; ten
+    frames a second, paused while the window is in the background, still under
+    Reduce Motion. Mountain Dither (assets/basic-new-agent-mountain.png, opaque,
+    still) covers the column centred, at the smallest whole-device-pixel cell
+    that covers it. Restore defaults resets the pick.
     Light and Cream keep the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
@@ -1730,6 +1737,8 @@
     - apps/web/src/custom/basicNewAgentDither.ts
     - apps/web/src/custom/ForkChoiceSelect.tsx
     - apps/web/src/custom/assets/basic-new-agent-dither.png
+    - apps/web/src/custom/assets/basic-new-agent-mountain.png
+    - apps/web/src/custom/ditherLight.ts
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeightState.ts
@@ -1745,6 +1754,7 @@
     - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
     - apps/web/src/custom/basicNewAgentDither.test.ts
+    - apps/web/src/custom/ditherLight.test.ts
 
 - id: fork-cool-darker-theme
   intent: >

@@ -7,13 +7,14 @@ import * as Schema from "effect/Schema";
 
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 
-export const BASIC_NEW_AGENT_BACKDROPS = ["texture", "dither"] as const;
+export const BASIC_NEW_AGENT_BACKDROPS = ["texture", "dither", "mountain"] as const;
 export type BasicNewAgentBackdrop = (typeof BASIC_NEW_AGENT_BACKDROPS)[number];
 export const DEFAULT_BASIC_NEW_AGENT_BACKDROP: BasicNewAgentBackdrop = "texture";
 
 export const BASIC_NEW_AGENT_BACKDROP_LABELS: Record<BasicNewAgentBackdrop, string> = {
   texture: "Pixel texture",
   dither: "Dither",
+  mountain: "Mountain Dither",
 };
 
 const BasicNewAgentBackdropSchema = Schema.Literals(BASIC_NEW_AGENT_BACKDROPS);
