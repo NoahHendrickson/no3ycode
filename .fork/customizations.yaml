@@ -7585,10 +7585,18 @@
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-digest
   intent: >
-    A bot keeps DIGEST.md in its folder (Needs you, New, In progress; seeded empty, rewritten by
-    the bot as its work changes, per the seeded CLAUDE.md, which also has it write each Needs you
-    item as the question itself and end each item, after its last sentence, with its thread's
-    link from the thread tools and its pull request's URL). Its Threads panel shows it above the
+    A bot keeps DIGEST.md in its folder (a `Status:` line, then Needs you, New, In progress;
+    seeded empty, rewritten by the bot as its work changes, per the seeded CLAUDE.md, which also
+    has it write each Needs you item as one question, end each item, after its last sentence, with
+    its thread's link from the thread tools and its pull request's URL, and end an ask a word or
+    two answers with up to four answers after an arrow: `→ Push | Hold`). The status line shows
+    first, as the digest's headline (parseBotDigestStatus; "Nothing yet." shows none). An ask's
+    answers (an arrow after a finished ask, each at most 32 characters; otherwise the arrow is
+    the line's prose) are outline buttons under its words: a click queues the ask, quoted, and the
+    answer as the owner's message to the bot (startTurn, dispatchMode queue), and the buttons give
+    way to "Sent" until the digest is read again. New and In progress fold under one Updates
+    label (SidebarV2SectionLabel, its count the items in them), folded by default, one choice for
+    every bot in localStorage. Its Threads panel shows it above the
     thread list (custom/bots/BotDigest), parsed by custom/bots/botDigestSections: a section's kind
     (needs-you or status) and one plain line per item (list marks, emphasis and link targets
     dropped; links that follow a line's last sentence dropped, so it reads as its ask, while a link

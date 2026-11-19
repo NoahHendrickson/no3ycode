@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseBotDigest } from "./botDigestSections";
+import { parseBotDigest, parseBotDigestStatus } from "./botDigestSections";
 
 describe("parseBotDigest", () => {
   it("keeps the sections with something in them, as plain lines", () => {
@@ -58,6 +58,7 @@ Nothing.
           },
         ],
         pullRequests: [{ url: "https://github.com/acme/app/pull/482", number: 482 }],
+        answers: [],
       },
       {
         text: "Fix billing is ready; merge #77 first?",
@@ -65,12 +66,14 @@ Nothing.
           "[Fix billing](t3-thread://v2/env-1/thread-2) is ready; merge https://github.com/acme/app/pull/77 first? <t3-thread://v2/env-1/thread-2>",
         threads: [{ link: { environmentId: "env-1", threadId: "thread-2" }, label: "Fix billing" }],
         pullRequests: [{ url: "https://github.com/acme/app/pull/77", number: 77 }],
+        answers: [],
       },
       {
         text: "See the review on #12.",
         source: "See the review on https://github.com/acme/app/pull/12/files#r9.",
         threads: [],
         pullRequests: [{ url: "https://github.com/acme/app/pull/12/files#r9", number: 12 }],
+        answers: [],
       },
     ]);
   });
@@ -94,6 +97,53 @@ Nothing.
       "The export finished.",
       "Retry the import?",
     ]);
+  });
+
+  it("reads an ask's short answers after its arrow, and its status line apart from any section", () => {
+    const digest = `# Digest
+
+Status: Waiting on you · next scan Thu 8:00
+
+## Needs you
+
+- OK to push #21 and open a PR? [Fix search](t3-thread://v2/env-1/thread-1) → Push | Hold
+- Remote only, or hybrid? →Remote|Hybrid|
+- Migrate A → B before the release?
+- Migrate A → B now
+- Which plan? → The one that keeps the old billing tables around for a quarter | New
+Status: a second one is ignored
+`;
+    const [needsYou] = parseBotDigest(digest);
+    expect(needsYou?.items.map(({ text, source, answers }) => ({ text, source, answers }))).toEqual(
+      [
+        {
+          text: "OK to push #21 and open a PR?",
+          source: "OK to push #21 and open a PR? [Fix search](t3-thread://v2/env-1/thread-1)",
+          answers: ["Push", "Hold"],
+        },
+        {
+          text: "Remote only, or hybrid?",
+          source: "Remote only, or hybrid?",
+          answers: ["Remote", "Hybrid"],
+        },
+        // Prose with an arrow in it, or answers too long to be buttons, stay the line's words.
+        {
+          text: "Migrate A → B before the release?",
+          source: "Migrate A → B before the release?",
+          answers: [],
+        },
+        { text: "Migrate A → B now", source: "Migrate A → B now", answers: [] },
+        {
+          text: "Which plan? → The one that keeps the old billing tables around for a quarter | New",
+          source:
+            "Which plan? → The one that keeps the old billing tables around for a quarter | New",
+          answers: [],
+        },
+      ],
+    );
+    expect(parseBotDigestStatus(digest)).toBe("Waiting on you · next scan Thu 8:00");
+    expect(parseBotDigestStatus("# Digest\n\nStatus: Nothing yet.\n")).toBeNull();
+    expect(parseBotDigestStatus("## Needs you\n\n- Pick a day\n")).toBeNull();
   });
 
   it("reads an untouched or headingless digest as empty", () => {
