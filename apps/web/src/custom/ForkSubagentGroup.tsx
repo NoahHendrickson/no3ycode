@@ -45,6 +45,7 @@ import {
 } from "~/components/chat/V2LifecycleRow";
 import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
+import { Button } from "~/components/ui/button";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
@@ -455,16 +456,17 @@ export function ForkSubagentCardView(props: {
           <Tooltip>
             <TooltipTrigger
               render={
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   type="button"
                   data-fork-subagent-open=""
                   aria-label={`Open ${member.title} thread`}
                   onClick={openThread}
-                  className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
                 />
               }
             >
-              <ArrowUpRightIcon aria-hidden className="size-3.5" />
+              <ArrowUpRightIcon aria-hidden className="size-3.5 text-foreground" />
             </TooltipTrigger>
             <TooltipPopup side="top">Open thread</TooltipPopup>
           </Tooltip>

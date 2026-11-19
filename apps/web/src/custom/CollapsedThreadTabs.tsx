@@ -28,7 +28,7 @@ import {
   prStatusIndicator,
   useLinkedThreadPullRequest,
 } from "~/components/ThreadStatusIndicators";
-import { InlineButton } from "~/components/ui/button";
+import { Button, InlineButton } from "~/components/ui/button";
 import {
   Menu,
   MenuGroup,
@@ -107,7 +107,6 @@ import {
 import { SegmentedTab, SegmentedTabs } from "./SegmentedTabs";
 import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
-import { SIDEBAR_V2_ICON_BUTTON_CLASS } from "./sidebarV2TrailingColumn";
 import { makeSplitDropHandlers, splitThreadDragSourceProps } from "./splitThreads/splitThreadDrag";
 import { closeSplitDraftAt } from "./splitThreads/splitPaneNavigation";
 import { resolveSidebarV2CardStatus } from "./sidebarV2CardStatus";
@@ -128,7 +127,6 @@ const StoredStatuses = Schema.Array(Schema.Literals(COLLAPSED_TAB_STATUSES));
 const TAB_SHELL_CLASS =
   "group/tab relative flex h-7 max-w-56 shrink items-center rounded-full text-xs font-medium";
 const TAB_SHELL_STYLE = { minWidth: COLLAPSED_TAB_MIN_WIDTH };
-const TAB_ACTION_CLASS = cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-5 rounded-full");
 const ACTIVE_TAB_CLASS = "bg-black/10 text-foreground dark:bg-white/16";
 // No group/tab: each half's hover actions answer to that half alone. Its minimum is its
 // halves' (one fitCollapsedThreadTabs slot each), so it never shrinks under them.
@@ -842,26 +840,28 @@ function ThreadTab(props: {
             className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden"
           >
             {props.canSettle ? (
-              <button
+              <Button
+                variant="ghost-muted"
+                size="icon-micro"
                 type="button"
                 aria-label="Settle thread"
-                className={TAB_ACTION_CLASS}
                 onClick={() => settleAndAdvance(threadRef)}
               >
                 <CheckIcon className="size-3" />
-              </button>
+              </Button>
             ) : null}
-            <button
+            <Button
+              variant="ghost-muted"
+              size="icon-micro"
               type="button"
               aria-label="More thread actions"
               aria-haspopup="menu"
               data-fork-tab-trigger=""
               data-fork-tab-actions-trigger=""
-              className={TAB_ACTION_CLASS}
               onClick={(event) => openMenu(anchoredMenuPosition(event.currentTarget))}
             >
               <EllipsisIcon className="size-3.5" />
-            </button>
+            </Button>
           </span>
         </span>
         {prBadge?.kind === "stack" || pr || currentLinkedPr ? (
@@ -945,14 +945,15 @@ function DraftTab(
       </span>
       {props.action ? (
         <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:pointer-events-auto [@media(any-hover:none)]:opacity-100">
-          <button
+          <Button
+            variant="ghost-muted"
+            size="icon-micro"
             type="button"
             aria-label={props.action.label}
-            className={TAB_ACTION_CLASS}
             onClick={props.action.run}
           >
             <XIcon className="size-3" />
-          </button>
+          </Button>
         </span>
       ) : null}
     </div>

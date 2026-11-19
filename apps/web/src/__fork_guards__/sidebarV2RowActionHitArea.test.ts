@@ -29,6 +29,7 @@ const chromeRows = readSibling("../custom/SidebarV2ChromeRows.tsx");
 const trailingColumn = readSibling("../custom/sidebarV2TrailingColumn.ts");
 const groupHeader = readSibling("../custom/SidebarV2ProjectGroupHeader.tsx");
 const theme = readSibling("../theme.custom.css");
+const button = readSibling("../components/ui/button.tsx");
 
 /** Every row action, and how many times each is rendered: "Settle thread" twice
  * because the card and the slim row both offer it. A label that stops appearing
@@ -50,9 +51,17 @@ const ROW_ACTIONS: ReadonlyArray<readonly [label: string, count: number]> = [
  * comfortably covers the longest of the set. */
 const TAG_WINDOW = 400;
 
+/** From the element's opening `<` through a window past its label: the shared props spread
+    ahead of the label. */
 function openingTags(label: string): string[] {
   return [...sidebarV2.matchAll(new RegExp(`aria-label="${label}"`, "gu"))].map((match) =>
-    sidebarV2.slice(match.index, match.index + TAG_WINDOW),
+    sidebarV2.slice(
+      Math.max(
+        sidebarV2.lastIndexOf("<Button", match.index),
+        sidebarV2.lastIndexOf("<button", match.index),
+      ),
+      match.index + TAG_WINDOW,
+    ),
   );
 }
 
@@ -68,28 +77,20 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
   });
 
   it("sizes the shared action box at 24px with a visible hover surface", () => {
-    // Fork-owned, and in a module of its own rather than in sidebarV2RowPolicy,
-    // whose subject is title-recede and row surface. The upstream file carries
-    // call sites, not rules, and the project header's plus shares the exact box
-    // rather than a copy of it.
-    const declaration = /export const SIDEBAR_V2_ICON_BUTTON_CLASS =\s*"([^"]*)"/u.exec(
-      trailingColumn,
-    )?.[1];
-    expect(declaration).toBeDefined();
-    // size-6 is the target; the fill is what makes the target legible, and
-    // without it the box is bigger but still guesswork.
-    expect(declaration).toContain("size-6");
-    expect(declaration).toContain("hover:bg-foreground/10");
-    // 24px is the WCAG 2.5.8 floor exactly. The row actions are hover-gated so
-    // never meet a coarse pointer, but the project header's plus is always
-    // rendered — hence the 44px expansion ui/button and the chrome rows'
-    // trailing buttons already carry, spent here once for the whole set.
-    expect(declaration).toContain("pointer-coarse:after:min-h-11");
-    expect(declaration).toContain("pointer-coarse:after:min-w-11");
-    // The expansion is an ::after, so the box has to be a containing block.
-    expect(declaration).toMatch(/(?:^|\s)relative(?:\s|$)/u);
-    // Keyboard focus needs the edge the hover fill draws, for the same reason.
-    expect(declaration).toContain("focus-visible:ring-2");
+    // Every icon-only control in the list is the Storybook Button at one variant and size, named
+    // once in a fork-owned module the call sites spread.
+    expect(trailingColumn).toContain(
+      'export const SIDEBAR_V2_ICON_BUTTON = { variant: "ghost-muted", size: "icon-xs" } as const;',
+    );
+    // That size is the 24px target on a fine pointer (sm and up), and the variant's fill is what
+    // makes the target legible; without it the box is bigger but still guesswork.
+    expect(button).toMatch(/"icon-xs":\s*"size-7 sm:size-6/u);
+    expect(button).toMatch(/"ghost-muted":\s*"[^"]*\[:hover,\[data-pressed\]\]:bg-accent/u);
+    // The 44px coarse-pointer target and the focus edge come from Button's base, an ::after on
+    // a positioned box.
+    expect(button).toContain("pointer-coarse:after:min-h-11");
+    expect(button).toContain("pointer-coarse:after:min-w-11");
+    expect(button).toContain("focus-visible:ring-2");
   });
 
   it("renders every row action from the shared class", () => {
@@ -98,17 +99,12 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // placement constant, which is what stopped them being three copies.
     const offenders = ROW_ACTIONS.flatMap(([label]) =>
       openingTags(label)
-        .filter(
-          (tag) =>
-            !tag.includes("SIDEBAR_V2_ICON_BUTTON_CLASS") &&
-            !tag.includes("SIDEBAR_V2_SLIM_ROW_ACTION_CLASS"),
-        )
+        .filter((tag) => !tag.startsWith("<Button") || !tag.includes("{...SIDEBAR_V2_ICON_BUTTON}"))
         .map(() => label),
     );
     expect(offenders).toEqual([]);
-    // The header's plus is the fifth consumer and the one furthest from these
-    // call sites; a copy of the box there is how the set starts drifting again.
-    expect(groupHeader).toContain("SIDEBAR_V2_ICON_BUTTON_CLASS");
+    // The header's buttons are Buttons too, at the design's 32px icon size.
+    expect(groupHeader).toMatch(/<Button\s+variant="ghost-muted"\s+size="icon"/u);
   });
 
   it("keeps every row action on screen", () => {

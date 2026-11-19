@@ -396,7 +396,7 @@ import { openBotThreadsPanel } from "~/custom/bots/botThreadsPanelStore";
 /* fork:end fork-bot-work-threads */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
 import {
-  SIDEBAR_V2_ICON_BUTTON_CLASS,
+  SIDEBAR_V2_ICON_BUTTON,
   SIDEBAR_V2_SLIM_ROW_ACTION_CLASS,
   SIDEBAR_V2_TRAILING_OFFSET,
 } from "~/custom/sidebarV2TrailingColumn";
@@ -460,7 +460,9 @@ import { stackedThreadToast, toastManager } from "./ui/toast";
 import { titleRegenerationToast } from "./threadTitleRegenerationToast";
 import { copyThreadReference } from "../lib/copyThreadReference";
 import { threadChipCopyTarget } from "@t3tools/client-runtime/thread-reference";
-import { InlineButton } from "./ui/button";
+/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+import { Button, InlineButton } from "./ui/button";
+/* fork:end sidebar-v2-row-action-hit-area */
 import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuShortcut, MenuTrigger } from "./ui/menu";
@@ -922,15 +924,15 @@ function SnoozeMenuButton(props: {
           render={
             <MenuTrigger
               render={
-                <button
+                /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                <Button
+                  {...SIDEBAR_V2_ICON_BUTTON}
                   type="button"
                   aria-label="Snooze thread"
                   onClick={(event) => event.stopPropagation()}
                   onDoubleClick={(event) => event.stopPropagation()}
-                  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                  className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                  /* fork:end sidebar-v2-row-action-hit-area */
                 />
+                /* fork:end sidebar-v2-row-action-hit-area */
               }
             />
           }
@@ -1898,49 +1900,55 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               </span>
               {variantAction === "unsnooze" ? (
                 !props.snoozeSupported ? null : (
-                  <button
-                    type="button"
-                    aria-label="Wake thread now"
-                    onClick={handleUnsnoozeClick}
-                    onPointerDown={handleActionPointerDown}
-                    /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                    className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}
-                    /* fork:end sidebar-v2-row-action-hit-area */
-                  >
-                    <AlarmClockOffIcon className="mb-px size-3" />
-                  </button>
+                  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                  <span className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}>
+                    <Button
+                      {...SIDEBAR_V2_ICON_BUTTON}
+                      type="button"
+                      aria-label="Wake thread now"
+                      onClick={handleUnsnoozeClick}
+                      onPointerDown={handleActionPointerDown}
+                    >
+                      <AlarmClockOffIcon className="mb-px size-3" />
+                    </Button>
+                  </span>
+                  /* fork:end sidebar-v2-row-action-hit-area */
                 )
               ) : !props.settlementSupported ? null : variantAction === "unsettle" ? (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        aria-label="Un-settle thread"
-                        onClick={handleUnsettleClick}
-                        onPointerDown={handleActionPointerDown}
-                        /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                        className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}
-                        /* fork:end sidebar-v2-row-action-hit-area */
-                      />
-                    }
-                  >
-                    <Undo2Icon className="mb-px size-3.5" />
-                  </TooltipTrigger>
-                  <TooltipPopup side="top">Un-settle thread</TooltipPopup>
-                </Tooltip>
+                /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                <span className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          {...SIDEBAR_V2_ICON_BUTTON}
+                          type="button"
+                          aria-label="Un-settle thread"
+                          onClick={handleUnsettleClick}
+                          onPointerDown={handleActionPointerDown}
+                        />
+                      }
+                    >
+                      <Undo2Icon className="mb-px size-3.5" />
+                    </TooltipTrigger>
+                    <TooltipPopup side="top">Un-settle thread</TooltipPopup>
+                  </Tooltip>
+                </span>
               ) : (
-                <button
-                  type="button"
-                  aria-label="Settle thread"
-                  onClick={handleSettleClick}
-                  onPointerDown={handleActionPointerDown}
-                  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                  className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}
-                  /* fork:end sidebar-v2-row-action-hit-area */
-                >
-                  <CheckIcon className="size-3" />
-                </button>
+                /* fork:end sidebar-v2-row-action-hit-area */
+                /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                <span className={SIDEBAR_V2_SLIM_ROW_ACTION_CLASS}>
+                  <Button
+                    {...SIDEBAR_V2_ICON_BUTTON}
+                    type="button"
+                    aria-label="Settle thread"
+                    onClick={handleSettleClick}
+                    onPointerDown={handleActionPointerDown}
+                  >
+                    <CheckIcon className="size-3" />
+                  </Button>
+                </span>
+                /* fork:end sidebar-v2-row-action-hit-area */
               )}
             </span>
             {isSwept ? sweepBadge : null}
@@ -2063,23 +2071,23 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                           guard counts each label's call sites. */}
                 {props.pinningSupported && canOperateThread ? (
                   props.isPinned ? (
-                    <button
+                    <Button
+                      {...SIDEBAR_V2_ICON_BUTTON}
                       type="button"
                       aria-label="Unpin thread"
                       onClick={handleUnpinClick}
-                      className={SIDEBAR_V2_ICON_BUTTON_CLASS}
                     >
                       <PinOffIcon className="size-3" />
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
+                      {...SIDEBAR_V2_ICON_BUTTON}
                       type="button"
                       aria-label="Pin thread"
                       onClick={handlePinClick}
-                      className={SIDEBAR_V2_ICON_BUTTON_CLASS}
                     >
                       <PinIcon className="size-3" />
-                    </button>
+                    </Button>
                   )
                 ) : null}
                 {/* fork:end sidebar-v2-row-action-hit-area */}
@@ -2093,31 +2101,30 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   />
                 ) : null}
                 {props.settlementSupported ? (
-                  <button
+                  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+                  <Button
+                    {...SIDEBAR_V2_ICON_BUTTON}
                     type="button"
                     aria-label="Settle thread"
                     onClick={handleSettleClick}
                     onPointerDown={handleActionPointerDown}
-                    /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-                    className={SIDEBAR_V2_ICON_BUTTON_CLASS}
-                    /* fork:end sidebar-v2-row-action-hit-area */
                   >
                     {/* Icon-only in v2: at 282px the "Settle" text pushed the
                               hover actions over the title, which now shares their
                               line. `aria-label` carries the name. */}
                     <CheckIcon className="size-3" />
-                  </button>
-                ) : null}
+                  </Button>
+                ) : /* fork:end sidebar-v2-row-action-hit-area */ null}
                 {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
                 {showDiscardDraft ? (
-                  <button
+                  <Button
+                    {...SIDEBAR_V2_ICON_BUTTON}
                     type="button"
                     aria-label="Discard draft"
                     onClick={handleDiscardDraftClick}
-                    className={SIDEBAR_V2_ICON_BUTTON_CLASS}
                   >
                     <XIcon className="size-3" />
-                  </button>
+                  </Button>
                 ) : null}
                 {/* fork:end sidebar-v2-draft-rows */}
               </span>

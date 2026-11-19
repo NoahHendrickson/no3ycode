@@ -63,7 +63,8 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { cn } from "~/lib/utils";
 import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
-import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
+import { Button } from "~/components/ui/button";
+import { SIDEBAR_V2_ICON_BUTTON, SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 import { SidebarV2SectionLabel } from "./SidebarV2SectionLabel";
 import { useQuietThreadShells } from "~/state/entities";
 import { usePullRequestsSupported } from "~/state/environments";
@@ -902,17 +903,18 @@ function ThreadsViewMenuContent<TProject extends SidebarV2ChromeProjectGroup>(
           >
             <ProjectFavicon project={project} className="size-4 shrink-0" />
             <span className="min-w-0 truncate text-sm">{project.displayName}</span>
-            <button
+            <Button
+              {...SIDEBAR_V2_ICON_BUTTON}
               type="button"
               aria-label={`Project actions for ${project.displayName}`}
-              className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className="ml-auto"
               // Stopping pointerdown keeps the checkbox item from toggling
               // the project as a side effect of reaching its overflow.
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => props.onProjectActions(event, project)}
             >
               <EllipsisVerticalIcon className="size-4" />
-            </button>
+            </Button>
           </ScopeCheckboxItem>
         ))}
       </div>

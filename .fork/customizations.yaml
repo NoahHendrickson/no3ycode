@@ -1451,12 +1451,15 @@
     edges you cannot see. On an icon-only control the box is the whole target,
     so undersizing it and hiding it are the same bug twice.
 
-    All of them share SIDEBAR_V2_ICON_BUTTON_CLASS, which is the point: they appear
-    in two row variants, three branches of one ternary and a project header, and
-    the previous drift between them is exactly what a per-call-site class string
-    produces. The three slim-row branches share one placement constant on top of
-    it — they are one control, and three copies is how the set came apart the
-    first time. Every offset below is derived in custom/sidebarV2TrailingColumn
+    All of them are the Storybook Button at one variant and size, spread from
+    SIDEBAR_V2_ICON_BUTTON ({ variant: "ghost-muted", size: "icon-xs" }), which is
+    the point: they appear in two row variants and three branches of one ternary,
+    and the previous drift between them is exactly what a per-call-site class
+    string produces. The three slim-row branches sit in one placement wrapper
+    (SIDEBAR_V2_SLIM_ROW_ACTION_CLASS on a span: position and reveal, since
+    Button takes no dynamic classes) — they are one control, and three copies is
+    how the set came apart the first time. The project header's ⋯ and + are
+    Buttons at the design's 32px icon size. Every offset below is derived in custom/sidebarV2TrailingColumn
     with the arithmetic that produced it; call sites name the one meant for them
     rather than spelling a value out.
 
@@ -1466,19 +1469,13 @@
     project header's plus is always rendered and its handler closes the mobile
     drawer, so it does — and 24px is the WCAG 2.5.8 floor exactly. That floor
     is a design-wide stance: the Figma chrome draws every icon-only control,
-    the always-on trailing buttons included, at the same 24px box. The class
-    also carries focus-visible, for the reason the hover fill exists: on a
-    transparent button you cannot see where the target ends, and that is as
-    true of keyboard focus as of the pointer. Its ring offset is 1, not the
-    chrome buttons' 2: these buttons sit inside the row surface's
-    overflow-hidden with their edge 4px from the clip boundary, and
-    ring-2 + offset-2 is exactly 4px of shadow — the ring rendered clipped.
-    offset-1 keeps the full ring with 1px to spare.
+    the always-on trailing buttons included, at the same 24px box (Button's
+    icon-xs is 24px from sm up, 28px under it). Button's focus ring is inset, so
+    the row surface's overflow-hidden cannot clip it.
 
-    The fill is bg-foreground/10, not bg-accent. These sit on top of the row's
-    own hover fill (--sidebar-row-hover), and a foreground alpha is the one
-    value that stays a step brighter than the row beneath it in dark and a step
-    darker in light.
+    The fill is Button's ghost hover (bg-accent), which under Basic is a
+    foreground alpha (8% black on light, 8% white on dark): a step past the
+    row's own hover fill beneath it either way.
 
     The card's trailing cell is h-6 rather than the title line's 18px —
     a 24px target cannot fit an 18px cell. It is centred in the line, so it
