@@ -1,11 +1,15 @@
-import { RunId } from "@t3tools/contracts";
+import { MessageId, RunId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  awaitedBotDigestAsks,
+  answeredBotDigestAsks,
+  type BotDigestRead,
+  botDigestQuotes,
   botDigestRevision,
+  nextBotDigestRead,
   parseBotDigest,
   parseBotDigestStatus,
+  quoteBotDigestAsk,
   splitBotDigestAsk,
 } from "./botDigestSections";
 
@@ -213,41 +217,99 @@ describe("splitBotDigestAsk", () => {
   });
 });
 
-describe("awaitedBotDigestAsks", () => {
-  it("holds the asks a reply quotes until the run that reads it settles", () => {
-    const run = (id: string, status: "completed" | "running" | "queued" | "cancelled") => ({
-      id: RunId.make(id),
-      status,
-    });
-    const user = (runId: string | null, text: string) => ({
-      role: "user" as const,
-      runId: runId === null ? null : RunId.make(runId),
-      text,
-    });
+type RunStatus = "completed" | "running" | "queued" | "cancelled";
+const run = (id: string, status: RunStatus) => ({ id: RunId.make(id), status });
+const user = (id: string, runId: string | null, text: string) => ({
+  id: MessageId.make(id),
+  role: "user" as const,
+  runId: runId === null ? null : RunId.make(runId),
+  text,
+});
+
+describe("botDigestQuotes", () => {
+  it("reads the asks each owner message quotes, and whether its run has settled", () => {
     expect(
-      awaitedBotDigestAsks({
-        runs: [
-          run("r1", "completed"),
-          run("r2", "running"),
-          run("r3", "queued"),
-          run("r4", "cancelled"),
-        ],
+      botDigestQuotes({
+        runs: [run("r1", "completed"), run("r2", "running"), run("r3", "cancelled")],
         messages: [
-          user("r1", "> Ship it?\n\nyes"),
-          { role: "assistant", runId: RunId.make("r2"), text: "> Not an answer?" },
-          user("r2", "> Merge #412?\n\nhold off"),
-          user("r3", "> Push | Hold?\n\nPush"),
-          user(null, "> Pick a day?\n\nThursday"),
-          user("r4", "> Cancelled before it ran?\n\nnever mind"),
+          user("m1", "r1", `${quoteBotDigestAsk("Ship it?")}yes`),
+          { ...user("m2", "r2", "> Not an answer?"), role: "assistant" as const },
+          user("m3", "r2", `Earlier draft\n\n${quoteBotDigestAsk("Merge #412?")}hold off`),
+          user("m4", "r3", `${quoteBotDigestAsk("Cancelled before it ran?")}never mind`),
+          // An imported message has no run, so it can never hide an ask for good.
+          user("m5", null, `${quoteBotDigestAsk("Pick a day?")}Thursday`),
+          user("m6", "r2", "no quote here"),
         ],
       }),
-    ).toEqual(new Set(["Merge #412?", "Push | Hold?", "Pick a day?"]));
-    // An earlier run starting or settling behind a later queued one still reads the digest again.
+    ).toEqual([
+      { messageId: "m1", asks: ["Ship it?"], settled: true },
+      { messageId: "m3", asks: ["Merge #412?"], settled: false },
+      { messageId: "m4", asks: ["Cancelled before it ran?"], settled: true },
+    ]);
+  });
+
+  it("moves the revision when any run starts or settles, behind a queued one too", () => {
     const revisions = [
       botDigestRevision([run("r1", "queued"), run("r2", "queued")]),
       botDigestRevision([run("r1", "running"), run("r2", "queued")]),
       botDigestRevision([run("r1", "completed"), run("r2", "queued")]),
     ];
     expect(new Set(revisions).size).toBe(3);
+  });
+});
+
+describe("nextBotDigestRead", () => {
+  const quote = (messageId: string, settled: boolean) => ({
+    messageId: MessageId.make(messageId),
+    asks: [`Ask ${messageId}?`],
+    settled,
+  });
+  const read = (revision: string, readAt: number | null, settled: string[]): BotDigestRead => ({
+    revision,
+    readAt,
+    settled: new Set(settled.map((id) => MessageId.make(id))),
+  });
+
+  it("hides an answer until a read lands under the revision that settled it", () => {
+    const pending = read("a", 1, []);
+    const answeredAsk = (state: BotDigestRead) =>
+      answeredBotDigestAsks([quote("m1", true)], state, new Map());
+    // The run settles: the revision moves, and the read in hand, even one landing now, predates it.
+    const moved = nextBotDigestRead(pending, {
+      revision: "b",
+      readAt: 2,
+      waiting: false,
+      quotes: [quote("m1", true)],
+    });
+    expect(moved).toEqual(read("b", 2, []));
+    expect(answeredAsk(moved)).toEqual(new Set(["Ask m1?"]));
+    // A refresh in flight, or a failed one, keeps it hidden.
+    for (const next of [
+      { readAt: 3, waiting: true },
+      { readAt: null, waiting: false },
+    ]) {
+      expect(
+        nextBotDigestRead(moved, { revision: "b", quotes: [quote("m1", true)], ...next }),
+      ).toBe(moved);
+    }
+    // The read under the new revision is the bot's word on it.
+    const fresh = nextBotDigestRead(moved, {
+      revision: "b",
+      readAt: 3,
+      waiting: false,
+      quotes: [quote("m1", true)],
+    });
+    expect(fresh).toEqual(read("b", 3, ["m1"]));
+    expect(answeredAsk(fresh)).toEqual(new Set());
+  });
+
+  it("hides an answer sent from here until the conversation holds it", () => {
+    const pending = new Map([[MessageId.make("m2"), "Ask m2?"]]);
+    const state = read("a", 1, []);
+    expect(answeredBotDigestAsks([], state, pending)).toEqual(new Set(["Ask m2?"]));
+    // Once held, the message's run decides, so a settled read brings the ask back.
+    expect(answeredBotDigestAsks([quote("m2", true)], read("a", 2, ["m2"]), pending)).toEqual(
+      new Set(),
+    );
   });
 });

@@ -5,7 +5,11 @@
  * line links and the answers an ask offers.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import type { OrchestrationV2ConversationMessage, OrchestrationV2Run } from "@t3tools/contracts";
+import type {
+  MessageId,
+  OrchestrationV2ConversationMessage,
+  OrchestrationV2Run,
+} from "@t3tools/contracts";
 import { parseThreadLinkHref, type ThreadLink } from "@t3tools/shared/threadLinks";
 
 export interface BotDigestPullRequest {
@@ -236,31 +240,96 @@ const SETTLED_RUN: ReadonlySet<string> = new Set([
   "rolled_back",
 ]);
 
-/** Changes whenever one of the conversation's runs starts or settles, any run, not only its latest. */
+/** How Reply and the answers quote an ask to the bot, and how its answers are found again. */
+export function quoteBotDigestAsk(source: string): string {
+  return `> ${source}\n\n`;
+}
+
+/** Changes whenever one of the conversation's runs starts or settles, any run, not only its
+    latest. Counts suffice because a run's status only moves forward. */
 export function botDigestRevision(runs: ReadonlyArray<Pick<OrchestrationV2Run, "status">>): string {
   const settled = runs.filter((run) => SETTLED_RUN.has(run.status)).length;
   const begun = runs.filter((run) => run.status !== "preparing" && run.status !== "queued").length;
   return `${runs.length}:${begun}:${settled}:${runs.at(-1)?.status ?? "none"}`;
 }
 
-/** Each ask an owner message quotes (`> ask`, as Reply and the answers write it) while the run
-    that reads that message is yet to settle: the bot has the answer, its digest does not yet. */
-export function awaitedBotDigestAsks(projection: {
+/** An owner message that quotes asks, and whether the run that reads it has settled. */
+export interface BotDigestQuote {
+  readonly messageId: MessageId;
+  readonly asks: ReadonlyArray<string>;
+  readonly settled: boolean;
+}
+
+/** The conversation's owner messages that quote an ask. One with no run (an imported message)
+    is left out, so it can never hide an ask for good. */
+export function botDigestQuotes(projection: {
   readonly messages: ReadonlyArray<
-    Pick<OrchestrationV2ConversationMessage, "role" | "runId" | "text">
+    Pick<OrchestrationV2ConversationMessage, "id" | "role" | "runId" | "text">
   >;
   readonly runs: ReadonlyArray<Pick<OrchestrationV2Run, "id" | "status">>;
-}): ReadonlySet<string> {
-  const awaited = new Set<string>();
+}): ReadonlyArray<BotDigestQuote> {
   const runs = new Map(projection.runs.map((run) => [run.id, run.status]));
-  for (let at = projection.messages.length - 1; at >= 0; at -= 1) {
-    const message = projection.messages[at]!;
-    if (message.role !== "user") continue;
-    const status = message.runId === null ? undefined : runs.get(message.runId);
-    if (status !== undefined && SETTLED_RUN.has(status)) continue;
-    for (const line of message.text.split(/\r?\n/)) {
-      if (line.startsWith("> ")) awaited.add(line.slice(2).trim());
-    }
+  const quotes: BotDigestQuote[] = [];
+  for (const message of projection.messages) {
+    if (message.role !== "user" || message.runId === null) continue;
+    const asks = message.text
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("> "))
+      .map((line) => line.slice(2).trim());
+    if (asks.length === 0) continue;
+    const status = runs.get(message.runId);
+    quotes.push({
+      messageId: message.id,
+      asks,
+      settled: status !== undefined && SETTLED_RUN.has(status),
+    });
   }
-  return awaited;
+  return quotes;
+}
+
+/** The digest read in hand: the revision it was read under, when it landed, and the quoting
+    messages whose runs had settled by then, so the bot's word on them is in it. */
+export interface BotDigestRead {
+  readonly revision: string | null;
+  readonly readAt: number | null;
+  readonly settled: ReadonlySet<MessageId>;
+}
+
+/** The read after this render. A moved revision makes every read in hand stale, even one landing
+    in the same render; only a later successful read under it brings in the newly settled. */
+export function nextBotDigestRead(
+  previous: BotDigestRead,
+  next: {
+    readonly revision: string | null;
+    readonly readAt: number | null;
+    readonly waiting: boolean;
+    readonly quotes: ReadonlyArray<BotDigestQuote>;
+  },
+): BotDigestRead {
+  if (previous.revision !== next.revision) {
+    return { revision: next.revision, readAt: next.readAt, settled: previous.settled };
+  }
+  if (next.waiting || next.readAt === null || next.readAt === previous.readAt) return previous;
+  return {
+    revision: previous.revision,
+    readAt: next.readAt,
+    settled: new Set(next.quotes.filter((quote) => quote.settled).map((quote) => quote.messageId)),
+  };
+}
+
+/** The asks answered and not yet settled in the digest in hand: quoted by a message the read
+    predates the settling of, or sent from here and not yet in the conversation. */
+export function answeredBotDigestAsks(
+  quotes: ReadonlyArray<BotDigestQuote>,
+  read: BotDigestRead,
+  pending: ReadonlyMap<MessageId, string>,
+): ReadonlySet<string> {
+  const answered = new Set<string>();
+  const held = new Set<MessageId>();
+  for (const quote of quotes) {
+    held.add(quote.messageId);
+    if (!read.settled.has(quote.messageId)) for (const ask of quote.asks) answered.add(ask);
+  }
+  for (const [messageId, ask] of pending) if (!held.has(messageId)) answered.add(ask);
+  return answered;
 }
