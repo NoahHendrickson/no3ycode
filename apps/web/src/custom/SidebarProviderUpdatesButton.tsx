@@ -44,6 +44,15 @@ export function SidebarProviderUpdatesButton() {
     setIsPending(false);
   };
 
+  return <SidebarProviderUpdatesPill machines={machines} onUpdate={() => void handleUpdate()} />;
+}
+
+/** @public — the pill as drawn, without the update run; Storybook renders it on its own. */
+export function SidebarProviderUpdatesPill(props: {
+  readonly machines: ReturnType<typeof useProviderUpdates>["machines"];
+  readonly onUpdate: () => void;
+}) {
+  const { machines } = props;
   return (
     // Icon-only so it and the app pill both fit the 208px minimum sidebar. It owns the push to
     // the right edge, so the app pill after it sits flush beside it.
@@ -55,7 +64,7 @@ export function SidebarProviderUpdatesButton() {
               type="button"
               aria-label="Update providers"
               className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-sidebar-control-surface text-sidebar-foreground outline-hidden ring-ring transition-colors hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-inset"
-              onClick={() => void handleUpdate()}
+              onClick={props.onUpdate}
             >
               <PackageIcon className="size-4" />
             </button>
