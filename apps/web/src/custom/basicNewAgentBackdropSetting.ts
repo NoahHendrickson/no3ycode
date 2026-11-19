@@ -18,8 +18,6 @@ export const BASIC_NEW_AGENT_BACKDROP_LABELS: Record<BasicNewAgentBackdrop, stri
 
 const BasicNewAgentBackdropSchema = Schema.Literals(BASIC_NEW_AGENT_BACKDROPS);
 
-export const isBasicNewAgentBackdrop = Schema.is(BasicNewAgentBackdropSchema);
-
 export function useBasicNewAgentBackdrop() {
   return useLocalStorage(
     "t3code:fork:basic-new-agent-backdrop:v1",

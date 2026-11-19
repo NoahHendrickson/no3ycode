@@ -1695,13 +1695,17 @@
     DesktopWindow's own repositioning (zoom, leaving full screen) reads the
     height recorded there. Windows' caption overlay keeps the OS height.
     The new-agent screen carries Inlet Black's pixel texture on every tone
-    (custom/BasicNewAgentTexture.tsx): in from the column's right edge, below
+    (custom/BasicNewAgentBackdrop.tsx): in from the column's right edge, below
     the header, in the tone's base and text colours. Settings › Appearance ›
     New agent background (Basic only, device-local) swaps it for the dither
     picture (custom/assets/basic-new-agent-dither.png, one pixel per cell, in
-    its own colours over a transparent ground) across the whole column: a whole
-    number of pixels per cell, at least 2, anchored top right; Figma's
-    Block / New agent › Background=Dither. Restore defaults resets the pick.
+    its own colours over a transparent ground) across the whole column
+    (custom/basicNewAgentDither.ts): every cell a whole number of device
+    pixels, at least 2 CSS px, grown only to reach the column's foot or keep
+    the column's centre in the gap between the drapes; the gap is centred when
+    the picture still covers the right edge, else the picture sits against it.
+    At 1184 x 900 it is Figma's Block / New agent › Background=Dither. Restore
+    defaults resets the pick.
     Light and Cream keep the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
@@ -1721,8 +1725,10 @@
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/custom/forkActivePalette.ts
     - apps/web/src/custom/icons/lucide-hugeicons.tsx
-    - apps/web/src/custom/BasicNewAgentTexture.tsx
-    - apps/web/src/custom/basicNewAgentBackdrop.ts
+    - apps/web/src/custom/BasicNewAgentBackdrop.tsx
+    - apps/web/src/custom/basicNewAgentBackdropSetting.ts
+    - apps/web/src/custom/basicNewAgentDither.ts
+    - apps/web/src/custom/ForkChoiceSelect.tsx
     - apps/web/src/custom/assets/basic-new-agent-dither.png
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
@@ -1738,6 +1744,7 @@
   verify:
     - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
+    - apps/web/src/custom/basicNewAgentDither.test.ts
 
 - id: fork-cool-darker-theme
   intent: >

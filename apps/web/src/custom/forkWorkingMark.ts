@@ -43,8 +43,6 @@ export const FORK_WORKING_MARK_LABELS: Record<ForkWorkingMark, string> = {
 
 const ForkWorkingMarkSchema = Schema.Literals(FORK_WORKING_MARKS);
 
-export const isForkWorkingMark = Schema.is(ForkWorkingMarkSchema);
-
 // One module-level store rather than `useLocalStorage` per mark: every working
 // row, the transcript row and the composer pill each mount one, and the latter
 // two re-render on every streamed chunk. This decodes storage once per change

@@ -45,9 +45,9 @@ import {
   BASIC_NEW_AGENT_BACKDROP_LABELS,
   BASIC_NEW_AGENT_BACKDROPS,
   DEFAULT_BASIC_NEW_AGENT_BACKDROP,
-  isBasicNewAgentBackdrop,
   useBasicNewAgentBackdrop,
-} from "../../custom/basicNewAgentBackdrop";
+} from "../../custom/basicNewAgentBackdropSetting";
+import { ForkChoiceSelect } from "../../custom/ForkChoiceSelect";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
@@ -61,7 +61,6 @@ import {
   DEFAULT_FORK_GLASS_3D_MODE,
   FORK_GLASS_3D_MODE_LABELS,
   FORK_GLASS_3D_MODES,
-  isForkGlass3dMode,
   useForkGlass3d,
 } from "../../custom/forkGlass3d";
 /* fork:end fork-glass-3d */
@@ -69,7 +68,6 @@ import {
 import {
   FORK_WORKING_MARK_LABELS,
   FORK_WORKING_MARKS,
-  isForkWorkingMark,
   useForkWorkingMark,
   useForkWorkingMarkPick,
 } from "../../custom/forkWorkingMark";
@@ -239,25 +237,13 @@ export function AppearanceSettingsPanel() {
               )
             }
             control={
-              <Select
+              <ForkChoiceSelect
                 value={basicNewAgentBackdrop}
-                onValueChange={(value) => {
-                  if (isBasicNewAgentBackdrop(value)) setBasicNewAgentBackdrop(value);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-44" aria-label="New agent background">
-                  <SelectValue>
-                    {BASIC_NEW_AGENT_BACKDROP_LABELS[basicNewAgentBackdrop]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectPopup align="end" alignItemWithTrigger={false}>
-                  {BASIC_NEW_AGENT_BACKDROPS.map((backdrop) => (
-                    <SelectItem hideIndicator key={backdrop} value={backdrop}>
-                      {BASIC_NEW_AGENT_BACKDROP_LABELS[backdrop]}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
+                options={BASIC_NEW_AGENT_BACKDROPS}
+                labels={BASIC_NEW_AGENT_BACKDROP_LABELS}
+                onChange={setBasicNewAgentBackdrop}
+                ariaLabel="New agent background"
+              />
             }
           />
         ) : null}
@@ -316,23 +302,13 @@ export function AppearanceSettingsPanel() {
               )
             }
             control={
-              <Select
+              <ForkChoiceSelect
                 value={glass3d}
-                onValueChange={(value) => {
-                  if (isForkGlass3dMode(value)) setGlass3d(value);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-44" aria-label="3D glass">
-                  <SelectValue>{FORK_GLASS_3D_MODE_LABELS[glass3d]}</SelectValue>
-                </SelectTrigger>
-                <SelectPopup align="end" alignItemWithTrigger={false}>
-                  {FORK_GLASS_3D_MODES.map((mode) => (
-                    <SelectItem hideIndicator key={mode} value={mode}>
-                      {FORK_GLASS_3D_MODE_LABELS[mode]}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
+                options={FORK_GLASS_3D_MODES}
+                labels={FORK_GLASS_3D_MODE_LABELS}
+                onChange={setGlass3d}
+                ariaLabel="3D glass"
+              />
             }
           />
         ) : null}
@@ -347,23 +323,13 @@ export function AppearanceSettingsPanel() {
             ) : null
           }
           control={
-            <Select
+            <ForkChoiceSelect
               value={workingMark}
-              onValueChange={(value) => {
-                if (isForkWorkingMark(value)) setWorkingMark(value);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Working indicator">
-                <SelectValue>{FORK_WORKING_MARK_LABELS[workingMark]}</SelectValue>
-              </SelectTrigger>
-              <SelectPopup align="end" alignItemWithTrigger={false}>
-                {FORK_WORKING_MARKS.map((mark) => (
-                  <SelectItem hideIndicator key={mark} value={mark}>
-                    {FORK_WORKING_MARK_LABELS[mark]}
-                  </SelectItem>
-                ))}
-              </SelectPopup>
-            </Select>
+              options={FORK_WORKING_MARKS}
+              labels={FORK_WORKING_MARK_LABELS}
+              onChange={setWorkingMark}
+              ariaLabel="Working indicator"
+            />
           }
         />
         {/* fork:end fork-working-mark */}

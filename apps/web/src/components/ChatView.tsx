@@ -434,7 +434,7 @@ import { useDraftHeroLayoutTransition } from "./chat/useDraftHeroLayoutTransitio
 import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
 /* fork:end fork-inlet-black-texture */
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
-import { BasicNewAgentTexture } from "~/custom/BasicNewAgentTexture";
+import { BasicNewAgentBackdrop } from "~/custom/BasicNewAgentBackdrop";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
 import { useIsChatThread } from "~/custom/useChatMode";
@@ -3790,7 +3790,7 @@ export default function ChatView(props: ChatViewProps) {
         <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
         {/* fork:end fork-inlet-black-texture */}
         {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
-        <BasicNewAgentTexture shown={isDraftHeroState && !embedded} />
+        <BasicNewAgentBackdrop shown={isDraftHeroState && !embedded} />
         {/* fork:end fork-basic-theme */}
         {embedded ? null : (
           <header

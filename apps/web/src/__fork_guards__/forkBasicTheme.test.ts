@@ -18,7 +18,8 @@ import {
   resolveActiveForkPalette,
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
-import { BASIC_NEW_AGENT_BACKDROPS } from "../custom/basicNewAgentBackdrop";
+import { BASIC_NEW_AGENT_BACKDROPS } from "../custom/basicNewAgentBackdropSetting";
+import { DITHER_CELLS } from "../custom/basicNewAgentDither";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -127,22 +128,22 @@ describe("fork guard: fork-basic-theme", () => {
     expect(appearancePanel).toMatch(/appearance === BASIC_THEME \?[\s\S]*?<ForkBasicTonePicker/u);
   });
 
-  it("offers the dither picture behind a new agent, kept one pixel per cell", () => {
+  it("offers the dither picture behind a new agent, one PNG pixel per cell", () => {
     expect(appearancePanel).toMatch(
       /appearance === BASIC_THEME \? \(\s*<SettingsRow\s*title="New agent background"/u,
     );
     expect(BASIC_NEW_AGENT_BACKDROPS).toEqual(["texture", "dither"]);
-    const stage = readSibling("../custom/BasicNewAgentTexture.tsx");
-    expect(stage).toContain('import ditherUrl from "./assets/basic-new-agent-dither.png";');
-    expect(stage).toMatch(/backdrop === "dither"/u);
-    expect(stage).toContain('imageRendering: "pixelated"');
-    // The size rule keeps whole-pixel cells only while the PNG has one pixel per cell.
-    expect(stage).toContain('backgroundSize: "auto max(1118px, round(up, 100%, 559px))"');
+    expect(readSibling("../components/ChatView.tsx")).toContain(
+      "<BasicNewAgentBackdrop shown={isDraftHeroState && !embedded} />",
+    );
     const png = NodeFS.readFileSync(
       NodeURL.fileURLToPath(
         new URL("../custom/assets/basic-new-agent-dither.png", import.meta.url),
       ),
     );
-    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([864, 559]);
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([
+      DITHER_CELLS.width,
+      DITHER_CELLS.height,
+    ]);
   });
 });

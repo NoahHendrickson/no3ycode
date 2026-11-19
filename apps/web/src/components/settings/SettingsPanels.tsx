@@ -68,7 +68,7 @@ import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
 import {
   DEFAULT_BASIC_NEW_AGENT_BACKDROP,
   useBasicNewAgentBackdrop,
-} from "../../custom/basicNewAgentBackdrop";
+} from "../../custom/basicNewAgentBackdropSetting";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
 import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
