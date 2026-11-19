@@ -85,9 +85,12 @@ export function ForkThemePicker(props: {
             aria-pressed={isActive}
             className={cn(
               "flex cursor-pointer flex-col items-stretch gap-2 rounded-xl border p-2 text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-7 focus-visible:outline-foreground/60",
+              // The pick is the most solid card, never the most see-through (accent is a faint tint
+              // in Basic and Glass, so a fill built from it vanished); hover lifts the outline,
+              // which reads in every palette because it follows the foreground.
               isActive
-                ? "border-transparent bg-accent/30 ring-2 ring-inset ring-ring"
-                : "border-border/70 bg-card/60 hover:bg-accent/10",
+                ? "border-transparent bg-card ring-2 ring-inset ring-ring"
+                : "border-border/70 bg-card/60 hover:border-foreground/24",
             )}
             key={palette}
             onClick={() => props.onChange(palette)}
@@ -117,7 +120,8 @@ export function ForkThemePicker(props: {
   );
 }
 
-const BASIC_TONE_SWATCHES = BASIC_TONES.map((tone) => ({
+/** @public — Storybook's Fork/Swatch picker story drives the picker with it. */
+export const BASIC_TONE_SWATCHES = BASIC_TONES.map((tone) => ({
   value: tone,
   label: BASIC_TONE_OPTIONS[tone].label,
   swatch: BASIC_TONE_OPTIONS[tone].base,

@@ -1,4 +1,8 @@
-import { PROVIDER_DISPLAY_NAMES } from "@t3tools/contracts";
+import {
+  type EnvironmentId,
+  PROVIDER_DISPLAY_NAMES,
+  type ProviderDriverKind,
+} from "@t3tools/contracts";
 import { settlePromise } from "@t3tools/client-runtime/state/runtime";
 import { PackageIcon } from "lucide-react";
 import { useRef, useState } from "react";
@@ -45,6 +49,22 @@ export function SidebarProviderUpdatesButton() {
   };
 
   return (
+    <SidebarProviderUpdatesButtonView machines={machines} onUpdate={() => void handleUpdate()} />
+  );
+}
+
+/** @public — the pill as drawn, without the update run; Storybook renders it on its own. */
+export function SidebarProviderUpdatesButtonView(props: {
+  /** What the pill draws: one line per machine naming the providers it would update. */
+  readonly machines: ReadonlyArray<{
+    readonly environmentId: EnvironmentId;
+    readonly label: string;
+    readonly candidates: ReadonlyArray<{ readonly driver: ProviderDriverKind }>;
+  }>;
+  readonly onUpdate: () => void;
+}) {
+  const { machines } = props;
+  return (
     // Icon-only so it and the app pill both fit the 208px minimum sidebar. It owns the push to
     // the right edge, so the app pill after it sits flush beside it.
     <SidebarMenuItem className="ml-auto shrink-0 [&+li]:ml-0">
@@ -55,7 +75,7 @@ export function SidebarProviderUpdatesButton() {
               type="button"
               aria-label="Update providers"
               className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-sidebar-control-surface text-sidebar-foreground outline-hidden ring-ring transition-colors hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-inset"
-              onClick={() => void handleUpdate()}
+              onClick={props.onUpdate}
             >
               <PackageIcon className="size-4" />
             </button>
