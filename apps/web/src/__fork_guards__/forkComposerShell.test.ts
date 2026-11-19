@@ -294,6 +294,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(
       resolveThreadContextBranch({ ...branch, isGitRepo: false, activeWorktreePath: null }),
     ).toBeNull();
+    // Clicking the branch chip copies the branch name.
+    const readout = readSibling("../custom/ThreadContextReadout.tsx");
+    expect(readout).toContain('writeTextToClipboard(branch, "branch name")');
+    expect(readout).toContain("onClick={() => copyBranchName(branch)}");
   });
 
   it("keeps composer styling scoped to the fork marker", () => {
