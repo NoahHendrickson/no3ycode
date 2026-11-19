@@ -4,14 +4,15 @@
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
-import { ReplyIcon } from "lucide-react";
+import { MessageCircleQuestionIcon, ReplyIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
+import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { Button } from "~/components/ui/button";
 import { useComposerDraftStore } from "~/composerDraftStore";
-import { newMessageId } from "~/lib/utils";
+import { cn, newMessageId } from "~/lib/utils";
 import { readThreadShell, useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
@@ -32,6 +33,8 @@ import {
   parseBotDigestStatus,
   splitBotDigestAsk,
 } from "./botDigestSections";
+import type { BotPullRequest } from "./botDigestItemLinks";
+import { useBotPullRequestState } from "./BotPullRequestMark";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";
 
@@ -152,6 +155,15 @@ function BotDigestAsksFor(props: {
             key={item.source}
             question={question}
             detail={detail}
+            pullRequest={line.links.pullRequests[0] ?? null}
+            environmentId={botRef.environmentId}
+            links={
+              <BotDigestLinkRow
+                links={line.links}
+                environmentId={botRef.environmentId}
+                localVisits={localVisits}
+              />
+            }
             actions={
               <>
                 {given === undefined ? null : (
@@ -184,50 +196,59 @@ function BotDigestAsksFor(props: {
                 </Button>
               </>
             }
-          >
-            {/* The floor always shows, so every ask is the composer's two layers. */}
-            <div className="flex min-w-0 items-center gap-3 py-2 pr-2 pl-3 text-xs leading-4 text-muted-foreground">
-              <span className="shrink-0">Needs you</span>
-              <BotDigestLinkRow
-                links={line.links}
-                environmentId={botRef.environmentId}
-                localVisits={localVisits}
-              />
-            </div>
-          </BotDigestAskCard>
+          />
         );
       })}
     </div>
   );
 }
 
-/** One ask drawn as the chat composer, by wearing its stamps, so each theme paints it as its
-    composer. The prompt surface reads top to bottom: the question, its detail, then what you
-    can do; `children` (what it is and what it links) sits on the vessel floor beneath. */
+/** One ask as a card. A tile leads it in the ask's colour: the state of the pull request it is
+    about (open, draft, merged, closed), or the sidebar's needs-input colour. Beside the tile it
+    reads top to bottom: the question, its detail, what it links, then what you can do. */
 function BotDigestAskCard(props: {
   readonly question: string;
   readonly detail: string | null;
+  readonly pullRequest: BotPullRequest | null;
+  readonly environmentId: EnvironmentId;
+  readonly links: ReactNode;
   readonly actions: ReactNode;
-  readonly children: ReactNode;
 }) {
+  const { state } = useBotPullRequestState(props.pullRequest, props.environmentId);
+  const Icon =
+    props.pullRequest === null
+      ? MessageCircleQuestionIcon
+      : (state?.Icon ?? PullRequestGlyph.pullRequest);
   return (
-    <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
-      <div data-fork-composer-box="true">
-        <div data-fork-composer-surface="true" className="flex flex-col gap-1 px-3 pt-2.5 pb-2">
-          {props.question === "" ? null : (
-            <p className="text-sm leading-5 font-medium break-words text-foreground">
-              {props.question}
-            </p>
-          )}
-          {props.detail === null ? null : (
-            <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
-              {props.detail}
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
-        </div>
+    <div
+      data-fork-bot-digest-ask=""
+      className="flex min-w-0 gap-3 rounded-lg border border-border bg-card p-3 text-card-foreground"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
+          props.pullRequest === null
+            ? "text-sidebar-v2-status-input"
+            : (state?.toneClassName ?? "text-muted-foreground"),
+        )}
+      >
+        <Icon className="size-4" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {props.question === "" ? null : (
+          <p className="text-sm leading-5 font-medium break-words text-foreground">
+            {props.question}
+          </p>
+        )}
+        {props.detail === null ? null : (
+          <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
+            {props.detail}
+          </p>
+        )}
+        {props.links}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
       </div>
-      {props.children}
     </div>
   );
 }
