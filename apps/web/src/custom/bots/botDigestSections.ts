@@ -43,6 +43,9 @@ const STATUS_LINE = /^status:\s*(.+)$/i;
 const ANSWERS = /\s*→\s*([^→]+)$/u;
 const MAX_ANSWERS = 4;
 const MAX_ANSWER_LENGTH = 32;
+/** Where an ask is finished: sentence punctuation, or a link ending the line. */
+const FINISHED_ASK =
+  /(?:[?.!]|\]\((?:<[^<>]*>|[^\s()]*)\)|<[a-z][\w+.-]*:\/\/[^\s<>]+>|https?:\/\/\S+)$/iu;
 /** A code span, a Markdown link (an angle-bracketed destination may hold parentheses), an
     autolink, or a bare web URL. */
 const TOKEN =
@@ -67,11 +70,9 @@ const plain = (segments: ReadonlyArray<Segment>) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/** One line as plain words, and the threads and pull requests it links. A link reads as its
-    label, a bare pull request URL as its number. */
 /** The line without its answers, and the answers, when the arrow follows a finished ask (a
-    question, a sentence or its links, bare URLs included) and what follows reads as short answers; anything else,
-    like "Migrate A → B now", stays part of the line. */
+    question or sentence, or a link: a Markdown link, an autolink or a bare URL) and what follows
+    reads as short answers; anything else, like "Migrate (staging) → prod", stays the line's. */
 function splitAnswers(line: string): { readonly line: string; readonly answers: string[] } {
   const match = ANSWERS.exec(line);
   const answers =
@@ -81,7 +82,7 @@ function splitAnswers(line: string): { readonly line: string; readonly answers: 
       .filter(Boolean) ?? [];
   if (
     match === null ||
-    !/(?:[?.!)>]|https?:\/\/\S+)$/u.test(line.slice(0, match.index).trimEnd()) ||
+    !FINISHED_ASK.test(line.slice(0, match.index).trimEnd()) ||
     answers.length === 0 ||
     answers.length > MAX_ANSWERS ||
     answers.some((answer) => answer.length > MAX_ANSWER_LENGTH)
@@ -91,8 +92,10 @@ function splitAnswers(line: string): { readonly line: string; readonly answers: 
   return { line: line.slice(0, match.index), answers };
 }
 
-function parseItem(line: string): BotDigestItem {
-  const split = splitAnswers(unmarked(line));
+/** One line as plain words, and the threads and pull requests it links. A link reads as its
+    label, a bare pull request URL as its number. Only an ask (`withAnswers`) reads answers. */
+function parseItem(line: string, withAnswers = false): BotDigestItem {
+  const split = withAnswers ? splitAnswers(unmarked(line)) : { line: unmarked(line), answers: [] };
   const source = split.line.trim();
   const threads: Array<{ link: ThreadLink; label: string }> = [];
   const pullRequests: BotDigestPullRequest[] = [];
@@ -172,9 +175,9 @@ export function parseBotDigest(contents: string): ReadonlyArray<BotDigestSection
       sections.push(current);
       continue;
     }
-    // Skips a level-one heading and the status line; a "#" with no space after it starts an item.
-    if (current === null || line === "" || /^#\s/.test(line) || STATUS_LINE.test(line)) continue;
-    const item = parseItem(line);
+    // Skips the title and the status line under it; a "#" with no space after it starts an item.
+    if (current === null || line === "" || /^#\s/.test(line)) continue;
+    const item = parseItem(line, /^needs you$/i.test(current.title));
     const linked = item.threads.length > 0 || item.pullRequests.length > 0;
     // A repeated line says nothing new, and each line keys its row.
     if (
@@ -193,10 +196,11 @@ export function parseBotDigest(contents: string): ReadonlyArray<BotDigestSection
     }));
 }
 
-/** The digest's status line in plain words (`Status: Waiting on you · next scan Thu 8:00`), or
-    null when the bot wrote none. */
+/** The digest's status line in plain words (`Status: Waiting on you · next scan Thu 8:00`), read
+    under the title only, or null when the bot wrote none. */
 export function parseBotDigestStatus(contents: string): string | null {
   for (const raw of contents.split(/\r?\n/)) {
+    if (/^#{2,6}\s/.test(raw.trim())) return null;
     const status = STATUS_LINE.exec(raw.trim())?.[1];
     if (status === undefined) continue;
     const text = parseItem(status).text;

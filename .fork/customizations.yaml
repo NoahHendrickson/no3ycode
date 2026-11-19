@@ -7667,6 +7667,8 @@
     - apps/web/src/custom/bots/botCrew.ts
     - apps/web/src/custom/bots/readListedBots.ts
     - apps/web/src/custom/bots/useSetBotWork.ts
+    # One send-to-bot path, shared with the digest's answers.
+    - apps/web/src/custom/bots/useTellBot.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx

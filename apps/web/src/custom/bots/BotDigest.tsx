@@ -21,13 +21,11 @@ import { Button } from "~/components/ui/button";
 import { toastManager } from "~/components/ui/toast";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
-import { cn, newMessageId } from "~/lib/utils";
-import { readThreadShell, useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
+import { cn } from "~/lib/utils";
+import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
 import { revisionedQuery } from "~/state/revisionedQuery";
-import { threadEnvironment } from "~/state/threads";
-import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 import { useUiStateStore } from "~/uiStateStore";
 
 import {
@@ -46,36 +44,22 @@ import type { BotPullRequest } from "./botDigestItemLinks";
 import { useBotPullRequestState } from "./BotPullRequestMark";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";
+import { useTellBot } from "./useTellBot";
 
 const NO_DIGEST = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(false)).pipe(
   Atom.withLabel("bot-digest:none"),
 );
 const NO_ANSWERS: ReadonlyMap<string, string> = new Map();
+type SentAnswers = {
+  readonly revision: string | null;
+  readonly answers: ReadonlyMap<string, string>;
+};
+/** Each bot's sent answers outlive its digest's mount, so leaving the conversation and coming back
+    before the bot answers cannot offer the same ask twice. */
+const sentByBot = new Map<string, SentAnswers>();
 const DismissedAsks = Schema.Array(Schema.String);
 const NO_DISMISSED: ReadonlyArray<string> = [];
 const SETTLED_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
-
-/** Queues `text` as the owner's message to the bot, behind whatever it is doing; false when it
-    could not be sent. */
-function useTellBot(): (botRef: ScopedThreadRef, text: string) => Promise<boolean> {
-  const startTurn = useOrchestrationCommand(threadEnvironment.startTurn);
-  return async (botRef, text) => {
-    const shell = readThreadShell(botRef);
-    if (shell === null) return false;
-    const result = await startTurn({
-      environmentId: botRef.environmentId,
-      input: {
-        threadId: botRef.threadId,
-        message: { messageId: newMessageId(), role: "user", text, attachments: [] },
-        runtimeMode: shell.runtimeMode,
-        interactionMode: shell.interactionMode,
-        dispatchMode: "queue",
-        createdAt: new Date().toISOString(),
-      },
-    });
-    return result._tag === "Success";
-  };
-}
 
 /** The digest of the open thread when it is a bot, just above its composer: the status line and
     a card per Needs you ask. Nothing draws for any other thread, or while the bot has neither. */
@@ -108,13 +92,19 @@ function BotDigestAsksFor(props: {
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
   // The answer each ask was given here, until the bot settles a run after it: the digest read then
   // is the bot's word, and an ask it kept offers its answers again.
-  const [sentFor, setSentFor] = useState<{
-    readonly revision: string | null;
-    readonly answers: ReadonlyMap<string, string>;
-  }>({ revision: null, answers: NO_ANSWERS });
+  const botKey = scopedThreadKey(botRef);
+  const [sentFor, setSent] = useState<SentAnswers>(
+    () => sentByBot.get(botKey) ?? { revision: null, answers: NO_ANSWERS },
+  );
+  const setSentFor = (update: SentAnswers | ((previous: SentAnswers) => SentAnswers)) =>
+    setSent((previous) => {
+      const next = typeof update === "function" ? update(previous) : update;
+      sentByBot.set(botKey, next);
+      return next;
+    });
   // Put away on this device, by the ask as written: one the bot rewrites comes back.
   const [dismissed, setDismissed] = useLocalStorage(
-    `t3code:fork:bot-digest-dismissed:${scopedThreadKey(botRef)}`,
+    `t3code:fork:bot-digest-dismissed:${botKey}`,
     NO_DISMISSED,
     DismissedAsks,
   );

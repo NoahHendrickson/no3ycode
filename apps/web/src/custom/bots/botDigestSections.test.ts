@@ -112,7 +112,12 @@ Status: Waiting on you · next scan Thu 8:00
 - Migrate A → B before the release?
 - Migrate A → B now
 - Which plan? → The one that keeps the old billing tables around for a quarter | New
-Status: a second one is ignored
+- Migrate (staging) → prod
+
+## In progress
+
+- Deploy v2 (beta). → stable
+Status: CI red on #9
 `;
     const [needsYou] = parseBotDigest(digest);
     expect(needsYou?.items.map(({ text, source, answers }) => ({ text, source, answers }))).toEqual(
@@ -145,9 +150,19 @@ Status: a second one is ignored
             "Which plan? → The one that keeps the old billing tables around for a quarter | New",
           answers: [],
         },
+        // A closing parenthesis is not a link, so "prod" stays the line's.
+        { text: "Migrate (staging) → prod", source: "Migrate (staging) → prod", answers: [] },
       ],
     );
+    // Only an ask reads answers, and a status line inside a section is that section's item.
+    expect(
+      parseBotDigest(digest)[1]?.items.map(({ text, answers }) => ({ text, answers })),
+    ).toEqual([
+      { text: "Deploy v2 (beta). → stable", answers: [] },
+      { text: "Status: CI red on #9", answers: [] },
+    ]);
     expect(parseBotDigestStatus(digest)).toBe("Waiting on you · next scan Thu 8:00");
+    expect(parseBotDigestStatus("# Digest\n\n## New\n\nStatus: CI red\n")).toBeNull();
     expect(parseBotDigestStatus("# Digest\n\nStatus: Nothing yet.\n")).toBeNull();
     expect(parseBotDigestStatus("## Needs you\n\n- Pick a day\n")).toBeNull();
   });
