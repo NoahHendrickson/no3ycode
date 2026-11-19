@@ -1,5 +1,5 @@
 /**
- * Where Basic's new-agent dither sits in the chat column — see
+ * Where Basic's new-agent dithers sit in the chat column — see
  * `.fork/customizations.yaml#fork-basic-theme`.
  */
 
@@ -12,11 +12,12 @@ const GAP = { from: 533, centre: 606 } as const;
 /** The size the picture was drawn for: a MacBook screen at 2px a cell. */
 const MIN_CELL_CSS_PX = 2;
 
-export interface DitherLayout {
+export interface PictureLayout {
   /** One cell, in CSS px; always a whole number of device pixels. */
   readonly cell: number;
-  /** The picture's left edge from the column's, in CSS px (zero or less). */
+  /** The picture's left and top edges from the column's, in CSS px (zero or less). */
   readonly left: number;
+  readonly top: number;
 }
 
 /**
@@ -24,7 +25,7 @@ export interface DitherLayout {
  * inside the gap with the picture against the right edge. The picture centres its gap on the column
  * when that still covers the right edge, and otherwise sits against it.
  */
-export function ditherLayout(box: { width: number; height: number }, dpr: number): DitherLayout {
+export function ditherLayout(box: { width: number; height: number }, dpr: number): PictureLayout {
   const devicePx = Math.max(
     Math.round(MIN_CELL_CSS_PX * dpr),
     Math.ceil((box.height * dpr) / DITHER_CELLS.height),
@@ -34,5 +35,32 @@ export function ditherLayout(box: { width: number; height: number }, dpr: number
   const cell = devicePx / dpr;
   const left = Math.max(box.width - DITHER_CELLS.width * cell, box.width / 2 - GAP.centre * cell);
   // Up, never down: a picture short of the right edge by a device pixel shows a seam.
-  return { cell, left: Math.min(0, Math.ceil(left * dpr) / dpr) };
+  return { cell, left: Math.min(0, Math.ceil(left * dpr) / dpr), top: 0 };
+}
+
+/** assets/basic-new-agent-mountain.png, one pixel per cell; opaque, so it covers the column. */
+export const MOUNTAIN_CELLS = { width: 692, height: 447 } as const;
+
+/** The smallest whole-device-pixel cell that covers the column, with the picture centred on it. */
+export function mountainLayout(box: { width: number; height: number }, dpr: number): PictureLayout {
+  const devicePx = Math.max(
+    Math.ceil((box.width * dpr) / MOUNTAIN_CELLS.width),
+    Math.ceil((box.height * dpr) / MOUNTAIN_CELLS.height),
+    1,
+  );
+  const cell = devicePx / dpr;
+  // The nearest whole-device-pixel offset to centred that still covers both edges.
+  const place = (column: number, picture: number) =>
+    Math.min(
+      0,
+      Math.max(
+        Math.ceil((column - picture) * dpr) / dpr,
+        Math.round(((column - picture) / 2) * dpr) / dpr,
+      ),
+    );
+  return {
+    cell,
+    left: place(box.width, MOUNTAIN_CELLS.width * cell),
+    top: place(box.height, MOUNTAIN_CELLS.height * cell),
+  };
 }

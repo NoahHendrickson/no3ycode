@@ -1,3 +1,4 @@
+import { runWhileFocused } from "../backgroundPausedLoop";
 import { GLYPH_GROUPS, GLYPH_SIZE, SLOT_COLORS, type Glyph } from "./pixelTextureGlyphs";
 import { createTextureModel, NEAR_ROWS, type TextureCell } from "./textureModel";
 
@@ -127,45 +128,10 @@ export function paintPixelTexture(
   for (const c of model.cells) drawCell(ctx, c, colors, metrics);
   if (!animate) return () => {};
 
-  const start = performance.now();
   let last = 0;
-  let frame = 0;
-  let timer = 0;
-  // Time spent paused in the background, taken off the clock so nothing jumps on return.
-  let pausedFor = 0;
-  let pausedAt: number | null = null;
-
-  const tick = (time: number) => {
-    const now = Math.max(last, time - start - pausedFor);
+  return runWhileFocused(FRAME_GAP_MS, (now) => {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     for (const c of model.step(now, dt)) drawCell(ctx, c, colors, metrics);
-    timer = window.setTimeout(() => {
-      frame = requestAnimationFrame(tick);
-    }, FRAME_GAP_MS);
-  };
-
-  // Holds while the window is in the background (another app focused) and picks up on return.
-  const pause = () => {
-    if (pausedAt !== null) return;
-    pausedAt = performance.now();
-    cancelAnimationFrame(frame);
-    window.clearTimeout(timer);
-  };
-  const resume = () => {
-    if (pausedAt === null) return;
-    pausedFor += performance.now() - pausedAt;
-    pausedAt = null;
-    frame = requestAnimationFrame(tick);
-  };
-  window.addEventListener("blur", pause);
-  window.addEventListener("focus", resume);
-  if (document.hasFocus()) frame = requestAnimationFrame(tick);
-  else pausedAt = performance.now();
-  return () => {
-    cancelAnimationFrame(frame);
-    window.clearTimeout(timer);
-    window.removeEventListener("blur", pause);
-    window.removeEventListener("focus", resume);
-  };
+  });
 }
