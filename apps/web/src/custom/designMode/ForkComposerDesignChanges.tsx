@@ -57,7 +57,8 @@ function chipSummary(entry: PendingDesignChange): string | null {
   return deltas.length > 1 ? `${first} +${deltas.length - 1}` : first;
 }
 
-function DesignChangeChip({
+/** @public — one pending design change's pill; Storybook renders it on its own. */
+export function DesignChangeChip({
   entry,
   onRemove,
 }: {
