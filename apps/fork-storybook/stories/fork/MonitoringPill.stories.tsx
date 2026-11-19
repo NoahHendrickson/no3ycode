@@ -18,37 +18,47 @@ const TASKS: ComponentProps<typeof ComposerBackgroundLivenessPill>["tasks"] = [
 
 const shared = { stopping: false, canStop: true, onStop: () => {}, onOpenThread: () => {} };
 
-const meta = {
+const MONITORING = { ...shared, kind: "monitoring", tasks: TASKS } as const;
+
+// Args live on each story: the props are a union on `kind`, which a shared meta.args can't hold.
+const meta: Meta<typeof ComposerBackgroundLivenessPill> = {
   title: "Fork/Monitoring pill",
   component: ComposerBackgroundLivenessPill,
   tags: ["autodocs"],
-  args: { ...shared, kind: "monitoring", tasks: TASKS },
   // The pill's chrome is drawn for the composer's context row, where it sits in the app.
   decorators: [(Story) => <div data-fork-composer-context-row="true">{Story()}</div>],
-} satisfies Meta<typeof ComposerBackgroundLivenessPill>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof ComposerBackgroundLivenessPill>;
 
 /** The composer's background-work pill: its label opens a list of the work (a subagent row opens
     its thread), and the square stops it. */
-export const Playground: Story = {};
+export const Playground: Story = { args: MONITORING };
 
 /** Monitoring and working, stopping, and a client without the operate scope (the square inert). */
 export const States: Story = {
-  render: (args) => (
+  args: MONITORING,
+  parameters: { controls: { disable: true } },
+  render: () => (
     <Stack gap={3}>
       <Row label="Monitoring">
-        <ComposerBackgroundLivenessPill {...args} kind="monitoring" />
+        <ComposerBackgroundLivenessPill {...MONITORING} />
       </Row>
       <Row label="Working">
-        <ComposerBackgroundLivenessPill {...args} kind="working" seed="story" liveCount={2} />
+        <ComposerBackgroundLivenessPill
+          {...shared}
+          tasks={TASKS}
+          kind="working"
+          seed="story"
+          liveCount={2}
+        />
       </Row>
       <Row label="Stopping">
-        <ComposerBackgroundLivenessPill {...args} kind="monitoring" stopping />
+        <ComposerBackgroundLivenessPill {...MONITORING} stopping />
       </Row>
       <Row label="Cannot stop">
-        <ComposerBackgroundLivenessPill {...args} kind="monitoring" canStop={false} />
+        <ComposerBackgroundLivenessPill {...MONITORING} canStop={false} />
       </Row>
     </Stack>
   ),
