@@ -355,7 +355,8 @@ describe("fork guard: fork-bots", () => {
     // The digest opens with a status line, and an ask can offer answers the owner clicks.
     expect(files.get("DIGEST.md")).toContain("Status: Nothing yet.");
     expect(rules).toContain("keep one status line, `Status:`");
-    expect(rules).toContain("after an arrow, after its links, at most four: `→ Push | Hold`");
+    expect(rules).toContain("End every approval or yes-or-no ask with its answers after an arrow");
+    expect(rules).toContain("pull/21 → Open PR | Hold`");
     // Usage: slow schedules, tail reads, a bounded Log, cheap subagents, no self-scheduling wakes.
     expect(rules).toContain("refuses an interval under 15 minutes");
     expect(rules).toContain("Reads return the newest messages first, so read with `limit: 20`");

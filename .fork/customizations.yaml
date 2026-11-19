@@ -7592,8 +7592,9 @@
     A bot keeps DIGEST.md in its folder (a `Status:` line, then Needs you, New, In progress;
     seeded empty, rewritten by the bot as its work changes, per the seeded CLAUDE.md, which also
     has it write each Needs you item as one question, end each item, after its last sentence, with
-    its thread's link from the thread tools and its pull request's URL, and end an ask a word or
-    two answers with up to four answers after an arrow: `→ Push | Hold`). On the bot's own
+    its thread's link from the thread tools and its pull request's URL, and end every approval or
+    yes-or-no ask, and any other ask a word or two answers, with up to four answers after an arrow,
+    links before the arrow, the yes naming the action: `OK to push and open a PR? <PR URL> → Open PR | Hold`). On the bot's own
     conversation the digest sits just above its composer, in the chat column (BotDigestAsks, one
     fenced line in ChatView beside upstream's ChildThreadApprovals, inside the composer stack so
     the transcript's bottom inset counts it); the bot's Threads panel lists its threads only. It
@@ -7614,8 +7615,15 @@
     at most one short sentence of context. An ask's answers (an arrow after a finished ask, each at most 32
     characters; otherwise the arrow is the line's prose) are outline buttons: a click queues the
     ask, quoted, and the answer as the owner's message to the bot (startTurn, dispatchMode
-    queue), and the buttons give way to "Sent" until the bot settles a run after it (a failed
-    send restores them with an error toast). Asks show one at a time, paged from the strip, so the stack never grows with the
+    queue). An answered ask leaves the stack, whether its answer came from a button or from Reply
+    and the composer: it stays away while an owner message quoting it (`> ask`, quoteBotDigestAsk) waits on a run
+    that has not settled, and after that until a digest read lands under the revision that settled
+    it, so a stale read cannot flash it back, even after leaving the conversation and returning;
+    it comes back only if the bot keeps it in the digest it leaves (a failed button send brings it
+    back with an error toast, through shared state, so a digest mounted since sees it too). The
+    conversation is read through one atom per bot (useAnsweredBotDigestAsks: its run revision and
+    quoting owner messages) that holds while assistant text streams, so the digest never redraws
+    at stream rate, and the digest draws nothing until the conversation loads. Asks show one at a time, paged from the strip, so the stack never grows with the
     list. Each card has an X
     that puts the ask away on this device (localStorage per bot, keyed by the ask as written, so
     one the bot rewrites comes back, and pruned to the asks the digest still has); "Show N
@@ -7634,8 +7642,9 @@
     opens it as the sidebar PR badge does, opening its thread when it lands in that thread's
     right panel. A pull request is matched by sourceControlClients.isSameChangeRequest, so a
     deep link and its thread's copy are one. The digest is read with projects.readFile from the
-    bot's folder (allowMissing) and read again whenever the bot's latest run starts or ends
-    (revisionedQuery keyed by its run id and status). An empty, missing or unreadable digest
+    bot's folder (allowMissing) and read again whenever any of the bot's runs starts or ends, as its conversation sees them
+    (revisionedQuery keyed by botDigestRevision, so a read never lands before the answers it
+    settles; the shell's latest run until the conversation loads). An empty, missing or unreadable digest
     draws nothing.
   tier: 4
   files:
@@ -7644,6 +7653,7 @@
     - apps/web/src/custom/bots/BotPullRequestMark.tsx
     - apps/web/src/custom/bots/botDigestItemLinks.ts
     - apps/web/src/custom/bots/botDigestSections.ts
+    - apps/web/src/custom/bots/useAnsweredBotDigestAsks.ts
   shadows: []
   watch:
     # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
