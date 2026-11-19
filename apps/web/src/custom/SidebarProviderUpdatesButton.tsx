@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 
 import { getProviderUpdateRunToastView } from "~/components/ProviderUpdateLaunchNotification.logic";
 import { useProviderUpdates } from "~/components/ProviderUpdatesAction";
-import { Button } from "~/components/ui/button";
 import { SidebarMenuItem } from "~/components/ui/sidebar";
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -52,15 +51,14 @@ export function SidebarProviderUpdatesButton() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <Button
-              variant="secondary"
-              size="icon-sm-pill"
-
+            <button
+              type="button"
               aria-label="Update providers"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-sidebar-control-surface text-sidebar-foreground outline-hidden ring-ring transition-colors hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-inset"
               onClick={() => void handleUpdate()}
             >
               <PackageIcon className="size-4" />
-            </Button>
+            </button>
           }
         />
         <TooltipPopup side="top">

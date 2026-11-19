@@ -10,21 +10,36 @@ import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_SLIM_ROW_ACTION_CLASS } from "./sidebarV2TrailingColumn";
 
-/** The Storybook Button, ghost-muted, pinned to the trailing column's fixed boxes at every width:
-    24px for a row action, 32px for a header's ⋯ and + (with the header's 10px corners). Button's
-    own icon sizes grow below sm, and the column's offsets are derived from these two boxes. */
+const BOX = {
+  // Button's icon sizes grow below sm; the trailing column's offsets are derived from fixed boxes.
+  row: { size: "icon-xs", className: "size-6" },
+  header: { size: "icon", className: "size-8 rounded-[10px]" },
+  tab: { size: "icon-micro", className: "size-5 rounded-full" },
+} as const;
+
+/** The Storybook Button, ghost-muted, at the list's fixed boxes: a 24px row action, a header's
+    32px ⋯ and + (with the header's 10px corners), or a collapsed tab's round 20px action. */
 export function SidebarV2IconButton({
   box = "row",
   className,
   ...props
 }: Omit<ComponentProps<typeof Button>, "variant" | "size"> & {
-  readonly box?: "row" | "header";
+  readonly box?: keyof typeof BOX;
 }) {
   return (
     <Button
       variant="ghost-muted"
-      size={box === "header" ? "icon" : "icon-xs"}
-      className={cn(box === "header" ? "size-8 rounded-[10px]" : "size-6", className)}
+      size={BOX[box].size}
+      className={cn(
+        BOX[box].className,
+        // A foreground tint, not accent: accent is the row's own hover or selected fill in some
+        // themes, and the target's edge would vanish on it.
+        "[:hover,[data-pressed]]:bg-foreground/10",
+        // Mounted hidden on every row of an unvirtualized list; a compositor layer each is the
+        // cost, and the press scale runs without one.
+        "[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto",
+        className,
+      )}
       {...props}
     />
   );

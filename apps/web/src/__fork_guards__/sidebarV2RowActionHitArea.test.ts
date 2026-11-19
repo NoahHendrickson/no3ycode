@@ -75,10 +75,15 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // Every icon-only control in the list is the Storybook Button, ghost-muted, pinned to the
     // trailing column's fixed boxes: Button's icon sizes grow below sm, the column's offsets don't.
     expect(iconButton).toContain('variant="ghost-muted"');
-    expect(iconButton).toContain('size={box === "header" ? "icon" : "icon-xs"}');
-    expect(iconButton).toContain('box === "header" ? "size-8 rounded-[10px]" : "size-6"');
-    // The variant's fill makes the target legible; without it the box is bigger but still guesswork.
-    expect(button).toMatch(/"ghost-muted":\s*"[^"]*\[:hover,\[data-pressed\]\]:bg-accent/u);
+    expect(iconButton).toContain('row: { size: "icon-xs", className: "size-6" }');
+    expect(iconButton).toContain('header: { size: "icon", className: "size-8 rounded-[10px]" }');
+    // The fill makes the target legible, and a foreground tint stays a step off the row's own
+    // hover and selected fills (accent is one of them in some themes).
+    expect(iconButton).toContain('"[:hover,[data-pressed]]:bg-foreground/10"');
+    // No compositor layer per hidden row action.
+    expect(iconButton).toContain(
+      '"[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto"',
+    );
     // The 44px coarse-pointer target and the focus edge come from Button's base, an ::after on a
     // positioned box.
     expect(button).toContain("pointer-coarse:after:min-h-11");

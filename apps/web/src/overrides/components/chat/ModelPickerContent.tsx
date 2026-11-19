@@ -764,6 +764,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               "pointer-coarse:opacity-100",
               // Button's 44px coarse-pointer target would reach into the next row's star.
               "pointer-coarse:after:hidden",
+              // Button fades a disabled button to 64%; this one stays hidden until its row is
+              // hovered, like any other row's star.
+              "disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
             )}
             disabled={Boolean(disabledReason)}
             onPointerDown={(event) => event.stopPropagation()}

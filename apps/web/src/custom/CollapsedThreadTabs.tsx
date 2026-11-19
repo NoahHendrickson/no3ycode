@@ -28,7 +28,7 @@ import {
   prStatusIndicator,
   useLinkedThreadPullRequest,
 } from "~/components/ThreadStatusIndicators";
-import { Button, InlineButton } from "~/components/ui/button";
+import { InlineButton } from "~/components/ui/button";
 import {
   Menu,
   MenuGroup,
@@ -55,6 +55,7 @@ import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
 import { shortcutLabelForCommand } from "~/keybindings";
 import { observeResize } from "~/lib/observeResize";
 import { cn } from "~/lib/utils";
+import { SidebarV2IconButton } from "./SidebarV2IconButton";
 import {
   useDelegatedUnderParent,
   useProjects,
@@ -840,19 +841,17 @@ function ThreadTab(props: {
             className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-0.5 opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:hidden"
           >
             {props.canSettle ? (
-              <Button
-                variant="ghost-muted"
-                size="icon-micro"
+              <SidebarV2IconButton
+                box="tab"
 
                 aria-label="Settle thread"
                 onClick={() => settleAndAdvance(threadRef)}
               >
                 <CheckIcon className="size-3" />
-              </Button>
+              </SidebarV2IconButton>
             ) : null}
-            <Button
-              variant="ghost-muted"
-              size="icon-micro"
+            <SidebarV2IconButton
+              box="tab"
 
               aria-label="More thread actions"
               aria-haspopup="menu"
@@ -861,7 +860,7 @@ function ThreadTab(props: {
               onClick={(event) => openMenu(anchoredMenuPosition(event.currentTarget))}
             >
               <EllipsisIcon className="size-3.5" />
-            </Button>
+            </SidebarV2IconButton>
           </span>
         </span>
         {prBadge?.kind === "stack" || pr || currentLinkedPr ? (
@@ -945,15 +944,14 @@ function DraftTab(
       </span>
       {props.action ? (
         <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center opacity-0 group-focus-within/tab:pointer-events-auto group-focus-within/tab:opacity-100 group-hover/tab:pointer-events-auto group-hover/tab:opacity-100 [@media(any-hover:none)]:pointer-events-auto [@media(any-hover:none)]:opacity-100">
-          <Button
-            variant="ghost-muted"
-            size="icon-micro"
+          <SidebarV2IconButton
+            box="tab"
 
             aria-label={props.action.label}
             onClick={props.action.run}
           >
             <XIcon className="size-3" />
-          </Button>
+          </SidebarV2IconButton>
         </span>
       ) : null}
     </div>

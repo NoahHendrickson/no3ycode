@@ -1454,7 +1454,7 @@
     All of them are SidebarV2IconButton (custom/SidebarV2IconButton): the
     Storybook Button, ghost-muted, pinned to the trailing column's fixed boxes at
     every width (24px for a row action; 32px with 10px corners for the project
-    header's ⋯ and +), since Button's icon sizes grow below sm and the offsets
+    header's ⋯ and +; 20px round for a collapsed tab's actions), since Button's icon sizes grow below sm and the offsets
     below are derived from those two boxes. That is the point: they appear in two
     row variants and three branches of one ternary, and the previous drift
     between them is exactly what a per-call-site class string produces. The
@@ -1474,9 +1474,14 @@
     icon-xs is 24px from sm up, 28px under it). Button's focus ring is inset, so
     the row surface's overflow-hidden cannot clip it.
 
-    The fill is Button's ghost hover (bg-accent), which under Basic is a
-    foreground alpha (8% black on light, 8% white on dark): a step past the
-    row's own hover fill beneath it either way.
+    The fill is bg-foreground/10 (SidebarV2IconButton overrides Button's
+    accent hover), not bg-accent: accent is the row's own hover fill in the
+    non-Basic dark sidebar and the selected row's fill under Basic, and a
+    foreground alpha is the one value that stays a step brighter than the row
+    beneath it in dark and a step darker in light. SidebarV2IconButton also
+    turns off Button's will-change: the actions mount hidden on every row of an
+    unvirtualized list. The collapsed tab strip's round 20px actions are its
+    "tab" box.
 
     The card's trailing cell is h-6 rather than the title line's 18px —
     a 24px target cannot fit an 18px cell. It is centred in the line, so it
