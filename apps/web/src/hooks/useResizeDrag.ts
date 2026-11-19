@@ -11,10 +11,7 @@ export interface ResizeBounds {
 
 interface ResizeSession {
   width: number;
-  /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-  // A top or bottom edge resizes a height, along the vertical axis.
-  edge: "left" | "right" | "top" | "bottom";
-  /* fork:end fork-bot-digest */
+  edge: "left" | "right";
   /** Pointer widths are clamped to these before `resize` sees them. */
   bounds: ResizeBounds;
   resize: (width: number) => number;
@@ -25,12 +22,6 @@ interface ResizeSession {
 function clampToBounds(width: number, bounds: ResizeBounds): number {
   return Math.max(bounds.min, Math.min(bounds.max, width));
 }
-
-/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-const isVertical = (edge: ResizeSession["edge"]) => edge === "top" || edge === "bottom";
-const along = (event: { clientX: number; clientY: number }, edge: ResizeSession["edge"]) =>
-  isVertical(edge) ? event.clientY : event.clientX;
-/* fork:end fork-bot-digest */
 
 interface ActiveDrag<T extends HTMLElement> {
   session: ResizeSession;
@@ -50,10 +41,7 @@ function createResizeDrag<T extends HTMLElement>() {
   const flush = () => {
     const active = drag;
     if (!active) return;
-    /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-    const leading = active.session.edge === "left" || active.session.edge === "top";
-    const delta = (active.pendingX - active.startX) * (leading ? -1 : 1);
-    /* fork:end fork-bot-digest */
+    const delta = (active.pendingX - active.startX) * (active.session.edge === "left" ? -1 : 1);
     if (Math.abs(delta) > 2) active.moved = true;
     active.width = active.session.resize(
       clampToBounds(active.session.width + delta, active.session.bounds),
@@ -83,9 +71,7 @@ function createResizeDrag<T extends HTMLElement>() {
     const active = drag;
     if (!active || active.pointerId !== event.pointerId) return;
     event.preventDefault();
-    /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-    if (usePosition) active.pendingX = along(event, active.session.edge);
-    /* fork:end fork-bot-digest */
+    if (usePosition) active.pendingX = event.clientX;
     finish(true);
   };
 
@@ -116,29 +102,22 @@ function createResizeDrag<T extends HTMLElement>() {
         session,
         target: event.currentTarget,
         pointerId: event.pointerId,
-        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-        startX: along(event, session.edge),
-        pendingX: along(event, session.edge),
-        /* fork:end fork-bot-digest */
+        startX: event.clientX,
+        pendingX: event.clientX,
         width: session.width,
         moved: false,
         frame: null,
         onBlur,
       };
-      /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-      document.body.style.cursor = isVertical(session.edge) ? "row-resize" : "col-resize";
-      /* fork:end fork-bot-digest */
+      document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     },
     onPointerMove(event: PointerEvent<T>) {
       const active = drag;
       if (!active || active.pointerId !== event.pointerId) return;
       event.preventDefault();
-      /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-      const position = along(event, active.session.edge);
-      active.pendingX = position;
-      if (Math.abs(position - active.startX) > 2) active.moved = true;
-      /* fork:end fork-bot-digest */
+      active.pendingX = event.clientX;
+      if (Math.abs(event.clientX - active.startX) > 2) active.moved = true;
       if (active.frame !== null) return;
       active.frame = requestAnimationFrame(() => {
         active.frame = null;

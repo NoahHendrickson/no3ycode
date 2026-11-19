@@ -1,13 +1,13 @@
 /** Giving a thread to a bot, or taking it back — see `.fork/customizations.yaml#fork-bot-crew`. */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { ThreadId } from "@t3tools/contracts";
-import { newMessageId } from "~/lib/utils";
-import { readThreadShell } from "~/state/entities";
+import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
 import { botCrewMessage, botWorkTagWrites } from "./botCrew";
 import { botWorkOwnerId } from "./botWorkRoster";
+import { useTellBot } from "./useTellBot";
 
 /** Moves `thread` to `botId`'s work (null: to no bot's) and tells each bot what changed. */
 export function useSetBotWork(): (
@@ -15,27 +15,7 @@ export function useSetBotWork(): (
   botId: ThreadId | null,
 ) => Promise<void> {
   const setTag = useOrchestrationCommand(threadEnvironment.setTag);
-  const startTurn = useOrchestrationCommand(threadEnvironment.startTurn);
-  const tell = async (
-    environmentId: EnvironmentThreadShell["environmentId"],
-    botId: ThreadId,
-    text: string,
-  ) => {
-    const bot = readThreadShell({ environmentId, threadId: botId });
-    if (bot === null || bot.archivedAt !== null) return;
-    await startTurn({
-      environmentId,
-      input: {
-        threadId: botId,
-        message: { messageId: newMessageId(), role: "user", text, attachments: [] },
-        runtimeMode: bot.runtimeMode,
-        interactionMode: bot.interactionMode,
-        // Behind whatever the bot is doing, never into it.
-        dispatchMode: "queue",
-        createdAt: new Date().toISOString(),
-      },
-    });
-  };
+  const tellBot = useTellBot();
   return async (thread, botId) => {
     const previous = botWorkOwnerId(thread.source);
     if (previous === botId) return;
@@ -47,7 +27,11 @@ export function useSetBotWork(): (
       if (result._tag !== "Success") return;
     }
     if (previous !== null)
-      await tell(thread.environmentId, previous, botCrewMessage(thread, "taken"));
-    if (botId !== null) await tell(thread.environmentId, botId, botCrewMessage(thread, "given"));
+      await tellBot(
+        scopeThreadRef(thread.environmentId, previous),
+        botCrewMessage(thread, "taken"),
+      );
+    if (botId !== null)
+      await tellBot(scopeThreadRef(thread.environmentId, botId), botCrewMessage(thread, "given"));
   };
 }

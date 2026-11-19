@@ -7585,37 +7585,54 @@
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-digest
   intent: >
-    A bot keeps DIGEST.md in its folder (Needs you, New, In progress; seeded empty, rewritten by
-    the bot as its work changes, per the seeded CLAUDE.md, which also has it write each Needs you
-    item as the question itself and end each item, after its last sentence, with its thread's
-    link from the thread tools and its pull request's URL). Its Threads panel shows it above the
-    thread list (custom/bots/BotDigest), parsed by custom/bots/botDigestSections: a section's kind
-    (needs-you or status) and one plain line per item (list marks, emphasis and link targets
-    dropped; links that follow a line's last sentence dropped, so it reads as its ask, while a link
-    the sentence runs into keeps its words; a bare pull request URL reads as its number;
-    "Nothing." left out). A status section is its label and count over one card with a dismiss X; Needs you is
-    its label over one card per request, drawn as the chat composer (it wears the vessel, box and
-    surface stamps, so each theme paints it): the ask and a filled Reply in the prompt surface, its
-    links on the vessel floor beneath. Reply quotes its source line in the bot's draft and opens
-    the bot, or, when a thread it links waits on a question (hasPendingUserInput), opens that
-    thread to answer it; either way it closes the panel when it is a sheet. Under a line
-    (custom/bots/BotDigestItem), each linked thread shows its sidebar status mark and title and
-    opens it (one chip however the link spells it; one it cannot find shows the bot's label), and each pull request the line names or a linked thread has (its linked one, else
-    its branch's: custom/bots/botDigestItemLinks, also the Threads rows' order) shows its state
-    and number (custom/bots/BotPullRequestMark, shared with the Threads rows; a branch pull
-    request's state from the shared summaries) and opens it as the sidebar PR badge does,
-    opening its thread when it lands in that thread's right panel. A pull request is matched by
-    sourceControlClients.isSameChangeRequest, so a deep link and its thread's copy are one. The digest and
-    the list scroll apart; the full-width rule between them drags (useResizeDrag's bottom edge)
-    to set the digest's tallest, one height for every bot in localStorage, never leaving the list
-    under 96px, and a shorter digest keeps its own height (dragging down never lowers the saved
-    height). A status card's X dismisses it per
-    device, keyed by its title and lines, so it comes back when the bot changes it; a dismissal
-    is forgotten once the file no longer has that section; "Show N dismissed" brings them all
-    back. Needs you cannot be dismissed. The digest takes the panel's threads and visits as
-    props. It is read with projects.readFile from the bot's folder (allowMissing) and read again
-    whenever the bot's latest run starts or ends (revisionedQuery keyed by its run id and
-    status). An empty, missing or unreadable digest draws nothing.
+    A bot keeps DIGEST.md in its folder (a `Status:` line, then Needs you, New, In progress;
+    seeded empty, rewritten by the bot as its work changes, per the seeded CLAUDE.md, which also
+    has it write each Needs you item as one question, end each item, after its last sentence, with
+    its thread's link from the thread tools and its pull request's URL, and end an ask a word or
+    two answers with up to four answers after an arrow: `→ Push | Hold`). On the bot's own
+    conversation the digest sits just above its composer, in the chat column (BotDigestAsks, one
+    fenced line in ChatView beside upstream's ChildThreadApprovals, inside the composer stack so
+    the transcript's bottom inset counts it); the bot's Threads panel lists its threads only. It
+    shows the status line (parseBotDigestStatus; "Nothing yet." shows none) and one card per
+    Needs you ask, nothing for any other thread or while there is neither. New and In progress
+    stay in the file for the bot's own memory and draw nothing: its chat messages already say
+    what it did. The digest is the chat composer's two layers, worn by its vessel,
+    box and surface stamps so each theme paints it as its composer: the vessel's own top strip
+    holds the status line (else "Needs you"), "Show N dismissed" and the pager (previous, a dot per
+    ask with the one on show a rounded dash, each opening its ask, next), and the
+    ask on show is the surface inside it, led by a 32px tile in its colour: the state of the pull request it is about (its first
+    linked pull request, via useBotPullRequestState: open, draft, merged, closed, in the pull
+    request tone the rest of the app uses), else the sidebar's needs-input colour with a question
+    glyph. Beside the tile it reads top to bottom: the ask's question (splitBotDigestAsk: its
+    first sentence that asks one, else its first sentence) in medium weight, the rest of the
+    line as muted detail clamped to two lines, its linked threads and pull requests, then its
+    actions (answers, then Reply). The seeded CLAUDE.md has the bot write the question first and
+    at most one short sentence of context. An ask's answers (an arrow after a finished ask, each at most 32
+    characters; otherwise the arrow is the line's prose) are outline buttons: a click queues the
+    ask, quoted, and the answer as the owner's message to the bot (startTurn, dispatchMode
+    queue), and the buttons give way to "Sent" until the bot settles a run after it (a failed
+    send restores them with an error toast). Asks show one at a time, paged from the strip, so the stack never grows with the
+    list. Each card has an X
+    that puts the ask away on this device (localStorage per bot, keyed by the ask as written, so
+    one the bot rewrites comes back, and pruned to the asks the digest still has); "Show N
+    dismissed" on the status row brings them back. Reply (a ghost
+    beside answers, outline alone) quotes the ask into the composer beneath, or, when a thread it links waits
+    on a question (hasPendingUserInput), opens that thread to answer it there. Each line is
+    parsed by custom/bots/botDigestSections: one plain line per item (list marks, emphasis and
+    link targets dropped; links that follow a line's last sentence dropped, so it reads as its
+    ask, while a link the sentence runs into keeps its words; a bare pull request URL reads as
+    its number; "Nothing." left out). Under a line (custom/bots/BotDigestItem), each linked
+    thread shows its sidebar status mark and title and opens it (one chip however the link
+    spells it; one it cannot find shows the bot's label), and each pull request the line names
+    or a linked thread has (its linked one, else its branch's: custom/bots/botDigestItemLinks,
+    also the Threads rows' order) shows its state and number (custom/bots/BotPullRequestMark,
+    shared with the Threads rows; a branch pull request's state from the shared summaries) and
+    opens it as the sidebar PR badge does, opening its thread when it lands in that thread's
+    right panel. A pull request is matched by sourceControlClients.isSameChangeRequest, so a
+    deep link and its thread's copy are one. The digest is read with projects.readFile from the
+    bot's folder (allowMissing) and read again whenever the bot's latest run starts or ends
+    (revisionedQuery keyed by its run id and status). An empty, missing or unreadable digest
+    draws nothing.
   tier: 4
   files:
     - apps/web/src/custom/bots/BotDigest.tsx
@@ -7625,10 +7642,8 @@
     - apps/web/src/custom/bots/botDigestSections.ts
   shadows: []
   watch:
-    # A vertical edge, so the digest's rule resizes through the shared drag.
-    - apps/web/src/hooks/useResizeDrag.ts
-    # Its viewport inherits the max-height the drag sets, and fades the edge the cards run past.
-    - apps/web/src/components/ui/scroll-area.tsx
+    # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
+    - apps/web/src/components/ChatView.tsx
   verify:
     - apps/web/src/custom/bots/botDigestSections.test.ts
     - apps/web/src/custom/bots/botDigestItemLinks.test.ts
@@ -7652,6 +7667,8 @@
     - apps/web/src/custom/bots/botCrew.ts
     - apps/web/src/custom/bots/readListedBots.ts
     - apps/web/src/custom/bots/useSetBotWork.ts
+    # One send-to-bot path, shared with the digest's answers.
+    - apps/web/src/custom/bots/useTellBot.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx

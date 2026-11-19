@@ -29,7 +29,6 @@ import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
-import { BotDigest } from "./BotDigest";
 import { botThreadPullRequest } from "./botDigestItemLinks";
 import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
@@ -100,7 +99,6 @@ export function BotThreadsPanel(props: {
       botRef={props.botRef}
       currentThreadRef={props.threadRef}
       rightmost={rightmost}
-      sheet={props.sheet}
     />
   );
   if (props.sheet) {
@@ -127,7 +125,6 @@ function BotThreadsBody(props: {
   readonly currentThreadRef: ScopedThreadRef;
   /** Its header is the one under Windows' caption buttons. */
   readonly rightmost: boolean;
-  readonly sheet: boolean;
 }) {
   const botKey = scopedThreadKey(props.botRef);
   const threads = useQuietThreadShells();
@@ -147,10 +144,6 @@ function BotThreadsBody(props: {
     sort,
   );
   const groups = filterBotWork(all, { ...view, query: view.query ?? "" });
-  const bot = threads.find(
-    (thread) =>
-      thread.id === props.botRef.threadId && thread.environmentId === props.botRef.environmentId,
-  );
   const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
   const header = (
     <div
@@ -243,13 +236,7 @@ function BotThreadsBody(props: {
   return (
     <>
       {header}
-      {bot === undefined ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">{content}</div>
-      ) : (
-        <BotDigest bot={bot} threads={{ shells: threads, localVisits }} sheet={props.sheet}>
-          {content}
-        </BotDigest>
-      )}
+      <div className="min-h-0 flex-1 overflow-y-auto">{content}</div>
     </>
   );
 }

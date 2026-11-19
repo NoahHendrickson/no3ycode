@@ -1,72 +1,79 @@
 /**
- * A bot's digest at the top of its Threads panel — see `.fork/customizations.yaml#fork-bot-digest`.
+ * A bot's digest above its composer — see `.fork/customizations.yaml#fork-bot-digest`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
-import * as Schema from "effect/Schema";
-import { ReplyIcon, XIcon } from "lucide-react";
-import { type ReactNode, useEffect } from "react";
-
-import { Button } from "~/components/ui/button";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { useComposerDraftStore } from "~/composerDraftStore";
 import {
-  readLocalStorageValue,
-  useLocalStorage,
-  writeLocalStorageValue,
-} from "~/hooks/useLocalStorage";
-import { useResizeDrag } from "~/hooks/useResizeDrag";
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MessageCircleQuestionIcon,
+  ReplyIcon,
+  XIcon,
+} from "lucide-react";
+import * as Schema from "effect/Schema";
+import { type ReactNode, useState } from "react";
+
+import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
+import { Button } from "~/components/ui/button";
+import { toastManager } from "~/components/ui/toast";
+import { useComposerDraftStore } from "~/composerDraftStore";
+import { useLocalStorage } from "~/hooks/useLocalStorage";
+import { cn } from "~/lib/utils";
+import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
 import { revisionedQuery } from "~/state/revisionedQuery";
+import { useUiStateStore } from "~/uiStateStore";
 
-import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import {
   BotDigestLinkRow,
   type BotDigestThreads,
-  BotDigestWords,
   resolveBotDigestLine,
   useOpenThread,
 } from "./BotDigestItem";
 import {
   type BotDigestItem,
-  type BotDigestSection,
-  botDigestSectionKey,
   parseBotDigest,
+  parseBotDigestStatus,
+  splitBotDigestAsk,
 } from "./botDigestSections";
+import type { BotPullRequest } from "./botDigestItemLinks";
+import { useBotPullRequestState } from "./BotPullRequestMark";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
-import { closeBotThreadsPanel } from "./botThreadsPanelStore";
+import { isListedBot } from "./botThreads";
+import { useTellBot } from "./useTellBot";
 
 const NO_DIGEST = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(false)).pipe(
   Atom.withLabel("bot-digest:none"),
 );
-
-/** The saved height is the digest's tallest: a shorter digest keeps its own height, and a drag
-    starts from what is on screen. One height serves every bot. */
-const HEIGHT_STORAGE_KEY = "t3code:fork:bot-digest-height";
-const DEFAULT_HEIGHT = 240;
-const MIN_HEIGHT = 64;
-/** What the drag leaves the thread list below it. */
-const LIST_MIN_HEIGHT = 96;
-const StoredHeight = Schema.Finite;
-const DismissedKeys = Schema.Array(Schema.String);
+const NO_ANSWERS: ReadonlyMap<string, string> = new Map();
+type SentAnswers = {
+  readonly revision: string | null;
+  readonly answers: ReadonlyMap<string, string>;
+};
+/** Each bot's sent answers outlive its digest's mount, so leaving the conversation and coming back
+    before the bot answers cannot offer the same ask twice. */
+const sentByBot = new Map<string, SentAnswers>();
+const DismissedAsks = Schema.Array(Schema.String);
 const NO_DISMISSED: ReadonlyArray<string> = [];
+const SETTLED_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
 
-const CARD_CLASS_NAME = "rounded-lg border border-border bg-card text-card-foreground";
-const LIST_CLASS_NAME = "min-h-24 flex-1 overflow-y-auto";
+/** The digest of the open thread when it is a bot, just above its composer: the status line and
+    a card per Needs you ask. Nothing draws for any other thread, or while the bot has neither. */
+export function BotDigestAsks(props: { readonly threadRef: ScopedThreadRef | null }) {
+  const bot = useQuietThreadShell(props.threadRef);
+  if (bot === null || !isListedBot(bot)) return null;
+  // Keyed by the bot, so one Petal's sent answers never carry over to the next.
+  return (
+    <BotDigestAsksFor key={scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id))} bot={bot} />
+  );
+}
 
-/** The digest's sections with something in them, as cards above `children` (the thread list),
-    split from it by a rule that drags to resize the digest. A dismissed card stays away until
-    the bot changes it; nothing draws above the list while the digest is empty or unreadable. */
-export function BotDigest(props: {
+function BotDigestAsksFor(props: {
   readonly bot: Pick<EnvironmentThreadShell, "id" | "environmentId" | "worktreePath" | "latestRun">;
-  readonly threads: BotDigestThreads;
-  /** The panel is a sheet, which covers the composer a Reply lands in. */
-  readonly sheet: boolean;
-  readonly children: ReactNode;
 }) {
   const { bot } = props;
   const botRef = scopeThreadRef(bot.environmentId, bot.id);
@@ -81,63 +88,75 @@ export function BotDigest(props: {
   // The bot rewrites its digest during a turn, so each run it starts or ends reads it again.
   const revision = bot.latestRun === null ? null : `${bot.latestRun.runId}:${bot.latestRun.status}`;
   const result = useAtomValue(revisionedQuery(query, canReadFiles ? revision : undefined));
-  const dismissedKey = `t3code:fork:bot-digest-dismissed:${scopedThreadKey(botRef)}`;
-  const [dismissed, setDismissed] = useLocalStorage(dismissedKey, NO_DISMISSED, DismissedKeys);
-  const [height, setHeight] = useLocalStorage(HEIGHT_STORAGE_KEY, DEFAULT_HEIGHT, StoredHeight);
-  // The rule sits between the digest it sizes and the list, in the split this component draws.
-  const { ref, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } =
-    useResizeDrag<HTMLDivElement>((event) => {
-      const region = event.currentTarget.previousElementSibling;
-      const root = event.currentTarget.parentElement;
-      if (!(region instanceof HTMLElement) || root === null) return null;
-      const restore = () => region.style.setProperty("max-height", `${height}px`);
-      const start = region.offsetHeight;
-      return {
-        width: start,
-        edge: "bottom",
-        bounds: { min: MIN_HEIGHT, max: Math.max(MIN_HEIGHT, root.clientHeight - LIST_MIN_HEIGHT) },
-        resize(next) {
-          region.style.setProperty("max-height", `${next}px`);
-          return next;
-        },
-        // A press without a move keeps the saved height, which may be taller than the digest.
-        finish(final, moved) {
-          // A drag that ends where it began changes nothing.
-          if (!moved || final === start) return restore();
-          // Dragging down a digest shorter than the saved height never lowers it.
-          const next = Math.round(final > start ? Math.max(final, height) : final);
-          setHeight(next);
-          region.style.setProperty("max-height", `${next}px`);
-        },
-        cleanup(committed) {
-          if (!committed) restore();
-        },
-      };
-    });
-  const file = AsyncResult.getOrElse(result, () => null);
-  const sections = file === null || file.exists === false ? [] : parseBotDigest(file.contents);
-  const contents = file === null ? null : file.exists === false ? "" : file.contents;
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- when this digest's file changes, forgets dismissals of sections it no longer has, so one that later reads the same again shows; keyed on the file, not on storage, so another window's newer dismissal survives
-  useEffect(() => {
-    if (contents === null) return;
-    const current = new Set(parseBotDigest(contents).map(botDigestSectionKey));
-    const stored = readLocalStorageValue(dismissedKey, NO_DISMISSED, DismissedKeys);
-    const kept = stored.filter((key) => current.has(key));
-    if (kept.length < stored.length) {
-      writeLocalStorageValue(dismissedKey, kept, NO_DISMISSED, DismissedKeys);
-    }
-  }, [contents, dismissedKey]);
-  const openThread = useOpenThread();
-  if (sections.length === 0) {
-    return <div className={LIST_CLASS_NAME}>{props.children}</div>;
-  }
-  const shown = sections.filter(
-    (section) => section.kind === "needs-you" || !dismissed.includes(botDigestSectionKey(section)),
+  const shells = useQuietThreadShells();
+  const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
+  // The answer each ask was given here, until the bot settles a run after it: the digest read then
+  // is the bot's word, and an ask it kept offers its answers again.
+  const botKey = scopedThreadKey(botRef);
+  const [sentFor, setSent] = useState<SentAnswers>(
+    () => sentByBot.get(botKey) ?? { revision: null, answers: NO_ANSWERS },
   );
-  const hiddenCount = sections.length - shown.length;
-  // A request whose linked thread waits on a question opens that thread to answer it there.
+  const setSentFor = (update: SentAnswers | ((previous: SentAnswers) => SentAnswers)) =>
+    setSent((previous) => {
+      const next = typeof update === "function" ? update(previous) : update;
+      sentByBot.set(botKey, next);
+      return next;
+    });
+  // Put away on this device, by the ask as written: one the bot rewrites comes back.
+  const [dismissed, setDismissed] = useLocalStorage(
+    `t3code:fork:bot-digest-dismissed:${botKey}`,
+    NO_DISMISSED,
+    DismissedAsks,
+  );
+  // One ask at a time, so the stack above the composer never grows with the list.
+  const [page, setPage] = useState(0);
+  const tellBot = useTellBot();
+  const openThread = useOpenThread();
+  const file = AsyncResult.getOrElse(result, () => null);
+  const contents = file === null || file.exists === false ? null : file.contents;
+  const allAsks =
+    contents === null
+      ? []
+      : (parseBotDigest(contents).find((section) => section.kind === "needs-you")?.items ?? []);
+  const asks = allAsks.filter((item) => !dismissed.includes(item.source));
+  const hiddenCount = allAsks.length - asks.length;
+  const status = contents === null ? null : parseBotDigestStatus(contents);
+  const settled = bot.latestRun === null || SETTLED_RUN.has(bot.latestRun.status);
+  const expired = sentFor.revision !== revision && settled;
+  // Retired for good once a run settles after them, so the bot's next run cannot bring them back.
+  if (expired && sentFor.answers.size > 0) setSentFor({ revision, answers: NO_ANSWERS });
+  if (allAsks.length === 0 && status === null) return null;
+  const at = Math.min(page, Math.max(0, asks.length - 1));
+  const item = asks[at];
+  // Kept to the asks the digest still has, so the list cannot grow past them.
+  const dismiss = (source: string) =>
+    setDismissed([
+      ...dismissed.filter((kept) => allAsks.some((ask) => ask.source === kept)),
+      source,
+    ]);
+  const sent = expired ? NO_ANSWERS : sentFor.answers;
+  // An answer goes to the bot as the owner's reply, quoting its ask, behind whatever it is doing.
+  const answer = async (item: BotDigestItem, choice: string) => {
+    setSentFor((previous) => ({
+      revision,
+      answers: new Map(previous.answers).set(item.source, choice),
+    }));
+    if (await tellBot(botRef, `> ${item.source}\n\n${choice}`)) return;
+    // Only this attempt's entry: another card answered meanwhile keeps its own.
+    setSentFor((previous) => {
+      const answers = new Map(previous.answers);
+      answers.delete(item.source);
+      return { ...previous, answers };
+    });
+    toastManager.add({
+      type: "error",
+      title: "Could not send your answer",
+      description: "The Petal did not get it. Try again, or use Reply.",
+    });
+  };
+  // An ask whose linked thread waits on a question opens that thread to answer it there; any
+  // other is quoted into the composer beneath.
   const reply = (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => {
-    if (props.sheet) closeBotThreadsPanel(botRef);
     if (question !== undefined) {
       openThread(scopeThreadRef(question.environmentId, question.id));
       return;
@@ -146,199 +165,186 @@ export function BotDigest(props: {
     const existing = store.getComposerDraft(botRef)?.prompt.trimEnd() ?? "";
     const quote = `> ${item.source}\n\n`;
     store.setPrompt(botRef, existing === "" ? quote : `${existing}\n\n${quote}`);
-    openThread(botRef);
   };
+  const threads: BotDigestThreads = { shells, localVisits };
+  const line =
+    item === undefined ? null : resolveBotDigestLine(item, threads, botRef.environmentId);
+  const ask = line === null ? null : splitBotDigestAsk(line.text);
+  const given = item === undefined ? undefined : sent.get(item.source);
+  const offered = item !== undefined && item.answers.length > 0 && given === undefined;
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Fades the edge the cards run past, so a cut-off card dissolves into the rule. */}
-      <ScrollArea
-        scrollFade
-        className="h-auto shrink"
-        style={{ maxHeight: height }}
-        data-fork-bot-digest=""
-      >
-        <div className="flex flex-col gap-2 p-2">
-          {shown.map((section) =>
-            section.kind === "needs-you" ? (
-              <BotDigestRequests
-                key={section.title}
-                section={section}
-                botRef={botRef}
-                threads={props.threads}
-                onReply={reply}
-              />
-            ) : (
-              <BotDigestStatusCard
-                key={section.title}
-                section={section}
-                botRef={botRef}
-                threads={props.threads}
-                onDismiss={() =>
-                  setDismissed((stored) => [...stored, botDigestSectionKey(section)])
-                }
-              />
-            ),
-          )}
+    <div data-fork-bot-digest="" className="pb-2">
+      {/* The composer's two layers, worn by its stamps so each theme paints it as the composer: the
+          vessel's own strip names where the bot stands, and the ask is the surface inside it. */}
+      <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
+        <div className="flex min-h-8 items-center gap-2 py-1 pr-1.5 pl-3 text-xs text-muted-foreground">
+          <span data-testid="bot-digest-status" className="min-w-0 flex-1 truncate">
+            {status ?? "Needs you"}
+          </span>
           {hiddenCount === 0 ? null : (
-            <div className="flex justify-end">
+            <Button
+              size="micro"
+              variant="ghost"
+              onClick={() => setDismissed(NO_DISMISSED)}
+              data-testid="bot-digest-show-dismissed"
+            >
+              Show {hiddenCount} dismissed
+            </Button>
+          )}
+          {asks.length < 2 ? null : (
+            <span className="flex shrink-0 items-center gap-0.5">
               <Button
-                size="micro"
+                size="icon-micro"
                 variant="ghost"
-                onClick={() => setDismissed(NO_DISMISSED)}
-                data-testid="bot-digest-show-dismissed"
+                aria-label="Previous ask"
+                disabled={at === 0}
+                onClick={() => setPage(at - 1)}
               >
-                Show {hiddenCount} dismissed
+                <ChevronLeftIcon />
               </Button>
-            </div>
+              {/* A dot per ask, the one on show a rounded dash; each opens its ask. */}
+              <span className="flex items-center gap-1 px-0.5">
+                {asks.map((ask, index) => (
+                  <button
+                    key={ask.source}
+                    type="button"
+                    aria-label={`Ask ${index + 1} of ${asks.length}`}
+                    aria-current={index === at ? "true" : undefined}
+                    onClick={() => setPage(index)}
+                    className={cn(
+                      "h-1.5 cursor-pointer rounded-full transition-[width,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      index === at
+                        ? "w-3.5 bg-foreground"
+                        : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70",
+                    )}
+                  />
+                ))}
+              </span>
+              <Button
+                size="icon-micro"
+                variant="ghost"
+                aria-label="Next ask"
+                disabled={at === asks.length - 1}
+                onClick={() => setPage(at + 1)}
+              >
+                <ChevronRightIcon />
+              </Button>
+            </span>
           )}
         </div>
-      </ScrollArea>
-      <div
-        role="separator"
-        aria-label="Resize digest"
-        aria-orientation="horizontal"
-        className="group relative h-px shrink-0 cursor-row-resize touch-none bg-border select-none"
-        ref={ref}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
-        onLostPointerCapture={onLostPointerCapture}
-      >
-        {/* A taller hit area than the 1px rule, which lights up under the pointer. */}
-        <span
-          aria-hidden
-          className="absolute inset-x-0 -top-1 h-2 any-pointer-coarse:-top-2 any-pointer-coarse:h-4"
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px transition-colors duration-150 group-hover:bg-primary/60 group-active:bg-primary/60"
-        />
+        {item === undefined || line === null || ask === null ? null : (
+          <BotDigestAskCard
+            key={item.source}
+            question={ask.question}
+            detail={ask.detail}
+            pullRequest={line.links.pullRequests[0] ?? null}
+            environmentId={botRef.environmentId}
+            onDismiss={() => dismiss(item.source)}
+            links={
+              <BotDigestLinkRow
+                links={line.links}
+                environmentId={botRef.environmentId}
+                localVisits={localVisits}
+              />
+            }
+            actions={
+              <>
+                {given === undefined ? null : (
+                  <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
+                    Sent “{given}”
+                  </span>
+                )}
+                {offered
+                  ? item.answers.map((choice) => (
+                      <Button
+                        key={choice}
+                        size="xs"
+                        variant="outline"
+                        onClick={() => void answer(item, choice)}
+                        data-testid="bot-digest-answer"
+                      >
+                        {choice}
+                      </Button>
+                    ))
+                  : null}
+                <Button
+                  size="xs"
+                  // Beside answers it is for anything else; alone it is the way to answer.
+                  variant={offered ? "ghost" : "outline"}
+                  onClick={() => reply(item, line.question)}
+                  data-testid="bot-digest-reply"
+                >
+                  <ReplyIcon />
+                  Reply
+                </Button>
+              </>
+            }
+          />
+        )}
       </div>
-      <div className={LIST_CLASS_NAME}>{props.children}</div>
     </div>
   );
 }
 
-/** A section's label and count above its cards. */
-function BotDigestSectionFrame(props: {
-  readonly section: BotDigestSection;
-  readonly children: ReactNode;
-}) {
-  const { section } = props;
-  const testId = `bot-digest-${section.title.toLowerCase().replace(/\W+/g, "-")}`;
-  return (
-    <section className="flex flex-col gap-1" data-testid={`${testId}-card`}>
-      <div className="flex h-7 items-center px-1">
-        <SidebarV2SectionLabel count={section.items.length} testId={testId}>
-          {section.title}
-        </SidebarV2SectionLabel>
-      </div>
-      {props.children}
-    </section>
-  );
-}
-
-/** Drawn as the chat composer by wearing its stamps, so each theme paints it as its composer:
-    `prompt` and its `action` in the prompt surface, `children` on the vessel floor beneath. */
-function BotDigestComposerFrame(props: {
-  readonly prompt: ReactNode;
-  readonly action: ReactNode;
-  readonly children: ReactNode;
-}) {
-  return (
-    <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
-      <div data-fork-composer-box="true">
-        <div data-fork-composer-surface="true" className="flex items-end gap-3 py-2 pr-2 pl-3">
-          <div className="min-w-0 flex-1 py-0.5">{props.prompt}</div>
-          {props.action}
-        </div>
-      </div>
-      {props.children}
-    </div>
-  );
-}
-
-/** New or In progress: one card, put away with its X. */
-function BotDigestStatusCard(props: {
-  readonly section: BotDigestSection;
-  readonly botRef: ScopedThreadRef;
-  readonly threads: BotDigestThreads;
+/** One ask as the vessel's surface. A tile leads it in the ask's colour: the state of the pull request it is
+    about (open, draft, merged, closed), or the sidebar's needs-input colour. Beside the tile it
+    reads top to bottom: the question, its detail, what it links, then what you can do. */
+function BotDigestAskCard(props: {
+  readonly question: string;
+  readonly detail: string | null;
+  readonly pullRequest: BotPullRequest | null;
+  readonly environmentId: EnvironmentId;
+  readonly links: ReactNode;
+  readonly actions: ReactNode;
   readonly onDismiss: () => void;
 }) {
-  const { section } = props;
-  const { environmentId } = props.botRef;
+  const { state } = useBotPullRequestState(props.pullRequest, props.environmentId);
+  const Icon =
+    props.pullRequest === null
+      ? MessageCircleQuestionIcon
+      : (state?.Icon ?? PullRequestGlyph.pullRequest);
   return (
-    <BotDigestSectionFrame section={section}>
-      <div className={`${CARD_CLASS_NAME} flex items-start gap-2 py-2.5 pr-2 pl-3`}>
-        <ul className="flex min-w-0 flex-1 flex-col gap-2">
-          {section.items.map((item) => {
-            const line = resolveBotDigestLine(item, props.threads, environmentId);
-            return (
-              <li key={item.source} className="flex flex-col gap-2">
-                {line.text === "" ? null : <BotDigestWords text={line.text} />}
-                <BotDigestLinkRow
-                  links={line.links}
-                  environmentId={environmentId}
-                  localVisits={props.threads.localVisits}
-                />
-              </li>
-            );
-          })}
-        </ul>
+    <div data-fork-composer-box="true">
+      <div
+        data-fork-composer-surface="true"
+        data-fork-bot-digest-ask=""
+        className="flex min-w-0 gap-3 p-3 text-card-foreground"
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
+            props.pullRequest === null
+              ? "text-sidebar-v2-status-input"
+              : (state?.toneClassName ?? "text-muted-foreground"),
+          )}
+        >
+          <Icon className="size-4" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {props.question === "" ? null : (
+            <p className="text-sm leading-5 font-medium break-words text-foreground">
+              {props.question}
+            </p>
+          )}
+          {props.detail === null ? null : (
+            <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
+              {props.detail}
+            </p>
+          )}
+          {props.links}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
+        </div>
         <Button
-          aria-label={`Dismiss ${section.title}`}
-          onClick={props.onDismiss}
           size="icon-micro"
           variant="ghost"
+          aria-label="Dismiss"
+          onClick={props.onDismiss}
+          data-testid="bot-digest-dismiss"
         >
           <XIcon />
         </Button>
       </div>
-    </BotDigestSectionFrame>
-  );
-}
-
-/** Needs you: a card per request, each with a Reply that quotes it to the bot, or opens the
-    thread it links when that thread waits on a question. */
-function BotDigestRequests(props: {
-  readonly section: BotDigestSection;
-  readonly botRef: ScopedThreadRef;
-  readonly threads: BotDigestThreads;
-  readonly onReply: (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => void;
-}) {
-  const { section, botRef } = props;
-  return (
-    <BotDigestSectionFrame section={section}>
-      <ul className="flex flex-col gap-2">
-        {section.items.map((item) => {
-          const line = resolveBotDigestLine(item, props.threads, botRef.environmentId);
-          return (
-            <li key={item.source}>
-              <BotDigestComposerFrame
-                prompt={line.text === "" ? null : <BotDigestWords text={line.text} />}
-                action={
-                  <Button
-                    size="xs"
-                    onClick={() => props.onReply(item, line.question)}
-                    data-testid="bot-digest-reply"
-                  >
-                    <ReplyIcon />
-                    Reply
-                  </Button>
-                }
-              >
-                <BotDigestLinkRow
-                  className="py-2 pr-2 pl-3"
-                  links={line.links}
-                  environmentId={botRef.environmentId}
-                  localVisits={props.threads.localVisits}
-                />
-              </BotDigestComposerFrame>
-            </li>
-          );
-        })}
-      </ul>
-    </BotDigestSectionFrame>
+    </div>
   );
 }

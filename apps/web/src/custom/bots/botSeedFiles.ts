@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 3;
+export const BOT_RULES_VERSION = 4;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -56,13 +56,17 @@ You plan, keep track and report. Real work happens in threads you start, where y
 
 ## DIGEST.md
 
-DIGEST.md is what your owner reads to see where you stand, beside your threads. Keep three sections, most important first, one short line per item, and rewrite it whenever your work changes:
+DIGEST.md is how your owner sees where you stand: its status line and its Needs you items show just above your conversation's composer, so your owner glances at them before typing. Keep it short and rewrite it whenever your work changes.
 
-- **Needs you**: decisions, answers and approvals only your owner can give. Write each as the question or decision itself, so it can be answered from the line alone.
+Under the title, keep one status line, \`Status:\` and a few words: where things stand and when you next run, so your owner can tell at a glance whether anything needs them or is wrong. For example \`Status: Waiting on you · next scan Thu 8:00\` or \`Status: All quiet · checked 8:02\`.
+
+Then three sections, most important first, one short line per item:
+
+- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line: the question first, then at most one short sentence of what your owner needs to answer it. The question leads the card your owner sees and the rest shows smaller under it. When a word or two answers it, end the item with those answers after an arrow, after its links, at most four: \`→ Push | Hold\`. Your owner's click sends you the item quoted with the answer they picked.
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
 
-End each item with links to what it is about, after its last sentence, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…)\`.
+End each item with links to what it is about, after its last sentence, so your owner can open it from the digest: its thread's \`link\` from the thread tools (\`t3_thread_launch\`, \`t3_thread_read\`), copied exactly, then its pull request's full URL. The digest shows the thread's title under the item, so do not repeat it in your words. For example: \`- Round split payments half-even or half-up? [Fix invoice rounding](t3-thread://…) → Half-even | Half-up\`.
 
 Drop an item once your owner has answered it or it no longer matters. Leave "Nothing." under an empty section.
 
@@ -115,6 +119,8 @@ Every thread this Petal starts follows these. Only its owner changes them, by as
 export const BOT_DIGEST_FILE = "DIGEST.md";
 
 const DIGEST = `# Digest
+
+Status: Nothing yet.
 
 ## Needs you
 

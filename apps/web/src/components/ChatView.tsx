@@ -1,4 +1,7 @@
 import { ChildThreadApprovals } from "./chat/ChildThreadApprovals";
+/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+import { BotDigestAsks } from "~/custom/bots/BotDigest";
+/* fork:end fork-bot-digest */
 import { workspaceAreaProps } from "../lib/workspaceFocus";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
@@ -4097,6 +4100,10 @@ export default function ChatView(props: ChatViewProps) {
                     }
                   >
                     <ChildThreadApprovals threadRef={activeThreadRef} />
+                    {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest
+                        A Petal's asks sit just above its composer, in the chat column. */}
+                    <BotDigestAsks threadRef={activeThreadRef ?? null} />
+                    {/* fork:end fork-bot-digest */}
                     <div className="relative">
                       <ComposerSurface.Shell
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
