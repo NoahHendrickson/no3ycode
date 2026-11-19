@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useArgs } from "storybook/preview-api";
 
 import { ForkThemePicker } from "~/custom/ForkThemePicker";
-import { BASIC_TONES, FORK_PALETTES, INLET_COLORS } from "~/custom/forkTheme";
+import { BASIC_TONES, DEFAULT_INLET_COLOR, FORK_PALETTES, INLET_COLORS } from "~/custom/forkTheme";
 
 type PickerProps = ComponentProps<typeof ForkThemePicker>;
 
@@ -11,10 +11,11 @@ const meta = {
   title: "Fork/Theme picker",
   component: ForkThemePicker,
   tags: ["autodocs"],
+  parameters: { surface: "page" },
   args: {
     value: FORK_PALETTES[0],
     basicTone: BASIC_TONES[0],
-    inletColor: "cream",
+    inletColor: DEFAULT_INLET_COLOR,
     onChange: () => {},
   },
   argTypes: {
@@ -36,3 +37,6 @@ export const Playground: Story = {
     return <ForkThemePicker {...args} onChange={(value) => updateArgs({ value })} />;
   },
 };
+
+/** An upstream theme is applied, so no card is the pick. */
+export const NoneActive: Story = { args: { value: null } };

@@ -120,7 +120,8 @@ export function ForkThemePicker(props: {
   );
 }
 
-const BASIC_TONE_SWATCHES = BASIC_TONES.map((tone) => ({
+/** @public — Storybook's Fork/Swatch picker story drives the picker with it. */
+export const BASIC_TONE_SWATCHES = BASIC_TONES.map((tone) => ({
   value: tone,
   label: BASIC_TONE_OPTIONS[tone].label,
   swatch: BASIC_TONE_OPTIONS[tone].base,

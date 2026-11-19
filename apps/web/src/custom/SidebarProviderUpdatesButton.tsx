@@ -1,4 +1,8 @@
-import { PROVIDER_DISPLAY_NAMES } from "@t3tools/contracts";
+import {
+  type EnvironmentId,
+  PROVIDER_DISPLAY_NAMES,
+  type ProviderDriverKind,
+} from "@t3tools/contracts";
 import { settlePromise } from "@t3tools/client-runtime/state/runtime";
 import { PackageIcon } from "lucide-react";
 import { useRef, useState } from "react";
@@ -44,12 +48,19 @@ export function SidebarProviderUpdatesButton() {
     setIsPending(false);
   };
 
-  return <SidebarProviderUpdatesPill machines={machines} onUpdate={() => void handleUpdate()} />;
+  return (
+    <SidebarProviderUpdatesButtonView machines={machines} onUpdate={() => void handleUpdate()} />
+  );
 }
 
 /** @public — the pill as drawn, without the update run; Storybook renders it on its own. */
-export function SidebarProviderUpdatesPill(props: {
-  readonly machines: ReturnType<typeof useProviderUpdates>["machines"];
+export function SidebarProviderUpdatesButtonView(props: {
+  /** What the pill draws: one line per machine naming the providers it would update. */
+  readonly machines: ReadonlyArray<{
+    readonly environmentId: EnvironmentId;
+    readonly label: string;
+    readonly candidates: ReadonlyArray<{ readonly driver: ProviderDriverKind }>;
+  }>;
   readonly onUpdate: () => void;
 }) {
   const { machines } = props;
