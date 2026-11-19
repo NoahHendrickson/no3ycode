@@ -128,12 +128,9 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
       'trailingCount === 2 ? "right-16" : trailingCount === 1 ? "right-8" : "right-0"',
     );
     expect(header).toContain('"-me-3 relative z-10 flex shrink-0 items-center"');
-    // The design's 32px buttons on the shared 24px box: the size and corner
-    // win through twMerge, and -me-3 pulls the group out of the row's padding
-    // onto the list edge the trailing derivation measures from.
-    expect(
-      header.split('cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-8 rounded-[10px]")').length - 1,
-    ).toBe(2);
+    // The design's 32px buttons are SidebarV2IconButton's header box, and -me-3 pulls the group
+    // out of the row's padding onto the list edge the trailing derivation measures from.
+    expect(header.split(/<SidebarV2IconButton\s+box="header"/u).length - 1).toBe(2);
     expect(header).toContain("group-hover/collapse:invisible");
     expect(header).toContain("group-hover/collapse:visible");
     expect(header).toContain("New thread in ${label}");

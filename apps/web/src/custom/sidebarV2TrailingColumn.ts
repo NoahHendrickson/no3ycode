@@ -2,9 +2,9 @@
  * The Sidebar V2 trailing column — see
  * `.fork/customizations.yaml#sidebar-v2-row-action-hit-area`.
  *
- * One file owns two things that were previously spelled out at every call site:
- * the box every icon-only control in the list is drawn in, and the offsets that
- * put their glyphs on a single vertical axis.
+ * One file owns what was previously spelled out at every call site: the offsets
+ * that put the icon-only controls' glyphs on a single vertical axis. Their box is
+ * the Storybook Button, pinned to 24px and 32px by custom/SidebarV2IconButton.
  *
  * ## The axis
  *
@@ -33,52 +33,6 @@
  * row's mark steps out of the column on its own.
  */
 import { cn } from "~/lib/utils";
-
-/** The shared box for every icon-only control in the thread list: the row hover
- *  actions (snooze, settle, un-settle, wake) and the project header's plus.
- *
- * These carry no label, so the button box IS the target. Sized from padding
- * around a 12px glyph they came out 24x18 and 28x18, two different shapes both
- * under the 24px minimum, on a row where the pointer is already travelling. A
- * uniform 24px square fixes the aim, and the hover fill fixes the other half of
- * the problem: on a transparent button you cannot see where the target ends, so
- * a near miss looks identical to a hit.
- *
- * `bg-foreground/10` rather than `bg-accent`: this sits on top of the row's own
- * hover fill (`--sidebar-row-hover` in both themes), and a foreground alpha is
- * the one value that stays a step brighter than the row under it in dark and a
- * step darker in light.
- *
- * 24px is the *visual* box. On a coarse pointer an invisible child grows the
- * tappable area to 44px without moving anything — upstream's trick, carried by
- * `ui/button` and by the chrome rows' trailing buttons, and this box is the one
- * place it can be spent once for every icon-only control in the list. The row
- * actions are hover-gated and so never reach a touch device at all; the project
- * header's plus is always rendered, and its own handler closes the mobile
- * drawer, which is the code conceding it is reachable there. 24px is exactly
- * the WCAG 2.5.8 floor for a fine pointer, and that is a design-wide stance
- * rather than this box's private compromise: the Figma card-v2 chrome draws
- * every icon-only control — the always-on trailing buttons included — at the
- * same 24px, and the margin everywhere comes from the coarse-pointer child,
- * not the visual box.
- *
- * `focus-visible` for the same reason the hover fill exists: on a transparent
- * button you cannot see where the target ends, and that is as true of keyboard
- * focus as of the pointer. Ring offset against the sidebar because that is
- * the surface these sit on. Offset 1, not TRAILING_BUTTON's 2, and the
- * difference is clipping, not taste: these buttons sit inside the row
- * surface's overflow-hidden, and their right edge is 4px in from the clip
- * boundary (flush with a card's px-1 content edge; me-1 on the bare-edge
- * rows). ring-2 + offset-2 is 4px of shadow outside the button — its outer
- * edge exactly on the boundary, so the ring rendered clipped. offset-1 keeps
- * the full ring with 1px to spare; the chrome buttons are unclipped and keep
- * their 2.
- *
- * A constant rather than a component, because the call sites need to be five
- * different elements — a plain button, a popover trigger's render prop, an
- * absolutely positioned overlay — and only the box is common to them. */
-export const SIDEBAR_V2_ICON_BUTTON_CLASS =
-  "relative inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md bg-transparent text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11";
 
 /**
  * What each row spends to reach the axis. Derived, never tuned — the comment on
@@ -132,13 +86,13 @@ export const SIDEBAR_V2_TRAILING_OFFSET = {
  * were three copies of this string; the copies are how the set drifted apart
  * the first time.
  *
- * Absolutely positioned rather than in flow, which is also why slim rows never
+ * Placement and reveal for the slim-row action (custom/SidebarV2IconButton's
+ * SidebarV2SlimRowAction). Absolutely positioned rather than in flow, which is also why slim rows never
  * had the card's paint-order bug: an opacity-induced stacking context on the
  * time label they swap with lands in the same layer as this button, and DOM
  * order decides.
  */
 export const SIDEBAR_V2_SLIM_ROW_ACTION_CLASS = cn(
-  SIDEBAR_V2_ICON_BUTTON_CLASS,
   "absolute inset-y-0 right-0 opacity-0 focus-visible:opacity-100 group-any-hover/v2-row:opacity-100",
   // With no hovering pointer at all nothing reveals it, so it must not take
   // taps either: its 44px coarse hit area sat invisibly over the time label

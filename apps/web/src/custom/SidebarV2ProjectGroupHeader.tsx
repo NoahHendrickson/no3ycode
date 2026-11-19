@@ -72,10 +72,8 @@ import { cn } from "~/lib/utils";
 // Fork-only glyph from the shim's own path (this file is fork-owned).
 import { EllipsisVerticalIcon } from "./icons/lucide-hugeicons";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
-import {
-  SIDEBAR_V2_ICON_BUTTON_CLASS,
-  SIDEBAR_V2_TRAILING_OFFSET,
-} from "./sidebarV2TrailingColumn";
+import { SidebarV2IconButton } from "./SidebarV2IconButton";
+import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 
 /** The unresolved-project section: a just-deleted project, or an environment
     whose projects have not loaded yet. Named rather than left blank so the run
@@ -224,9 +222,8 @@ export function SidebarV2ProjectGroupHeader(props: {
           {label}
         </span>
         {trailingCount > 0 ? (
-          // The design's 32px icon buttons (364:11451, 368:21126) on the
-          // shared box: twMerge lets size-8/rounded-[10px] win over the
-          // class's size-6/rounded-md. -me-3 pulls the group out of the row's
+          // The design's 32px icon buttons (364:11451, 368:21126), the
+          // header box of SidebarV2IconButton. -me-3 pulls the group out of the row's
           // own padding so it sits flush with the list edge, where the
           // trailing derivation puts it. Above the collapse layer — without
           // z-10 the absolute button steals the click and the buttons look
@@ -243,14 +240,13 @@ export function SidebarV2ProjectGroupHeader(props: {
               <Menu open={menuOpen} onOpenChange={setMenuOpen}>
                 <MenuTrigger
                   render={
-                    <button
-                      type="button"
+                    <SidebarV2IconButton
+                      box="header"
                       aria-label={`Actions for ${label}`}
                       data-testid="sidebar-v2-project-group-menu"
                       // The collapse layer sits under the row; a click here
                       // is the menu's, never a toggle.
                       onClick={(event) => event.stopPropagation()}
-                      className={cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-8 rounded-[10px]")}
                     />
                   }
                 >
@@ -274,8 +270,8 @@ export function SidebarV2ProjectGroupHeader(props: {
               </Menu>
             ) : null}
             {props.onNewThread ? (
-              <button
-                type="button"
+              <SidebarV2IconButton
+                box="header"
                 // Named for the project, not "New thread": a screen reader
                 // running the headings of a grouped sidebar would otherwise
                 // hear the same control repeated once per group with nothing
@@ -287,10 +283,9 @@ export function SidebarV2ProjectGroupHeader(props: {
                   event.stopPropagation();
                   props.onNewThread?.();
                 }}
-                className={cn(SIDEBAR_V2_ICON_BUTTON_CLASS, "size-8 rounded-[10px]")}
               >
                 <PlusIcon aria-hidden className="size-4" />
-              </button>
+              </SidebarV2IconButton>
             ) : null}
           </span>
         ) : null}

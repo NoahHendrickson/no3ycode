@@ -31,10 +31,6 @@ import { cn } from "~/lib/utils";
 
 import type { SidebarV2StatusBucket } from "./sidebarV2StatusGrouping";
 
-// SIDEBAR_V2_ICON_BUTTON_CLASS moved to custom/sidebarV2TrailingColumn.ts:
-// this module is title-recede and surface policy, and the trailing column is
-// its own concern with its own derivation to carry.
-
 /** Does a card's *title* step back?
  *
  * The component set (Figma 113:724) mutes exactly two statuses at rest — Done

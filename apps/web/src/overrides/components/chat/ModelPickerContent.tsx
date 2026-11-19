@@ -33,6 +33,7 @@ import { getProviderStatusMessage, hasProviderSetup } from "./ProviderStatusBann
 import { useProviderWorkspaceSnapshotRefresh } from "./useProviderWorkspaceSnapshotRefresh";
 import { rankModelPickerSearch } from "@t3tools/client-runtime/model-search";
 import { getDisplayModelName, ModelEsque } from "./providerIconUtils";
+import { Button } from "../ui/button";
 import { MenuItem } from "../ui/menu";
 import { Badge } from "../ui/badge";
 import { Kbd } from "../ui/kbd";
@@ -751,16 +752,21 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           ) : null}
           {/* Toggles the favorite without choosing the row: the item selects
               on click, so the star's click must not reach it. */}
-          <button
-            type="button"
+          <Button
+            variant="ghost-muted"
+            size="icon-xs"
             tabIndex={-1}
             aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             className={cn(
-              "flex size-6 cursor-pointer items-center justify-center rounded-[4px] text-muted-foreground/70 hover:text-foreground",
               HOVER_REVEAL_CLASS,
               // No hover on touch: the star stays shown, or tapping a row's
               // right edge would toggle a favorite the user cannot see.
               "pointer-coarse:opacity-100",
+              // Button's 44px coarse-pointer target would reach into the next row's star.
+              "pointer-coarse:after:hidden",
+              // Button fades a disabled button to 64%; this one stays hidden until its row is
+              // hovered, like any other row's star.
+              "disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
             )}
             disabled={Boolean(disabledReason)}
             onPointerDown={(event) => event.stopPropagation()}
@@ -773,7 +779,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             }}
           >
             <StarIcon className={cn("size-3.5", isFavorite && "fill-current text-yellow-500")} />
-          </button>
+          </Button>
           {isSelected ? (
             <CheckIcon className="size-4 shrink-0 text-foreground" aria-label="Selected" />
           ) : null}
