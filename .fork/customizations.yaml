@@ -3745,7 +3745,8 @@
     the same fallback strip leads with ThreadContextReadout: the project and
     branch as read-only chips (worktree mark in a worktree), with no
     workspace-mode label, so they show above the composer as well as in the
-    details card. Composer context on keeps upstream's interactive strip.
+    details card. Clicking the branch chip copies the branch name. Composer
+    context on keeps upstream's interactive strip.
     Upstream deleted its resting composer layout (#25869), so the fork's
     one-layout rule needs no neutralizing; the composerFooterLayout shadow now
     only carries the lowered compact thresholds. Since that sync the shell's

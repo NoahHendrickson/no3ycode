@@ -5,13 +5,15 @@
  * Upstream drops the context strip once a thread starts (unless "Composer
  * context" is on), leaving the project and branch only in the details card.
  * Both are pinned by then, so this repeats them as plain chips: no menus, and
- * no workspace-mode label. The worktree mark replaces the branch glyph when
- * the thread runs in a worktree, as on the sidebar card. The spans carry
- * `data-fork-context-chip`, so the row's CSS paints them like the draft's
- * interactive chips.
+ * no workspace-mode label. Clicking the branch chip copies the branch name.
+ * The worktree mark replaces the branch glyph when the thread runs in a
+ * worktree, as on the sidebar card. The chips carry `data-fork-context-chip`,
+ * so the row's CSS paints them like the draft's interactive chips.
  */
 import { resolveBranchToolbarValue, type EnvMode } from "~/components/BranchToolbar.logic";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
+import { stackedThreadToast, toastManager } from "~/components/ui/toast";
+import { writeTextToClipboard } from "~/hooks/useCopyToClipboard";
 
 import { READ_ONLY_CONTEXT_CHIP_CLASS_NAME } from "./composerContextStrip";
 import { FolderIcon, GitBranchIcon } from "./icons/lucide-hugeicons";
@@ -31,6 +33,25 @@ export function resolveThreadContextBranch(input: {
 }): string | null {
   if (!input.isGitRepo && input.activeWorktreePath === null) return null;
   return resolveBranchToolbarValue(input);
+}
+
+function copyBranchName(branch: string) {
+  void writeTextToClipboard(branch, "branch name").then(
+    (didCopy) => {
+      if (didCopy) {
+        toastManager.add({ type: "success", title: "Branch name copied", description: branch });
+      }
+    },
+    (error: unknown) => {
+      toastManager.add(
+        stackedThreadToast({
+          type: "error",
+          title: "Failed to copy branch name",
+          description: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    },
+  );
 }
 
 export function ThreadContextReadout(props: {
@@ -60,15 +81,18 @@ export function ThreadContextReadout(props: {
         <span className="min-w-0 truncate">{props.project.title}</span>
       </span>
       {branch ? (
-        <span
+        <button
+          type="button"
           data-fork-context-chip
           data-composer-context-control
           data-testid="thread-branch-readout"
-          className={READ_ONLY_CONTEXT_CHIP_CLASS_NAME}
+          className={`${READ_ONLY_CONTEXT_CHIP_CLASS_NAME} cursor-pointer`}
+          aria-label={`Copy branch name ${branch}`}
+          onClick={() => copyBranchName(branch)}
         >
           <BranchIcon className="size-3 shrink-0" />
           <span className="min-w-0 truncate">{branch}</span>
-        </span>
+        </button>
       ) : null}
     </>
   );
