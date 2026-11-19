@@ -3,6 +3,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ThreadId } from "@t3tools/contracts";
 
 import { ComposerBackgroundLivenessPill } from "~/custom/ComposerMonitoringPill";
+// The app loads the pill's rules through the composer shell.
+import "~/custom/ComposerShell.css";
 
 import { Row, Stack } from "../Specimen.tsx";
 

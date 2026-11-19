@@ -71,14 +71,22 @@ const meta = {
   tags: ["autodocs"],
   parameters: { surface: "sidebar" },
   args: { snapshot: SNAPSHOT, expanded: true },
-  decorators: [(Story) => <div className="w-64">{Story()}</div>],
+  // The strip's fill and inks are scoped to the sidebar footer it sits in.
+  decorators: [
+    (Story) => (
+      <div data-slot="sidebar-footer" className="w-64">
+        {Story()}
+      </div>
+    ),
+  ],
 } satisfies Meta<typeof MusicStripCardView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** The sidebar's ah ahh strip, open on Up next: now playing, the list tabs, the queue and the
-    transport. Rows open a song, playlist or artist. */
+    transport. A static specimen: its controls write to the app's music store, not these args, so
+    each tab has its own story. */
 export const Playground: Story = {};
 
 /** Folded to the transport alone. */
@@ -86,9 +94,9 @@ export const Collapsed: Story = { args: { expanded: false } };
 
 export const Songs: Story = { args: { snapshot: { ...SNAPSHOT, tab: "songs" } } };
 
+export const Playlists: Story = { args: { snapshot: { ...SNAPSHOT, tab: "playlists" } } };
+
 export const Artists: Story = { args: { snapshot: { ...SNAPSHOT, tab: "artists" } } };
 
-/** ah ahh is not installed. */
-export const Unavailable: Story = {
-  args: { snapshot: { ...SNAPSHOT, state: { status: "closed" }, openFailed: true } },
-};
+/** ah ahh isn't open. */
+export const Closed: Story = { args: { snapshot: { ...SNAPSHOT, state: { status: "closed" } } } };

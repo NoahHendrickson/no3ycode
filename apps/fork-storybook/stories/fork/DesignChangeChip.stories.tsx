@@ -56,6 +56,12 @@ export const Shapes: Story = {
       <Row label="No source">
         <DesignChangeChip
           {...args}
+          entry={change("d", [{ tag: "div", sourceLabel: null, deltas: ["gap 8px → 12px"] }])}
+        />
+      </Row>
+      <Row label="Some without source">
+        <DesignChangeChip
+          {...args}
           entry={change("c", [
             { tag: "div", sourceLabel: null, deltas: ["gap 8px → 12px"] },
             { tag: "span", sourceLabel: "Card.tsx:7", deltas: ["opacity 1 → 0.8"] },
