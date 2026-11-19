@@ -97,6 +97,10 @@ describe("fork guard: working indicator setting", () => {
 
   it("offers the switch under Appearance and resets it with Restore defaults", () => {
     expect(appearance).toContain('title="Working indicator"');
+    // In the Theme section, under Basic's New agent background.
+    const row = appearance.indexOf('title="Working indicator"');
+    expect(row).toBeGreaterThan(appearance.indexOf('title="New agent background"'));
+    expect(row).toBeLessThan(appearance.indexOf('<SettingsSection id="appearance" '));
     expect(panels).toContain('["Working indicator"]');
     expect(panels).toContain("setWorkingMark(null)");
   });

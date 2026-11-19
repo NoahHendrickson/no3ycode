@@ -41,6 +41,13 @@ import { COOL_DARKER_THEME, useForkAppearance } from "../../custom/forkTheme";
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
 import { BASIC_THEME, BASIC_TONE_OPTIONS, DEFAULT_BASIC_TONES } from "../../custom/forkTheme";
 import { ForkBasicTonePicker, ForkThemePicker } from "../../custom/ForkThemePicker";
+import {
+  BASIC_NEW_AGENT_BACKDROP_LABELS,
+  BASIC_NEW_AGENT_BACKDROPS,
+  DEFAULT_BASIC_NEW_AGENT_BACKDROP,
+  isBasicNewAgentBackdrop,
+  useBasicNewAgentBackdrop,
+} from "../../custom/basicNewAgentBackdrop";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
@@ -134,6 +141,9 @@ export function AppearanceSettingsPanel() {
     useForkAppearance(setTheme);
   const defaultBasicTone = DEFAULT_BASIC_TONES[BASIC_TONE_OPTIONS[basicTone].appearance];
   /* fork:end fork-cool-dark-theme */
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
+  /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
   const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
   /* fork:end fork-glass-new-agent-stage */
@@ -216,6 +226,41 @@ export function AppearanceSettingsPanel() {
             control={<ForkBasicTonePicker value={basicTone} onChange={setBasicTone} />}
           />
         ) : null}
+        {appearance === BASIC_THEME ? (
+          <SettingsRow
+            title="New agent background"
+            description="What Basic draws behind a new agent."
+            resetAction={
+              basicNewAgentBackdrop === DEFAULT_BASIC_NEW_AGENT_BACKDROP ? null : (
+                <SettingResetButton
+                  label="new agent background"
+                  onClick={() => setBasicNewAgentBackdrop(DEFAULT_BASIC_NEW_AGENT_BACKDROP)}
+                />
+              )
+            }
+            control={
+              <Select
+                value={basicNewAgentBackdrop}
+                onValueChange={(value) => {
+                  if (isBasicNewAgentBackdrop(value)) setBasicNewAgentBackdrop(value);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-44" aria-label="New agent background">
+                  <SelectValue>
+                    {BASIC_NEW_AGENT_BACKDROP_LABELS[basicNewAgentBackdrop]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectPopup align="end" alignItemWithTrigger={false}>
+                  {BASIC_NEW_AGENT_BACKDROPS.map((backdrop) => (
+                    <SelectItem hideIndicator key={backdrop} value={backdrop}>
+                      {BASIC_NEW_AGENT_BACKDROP_LABELS[backdrop]}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            }
+          />
+        ) : null}
         {/* fork:end fork-basic-theme */}
         {/* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */}
         {appearance === INLET_THEME ? (
@@ -292,29 +337,6 @@ export function AppearanceSettingsPanel() {
           />
         ) : null}
         {/* fork:end fork-glass-3d */}
-        {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
-      </SettingsSection>
-      {/* fork:end fork-basic-theme */}
-
-      <SettingsSection id="appearance" title="Colors & themes" variant="plain" hideTitle>
-        <div id={searchableSetting("theme").id}>
-          <ThemeLibrary
-            appearanceMode={appearanceMode}
-            customThemes={customThemes}
-            initialAppearance={resolvedTheme}
-            refreshTheme={refreshTheme}
-            isImportOpen={isImportThemeOpen}
-            setAppearanceMode={setAppearanceMode}
-            setTheme={setTheme}
-            setThemeHalf={setThemeHalf}
-            theme={theme}
-            themeHalves={themeHalves}
-            onImportOpenChange={setIsImportThemeOpen}
-          />
-        </div>
-      </SettingsSection>
-
-      <SettingsSection id="appearance-interface" title="Interface">
         {/* fork:begin fork-working-mark — see .fork/customizations.yaml#fork-working-mark */}
         <SettingsRow
           title="Working indicator"
@@ -345,7 +367,29 @@ export function AppearanceSettingsPanel() {
           }
         />
         {/* fork:end fork-working-mark */}
+        {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
+      </SettingsSection>
+      {/* fork:end fork-basic-theme */}
 
+      <SettingsSection id="appearance" title="Colors & themes" variant="plain" hideTitle>
+        <div id={searchableSetting("theme").id}>
+          <ThemeLibrary
+            appearanceMode={appearanceMode}
+            customThemes={customThemes}
+            initialAppearance={resolvedTheme}
+            refreshTheme={refreshTheme}
+            isImportOpen={isImportThemeOpen}
+            setAppearanceMode={setAppearanceMode}
+            setTheme={setTheme}
+            setThemeHalf={setThemeHalf}
+            theme={theme}
+            themeHalves={themeHalves}
+            onImportOpenChange={setIsImportThemeOpen}
+          />
+        </div>
+      </SettingsSection>
+
+      <SettingsSection id="appearance-interface" title="Interface">
         <SettingsRow
           {...searchableSetting("setting-appearance-contrast")}
           description="Adjust the contrast of colors and borders across the interface."

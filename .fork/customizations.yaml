@@ -1696,7 +1696,12 @@
     height recorded there. Windows' caption overlay keeps the OS height.
     The new-agent screen carries Inlet Black's pixel texture on every tone
     (custom/BasicNewAgentTexture.tsx): in from the column's right edge, below
-    the header, in the tone's base and text colours.
+    the header, in the tone's base and text colours. Settings › Appearance ›
+    New agent background (Basic only, device-local) swaps it for the dither
+    picture (custom/assets/basic-new-agent-dither.png, one pixel per cell, in
+    its own colours over a transparent ground) across the whole column: a whole
+    number of pixels per cell, at least 2, anchored top right; Figma's
+    Block / New agent › Background=Dither. Restore defaults resets the pick.
     Light and Cream keep the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
@@ -1717,6 +1722,8 @@
     - apps/web/src/custom/forkActivePalette.ts
     - apps/web/src/custom/icons/lucide-hugeicons.tsx
     - apps/web/src/custom/BasicNewAgentTexture.tsx
+    - apps/web/src/custom/basicNewAgentBackdrop.ts
+    - apps/web/src/custom/assets/basic-new-agent-dither.png
     - apps/web/src/custom/forkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeight.ts
     - apps/desktop/src/fork/ForkTopbarHeightState.ts
@@ -1726,6 +1733,7 @@
     - apps/desktop/src/ipc/DesktopIpcHandlers.ts
     - apps/desktop/src/preload.ts
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
+    - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/ChatView.tsx
   verify:
     - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
@@ -5315,7 +5323,7 @@
 
 - id: fork-working-mark
   intent: >
-    Settings → Appearance → Interface → Working indicator picks which mark a
+    Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
     transcript working row, the composer liveness pill, subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
