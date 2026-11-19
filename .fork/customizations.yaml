@@ -7596,8 +7596,10 @@
     shows the status line (parseBotDigestStatus; "Nothing yet." shows none) and one card per
     Needs you ask, nothing for any other thread or while there is neither. New and In progress
     stay in the file for the bot's own memory and draw nothing: its chat messages already say
-    what it did. Each ask is a card (the card fill, a 1px border, 8px corners)
-    led by a 32px tile in its colour: the state of the pull request it is about (its first
+    what it did. The digest is the chat composer's two layers, worn by its vessel,
+    box and surface stamps so each theme paints it as its composer: the vessel's own top strip
+    holds the status line (else "Needs you"), "Show N dismissed" and the "N of M" pager, and the
+    ask on show is the surface inside it, led by a 32px tile in its colour: the state of the pull request it is about (its first
     linked pull request, via useBotPullRequestState: open, draft, merged, closed, in the pull
     request tone the rest of the app uses), else the sidebar's needs-input colour with a question
     glyph. Beside the tile it reads top to bottom: the ask's question (splitBotDigestAsk: its

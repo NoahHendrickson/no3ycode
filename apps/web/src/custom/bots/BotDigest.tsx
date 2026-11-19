@@ -183,99 +183,103 @@ function BotDigestAsksFor(props: {
   const given = item === undefined ? undefined : sent.get(item.source);
   const offered = item !== undefined && item.answers.length > 0 && given === undefined;
   return (
-    <div data-fork-bot-digest="" className="flex flex-col gap-2 pb-2">
-      <div className="flex min-h-6 items-center gap-2 px-1 text-xs text-muted-foreground">
-        <span data-testid="bot-digest-status" className="min-w-0 flex-1 truncate">
-          {status}
-        </span>
-        {hiddenCount === 0 ? null : (
-          <Button
-            size="micro"
-            variant="ghost"
-            onClick={() => setDismissed(NO_DISMISSED)}
-            data-testid="bot-digest-show-dismissed"
-          >
-            Show {hiddenCount} dismissed
-          </Button>
-        )}
-        {asks.length < 2 ? null : (
-          <span className="flex shrink-0 items-center gap-0.5 tabular-nums">
-            <Button
-              size="icon-micro"
-              variant="ghost"
-              aria-label="Previous ask"
-              disabled={at === 0}
-              onClick={() => setPage(at - 1)}
-            >
-              <ChevronLeftIcon />
-            </Button>
-            {at + 1} of {asks.length}
-            <Button
-              size="icon-micro"
-              variant="ghost"
-              aria-label="Next ask"
-              disabled={at === asks.length - 1}
-              onClick={() => setPage(at + 1)}
-            >
-              <ChevronRightIcon />
-            </Button>
+    <div data-fork-bot-digest="" className="pb-2">
+      {/* The composer's two layers, worn by its stamps so each theme paints it as the composer: the
+          vessel's own strip names where the bot stands, and the ask is the surface inside it. */}
+      <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
+        <div className="flex min-h-8 items-center gap-2 py-1 pr-1.5 pl-3 text-xs text-muted-foreground">
+          <span data-testid="bot-digest-status" className="min-w-0 flex-1 truncate">
+            {status ?? "Needs you"}
           </span>
+          {hiddenCount === 0 ? null : (
+            <Button
+              size="micro"
+              variant="ghost"
+              onClick={() => setDismissed(NO_DISMISSED)}
+              data-testid="bot-digest-show-dismissed"
+            >
+              Show {hiddenCount} dismissed
+            </Button>
+          )}
+          {asks.length < 2 ? null : (
+            <span className="flex shrink-0 items-center gap-0.5 tabular-nums">
+              <Button
+                size="icon-micro"
+                variant="ghost"
+                aria-label="Previous ask"
+                disabled={at === 0}
+                onClick={() => setPage(at - 1)}
+              >
+                <ChevronLeftIcon />
+              </Button>
+              {at + 1} of {asks.length}
+              <Button
+                size="icon-micro"
+                variant="ghost"
+                aria-label="Next ask"
+                disabled={at === asks.length - 1}
+                onClick={() => setPage(at + 1)}
+              >
+                <ChevronRightIcon />
+              </Button>
+            </span>
+          )}
+        </div>
+        {item === undefined || line === null || ask === null ? null : (
+          <BotDigestAskCard
+            key={item.source}
+            question={ask.question}
+            detail={ask.detail}
+            pullRequest={line.links.pullRequests[0] ?? null}
+            environmentId={botRef.environmentId}
+            onDismiss={() => dismiss(item.source)}
+            links={
+              <BotDigestLinkRow
+                links={line.links}
+                environmentId={botRef.environmentId}
+                localVisits={localVisits}
+              />
+            }
+            actions={
+              <>
+                {given === undefined ? null : (
+                  <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
+                    Sent “{given}”
+                  </span>
+                )}
+                {offered
+                  ? item.answers.map((choice) => (
+                      <Button
+                        key={choice}
+                        size="xs"
+                        variant="outline"
+                        onClick={() => void answer(item, choice)}
+                        data-testid="bot-digest-answer"
+                      >
+                        {choice}
+                      </Button>
+                    ))
+                  : null}
+                <Button
+                  size="xs"
+                  // Beside answers it is for anything else; alone it is the way to answer.
+                  variant={offered ? "ghost" : "outline"}
+                  onClick={() => reply(item, line.question)}
+                  data-testid="bot-digest-reply"
+                >
+                  <ReplyIcon />
+                  Reply
+                </Button>
+              </>
+            }
+          />
         )}
       </div>
-      {item === undefined || line === null || ask === null ? null : (
-        <BotDigestAskCard
-          key={item.source}
-          question={ask.question}
-          detail={ask.detail}
-          pullRequest={line.links.pullRequests[0] ?? null}
-          environmentId={botRef.environmentId}
-          onDismiss={() => dismiss(item.source)}
-          links={
-            <BotDigestLinkRow
-              links={line.links}
-              environmentId={botRef.environmentId}
-              localVisits={localVisits}
-            />
-          }
-          actions={
-            <>
-              {given === undefined ? null : (
-                <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
-                  Sent “{given}”
-                </span>
-              )}
-              {offered
-                ? item.answers.map((choice) => (
-                    <Button
-                      key={choice}
-                      size="xs"
-                      variant="outline"
-                      onClick={() => void answer(item, choice)}
-                      data-testid="bot-digest-answer"
-                    >
-                      {choice}
-                    </Button>
-                  ))
-                : null}
-              <Button
-                size="xs"
-                // Beside answers it is for anything else; alone it is the way to answer.
-                variant={offered ? "ghost" : "outline"}
-                onClick={() => reply(item, line.question)}
-                data-testid="bot-digest-reply"
-              >
-                <ReplyIcon />
-                Reply
-              </Button>
-            </>
-          }
-        />
-      )}
     </div>
   );
 }
 
-/** One ask as a card. A tile leads it in the ask's colour: the state of the pull request it is
+/** One ask as the vessel's surface. A tile leads it in the ask's colour: the state of the pull request it is
     about (open, draft, merged, closed), or the sidebar's needs-input colour. Beside the tile it
     reads top to bottom: the question, its detail, what it links, then what you can do. */
 function BotDigestAskCard(props: {
@@ -293,44 +297,47 @@ function BotDigestAskCard(props: {
       ? MessageCircleQuestionIcon
       : (state?.Icon ?? PullRequestGlyph.pullRequest);
   return (
-    <div
-      data-fork-bot-digest-ask=""
-      className="flex min-w-0 gap-3 rounded-lg border border-border bg-card p-3 text-card-foreground"
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
-          props.pullRequest === null
-            ? "text-sidebar-v2-status-input"
-            : (state?.toneClassName ?? "text-muted-foreground"),
-        )}
+    <div data-fork-composer-box="true">
+      <div
+        data-fork-composer-surface="true"
+        data-fork-bot-digest-ask=""
+        className="flex min-w-0 gap-3 p-3 text-card-foreground"
       >
-        <Icon className="size-4" />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        {props.question === "" ? null : (
-          <p className="text-sm leading-5 font-medium break-words text-foreground">
-            {props.question}
-          </p>
-        )}
-        {props.detail === null ? null : (
-          <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
-            {props.detail}
-          </p>
-        )}
-        {props.links}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
+            props.pullRequest === null
+              ? "text-sidebar-v2-status-input"
+              : (state?.toneClassName ?? "text-muted-foreground"),
+          )}
+        >
+          <Icon className="size-4" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {props.question === "" ? null : (
+            <p className="text-sm leading-5 font-medium break-words text-foreground">
+              {props.question}
+            </p>
+          )}
+          {props.detail === null ? null : (
+            <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
+              {props.detail}
+            </p>
+          )}
+          {props.links}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
+        </div>
+        <Button
+          size="icon-micro"
+          variant="ghost"
+          aria-label="Dismiss"
+          onClick={props.onDismiss}
+          data-testid="bot-digest-dismiss"
+        >
+          <XIcon />
+        </Button>
       </div>
-      <Button
-        size="icon-micro"
-        variant="ghost"
-        aria-label="Dismiss"
-        onClick={props.onDismiss}
-        data-testid="bot-digest-dismiss"
-      >
-        <XIcon />
-      </Button>
     </div>
   );
 }
