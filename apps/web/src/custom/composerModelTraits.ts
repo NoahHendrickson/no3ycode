@@ -73,6 +73,16 @@ export function findEffortDescriptor(
   );
 }
 
+/** A select offers a choice when it has two values, or when its one value is not yet in force,
+    so picking it still changes the request (Codex's Cyber Access when its default is unknown). */
+function offersChoice(descriptor: ProviderOptionDescriptor): boolean {
+  return (
+    descriptor.type !== "select" ||
+    descriptor.options.length > 1 ||
+    getProviderOptionCurrentValue(descriptor) === undefined
+  );
+}
+
 /**
  * Rows under the slider keep one order whatever the provider lists: the rest
  * in the provider's order, then Fast Mode, then Context Window last.
@@ -136,16 +146,23 @@ export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
   const ultrathinkPromptControlled =
     (primarySelect?.promptInjectedValues?.length ?? 0) > 0 && promptUltrathink !== "none";
   const ultrathinkInBodyText = ultrathinkPromptControlled && promptUltrathink === "body";
+  const effortDescriptor = modelIsUnavailable ? null : findEffortDescriptor(descriptors);
+  // Saved options show read-only as they were saved. An editable option with nothing to pick gets
+  // no row and stays out of the trigger; `descriptors` keeps it, so the stored value is untouched.
+  const shown = modelIsUnavailable ? descriptors : descriptors.filter(offersChoice);
+  const rows = orderTraitRows(shown, effortDescriptor);
+  if (effortDescriptor === null && rows.length === 0) return null;
 
   return {
     descriptors,
+    rows,
     primarySelectId: primarySelect?.id ?? null,
-    effortDescriptor: modelIsUnavailable ? null : findEffortDescriptor(descriptors),
+    effortDescriptor,
     ultrathinkPromptControlled,
     ultrathinkInBodyText,
     modelIsUnavailable,
     trigger: buildTraitsTriggerDisplay({
-      descriptors,
+      descriptors: shown,
       primarySelectDescriptorId: primarySelect?.id ?? null,
       ultrathinkPromptControlled,
       labelSeparator: " ",

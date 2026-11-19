@@ -38,10 +38,10 @@ import {
   type ComposerModelTraitsInput,
   type SelectDescriptor,
   effortStopIndex,
-  orderTraitRows,
   resolveComposerModelTraits,
 } from "./composerModelTraits";
 import { EffortDither, type EffortDitherStops, effortDitherStops } from "./EffortDither";
+import { Tab, Tabs } from "./Tabs";
 
 const ULTRATHINK_PROMPT_PREFIX = "Ultrathink:\n";
 /**
@@ -200,35 +200,25 @@ export function EffortSlider(props: {
   );
 }
 
-/** Styled like ui/toggle-group's segmented variant, so Glass's --input wash applies. */
-function SegmentedTrait(props: {
-  descriptor: SelectDescriptor;
-  onSelect: (optionId: string) => void;
-}) {
+/** A select trait as the fork's tab strip; Inlet Black dresses it by its marker. */
+function TraitTabs(props: { descriptor: SelectDescriptor; onSelect: (optionId: string) => void }) {
   const current = getProviderOptionCurrentValue(props.descriptor);
   return (
-    <div
+    <Tabs
       data-fork-segmented-trait=""
-      className="flex min-w-0 flex-wrap justify-end gap-0.5 rounded-[6px] bg-input/40 p-0.5"
+      aria-label={props.descriptor.label}
+      value={typeof current === "string" ? [current] : []}
+      onValueChange={([optionId]) => {
+        // Pressing the picked tab again unpicks it in a toggle group; a trait always has one.
+        if (optionId !== undefined) props.onSelect(optionId);
+      }}
     >
-      {props.descriptor.options.map((option) => {
-        const selected = option.id === current;
-        return (
-          <button
-            key={option.id}
-            type="button"
-            aria-pressed={selected}
-            className={cn(
-              "h-6 cursor-pointer rounded-[4px] px-2 text-xs font-medium text-muted-foreground hover:text-foreground",
-              selected && "bg-background text-foreground shadow-xs/10 dark:bg-input/72",
-            )}
-            onClick={() => props.onSelect(option.id)}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+      {props.descriptor.options.map((option) => (
+        <Tab key={option.id} value={option.id}>
+          {option.label}
+        </Tab>
+      ))}
+    </Tabs>
   );
 }
 
@@ -280,7 +270,7 @@ function ComposerModelTraitsPanel(props: {
   if (traits.modelIsUnavailable) {
     return (
       <div className="flex flex-col p-1" onKeyDown={keepKeysInPanel}>
-        {orderTraitRows(descriptors, null).map((descriptor) => {
+        {traits.rows.map((descriptor) => {
           const value = getProviderOptionCurrentLabel(descriptor);
           return value ? (
             <TraitRow key={descriptor.id} label={descriptor.label}>
@@ -316,7 +306,7 @@ function ComposerModelTraitsPanel(props: {
           ) : null}
         </>
       ) : null}
-      {orderTraitRows(descriptors, effortDescriptor).map((descriptor) => {
+      {traits.rows.map((descriptor) => {
         if (descriptor.type === "boolean") {
           return (
             <TraitRow key={descriptor.id} label={descriptor.label} asLabel>
@@ -333,7 +323,7 @@ function ComposerModelTraitsPanel(props: {
         }
         return (
           <TraitRow key={descriptor.id} label={descriptor.label}>
-            <SegmentedTrait
+            <TraitTabs
               descriptor={descriptor}
               onSelect={(optionId) => selectOption(descriptor, optionId)}
             />
