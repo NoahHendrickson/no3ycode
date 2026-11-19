@@ -204,3 +204,20 @@ export function parseBotDigestStatus(contents: string): string | null {
   }
   return null;
 }
+
+/** An ask's question, to lead its card, and the rest of its line as quieter detail. The question
+    is its first sentence that asks one; a line that asks none leads with its first sentence. */
+export function splitBotDigestAsk(text: string): {
+  readonly question: string;
+  readonly detail: string | null;
+} {
+  const sentences = text.match(/\S[\s\S]*?(?:[?.!](?=\s|$)|$)/gu) ?? [];
+  const asking = sentences.findIndex((sentence) => sentence.endsWith("?"));
+  const at = asking === -1 ? 0 : asking;
+  if (sentences[at] === undefined) return { question: text, detail: null };
+  const detail = sentences
+    .filter((_, index) => index !== at)
+    .join(" ")
+    .trim();
+  return { question: sentences[at]!, detail: detail === "" ? null : detail };
+}

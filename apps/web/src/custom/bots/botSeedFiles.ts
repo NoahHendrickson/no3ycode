@@ -62,7 +62,7 @@ Under the title, keep one status line, \`Status:\` and a few words: where things
 
 Then three sections, most important first, one short line per item:
 
-- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line, so it can be answered from the line alone. When a word or two answers it, end the item with those answers after an arrow, after its links, at most four: \`→ Push | Hold\`. Your owner's click sends you the item quoted with the answer they picked.
+- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line: the question first, then at most one short sentence of what your owner needs to answer it. The question leads the card your owner sees and the rest shows smaller under it. When a word or two answers it, end the item with those answers after an arrow, after its links, at most four: \`→ Push | Hold\`. Your owner's click sends you the item quoted with the answer they picked.
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
 

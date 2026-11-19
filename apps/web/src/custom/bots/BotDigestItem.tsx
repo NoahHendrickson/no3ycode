@@ -52,10 +52,6 @@ export function resolveBotDigestLine(
   return { text, links, question: waitingQuestionThread(links) };
 }
 
-export function BotDigestWords(props: { readonly text: string }) {
-  return <span className="text-sm leading-5 break-words text-foreground">{props.text}</span>;
-}
-
 /** The threads and pull requests a line links, each opening its target. */
 export function BotDigestLinkRow(props: {
   readonly links: BotDigestLinks;

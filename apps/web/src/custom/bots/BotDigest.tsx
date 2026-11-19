@@ -23,11 +23,15 @@ import { useUiStateStore } from "~/uiStateStore";
 import {
   BotDigestLinkRow,
   type BotDigestThreads,
-  BotDigestWords,
   resolveBotDigestLine,
   useOpenThread,
 } from "./BotDigestItem";
-import { type BotDigestItem, parseBotDigest, parseBotDigestStatus } from "./botDigestSections";
+import {
+  type BotDigestItem,
+  parseBotDigest,
+  parseBotDigestStatus,
+  splitBotDigestAsk,
+} from "./botDigestSections";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";
 
@@ -140,43 +144,45 @@ function BotDigestAsksFor(props: {
       )}
       {asks.map((item) => {
         const line = resolveBotDigestLine(item, threads, botRef.environmentId);
+        const { question, detail } = splitBotDigestAsk(line.text);
         const given = sent.get(item.source);
+        const offered = item.answers.length > 0 && given === undefined;
         return (
           <BotDigestAskCard
             key={item.source}
-            words={line.text === "" ? null : <BotDigestWords text={line.text} />}
-            answers={
-              item.answers.length === 0 ? null : given !== undefined ? (
-                <p className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
-                  Sent “{given}”
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {item.answers.map((choice) => (
-                    <Button
-                      key={choice}
-                      size="xs"
-                      variant="outline"
-                      onClick={() => void answer(item, choice)}
-                      data-testid="bot-digest-answer"
-                    >
-                      {choice}
-                    </Button>
-                  ))}
-                </div>
-              )
-            }
-            reply={
-              <Button
-                size="xs"
-                // The answers lead; Reply is for anything else.
-                variant={item.answers.length > 0 && given === undefined ? "ghost" : "default"}
-                onClick={() => reply(item, line.question)}
-                data-testid="bot-digest-reply"
-              >
-                <ReplyIcon />
-                Reply
-              </Button>
+            question={question}
+            detail={detail}
+            actions={
+              <>
+                {given === undefined ? null : (
+                  <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
+                    Sent “{given}”
+                  </span>
+                )}
+                {offered
+                  ? item.answers.map((choice) => (
+                      <Button
+                        key={choice}
+                        size="xs"
+                        variant="outline"
+                        onClick={() => void answer(item, choice)}
+                        data-testid="bot-digest-answer"
+                      >
+                        {choice}
+                      </Button>
+                    ))
+                  : null}
+                <Button
+                  size="xs"
+                  // Beside answers it is for anything else; alone it is the way to answer.
+                  variant={offered ? "ghost" : "outline"}
+                  onClick={() => reply(item, line.question)}
+                  data-testid="bot-digest-reply"
+                >
+                  <ReplyIcon />
+                  Reply
+                </Button>
+              </>
             }
           >
             {/* The floor always shows, so every ask is the composer's two layers. */}
@@ -196,23 +202,29 @@ function BotDigestAsksFor(props: {
 }
 
 /** One ask drawn as the chat composer, by wearing its stamps, so each theme paints it as its
-    composer: its words, answers and Reply in the prompt surface, `children` (what it is and
-    what it links) on the vessel floor beneath. */
+    composer. The prompt surface reads top to bottom: the question, its detail, then what you
+    can do; `children` (what it is and what it links) sits on the vessel floor beneath. */
 function BotDigestAskCard(props: {
-  readonly words: ReactNode;
-  readonly answers: ReactNode;
-  readonly reply: ReactNode;
+  readonly question: string;
+  readonly detail: string | null;
+  readonly actions: ReactNode;
   readonly children: ReactNode;
 }) {
   return (
     <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
       <div data-fork-composer-box="true">
-        <div data-fork-composer-surface="true" className="flex items-end gap-3 py-2 pr-2 pl-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-2 py-0.5">
-            {props.words}
-            {props.answers}
-          </div>
-          {props.reply}
+        <div data-fork-composer-surface="true" className="flex flex-col gap-1 px-3 pt-2.5 pb-2">
+          {props.question === "" ? null : (
+            <p className="text-sm leading-5 font-medium break-words text-foreground">
+              {props.question}
+            </p>
+          )}
+          {props.detail === null ? null : (
+            <p className="line-clamp-2 text-xs leading-4 break-words text-muted-foreground">
+              {props.detail}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
         </div>
       </div>
       {props.children}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseBotDigest, parseBotDigestStatus } from "./botDigestSections";
+import { parseBotDigest, parseBotDigestStatus, splitBotDigestAsk } from "./botDigestSections";
 
 describe("parseBotDigest", () => {
   it("keeps the sections with something in them, as plain lines", () => {
@@ -153,5 +153,34 @@ Status: a second one is ignored
       ),
     ).toEqual([]);
     expect(parseBotDigest("Just a note with no sections.")).toEqual([]);
+  });
+});
+
+describe("splitBotDigestAsk", () => {
+  it("leads with the line's question and keeps the rest as detail", () => {
+    expect(
+      splitBotDigestAsk(
+        '#21: built on branch fix/21-perkcombo-search (9fdd30ae), sol approved, 1677 tests pass. OK to push and open a PR? (thread "#21 fix: perkcombo:A+B in Items search")',
+      ),
+    ).toEqual({
+      question: "OK to push and open a PR?",
+      detail:
+        '#21: built on branch fix/21-perkcombo-search (9fdd30ae), sol approved, 1677 tests pass. (thread "#21 fix: perkcombo:A+B in Items search")',
+    });
+    expect(splitBotDigestAsk("Round half-even or half-up? It changes 3 invoices.")).toEqual({
+      question: "Round half-even or half-up?",
+      detail: "It changes 3 invoices.",
+    });
+    // A line that asks nothing leads with its first sentence.
+    expect(splitBotDigestAsk("Confirm push-ups (500) are per week.")).toEqual({
+      question: "Confirm push-ups (500) are per week.",
+      detail: null,
+    });
+    expect(
+      splitBotDigestAsk("#22: ask the player where it sits. Or have me start a read-only thread."),
+    ).toEqual({
+      question: "#22: ask the player where it sits.",
+      detail: "Or have me start a read-only thread.",
+    });
   });
 });
