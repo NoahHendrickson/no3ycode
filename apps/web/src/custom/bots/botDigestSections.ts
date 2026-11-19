@@ -70,7 +70,7 @@ const plain = (segments: ReadonlyArray<Segment>) =>
 /** One line as plain words, and the threads and pull requests it links. A link reads as its
     label, a bare pull request URL as its number. */
 /** The line without its answers, and the answers, when the arrow follows a finished ask (a
-    question, a sentence or its links) and what follows reads as short answers; anything else,
+    question, a sentence or its links, bare URLs included) and what follows reads as short answers; anything else,
     like "Migrate A → B now", stays part of the line. */
 function splitAnswers(line: string): { readonly line: string; readonly answers: string[] } {
   const match = ANSWERS.exec(line);
@@ -81,7 +81,7 @@ function splitAnswers(line: string): { readonly line: string; readonly answers: 
       .filter(Boolean) ?? [];
   if (
     match === null ||
-    !/[?.!)>]$/.test(line.slice(0, match.index).trimEnd()) ||
+    !/(?:[?.!)>]|https?:\/\/\S+)$/u.test(line.slice(0, match.index).trimEnd()) ||
     answers.length === 0 ||
     answers.length > MAX_ANSWERS ||
     answers.some((answer) => answer.length > MAX_ANSWER_LENGTH)

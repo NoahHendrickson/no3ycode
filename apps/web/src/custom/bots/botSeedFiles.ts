@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 3;
+export const BOT_RULES_VERSION = 4;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 

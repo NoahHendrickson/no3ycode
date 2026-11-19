@@ -2,16 +2,25 @@
  * A bot's digest above its composer — see `.fork/customizations.yaml#fork-bot-digest`.
  */
 import { useAtomValue } from "@effect/atom-react";
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { EnvironmentId, ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
-import { MessageCircleQuestionIcon, ReplyIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MessageCircleQuestionIcon,
+  ReplyIcon,
+  XIcon,
+} from "lucide-react";
+import * as Schema from "effect/Schema";
 import { type ReactNode, useState } from "react";
 
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { Button } from "~/components/ui/button";
+import { toastManager } from "~/components/ui/toast";
 import { useComposerDraftStore } from "~/composerDraftStore";
+import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { cn, newMessageId } from "~/lib/utils";
 import { readThreadShell, useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
@@ -42,6 +51,9 @@ const NO_DIGEST = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(fa
   Atom.withLabel("bot-digest:none"),
 );
 const NO_ANSWERS: ReadonlyMap<string, string> = new Map();
+const DismissedAsks = Schema.Array(Schema.String);
+const NO_DISMISSED: ReadonlyArray<string> = [];
+const SETTLED_RUN = new Set(["completed", "interrupted", "failed", "cancelled", "rolled_back"]);
 
 /** Queues `text` as the owner's message to the bot, behind whatever it is doing; false when it
     could not be sent. */
@@ -70,7 +82,10 @@ function useTellBot(): (botRef: ScopedThreadRef, text: string) => Promise<boolea
 export function BotDigestAsks(props: { readonly threadRef: ScopedThreadRef | null }) {
   const bot = useQuietThreadShell(props.threadRef);
   if (bot === null || !isListedBot(bot)) return null;
-  return <BotDigestAsksFor bot={bot} />;
+  // Keyed by the bot, so one Petal's sent answers never carry over to the next.
+  return (
+    <BotDigestAsksFor key={scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id))} bot={bot} />
+  );
 }
 
 function BotDigestAsksFor(props: {
@@ -91,38 +106,62 @@ function BotDigestAsksFor(props: {
   const result = useAtomValue(revisionedQuery(query, canReadFiles ? revision : undefined));
   const shells = useQuietThreadShells();
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
-  // The answer each ask was given here, for the digest as it read then: once the bot rewrites it,
-  // an ask it kept offers its answers again.
+  // The answer each ask was given here, until the bot settles a run after it: the digest read then
+  // is the bot's word, and an ask it kept offers its answers again.
   const [sentFor, setSentFor] = useState<{
-    readonly contents: string | null;
+    readonly revision: string | null;
     readonly answers: ReadonlyMap<string, string>;
-  }>({ contents: null, answers: NO_ANSWERS });
+  }>({ revision: null, answers: NO_ANSWERS });
+  // Put away on this device, by the ask as written: one the bot rewrites comes back.
+  const [dismissed, setDismissed] = useLocalStorage(
+    `t3code:fork:bot-digest-dismissed:${scopedThreadKey(botRef)}`,
+    NO_DISMISSED,
+    DismissedAsks,
+  );
+  // One ask at a time, so the stack above the composer never grows with the list.
+  const [page, setPage] = useState(0);
   const tellBot = useTellBot();
   const openThread = useOpenThread();
   const file = AsyncResult.getOrElse(result, () => null);
   const contents = file === null || file.exists === false ? null : file.contents;
-  const asks =
+  const allAsks =
     contents === null
       ? []
       : (parseBotDigest(contents).find((section) => section.kind === "needs-you")?.items ?? []);
+  const asks = allAsks.filter((item) => !dismissed.includes(item.source));
+  const hiddenCount = allAsks.length - asks.length;
   const status = contents === null ? null : parseBotDigestStatus(contents);
-  if (asks.length === 0 && status === null) return null;
-  const sent = sentFor.contents === contents ? sentFor.answers : NO_ANSWERS;
-  const setSent = (
-    update: (previous: ReadonlyMap<string, string>) => ReadonlyMap<string, string>,
-  ) =>
-    setSentFor((previous) => ({
-      contents,
-      answers: update(previous.contents === contents ? previous.answers : NO_ANSWERS),
-    }));
+  const settled = bot.latestRun === null || SETTLED_RUN.has(bot.latestRun.status);
+  const expired = sentFor.revision !== revision && settled;
+  // Retired for good once a run settles after them, so the bot's next run cannot bring them back.
+  if (expired && sentFor.answers.size > 0) setSentFor({ revision, answers: NO_ANSWERS });
+  if (allAsks.length === 0 && status === null) return null;
+  const at = Math.min(page, Math.max(0, asks.length - 1));
+  const item = asks[at];
+  // Kept to the asks the digest still has, so the list cannot grow past them.
+  const dismiss = (source: string) =>
+    setDismissed([
+      ...dismissed.filter((kept) => allAsks.some((ask) => ask.source === kept)),
+      source,
+    ]);
+  const sent = expired ? NO_ANSWERS : sentFor.answers;
   // An answer goes to the bot as the owner's reply, quoting its ask, behind whatever it is doing.
   const answer = async (item: BotDigestItem, choice: string) => {
-    setSent((previous) => new Map(previous).set(item.source, choice));
+    setSentFor((previous) => ({
+      revision,
+      answers: new Map(previous.answers).set(item.source, choice),
+    }));
     if (await tellBot(botRef, `> ${item.source}\n\n${choice}`)) return;
-    setSent((previous) => {
-      const next = new Map(previous);
-      next.delete(item.source);
-      return next;
+    // Only this attempt's entry: another card answered meanwhile keeps its own.
+    setSentFor((previous) => {
+      const answers = new Map(previous.answers);
+      answers.delete(item.source);
+      return { ...previous, answers };
+    });
+    toastManager.add({
+      type: "error",
+      title: "Could not send your answer",
+      description: "The Petal did not get it. Try again, or use Reply.",
     });
   };
   // An ask whose linked thread waits on a question opens that thread to answer it there; any
@@ -138,67 +177,100 @@ function BotDigestAsksFor(props: {
     store.setPrompt(botRef, existing === "" ? quote : `${existing}\n\n${quote}`);
   };
   const threads: BotDigestThreads = { shells, localVisits };
+  const line =
+    item === undefined ? null : resolveBotDigestLine(item, threads, botRef.environmentId);
+  const ask = line === null ? null : splitBotDigestAsk(line.text);
+  const given = item === undefined ? undefined : sent.get(item.source);
+  const offered = item !== undefined && item.answers.length > 0 && given === undefined;
   return (
     <div data-fork-bot-digest="" className="flex flex-col gap-2 pb-2">
-      {status === null ? null : (
-        <p data-testid="bot-digest-status" className="px-1 text-xs text-muted-foreground">
+      <div className="flex min-h-6 items-center gap-2 px-1 text-xs text-muted-foreground">
+        <span data-testid="bot-digest-status" className="min-w-0 flex-1 truncate">
           {status}
-        </p>
+        </span>
+        {hiddenCount === 0 ? null : (
+          <Button
+            size="micro"
+            variant="ghost"
+            onClick={() => setDismissed(NO_DISMISSED)}
+            data-testid="bot-digest-show-dismissed"
+          >
+            Show {hiddenCount} dismissed
+          </Button>
+        )}
+        {asks.length < 2 ? null : (
+          <span className="flex shrink-0 items-center gap-0.5 tabular-nums">
+            <Button
+              size="icon-micro"
+              variant="ghost"
+              aria-label="Previous ask"
+              disabled={at === 0}
+              onClick={() => setPage(at - 1)}
+            >
+              <ChevronLeftIcon />
+            </Button>
+            {at + 1} of {asks.length}
+            <Button
+              size="icon-micro"
+              variant="ghost"
+              aria-label="Next ask"
+              disabled={at === asks.length - 1}
+              onClick={() => setPage(at + 1)}
+            >
+              <ChevronRightIcon />
+            </Button>
+          </span>
+        )}
+      </div>
+      {item === undefined || line === null || ask === null ? null : (
+        <BotDigestAskCard
+          key={item.source}
+          question={ask.question}
+          detail={ask.detail}
+          pullRequest={line.links.pullRequests[0] ?? null}
+          environmentId={botRef.environmentId}
+          onDismiss={() => dismiss(item.source)}
+          links={
+            <BotDigestLinkRow
+              links={line.links}
+              environmentId={botRef.environmentId}
+              localVisits={localVisits}
+            />
+          }
+          actions={
+            <>
+              {given === undefined ? null : (
+                <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
+                  Sent “{given}”
+                </span>
+              )}
+              {offered
+                ? item.answers.map((choice) => (
+                    <Button
+                      key={choice}
+                      size="xs"
+                      variant="outline"
+                      onClick={() => void answer(item, choice)}
+                      data-testid="bot-digest-answer"
+                    >
+                      {choice}
+                    </Button>
+                  ))
+                : null}
+              <Button
+                size="xs"
+                // Beside answers it is for anything else; alone it is the way to answer.
+                variant={offered ? "ghost" : "outline"}
+                onClick={() => reply(item, line.question)}
+                data-testid="bot-digest-reply"
+              >
+                <ReplyIcon />
+                Reply
+              </Button>
+            </>
+          }
+        />
       )}
-      {asks.map((item) => {
-        const line = resolveBotDigestLine(item, threads, botRef.environmentId);
-        const { question, detail } = splitBotDigestAsk(line.text);
-        const given = sent.get(item.source);
-        const offered = item.answers.length > 0 && given === undefined;
-        return (
-          <BotDigestAskCard
-            key={item.source}
-            question={question}
-            detail={detail}
-            pullRequest={line.links.pullRequests[0] ?? null}
-            environmentId={botRef.environmentId}
-            links={
-              <BotDigestLinkRow
-                links={line.links}
-                environmentId={botRef.environmentId}
-                localVisits={localVisits}
-              />
-            }
-            actions={
-              <>
-                {given === undefined ? null : (
-                  <span className="text-xs text-muted-foreground" data-testid="bot-digest-sent">
-                    Sent “{given}”
-                  </span>
-                )}
-                {offered
-                  ? item.answers.map((choice) => (
-                      <Button
-                        key={choice}
-                        size="xs"
-                        variant="outline"
-                        onClick={() => void answer(item, choice)}
-                        data-testid="bot-digest-answer"
-                      >
-                        {choice}
-                      </Button>
-                    ))
-                  : null}
-                <Button
-                  size="xs"
-                  // Beside answers it is for anything else; alone it is the way to answer.
-                  variant={offered ? "ghost" : "outline"}
-                  onClick={() => reply(item, line.question)}
-                  data-testid="bot-digest-reply"
-                >
-                  <ReplyIcon />
-                  Reply
-                </Button>
-              </>
-            }
-          />
-        );
-      })}
     </div>
   );
 }
@@ -213,6 +285,7 @@ function BotDigestAskCard(props: {
   readonly environmentId: EnvironmentId;
   readonly links: ReactNode;
   readonly actions: ReactNode;
+  readonly onDismiss: () => void;
 }) {
   const { state } = useBotPullRequestState(props.pullRequest, props.environmentId);
   const Icon =
@@ -249,6 +322,15 @@ function BotDigestAskCard(props: {
         {props.links}
         <div className="flex flex-wrap items-center gap-1.5 pt-1.5">{props.actions}</div>
       </div>
+      <Button
+        size="icon-micro"
+        variant="ghost"
+        aria-label="Dismiss"
+        onClick={props.onDismiss}
+        data-testid="bot-digest-dismiss"
+      >
+        <XIcon />
+      </Button>
     </div>
   );
 }

@@ -108,6 +108,7 @@ Status: Waiting on you · next scan Thu 8:00
 
 - OK to push #21 and open a PR? [Fix search](t3-thread://v2/env-1/thread-1) → Push | Hold
 - Remote only, or hybrid? →Remote|Hybrid|
+- Merge it? https://github.com/acme/app/pull/23 → Merge | Hold
 - Migrate A → B before the release?
 - Migrate A → B now
 - Which plan? → The one that keeps the old billing tables around for a quarter | New
@@ -125,6 +126,11 @@ Status: a second one is ignored
           text: "Remote only, or hybrid?",
           source: "Remote only, or hybrid?",
           answers: ["Remote", "Hybrid"],
+        },
+        {
+          text: "Merge it?",
+          source: "Merge it? https://github.com/acme/app/pull/23",
+          answers: ["Merge", "Hold"],
         },
         // Prose with an arrow in it, or answers too long to be buttons, stay the line's words.
         {

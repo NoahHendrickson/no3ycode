@@ -57,17 +57,11 @@ export function BotDigestLinkRow(props: {
   readonly links: BotDigestLinks;
   readonly environmentId: EnvironmentId;
   readonly localVisits: BotDigestThreads["localVisits"];
-  readonly className?: string;
 }) {
   const { links } = props;
   if (links.threads.length === 0 && links.pullRequests.length === 0) return null;
   return (
-    <span
-      className={cn(
-        "flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground",
-        props.className,
-      )}
-    >
+    <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground">
       {links.threads.map(({ link, label, shell }) =>
         shell === undefined ? (
           <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
