@@ -587,7 +587,8 @@
 :root[data-fork="noahhendrickson-t3code"] .fork-timeline-cutoff {
   --fork-timeline-top-fade: 0px;
   --fork-timeline-cutoff-inset: calc(
-    var(--fork-composer-inset, 0px) + var(--fork-timeline-cutoff-gap)
+    var(--fork-composer-inset, 0px) + var(--fork-usage-drawer-mask, 0px) +
+      var(--fork-timeline-cutoff-gap)
   );
   --fork-timeline-cutoff-knee: calc(
     var(--fork-timeline-cutoff-inset) + var(--fork-timeline-cutoff-edge)
@@ -728,16 +729,21 @@
   border-radius: var(--fork-composer-radius);
   background: var(--fork-composer-vessel-bg);
   transition:
-    border-top-left-radius 100ms ease-out,
-    border-top-right-radius 100ms ease-out;
+    border-top-left-radius 80ms ease-out 55ms,
+    border-top-right-radius 80ms ease-out 55ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  [data-fork-composer-top-vessel]:has(
+    [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+        [data-ending-style]
+      )
+  )
   + [data-fork-composer-vessel] {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   transition-duration: 0ms;
+  transition-delay: 0ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -748,6 +754,23 @@
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-usage-drawer] {
   border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
   background: var(--fork-composer-vessel-bg, var(--card));
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 120ms ease-out;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-usage-drawer]:is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-fork-composer-above-stack], [data-fork-draft-headline-wrap], .chat-scroll-to-bottom) {
+  transform: translateY(calc(-1 * var(--fork-usage-drawer-lift, 0px)));
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-draft-launchpad-card] {
@@ -764,8 +787,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
+  :root[data-fork="noahhendrickson-t3code"]
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-composer-usage-drawer],
+      [data-fork-composer-above-stack],
+      [data-fork-draft-headline-wrap],
+      .chat-scroll-to-bottom
+    ) {
     transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
@@ -1397,6 +1428,9 @@
     flex: 0 1 auto;
     min-width: 0;
     min-height: 0;
+  }
+
+  & > :not(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
     gap: 1px;
   }
 

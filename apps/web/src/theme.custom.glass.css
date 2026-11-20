@@ -355,18 +355,53 @@
     scale: none;
   }
 
-  /* The vessel wears Glass's halo (theme.custom.glass-surfaces.css),
-     an outer shadow 3px deep, which a clip at the border box cut away. Its
-     clip steps out by that much; the frost copy shows in the ring under the
-     halo. The header pills wear no halo, so they keep the tight clip. Short of
-     Full 3D there is no halo, so the clip stays at the border box. */
+  /* The vessel and draft launchpad cards wear Glass's outer rim
+     (theme.custom.glass-surfaces.css), which a clip at the border box cut away.
+     Their clip steps out by 3px; the frost copy shows in the ring under the
+     rim. The header pills wear no rim, so they keep the tight clip. Short of
+     Full 3D there is no rim, so the clip stays at the border box. */
+  :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-picture="off"])):where(
+      :not([data-fork-glass-3d])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    :is(
+      [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card]
+    ) {
+    clip-path: inset(-3px round calc(var(--fork-glass-frost-radius) + 3px));
+  }
+
+  /* Square the frost clip's top corners while the usage drawer is attached so
+     the baked hero frost doesn't stay rounded under the flat seam. */
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-composer-top-vessel]:has(
+      [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+          [data-ending-style]
+        )
+    )
+    + [data-fork-composer-vessel] {
+    clip-path: inset(0 round 0 0 var(--fork-glass-frost-radius) var(--fork-glass-frost-radius));
+  }
+
   :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-picture="off"])):where(
       :not([data-fork-glass-3d])
     ).dark[data-fork-theme="cool-darker"]
     [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-fork-composer-stack="true"]
-    [data-fork-composer-vessel] {
-    clip-path: inset(-3px round calc(var(--fork-glass-frost-radius) + 3px));
+    [data-fork-composer-top-vessel]:has(
+      [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+          [data-ending-style]
+        )
+    )
+    + [data-fork-composer-vessel] {
+    clip-path: inset(
+      0 -3px -3px -3px round 0 0 calc(var(--fork-glass-frost-radius) + 3px)
+        calc(var(--fork-glass-frost-radius) + 3px)
+    );
   }
 
   :root[data-fork="noahhendrickson-t3code"]:where(
@@ -379,6 +414,28 @@
       [data-chat-header] [data-fork-pill]
     ):is(:focus-visible, :has(:focus-visible:not([data-testid="composer-editor"]))) {
     clip-path: inset(-4px round calc(var(--fork-glass-frost-radius) + 4px));
+  }
+
+  /* Keep the square top seam while preserving the 4px focus-ring clearance on
+     the left, bottom, and right edges in every 3D mode. */
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-composer-top-vessel]:has(
+      [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+          [data-ending-style]
+        )
+    )
+    + [data-fork-composer-vessel]:is(
+      :focus-visible,
+      :has(:focus-visible:not([data-testid="composer-editor"]))
+    ) {
+    clip-path: inset(
+      0 -4px -4px -4px round 0 0 calc(var(--fork-glass-frost-radius) + 4px)
+        calc(var(--fork-glass-frost-radius) + 4px)
+    );
   }
 
   :root[data-fork="noahhendrickson-t3code"]:where(

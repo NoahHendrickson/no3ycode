@@ -67,13 +67,40 @@ export function useForkGlassScrollPillHole(bottom: number) {
       if (host.querySelector(SCROLLER_SELECTOR)) bind();
     });
 
+    const clearHole = () => {
+      pill.removeAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE);
+      for (const property of HOLE_PROPERTIES) scroller?.style.removeProperty(property);
+      written = "";
+    };
+
     const release = () => {
       unobserve();
       unobserve = () => {};
-      pill.removeAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE);
-      for (const property of HOLE_PROPERTIES) scroller?.style.removeProperty(property);
+      clearHole();
       scroller = null;
-      written = "";
+    };
+
+    const hasRunningTransformTransition = () =>
+      typeof lane.getAnimations === "function" &&
+      lane
+        .getAnimations()
+        .some(
+          (animation) =>
+            "transitionProperty" in animation &&
+            animation.transitionProperty === "transform" &&
+            animation.playState === "running",
+        );
+
+    const hasTransformTransition = () => {
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true) return false;
+      const computed = getComputedStyle(lane);
+      const properties = computed.transitionProperty.split(",").map((value) => value.trim());
+      const durations = computed.transitionDuration.split(",").map((value) => value.trim());
+      return properties.some((property, index) => {
+        if (property !== "transform" && property !== "all") return false;
+        const duration = durations[index % durations.length] ?? "0s";
+        return Number.parseFloat(duration) > 0;
+      });
     };
 
     const cut = () => {
@@ -82,6 +109,7 @@ export function useForkGlassScrollPillHole(bottom: number) {
         bind();
         return;
       }
+      if (hasRunningTransformTransition()) return;
       // Size from layout and position from the centre, so a press's scale
       // never shrinks the hole.
       const rect = pill.getBoundingClientRect();
@@ -115,11 +143,50 @@ export function useForkGlassScrollPillHole(bottom: number) {
       cut();
     };
 
+    const canvas = host.closest<HTMLElement>("[data-chat-canvas]");
+    const readLiftPx = () =>
+      Number.parseFloat(canvas?.style.getPropertyValue("--fork-usage-drawer-lift") || "0") || 0;
+    let lastLiftPx = readLiftPx();
+    const onLaneTransitionRun = (event: TransitionEvent) => {
+      if (event.target === lane && event.propertyName === "transform") clearHole();
+    };
+    const onLaneTransitionSettle = (event: TransitionEvent) => {
+      if (event.target === lane && event.propertyName === "transform") {
+        if (hasRunningTransformTransition()) {
+          clearHole();
+        } else {
+          cut();
+        }
+      }
+    };
+    const onCanvasStyleChange = new MutationObserver(() => {
+      const nextLiftPx = readLiftPx();
+      if (nextLiftPx === lastLiftPx) return;
+      lastLiftPx = nextLiftPx;
+      // Clear the hole while an animated transform runs so the pill falls back
+      // to its opaque Glass wash instead of dragging past a stationary hole.
+      if (hasTransformTransition()) {
+        clearHole();
+      } else {
+        cut();
+      }
+    });
+    lane.addEventListener("transitionrun", onLaneTransitionRun);
+    lane.addEventListener("transitionend", onLaneTransitionSettle);
+    lane.addEventListener("transitioncancel", onLaneTransitionSettle);
+    if (canvas) {
+      onCanvasStyleChange.observe(canvas, { attributes: true, attributeFilter: ["style"] });
+    }
+
     bind();
     cutRef.current = cut;
     return () => {
       cutRef.current = null;
       waiting.disconnect();
+      onCanvasStyleChange.disconnect();
+      lane.removeEventListener("transitionrun", onLaneTransitionRun);
+      lane.removeEventListener("transitionend", onLaneTransitionSettle);
+      lane.removeEventListener("transitioncancel", onLaneTransitionSettle);
       release();
     };
   }, []);

@@ -16,16 +16,21 @@
   --chat-composer-drawer-inset: 4px;
   border-radius: 12px;
   transition:
-    border-top-left-radius 100ms ease-out,
-    border-top-right-radius 100ms ease-out;
+    border-top-left-radius 80ms ease-out 55ms,
+    border-top-right-radius 80ms ease-out 55ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  [data-fork-composer-top-vessel]:has(
+    [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+        [data-ending-style]
+      )
+  )
   + [data-fork-composer-vessel] {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   transition-duration: 0ms;
+  transition-delay: 0ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]

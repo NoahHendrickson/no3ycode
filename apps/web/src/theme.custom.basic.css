@@ -234,15 +234,25 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-composer-vessel] {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+  transition:
+    border-top-left-radius 80ms ease-out 55ms,
+    border-top-right-radius 80ms ease-out 55ms,
+    box-shadow 0ms linear 115ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  [data-fork-composer-top-vessel]:has(
+    [data-fork-composer-usage-drawer]:not([hidden]):not([data-starting-style]):not(
+        [data-ending-style]
+      )
+  )
   + [data-fork-composer-vessel] {
   box-shadow:
     inset 1px 0 0 var(--fork-composer-border),
     inset -1px 0 0 var(--fork-composer-border),
     inset 0 -1px 0 var(--fork-composer-border);
+  transition-duration: 0ms;
+  transition-delay: 0ms;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]

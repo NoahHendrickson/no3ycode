@@ -507,6 +507,9 @@ export interface ChatComposerProps {
   /** BranchToolbar's strip, rendered above the vessel by ComposerShell. */
   contextStrip?: ReactNode;
   /* fork:end fork-composer-shell */
+  /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+  onUsageDrawerLiftChange?: ((height: number) => void) | undefined;
+  /* fork:end fork-composer-usage-limits */
 
   promptRef: React.RefObject<string>;
   composerImagesRef: React.RefObject<ComposerImageAttachment[]>;
@@ -1085,9 +1088,17 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const [isDragOverComposer, setIsDragOverComposer] = useState(false);
   const [isComposerFooterCompact, setIsComposerFooterCompact] = useState(false);
   /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+  const usageSessionWindowId =
+    selectedProviderStatus?.usageLimits?.windows.find((window) => window.kind === "session")?.id ??
+    "";
   const usageDrawer = useComposerUsageDrawer({
     usageLimits: selectedProviderStatus?.usageLimits,
     enabled: !isComposerFooterCompact,
+    scopeKey: activeThreadId ? `${environmentId}:${activeThreadId}` : (draftId ?? "new"),
+    meterKey: selectedProviderStatus
+      ? `${selectedProviderStatus.instanceId}:${usageSessionWindowId}`
+      : "",
+    onSettledLiftChange: props.onUsageDrawerLiftChange,
   });
   /* fork:end fork-composer-usage-limits */
   const [isComposerPrimaryActionsCompact, setIsComposerPrimaryActionsCompact] = useState(false);

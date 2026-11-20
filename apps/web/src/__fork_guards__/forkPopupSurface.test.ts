@@ -75,7 +75,7 @@ describe("fork guard: fork-popup-surface", () => {
     const rule = cssRules(palettes).find(
       (candidate) =>
         candidate.selector.replace(/\s+/gu, " ") ===
-        `${GLASS_GATE} [data-fork-composer-context-row] [data-slot="composer-context-strip"].surface-glass`,
+        `${GLASS_GATE} :is([data-fork-composer-context-row], [data-fork-composer-vessel-context]) [data-slot="composer-context-strip"].surface-glass`,
     );
     expect(rule?.body).toMatch(/background:\s*none/u);
   });

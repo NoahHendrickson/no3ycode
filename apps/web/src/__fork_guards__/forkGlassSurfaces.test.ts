@@ -62,31 +62,31 @@ describe("fork guard: glass surfaces", () => {
     expect(sheet).toContain('[data-chat-composer-floating-layer="true"]');
   });
 
-  it("gives send and stop translucent faces and shared static glass edges", () => {
+  it("gives stop a translucent red glass face and leaves send as a regular white button", () => {
     const send = '[data-fork-composer-action="send"][data-fork-composer-send-tone="flat"]';
     const stop = '[data-fork-composer-action="stop"]';
-    const face = ruleBodyFor(rules, [`${MARKER}.dark${PALETTE}`, send]);
-    expect(face).toMatch(
-      /background-color:\s*rgb\(from var\(--fork-composer-action-light\) r g b \/ 18%\)/u,
-    );
-    expect(face).toContain("background-image:");
-    expect(face).toMatch(/color:\s*#ffffff/u);
+    expect(rules.filter((candidate) => candidate.selector.includes(send))).toHaveLength(0);
 
     const stopFace = ruleBodyFor(rules, [`${MARKER}.dark${PALETTE}`, stop]);
     expect(stopFace).toMatch(/background:\s*rgb\(234 49 80 \/ 48%\)/u);
     expect(stopFace).toMatch(/color:\s*#ffffff/u);
+    expect(stopFace).toContain("var(--tw-ring-offset-shadow");
+    expect(stopFace).toContain("var(--tw-ring-shadow");
+    expect(stopFace).toContain("var(--fork-glass-halo)");
+    expect(stopFace).toContain("var(--fork-glass-send-light)");
 
     const root = ruleBodyFor(rules, [`${TOKENS}.dark${PALETTE}`]);
     expect(stopFace).not.toContain("--fork-popup-glass-floor");
     for (const tone of ["glint", "light", "shade"]) {
       // The floor only exists under desktop vibrancy; without a fallback the
-      // send's whole box-shadow is invalid on web.
+      // effort thumb's whole box-shadow is invalid on web.
       expect(root).toMatch(
         new RegExp(
           `--fork-composer-action-${tone}:\\s*oklch\\(\\s*from var\\(--fork-popup-glass-floor,\\s*rgb\\(`,
           "u",
         ),
       );
+      expect(stopFace).toContain(`rgb(from var(--fork-composer-action-${tone}) r g b /`);
       const stopColor = new RegExp(
         `--fork-composer-action-${tone}:\\s*rgb\\((\\d+) (\\d+) (\\d+)\\)`,
       ).exec(stopFace);
@@ -95,27 +95,7 @@ describe("fork guard: glass surfaces", () => {
       expect(stopColor?.[2]).toBe(stopColor?.[3]);
     }
 
-    const edgeSelector = [`${MARKER}.dark${PALETTE}`, `${send},`, `${MARKER}.dark${PALETTE}`, stop]
-      .join(" ")
-      .replace(/\s+/gu, " ")
-      .trim();
-    const edgeRule = rules.find(
-      (candidate) => candidate.selector.replace(/\s+/gu, " ").trim() === edgeSelector,
-    );
-    expect(edgeRule, "glass edge applies while disabled").toBeDefined();
-    expect(edgeRule?.selector).not.toMatch(/:not\(:disabled\)/u);
-    const edge = edgeRule?.body ?? "";
-    expect(edge).toContain("var(--tw-ring-offset-shadow");
-    expect(edge).toContain("var(--tw-ring-shadow");
-    expect(edge).toContain("var(--fork-glass-halo)");
-    expect(edge).toContain("var(--fork-glass-send-light)");
-    for (const tone of ["glint", "light", "shade"]) {
-      expect(edge).toContain(`rgb(from var(--fork-composer-action-${tone}) r g b /`);
-    }
-
-    for (const rule of rules.filter(
-      (candidate) => candidate.selector.includes(send) || candidate.selector.includes(stop),
-    )) {
+    for (const rule of rules.filter((candidate) => candidate.selector.includes(stop))) {
       // Phone hit areas and disabled semantics belong to the existing button.
       expect(rule.selector).not.toMatch(/::(?:before|after)/u);
       expect(rule.body).not.toMatch(
