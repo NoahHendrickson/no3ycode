@@ -1,15 +1,15 @@
 /** A draft's project chip, first in the composer's context row and painted like
-    its neighbours by the row's CSS ([data-fork-composer-context-row]); an
-    unassigned draft gets the quick picks instead. See
-    `.fork/customizations.yaml#fork-new-agent-draft`. */
+    its neighbours by the row's CSS ([data-fork-composer-context-row]). An
+    unassigned draft has none: it picks from the launchpad under the composer
+    (custom/DraftLaunchpad). See `.fork/customizations.yaml#fork-new-agent-draft`. */
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import type { DraftId } from "~/composerDraftStore";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
-import { DraftProjectQuickPicks } from "./DraftProjectQuickPicks";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import {
   ChevronDownIcon,
@@ -19,6 +19,7 @@ import {
 } from "./icons/lucide-hugeicons";
 import {
   openAddProject,
+  SHORT_WINDOW_QUERY,
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
@@ -46,6 +47,7 @@ function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
 
 export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices>[0]) {
   const choices = useDraftProjectChoices(props);
+  const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) {
     return (
       <Button
@@ -62,11 +64,10 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
       </Button>
     );
   }
-  return choices.recentEntries !== null ? (
-    <DraftProjectQuickPicks choices={choices} recentEntries={choices.recentEntries} />
-  ) : (
-    <DraftProjectChip choices={choices} draftId={props.draftId} />
-  );
+  // An unassigned draft picks from the launchpad, except in a short window, which has
+  // no room for it.
+  if (choices.selection.kind === "unassigned" && !shortWindow) return null;
+  return <DraftProjectChip choices={choices} draftId={props.draftId} />;
 }
 
 function DraftProjectChip(props: {

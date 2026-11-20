@@ -5,12 +5,11 @@
  * Upstream weaves the project chooser into its headline as dotted-underline
  * text ("What should we build in <project>?") and, since #13612, an "or start
  * without a project" line under it. The fork's "New agent" flow opens a draft
- * with no project at all, and the chooser is the first chip in the composer's
- * context row (custom/DraftProjectPill, ahead of the workspace and branch
- * chips — ChatView mounts it there), so the headline is just the sentence.
- * A draft already on the no-project home reads upstream's "What should we
- * work on?", except in the desktop side chat (fork-side-chat), which is for
- * quick questions and asks "Got a question?". This file keeps upstream's prop
+ * with no project at all and picks one from the launchpad under the composer
+ * (custom/DraftLaunchpad), so the draft shows no headline at all. Only the
+ * desktop side chat on the no-project home (fork-side-chat), which is for
+ * quick questions, asks "Got a question?", and a Chat mode draft asks
+ * "What's up?". This file keeps upstream's prop
  * surface and the `h1`, so ChatView's call site and the mobile
  * view-transition wrapper around it are untouched.
  */
@@ -36,7 +35,7 @@ interface DraftHeroHeadlineProps {
 export function DraftHeroHeadline({
   draftId,
   activeProjectRef,
-  activeProjectTitle,
+  activeProjectTitle: _activeProjectTitle,
 }: DraftHeroHeadlineProps) {
   const projects = useProjects();
   const { environments } = useEnvironments();
@@ -56,7 +55,6 @@ export function DraftHeroHeadline({
   const isScratchDraft =
     activeProject !== null &&
     isScratchProject(activeProject, scratchWorkspaceRootFor(activeProject.environmentId));
-  const hasResolvedProject = activeProjectTitle !== null;
   // A chat started in Chat mode (custom/chatMode).
   const isChatDraft = useIsChatThread(draftId);
   if (isScratchDraft && isTriageDraftPrompt) {
@@ -70,17 +68,15 @@ export function DraftHeroHeadline({
       />
     );
   }
+  const headline = isChatDraft
+    ? "What's up?"
+    : isScratchDraft && isSideChatSurface
+      ? "Got a question?"
+      : null;
+  if (headline === null) return null;
   return (
     <h1 className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
-      {isChatDraft
-        ? "What's up?"
-        : isScratchDraft
-          ? isSideChatSurface
-            ? "Got a question?"
-            : "What should we work on?"
-          : hasResolvedProject
-            ? "What should we build?"
-            : "Choose a project to start"}
+      {headline}
     </h1>
   );
 }
