@@ -456,10 +456,10 @@ describe("fork guard: fork-inlet-theme", () => {
       )?.body;
       expect(tab, side).toContain("radial-gradient");
     }
-    // The usage readout beside it hangs from its bar the same way.
+    // The usage readout opens an upward-expanding vessel strip above the prompt.
     const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
-    expect(usage).toContain('data-fork-tab-menu="composer"');
-    expect(usage).toContain('data-fork-tab-trigger=""');
+    expect(usage).toContain('data-fork-composer-usage-drawer="true"');
+    expect(usage).toContain('data-fork-composer-usage-limits="true"');
     const upward = inletRules.find(
       (rule) => rule.selector.includes('[data-side="top"]') && rule.selector.endsWith("::after"),
     )?.body;

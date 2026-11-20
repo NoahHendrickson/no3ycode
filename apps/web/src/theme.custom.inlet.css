@@ -577,7 +577,7 @@
    different elements, so each rule names the visible glass box three ways. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
   background-color: var(--popover);
   color: var(--popover-foreground);
@@ -592,7 +592,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]:has(
     [data-fork-chip-menu][data-side="bottom"]
   )
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
   border-radius: 8px 8px 0 0;
 }
@@ -739,20 +739,7 @@
   }
 }
 
-/* Black draws the mode chip neutral (black 16%, black ink) where Cream keeps
-   each mode's hue, and takes the dark palettes' flat red stop button. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-fork-composer-mode-chip] {
-  background: rgb(0 0 0 / 16%);
-  color: var(--foreground);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
-  background: rgb(0 0 0 / 22%);
-  color: var(--foreground);
-}
+/* Black takes the dark palettes' flat red stop button. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-action="stop"] {
@@ -978,11 +965,9 @@
      list keeps the shadow and scale these controls ease. */
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     :is(
-      [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip]),
-      [data-fork-tab-trigger]:not(
-        [data-chat-provider-model-picker],
-        [data-fork-composer-usage-limits]
-      ),
+      :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
+        :is(button, [data-slot="button"], [data-fork-context-chip]),
+      [data-fork-tab-trigger]:not([data-chat-provider-model-picker]),
       [data-fork-panel-toggle] > button
     ) {
     transition-property: background-color, color, border-radius, box-shadow, scale;

@@ -104,18 +104,13 @@ describe("fork local dictation", () => {
     expect(control).toContain('data-fork-dictation-action={busy ? "done" : "dictate"}');
     expect(control).toMatch(/busy \? \(\s*<CheckIcon/u);
     expect(control).toMatch(/\) : \(\s*<MicIcon weight="fill"/u);
-    // The mic is a ghost in the control row's left slot, after attach and
-    // before the mode controls (Full access). It stays in place while a live
-    // session's X and check hold the send slot, finishes a recording as the
-    // check does, and never rides the primary cluster.
+    // The mic sits in the prompt row beside the send button; while live it
+    // swaps to the bare level timeline (no mic glyph or pill fill) beside X and check.
     expect(composer).toMatch(
-      /modeControls=\{\s*<>\s*\{composerAttachAction\}[\s\S]{0,400}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked\}\s*\/>[\s\S]{0,120}?\{composerModeControls\}/u,
-    );
-    expect(composer).not.toMatch(
-      /const composerPrimaryActionSlot = \([\s\S]{0,1500}?<ForkDictationGhostMic/u,
+      /const composerPrimaryActionSlot = \([\s\S]{0,1500}?<ForkDictationGhostMic\s*dictation=\{dictation\}\s*disabled=\{forkDictationStartBlocked\}\s*\/>/u,
     );
     expect(control).toMatch(
-      /data-fork-composer-action="dictate"\s*disabled=\{!recording && \(disabled \|\| dictation\.blocksSubmission\)\}[\s\S]*?onClick=\{recording \? dictation\.stop : dictation\.start\}/u,
+      /data-fork-composer-action="dictate"\s*disabled=\{disabled \|\| dictation\.blocksSubmission\}[\s\S]*?onClick=\{dictation\.start\}/u,
     );
     expect(control).toMatch(/icon=\{<MicIcon weight="fill" \/>\}/u);
     expect(control).toContain(
@@ -126,12 +121,11 @@ describe("fork local dictation", () => {
       /\{busy \? \(\s*<Button[^>]*data-fork-composer-action="dictate-cancel"/su,
     );
     expect(theme).toContain('[data-fork-composer-action="dictate-cancel"]');
-    // The level timeline is a small canvas beside the mic in the control row,
-    // mounted while a session is live (and briefly after, only for Inlet's exit
-    // animation, useInletMorphPresence): dots for silence, bars for
-    // speech, newest at the right edge, painted in its own colour.
+    // The level timeline replaces the mic button while a session is live (and
+    // briefly after for Inlet's exit animation, useInletMorphPresence): dots
+    // for silence, bars for speech, newest at the right edge.
     expect(control).toMatch(
-      /\{live \|\| closing \? <VoiceLevelTimeline level=\{dictation\.level\} \/> : null\}/u,
+      /showTimeline \? \(\s*<VoiceLevelTimeline level=\{dictation\.level\} \/>\s*\) : \(/u,
     );
     expect(control).toContain("useInletMorphPresence(live, TIMELINE_CLOSE_MS)");
     expect(control).toContain("<canvas");
@@ -147,15 +141,8 @@ describe("fork local dictation", () => {
     expect(dictationModule).not.toContain("useEffectEvent");
     expect(rootRoute).toContain("<ForkDictationHotkeyHost />");
     expect(hotkeyHost).toContain("installForkDictationHotkey()");
-    // The X cancels its own footprint, so a one-button send slot does not widen.
-    expect(theme).toMatch(
-      /\[data-fork-composer-action="dictate-cancel"\]\s*\{\s*margin-inline:\s*-28px -4px/u,
-    );
-    // A live session lights the mic and timeline as one rectangle in one ink.
+    // A live session keeps the waveform bare (no background fill), in foreground/white ink.
     expect(control).toContain('"data-fork-dictation-live": ""');
-    expect(theme).toMatch(
-      /\[data-fork-dictation-live\]\s*\{[^}]*background:\s*var\(--fork-composer-control-hover\)/u,
-    );
     expect(theme).toMatch(/\.dark \[data-fork-dictation-live\]\s*\{[^}]*color:\s*#ffffff/u);
     // Live words are prompt text in the prompt row, not upstream's box above it,
     // and they hold through transcript cleanup.

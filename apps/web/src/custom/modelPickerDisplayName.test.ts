@@ -1,8 +1,13 @@
 import { ProviderDriverKind } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { stripProviderName, triggerModelName } from "./modelPickerDisplayName";
+import {
+  pickerTriggerModelName,
+  stripProviderName,
+  triggerModelName,
+} from "./modelPickerDisplayName";
 
+const antigravity = ProviderDriverKind.make("antigravity");
 const claude = ProviderDriverKind.make("claudeAgent");
 const codex = ProviderDriverKind.make("codex");
 const cursor = ProviderDriverKind.make("cursor");
@@ -26,6 +31,10 @@ describe("stripProviderName", () => {
   });
 
   it("keeps a family word that carries the model's identity", () => {
+    expect(stripProviderName("Gemini 4 Neon", { driverKind: antigravity })).toBe("Gemini 4 Neon");
+    expect(
+      stripProviderName("Gemini 4 Neon", { driverKind: antigravity, displayName: "Gemini" }),
+    ).toBe("Gemini 4 Neon");
     expect(stripProviderName("Grok Build", { driverKind: grok })).toBe("Grok Build");
     expect(stripProviderName("Grok 4.6", { driverKind: grok })).toBe("Grok 4.6");
     // The default Grok instance is named "Grok"; that is not a custom account name.
@@ -77,5 +86,46 @@ describe("triggerModelName", () => {
 
   it("keeps the name whole without a provider", () => {
     expect(triggerModelName("Claude Opus 5.5", null, hidden)).toBe("Claude Opus 5.5");
+  });
+});
+
+describe("pickerTriggerModelName", () => {
+  it("keeps Gemini and GPT prefixes in the web model picker trigger", () => {
+    expect(
+      pickerTriggerModelName(
+        { slug: "gemini-4-neon", name: "Gemini 4 Neon" },
+        { driverKind: antigravity },
+      ),
+    ).toBe("Gemini 4 Neon");
+    expect(
+      pickerTriggerModelName({ slug: "gpt-6.2-sol", name: "GPT-6.2-Sol" }, { driverKind: codex }),
+    ).toBe("GPT-6.2-Sol");
+    expect(
+      pickerTriggerModelName(
+        { slug: "gpt-6.1-terra", name: "GPT 6.1 Terra" },
+        { driverKind: codex },
+      ),
+    ).toBe("GPT 6.1 Terra");
+  });
+
+  it("still shortens Claude and vendor-prefixed models", () => {
+    expect(
+      pickerTriggerModelName(
+        { slug: "claude-opus-5-5", name: "Claude Opus 5.5" },
+        { driverKind: claude },
+      ),
+    ).toBe("Opus 5.5");
+    expect(
+      pickerTriggerModelName(
+        { slug: "claude-opus-5-5", name: "Claude Opus 5.5" },
+        { driverKind: cursor },
+      ),
+    ).toBe("Opus 5.5");
+    expect(
+      pickerTriggerModelName(
+        { slug: "nemotron-3-super", name: "NVIDIA: Nemotron 3 Super" },
+        { driverKind: cursor },
+      ),
+    ).toBe("Nemotron 3 Super");
   });
 });

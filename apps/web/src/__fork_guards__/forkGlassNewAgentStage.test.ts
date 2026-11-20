@@ -51,7 +51,7 @@ const POPUP = `body.dropdown-glass${FROSTED}`;
 const SUPPORTS = ["@supports (anchor-name: --fork-glass-card)"];
 // The three frost hosts, as the sheet lists them inside one :is().
 const HOSTS =
-  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-composer-stack="true"][data-fork-composer-context-row]:is(button,[data-slot="button"],[data-fork-context-chip],[data-fork-pr-chip]),[data-chat-header][data-fork-pill])';
+  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-draft-launchpad-card],[data-chat-header][data-fork-pill])';
 
 const sheet = readSibling("../theme.custom.glass.css");
 const rules = cssRules(sheet);
@@ -93,7 +93,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     );
     expect(compact(palettes)).toContain(
       compact(
-        ".dropdown-glass[data-fork-glass-over-picture] { background: var(--fork-glass-picture-tint);",
+        ".dropdown-glass[data-fork-glass-over-picture] { background: var(--fork-glass-picture-menu-tint);",
       ),
     );
     // React never reads the pick on ChatView's render path.
@@ -381,21 +381,11 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
 
     // Each host's tokens.
     const STACK = `${DRAFT}[data-fork-composer-stack="true"]`;
-    const CHIPS = `${STACK}[data-fork-composer-context-row]:is(button,[data-slot="button"],[data-fork-context-chip],[data-fork-pr-chip])`;
     expect(flat(find(`${GLASS}${STACK}[data-fork-composer-vessel]`)?.body)).toBe(
       "--fork-glass-frost-wash: var(--fork-composer-vessel-bg); --fork-glass-frost-radius: var(--fork-composer-radius);",
     );
-    expect(flat(find(`${GLASS}${CHIPS}`)?.body)).toBe(
-      "--fork-glass-frost-wash: var(--fork-context-chip-bg); --fork-glass-frost-radius: 6px;",
-    );
-    const chipHover = rules.find(
-      (rule) =>
-        compact(rule.selector).startsWith(
-          `${compact(GLASS)}${STACK}[data-fork-composer-context-row]`,
-        ) && rule.selector.includes(":hover"),
-    );
-    expect(flat(chipHover?.body)).toBe(
-      "--fork-glass-frost-wash: var(--fork-context-chip-bg-hover);",
+    expect(flat(find(`${GLASS}${DRAFT}[data-fork-draft-launchpad-card]`)?.body)).toBe(
+      "--fork-glass-frost-wash: var(--fork-composer-vessel-bg); --fork-glass-frost-radius: var(--fork-composer-radius); border-color: var(--fork-composer-border);",
     );
     const HEADER = `${DRAFT}[data-chat-header]`;
     expect(flat(find(`${GLASS}${HEADER}[data-fork-pill]`)?.body)).toBe(

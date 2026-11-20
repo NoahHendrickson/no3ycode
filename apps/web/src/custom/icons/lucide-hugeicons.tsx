@@ -199,6 +199,7 @@ export const ArrowUpCircleIcon = icon("arrow-up-circle", Hg.CircleArrowUpIcon, "
 export const CornerLeftUpIcon = icon("corner-left-up", Hg.CornerLeftUpIcon, "stroke");
 export const Undo2Icon = icon("undo-2", Hg.Undo02Icon, "stroke");
 export const Redo2Icon = icon("redo-2", Hg.Redo02Icon, "stroke");
+export const CornerDownLeftIcon = icon("corner-down-left", Hg.CornerDownLeftIcon, "stroke");
 export const CornerUpRightIcon = icon("corner-up-right", Hg.CornerUpRightIcon, "stroke");
 export const ArrowUpLeftIcon = icon("arrow-up-left", Hg.ArrowUpLeftIcon, "stroke");
 export const ArrowRightLeftIcon = icon("arrow-right-left", Hg.ArrowLeftRightIcon, "stroke");

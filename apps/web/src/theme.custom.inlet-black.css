@@ -101,10 +101,30 @@
     --fork-context-chip-bg: rgb(208 204 181 / 55%);
     --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
 
-    & [data-fork-composer-vessel] {
+    & :is([data-fork-composer-vessel], [data-fork-composer-usage-drawer]) {
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
     }
+  }
+
+  &
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-chat-composer-overlay][data-draft-hero]
+    [data-fork-draft-launchpad-card] {
+    --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  & [data-fork-composer-usage-drawer] {
+    --border: rgb(28 28 26 / 16%);
+    --contrast-border: rgb(28 28 26 / 16%);
+  }
+
+  & [data-fork-draft-launchpad-card] {
+    --border: rgb(28 28 26 / 14%);
+    --contrast-border: rgb(28 28 26 / 14%);
+    --accent: rgb(28 28 26 / 8%);
   }
 
   /* Inlet Black's message links are the new-agent texture's blue, deepened
@@ -304,7 +324,7 @@
     :is(
       [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"],
       [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled),
-      [data-fork-composer-control-row-slot="left"] [data-fork-dictation-live]
+      [data-fork-dictation-live]
     ) {
     color: var(--fork-inlet-black-ink);
 
@@ -362,7 +382,8 @@
   &
     :is(
       [data-slot="popover-popup"][data-fork-tab-menu],
-      [data-slot="menu-popup"]:has([data-fork-model-picker])
+      [data-slot="menu-popup"]:has([data-fork-model-picker]),
+      [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"]
     ) {
     & [data-provider-package-icon] {
       fill: var(--icon-dark);

@@ -110,25 +110,15 @@ describe("fork guard: fork-model-picker", () => {
     expect(picker).toMatch(/<MenuPopup\s+\{\.\.\.floatingLayerProps\}/u);
   });
 
-  it("drops the provider name wherever the provider is already shown", () => {
-    // Trigger: the composer shows the name alone, but its resting strip
-    // collapses the label below 640px, so the icon must come back there;
-    // Settings keeps the icon, and no stylesheet rule may hide it. The
-    // tooltip names the instance the hidden icon used to.
-    // In the composer, Cursor's models are named "Cursor Opus 5.5": without
-    // the icon a bare "Opus 5.5" reads as Claude's own.
-    expect(picker).toContain("const iconShown = !props.isComposerOwned;");
-    expect(
-      // getTriggerDisplayModelName takes the driver kind since upstream #24205.
-      picker.match(
-        /triggerModelName\(\s*getTriggerDisplayModelName\(\w+, \w+\?\.driverKind\),\s*\w+,\s*\{ iconShown \},?\s*\)/gu,
-      ),
-    ).toHaveLength(2);
-    expect(picker).toMatch(/\{activeEntry \? \(\s*<ProviderInstanceIcon/u);
-    // One class for the single icon and the multi-model avatar stack alike.
-    expect(picker).toContain(
-      'const composerIconClassName =\n    props.isComposerOwned &&\n    (size === "xs" ? "hidden @max-[640px]/composer-surface:inline-flex" : "hidden")',
-    );
+  it("shows the menu's provider icon in the trigger and keeps Gemini and GPT in model names", () => {
+    // Trigger: both the composer and Settings show ModelPickerProviderGlyph
+    // (the same Claude/Codex/provider marks as the menu), and no stylesheet
+    // rule hides the trigger icon.
+    expect(picker.match(/pickerTriggerModelName\(/gu)).toHaveLength(2);
+    expect(picker).toMatch(/\{activeEntry \? \(\s*<ModelPickerProviderGlyph/u);
+    expect(picker.match(/<ModelPickerProviderGlyph\b/gu)).toHaveLength(2);
+    expect(picker).not.toContain("composerIconClassName");
+    expect(picker).not.toContain("ChevronDownIcon");
     expect(picker).toMatch(
       /\{activeEntry \? \(\s*<span[^>]*>\{activeEntry\.displayName\}<\/span>/u,
     );
@@ -139,6 +129,14 @@ describe("fork guard: fork-model-picker", () => {
     }
     // Rows: the selected tab or the inline provider label names it.
     expect(content).toContain("const modelName = stripProviderName(displayName, {");
+    // Gemini and GPT models keep their family names in the web model picker trigger.
+    const displayName = readSibling("../custom/modelPickerDisplayName.ts");
+    expect(displayName).toContain('"Gemini "');
+    expect(displayName).toContain('"GPT-"');
+    expect(displayName).toContain('"GPT "');
+    // Antigravity's thinking_level / role: "reasoning" drives the effort slider.
+    const traits = readSibling("../custom/composerModelTraits.ts");
+    expect(traits).toContain("isReasoningSelect(descriptor)");
   });
 
   it("scopes the list with a rail of provider icon tabs beside the search field", () => {
@@ -265,9 +263,9 @@ describe("fork guard: fork-model-picker", () => {
     // The trigger reads "Opus 5.5 High"; the panel sits under the pages, and a
     // pick keeps the menu open so effort can follow.
     expect(picker).toContain("data-chat-provider-model-picker-traits");
-    // The traits label truncates inside the trigger's max width, and the
-    // resting strip collapses it with the model name.
-    expect(picker).toContain('"min-w-0 truncate text-muted-foreground"');
+    // The traits label truncates inside the trigger's max width and trims its
+    // text-box to align on the same baseline as the model label.
+    expect(picker).toContain("min-w-0 truncate text-muted-foreground");
     // One carrier since upstream #16069 folded fast mode into the label text;
     // the bolt that used to collapse alongside it is gone.
     expect(

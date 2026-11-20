@@ -42,7 +42,10 @@
   }
 
   &[data-fork-side-chat="true"].dark[data-fork-theme="cool-darker"]
-    :is([data-chat-column-maximized-away], [data-fork-stage-card])::before {
+    :is([data-chat-column-maximized-away], [data-fork-stage-card])::before,
+  &[data-fork-side-chat="true"].dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away]
+    > [data-fork-new-agent-backdrop] {
     box-shadow: none;
   }
 
@@ -117,6 +120,23 @@
       inset 0 0 0 0.5px rgb(255 255 255 / 6%),
       inset 0 3px 4px -3px rgb(255 255 255 / 5%),
       inset 0 -3px 4px -3px rgb(255 255 255 / 4%);
+  }
+
+  /* Settings new-agent backdrops (Mountain Dither, Jolly Petal, Dither) clip to
+     the same inset stage card as threads and Glass's own portrait, so the gutter
+     and card rim separate them from the sidebar instead of bleeding flush into it. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away]
+    > [data-fork-new-agent-backdrop] {
+    inset: var(--fork-glass-card-inset) var(--fork-glass-card-inset) var(--fork-glass-card-inset)
+      var(--fork-glass-card-inset-left);
+    border-radius: var(--fork-glass-card-radius);
+    overflow: hidden;
+    box-shadow:
+      0 0 2px 1px rgb(0 0 0 / 35%),
+      inset 0 0.5px 0 rgb(255 255 255 / 28%),
+      inset 0 -0.5px 0 rgb(255 255 255 / 12%),
+      inset 0 0 0 0.5px rgb(255 255 255 / 12%);
   }
 
   /* Under the desktop glass the stage's reading value is a composite, not one

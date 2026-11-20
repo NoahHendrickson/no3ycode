@@ -34,6 +34,9 @@ export function BranchPicker({
   statusText,
   notice,
   originControl,
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  footer,
+  /* fork:end fork-composer-shell */
   popupProps,
   renderItem,
   getItemType,
@@ -53,6 +56,9 @@ export function BranchPicker({
   statusText: string | null;
   notice?: string | null | undefined;
   originControl?: { checked: boolean; onCheckedChange: (checked: boolean) => void } | undefined;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  footer?: ReactNode;
+  /* fork:end fork-composer-shell */
   popupProps: Omit<ComponentProps<typeof ComboboxPopup>, "children">;
   renderItem: (value: string, index: number) => ReactNode;
   getItemType?: ((value: string) => string) | undefined;
@@ -185,6 +191,9 @@ export function BranchPicker({
           ) : null}
           {notice ? <ComboboxStatus>{notice}</ComboboxStatus> : null}
           {statusText ? <ComboboxStatus>{statusText}</ComboboxStatus> : null}
+          {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
+          {footer}
+          {/* fork:end fork-composer-shell */}
         </div>
       </ComboboxPopup>
     </Combobox>

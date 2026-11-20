@@ -1,15 +1,11 @@
 import { PROVIDER_DISPLAY_NAMES, ProviderDriverKind } from "@t3tools/contracts";
+import {
+  getDisplayModelName,
+  getTriggerDisplayModelName,
+  type ModelEsque,
+} from "~/components/chat/providerIconUtils";
 
-/**
- * Model families whose maker is already shown beside the row, per provider.
- * Claude's catalogue repeats its own name ("Claude Opus 5.5"), and Cursor
- * lists Anthropic's models under it too; both logos already mark the row, so
- * the family name goes. Where the logo is hidden, triggerModelName names the
- * reseller instead. Providers whose family word carries the model's
- * identity (Grok's "Grok Build", "Grok 4.6") are deliberately absent: strip
- * "Grok" and only "Build" is left. KEPT_FAMILY_NAMES holds that line even when
- * the instance is named after the family, as the default Grok instance is.
- */
+/** Families whose maker is already shown beside the row; kept families carry the model's identity. */
 const SHOWN_FAMILY_NAMES: Partial<Record<ProviderDriverKind, ReadonlyArray<string>>> = {
   [ProviderDriverKind.make("claudeAgent")]: ["Claude"],
   [ProviderDriverKind.make("cursor")]: ["Claude"],
@@ -17,19 +13,18 @@ const SHOWN_FAMILY_NAMES: Partial<Record<ProviderDriverKind, ReadonlyArray<strin
 
 /** Family words that are the model's name, never stripped as an instance name. */
 const KEPT_FAMILY_NAMES: Partial<Record<ProviderDriverKind, ReadonlyArray<string>>> = {
+  [ProviderDriverKind.make("antigravity")]: ["Gemini"],
+  [ProviderDriverKind.make("codex")]: ["GPT"],
   [ProviderDriverKind.make("grok")]: ["Grok"],
 };
+
+/** Leading family prefixes the web model picker keeps instead of shortening via `modelShortName`. */
+const KEPT_TRIGGER_FAMILY_PREFIXES = ["Gemini ", "GPT-", "GPT "] as const;
 
 /** Providers that resell another maker's models; named wherever their icon isn't shown. */
 const RESELLERS: ReadonlySet<ProviderDriverKind> = new Set([ProviderDriverKind.make("cursor")]);
 
-/**
- * Drops a leading provider name from a model name ("Claude Fable 5.1" →
- * "Fable 5.1") wherever the provider is already shown beside it: the composer
- * trigger's icon, a provider submenu, or a row's provider label. Matches the
- * families listed for the provider and the instance's own (custom account)
- * name.
- */
+/** Drops a leading provider or custom account name wherever the provider icon is shown beside it. */
 export function stripProviderName(
   name: string,
   provider: { driverKind: ProviderDriverKind; displayName?: string | undefined },
@@ -49,11 +44,19 @@ export function stripProviderName(
   return name;
 }
 
-/**
- * The model picker trigger's name for a model. Without its icon, a reseller
- * leads with its own name: Cursor's "Opus 5.5" would otherwise read as
- * Claude's own, so it reads "Cursor Opus 5.5".
- */
+/** Trigger label for the web model picker (which always shows the provider icon). */
+export function pickerTriggerModelName(
+  model: ModelEsque,
+  provider: { driverKind: ProviderDriverKind; displayName?: string | undefined } | null | undefined,
+): string {
+  const full = getDisplayModelName(model);
+  const base = KEPT_TRIGGER_FAMILY_PREFIXES.some((prefix) => full.startsWith(prefix))
+    ? full
+    : getTriggerDisplayModelName(model, provider?.driverKind);
+  return provider ? stripProviderName(base, provider) : base;
+}
+
+/** Trigger/row model name when a reseller may need to prefix itself if its icon is hidden. */
 export function triggerModelName(
   name: string,
   provider: { driverKind: ProviderDriverKind; displayName?: string | undefined } | null | undefined,

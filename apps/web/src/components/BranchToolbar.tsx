@@ -10,7 +10,7 @@ import { PlusIcon, ScaleIcon } from "lucide-react";
 // Workspace marks match the thread readout: the branch mark for a checkout,
 // the fork's worktree mark for any worktree. Aliased so upstream's call sites
 // stay untouched.
-import { ChevronDownIcon, GitBranchIcon as FolderIcon } from "../custom/icons/lucide-hugeicons";
+import { GitBranchIcon as FolderIcon } from "../custom/icons/lucide-hugeicons";
 import {
   WorktreeIcon as FolderGit2Icon,
   WorktreeIcon as FolderGitIcon,
@@ -58,7 +58,12 @@ import {
 import { BranchToolbarEnvironmentSelector } from "./BranchToolbarEnvironmentSelector";
 import { openAddProjectToMachine } from "./AddProjectToMachineDialog";
 import { type AddProjectTarget, useAddProjectTargets } from "../hooks/useAddProjectTargets";
-import { BranchToolbarEnvModeSelector } from "./BranchToolbarEnvModeSelector";
+/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import {
+  ComposerWorkspaceFooter,
+  ComposerWorkspaceTriggerIcon,
+} from "../custom/ComposerWorkspaceFooter";
+/* fork:end fork-composer-shell */
 import { PreviousWorktreeItemContent } from "./PreviousWorktreeItemContent";
 import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import {
@@ -80,7 +85,6 @@ import {
   MenuSubTrigger,
   MenuTrigger,
 } from "./ui/menu";
-import { Separator } from "./ui/separator";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import { MiddleTruncate } from "./ui/middle-truncate";
 import { ComposerSurface } from "./chat/ComposerSurface";
@@ -284,31 +288,23 @@ const RunContextSelector = memo(function RunContextSelector({
 
   if (isLocked) {
     return (
-      <>
-        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-            Locked readout is a span; data-fork-context-chip keeps the frosted
-            chip paint (desktop EnvModeSelector has the same mark). The paint is
-            scoped to the composer context row, so the panel row is untouched. */}
-        <span
-          data-fork-context-chip
-          className={cn(
-            READ_ONLY_CONTEXT_CHIP_CLASS_NAME,
-            "max-w-[48%] flex-initial justify-start",
-            isPanel && "max-w-full",
-            isPanel && THREAD_DETAILS_PANEL_LOCKED_ROW_CLASS,
-          )}
-          onContextMenu={handleContextMenu}
-          aria-label={
-            isPanel
-              ? `Run context: ${[autoEnvironmentLabel ?? activeEnvironment?.label, workspaceLabel].filter(Boolean).join(", ")}`
-              : undefined
-          }
-          data-composer-context-control
-        >
-          {triggerContent}
-        </span>
-        {/* fork:end fork-composer-shell */}
-      </>
+      <span
+        className={cn(
+          READ_ONLY_CONTEXT_CHIP_CLASS_NAME,
+          "max-w-[48%] flex-initial justify-start",
+          isPanel && "max-w-full",
+          isPanel && THREAD_DETAILS_PANEL_LOCKED_ROW_CLASS,
+        )}
+        onContextMenu={handleContextMenu}
+        aria-label={
+          isPanel
+            ? `Run context: ${[autoEnvironmentLabel ?? activeEnvironment?.label, workspaceLabel].filter(Boolean).join(", ")}`
+            : undefined
+        }
+        data-composer-context-control
+      >
+        {triggerContent}
+      </span>
     );
   }
 
@@ -337,17 +333,10 @@ const RunContextSelector = memo(function RunContextSelector({
         ].join(" ")}
       >
         {triggerContent}
-        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-            Upstream dropped the context chips' carets; the fork's chips keep them. */}
-        {!isPanel ? <ChevronDownIcon className="size-3 shrink-0 opacity-50" /> : null}
-        {/* fork:end fork-composer-shell */}
       </MenuTrigger>
       <MenuPopup
         align="start"
         side={isPanel ? "bottom" : "top"}
-        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-        data-fork-chip-menu={isPanel ? undefined : ""}
-        /* fork:end fork-composer-shell */
         className={
           isPanel
             ? "w-(--anchor-width)"
@@ -800,91 +789,74 @@ export const BranchToolbar = memo(function BranchToolbar({
       {/* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */}
       {leading ?? null}
       {/* fork:end fork-new-agent-draft */}
-      {showGitControls ? (
-        <div className="contents @xl/composer-surface:hidden">
-          <RunContextSelector
-            forceNewWorktree={forceNewWorktree}
-            autoEnvironmentLabel={autoEnvironmentLabel}
-            onAutoEnvironment={onAutoEnvironment}
-            envLocked={envLocked}
-            envModeLocked={envModeLocked}
-            environmentId={environmentId}
-            availableEnvironments={availableEnvironments}
-            showEnvironmentPicker={showEnvironmentPicker}
-            showEnvironmentIndicator={showEnvironmentIndicator}
-            onEnvironmentChange={onEnvironmentChange}
-            effectiveEnvMode={effectiveEnvMode}
-            activeWorktreePath={activeWorktreePath}
-            onEnvModeChange={onEnvModeChange}
-            previousWorktreeLabel={previousWorktreeLabel}
-            previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
-            onUsePreviousWorktree={onUsePreviousWorktree}
-            addTargets={addTargets}
-            onAddToMachine={onAddToMachine}
-          />
-        </div>
-      ) : null}
-      {showGitControls || showEnvironmentIndicator ? (
-        <div
-          className={cn(
-            "min-h-7 min-w-10 items-center gap-1 sm:min-h-6",
-            showGitControls ? "hidden @xl/composer-surface:flex" : "flex",
-            "flex-1",
-          )}
-        >
-          {showEnvironmentIndicator && availableEnvironments && (
-            <>
-              <BranchToolbarEnvironmentSelector
-                autoEnvironmentLabel={autoEnvironmentLabel}
-                onAutoEnvironment={onAutoEnvironment}
-                envLocked={envLocked}
-                environmentId={environmentId}
-                availableEnvironments={availableEnvironments}
-                {...(showEnvironmentPicker ? { onEnvironmentChange } : {})}
-                {...(addTargets.length > 0 ? { onAddToMachine: () => onAddToMachine(null) } : {})}
-              />
-              {showGitControls ? (
-                <Separator
-                  orientation="vertical"
-                  className="mx-0.5 h-3.5!"
-                  data-composer-context-control
-                />
-              ) : null}
-            </>
-          )}
-          {showGitControls ? (
-            <BranchToolbarEnvModeSelector
-              forceNewWorktree={forceNewWorktree}
-              envLocked={envModeLocked}
-              effectiveEnvMode={effectiveEnvMode}
-              activeWorktreePath={activeWorktreePath}
-              onEnvModeChange={onEnvModeChange}
-              previousWorktreeLabel={previousWorktreeLabel}
-              previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
-              onUsePreviousWorktree={onUsePreviousWorktree}
-            />
-          ) : null}
-        </div>
+      {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+          Combine workspace mode and branch selection into one trigger (workspace
+          glyph + branch label) backed by a split popup: branch picker on top,
+          edge-to-edge divider, workspace mode picker on bottom. */}
+      {showEnvironmentIndicator && availableEnvironments ? (
+        <BranchToolbarEnvironmentSelector
+          autoEnvironmentLabel={autoEnvironmentLabel}
+          onAutoEnvironment={onAutoEnvironment}
+          envLocked={envLocked}
+          environmentId={environmentId}
+          availableEnvironments={availableEnvironments}
+          {...(showEnvironmentPicker ? { onEnvironmentChange } : {})}
+          {...(addTargets.length > 0 ? { onAddToMachine: () => onAddToMachine(null) } : {})}
+        />
       ) : null}
 
       {showGitControls ? (
-        <BranchToolbarBranchSelector
-          forceNewWorktree={forceNewWorktree}
-          ref={branchSelectorRef}
-          className="min-w-0 flex-initial justify-end @xl/composer-surface:ml-auto"
-          environmentId={environmentId}
-          threadId={threadId}
-          {...(draftId ? { draftId } : {})}
-          envLocked={envLocked}
-          effectiveEnvModeOverride={effectiveEnvMode}
-          {...(activeThreadBranchOverride !== undefined ? { activeThreadBranchOverride } : {})}
-          {...(onActiveThreadBranchOverrideChange ? { onActiveThreadBranchOverrideChange } : {})}
-          startFromOrigin={startFromOrigin}
-          onStartFromOriginChange={onStartFromOriginChange}
-          {...(onCheckoutPullRequestRequest ? { onCheckoutPullRequestRequest } : {})}
-          {...(onComposerFocusRequest ? { onComposerFocusRequest } : {})}
-        />
+        <>
+          {!envModeLocked && !forceNewWorktree ? (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              data-composer-shortcut="composer.workspace"
+              className="sr-only"
+              onClick={() => branchSelectorRef.current?.openWorkspace()}
+            />
+          ) : null}
+          <BranchToolbarBranchSelector
+            forceNewWorktree={forceNewWorktree}
+            ref={branchSelectorRef}
+            className="min-w-0 flex-initial"
+            environmentId={environmentId}
+            threadId={threadId}
+            {...(draftId ? { draftId } : {})}
+            envLocked={envLocked}
+            effectiveEnvModeOverride={effectiveEnvMode}
+            {...(activeThreadBranchOverride !== undefined ? { activeThreadBranchOverride } : {})}
+            {...(onActiveThreadBranchOverrideChange ? { onActiveThreadBranchOverrideChange } : {})}
+            startFromOrigin={startFromOrigin}
+            onStartFromOriginChange={onStartFromOriginChange}
+            {...(onCheckoutPullRequestRequest ? { onCheckoutPullRequestRequest } : {})}
+            {...(onComposerFocusRequest ? { onComposerFocusRequest } : {})}
+            triggerIcon={
+              <ComposerWorkspaceTriggerIcon
+                effectiveEnvMode={effectiveEnvMode}
+                activeWorktreePath={activeWorktreePath}
+                forceNewWorktree={forceNewWorktree}
+              />
+            }
+            keepTriggerEnabled={!envModeLocked && !forceNewWorktree}
+            popupFooter={
+              <ComposerWorkspaceFooter
+                forceNewWorktree={forceNewWorktree}
+                envLocked={envModeLocked}
+                effectiveEnvMode={effectiveEnvMode}
+                activeWorktreePath={activeWorktreePath}
+                onEnvModeChange={onEnvModeChange}
+                previousWorktreeLabel={previousWorktreeLabel}
+                previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
+                onUsePreviousWorktree={onUsePreviousWorktree}
+                onClose={() => branchSelectorRef.current?.close()}
+              />
+            }
+          />
+        </>
       ) : null}
+      {/* fork:end fork-composer-shell */}
       {trailing}
     </ComposerSurface.ContextStrip>
   );

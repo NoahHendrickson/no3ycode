@@ -381,14 +381,11 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       alphaOf("--fork-composer-vessel-bg"),
     );
 
-    // The row is outside the vessel, which is why the chips need their own alpha
-    // and why the filter clear names them separately.
+    // The composer's context strip sits inside the vessel's left control slot,
+    // while ScheduledTaskEditor keeps data-fork-composer-context-row above its vessel.
     const shell = readSibling("../custom/ComposerShell.tsx");
-    const contextRow = shell.indexOf('data-fork-composer-context-row="true"');
-    const vessel = shell.indexOf('"data-fork-composer-vessel": "true"');
-    expect(contextRow).toBeGreaterThan(-1);
-    expect(vessel).toBeGreaterThan(-1);
-    expect(contextRow, "the context row must still precede the vessel").toBeLessThan(vessel);
+    expect(shell).toContain('data-fork-composer-vessel-context="true"');
+    expect(shell).toContain('"data-fork-composer-vessel": "true"');
   });
 
   it("turns the palette's opaque greys into white washes on the stage", () => {
@@ -413,7 +410,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
 
     const controlRow = themeRules.find(
       (rule) =>
-        rule.selector.includes("[data-fork-composer-model-controls]") &&
+        rule.selector.includes("[data-fork-composer-control-row]") &&
         /color:\s*var\(--fork-composer-control-ink/u.test(rule.body),
     );
     expect(controlRow, "the control row must read its ink from the token").toBeDefined();

@@ -146,9 +146,11 @@
         "src/components/sidebar/SidebarThreadRow.tsx",
         // fork:end sidebar-v2-card-rows
         // fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-        // The shell's slots replace upstream's controls bar and strip permissions chip.
+        // The shell's slots replace upstream's controls bar, strip permissions chip,
+        // and standalone workspace env-mode selector (combined into the branch split menu).
         "src/components/chat/ComposerControlsBar.tsx",
         "src/components/ComposerContextPermissions.tsx",
+        "src/components/BranchToolbarEnvModeSelector.tsx",
         // fork:end fork-composer-shell
       ],
       // fork:end fork-sidebar-chrome

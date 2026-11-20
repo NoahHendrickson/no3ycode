@@ -2318,8 +2318,9 @@
     composer still centred, and BasicNewAgentBackdrop draws the pick there,
     the texture in Glass's stage and ink. Over the opaque pictures (Mountain
     Dither, Jolly Petal, which stamp data-fork-opaque-backdrop) the composer,
-    its pills and the popups wholly inside the picture are one dark tint
-    (--fork-glass-picture-tint, black-ish 36%) with a real backdrop-filter
+    its pills and the popups wholly inside the picture share a translucent
+    white tint (--fork-glass-picture-tint, white 24%, with the prompt box a
+    step brighter at 10% white over it) with a real backdrop-filter
     blur, which does reach the screen there because no wallpaper sits under
     it (checked in the desktop app, 2026-11-19); the vibrancy guard's
     no-filter rule exempts only this state. Dither and the texture leave
@@ -2979,22 +2980,27 @@
 
 - id: fork-composer-usage-limits
   intent: >
-    The composer vessel's control row carries a small session-limit bar
-    immediately before the model picker, inside the model controls slot so
-    it takes the row's control geometry: the selected provider's session
-    window, drawn with the Usage view's meter (custom/UsageMeter.tsx). It
-    reads the selected instance's own
-    ServerProvider.usageLimits snapshot, so it follows the model picker and
-    adds no wire data or polling. Clicking it opens a 16rem popover with
-    every provider's limits across all environments: the Usage view's list
-    in its compact mode (providers split by edge-to-edge dividers, no cards, text-xs, a
-    4px meter), its clock taken on open. The list scrolls with no visible
-    scrollbar in every theme (theme.custom.css). The list subscribes to the
-    environment presentations only while the menu is open. Hidden when the
-    provider reports no session window and when the mode row collapses to ⋯.
+    The composer vessel's right control slot ends with a 16px circular
+    session-limit ring (UsageCircleMeter in custom/UsageMeter.tsx) driven by
+    useComposerUsageDrawer() in custom/ComposerUsageLimitsReadout.tsx. It reads
+    the selected provider instance's ServerProvider.usageLimits snapshot, adding
+    no wire data or polling. Toggling it expands an upward-opening single-line
+    CollapsiblePanel (data-fork-composer-usage-drawer) mounted as a sibling of
+    [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
+    Black does not block backdrop blur; the vessel's top corners stay square
+    until the panel unmounts after its close transition. The tray subscribes to
+    environment presentations only while open, renders icon-only provider marks
+    with compact bars (abbreviating to 5hr / 7d only from typed window
+    durations, omitting Claude's seven_day_fable id), focusable meter tooltips
+    with remaining % and reset times, actionable limit notices, external usage
+    links, and Escape / close-button dismissal restoring focus to the ring. The
+    calmer #38a169 green is scoped via --success to the composer trigger and
+    drawer so the Usage settings page keeps each theme's --success token. Hidden
+    when the provider reports no session window or when the footer collapses.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
+    - apps/web/src/custom/ComposerUsageLimitsReadout.test.ts
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
   shadows: []
@@ -3577,223 +3583,38 @@
 
 - id: fork-composer-shell
   intent: >
-    The chat composer is one outer 8px vessel that wraps the prompt surface and
-    the control row, with context chips sitting 8px above the vessel. One
-    compact base layout in every thread state; the one exception is the
-    draft-only prompt geometry fork-new-agent-draft keys on the hero overlay.
-    ChatView centers the composer on the column while a draft has no
-    messages, with the empty-draft greeting ("What should we build…") parked
-    bottom-full above it as upstream does, and docks it to the bottom once
-    the thread starts. BranchToolbar renders upstream's ComposerSurface.ContextStrip
-    untouched (the liveness fallback strip mounts the same component); the
-    context-row CSS flatten, keyed on its data-slot, is the single owner of
-    the strip geometry (width/margin/padding resets, unlayered so they beat
-    the Tailwind utilities) so the chips share the composer's max-w-3xl rail
-    instead of the old under-glass inset. The prompt surface is 44px tall at rest: 10px
-    block and 8px inline padding (px-2 py-2.5) around a
-    one-line prompt and the 24px send/stop button. The prompt and action remain
-    in that same row as text wraps — the action pinned bottom-right so it stays
-    with the last line — so the surface grows naturally with the editor; there
-    is no tall/slim density switch, resize observer, or wrap latch. Upstream's
-    collapsed mobile tap target remains a separate functional state.
+    The chat composer is one outer 8px vessel (12px on Inlet) wrapping the
+    prompt surface and a single control row beneath it. BranchToolbar's context
+    strip (project pill on drafts, environment picker on multi-env projects,
+    combined workspace + branch trigger, PR chip, and trailing background
+    liveness pill) sits in the control row's left slot inside
+    [data-fork-composer-vessel-context], while Model, runtime Mode (muted ghost
+    label, no colored fill or caret), and the circular Usage trigger sit in the
+    right slot. On narrow composers the control row wraps so the left context
+    slot and liveness stop pill never get squeezed off-screen; while collapsed
+    on mobile or showing mobile pending answers, the in-vessel context slot is
+    omitted so nothing slabs onto the collapsed pill. ScheduledTaskEditor keeps
+    the floating [data-fork-composer-context-row] chip row above its vessel.
 
-    Which controls sit where is the main design contract. BranchToolbar's
-    worktree, PR, and branch chips sit above the vessel as filled chips
-    sharing one selected-surface fill with no hairline, 8px apart (matching
-    the context row's pb-2 under the pills — including the nested PR+branch
-    pair that upstream keeps at gap-1). When a settled turn still has
-    background liveness (monitoring watch or working fleets), a pill (leading
-    mark + label + small stop square) sits immediately after the branch pill
-    via BranchToolbar's optional trailing slot — not in the ComposerBannerStack.
-    Working uses the sidebar pixel-rain mark; monitoring uses the duty-cycled
-    white pulse. Labels stay short for the chip: Monitoring, N agent(s), or
-    Working. Since the 2026-10-05 sync the label is a button when there are
-    tasks behind the count: it opens a popover (the one frost recipe) that
-    names each pending task — upstream's dropped background-work banner
-    listed them inline — and a subagent's row opens its thread. The stop
-    square keeps its place on the pill. Chrome stays in ComposerShell.css.
-    Upstream's strip children use flex-1
-    and the branch's justify-end / md:ml-auto, which opens a large empty gap
-    between checkout and branch at narrower widths while the checkout label
-    truncates; the fork forces those direct flex children to flex 0 1 auto,
-    justify-content flex-start, and margin-inline-start 0 so the chips stay a
-    packed leading cluster. The strip itself still spans the row (flex-1,
-    min-width 0) rather than shrinking to its chips: upstream collapses the
-    chip labels to icons by comparing the width they need against the strip's
-    own clientWidth, and a shrink-to-fit strip measures its collapsed self, so
-    one compact pass would latch the chips icon-only for good. Because a strip
-    that spans the row has free space to hand out, the flex-1 neutralization
-    covers every direct child rather than only the ones carrying `.flex` —
-    below `md` the workspace slot is an inline-flex Button or span, and left to
-    upstream's flex-1 it would claim that space and gap the cluster open.
-    The resting-controls host is not a desktop strip child: an empty host is
-    still a flex item, so the 8px gap would apply twice (checkout→host and
-    host→branch) and the pills would sit 16px apart. ChatView only passes the
-    host ref where relocated controls actually mount, and an empty host is
-    `display: none` so a leftover node cannot open that second gap.
-    Chips use 8px inline padding (24px tall, 6px radius) at 12px type matching
-    the mode row's Auto/Build pills, and the workspace chip's trigger caret is
-    dropped. The folder glyph sits flush in its 12px frame, so that start
-    padding is real — not the old optical 0 that left Current checkout tight
-    on the pill edge. The workspace select opens above the chip row (side top,
-    no align-item-with-trigger) so its glass menu clears the neighboring
-    branch pill instead of overlapping it. Only the prompt and primary action sit
-    inside the prompt surface. The runtime mode sits below-left inside the
-    vessel (upstream #33131 removed plan mode and the context meter, so the
-    Build/Plan toggle and the readout slot's meter are gone); model and effort
-    sit below-right in a control row with 8px padding — 36px tall over the
-    20px ghost controls (4px-radius controls —
-    Noey's radius over the drawn full-pill ghosts, so hover fills square
-    off). The
-    runtime mode renders as the design's 20px accent chip — label only, no
-    icon or caret — with its hue selected by a typed fork-owned token map:
-    auto green, full access yellow, auto-accept edits purple, supervised red.
-    The interaction toggles are text-only ghost chips. Mode,
-    Build, model, and effort all share 12px medium on a 16px line and 4px
-    inline padding (including the runtime-mode chip). They also share one hover
-    channel — a faint white 4% wash in dark (`--fork-composer-control-hover`),
-    not upstream's ghost `--accent`, which the Cool palettes resolve to the
-    composer's own prompt-surface fill, and not the context chips' raised lift,
-    which read nearly solid on these text-only ghosts. The runtime-mode chip is
-    the one opt-out; its hover is a per-mode hue. The composer's effort
-    trigger joins its trait labels with a plain space ("High 1M") while
-    Settings keeps upstream's " · " separator. Geometry is CSS-owned:
-    theme.custom.css styles every ghost control under the mode and model
-    groups — the mode chip included, so geometry has exactly one owner —
-    while ComposerShell.css carries only the chip's per-mode fill and ink.
-    Both are imported unlayered while Tailwind's utilities live in `@layer
-    utilities`.
-    Unlayered beats layered regardless of specificity, so a `px-*` class
-    passed at a call site cannot move these controls at all — not upstream's
-    px-2.5.
-    The branch strip is still passed into ChatComposer as
-    the memoised contextStrip element, preserving ChatComposer's memo boundary
-    and keeping branch controls reachable while mobile is collapsed. It also
-    stays mounted whenever the thread holds a worktree path, rather than only
-    when the status cwd reports a git repo: a worktree whose directory has been
-    deleted answers not-a-repo for itself, and hiding the strip on that answer
-    took away the workspace chip — the control a draft uses to point itself
-    back out of the dead tree, and its only way out. A started thread's
-    workspace is pinned either way, so its strip returns read-only. Runtime,
-    model, and effort controls remain gated during a pending approval, while
-    the mobile composer is collapsed, and while the mobile pending-answer
-    cluster is visible (upstream hides its footer there too, since the editor
-    reserves that band for the absolute prev/advance actions); the read-only
-    context meter may remain. The inline primary-action cluster is suppressed
-    whenever the mobile pending-answer cluster is visible, so only one answer
-    action renders.
-
-    Upstream's stitched glass-shell paint — ComposerSurface's shell, host and
-    context-strip pseudo-elements, keyed by data-slot since #8734 — is
-    disabled under the fork marker, as is the glass upstream puts on the
-    prompt frame whenever any banner is attached above it (backdrop-filter,
-    drop shadow and a ::after outline ring that would double the surface's
-    own hairline): the frame sheds all of it in both schemes, not only under
-    the Questions drawer.
-    The cutoff's top-fade companion rule reads the height variable upstream's
-    own topbar-scroll-fade utility reads, by its current name
-    (--workspace-titlebar-scroll-fade-height since upstream #8799); an
-    unresolved name there invalidates the whole mask-size declaration and the
-    transcript paints straight through the composer, so the guard derives the
-    name from index.css rather than pinning it.
-    The transcript scroller draws no scrollbar (both spellings); the cutoff
-    mask has no scrollbar-lane exemption, so that is what keeps it whole.
-    The docked composer overlay paints an opaque page-colored floor (soft fade
-    over its top edge) so timeline rows cannot read through the composer once
-    that upstream vessel is gone. The fork vessel paints `--fork-composer-vessel-bg`
-    in dark only — the designs are dark-only and a light fork build keeps
-    upstream's unpainted flow — and never behind the collapsed mobile pill,
-    whose 12px corners would expose the vessel's 8px arcs as background
-    wedges. The prompt surface keeps its own translucent fill, inset
-    hairline, focus-border recolour, and explicit drag-over outline on top of
-    that floor; it carries no backdrop blur, because its backdrop is the
-    vessel's own opaque fill and blurring a uniform solid is pure GPU cost.
-    BranchToolbar's stitched-strip spacing is flattened in the named context
-    row. Send and stop remain 24px square at 4px radius; dark builds use a
-    flat white send button with a black icon outside Glass on every build,
-    Dev and Nightly included: upstream's stage art still renders inside the
-    button (so its artwork test and exports stand) but is stamped and hidden
-    by the theme, and the tone attribute is always "flat". Existing project
-    components supply all icons and controls; no Figma-exported assets are
-    committed.
-
-    Type follows the design system's dark tokens: the prompt is body/md — 14px
-    on a 23px line at >=40rem with a full muted-foreground placeholder (16px
-    mobile type stays, avoiding iOS focus zoom) — and the ghost controls,
-    mode chip, model, and effort are 12px medium on 16px with 12px glyphs.
-    The prompt wrapper owns the 12.5rem scroll cap so a one-line Tiptap
-    editor never paints a phantom scrollbar, absorbs the editor's 4px
-    overhang in its own padding so that cap never scrolls sideways, and the
-    placeholder overflow containment remains in place (the placeholder is a
-    sibling of Tiptap's editor wrapper, reached through :has). Attachment and pending-state
-    content may add height above the base row inside the surface, but ordinary
-    composer height changes only when prompt content wraps. Pill styling stays
-    narrowly scoped so pending-state primary actions retain their upstream
-    geometry.
-
-    Compact ⋯ collapse for the in-vessel mode row uses fork-lowered
-    form-width thresholds (400px normal / 520px with wide primary actions),
-    not upstream's 620/780. Upstream's numbers pack denser in-box footers;
-    here mode chips sit opposite the model picker on a dedicated row, so
-    those thresholds hide Full access / Build / Plan behind ⋯ while a large
-    empty gap remains. The wide-actions threshold must stay under the form's
-    max-w-3xl (768px) or the expanded row can never appear in that state.
-    Mode-row collapse and model-picker compaction are deliberately split:
-    the override drives only ⋯ vs ComposerFooterModeControls; the model
-    trigger keeps upstream's 620/780 via composerModelSlotCompact.ts so the
-    right slot does not grow in the newly expanded 400–620 band. Traits stay
-    gated with the mode row (inline when expanded, CompactComposerControlsMenu
-    when collapsed) so they are never stranded between the two thresholds.
-
-    Upstream's banner dock (#8734: the ComposerBannerStack, the sync /
-    activity strip, the approval / questions / plan top drawer, the tasks
-    drawer and tab, and the stash badge) renders inside the vessel above the
-    prompt surface as ComposerBanner.Dock, gated by upstream's own state —
-    so the banner stack lives in ChatComposer, not ChatView, and nothing
-    hangs above the vessel any more (no shoulder clearance). Upstream's
-    bottom toolbar is not rendered at all — the control row owns those
-    controls — and its attach-files control leads the control row's left
-    slot instead, followed by the dictation mic (fork-local-dictation) and
-    then the mode controls, so send trails the prompt alone. Attach and the
-    mic are stamped data-fork-composer-action (fenced in ChatComposer) and
-    sized there as 20px squares, the row's ghost height, taking the row's
-    ghost ink and 4% hover. Its glyph is a plus, not upstream's paperclip.
-    The dictation cancel X, a ghost in the send slot, paints pure white in
-    dark instead of the muted foreground. Actions are always stamped by
-    name, never selected by position: ComposerPrimaryActions hoists a
-    labelled Refine submit into the same cluster as a direct child.
-    Default-dark context chips are Figma 322:6316's white 12% wash (hover
-    17%), the pair the Glass glass tier already uses; the other
-    palettes keep their own opaque tints. The PR chip is the exception: its
-    glyph keeps upstream's state ink (emerald open, violet merged, red
-    closed — the sidebar card's PR badge colours) instead of the white chip
-    text, and its number, which upstream grays, inherits that ink. The fill stays the sibling chips' glass / raised step. It
-    rides the far end of the strip — the wrapper it shares with the branch
-    trigger grows and spreads the two apart with justify-content, so the
-    branch stays packed against checkout. Never an auto margin on the chip:
-    useLabelsOverflow counts a chip's margins as needed width, and a used
-    auto margin is the strip's whole slack, which latched the labels compact
-    whenever a PR was linked. Chip ink is owned by the one default-dark rule
-    in theme.custom.css; palette overlays only swap the fill tokens and never
-    restate chip colour, since a palette copy of the white ink outranks the
-    exemption and flattens the state colour.
-    The liveness pill, when shown, stays last; a draft's project chip
-    (fork-new-agent-draft's `leading` slot) is first.
-    Once a thread starts and upstream drops the strip (Composer context off),
-    the same fallback strip leads with ThreadContextReadout: the project and
-    branch as read-only chips (worktree mark in a worktree), with no
-    workspace-mode label, so they show above the composer as well as in the
-    details card. Composer context on keeps upstream's interactive strip.
-    Upstream deleted its resting composer layout (#25869), so the fork's
-    one-layout rule needs no neutralizing; the composerFooterLayout shadow now
-    only carries the lowered compact thresholds. Since that sync the shell's
-    three slots are built in ChatComposer from upstream's ComposerFooterControls
-    (mode controls and primary actions) instead of upstream's ComposerControlsBar.
+    BranchToolbar combines workspace mode (Current checkout / New worktree /
+    previous worktree) into the bottom of BranchPicker's popup via
+    ComposerWorkspaceFooter and BranchToolbarBranchSelector's popupFooter /
+    triggerIcon / keepTriggerEnabled props (keeping the trigger openable while
+    refs load and focusing the workspace radiogroup on Mod+Shift+X). Attach (+)
+    leads the prompt row opposite Send, and the dictation mic sits beside Send.
+    [data-fork-composer-control-row] in theme.custom.css is the single owner of
+    the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
+    control-row slots. Send and stop remain 24px squares at 4px radius; send
+    uses Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
+    Glass. Upstream's stitched glass-shell paint and banner-frame glass are
+    disabled under the fork marker, and the banner dock sits inside the vessel
+    above the prompt surface.
   tier: 4
   files:
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerMonitoringPill.tsx
+    - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
     - apps/web/src/custom/StopSquareIcon.tsx
@@ -3803,10 +3624,9 @@
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
   watch:
-    # Carries the base row, the context/control rows, and contextStrip prop,
-    # and marks the mode menu data-fork-glass-selection.
+    # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
-    # Centers the draft composer with the greeting above it and docks it once
+    # Centers the draft composer with the launchpad below it and docks it once
     # the thread starts, passes BranchToolbar as contextStrip (with monitoring
     # trailing), and keeps that strip mounted when the thread's worktree
     # directory is missing.
@@ -3823,19 +3643,14 @@
     - apps/web/src/components/chat/TraitsPicker.tsx
     # Passes the composer-only label separator through to TraitsPicker.
     - apps/web/src/components/chat/composerProviderState.tsx
-    # Workspace select opens above the context chips (side top, no
-    # align-item-with-trigger) so the glass menu clears the branch pill.
-    # Locked checkout/env spans carry data-fork-context-chip so they keep the
-    # filled pill when there is no interactive trigger (desktop selectors +
-    # mobile locked readout in BranchToolbar).
-    # Both files alias the workspace icons: GitBranchIcon for a checkout,
-    # WorktreeIcon for any worktree, matching ThreadContextReadout.
+    # Combines workspace mode into BranchPicker's footer via BranchToolbarBranchSelector;
+    # BranchToolbarEnvironmentSelector still renders on multi-environment projects,
+    # and BranchToolbarEnvModeSelector stays upstream-fenced (ignored in knip.jsonc).
+    - apps/web/src/components/BranchPicker.tsx
+    - apps/web/src/components/BranchToolbarBranchSelector.tsx
     - apps/web/src/components/BranchToolbar.tsx
     - apps/web/src/components/BranchToolbarEnvModeSelector.tsx
     - apps/web/src/components/BranchToolbarEnvironmentSelector.tsx
-    # Stamps data-fork-pr-chip on the PR pill so it keeps its state colour
-    # and moves to the strip's far end.
-    - apps/web/src/components/BranchToolbarBranchSelector.tsx
     # PullRequestBadge's tone wrapper and text-secondary-label number span,
     # which the number-ink rule inherits through.
     - apps/web/src/components/ThreadStatusIndicators.tsx
@@ -5090,15 +4905,16 @@
     the popup, 4px on the rows and search field. ProviderModelPicker's shadow
     swaps upstream's Popover for a non-modal Base UI Menu and keeps the rest
     of the file (trigger, wheel/touch lock) upstream's, except that the
-    trigger label drops the provider name its icon already shows ("Opus 5.5",
-    not "Claude Opus 5.5"; the tooltip keeps the full name). The composer's
-    trigger also hides the provider icon, showing the model name alone,
-    except that Cursor's models lead with "Cursor" ("Cursor Opus 5.5") so a
-    Cursor-served Opus never reads as Claude's own; multi-model labels do the
-    same. The icon returns only in the composer's resting strip below 640px, where
-    upstream collapses the label to nothing and the icon would otherwise be
-    the trigger's only content. Settings pickers keep the icon. Cursor's models also drop
-    the "Claude" family name they are resold under. The strip is a per-provider
+    trigger renders the same ModelPickerProviderGlyph used in the menu (both in
+    the composer and in Settings, and in multi-model stacks) and drops the
+    provider name its icon already shows ("Opus 5.5", not "Claude Opus 5.5";
+    the tooltip keeps the full name and names the provider instance). Cursor's
+    models also drop the "Claude" family name they are resold under; when no
+    icon is shown (such as sidebar thread rows), triggerModelName still leads
+    Cursor models with "Cursor". Gemini and GPT models keep their family words
+    in the web model picker trigger ("Gemini 4 Neon", "GPT-6.2-Sol") via
+    pickerTriggerModelName in custom/modelPickerDisplayName.ts without touching
+    shared packages or mobile. The strip is a per-provider
     list of family words, not the provider's display name: Grok's "Grok Build"
     keeps its name because "Build" alone is nothing. Picker rows drop the name
     too, since the selected provider tab or the row's provider label names it.
@@ -5158,8 +4974,10 @@
     shows the selected model's traits. The traits label truncates inside the
     trigger's max width, and in the resting strip it collapses with the model
     name below 640px, where upstream moved the traits picker
-    into the ⋯ menu. Effort (`effort`, `reasoningEffort`,
-    `reasoning` or `variant`, when it has two or more levels) is a slider over
+    into the ⋯ menu. Effort (any reasoning select recognized by
+    isReasoningSelect — including `effort`, `reasoningEffort`, `reasoning`,
+    `variant`, `thinking_level`, and `role: "reasoning"` — when it has two or
+    more levels) is a slider over
     the model's own levels, Ultrathink included as the top stop for Claude;
     dragging previews and writes once on release. It is a 24px bar with a block
     thumb, dot stops and a short bar at the default level, drawn under the fill
@@ -5252,11 +5070,16 @@
     # Unfenced: the controlled-update effect must keep reading focus before it
     # rewrites and never focus the view itself (guard-pinned).
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx
+    # Fenced: keeps "Gemini " out of FAMILY_PREFIXES so Gemini models stay
+    # "Gemini 4 Neon" rather than shortening to "4 Neon".
+    - packages/provider-core/src/modelShortName.ts
+    - packages/provider-core/src/modelShortName.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
     - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
+    - packages/provider-core/src/modelShortName.test.ts
 
 - id: fork-changed-files-card
   intent: >

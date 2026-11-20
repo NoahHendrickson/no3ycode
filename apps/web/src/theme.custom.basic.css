@@ -236,6 +236,22 @@
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
 }
 
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  + [data-fork-composer-vessel] {
+  box-shadow:
+    inset 1px 0 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border),
+    inset 0 -1px 0 var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-composer-usage-drawer] {
+  box-shadow:
+    inset 1px 1px 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
+}
+
 /* The liveness pill's label and stop square are buttons too; left in, each drew
    its own outline inside the pill. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
@@ -410,19 +426,6 @@
     [aria-invalid="true"]
   )::before {
   box-shadow: none;
-}
-
-/* The mode chip's wash is drawn from its dark-mode hue (amber #ffcd59 at 16%), which
-   vanishes on the light tones, and on Cream above all, being yellow itself. There it
-   takes its own deep ink instead, so the wash and the label are one colour. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-composer-mode-chip] {
-  background: color-mix(in srgb, var(--fork-mode-fg) 14%, transparent);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
-  background: color-mix(in srgb, var(--fork-mode-fg) 22%, transparent);
 }
 
 /* The effort knob is edged in 16% black on every tone. The light tones keep upstream's

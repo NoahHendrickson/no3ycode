@@ -414,10 +414,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  :is(
-    [data-chat-provider-model-picker],
-    [data-fork-composer-usage-limits]
-  )[data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
+  [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
   /* Outranks theme.custom.css's hover / open wash on the composer's controls.
      The model menu's shell is what hangs. */
   background: var(--fork-inlet-model-shell);
@@ -494,9 +491,10 @@
   --fork-inlet-rail-fillet: 6px;
   border-inline-end-width: 0;
   padding-inline-end: var(--fork-inlet-rail-fillet);
-  /* Down by the list's 4px inset, so the first tab still lines up with the
-     search field and its fillet stays below the list's rounded top corner. */
+  /* Inset by the list's 4px margin plus corners, so the first and last tabs'
+     fillets stay inside the rail and clear of the list's rounded corners. */
   padding-top: 12px;
+  padding-bottom: 12px;
 
   & [aria-current="true"] {
     background: var(--popover);
@@ -881,34 +879,13 @@
   }
 }
 
-/* The open model button's fill pads 4px past it, onto the usage meter beside
-   it; the meter steps aside while the menu is out. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
-  [data-fork-composer-usage-limits] {
-  translate: -8px 0;
-}
-
-/* The usage meter and the model button, which the menus hang from, ease their
-   fills from the composer's control wash. */
+/* The model button, which the menu hangs from, eases its fill from the
+   composer's control wash. */
 
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    :is(
-      [data-chat-provider-model-picker],
-      [data-fork-composer-usage-limits]
-    )[data-fork-tab-trigger] {
+    [data-chat-provider-model-picker][data-fork-tab-trigger] {
     transition:
-      background-color 160ms ease-out,
-      box-shadow 160ms ease-out;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
-    [data-fork-composer-usage-limits] {
-    transition:
-      translate 300ms cubic-bezier(0.33, 1, 0.68, 1),
       background-color 160ms ease-out,
       box-shadow 160ms ease-out;
   }

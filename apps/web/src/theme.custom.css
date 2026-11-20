@@ -398,16 +398,15 @@
   padding-block: 8px;
 }
 
-/* Prompt on top, the action cluster on a row beneath it with send at the
-   trailing edge. */
+/* Prompt on top, + on the bottom-left and mic + send on the bottom-right. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-fork-composer-prompt-row] {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "prompt"
-    "actions";
+    "prompt prompt"
+    "leading actions";
   align-items: stretch;
   gap: 0;
 }
@@ -430,6 +429,13 @@
   [data-fork-composer-prompt] {
   grid-area: prompt;
   min-height: 48px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-composer-overlay="true"][data-draft-hero]
+  [data-chat-composer-leading-actions] {
+  grid-area: leading;
+  align-self: center;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -721,6 +727,46 @@
   [data-fork-composer-vessel] {
   border-radius: var(--fork-composer-radius);
   background: var(--fork-composer-vessel-bg);
+  transition:
+    border-top-left-radius 100ms ease-out,
+    border-top-right-radius 100ms ease-out;
+}
+
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  + [data-fork-composer-vessel] {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transition-duration: 0ms;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-fork-composer-usage-limits], [data-fork-composer-usage-drawer]) {
+  --success: #38a169;
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-usage-drawer] {
+  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+  background: var(--fork-composer-vessel-bg, var(--card));
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-draft-launchpad-card] {
+  background: var(--fork-composer-vessel-bg, var(--card));
+}
+
+:root[data-fork="noahhendrickson-t3code"]:not(.dark):not([data-fork-theme="basic"]):not(
+    [data-fork-theme="inlet"]
+  )
+  [data-fork-composer-usage-drawer] {
+  box-shadow:
+    inset 1px 1px 0 var(--border),
+    inset -1px 0 0 var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
+    transition-duration: 0ms !important;
+  }
 }
 
 /* The frame div is upstream's 1px gradient-border trick: a p-px shim whose
@@ -894,36 +940,52 @@
   }
 }
 
-/* The control row's ghost controls: 20px tall, 12px medium on a 16px line,
-   4px inline padding, 4px radius (Noey's call over the drawn full pill).
-   Mode/Build and model/effort share this — including the mode chip, which is
-   geometrically identical and differs only in ink and fill; its colour lives
-   in `custom/ComposerShell.css`, so geometry has exactly one owner here. */
+/* The control row's ghost controls: single owner of 26px / 8px / 6px geometry
+   and hover/ink tokens across left context controls and right model/mode/usage controls. */
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-model-controls], [data-fork-composer-control-row-slot="left"])
-  :is(button, [data-slot="button"]) {
-  height: 20px;
-  min-height: 20px;
-  gap: 6px;
-  padding-inline: 4px;
-  border-radius: 4px;
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  height: 26px;
+  min-height: 26px;
+  gap: 5px;
+  padding-inline: 8px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-model-controls], [data-fork-composer-control-row-slot="left"])
-  :is(button, [data-slot="button"]):not([data-fork-composer-mode-chip])
+  [data-fork-composer-control-row-slot="right"]
+  [data-fork-composer-usage-limits] {
+  width: 26px;
+  padding-inline: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
+    [data-fork-composer-usage-limits]
+  )
   svg {
   width: 12px;
   height: 12px;
+  opacity: 1;
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
-  :is([data-fork-composer-model-controls], [data-fork-composer-control-row-slot="left"])
-  :is(button, [data-slot="button"]):not([data-fork-composer-mode-chip]) {
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not(
+    [data-fork-composer-mode-chip],
+    [data-fork-pr-chip]
+  ) {
   color: var(--fork-composer-control-ink, #a6a6a6);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-mode-controls]
+  [data-fork-composer-mode-chip] {
+  color: var(--color-muted-foreground);
 }
 
 /* Hover / open fill. Upstream's ghost variant paints `--accent`, which is the
@@ -937,10 +999,7 @@
    the chips are filled controls whose hover is one step up from a 12% fill,
    and borrowing that lift here painted the model trigger nearly as solid as
    the chips themselves. Light mode has no drawn value and falls back to the
-   chip lift.
-
-   The mode chip opts out: it is the only filled control here, and its fill and
-   hover are per-mode hues owned by `custom/ComposerShell.css`. */
+   chip lift. */
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-composer-control-hover: var(--fork-context-chip-bg-hover);
 }
@@ -950,8 +1009,8 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-model-controls], [data-fork-composer-control-row-slot="left"])
-  :is(button, [data-slot="button"]):not([data-fork-composer-mode-chip]):is(
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
     :hover,
     [data-pressed],
     [data-popup-open]
@@ -974,16 +1033,30 @@
   border-radius: 4px;
 }
 
-/* Attach and the mic lead the control row's left slot as 20px squares, the
-   row's ghost height; the ghost-control rule above owns their ink and hover.
-   Upstream routes ghost icons through --control-icon-color, so it follows the
-   row's ink here. */
+/* Attach (+) and dictate (mic) sit inside the prompt row as 24px ghost squares
+   matching the send button's height, using the control row's ink and hover. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-control-row-slot="left"]
-  [data-fork-composer-action] {
-  width: 20px;
+  :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]) {
   padding-inline: 0;
   --control-icon-color: currentColor;
+
+  & svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark
+  :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]) {
+  color: var(--fork-composer-control-ink, #a6a6a6);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]):is(
+    :hover,
+    [data-pressed]
+  ):not(:disabled) {
+  background: var(--fork-composer-control-hover);
 }
 
 /* The dictation cancel X (fork-local-dictation) is the one ghost in the send
@@ -1041,7 +1114,7 @@
    environment picker and the env-mode/branch pair on multi-environment
    projects; hiding that one merged two groups the design keeps apart. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-control-row-slot="left"]
+  :is([data-fork-composer-control-row-slot="left"], [data-fork-composer-mode-controls])
   [data-slot="separator"] {
   display: none;
 }
@@ -1163,7 +1236,7 @@
   gap: 6px;
   padding-inline: 8px;
   border-radius: 6px;
-  /* 12px, matching the control row's Auto/Build type. */
+  /* 12px medium, matching the vessel's control row. */
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -1228,13 +1301,13 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   [data-slot="composer-context-strip"]
-  > .flex:has(> [data-fork-pr-chip]) {
+  [data-fork-branch-group] {
   flex: 1 1 auto;
   justify-content: space-between;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   [data-slot="composer-context-strip"]
   [data-fork-pr-chip] {
   order: 1;
@@ -1243,7 +1316,7 @@
 /* A PR badge's number takes its glyph's state ink, in the composer and the
    sidebar. A settled slim row mutes the whole tone span, number included. */
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-context-row] [data-fork-pr-chip], [data-fork-sidebar-pr-badge])
+  :is([data-fork-pr-chip], [data-fork-sidebar-pr-badge])
   .text-secondary-label {
   color: inherit;
 }
@@ -1298,7 +1371,43 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-control-row-slot="right"] {
-  gap: 0;
+  gap: 1px;
+}
+
+/* Upstream's ContextStrip wears .surface-glass and margin/inset padding when
+   standalone; inside the vessel's left control slot it lays out flat and flush,
+   while [data-fork-composer-control-row] above owns every control's geometry. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-vessel-context]
+  [data-slot="composer-context-strip"] {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  gap: 1px;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+
+  & > * {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 0;
+    gap: 1px;
+  }
+
+  & [data-fork-context-chip] {
+    opacity: 1;
+  }
+
+  & [data-slot="select-trigger"]::before,
+  & [data-slot="select-icon"] {
+    display: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -2561,35 +2670,14 @@
 }
 
 /* ── Dictation session (fork-local-dictation) ──────────────────────────────
-   The level timeline sits beside the mic in the control row, leaving the
-   prompt row to the text and the X and check. The X's margins cancel its own
-   footprint and the 8px gap, so it sits 4px from the check and a one-button
-   send slot does not widen. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="dictate-cancel"] {
-  margin-inline: -28px -4px;
-}
-
-/* A live session lights the mic and timeline as one rectangle on the control
-   row's 4% fill, in one ink; the canvas reads it through `color`. The mic stays
-   full ink in the phases where it is disabled. Its `data-slot` matches the
-   specificity of the row's dark ghost ink, which this has to follow. */
+   The live level timeline sits directly beside the cancel X and check buttons
+   with no background fill; the canvas reads its bar ink through `color`. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-live] {
-  padding-right: 4px;
-  border-radius: 4px;
   color: var(--foreground);
-  background: var(--fork-composer-control-hover);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-dictation-live] {
   color: #ffffff;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-control-row-slot="left"]
-  [data-fork-dictation-live]
-  [data-slot="button"][data-fork-composer-action="dictate"] {
-  color: inherit;
-  opacity: 1;
 }
 
 /* Live words share the prompt's scrollport, at every width. */
@@ -3036,10 +3124,10 @@
 }
 
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
-   A chat is the composer alone: no project, checkout or branch chips above it. */
+   A chat is the composer alone: no project, checkout or branch controls. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-column][data-fork-chat-thread]
-  [data-fork-composer-context-row] {
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context]) {
   display: none;
 }
 /* fork:end fork-chat-mode */

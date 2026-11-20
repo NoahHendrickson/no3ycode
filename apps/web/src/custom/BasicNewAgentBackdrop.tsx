@@ -83,7 +83,12 @@ function Picture(props: {
   }
   if (backdrop === "jollyPetal") {
     return (
-      <StillBackdrop url={jollyPetalUrl} cells={JOLLY_PETAL_CELLS} layoutFor={jollyPetalLayout} />
+      <StillBackdrop
+        url={jollyPetalUrl}
+        cells={JOLLY_PETAL_CELLS}
+        layoutFor={jollyPetalLayout}
+        scrim="rgb(0 0 0 / 18%)"
+      />
     );
   }
   return (
@@ -123,22 +128,30 @@ function StillBackdrop(props: {
   readonly url: string;
   readonly cells: { readonly width: number; readonly height: number };
   readonly layoutFor: LayoutFor;
+  readonly scrim?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const layout = useColumnLayout(ref, props.layoutFor);
+  const size = layout
+    ? `${props.cells.width * layout.cell}px ${props.cells.height * layout.cell}px`
+    : undefined;
+  const position = layout ? `${layout.left}px ${layout.top}px` : undefined;
   return (
     <div
       ref={ref}
       aria-hidden
       // Covers the column opaquely, so Glass may blur it (theme.custom.palettes.css).
+      data-fork-new-agent-backdrop=""
       data-fork-opaque-backdrop=""
       className="pointer-events-none absolute inset-0 bg-no-repeat [image-rendering:pixelated]"
       style={
         layout
           ? {
-              backgroundImage: `url(${props.url})`,
-              backgroundSize: `${props.cells.width * layout.cell}px ${props.cells.height * layout.cell}px`,
-              backgroundPosition: `${layout.left}px ${layout.top}px`,
+              backgroundImage: props.scrim
+                ? `linear-gradient(${props.scrim}, ${props.scrim}), url(${props.url})`
+                : `url(${props.url})`,
+              backgroundSize: props.scrim ? `100% 100%, ${size}` : size,
+              backgroundPosition: props.scrim ? `0 0, ${position}` : position,
             }
           : undefined
       }
@@ -167,6 +180,7 @@ function DitherBackdrop() {
     <div
       ref={ref}
       aria-hidden
+      data-fork-new-agent-backdrop=""
       className="pointer-events-none absolute inset-0 overflow-hidden"
       style={{ maskImage: RAYS_FADE, WebkitMaskImage: RAYS_FADE }}
     >

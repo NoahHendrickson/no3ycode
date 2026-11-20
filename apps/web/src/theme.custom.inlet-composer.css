@@ -15,6 +15,32 @@
   /* The question drawer and banners above the prompt take the same inset. */
   --chat-composer-drawer-inset: 4px;
   border-radius: 12px;
+  transition:
+    border-top-left-radius 100ms ease-out,
+    border-top-right-radius 100ms ease-out;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  + [data-fork-composer-vessel] {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transition-duration: 0ms;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-usage-drawer] {
+  border-radius: 12px 12px 0 0;
+
+  & > * {
+    padding-bottom: 2px;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-draft-launchpad-card] {
+  border-radius: 12px;
+  border-color: transparent;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]

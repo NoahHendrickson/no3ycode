@@ -20,7 +20,6 @@ import {
 import {
   ComposerPromptRow,
   ComposerShell,
-  getRuntimeModeChipStyle,
   resolveComposerShellVisibility,
 } from "../custom/ComposerShell";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
@@ -46,7 +45,6 @@ const chatView = readSibling("../components/ChatView.tsx");
 const primaryActions = readSibling("../components/chat/ComposerPrimaryActions.tsx");
 // Upstream moved the queued and draft attachment tiles out of ChatComposer.
 const attachmentStrip = readSibling("../components/chat/ComposerAttachmentStrip.tsx");
-const envModeSelector = readSibling("../components/BranchToolbarEnvModeSelector.tsx");
 const stageBackdrop = readSibling("../components/SidebarStageBackdrop.tsx");
 
 function shellMarkup(input: { approvalPending?: boolean; collapsedMobile?: boolean } = {}) {
@@ -111,19 +109,18 @@ describe("fork guard: fork-composer-shell", () => {
       }),
     ).toBe(false);
   });
-  it("orders context, then a vessel wrapping surface and controls", () => {
+  it("wraps surface and controls inside the vessel, with context bottom-left", () => {
     const markup = shellMarkup();
     const context = markup.indexOf("data-test-context");
     const vessel = markup.indexOf('data-fork-composer-vessel="true"');
     const surface = markup.indexOf("data-test-surface");
     const controls = markup.indexOf("data-fork-composer-control-row");
 
-    expect(context).toBeGreaterThanOrEqual(0);
-    expect(context).toBeLessThan(vessel);
     expect(vessel).toBeGreaterThanOrEqual(0);
     expect(vessel).toBeLessThan(surface);
     expect(surface).toBeLessThan(controls);
     expect(controls).toBeGreaterThanOrEqual(0);
+    expect(context).toBeGreaterThan(controls);
 
     // Containment, not just ordering: the surface and the whole control row
     // (open through balanced close) must fall inside the vessel's own close.
@@ -134,6 +131,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(vesselClose).toBeGreaterThan(-1);
     expect(controlsClose).toBeGreaterThan(-1);
     expect(surface).toBeLessThan(vesselClose);
+    expect(context).toBeLessThan(controlsClose);
     expect(controlsClose).toBeLessThan(vesselClose);
   });
 
@@ -161,11 +159,11 @@ describe("fork guard: fork-composer-shell", () => {
     expect(markup).toContain("data-test-readout");
   });
 
-  it("hides model and mode controls under the collapsed mobile composer", () => {
+  it("hides model, mode, and context controls under the collapsed mobile composer", () => {
     const markup = shellMarkup({ collapsedMobile: true });
     expect(markup).not.toContain("data-test-mode");
     expect(markup).not.toContain("data-test-model");
-    expect(markup).toContain("data-test-context");
+    expect(markup).not.toContain("data-test-context");
     expect(markup).toContain("data-test-readout");
   });
 
@@ -400,18 +398,17 @@ describe("fork guard: fork-composer-shell", () => {
     expect(placeholderColor?.body).toMatch(/color:\s*var\(--muted-foreground\)/u);
   });
 
-  it("keeps ghost geometry on named interactive groups only", () => {
+  it("keeps ghost geometry on the single control-row owner", () => {
     const geometry = rules.find(
       (rule) =>
-        rule.selector.includes("[data-fork-composer-model-controls]") &&
-        rule.body.includes("height: 20px"),
+        rule.selector.includes("[data-fork-composer-control-row]") &&
+        rule.body.includes("height: 26px"),
     );
-    expect(geometry?.selector).toContain('[data-fork-composer-control-row-slot="left"]');
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
-    expect(geometry?.body).toMatch(/border-radius:\s*4px/u);
+    expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
     expect(geometry?.body).toMatch(/font-size:\s*12px/u);
-    expect(geometry?.body).toMatch(/padding-inline:\s*4px/u);
+    expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
   });
 
   it("paints the outer vessel that floors the control row", () => {
@@ -435,11 +432,10 @@ describe("fork guard: fork-composer-shell", () => {
     // controls), falling back to the chip lift in light.
     const hover = rules.find(
       (rule) =>
-        rule.selector.includes("[data-fork-composer-model-controls]") &&
+        rule.selector.includes("[data-fork-composer-control-row]") &&
         rule.selector.includes(":hover") &&
         rule.body.includes("background"),
     );
-    expect(hover?.selector).toContain('[data-fork-composer-control-row-slot="left"]');
     expect(hover?.body).toMatch(/background:\s*var\(--fork-composer-control-hover\)/u);
     const controlHover = rules.find(
       (rule) =>
@@ -449,8 +445,6 @@ describe("fork guard: fork-composer-shell", () => {
     // Open triggers hold the fill; disabled ones never take it.
     expect(hover?.selector).toContain("[data-popup-open]");
     expect(hover?.selector).toContain(":not(:disabled)");
-    // The chip owns its own per-mode hover hue.
-    expect(hover?.selector).toContain(":not([data-fork-composer-mode-chip])");
     // The rule reads a per-palette token, so every palette has to declare one
     // on its stage block or that theme falls back to the default dark lift.
     for (const palette of ["basic", "cool-darker", "inlet"]) {
@@ -464,60 +458,42 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(/--fork-context-chip-bg-hover:/u);
   });
 
-  it("keeps the mode chip colour-only on shared geometry and maps every mode to tokens", () => {
-    const modeRule = rules.find(
+  it("renders the mode control as a muted ghost button on shared geometry", () => {
+    const modeInk = rules.find(
       (rule) =>
-        rule.selector.endsWith("[data-fork-composer-mode-chip]") &&
-        rule.body.includes("background: var(--fork-mode-bg)"),
+        rule.selector.includes("[data-fork-composer-mode-controls]") &&
+        rule.selector.endsWith("[data-fork-composer-mode-chip]"),
     );
-    expect(modeRule?.body).toMatch(/color:\s*var\(--fork-mode-fg\)/u);
-    // Geometry has one owner — the shared ghost-control rule, which must not
-    // exclude the chip, and the chip block must not re-declare it.
-    expect(modeRule?.body).not.toMatch(/height:|padding-inline:|border-radius:|font-size:/u);
+    expect(modeInk?.body).toMatch(/color:\s*var\(--color-muted-foreground\)/u);
     const sharedGeometry = rules.find(
       (rule) =>
-        rule.selector.includes('[data-fork-composer-control-row-slot="left"]') &&
-        rule.body.includes("height: 20px"),
+        rule.selector.includes("[data-fork-composer-control-row]") &&
+        rule.body.includes("height: 26px"),
     );
     expect(sharedGeometry?.selector).not.toContain(":not([data-fork-composer-mode-chip])");
-    const tokens = [
-      getRuntimeModeChipStyle("auto"),
-      getRuntimeModeChipStyle("full-access"),
-      getRuntimeModeChipStyle("auto-accept-edits"),
-      getRuntimeModeChipStyle("approval-required"),
-    ];
-    expect(new Set(tokens.map((token) => token["--fork-mode-bg"])).size).toBe(4);
-    expect(new Set(tokens.map((token) => token["--fork-mode-fg-dark"])).size).toBe(4);
   });
 
-  it("opens the workspace select above the context chip row", () => {
-    // Assert independently — prop order must not matter to the guard.
-    expect(envModeSelector).toMatch(/SelectPopup[^>]*alignItemWithTrigger=\{false\}/u);
-    // Toolbar only by construction: upstream #16823 moved the thread details
-    // panel onto RunContextSelector, so this selector has no panel mode left.
-    expect(envModeSelector).toMatch(/SelectPopup[^>]*side="top"/u);
-    expect(envModeSelector).not.toContain("displayMode");
-  });
-
-  it("spaces the chips off the vessel on upstream's own context-row signal", () => {
-    // The gap keys on the shell's marker; an upstream rename silently drops it.
+  it("places context options in the bottom-left control slot inside the vessel", () => {
     expect(readSibling("../components/chat/ComposerSurface.tsx")).toContain("data-context-row=");
     expect(readSibling("../custom/ComposerShell.tsx")).toContain(
-      "group-data-context-row/composer-surface:pb-2",
+      'data-fork-composer-vessel-context="true"',
     );
   });
 
-  it("keeps the carets on the context chips and the model chip", () => {
-    for (const file of [
-      "../components/BranchToolbar.tsx",
-      "../components/BranchToolbarBranchSelector.tsx",
-      "../overrides/components/chat/ProviderModelPicker.tsx",
-    ]) {
-      expect(readSibling(file), file).toMatch(/<ChevronDownIcon[\s\S]{0,160}shrink-0/u);
-    }
+  it("combines workspace and branch into one caret-free split menu in the composer strip", () => {
+    const branchToolbar = readSibling("../components/BranchToolbar.tsx");
+    const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
+    const footer = readSibling("../custom/ComposerWorkspaceFooter.tsx");
+    expect(branchToolbar).toContain("ComposerWorkspaceFooter");
+    expect(branchToolbar).toContain('data-composer-shortcut="composer.workspace"');
+    expect(branchToolbar).toContain("keepTriggerEnabled={!envModeLocked && !forceNewWorktree}");
+    expect(branchSelector).toContain("openWorkspace:");
+    expect(branchSelector).not.toContain("ChevronDownIcon");
+    expect(footer).toContain("<RadioGroup");
+    expect(readSibling("../custom/DraftProjectPill.tsx")).not.toContain("ChevronDownIcon");
   });
 
-  it("keeps context chips at 24px and the meter outside ghost geometry", () => {
+  it("keeps floating context chips at 24px for ScheduledTaskEditor", () => {
     const context = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
@@ -533,17 +509,12 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-context-chip]"),
     );
     expect(chipPad?.body).toMatch(/padding-inline:\s*8px/u);
-    // The ghost xs trigger's Tailwind before-utility stamps a real in-flow
-    // pseudo-element; left in the flex row it opens phantom gap space ahead
-    // of the folder glyph (Current checkout only — the locked span and the
-    // branch chip carry no before utility).
     const triggerBefore = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
         rule.selector.includes('[data-slot="select-trigger"]::before'),
     );
     expect(triggerBefore?.body).toMatch(/display:\s*none/u);
-    // Workspace + branch chips share white ink in dark (including locked spans).
     const chipInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
@@ -552,19 +523,18 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(chipInk?.body).toMatch(/color:\s*#ffffff/u);
     expect(chipInk?.selector).toContain(".dark");
-    expect(envModeSelector).toContain("data-fork-context-chip");
     expect(readSibling("../components/BranchToolbarEnvironmentSelector.tsx")).toContain(
       "data-fork-context-chip",
     );
-    expect(readSibling("../components/BranchToolbar.tsx")).toContain("data-fork-context-chip");
   });
 
   it("lets the PR chip keep its state colour and ride the strip's far end", () => {
     // Upstream inks the glyph emerald / violet / red by PR state and grays #N;
     // the fork's #N inherits the glyph's ink, which the white chip ink would
-    // flatten. The fill stays the sibling chips' glass.
+    // flatten.
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
     expect(branchSelector).toContain("data-fork-pr-chip");
+    expect(branchSelector).toContain("data-fork-branch-group");
     expect(branchSelector).toContain("status={prStatus}");
     const chipInk = rules.find(
       (rule) =>
@@ -573,12 +543,12 @@ describe("fork guard: fork-composer-shell", () => {
         rule.body.includes("color:"),
     );
     expect(chipInk?.selector).toContain(":not([data-fork-pr-chip])");
-    // That rule is the only chip ink. Palette overlays swap fill tokens; a
-    // palette restatement of the white ink carries [data-fork-theme] weight,
-    // outranks the exemption above, and flattens the PR chip.
+    // Any palette ink rule that touches context-row buttons must exempt the PR
+    // chip so it never flattens PR state colours.
     const paletteChipInk = paletteRules.filter(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
+        !rule.selector.includes(":not([data-fork-pr-chip])") &&
         /(^|[^-])color:/u.test(rule.body),
     );
     expect(paletteChipInk).toEqual([]);
@@ -587,9 +557,6 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-composer-context-row]") &&
         rule.body.includes("var(--fork-context-chip-bg-hover)"),
     );
-    // A single linked PR renders the chip as an anchor (upstream's badge
-    // control), so the shared hover and fill rules have to name it; the
-    // button-only selector left it with no pill at all.
     expect(chipHover?.selector).toContain("[data-fork-pr-chip]");
     const chipFill = rules.find(
       (rule) =>
@@ -607,7 +574,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(
       ruleBodyFor(rules, [
         MARKER,
-        ":is([data-fork-composer-context-row] [data-fork-pr-chip], [data-fork-sidebar-pr-badge])",
+        ":is([data-fork-pr-chip], [data-fork-sidebar-pr-badge])",
         ".text-secondary-label",
       ]),
     ).toMatch(/color:\s*inherit/u);
@@ -615,16 +582,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(readSibling("../components/ThreadStatusIndicators.tsx")).toMatch(
       /presentation\.toneClassName\)\}\s*>\s*<presentation\.Icon[^>]*\/>\s*<span className="text-secondary-label">\{presentation\.text\}<\/span>/u,
     );
-    // Far end: the wrapper holding the chip may grow again (the packing rule
-    // pins every other strip child shrink-only) and spreads its children
-    // apart, so the branch stays packed against checkout. The spread has to
-    // be justify-content: an auto margin on the chip is counted by
-    // useLabelsOverflow as needed width, which latched the strip compact
-    // (icon-only labels) whenever a PR was linked.
     const grow = rules.find(
       (rule) =>
         rule.selector.includes('[data-slot="composer-context-strip"]') &&
-        rule.selector.includes(":has(> [data-fork-pr-chip])"),
+        rule.selector.includes("[data-fork-branch-group]"),
     );
     expect(grow?.body).toMatch(/flex:\s*1 1 auto/u);
     expect(grow?.body).toMatch(/justify-content:\s*space-between/u);
@@ -719,17 +680,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatComposer).toMatch(
       /const composerAttachAction = showComposerAttachAction \? \([\s\S]*?\) : null;(?:(?!fork:begin fork-composer-shell)[\s\S])*?\/\* fork:end fork-composer-shell \*\//u,
     );
-    expect(chatComposer).toMatch(/modeControls=\{\s*<>\s*\{composerAttachAction\}/u);
-    expect(theme).not.toContain("leading-actions");
-    // In the control row the stamped ghosts are 20px squares, the row's ghost
-    // height, rather than send's 24px box.
-    const rowAction = rules.find((rule) =>
-      rule.selector
-        .replace(/\s+/gu, " ")
-        .endsWith('[data-fork-composer-control-row-slot="left"] [data-fork-composer-action]'),
+    expect(chatComposer).toContain("leadingAction={composerAttachAction}");
+    expect(theme).toMatch(
+      /:is\(\[data-fork-composer-action="attach"\],\s*\[data-fork-composer-action="dictate"\]\)\s*\{[^}]*padding-inline:\s*0/u,
     );
-    expect(rowAction?.body).toMatch(/width:\s*20px/u);
-    expect(rowAction?.body).toMatch(/padding-inline:\s*0/u);
     const promptLift = rules.find(
       (rule) =>
         rule.selector.includes(":not([data-draft-hero])") &&
@@ -743,7 +697,9 @@ describe("fork guard: fork-composer-shell", () => {
       /data-chat-composer-actions="right"[\s\S]{0,600}?\{showComposerAttachAction \? \(/u,
     );
     // The glyph is a plus; upstream's paperclip must not come back on a sync.
-    expect(chatComposer).toMatch(/data-fork-composer-action="attach"[\s\S]{0,400}?<PlusIcon \/>/u);
+    expect(chatComposer).toMatch(
+      /data-fork-composer-action="attach"[\s\S]{0,400}?<PlusIcon[^>]*\/>/u,
+    );
     expect(chatComposer).not.toContain("<PaperclipIcon />");
     // Dark mode paints the send slot's ghost X pure white, not the muted foreground.
     const whiteGhosts = rules.find(
