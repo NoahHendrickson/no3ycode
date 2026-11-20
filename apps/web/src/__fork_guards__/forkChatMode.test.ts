@@ -51,7 +51,7 @@ describe("fork guard: fork-chat-mode", () => {
       'data-fork-chat-thread={isForkChatThread || isForkBotThread ? "" : undefined}',
     );
     expect(read("../theme.custom.css")).toMatch(
-      /\[data-fork-chat-thread\]\s*\[data-fork-composer-context-row\] \{\s*display: none;/u,
+      /\[data-fork-chat-thread\]\s*:is\(\[data-fork-composer-context-row\],\s*\[data-fork-composer-vessel-context\]\) \{\s*display: none;/u,
     );
     expect(read("../overrides/components/chat/DraftHeroHeadline.tsx")).toContain(`"What's up?"`);
   });

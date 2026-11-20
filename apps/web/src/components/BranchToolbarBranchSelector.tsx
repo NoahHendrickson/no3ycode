@@ -70,6 +70,7 @@ import { stackedThreadToast, toastManager } from "./ui/toast";
 export interface BranchToolbarBranchSelectorHandle {
   open: () => void;
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  openWorkspace: () => void;
   close: () => void;
   /* fork:end fork-composer-shell */
 }
@@ -92,7 +93,7 @@ interface BranchToolbarBranchSelectorProps {
   onComposerFocusRequest?: () => void;
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   triggerIcon?: ReactNode;
-  triggerShortcut?: string;
+  keepTriggerEnabled?: boolean;
   popupFooter?: ReactNode;
   /* fork:end fork-composer-shell */
 }
@@ -121,7 +122,7 @@ export function BranchToolbarBranchSelector({
   onComposerFocusRequest,
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   triggerIcon,
-  triggerShortcut,
+  keepTriggerEnabled = false,
   popupFooter,
   /* fork:end fork-composer-shell */
 }: BranchToolbarBranchSelectorProps) {
@@ -590,16 +591,29 @@ export function BranchToolbarBranchSelector({
     ref,
     () => ({
       open: () => {
-        if (isInitialBranchesLoadPending || isBranchActionPending) return;
+        if (!keepTriggerEnabled && (isInitialBranchesLoadPending || isBranchActionPending)) return;
         handleOpenChange(true);
       },
       /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      openWorkspace: () => {
+        handleOpenChange(true);
+        requestAnimationFrame(() => {
+          const target =
+            document.querySelector<HTMLElement>(
+              '[data-fork-workspace-footer="true"] [role="radio"][aria-checked="true"]',
+            ) ??
+            document.querySelector<HTMLElement>(
+              '[data-fork-workspace-footer="true"] [role="radio"]',
+            );
+          target?.focus();
+        });
+      },
       close: () => {
         handleOpenChange(false);
       },
       /* fork:end fork-composer-shell */
     }),
-    [handleOpenChange, isBranchActionPending, isInitialBranchesLoadPending],
+    [handleOpenChange, isBranchActionPending, isInitialBranchesLoadPending, keepTriggerEnabled],
   );
 
   const triggerLabel = resolveBranchTriggerLabel({
@@ -631,7 +645,10 @@ export function BranchToolbarBranchSelector({
   );
   const openPrLink = useOpenPrLink(threadRef);
 
+  const branchItemsDisabled = isInitialBranchesLoadPending || isBranchActionPending;
+
   function selectPickerItem(itemValue: string) {
+    if (branchItemsDisabled) return;
     if (itemValue === checkoutPullRequestItemValue && prReference && onCheckoutPullRequestRequest) {
       handleOpenChange(false);
       onComposerFocusRequest?.();
@@ -648,6 +665,7 @@ export function BranchToolbarBranchSelector({
     if (checkoutPullRequestItemValue && itemValue === checkoutPullRequestItemValue) {
       return (
         <ComboboxItem
+          disabled={branchItemsDisabled}
           hideIndicator
           key={itemValue}
           index={index}
@@ -669,6 +687,7 @@ export function BranchToolbarBranchSelector({
     if (createBranchItemValue && itemValue === createBranchItemValue) {
       return (
         <ComboboxItem
+          disabled={branchItemsDisabled}
           hideIndicator
           key={itemValue}
           index={index}
@@ -690,6 +709,7 @@ export function BranchToolbarBranchSelector({
         index={index}
         value={itemValue}
         disabled={
+          branchItemsDisabled ||
           !canUpdateThreadBranch ||
           (!canWriteSourceControl &&
             !isSelectingWorktreeBase &&
@@ -758,6 +778,9 @@ export function BranchToolbarBranchSelector({
       }}
     >
       <div
+        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        data-fork-branch-group={displayMode !== "panel" ? "true" : undefined}
+        /* fork:end fork-composer-shell */
         className={cn(
           "flex min-w-0",
           displayMode === "panel" ? "w-full flex-col items-stretch" : "items-center gap-1",
@@ -806,8 +829,7 @@ export function BranchToolbarBranchSelector({
               )
             }
             className="min-w-0 max-w-full active:scale-100"
-            data-composer-shortcut={triggerShortcut}
-            disabled={isInitialBranchesLoadPending || isBranchActionPending}
+            disabled={!keepTriggerEnabled && branchItemsDisabled}
           >
             {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
                 Combined workspace + branch trigger passes the active checkout/worktree glyph. */}

@@ -147,18 +147,6 @@
     }
   }
 
-  /* Context options seated inside the vessel are flat ghost buttons, not 3D glass pills. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-composer-vessel]
-    [data-fork-composer-context-row]
-    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
-    box-shadow: none;
-
-    &::after {
-      content: none;
-    }
-  }
-
   /* Every selected tab is a chip of the same glass: the selected segment of
      any segmented toggle group (tabs, and the pickers drawn as tabs) and of
      the fork's SegmentedTabs. Both sit on a track, a lighter surface than the

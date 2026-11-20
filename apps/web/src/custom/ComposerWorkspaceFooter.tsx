@@ -1,12 +1,8 @@
 /**
- * The bottom half of the composer's split branch-and-workspace menu — see
+ * Bottom half of the composer's split branch-and-workspace popup — see
  * `.fork/customizations.yaml#fork-composer-shell`.
- *
- * Combines the workspace picker (Local checkout / New worktree / previous
- * worktree) into the bottom of BranchPicker's popup below an edge-to-edge
- * divider, while the trigger shows the active workspace icon beside the branch
- * name as one ghost button.
  */
+import { Radio as RadioPrimitive } from "@base-ui/react/radio";
 import type { KeyboardEvent } from "react";
 
 import {
@@ -16,24 +12,52 @@ import {
   type EnvMode,
 } from "../components/BranchToolbar.logic";
 import { PreviousWorktreeItemContent } from "../components/PreviousWorktreeItemContent";
+import { RadioGroup } from "../components/ui/radio-group";
 import { cn } from "~/lib/utils";
 import { CheckIcon, GitBranchIcon } from "./icons/lucide-hugeicons";
 import { WorktreeIcon } from "./icons/WorktreeIcon";
 
-/** Renders the checkout or worktree glyph on the combined branch/workspace trigger. */
+/** Single source of truth for whether a workspace state wears the worktree or branch glyph. */
+function resolveWorkspaceGlyphKind(input: {
+  readonly effectiveEnvMode: EnvMode;
+  readonly activeWorktreePath: string | null;
+  readonly forceNewWorktree?: boolean;
+}): "worktree" | "branch" {
+  return input.forceNewWorktree || input.effectiveEnvMode === "worktree" || input.activeWorktreePath
+    ? "worktree"
+    : "branch";
+}
+
+/** Renders the checkout or worktree glyph on the combined trigger and footer rows. */
 export function ComposerWorkspaceTriggerIcon(props: {
   readonly effectiveEnvMode: EnvMode;
   readonly activeWorktreePath: string | null;
+  readonly forceNewWorktree?: boolean;
+  readonly className?: string;
 }) {
-  if (props.effectiveEnvMode === "worktree" || props.activeWorktreePath) {
-    return <WorktreeIcon className="size-3 shrink-0" />;
-  }
-  return <GitBranchIcon className="size-3 shrink-0" />;
+  const iconClassName = props.className ?? "size-3 shrink-0";
+  return resolveWorkspaceGlyphKind(props) === "worktree" ? (
+    <WorktreeIcon className={iconClassName} />
+  ) : (
+    <GitBranchIcon className={iconClassName} />
+  );
 }
 
-/** Keeps keyboard events on the workspace buttons from reaching the combobox search input. */
-function keepKeysInFooter(event: KeyboardEvent<HTMLDivElement>) {
-  if (event.key !== "Escape" && event.key !== "Tab") {
+const FOOTER_HANDLED_KEYS = new Set([
+  "ArrowDown",
+  "ArrowUp",
+  "ArrowLeft",
+  "ArrowRight",
+  "Home",
+  "End",
+  "Enter",
+  " ",
+]);
+
+/** Stops combobox capture of radio-group navigation/activation keys while letting Escape, Tab, and chords bubble. */
+function keepRadioKeysInFooter(event: KeyboardEvent<HTMLDivElement>) {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (FOOTER_HANDLED_KEYS.has(event.key)) {
     event.stopPropagation();
   }
 }
@@ -74,8 +98,9 @@ export function ComposerWorkspaceFooter(props: {
         className="flex items-center gap-2 border-t border-border/60 px-3 py-2 text-xs text-muted-foreground"
       >
         <ComposerWorkspaceTriggerIcon
-          effectiveEnvMode={forceNewWorktree ? "worktree" : effectiveEnvMode}
+          effectiveEnvMode={effectiveEnvMode}
           activeWorktreePath={activeWorktreePath}
+          forceNewWorktree={forceNewWorktree}
         />
         <span className="min-w-0 truncate">{label}</span>
       </div>
@@ -89,44 +114,51 @@ export function ComposerWorkspaceFooter(props: {
   return (
     <div
       data-fork-workspace-footer="true"
-      role="radiogroup"
-      aria-label="Workspace"
       className="flex flex-col gap-0.5 border-t border-border/60 p-1"
-      onKeyDown={keepKeysInFooter}
+      onKeyDown={keepRadioKeysInFooter}
     >
       <div className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
         Workspace
       </div>
-      <button
-        type="button"
-        role="radio"
-        aria-checked={effectiveEnvMode === "local"}
-        className={cn(OPTION_CLASS, effectiveEnvMode === "local" && "bg-foreground/[0.06]")}
-        onClick={() => onEnvModeChange("local")}
+      <RadioGroup
+        aria-label="Workspace"
+        value={effectiveEnvMode}
+        onValueChange={(value) => {
+          if (value === "local" || value === "worktree") {
+            onEnvModeChange(value);
+          }
+        }}
+        className="flex flex-col gap-0.5"
       >
-        {activeWorktreePath ? (
-          <WorktreeIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        ) : (
-          <GitBranchIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        )}
-        <span className="min-w-0 flex-1 truncate">{localLabel}</span>
-        {effectiveEnvMode === "local" ? (
-          <CheckIcon className="size-3.5 shrink-0 text-foreground" aria-hidden="true" />
-        ) : null}
-      </button>
-      <button
-        type="button"
-        role="radio"
-        aria-checked={effectiveEnvMode === "worktree"}
-        className={cn(OPTION_CLASS, effectiveEnvMode === "worktree" && "bg-foreground/[0.06]")}
-        onClick={() => onEnvModeChange("worktree")}
-      >
-        <WorktreeIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="min-w-0 flex-1 truncate">{worktreeLabel}</span>
-        {effectiveEnvMode === "worktree" ? (
-          <CheckIcon className="size-3.5 shrink-0 text-foreground" aria-hidden="true" />
-        ) : null}
-      </button>
+        <RadioPrimitive.Root
+          value="local"
+          className={cn(OPTION_CLASS, "data-checked:bg-foreground/[0.06]")}
+        >
+          <ComposerWorkspaceTriggerIcon
+            effectiveEnvMode="local"
+            activeWorktreePath={activeWorktreePath}
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+          <span className="min-w-0 flex-1 truncate">{localLabel}</span>
+          {effectiveEnvMode === "local" ? (
+            <CheckIcon className="size-3.5 shrink-0 text-foreground" aria-hidden="true" />
+          ) : null}
+        </RadioPrimitive.Root>
+        <RadioPrimitive.Root
+          value="worktree"
+          className={cn(OPTION_CLASS, "data-checked:bg-foreground/[0.06]")}
+        >
+          <ComposerWorkspaceTriggerIcon
+            effectiveEnvMode="worktree"
+            activeWorktreePath={activeWorktreePath}
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+          <span className="min-w-0 flex-1 truncate">{worktreeLabel}</span>
+          {effectiveEnvMode === "worktree" ? (
+            <CheckIcon className="size-3.5 shrink-0 text-foreground" aria-hidden="true" />
+          ) : null}
+        </RadioPrimitive.Root>
+      </RadioGroup>
       {showPreviousWorktree && previousWorktreeLabel ? (
         <button
           type="button"

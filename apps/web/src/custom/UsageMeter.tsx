@@ -1,40 +1,28 @@
 /**
- * A limit meter: a muted, fully rounded track filled to the share left, toned
- * green from 50%, amber down to 20%, red below. Shared by the Usage
- * limits view and the composer's limits bar (fork-usage-limits-surface,
- * fork-composer-usage-limits). Size the track with `className`; `remaining`
- * null draws the bare track for an account with no window.
+ * Limit meters toned by share left (success >= 50%, amber >= 20%, red below).
+ * Shared by the Usage view and the composer's quota ring / drawer.
  */
 import { cn } from "~/lib/utils";
 
-function toneOf(remaining: number): string {
-  if (remaining >= 50) return "bg-[#38a169]";
-  if (remaining >= 20) return "bg-amber-500 dark:bg-yellow-200";
-  return "bg-destructive";
-}
-
-function strokeToneOf(remaining: number): string {
-  if (remaining >= 50) return "stroke-[#38a169]";
-  if (remaining >= 20) return "stroke-amber-500 dark:stroke-yellow-200";
-  return "stroke-destructive";
+function toneClassName(remaining: number): string {
+  if (remaining >= 50) return "text-success";
+  if (remaining >= 20) return "text-amber-500 dark:text-yellow-200";
+  return "text-destructive";
 }
 
 export function UsageMeter(props: {
   readonly remaining: number | null;
   readonly className?: string;
   readonly fillClassName?: string;
-  readonly radiusClassName?: string;
 }) {
-  const radius = props.radiusClassName ?? "rounded-full";
   return (
-    <span className={cn("relative block overflow-hidden bg-muted", radius, props.className)}>
+    <span className={cn("relative block overflow-hidden rounded-full bg-muted", props.className)}>
       {props.remaining === null ? null : (
         <span
           aria-hidden
           className={cn(
-            "absolute inset-y-0 left-0 transition-[background-color,opacity]",
-            radius,
-            toneOf(props.remaining),
+            "absolute inset-y-0 left-0 rounded-full bg-current transition-[color,opacity]",
+            toneClassName(props.remaining),
             props.fillClassName,
           )}
           style={{ width: `${props.remaining}%` }}
@@ -69,8 +57,8 @@ export function UsageCircleMeter(props: {
           strokeDashoffset={100 - clamped}
           strokeLinecap="round"
           className={cn(
-            "transition-[stroke-dashoffset,stroke] duration-200 ease-out motion-reduce:transition-none",
-            strokeToneOf(clamped),
+            "stroke-current transition-[stroke-dashoffset,color] duration-200 ease-out motion-reduce:transition-none",
+            toneClassName(clamped),
           )}
         />
       ) : null}

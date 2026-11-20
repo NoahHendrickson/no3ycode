@@ -1213,9 +1213,7 @@
     :is(
       [data-fork-composer-vessel],
       [data-fork-composer-usage-drawer],
-      [data-fork-draft-launchpad-card],
-      [data-fork-composer-context-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])
+      [data-fork-draft-launchpad-card]
     ) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
@@ -1243,24 +1241,15 @@
     backdrop-filter: blur(48px);
   }
 
-  /* Inside the vessel the context options are ghost buttons sharing its blur. */
-  &
-    [data-fork-composer-vessel]
-    [data-fork-composer-context-row]
-    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
   &
     :is(
-      [data-fork-composer-usage-limits],
-      [data-chat-provider-model-picker],
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
-      [data-fork-composer-vessel]
-        [data-fork-composer-context-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
+      [data-fork-composer-control-row]
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
+          [data-fork-composer-mode-chip],
+          [data-fork-pr-chip]
+        )
     ) {
     color: #fff;
   }

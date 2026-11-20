@@ -16,7 +16,7 @@
    rules in theme.custom.css or it would paint a second full pill. Hit target
    is 24px (WCAG 2.5.8 floor); the glyph stays 10px inside. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   [data-fork-monitoring-pill] {
   height: 24px;
   min-height: 24px;
@@ -32,13 +32,13 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   [data-fork-monitoring-pill] {
   color: #ffffff;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-stop] {
   display: inline-flex;
   width: 24px;
@@ -56,14 +56,14 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-stop]:hover:not(:disabled) {
   background: var(--fork-context-chip-bg-hover);
   opacity: 1;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-stop]:disabled {
   background: transparent;
   cursor: default;
@@ -71,7 +71,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-stop]
   svg {
   width: 10px;
@@ -82,25 +82,25 @@
    of its own; the popover it opens is a popover-popup and so takes the one
    frost recipe (fork-popup-surface). Rows inside hover as the 4% lift. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-list] {
   display: inline-flex;
   min-width: 0;
+  height: auto;
+  min-height: 0;
+  gap: 0;
   align-items: center;
   padding: 0;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
 }
 
-/* theme.custom.css lifts any hovered, pressed or open button in the context
-   row to the chip-hover fill, at a specificity the reset above loses to; the
-   label is text, not a chip, so it holds transparent in those states — the
-   stop button's own hover rule keeps its square the same way. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   button[data-fork-monitoring-list]:is(:hover, [data-pressed], [data-popup-open]):not(:disabled) {
   background: transparent;
 }
@@ -139,7 +139,7 @@
    the context-row chip SVG rule only targets button/chip triggers, but pin
    the mark box so a future broader glyph rule cannot squash the grid. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   [data-fork-liveness-mark]
   svg {
   width: auto;

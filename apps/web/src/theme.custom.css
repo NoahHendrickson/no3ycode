@@ -740,6 +740,11 @@
   transition-duration: 0ms;
 }
 
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-fork-composer-usage-limits], [data-fork-composer-usage-drawer]) {
+  --success: #38a169;
+}
+
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-usage-drawer] {
   border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
   background: var(--fork-composer-vessel-bg, var(--card));
@@ -935,19 +940,14 @@
   }
 }
 
-/* The control row's ghost controls: 26px tall, 12px medium on a 16px line,
-   8px inline padding, 6px radius for comfortable hover seats inside the vessel. */
+/* The control row's ghost controls: single owner of 26px / 8px / 6px geometry
+   and hover/ink tokens across left context controls and right model/mode/usage controls. */
 :root[data-fork="noahhendrickson-t3code"]
-  :is(
-    [data-fork-composer-model-controls],
-    [data-fork-composer-mode-controls],
-    [data-fork-composer-control-row-slot="left"],
-    [data-fork-composer-control-row-slot="right"]
-  )
-  :is(button, [data-slot="button"]) {
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
   height: 26px;
   min-height: 26px;
-  gap: 6px;
+  gap: 5px;
   padding-inline: 8px;
   border-radius: 6px;
   font-size: 12px;
@@ -963,26 +963,22 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is(
-    [data-fork-composer-model-controls],
-    [data-fork-composer-mode-controls],
-    [data-fork-composer-control-row-slot="left"],
-    [data-fork-composer-control-row-slot="right"]
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
+    [data-fork-composer-usage-limits]
   )
-  :is(button, [data-slot="button"]):not([data-fork-composer-usage-limits])
   svg {
   width: 12px;
   height: 12px;
+  opacity: 1;
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
-  :is(
-    [data-fork-composer-model-controls],
-    [data-fork-composer-mode-controls],
-    [data-fork-composer-control-row-slot="left"],
-    [data-fork-composer-control-row-slot="right"]
-  )
-  :is(button, [data-slot="button"]):not([data-fork-composer-mode-chip]) {
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not(
+    [data-fork-composer-mode-chip],
+    [data-fork-pr-chip]
+  ) {
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
@@ -1013,13 +1009,12 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is(
-    [data-fork-composer-model-controls],
-    [data-fork-composer-mode-controls],
-    [data-fork-composer-control-row-slot="left"],
-    [data-fork-composer-control-row-slot="right"]
-  )
-  :is(button, [data-slot="button"]):is(:hover, [data-pressed], [data-popup-open]):not(:disabled) {
+  [data-fork-composer-control-row]
+  :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
+    :hover,
+    [data-pressed],
+    [data-popup-open]
+  ):not(:disabled) {
   background: var(--fork-composer-control-hover);
 }
 
@@ -1306,13 +1301,13 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   [data-slot="composer-context-strip"]
-  > .flex:has(> [data-fork-pr-chip]) {
+  [data-fork-branch-group] {
   flex: 1 1 auto;
   justify-content: space-between;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   [data-slot="composer-context-strip"]
   [data-fork-pr-chip] {
   order: 1;
@@ -1321,7 +1316,7 @@
 /* A PR badge's number takes its glyph's state ink, in the composer and the
    sidebar. A settled slim row mutes the whole tone span, number included. */
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-context-row] [data-fork-pr-chip], [data-fork-sidebar-pr-badge])
+  :is([data-fork-pr-chip], [data-fork-sidebar-pr-badge])
   .text-secondary-label {
   color: inherit;
 }
@@ -1379,71 +1374,40 @@
   gap: 1px;
 }
 
-/* Context options placed inside the vessel's bottom-left slot render as 26px
-   ghost controls matching the model selector rather than 24px floating pills. */
+/* Upstream's ContextStrip wears .surface-glass and margin/inset padding when
+   standalone; inside the vessel's left control slot it lays out flat and flush,
+   while [data-fork-composer-control-row] above owns every control's geometry. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
+  [data-fork-composer-vessel-context]
   [data-slot="composer-context-strip"] {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  gap: 1px;
   background: transparent;
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  [data-slot="composer-context-strip"],
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  [data-slot="composer-context-strip"]
-  > * {
-  min-width: 0;
-  min-height: 0;
-  gap: 1px;
-}
+  & > * {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 0;
+    gap: 1px;
+  }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  [data-slot="composer-context-strip"]
-  > .flex:has(> [data-fork-pr-chip]) {
-  flex: 0 1 auto;
-  justify-content: flex-start;
-}
+  & [data-fork-context-chip] {
+    opacity: 1;
+  }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
-  height: 26px;
-  min-height: 26px;
-  gap: 5px;
-  padding-inline: 8px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  box-shadow: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
-    :hover,
-    [data-pressed],
-    [data-popup-open]
-  ):not(:disabled) {
-  background: var(--fork-composer-control-hover);
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
-  color: var(--fork-composer-control-ink, #a6a6a6);
+  & [data-slot="select-trigger"]::before,
+  & [data-slot="select-icon"] {
+    display: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -3160,10 +3124,10 @@
 }
 
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
-   A chat is the composer alone: no project, checkout or branch chips above it. */
+   A chat is the composer alone: no project, checkout or branch controls. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-column][data-fork-chat-thread]
-  [data-fork-composer-context-row] {
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context]) {
   display: none;
 }
 /* fork:end fork-chat-mode */

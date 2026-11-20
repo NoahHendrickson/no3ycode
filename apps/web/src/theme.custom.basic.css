@@ -264,16 +264,6 @@
   box-shadow: none;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
-    [data-fork-monitoring-pill] *
-  ) {
-  border: 0;
-  border-radius: 6px;
-}
-
 /* The pill's hairline sits on ::after, above its children: a border would
    shrink the box under the 24px stop square, whose hover fill would then cover
    the edge. */

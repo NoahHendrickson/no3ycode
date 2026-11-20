@@ -288,31 +288,23 @@ const RunContextSelector = memo(function RunContextSelector({
 
   if (isLocked) {
     return (
-      <>
-        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-            Locked readout is a span; data-fork-context-chip keeps the frosted
-            chip paint (desktop EnvModeSelector has the same mark). The paint is
-            scoped to the composer context row, so the panel row is untouched. */}
-        <span
-          data-fork-context-chip
-          className={cn(
-            READ_ONLY_CONTEXT_CHIP_CLASS_NAME,
-            "max-w-[48%] flex-initial justify-start",
-            isPanel && "max-w-full",
-            isPanel && THREAD_DETAILS_PANEL_LOCKED_ROW_CLASS,
-          )}
-          onContextMenu={handleContextMenu}
-          aria-label={
-            isPanel
-              ? `Run context: ${[autoEnvironmentLabel ?? activeEnvironment?.label, workspaceLabel].filter(Boolean).join(", ")}`
-              : undefined
-          }
-          data-composer-context-control
-        >
-          {triggerContent}
-        </span>
-        {/* fork:end fork-composer-shell */}
-      </>
+      <span
+        className={cn(
+          READ_ONLY_CONTEXT_CHIP_CLASS_NAME,
+          "max-w-[48%] flex-initial justify-start",
+          isPanel && "max-w-full",
+          isPanel && THREAD_DETAILS_PANEL_LOCKED_ROW_CLASS,
+        )}
+        onContextMenu={handleContextMenu}
+        aria-label={
+          isPanel
+            ? `Run context: ${[autoEnvironmentLabel ?? activeEnvironment?.label, workspaceLabel].filter(Boolean).join(", ")}`
+            : undefined
+        }
+        data-composer-context-control
+      >
+        {triggerContent}
+      </span>
     );
   }
 
@@ -345,9 +337,6 @@ const RunContextSelector = memo(function RunContextSelector({
       <MenuPopup
         align="start"
         side={isPanel ? "bottom" : "top"}
-        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-        data-fork-chip-menu={isPanel ? undefined : ""}
-        /* fork:end fork-composer-shell */
         className={
           isPanel
             ? "w-(--anchor-width)"
@@ -817,42 +806,55 @@ export const BranchToolbar = memo(function BranchToolbar({
       ) : null}
 
       {showGitControls ? (
-        <BranchToolbarBranchSelector
-          forceNewWorktree={forceNewWorktree}
-          ref={branchSelectorRef}
-          className="min-w-0 flex-initial"
-          environmentId={environmentId}
-          threadId={threadId}
-          {...(draftId ? { draftId } : {})}
-          envLocked={envLocked}
-          effectiveEnvModeOverride={effectiveEnvMode}
-          {...(activeThreadBranchOverride !== undefined ? { activeThreadBranchOverride } : {})}
-          {...(onActiveThreadBranchOverrideChange ? { onActiveThreadBranchOverrideChange } : {})}
-          startFromOrigin={startFromOrigin}
-          onStartFromOriginChange={onStartFromOriginChange}
-          {...(onCheckoutPullRequestRequest ? { onCheckoutPullRequestRequest } : {})}
-          {...(onComposerFocusRequest ? { onComposerFocusRequest } : {})}
-          triggerIcon={
-            <ComposerWorkspaceTriggerIcon
-              effectiveEnvMode={forceNewWorktree ? "worktree" : effectiveEnvMode}
-              activeWorktreePath={activeWorktreePath}
+        <>
+          {!envModeLocked && !forceNewWorktree ? (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              data-composer-shortcut="composer.workspace"
+              className="sr-only"
+              onClick={() => branchSelectorRef.current?.openWorkspace()}
             />
-          }
-          {...(!envModeLocked ? { triggerShortcut: "composer.workspace" } : {})}
-          popupFooter={
-            <ComposerWorkspaceFooter
-              forceNewWorktree={forceNewWorktree}
-              envLocked={envModeLocked}
-              effectiveEnvMode={effectiveEnvMode}
-              activeWorktreePath={activeWorktreePath}
-              onEnvModeChange={onEnvModeChange}
-              previousWorktreeLabel={previousWorktreeLabel}
-              previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
-              onUsePreviousWorktree={onUsePreviousWorktree}
-              onClose={() => branchSelectorRef.current?.close()}
-            />
-          }
-        />
+          ) : null}
+          <BranchToolbarBranchSelector
+            forceNewWorktree={forceNewWorktree}
+            ref={branchSelectorRef}
+            className="min-w-0 flex-initial"
+            environmentId={environmentId}
+            threadId={threadId}
+            {...(draftId ? { draftId } : {})}
+            envLocked={envLocked}
+            effectiveEnvModeOverride={effectiveEnvMode}
+            {...(activeThreadBranchOverride !== undefined ? { activeThreadBranchOverride } : {})}
+            {...(onActiveThreadBranchOverrideChange ? { onActiveThreadBranchOverrideChange } : {})}
+            startFromOrigin={startFromOrigin}
+            onStartFromOriginChange={onStartFromOriginChange}
+            {...(onCheckoutPullRequestRequest ? { onCheckoutPullRequestRequest } : {})}
+            {...(onComposerFocusRequest ? { onComposerFocusRequest } : {})}
+            triggerIcon={
+              <ComposerWorkspaceTriggerIcon
+                effectiveEnvMode={effectiveEnvMode}
+                activeWorktreePath={activeWorktreePath}
+                forceNewWorktree={forceNewWorktree}
+              />
+            }
+            keepTriggerEnabled={!envModeLocked && !forceNewWorktree}
+            popupFooter={
+              <ComposerWorkspaceFooter
+                forceNewWorktree={forceNewWorktree}
+                envLocked={envModeLocked}
+                effectiveEnvMode={effectiveEnvMode}
+                activeWorktreePath={activeWorktreePath}
+                onEnvModeChange={onEnvModeChange}
+                previousWorktreeLabel={previousWorktreeLabel}
+                previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
+                onUsePreviousWorktree={onUsePreviousWorktree}
+                onClose={() => branchSelectorRef.current?.close()}
+              />
+            }
+          />
+        </>
       ) : null}
       {/* fork:end fork-composer-shell */}
       {trailing}

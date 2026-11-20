@@ -110,17 +110,11 @@ describe("fork guard: fork-model-picker", () => {
     expect(picker).toMatch(/<MenuPopup\s+\{\.\.\.floatingLayerProps\}/u);
   });
 
-  it("shows the menu's provider icon in the trigger and keeps Gemini in model names", () => {
+  it("shows the menu's provider icon in the trigger and keeps Gemini and GPT in model names", () => {
     // Trigger: both the composer and Settings show ModelPickerProviderGlyph
-    // (the same Claude/Codex/provider marks as the menu), so iconShown is true
-    // and no stylesheet rule hides the trigger icon.
-    expect(picker).toContain("const iconShown = true;");
-    expect(
-      // getTriggerDisplayModelName takes the driver kind since upstream #24205.
-      picker.match(
-        /triggerModelName\(\s*getTriggerDisplayModelName\(\w+, \w+\?\.driverKind\),\s*\w+,\s*\{ iconShown \},?\s*\)/gu,
-      ),
-    ).toHaveLength(2);
+    // (the same Claude/Codex/provider marks as the menu), and no stylesheet
+    // rule hides the trigger icon.
+    expect(picker.match(/pickerTriggerModelName\(/gu)).toHaveLength(2);
     expect(picker).toMatch(/\{activeEntry \? \(\s*<ModelPickerProviderGlyph/u);
     expect(picker.match(/<ModelPickerProviderGlyph\b/gu)).toHaveLength(2);
     expect(picker).not.toContain("composerIconClassName");
@@ -135,10 +129,11 @@ describe("fork guard: fork-model-picker", () => {
     }
     // Rows: the selected tab or the inline provider label names it.
     expect(content).toContain("const modelName = stripProviderName(displayName, {");
-    // Gemini and GPT models keep their family names ("Gemini 4 Neon", "GPT-6.2-Sol").
-    const shortName = readSibling("../../../../packages/provider-core/src/modelShortName.ts");
-    expect(shortName).not.toMatch(/FAMILY_PREFIXES\s*=\s*\[[^\]]*"Gemini "/u);
-    expect(shortName).not.toMatch(/FAMILY_PREFIXES\s*=\s*\[[^\]]*"GPT[- ]"/u);
+    // Gemini and GPT models keep their family names in the web model picker trigger.
+    const displayName = readSibling("../custom/modelPickerDisplayName.ts");
+    expect(displayName).toContain('"Gemini "');
+    expect(displayName).toContain('"GPT-"');
+    expect(displayName).toContain('"GPT "');
     // Antigravity's thinking_level / role: "reasoning" drives the effort slider.
     const traits = readSibling("../custom/composerModelTraits.ts");
     expect(traits).toContain("isReasoningSelect(descriptor)");

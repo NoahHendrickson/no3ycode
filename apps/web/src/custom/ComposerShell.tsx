@@ -53,11 +53,12 @@ export const ComposerShell = memo(function ComposerShell({
     collapsedMobile,
     mobilePendingActionsVisible,
   });
-  const left = context ? (
-    <div data-fork-composer-context-row="true" className="flex min-w-0 flex-1 items-center">
-      {context}
-    </div>
-  ) : null;
+  const left =
+    !collapsedMobile && !mobilePendingActionsVisible && context ? (
+      <div data-fork-composer-vessel-context="true" className="flex min-w-0 flex-1 items-center">
+        {context}
+      </div>
+    ) : null;
   const right =
     readoutControls ||
     (showInteractiveControls && (modelControls || modeControls || usageControls)) ? (
@@ -107,18 +108,20 @@ export const ComposerShell = memo(function ComposerShell({
         {left || right ? (
           <div
             data-fork-composer-control-row="true"
-            className="flex min-w-0 items-center justify-between gap-2 px-2 py-1.5"
+            className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 py-1.5"
           >
-            <div
-              data-fork-composer-control-row-slot="left"
-              className="-m-1 flex min-w-0 flex-1 items-center gap-px overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {left}
-            </div>
+            {left ? (
+              <div
+                data-fork-composer-control-row-slot="left"
+                className="-m-1 flex min-w-[min(100%,11rem)] flex-1 items-center gap-px overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {left}
+              </div>
+            ) : null}
             {right ? (
               <div
                 data-fork-composer-control-row-slot="right"
-                className="flex min-w-0 shrink-0 items-center justify-end gap-px"
+                className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-px"
               >
                 {right}
               </div>

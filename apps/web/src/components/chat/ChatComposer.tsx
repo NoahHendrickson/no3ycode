@@ -197,10 +197,7 @@ import { modelPickerHoldsFocus } from "../../custom/modelPickerFocus";
 import { resolveModelPickerSelectedModel } from "./ModelPickerContent";
 /* fork:end fork-model-picker */
 /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-import {
-  ComposerUsageLimitsDrawer,
-  ComposerUsageLimitsReadout,
-} from "../../custom/ComposerUsageLimitsReadout";
+import { useComposerUsageDrawer } from "../../custom/ComposerUsageLimitsReadout";
 /* fork:end fork-composer-usage-limits */
 import {
   type ComposerCitationCommentRequest,
@@ -1022,17 +1019,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         (multipleModelSelections === null ? providerSendBlockReason : null)));
   const isSendDisabled = sendDisabledReason !== null;
   const selectedProviderStatus = selectedProviderEntry?.snapshot ?? null;
-  /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-  const [usageDrawerOpen, setUsageDrawerOpen] = useState(false);
-  const [usageDrawerOpenedAt, setUsageDrawerOpenedAt] = useState(() => Date.now());
-  const toggleUsageDrawer = () => {
-    setUsageDrawerOpen((prev) => {
-      const next = !prev;
-      if (next) setUsageDrawerOpenedAt(Date.now());
-      return next;
-    });
-  };
-  /* fork:end fork-composer-usage-limits */
   const selectedProviderSkills = selectedProviderStatus
     ? resolveProviderSkillsForCwd(selectedProviderStatus, gitCwd)
     : NO_PROVIDER_SKILLS;
@@ -1098,6 +1084,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   );
   const [isDragOverComposer, setIsDragOverComposer] = useState(false);
   const [isComposerFooterCompact, setIsComposerFooterCompact] = useState(false);
+  /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+  const usageDrawer = useComposerUsageDrawer({
+    usageLimits: selectedProviderStatus?.usageLimits,
+    enabled: !isComposerFooterCompact,
+  });
+  /* fork:end fork-composer-usage-limits */
   const [isComposerPrimaryActionsCompact, setIsComposerPrimaryActionsCompact] = useState(false);
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   // Mode-row ⋯ uses the fork footer override; model trigger keeps upstream widths.
@@ -3754,26 +3746,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         modeControls={composerModeControls}
         modelControls={composerModelControls}
         readoutControls={null}
-        usageControls={
-          /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-          isComposerFooterCompact ? null : (
-            <ComposerUsageLimitsReadout
-              usageLimits={selectedProviderStatus?.usageLimits}
-              open={usageDrawerOpen}
-              onToggle={toggleUsageDrawer}
-            />
-          )
-          /* fork:end fork-composer-usage-limits */
-        }
-        topVessel={
-          isComposerFooterCompact ? null : (
-            <ComposerUsageLimitsDrawer
-              open={usageDrawerOpen}
-              openedAt={usageDrawerOpenedAt}
-              onClose={() => setUsageDrawerOpen(false)}
-            />
-          )
-        }
+        /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+        usageControls={usageDrawer.readout}
+        topVessel={usageDrawer.drawer}
+        /* fork:end fork-composer-usage-limits */
       >
         {/* fork:end fork-composer-shell */}
         <ComposerBanner.Dock>

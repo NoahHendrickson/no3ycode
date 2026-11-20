@@ -568,13 +568,6 @@
   border-radius: 8px;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-vessel]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
-  border-radius: 6px;
-}
-
 /* A chip's menu (project, workspace, host, branch; stamped
    data-fork-chip-menu) hangs from the chip as the header's menus hang from
    their buttons: the open chip takes the menu's fill and goes square on the
@@ -584,7 +577,7 @@
    different elements, so each rule names the visible glass box three ways. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
   background-color: var(--popover);
   color: var(--popover-foreground);
@@ -599,7 +592,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]:has(
     [data-fork-chip-menu][data-side="bottom"]
   )
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
   border-radius: 8px 8px 0 0;
 }
@@ -972,11 +965,9 @@
      list keeps the shadow and scale these controls ease. */
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
     :is(
-      [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip]),
-      [data-fork-tab-trigger]:not(
-        [data-chat-provider-model-picker],
-        [data-fork-composer-usage-limits]
-      ),
+      :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
+        :is(button, [data-slot="button"], [data-fork-context-chip]),
+      [data-fork-tab-trigger]:not([data-chat-provider-model-picker]),
       [data-fork-panel-toggle] > button
     ) {
     transition-property: background-color, color, border-radius, box-shadow, scale;

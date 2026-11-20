@@ -143,11 +143,6 @@ const BARE_SUBJECT_KNOWN: ReadonlyArray<{ readonly sheet: string; readonly compo
   { sheet: "custom/ComposerShell.css", compound: ":has(> [data-composer-control-chevron])" },
   // Glass's header breadcrumb list.
   { sheet: "theme.custom.glass.css", compound: 'ol:has([data-slot="workspace-breadcrumb-text"])' },
-  // Glass's focus ring on the composer row's chips: one option of its subject is any button.
-  {
-    sheet: "theme.custom.glass.css",
-    compound: ':has(:focus-visible:not([data-testid="composer-editor"]))',
-  },
 ];
 
 const STAMPS: ReadonlyArray<{

@@ -41,11 +41,11 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "~/lib/utils";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
 import { useIsInletActive } from "~/custom/forkActivePalette";
-import { triggerModelName } from "~/custom/modelPickerDisplayName";
+import { pickerTriggerModelName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerContent, resolveModelPickerSelectedModel } from "./ModelPickerContent";
 import { retainedModelWhileProviderLocked } from "./ProviderModelPicker.logic";
 import { ChatGptSharingControl } from "./ChatGptSharingControl";
-import { ModelEsque, getDisplayModelName, getTriggerDisplayModelName } from "./providerIconUtils";
+import { ModelEsque, getDisplayModelName } from "./providerIconUtils";
 import { shouldShowInstanceBadge, type ProviderInstanceEntry } from "../../providerInstances";
 import { ComposerControl, type ComposerControlSize } from "./ComposerControl";
 import { useComposerMenuProps } from "./composerEventScope";
@@ -178,15 +178,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
     (activeEntry?.driverKind === "opencode" || activeEntry?.driverKind === "antigravity"
       ? undefined
       : selectedInstanceOptions[0]);
-  // The trigger always shows the provider icon, so the label drops redundant
-  // provider prefixes; the tooltip keeps the full model name and instance name.
-  const iconShown = true;
   const triggerTitle = selectedModel
-    ? triggerModelName(
-        getTriggerDisplayModelName(selectedModel, activeEntry?.driverKind),
-        activeEntry,
-        { iconShown },
-      )
+    ? pickerTriggerModelName(selectedModel, activeEntry)
     : props.model === ANTIGRAVITY_DEFAULT_MODEL
       ? "Choose model"
       : props.model || "Choose model";
@@ -224,9 +217,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
       options: props.modelOptionsByInstance.get(selection.instanceId) ?? [],
     });
     // Same name as the single trigger title; the tooltip keeps the full names.
-    const modelName = model
-      ? triggerModelName(getTriggerDisplayModelName(model, entry?.driverKind), entry, { iconShown })
-      : selection.model;
+    const modelName = model ? pickerTriggerModelName(model, entry) : selection.model;
     const unavailable = model?.isUnavailable ? " (Unavailable)" : "";
     return {
       ...selection,
