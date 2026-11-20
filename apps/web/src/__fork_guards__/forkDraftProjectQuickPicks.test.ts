@@ -24,8 +24,10 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
 
   it("picks the unassigned draft's project from the list under the composer", () => {
     expect(read("../custom/DraftProjectPill.tsx")).toContain(
-      'if (choices.selection.kind === "unassigned") return null;',
+      'if (choices.selection.kind === "unassigned" && !shortWindow) return null;',
     );
+    // A short window has no room under its bottom-pinned composer.
+    expect(launchpad).toContain("if (draftId === null || shortWindow) return null;");
     expect(read("../components/ChatView.tsx")).toMatch(
       /isDraftHeroState &&\s*\(composerBannerItems\.length > 0 \|\| isLocalDraftThread\)[\s\S]{0,1600}<DraftLaunchpad/u,
     );
@@ -57,7 +59,10 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
 
   it("offers new work that fills the composer and never opens another thread", () => {
     expect(launchpad).toContain("const suggestions = deriveLaunchpadSuggestions({");
-    expect(launchpad).toContain("setPrompt(draftId, suggestion.prompt);");
+    // Added after anything the user already wrote, never in place of it.
+    expect(launchpad).toMatch(
+      /written\.trim\(\)\.length > 0\s*\? `\$\{written\}\\n\\n\$\{suggestion\.prompt\}`/u,
+    );
     expect(launchpad).not.toMatch(/navigate|useNavigate|router/u);
     expect(read("../custom/draftLaunchpadSuggestions.ts")).toContain(
       "export function deriveLaunchpadSuggestions(",

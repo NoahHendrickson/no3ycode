@@ -111,7 +111,8 @@ default order until the server is updated.
 **New agent** at the top of the sidebar (`mod+n`) opens an empty chat. Start writing straight
 away; nothing appears in the thread list yet. To send, choose a project from the list under the
 composer: your recent projects are listed, **All projects** shows the rest, and you can search by
-name. The draft then takes its place under that project, and its pill appears above the composer;
+name (in a very short window, pick from the pill above the composer instead). The draft then
+takes its place under that project, and its pill appears above the composer;
 change the project from that pill before sending and the draft moves with it.
 With more than one machine connected, a machine pill above the composer picks where the agent runs;
 choose the machine before the project, and "No project" and projects on several machines follow it.
@@ -121,7 +122,8 @@ Under the composer, **Start something new** suggests work from your open pull re
 failing checks, resolve conflicts, address a review, merge an approved pull request, or review one
 someone asked you to. Once you pick a project that runs in its current checkout, it also suggests
 committing or pulling changes and opening a pull request for your branch. Picking a suggestion
-chooses its project and writes the task into the composer for you to edit and send.
+chooses its project and adds the task to the composer, after anything you already wrote, for you
+to edit and send.
 
 The **Threads** row sorts and filters the list: the sort button picks the project order, and
 the filter button picks how the list is grouped and checks off which projects it shows — tick

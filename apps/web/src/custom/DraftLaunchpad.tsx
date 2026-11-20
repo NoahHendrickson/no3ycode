@@ -6,10 +6,12 @@ import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, PullRequestListInput, ScopedProjectRef } from "@t3tools/contracts";
 import * as Equal from "effect/Equal";
 import { AsyncResult, Atom } from "effect/reactivity";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useState } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { useComposerDraftStore } from "~/composerDraftStore";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { observeResize } from "~/lib/observeResize";
 import { usePullRequestList } from "~/state/pullRequests";
 import { vcsEnvironment } from "~/state/vcs";
 import {
@@ -124,6 +126,7 @@ export function DraftLaunchpad(
 ) {
   const choices = useDraftProjectChoices(props);
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
+  const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   const { draftId } = props;
   const unassigned = choices.selection.kind === "unassigned";
   const recent = recentProjectRows(choices);
@@ -153,7 +156,7 @@ export function DraftLaunchpad(
         ),
   );
 
-  if (draftId === null) return null;
+  if (draftId === null || shortWindow) return null;
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) return null;
   // "No project" is a chat with no repository; there is no project work to suggest.
   if (choices.selection.kind === "no-project") return null;
@@ -188,7 +191,15 @@ export function DraftLaunchpad(
               className={ROW_CLASS_NAME}
               onClick={(event) => {
                 if (entry !== null) choices.pick(entry.group.projectKey, event.currentTarget);
-                setPrompt(draftId, suggestion.prompt);
+                // A draft can already hold what the user wrote before picking.
+                const written =
+                  useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
+                setPrompt(
+                  draftId,
+                  written.trim().length > 0
+                    ? `${written}\n\n${suggestion.prompt}`
+                    : suggestion.prompt,
+                );
               }}
             >
               {entry !== null ? (
@@ -209,13 +220,10 @@ export function DraftLaunchpad(
     );
 
   if (!unassigned) {
-    return suggestionCard === null ? null : (
-      <div data-fork-draft-launchpad="">{suggestionCard}</div>
-    );
+    return suggestionCard === null ? null : <LaunchpadRoot>{suggestionCard}</LaunchpadRoot>;
   }
   return (
-    <div
-      data-fork-draft-launchpad=""
+    <LaunchpadRoot
       className={
         suggestionCard === null
           ? undefined
@@ -224,12 +232,59 @@ export function DraftLaunchpad(
     >
       <ProjectList choices={choices} recent={recent} />
       {suggestionCard}
-    </div>
+    </LaunchpadRoot>
   );
 }
 
-/** Room the open list leaves below it: the toggle row, the card's padding and a gutter. */
-const OPEN_LIST_BOTTOM_RESERVE = 64;
+/** Short windows pin the composer to the bottom and put the slot under it in flow
+    (ChatView), leaving no room for the launchpad; the project chip stands in there. */
+export const SHORT_WINDOW_QUERY = "(max-height: 34rem)";
+
+/**
+ * The launchpad scrolls inside the room left between it and the window's bottom
+ * edge, so a tall list or a phone's stacked cards never run off screen.
+ */
+function LaunchpadRoot(props: {
+  readonly className?: string | undefined;
+  readonly children: ReactNode;
+}) {
+  const [root, setRoot] = useState<HTMLDivElement | null>(null);
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- tracks the window and the composer above, which move the room below
+  useLayoutEffect(() => {
+    if (root === null) return;
+    const measure = () => {
+      setMaxHeight(
+        Math.max(96, Math.floor(window.innerHeight - root.getBoundingClientRect().top - 16)),
+      );
+    };
+    // The composer above grows as the user writes, and a notice can appear above
+    // the launchpad in its slot; either pushes it down.
+    const stopObserving = observeResize(
+      [
+        root.closest("[data-chat-composer-stack]") ?? document.documentElement,
+        ...(root.parentElement ? [root.parentElement] : []),
+      ],
+      measure,
+    );
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      stopObserving();
+      window.removeEventListener("resize", measure);
+    };
+  }, [root]);
+  return (
+    <div
+      ref={setRoot}
+      data-fork-draft-launchpad=""
+      className={`overflow-y-auto overscroll-contain ${props.className ?? ""}`}
+      style={maxHeight === null ? undefined : { maxHeight }}
+    >
+      {props.children}
+    </div>
+  );
+}
 
 /** Projects with recent sidebar activity, or the first pickable ones when none has any. */
 function recentProjectRows(choices: DraftProjectChoices) {
@@ -244,18 +299,9 @@ function ProjectList(props: {
   const { choices, recent } = props;
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
-  // Expanded or searching, the list grows in place and scrolls inside whatever
-  // height is left below it, so the panel never runs off the window.
-  const [openMaxHeight, setOpenMaxHeight] = useState<number | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  // Expanded or searching, the list grows in place; LaunchpadRoot scrolls it.
   const searching = query.trim().length > 0;
   const open = expanded || searching;
-
-  // Measured each time the list opens, so a resize or a taller composer since the last open counts.
-  const measureOpenHeight = () => {
-    const top = listRef.current?.getBoundingClientRect().top ?? 0;
-    setOpenMaxHeight(Math.max(128, window.innerHeight - top - OPEN_LIST_BOTTOM_RESERVE));
-  };
 
   const recentKeys = new Set(recent.map((entry) => entry.group.projectKey));
   const allOrdered = [
@@ -269,10 +315,7 @@ function ProjectList(props: {
       ? allOrdered
       : recent;
 
-  const toggle = () => {
-    if (!expanded) measureOpenHeight();
-    setExpanded(!expanded);
-  };
+  const toggle = () => setExpanded(!expanded);
 
   const search = (
     <label className="flex h-9 min-w-0 cursor-text items-center gap-2 border-border border-b px-3 text-muted-foreground/70">
@@ -285,12 +328,9 @@ function ProjectList(props: {
         spellCheck={false}
         autoComplete="off"
         className="min-w-0 flex-1 bg-transparent text-foreground text-xs outline-none placeholder:font-medium placeholder:text-muted-foreground/70"
-        onChange={(event) => {
-          if (!open) measureOpenHeight();
-          setQuery(event.target.value);
-        }}
+        onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && rows[0]) {
+          if (event.key === "Enter" && searching && rows[0]) {
             event.preventDefault();
             choices.pick(rows[0].group.projectKey, event.currentTarget);
           } else if (event.key === "Escape" && query.length > 0) {
@@ -305,11 +345,7 @@ function ProjectList(props: {
 
   return (
     <Card header={search}>
-      <div
-        ref={listRef}
-        className="min-h-0 overflow-y-auto overscroll-contain"
-        style={open && openMaxHeight !== null ? { maxHeight: openMaxHeight } : undefined}
-      >
+      <div>
         {rows.map((entry) => (
           <button
             key={entry.group.projectKey}

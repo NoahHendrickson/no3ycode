@@ -6418,9 +6418,13 @@
     ranks through sortLogicalProjectsForSidebar, so a hidden subagent or
     off-sidebar automation run cannot reorder them; with no such project, the
     first pickable ones), No project, and "All projects (N)", which expands
-    the list in place rather than opening a menu. An expanded or searched list
-    scrolls within the height left below it, measured each time it opens.
-    Enter picks the top match and Esc clears the search. Rows use the menu
+    the list in place rather than opening a menu. The whole launchpad scrolls
+    within the room left below it, re-measured as the window or the composer
+    above it or a notice in its slot changes. A short window (34rem or less)
+    pins the composer to the bottom with no room under it, so there the
+    launchpad is not shown and the unassigned draft gets the project chip
+    ("Choose a project") and its menu instead. While searching, Enter picks the top
+    match; Esc clears the search. Rows use the menu
     item's inset, rounded hover. A row goes through the same pick dispatcher as
     the chip's menu (useDraftProjectChoices, owned by fork-new-agent-draft).
 
@@ -6435,7 +6439,7 @@
     the cached pullRequests.list query and the checkout from the git status
     ChatView already subscribes to; a failed or unsupported list just offers
     nothing. Picking a suggestion picks its project and writes its prompt into
-    the draft composer. It never sends and never opens another thread: New
+    the draft composer, after anything the user already wrote. It never sends and never opens another thread: New
     agent is for new work. With nothing to suggest, the card is not shown.
 
     The project chip opens from the picked row, sliding to the context row's

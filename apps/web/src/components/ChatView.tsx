@@ -4337,7 +4337,7 @@ export default function ChatView(props: ChatViewProps) {
                         // Out of flow, like the headline, so a notice never moves the centered composer.
                         // Short windows pin the composer to the bottom, where an out-of-flow notice
                         // would fall off-screen, so there it takes space and lifts the composer.
-                        <div className="absolute inset-x-0 top-full flex flex-col gap-1 pt-4 [@media(max-height:34rem)]:static">
+                        <div className="absolute inset-x-0 top-full flex flex-col gap-1 pt-4 empty:hidden [@media(max-height:34rem)]:static">
                           {composerBannerItems.length > 0 ? (
                             <ComposerBannerStack items={composerBannerItems} detached />
                           ) : null}
