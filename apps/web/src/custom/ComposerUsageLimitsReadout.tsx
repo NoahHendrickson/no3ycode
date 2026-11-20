@@ -92,7 +92,7 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
       aria-expanded={open}
       data-pressed={open ? "" : undefined}
       aria-label={`${session.label} limit: ${remaining}% left. ${open ? "Hide" : "Show"} usage limits`}
-      className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       onClick={onToggle}
       onKeyDown={(event) => {
         if (open && event.key === "Escape") {
@@ -215,7 +215,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
                 ) : null}
                 <button
                   type="button"
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-xs text-xs text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-xs text-xs text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   onClick={() => void ensureLocalApi().shell.openExternal(link.url)}
                 >
                   <span>{link.label}</span>
@@ -235,7 +235,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
                         type="button"
                         data-fork-usage-notices="true"
                         aria-label={`Usage warnings: ${notices.join(" ")}`}
-                        className="inline-flex min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-xs text-xs text-amber-600 dark:text-amber-400 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-xs text-xs text-amber-600 dark:text-amber-400 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                       >
                         <AlertTriangleIcon className="size-3.5 shrink-0" aria-hidden="true" />
                         <span className="max-w-56 truncate">
@@ -264,7 +264,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
       <button
         type="button"
         aria-label="Close usage limits"
-        className="ml-auto inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="ml-auto inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={props.onClose}
       >
         <XIcon className="size-3" aria-hidden="true" />
@@ -323,7 +323,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
                     tabIndex={0}
                     role="group"
                     aria-label={accessibleLabel}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
                     <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                       {shortLabel}
