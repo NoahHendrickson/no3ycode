@@ -529,3 +529,23 @@ describe("fork guard: fork-inlet-theme", () => {
     }
   });
 });
+
+describe("fork guard: fork-inlet-theme tooltip fill", () => {
+  // Black's tooltips are ink over its cream panel and cream over its dark-ink surfaces.
+  it("gives each tooltip the fill its trigger's surface declares", () => {
+    const tooltip = readSibling("../components/ui/tooltip.tsx");
+    expect(tooltip).toContain('getPropertyValue("--fork-inlet-tooltip")');
+    expect(tooltip).toMatch(/if \(open\) setForkFill\(readForkTooltipFill\(details\.trigger\)\)/u);
+    const palettes = readSibling("../theme.custom.palettes.css");
+    expect(palettes).toMatch(
+      /--fork-inlet-model-shell: var\(--fork-inlet-black-surface\);[^}]*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);\s*--fork-inlet-tooltip-foreground: var\(--fork-inlet-black-ink\);/u,
+    );
+    expect(palettes).toMatch(
+      /--border: var\(--fork-inlet-black-line\);\s*--fork-inlet-tooltip: #fcfaee;\s*--fork-inlet-tooltip-foreground: #1c1c1a;/u,
+    );
+    // The open row is cream inside the dark sidebar, so its tooltips are ink again.
+    expect(palettes).toMatch(
+      /\[data-fork-thread-row\]\[aria-current="page"\],[^{]*\{\s*--fork-inlet-tooltip: var\(--fork-inlet-black-surface\);/u,
+    );
+  });
+});

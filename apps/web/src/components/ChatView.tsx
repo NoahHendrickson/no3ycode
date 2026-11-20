@@ -4331,7 +4331,7 @@ export default function ChatView(props: ChatViewProps) {
                         {/* fork:end fork-composer-shell */}
                       </ComposerSurface.Shell>
                       {/* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
-                          The slot also holds a local draft's launchpad (MOCKUP). */}
+                          The slot also holds a local draft's launchpad (fork-draft-project-quick-picks). */}
                       {isDraftHeroState &&
                       (composerBannerItems.length > 0 || isLocalDraftThread) ? (
                         // Out of flow, like the headline, so a notice never moves the centered composer.
@@ -4346,6 +4346,11 @@ export default function ChatView(props: ChatViewProps) {
                               draftId={draftId}
                               activeProjectRef={activeProjectRef}
                               activeProjectTitle={activeProject?.title ?? null}
+                              checkout={
+                                envMode === "local" && gitStatusCwd !== null
+                                  ? { environmentId, cwd: gitStatusCwd }
+                                  : null
+                              }
                             />
                           ) : null}
                         </div>

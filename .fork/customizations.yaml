@@ -2523,7 +2523,7 @@
     left side. On Black the bot panel's two (data-fork-tab-menu="bot-threads") and
     their open buttons are the sidebar's #141414 ink, since they open over the
     cream panel, and the sidebar headers' menus (data-fork-tab-menu="sidebar") are the
-    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap (the New agent quick picks' tooltips stand 4px off) rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -5574,11 +5574,15 @@
     the title, the panel toggles and the thread details card while a local
     draft has no project, since there is nothing for them to name or show.
 
-    The project is chosen from the first chip in the composer's context row
-    (custom/DraftProjectPill), ahead of the workspace and branch chips and
-    dressed like them: the row's CSS paints it as the same filled 24px chip
-    and its label collapses with theirs when the strip overflows. Its menu
-    opens with a "No project" row: picking it opens the environment's scratch
+    The project is first picked from the launchpad under the composer
+    (fork-draft-project-quick-picks); the composer's placeholder (fenced in
+    ChatComposer) asks for a project without pointing above. Once picked, it
+    shows as the first chip in the composer's context row
+    (custom/DraftProjectPill, which renders nothing while unassigned), ahead
+    of the workspace and branch chips and dressed like them: the row's CSS
+    paints it as the same filled 24px chip and its label collapses with
+    theirs when the strip overflows. Its menu, like the launchpad, offers a
+    "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
     become a projectless chat. The scratch folder itself is never listed as a
@@ -5595,11 +5599,12 @@
     fork-composer-shell's `trailing`), or to the bare fallback strip while the
     draft has no project — and so no toolbar — yet. The headline shadow
     (upstream's DraftHeroHeadline, same prop surface so ChatView's call site
-    is unfenced) is then just the sentence.
+    is unfenced) shows no headline on a New agent draft; only the side chat's
+    "Got a question?" and a Chat mode draft's "What's up?" remain.
 
     While the draft has no messages the composer sits on the chat column's
-    centre line with the headline parked above it, upstream's own hero
-    arrangement, and drops to the docked position on the first send through
+    centre line, upstream's own hero arrangement (any headline parked above
+    it), and drops to the docked position on the first send through
     upstream's layout transition. ChatView keeps upstream's one docked
     className and only stamps data-draft-hero; that stamp is the layout
     mode, and theme.custom.css owns everything keyed on it — the overlay's
@@ -5686,8 +5691,6 @@
     - apps/web/src/custom/DraftProjectPill.tsx
     - apps/web/src/custom/DraftProjectMenuPopup.tsx
     - apps/web/src/custom/useDraftProjectChoices.ts
-    # Mockup: projects and placeholder suggestions under the draft composer.
-    - apps/web/src/custom/DraftLaunchpad.tsx
     - apps/web/src/custom/newAgentDraft.test.ts
     - apps/web/src/custom/useNewAgentDraft.test.ts
     # Draft-only prompt geometry and the docked-only floor, keyed on data-draft-hero.
@@ -6404,46 +6407,58 @@
 
 - id: fork-draft-project-quick-picks
   intent: >
-    An unassigned New agent draft offers its recent projects as pills above
-    the composer, in place of the project chip: No project first, then up to
-    five projects with a thread the sidebar would show, newest activity first
-    by those same threads (rankRecentProjectEntries, which ranks through
-    sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
-    automation run cannot reorder them), each its icon then a
-    plus, and a chevron opening the full project menu. A pill and a menu row
-    go through the same pick dispatcher (useDraftProjectChoices, owned by
-    fork-new-agent-draft) keyed on the row's radio value, and the chevron
-    opens the chip's own DraftProjectMenuPopup. A narrow composer scrolls the
-    pills sideways while the chevron stays outside the scroller, so the only
-    route to every project and Add a project is never clipped. The project
-    chip opens from
-    where the pill was, sliding to the row's start as its label is revealed.
-    The pick is kept outside the component (custom/draftProjectPickMotion),
-    because the chip remounts mid-slide when the assignment settles and
-    ChatView swaps the fallback strip for BranchToolbar; each chip that mounts
-    resumes the slide where the last one was. The chips the pick brings in
-    (checkout, branch) fade in after it, and the row that renders them owns
-    that: BranchToolbar (fenced) stamps data-fork-chips-joining on its strip
-    when it mounts within a moment of a pick, and theme.custom.css gives every
-    chip under the stamp but the project chip a one-shot fade, so chips that
-    mount later in that window (git status resolving) fade in too. Reduced
-    motion skips both.
-    Each pill names its project in a tooltip; the pills share one
-    TooltipProvider (150ms delay, instant hand-off between pills). Under Inlet
-    the tooltip stands 4px past where its nub meets the pill, through
-    TooltipPopup's fenced forkNubGap (fork-inlet-theme), and Inlet Black
-    inks it like the sidebar (#141414 / #e8e8e8, theme.custom.inlet-black.css).
+    An unassigned New agent draft picks its project from a launchpad under
+    the centred composer (custom/DraftLaunchpad), not from a chip or pills
+    above it: the draft hero shows no headline and no project chip until a
+    project is picked. The launchpad sits in ChatView's out-of-flow slot under
+    the composer (fenced, fork-new-agent-draft), so it never moves the
+    composer. Its Projects card has a search field over a full-width divider,
+    then up to four projects with a thread the sidebar would show, newest
+    activity first by those same threads (rankRecentProjectEntries, which
+    ranks through sortLogicalProjectsForSidebar, so a hidden subagent or
+    off-sidebar automation run cannot reorder them; with no such project, the
+    first pickable ones), No project, and "All projects (N)", which expands
+    the list in place rather than opening a menu. An expanded or searched list
+    scrolls within the height left below it, measured each time it opens.
+    Enter picks the top match and Esc clears the search. Rows use the menu
+    item's inset, rounded hover. A row goes through the same pick dispatcher as
+    the chip's menu (useDraftProjectChoices, owned by fork-new-agent-draft).
+
+    Beside it, "Start something new" offers up to four pieces of new work for
+    those projects, each read from the copy a pick runs on, the draft's
+    machine (or, once a project is picked, for that project alone):
+    conflicts, failing checks, requested changes and approved, mergeable pull
+    requests you opened; open pull requests that request your review; and,
+    when the picked project runs in its own checkout rather than a new
+    worktree, its uncommitted files, commits to pull and a branch with no pull
+    request (custom/draftLaunchpadSuggestions). The pull requests come from
+    the cached pullRequests.list query and the checkout from the git status
+    ChatView already subscribes to; a failed or unsupported list just offers
+    nothing. Picking a suggestion picks its project and writes its prompt into
+    the draft composer. It never sends and never opens another thread: New
+    agent is for new work. With nothing to suggest, the card is not shown.
+
+    The project chip opens from the picked row, sliding to the context row's
+    start as its label is revealed. The pick is kept outside the component
+    (custom/draftProjectPickMotion), because the chip remounts mid-slide when
+    the assignment settles and ChatView swaps the fallback strip for
+    BranchToolbar; each chip that mounts resumes the slide where the last one
+    was. The chips the pick brings in (checkout, branch) fade in after it, and
+    the row that renders them owns that: BranchToolbar (fenced) stamps
+    data-fork-chips-joining on its strip when it mounts within a moment of a
+    pick, and theme.custom.css gives every chip under the stamp but the
+    project chip a one-shot fade, so chips that mount later in that window
+    (git status resolving) fade in too. Reduced motion skips both.
   tier: 4
   files:
-    - apps/web/src/custom/DraftProjectQuickPicks.tsx
-    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
+    - apps/web/src/custom/DraftLaunchpad.tsx
+    - apps/web/src/custom/draftLaunchpadSuggestions.ts
+    - apps/web/src/custom/draftLaunchpadSuggestions.test.ts
     - apps/web/src/custom/draftProjectPickMotion.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
     # The joining chips fade, after the context row rules.
     - apps/web/src/theme.custom.css
-    # Black's tooltip ink for the pills.
-    - apps/web/src/theme.custom.inlet-black.css
   shadows: []
   watch:
     # Fenced rankRecentProjectEntries beside sortLogicalProjectsForSidebar.
@@ -6454,7 +6469,7 @@
     - apps/web/src/__fork_guards__/forkDraftProjectQuickPicks.test.ts
     - apps/web/src/custom/rankRecentProjectEntries.test.ts
     - apps/web/src/custom/draftProjectPickMotion.browser.test.tsx
-    - apps/web/src/custom/DraftProjectQuickPicks.browser.test.tsx
+    - apps/web/src/custom/draftLaunchpadSuggestions.test.ts
 
 - id: fork-landing-draft-cleanup
   intent: >

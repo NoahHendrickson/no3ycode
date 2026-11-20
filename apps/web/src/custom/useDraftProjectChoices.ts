@@ -32,8 +32,9 @@ import { rememberDraftProjectPick } from "./draftProjectPickMotion";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
 import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
 
-/** How many recent projects an unassigned draft offers as pills; the rest wait in the menu. */
-const QUICK_PICK_LIMIT = 5;
+/** How many recent projects an unassigned draft's launchpad lists before "All projects";
+    the composer is centred, so the launchpad has roughly half a window to fit in. */
+export const QUICK_PICK_LIMIT = 4;
 
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
@@ -160,7 +161,7 @@ export function useDraftProjectChoices(props: {
       : selection.kind === "project"
         ? (selection.entry?.group.projectKey ?? "")
         : "";
-  // An unassigned draft offers its recent projects as pills above the composer.
+  // An unassigned draft lists its recent projects in the launchpad under the composer.
   const recentEntries =
     selection.kind === "unassigned" && draftId !== null
       ? rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)
@@ -175,7 +176,7 @@ export function useDraftProjectChoices(props: {
     });
   };
 
-  /** Points the draft at a menu row or pill value; `pill` is the pill picked, which the chip opens from. */
+  /** Points the draft at a menu or launchpad row's value; `pill` is the row picked, which the chip opens from. */
   const pick = (next: string, pill?: Element) => {
     if (draftId === null || next === value) return;
     if (next === NO_PROJECT_VALUE) {

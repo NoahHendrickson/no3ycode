@@ -1,111 +1,101 @@
-/** MOCKUP: the New agent draft's launchpad under the centred composer. An
-    unassigned draft lists its recent projects; either state lists suggested
-    new work that fills the composer. Suggestions are placeholder data. */
+/** The New agent draft's launchpad under the centred composer: the projects to
+    pick from while the draft has none, and new work drawn from open pull
+    requests and the checkout's git status. See
+    `.fork/customizations.yaml#fork-draft-project-quick-picks`. */
+import { useAtomValue } from "@effect/atom-react";
+import type { EnvironmentId, PullRequestListInput, ScopedProjectRef } from "@t3tools/contracts";
+import * as Equal from "effect/Equal";
+import { AsyncResult, Atom } from "effect/reactivity";
 import { type ReactNode, useRef, useState } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { useComposerDraftStore } from "~/composerDraftStore";
+import { usePullRequestList } from "~/state/pullRequests";
+import { vcsEnvironment } from "~/state/vcs";
+import {
+  deriveLaunchpadSuggestions,
+  type LaunchpadGitStatus,
+  type LaunchpadSuggestion,
+  type LaunchpadSuggestionKind,
+} from "./draftLaunchpadSuggestions";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
-  FolderPlusIcon,
+  CircleAlertIcon,
   CircleXIcon,
+  CloudDownloadIcon,
   EyeIcon,
   FolderIcon,
+  FolderPlusIcon,
   GitCommitIcon,
   GitMergeIcon,
+  GitPullRequestArrowIcon,
   MessageSquareDashedIcon,
+  PenLineIcon,
   SearchIcon,
-  Trash2Icon,
-  CloudDownloadIcon,
 } from "./icons/lucide-hugeicons";
 import {
   NO_PROJECT_VALUE,
   openAddProject,
+  QUICK_PICK_LIMIT,
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 
-type SuggestionKind = "checks" | "review" | "conflicts" | "commit" | "pull" | "cleanup";
-
-interface Suggestion {
-  readonly id: string;
-  readonly kind: SuggestionKind;
-  readonly title: string;
-  readonly meta: string;
-  readonly prompt: string;
-}
-
-const KIND_ICON: Record<SuggestionKind, typeof CircleXIcon> = {
+const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
+  conflicts: CircleAlertIcon,
   checks: CircleXIcon,
+  changes: PenLineIcon,
   review: EyeIcon,
-  conflicts: GitMergeIcon,
   commit: GitCommitIcon,
   pull: CloudDownloadIcon,
-  cleanup: Trash2Icon,
+  "open-pr": GitPullRequestArrowIcon,
+  merge: GitMergeIcon,
 };
-
-const PLACEHOLDER_ACROSS_PROJECTS: readonly Suggestion[] = [
-  {
-    id: "checks-382",
-    kind: "checks",
-    title: "Fix the failing checks on #382",
-    meta: "Checks failing",
-    prompt:
-      "Fix the failing CI checks on PR #382. Pull the failing job logs, find the root cause, and push a fix to the PR branch.",
-  },
-  {
-    id: "review-391",
-    kind: "review",
-    title: "Review #391 · Mobile sheet drag handle",
-    meta: "Review requested",
-    prompt:
-      "Review PR #391. Read the diff and the review guide, then leave a summary of real issues ranked by severity.",
-  },
-  {
-    id: "conflicts-377",
-    kind: "conflicts",
-    title: "Resolve conflicts on #377",
-    meta: "Conflicts",
-    prompt:
-      "PR #377 conflicts with its base. Rebase it, resolve the conflicts, run the affected tests, and push.",
-  },
-  {
-    id: "cleanup",
-    kind: "cleanup",
-    title: "Clean up 3 worktrees whose PRs merged",
-    meta: "Cleanup",
-    prompt:
-      "List the worktrees whose pull requests have merged, confirm none has uncommitted work, and remove them.",
-  },
-];
-
-const PLACEHOLDER_IN_PROJECT: readonly Suggestion[] = [
-  PLACEHOLDER_ACROSS_PROJECTS[0]!,
-  PLACEHOLDER_ACROSS_PROJECTS[1]!,
-  {
-    id: "commit",
-    kind: "commit",
-    title: "Commit the 6 uncommitted changes",
-    meta: "Working tree",
-    prompt:
-      "Look at the uncommitted changes in this checkout, group them into sensible commits, and commit them.",
-  },
-  {
-    id: "pull",
-    kind: "pull",
-    title: "Pull the 3 new commits on custom",
-    meta: "Behind",
-    prompt: "Pull the latest commits on custom into this checkout and tell me what changed.",
-  },
-];
 
 const ROW_CLASS_NAME =
   "flex h-8 w-full min-w-0 cursor-pointer select-none items-center gap-2 rounded-sm px-2 text-left text-foreground text-sm outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground";
 
-/** Rows the project column shows before "All projects"; the composer is centred, so the
-    panel below it has roughly half a window to fit in. */
-const PROJECT_ROW_LIMIT = 4;
+/** Only what the suggestions read, so a file edit that keeps the counts doesn't re-render. */
+const launchpadGitStatusAtom = Atom.family((status: ReturnType<typeof vcsEnvironment.status>) =>
+  Atom.map(status, (result): LaunchpadGitStatus | null => {
+    const data = AsyncResult.getOrElse(result, () => null);
+    if (data === null || !data.isRepo) return null;
+    return {
+      refName: data.refName,
+      isDefaultRef: data.isDefaultRef,
+      hasPrimaryRemote: data.hasPrimaryRemote,
+      changedFileCount: data.workingTree.files.length,
+      hasUpstream: data.hasUpstream,
+      behindCount: data.behindCount,
+      aheadOfDefaultCount: data.aheadOfDefaultCount ?? 0,
+      hasOpenPullRequest: data.pr?.state === "open",
+    };
+  }).pipe(Atom.withEquality(Equal.equals)),
+);
+const NO_LAUNCHPAD_GIT_STATUS_ATOM: ReturnType<typeof launchpadGitStatusAtom> = Atom.make(null);
+
+/** One list request per environment, covering the given projects. */
+function pullRequestTargets(
+  projectRefs: ReadonlyArray<ScopedProjectRef>,
+  involvement: "authored" | "reviewing",
+) {
+  const projectIdsByEnvironment = new Map<EnvironmentId, ScopedProjectRef["projectId"][]>();
+  for (const ref of projectRefs) {
+    const projectIds = projectIdsByEnvironment.get(ref.environmentId) ?? [];
+    projectIds.push(ref.projectId);
+    projectIdsByEnvironment.set(ref.environmentId, projectIds);
+  }
+  return [...projectIdsByEnvironment].map(([environmentId, projectIds]) => ({
+    environmentId,
+    input: {
+      state: "open",
+      involvement,
+      limit: involvement === "authored" ? 20 : 10,
+      projectIds,
+    } satisfies PullRequestListInput,
+  }));
+}
 
 /** A launchpad card: a header row (a label, or the project search) over its rows. */
 function Card(props: {
@@ -125,73 +115,90 @@ function Card(props: {
   );
 }
 
-export function DraftLaunchpad(props: Parameters<typeof useDraftProjectChoices>[0]) {
+export function DraftLaunchpad(
+  props: Parameters<typeof useDraftProjectChoices>[0] & {
+    /** The checkout a picked project's thread will run in, when it is the project's own
+        checkout (not a new worktree); its git status offers commit, pull and open-PR work. */
+    readonly checkout: { readonly environmentId: EnvironmentId; readonly cwd: string } | null;
+  },
+) {
   const choices = useDraftProjectChoices(props);
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
   const { draftId } = props;
+  const unassigned = choices.selection.kind === "unassigned";
+  const recent = recentProjectRows(choices);
+  // Only the copy a pick runs on (the draft's machine), so the forge account that
+  // lists "your" pull requests is the one the task will run under.
+  const projectRefs: ScopedProjectRef[] = unassigned
+    ? recent.map((entry) => ({
+        environmentId: entry.targetProject.environmentId,
+        projectId: entry.targetProject.id,
+      }))
+    : // While a pick is pending, activeProjectRef still names the previous project.
+      props.activeProjectRef === null || choices.pending
+      ? []
+      : [props.activeProjectRef];
+  const authored = usePullRequestList(pullRequestTargets(projectRefs, "authored"));
+  const reviewing = usePullRequestList(pullRequestTargets(projectRefs, "reviewing"));
+  // While a pick is pending, `checkout` still names the previous project's checkout.
+  const checkout = unassigned || choices.pending ? null : props.checkout;
+  const git = useAtomValue(
+    checkout === null
+      ? NO_LAUNCHPAD_GIT_STATUS_ATOM
+      : launchpadGitStatusAtom(
+          vcsEnvironment.status({
+            environmentId: checkout.environmentId,
+            input: { cwd: checkout.cwd },
+          }),
+        ),
+  );
+
   if (draftId === null) return null;
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) return null;
   // "No project" is a chat with no repository; there is no project work to suggest.
   if (choices.selection.kind === "no-project") return null;
 
-  const unassigned = choices.selection.kind === "unassigned";
-  const recent = recentProjectRows(choices);
+  const suggestions = deriveLaunchpadSuggestions({
+    authored: authored.data?.entries ?? [],
+    reviewing: reviewing.data?.entries ?? [],
+    git,
+  });
+  const entryFor = (project: LaunchpadSuggestion["project"]) =>
+    project === null
+      ? null
+      : (choices.entries.find((entry) =>
+          entry.group.memberProjectRefs.some(
+            (ref) =>
+              ref.environmentId === project.environmentId && ref.projectId === project.projectId,
+          ),
+        ) ?? null);
 
-  const start = (suggestion: Suggestion, projectKey: string | null) => {
-    if (projectKey !== null) choices.pick(projectKey);
-    setPrompt(draftId, suggestion.prompt);
-  };
-
-  if (!unassigned) {
-    return (
-      <div data-fork-draft-launchpad="">
-        <Card label="Start something new">
-          {PLACEHOLDER_IN_PROJECT.map((suggestion) => {
-            const Icon = KIND_ICON[suggestion.kind];
-            return (
-              <button
-                key={suggestion.id}
-                type="button"
-                className={ROW_CLASS_NAME}
-                onClick={() => start(suggestion, null)}
-              >
-                <Icon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
-                <span className="shrink-0 text-muted-foreground/60 text-xs">{suggestion.meta}</span>
-              </button>
-            );
-          })}
-        </Card>
-      </div>
-    );
-  }
-
-  // Unassigned: where to work on the left, what to work on (anywhere) on the right.
-  // Each suggestion leads with its project's icon, since picking it picks that project.
-  return (
-    <div
-      data-fork-draft-launchpad=""
-      className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-2 max-sm:grid-cols-1"
-    >
-      <ProjectList choices={choices} />
+  const suggestionCard =
+    suggestions.length === 0 ? null : (
       <Card label="Start something new">
-        {PLACEHOLDER_ACROSS_PROJECTS.map((suggestion, index) => {
-          const entry = recent.length > 0 ? recent[index % recent.length]! : null;
+        {suggestions.map((suggestion) => {
+          // An unassigned draft's suggestions span projects, so each leads with its
+          // project's icon and picking one picks that project.
+          const entry = unassigned ? entryFor(suggestion.project) : null;
+          const Icon = KIND_ICON[suggestion.kind];
           return (
             <button
               key={suggestion.id}
               type="button"
               className={ROW_CLASS_NAME}
-              onClick={() => start(suggestion, entry?.group.projectKey ?? null)}
+              onClick={(event) => {
+                if (entry !== null) choices.pick(entry.group.projectKey, event.currentTarget);
+                setPrompt(draftId, suggestion.prompt);
+              }}
             >
-              {entry ? (
+              {entry !== null ? (
                 <ProjectFavicon
                   project={entry.targetProject}
                   className="size-4 shrink-0"
                   fallbackIcon={FolderIcon}
                 />
               ) : (
-                <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
               )}
               <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
               <span className="shrink-0 text-muted-foreground/60 text-xs">{suggestion.meta}</span>
@@ -199,6 +206,24 @@ export function DraftLaunchpad(props: Parameters<typeof useDraftProjectChoices>[
           );
         })}
       </Card>
+    );
+
+  if (!unassigned) {
+    return suggestionCard === null ? null : (
+      <div data-fork-draft-launchpad="">{suggestionCard}</div>
+    );
+  }
+  return (
+    <div
+      data-fork-draft-launchpad=""
+      className={
+        suggestionCard === null
+          ? undefined
+          : "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-2 max-sm:grid-cols-1"
+      }
+    >
+      <ProjectList choices={choices} recent={recent} />
+      {suggestionCard}
     </div>
   );
 }
@@ -209,11 +234,14 @@ const OPEN_LIST_BOTTOM_RESERVE = 64;
 /** Projects with recent sidebar activity, or the first pickable ones when none has any. */
 function recentProjectRows(choices: DraftProjectChoices) {
   const recent = choices.recentEntries ?? [];
-  return (recent.length > 0 ? recent : choices.entries).slice(0, PROJECT_ROW_LIMIT);
+  return recent.length > 0 ? recent : choices.entries.slice(0, QUICK_PICK_LIMIT);
 }
 
-function ProjectList(props: { readonly choices: DraftProjectChoices }) {
-  const { choices } = props;
+function ProjectList(props: {
+  readonly choices: DraftProjectChoices;
+  readonly recent: ReturnType<typeof recentProjectRows>;
+}) {
+  const { choices, recent } = props;
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
   // Expanded or searching, the list grows in place and scrolls inside whatever
@@ -223,13 +251,12 @@ function ProjectList(props: { readonly choices: DraftProjectChoices }) {
   const searching = query.trim().length > 0;
   const open = expanded || searching;
 
+  // Measured each time the list opens, so a resize or a taller composer since the last open counts.
   const measureOpenHeight = () => {
-    if (openMaxHeight !== null) return;
     const top = listRef.current?.getBoundingClientRect().top ?? 0;
     setOpenMaxHeight(Math.max(128, window.innerHeight - top - OPEN_LIST_BOTTOM_RESERVE));
   };
 
-  const recent = recentProjectRows(choices);
   const recentKeys = new Set(recent.map((entry) => entry.group.projectKey));
   const allOrdered = [
     ...recent,
@@ -259,13 +286,13 @@ function ProjectList(props: { readonly choices: DraftProjectChoices }) {
         autoComplete="off"
         className="min-w-0 flex-1 bg-transparent text-foreground text-xs outline-none placeholder:font-medium placeholder:text-muted-foreground/70"
         onChange={(event) => {
-          measureOpenHeight();
+          if (!open) measureOpenHeight();
           setQuery(event.target.value);
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter" && rows[0]) {
             event.preventDefault();
-            choices.pick(rows[0].group.projectKey);
+            choices.pick(rows[0].group.projectKey, event.currentTarget);
           } else if (event.key === "Escape" && query.length > 0) {
             event.preventDefault();
             event.stopPropagation();
@@ -288,7 +315,7 @@ function ProjectList(props: { readonly choices: DraftProjectChoices }) {
             key={entry.group.projectKey}
             type="button"
             className={ROW_CLASS_NAME}
-            onClick={() => choices.pick(entry.group.projectKey)}
+            onClick={(event) => choices.pick(entry.group.projectKey, event.currentTarget)}
           >
             <ProjectFavicon
               project={entry.targetProject}
@@ -307,7 +334,7 @@ function ProjectList(props: { readonly choices: DraftProjectChoices }) {
           <button
             type="button"
             className={ROW_CLASS_NAME}
-            onClick={() => choices.pick(NO_PROJECT_VALUE)}
+            onClick={(event) => choices.pick(NO_PROJECT_VALUE, event.currentTarget)}
           >
             <MessageSquareDashedIcon className="size-4 shrink-0 text-muted-foreground" />
             <span className="min-w-0 flex-1 truncate text-muted-foreground">No project</span>

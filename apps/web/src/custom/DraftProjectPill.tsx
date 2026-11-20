@@ -1,7 +1,7 @@
 /** A draft's project chip, first in the composer's context row and painted like
-    its neighbours by the row's CSS ([data-fork-composer-context-row]); an
-    unassigned draft gets the quick picks instead. See
-    `.fork/customizations.yaml#fork-new-agent-draft`. */
+    its neighbours by the row's CSS ([data-fork-composer-context-row]). An
+    unassigned draft has none: it picks from the launchpad under the composer
+    (custom/DraftLaunchpad). See `.fork/customizations.yaml#fork-new-agent-draft`. */
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
@@ -61,8 +61,6 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
       </Button>
     );
   }
-  // MOCKUP: an unassigned draft picks from DraftLaunchpad's list under the
-  // composer, so the chip appears only once a project is picked.
   if (choices.selection.kind === "unassigned") return null;
   return <DraftProjectChip choices={choices} draftId={props.draftId} />;
 }
