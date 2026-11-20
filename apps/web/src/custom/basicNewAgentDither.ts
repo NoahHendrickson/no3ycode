@@ -41,11 +41,18 @@ export function ditherLayout(box: { width: number; height: number }, dpr: number
 /** assets/basic-new-agent-mountain.png, one pixel per cell; opaque, so it covers the column. */
 export const MOUNTAIN_CELLS = { width: 692, height: 447 } as const;
 
+/** assets/basic-new-agent-jolly-petal.png (Dither Studio's Jolly Petal 6), likewise opaque. */
+export const JOLLY_PETAL_CELLS = { width: 576, height: 373 } as const;
+
 /** The smallest whole-device-pixel cell that covers the column, with the picture centred on it. */
-export function mountainLayout(box: { width: number; height: number }, dpr: number): PictureLayout {
+function coverLayout(
+  cells: { width: number; height: number },
+  box: { width: number; height: number },
+  dpr: number,
+): PictureLayout {
   const devicePx = Math.max(
-    Math.ceil((box.width * dpr) / MOUNTAIN_CELLS.width),
-    Math.ceil((box.height * dpr) / MOUNTAIN_CELLS.height),
+    Math.ceil((box.width * dpr) / cells.width),
+    Math.ceil((box.height * dpr) / cells.height),
     1,
   );
   const cell = devicePx / dpr;
@@ -60,7 +67,13 @@ export function mountainLayout(box: { width: number; height: number }, dpr: numb
     );
   return {
     cell,
-    left: place(box.width, MOUNTAIN_CELLS.width * cell),
-    top: place(box.height, MOUNTAIN_CELLS.height * cell),
+    left: place(box.width, cells.width * cell),
+    top: place(box.height, cells.height * cell),
   };
 }
+
+export const mountainLayout = (box: { width: number; height: number }, dpr: number) =>
+  coverLayout(MOUNTAIN_CELLS, box, dpr);
+
+export const jollyPetalLayout = (box: { width: number; height: number }, dpr: number) =>
+  coverLayout(JOLLY_PETAL_CELLS, box, dpr);

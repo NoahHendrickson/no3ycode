@@ -2,7 +2,7 @@
 
    Every rule that restates the template, its composer or its hung menus for
    Inlet Black alone (Figma 630:14154): the dark-ink sidebar surfaces on a
-   cream panel, the new-agent texture, the composer menus. Tokens live in
+   cream panel, the frosted new-agent composer, the composer menus. Tokens live in
    theme.custom.palettes.css. Imported last of the Inlet files so these follow
    the rules they restate, and kept in their original order among themselves:
    several override one another at equal specificity. */
@@ -87,26 +87,9 @@
     --info-foreground: var(--fork-texture-blue);
   }
 
-  /* Inlet Black's new-agent screen draws the pixel texture
-     (custom/InletBlackNewAgentTexture) behind the panel's content, so the
-     header, the workspace and the draft composer stop painting the panel over
-     it. The column already paints the cream under the texture's faded edge. */
-
-  & [data-chat-column-maximized-away][data-fork-draft-hero] {
-    position: relative;
-
-    & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
-      background-color: transparent;
-    }
-
-    & [data-chat-composer-overlay][data-draft-hero] {
-      background-image: none;
-    }
-  }
-
-  /* Over the texture the draft composer is frosted cream: its fills (Black's
-     #d0ccb5 vessel, #ecebe1 prompt, chips) let the texture through, and the
-     vessel blurs it. The texture keeps moving, so the blur redraws with it. */
+  /* Over the new-agent picture the draft composer is frosted cream: its fills
+     (Black's #d0ccb5 vessel, #ecebe1 prompt, chips) let the picture through,
+     and the vessel blurs it. The texture keeps moving, so the blur redraws with it. */
 
   &
     [data-chat-column-maximized-away][data-fork-draft-hero]

@@ -87,9 +87,9 @@ describe("the Glass settings", () => {
     vi.unstubAllGlobals();
   });
 
-  async function stamp(glass3d: string | null) {
+  async function stamp(glass3d: string | null, backdrop = '"portrait"') {
     vi.resetModules();
-    const values = new Map([["t3code:fork:glass-new-agent-picture:v1", "true"]]);
+    const values = new Map([["t3code:fork:glass-new-agent-backdrop:v1", backdrop]]);
     if (glass3d !== null) values.set("t3code:fork:glass-3d:v1", glass3d);
     const attributes = new Map<string, string>();
     vi.stubGlobal("window", {
@@ -121,5 +121,10 @@ describe("the Glass settings", () => {
 
   it("reads an unknown stored value as Full", async () => {
     expect(await stamp("false")).toEqual({});
+  });
+
+  it("stands the portrait down for any other new agent background", async () => {
+    expect(await stamp(null, '"jollyPetal"')).toEqual({ "data-fork-glass-picture": "off" });
+    expect(await stamp(null, "false")).toEqual({});
   });
 });

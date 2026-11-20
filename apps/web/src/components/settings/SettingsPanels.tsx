@@ -71,7 +71,16 @@ import {
 } from "../../custom/basicNewAgentBackdropSetting";
 /* fork:end fork-basic-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
+import {
+  DEFAULT_GLASS_NEW_AGENT_BACKDROP,
+  useGlassNewAgentBackdrop,
+} from "../../custom/forkGlassNewAgentPicture";
+/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+import {
+  DEFAULT_INLET_NEW_AGENT_BACKDROPS,
+  useInletNewAgentBackdrop,
+} from "../../custom/inletNewAgentBackdropSetting";
+/* fork:end fork-inlet-black-texture */
 /* fork:end fork-glass-new-agent-stage */
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 import { DEFAULT_FORK_GLASS_3D_MODE, useForkGlass3d } from "../../custom/forkGlass3d";
@@ -478,18 +487,29 @@ export function useSettingsRestore(onRestored?: () => void) {
   } = useForkAppearance(setTheme);
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
-  // Only while Inlet shows the row, as with Glass's picture below.
+  // Only while Inlet shows the row, as with Glass's new agent background below.
   const inletColorChanged = appearance === INLET_THEME && inletColor !== DEFAULT_INLET_COLOR;
   /* fork:end fork-inlet-theme */
+  /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+  // Both colours' picks while Inlet shows the row: the colour resets too, and would show the other.
+  const [blackNewAgentBackdrop, setBlackNewAgentBackdrop] = useInletNewAgentBackdrop("black");
+  const [creamNewAgentBackdrop, setCreamNewAgentBackdrop] = useInletNewAgentBackdrop("cream");
+  const blackNewAgentBackdropChanged =
+    appearance === INLET_THEME && blackNewAgentBackdrop !== DEFAULT_INLET_NEW_AGENT_BACKDROPS.black;
+  const creamNewAgentBackdropChanged =
+    appearance === INLET_THEME && creamNewAgentBackdrop !== DEFAULT_INLET_NEW_AGENT_BACKDROPS.cream;
+  const inletNewAgentBackdropChanged = blackNewAgentBackdropChanged || creamNewAgentBackdropChanged;
+  /* fork:end fork-inlet-black-texture */
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   // Counted on any theme, like the tones: restoring defaults lands on Basic, which would show it.
   const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
   const basicNewAgentBackdropChanged = basicNewAgentBackdrop !== DEFAULT_BASIC_NEW_AGENT_BACKDROP;
   /* fork:end fork-basic-theme */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-  const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
-  // Only while Glass shows the row: elsewhere the switch is hidden and inert.
-  const glassNewAgentPictureChanged = appearance === COOL_DARKER_THEME && !glassNewAgentPicture;
+  const [glassNewAgentBackdrop, setGlassNewAgentBackdrop] = useGlassNewAgentBackdrop();
+  // Only while Glass shows the row: elsewhere the pick is hidden and inert.
+  const glassNewAgentBackdropChanged =
+    appearance === COOL_DARKER_THEME && glassNewAgentBackdrop !== DEFAULT_GLASS_NEW_AGENT_BACKDROP;
   /* fork:end fork-glass-new-agent-stage */
   /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
   const [glass3d, setGlass3d] = useForkGlass3d();
@@ -521,8 +541,11 @@ export function useSettingsRestore(onRestored?: () => void) {
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
     ...(inletColorChanged ? ["Inlet colour"] : []),
     /* fork:end fork-inlet-theme */
+    /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+    ...(inletNewAgentBackdropChanged ? ["Inlet new agent background"] : []),
+    /* fork:end fork-inlet-black-texture */
     /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-    ...(glassNewAgentPictureChanged ? ["New agent picture"] : []),
+    ...(glassNewAgentBackdropChanged ? ["Glass new agent background"] : []),
     /* fork:end fork-glass-new-agent-stage */
     /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
     ...(glass3dChanged ? ["3D glass"] : []),
@@ -684,6 +707,12 @@ export function useSettingsRestore(onRestored?: () => void) {
     );
     if (!confirmed) return;
 
+    /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+    if (blackNewAgentBackdropChanged)
+      setBlackNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS.black);
+    if (creamNewAgentBackdropChanged)
+      setCreamNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS.cream);
+    /* fork:end fork-inlet-black-texture */
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
        Before the palette leaves Inlet, so the colour's appearance is settled with it. */
     if (inletColorChanged) setInletColor(DEFAULT_INLET_COLOR);
@@ -696,7 +725,7 @@ export function useSettingsRestore(onRestored?: () => void) {
     if (basicNewAgentBackdropChanged) setBasicNewAgentBackdrop(DEFAULT_BASIC_NEW_AGENT_BACKDROP);
     /* fork:end fork-basic-theme */
     /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-    if (glassNewAgentPictureChanged) setGlassNewAgentPicture(true);
+    if (glassNewAgentBackdropChanged) setGlassNewAgentBackdrop(DEFAULT_GLASS_NEW_AGENT_BACKDROP);
     /* fork:end fork-glass-new-agent-stage */
     /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
     if (glass3dChanged) setGlass3d(DEFAULT_FORK_GLASS_3D_MODE);

@@ -20,9 +20,9 @@
    other palette sees any of it.
 
    Every selector also stands down while the root carries
-   data-fork-glass-picture="off", the Settings switch that turns the stage
-   off (custom/forkGlassNewAgentPicture.ts), so a draft paints on the
-   started thread's stage. The gate sits in :where(), adding no
+   data-fork-glass-picture="off", stamped while Settings picks a background
+   other than this portrait (custom/forkGlassNewAgentPicture.ts), so a draft
+   paints on the started thread's stage. The gate sits in :where(), adding no
    specificity, so no contest with the palettes sheet changes. */
 
 /* The card paints on ChatView's own root (upstream stamps it

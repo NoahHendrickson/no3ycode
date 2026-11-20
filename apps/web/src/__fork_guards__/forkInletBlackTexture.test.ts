@@ -5,6 +5,11 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it, onTestFinished, vi } from "vite-plus/test";
 
+import { BASIC_NEW_AGENT_BACKDROPS } from "../custom/basicNewAgentBackdropSetting";
+import {
+  DEFAULT_INLET_NEW_AGENT_BACKDROPS,
+  INLET_NEW_AGENT_BACKDROPS,
+} from "../custom/inletNewAgentBackdropSetting";
 import { paintPixelTexture } from "../custom/pixelTexture/paintPixelTexture";
 import { cssRules } from "./cssRules";
 
@@ -36,12 +41,14 @@ const GRID = { cols: 12, rows: 10, unit: 2 };
 const COLORS = { ground: "#fff", text: "#000" };
 
 describe("fork guard: fork-inlet-black-texture", () => {
-  it("mounts the texture in the chat column, on Inlet Black's new-agent screen only", () => {
-    expect(read("../components/ChatView.tsx")).toContain(
-      "<InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />",
+  it("lets each Inlet colour pick its new-agent background, Black starting on the texture", () => {
+    expect(INLET_NEW_AGENT_BACKDROPS).toEqual(["none", ...BASIC_NEW_AGENT_BACKDROPS]);
+    expect(DEFAULT_INLET_NEW_AGENT_BACKDROPS).toEqual({ black: "texture", cream: "none" });
+    expect(read("../custom/BasicNewAgentBackdrop.tsx")).toContain(
+      'if (inletColor !== null && inletBackdrop !== "none") {',
     );
-    expect(read("../custom/InletBlackNewAgentTexture.tsx")).toContain(
-      'if (!props.shown || inletColor !== "black") return null;',
+    expect(read("../components/settings/AppearanceSettingsPanel.tsx")).toMatch(
+      /appearance === INLET_THEME \? \(\s*<SettingsRow\s*title="New agent background"/u,
     );
   });
 
@@ -67,10 +74,10 @@ describe("fork guard: fork-inlet-black-texture", () => {
     expect(page.requested).toHaveBeenCalledTimes(1);
   });
 
-  it("clears the panel's paint over the texture on Inlet Black's new-agent screen", () => {
-    const rule = cssRules(read("../theme.custom.inlet-black.css")).find(
+  it("clears the panel's paint over the picture on either Inlet colour's new-agent screen", () => {
+    const rule = cssRules(read("../theme.custom.inlet.css")).find(
       (candidate) =>
-        candidate.selector.includes('[data-fork-inlet-color="black"]') &&
+        !candidate.selector.includes("data-fork-inlet-color") &&
         candidate.selector.includes("[data-fork-draft-hero]") &&
         candidate.selector.includes("[data-chat-header]"),
     );

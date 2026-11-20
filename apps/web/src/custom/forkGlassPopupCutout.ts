@@ -24,7 +24,10 @@
  * too. A popup that opens wholly inside the card gets no hole; it is stamped
  * data-fork-glass-frost with the card's box relative to itself, and
  * theme.custom.glass.css lays the stage's baked frost under it, the way the
- * composer's pills carry it.
+ * composer's pills carry it. An opaque Settings picture drawn instead
+ * (BasicNewAgentBackdrop) is the same exception: a popup wholly inside one is
+ * stamped data-fork-glass-over-picture and blurs the picture itself
+ * (theme.custom.palettes.css).
  *
  * Masks exist only while a popup is open. With none open, all that runs is a
  * childList observer on <body> and on the portal containers, to notice one
@@ -57,15 +60,23 @@ export const FORK_GLASS_POPUP_SELECTOR = [
  * ChatView's root while its composer is a new-agent draft: the picture card's
  * host. Not while a desktop tab floats over it, when the card drops its
  * stacking context and with it the picture (theme.custom.glass.css), nor
- * while the picture is switched off (forkGlassNewAgentPicture.ts).
+ * while another background replaces the picture (forkGlassNewAgentPicture.ts).
  */
 const DRAFT_CARD_SELECTOR = `:root:not(${PICTURE_OFF}) [data-chat-column-maximized-away]:has([data-chat-composer-overlay="true"][data-draft-hero]):not(:has([data-preview-mini-player] [data-browser-surface-slot]))`;
+
+/** Each opaque Settings picture drawn in place of the portrait, one per draft that shows one. */
+const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]`;
 
 /** Base UI's portal node, which nests a portal opened from inside it. */
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
 /** Stamped on a popup that frosts over the draft card instead of cutting it. */
 const FORK_GLASS_FROST_ATTRIBUTE = "data-fork-glass-frost";
+/** Stamped instead over a draft showing another picture. */
+const FORK_GLASS_OVER_PICTURE_ATTRIBUTE = "data-fork-glass-over-picture";
+
+/** What a popup over a new agent's draft lands on, and the stamp that says so. */
+type DraftStage = { readonly rect: Rect; readonly attribute: string };
 
 /** The attributes Base UI moves on a popup's subtree when it closes or repositions. */
 const POPUP_ATTRIBUTES = ["style", "hidden", "data-ending-style", "data-side", "data-align"];
@@ -233,8 +244,20 @@ export function frostPlacement(
   };
 }
 
-/** The draft card's box: the chat view inset by the card's own inset. */
-function draftCard(appRoot: HTMLElement): Rect | null {
+/** Every opaque picture's box, then the draft card's (the chat view inset by its own inset). */
+function draftStages(appRoot: HTMLElement): Array<DraftStage> {
+  const stages = Array.from(appRoot.querySelectorAll(OPAQUE_PICTURE_SELECTOR), (picture) => {
+    const rect = picture.getBoundingClientRect();
+    return {
+      rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      attribute: FORK_GLASS_OVER_PICTURE_ATTRIBUTE,
+    };
+  });
+  const card = draftCard(appRoot);
+  return card === null ? stages : [...stages, card];
+}
+
+function draftCard(appRoot: HTMLElement): DraftStage | null {
   const view = appRoot.querySelector<HTMLElement>(DRAFT_CARD_SELECTOR);
   if (view === null) return null;
   const style = getComputedStyle(view);
@@ -244,10 +267,13 @@ function draftCard(appRoot: HTMLElement): Rect | null {
   const left = Number.parseFloat(style.getPropertyValue("--fork-glass-card-inset-left")) || 0;
   const rect = view.getBoundingClientRect();
   return {
-    x: rect.left + left,
-    y: rect.top + inset,
-    width: rect.width - left - inset,
-    height: rect.height - inset * 2,
+    rect: {
+      x: rect.left + left,
+      y: rect.top + inset,
+      width: rect.width - left - inset,
+      height: rect.height - inset * 2,
+    },
+    attribute: FORK_GLASS_FROST_ATTRIBUTE,
   };
 }
 
@@ -301,6 +327,7 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
 
   const clearFrost = (popup: HTMLElement) => {
     popup.removeAttribute(FORK_GLASS_FROST_ATTRIBUTE);
+    popup.removeAttribute(FORK_GLASS_OVER_PICTURE_ATTRIBUTE);
     for (const property of FROST_PROPERTIES) popup.style.removeProperty(property);
   };
 
@@ -308,25 +335,29 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
    * Frosts the popup if it sits inside the draft card; true if it does. A
    * closing popup keeps whatever it had, so it fades out on the same frost.
    */
-  const frost = (popup: HTMLElement, hole: CutoutHole, card: Rect | null): boolean => {
-    const placement =
-      card === null
-        ? null
-        : frostPlacement(
-            { ...hole, borderLeft: popup.clientLeft, borderTop: popup.clientTop },
-            card,
-          );
-    if (placement === null) {
+  const frost = (popup: HTMLElement, hole: CutoutHole, stages: Array<DraftStage>): boolean => {
+    const box = { ...hole, borderLeft: popup.clientLeft, borderTop: popup.clientTop };
+    let stage: DraftStage | null = null;
+    let placement: Record<string, string> | null = null;
+    for (const candidate of stages) {
+      placement = frostPlacement(box, candidate.rect);
+      if (placement !== null) {
+        stage = candidate;
+        break;
+      }
+    }
+    if (stage === null || placement === null) {
       if (frosted.delete(popup)) {
         clearFrost(popup);
         frostChanged = true;
       }
       return false;
     }
-    const written = Object.values(placement).join("|");
+    const written = [stage.attribute, ...Object.values(placement)].join("|");
     if (frosted.get(popup) !== written) {
+      if (frosted.has(popup)) clearFrost(popup);
       frosted.set(popup, written);
-      popup.setAttribute(FORK_GLASS_FROST_ATTRIBUTE, "");
+      popup.setAttribute(stage.attribute, "");
       for (const [property, value] of Object.entries(placement)) {
         popup.style.setProperty(property, value);
       }
@@ -342,14 +373,15 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
       if (!popup.isConnected) frosted.delete(popup);
     }
     const holes: Array<CutoutHole> = [];
-    let card: Rect | null | undefined;
+    let stages: Array<DraftStage> | undefined;
     for (const { popup, layer } of placed) {
       const hole = measure(popup, layer, layers[layer]?.z ?? 0);
       if (hole === null) continue;
-      if (card === undefined) card = draftCard(appRoot);
+      stages ??= draftStages(appRoot);
       // The frost layer paints only on dropdown-glass (theme.custom.glass.css).
-      const frostCard = popup.classList.contains("dropdown-glass") ? card : null;
-      if (!frost(popup, hole, frostCard)) holes.push(hole);
+      if (!frost(popup, hole, popup.classList.contains("dropdown-glass") ? stages : [])) {
+        holes.push(hole);
+      }
     }
 
     const surfaces: Array<CutoutSurface<HTMLElement>> = [];

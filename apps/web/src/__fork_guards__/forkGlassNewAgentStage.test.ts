@@ -19,7 +19,11 @@ import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import { COOL_DARKER_THEME, FORK_THEME_ATTRIBUTE } from "../custom/forkTheme";
-import { FORK_GLASS_PICTURE_OFF_ATTRIBUTE } from "../custom/forkGlassNewAgentPicture";
+import { BASIC_NEW_AGENT_BACKDROPS } from "../custom/basicNewAgentBackdropSetting";
+import {
+  FORK_GLASS_PICTURE_OFF_ATTRIBUTE,
+  GLASS_NEW_AGENT_BACKDROPS,
+} from "../custom/forkGlassNewAgentPicture";
 import { FORK_GLASS_POPUP_SELECTOR } from "../custom/forkGlassPopupCutout";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { cssRules } from "./cssRules";
@@ -62,7 +66,7 @@ const find = (selector: string) =>
   rules.find((rule) => compact(rule.selector) === compact(selector));
 
 describe("fork guard: fork-glass-new-agent-stage", () => {
-  it("stands the whole stage down when the picture switch is off", () => {
+  it("stands the whole stage down when another background is picked", () => {
     // Stamped before first render, so an off draft never flashes the card.
     expect(readSibling("../main.tsx")).toContain("initializeForkGlassNewAgentPicture();");
     // Off, popups cut holes as in a started thread: the cutout finds no card
@@ -79,10 +83,24 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     expect(compact(palettes)).toContain(
       compact(`${offRoot} [data-slot="popover-popup"][data-starting-style]`),
     );
-    // React never reads the switch on ChatView's render path.
+    // Over an opaque picture a popup inside it is stamped rather than cut, and
+    // blurs that picture in the composer's tint instead of the desktop.
+    expect(readSibling("../custom/forkGlassPopupCutout.ts")).toContain(
+      ":root${PICTURE_OFF} [data-fork-opaque-backdrop]",
+    );
+    expect(readSibling("../custom/BasicNewAgentBackdrop.tsx")).toContain(
+      "data-fork-opaque-backdrop",
+    );
+    expect(compact(palettes)).toContain(
+      compact(
+        ".dropdown-glass[data-fork-glass-over-picture] { background: var(--fork-glass-picture-tint);",
+      ),
+    );
+    // React never reads the pick on ChatView's render path.
     expect(chatView).not.toContain("forkGlassNewAgentPicture");
-    expect(readSibling("../components/settings/AppearanceSettingsPanel.tsx")).toContain(
-      'title="New agent picture"',
+    expect(GLASS_NEW_AGENT_BACKDROPS).toEqual(["portrait", ...BASIC_NEW_AGENT_BACKDROPS]);
+    expect(readSibling("../components/settings/AppearanceSettingsPanel.tsx")).toMatch(
+      /appearance === COOL_DARKER_THEME \? \(\s*<SettingsRow\s*title="New agent background"/u,
     );
   });
 
