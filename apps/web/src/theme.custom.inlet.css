@@ -75,6 +75,24 @@
   background: var(--background);
 }
 
+/* The new-agent screen draws the picture picked in Settings
+   (custom/BasicNewAgentBackdrop) behind the panel's content, so the header,
+   the workspace and the draft composer stop painting the panel over it. The
+   column already paints the panel under the picture's faded edges. */
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-chat-column-maximized-away][data-fork-draft-hero] {
+  position: relative;
+
+  & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
+    background-color: transparent;
+  }
+
+  & [data-chat-composer-overlay][data-draft-hero] {
+    background-image: none;
+  }
+}
+
 /* Every column's header row carries the same bottom line, so it runs across
    the card: the panels' headers draw theirs, the conversation's draws it here.
    The new-agent screen (a draft hero) has no columns beside it and keeps none. */

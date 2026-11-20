@@ -1,30 +1,37 @@
 /**
- * Glass new-agent picture switch — see
- * `.fork/customizations.yaml#fork-glass-new-agent-stage`.
+ * Glass new-agent background — see `.fork/customizations.yaml#fork-glass-new-agent-stage`.
  *
- * Turns Glass's new-agent stage (theme.custom.glass.css) off and on. Off,
- * every rule in that sheet stands down through the root attribute below,
- * so a draft paints on the same stage as a started thread; the composer
- * still centres, which is fork-new-agent-draft's and not the stage's. The
- * popup cutout and the palettes sheet read the same attribute, so popups,
- * the thread details popover among them, cut holes as in a started thread.
- * The attribute is the one place the state lives in the DOM; no component
- * subscribes to it.
+ * Glass's own portrait is its stage (theme.custom.glass.css). Any other pick stamps the root
+ * attribute below, every rule in that sheet stands down (so popups cut holes as in a started
+ * thread), and BasicNewAgentBackdrop draws the pick instead.
  */
 import * as Schema from "effect/Schema";
 
+import {
+  BASIC_NEW_AGENT_BACKDROPS,
+  BASIC_NEW_AGENT_BACKDROP_LABELS,
+} from "./basicNewAgentBackdropSetting";
 import { createForkRootSetting } from "./forkRootSetting";
 
-/** Stamped on the root while the picture is off; the stage sheet's rules require its absence. */
+/** Stamped on the root while the portrait is off; the stage sheet's rules require its absence. */
 export const FORK_GLASS_PICTURE_OFF_ATTRIBUTE = "data-fork-glass-picture";
+
+export const GLASS_NEW_AGENT_BACKDROPS = ["portrait", ...BASIC_NEW_AGENT_BACKDROPS] as const;
+export type GlassNewAgentBackdrop = (typeof GLASS_NEW_AGENT_BACKDROPS)[number];
+export const DEFAULT_GLASS_NEW_AGENT_BACKDROP: GlassNewAgentBackdrop = "portrait";
+
+export const GLASS_NEW_AGENT_BACKDROP_LABELS: Record<GlassNewAgentBackdrop, string> = {
+  portrait: "Glass portrait",
+  ...BASIC_NEW_AGENT_BACKDROP_LABELS,
+};
 
 export const {
   initialize: initializeForkGlassNewAgentPicture,
-  useValue: useForkGlassNewAgentPicture,
+  useValue: useGlassNewAgentBackdrop,
 } = createForkRootSetting({
-  storageKey: "t3code:fork:glass-new-agent-picture:v1",
+  storageKey: "t3code:fork:glass-new-agent-backdrop:v1",
   attribute: FORK_GLASS_PICTURE_OFF_ATTRIBUTE,
-  schema: Schema.Boolean,
-  defaultValue: true,
-  attributeValue: (enabled) => (enabled ? null : "off"),
+  schema: Schema.Literals(GLASS_NEW_AGENT_BACKDROPS),
+  defaultValue: DEFAULT_GLASS_NEW_AGENT_BACKDROP,
+  attributeValue: (backdrop) => (backdrop === "portrait" ? null : "off"),
 });

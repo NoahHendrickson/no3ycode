@@ -1697,7 +1697,7 @@
     The new-agent screen carries Inlet Black's pixel texture on every tone
     (custom/BasicNewAgentBackdrop.tsx): in from the column's right edge, below
     the header, in the tone's base and text colours. Settings › Appearance ›
-    New agent background (Basic only, device-local) swaps it for the dither
+    New agent background (Basic, and Glass through fork-glass-new-agent-stage; device-local) swaps it for the dither
     picture (custom/assets/basic-new-agent-dither.png, one pixel per cell, in
     its own colours over a transparent ground) across the whole column
     (custom/basicNewAgentDither.ts): every cell a whole number of device
@@ -1710,8 +1710,9 @@
     each swells and thins with the swell running down it, its core brightening
     at the full, re-dithered against the art's own ordered thresholds; ten
     frames a second, paused while the window is in the background, still under
-    Reduce Motion. Mountain Dither (assets/basic-new-agent-mountain.png, opaque,
-    still) covers the column centred, at the smallest whole-device-pixel cell
+    Reduce Motion. Mountain Dither (assets/basic-new-agent-mountain.png) and
+    Jolly Petal (assets/basic-new-agent-jolly-petal.png), both opaque and
+    still, cover the column centred, at the smallest whole-device-pixel cell
     that covers it. Restore defaults resets the pick.
     Light and Cream keep the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
@@ -1738,6 +1739,7 @@
     - apps/web/src/custom/ForkChoiceSelect.tsx
     - apps/web/src/custom/assets/basic-new-agent-dither.png
     - apps/web/src/custom/assets/basic-new-agent-mountain.png
+    - apps/web/src/custom/assets/basic-new-agent-jolly-petal.png
     - apps/web/src/custom/ditherLight.ts
     - apps/web/src/custom/backgroundPausedLoop.ts
     - apps/web/src/custom/forkTopbarHeight.ts
@@ -2309,10 +2311,18 @@
     Must not alter Westworld, Neutral Dark, Neutral Darker or default Dark,
     and must not change a started Glass thread.
 
-    Settings > Appearance > Interface carries a "New agent picture" switch
-    while Glass is the palette, on by default. Off, the whole stage stands
-    down and a draft paints on the started thread's stage, the composer
-    still centred. Device-local (localStorage), restored by Restore defaults.
+    Settings > Appearance carries a "New agent background" pick while Glass
+    is the palette: Glass portrait (this stage, the default) or any of
+    Basic's backgrounds (fork-basic-theme). Any other pick stands the whole
+    stage down, so a draft paints on the started thread's stage with the
+    composer still centred, and BasicNewAgentBackdrop draws the pick there,
+    the texture in Glass's stage and ink. Over those opaque pictures the
+    composer, its pills and the popups that open over the chat view are one
+    dark tint (--fork-glass-picture-tint, black-ish 36%) with a real
+    backdrop-filter blur, which does reach the screen there because no
+    wallpaper sits under it (checked in the desktop app, 2026-11-19); the
+    vibrancy guard's no-filter rule exempts only this state. Device-local
+    (localStorage), restored by Restore defaults.
   tier: 2
   files:
     - apps/web/src/theme.custom.glass.css
@@ -2321,7 +2331,7 @@
     - apps/web/src/custom/assets/glass-hero-popup-frost.png
     # Stamps popups over the card instead of cutting them.
     - apps/web/src/custom/forkGlassPopupCutout.ts
-    # The picture switch: storage, the root attribute the sheet gates on.
+    # The background pick: storage, the root attribute the sheet gates on.
     - apps/web/src/custom/forkGlassNewAgentPicture.ts
   watch:
     # @imports the sheet at its top, after Westworld's, and names
@@ -2337,7 +2347,7 @@
     # stacking-context carve and the cutout's draft-card selector key on.
     - apps/web/src/components/preview/ThreadPreviewMiniPlayer.tsx
     - apps/web/src/browser/BrowserSurfaceSlot.tsx
-    # The picture switch: its init before first render, and its Settings row.
+    # The background pick: its init before first render, and its Settings row.
     - apps/web/src/main.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
@@ -4834,7 +4844,9 @@
     and non-Glass palettes never mask anything. A popup wholly inside the
     new-agent draft's picture card gets no hole: it is stamped
     data-fork-glass-frost and frosts over the picture instead
-    (fork-glass-new-agent-stage).
+    (fork-glass-new-agent-stage). Over another Settings picture, one wholly
+    inside the chat view is stamped data-fork-glass-over-picture and blurs
+    that picture under the composer's tint instead.
   tier: 3
   files:
     - apps/web/src/custom/forkGlassPopupCutout.ts
@@ -6880,10 +6892,15 @@
 
 - id: fork-inlet-black-texture
   intent: >
-    Inlet Black's new-agent screen shows the portfolio's pixel texture (the
+    Inlet's new-agent screen draws the background picked for the shown Inlet
+    colour in Settings > Appearance: None, the portfolio's pixel texture (the
     Landing preset: an Edge of pixel faces, leaves and shapes coming in from
-    the panel's right edge) on the panel's cream, behind the draft. Only Inlet
-    Black, only the new-agent screen; threads keep the plain panel.
+    the panel's right edge, inked in that colour's panel and ink) or any of
+    Basic's dither pictures (custom/BasicNewAgentBackdrop.tsx, which draws
+    them for every theme). Each colour keeps its own pick
+    (custom/inletNewAgentBackdropSetting.ts, device-local): Black starts on
+    the texture it always had, Cream on None. Only the new-agent screen;
+    threads keep the plain panel. Restore defaults resets the shown colour's.
 
     It keeps moving while the screen is open, which Noey chose over settling
     (Nov 12) as an explicit sign-off on CLAUDE.md's rule against continuously
@@ -6895,19 +6912,22 @@
     (textureModel.ts) and a painter that owns the canvas and frame loop. A
     resize re-deals it only when the whole-cell grid changes.
     The column's header, workspace area and draft composer stop painting the
-    panel there so the texture shows through.
+    panel there on either colour (theme.custom.inlet.css) so the picture shows
+    through; Black's draft composer is frosted cream over it.
   tier: 4
   files:
-    - apps/web/src/custom/InletBlackNewAgentTexture.tsx
+    - apps/web/src/custom/inletNewAgentBackdropSetting.ts
     - apps/web/src/custom/pixelTexture/PixelTextureBackdrop.tsx
     - apps/web/src/custom/pixelTexture/paintPixelTexture.ts
     - apps/web/src/custom/pixelTexture/textureModel.ts
     - apps/web/src/custom/pixelTexture/pixelTextureGlyphs.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.inlet-black.css
+    - apps/web/src/theme.custom.inlet.css
   shadows: []
   watch:
-    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
+    - apps/web/src/components/settings/SettingsPanels.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInletBlackTexture.test.ts
     - apps/web/src/custom/pixelTexture/textureModel.test.ts

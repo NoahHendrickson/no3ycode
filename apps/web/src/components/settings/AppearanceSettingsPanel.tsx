@@ -54,7 +54,20 @@ import { DEFAULT_INLET_COLOR, INLET_THEME } from "../../custom/forkTheme";
 import { ForkInletColorPicker } from "../../custom/ForkInletColorPicker";
 /* fork:end fork-inlet-theme */
 /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-import { useForkGlassNewAgentPicture } from "../../custom/forkGlassNewAgentPicture";
+import {
+  DEFAULT_GLASS_NEW_AGENT_BACKDROP,
+  GLASS_NEW_AGENT_BACKDROPS,
+  GLASS_NEW_AGENT_BACKDROP_LABELS,
+  useGlassNewAgentBackdrop,
+} from "../../custom/forkGlassNewAgentPicture";
+/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+import {
+  DEFAULT_INLET_NEW_AGENT_BACKDROPS,
+  INLET_NEW_AGENT_BACKDROPS,
+  INLET_NEW_AGENT_BACKDROP_LABELS,
+  useInletNewAgentBackdrop,
+} from "../../custom/inletNewAgentBackdropSetting";
+/* fork:end fork-inlet-black-texture */
 /* fork:end fork-glass-new-agent-stage */
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 import {
@@ -142,8 +155,11 @@ export function AppearanceSettingsPanel() {
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
   /* fork:end fork-basic-theme */
+  /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+  const [inletNewAgentBackdrop, setInletNewAgentBackdrop] = useInletNewAgentBackdrop(inletColor);
+  /* fork:end fork-inlet-black-texture */
   /* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */
-  const [glassNewAgentPicture, setGlassNewAgentPicture] = useForkGlassNewAgentPicture();
+  const [glassNewAgentBackdrop, setGlassNewAgentBackdrop] = useGlassNewAgentBackdrop();
   /* fork:end fork-glass-new-agent-stage */
   /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
   const [glass3d, setGlass3d] = useForkGlass3d();
@@ -265,24 +281,53 @@ export function AppearanceSettingsPanel() {
           />
         ) : null}
         {/* fork:end fork-inlet-theme */}
-        {/* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */}
-        {appearance === COOL_DARKER_THEME ? (
+        {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
+        {appearance === INLET_THEME ? (
           <SettingsRow
-            title="New agent picture"
-            description="Show the picture behind a new agent in Glass."
+            title="New agent background"
+            description="What this Inlet colour draws behind a new agent."
             resetAction={
-              glassNewAgentPicture ? null : (
+              inletNewAgentBackdrop === DEFAULT_INLET_NEW_AGENT_BACKDROPS[inletColor] ? null : (
                 <SettingResetButton
-                  label="new agent picture"
-                  onClick={() => setGlassNewAgentPicture(true)}
+                  label="new agent background"
+                  onClick={() =>
+                    setInletNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS[inletColor])
+                  }
                 />
               )
             }
             control={
-              <Switch
-                checked={glassNewAgentPicture}
-                onCheckedChange={(checked) => setGlassNewAgentPicture(Boolean(checked))}
-                aria-label="Show the new agent picture"
+              <ForkChoiceSelect
+                value={inletNewAgentBackdrop}
+                options={INLET_NEW_AGENT_BACKDROPS}
+                labels={INLET_NEW_AGENT_BACKDROP_LABELS}
+                onChange={setInletNewAgentBackdrop}
+                ariaLabel="New agent background"
+              />
+            }
+          />
+        ) : null}
+        {/* fork:end fork-inlet-black-texture */}
+        {/* fork:begin fork-glass-new-agent-stage — see .fork/customizations.yaml#fork-glass-new-agent-stage */}
+        {appearance === COOL_DARKER_THEME ? (
+          <SettingsRow
+            title="New agent background"
+            description="What Glass draws behind a new agent."
+            resetAction={
+              glassNewAgentBackdrop === DEFAULT_GLASS_NEW_AGENT_BACKDROP ? null : (
+                <SettingResetButton
+                  label="new agent background"
+                  onClick={() => setGlassNewAgentBackdrop(DEFAULT_GLASS_NEW_AGENT_BACKDROP)}
+                />
+              )
+            }
+            control={
+              <ForkChoiceSelect
+                value={glassNewAgentBackdrop}
+                options={GLASS_NEW_AGENT_BACKDROPS}
+                labels={GLASS_NEW_AGENT_BACKDROP_LABELS}
+                onChange={setGlassNewAgentBackdrop}
+                ariaLabel="New agent background"
               />
             }
           />

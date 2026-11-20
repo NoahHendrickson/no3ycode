@@ -430,9 +430,6 @@ import {
   useSystemComposerBanners,
 } from "./chat/useSystemComposerBanners";
 import { useDraftHeroLayoutTransition } from "./chat/useDraftHeroLayoutTransition";
-/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
-import { InletBlackNewAgentTexture } from "~/custom/InletBlackNewAgentTexture";
-/* fork:end fork-inlet-black-texture */
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
 import { BasicNewAgentBackdrop } from "~/custom/BasicNewAgentBackdrop";
 /* fork:end fork-basic-theme */
@@ -3786,9 +3783,6 @@ export default function ChatView(props: ChatViewProps) {
         /* fork:end fork-basic-theme */
         inert={rightPanelMaximized}
       >
-        {/* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */}
-        <InletBlackNewAgentTexture shown={isDraftHeroState && !embedded} />
-        {/* fork:end fork-inlet-black-texture */}
         {/* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */}
         {/* Not behind a maximized right panel, where the column is gone and its animation unseen. */}
         <BasicNewAgentBackdrop shown={isDraftHeroState && !embedded && !rightPanelMaximized} />

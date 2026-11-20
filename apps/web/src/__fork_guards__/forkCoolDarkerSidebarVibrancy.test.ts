@@ -284,7 +284,13 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     // A filter and the native material are alternatives, not layers: the
     // NSVisualEffectView is behind the window, so Chromium flattens the region
     // to composite the filter and the wallpaper is lost.
+    // The one exception: a new agent drawn on an opaque Settings picture, which
+    // leaves no wallpaper under the filter (fork-glass-new-agent-stage).
+    const overPicture = (selector: string) =>
+      selector.includes('[data-fork-glass-picture="off"]') &&
+      /\[data-fork-draft-hero\]|\[data-fork-glass-over-picture\]/u.test(selector);
     for (const rule of glassRules) {
+      if (overPicture(rule.selector)) continue;
       for (const [, value] of rule.body.matchAll(/(?:-webkit-)?backdrop-filter:\s*([^;]+);/gu)) {
         expect(
           value?.trim(),

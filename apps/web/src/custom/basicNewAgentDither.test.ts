@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { DITHER_CELLS, MOUNTAIN_CELLS, ditherLayout, mountainLayout } from "./basicNewAgentDither";
+import {
+  DITHER_CELLS,
+  JOLLY_PETAL_CELLS,
+  MOUNTAIN_CELLS,
+  ditherLayout,
+  jollyPetalLayout,
+  mountainLayout,
+} from "./basicNewAgentDither";
 
 const gapCentre = (box: { width: number }, layout: { cell: number; left: number }) =>
   (box.width / 2 - layout.left) / layout.cell;
@@ -61,6 +68,13 @@ describe("mountainLayout", () => {
       expect(layout.left + MOUNTAIN_CELLS.width * layout.cell).toBeGreaterThanOrEqual(box.width);
       expect(layout.top + MOUNTAIN_CELLS.height * layout.cell).toBeGreaterThanOrEqual(box.height);
     }
+  });
+
+  it("covers the column with Jolly Petal's own cell count", () => {
+    const box = { width: 1184, height: 900 };
+    const layout = jollyPetalLayout(box, 2);
+    expect(layout.left + JOLLY_PETAL_CELLS.width * layout.cell).toBeGreaterThanOrEqual(box.width);
+    expect(layout.top + JOLLY_PETAL_CELLS.height * layout.cell).toBeGreaterThanOrEqual(box.height);
   });
 
   it("keeps cells and offsets whole in device pixels at fractional scales", () => {

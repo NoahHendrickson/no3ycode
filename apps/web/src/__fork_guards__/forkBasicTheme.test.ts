@@ -19,7 +19,7 @@ import {
 } from "../custom/forkTheme";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { BASIC_NEW_AGENT_BACKDROPS } from "../custom/basicNewAgentBackdropSetting";
-import { DITHER_CELLS, MOUNTAIN_CELLS } from "../custom/basicNewAgentDither";
+import { DITHER_CELLS, JOLLY_PETAL_CELLS, MOUNTAIN_CELLS } from "../custom/basicNewAgentDither";
 import { cssRules, declarationHex, ruleBodyFor } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -132,13 +132,14 @@ describe("fork guard: fork-basic-theme", () => {
     expect(appearancePanel).toMatch(
       /appearance === BASIC_THEME \? \(\s*<SettingsRow\s*title="New agent background"/u,
     );
-    expect(BASIC_NEW_AGENT_BACKDROPS).toEqual(["texture", "dither", "mountain"]);
+    expect(BASIC_NEW_AGENT_BACKDROPS).toEqual(["texture", "dither", "mountain", "jollyPetal"]);
     expect(readSibling("../components/ChatView.tsx")).toContain(
       "<BasicNewAgentBackdrop shown={isDraftHeroState && !embedded && !rightPanelMaximized} />",
     );
     for (const [asset, cells] of [
       ["basic-new-agent-dither.png", DITHER_CELLS],
       ["basic-new-agent-mountain.png", MOUNTAIN_CELLS],
+      ["basic-new-agent-jolly-petal.png", JOLLY_PETAL_CELLS],
     ] as const) {
       const png = NodeFS.readFileSync(
         NodeURL.fileURLToPath(new URL(`../custom/assets/${asset}`, import.meta.url)),
