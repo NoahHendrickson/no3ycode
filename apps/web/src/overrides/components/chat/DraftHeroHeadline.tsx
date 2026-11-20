@@ -36,7 +36,7 @@ interface DraftHeroHeadlineProps {
 export function DraftHeroHeadline({
   draftId,
   activeProjectRef,
-  activeProjectTitle,
+  activeProjectTitle: _activeProjectTitle,
 }: DraftHeroHeadlineProps) {
   const projects = useProjects();
   const { environments } = useEnvironments();
@@ -56,7 +56,6 @@ export function DraftHeroHeadline({
   const isScratchDraft =
     activeProject !== null &&
     isScratchProject(activeProject, scratchWorkspaceRootFor(activeProject.environmentId));
-  const hasResolvedProject = activeProjectTitle !== null;
   // A chat started in Chat mode (custom/chatMode).
   const isChatDraft = useIsChatThread(draftId);
   if (isScratchDraft && isTriageDraftPrompt) {
@@ -70,17 +69,17 @@ export function DraftHeroHeadline({
       />
     );
   }
+  // MOCKUP: the New agent draft (no project, a project, or No project) shows no
+  // headline; the launchpad under the composer does the asking.
+  const headline = isChatDraft
+    ? "What's up?"
+    : isScratchDraft && isSideChatSurface
+      ? "Got a question?"
+      : null;
+  if (headline === null) return null;
   return (
     <h1 className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
-      {isChatDraft
-        ? "What's up?"
-        : isScratchDraft
-          ? isSideChatSurface
-            ? "Got a question?"
-            : "What should we work on?"
-          : hasResolvedProject
-            ? "What should we build?"
-            : "Choose a project to start"}
+      {headline}
     </h1>
   );
 }

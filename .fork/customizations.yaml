@@ -5686,6 +5686,8 @@
     - apps/web/src/custom/DraftProjectPill.tsx
     - apps/web/src/custom/DraftProjectMenuPopup.tsx
     - apps/web/src/custom/useDraftProjectChoices.ts
+    # Mockup: projects and placeholder suggestions under the draft composer.
+    - apps/web/src/custom/DraftLaunchpad.tsx
     - apps/web/src/custom/newAgentDraft.test.ts
     - apps/web/src/custom/useNewAgentDraft.test.ts
     # Draft-only prompt geometry and the docked-only floor, keyed on data-draft-hero.

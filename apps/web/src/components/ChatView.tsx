@@ -345,6 +345,7 @@ import { forkChatColumnRef, forkDraftHeroShownRef } from "~/custom/forkStageStam
 /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
 import { DraftMachineChip } from "~/custom/DraftMachineChip";
 import { DraftProjectPill } from "~/custom/DraftProjectPill";
+import { DraftLaunchpad } from "~/custom/DraftLaunchpad";
 import { useDraftProjectAssignmentPending } from "~/custom/useNewAgentDraft";
 // Through the alias: TypeScript resolves the relative draftHeroTransition path to
 // upstream's module, which has none of these; the alias resolves override-first.
@@ -4329,14 +4330,27 @@ export default function ChatView(props: ChatViewProps) {
                           can put it 8px above the vessel. */}
                         {/* fork:end fork-composer-shell */}
                       </ComposerSurface.Shell>
-                      {isDraftHeroState && composerBannerItems.length > 0 ? (
+                      {/* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft
+                          The slot also holds a local draft's launchpad (MOCKUP). */}
+                      {isDraftHeroState &&
+                      (composerBannerItems.length > 0 || isLocalDraftThread) ? (
                         // Out of flow, like the headline, so a notice never moves the centered composer.
                         // Short windows pin the composer to the bottom, where an out-of-flow notice
                         // would fall off-screen, so there it takes space and lifts the composer.
                         <div className="absolute inset-x-0 top-full flex flex-col gap-1 pt-4 [@media(max-height:34rem)]:static">
-                          <ComposerBannerStack items={composerBannerItems} detached />
+                          {composerBannerItems.length > 0 ? (
+                            <ComposerBannerStack items={composerBannerItems} detached />
+                          ) : null}
+                          {isLocalDraftThread && !embedded ? (
+                            <DraftLaunchpad
+                              draftId={draftId}
+                              activeProjectRef={activeProjectRef}
+                              activeProjectTitle={activeProject?.title ?? null}
+                            />
+                          ) : null}
                         </div>
                       ) : null}
+                      {/* fork:end fork-new-agent-draft */}
                     </div>
                     {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
                     {/* The composer's floor: the fork lifts upstream's 1rem/1.25rem dock

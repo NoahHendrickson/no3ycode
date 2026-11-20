@@ -9,7 +9,6 @@ import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import type { DraftId } from "~/composerDraftStore";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
-import { DraftProjectQuickPicks } from "./DraftProjectQuickPicks";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import {
   ChevronDownIcon,
@@ -62,11 +61,10 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
       </Button>
     );
   }
-  return choices.recentEntries !== null ? (
-    <DraftProjectQuickPicks choices={choices} recentEntries={choices.recentEntries} />
-  ) : (
-    <DraftProjectChip choices={choices} draftId={props.draftId} />
-  );
+  // MOCKUP: an unassigned draft picks from DraftLaunchpad's list under the
+  // composer, so the chip appears only once a project is picked.
+  if (choices.selection.kind === "unassigned") return null;
+  return <DraftProjectChip choices={choices} draftId={props.draftId} />;
 }
 
 function DraftProjectChip(props: {
