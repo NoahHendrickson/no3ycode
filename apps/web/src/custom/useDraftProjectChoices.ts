@@ -36,6 +36,10 @@ import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNe
     the composer is centred, so the launchpad has roughly half a window to fit in. */
 export const QUICK_PICK_LIMIT = 4;
 
+/** Short windows pin the composer to the bottom and put the slot under it in flow
+    (ChatView), leaving no room for the launchpad; the project chip stands in there. */
+export const SHORT_WINDOW_QUERY = "(max-height: 34rem)";
+
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
 export const NO_PROJECT_VALUE = "no-project";

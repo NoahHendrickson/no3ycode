@@ -9,7 +9,6 @@ import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import type { DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
-import { SHORT_WINDOW_QUERY } from "./DraftLaunchpad";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import {
@@ -20,6 +19,7 @@ import {
 } from "./icons/lucide-hugeicons";
 import {
   openAddProject,
+  SHORT_WINDOW_QUERY,
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";

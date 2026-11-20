@@ -40,6 +40,7 @@ import {
   NO_PROJECT_VALUE,
   openAddProject,
   QUICK_PICK_LIMIT,
+  SHORT_WINDOW_QUERY,
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
@@ -130,21 +131,31 @@ export function DraftLaunchpad(
   const { draftId } = props;
   const unassigned = choices.selection.kind === "unassigned";
   const recent = recentProjectRows(choices);
+  // Decided before the queries, so a hidden launchpad (a short window, a No project
+  // or Chat mode draft) never asks the server for pull requests or git status.
+  const shown =
+    draftId !== null &&
+    !shortWindow &&
+    // "No project" is a chat with no repository; there is no project work to suggest.
+    choices.selection.kind !== "no-project" &&
+    (choices.entries.length > 0 || choices.noProjectEnvironmentId !== null);
   // Only the copy a pick runs on (the draft's machine), so the forge account that
   // lists "your" pull requests is the one the task will run under.
-  const projectRefs: ScopedProjectRef[] = unassigned
-    ? recent.map((entry) => ({
-        environmentId: entry.targetProject.environmentId,
-        projectId: entry.targetProject.id,
-      }))
-    : // While a pick is pending, activeProjectRef still names the previous project.
-      props.activeProjectRef === null || choices.pending
-      ? []
-      : [props.activeProjectRef];
+  const projectRefs: ScopedProjectRef[] = !shown
+    ? []
+    : unassigned
+      ? recent.map((entry) => ({
+          environmentId: entry.targetProject.environmentId,
+          projectId: entry.targetProject.id,
+        }))
+      : // While a pick is pending, activeProjectRef still names the previous project.
+        props.activeProjectRef === null || choices.pending
+        ? []
+        : [props.activeProjectRef];
   const authored = usePullRequestList(pullRequestTargets(projectRefs, "authored"));
   const reviewing = usePullRequestList(pullRequestTargets(projectRefs, "reviewing"));
   // While a pick is pending, `checkout` still names the previous project's checkout.
-  const checkout = unassigned || choices.pending ? null : props.checkout;
+  const checkout = !shown || unassigned || choices.pending ? null : props.checkout;
   const git = useAtomValue(
     checkout === null
       ? NO_LAUNCHPAD_GIT_STATUS_ATOM
@@ -156,10 +167,7 @@ export function DraftLaunchpad(
         ),
   );
 
-  if (draftId === null || shortWindow) return null;
-  if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) return null;
-  // "No project" is a chat with no repository; there is no project work to suggest.
-  if (choices.selection.kind === "no-project") return null;
+  if (!shown || draftId === null) return null;
 
   const suggestions = deriveLaunchpadSuggestions({
     authored: authored.data?.entries ?? [],
@@ -176,13 +184,15 @@ export function DraftLaunchpad(
           ),
         ) ?? null);
 
+  // An unassigned draft's suggestions span projects, so each leads with its project's
+  // icon and picking one picks that project; one whose project isn't pickable is left out.
+  const rows = suggestions
+    .map((suggestion) => ({ suggestion, entry: unassigned ? entryFor(suggestion.project) : null }))
+    .filter((row) => !unassigned || row.entry !== null);
   const suggestionCard =
-    suggestions.length === 0 ? null : (
+    rows.length === 0 ? null : (
       <Card label="Start something new">
-        {suggestions.map((suggestion) => {
-          // An unassigned draft's suggestions span projects, so each leads with its
-          // project's icon and picking one picks that project.
-          const entry = unassigned ? entryFor(suggestion.project) : null;
+        {rows.map(({ suggestion, entry }) => {
           const Icon = KIND_ICON[suggestion.kind];
           return (
             <button
@@ -194,6 +204,7 @@ export function DraftLaunchpad(
                 // A draft can already hold what the user wrote before picking.
                 const written =
                   useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
+                if (written.includes(suggestion.prompt)) return;
                 setPrompt(
                   draftId,
                   written.trim().length > 0
@@ -236,13 +247,10 @@ export function DraftLaunchpad(
   );
 }
 
-/** Short windows pin the composer to the bottom and put the slot under it in flow
-    (ChatView), leaving no room for the launchpad; the project chip stands in there. */
-export const SHORT_WINDOW_QUERY = "(max-height: 34rem)";
-
 /**
- * The launchpad scrolls inside the room left between it and the window's bottom
- * edge, so a tall list or a phone's stacked cards never run off screen.
+ * The launchpad scrolls inside the room left between it and the chat canvas's
+ * bottom edge (above any terminal drawer), so a tall list or a phone's stacked
+ * cards never run off screen or under the drawer.
  */
 function LaunchpadRoot(props: {
   readonly className?: string | undefined;
@@ -253,17 +261,18 @@ function LaunchpadRoot(props: {
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- tracks the window and the composer above, which move the room below
   useLayoutEffect(() => {
     if (root === null) return;
+    const canvas = root.closest("[data-chat-canvas]");
     const measure = () => {
-      setMaxHeight(
-        Math.max(96, Math.floor(window.innerHeight - root.getBoundingClientRect().top - 16)),
-      );
+      const bottom = canvas?.getBoundingClientRect().bottom ?? window.innerHeight;
+      setMaxHeight(Math.max(96, Math.floor(bottom - root.getBoundingClientRect().top - 16)));
     };
-    // The composer above grows as the user writes, and a notice can appear above
-    // the launchpad in its slot; either pushes it down.
+    // The composer above grows as the user writes, a notice can appear above the
+    // launchpad in its slot, and a terminal drawer shortens the canvas.
     const stopObserving = observeResize(
       [
         root.closest("[data-chat-composer-stack]") ?? document.documentElement,
         ...(root.parentElement ? [root.parentElement] : []),
+        ...(canvas ? [canvas] : []),
       ],
       measure,
     );
@@ -316,6 +325,8 @@ function ProjectList(props: {
       : recent;
 
   const toggle = () => setExpanded(!expanded);
+  // With every project already listed, there is nothing to expand to.
+  const hasMore = choices.entries.length > recent.length;
 
   const search = (
     <label className="flex h-9 min-w-0 cursor-text items-center gap-2 border-border border-b px-3 text-muted-foreground/70">
@@ -376,7 +387,7 @@ function ProjectList(props: {
             <span className="min-w-0 flex-1 truncate text-muted-foreground">No project</span>
           </button>
         ) : null}
-        {open ? (
+        {open || !hasMore ? (
           <button
             type="button"
             className={`${ROW_CLASS_NAME} text-muted-foreground`}
@@ -387,7 +398,7 @@ function ProjectList(props: {
           </button>
         ) : null}
       </div>
-      {searching ? null : (
+      {searching || !hasMore ? null : (
         <>
           {/* The divider spans the card edge to edge, past the list padding. */}
           {expanded ? <div className="-mx-1 my-1 border-border border-t" /> : null}

@@ -178,7 +178,6 @@ function TooltipPopup({
   children,
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
   forkNub = true,
-  forkNubGap = 0,
   /* fork:end fork-inlet-theme */
   ...props
 }: TooltipPrimitive.Popup.Props & {
@@ -190,9 +189,6 @@ function TooltipPopup({
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
   /** Inlet's nub and its standoff; a card that hangs as a tab (the row hover card) opts out. */
   forkNub?: boolean;
-  /** Inlet: px between the nub's tip and the trigger. Upstream callers' sideOffset is
-      their nub-less standoff, so it stays ignored under Inlet. */
-  forkNubGap?: number;
   /* fork:end fork-inlet-theme */
 }) {
   /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
@@ -200,7 +196,7 @@ function TooltipPopup({
   const positionerSideOffset: TooltipPrimitive.Positioner.Props["sideOffset"] = forkNub
     ? (data) =>
         isInletActive()
-          ? FORK_TOOLTIP_NUB_DEPTH + forkNubGap
+          ? FORK_TOOLTIP_NUB_DEPTH
           : typeof sideOffset === "function"
             ? sideOffset(data)
             : sideOffset

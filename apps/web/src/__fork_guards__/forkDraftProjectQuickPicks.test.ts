@@ -27,7 +27,8 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
       'if (choices.selection.kind === "unassigned" && !shortWindow) return null;',
     );
     // A short window has no room under its bottom-pinned composer.
-    expect(launchpad).toContain("if (draftId === null || shortWindow) return null;");
+    expect(launchpad).toMatch(/const shown =\s*draftId !== null &&\s*!shortWindow &&/u);
+    expect(launchpad).toContain("if (!shown || draftId === null) return null;");
     expect(read("../components/ChatView.tsx")).toMatch(
       /isDraftHeroState &&\s*\(composerBannerItems\.length > 0 \|\| isLocalDraftThread\)[\s\S]{0,1600}<DraftLaunchpad/u,
     );

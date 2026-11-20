@@ -2523,7 +2523,7 @@
     left side. On Black the bot panel's two (data-fork-tab-menu="bot-threads") and
     their open buttons are the sidebar's #141414 ink, since they open over the
     cream panel, and the sidebar headers' menus (data-fork-tab-menu="sidebar") are the
-    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and a caller that wants air past the tip passes the fenced forkNubGap rather than offsetting the popup in CSS, since upstream callers' sideOffset is their nub-less standoff and stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and upstream callers' sideOffset, their nub-less standoff, stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -6417,10 +6417,12 @@
     activity first by those same threads (rankRecentProjectEntries, which
     ranks through sortLogicalProjectsForSidebar, so a hidden subagent or
     off-sidebar automation run cannot reorder them; with no such project, the
-    first pickable ones), No project, and "All projects (N)", which expands
-    the list in place rather than opening a menu. The whole launchpad scrolls
-    within the room left below it, re-measured as the window or the composer
-    above it or a notice in its slot changes. A short window (34rem or less)
+    first pickable ones), No project, and, when more projects exist than it
+    lists, "All projects (N)", which expands the list in place rather than
+    opening a menu (otherwise "Add a project" stands in its place). The whole
+    launchpad scrolls within the room left between it and the chat canvas's
+    bottom (above any terminal drawer), re-measured as the window, the canvas,
+    the composer above it or a notice in its slot changes. A short window (34rem or less)
     pins the composer to the bottom with no room under it, so there the
     launchpad is not shown and the unassigned draft gets the project chip
     ("Choose a project") and its menu instead. While searching, Enter picks the top
@@ -6434,12 +6436,16 @@
     conflicts, failing checks, requested changes and approved, mergeable pull
     requests you opened; open pull requests that request your review; and,
     when the picked project runs in its own checkout rather than a new
-    worktree, its uncommitted files, commits to pull and a branch with no pull
+    worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
     request (custom/draftLaunchpadSuggestions). The pull requests come from
     the cached pullRequests.list query and the checkout from the git status
     ChatView already subscribes to; a failed or unsupported list just offers
-    nothing. Picking a suggestion picks its project and writes its prompt into
-    the draft composer, after anything the user already wrote. It never sends and never opens another thread: New
+    nothing. Visibility is decided before either is asked for, so a hidden
+    launchpad (short window, No project or Chat mode draft) queries nothing.
+    Picking a suggestion picks its project and writes its prompt into the
+    draft composer, after anything the user already wrote (once: a second
+    click on the same row adds nothing). A suggestion whose project is not
+    pickable is left out. It never sends and never opens another thread: New
     agent is for new work. With nothing to suggest, the card is not shown.
 
     The project chip opens from the picked row, sliding to the context row's
