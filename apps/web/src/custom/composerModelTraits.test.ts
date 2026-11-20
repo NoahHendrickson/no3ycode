@@ -91,10 +91,34 @@ describe("findEffortDescriptor", () => {
         { id: "1m", label: "1M" },
       ],
     };
-    for (const id of ["effort", "reasoningEffort", "reasoning", "variant"]) {
+    for (const id of [
+      "effort",
+      "reasoningEffort",
+      "reasoning",
+      "variant",
+      "reasoning_effort",
+      "thinking_level",
+    ]) {
       const effort = { ...claudeEffort, id };
       expect(findEffortDescriptor([contextWindow, effort])).toBe(effort);
     }
+  });
+
+  it("matches an agent-marked reasoning select such as Antigravity thinking_level", () => {
+    const antigravityThinking: SelectDescriptor = {
+      id: "thought_level",
+      label: "Thinking Level",
+      type: "select",
+      role: "reasoning",
+      options: [
+        { id: "minimal", label: "Minimal" },
+        { id: "low", label: "Low" },
+        { id: "medium", label: "Medium" },
+        { id: "high", label: "High" },
+      ],
+      currentValue: "high",
+    };
+    expect(findEffortDescriptor([antigravityThinking])).toBe(antigravityThinking);
   });
 
   it("leaves a single-level effort to the segmented controls", () => {

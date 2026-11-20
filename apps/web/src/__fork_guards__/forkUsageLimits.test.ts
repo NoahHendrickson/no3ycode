@@ -43,13 +43,13 @@ function provider(overrides: Partial<ServerProvider>): ServerProvider {
 }
 
 describe("fork guard: fork-composer-usage-limits", () => {
-  it("renders the limits bar in the composer's model controls", () => {
+  it("renders the circular limits meter at the far right and its upward vessel drawer", () => {
     const composer = readSibling("../components/chat/ChatComposer.tsx");
-    const modelControls = composer.slice(
-      composer.indexOf("const composerModelControls"),
-      composer.indexOf("const composerModeControls"),
-    );
-    expect(modelControls).toContain("<ComposerUsageLimitsReadout");
+    expect(composer).toContain("<ComposerUsageLimitsReadout");
+    expect(composer).toContain("<ComposerUsageLimitsDrawer");
+    const readout = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
+    expect(readout).toContain("<UsageCircleMeter");
+    expect(readout).toContain('data-fork-composer-usage-drawer="true"');
   });
 });
 

@@ -17,6 +17,7 @@ const SHOWN_FAMILY_NAMES: Partial<Record<ProviderDriverKind, ReadonlyArray<strin
 
 /** Family words that are the model's name, never stripped as an instance name. */
 const KEPT_FAMILY_NAMES: Partial<Record<ProviderDriverKind, ReadonlyArray<string>>> = {
+  [ProviderDriverKind.make("antigravity")]: ["Gemini"],
   [ProviderDriverKind.make("grok")]: ["Grok"],
 };
 

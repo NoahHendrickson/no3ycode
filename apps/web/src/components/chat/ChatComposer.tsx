@@ -197,7 +197,10 @@ import { modelPickerHoldsFocus } from "../../custom/modelPickerFocus";
 import { resolveModelPickerSelectedModel } from "./ModelPickerContent";
 /* fork:end fork-model-picker */
 /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-import { ComposerUsageLimitsReadout } from "../../custom/ComposerUsageLimitsReadout";
+import {
+  ComposerUsageLimitsDrawer,
+  ComposerUsageLimitsReadout,
+} from "../../custom/ComposerUsageLimitsReadout";
 /* fork:end fork-composer-usage-limits */
 import {
   type ComposerCitationCommentRequest,
@@ -1019,6 +1022,17 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         (multipleModelSelections === null ? providerSendBlockReason : null)));
   const isSendDisabled = sendDisabledReason !== null;
   const selectedProviderStatus = selectedProviderEntry?.snapshot ?? null;
+  /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+  const [usageDrawerOpen, setUsageDrawerOpen] = useState(false);
+  const [usageDrawerOpenedAt, setUsageDrawerOpenedAt] = useState(() => Date.now());
+  const toggleUsageDrawer = () => {
+    setUsageDrawerOpen((prev) => {
+      const next = !prev;
+      if (next) setUsageDrawerOpenedAt(Date.now());
+      return next;
+    });
+  };
+  /* fork:end fork-composer-usage-limits */
   const selectedProviderSkills = selectedProviderStatus
     ? resolveProviderSkillsForCwd(selectedProviderStatus, gitCwd)
     : NO_PROVIDER_SKILLS;
@@ -3441,11 +3455,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   // (fork-model-picker), so no width ever strands them in a second control.
   const composerModelControls = showProviderUnavailable ? null : (
     <>
-      {/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */}
-      {isComposerFooterCompact ? null : (
-        <ComposerUsageLimitsReadout usageLimits={selectedProviderStatus?.usageLimits} />
-      )}
-      {/* fork:end fork-composer-usage-limits */}
       <ComposerModelPicker
         traitsInput={providerTraitsPickerInput}
         environmentId={environmentId}
@@ -3594,7 +3603,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             />
           }
         >
-          <PlusIcon />
+          {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
+          <PlusIcon strokeWidth={2.4} />
+          {/* fork:end fork-composer-shell */}
         </TooltipTrigger>
         <TooltipPopup>Attach files</TooltipPopup>
       </Tooltip>
@@ -3611,6 +3622,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     >
       {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */}
       <ForkDictationNotices dictation={dictation} />
+      <ForkDictationGhostMic dictation={dictation} disabled={forkDictationStartBlocked} />
       {/* fork:end fork-local-dictation */}
       <ComposerFooterPrimaryActions
         // Stop state belongs to one thread; the composer stays mounted across threads.
@@ -3739,20 +3751,29 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         collapsedMobile={isComposerCollapsedMobile}
         context={props.contextStrip}
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
-        modeControls={
-          <>
-            {composerAttachAction}
-            {/* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-                Stays in place for a live session, where it finishes the
-                recording like the check, and is inert wherever there is no
-                field to dictate into. */}
-            <ForkDictationGhostMic dictation={dictation} disabled={forkDictationStartBlocked} />
-            {/* fork:end fork-local-dictation */}
-            {composerModeControls}
-          </>
-        }
+        modeControls={composerModeControls}
         modelControls={composerModelControls}
         readoutControls={null}
+        usageControls={
+          /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+          isComposerFooterCompact ? null : (
+            <ComposerUsageLimitsReadout
+              usageLimits={selectedProviderStatus?.usageLimits}
+              open={usageDrawerOpen}
+              onToggle={toggleUsageDrawer}
+            />
+          )
+          /* fork:end fork-composer-usage-limits */
+        }
+        topVessel={
+          isComposerFooterCompact ? null : (
+            <ComposerUsageLimitsDrawer
+              open={usageDrawerOpen}
+              openedAt={usageDrawerOpenedAt}
+              onClose={() => setUsageDrawerOpen(false)}
+            />
+          )
+        }
       >
         {/* fork:end fork-composer-shell */}
         <ComposerBanner.Dock>
@@ -3997,6 +4018,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   ) : null}
                   {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
                   <ComposerPromptRow
+                    leadingAction={composerAttachAction}
                     action={composerPrimaryActionSlot}
                     approvalPending={activePendingApproval !== null}
                     mobilePendingActionsVisible={showMobilePendingAnswerActions}

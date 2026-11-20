@@ -1,4 +1,7 @@
-const FAMILY_PREFIXES = ["Claude ", "GPT-", "GPT ", "Gemini ", "Muse ", "Grok "] as const;
+/* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+   Gemini and GPT models keep their family names ("Gemini 4 Neon", "GPT-6.2-Sol"). */
+const FAMILY_PREFIXES = ["Claude ", "Muse ", "Grok "] as const;
+/* fork:end fork-model-picker */
 
 // Words that describe a variant within a family rather than name a model. Off the
 // family's native provider there is no icon saying which family "4 Pro" belongs to.

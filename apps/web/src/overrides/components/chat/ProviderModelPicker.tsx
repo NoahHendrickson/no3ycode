@@ -6,12 +6,11 @@
  * Menu holding provider icon tabs, search and the chosen provider's models
  * (ModelPickerContent's shadow renders them). Non-modal like the popover
  * it replaces; upstream's own wheel/touch lock still guards the page.
- * The trigger label drops the provider name ("Opus 5.5", not "Claude Opus
- * 5.5"). The composer's trigger hides the provider icon too, except where its
- * label collapses, and names Cursor instead ("Cursor Opus 5.5"); Settings
- * keeps the icon. And an optional `traits` slot (the
- * composer's ComposerModelPicker fills it) adds the reasoning label to the
- * trigger and its panel under the model list, keeping the menu open on a pick.
+ * The trigger shows the same ModelPickerProviderGlyph used in the menu and
+ * drops the provider name ("Opus 5.5", not "Claude Opus 5.5"). And an
+ * optional `traits` slot (the composer's ComposerModelPicker fills it) adds
+ * the reasoning label to the trigger and its panel under the model list,
+ * keeping the menu open on a pick.
  *
  * The `compact` prop (dropped upstream in #11002, since restored) caps the
  * trigger's width from the fork's footer (custom/composerModelSlotCompact.ts)
@@ -40,13 +39,12 @@ import { Badge } from "../ui/badge";
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "~/lib/utils";
-import { ChevronDownIcon } from "~/custom/icons/lucide-hugeicons";
+import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
 import { useIsInletActive } from "~/custom/forkActivePalette";
 import { triggerModelName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerContent, resolveModelPickerSelectedModel } from "./ModelPickerContent";
 import { retainedModelWhileProviderLocked } from "./ProviderModelPicker.logic";
 import { ChatGptSharingControl } from "./ChatGptSharingControl";
-import { ProviderInstanceIcon } from "./ProviderInstanceIcon";
 import { ModelEsque, getDisplayModelName, getTriggerDisplayModelName } from "./providerIconUtils";
 import { shouldShowInstanceBadge, type ProviderInstanceEntry } from "../../providerInstances";
 import { ComposerControl, type ComposerControlSize } from "./ComposerControl";
@@ -180,9 +178,9 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
     (activeEntry?.driverKind === "opencode" || activeEntry?.driverKind === "antigravity"
       ? undefined
       : selectedInstanceOptions[0]);
-  // The composer hides the provider icon, so a reseller names itself there;
-  // the tooltip keeps the full model name and names the provider instance.
-  const iconShown = !props.isComposerOwned;
+  // The trigger always shows the provider icon, so the label drops redundant
+  // provider prefixes; the tooltip keeps the full model name and instance name.
+  const iconShown = true;
   const triggerTitle = selectedModel
     ? triggerModelName(
         getTriggerDisplayModelName(selectedModel, activeEntry?.driverKind),
@@ -251,12 +249,6 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   const triggerTooltipContent = shortcutLabel
     ? `${props.triggerLabel ?? allModelNames ?? triggerLabel} · ${shortcutLabel}`
     : (props.triggerLabel ?? allModelNames ?? triggerLabel);
-  // The composer shows the model name alone. Its resting strip (size xs)
-  // collapses that name to nothing below 640px, so the icon comes back there
-  // rather than leave a bare chevron.
-  const composerIconClassName =
-    props.isComposerOwned &&
-    (size === "xs" ? "hidden @max-[640px]/composer-surface:inline-flex" : "hidden");
   // Inlet's open composer menu hangs from this button as a tab, so effort holds
   // its label until close rather than resize the button and the tab with it.
   // The hold is keyed by model: a new pick is deliberate and re-takes it at once.
@@ -311,23 +303,17 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           className={cn("flex min-w-0 flex-1 items-center", size === "xs" ? "gap-1" : "gap-1.5")}
         >
           {/* An aggregate label claims no provider; several selected models
-              stack their glyphs (hidden in the composer like the single icon). */}
+              stack their glyphs. */}
           {props.triggerLabel !== undefined ? null : selectedEntries ? (
-            <span
-              className={cn("flex shrink-0 items-center -space-x-1", composerIconClassName)}
-              aria-hidden="true"
-            >
+            <span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
               {selectedEntries
                 .slice(0, 3)
                 .map((selection) =>
                   selection.entry ? (
-                    <ProviderInstanceIcon
+                    <ModelPickerProviderGlyph
                       key={`${selection.instanceId}:${selection.model}`}
-                      driverKind={selection.entry.driverKind}
-                      displayName={selection.entry.displayName}
-                      accentColor={selection.entry.accentColor}
-                      acpRegistryAgentId={selection.entry.acpRegistryAgentId}
-                      acpRegistryIconUrl={selection.entry.acpRegistryIconUrl}
+                      entry={selection.entry}
+                      showBadge={false}
                       className="size-4 rounded-full bg-(--chat-composer-glass-surface,var(--background)) ring-2 ring-(--chat-composer-glass-surface,var(--background))"
                       iconClassName="size-4"
                     />
@@ -342,14 +328,10 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           ) : (
             <>
               {activeEntry ? (
-                <ProviderInstanceIcon
-                  driverKind={activeEntry.driverKind}
-                  displayName={activeEntry.displayName}
-                  accentColor={activeEntry.accentColor}
-                  acpRegistryAgentId={activeEntry.acpRegistryAgentId}
-                  acpRegistryIconUrl={activeEntry.acpRegistryIconUrl}
+                <ModelPickerProviderGlyph
+                  entry={activeEntry}
                   showBadge={showInstanceBadge}
-                  className={cn("size-4", composerIconClassName)}
+                  className="size-4"
                   iconClassName={cn("size-4", props.activeProviderIconClassName)}
                   indicatorBackground={props.instanceIndicatorBackground ?? "var(--contrast-input)"}
                   badgeClassName={cn(
@@ -392,7 +374,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           {traitsLabel ? (
             <span
               className={cn(
-                "min-w-0 truncate text-muted-foreground",
+                "min-w-0 truncate text-muted-foreground [text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both_cap_alphabetic]:py-1.5",
                 size === "xs" && "@max-[640px]/composer-surface:hidden",
               )}
               data-chat-provider-model-picker-traits="true"
@@ -401,14 +383,6 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
             </span>
           ) : null}
         </span>
-        {/* Upstream dropped the composer chips' carets; the fork's keep them. */}
-        <ChevronDownIcon
-          aria-hidden="true"
-          className={cn(
-            "shrink-0",
-            size === "xs" ? "size-3 text-current opacity-50" : "size-3.5 text-icon-muted",
-          )}
-        />
       </MenuTrigger>
       {/* The composer's trigger ends the row, so its right edge holds still
           while the label's length changes; anchor the menu there. It always

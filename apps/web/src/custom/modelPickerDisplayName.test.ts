@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { stripProviderName, triggerModelName } from "./modelPickerDisplayName";
 
+const antigravity = ProviderDriverKind.make("antigravity");
 const claude = ProviderDriverKind.make("claudeAgent");
 const codex = ProviderDriverKind.make("codex");
 const cursor = ProviderDriverKind.make("cursor");
@@ -26,6 +27,10 @@ describe("stripProviderName", () => {
   });
 
   it("keeps a family word that carries the model's identity", () => {
+    expect(stripProviderName("Gemini 4 Neon", { driverKind: antigravity })).toBe("Gemini 4 Neon");
+    expect(
+      stripProviderName("Gemini 4 Neon", { driverKind: antigravity, displayName: "Gemini" }),
+    ).toBe("Gemini 4 Neon");
     expect(stripProviderName("Grok Build", { driverKind: grok })).toBe("Grok Build");
     expect(stripProviderName("Grok 4.6", { driverKind: grok })).toBe("Grok 4.6");
     // The default Grok instance is named "Grok"; that is not a custom account name.

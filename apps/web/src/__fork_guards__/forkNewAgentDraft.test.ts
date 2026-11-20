@@ -259,7 +259,7 @@ describe("fork guard: fork-new-agent-draft", () => {
     // beneath — keyed off the overlay so it folds back on send.
     expect(shell).toContain('data-fork-composer-prompt-row="true"');
     expect(css).toMatch(
-      /\[data-draft-hero\]\s*\[data-fork-composer-prompt-row\]\s*\{[^}]*display:\s*grid;[^}]*grid-template-areas:\s*"prompt"\s*"actions"/u,
+      /\[data-draft-hero\]\s*\[data-fork-composer-prompt-row\]\s*\{[^}]*display:\s*grid;[^}]*grid-template-areas:\s*"prompt prompt"\s*"leading actions"/u,
     );
     expect(css).toMatch(
       /\[data-draft-hero\]\s*\[data-chat-composer-inline-actions\]\s*\{[^}]*grid-area:\s*actions/u,

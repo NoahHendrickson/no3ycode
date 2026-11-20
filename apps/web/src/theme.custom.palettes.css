@@ -1176,13 +1176,14 @@
 /* The exception to the rule above (fork-glass-new-agent-stage): a new agent drawn on an
    opaque Settings picture (Mountain Dither, Jolly Petal), which leaves no wallpaper for the
    filter to flatten; on screen it does blur them (checked in the desktop app, 2026-11-19).
-   Over their bright colours a white wash left the ink unreadable, so the composer, its pills
-   and the popups that open over the picture (stamped by custom/forkGlassPopupCutout.ts
-   instead of cut) share one dark tint. Keyed on the picture's later siblings, so a draft
-   without one (a translucent pick, an embedded side chat) keeps the native glass. */
+   The composer, its pills and the popups that open over the picture (stamped by
+   custom/forkGlassPopupCutout.ts instead of cut) share a smoked neutral-gray tint, with the
+   prompt box a step lighter over the vessel. Keyed on the picture's later siblings, so a
+   draft without one (a translucent pick, an embedded side chat) keeps the native glass. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-picture="off"].dark[data-fork-theme="cool-darker"] {
-  --fork-glass-picture-tint: rgb(12 13 15 / 36%);
-  --fork-glass-picture-tint-hover: rgb(12 13 15 / 47%);
+  --fork-glass-picture-tint: rgb(150 150 150 / 30%);
+  --fork-glass-picture-tint-hover: rgb(150 150 150 / 38%);
+  --fork-glass-picture-menu-tint: rgb(84 84 84 / 48%);
   --fork-glass-picture-blur: blur(24px);
 }
 
@@ -1201,19 +1202,71 @@
   [data-fork-opaque-backdrop]
   ~ * {
   --fork-composer-vessel-bg: var(--fork-glass-picture-tint);
-  --fork-composer-bg: rgb(0 0 0 / 19%);
-  --fork-composer-border: rgb(255 255 255 / 10%);
+  --fork-composer-bg: rgb(255 255 255 / 8%);
+  --fork-composer-border: rgb(255 255 255 / 22%);
+  --fork-composer-border-focus: rgb(255 255 255 / 38%);
+  --fork-composer-control-hover: rgb(255 255 255 / 12%);
   --fork-context-chip-bg: var(--fork-glass-picture-tint);
   --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
   &
     :is(
       [data-fork-composer-vessel],
+      [data-fork-composer-usage-drawer],
+      [data-fork-draft-launchpad-card],
       [data-fork-composer-context-row]
         :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])
     ) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
+  }
+
+  & [data-fork-draft-launchpad-card] {
+    --card: var(--fork-glass-picture-tint);
+    --contrast-border: var(--fork-composer-border);
+    --contrast-foreground: #fff;
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+    --accent: var(--fork-composer-control-hover);
+    --contrast-accent-foreground: #fff;
+    background: var(--fork-glass-picture-tint);
+    border-color: var(--fork-composer-border);
+  }
+
+  & [data-fork-composer-usage-drawer] {
+    --contrast-border: var(--fork-composer-border);
+    --contrast-foreground: #fff;
+    --contrast-muted-foreground: rgb(255 255 255 / 85%);
+    --muted: rgb(255 255 255 / 22%);
+    --accent: var(--fork-composer-control-hover);
+    --contrast-accent-foreground: #fff;
+    -webkit-backdrop-filter: blur(48px);
+    backdrop-filter: blur(48px);
+  }
+
+  /* Inside the vessel the context options are ghost buttons sharing its blur. */
+  &
+    [data-fork-composer-vessel]
+    [data-fork-composer-context-row]
+    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  &
+    :is(
+      [data-fork-composer-usage-limits],
+      [data-chat-provider-model-picker],
+      [data-fork-composer-action="attach"],
+      [data-fork-composer-action="dictate"],
+      [data-fork-composer-vessel]
+        [data-fork-composer-context-row]
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
+    ) {
+    color: #fff;
+  }
+
+  & :is([data-chat-provider-model-picker-traits], [data-fork-composer-mode-chip]) {
+    color: rgb(255 255 255 / 70%);
   }
 }
 
@@ -1221,8 +1274,8 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-picture="off"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   body
   .dropdown-glass[data-fork-glass-over-picture] {
-  background: var(--fork-glass-picture-tint);
-  border-color: rgb(255 255 255 / 10%);
+  background: var(--fork-glass-picture-menu-tint);
+  border-color: rgb(255 255 255 / 18%);
   -webkit-backdrop-filter: var(--fork-glass-picture-blur);
   backdrop-filter: var(--fork-glass-picture-blur);
 }
@@ -1456,6 +1509,14 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
   border-color: rgb(64 64 64 / 60%);
+}
+
+/* Over a bright new-agent picture on flat/selection Glass, 60% #404040 lands
+   right at the midpoint between the dark sidebar and the bright picture and
+   vanishes. Lift the seam so the sidebar/stage divider reads clearly. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-glass-picture="off"][data-fork-draft-hero-shown].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-container"][data-sidebar-version="v2"] {
+  border-color: rgb(210 210 210 / 42%);
 }
 
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px

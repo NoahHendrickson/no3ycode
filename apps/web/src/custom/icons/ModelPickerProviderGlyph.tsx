@@ -6,6 +6,7 @@ import { ProviderDriverKind } from "@t3tools/contracts";
 import type { CSSProperties, JSX } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
+import { cn } from "~/lib/utils";
 import type { ProviderInstanceEntry } from "~/providerInstances";
 import codexMarkUrl from "../assets/codex-mark.png";
 
@@ -71,6 +72,10 @@ export function ModelPickerProviderGlyph(props: {
   readonly entry: ProviderInstanceEntry;
   /** Set when several instances share a driver, so the initials tell them apart. */
   readonly showBadge: boolean;
+  readonly className?: string | undefined;
+  readonly iconClassName?: string | undefined;
+  readonly indicatorBackground?: string | undefined;
+  readonly badgeClassName?: string | undefined;
 }) {
   const { entry } = props;
   const Mark = FORK_MARK_BY_DRIVER[entry.driverKind];
@@ -84,15 +89,24 @@ export function ModelPickerProviderGlyph(props: {
       showBadge={props.showBadge}
       className={className}
       iconClassName={iconClassName}
-      indicatorBackground="var(--popover)"
-      badgeClassName="right-[-0.25rem] bottom-[-0.25rem] h-3 min-w-3 px-0.5 text-[7px]"
+      indicatorBackground={props.indicatorBackground ?? "var(--popover)"}
+      badgeClassName={
+        props.badgeClassName ?? "right-[-0.25rem] bottom-[-0.25rem] h-3 min-w-3 px-0.5 text-[7px]"
+      }
     />
   );
-  if (!Mark) return icon("size-4", "size-4");
+  if (!Mark) return icon(cn("size-4", props.className), cn("size-4", props.iconClassName));
   // Upstream's icon with its glyph hidden, laid over the mark, draws the badge.
   return (
-    <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
-      <Mark />
+    <span
+      className={cn(
+        "relative inline-flex size-4 shrink-0 items-center justify-center",
+        props.className,
+      )}
+    >
+      <span className={cn("inline-flex items-center justify-center", props.iconClassName)}>
+        <Mark />
+      </span>
       {props.showBadge ? icon("absolute inset-0", "hidden") : null}
     </span>
   );

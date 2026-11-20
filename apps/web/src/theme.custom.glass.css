@@ -346,6 +346,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
       [data-fork-composer-stack="true"]
         [data-fork-composer-context-row]
         :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]),
@@ -382,6 +383,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
       [data-fork-composer-stack="true"]
         [data-fork-composer-context-row]
         :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]),
@@ -396,6 +398,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
       [data-fork-composer-stack="true"]
         [data-fork-composer-context-row]
         :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]),
@@ -433,6 +436,16 @@
       :not([data-fork-glass-picture="off"])
     ).dark[data-fork-theme="cool-darker"]
     [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-draft-launchpad-card] {
+    --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
+    --fork-glass-frost-radius: var(--fork-composer-radius);
+    border-color: var(--fork-composer-border);
+  }
+
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-fork-composer-stack="true"]
     [data-fork-composer-context-row]
     :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
@@ -452,6 +465,26 @@
       [data-popup-open]
     ):not(:disabled) {
     --fork-glass-frost-wash: var(--fork-context-chip-bg-hover);
+  }
+
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-composer-vessel]
+    [data-fork-composer-context-row]
+    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+    clip-path: none;
+    background: transparent;
+
+    &::before {
+      content: none;
+    }
+
+    &:is(:hover, [data-pressed], [data-popup-open]):not(:disabled) {
+      background: var(--fork-composer-control-hover);
+    }
   }
 
   /* The header's controls: the split pills (fork-sidebar-chrome's
@@ -539,6 +572,7 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+    [data-fork-draft-launchpad-card],
     [data-fork-composer-stack="true"]
       [data-fork-composer-context-row]
       :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]),

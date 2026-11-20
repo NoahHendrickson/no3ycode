@@ -2318,8 +2318,9 @@
     composer still centred, and BasicNewAgentBackdrop draws the pick there,
     the texture in Glass's stage and ink. Over the opaque pictures (Mountain
     Dither, Jolly Petal, which stamp data-fork-opaque-backdrop) the composer,
-    its pills and the popups wholly inside the picture are one dark tint
-    (--fork-glass-picture-tint, black-ish 36%) with a real backdrop-filter
+    its pills and the popups wholly inside the picture share a translucent
+    white tint (--fork-glass-picture-tint, white 24%, with the prompt box a
+    step brighter at 10% white over it) with a real backdrop-filter
     blur, which does reach the screen there because no wallpaper sits under
     it (checked in the desktop app, 2026-11-19); the vibrancy guard's
     no-filter rule exempts only this state. Dither and the texture leave
@@ -2979,11 +2980,11 @@
 
 - id: fork-composer-usage-limits
   intent: >
-    The composer vessel's control row carries a small session-limit bar
-    immediately before the model picker, inside the model controls slot so
+    The composer vessel's control row carries a small circular session-limit
+    meter immediately before the model picker, inside the model controls slot so
     it takes the row's control geometry: the selected provider's session
-    window, drawn with the Usage view's meter (custom/UsageMeter.tsx). It
-    reads the selected instance's own
+    window, drawn with the Usage view's circular meter (UsageCircleMeter in
+    custom/UsageMeter.tsx). It reads the selected instance's own
     ServerProvider.usageLimits snapshot, so it follows the model picker and
     adds no wire data or polling. Clicking it opens a 16rem popover with
     every provider's limits across all environments: the Usage view's list
@@ -3794,6 +3795,7 @@
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerMonitoringPill.tsx
+    - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
     - apps/web/src/custom/StopSquareIcon.tsx
@@ -3833,9 +3835,11 @@
     - apps/web/src/components/BranchToolbar.tsx
     - apps/web/src/components/BranchToolbarEnvModeSelector.tsx
     - apps/web/src/components/BranchToolbarEnvironmentSelector.tsx
-    # Stamps data-fork-pr-chip on the PR pill so it keeps its state colour
-    # and moves to the strip's far end.
+    # Stamps data-fork-pr-chip on the PR pill and passes workspace trigger icon
+    # and split-menu footer into BranchPicker.
     - apps/web/src/components/BranchToolbarBranchSelector.tsx
+    # Renders the optional footer slot at the bottom of the branch combobox popup.
+    - apps/web/src/components/BranchPicker.tsx
     # PullRequestBadge's tone wrapper and text-secondary-label number span,
     # which the number-ink rule inherits through.
     - apps/web/src/components/ThreadStatusIndicators.tsx
@@ -5090,15 +5094,16 @@
     the popup, 4px on the rows and search field. ProviderModelPicker's shadow
     swaps upstream's Popover for a non-modal Base UI Menu and keeps the rest
     of the file (trigger, wheel/touch lock) upstream's, except that the
-    trigger label drops the provider name its icon already shows ("Opus 5.5",
-    not "Claude Opus 5.5"; the tooltip keeps the full name). The composer's
-    trigger also hides the provider icon, showing the model name alone,
-    except that Cursor's models lead with "Cursor" ("Cursor Opus 5.5") so a
-    Cursor-served Opus never reads as Claude's own; multi-model labels do the
-    same. The icon returns only in the composer's resting strip below 640px, where
-    upstream collapses the label to nothing and the icon would otherwise be
-    the trigger's only content. Settings pickers keep the icon. Cursor's models also drop
-    the "Claude" family name they are resold under. The strip is a per-provider
+    trigger renders the same ModelPickerProviderGlyph used in the menu (both in
+    the composer and in Settings, and in multi-model stacks) and drops the
+    provider name its icon already shows ("Opus 5.5", not "Claude Opus 5.5";
+    the tooltip keeps the full name and names the provider instance). Cursor's
+    models also drop the "Claude" family name they are resold under; when no
+    icon is shown (such as sidebar thread rows), triggerModelName still leads
+    Cursor models with "Cursor". Gemini models keep their "Gemini" family word
+    everywhere ("Gemini 4 Neon", not "4 Neon"), via a fenced hunk in
+    packages/provider-core/src/modelShortName.ts and KEPT_FAMILY_NAMES for
+    antigravity. The strip is a per-provider
     list of family words, not the provider's display name: Grok's "Grok Build"
     keeps its name because "Build" alone is nothing. Picker rows drop the name
     too, since the selected provider tab or the row's provider label names it.
@@ -5158,8 +5163,10 @@
     shows the selected model's traits. The traits label truncates inside the
     trigger's max width, and in the resting strip it collapses with the model
     name below 640px, where upstream moved the traits picker
-    into the ⋯ menu. Effort (`effort`, `reasoningEffort`,
-    `reasoning` or `variant`, when it has two or more levels) is a slider over
+    into the ⋯ menu. Effort (any reasoning select recognized by
+    isReasoningSelect — including `effort`, `reasoningEffort`, `reasoning`,
+    `variant`, `thinking_level`, and `role: "reasoning"` — when it has two or
+    more levels) is a slider over
     the model's own levels, Ultrathink included as the top stop for Claude;
     dragging previews and writes once on release. It is a 24px bar with a block
     thumb, dot stops and a short bar at the default level, drawn under the fill
@@ -5252,11 +5259,16 @@
     # Unfenced: the controlled-update effect must keep reading focus before it
     # rewrites and never focus the view itself (guard-pinned).
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx
+    # Fenced: keeps "Gemini " out of FAMILY_PREFIXES so Gemini models stay
+    # "Gemini 4 Neon" rather than shortening to "4 Neon".
+    - packages/provider-core/src/modelShortName.ts
+    - packages/provider-core/src/modelShortName.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
     - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
+    - packages/provider-core/src/modelShortName.test.ts
 
 - id: fork-changed-files-card
   intent: >

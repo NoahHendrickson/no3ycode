@@ -11,12 +11,7 @@ import type { DraftId } from "~/composerDraftStore";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
-import {
-  ChevronDownIcon,
-  FolderIcon,
-  FolderPlusIcon,
-  MessageSquareDashedIcon,
-} from "./icons/lucide-hugeicons";
+import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-hugeicons";
 import {
   openAddProject,
   SHORT_WINDOW_QUERY,
@@ -121,7 +116,6 @@ function DraftProjectChip(props: {
           <FolderIcon className="size-3 shrink-0" />
         )}
         <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
-        <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
       </MenuTrigger>
       <DraftProjectMenuPopup choices={props.choices} />
     </Menu>

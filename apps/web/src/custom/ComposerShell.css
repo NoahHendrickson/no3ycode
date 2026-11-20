@@ -1,31 +1,7 @@
-/* Colour only. The chip's geometry (20px, 4px inline padding, 4px radius,
-   12px/500/16px type) comes from the shared ghost-control rule in
-   `theme.custom.css` — the chip is a left-slot button like its neighbours,
-   and duplicating those values here once meant every tweak was a
-   synchronized two-file edit. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-mode-chip] {
-  background: var(--fork-mode-bg);
-  color: var(--fork-mode-fg);
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-mode-chip] {
-  color: var(--fork-mode-fg-dark);
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
-  background: var(--fork-mode-bg-hover);
-  color: var(--fork-mode-fg);
-}
-
-:root[data-fork="noahhendrickson-t3code"].dark
-  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
-  color: var(--fork-mode-fg-dark);
-}
-
 /* Label only, no caret. Upstream's ComposerSelectControl renders a bare
    Select.Icon (no data-slot), so the caret is reached as the trigger child
-   that holds the composer chevron. */
+   that holds the composer chevron. The button itself inherits ghost styling
+   (transparent fill, composer control ink, hover wash) from theme.custom.css. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-mode-chip]
   > :has(> [data-composer-control-chevron]) {

@@ -6,6 +6,7 @@
  * implicit fast-mode default, same Ultrathink detection) so the menu's
  * reasoning half reads and writes exactly what the traits picker did.
  */
+import { isReasoningSelect } from "@t3tools/client-runtime/model-traits";
 import type {
   ModelSelection,
   ProviderDriverKind,
@@ -51,24 +52,14 @@ export type ComposerModelTraitsInput = {
 
 export type SelectDescriptor = Extract<ProviderOptionDescriptor, { type: "select" }>;
 
-/** Each provider's name for its reasoning-effort option. */
-const EFFORT_DESCRIPTOR_IDS: ReadonlySet<string> = new Set([
-  "effort",
-  "reasoningEffort",
-  "reasoning",
-  "variant",
-]);
-
-/** The option the slider drives: an effort select with at least two levels to slide between. */
+/** The option the slider drives: a reasoning select with at least two levels to slide between. */
 export function findEffortDescriptor(
   descriptors: ReadonlyArray<ProviderOptionDescriptor>,
 ): SelectDescriptor | null {
   return (
     descriptors.find(
       (descriptor): descriptor is SelectDescriptor =>
-        descriptor.type === "select" &&
-        EFFORT_DESCRIPTOR_IDS.has(descriptor.id) &&
-        descriptor.options.length > 1,
+        isReasoningSelect(descriptor) && descriptor.options.length > 1,
     ) ?? null
   );
 }

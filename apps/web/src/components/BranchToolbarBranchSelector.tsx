@@ -15,9 +15,6 @@ import {
   type ThreadId,
 } from "@t3tools/contracts";
 import { GitBranchIcon } from "lucide-react";
-/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-import { ChevronDownIcon } from "../custom/icons/lucide-hugeicons";
-/* fork:end fork-composer-shell */
 import {
   useEffect,
   useImperativeHandle,
@@ -25,6 +22,7 @@ import {
   useState,
   useTransition,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
   type Ref,
 } from "react";
 
@@ -71,6 +69,9 @@ import { stackedThreadToast, toastManager } from "./ui/toast";
 
 export interface BranchToolbarBranchSelectorHandle {
   open: () => void;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  close: () => void;
+  /* fork:end fork-composer-shell */
 }
 
 interface BranchToolbarBranchSelectorProps {
@@ -89,6 +90,11 @@ interface BranchToolbarBranchSelectorProps {
   onStartFromOriginChange: (startFromOrigin: boolean) => void;
   onCheckoutPullRequestRequest?: (reference: string) => void;
   onComposerFocusRequest?: () => void;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  triggerIcon?: ReactNode;
+  triggerShortcut?: string;
+  popupFooter?: ReactNode;
+  /* fork:end fork-composer-shell */
 }
 
 const WORKTREE_CHANGE_BLOCKED_MESSAGE = "Stop the current turn to switch worktrees.";
@@ -113,6 +119,11 @@ export function BranchToolbarBranchSelector({
   onStartFromOriginChange,
   onCheckoutPullRequestRequest,
   onComposerFocusRequest,
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  triggerIcon,
+  triggerShortcut,
+  popupFooter,
+  /* fork:end fork-composer-shell */
 }: BranchToolbarBranchSelectorProps) {
   const composerFloatingLayerProps = useComposerMenuProps();
   const canWriteSourceControl = useEnvironmentScope(environmentId, AuthSourceControlWriteScope);
@@ -582,6 +593,11 @@ export function BranchToolbarBranchSelector({
         if (isInitialBranchesLoadPending || isBranchActionPending) return;
         handleOpenChange(true);
       },
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      close: () => {
+        handleOpenChange(false);
+      },
+      /* fork:end fork-composer-shell */
     }),
     [handleOpenChange, isBranchActionPending, isInitialBranchesLoadPending],
   );
@@ -724,8 +740,11 @@ export function BranchToolbarBranchSelector({
           ? { checked: startFromOrigin, onCheckedChange: onStartFromOriginChange }
           : undefined
       }
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      footer={popupFooter}
+      /* fork:end fork-composer-shell */
       popupProps={{
-        align: displayMode === "panel" ? "start" : "end",
+        align: "start",
         side: displayMode === "panel" ? "bottom" : "top",
         className: cn("flex flex-col", displayMode === "panel" ? "w-(--anchor-width)" : "w-80"),
         ...(displayMode === "toolbar"
@@ -787,23 +806,25 @@ export function BranchToolbarBranchSelector({
               )
             }
             className="min-w-0 max-w-full active:scale-100"
+            data-composer-shortcut={triggerShortcut}
             disabled={isInitialBranchesLoadPending || isBranchActionPending}
           >
-            <GitBranchIcon
-              className={cn(
-                "size-3 shrink-0",
-                displayMode === "panel" && THREAD_DETAILS_PANEL_ICON_CLASS,
-              )}
-            />
+            {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+                Combined workspace + branch trigger passes the active checkout/worktree glyph. */}
+            {triggerIcon !== undefined ? (
+              triggerIcon
+            ) : (
+              <GitBranchIcon
+                className={cn(
+                  "size-3 shrink-0",
+                  displayMode === "panel" && THREAD_DETAILS_PANEL_ICON_CLASS,
+                )}
+              />
+            )}
+            {/* fork:end fork-composer-shell */}
             <ComposerContextLabel displayMode={displayMode}>
               <MiddleTruncate value={triggerLabel} variant="cap-aligned" className="w-full" />
             </ComposerContextLabel>
-            {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-                Upstream dropped the context chips' carets; the fork's chips keep them. */}
-            {displayMode !== "panel" ? (
-              <ChevronDownIcon className="size-3 shrink-0 opacity-50" />
-            ) : null}
-            {/* fork:end fork-composer-shell */}
           </ComboboxTrigger>
         </span>
         {displayMode === "panel" ? (

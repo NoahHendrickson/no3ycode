@@ -1,5 +1,5 @@
 import type { RuntimeMode } from "@t3tools/contracts";
-import { memo, type ComponentProps, type CSSProperties, type ReactNode } from "react";
+import { memo, type ComponentProps, type ReactNode } from "react";
 
 import { ComposerControl } from "../components/chat/ComposerControl";
 import { cn } from "~/lib/utils";
@@ -31,9 +31,11 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   modeControls: ReactNode;
   modelControls: ReactNode;
   readoutControls: ReactNode;
+  usageControls?: ReactNode;
+  topVessel?: ReactNode;
 };
 
-/** Owns the fork's context → vessel(surface + controls) composition and state gates. */
+/** Owns the fork's vessel(topVessel + surface + controls) composition and state gates. */
 export const ComposerShell = memo(function ComposerShell({
   approvalPending,
   children,
@@ -43,36 +45,55 @@ export const ComposerShell = memo(function ComposerShell({
   modeControls,
   modelControls,
   readoutControls,
+  usageControls,
+  topVessel,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
     approvalPending,
     collapsedMobile,
     mobilePendingActionsVisible,
   });
-  const left = showInteractiveControls ? modeControls : null;
+  const left = context ? (
+    <div data-fork-composer-context-row="true" className="flex min-w-0 flex-1 items-center">
+      {context}
+    </div>
+  ) : null;
   const right =
-    readoutControls || (showInteractiveControls && modelControls) ? (
+    readoutControls ||
+    (showInteractiveControls && (modelControls || modeControls || usageControls)) ? (
       <>
         {readoutControls}
-        {showInteractiveControls ? (
-          <div data-fork-composer-model-controls="true" className="flex min-w-0 items-center">
+        {showInteractiveControls && modelControls ? (
+          <div
+            data-fork-composer-model-controls="true"
+            className="flex min-w-0 items-center gap-px"
+          >
             {modelControls}
           </div>
         ) : null}
+        {showInteractiveControls && modeControls ? (
+          <div
+            data-fork-composer-mode-controls="true"
+            className="flex shrink-0 items-center gap-px"
+          >
+            {modeControls}
+          </div>
+        ) : null}
+        {showInteractiveControls ? usageControls : null}
       </>
     ) : null;
 
   return (
-    <>
-      {context ? (
-        // The 8px gap under the chips only when the strip is actually showing:
-        // ChatView also mounts upstream's hidden, off-flow measuring strip, and
-        // ComposerSurface.Shell's data-context-row is the visibility signal.
+    <div className="relative flex min-w-0 flex-col">
+      {/* Sibling of the vessel (not its child): the vessel carries backdrop-filter
+          over Glass pictures, which creates a Chromium Backdrop Root that would
+          prevent an absolutely positioned child above it from blurring the picture. */}
+      {!collapsedMobile && topVessel ? (
         <div
-          data-fork-composer-context-row="true"
-          className="flex min-w-0 items-center group-data-context-row/composer-surface:pb-2"
+          data-fork-composer-top-vessel="true"
+          className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"
         >
-          {context}
+          {topVessel}
         </div>
       ) : null}
       {/* No vessel paint while collapsed: the mobile pill rounds to 12px and
@@ -86,18 +107,18 @@ export const ComposerShell = memo(function ComposerShell({
         {left || right ? (
           <div
             data-fork-composer-control-row="true"
-            className="flex min-w-0 items-center justify-between gap-2 p-2"
+            className="flex min-w-0 items-center justify-between gap-2 px-2 py-1.5"
           >
             <div
               data-fork-composer-control-row-slot="left"
-              className="-m-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="-m-1 flex min-w-0 flex-1 items-center gap-px overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {left}
             </div>
             {right ? (
               <div
                 data-fork-composer-control-row-slot="right"
-                className="flex min-w-0 shrink-0 items-center justify-end"
+                className="flex min-w-0 shrink-0 items-center justify-end gap-px"
               >
                 {right}
               </div>
@@ -105,7 +126,7 @@ export const ComposerShell = memo(function ComposerShell({
           </div>
         ) : null}
       </div>
-    </>
+    </div>
   );
 });
 
@@ -113,18 +134,21 @@ type ComposerPromptRowProps = Pick<
   ComposerShellVisibilityInput,
   "approvalPending" | "mobilePendingActionsVisible"
 > & {
+  leadingAction?: ReactNode;
   action: ReactNode;
   children?: ReactNode;
 };
 
 /**
- * Keeps the prompt beside its primary-action cluster in the drawn base row.
- * The cluster goes with showInlinePrimaryAction, so an approval takes send away.
+ * Keeps the prompt beside its leading (+) and primary-action (mic + send)
+ * clusters. On the draft hero CSS grid moves both clusters to a row beneath
+ * the prompt, with + at the far left and mic + send at the far right.
  */
 export const ComposerPromptRow = memo(function ComposerPromptRow({
   action,
   approvalPending,
   children,
+  leadingAction,
   mobilePendingActionsVisible,
 }: ComposerPromptRowProps) {
   const { showInlinePrimaryAction } = resolveComposerShellVisibility({
@@ -136,8 +160,16 @@ export const ComposerPromptRow = memo(function ComposerPromptRow({
   return (
     // Stamped so the draft-only geometry (theme.custom.css, keyed on the
     // overlay's data-draft-hero) can put the prompt on top and the action
-    // cluster beneath it.
-    <div data-fork-composer-prompt-row="true" className="flex min-w-0 items-end gap-6">
+    // clusters beneath it.
+    <div data-fork-composer-prompt-row="true" className="flex min-w-0 items-end gap-2">
+      {showInlinePrimaryAction && leadingAction ? (
+        <div
+          data-chat-composer-leading-actions="true"
+          className="flex shrink-0 items-center self-end"
+        >
+          {leadingAction}
+        </div>
+      ) : null}
       <div data-fork-composer-prompt="true" className="relative min-w-0 flex-1">
         {children}
       </div>
@@ -153,62 +185,22 @@ export const ComposerPromptRow = memo(function ComposerPromptRow({
   );
 });
 
-type RuntimeModeChipStyle = CSSProperties & {
-  "--fork-mode-bg": string;
-  "--fork-mode-bg-hover": string;
-  "--fork-mode-fg": string;
-  "--fork-mode-fg-dark": string;
-};
-
-const runtimeModeChipStyles = {
-  auto: {
-    "--fork-mode-bg": "rgb(18 255 89 / 16%)",
-    "--fork-mode-bg-hover": "rgb(18 255 89 / 24%)",
-    "--fork-mode-fg": "var(--color-emerald-700)",
-    "--fork-mode-fg-dark": "#00ff88",
-  },
-  "full-access": {
-    "--fork-mode-bg": "rgb(255 205 89 / 16%)",
-    "--fork-mode-bg-hover": "rgb(255 205 89 / 24%)",
-    "--fork-mode-fg": "var(--color-amber-700)",
-    "--fork-mode-fg-dark": "#ffcd59",
-  },
-  "auto-accept-edits": {
-    "--fork-mode-bg": "rgb(192 132 252 / 16%)",
-    "--fork-mode-bg-hover": "rgb(192 132 252 / 24%)",
-    "--fork-mode-fg": "var(--color-violet-700)",
-    "--fork-mode-fg-dark": "#c084fc",
-  },
-  "approval-required": {
-    "--fork-mode-bg": "rgb(255 107 96 / 16%)",
-    "--fork-mode-bg-hover": "rgb(255 107 96 / 24%)",
-    "--fork-mode-fg": "var(--color-red-700)",
-    "--fork-mode-fg-dark": "#ff6b60",
-  },
-} satisfies Record<RuntimeMode, RuntimeModeChipStyle>;
-
-export function getRuntimeModeChipStyle(runtimeMode: RuntimeMode): RuntimeModeChipStyle {
-  return runtimeModeChipStyles[runtimeMode];
-}
-
-type ComposerRuntimeModeTriggerProps = Omit<ComponentProps<typeof ComposerControl>, "style"> & {
+type ComposerRuntimeModeTriggerProps = ComponentProps<typeof ComposerControl> & {
   runtimeMode: RuntimeMode;
-  style?: CSSProperties;
 };
 
-/** The runtime mode chip with its mode-specific accent tokens. */
+/** The runtime mode trigger, rendered as a ghost button matching sibling composer controls. */
 export function ComposerRuntimeModeTrigger({
   className,
   runtimeMode,
-  style,
   ...props
 }: ComposerRuntimeModeTriggerProps) {
   return (
     <ComposerControl
       {...props}
       data-fork-composer-mode-chip="true"
+      data-fork-runtime-mode={runtimeMode}
       className={cn("font-medium", className)}
-      style={{ ...getRuntimeModeChipStyle(runtimeMode), ...style }}
     />
   );
 }

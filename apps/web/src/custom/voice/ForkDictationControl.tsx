@@ -8,15 +8,15 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useInletMorphPresence } from "../inletMenuMorph";
 import type { ForkDictation } from "./forkDictation";
 
-// 1px bars on a 4px pitch, 3px in from either edge, up to 12px tall in the 20px
-// control row, painted in the canvas's own `color` (theme.custom.css).
-const BAR_WIDTH = 1;
-const BAR_PITCH = 4;
+// 2px rounded bars on a 5px pitch, 3px in from either edge, up to 18px tall in
+// the 24px action row, painted in the canvas's own `color` (theme.custom.css).
+const BAR_WIDTH = 2;
+const BAR_PITCH = 5;
 const BAR_GAP = BAR_PITCH - BAR_WIDTH;
-const DOT_HEIGHT = 2;
-const BAR_MAX_HEIGHT = 12;
+const DOT_HEIGHT = 3;
+const BAR_MAX_HEIGHT = 18;
 const BAR_INSET = 3;
-// The bars a w-16 canvas holds; older samples are never drawn.
+// The bars a w-20 canvas holds; older samples are never drawn.
 const SLOTS = 15;
 // Quiet speech sits around -40 dBFS and normal speech near -20, so map the
 // -50…-10 dB range to the bar height instead of raw amplitude, which barely
@@ -52,7 +52,9 @@ function paintTimeline(canvas: HTMLCanvasElement, history: ReadonlyArray<number>
         ? DOT_HEIGHT
         : DOT_HEIGHT + Math.round(sample * (BAR_MAX_HEIGHT - DOT_HEIGHT));
     const x = width - BAR_INSET + BAR_GAP - (SLOTS - slot) * BAR_PITCH;
-    context.fillRect(x, (height - barHeight) / 2, BAR_WIDTH, barHeight);
+    context.beginPath();
+    context.roundRect(x, (height - barHeight) / 2, BAR_WIDTH, barHeight, BAR_WIDTH / 2);
+    context.fill();
   }
 }
 
@@ -81,7 +83,7 @@ function VoiceLevelTimeline(props: { level: number }) {
       ref={canvasRef}
       aria-hidden
       data-fork-dictation-timeline=""
-      className="block h-5 w-16 shrink-0"
+      className="block h-6 w-20 shrink-0"
     />
   );
 }
@@ -152,7 +154,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
   const live = dictation.blocksSubmission;
   const closing = useInletMorphPresence(live, TIMELINE_CLOSE_MS).ending;
   if (!dictation.isAvailable) return null;
-  const recording = dictation.state.phase === "recording";
+  const showTimeline = live || closing;
   return (
     <div
       {...(live ? { "data-fork-dictation-live": "" } : {})}
@@ -160,23 +162,26 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
       data-fork-dictation-mic=""
       className="flex shrink-0 items-center"
     >
-      <DictationTooltip
-        label={recording ? DONE_LABEL : "Dictate"}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={recording ? DONE_LABEL : "Dictate (Right Command)"}
-            data-fork-composer-action="dictate"
-            disabled={!recording && (disabled || dictation.blocksSubmission)}
-            onPointerDown={(event) => event.preventDefault()}
-            onClick={recording ? dictation.stop : dictation.start}
-          />
-        }
-        icon={<MicIcon weight="fill" />}
-      />
-      {live || closing ? <VoiceLevelTimeline level={dictation.level} /> : null}
+      {showTimeline ? (
+        <VoiceLevelTimeline level={dictation.level} />
+      ) : (
+        <DictationTooltip
+          label="Dictate"
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Dictate (Right Command)"
+              data-fork-composer-action="dictate"
+              disabled={disabled || dictation.blocksSubmission}
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={dictation.start}
+            />
+          }
+          icon={<MicIcon weight="fill" />}
+        />
+      )}
     </div>
   );
 }
@@ -246,7 +251,7 @@ export function ForkDictationPrimaryButton(props: {
           transcribing ? (
             <Spinner className="size-3.5" aria-hidden />
           ) : busy ? (
-            <CheckIcon className="size-4" aria-hidden />
+            <CheckIcon className="size-3.5" strokeWidth={2.4} aria-hidden />
           ) : (
             <MicIcon weight="fill" className="size-4" aria-hidden />
           )

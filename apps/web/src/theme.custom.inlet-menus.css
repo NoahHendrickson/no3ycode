@@ -494,9 +494,10 @@
   --fork-inlet-rail-fillet: 6px;
   border-inline-end-width: 0;
   padding-inline-end: var(--fork-inlet-rail-fillet);
-  /* Down by the list's 4px inset, so the first tab still lines up with the
-     search field and its fillet stays below the list's rounded top corner. */
+  /* Inset by the list's 4px margin plus corners, so the first and last tabs'
+     fillets stay inside the rail and clear of the list's rounded corners. */
   padding-top: 12px;
+  padding-bottom: 12px;
 
   & [aria-current="true"] {
     background: var(--popover);
@@ -887,7 +888,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-model-controls]:has([data-chat-provider-model-picker][aria-expanded="true"])
   [data-fork-composer-usage-limits] {
-  translate: -8px 0;
+  translate: 8px 0;
 }
 
 /* The usage meter and the model button, which the menus hang from, ease their

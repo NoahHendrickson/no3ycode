@@ -107,7 +107,10 @@ function Card(props: {
   readonly children: ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card pb-1">
+    <div
+      data-fork-draft-launchpad-card=""
+      className="flex min-w-0 flex-col overflow-hidden rounded-[var(--fork-composer-radius,8px)] border border-border bg-card pb-1"
+    >
       {props.header ?? (
         <div className="flex h-9 items-center px-3 font-medium text-muted-foreground/70 text-xs">
           {props.label}

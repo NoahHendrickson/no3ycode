@@ -93,17 +93,14 @@
      and stop buttons match the chip selector and are left out, or they would
      draw a pill inside the pill. */
   &.dark[data-fork-theme="cool-darker"]
+    [data-fork-composer-context-row]
     :is(
-      [data-fork-composer-context-row]
-        :is(
-          button,
-          [data-slot="button"],
-          [data-fork-context-chip],
-          [data-fork-pr-chip],
-          [data-fork-monitoring-pill]
-        ):not([data-fork-monitoring-pill] *),
-      [data-fork-composer-mode-chip]
-    ) {
+      button,
+      [data-slot="button"],
+      [data-fork-context-chip],
+      [data-fork-pr-chip],
+      [data-fork-monitoring-pill]
+    ):not([data-fork-monitoring-pill] *) {
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-rim);
@@ -111,17 +108,14 @@
 
   @media (pointer: fine) {
     &.dark[data-fork-theme="cool-darker"]
+      [data-fork-composer-context-row]
       :is(
-        [data-fork-composer-context-row]
-          :is(
-            button,
-            [data-slot="button"],
-            [data-fork-context-chip],
-            [data-fork-pr-chip],
-            [data-fork-monitoring-pill]
-          ):not([data-fork-monitoring-pill] *),
-        [data-fork-composer-mode-chip]
-      ) {
+        button,
+        [data-slot="button"],
+        [data-fork-context-chip],
+        [data-fork-pr-chip],
+        [data-fork-monitoring-pill]
+      ):not([data-fork-monitoring-pill] *) {
       position: relative;
       box-shadow:
         var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
@@ -129,12 +123,9 @@
     }
 
     &.dark[data-fork-theme="cool-darker"]
-      :is(
-        [data-fork-composer-context-row]
-          :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
-            [data-fork-monitoring-pill] *
-          ),
-        [data-fork-composer-mode-chip]
+      [data-fork-composer-context-row]
+      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
+        [data-fork-monitoring-pill] *
       )::after {
       content: "";
       position: absolute;
@@ -156,13 +147,16 @@
     }
   }
 
-  /* The mode chip sits on the vessel, a lighter surface than the stage the
-     context chips stand on, and its tinted fill made the full halo read as a
-     dark smudge round it, so it takes the soft halo. The rim is restated so
-     its var() picks this halo up, not the root's. */
-  &.dark[data-fork-theme="cool-darker"] [data-fork-composer-mode-chip] {
-    --fork-glass-halo: var(--fork-glass-halo-soft);
-    --fork-glass-rim: var(--fork-glass-halo), var(--fork-glass-light);
+  /* Context options seated inside the vessel are flat ghost buttons, not 3D glass pills. */
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-composer-vessel]
+    [data-fork-composer-context-row]
+    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+    box-shadow: none;
+
+    &::after {
+      content: none;
+    }
   }
 
   /* Every selected tab is a chip of the same glass: the selected segment of

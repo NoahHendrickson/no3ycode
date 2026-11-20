@@ -99,7 +99,7 @@ describe("fork guard: fork-side-chat", () => {
       /\[data-fork-side-chat="true"\][^{]*\{\s*--fork-glass-card-inset: 0px;\s*--fork-glass-card-radius: 0px;\s*\}/u,
     );
     expect(glassStage).toMatch(
-      /\[data-fork-side-chat="true"\][^{]*\[data-fork-stage-card\]\)::before \{\s*box-shadow: none;\s*\}/u,
+      /\[data-fork-side-chat="true"\][^{]*\[data-fork-stage-card\]\)::before[^{]*\{\s*box-shadow: none;\s*\}/u,
     );
   });
 

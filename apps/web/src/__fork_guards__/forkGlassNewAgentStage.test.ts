@@ -49,9 +49,9 @@ const FROSTED = "[data-fork-glass-frost]";
 const TOKENS = `:is(${ROOT},${FROSTED})`;
 const POPUP = `body.dropdown-glass${FROSTED}`;
 const SUPPORTS = ["@supports (anchor-name: --fork-glass-card)"];
-// The three frost hosts, as the sheet lists them inside one :is().
+// The four frost hosts, as the sheet lists them inside one :is().
 const HOSTS =
-  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-composer-stack="true"][data-fork-composer-context-row]:is(button,[data-slot="button"],[data-fork-context-chip],[data-fork-pr-chip]),[data-chat-header][data-fork-pill])';
+  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-draft-launchpad-card],[data-fork-composer-stack="true"][data-fork-composer-context-row]:is(button,[data-slot="button"],[data-fork-context-chip],[data-fork-pr-chip]),[data-chat-header][data-fork-pill])';
 
 const sheet = readSibling("../theme.custom.glass.css");
 const rules = cssRules(sheet);
@@ -93,7 +93,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     );
     expect(compact(palettes)).toContain(
       compact(
-        ".dropdown-glass[data-fork-glass-over-picture] { background: var(--fork-glass-picture-tint);",
+        ".dropdown-glass[data-fork-glass-over-picture] { background: var(--fork-glass-picture-menu-tint);",
       ),
     );
     // React never reads the pick on ChatView's render path.

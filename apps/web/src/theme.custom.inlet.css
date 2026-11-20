@@ -568,6 +568,13 @@
   border-radius: 8px;
 }
 
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-fork-composer-vessel]
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  border-radius: 6px;
+}
+
 /* A chip's menu (project, workspace, host, branch; stamped
    data-fork-chip-menu) hangs from the chip as the header's menus hang from
    their buttons: the open chip takes the menu's fill and goes square on the
@@ -739,20 +746,7 @@
   }
 }
 
-/* Black draws the mode chip neutral (black 16%, black ink) where Cream keeps
-   each mode's hue, and takes the dark palettes' flat red stop button. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-fork-composer-mode-chip] {
-  background: rgb(0 0 0 / 16%);
-  color: var(--foreground);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
-  [data-fork-composer-mode-chip]:is(:hover, [data-pressed], [data-popup-open]) {
-  background: rgb(0 0 0 / 22%);
-  color: var(--foreground);
-}
+/* Black takes the dark palettes' flat red stop button. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-action="stop"] {
