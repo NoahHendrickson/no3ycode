@@ -288,7 +288,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     // leaves no wallpaper under the filter (fork-glass-new-agent-stage).
     const overPicture = (selector: string) =>
       selector.includes('[data-fork-glass-picture="off"]') &&
-      /\[data-fork-draft-hero\]|\[data-fork-glass-over-picture\]/u.test(selector);
+      /\[data-fork-opaque-backdrop\]|\[data-fork-glass-over-picture\]/u.test(selector);
     for (const rule of glassRules) {
       if (overPicture(rule.selector)) continue;
       for (const [, value] of rule.body.matchAll(/(?:-webkit-)?backdrop-filter:\s*([^;]+);/gu)) {

@@ -491,11 +491,14 @@ export function useSettingsRestore(onRestored?: () => void) {
   const inletColorChanged = appearance === INLET_THEME && inletColor !== DEFAULT_INLET_COLOR;
   /* fork:end fork-inlet-theme */
   /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
-  // The shown colour's pick, only while Inlet shows the row.
-  const [inletNewAgentBackdrop, setInletNewAgentBackdrop] = useInletNewAgentBackdrop(inletColor);
-  const inletNewAgentBackdropChanged =
-    appearance === INLET_THEME &&
-    inletNewAgentBackdrop !== DEFAULT_INLET_NEW_AGENT_BACKDROPS[inletColor];
+  // Both colours' picks while Inlet shows the row: the colour resets too, and would show the other.
+  const [blackNewAgentBackdrop, setBlackNewAgentBackdrop] = useInletNewAgentBackdrop("black");
+  const [creamNewAgentBackdrop, setCreamNewAgentBackdrop] = useInletNewAgentBackdrop("cream");
+  const blackNewAgentBackdropChanged =
+    appearance === INLET_THEME && blackNewAgentBackdrop !== DEFAULT_INLET_NEW_AGENT_BACKDROPS.black;
+  const creamNewAgentBackdropChanged =
+    appearance === INLET_THEME && creamNewAgentBackdrop !== DEFAULT_INLET_NEW_AGENT_BACKDROPS.cream;
+  const inletNewAgentBackdropChanged = blackNewAgentBackdropChanged || creamNewAgentBackdropChanged;
   /* fork:end fork-inlet-black-texture */
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   // Counted on any theme, like the tones: restoring defaults lands on Basic, which would show it.
@@ -704,11 +707,11 @@ export function useSettingsRestore(onRestored?: () => void) {
     );
     if (!confirmed) return;
 
-    /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture
-       Before the colour resets, so the pick reset is the shown colour's. */
-    if (inletNewAgentBackdropChanged) {
-      setInletNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS[inletColor]);
-    }
+    /* fork:begin fork-inlet-black-texture — see .fork/customizations.yaml#fork-inlet-black-texture */
+    if (blackNewAgentBackdropChanged)
+      setBlackNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS.black);
+    if (creamNewAgentBackdropChanged)
+      setCreamNewAgentBackdrop(DEFAULT_INLET_NEW_AGENT_BACKDROPS.cream);
     /* fork:end fork-inlet-black-texture */
     /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme
        Before the palette leaves Inlet, so the colour's appearance is settled with it. */

@@ -1173,12 +1173,13 @@
   backdrop-filter: none;
 }
 
-/* The exception to the rule above (fork-glass-new-agent-stage): a new agent drawn on a
-   Settings picture other than the portrait. Those pictures are opaque, so the filter has no
-   wallpaper to flatten, and on screen it does blur them (checked in the desktop app,
-   2026-11-19). Over their bright colours a white wash left the ink unreadable, so the
-   composer, its pills and the popups that open over the picture (stamped by
-   custom/forkGlassPopupCutout.ts instead of cut) share one dark tint. */
+/* The exception to the rule above (fork-glass-new-agent-stage): a new agent drawn on an
+   opaque Settings picture (Mountain Dither, Jolly Petal), which leaves no wallpaper for the
+   filter to flatten; on screen it does blur them (checked in the desktop app, 2026-11-19).
+   Over their bright colours a white wash left the ink unreadable, so the composer, its pills
+   and the popups that open over the picture (stamped by custom/forkGlassPopupCutout.ts
+   instead of cut) share one dark tint. Keyed on the picture's later siblings, so a draft
+   without one (a translucent pick, an embedded side chat) keeps the native glass. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-picture="off"].dark[data-fork-theme="cool-darker"] {
   --fork-glass-picture-tint: rgb(12 13 15 / 36%);
   --fork-glass-picture-tint-hover: rgb(12 13 15 / 47%);
@@ -1189,16 +1190,21 @@
   [data-chat-column-maximized-away][data-fork-draft-hero] {
   /* The picture's containing block, which the portrait's sheet gave the chat view. */
   position: relative;
-  --fork-composer-vessel-bg: var(--fork-glass-picture-tint);
-  --fork-composer-bg: rgb(0 0 0 / 19%);
-  --fork-composer-border: rgb(255 255 255 / 10%);
-  --fork-context-chip-bg: var(--fork-glass-picture-tint);
-  --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
   /* An opaque client's fills, as the portrait's sheet clears them (theme.custom.glass.css). */
   & .bg-background:not([data-slot="switch-thumb"]) {
     background: none;
   }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-picture="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-opaque-backdrop]
+  ~ * {
+  --fork-composer-vessel-bg: var(--fork-glass-picture-tint);
+  --fork-composer-bg: rgb(0 0 0 / 19%);
+  --fork-composer-border: rgb(255 255 255 / 10%);
+  --fork-context-chip-bg: var(--fork-glass-picture-tint);
+  --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
   &
     :is(

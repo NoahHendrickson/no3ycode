@@ -31,7 +31,10 @@ import { useActiveForkPalette } from "./forkActivePalette";
 import { useGlassNewAgentBackdrop } from "./forkGlassNewAgentPicture";
 import {
   BASIC_TONE_OPTIONS,
+  COOL_DARKER_BACKGROUND,
   COOL_DARKER_THEME,
+  INLET_BACKGROUND,
+  INLET_COLOR_OPTIONS,
   type InletColor,
   useActiveBasicTone,
   useActiveInletColor,
@@ -40,12 +43,12 @@ import { useInletNewAgentBackdrop } from "./inletNewAgentBackdropSetting";
 import { PixelTextureBackdrop } from "./pixelTexture/PixelTextureBackdrop";
 
 /** Glass's stage and ink (theme.custom.palettes.css), for the texture's tiles. */
-const GLASS_TEXTURE_COLORS = { ground: "#141618", text: "#e8e8e8" };
+const GLASS_TEXTURE_COLORS = { ground: COOL_DARKER_BACKGROUND, text: "#e8e8e8" };
 
-/** Each Inlet colour's panel and ink (theme.custom.palettes.css). */
+/** Each Inlet colour's panel (the other colour's frame) and ink (theme.custom.palettes.css). */
 const INLET_TEXTURE_COLORS: Record<InletColor, { ground: string; text: string }> = {
-  black: { ground: "#f8f3d8", text: "#1c1c1a" },
-  cream: { ground: "#141414", text: "#e8e8e8" },
+  black: { ground: INLET_BACKGROUND, text: "#1c1c1a" },
+  cream: { ground: INLET_COLOR_OPTIONS.black.frame, text: "#e8e8e8" },
 };
 
 export function BasicNewAgentBackdrop(props: { readonly shown: boolean }) {
@@ -127,6 +130,8 @@ function StillBackdrop(props: {
     <div
       ref={ref}
       aria-hidden
+      // Covers the column opaquely, so Glass may blur it (theme.custom.palettes.css).
+      data-fork-opaque-backdrop=""
       className="pointer-events-none absolute inset-0 bg-no-repeat [image-rendering:pixelated]"
       style={
         layout

@@ -83,10 +83,13 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     expect(compact(palettes)).toContain(
       compact(`${offRoot} [data-slot="popover-popup"][data-starting-style]`),
     );
-    // Over another picture a popup inside the chat view is stamped rather than
-    // cut, and blurs that picture in the composer's tint instead of the desktop.
+    // Over an opaque picture a popup inside it is stamped rather than cut, and
+    // blurs that picture in the composer's tint instead of the desktop.
     expect(readSibling("../custom/forkGlassPopupCutout.ts")).toContain(
-      ":root${PICTURE_OFF} [data-chat-column-maximized-away][data-fork-draft-hero]",
+      ":root${PICTURE_OFF} [data-fork-opaque-backdrop]",
+    );
+    expect(readSibling("../custom/BasicNewAgentBackdrop.tsx")).toContain(
+      "data-fork-opaque-backdrop",
     );
     expect(compact(palettes)).toContain(
       compact(
