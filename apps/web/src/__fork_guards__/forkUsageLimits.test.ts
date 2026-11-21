@@ -48,6 +48,12 @@ describe("fork guard: fork-composer-usage-limits", () => {
     expect(composer).toContain("useComposerUsageDrawer(");
     expect(composer).toContain("usageControls={usageDrawer.readout}");
     expect(composer).toContain("topVessel={usageDrawer.drawer}");
+    expect(composer).toContain("enabled: !isComposerFooterCompact && !isComposerCollapsedMobile");
+    const chatView = readSibling("../components/ChatView.tsx");
+    expect(chatView).toContain("contentInsetEndAdjustment={effectiveComposerTimelineInset}");
+    expect(chatView).toMatch(
+      /composerTimelineInset:\s*timelineAnchorMessageId === null \? effectiveComposerTimelineInset : composerTimelineInset/,
+    );
     const readout = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     expect(readout).toContain("<UsageCircleMeter");
     expect(readout).toContain('data-fork-composer-usage-drawer="true"');

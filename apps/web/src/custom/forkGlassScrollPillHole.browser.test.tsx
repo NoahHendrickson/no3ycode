@@ -93,7 +93,7 @@ describe("useForkGlassScrollPillHole", () => {
   });
 
   it("clears the cutout during an animated transform and re-cuts once settled", async () => {
-    await using screen = await render(<Timeline scroller="first" transitionMs={120} />);
+    await using screen = await render(<Timeline scroller="first" transitionMs={600_000} />);
     const scroller = screen.getByTestId("first").element() as HTMLElement;
     const canvas = screen.getByTestId("canvas").element() as HTMLElement;
     const pill = screen.getByRole("button", { name: "Scroll to end" });
@@ -107,6 +107,7 @@ describe("useForkGlassScrollPillHole", () => {
       expect(scroller.style.getPropertyValue("--fork-pill-hole-y")).toBe("");
     });
 
+    for (const animation of pill.element().parentElement!.getAnimations()) animation.finish();
     await vi.waitFor(() => {
       expect(pill.element().hasAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE)).toBe(true);
       const liftedY = Number.parseFloat(scroller.style.getPropertyValue("--fork-pill-hole-y"));

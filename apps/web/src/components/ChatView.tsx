@@ -2293,7 +2293,10 @@ export default function ChatView(props: ChatViewProps) {
     attachComposerOverlay: attachFollowComposerOverlay,
   } = useTimelineFollow({
     legendListRef,
-    composerTimelineInset: effectiveComposerTimelineInset,
+    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+    composerTimelineInset:
+      timelineAnchorMessageId === null ? effectiveComposerTimelineInset : composerTimelineInset,
+    /* fork:end fork-composer-usage-limits */
     routeThreadKey,
     activeThreadKey,
     isServerThread,

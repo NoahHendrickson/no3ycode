@@ -91,18 +91,6 @@ export function useForkGlassScrollPillHole(bottom: number) {
             animation.playState === "running",
         );
 
-    const hasTransformTransition = () => {
-      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true) return false;
-      const computed = getComputedStyle(lane);
-      const properties = computed.transitionProperty.split(",").map((value) => value.trim());
-      const durations = computed.transitionDuration.split(",").map((value) => value.trim());
-      return properties.some((property, index) => {
-        if (property !== "transform" && property !== "all") return false;
-        const duration = durations[index % durations.length] ?? "0s";
-        return Number.parseFloat(duration) > 0;
-      });
-    };
-
     const cut = () => {
       // A replaced scroller reports one last resize as it detaches.
       if (!scroller?.isConnected) {
@@ -165,7 +153,7 @@ export function useForkGlassScrollPillHole(bottom: number) {
       lastLiftPx = nextLiftPx;
       // Clear the hole while an animated transform runs so the pill falls back
       // to its opaque Glass wash instead of dragging past a stationary hole.
-      if (hasTransformTransition()) {
+      if (hasRunningTransformTransition()) {
         clearHole();
       } else {
         cut();

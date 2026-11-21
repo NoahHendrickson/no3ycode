@@ -66,7 +66,7 @@ describe("useComposerUsageDrawer", () => {
     await using screen = await render(
       <DrawerHarness
         usageLimits={SESSION_LIMITS}
-        transitionMs={800}
+        transitionMs={600_000}
         onSettledLiftChange={onSettledLiftChange}
       />,
       { router: false },
@@ -83,6 +83,7 @@ describe("useComposerUsageDrawer", () => {
     });
     const initialPanel = canvas.querySelector("[data-fork-composer-usage-drawer]");
     expect(initialPanel).not.toBeNull();
+    for (const animation of initialPanel!.getAnimations()) animation.finish();
     const initialLift = Number.parseFloat(
       canvas.style.getPropertyValue("--fork-usage-drawer-lift"),
     );
