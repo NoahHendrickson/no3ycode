@@ -44,6 +44,12 @@ import {
   normalizeAntigravityToolCall,
 } from "../../provider/acp/AntigravityProtocol.ts";
 import { isAntigravitySignInRequiredError } from "../../provider/antigravityAuthSupport.ts";
+/* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+import {
+  loadAntigravityUserMcpServers,
+  mergeAntigravityMcpActivation,
+} from "../../provider/acp/forkAntigravityUserMcp.ts";
+/* fork:end fork-antigravity-user-mcp */
 import {
   AcpProviderCapabilitiesV2,
   makeAcpAdapterV2,
@@ -92,6 +98,10 @@ export interface AntigravityAdapterV2Options {
   readonly continuationRequests?: Parameters<typeof makeAcpAdapterV2>[0]["continuationRequests"];
   /** The agent's GEMINI_HOME. Its session logs show turns that ended on an upstream error. */
   readonly profileDirectory?: string;
+  /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+  /** The host user's home directory, used to load `~/.gemini/config/mcp_config.json`. */
+  readonly userHome?: string;
+  /* fork:end fork-antigravity-user-mcp */
 }
 
 /**
@@ -140,11 +150,25 @@ export function makeAntigravityAcpAdapterFlavor(
   const makeRuntime = Effect.fn("AntigravityAdapterV2.makeRuntime")(
     function* (input: AcpAdapterV2RuntimeInput) {
       const scope = yield* Scope.fork(yield* Effect.scope);
+      /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+      const readUserMcpServers =
+        options.userHome === undefined
+          ? Effect.succeed([] as const)
+          : loadAntigravityUserMcpServers(options.userHome).pipe(
+              Effect.provideService(FileSystem.FileSystem, options.fileSystem),
+              Effect.provideService(Path.Path, options.path),
+            );
+      const userMcpServers = yield* readUserMcpServers;
+      const mergedMcp = mergeAntigravityMcpActivation(input, userMcpServers);
+      /* fork:end fork-antigravity-user-mcp */
       const runtime = yield* options
         .withProcess(
           Scope.close(scope, Exit.void),
           options.makeRuntime({
             ...input,
+            /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+            ...mergedMcp,
+            /* fork:end fork-antigravity-user-mcp */
             clientFileReads: true,
             sessionSystemPromptAppend: PULL_REQUEST_LINKING_INSTRUCTIONS,
             additionalDirectories: [options.host.paths.attachmentsDir],
@@ -156,8 +180,32 @@ export function makeAntigravityAcpAdapterFlavor(
       // Served reads are reported from the read handler, so they take turns with agent updates.
       const updates = yield* Semaphore.make(1);
       let projectUpdate: Parameters<typeof runtime.handleSessionUpdate>[0] | undefined;
+      /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+      const withUserMcpActivation = (
+        activationOptions?: AcpSessionRuntime.AcpSessionActivationOptions,
+      ) =>
+        activationOptions === undefined || options.userHome === undefined
+          ? Effect.succeed(activationOptions)
+          : readUserMcpServers.pipe(
+              Effect.map((servers) => mergeAntigravityMcpActivation(activationOptions, servers)),
+            );
+      /* fork:end fork-antigravity-user-mcp */
       return {
         ...runtime,
+        /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+        loadSession: (sessionId, activationOptions) =>
+          withUserMcpActivation(activationOptions).pipe(
+            Effect.flatMap((merged) => runtime.loadSession(sessionId, merged)),
+          ),
+        resumeSession: (sessionId, activationOptions) =>
+          withUserMcpActivation(activationOptions).pipe(
+            Effect.flatMap((merged) => runtime.resumeSession(sessionId, merged)),
+          ),
+        forkSession: (sessionId, activationOptions, meta) =>
+          withUserMcpActivation(activationOptions).pipe(
+            Effect.flatMap((merged) => runtime.forkSession(sessionId, merged, meta)),
+          ),
+        /* fork:end fork-antigravity-user-mcp */
         handleReadTextFile: (handler) =>
           runtime.handleReadTextFile((request, context) =>
             handler(request, context).pipe(
