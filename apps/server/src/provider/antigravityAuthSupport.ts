@@ -22,6 +22,9 @@ import {
   antigravityUserSkillDirectories,
   resolveAntigravityUserHome,
 } from "./Drivers/AntigravitySkills.ts";
+/* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+import { linkAntigravityUserMcpOAuthTokens } from "./acp/forkAntigravityUserMcp.ts";
+/* fork:end fork-antigravity-user-mcp */
 
 export const ANTIGRAVITY_AUTH_STDOUT_PREFIX =
   "Open the following link to authenticate the ACP server: ";
@@ -448,6 +451,9 @@ export const prepareAntigravityProfile = Effect.fn("prepareAntigravityProfile")(
       ),
     );
   yield* linkAntigravityUserSkills({ profileDirectory: geminiHome, userHome, platform });
+  /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+  yield* linkAntigravityUserMcpOAuthTokens({ profileDirectory: geminiHome, userHome });
+  /* fork:end fork-antigravity-user-mcp */
   return profile;
 });
 

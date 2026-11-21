@@ -7732,3 +7732,33 @@
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
+
+- id: fork-antigravity-user-mcp
+  intent: >
+    Antigravity runs under a private GEMINI_HOME profile so accounts and
+    conversations stay isolated per instance, which also hid MCP servers
+    configured for the user's agy CLI (`~/.gemini/config/mcp_config.json`) and
+    their OAuth tokens (`~/.gemini/antigravity-cli/mcp_oauth_tokens.json`, used
+    by remote OAuth MCP servers such as Figma). Interactive Antigravity chat
+    sessions (AntigravityAdapterV2 makeRuntime plus loadSession, resumeSession,
+    and forkSession) load enabled entries from `~/.gemini/config/mcp_config.json`
+    (supporting JSONC comments, trailing commas, UTF-8 BOM, HTTP `url` and
+    `serverUrl`, SSE, and stdio) and append them after T3's own `t3-code` MCP
+    server without overriding colliding names. prepareAntigravityProfile links
+    `~/.gemini/antigravity-cli/mcp_oauth_tokens.json` into
+    `<profile>/antigravity-acp/mcp_oauth_tokens.json` (best-effort, leaving
+    non-empty profile files untouched and cleaning dangling links) so OAuth MCP
+    servers authenticate and keep refreshed tokens synced with the CLI. Profile
+    `config/mcp_config.json` stays unlinked so Antigravity text generation and
+    disposable sign-in/model-refresh runtimes remain isolated and fast.
+  tier: 4
+  files:
+    - apps/server/src/provider/acp/forkAntigravityUserMcp.ts
+    - apps/server/src/provider/acp/forkAntigravityUserMcp.test.ts
+  shadows: []
+  watch:
+    - apps/server/src/provider/antigravityAuthSupport.ts
+    - apps/server/src/provider/Drivers/AntigravityDriver.ts
+    - apps/server/src/orchestration-v2/Adapters/AntigravityAdapterV2.ts
+  verify:
+    - apps/server/src/provider/acp/forkAntigravityUserMcp.test.ts
