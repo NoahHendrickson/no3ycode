@@ -831,6 +831,10 @@ export default function ChatView(props: ChatViewProps) {
   const composerArea = workspaceAreaProps("composer", 2, "Message input");
   const [composerOverlayElement, setComposerOverlayElement] = useState<HTMLDivElement | null>(null);
   const [composerTimelineInset, setComposerTimelineInset] = useState(0);
+  /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+  const [usageDrawerLift, setUsageDrawerLift] = useState(0);
+  const effectiveComposerTimelineInset = composerTimelineInset + usageDrawerLift;
+  /* fork:end fork-composer-usage-limits */
   const composerTimelineInsetRef = useRef(0);
   const [composerReservedHeight, setComposerReservedHeight] = useState(0);
   const composerReservedHeightRef = useRef(0);
@@ -2289,7 +2293,10 @@ export default function ChatView(props: ChatViewProps) {
     attachComposerOverlay: attachFollowComposerOverlay,
   } = useTimelineFollow({
     legendListRef,
-    composerTimelineInset,
+    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+    composerTimelineInset:
+      timelineAnchorMessageId === null ? effectiveComposerTimelineInset : composerTimelineInset,
+    /* fork:end fork-composer-usage-limits */
     routeThreadKey,
     activeThreadKey,
     isServerThread,
@@ -3989,7 +3996,7 @@ export default function ChatView(props: ChatViewProps) {
                   anchorMessageId={timelineAnchorMessageId}
                   onAnchorReady={onTimelineAnchorReadyStable}
                   onAnchorSizeChanged={onTimelineAnchorSizeChangedStable}
-                  contentInsetEndAdjustment={composerTimelineInset}
+                  contentInsetEndAdjustment={effectiveComposerTimelineInset}
                   liveFollowEnabled={timelineLiveFollowEnabled}
                   onIsAtEndChange={onIsAtEndChangeStable}
                   onViewportAttach={attachTimelineViewport}
@@ -4052,6 +4059,7 @@ export default function ChatView(props: ChatViewProps) {
                       /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
                       ref={forkDraftHeroShownRef}
                       /* fork:end fork-stage-stamps */
+                      data-fork-draft-headline-wrap="true"
                       className="pointer-events-none absolute inset-x-0 bottom-full"
                     >
                       {/* fork:end fork-composer-shell */}
@@ -4095,11 +4103,15 @@ export default function ChatView(props: ChatViewProps) {
                         : undefined
                     }
                   >
-                    <ChildThreadApprovals threadRef={activeThreadRef} />
-                    {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest
-                        A Petal's asks sit just above its composer, in the chat column. */}
-                    <BotDigestAsks threadRef={activeThreadRef ?? null} />
-                    {/* fork:end fork-bot-digest */}
+                    {/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */}
+                    <div data-fork-composer-above-stack="true">
+                      <ChildThreadApprovals threadRef={activeThreadRef} />
+                      {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest
+                          A Petal's asks sit just above its composer, in the chat column. */}
+                      <BotDigestAsks threadRef={activeThreadRef ?? null} />
+                      {/* fork:end fork-bot-digest */}
+                    </div>
+                    {/* fork:end fork-composer-usage-limits */}
                     <div className="relative">
                       <ComposerSurface.Shell
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
@@ -4274,6 +4286,9 @@ export default function ChatView(props: ChatViewProps) {
                                   (activeThreadShell ?? activeThread)?.pullRequests
                                 }
                                 onComposerOverlayHeightChange={publishComposerOverlayHeightStable}
+                                /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+                                onUsageDrawerLiftChange={setUsageDrawerLift}
+                                /* fork:end fork-composer-usage-limits */
                                 permissionsShownInStrip={
                                   showComposerContextStrip && !isServerThread
                                 }

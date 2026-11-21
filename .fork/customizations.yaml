@@ -2987,8 +2987,8 @@
     no wire data or polling. Toggling it expands an upward-opening single-line
     CollapsiblePanel (data-fork-composer-usage-drawer) mounted as a sibling of
     [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
-    Black does not block backdrop blur; the vessel's top corners stay square
-    until the panel unmounts after its close transition. The tray subscribes to
+    Black does not block backdrop blur; the vessel's top corners round again
+    as the drawer closes. The tray subscribes to
     environment presentations only while open, renders icon-only provider marks
     with compact bars (abbreviating to 5hr / 7d only from typed window
     durations, omitting Claude's seven_day_fable id), focusable meter tooltips
@@ -3000,11 +3000,13 @@
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
+    - apps/web/src/custom/ComposerUsageLimitsReadout.browser.test.tsx
     - apps/web/src/custom/ComposerUsageLimitsReadout.test.ts
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
+    - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/ChatComposer.tsx
   verify:
     - apps/web/src/__fork_guards__/forkUsageLimits.test.ts

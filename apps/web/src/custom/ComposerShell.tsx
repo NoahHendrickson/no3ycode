@@ -92,7 +92,7 @@ export const ComposerShell = memo(function ComposerShell({
       {!collapsedMobile && topVessel ? (
         <div
           data-fork-composer-top-vessel="true"
-          className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"
+          className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col overflow-hidden"
         >
           {topVessel}
         </div>

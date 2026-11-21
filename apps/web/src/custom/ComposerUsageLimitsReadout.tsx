@@ -16,12 +16,14 @@ import {
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
-import { Fragment, memo, type RefObject, useRef, useState } from "react";
+import { Fragment, memo, type RefObject, useLayoutEffect, useRef, useState } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { providerClients } from "~/components/settings/providerDriverMeta";
 import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { useStableCallback } from "~/hooks/useStableCallback";
+import { observeResize } from "~/lib/observeResize";
 import { ensureLocalApi } from "~/localApi";
 import { environmentPresentations } from "~/state/presentation";
 import { XIcon } from "./icons/lucide-hugeicons";
@@ -36,17 +38,41 @@ const SEVEN_DAYS_MINS = 7 * 24 * 60;
 export function useComposerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
+  readonly scopeKey?: string | undefined;
+  readonly meterKey?: string | undefined;
+  readonly onSettledLiftChange?: ((height: number) => void) | undefined;
 }) {
-  const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const sessionWindow = props.usageLimits?.windows.find((window) => window.kind === "session");
+  const hasSessionMeter = sessionWindow !== undefined;
+  const availabilityKey =
+    props.enabled && hasSessionMeter
+      ? `${props.scopeKey ?? ""}|${props.meterKey ?? sessionWindow.id}`
+      : null;
+  const [openedState, setOpenedState] = useState<{
+    readonly key: string;
+    readonly openedAt: number;
+  } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const open = props.enabled && openedAt !== null;
+
+  // Invalidate saved open state whenever thread, meter identity, or trigger
+  // availability changes so returning to a prior scope/meter never auto-reopens.
+  if (openedState !== null && openedState.key !== availabilityKey) {
+    setOpenedState(null);
+  }
+  const open =
+    availabilityKey !== null && openedState !== null && openedState.key === availabilityKey;
 
   const toggle = () => {
-    setOpenedAt((current) => (current === null ? Date.now() : null));
+    if (availabilityKey === null) return;
+    setOpenedState((current) =>
+      current !== null && current.key === availabilityKey
+        ? null
+        : { key: availabilityKey, openedAt: Date.now() },
+    );
   };
 
   const close = (restoreFocus = false) => {
-    setOpenedAt(null);
+    setOpenedState(null);
     if (restoreFocus) {
       triggerRef.current?.focus();
     }
@@ -63,7 +89,12 @@ export function useComposerUsageDrawer(props: {
       />
     ) : null,
     drawer: props.enabled ? (
-      <ComposerUsageLimitsDrawer open={open} openedAt={openedAt ?? 0} onClose={() => close(true)} />
+      <ComposerUsageLimitsDrawer
+        open={open}
+        openedAt={open ? openedState.openedAt : 0}
+        onClose={() => close(true)}
+        onSettledLiftChange={props.onSettledLiftChange}
+      />
     ) : null,
   };
 }
@@ -106,15 +137,96 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   );
 });
 
-/** Smoothly expanding single-line vessel strip anchored above the composer (grows upward, zero shift). */
+/** Smoothly sliding single-line vessel strip anchored above the composer (GPU transform, zero layout shift). */
 const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly openedAt: number;
   readonly onClose: () => void;
+  readonly onSettledLiftChange?: ((height: number) => void) | undefined;
 }) {
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
+  const reportSettledLift = useStableCallback((height: number) => {
+    props.onSettledLiftChange?.(height);
+  });
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- observes Base UI's committed panel phase and size so the GPU lift, cutoff mask, and timeline clearance stay locked to the drawer with at most one clearance publish per phase
+  useLayoutEffect(() => {
+    if (!panelEl) return;
+    const canvas = panelEl.closest<HTMLElement>("[data-chat-canvas]");
+    let reportedLift = 0;
+
+    const publishLift = (height: number) => {
+      if (height === reportedLift) return;
+      reportedLift = height;
+      reportSettledLift(height);
+    };
+
+    const isPanelActive = () =>
+      !panelEl.hasAttribute("hidden") &&
+      !panelEl.hasAttribute("data-starting-style") &&
+      !panelEl.hasAttribute("data-ending-style");
+
+    const hasInstantTransition = () =>
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true ||
+      Number.parseFloat(getComputedStyle(panelEl).transitionDuration) === 0;
+
+    const sync = () => {
+      if (isPanelActive()) {
+        const height = panelEl.offsetHeight;
+        if (height > 0) {
+          canvas?.style.setProperty("--fork-usage-drawer-lift", `${height}px`);
+          canvas?.style.setProperty("--fork-usage-drawer-mask", `${height}px`);
+          // Publish clearance alongside the mask so the last transcript row stays
+          // visible immediately while following the end, and updates on live resize.
+          publishLift(height);
+        }
+        return;
+      }
+      canvas?.style.removeProperty("--fork-usage-drawer-lift");
+      if (
+        panelEl.hasAttribute("hidden") ||
+        (panelEl.hasAttribute("data-ending-style") && hasInstantTransition())
+      ) {
+        canvas?.style.removeProperty("--fork-usage-drawer-mask");
+        publishLift(0);
+      }
+    };
+
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.target !== panelEl || event.propertyName !== "transform") return;
+      if (isPanelActive()) {
+        const height = panelEl.offsetHeight;
+        if (height > 0) publishLift(height);
+        return;
+      }
+      canvas?.style.removeProperty("--fork-usage-drawer-mask");
+      publishLift(0);
+    };
+
+    const observer = new MutationObserver(sync);
+    observer.observe(panelEl, {
+      attributes: true,
+      attributeFilter: ["data-starting-style", "data-ending-style", "hidden"],
+    });
+    const unobserveResize = observeResize(panelEl, sync);
+    panelEl.addEventListener("transitionend", onTransitionEnd);
+    sync();
+
+    return () => {
+      observer.disconnect();
+      unobserveResize();
+      panelEl.removeEventListener("transitionend", onTransitionEnd);
+      canvas?.style.removeProperty("--fork-usage-drawer-lift");
+      canvas?.style.removeProperty("--fork-usage-drawer-mask");
+      publishLift(0);
+    };
+  }, [panelEl, reportSettledLift]);
+
   return (
     <Collapsible open={props.open}>
       <CollapsiblePanel
+        ref={setPanelEl}
+        animate={false}
         data-fork-composer-usage-drawer="true"
         className="pointer-events-auto"
         onKeyDown={(event) => {

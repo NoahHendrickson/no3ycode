@@ -1046,6 +1046,19 @@
   background: transparent;
 }
 
+/* The bot digest's ask card sits inside a vessel too, but unlike the
+   composer's darkened input well it takes a softer lift over the tray on both
+   opaque Glass and native vibrancy. */
+:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  [data-fork-bot-digest-ask] {
+  background: #2b3034;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  [data-fork-bot-digest-ask] {
+  background: rgb(255 255 255 / 3%);
+}
+
 /* Glass popups open at full strength instead of fading in. The hole under a
    popup is cut the frame it mounts, so a fade would show the bare material
    through it — a bright flash — until the tint caught up. Native menus open
@@ -1088,10 +1101,11 @@
 }
 
 /* The composer's context strip is surface-glass too (upstream #34846), but the
-   cutoff ends the transcript above it, so here it stays bare: the opaque fill
-   painted a band behind the chips. */
+   cutoff ends the transcript above it, so here it stays bare — both above the
+   vessel (ScheduledTaskEditor) and inside the vessel's left control slot: the
+   opaque fill painted a band behind the controls. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
-  [data-fork-composer-context-row]
+  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   [data-slot="composer-context-strip"].surface-glass {
   background: none;
 }
@@ -1219,26 +1233,44 @@
     backdrop-filter: var(--fork-glass-picture-blur);
   }
 
+  /* New-agent composer vessel & prompt over opaque Settings pictures (Mountain
+     Dither, Jolly Petal): lighter white wash so more wallpaper color comes
+     through under a heavier 40px blur. Depth rims and inset shelf glows stay
+     gated on Full 3D in theme.custom.glass-surfaces.css, and drag-over keeps
+     its drop fill. */
+  & [data-chat-composer-overlay="true"][data-draft-hero] [data-fork-composer-vessel] {
+    background: rgb(255 255 255 / 10%);
+    -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(40px);
+
+    & [data-fork-composer-surface]:not([data-fork-composer-drag-over]) {
+      background: rgb(255 255 255 / 6%);
+    }
+  }
+
   & [data-fork-draft-launchpad-card] {
-    --card: var(--fork-glass-picture-tint);
-    --contrast-border: var(--fork-composer-border);
+    --card: rgb(255 255 255 / 10%);
+    --contrast-border: rgb(255 255 255 / 14%);
     --contrast-foreground: #fff;
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
     --accent: var(--fork-composer-control-hover);
     --contrast-accent-foreground: #fff;
-    background: var(--fork-glass-picture-tint);
     border-color: var(--fork-composer-border);
+    background: rgb(255 255 255 / 10%);
+    -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(40px);
   }
 
   & [data-fork-composer-usage-drawer] {
-    --contrast-border: var(--fork-composer-border);
+    --contrast-border: rgb(255 255 255 / 14%);
     --contrast-foreground: #fff;
     --contrast-muted-foreground: rgb(255 255 255 / 85%);
     --muted: rgb(255 255 255 / 22%);
     --accent: var(--fork-composer-control-hover);
     --contrast-accent-foreground: #fff;
-    -webkit-backdrop-filter: blur(48px);
-    backdrop-filter: blur(48px);
+    background: rgb(255 255 255 / 10%);
+    -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(40px);
   }
 
   &
@@ -1267,6 +1299,21 @@
   border-color: rgb(255 255 255 / 18%);
   -webkit-backdrop-filter: var(--fork-glass-picture-blur);
   backdrop-filter: var(--fork-glass-picture-blur);
+}
+
+/* Model picker & permissions menu over an opaque new-agent picture: clearer
+   frosted glass matching the composer & launchpad cards instead of the heavier
+   smoked menu tint, with a light dark floor so labels stay crisp over bright patches. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-picture="off"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  body
+  .dropdown-glass[data-fork-glass-over-picture]:has(
+    :is([data-fork-model-picker], [data-composer-permissions])
+  ) {
+  --border: rgb(255 255 255 / 14%);
+  --contrast-border: rgb(255 255 255 / 14%);
+  background: linear-gradient(rgb(255 255 255 / 14%), rgb(255 255 255 / 14%)), rgb(0 0 0 / 16%);
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
 }
 
 /* Exactly one layer in the chat column paints the glass, and it is the inset

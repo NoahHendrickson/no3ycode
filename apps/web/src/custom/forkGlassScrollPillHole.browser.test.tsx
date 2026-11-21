@@ -15,10 +15,23 @@ const hasHoleWidth = (element: Element) =>
   element instanceof HTMLElement &&
   element.style.getPropertyValue("--fork-pill-hole-w") === "120px";
 
-function Pill() {
+function Pill(props: { readonly transitionMs?: number | undefined }) {
   const laneRef = useForkGlassScrollPillHole(16);
   return (
-    <div ref={laneRef} style={{ position: "absolute", bottom: 16, left: 0, right: 0 }}>
+    <div
+      ref={laneRef}
+      style={{
+        position: "absolute",
+        bottom: 16,
+        left: 0,
+        right: 0,
+        transform: "translateY(calc(-1 * var(--fork-usage-drawer-lift, 0px)))",
+        transition:
+          props.transitionMs && props.transitionMs > 0
+            ? `transform ${props.transitionMs}ms linear`
+            : undefined,
+      }}
+    >
       <button data-scroll-to-end="true" style={{ width: 120, height: 24, borderRadius: 12 }}>
         Scroll to end
       </button>
@@ -26,17 +39,19 @@ function Pill() {
   );
 }
 
-function Timeline(props: { readonly scroller: string | null }) {
+function Timeline(props: { readonly scroller: string | null; readonly transitionMs?: number }) {
   return (
-    <div style={{ position: "relative", width: 400, height: 400 }}>
-      {props.scroller === null ? (
-        <div>Loading</div>
-      ) : (
-        <div key={props.scroller} data-testid={props.scroller} className="fork-timeline-cutoff">
-          <div style={{ height: 400 }} />
-        </div>
-      )}
-      <Pill />
+    <div data-chat-canvas="true" data-testid="canvas">
+      <div style={{ position: "relative", width: 400, height: 400 }}>
+        {props.scroller === null ? (
+          <div>Loading</div>
+        ) : (
+          <div key={props.scroller} data-testid={props.scroller} className="fork-timeline-cutoff">
+            <div style={{ height: 400 }} />
+          </div>
+        )}
+        <Pill transitionMs={props.transitionMs} />
+      </div>
     </div>
   );
 }
@@ -61,5 +76,42 @@ describe("useForkGlassScrollPillHole", () => {
     await expect
       .element(screen.getByRole("button", { name: "Scroll to end" }))
       .toHaveAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE);
+  });
+
+  it("re-cuts immediately when the usage drawer lifts an unanimated pill", async () => {
+    await using screen = await render(<Timeline scroller="first" />);
+    const scroller = screen.getByTestId("first").element() as HTMLElement;
+    const canvas = screen.getByTestId("canvas").element() as HTMLElement;
+    await vi.waitFor(() => expect(scroller).toSatisfy(hasHoleWidth));
+    const initialY = Number.parseFloat(scroller.style.getPropertyValue("--fork-pill-hole-y"));
+
+    canvas.style.setProperty("--fork-usage-drawer-lift", "36px");
+    await vi.waitFor(() => {
+      const liftedY = Number.parseFloat(scroller.style.getPropertyValue("--fork-pill-hole-y"));
+      expect(liftedY).toBe(initialY - 36);
+    });
+  });
+
+  it("clears the cutout during an animated transform and re-cuts once settled", async () => {
+    await using screen = await render(<Timeline scroller="first" transitionMs={600_000} />);
+    const scroller = screen.getByTestId("first").element() as HTMLElement;
+    const canvas = screen.getByTestId("canvas").element() as HTMLElement;
+    const pill = screen.getByRole("button", { name: "Scroll to end" });
+    await vi.waitFor(() => expect(scroller).toSatisfy(hasHoleWidth));
+    await expect.element(pill).toHaveAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE);
+    const initialY = Number.parseFloat(scroller.style.getPropertyValue("--fork-pill-hole-y"));
+
+    canvas.style.setProperty("--fork-usage-drawer-lift", "36px");
+    await vi.waitFor(() => {
+      expect(pill.element().hasAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE)).toBe(false);
+      expect(scroller.style.getPropertyValue("--fork-pill-hole-y")).toBe("");
+    });
+
+    for (const animation of pill.element().parentElement!.getAnimations()) animation.finish();
+    await vi.waitFor(() => {
+      expect(pill.element().hasAttribute(FORK_PILL_HOLE_CUT_ATTRIBUTE)).toBe(true);
+      const liftedY = Number.parseFloat(scroller.style.getPropertyValue("--fork-pill-hole-y"));
+      expect(liftedY).toBe(initialY - 36);
+    });
   });
 });
