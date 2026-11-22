@@ -458,13 +458,15 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(/--fork-context-chip-bg-hover:/u);
   });
 
-  it("renders the mode control as a muted ghost button on shared geometry", () => {
+  it("renders the mode control in the row's control ink on shared geometry", () => {
     const modeInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-mode-controls]") &&
         rule.selector.endsWith("[data-fork-composer-mode-chip]"),
     );
-    expect(modeInk?.body).toMatch(/color:\s*var\(--color-muted-foreground\)/u);
+    expect(modeInk?.body).toMatch(
+      /color:\s*var\(--fork-composer-control-ink,\s*var\(--color-muted-foreground\)\)/u,
+    );
     const sharedGeometry = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-control-row]") &&

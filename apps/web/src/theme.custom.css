@@ -949,10 +949,11 @@
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
+/* Icon-only now, so it takes the row's control ink like the model and usage beside it. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-mode-controls]
   [data-fork-composer-mode-chip] {
-  color: var(--color-muted-foreground);
+  color: var(--fork-composer-control-ink, var(--color-muted-foreground));
 }
 
 /* Hover / open fill. Upstream's ghost variant paints `--accent`, which is the

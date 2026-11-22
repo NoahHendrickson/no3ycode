@@ -2,7 +2,6 @@ import type { ModelSelection, ProviderInstanceId, RuntimeMode } from "@t3tools/c
 import { createModelSelection } from "@t3tools/shared/model";
 import { type ComponentProps, memo, useId, useRef, useState } from "react";
 
-import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { focusRequestedPermission, useComposerMenuProps } from "./composerEventScope";
@@ -14,6 +13,7 @@ import { useComposerMenuState } from "./useComposerMenuState";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { ComposerRuntimeModeTrigger } from "../../custom/ComposerShell";
 import { ShieldOffFilledIcon } from "../../custom/icons/ShieldOffFilledIcon";
+import { MenuIconTab, MenuTabs } from "../../custom/Tabs";
 /* fork:end fork-composer-shell */
 
 export type RuntimeModeOption = {
@@ -124,13 +124,16 @@ export function ComposerPermissionsSection(props: {
   return (
     <div data-composer-permissions className="grid w-72 gap-1.5 px-2 py-1.5">
       <div className="font-medium text-muted-foreground text-xs">Permissions</div>
-      <MenuPrimitive.RadioGroup
+      {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+          The fork's menu tab strip (custom/Tabs), as the model picker's provider tabs use. */}
+      <MenuTabs
+        size="md"
         aria-label="Permissions"
         value={props.runtimeMode}
         onValueChange={(value: RuntimeMode) => {
           if (value !== props.runtimeMode) props.onRuntimeModeChange(value);
         }}
-        className="flex rounded-lg bg-input/40 p-0.5"
+        className="w-full"
         // Menus navigate with Up/Down only; the row reads horizontally, so Left/Right move too.
         onKeyDown={(event) => {
           if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -146,9 +149,9 @@ export function ComposerPermissionsSection(props: {
         }}
       >
         {props.runtimeModeOptions.map((option) => {
-          const OptionIcon = option.icon;
+          const OptionIcon = option.mode === "full-access" ? ShieldOffFilledIcon : option.icon;
           return (
-            <MenuPrimitive.RadioItem
+            <MenuIconTab
               key={option.mode}
               value={option.mode}
               disabled={option.disabledReason !== undefined}
@@ -160,13 +163,14 @@ export function ComposerPermissionsSection(props: {
               onPointerLeave={() => setPreviewMode(null)}
               onFocus={() => setPreviewMode(option.mode)}
               onBlur={() => setPreviewMode(null)}
-              className="flex h-6 flex-1 cursor-pointer items-center justify-center text-muted-foreground outline-none first:rounded-l-md last:rounded-r-md data-disabled:cursor-not-allowed data-disabled:opacity-40 data-checked:bg-input/72 data-checked:text-foreground data-highlighted:text-foreground not-data-checked:data-highlighted:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+              className="aspect-auto flex-1 data-disabled:cursor-not-allowed"
             >
-              <OptionIcon aria-hidden="true" className="size-3.5" />
-            </MenuPrimitive.RadioItem>
+              <OptionIcon aria-hidden="true" className="size-4" />
+            </MenuIconTab>
           );
         })}
-      </MenuPrimitive.RadioGroup>
+      </MenuTabs>
+      {/* fork:end fork-composer-shell */}
       {/* Static per-mode descriptions for screen readers; the preview below is visual only. */}
       {props.runtimeModeOptions.map((option) => (
         <span key={option.mode} id={`${descriptionId}-${option.mode}`} className="sr-only">

@@ -133,18 +133,20 @@ export function SegmentedMenuTabs({
 }
 
 /** One tab of a SegmentedMenuTabs. data-pressed mirrors the item's checked state, so the glide
-    and the themes' segmented-tab rules read it like a Toggle's. */
+    and the themes' segmented-tab rules read it like a Toggle's. A pick leaves the menu open
+    unless the caller sets closeOnClick (the permissions toggle does). */
 export function SegmentedMenuTab({
   className,
   children,
+  closeOnClick = false,
   ...props
-}: Omit<MenuPrimitive.RadioItem.Props, "className" | "closeOnClick" | "render"> & {
+}: Omit<MenuPrimitive.RadioItem.Props, "className" | "render"> & {
   readonly className?: string;
 }) {
   return (
     <MenuPrimitive.RadioItem
       {...props}
-      closeOnClick={false}
+      closeOnClick={closeOnClick}
       data-fork-segmented-tab
       render={(itemProps, state) => (
         <div {...itemProps} data-pressed={state.checked ? "" : undefined} />

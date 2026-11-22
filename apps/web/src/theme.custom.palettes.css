@@ -1400,15 +1400,12 @@
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
       [data-fork-composer-control-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-          [data-fork-composer-mode-chip],
-          [data-fork-pr-chip]
-        )
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
     ) {
     color: #fff;
   }
 
-  & :is([data-chat-provider-model-picker-traits], [data-fork-composer-mode-chip]) {
+  & [data-chat-provider-model-picker-traits] {
     color: rgb(255 255 255 / 70%);
   }
 }
@@ -1899,16 +1896,9 @@
       [data-fork-composer-action="dictate"],
       [data-chat-provider-model-picker-traits],
       [data-fork-composer-control-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-          [data-fork-composer-mode-chip],
-          [data-fork-pr-chip]
-        )
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
     ) {
     color: #ffffff;
-  }
-
-  & [data-fork-composer-mode-chip] {
-    color: rgb(255 255 255 / 80%);
   }
 
   & [data-fork-draft-launchpad-card] {
