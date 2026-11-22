@@ -1139,7 +1139,7 @@
   width: 28px;
   height: 28px;
   min-height: 28px;
-  margin: 2px -4px 2px 2px;
+  margin: 2px -4px 2px 0;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
