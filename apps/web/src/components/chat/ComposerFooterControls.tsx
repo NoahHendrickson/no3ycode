@@ -13,6 +13,7 @@ import { runtimeModeConfig } from "./runtimeModeConfig";
 import { useComposerMenuState } from "./useComposerMenuState";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { ComposerRuntimeModeTrigger } from "../../custom/ComposerShell";
+import { ShieldOffFilledIcon } from "../../custom/icons/ShieldOffFilledIcon";
 /* fork:end fork-composer-shell */
 
 export type RuntimeModeOption = {
@@ -43,6 +44,9 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
     props.runtimeModeOptions.find((option) => option.mode === props.runtimeMode) ??
     supervisedRuntimeModeOption;
   const RuntimeModeIcon = runtimeModeOption.icon;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  const ChipIcon = props.runtimeMode === "full-access" ? ShieldOffFilledIcon : RuntimeModeIcon;
+  /* fork:end fork-composer-shell */
   // The chip opens the same Permissions toggle used in the model picker and the overflow menu.
   const permissionsTooltip = `Permissions: ${runtimeModeOption.label}. ${runtimeModeOption.description}`;
   const permissionsChip = (
@@ -73,7 +77,7 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
         >
           {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
               Icon only: the mode's name lives in the tooltip and aria-label. */}
-          <RuntimeModeIcon aria-hidden />
+          <ChipIcon aria-hidden />
           {/* fork:end fork-composer-shell */}
         </TooltipTrigger>
         <TooltipPopup side="top">{permissionsTooltip}</TooltipPopup>

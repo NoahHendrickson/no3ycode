@@ -3626,8 +3626,8 @@
     Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
     Glass. The compact row is 8px on every side with 2px between the actions and
     the prompt (Figma no3y-code 34:8764). The permissions chip is icon-only (the
-    mode's runtimeModeConfig icon, upstream's own), its name in the tooltip
-    and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
+    mode's runtimeModeConfig icon, upstream's own; Full access draws the
+    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
   tier: 4
@@ -3639,6 +3639,7 @@
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
     - apps/web/src/custom/StopSquareIcon.tsx
+    - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
