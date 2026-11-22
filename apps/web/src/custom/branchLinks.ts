@@ -72,10 +72,13 @@ export function refBranchUrl(
 ): string | null {
   if (identity == null) return null;
   // A local branch links where it tracks when git knows; otherwise where it would be pushed.
-  const remoteRef = ref.isRemote === true ? ref.name : ref.upstreamRef;
+  const remoteRef =
+    ref.isRemote === true ? ref.name : ref.upstreamRef?.replace(/^refs\/remotes\//u, "");
   if (remoteRef === undefined) return projectBranchUrl(identity, ref.name);
   for (const target of [identity, pushIdentity(identity)]) {
     const prefix = `${target.locator.remoteName}/`;
+    // A remote row names its remote; a remote called `origin/team` is not `origin`.
+    if (ref.isRemote === true && ref.remoteName !== target.locator.remoteName) continue;
     if (remoteRef.startsWith(prefix)) return branchUrlOn(target, remoteRef.slice(prefix.length));
   }
   return ref.isRemote === true ? null : projectBranchUrl(identity, ref.name);
