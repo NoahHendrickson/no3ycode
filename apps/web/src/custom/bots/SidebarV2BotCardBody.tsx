@@ -30,8 +30,8 @@ export function sidebarV2CardKind(
   return compact ? "compact" : "card";
 }
 
-/** A bot in the Petals grid: its 48px tile with the status mark on a badge at the corner, and
-    its name under it. 8 + 48 + 2 + 16 + 6 = 80px tall, in a 66px cell. */
+/** A bot in the Petals grid: its 48px tile with the status mark in a notch cut from its corner,
+    and its name under it. 8 + 48 + 2 + 16 + 6 = 80px tall, in a 66px cell. */
 export function SidebarV2BotGridBody(props: {
   readonly shell: BotShell & { readonly id: string };
   readonly mood: BotMascotMood;
@@ -46,7 +46,7 @@ export function SidebarV2BotGridBody(props: {
         <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} size="grid" />
         <span
           data-fork-bot-grid-badge=""
-          className="pointer-events-none absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-popover"
+          className="pointer-events-none absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center"
         >
           {props.statusMark}
         </span>

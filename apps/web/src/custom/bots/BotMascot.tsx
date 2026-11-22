@@ -51,7 +51,15 @@ export function BotMascot(props: {
 
 /** The mascot on a tile in its own colour at half strength, behind a 1px 24% edge, white on
     dark and black on light (Figma Petal card): 32px to fill a full card's two text lines, or
-    48px in the Petals grid. */
+    48px in the Petals grid, notched at the bottom-right for the status badge. */
+/** The grid badge's 16px circle centred 6px in from the corner (42, 42), with a 2px gap. */
+const GRID_BADGE_NOTCH_MASK =
+  "radial-gradient(circle 10px at 42px 42px, transparent 99%, #000 100%)";
+const GRID_BADGE_NOTCH = {
+  maskImage: GRID_BADGE_NOTCH_MASK,
+  WebkitMaskImage: GRID_BADGE_NOTCH_MASK,
+} as const;
+
 export function BotMascotTile(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
@@ -67,9 +75,10 @@ export function BotMascotTile(props: {
       )}
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
+        ...(grid ? GRID_BADGE_NOTCH : {}),
       }}
     >
-      <BotMascot shape={props.shape} mood={props.mood} fit={grid ? 33 : 22} />
+      <BotMascot shape={props.shape} mood={props.mood} fit={grid ? 28 : 22} />
     </span>
   );
 }
