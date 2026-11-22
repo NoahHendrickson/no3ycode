@@ -44,6 +44,8 @@ export interface FlatGlassPalette {
   readonly panelBorder: string;
   readonly hairline: string;
   readonly foreground: string;
+  /** Every thread title, whatever its status, read state or shelf: pure white in dark. */
+  readonly titleInk: string;
   readonly quietInk: string;
   readonly faintInk: string;
   readonly rowPressed: string;
@@ -83,6 +85,7 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   panelBorder: "rgba(255, 255, 255, 0.13)",
   hairline: "rgba(255, 255, 255, 0.12)",
   foreground: "#E8E8E8",
+  titleInk: "#FFFFFF",
   quietInk: "rgba(255, 255, 255, 0.65)",
   faintInk: "rgba(255, 255, 255, 0.42)",
   rowPressed: "rgba(255, 255, 255, 0.05)",
@@ -117,6 +120,7 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   panelBorder: "rgba(20, 22, 24, 0.10)",
   hairline: "rgba(20, 22, 24, 0.10)",
   foreground: "#141618",
+  titleInk: "#141618",
   quietInk: "rgba(20, 22, 24, 0.60)",
   faintInk: "rgba(20, 22, 24, 0.40)",
   rowPressed: "rgba(20, 22, 24, 0.04)",

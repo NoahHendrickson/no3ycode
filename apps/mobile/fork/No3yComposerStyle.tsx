@@ -9,6 +9,7 @@ import CornerDownLeftIcon from "@hugeicons/core-free-icons/CornerDownLeftIcon";
 import PlayIcon from "@hugeicons/core-free-icons/PlayIcon";
 import StopIcon from "@hugeicons/core-free-icons/StopIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
+import type { RuntimeMode } from "@t3tools/contracts";
 import { createContext, use, type ReactNode } from "react";
 import { Pressable, View, type PressableProps } from "react-native";
 
@@ -16,12 +17,18 @@ import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
+import { no3yAccessIcon } from "./No3yAccess";
 import { No3yGlassLayer } from "./No3yGlass";
 
-const No3yComposerStyleContext = createContext(false);
+/** What the card tells its controls: set while the no3y card style is on. */
+interface No3yComposerCard {
+  readonly runtimeMode: RuntimeMode;
+}
+
+const No3yComposerStyleContext = createContext<No3yComposerCard | null>(null);
 
 export function No3yComposerStyleProvider(props: {
-  readonly value: boolean;
+  readonly value: No3yComposerCard;
   readonly children: ReactNode;
 }) {
   return <No3yComposerStyleContext value={props.value}>{props.children}</No3yComposerStyleContext>;
@@ -29,7 +36,7 @@ export function No3yComposerStyleProvider(props: {
 
 /** Whether the composer controls draw the no3y card style. */
 export function useNo3yComposerStyle(): boolean {
-  return use(No3yComposerStyleContext);
+  return use(No3yComposerStyleContext) !== null;
 }
 
 /** The SF Symbols the composer actions name, as the Hugeicons the card draws. */
@@ -104,7 +111,7 @@ export function No3yComposerRoundButton(
   );
 }
 
-/** The model chip: provider mark, model and effort on a 40pt glass pill. */
+/** The model chip: provider mark, model, effort and the access shield on a 40pt glass pill. */
 export function No3yModelChip(props: {
   readonly accessibilityLabel: string;
   readonly icon: ReactNode;
@@ -113,6 +120,7 @@ export function No3yModelChip(props: {
   readonly disabled?: boolean;
   readonly onPress: () => void;
 }) {
+  const card = use(No3yComposerStyleContext);
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const text = {
@@ -156,6 +164,16 @@ export function No3yModelChip(props: {
           <Text numberOfLines={1} style={{ ...text, color: palette.quietInk }}>
             {props.detail}
           </Text>
+        ) : null}
+        {card ? (
+          <View accessibilityLabel={`Access: ${card.runtimeMode}`}>
+            <HugeIcon
+              icon={no3yAccessIcon(card.runtimeMode)}
+              size={16}
+              color={palette.quietInk}
+              filled
+            />
+          </View>
         ) : null}
       </Pressable>
     </View>

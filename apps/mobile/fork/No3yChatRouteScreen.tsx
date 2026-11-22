@@ -242,13 +242,7 @@ export function No3yChatRouteScreen() {
                     fontSize: 14,
                     lineHeight: 18,
                     fontWeight: "400",
-                    color:
-                      statusKind === "input" ||
-                      statusKind === "approval" ||
-                      statusKind === "done" ||
-                      statusKind === "failed"
-                        ? palette.foreground
-                        : palette.quietInk,
+                    color: palette.titleInk,
                   }}
                 >
                   {thread.title}

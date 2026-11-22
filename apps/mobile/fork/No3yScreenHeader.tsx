@@ -1,9 +1,10 @@
 /**
- * The Threads screen header (title, Settings and Usage buttons) and the thread bar's usage button
+ * The Threads screen header (title; Pull requests, Settings and Usage buttons) and the thread bar's usage button
  * and ⋯ menu — see `.fork/customizations.yaml#no3y-mobile-redesign`. The usage buttons open the
  * half-height usage sheet; the ring shows how much of the thread's provider limit is left.
  */
 import GaugeIcon from "@hugeicons/core-free-icons/GaugeIcon";
+import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import Settings01Icon from "@hugeicons/core-free-icons/Settings01Icon";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
@@ -54,6 +55,12 @@ export function No3yThreadsHeader() {
           Threads
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <No3yCircleButton
+            palette={palette}
+            accessibilityLabel="Pull requests"
+            icon={GitPullRequestIcon}
+            onPress={() => openWorkspaceTab("pullRequests")}
+          />
           <No3yCircleButton
             palette={palette}
             accessibilityLabel="Settings"

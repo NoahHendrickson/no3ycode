@@ -166,7 +166,7 @@ function PeekRow(props: {
           flex: 1,
           fontSize: 15,
           lineHeight: 20,
-          color: props.muted ? palette.quietInk : palette.foreground,
+          color: props.muted ? palette.quietInk : palette.titleInk,
         }}
       >
         {props.title}

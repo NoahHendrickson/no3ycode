@@ -114,7 +114,7 @@ export function No3yAutomationRunsSection(props: {
                       fontSize: 14,
                       lineHeight: 18,
                       fontWeight: "400",
-                      color: palette.foreground,
+                      color: palette.titleInk,
                     }}
                   >
                     {thread.title}

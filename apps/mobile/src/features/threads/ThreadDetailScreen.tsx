@@ -218,10 +218,6 @@ import type { OrchestrationV2ProviderSession } from "@t3tools/contracts";
 
 export interface ThreadDetailScreenProps {
   readonly header?: React.ReactNode;
-  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  /** The branch and access chips over a thread's composer on the no3y iPhone layout. */
-  readonly no3yComposerChips?: React.ReactNode;
-  /* fork:end no3y-mobile-redesign */
   readonly draftMode?: {
     /** viewportHeight excludes the composer so draft chrome can resize it without feedback. */
     readonly content: (
@@ -1898,11 +1894,7 @@ function ThreadDetailBody(
                                 "Ask anything"
                         }
                         contentMaxWidth={contentMaxWidth}
-                        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                        draftControls={
-                          props.draftMode?.controls(draftViewportHeight) ?? props.no3yComposerChips
-                        }
-                        /* fork:end no3y-mobile-redesign */
+                        draftControls={props.draftMode?.controls(draftViewportHeight)}
                         connectionState={props.connectionStateLabel}
                         environmentLabel={props.environmentLabel}
                         selectedThread={props.selectedThread}

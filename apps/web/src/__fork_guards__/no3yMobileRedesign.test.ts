@@ -43,6 +43,13 @@ import {
   type SidebarV2StatusHeaderKey,
   type SidebarV2StatusSection,
 } from "../custom/sidebarV2StatusGrouping";
+import {
+  BOT_MASCOT_MOODS as WEB_BOT_MASCOT_MOODS,
+  BOT_MASCOT_SHAPES as WEB_BOT_MASCOT_SHAPES,
+  botMascotSprite as webBotMascotSprite,
+} from "../custom/bots/botMascotArt";
+import { botMascotShape as webBotMascotShape } from "../custom/bots/botMascotTags";
+import { listSidebarBots as webListSidebarBots } from "../custom/bots/botThreads";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
 
@@ -444,6 +451,55 @@ describe("fork guard: no3y-mobile-redesign", () => {
     }).toEqual(webPartition);
   });
 
+  it("lists bots, picks their mascots and draws their sprites exactly as web does", async () => {
+    const botsPath = NodeURL.fileURLToPath(
+      new URL("../../../mobile/fork/forkBots.ts", import.meta.url),
+    );
+    const artPath = NodeURL.fileURLToPath(
+      new URL("../../../mobile/fork/botMascotArt.ts", import.meta.url),
+    );
+    const [bots, art] = (await Promise.all([
+      import(/* @vite-ignore */ botsPath),
+      import(/* @vite-ignore */ artPath),
+    ])) as [
+      {
+        readonly listNo3yBots: typeof webListSidebarBots;
+        readonly no3yBotMascotShape: typeof webBotMascotShape;
+      },
+      { readonly botMascotSprite: typeof webBotMascotSprite },
+    ];
+
+    const older = withSource(
+      threadFixture("bot-older", { createdAt: "2026-11-20T10:00:00.000Z" }),
+      {
+        tags: ["bot", "mascot:Heart"],
+      },
+    );
+    const newer = withSource(
+      threadFixture("bot-newer", { createdAt: "2026-11-21T10:00:00.000Z" }),
+      {
+        tags: ["bot"],
+      },
+    );
+    const archivedBot = withSource(threadFixture("bot-archived", { archivedAt: NOW }), {
+      tags: ["bot"],
+    });
+    const work = withSource(threadFixture("bot-work"), { tags: ["bot-work:bot-newer"] });
+    const fixtures = [newer, work, archivedBot, threadFixture("plain"), older];
+
+    const ids = (threads: ReadonlyArray<Thread>) => threads.map((thread) => thread.id);
+    expect(ids(bots.listNo3yBots(fixtures))).toEqual(ids(webListSidebarBots(fixtures)));
+    for (const thread of fixtures) {
+      const shell = { id: thread.id, tags: thread.source.tags };
+      expect(bots.no3yBotMascotShape(shell)).toBe(webBotMascotShape(shell));
+    }
+    for (const shape of WEB_BOT_MASCOT_SHAPES) {
+      for (const mood of WEB_BOT_MASCOT_MOODS) {
+        expect(art.botMascotSprite(shape, mood)).toEqual(webBotMascotSprite(shape, mood));
+      }
+    }
+  });
+
   it("mounts the dock, Threads header, thread composer card, and model sheet in mobile seams", () => {
     const stack = readRepoFile("apps/mobile/src/Stack.tsx");
     const nativeTabs = readRepoFile(
@@ -473,6 +529,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
     );
     const statusMark = readRepoFile("apps/mobile/fork/No3yStatusMark.tsx");
     const composerStyle = readRepoFile("apps/mobile/fork/No3yComposerStyle.tsx");
+    const listView = readRepoFile("apps/mobile/fork/No3yThreadsListView.tsx");
+    const modelPicker = readRepoFile("apps/mobile/fork/No3yModelPicker.tsx");
 
     expect(stack).toContain('import { No3yBottomNavHost } from "../fork/No3yBottomNav";');
     expect(stack).toContain('import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";');
@@ -498,12 +556,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(mobileGrouping).toContain("partitionForkStatusShelves(");
     // Threads search, filter and sort live in fork/No3yThreadsFilterBar.tsx; upstream stays as is.
     expect(filters).not.toContain("fork:begin");
-    // Inside a thread there is no dock: the composer card sits low with its branch/access chips.
+    // Inside a thread there is no dock: the composer card sits low.
     expect(threadDetail).toContain(
       "no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))",
     );
-    expect(threadDetail).toContain("props.no3yComposerChips");
-    expect(threadRoute).toContain("<No3yThreadComposerChips");
+    expect(threadRoute).toContain("<No3yThreadTitleStyle />");
     // One usage button opening the half-height usage sheet, and a ⋯ menu holding the rest.
     expect(threadHeader).toContain("useNo3yThreadBar(");
     expect(threadHeader).toContain('subtitle={no3yBar ? "" : props.subtitle}');
@@ -515,7 +572,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
     expect(threadComposer).toContain("<No3yBottomScrim");
     expect(statusMark).toContain("<No3yBeadRing");
-    expect(threadComposer).toContain("no3yCard={no3yCard}");
+    // Pull requests from the Threads header, bots above the sections, access on New agent.
+    expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
+    expect(listView).toContain("<No3yBotsGrid");
+    // Access lives on the model chip and in the model sheet, for threads and New agent drafts.
+    expect(composerStyle).toContain("no3yAccessIcon(card.runtimeMode)");
+    expect(modelPicker).toContain("onSelect={session.onUpdateRuntimeMode}");
+    expect(threadComposer).toContain("runtimeMode: props.selectedThread.runtimeMode");
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
     expect(stack).toContain('sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })');

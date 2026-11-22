@@ -5292,7 +5292,6 @@
   shadows: []
   watch:
     - apps/mobile/src/features/threads/new-task-flow-provider.tsx
-    - apps/mobile/src/features/threads/NewTaskDraftScreen.tsx
     - apps/mobile/src/features/threads/projectThreadCreationValidation.ts
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
@@ -7807,53 +7806,60 @@
 - id: no3y-mobile-redesign
   intent: >
     The no3y Code iOS redesign from the owner's Figma mocks (Threads list and
-    inside a thread). One page colour, #191817, on every iOS screen: the
-    dark themes' page tokens are replaced on iOS in both the Uniwind CSS
-    variables and the JS theme variables (fork/no3yPageColor.ts), so nothing
-    changes colour on push/pop. iOS draws the system font (SF Pro)
-    everywhere: global.css points the font tokens at System with weights on
-    the medium/bold utilities, FONT_FAMILIES is System on iOS, and markdown
-    strong/headings take a bold weight; Android keeps DM Sans. Controls are
-    native glass (fork/No3yGlass.tsx: liquid glass, or the app's blur
-    backdrop where it is unavailable) at 40pt. A dock of four filled
-    Hugeicons items (Threads, New agent, Chat, Automations; glass pill on the
-    selected one, 80pt band) shows on the workspace screens and New agent and
-    hides inside a thread. Long-pressing Threads, Automations or Chat opens a
-    peek card (provider marks, status marks, a New thread / New automation /
-    New chat row). Threads replaces the native bar with its own header
-    (Threads title, Settings and Usage buttons) and keeps a bottom tray above
-    the dock: a glass search pill, a filter button and a sort button
-    (fork/No3yThreadsFilterBar.tsx; upstream ThreadListFilters.tsx stays
-    untouched). Thread cards show the title, then project icon and name, PR
-    number, provider mark and model, with the status mark trailing; working
-    is the Mac's bead ring, looping on the UI thread and still while its
-    screen is covered, the app is inactive or Reduce Motion is on. Inside a
-    thread the native bar has a 16pt Medium title and no subtitle, one usage
-    button (the provider's remaining-limit ring, or a gauge when it reports
-    none) and a ⋯ menu with the project, environment and branch as info rows
-    plus the git, terminal and files items, so they stay reachable when the
-    composer is hidden. The usage buttons open a half-height usage sheet
-    (fork/No3yUsageSheet.tsx) embedding Settings › Usage's limits with a See
-    all link. Above the composer a branch chip repeats the git, terminal and
-    files items and an access chip sets the runtime mode the thread settings
-    sheet sets. The composer is a glass card (editor on top; 40pt +, model
-    chip, mic and send below) over a fade-to-page scrim so the transcript
-    never reads through; the upstream controls draw that style through
-    fork/No3yComposerStyle.tsx's context and keep their behaviour. On iPhone
-    the model chip opens a half-height sheet (fork/No3yModelPicker.tsx) with a
-    close button, a Favorites/provider select, the model list (long-press to
-    favorite) and an effort slider with a notch per level, tap-to-jump and
-    snapping drags with a haptic tick, driving the same thread settings
-    session so picks, favorites and options save exactly as before. Claude
-    and Codex draw the Mac fork's own marks (fork/No3yProviderMark.tsx and
-    fork/assets/codex-mark.png); other providers keep the app's icon. Icons
-    come from @hugeicons/core-free-icons at the Mac fork's version, drawn by
-    fork/HugeIcon.tsx with the Mac's derived filled weight (a copy of
-    hugeiconsFill.ts). Chat keeps its prompt bar and search; Automations
-    keeps a Recent runs section. Threads keeps Mac-parity status sections and
-    roster visibility in apps/mobile/fork/forkStatusGrouping.ts and
-    forkRosterVisibility.ts (parity-guarded against web without modifying web
-    or client-runtime).
+    inside a thread). One page colour, #191817, on every iOS screen: the dark
+    themes' page tokens are replaced on iOS in both the Uniwind CSS variables
+    and the JS theme variables (fork/no3yPageColor.ts), so nothing changes
+    colour on push/pop. iOS draws the system font (SF Pro) everywhere:
+    global.css points the font tokens at System with weights on the medium/bold
+    utilities, FONT_FAMILIES is System on iOS, and markdown strong/headings take
+    a bold weight; Android keeps DM Sans. Controls are native glass
+    (fork/No3yGlass.tsx: liquid glass, or the app's blur backdrop where it is
+    unavailable) at 40pt. A dock of four filled Hugeicons items (Threads, New
+    agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
+    on the workspace screens and New agent and hides inside a thread.
+    Long-pressing Threads, Automations or Chat opens a peek card (provider
+    marks, status marks, a New thread / New automation / New chat row). Threads
+    replaces the native bar with its own header (Threads title; Pull requests,
+    Settings and Usage buttons, Pull requests opening the PR list the old tab
+    bar reached) and keeps a bottom tray above the dock: a glass search pill, a
+    filter button and a sort button (fork/No3yThreadsFilterBar.tsx; upstream
+    ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
+    listing rule, fork/forkBots.ts) sit above the status sections as a wrapping
+    grid of Petal tiles (mascot art copied in fork/botMascotArt.ts, name, status
+    mark); a tap opens the bot, a long press offers rename, archive and delete,
+    search narrows them, and the grid is gone when there are none; bot work
+    stays off the list. Thread titles are pure white on every surface whatever
+    their status, read state or shelf (the shared recede rule stays
+    parity-guarded but never colours a mobile title). Thread cards show the
+    title, then project icon and name, PR number, provider mark and model, with
+    the status mark trailing; working is the Mac's bead ring, looping on the UI
+    thread and still while its screen is covered, the app is inactive or Reduce
+    Motion is on. Inside a thread the native bar has a 16pt Medium title and no
+    subtitle, one usage button (the provider's remaining-limit ring, or a gauge
+    when it reports none) and a ⋯ menu with the project, environment and branch
+    as info rows plus the git, terminal and files items, their one home,
+    reachable in every thread state. The usage buttons open a half-height usage
+    sheet (fork/No3yUsageSheet.tsx) embedding Settings › Usage's limits with a
+    See all link. The composer is a glass card (editor on top; 40pt +, model
+    chip, mic and send below; no chip row above it; the model chip ends in the
+    current runtime mode's access shield) over a fade-to-page scrim so the
+    transcript never reads through; the upstream controls draw that style
+    through fork/No3yComposerStyle.tsx's context and keep their behaviour. On
+    iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
+    with a close button, a Favorites/provider select, an Access menu (the
+    session's runtime mode: the thread's composer draft settings, or the New
+    agent draft's mode), the model list (long-press to favorite) and an effort
+    slider with a notch per level, tap-to-jump and snapping drags with a haptic
+    tick, driving the same thread settings session so picks, favorites and
+    options save exactly as before. Claude and Codex draw the Mac fork's own
+    marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
+    providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
+    the Mac fork's version, drawn by fork/HugeIcon.tsx with the Mac's derived
+    filled weight (a copy of hugeiconsFill.ts). Chat keeps its prompt bar and
+    search; Automations keeps a Recent runs section. Threads keeps Mac-parity
+    status sections and roster visibility in
+    apps/mobile/fork/forkStatusGrouping.ts and forkRosterVisibility.ts
+    (parity-guarded against web without modifying web or client-runtime).
   tier: 4
   files:
     - apps/mobile/fork/forkStatusGrouping.ts
@@ -7877,7 +7883,7 @@
     - apps/mobile/fork/No3yControls.tsx
     - apps/mobile/fork/No3yScreenHeader.tsx
     - apps/mobile/fork/No3yComposerStyle.tsx
-    - apps/mobile/fork/No3yThreadComposerChips.tsx
+    - apps/mobile/fork/No3yAccess.tsx
     - apps/mobile/fork/No3yModelPicker.tsx
     - apps/mobile/fork/No3yGlass.tsx
     - apps/mobile/fork/No3yBeadRing.tsx
@@ -7889,6 +7895,9 @@
     - apps/mobile/fork/No3yProviderMark.tsx
     - apps/mobile/fork/assets/codex-mark.png
     - apps/mobile/fork/no3yPageColor.ts
+    - apps/mobile/fork/forkBots.ts
+    - apps/mobile/fork/botMascotArt.ts
+    - apps/mobile/fork/No3yBotsGrid.tsx
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
@@ -7904,6 +7913,7 @@
     - apps/mobile/src/features/threads/ThreadHeader.tsx
     - apps/mobile/src/features/threads/ThreadRouteScreen.tsx
     - apps/mobile/src/features/threads/ThreadSettingsSheet.tsx
+    - apps/mobile/src/features/threads/NewTaskDraftScreen.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
     - apps/mobile/src/features/home/home-list-options.ts

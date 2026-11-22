@@ -4,11 +4,7 @@
  * preserving mobile swipe and context-menu actions.
  * See `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
-import {
-  threadCardTitleRecedes,
-  type SidebarV2CardStatusKind,
-  type SidebarV2StatusBucket,
-} from "./forkStatusGrouping";
+import type { SidebarV2CardStatusKind, SidebarV2StatusBucket } from "./forkStatusGrouping";
 import type {
   EnvironmentProject,
   EnvironmentThreadShell,
@@ -155,7 +151,7 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
                 ...NO3Y_FONT.regular,
                 fontSize: 16,
                 lineHeight: 18,
-                color: selected ? palette.foreground : palette.quietInk,
+                color: palette.titleInk,
               }}
             >
               {pendingTask.title}
@@ -244,7 +240,6 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
     thread,
     variant,
     statusKind,
-    statusSection,
     selected,
     snoozed,
     pinned,
@@ -282,14 +277,6 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
       candidate.instanceId ===
       (thread.runtime?.providerInstanceId ?? thread.modelSelection.instanceId),
   )?.iconUrl;
-
-  const titleRecedes = threadCardTitleRecedes({
-    isDone: statusKind === "done" || statusKind === "woke",
-    isIdle: statusKind === null || statusKind === "monitoring",
-    isActive: selected,
-    isSelected: selected,
-    statusSection,
-  });
 
   const handleOpenPullRequests = useCallback(() => {
     if (pr) onOpenThreadPullRequests(thread, pr);
@@ -638,8 +625,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                 ...NO3Y_FONT.regular,
                 fontSize: 14,
                 lineHeight: 18,
-                color: selected ? palette.foreground : palette.metaInk,
-                opacity: isRegeneratingTitle ? 0.55 : 1,
+                color: palette.titleInk,
               }}
             >
               {thread.title}
@@ -668,8 +654,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                   ...NO3Y_FONT.regular,
                   fontSize: 16,
                   lineHeight: 18,
-                  color: titleRecedes ? palette.quietInk : palette.foreground,
-                  opacity: isRegeneratingTitle ? 0.55 : 1,
+                  color: palette.titleInk,
                 }}
               >
                 {thread.title}

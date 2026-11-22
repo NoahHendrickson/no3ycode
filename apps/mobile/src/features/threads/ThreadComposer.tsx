@@ -123,6 +123,7 @@ import {
   type NavigationWithFinishTransitioning,
 } from "./use-thread-settings-sheet-presentation";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { RuntimeMode } from "@t3tools/contracts";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 import { No3yBottomScrim } from "../../../fork/No3yBottomFade";
 import { No3yComposerStyleProvider } from "../../../fork/No3yComposerStyle";
@@ -387,7 +388,7 @@ function ComposerSurface(props: {
   readonly style: ViewStyle;
   readonly animateLayout?: boolean;
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  readonly no3yCard?: boolean;
+  readonly no3yCard?: { readonly runtimeMode: RuntimeMode };
   /* fork:end no3y-mobile-redesign */
 }) {
   const colors = useUniwindTheme();
@@ -417,7 +418,9 @@ function ComposerSurface(props: {
     return (
       <View style={props.style}>
         <No3yGlassLayer radius={targetBorderRadius} />
-        <No3yComposerStyleProvider value>{props.children}</No3yComposerStyleProvider>
+        <No3yComposerStyleProvider value={props.no3yCard}>
+          {props.children}
+        </No3yComposerStyleProvider>
       </View>
     );
   }
@@ -951,7 +954,7 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
         <ComposerSurface
           animateLayout={false}
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          no3yCard={no3yCard}
+          no3yCard={no3yCard ? { runtimeMode: props.selectedThread.runtimeMode } : undefined}
           /* fork:end no3y-mobile-redesign */
           style={{
             /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */

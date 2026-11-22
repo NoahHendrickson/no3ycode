@@ -9,7 +9,7 @@ import Cancel01Icon from "@hugeicons/core-free-icons/Cancel01Icon";
 import StarIcon from "@hugeicons/core-free-icons/StarIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import { isReasoningSelect } from "@t3tools/client-runtime/model-traits";
-import type { ProviderOptionDescriptor } from "@t3tools/contracts";
+import type { ProviderOptionDescriptor, RuntimeMode } from "@t3tools/contracts";
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText as Text } from "../src/components/ui/AppText";
 import { Menu } from "../src/components/ui/Menu";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
+import type { RuntimeModeChoice } from "../src/features/threads/thread-settings-options";
 import type { ModelOption, ProviderGroup } from "../src/lib/modelOptions";
 import {
   flatGlassPalette,
@@ -28,6 +29,7 @@ import {
 } from "./flatGlassTheme";
 import { effortLevelAt, effortStopX } from "./effortSlider";
 import { HugeIcon } from "./HugeIcon";
+import { no3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
 import { No3yGlassLayer } from "./No3yGlass";
@@ -53,6 +55,9 @@ export interface No3yModelPickerSession {
   readonly pressModel: (option: ModelOption) => void;
   readonly commitPendingModel: () => boolean;
   readonly applyOptionChange: (id: string, value: string | boolean) => void;
+  readonly runtimeMode: RuntimeMode;
+  readonly runtimeModeChoices: ReadonlyArray<RuntimeModeChoice>;
+  readonly onUpdateRuntimeMode: (mode: RuntimeMode) => void;
 }
 
 const FAVORITES = "@favorites";
@@ -294,6 +299,9 @@ export function No3yModelPicker(props: {
       label: group.providerLabel,
     })),
   ];
+  const accessLabel =
+    session.runtimeModeChoices.find((candidate) => candidate.mode === session.runtimeMode)?.label ??
+    "Access";
   const choiceLabel = choices.find((candidate) => candidate.id === choice)?.label ?? "Favorites";
   const choiceDriver =
     choice === FAVORITES
@@ -361,6 +369,39 @@ export function No3yModelPicker(props: {
             <HugeIcon icon={ArrowDown01Icon} size={14} color={palette.quietInk} />
           </Pressable>
         </Menu>
+        <View style={{ flex: 1 }} />
+        <No3yAccessMenu
+          runtimeMode={session.runtimeMode}
+          choices={session.runtimeModeChoices}
+          onSelect={session.onUpdateRuntimeMode}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Access: ${accessLabel}. Choose access`}
+            style={{
+              height: NO3Y_CONTROL_SIZE,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              paddingHorizontal: 14,
+              borderRadius: NO3Y_CONTROL_SIZE / 2,
+            }}
+          >
+            <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
+            <HugeIcon
+              icon={no3yAccessIcon(session.runtimeMode)}
+              size={16}
+              color={palette.foreground}
+              filled
+            />
+            <Text
+              numberOfLines={1}
+              style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+            >
+              {accessLabel}
+            </Text>
+          </Pressable>
+        </No3yAccessMenu>
       </View>
       <ScrollView
         style={{ flex: 1 }}

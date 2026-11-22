@@ -75,6 +75,8 @@ import {
 } from "./mobileStatusGrouping";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
+import { No3yBotsGrid } from "./No3yBotsGrid";
+import { listNo3yBots } from "./forkBots";
 import { No3yThreadsHeader } from "./No3yScreenHeader";
 import { No3yStatusSectionHeader } from "./No3yStatusSectionHeader";
 import { No3yPendingDraftRow, No3yThreadRow } from "./No3yThreadRow";
@@ -460,6 +462,17 @@ export function No3yThreadsListView(props: {
   };
 
   const hasSearchQuery = props.searchQuery.trim().length > 0;
+  // Bots sit above the sections; search and the environment filter narrow them too.
+  const botQuery = props.searchQuery.trim().toLocaleLowerCase();
+  const bots = listNo3yBots(props.threads).filter(
+    (bot) =>
+      (props.selectedEnvironmentId === null || bot.environmentId === props.selectedEnvironmentId) &&
+      (botQuery.length === 0 ||
+        bot.title.toLocaleLowerCase().includes(botQuery) ||
+        props.searchMatchByKey.has(
+          threadSearchMatchKey({ environmentId: bot.environmentId, threadId: bot.id }),
+        )),
+  );
   const listEmpty =
     hasSearchQuery && props.searchIsPending ? (
       <EmptyState
@@ -547,7 +560,16 @@ export function No3yThreadsListView(props: {
                   themeAppearance,
                 }}
                 ListHeaderComponent={
-                  no3yBottomNav ? null : (
+                  no3yBottomNav ? (
+                    <No3yBotsGrid
+                      bots={bots}
+                      now={props.now}
+                      onOpen={selectThread}
+                      onRename={props.onRenameThread}
+                      onArchive={props.onArchiveThread}
+                      onDelete={props.onDeleteThread}
+                    />
+                  ) : (
                     <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
                       {filterBar}
                     </View>
