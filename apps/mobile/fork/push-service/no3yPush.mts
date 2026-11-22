@@ -289,7 +289,14 @@ export interface Tracker {
 
 type ThreadShell = Extract<OrchestrationV2ShellStreamItem, { kind: "thread.updated" }>["thread"];
 type ObservedThread = ProjectThreadAwarenessV2Input["thread"] &
-  Pick<ThreadShell, "projectId" | "latestRunId" | "scheduledTaskId">;
+  Pick<ThreadShell, "projectId" | "latestRunId" | "scheduledTaskId" | "pinnedAt">;
+
+/** Mirrors the roster: an automation run stays off the thread list, and off the phone, unless pinned. */
+export function isHiddenAutomationRun(
+  thread: Pick<ObservedThread, "scheduledTaskId" | "pinnedAt">,
+) {
+  return thread.scheduledTaskId !== undefined && thread.pinnedAt == null;
+}
 
 export interface AlertRun {
   readonly threadId: string;
@@ -332,6 +339,7 @@ export function observeThread(tracker: Tracker, thread: ObservedThread, silent: 
   const previous = tracker.lastKeys.get(thread.id) ?? null;
   tracker.lastKeys.set(thread.id, key);
   if (silent || key === null || key === previous || state === null) return;
+  if (isHiddenAutomationRun(thread)) return;
 
   clearTimeout(tracker.settleTimers.get(thread.id));
   const run: AlertRun = {

@@ -1,5 +1,5 @@
 import type { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
-import { ProviderInstanceId, RuntimeRequestId } from "@t3tools/contracts";
+import { ProviderInstanceId, RuntimeRequestId, ScheduledTaskId } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 import { describe, expect, it, vi } from "vite-plus/test";
 
@@ -65,6 +65,18 @@ describe("no3y push transitions", () => {
       "Approval needed: no3ycode",
       "Approval needed: no3ycode",
     ]);
+  });
+
+  it("stays silent for an automation run hidden from the thread list until it is pinned", () => {
+    const t = tracker();
+    const run = { scheduledTaskId: ScheduledTaskId.make("scheduled-task:review") };
+    observeThread(t, { ...thread({}), ...run }, false);
+    observeThread(t, { ...thread({ pendingRuntimeRequest: approval("a") }), ...run }, false);
+    expect(t.sent).toEqual([]);
+
+    const pinned = { ...run, pinnedAt: DateTime.makeUnsafe("2026-11-22T12:00:00.000Z") };
+    observeThread(t, { ...thread({ pendingRuntimeRequest: approval("b") }), ...pinned }, false);
+    expect(t.sent.map((n) => n.body)).toEqual(["Approval needed: no3ycode"]);
   });
 
   it("holds a completion and drops it when the thread resumes", () => {
