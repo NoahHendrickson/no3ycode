@@ -45,6 +45,7 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
     expect(card?.body).toMatch(/border-radius:\s*var\(--fork-card-radius\)/u);
+    expect(card?.body).toMatch(/--fork-card-radius:\s*var\(--fork-composer-radius\)/u);
     expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
   });
 

@@ -2930,6 +2930,8 @@
    other three sides. Basic paints its own raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
+  /* The composer's corners: the card is the composer turned over (fork-changed-files-card). */
+  --fork-card-radius: var(--fork-composer-radius);
   background: var(--card);
   border: 1px solid var(--fork-composer-border);
   border-radius: var(--fork-card-radius);
@@ -2955,6 +2957,13 @@
   ~ div:last-child {
   border-bottom-left-radius: calc(var(--fork-card-radius) - 1px);
   border-bottom-right-radius: calc(var(--fork-card-radius) - 1px);
+}
+
+/* On Flat Glass the tree and its footer lift 4% off the card, like the composer's prompt well. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-changed-files-state]
+  > :not([data-changed-files-header]) {
+  background: rgb(255 255 255 / 4%);
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream
