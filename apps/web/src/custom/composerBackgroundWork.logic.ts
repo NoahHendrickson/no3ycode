@@ -6,12 +6,3 @@ export function resolveCollapsedTaskIds(
   if (collapsedTaskIds === null) return null;
   return tasks.every((task) => collapsedTaskIds.has(task.taskId)) ? collapsedTaskIds : null;
 }
-
-/** Whether a subagent approval the drawer has not yet made way for is pending. */
-export function hasUnseenApproval(
-  approvalIds: ReadonlySet<string>,
-  seenApprovalIds: ReadonlySet<string>,
-): boolean {
-  for (const id of approvalIds) if (!seenApprovalIds.has(id)) return true;
-  return false;
-}

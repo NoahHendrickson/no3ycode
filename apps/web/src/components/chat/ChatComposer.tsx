@@ -189,7 +189,7 @@ import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import type { ComposerBackgroundWorkVessel } from "../../custom/ComposerBackgroundWork";
+import type { ComposerDrawerSection } from "../../custom/ComposerBackgroundWork";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker */
 // One menu carries model and reasoning; upstream renders ProviderModelPicker in ComposerControlsBar.
@@ -508,7 +508,7 @@ export interface ChatComposerProps {
   /** BranchToolbar's strip, rendered above the vessel by ComposerShell. */
   contextStrip?: ReactNode;
   /** Background work (subagents, monitors), stacked into the top drawer above usage. */
-  backgroundWork?: ComposerBackgroundWorkVessel | null;
+  backgroundWork?: ComposerDrawerSection | null;
   /* fork:end fork-composer-shell */
 
   promptRef: React.RefObject<string>;

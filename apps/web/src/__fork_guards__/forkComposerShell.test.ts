@@ -23,7 +23,6 @@ import {
   resolveComposerShellVisibility,
 } from "../custom/ComposerShell";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
-import { hasUnseenApproval, resolveCollapsedTaskIds } from "../custom/composerBackgroundWork.logic";
 import { resolveThreadContextBranch } from "../custom/ThreadContextReadout";
 import { cssRules, ruleBodyFor } from "./cssRules";
 
@@ -839,22 +838,26 @@ describe("fork guard: fork-composer-shell", () => {
     expect(work).toContain("SidebarV2MonitoringMark");
     expect(work).toContain('role="status"');
     expect(work).toContain("data-fork-background-work ");
-    expect(work).toContain("data-fork-monitoring-stop");
     expect(work).toContain("Stop background work");
     expect(work).toContain("StopSquareIcon");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
     expect(work).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
     // One drawer surface: the work section stacks above the usage tray, so every theme's
     // drawer paint and the Liquid Glass card cover both.
-    expect(usage).toContain("readonly backgroundWork: ComposerBackgroundWorkVessel | null;");
+    expect(usage).toContain("readonly backgroundWork: ComposerDrawerSection | null;");
     expect(usage).toContain("open={drawerOpen}");
     expect(usage).toContain("work.content");
     expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
     expect(chatView).toContain("useComposerBackgroundWork(");
-    // A subagent's approval waits right above the composer; each arrival makes the drawer give way.
-    expect(chatView).toContain("useAtomValue(childThreadApprovalsAtom(activeThreadRef));");
+    // In flow, so an open drawer never covers the approval cards and asks above the composer;
+    // only the draft hero floats it.
+    const shell = readSibling("../custom/ComposerShell.tsx");
+    expect(shell).toContain('className="pointer-events-none relative z-20 flex flex-col"');
+    expect(shellCss).toMatch(
+      /\[data-draft-hero\]\s*\[data-fork-composer-top-vessel\]\s*\{[^}]*position:\s*absolute/u,
+    );
     expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
-    expect(chatView).toContain("backgroundWork={composerBackgroundWork.vessel}");
+    expect(chatView).toContain("backgroundWork={composerBackgroundWork.section}");
     expect(chatView).toContain("trailing: composerContextTrailing");
     expect(chatView).toContain("const composerContextTrailing = composerBackgroundWork.toggle;");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
@@ -876,28 +879,6 @@ describe("fork guard: fork-composer-shell", () => {
     expect(shellCss).toContain("[data-fork-liveness-mark]");
     expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
   });
-
-  it("opens the background-work drawer for work it has not shown and holds a collapse", () => {
-    const tasks = (...ids: string[]) => ids.map((taskId) => ({ taskId }));
-    const collapsed = new Set(["monitor", "a"]);
-    // A task ending keeps the collapse.
-    expect(resolveCollapsedTaskIds(tasks("monitor"), collapsed)).toBe(collapsed);
-    // One starting spends it, so the drawer stays open after that task ends too.
-    const reopened = resolveCollapsedTaskIds(tasks("monitor", "subagent"), collapsed);
-    expect(reopened).toBeNull();
-    expect(resolveCollapsedTaskIds(tasks("monitor"), reopened)).toBeNull();
-  });
-
-  it("collapses the background-work drawer once per subagent approval that arrives", () => {
-    const ids = (...values: string[]) => new Set(values);
-    expect(hasUnseenApproval(ids("a"), ids())).toBe(true);
-    // The user reopens over A: no new arrival, so the drawer stays as they left it.
-    expect(hasUnseenApproval(ids("a"), ids("a"))).toBe(false);
-    // B arrives while A still waits.
-    expect(hasUnseenApproval(ids("a", "b"), ids("a"))).toBe(true);
-    expect(hasUnseenApproval(ids("b"), ids("a", "b"))).toBe(false);
-  });
-
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the
     // composer to cover it. That fails wherever the composer is translucent —

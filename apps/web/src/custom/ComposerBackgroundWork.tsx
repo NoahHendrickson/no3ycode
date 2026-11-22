@@ -5,18 +5,19 @@ import type {
 import type { ThreadId } from "@t3tools/contracts";
 import { type ReactNode, type RefObject, useRef, useState } from "react";
 
+import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
-import { hasUnseenApproval, resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
+import { resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
 import { ChevronDownIcon, ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
 
 /** The work section ChatComposer stacks into its top drawer, above the usage tray. */
-export interface ComposerBackgroundWorkVessel {
+export interface ComposerDrawerSection {
   readonly open: boolean;
   readonly content: ReactNode;
-  readonly onCollapse: () => void;
+  readonly onCollapse: (restoreFocus: boolean) => void;
 }
 
 export interface ComposerBackgroundWorkViewProps {
@@ -53,30 +54,20 @@ function BackgroundWorkMark(props: Pick<ComposerBackgroundWorkViewProps, "presen
 }
 
 /** Background work as a context-row toggle and a top-drawer section (fork-composer-shell). It opens
- * whenever an unseen task starts; a collapse holds until one does. Each subagent approval arriving
- * above the composer, which the drawer would cover, collapses it once; the toggle still reopens it. */
-export function useComposerBackgroundWork(
-  view: ComposerBackgroundWorkViewProps | null,
-  approvalIds: ReadonlySet<string>,
-) {
+ * whenever an unseen task starts; a collapse holds until one does. */
+export function useComposerBackgroundWork(view: ComposerBackgroundWorkViewProps | null) {
   // The tasks on screen when the drawer was collapsed.
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<ReadonlySet<string> | null>(null);
-  const [seenApprovalIds, setSeenApprovalIds] = useState<ReadonlySet<string>>(() => new Set());
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const tasks = view?.presentation.items ?? [];
-  let heldTaskIds = resolveCollapsedTaskIds(tasks, collapsedTaskIds);
-  const approvalArrived = hasUnseenApproval(approvalIds, seenApprovalIds);
-  if (approvalArrived || approvalIds.size !== seenApprovalIds.size) {
-    setSeenApprovalIds(approvalIds);
-    if (approvalArrived) heldTaskIds = new Set(tasks.map((task) => task.taskId));
-  }
+  const heldTaskIds = resolveCollapsedTaskIds(tasks, collapsedTaskIds);
   if (heldTaskIds !== collapsedTaskIds) setCollapsedTaskIds(heldTaskIds);
-  if (view === null) return { toggle: null, vessel: null };
+  if (view === null) return { toggle: null, section: null };
 
   const open = heldTaskIds === null;
-  const collapse = () => {
+  const collapse = (restoreFocus: boolean) => {
     setCollapsedTaskIds(new Set(tasks.map((task) => task.taskId)));
-    toggleRef.current?.focus();
+    if (restoreFocus) toggleRef.current?.focus();
   };
 
   return {
@@ -85,14 +76,14 @@ export function useComposerBackgroundWork(
         {...view}
         triggerRef={toggleRef}
         open={open}
-        onToggle={() => (open ? collapse() : setCollapsedTaskIds(null))}
+        onToggle={() => (open ? collapse(false) : setCollapsedTaskIds(null))}
       />
     ),
-    vessel: {
+    section: {
       open,
       onCollapse: collapse,
-      content: <ComposerBackgroundWorkSection {...view} onCollapse={collapse} />,
-    } satisfies ComposerBackgroundWorkVessel,
+      content: <ComposerBackgroundWorkSection {...view} onCollapse={() => collapse(true)} />,
+    } satisfies ComposerDrawerSection,
   };
 }
 
@@ -146,25 +137,24 @@ export function ComposerBackgroundWorkSection(
       <div className="flex min-w-0 items-center gap-2">
         <BackgroundWorkMark presentation={props.presentation} seed={props.seed} />
         <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{label}</span>
-        <button
-          type="button"
-          data-fork-monitoring-stop
+        <Button
+          variant="ghost"
+          size="xs"
           aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
           disabled={props.stopping || !props.canStop}
-          className="inline-flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-sm px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:cursor-default disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
           onClick={props.onStop}
         >
           <StopSquareIcon size={10} />
-          <span>Stop</span>
-        </button>
-        <button
-          type="button"
+          Stop
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-xs"
           aria-label="Hide background work"
-          className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           onClick={props.onCollapse}
         >
-          <ChevronDownIcon className="size-4" aria-hidden="true" />
-        </button>
+          <ChevronDownIcon aria-hidden="true" />
+        </Button>
       </div>
       <ul data-fork-monitoring-tasks className="-mx-2 flex max-h-40 flex-col overflow-y-auto">
         {props.presentation.items.map((task) => (

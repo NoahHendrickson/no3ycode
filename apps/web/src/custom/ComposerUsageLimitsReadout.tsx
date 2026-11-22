@@ -24,7 +24,7 @@ import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ensureLocalApi } from "~/localApi";
 import { environmentPresentations } from "~/state/presentation";
-import type { ComposerBackgroundWorkVessel } from "./ComposerBackgroundWork";
+import type { ComposerDrawerSection } from "./ComposerBackgroundWork";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
@@ -38,7 +38,7 @@ const SEVEN_DAYS_MINS = 7 * 24 * 60;
 export function useComposerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
-  readonly backgroundWork: ComposerBackgroundWorkVessel | null;
+  readonly backgroundWork: ComposerDrawerSection | null;
 }) {
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -46,7 +46,8 @@ export function useComposerUsageDrawer(props: {
   const work = props.backgroundWork;
   const workOpen = work?.open === true;
   const drawerOpen = open || workOpen;
-  // The panel keeps its children through the close slide, so it keeps the sections it last showed.
+  // The panel keeps its children through the close slide, so a closed drawer keeps the sections it
+  // last showed. Work that has ended has nothing left to show, so it leaves at once.
   const [lastShown, setLastShown] = useState({ work: false, usage: false });
   if (drawerOpen && (lastShown.work !== workOpen || lastShown.usage !== open)) {
     setLastShown({ work: workOpen, usage: open });
@@ -78,8 +79,9 @@ export function useComposerUsageDrawer(props: {
       props.enabled || work !== null ? (
         <ComposerUsageLimitsDrawer
           open={drawerOpen}
+          // Escape closes every section and returns focus to one trigger, the ring when usage was open.
           onClose={() => {
-            if (workOpen) work?.onCollapse();
+            if (work?.open) work.onCollapse(!open);
             if (open) close(true);
           }}
         >

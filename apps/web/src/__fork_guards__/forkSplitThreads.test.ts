@@ -116,7 +116,7 @@ describe("fork guard: fork-split-threads", () => {
       /fork:begin fork-split-threads[\s\S]*?<SplitAgentToggle[\s\S]*?fork:end fork-split-threads/u,
     );
     expect(chatView).toContain("splitAgentToggle={splitAgentToggle}");
-    // Only where the composer was: never on a provider-native subagent thread.
+    // Split agent only where the composer was; a provider-native subagent keeps Unsplit in a pair.
     expect(chatView).toContain(
       "splitAgentToggleShown(splitPane, isServerThread && composerMounted)",
     );

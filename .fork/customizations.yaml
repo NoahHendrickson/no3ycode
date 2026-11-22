@@ -2999,8 +2999,11 @@
     drawer so the Usage settings page keeps each theme's --success token. Hidden
     when the provider reports no session window or when the footer collapses.
     The same drawer also carries fork-composer-shell's background-work
-    section above the tray; it keeps the sections it showed through its close
-    slide.
+    section above the tray; a closed drawer keeps the sections it showed
+    through its close slide. The drawer sits in the composer's flow, so opening
+    it pushes the transcript up instead of covering the approval cards, Petal
+    asks or last transcript lines above the composer; only the draft hero,
+    whose composer is centred over its launchpad, floats it above the vessel.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3599,7 +3602,9 @@
     data-fork-composer-usage-drawer surface, with Stop and a collapse button;
     a subagent's row opens its thread. The drawer opens by itself whenever a
     task it has not shown starts, and a collapse holds until new work
-    arrives (custom/ComposerBackgroundWork.tsx). On narrow composers the
+    arrives (custom/ComposerBackgroundWork.tsx). Because the drawer takes
+    space (see fork-composer-usage-limits), auto-opening never covers what
+    sits above the composer. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
@@ -3630,6 +3635,7 @@
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerBackgroundWork.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
+    - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx

@@ -333,7 +333,6 @@ import {
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
 import { useComposerBackgroundWork } from "~/custom/ComposerBackgroundWork";
-import { childThreadApprovalsAtom } from "../state/threads";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2684,14 +2683,7 @@ export default function ChatView(props: ChatViewProps) {
      Working fleets and monitoring leave the banner stack: an icon in the context strip toggles
      a section of the composer's top drawer (custom/ComposerBackgroundWork). Stop handler and
      task list come from useThreadLifecycle, like upstream's row. */
-  const composerBackgroundWorkPresentation = activeThread
-    ? presentPendingBackgroundWork(activeBackgroundTasks)
-    : null;
-  // ChildThreadApprovals sits right above the composer, where the drawer would cover it.
-  const composerChildApprovals = useAtomValue(childThreadApprovalsAtom(activeThreadRef));
-  const composerChildApprovalIds = new Set(
-    composerChildApprovals.map((entry) => `${entry.thread.threadId}:${entry.approval.requestId}`),
-  );
+  const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
   const composerBackgroundWork = useComposerBackgroundWork(
     composerBackgroundWorkPresentation && activeThread
       ? {
@@ -2703,7 +2695,6 @@ export default function ChatView(props: ChatViewProps) {
           onOpenThread: onOpenRelatedThreadStable,
         }
       : null,
-    composerChildApprovalIds,
   );
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = serverVisibleTurnItems.some(
@@ -3428,8 +3419,8 @@ export default function ChatView(props: ChatViewProps) {
   // its lifecycle status, guest messages awaiting you, then your queued messages.
   /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards
      No status line after the last message: thread state is a composer card
-     (threadStatusLine stays unread). Background work rides the context-strip
-     liveness pill (fork-composer-shell), not ThreadNow's work row. */
+     (threadStatusLine stays unread). Background work rides the composer's top
+     drawer (fork-composer-shell), not ThreadNow's work row. */
   const timelineFooter =
     pendingHandoff === null &&
     !hasThreadNow &&
@@ -3616,7 +3607,8 @@ export default function ChatView(props: ChatViewProps) {
     !embedded &&
     activeThreadRef &&
     activeProjectRef &&
-    // A provider-native subagent thread has no composer and never offered a split.
+    // A provider-native subagent thread has no composer and never offers Split agent; inside a
+    // pair it keeps Unsplit.
     splitAgentToggleShown(splitPane, isServerThread && composerMounted) ? (
       <SplitAgentToggle
         threadRef={activeThreadRef}
@@ -4104,8 +4096,8 @@ export default function ChatView(props: ChatViewProps) {
                     <div className="relative">
                       <ComposerSurface.Shell
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-                         The chips the fork adds to the strip (project pill, split
-                         pill, liveness pill) need the row even when upstream's
+                         The chips the fork adds to the strip (project pill,
+                         background-work toggle) need the row even when upstream's
                          strip predicate says no. */
                         contextRow={
                           showComposerContextStrip ||
@@ -4177,7 +4169,7 @@ export default function ChatView(props: ChatViewProps) {
                                 {...(composerContextStrip
                                   ? { contextStrip: composerContextStrip }
                                   : {})}
-                                backgroundWork={composerBackgroundWork.vessel}
+                                backgroundWork={composerBackgroundWork.section}
                                 /* fork:end fork-composer-shell */
                                 phase={phase}
                                 canSteer={!compactionBlocksSteer}
