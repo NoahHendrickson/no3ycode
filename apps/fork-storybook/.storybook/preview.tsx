@@ -40,6 +40,7 @@ const withSurface: Decorator = (Story, context) => {
     <Surface
       name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
       inline={context.viewMode === "docs"}
+      dockedSidebar={storyTheme(context.globals).palette === "glass"}
     >
       <Story />
     </Surface>

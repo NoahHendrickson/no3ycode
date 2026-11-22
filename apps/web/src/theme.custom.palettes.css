@@ -1723,14 +1723,17 @@
   backdrop-filter: none;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
-  [data-fork-liquid-glass-popup="solid"] {
-  background: color-mix(in srgb, #ffffff 4%, #141618);
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: color-mix(in srgb, #ffffff 4%, #141618);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: #2a2324;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-fork-liquid-glass-popup="solid"] {
-  background: #2a2324;
+  background: var(--fork-liquid-glass-sidebar);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]

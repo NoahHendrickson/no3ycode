@@ -23,20 +23,22 @@ for (const [key, value] of Object.entries(PREFERENCES)) {
 }
 
 // Glass is see-through only once the desktop shell reports its window material
-// (forkSidebarVibrancy.ts). A browser has none, so this stands in for the bridge: the app's own
-// palette sync asks for the material when Glass is picked, and preview-head.html paints a
-// wallpaper where the desktop would show through.
+// (forkSidebarVibrancy.ts). A browser has none, so this stands in for a macOS 26+ main window:
+// Liquid Glass under the docked sidebar only. preview-head.html paints the glass's colour where
+// the sidebar goes clear. No draft-glass setter, so the New agent stage keeps its CSS backdrop.
 (window as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
-  setSidebarVibrancy: async (enabled: boolean) => enabled,
+  setSidebarVibrancy: async (enabled: boolean) => (enabled ? "liquid-glass" : "off"),
+  sidebarLiquidGlass: { setWidth: async () => true },
 };
 
 // The app mounts into #root, and Glass's popup cutout (forkGlassPopupCutout.ts) masks that element
-// when a popup opens over its trigger. Storybook mounts into #storybook-root, so it sits inside a
-// #root here, created before the theme turns Glass on.
+// when a popup opens over its trigger. Storybook mounts a story into #storybook-root and a docs page
+// into #storybook-docs, so both sit inside a #root here, created before the theme turns Glass on.
 const storyRoot = document.getElementById("storybook-root");
 if (storyRoot !== null && document.getElementById("root") === null) {
   const appRoot = document.createElement("div");
   appRoot.id = "root";
   storyRoot.before(appRoot);
-  appRoot.append(storyRoot);
+  const docsRoot = document.getElementById("storybook-docs");
+  appRoot.append(storyRoot, ...(docsRoot === null ? [] : [docsRoot]));
 }
