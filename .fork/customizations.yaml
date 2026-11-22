@@ -7670,8 +7670,10 @@
     toolbar (Basic's tones, Glass, Inlet's colours), moved through
     setForkBasicTone / setForkAppearance / setForkInletColor as Settings ›
     Appearance moves them. Glass stands in a desktop bridge that reports the
-    window material (appearance.ts) and a blurred wallpaper under the canvas
-    (preview-head.html), since a browser has no window behind the page. Its Vite config
+    window material (appearance.ts) as macOS 26+ sidebar Liquid Glass, and paints
+    the window backing and the app's --fork-liquid-glass-sidebar where the docked
+    sidebar goes clear (preview-head.html), since a browser has no window behind
+    the page. Its Vite config
     adds the same resolution as apps/web's (forkOverrides, brand name, React
     Compiler, Tailwind scanning apps/web plus the stories, the lucide-react shim
     alias). Foundations read tokens from the CSS itself (the @theme inline

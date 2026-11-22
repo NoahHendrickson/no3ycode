@@ -32,12 +32,13 @@ for (const [key, value] of Object.entries(PREFERENCES)) {
 };
 
 // The app mounts into #root, and Glass's popup cutout (forkGlassPopupCutout.ts) masks that element
-// when a popup opens over its trigger. Storybook mounts into #storybook-root, so it sits inside a
-// #root here, created before the theme turns Glass on.
+// when a popup opens over its trigger. Storybook mounts a story into #storybook-root and a docs page
+// into #storybook-docs, so both sit inside a #root here, created before the theme turns Glass on.
 const storyRoot = document.getElementById("storybook-root");
 if (storyRoot !== null && document.getElementById("root") === null) {
   const appRoot = document.createElement("div");
   appRoot.id = "root";
   storyRoot.before(appRoot);
-  appRoot.append(storyRoot);
+  const docsRoot = document.getElementById("storybook-docs");
+  appRoot.append(storyRoot, ...(docsRoot === null ? [] : [docsRoot]));
 }

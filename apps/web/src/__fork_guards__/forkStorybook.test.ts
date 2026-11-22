@@ -53,18 +53,27 @@ describe("fork-storybook", () => {
     const themes = read(`${storybook}../stories/storyTheme.ts`);
     expect(themes).toContain("BASIC_TONES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
-    // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, the stand-in glass
-    // paints only once the app stamps that marker, and the sidebar canvas is docked under Glass.
-    expect(appearance).toMatch(
-      /setSidebarVibrancy: async \(enabled: boolean\) => \(enabled \? "liquid-glass"/u,
+    // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, and the stand-in paints
+    // the app's backings, its glass token and its docked-sidebar selector, so neither side drifts.
+    expect(appearance).toContain('"liquid-glass"');
+    expect(appearance).toContain("sidebarLiquidGlass:");
+    expect(preview).toContain("dockedSidebar={");
+    const head = read(`${storybook}preview-head.html`).replace(/\s+/gu, " ");
+    expect(read("../theme.custom.palettes.css")).toMatch(
+      /\[data-fork-liquid-glass-popup="solid"\] \{\s*background: var\(--fork-liquid-glass-sidebar\);/u,
     );
-    expect(appearance).toContain("sidebarLiquidGlass: { setWidth:");
-    const head = read(`${storybook}preview-head.html`);
-    expect(head).toMatch(
-      /html\[data-fork-sidebar-vibrancy="liquid-glass"\] \{[^}]*--story-liquid-glass:/u,
-    );
+    expect(head).toContain("var(--fork-liquid-glass-sidebar)");
+    for (const [, hex] of read("../custom/forkSidebarVibrancy.ts").matchAll(
+      /_GLASS_BACKING_RGB = 0x([0-9a-f]{6});/gu,
+    )) {
+      expect(head).toContain(`linear-gradient(#${hex}, #${hex})`);
+    }
+    const selector = /SIDEBAR_GLASS_SELECTOR =\s*'([^']+)'/u.exec(
+      read("../custom/forkGlassPopupCutout.ts"),
+    )?.[1];
+    expect(selector).toBeDefined();
+    expect(head).toContain(selector);
     expect(head).toContain('[data-fork-liquid-glass-popup="glass"]');
-    expect(preview).toContain('glass={storyTheme(context.globals).palette === "glass"}');
   });
 
   it("resolves modules as the app's Vite config does", () => {

@@ -34,14 +34,15 @@ export function Surface({
   name,
   children,
   inline = false,
-  glass = false,
+  dockedSidebar = false,
 }: {
   name: SurfaceName;
   children: ReactNode;
   /** On a docs page the example sits in the page's flow, so it sizes to its content. */
   inline?: boolean;
-  /** Under Glass the sidebar canvas is the docked sidebar, so Liquid Glass clears it as the app does. */
-  glass?: boolean;
+  /** The sidebar canvas is the docked sidebar (Glass), which Liquid Glass clears as the app does.
+      On a docs page only the first such example counts, as the app has one docked sidebar. */
+  dockedSidebar?: boolean;
 }) {
   const height = inline ? "min-h-48" : "min-h-screen";
   if (name === "app-sidebar") {
@@ -60,19 +61,21 @@ export function Surface({
     );
   }
   const { scope, layout } = CANVASES[name];
+  const docked = dockedSidebar && name === "sidebar";
   const canvas = (
     <div
       {...scope}
-      {...(glass && name === "sidebar" ? { "data-slot": "sidebar-container" } : {})}
+      data-slot={docked ? "sidebar-container" : undefined}
       data-story-canvas=""
       className={`${LAYOUTS[layout]} ${height} bg-background text-foreground`}
     >
       {children}
     </div>
   );
-  if (!glass || name !== "sidebar") return canvas;
+  // The sidebar canvas keeps its wrapper under every theme, so a theme switch never remounts it.
+  if (name !== "sidebar") return canvas;
   return (
-    <div data-slot="sidebar-wrapper" className="contents">
+    <div data-slot={docked ? "sidebar-wrapper" : undefined} className="contents">
       {canvas}
     </div>
   );

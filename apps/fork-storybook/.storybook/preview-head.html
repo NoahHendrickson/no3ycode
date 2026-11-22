@@ -11,18 +11,13 @@
     overflow: visible;
   }
 
-  /* Glass stands in for a macOS 26+ main window (appearance.ts): Liquid Glass under the docked
-     sidebar only. The app clears html, body and that sidebar, so the page paints the window's
-     backing (forkSidebarVibrancy.ts) and the sidebar paints the glass as measured on screen over
-     it, the colour a menu reaching past the sidebar takes (theme.custom.palettes.css). A menu
-     wholly over the sidebar shows that glass in the app, so it takes the same colour here. */
+  /* The app clears html, body and the docked sidebar over Liquid Glass (appearance.ts), so the
+     page paints the window's backing (forkSidebarVibrancy.ts), and the sidebar and the popups cut
+     through to it paint the glass's measured colour. An image layer: Glass clears html's colour. */
   html[data-fork-sidebar-vibrancy="liquid-glass"] {
-    --story-liquid-glass: color-mix(in srgb, #ffffff 4%, #141618);
-    /* An image layer, not a colour: Glass clears html's background-color. */
     background-image: linear-gradient(#141618, #141618);
   }
   html[data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"] {
-    --story-liquid-glass: #2a2324;
     background-image: linear-gradient(#1f1c1b, #1f1c1b);
   }
   html[data-fork-sidebar-vibrancy="liquid-glass"]
@@ -32,8 +27,8 @@
       [data-fork-liquid-glass-popup="glass"]
     ) {
     background-image: linear-gradient(
-      var(--story-liquid-glass),
-      var(--story-liquid-glass)
+      var(--fork-liquid-glass-sidebar),
+      var(--fork-liquid-glass-sidebar)
     ) !important;
   }
 </style>
