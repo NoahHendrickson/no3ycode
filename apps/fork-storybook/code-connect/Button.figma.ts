@@ -3,15 +3,16 @@
 // component=Button
 import figma from "figma";
 
-import { BUTTON_VARIANTS, glyph, jsxText } from "./shared";
+import { BUTTON_VARIANTS, glyphWithImports, jsxText } from "./shared";
 
 const button = figma.selectedInstance;
 const variant = button.getEnum("Variant", BUTTON_VARIANTS);
 const size = button.getEnum("Size", { xs: "xs", sm: "sm", "sm-pill": "sm-pill", lg: "lg" });
 const disabled = button.getEnum("State", { Disabled: true });
 const slot = button.getEnum("Icon", { Left: "Leading glyph", Right: "Trailing glyph" });
-const icon = slot ? glyph(button, slot)?.example : null;
+const icon = slot ? glyphWithImports(button, slot) : null;
 const label = jsxText(button.getString("Label"));
+const BUTTON_IMPORT = 'import { Button } from "~/components/ui/button";';
 
 const attrs = [
   variant ? ` variant="${variant}"` : "",
@@ -24,14 +25,14 @@ export default {
     ? figma.tsx`<Button${attrs}>${label}</Button>`
     : slot === "Leading glyph"
       ? figma.tsx`<Button${attrs}>
-  ${icon}
+  ${icon.example}
   ${label}
 </Button>`
       : figma.tsx`<Button${attrs}>
   ${label}
-  ${icon}
+  ${icon.example}
 </Button>`,
-  imports: ['import { Button } from "~/components/ui/button";'],
+  imports: [BUTTON_IMPORT],
   id: "button",
-  metadata: { nestable: true },
+  metadata: { nestable: true, props: { imports: [BUTTON_IMPORT, ...(icon?.imports ?? [])] } },
 };
