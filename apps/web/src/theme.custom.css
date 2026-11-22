@@ -1112,8 +1112,9 @@
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
-/* Beside send, the mic is attach's mirror: 28px in its slot, 2px from send, not the cluster's 8px. */
-:root[data-fork="noahhendrickson-t3code"]
+/* Beside send, the mic is attach's mirror: 28px in its slot, pulled in from the cluster's 8px.
+   Inlet keeps its own mic geometry. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate"] {
   width: 28px;
@@ -1122,14 +1123,17 @@
   margin: 2px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
-  > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]) {
+  > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]):has(
+    + :is([data-fork-composer-action="send"], [data-fork-composer-action="stop"]),
+    + * :is([data-fork-composer-action="send"], [data-fork-composer-action="stop"])
+  ) {
   margin-inline-end: -6px;
 }
 
 /* A live session's cancel X sits the same 2px from its check. */
-:root[data-fork="noahhendrickson-t3code"]
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate-cancel"] {
   width: 28px;
