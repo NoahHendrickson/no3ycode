@@ -122,6 +122,17 @@ import {
   useThreadSettingsSheetPresentation,
   type NavigationWithFinishTransitioning,
 } from "./use-thread-settings-sheet-presentation";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { flatGlassPalette, NO3Y_FONT } from "../../../fork/flatGlassTheme";
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yComposerStyleProvider } from "../../../fork/No3yComposerStyle";
+import { no3yHairline } from "../../../fork/No3yControls";
+/* fork:end no3y-mobile-redesign */
+
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+/** The no3y card keeps the editor this far above its row's bottom: 32pt controls and an 8pt gap. */
+const NO3Y_CARD_CONTROLS_CLEARANCE = 40;
+/* fork:end no3y-mobile-redesign */
 
 export const COMPOSER_COLLAPSED_CHROME = 60;
 
@@ -140,7 +151,18 @@ function collapsedEditorInset(text: ScaledTextRole): number {
   return Math.max(0, Math.round(COLLAPSED_EDITOR_DEFAULT_INSET - shift));
 }
 
-function useCompactComposerEditor(text: ScaledTextRole, value: string) {
+function useCompactComposerEditor(
+  text: ScaledTextRole,
+  value: string,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  no3yCard = false,
+  /* fork:end no3y-mobile-redesign */
+) {
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card always lays the editor out full width above its controls.
+  const expandedLeft = no3yCard ? 8 : 14;
+  const controlsClearance = no3yCard ? NO3Y_CARD_CONTROLS_CLEARANCE : 52;
+  /* fork:end no3y-mobile-redesign */
   const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
   const [compactWidth, setCompactWidth] = useState(0);
   const contentHeight = contentSize.height;
@@ -157,9 +179,12 @@ function useCompactComposerEditor(text: ScaledTextRole, value: string) {
   // A line that fits the expanded editor may still overflow its compact slot.
   // Compare its measured width too so widening cannot trigger a collapse loop.
   const isExpanded =
-    value.length > 0 &&
-    (contentHeight > text.lineHeight * 1.5 ||
-      (compactWidth > 0 && contentSize.width > compactWidth));
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    no3yCard ||
+    /* fork:end no3y-mobile-redesign */
+    (value.length > 0 &&
+      (contentHeight > text.lineHeight * 1.5 ||
+        (compactWidth > 0 && contentSize.width > compactWidth)));
   const compactRowHeight = Math.max(44, minimum);
   const isRTL = I18nManager.isRTL;
   const editorStyle = useAnimatedStyle(() => ({
@@ -167,19 +192,25 @@ function useCompactComposerEditor(text: ScaledTextRole, value: string) {
     overflow: "hidden",
     height,
     ...(isExpanded
-      ? { left: 14, right: 14 }
-      : compactEditorInsets({
+      ? /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        { left: expandedLeft, right: expandedLeft }
+      : /* fork:end no3y-mobile-redesign */
+        compactEditorInsets({
           slotX: editorX.value,
           slotWidth: editorWidth.value,
           rowWidth: rowWidth.value,
           isRTL,
         })),
     // The full-width editor must move above the controls in the same frame it widens.
-    bottom: isExpanded ? 52 : (compactRowHeight - minimum) / 2,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    bottom: isExpanded ? controlsClearance : (compactRowHeight - minimum) / 2,
+    /* fork:end no3y-mobile-redesign */
   }));
   return {
     isExpanded,
-    containerStyle: { height: isExpanded ? height + 52 : compactRowHeight },
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    containerStyle: { height: isExpanded ? height + controlsClearance : compactRowHeight },
+    /* fork:end no3y-mobile-redesign */
     editorStyle,
     onRowLayout: (event: { nativeEvent: { layout: { width: number } } }) => {
       rowWidth.set(event.nativeEvent.layout.width);
@@ -353,8 +384,14 @@ function ComposerSurface(props: {
   readonly children: ReactNode;
   readonly style: ViewStyle;
   readonly animateLayout?: boolean;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  readonly no3yCard?: boolean;
+  /* fork:end no3y-mobile-redesign */
 }) {
   const colors = useUniwindTheme();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yPalette = flatGlassPalette(useAppearancePreferences().themeAppearance);
+  /* fork:end no3y-mobile-redesign */
   const targetBorderRadius =
     typeof props.style.borderRadius === "number" ? props.style.borderRadius : 0;
   const shouldAnimate = props.animateLayout !== false && Platform.OS !== "android";
@@ -373,6 +410,22 @@ function ComposerSurface(props: {
   }));
   const layoutTransition = shouldAnimate ? COMPOSER_LAYOUT_TRANSITION : undefined;
 
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card is a flat soft fill with a hairline, not glass.
+  if (props.no3yCard) {
+    return (
+      <View
+        style={[
+          props.style,
+          { backgroundColor: no3yPalette.pillFill, overflow: "visible" },
+          no3yHairline(no3yPalette),
+        ]}
+      >
+        <No3yComposerStyleProvider value>{props.children}</No3yComposerStyleProvider>
+      </View>
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   // Animate every native frame or glass and content jump to final height inside the clip.
   return (
     <Animated.View
@@ -594,10 +647,21 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
   const sidebarWorkspaceTabs = useSidebarWorkspaceTabs();
   const deviceType = useDeviceType();
   const usesLargeControls = sidebarWorkspaceTabs === "picker" || deviceType === "pad";
-  const surfacePaddingVertical = usesLargeControls ? 9 : floatingSidebarComposer ? 6 : 2;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yCard = useNo3yBottomNavEnabled();
+  const surfacePaddingVertical = no3yCard
+    ? 16
+    : usesLargeControls
+      ? 9
+      : floatingSidebarComposer
+        ? 6
+        : 2;
+  /* fork:end no3y-mobile-redesign */
   const [compactRowWidth, setCompactRowWidth] = useState(0);
   const compactAttachmentLimit = compactRowWidth >= 500 ? 3 : 1;
-  const compactEditor = useCompactComposerEditor(bodyText, draftMessage);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const compactEditor = useCompactComposerEditor(bodyText, draftMessage, no3yCard);
+  /* fork:end no3y-mobile-redesign */
   const showsCompactDictation = isVoiceInputPresented;
   const isToolbarVisible = isVoiceInputPresented;
   const hasEditingAttachments =
@@ -818,6 +882,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
       onLayout={(event) => props.onHeightChange?.(event.nativeEvent.layout.height)}
       className="px-[12px]"
       style={{
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        ...(no3yCard ? { paddingHorizontal: 16 } : null),
+        /* fork:end no3y-mobile-redesign */
         paddingTop: 6,
         paddingBottom: (props.bottomInset ?? 0) + THREAD_COMPOSER_BOTTOM_GUTTER,
         backgroundColor:
@@ -883,8 +950,13 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
 
         <ComposerSurface
           animateLayout={false}
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          no3yCard={no3yCard}
+          /* fork:end no3y-mobile-redesign */
           style={{
-            borderRadius: usesLargeControls ? 31 : 27,
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            borderRadius: no3yCard ? 32 : usesLargeControls ? 31 : 27,
+            /* fork:end no3y-mobile-redesign */
             borderCurve: "circular",
             overflow: "hidden",
             paddingVertical: surfacePaddingVertical,
@@ -900,6 +972,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
               compactEditor.onRowLayout(event);
               setCompactRowWidth(event.nativeEvent.layout.width);
             }}
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            style={no3yCard ? { paddingHorizontal: 16 } : undefined}
+            /* fork:end no3y-mobile-redesign */
           >
             <ComposerDictationDraftContent
               className="flex-row items-end"
@@ -913,6 +988,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                 onPickMedia={props.onPickDraftMedia}
                 onPickFiles={props.onPickDraftFiles}
               />
+              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+              {no3yCard ? modelControl : null}
+              {/* fork:end no3y-mobile-redesign */}
               <Animated.View
                 className="min-w-0 flex-1"
                 onLayout={compactEditor.onEditorLayout}
@@ -1061,6 +1139,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   textStyle={{
                     ...bodyText,
                     color: foregroundColor,
+                    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                    ...(no3yCard ? { fontFamily: NO3Y_FONT.regular } : null),
+                    /* fork:end no3y-mobile-redesign */
                   }}
                 />
               </Animated.View>
@@ -1093,7 +1174,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   compactEditor.isExpanded ? { flex: 1, justifyContent: "flex-end" } : undefined
                 }
               >
-                {modelControl}
+                {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                {no3yCard ? null : modelControl}
+                {/* fork:end no3y-mobile-redesign */}
                 <ComposerDictationStartAction
                   size={usesLargeControls ? "large" : "regular"}
                   state={voiceInput.state}

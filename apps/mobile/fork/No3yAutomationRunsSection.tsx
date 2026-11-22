@@ -136,7 +136,7 @@ export function No3yAutomationRunsSection(props: {
                       .join(" · ")}
                   </Text>
                 </View>
-                <No3yStatusMark kind={statusKind} seed={seed} palette={palette} idleMode="dot" />
+                <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
               </Pressable>
             </View>
           );

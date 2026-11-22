@@ -1,13 +1,13 @@
 /**
- * The always-visible dock: five icon-only items (Threads, Automations, New agent centered, Chat,
- * Settings) with a soft pill behind the selected one, and a long-press peek card anchored above
- * Threads, Automations and Chat — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * The dock: four filled icon items (Threads, New agent, Chat, Automations) with a soft pill behind
+ * the selected one, and a long-press peek card anchored above Threads, Automations and Chat — see
+ * `.fork/customizations.yaml#no3y-mobile-redesign`. Settings lives in the Threads header.
  */
 import { useAtomValue } from "@effect/atom-react";
-import CodeIcon from "@hugeicons/core-free-icons/CodeIcon";
 import MessageSquareTextIcon from "@hugeicons/core-free-icons/MessageSquareTextIcon";
+import Navigation03Icon from "@hugeicons/core-free-icons/Navigation03Icon";
 import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
-import Settings01Icon from "@hugeicons/core-free-icons/Settings01Icon";
+import SourceCodeIcon from "@hugeicons/core-free-icons/SourceCodeIcon";
 import ZapIcon from "@hugeicons/core-free-icons/ZapIcon";
 import { CommonActions, useNavigation, type NavigationState } from "@react-navigation/native";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
@@ -54,7 +54,9 @@ import {
 import { No3yBottomFade } from "./No3yBottomFade";
 import { No3yStatusMark } from "./No3yStatusMark";
 
-const DOCK_SIDE_PADDING = 16;
+const DOCK_ITEM_WIDTH = 48;
+const DOCK_ITEM_HEIGHT = 36;
+const DOCK_GAP = 20;
 const PEEK_CARD_MAX_WIDTH = 300;
 const PEEK_EDGE = 12;
 
@@ -63,11 +65,10 @@ const DOCK_ITEMS: ReadonlyArray<{
   readonly label: string;
   readonly icon: HugeIconData;
 }> = [
-  { id: "threads", label: "Threads", icon: CodeIcon },
-  { id: "automations", label: "Automations", icon: ZapIcon },
-  { id: "newAgent", label: "New agent", icon: PlusIcon },
+  { id: "threads", label: "Threads", icon: SourceCodeIcon },
+  { id: "newAgent", label: "New agent", icon: Navigation03Icon },
   { id: "chat", label: "Chat", icon: MessageSquareTextIcon },
-  { id: "settings", label: "Settings", icon: Settings01Icon },
+  { id: "automations", label: "Automations", icon: ZapIcon },
 ];
 
 const PEEK_COPY: Partial<
@@ -91,54 +92,47 @@ function DockItem(props: {
 }) {
   const { palette } = props;
   return (
-    <View style={{ flex: 1, alignItems: "center" }}>
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityLabel={props.label}
-        accessibilityHint={props.hasPeek ? "Long-press to peek" : undefined}
-        accessibilityState={{ selected: props.active }}
-        delayLongPress={300}
-        onPress={props.onPress}
-        onLongPress={props.hasPeek ? props.onLongPress : undefined}
-        style={({ pressed }) => ({
-          width: 56,
-          height: 40,
-          borderRadius: 20,
-          alignItems: "center",
-          justifyContent: "center",
-          borderWidth: 1.5,
-          borderColor: props.peeking ? palette.peekRing : "transparent",
-          backgroundColor:
-            props.active || props.peeking
-              ? palette.activePillSurface
-              : pressed
-                ? palette.rowPressed
-                : "transparent",
-        })}
-      >
-        <View>
-          <HugeIcon
-            icon={props.icon}
-            size={22}
-            color={props.active ? palette.foreground : palette.quietInk}
-            strokeWidth={props.active ? 1.8 : 1.5}
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityLabel={props.label}
+      accessibilityHint={props.hasPeek ? "Long-press to peek" : undefined}
+      accessibilityState={{ selected: props.active }}
+      delayLongPress={300}
+      onPress={props.onPress}
+      onLongPress={props.hasPeek ? props.onLongPress : undefined}
+      style={({ pressed }) => ({
+        width: DOCK_ITEM_WIDTH,
+        height: DOCK_ITEM_HEIGHT,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1.5,
+        borderColor: props.peeking ? palette.peekRing : "transparent",
+        backgroundColor:
+          props.active || props.peeking
+            ? palette.rowSelected
+            : pressed
+              ? palette.rowPressed
+              : "transparent",
+      })}
+    >
+      <View>
+        <HugeIcon icon={props.icon} size={24} color={palette.foreground} filled />
+        {props.badgeColor ? (
+          <View
+            style={{
+              position: "absolute",
+              top: -1,
+              right: -3,
+              width: 7,
+              height: 7,
+              borderRadius: 3.5,
+              backgroundColor: props.badgeColor,
+            }}
           />
-          {props.badgeColor ? (
-            <View
-              style={{
-                position: "absolute",
-                top: -1,
-                right: -3,
-                width: 7,
-                height: 7,
-                borderRadius: 3.5,
-                backgroundColor: props.badgeColor,
-              }}
-            />
-          ) : null}
-        </View>
-      </Pressable>
-    </View>
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
 
@@ -259,9 +253,7 @@ function No3yPeekCard(props: {
                   }}
                   leading={<HugeIcon icon={props.icon} size={18} color={palette.quietInk} />}
                   title={entry.thread.title}
-                  trailing={
-                    <No3yStatusMark kind={entry.statusKind} seed={entry.key} palette={palette} />
-                  }
+                  trailing={<No3yStatusMark kind={entry.statusKind} palette={palette} />}
                 />
               ))
             )}
@@ -334,7 +326,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const visible =
     enabled &&
     keyboardHeight <= 0 &&
-    shouldShowNo3yBottomNav({ topRouteName: topRoute?.name, isOverlayRoute: isOverlay });
+    shouldShowNo3yBottomNav({ topRoute, isOverlayRoute: isOverlay });
 
   const activeItem = resolveActiveNo3yNavItem(visibleRoutes);
 
@@ -386,7 +378,8 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   if (!visible) return null;
 
   const dockBottom = no3yDockBottom(insets.bottom);
-  const columnWidth = (window.width - DOCK_SIDE_PADDING * 2) / DOCK_ITEMS.length;
+  const dockRowWidth = DOCK_ITEMS.length * DOCK_ITEM_WIDTH + (DOCK_ITEMS.length - 1) * DOCK_GAP;
+  const dockRowStart = (window.width - dockRowWidth) / 2;
 
   const openPeek = (item: No3yNavItemId) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -433,8 +426,8 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
           item={peekItem}
           icon={peekDockItem.icon}
           entries={peekEntries}
-          anchorX={DOCK_SIDE_PADDING + (peekIndex + 0.5) * columnWidth}
-          bottom={dockBottom + NO3Y_DOCK_HEIGHT + 4}
+          anchorX={dockRowStart + peekIndex * (DOCK_ITEM_WIDTH + DOCK_GAP) + DOCK_ITEM_WIDTH / 2}
+          bottom={dockBottom + (NO3Y_DOCK_HEIGHT + DOCK_ITEM_HEIGHT) / 2 + 8}
           palette={palette}
           onClose={() => setPeekItem(null)}
           onOpenThread={handleOpenThread}
@@ -454,8 +447,9 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
           style={{
             flexDirection: "row",
             alignItems: "center",
+            justifyContent: "center",
+            gap: DOCK_GAP,
             height: NO3Y_DOCK_HEIGHT + dockBottom,
-            paddingHorizontal: DOCK_SIDE_PADDING,
             paddingBottom: dockBottom,
           }}
         >

@@ -2,7 +2,7 @@ import { ChildThreadApprovals } from "./ChildThreadApprovals";
 import { useOpenThreadInspector } from "./thread-inspector-navigation";
 import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceTabBar";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
+import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 /* fork:end no3y-mobile-redesign */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
@@ -218,6 +218,10 @@ import type { OrchestrationV2ProviderSession } from "@t3tools/contracts";
 
 export interface ThreadDetailScreenProps {
   readonly header?: React.ReactNode;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** The branch and access chips over a thread's composer on the no3y iPhone layout. */
+  readonly no3yComposerChips?: React.ReactNode;
+  /* fork:end no3y-mobile-redesign */
   readonly draftMode?: {
     /** viewportHeight excludes the composer so draft chrome can resize it without feedback. */
     readonly content: (
@@ -565,15 +569,16 @@ function ThreadDetailBody(
       ? Math.max(bottomSafeArea, 12) - (layout.usesSplitView ? 5 : 0)
       : undefined);
   // The Duo's floating sidebar pill ends three points below the composer's usual gutter.
-  const composerBottomInset =
-    Math.max(
-      0,
-      (alignedBottomInset !== undefined
-        ? alignedBottomInset - THREAD_COMPOSER_BOTTOM_GUTTER
-        : Math.max(bottomSafeArea, 12)) - (hasSidebarTabBar ? 3 : 0),
-    ) +
-    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-    (no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const upstreamComposerBottomInset = Math.max(
+    0,
+    (alignedBottomInset !== undefined
+      ? alignedBottomInset - THREAD_COMPOSER_BOTTOM_GUTTER
+      : Math.max(bottomSafeArea, 12)) - (hasSidebarTabBar ? 3 : 0),
+  );
+  const composerBottomInset = no3yBottomNav
+    ? no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))
+    : upstreamComposerBottomInset;
   /* fork:end no3y-mobile-redesign */
   const composerKeyboardOffset = composerBottomInset;
   const contentPresentationKind = props.contentPresentation.kind;
@@ -1886,10 +1891,18 @@ function ThreadDetailBody(
                             ? props.activePendingApproval.supportsFeedback
                               ? "Send feedback to decline this request"
                               : "Send a message to decline and redirect the agent"
-                            : "Ask anything"
+                            : /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                              no3yBottomNav
+                              ? "What do you want to do?"
+                              : /* fork:end no3y-mobile-redesign */
+                                "Ask anything"
                         }
                         contentMaxWidth={contentMaxWidth}
-                        draftControls={props.draftMode?.controls(draftViewportHeight)}
+                        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                        draftControls={
+                          props.draftMode?.controls(draftViewportHeight) ?? props.no3yComposerChips
+                        }
+                        /* fork:end no3y-mobile-redesign */
                         connectionState={props.connectionStateLabel}
                         environmentLabel={props.environmentLabel}
                         selectedThread={props.selectedThread}

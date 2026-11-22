@@ -153,6 +153,10 @@ export function WorkspaceToolbar(props: {
         optionsVersion={[selectedTab, tab.searchMode]}
         listeners={{ transitionEnd: restoreSearch }}
         options={{
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          // Threads draws its own header (fork/No3yScreenHeader.tsx) on the no3y iPhone layout.
+          ...(no3yBottomNav ? { headerShown: selectedTab !== "threads" } : null),
+          /* fork:end no3y-mobile-redesign */
           // Without Liquid Glass, Settings keeps its search field out instead of a search button,
           // which would take the header's trailing items from the scope filter.
           headerSearchBarOptions:

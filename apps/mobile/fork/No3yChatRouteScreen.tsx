@@ -222,7 +222,6 @@ export function No3yChatRouteScreen() {
         }
         renderItem={({ item: thread }) => {
           const statusKind = resolveNo3yThreadCardStatusKind(thread, { now: nowIso });
-          const seed = `${thread.environmentId}:${thread.id}`;
           return (
             <Pressable
               accessibilityRole="button"
@@ -264,7 +263,7 @@ export function No3yChatRouteScreen() {
                 >
                   {relativeTime(resolveThreadActivityTimestamp(thread) ?? thread.createdAt)}
                 </Text>
-                <No3yStatusMark kind={statusKind} seed={seed} palette={palette} idleMode="dot" />
+                <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
               </View>
             </Pressable>
           );

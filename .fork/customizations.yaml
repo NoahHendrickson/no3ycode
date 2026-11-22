@@ -7806,28 +7806,42 @@
 
 - id: no3y-mobile-redesign
   intent: >
-    The no3y Code iOS redesign on the Flat Glass visual language (Glass with
-    3D off). An always-visible dock of five icon-only Hugeicons items
-    (Threads, Automations, New agent in the exact middle, Chat, Settings)
-    with a soft pill behind the selected item, on a fade to the stage colour
-    above the home indicator; Settings moved there from the top-right gear so
-    nothing frequent needs a top-of-screen reach. Long-pressing Threads,
-    Automations or Chat opens a peek card anchored above that item (the item
-    gets a ring) listing up to five threads with their status marks, needs-you
-    and working threads first on Threads, and a New thread / New automation /
-    New chat row; New agent and Settings have no peek. Frequent controls sit
-    in a bottom tray just above the dock: Threads search plus one filter/sort
-    menu (fork/No3yThreadsFilterBar.tsx, so upstream ThreadListFilters.tsx is
-    untouched), and on Chat the prompt bar, whose search button swaps it for
-    a chat search field. Chat lays its list under the glass header by the
-    measured bar inset. Icons come from @hugeicons/core-free-icons at the Mac
-    fork's version, drawn by fork/HugeIcon.tsx with react-native-svg and
-    imported by subpath so Metro bundles only the glyphs used. Threads keeps
-    Mac-parity status sections and roster visibility in
+    The no3y Code iOS redesign from the owner's Figma mocks (Threads list and
+    inside a thread, Flat Glass dark on #191817, Geist type). A dock of four
+    filled Hugeicons items (Threads, New agent, Chat, Automations; 48x36
+    items with a soft pill behind the selected one, in an 80pt band) shows on
+    the workspace screens and New agent, and hides inside a thread, whose
+    composer takes the bottom. Long-pressing Threads, Automations or Chat
+    opens a peek card above that item (the item gets a ring) listing up to
+    five threads with status marks, needs-you and working first on Threads,
+    and a New thread / New automation / New chat row. Threads replaces the
+    native bar with its own header (Threads title, Settings and Usage circle
+    buttons; Settings left the dock for it) and keeps a bottom tray above the
+    dock: a search pill, a filter button and a separate sort button
+    (fork/No3yThreadsFilterBar.tsx; upstream ThreadListFilters.tsx stays
+    untouched). Thread cards show the title, then PR number, provider mark
+    and model, and project, with the status mark trailing (working is a still
+    bead ring); sections have a muted label and a collapse chevron. Inside a
+    thread the bar keeps native back and title and trades its git, terminal
+    and files items for a usage ring (the provider's tightest limit left)
+    and a gauge, both opening Usage; those items move to a branch chip above
+    the composer, beside an access chip that sets the runtime mode the thread
+    settings sheet sets. The composer is a flat rounded card with the editor
+    on top and +, model chip, mic and send below; the upstream controls draw
+    that style through fork/No3yComposerStyle.tsx's context and keep their
+    behaviour. On iPhone the model chip opens a half-height sheet
+    (fork/No3yModelPicker.tsx) with a close button, a Favorites/provider
+    select, the model list (long-press to favorite) and the effort slider,
+    driving the same thread settings session, so picks, favorites and options
+    save exactly as before; a pending pick commits on close or swipe-away.
+    Geist is embedded by app.config.ts and set by PostScript name on the
+    no3y screens only. Icons come from @hugeicons/core-free-icons at the Mac
+    fork's version, drawn by fork/HugeIcon.tsx with react-native-svg, with
+    the Mac's derived filled weight (a copy of hugeiconsFill.ts). Chat keeps
+    its prompt bar and search; Automations keeps a Recent runs section.
+    Threads keeps Mac-parity status sections and roster visibility in
     apps/mobile/fork/forkStatusGrouping.ts and forkRosterVisibility.ts
-    (parity-guarded against web without modifying web or client-runtime),
-    Flat Glass rows and status marks, and a Recent runs section on
-    Automations. Prompt bars on New agent and Thread clear the dock.
+    (parity-guarded against web without modifying web or client-runtime).
   tier: 4
   files:
     - apps/mobile/fork/forkStatusGrouping.ts
@@ -7847,9 +7861,25 @@
     - apps/mobile/fork/No3yAutomationRunsSection.tsx
     - apps/mobile/fork/No3yThreadsFilterBar.tsx
     - apps/mobile/fork/No3yThreadsListView.tsx
+    - apps/mobile/fork/hugeiconsFill.ts
+    - apps/mobile/fork/No3yControls.tsx
+    - apps/mobile/fork/No3yScreenHeader.tsx
+    - apps/mobile/fork/No3yComposerStyle.tsx
+    - apps/mobile/fork/No3yThreadComposerChips.tsx
+    - apps/mobile/fork/No3yModelPicker.tsx
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
+    - apps/mobile/app.config.ts
+    - knip.jsonc
+    - apps/mobile/src/components/ComposerToolbar.tsx
+    - apps/mobile/src/components/ComposerModelControl.tsx
+    - apps/mobile/src/features/threads/ComposerAttachmentButton.tsx
+    - apps/mobile/src/features/voice-input/ComposerDictationControl.tsx
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/features/threads/ThreadHeader.tsx
+    - apps/mobile/src/features/threads/ThreadRouteScreen.tsx
+    - apps/mobile/src/features/threads/ThreadSettingsSheet.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
     - apps/mobile/src/features/home/home-list-options.ts
@@ -7857,7 +7887,8 @@
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
-    # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
+    # Carries the @hugeicons/core-free-icons and @expo-google-fonts/geist deps, which fences
+    # can't drift-watch.
     - apps/mobile/package.json
   verify:
     - apps/web/src/__fork_guards__/no3yMobileRedesign.test.ts

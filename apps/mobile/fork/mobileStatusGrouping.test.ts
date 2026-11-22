@@ -466,13 +466,12 @@ describe("bottom nav route resolution", () => {
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "SettingsAuth" }])).toBeNull();
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "No3yChat" }])).toBe("chat");
 
-    expect(shouldShowNo3yBottomNav({ topRouteName: "Home", isOverlayRoute: false })).toBe(true);
-    expect(shouldShowNo3yBottomNav({ topRouteName: "Thread", isOverlayRoute: false })).toBe(true);
-    expect(
-      shouldShowNo3yBottomNav({ topRouteName: "ThreadDevicePreview", isOverlayRoute: false }),
-    ).toBe(false);
-    expect(shouldShowNo3yBottomNav({ topRouteName: "GitOverview", isOverlayRoute: true })).toBe(
-      false,
-    );
+    const show = (topRoute: { name: string; params?: object }, isOverlayRoute = false) =>
+      shouldShowNo3yBottomNav({ topRoute, isOverlayRoute });
+    expect(show({ name: "Home" })).toBe(true);
+    expect(show({ name: "Thread", params: { threadId: "t1" } })).toBe(false);
+    expect(show({ name: "Thread", params: { draft: { draftId: "d1" } } })).toBe(true);
+    expect(show({ name: "ThreadDevicePreview" })).toBe(false);
+    expect(show({ name: "GitOverview" }, true)).toBe(false);
   });
 });

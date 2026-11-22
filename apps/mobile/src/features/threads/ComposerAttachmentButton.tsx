@@ -4,6 +4,10 @@ import { Pressable } from "react-native";
 import { useAndroidControlSizing } from "../../components/ui/useAndroidControlSizing";
 import { SymbolView } from "../../components/ui/AppSymbol";
 import { Menu } from "../../components/ui/Menu";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
+import { No3yComposerRoundButton, useNo3yComposerStyle } from "../../../fork/No3yComposerStyle";
+/* fork:end no3y-mobile-redesign */
 
 const ATTACHMENT_MENU_ACTIONS: MenuAction[] = [
   { id: "photos", title: "Photo Library", image: "photo" },
@@ -18,7 +22,18 @@ export function ComposerAttachmentButton(props: {
   readonly onPickFiles: () => Promise<void>;
 }) {
   const { scale } = useAndroidControlSizing();
-  const button = (
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yCard = useNo3yComposerStyle();
+  const button = no3yCard ? (
+    <No3yComposerRoundButton
+      accessibilityLabel="Add attachment"
+      icon={PlusIcon}
+      leading
+      disabled={props.disabled}
+      onPress={props.supportsFiles ? undefined : () => void props.onPickMedia()}
+    />
+  ) : (
+    /* fork:end no3y-mobile-redesign */
     <Pressable
       accessibilityLabel="Add attachment"
       accessibilityRole="button"

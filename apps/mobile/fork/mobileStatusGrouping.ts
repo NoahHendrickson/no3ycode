@@ -720,20 +720,22 @@ const IMMERSIVE_OR_MODAL_ROUTES = new Set([
   "ConnectionsNew",
 ]);
 
-/** Which of the 5 dock items should read as active for the current stack. */
+function isDraftThreadRoute(route: RouteLike): boolean {
+  return (
+    route.name === "Thread" &&
+    route.params !== undefined &&
+    "draft" in route.params &&
+    Boolean((route.params as { readonly draft?: unknown }).draft)
+  );
+}
+
+/** Which dock item should read as active for the current stack; Settings has none. */
 export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavItemId | null {
   const top = routes.at(-1);
   if (!top) return "threads";
   if (top.name === "No3yChat") return "chat";
   if (AUTOMATIONS_ROUTES.has(top.name)) return "automations";
-  if (
-    top.name === "NewTaskProject" ||
-    top.name.startsWith("NewTask") ||
-    (top.name === "Thread" &&
-      top.params !== undefined &&
-      "draft" in top.params &&
-      Boolean((top.params as { readonly draft?: unknown }).draft))
-  ) {
+  if (top.name === "NewTaskProject" || top.name.startsWith("NewTask") || isDraftThreadRoute(top)) {
     return "newAgent";
   }
   if (top.name === "Home" || top.name === "Thread") return "threads";
@@ -742,16 +744,17 @@ export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavI
 }
 
 /**
- * The bottom nav bar is always visible on primary/workspace screens, hiding only
- * when an overlay sheet, full-screen preview, or auth modal covers the viewport.
+ * The dock shows on primary/workspace screens. It hides inside a thread (its composer takes the
+ * bottom; New agent's draft thread keeps it) and when an overlay sheet, full-screen preview,
+ * or auth modal covers the viewport.
  */
 export function shouldShowNo3yBottomNav(input: {
-  readonly topRouteName: string | undefined;
+  readonly topRoute: RouteLike | undefined;
   readonly isOverlayRoute: boolean;
 }): boolean {
   if (input.isOverlayRoute) return false;
-  if (input.topRouteName !== undefined && IMMERSIVE_OR_MODAL_ROUTES.has(input.topRouteName)) {
-    return false;
-  }
-  return true;
+  const top = input.topRoute;
+  if (top === undefined) return true;
+  if (IMMERSIVE_OR_MODAL_ROUTES.has(top.name)) return false;
+  return top.name !== "Thread" || isDraftThreadRoute(top);
 }

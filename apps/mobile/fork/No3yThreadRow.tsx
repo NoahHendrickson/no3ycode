@@ -9,10 +9,6 @@ import {
   type SidebarV2CardStatusKind,
   type SidebarV2StatusBucket,
 } from "./forkStatusGrouping";
-import {
-  formatWorkingDurationLabel,
-  resolveThreadWorkingStartedAt,
-} from "@t3tools/client-runtime/state/models";
 import type {
   EnvironmentProject,
   EnvironmentThreadShell,
@@ -24,16 +20,10 @@ import { AuthOrchestrationOperateScope, type EnvironmentMachineKind } from "@t3t
 import type { SnoozePresetSetting } from "@t3tools/contracts/settings";
 import type { MenuAction } from "@react-native-menu/menu";
 import { memo, useCallback, useMemo, useState, type ComponentProps } from "react";
-import { Platform, Pressable, Text as RNText, useWindowDimensions, View } from "react-native";
+import { Platform, Pressable, useWindowDimensions, View } from "react-native";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 
-import { EnvironmentMachineSymbol } from "../src/components/EnvironmentMachineSymbol";
-import { ProjectFavicon } from "../src/components/ProjectFavicon";
-import {
-  ProviderIcon,
-  ProviderInstanceIcon,
-  providerInstanceNameLabel,
-} from "../src/components/ProviderIcon";
+import { ProviderInstanceIcon } from "../src/components/ProviderIcon";
 import { SymbolView } from "../src/components/ui/AppSymbol";
 import { AppText as Text } from "../src/components/ui/AppText";
 import * as Dialog from "../src/components/ui/Dialog";
@@ -56,18 +46,14 @@ import { useThreadPr } from "../src/state/use-thread-pr";
 import { useSwipeRowDormant } from "../src/features/home/swipe-row-activation";
 import { ThreadSwipeable } from "../src/features/home/thread-swipe-actions";
 import { threadCanArchive } from "../src/features/home/threadArchive";
-import { PullRequestGlyph } from "../src/features/pull-requests/pullRequestGlyphs";
-import { pullRequestStatus } from "../src/features/pull-requests/pullRequestStatus";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { CustomSnoozeSheet } from "../src/features/threads/CustomSnoozeSheet";
 import { QueuedMessageIcon } from "../src/features/threads/queued-message-icon";
-import { THREAD_LIST_V2_MONO_FONT } from "../src/features/threads/thread-list-v2-row-appearance";
 import type { ThreadRowProviderInstance } from "../src/features/threads/thread-provider-instance";
 import { ThreadSearchMatchExcerpt } from "../src/features/threads/thread-search-match";
 import { buildThreadTitleRegenerationMenuItems } from "../src/features/threads/thread-title-regeneration-menu";
 import {
   layoutThreadListV2RowMenuActions,
-  resolveThreadListV2ProviderDrivers,
   resolveThreadListV2SnoozeGateExpiryMs,
   resolveThreadListV2SnoozeMenuSelection,
   resolveThreadListV2SnoozePresets,
@@ -78,26 +64,15 @@ import {
   canTurnThreadIntoProject,
   turnThreadIntoProject,
 } from "../src/features/threads/turnThreadIntoProject";
-import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
-import { flatGlassPalette } from "./flatGlassTheme";
+import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
+import { formatModelSlugName } from "@t3tools/shared/model";
+import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
+import { HugeIcon } from "./HugeIcon";
 import { No3yStatusMark } from "./No3yStatusMark";
 
-const TABULAR_DURATION_STYLE = {
-  fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
-  fontVariant: ["tabular-nums"],
-  fontSize: 12,
-  lineHeight: 16,
-} as const;
-
-function WorkingElapsedText(props: { readonly startedAt: string | null; readonly color: string }) {
-  const startedAtMs = Date.parse(props.startedAt ?? "");
-  const nowMs = useVisibleSecondClock(Number.isFinite(startedAtMs));
-  if (!Number.isFinite(startedAtMs)) return null;
-  return (
-    <RNText style={[TABULAR_DURATION_STYLE, { color: props.color }]}>
-      {formatWorkingDurationLabel(nowMs - startedAtMs)}
-    </RNText>
-  );
+/** "claude-opus-5-5" reads "Opus 5.5": the provider mark beside it already names the family. */
+function no3yModelLabel(model: string): string {
+  return formatModelSlugName(model).replace(/^Claude /, "");
 }
 
 const CARD_MENU_ACTIONS: MenuAction[] = [
@@ -134,7 +109,7 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
   const { pendingTask, selected } = props;
 
   return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 1 }}>
+    <View style={{ paddingHorizontal: 10 }}>
       <Menu
         actions={[
           { id: "open", title: "Open draft", image: "square.and.pencil" },
@@ -157,9 +132,13 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
           accessibilityState={{ selected }}
           onPress={() => props.onSelectPendingTask(pendingTask)}
           style={({ pressed }) => ({
-            borderRadius: 16,
-            paddingHorizontal: 12,
-            paddingVertical: 9,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            borderRadius: 8,
+            paddingLeft: 8,
+            paddingRight: 10,
+            paddingVertical: 8,
             backgroundColor: selected
               ? palette.rowSelected
               : pressed
@@ -167,41 +146,33 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
                 : "transparent",
           })}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
             <Text
               numberOfLines={1}
               style={{
-                flex: 1,
-                fontSize: 14,
+                fontFamily: NO3Y_FONT.regular,
+                fontSize: 16,
                 lineHeight: 18,
-                fontWeight: "400",
                 color: selected ? palette.foreground : palette.quietInk,
               }}
             >
               {pendingTask.title}
             </Text>
-            <No3yStatusMark kind={null} seed={pendingTask.key} palette={palette} idleMode="draft" />
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-            {props.project ? (
-              <ProjectFavicon
-                environmentId={pendingTask.environmentId}
-                faviconPath={props.project.faviconPath}
-                projectIcon={props.project.projectIcon}
-                size={13}
-                projectTitle={props.project.title}
-                workspaceRoot={props.project.workspaceRoot}
-              />
-            ) : null}
             <Text
               numberOfLines={1}
-              style={{ flex: 1, fontSize: 12, lineHeight: 16, color: palette.quietInk }}
+              style={{
+                fontFamily: NO3Y_FONT.regular,
+                fontSize: 14,
+                lineHeight: 16,
+                color: palette.metaInk,
+              }}
             >
               {[props.projectTitle ?? props.project?.title, props.environmentLabel]
                 .filter(Boolean)
                 .join(" · ") || "Draft"}
             </Text>
           </View>
+          <No3yStatusMark kind={null} palette={palette} idleMode="draft" />
         </Pressable>
       </Menu>
     </View>
@@ -304,26 +275,11 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
     setCustomSnoozeOpen(false);
   }
 
-  const { providerDrivers, providerIconUrl } = useMemo(() => {
-    const provider = props.providers?.find(
-      (candidate) =>
-        candidate.instanceId ===
-        (thread.runtime?.providerInstanceId ?? thread.modelSelection.instanceId),
-    );
-    return {
-      providerDrivers: resolveThreadListV2ProviderDrivers(thread, props.providers),
-      providerIconUrl: provider?.iconUrl,
-    };
-  }, [thread, props.providers]);
-
-  const providerNameLabel = props.providerInstance
-    ? providerInstanceNameLabel({
-        provider: props.providerInstance.driverKind,
-        iconUrl: providerIconUrl,
-        displayName: props.providerInstance.displayName,
-        showBadge: props.providerInstance.showBadge,
-      })
-    : null;
+  const providerIconUrl = props.providers?.find(
+    (candidate) =>
+      candidate.instanceId ===
+      (thread.runtime?.providerInstanceId ?? thread.modelSelection.instanceId),
+  )?.iconUrl;
 
   const titleRecedes = threadCardTitleRecedes({
     isDone: statusKind === "done" || statusKind === "woke",
@@ -643,10 +599,11 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
   );
 
   const prBadgeLabel = pr ? resolveThreadPrBadgeAction(pr).accessibilityLabel : null;
+  const prColor = pr?.state === "open" || pr?.state === null ? palette.prOpen : palette.metaInk;
   const isSlim = variant === "slim";
 
   const renderPressable = (close: () => void) => (
-    <View style={{ paddingHorizontal: 8, paddingVertical: isSlim ? 0.5 : 1 }}>
+    <View style={{ paddingHorizontal: 10 }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={thread.title}
@@ -656,9 +613,13 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
           onSelectThread(thread);
         }}
         style={({ pressed }) => ({
-          borderRadius: isSlim ? 8 : 16,
-          paddingHorizontal: 12,
-          paddingVertical: isSlim ? 8 : 9,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          borderRadius: 8,
+          paddingLeft: 8,
+          paddingRight: 10,
+          paddingVertical: 8,
           backgroundColor: selected
             ? palette.rowSelected
             : pressed
@@ -667,27 +628,15 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
         })}
       >
         {isSlim ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            {props.project ? (
-              <View style={{ opacity: 0.45 }}>
-                <ProjectFavicon
-                  environmentId={thread.environmentId}
-                  faviconPath={props.project.faviconPath}
-                  projectIcon={props.project.projectIcon}
-                  size={14}
-                  projectTitle={props.project.title}
-                  workspaceRoot={props.project.workspaceRoot}
-                />
-              </View>
-            ) : null}
+          <>
             <Text
               numberOfLines={1}
               style={{
                 flex: 1,
+                fontFamily: NO3Y_FONT.regular,
                 fontSize: 14,
                 lineHeight: 18,
-                fontWeight: "400",
-                color: selected ? palette.foreground : palette.quietInk,
+                color: selected ? palette.foreground : palette.metaInk,
                 opacity: isRegeneratingTitle ? 0.55 : 1,
               }}
             >
@@ -696,103 +645,49 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
             {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
             <Text
               style={{
+                fontFamily: NO3Y_FONT.regular,
                 fontSize: 12,
                 lineHeight: 16,
                 fontVariant: ["tabular-nums"],
                 color: palette.faintInk,
-                fontFamily: THREAD_LIST_V2_MONO_FONT,
               }}
             >
               {snoozed && props.snoozeWakeLabelText !== undefined
                 ? props.snoozeWakeLabelText
                 : props.timeLabel}
             </Text>
-          </View>
+          </>
         ) : (
           <>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
               <Text
                 numberOfLines={1}
                 style={{
-                  flex: 1,
-                  fontSize: 14,
+                  fontFamily: NO3Y_FONT.regular,
+                  fontSize: 16,
                   lineHeight: 18,
-                  fontWeight: "400",
                   color: titleRecedes ? palette.quietInk : palette.foreground,
                   opacity: isRegeneratingTitle ? 0.55 : 1,
                 }}
               >
                 {thread.title}
               </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
-                {statusKind === "working" ? (
-                  <WorkingElapsedText
-                    startedAt={resolveThreadWorkingStartedAt(thread)}
-                    color={palette.faintInk}
-                  />
-                ) : props.timeLabel ? (
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      lineHeight: 16,
-                      fontVariant: ["tabular-nums"],
-                      color: palette.faintInk,
-                    }}
-                  >
-                    {props.timeLabel}
-                  </Text>
-                ) : null}
-                {pinned ? (
-                  <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
-                ) : null}
-                {statusKind === "woke" && props.wokeAt !== null ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Dismiss Woke notification"
-                    hitSlop={8}
-                    onPress={handleAcknowledgeWoke}
-                  >
-                    <No3yStatusMark
-                      kind="woke"
-                      seed={rowIdentity}
-                      palette={palette}
-                      idleMode="dot"
-                    />
-                  </Pressable>
-                ) : (
-                  <No3yStatusMark
-                    kind={statusKind}
-                    seed={rowIdentity}
-                    palette={palette}
-                    idleMode="dot"
-                  />
-                )}
-              </View>
-            </View>
-            {props.searchMatch ? (
-              <View style={{ marginTop: 4 }}>
+              {props.searchMatch ? (
                 <ThreadSearchMatchExcerpt
                   sidebar={false}
                   match={props.searchMatch}
                   query={props.searchQuery ?? ""}
                   selected={selected}
                 />
-              </View>
-            ) : null}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-              {props.project ? (
-                <ProjectFavicon
-                  environmentId={thread.environmentId}
-                  faviconPath={props.project.faviconPath}
-                  projectIcon={props.project.projectIcon}
-                  size={13}
-                  projectTitle={props.project.title}
-                  workspaceRoot={props.project.workspaceRoot}
-                />
               ) : null}
               <View
-                style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 5, minWidth: 0 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  height: 16,
+                  overflow: "hidden",
+                }}
               >
                 {(statusKind === "failed" || statusKind === "limited") &&
                 thread.runtime?.lastError ? (
@@ -800,7 +695,8 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                     numberOfLines={1}
                     style={{
                       flex: 1,
-                      fontSize: 12,
+                      fontFamily: NO3Y_FONT.regular,
+                      fontSize: 14,
                       lineHeight: 16,
                       color:
                         statusKind === "limited" ? palette.statusAttention : palette.statusFailed,
@@ -810,125 +706,90 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                   </Text>
                 ) : (
                   <>
+                    {pr ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={prBadgeLabel ?? undefined}
+                        hitSlop={6}
+                        onPress={handleOpenPullRequests}
+                        onLongPress={() => undefined}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                      >
+                        <HugeIcon
+                          icon={GitPullRequestIcon}
+                          size={12}
+                          color={prColor}
+                          strokeWidth={1.5}
+                        />
+                        <Text
+                          style={{
+                            fontFamily: NO3Y_FONT.regular,
+                            fontSize: 12,
+                            lineHeight: 16,
+                            color: prColor,
+                          }}
+                        >
+                          {pr.label}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                    {props.providerInstance ? (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <ProviderInstanceIcon
+                          iconUrl={providerIconUrl}
+                          provider={props.providerInstance.driverKind}
+                          size={14}
+                          displayName={props.providerInstance.displayName}
+                          accentColor={props.providerInstance.accentColor}
+                          showBadge={props.providerInstance.showBadge}
+                          surfaceColor={palette.stageBackground}
+                        />
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            maxWidth: 120,
+                            fontFamily: NO3Y_FONT.regular,
+                            fontSize: 14,
+                            lineHeight: 15,
+                            color: palette.metaInk,
+                          }}
+                        >
+                          {no3yModelLabel(thread.modelSelection.model)}
+                        </Text>
+                      </View>
+                    ) : null}
                     <Text
                       numberOfLines={1}
                       style={{
                         flexShrink: 1,
-                        fontSize: 12,
+                        fontFamily: NO3Y_FONT.regular,
+                        fontSize: 14,
                         lineHeight: 16,
-                        color: palette.quietInk,
+                        color: palette.metaInk,
                       }}
                     >
                       {props.project?.title ?? "No project"}
                     </Text>
-                    {thread.branch ? (
-                      <>
-                        <Text style={{ fontSize: 12, color: palette.faintInk }}>·</Text>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            flexShrink: 1,
-                            fontSize: 12,
-                            lineHeight: 16,
-                            color: palette.faintInk,
-                          }}
-                        >
-                          {thread.branch}
-                        </Text>
-                      </>
-                    ) : null}
-                    {props.environmentLabel ? (
-                      <>
-                        <Text style={{ fontSize: 12, color: palette.faintInk }}>·</Text>
-                        {props.environmentMachine ? (
-                          <EnvironmentMachineSymbol
-                            kind={props.environmentMachine}
-                            size={11}
-                            tintColorClassName="accent-foreground-muted"
-                          />
-                        ) : null}
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            flexShrink: 1,
-                            fontSize: 12,
-                            lineHeight: 16,
-                            color: palette.faintInk,
-                          }}
-                        >
-                          {props.environmentLabel}
-                        </Text>
-                      </>
-                    ) : null}
                   </>
                 )}
               </View>
-              {pr ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={prBadgeLabel ?? undefined}
-                  hitSlop={6}
-                  onPress={handleOpenPullRequests}
-                  onLongPress={() => undefined}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 3 }}
-                >
-                  <SymbolView
-                    name={
-                      pr.kind === "stack"
-                        ? PullRequestGlyph.stack
-                        : pr.state === null
-                          ? PullRequestGlyph.pullRequest
-                          : pullRequestStatus({ state: pr.state, isDraft: pr.isDraft }).icon
-                    }
-                    size={11}
-                    tintColor={palette.quietInk}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      lineHeight: 14,
-                      color: palette.quietInk,
-                      fontFamily: THREAD_LIST_V2_MONO_FONT,
-                    }}
-                  >
-                    {pr.label}
-                  </Text>
-                </Pressable>
-              ) : null}
-              {props.providerInstance ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  {providerDrivers.slice(0, -1).map((driver, index) => (
-                    /* oxlint-disable-next-line react/no-array-index-key -- decorative driver history icons */
-                    <View key={`${driver}:${index}`} style={{ marginRight: -4, opacity: 0.3 }}>
-                      <ProviderIcon provider={driver} size={11} />
-                    </View>
-                  ))}
-                  <ProviderInstanceIcon
-                    iconUrl={providerIconUrl}
-                    provider={props.providerInstance.driverKind}
-                    size={13}
-                    displayName={props.providerInstance.displayName}
-                    accentColor={props.providerInstance.accentColor}
-                    showBadge={props.providerInstance.showBadge}
-                    surfaceColor={palette.stageBackground}
-                  />
-                  {providerNameLabel ? (
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="middle"
-                      style={{
-                        maxWidth: 96,
-                        fontSize: 12,
-                        lineHeight: 16,
-                        color: palette.faintInk,
-                      }}
-                    >
-                      {providerNameLabel}
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
             </View>
+            {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
+            {pinned ? (
+              <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
+            ) : null}
+            {statusKind === "woke" && props.wokeAt !== null ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss Woke notification"
+                hitSlop={8}
+                onPress={handleAcknowledgeWoke}
+              >
+                <No3yStatusMark kind="woke" palette={palette} idleMode="dot" />
+              </Pressable>
+            ) : (
+              <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
+            )}
           </>
         )}
       </Pressable>

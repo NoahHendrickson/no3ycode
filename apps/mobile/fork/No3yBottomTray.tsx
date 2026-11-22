@@ -13,7 +13,7 @@ import { No3yBottomFade } from "./No3yBottomFade";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 
 /** Height of the bars the tray holds; lists pad by it so their last row clears the tray. */
-export const NO3Y_TRAY_BAR_HEIGHT = 44;
+export const NO3Y_TRAY_BAR_HEIGHT = 40;
 
 /** Where the tray's bar rests above the screen bottom: over the dock when it shows. */
 export function useNo3yTrayRestingInset(): number {
@@ -38,7 +38,7 @@ export function No3yBottomTray(props: { readonly color: string; readonly childre
       <View
         style={{
           backgroundColor: props.color,
-          paddingHorizontal: 14,
+          paddingHorizontal: 16,
           paddingBottom: resting,
         }}
       >

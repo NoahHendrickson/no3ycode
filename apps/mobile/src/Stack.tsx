@@ -145,18 +145,24 @@ import { workspaceDetailRouter } from "./features/layout/workspace/workspace-det
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3yBottomNavHost } from "../fork/No3yBottomNav";
 import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
+import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
 /* fork:end no3y-mobile-redesign */
 
 const settingsPage = (title: string) => pageRoute({ title, itemStyle: "standard" });
 
 // Thread settings keep the Duo's vertical bar so cancel, search, filter and confirm sit in the
 // rail. The picker stack spans the sheet so its header reaches the rail, and insets its content.
-const THREAD_SETTINGS_ROUTE = sheetRoute({
-  detent: "full",
-  header: "none",
-  android: "card",
-  spansRail: true,
-});
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// The iPhone model picker (fork/No3yModelPicker.tsx) is a half sheet that never grows.
+const THREAD_SETTINGS_ROUTE = NO3Y_MODEL_SHEET
+  ? sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })
+  : /* fork:end no3y-mobile-redesign */
+    sheetRoute({
+      detent: "full",
+      header: "none",
+      android: "card",
+      spansRail: true,
+    });
 
 // Search sheets push on Android like the branch picker; a formSheet there leaves the list's
 // header peeking above it once the keyboard opens.

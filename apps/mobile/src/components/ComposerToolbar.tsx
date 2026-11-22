@@ -18,6 +18,9 @@ import { cn } from "../lib/cn";
 import { AppText as Text } from "./ui/AppText";
 import { SymbolView } from "./ui/AppSymbol";
 import { useAndroidControlSizing } from "./ui/useAndroidControlSizing";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yComposerRoundButton, useNo3yComposerStyle } from "../../fork/No3yComposerStyle";
+/* fork:end no3y-mobile-redesign */
 
 const COMPOSER_TOOLBAR_GAP = 8;
 const COMPOSER_TOOLBAR_FADE_WIDTH = 18;
@@ -285,6 +288,17 @@ export function ComposerActionButton(props: {
 }) {
   const { scale, smallIconSize } = useAndroidControlSizing();
   const circleSize = Math.round((props.size === "large" ? 44 : 30) * scale);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (useNo3yComposerStyle()) {
+    return (
+      <No3yComposerRoundButton
+        {...props}
+        icon={typeof props.icon === "string" ? props.icon : props.icon.ios}
+        variant={props.variant ?? "primary"}
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   return (
     <Pressable
       accessibilityLabel={props.accessibilityLabel}

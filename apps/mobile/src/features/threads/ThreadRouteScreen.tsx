@@ -126,6 +126,10 @@ import { useStartSideChat } from "./useStartSideChat";
 import { useThreadStatusAnnouncements } from "./useThreadStatusAnnouncements";
 import type { ThreadInspectorMode, ThreadInspectorTarget } from "./thread-inspector-navigation";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yThreadComposerChips } from "../../../fork/No3yThreadComposerChips";
+/* fork:end no3y-mobile-redesign */
 
 function firstRouteParam(value: string | string[] | undefined): string | null {
   const first = Array.isArray(value) ? value[0] : value;
@@ -349,6 +353,9 @@ function ThreadRouteContent(
   },
 ) {
   const { layout, showInspector, toggleAuxiliaryPane } = useAdaptiveWorkspaceLayout();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
   const { connectionState } = useRemoteConnectionStatus();
   const { onReconnectEnvironment } = useRemoteConnections();
   const {
@@ -983,9 +990,27 @@ function ThreadRouteContent(
                 inspectorMode={inspectorMode}
                 onOpenFilesInspector={handleOpenFilesInspector}
                 onReturnToThread={props.onReturnToThread}
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                no3yUsage={{
+                  environmentId: selectedThread.environmentId,
+                  providerInstanceId: selectedThread.modelSelection.instanceId,
+                }}
+                /* fork:end no3y-mobile-redesign */
               />
             )
           }
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          no3yComposerChips={
+            no3yBottomNav ? (
+              <No3yThreadComposerChips
+                thread={selectedThread}
+                cwd={selectedThreadCwd}
+                gitControls={threadGitControlProps}
+                onOpenFiles={selectedThreadCwd !== null ? handleOpenFilesInspector : null}
+              />
+            ) : undefined
+          }
+          /* fork:end no3y-mobile-redesign */
           canOperateThread={canOperateThread}
           selectedThread={selectedThreadWithDraftSettings ?? selectedThread}
           selectedThreadDetailRef={selectedThreadDetailRef}

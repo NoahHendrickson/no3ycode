@@ -122,6 +122,9 @@ import {
   providerSectionIsCollapsed,
 } from "./thread-settings-sheet-state";
 import { formatProviderUpdateRequiredNotice } from "@t3tools/client-runtime/providerUpdateRequiredModels";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yModelPicker, NO3Y_MODEL_SHEET } from "../../../fork/No3yModelPicker";
+/* fork:end no3y-mobile-redesign */
 
 const PRIMARY_PROVIDER_DRIVERS: ReadonlySet<string> = new Set([
   "claudeAgent",
@@ -1339,12 +1342,41 @@ function ThreadSettingsPickerNavigator(props: ThreadSettingsPickerPresentation) 
   );
 }
 
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+/** The iPhone half-sheet picker on this session; the catalog refresh mirrors the model list's. */
+function No3yModelPickerHost(props: { readonly onClose: () => void }) {
+  const session = useThreadSettingsSession();
+  const refreshProvidersCommand = useAtomCommand(serverEnvironment.refreshProviders, {
+    reportFailure: false,
+  });
+  const registry = use(RegistryContext);
+  const refreshModelCatalog = useEffectEvent(() => {
+    const environmentId = session.environmentId;
+    if (!environmentId) return;
+    const config = registry.get(environmentServerConfigsAtom).get(environmentId);
+    if (config?.environment.capabilities.modelCatalogRefresh !== true) return;
+    void refreshProvidersCommand({ environmentId, input: { modelCatalogOnly: true } });
+  });
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- asks the server for newly released models when the picker opens, as the model list does
+  useEffect(() => {
+    refreshModelCatalog();
+  }, []);
+  return <No3yModelPicker session={session} onClose={props.onClose} />;
+}
+/* fork:end no3y-mobile-redesign */
+
 export function ThreadSettingsPickerScreen(
   props: ThreadSettingsSessionProps & { readonly onClose: () => void },
 ) {
   return (
     <ThreadSettingsSessionProvider {...props}>
-      <ThreadSettingsPickerNavigator onClose={props.onClose} />
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {NO3Y_MODEL_SHEET ? (
+        <No3yModelPickerHost onClose={props.onClose} />
+      ) : (
+        /* fork:end no3y-mobile-redesign */
+        <ThreadSettingsPickerNavigator onClose={props.onClose} />
+      )}
     </ThreadSettingsSessionProvider>
   );
 }

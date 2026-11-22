@@ -1,21 +1,21 @@
 /**
- * The Threads screen's search field and filter/sort menu, held in the bottom tray above the
- * dock — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * The Threads screen's search pill and its filter and sort buttons, held in the bottom tray
+ * above the dock — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
+import ArrowUpDownIcon from "@hugeicons/core-free-icons/ArrowUpDownIcon";
 import ListFilterIcon from "@hugeicons/core-free-icons/ListFilterIcon";
 import Search01Icon from "@hugeicons/core-free-icons/Search01Icon";
 import XIcon from "@hugeicons/core-free-icons/XIcon";
 import type { EnvironmentId } from "@t3tools/contracts";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
 
-import { GlassSurface } from "../src/components/ui/GlassSurface";
 import { Menu } from "../src/components/ui/Menu";
 import type { MenuProps } from "../src/components/ui/Menu.types";
 import type {
   HomeListFilterMenuEnvironment,
   HomeListFilterMenuProject,
 } from "../src/features/home/home-list-filter-menu";
-import type { FlatGlassPalette } from "./flatGlassTheme";
+import { NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import {
   NO3Y_STATUS_FILTER_OPTIONS,
@@ -24,6 +24,7 @@ import {
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
 import { NO3Y_TRAY_BAR_HEIGHT } from "./No3yBottomTray";
+import { No3yCircleButton, no3yHairline } from "./No3yControls";
 
 const checked = (on: boolean) => (on ? ("on" as const) : ("off" as const));
 
@@ -46,10 +47,10 @@ export function No3yThreadsFilterBar(props: {
   const filtered =
     props.selectedEnvironmentId !== null ||
     props.selectedProjectKey !== null ||
-    props.statusFilter !== "all" ||
-    props.sortOrder !== "status";
+    props.statusFilter !== "all";
+  const sorted = props.sortOrder !== "status";
 
-  const actions: MenuProps["actions"] = [
+  const filterActions: MenuProps["actions"] = [
     {
       id: "status",
       title: "Status",
@@ -58,16 +59,6 @@ export function No3yThreadsFilterBar(props: {
         id: `status:${option.id}`,
         title: option.label,
         state: checked(option.id === props.statusFilter),
-      })),
-    },
-    {
-      id: "sort",
-      title: "Sort",
-      displayInline: true,
-      subactions: NO3Y_THREAD_SORT_OPTIONS.map((option) => ({
-        id: `sort:${option.id}`,
-        title: option.label,
-        state: checked(option.id === props.sortOrder),
       })),
     },
     {
@@ -112,6 +103,12 @@ export function No3yThreadsFilterBar(props: {
     ...(filtered ? [{ id: "reset", title: "Reset filters" }] : []),
   ];
 
+  const sortActions: MenuProps["actions"] = NO3Y_THREAD_SORT_OPTIONS.map((option) => ({
+    id: `sort:${option.id}`,
+    title: option.label,
+    state: checked(option.id === props.sortOrder),
+  }));
+
   const select = (id: string) => {
     const split = id.indexOf(":");
     const group = split < 0 ? id : id.slice(0, split);
@@ -136,37 +133,27 @@ export function No3yThreadsFilterBar(props: {
       props.onEnvironmentChange(null);
       props.onProjectChange(null);
       props.onStatusFilterChange("all");
-      props.onSortOrderChange("status");
     }
-  };
-
-  const glass = {
-    glassEffectStyle: "regular" as const,
-    tintColor: palette.panelTint,
-    fallbackColor: palette.panelFallback,
-  };
-  const pill = {
-    height: NO3Y_TRAY_BAR_HEIGHT,
-    borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: palette.panelBorder,
   };
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <GlassSurface
-        {...glass}
-        style={{
-          ...pill,
-          flex: 1,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-          paddingLeft: 14,
-          paddingRight: 10,
-        }}
+      <View
+        style={[
+          {
+            flex: 1,
+            height: NO3Y_TRAY_BAR_HEIGHT,
+            borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            paddingHorizontal: 12,
+            backgroundColor: palette.pillFill,
+          },
+          no3yHairline(palette),
+        ]}
       >
-        <HugeIcon icon={Search01Icon} size={16} color={palette.faintInk} />
+        <HugeIcon icon={Search01Icon} size={16} color={palette.foreground} filled />
         <TextInput
           accessibilityLabel="Search threads"
           value={props.searchQuery}
@@ -176,7 +163,13 @@ export function No3yThreadsFilterBar(props: {
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
-          style={{ flex: 1, fontSize: 15, color: palette.foreground, paddingVertical: 0 }}
+          style={{
+            flex: 1,
+            fontFamily: NO3Y_FONT.regular,
+            fontSize: 14,
+            color: palette.foreground,
+            paddingVertical: 0,
+          }}
         />
         {props.searchQuery.length > 0 ? (
           <Pressable
@@ -188,35 +181,30 @@ export function No3yThreadsFilterBar(props: {
             <HugeIcon icon={XIcon} size={16} color={palette.quietInk} />
           </Pressable>
         ) : null}
-      </GlassSurface>
+      </View>
       <Menu
-        title="Filter and sort threads"
-        actions={actions}
+        title="Filter threads"
+        actions={filterActions}
         onPressAction={({ nativeEvent }) => select(nativeEvent.event)}
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Filter and sort threads"
-          accessibilityState={{ selected: filtered }}
-          hitSlop={4}
-        >
-          <GlassSurface
-            {...glass}
-            style={{
-              ...pill,
-              width: NO3Y_TRAY_BAR_HEIGHT,
-              alignItems: "center",
-              justifyContent: "center",
-              borderColor: filtered ? palette.peekRing : palette.panelBorder,
-            }}
-          >
-            <HugeIcon
-              icon={ListFilterIcon}
-              size={18}
-              color={filtered ? palette.foreground : palette.quietInk}
-            />
-          </GlassSurface>
-        </Pressable>
+        <No3yCircleButton
+          palette={palette}
+          accessibilityLabel="Filter threads"
+          icon={ListFilterIcon}
+          selected={filtered}
+        />
+      </Menu>
+      <Menu
+        title="Sort threads"
+        actions={sortActions}
+        onPressAction={({ nativeEvent }) => select(nativeEvent.event)}
+      >
+        <No3yCircleButton
+          palette={palette}
+          accessibilityLabel="Sort threads"
+          icon={ArrowUpDownIcon}
+          selected={sorted}
+        />
       </Menu>
     </View>
   );

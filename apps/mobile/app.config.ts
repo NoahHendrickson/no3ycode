@@ -134,6 +134,13 @@ const dmSansFonts = {
   medium: "@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf",
   bold: "@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf",
 } as const;
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// The no3y screens set Geist by PostScript name (Geist-Regular, Geist-Medium).
+const geistFonts = {
+  regular: "@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf",
+  medium: "@expo-google-fonts/geist/500Medium/Geist_500Medium.ttf",
+} as const;
+/* fork:end no3y-mobile-redesign */
 
 const widgetsPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
   "expo-widgets",
@@ -335,7 +342,15 @@ const config: ExpoConfig = {
       "expo-font",
       {
         ios: {
-          fonts: [dmSansFonts.regular, dmSansFonts.medium, dmSansFonts.bold],
+          fonts: [
+            dmSansFonts.regular,
+            dmSansFonts.medium,
+            dmSansFonts.bold,
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            geistFonts.regular,
+            geistFonts.medium,
+            /* fork:end no3y-mobile-redesign */
+          ],
         },
         android: {
           fonts: [

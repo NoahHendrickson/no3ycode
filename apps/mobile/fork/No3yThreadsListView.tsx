@@ -75,6 +75,7 @@ import {
 } from "./mobileStatusGrouping";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
+import { No3yThreadsHeader } from "./No3yScreenHeader";
 import { No3yStatusSectionHeader } from "./No3yStatusSectionHeader";
 import { No3yPendingDraftRow, No3yThreadRow } from "./No3yThreadRow";
 import { No3yThreadsFilterBar } from "./No3yThreadsFilterBar";
@@ -184,7 +185,9 @@ export function No3yThreadsListView(props: {
   const workspace = useWorkspaceTabs();
   const no3yBottomNav = useNo3yBottomNavEnabled();
   const insets = useSafeAreaInsets();
-  const contentTopInset = useContentTopInset();
+  const barTopInset = useContentTopInset();
+  // The no3y Threads header lays out above the list instead of over it.
+  const contentTopInset = no3yBottomNav ? 0 : barTopInset;
   const trayContentInset = useNo3yTrayContentInset();
   const activeNewTask = useActiveNewTask();
   const serverConfigs = useServerConfigs();
@@ -509,6 +512,7 @@ export function No3yThreadsListView(props: {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
+      {no3yBottomNav ? <No3yThreadsHeader /> : null}
       <ScreenContent surface="screen">
         <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
           <SwipeableScrollGateProvider enabled={swipeEnabled} activation={swipeRowActivation}>
@@ -580,10 +584,8 @@ export function No3yThreadsListView(props: {
                 {...scrollGateHandlers}
                 scrollEventThrottle={16}
                 contentContainerStyle={{
-                  paddingLeft:
-                    (props.contentSideInsets?.left ?? 0) + (props.sidebarSurface ? 8 : 0),
-                  paddingRight:
-                    (props.contentSideInsets?.right ?? 0) + (props.sidebarSurface ? 8 : 0),
+                  paddingLeft: props.contentSideInsets?.left ?? 0,
+                  paddingRight: props.contentSideInsets?.right ?? 0,
                   paddingBottom: bottomPadding,
                 }}
               />

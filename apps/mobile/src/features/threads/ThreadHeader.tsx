@@ -11,6 +11,10 @@ import {
   useThreadGitMenuDefinition,
   type ThreadGitControlsProps,
 } from "./ThreadGitControls";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
+import { useNo3yThreadHeaderTrailing } from "../../../fork/No3yScreenHeader";
+/* fork:end no3y-mobile-redesign */
 
 export function ThreadHeader(props: {
   readonly title: string;
@@ -21,6 +25,13 @@ export function ThreadHeader(props: {
   readonly hasThreadCwd: boolean;
   readonly inspectorMode: ThreadInspectorMode | null;
   readonly onOpenFilesInspector: () => void;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** The no3y iPhone bar swaps the git, terminal and files items (now on the branch chip) for usage. */
+  readonly no3yUsage?: {
+    readonly environmentId: EnvironmentId;
+    readonly providerInstanceId: ProviderInstanceId;
+  };
+  /* fork:end no3y-mobile-redesign */
 }) {
   const goBack = useWorkspaceBackNavigation();
   const { toggleAuxiliaryPane, startNewTask } = useAdaptiveWorkspaceLayout();
@@ -41,6 +52,9 @@ export function ThreadHeader(props: {
       ]
     : [];
   const menus = [gitMenu, terminalMenu].filter((menu): menu is AppBarMenu => menu !== null);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yTrailing = useNo3yThreadHeaderTrailing(props.draft ? undefined : props.no3yUsage);
+  /* fork:end no3y-mobile-redesign */
 
   return (
     <AppBar
@@ -57,8 +71,11 @@ export function ThreadHeader(props: {
             }
           : undefined
       }
-      actions={actions}
-      menus={menus}
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      actions={no3yTrailing ? [] : actions}
+      menus={no3yTrailing ? [] : menus}
+      trailing={no3yTrailing}
+      /* fork:end no3y-mobile-redesign */
       hideBottomBorder
     />
   );

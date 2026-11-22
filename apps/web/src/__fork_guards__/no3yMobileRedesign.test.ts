@@ -444,7 +444,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     }).toEqual(webPartition);
   });
 
-  it("mounts the dock host, Chat route, Flat Glass threads, and Automations runs in mobile seams", () => {
+  it("mounts the dock, Threads header, thread composer card, and model sheet in mobile seams", () => {
     const stack = readRepoFile("apps/mobile/src/Stack.tsx");
     const nativeTabs = readRepoFile(
       "apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx",
@@ -461,6 +461,12 @@ describe("fork guard: no3y-mobile-redesign", () => {
       readonly dependencies: Record<string, string>;
     };
     const threadDetail = readRepoFile("apps/mobile/src/features/threads/ThreadDetailScreen.tsx");
+    const threadRoute = readRepoFile("apps/mobile/src/features/threads/ThreadRouteScreen.tsx");
+    const threadHeader = readRepoFile("apps/mobile/src/features/threads/ThreadHeader.tsx");
+    const threadComposer = readRepoFile("apps/mobile/src/features/threads/ThreadComposer.tsx");
+    const threadSettings = readRepoFile("apps/mobile/src/features/threads/ThreadSettingsSheet.tsx");
+    const screenHeader = readRepoFile("apps/mobile/fork/No3yScreenHeader.tsx");
+    const appConfig = readRepoFile("apps/mobile/app.config.ts");
 
     expect(stack).toContain('import { No3yBottomNavHost } from "../fork/No3yBottomNav";');
     expect(stack).toContain('import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";');
@@ -470,17 +476,35 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(toolbar).toContain(
       '!(no3yBottomNav && !workspace.settingsOpen && selectedTab === "threads")',
     );
-    expect(dock).toContain('{ id: "settings", label: "Settings", icon: Settings01Icon }');
+    // Four filled dock items; Settings moved to the Threads header.
+    expect(dock).toContain('{ id: "automations", label: "Automations", icon: ZapIcon }');
+    expect(dock).not.toContain('{ id: "settings"');
+    expect(dock).toContain("filled />");
+    expect(screenHeader).toContain('accessibilityLabel="Settings"');
+    expect(toolbar).toContain('headerShown: selectedTab !== "threads"');
+    expect(homeScreen).toContain("<No3yThreadsListView");
     // The dock draws the same Hugeicons release the Mac fork does.
     expect(mobilePackage.dependencies["@hugeicons/core-free-icons"]).toBe(
       webPackage.dependencies["@hugeicons/core-free-icons"],
     );
-    expect(homeScreen).toContain("<No3yThreadsListView");
     expect(mobileGrouping).toContain('from "./forkRosterVisibility"');
     expect(mobileGrouping).toContain('from "./forkStatusGrouping"');
     expect(mobileGrouping).toContain("partitionForkStatusShelves(");
     // Threads search, filter and sort live in fork/No3yThreadsFilterBar.tsx; upstream stays as is.
     expect(filters).not.toContain("fork:begin");
-    expect(threadDetail).toContain("no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0");
+    // Inside a thread there is no dock: the composer card sits low with its branch/access chips.
+    expect(threadDetail).toContain(
+      "no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))",
+    );
+    expect(threadDetail).toContain("props.no3yComposerChips");
+    expect(threadRoute).toContain("<No3yThreadComposerChips");
+    expect(threadHeader).toContain("useNo3yThreadHeaderTrailing(");
+    expect(threadComposer).toContain("no3yCard={no3yCard}");
+    // The composer chip opens the half-sheet model picker on iPhone.
+    expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
+    expect(stack).toContain('sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })');
+    // Geist is embedded for the no3y screens.
+    expect(appConfig).toContain("@expo-google-fonts/geist/500Medium/Geist_500Medium.ttf");
+    expect(mobilePackage.dependencies["@expo-google-fonts/geist"]).toBe("0.4.2");
   });
 });
