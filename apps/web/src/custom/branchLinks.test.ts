@@ -109,27 +109,49 @@ describe("projectBranchUrl", () => {
     expect(projectBranchUrl(withoutProvider, "main")).toBeNull();
     expect(projectBranchUrl(github, "  ")).toBeNull();
   });
+
+  it("keeps a GitCafe branch with a slash as one revision", () => {
+    expect(
+      projectBranchUrl(
+        identity("gitcafe", "git.cafe/acme/app", "git@git.cafe:acme/app.git"),
+        "feature/x",
+      ),
+    ).toBe("https://git.cafe/acme/app/tree/refs%2Fheads%2Ffeature%2Fx");
+  });
+
+  it("links a fork checkout's branch on origin, not upstream", () => {
+    const fork = identity("github", "github.com/acme/app", "git@github.com:acme/app.git", {
+      locator: {
+        source: "git-remote",
+        remoteName: "upstream",
+        remoteUrl: "git@github.com:acme/app.git",
+      },
+      webUrl: "https://github.com/acme/app",
+      origin: { canonicalKey: "github.com/me/app", remoteUrl: "git@github.com:me/app.git" },
+    });
+    expect(projectBranchUrl(fork, "feature/x")).toBe("https://github.com/me/app/tree/feature/x");
+    expect(
+      refBranchUrl(fork, { name: "origin/feature", isRemote: true, remoteName: "origin" }),
+    ).toBe("https://github.com/me/app/tree/feature");
+    expect(
+      refBranchUrl(fork, { name: "upstream/main", isRemote: true, remoteName: "upstream" }),
+    ).toBe("https://github.com/acme/app/tree/main");
+  });
 });
 
 describe("refBranchUrl", () => {
   it("links a remote ref of the project's own remote at its branch name", () => {
     expect(
-      refBranchUrl(
-        github,
-        { name: "origin/feature/x", isRemote: true, remoteName: "origin" },
-        null,
-      ),
+      refBranchUrl(github, { name: "origin/feature/x", isRemote: true, remoteName: "origin" }),
     ).toBe("https://github.com/acme/app/tree/feature/x");
     expect(
-      refBranchUrl(github, { name: "fork/feature", isRemote: true, remoteName: "fork" }, null),
+      refBranchUrl(github, { name: "fork/feature", isRemote: true, remoteName: "fork" }),
     ).toBeNull();
   });
 
-  it("does not link the checked-out branch while git reports no upstream", () => {
-    const status = { refName: "feature", hasUpstream: false };
-    expect(refBranchUrl(github, { name: "feature" }, status)).toBeNull();
-    expect(refBranchUrl(github, { name: "main" }, status)).toBe(
-      "https://github.com/acme/app/tree/main",
+  it("links a local branch", () => {
+    expect(refBranchUrl(github, { name: "feature" })).toBe(
+      "https://github.com/acme/app/tree/feature",
     );
   });
 });

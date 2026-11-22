@@ -7777,7 +7777,8 @@
     In a started thread, clicking the composer's read-only branch chip
     (custom/ThreadContextReadout, or Enter/Space on it) copies the branch's
     web page on the project's host, built from the project's
-    repositoryIdentity by custom/branchLinks: the repository root comes from
+    repositoryIdentity by custom/branchLinks (on `origin` when the identity is a fork's
+    `upstream`, since branches are pushed there): the repository root comes from
     the host's own commit link, so webUrl mounts, HTTP remote ports and
     Azure's SSH spellings match commit links. GitHub and GitCafe use
     /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
@@ -7801,8 +7802,6 @@
   watch:
     # Fenced imports and the right-click menu's link item.
     - apps/web/src/components/BranchToolbarBranchSelector.tsx
-    # The readout's statusCwd prop, inside the fork-composer-shell fence.
-    - apps/web/src/components/ChatView.tsx
   verify:
     - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
     - apps/web/src/custom/branchLinks.test.ts

@@ -132,6 +132,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-fork-composer-control-row]
   [data-fork-split-agent-pill] {
+  --control-icon-color: currentColor;
   color: rgb(255 255 255 / 85%);
 }
 

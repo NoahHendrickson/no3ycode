@@ -415,7 +415,6 @@ export function BranchToolbarBranchSelector({
         (branchName === resolvedActiveBranch ? queriedActiveBranch : undefined) ?? {
           name: branchName,
         },
-      branchStatusQuery.data,
     );
     const items: ContextMenuItem<"copy-branch-name" | "copy-branch-link">[] = [
       { id: "copy-branch-name", label: "Copy branch name", icon: "copy" },
