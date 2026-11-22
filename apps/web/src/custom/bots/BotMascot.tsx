@@ -49,21 +49,27 @@ export function BotMascot(props: {
   );
 }
 
-/** The mascot on a 32px tile in its own colour at half strength, behind a 1px 24% edge, white on
-    dark and black on light (Figma Petal card), filling a full card's two text lines. */
+/** The mascot on a tile in its own colour at half strength, behind a 1px 24% edge, white on
+    dark and black on light (Figma Petal card): 32px to fill a full card's two text lines, or
+    48px in the Petals grid. */
 export function BotMascotTile(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
+  readonly size?: "card" | "grid";
 }) {
+  const grid = props.size === "grid";
   return (
     <span
       data-fork-bot-mascot-tile=""
-      className="flex size-8 shrink-0 items-center justify-center rounded-[8px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
+      className={cn(
+        "flex shrink-0 items-center justify-center shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]",
+        grid ? "size-12 rounded-[10px]" : "size-8 rounded-[8px]",
+      )}
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
       }}
     >
-      <BotMascot shape={props.shape} mood={props.mood} fit={22} />
+      <BotMascot shape={props.shape} mood={props.mood} fit={grid ? 33 : 22} />
     </span>
   );
 }

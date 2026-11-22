@@ -87,6 +87,8 @@ const THREAD_ROW_RADIUS = {
   card: "rounded-[16px]",
   shelf: "rounded-md",
   pill: "rounded-full",
+  // A bot's tile in the Petals grid (fork-bots).
+  tile: "rounded-[12px]",
 } as const;
 
 export type ThreadRowShape = keyof typeof THREAD_ROW_RADIUS;
@@ -102,7 +104,9 @@ export function threadRowOpenSurfaceClassName(shape: ThreadRowShape): string {
 export function threadRowShape(input: {
   readonly variant: "card" | "slim";
   readonly compact: boolean;
+  readonly grid?: boolean;
 }): ThreadRowShape {
+  if (input.grid === true) return "tile";
   if (input.compact) return "pill";
   return input.variant === "slim" ? "shelf" : "card";
 }

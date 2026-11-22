@@ -7156,6 +7156,7 @@
     - apps/web/src/custom/bots/useIsBotThread.ts
     - apps/web/src/custom/bots/quietBotWakes.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
+    - apps/web/src/custom/bots/PetalLayoutPicker.tsx
     - apps/web/src/custom/bots/CollapsedPetalTabs.tsx
     - apps/web/src/custom/SidebarV2SectionLabel.tsx
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx

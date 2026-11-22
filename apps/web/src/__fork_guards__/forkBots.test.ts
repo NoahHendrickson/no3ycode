@@ -229,7 +229,7 @@ describe("fork guard: fork-bots", () => {
     expect(sidebarV2CardKind(plain, false)).toBe("card");
     expect(sidebarV2CardKind(plain, true)).toBe("compact");
     expect(sidebar).toContain(
-      "const cardKind = sidebarV2CardKind(thread.source, props.compact === true);",
+      "const cardKind = sidebarV2CardKind(thread.source, props.compact === true, props.botGrid === true);",
     );
     expect(sidebar).toContain("<SidebarV2BotCardBody");
     // A full bot card puts its mascot on a tile in its own colour (Figma Petal card).

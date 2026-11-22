@@ -18,14 +18,44 @@ import { type BotShell, isBotThread } from "./botThreads";
 import type { BotWorkAttention } from "./botWork";
 
 /** Which body a sidebar card draws, chosen once per row. */
-export type SidebarV2CardKind = "card" | "compact" | "bot" | "bot-compact";
+export type SidebarV2CardKind = "card" | "compact" | "bot" | "bot-compact" | "bot-grid";
 
 export function sidebarV2CardKind(
   shell: Pick<BotShell, "tags">,
   compact: boolean,
+  /** The Petals grid's tiles; only bots are drawn there. */
+  grid = false,
 ): SidebarV2CardKind {
-  if (isBotThread(shell)) return compact ? "bot-compact" : "bot";
+  if (isBotThread(shell)) return grid ? "bot-grid" : compact ? "bot-compact" : "bot";
   return compact ? "compact" : "card";
+}
+
+/** A bot in the Petals grid: its 48px tile with the status mark on a badge at the corner, and
+    its name under it. 8 + 48 + 2 + 16 + 6 = 80px tall, in a 66px cell. */
+export function SidebarV2BotGridBody(props: {
+  readonly shell: BotShell & { readonly id: string };
+  readonly mood: BotMascotMood;
+  /** The card's status mark; the badge centres it. */
+  readonly statusMark: ReactNode;
+  /** The name, or the rename field while renaming. */
+  readonly title: ReactNode;
+}) {
+  return (
+    <div className="relative z-10 flex flex-col items-center px-1 pt-2 pb-1.5">
+      <span className="relative">
+        <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} size="grid" />
+        <span
+          data-fork-bot-grid-badge=""
+          className="pointer-events-none absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-popover"
+        >
+          {props.statusMark}
+        </span>
+      </span>
+      <span className="mt-0.5 flex h-4 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-4">
+        {props.title}
+      </span>
+    </div>
+  );
 }
 
 export function SidebarV2BotCardBody(props: {

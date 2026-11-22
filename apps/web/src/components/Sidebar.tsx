@@ -375,10 +375,15 @@ import {
 } from "~/custom/bots/botMascotMenu";
 import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots/botMascotTags";
 import { isBotThread, listSidebarBots } from "~/custom/bots/botThreads";
-import { SidebarV2BotCardBody, sidebarV2CardKind } from "~/custom/bots/SidebarV2BotCardBody";
+import {
+  SidebarV2BotCardBody,
+  SidebarV2BotGridBody,
+  sidebarV2CardKind,
+} from "~/custom/bots/SidebarV2BotCardBody";
 import {
   SidebarV2BotsRow,
   SidebarV2NewBotRow,
+  useSidebarV2BotsLayout,
   useSidebarV2CollapsedListSections,
   useSidebarV2CompactBots,
 } from "~/custom/bots/SidebarV2BotsSection";
@@ -1078,6 +1083,10 @@ type SidebarThreadRowProps = {
   /** What a bot card's work says on it (custom/bots/botWork). */
   botWork?: BotWork | null;
   /* fork:end fork-bot-work-threads */
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+  /** A tile in the Petals grid rather than a card in the list. */
+  botGrid?: boolean;
+  /* fork:end fork-bots */
   isActive: boolean;
   // Unlike isActive, never true for the ancestor standing in for an open
   // subagent: drafts and PR clicks care about which composer is on screen.
@@ -1581,7 +1590,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       recedes: variant === "card" ? cardRecedes : shouldRecede,
       /* fork:end sidebar-v2-card-rows */
       /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-      shape: threadRowShape({ variant, compact: props.compact === true }),
+      shape: threadRowShape({
+        variant,
+        compact: props.compact === true,
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        grid: props.botGrid === true,
+        /* fork:end fork-bots */
+      }),
       /* fork:end sidebar-v2-compact-cards */
       /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
       onOpenPair: props.onOpenSplitPair === true,
@@ -1608,7 +1623,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
      The card's kind is chosen once: a bot's card draws its own body, led by a mascot whose
      face follows what the bot is doing. */
-  const cardKind = sidebarV2CardKind(thread.source, props.compact === true);
+  const cardKind = sidebarV2CardKind(thread.source, props.compact === true, props.botGrid === true);
   const botMood = botMascotMood({ status, isUnread, resting: !props.isActive });
   /* fork:end fork-bots */
 
@@ -2166,8 +2181,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                A bot's avatar card: 6 + 16 + 2 + 14 + 6 = 44 (custom/bots/SidebarV2BotCardBody). */
             cardKind === "bot"
             ? "[contain-intrinsic-size:auto_44px]"
-            : /* fork:end fork-bots */
-              "[contain-intrinsic-size:auto_54px]",
+            : // A grid tile: 8 + 48 + 2 + 16 + 6 = 80 (SidebarV2BotGridBody).
+              cardKind === "bot-grid"
+              ? "[contain-intrinsic-size:66px_80px]"
+              : /* fork:end fork-bots */
+                "[contain-intrinsic-size:auto_54px]",
         /* fork:end sidebar-v2-card-rows */
       )}
     >
@@ -2206,7 +2224,22 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               from custom/sidebarV2CardAlignment. List pad 8 + px-12 puts the
               prompt on the 20px edge the project header's folder mark shares. */}
           {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
-          {cardKind === "bot" ? (
+          {cardKind === "bot-grid" ? (
+            <SidebarV2BotGridBody
+              shell={thread.source}
+              mood={botMood}
+              statusMark={<SidebarV2StatusMark status={topStatus} seed={threadKey} idle="dot" />}
+              title={
+                isRenaming ? (
+                  title
+                ) : (
+                  <span aria-hidden className="min-w-0 truncate">
+                    {thread.title}
+                  </span>
+                )
+              }
+            />
+          ) : cardKind === "bot" ? (
             <SidebarV2BotCardBody
               environmentId={thread.environmentId}
               threadId={thread.id}
@@ -2403,6 +2436,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const [isListSectionCollapsed, toggleListSectionCollapsed] = useSidebarV2CollapsedListSections();
   const botsSectionCollapsed = isListSectionCollapsed("bots");
   const [compactBots, setCompactBots] = useSidebarV2CompactBots();
+  const [botsLayout, setBotsLayout] = useSidebarV2BotsLayout();
   const [namingBot, setNamingBot] = useState(false);
   const createBot = useCreateBot();
   const setBotMascot = useSetBotMascot();
@@ -5104,6 +5138,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
                            The Bots section's own density, apart from the threads' Compact cards. */
       readonly compact?: boolean;
+      readonly botGrid?: boolean;
       /* fork:end fork-bots */
       /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
       readonly botWork?: BotWork | null;
@@ -5201,6 +5236,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
         botWork={options.botWork ?? null}
         /* fork:end fork-bot-work-threads */
+        /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
+        botGrid={options.botGrid === true}
+        /* fork:end fork-bots */
         isActive={routeRowThreadKey === threadKey}
         revealRef={routeRowThreadKey === threadKey ? revealActiveRow : undefined}
         isRouteThread={routeThreadKey === threadKey}
@@ -5327,6 +5365,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 setNamingBot(true);
                 if (botsSectionCollapsed) toggleListSectionCollapsed("bots");
               }}
+              layout={botsLayout}
+              onLayoutChange={setBotsLayout}
               compactCards={compactBots}
               onCompactCardsChange={setCompactBots}
             >
@@ -5341,6 +5381,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 .map((bot) =>
                   renderOneThreadRow(bot, "active", {
                     compact: compactBots,
+                    botGrid: botsLayout === "grid",
                     /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
                     botWork:
                       botWorkByKey.get(
@@ -5352,6 +5393,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               {namingBot ? (
                 <SidebarV2NewBotRow
                   compact={compactBots}
+                  grid={botsLayout === "grid"}
                   initialMascot={nextBotMascotShape(
                     botThreads.map((bot) => botMascotShape(bot.source)),
                   )}
