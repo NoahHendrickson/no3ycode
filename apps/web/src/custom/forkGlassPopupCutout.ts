@@ -71,9 +71,9 @@ const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
 /**
- * Under sidebar-only Liquid Glass the native glass sits behind the docked sidebar alone, so a hole
- * elsewhere would open onto the desktop: only a popup wholly inside the sidebar is cut, and it is
- * stamped so its tint matches the sidebar's (theme.custom.palettes.css).
+ * Under sidebar-only Liquid Glass nothing is cut: no hole looked right over the sidebar's glass,
+ * and one elsewhere would open onto the desktop. A popup wholly inside the docked sidebar is only
+ * stamped, so it paints a solid fill in the sidebar's colour (theme.custom.palettes.css).
  */
 const SIDEBAR_GLASS_SELECTOR =
   '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
@@ -333,7 +333,8 @@ function within(inner: Rect, outer: Rect): boolean {
   );
 }
 
-/** "window": the whole window is glass. "sidebar": only the docked sidebar is. */
+/** "window": the whole window is glass, and popups cut through to it. "sidebar": only the docked
+    sidebar is, and popups over it are stamped rather than cut. */
 type CutoutMode = "window" | "sidebar";
 
 function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
@@ -415,7 +416,6 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
           popup.toggleAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, inside);
           frostChanged = true;
         }
-        if (inside) holes.push(hole);
         continue;
       }
       if (hole === null) continue;

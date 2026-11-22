@@ -1668,23 +1668,19 @@
 }
 
 /* No backdrop-filter blurs on screen over the native glass (the "NO backdrop-filter" note
-   above), so a popup's frost left the rows under it sharp. A popup wholly over the docked
-   sidebar has the page cut away beneath it instead (forkGlassPopupCutout.ts) and sits straight
-   on the sidebar's glass, in its clear wash with a faint lift. Any other popup takes a
-   near-opaque fill, which reads the same with or without the blur. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
-  --fork-popup-fill:
-    linear-gradient(
-      color-mix(in srgb, var(--contrast-foreground) 8%, transparent),
-      color-mix(in srgb, var(--contrast-foreground) 8%, transparent)
-    ),
-    color-mix(in srgb, var(--popover) 94%, transparent);
+   above), so a popup's frost over the sidebar left the rows under it sharp. A popup wholly over
+   the docked sidebar (stamped by forkGlassPopupCutout.ts) is solid instead, in the sidebar's own
+   colour: the glass's backing (forkSidebarVibrancy.ts) with the 4% lift the glass reads at. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-fork-sidebar-glass-popup] {
+  background: color-mix(in srgb, #ffffff 4%, #141618);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 
-  & [data-fork-sidebar-glass-popup] {
-    background: rgb(255 255 255 / 4%);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-sidebar-glass-popup] {
+  background: color-mix(in srgb, #ffffff 4%, #1f1c1b);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]

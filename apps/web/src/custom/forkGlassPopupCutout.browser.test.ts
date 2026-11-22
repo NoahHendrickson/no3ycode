@@ -32,14 +32,14 @@ function stage(left: number) {
 }
 
 describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
-  it("cuts the page from under a menu wholly inside the docked sidebar", () => {
+  it("stamps a menu wholly inside the docked sidebar for its solid fill, cutting nothing", () => {
     using scene = stage(40);
     syncForkGlassPopupCutout("sidebar");
     expect(scene.menu.hasAttribute("data-fork-sidebar-glass-popup")).toBe(true);
-    expect(scene.root.style.getPropertyValue("mask-image")).toContain("svg");
+    expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
   });
 
-  it("leaves a menu reaching past the sidebar uncut, over no glass", () => {
+  it("leaves a menu reaching past the sidebar unstamped", () => {
     using scene = stage(200);
     syncForkGlassPopupCutout("sidebar");
     expect(scene.menu.hasAttribute("data-fork-sidebar-glass-popup")).toBe(false);
