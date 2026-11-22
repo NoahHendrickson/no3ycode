@@ -6453,9 +6453,10 @@
     same banner is a collapsible glass card: one line per message with the
     sender for non-owners, Send now / Steer, Edit and Remove buttons, and
     Move up / Move down plus the same actions in each row's long-press menu,
-    on the same mobile queue commands; a held queue offers Resume. There is
-    no prompt stash on mobile, so no stash bookmark, and the status pill no
-    longer counts the queue. iPad and Android keep upstream's queue sheet.
+    on the same mobile queue commands; a held queue offers Resume. Its
+    long-press menu's Move to stash puts a text-only, owner-written message in
+    the iOS prompt stash (no3y-prompt-stash) and takes it back if removing the
+    run fails. The status pill no longer counts the queue. iPad and Android keep upstream's queue sheet.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
@@ -7834,6 +7835,32 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
+- id: no3y-prompt-stash
+  intent: >
+    iOS has a device-local prompt stash like the Mac's promptStashStore: the
+    no3y composer's + menu offers "Stash prompt" (moves the composer's text
+    into the stash and clears it) and "Stashed prompts (N)", a half sheet
+    (fork/No3yPromptStashSheet.tsx) listing each stashed prompt's first line,
+    project and age; a tap restores it (straight in when the composer is
+    empty, else Replace or Add below), a swipe deletes it. The queued-messages
+    banner's Move to stash feeds the same stash. Newest first, at most 20,
+    saved as JSON in the app's documents directory (fork/no3yPromptStash.ts
+    holds the rules). Text only: mobile drafts keep attachments in their own
+    store, so stashing leaves them in the composer. No server or contract
+    data.
+  tier: 3
+  files:
+    - apps/mobile/fork/no3yPromptStash.ts
+    - apps/mobile/fork/no3yPromptStash.test.ts
+    - apps/mobile/fork/No3yPromptStashSheet.tsx
+  shadows: []
+  watch:
+    - apps/mobile/src/features/threads/ComposerAttachmentButton.tsx
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/Stack.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yPromptStash.test.ts
+    - apps/mobile/fork/no3yPromptStash.test.ts
 - id: no3y-voice-prepare-cache
   intent: >
     Dictation on mobile starts without waiting on the environment. Each tap

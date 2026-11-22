@@ -39,11 +39,12 @@ import { useAtomCommand } from "../src/state/use-atom-command";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
+import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
 import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
 
 const RADIUS = 22;
 
-type RowAction = "steer" | "edit" | "remove" | "up" | "down";
+type RowAction = "steer" | "edit" | "remove" | "up" | "down" | "stash";
 
 export function No3yQueuedRunsBanner(props: {
   readonly environmentId: EnvironmentId;
@@ -109,6 +110,11 @@ export function No3yQueuedRunsBanner(props: {
     void Haptics.selectionAsync();
     if (action === "remove") {
       await cancel(buildCancelQueuedRunCommand({ ...target, runId }));
+    } else if (action === "stash") {
+      // Written first and taken back if the run can't be removed, as the Mac's stashQueuedRun does.
+      const id = stashPromptText(entry.text, null);
+      const result = await cancel(buildCancelQueuedRunCommand({ ...target, runId }));
+      if (result._tag === "Failure") no3yPromptStash.remove(id);
     } else if (action === "up" || action === "down") {
       const move = no3yQueueMove(runIds, runId, action);
       if (move !== null) await reorder({ ...target, input: { threadId: props.threadId, ...move } });
@@ -226,6 +232,13 @@ export function No3yQueuedRunsBanner(props: {
                 canEdit={controls.canEdit}
                 editHint={editBlockedReason}
                 canRemove={controls.canDismiss}
+                // The stash keeps text only, and a guest's words are not the owner's to keep.
+                canStash={
+                  controls.canDismiss &&
+                  attachments.length === 0 &&
+                  context?.guest === undefined &&
+                  text.trim().length > 0
+                }
                 canReorder={busyRunId === null}
                 onAction={(action) => void act(run.id, action)}
               />
@@ -250,6 +263,7 @@ function QueuedRow(props: {
   readonly canEdit: boolean;
   readonly editHint: string | null;
   readonly canRemove: boolean;
+  readonly canStash: boolean;
   readonly canReorder: boolean;
   readonly onAction: (action: RowAction) => void;
 }) {
@@ -297,6 +311,9 @@ function QueuedRow(props: {
                   image: "arrow.down.to.line",
                 },
               ]
+            : []),
+          ...(props.canStash
+            ? [{ id: "stash", title: "Move to stash", image: "tray.and.arrow.down" }]
             : []),
           {
             id: "remove",

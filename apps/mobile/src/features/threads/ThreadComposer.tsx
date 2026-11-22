@@ -1001,6 +1001,13 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   supportsFiles={props.serverConfig !== null}
                   onPickMedia={props.onPickDraftMedia}
                   onPickFiles={props.onPickDraftFiles}
+                  /* fork:begin no3y-prompt-stash — see .fork/customizations.yaml#no3y-prompt-stash */
+                  no3yStash={
+                    no3yCard && props.draftKey
+                      ? { draftKey: props.draftKey, projectTitle: project?.title ?? null }
+                      : undefined
+                  }
+                  /* fork:end no3y-prompt-stash */
                 />
                 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
               )}

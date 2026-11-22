@@ -148,6 +148,7 @@ import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
 import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 import { No3yStatusSheet } from "../fork/No3yStatusSheet";
+import { No3yPromptStashSheet } from "../fork/No3yPromptStashSheet";
 /* fork:end no3y-mobile-redesign */
 
 const settingsPage = (title: string) => pageRoute({ title, itemStyle: "standard" });
@@ -532,6 +533,11 @@ const RootStackConfig = createWorkspaceStackNavigator({
         ...sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
         sheetAllowedDetents: "fitToContents",
       },
+    }),
+    // The composer's stashed prompts (fork/No3yPromptStashSheet.tsx).
+    No3yPromptStash: createNativeStackScreen({
+      screen: No3yPromptStashSheet,
+      options: sheetRoute({ detent: 0.5, header: "none" }),
     }),
     // The thread status pill's half sheet (fork/No3yStatusPill.tsx), the usage sheet's shape.
     No3yThreadStatus: createNativeStackScreen({
