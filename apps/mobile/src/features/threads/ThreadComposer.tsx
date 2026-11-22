@@ -662,7 +662,11 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const compactEditor = useCompactComposerEditor(bodyText, draftMessage, no3yCard);
   /* fork:end no3y-mobile-redesign */
-  const showsCompactDictation = isVoiceInputPresented;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card keeps the draft text in view while dictating; only its control row swaps.
+  const showsCompactDictation = isVoiceInputPresented && !no3yCard;
+  const no3yDictating = no3yCard && isVoiceInputPresented;
+  /* fork:end no3y-mobile-redesign */
   const isToolbarVisible = isVoiceInputPresented;
   const hasEditingAttachments =
     (queuedEdit !== null && queuedEdit.existingAttachments.length > 0) ||
@@ -984,15 +988,19 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
               compact
               hidden={showsCompactDictation}
             >
-              <ComposerAttachmentButton
-                size={usesLargeControls ? "large" : "regular"}
-                disabled={isSubmissionLocked}
-                supportsFiles={props.serverConfig !== null}
-                onPickMedia={props.onPickDraftMedia}
-                onPickFiles={props.onPickDraftFiles}
-              />
               {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-              {no3yCard ? modelControl : null}
+              {no3yDictating ? null : (
+                /* fork:end no3y-mobile-redesign */
+                <ComposerAttachmentButton
+                  size={usesLargeControls ? "large" : "regular"}
+                  disabled={isSubmissionLocked}
+                  supportsFiles={props.serverConfig !== null}
+                  onPickMedia={props.onPickDraftMedia}
+                  onPickFiles={props.onPickDraftFiles}
+                />
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              )}
+              {no3yCard && !no3yDictating ? modelControl : null}
               {/* fork:end no3y-mobile-redesign */}
               <Animated.View
                 className="min-w-0 flex-1"
@@ -1168,50 +1176,56 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   ) : null}
                 </View>
               ) : null}
-              <View
-                className="min-w-0 shrink flex-row items-center"
-                style={
-                  compactEditor.isExpanded ? { flex: 1, justifyContent: "flex-end" } : undefined
-                }
-              >
-                {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-                {no3yCard ? null : modelControl}
-                {/* fork:end no3y-mobile-redesign */}
-                <ComposerDictationStartAction
-                  size={usesLargeControls ? "large" : "regular"}
-                  state={voiceInput.state}
-                  isAvailable={voiceInput.isAvailable}
-                  disabled={isSubmissionLocked}
-                  onStart={voiceInput.start}
-                  onCancel={voiceInput.cancel}
-                />
-                {showStopAction ? (
-                  <ComposerActionButton
+              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+              {no3yDictating ? null : (
+                /* fork:end no3y-mobile-redesign */
+                <View
+                  className="min-w-0 shrink flex-row items-center"
+                  style={
+                    compactEditor.isExpanded ? { flex: 1, justifyContent: "flex-end" } : undefined
+                  }
+                >
+                  {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                  {no3yCard ? null : modelControl}
+                  {/* fork:end no3y-mobile-redesign */}
+                  <ComposerDictationStartAction
                     size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel="Stop agent"
-                    icon="stop.fill"
-                    variant="danger"
-                    disabled={!props.canOperateThread}
-                    onPress={props.onStopThread}
+                    state={voiceInput.state}
+                    isAvailable={voiceInput.isAvailable}
+                    disabled={isSubmissionLocked}
+                    onStart={voiceInput.start}
+                    onCancel={voiceInput.cancel}
                   />
-                ) : showResumeAction ? (
-                  <ComposerActionButton
-                    size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel="Resume thread"
-                    icon="play"
-                    disabled={!props.canOperateThread || resumingQueue}
-                    onPress={() => void handleResumeQueue()}
-                  />
-                ) : (
-                  <SendActionButton
-                    size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel={sendBlockedReason ?? sendLabel}
-                    presentation={sendPresentation}
-                    disabled={!canSend}
-                    onSend={handleSend}
-                  />
-                )}
-              </View>
+                  {showStopAction ? (
+                    <ComposerActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel="Stop agent"
+                      icon="stop.fill"
+                      variant="danger"
+                      disabled={!props.canOperateThread}
+                      onPress={props.onStopThread}
+                    />
+                  ) : showResumeAction ? (
+                    <ComposerActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel="Resume thread"
+                      icon="play"
+                      disabled={!props.canOperateThread || resumingQueue}
+                      onPress={() => void handleResumeQueue()}
+                    />
+                  ) : (
+                    <SendActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel={sendBlockedReason ?? sendLabel}
+                      presentation={sendPresentation}
+                      disabled={!canSend}
+                      onSend={handleSend}
+                    />
+                  )}
+                </View>
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              )}
+              {/* fork:end no3y-mobile-redesign */}
             </ComposerDictationDraftContent>
           </View>
           <Animated.View
