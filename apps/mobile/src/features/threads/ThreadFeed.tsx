@@ -190,6 +190,8 @@ import { useAppearancePreferences } from "../settings/appearance/AppearancePrefe
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { flatGlassPalette } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
+import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast } from "../../../fork/no3yLiveStatus";
 /* fork:end no3y-mobile-redesign */
 import { PierreEntryIcon } from "../../components/PierreEntryIcon";
 import {
@@ -1640,6 +1642,10 @@ function renderFeedEntry(
     | "workspaceRoot"
   > & {
     readonly copiedRowId: string | null;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    /** Set on the no3y layout: the live row draws as its status line, from the turn's start. */
+    readonly no3y: { readonly liveStartedAt: string | null } | null;
+    /* fork:end no3y-mobile-redesign */
     readonly expandedWorkRows: Record<string, boolean>;
     readonly workRowSizing: ReturnType<typeof deriveThreadWorkLogSizing>;
     readonly workGroupScrollPositions: Map<string, ThreadWorkGroupScrollPosition>;
@@ -1677,6 +1683,35 @@ function renderFeedEntry(
 ) {
   const entry = info.item;
   const { markdownStyles, iconSubtleColor, userBubbleColor } = props;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (
+    props.no3y &&
+    entry.id === NO3Y_LIVE_ROW_ID &&
+    (entry.type === "thinking" || entry.type === "work-toggle" || entry.type === "activity-group")
+  ) {
+    return (
+      <No3yLiveStatusLine
+        minHeight={props.workRowSizing.estimatedRowHeight}
+        startedAt={entry.type === "thinking" ? entry.createdAt : props.no3y.liveStartedAt}
+        label={
+          entry.type === "thinking"
+            ? (entry.providerStartingLabel ?? entry.label ?? "Thinking")
+            : entry.type === "work-toggle"
+              ? entry.summary
+              : (entry.activities[0]?.groupStandIn?.label ?? "Working")
+        }
+        group={
+          entry.type === "work-toggle"
+            ? {
+                expanded: entry.expanded,
+                onToggle: () => props.onToggleWorkGroup(entry.groupId, entry.id),
+              }
+            : undefined
+        }
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
 
   if (entry.type === "guest-pending") {
     return (
@@ -1699,7 +1734,15 @@ function renderFeedEntry(
 
   if (entry.type === "run-fold") {
     return (
-      <View className="mb-1 flex-row items-center border-b border-border-subtle px-2">
+      <View
+        className={
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          props.no3y
+            ? "mb-1 flex-row items-center px-2"
+            : /* fork:end no3y-mobile-redesign */
+              "mb-1 flex-row items-center border-b border-border-subtle px-2"
+        }
+      >
         <RunFoldButton
           key={entry.id}
           entry={entry}
@@ -2582,21 +2625,25 @@ function useThreadFeedPresentation(
   revealedMessageId: MessageId | null,
 ) {
   const [feedCache] = useState(createThreadFeedCache);
-  return appendPendingThreadMessages(
-    deriveThreadFeedPresentation(
-      props.feed,
-      props.latestRun,
-      expandedTurnIds,
-      new Set(
-        Object.entries(expandedWorkGroups)
-          .filter(([, expanded]) => expanded)
-          .map(([groupId]) => groupId),
-      ),
-      props.activeWorkStartedAt,
-      props.runlessWorkActive ?? false,
-      feedCache,
-      { toolCallVisibility: props.toolCallVisibility ?? "showAll", revealedMessageId },
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yLiveLast = useNo3yBottomNavEnabled();
+  const presentation = deriveThreadFeedPresentation(
+    props.feed,
+    props.latestRun,
+    expandedTurnIds,
+    new Set(
+      Object.entries(expandedWorkGroups)
+        .filter(([, expanded]) => expanded)
+        .map(([groupId]) => groupId),
     ),
+    props.activeWorkStartedAt,
+    props.runlessWorkActive ?? false,
+    feedCache,
+    { toolCallVisibility: props.toolCallVisibility ?? "showAll", revealedMessageId },
+  );
+  return appendPendingThreadMessages(
+    no3yLiveLast ? no3yLiveRowLast(presentation) : presentation,
+    /* fork:end no3y-mobile-redesign */
     props.feed,
     props.queuedMessages,
   );
@@ -3282,6 +3329,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     reviewCommentColors,
     themeAppearance,
     userBubbleColor,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    no3yLiveStartedAt: no3yBubble ? props.activeWorkStartedAt : null,
+    /* fork:end no3y-mobile-redesign */
     viewportWidth,
     contentWidth,
     skills: props.skills,
@@ -3685,6 +3735,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             onUseArtifactTemplate: props.onUseArtifactTemplate,
             threadId: props.threadId,
             copiedRowId,
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            no3y: no3yBubble ? { liveStartedAt: props.activeWorkStartedAt } : null,
+            /* fork:end no3y-mobile-redesign */
             expandedWorkRows,
             workRowSizing,
             workGroupScrollPositions,

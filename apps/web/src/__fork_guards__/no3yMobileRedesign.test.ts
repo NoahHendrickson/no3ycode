@@ -615,6 +615,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(
       "flatGlassPalette(themeAppearance).userBubble",
     );
+    // A live turn ends in one status line; the live row moves last and draws as it.
+    const feed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
+    expect(feed).toContain("no3yLiveLast ? no3yLiveRowLast(presentation) : presentation");
+    expect(feed).toContain("<No3yLiveStatusLine");
     // Transcript subagents draw as the Mac fork's card with the Threads list's status marks.
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");

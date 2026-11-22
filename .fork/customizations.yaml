@@ -7927,6 +7927,14 @@
     status, previews). iPad and Android keep the upstream control.
     The user's sent bubble is a translucent wash (white 9% on the dark page,
     flatGlassTheme's userBubble), as the Mac's glass bubble is, not a grey fill.
+    A live turn ends in one status line, as on the Mac (fork-working-row-last):
+    the feed's single live row (thinking, a running tool group, or a lone
+    running call; fork/no3yLiveStatus.ts) moves to the end of the derived rows,
+    so an open group's details sit above it, and draws as
+    fork/No3yLiveStatusLine.tsx: the bead ring, what the agent is doing now,
+    the turn timer, and a chevron that opens the running group. Upstream's
+    derivation is untouched. The finished turn's "Worked for …" fold row has
+    no divider.
     Subagents in the transcript draw as the Mac fork's subagent card
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
@@ -7998,7 +8006,9 @@
     - apps/mobile/fork/No3ySubagentCards.tsx
     - apps/mobile/fork/no3ySubagentCard.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
-    - apps/mobile/fork/no3yUsageCompact.test.ts
+    - apps/mobile/fork/no3yLiveStatus.ts
+    - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/No3yLiveStatusLine.tsx
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
@@ -8033,3 +8043,5 @@
     - apps/mobile/fork/beadRing.test.ts
     - apps/mobile/fork/no3yStatusSegments.test.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
+    - apps/mobile/fork/no3yUsageCompact.test.ts
+    - apps/mobile/fork/no3yLiveStatus.test.ts
