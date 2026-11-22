@@ -52,12 +52,14 @@ describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
     expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
   });
 
-  it("leaves a menu reaching past the sidebar unstamped", () => {
+  it("stamps a menu reaching past the sidebar too, and leaves one clear of it alone", () => {
     using scene = stage();
     liquidGlass();
-    const menu = scene.open(200);
+    const straddling = scene.open(200);
+    const clear = scene.open(400);
     syncForkGlassPopupCutout("sidebar");
-    expect(menu.hasAttribute(MARK)).toBe(false);
+    expect(straddling.hasAttribute(MARK)).toBe(true);
+    expect(clear.hasAttribute(MARK)).toBe(false);
   });
 
   it("stamps a menu opened after Liquid Glass lands, though the cutout started before it", async () => {

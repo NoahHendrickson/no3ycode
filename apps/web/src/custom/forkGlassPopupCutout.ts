@@ -73,8 +73,9 @@ const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
 /**
  * Under sidebar-only Liquid Glass nothing is cut: no hole looked right over the sidebar's glass,
- * and one elsewhere would open onto the desktop. A popup wholly inside the docked sidebar is only
- * stamped, so it paints a solid fill in the sidebar's colour (theme.custom.palettes.css).
+ * and one elsewhere would open onto the desktop. A popup over the docked sidebar is only
+ * stamped, so it paints a solid fill in the sidebar's colour (theme.custom.palettes.css). Any
+ * popup reaching over the sidebar is, since no frost blurs the rows there.
  */
 const SIDEBAR_GLASS_SELECTOR =
   '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
@@ -325,13 +326,8 @@ function sidebarGlassRect(appRoot: HTMLElement): Rect | null {
     : { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
 
-function within(inner: Rect, outer: Rect): boolean {
-  return (
-    inner.x >= outer.x &&
-    inner.y >= outer.y &&
-    inner.x + inner.width <= outer.x + outer.width &&
-    inner.y + inner.height <= outer.y + outer.height
-  );
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 /** "window": the whole window is glass, and popups cut through to it. "sidebar": the Glass palette
@@ -413,7 +409,8 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
       if (mode === "sidebar") {
         // A closing popup keeps its stamp, so it fades out on the same tint.
         if (hole === null) continue;
-        const inside = sidebar !== null && within(hole, sidebar);
+        // Any part over the sidebar would show its rows sharp, so any overlap is solid.
+        const inside = sidebar !== null && overlaps(hole, sidebar);
         if (inside !== popup.hasAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE)) {
           popup.toggleAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, inside);
           frostChanged = true;
