@@ -7817,6 +7817,30 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
+- id: no3y-voice-prepare-cache
+  intent: >
+    Dictation on mobile starts without waiting on the environment. Each tap
+    used to fetch the voice destination's speech status (or check the cloud
+    key) before recording could prepare, a round trip to the Mac over the
+    network. fork/no3yVoicePrepareCache.ts keeps the last successful result
+    for five minutes per connection and destination (a new connection or a
+    different destination misses; errors are never cached), one fetch is
+    shared between overlapping callers, and a tap that gives up never cancels
+    it. The composer's mic warms it while it shows
+    (fork/useVoicePreparePrefetch.ts), so a tap usually skips the round trip.
+    Mobile only; the shared voice controller and the server are untouched.
+  tier: 3
+  files:
+    - apps/mobile/fork/no3yVoicePrepareCache.ts
+    - apps/mobile/fork/no3yVoicePrepareCache.test.ts
+    - apps/mobile/fork/useVoicePreparePrefetch.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/features/voice-input/voiceDestination.ts
+    - apps/mobile/src/features/voice-input/ComposerDictationControl.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yVoicePrepareCache.test.ts
+    - apps/mobile/fork/no3yVoicePrepareCache.test.ts
 - id: no3y-mobile-redesign
   intent: >
     The no3y Code iOS redesign from the owner's Figma mocks (Threads list and

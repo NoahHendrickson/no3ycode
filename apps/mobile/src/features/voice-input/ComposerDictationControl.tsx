@@ -23,6 +23,9 @@ import { VOICE_WAVEFORM_SAMPLE_COUNT } from "./voiceInputMetering";
 import Mic01Icon from "@hugeicons/core-free-icons/Mic01Icon";
 import { No3yComposerRoundButton, useNo3yComposerStyle } from "../../../fork/No3yComposerStyle";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+import { useVoicePreparePrefetch } from "../../../fork/useVoicePreparePrefetch";
+/* fork:end no3y-voice-prepare-cache */
 
 const DICTATION_TIMING = {
   duration: 220,
@@ -456,6 +459,9 @@ export function ComposerDictationStartAction(props: {
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yCard = useNo3yComposerStyle();
   /* fork:end no3y-mobile-redesign */
+  /* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+  useVoicePreparePrefetch(props.isAvailable);
+  /* fork:end no3y-voice-prepare-cache */
   if (!props.isAvailable) return null;
   const openSettings = props.state.phase === "error" && props.state.errorAction === "settings";
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
