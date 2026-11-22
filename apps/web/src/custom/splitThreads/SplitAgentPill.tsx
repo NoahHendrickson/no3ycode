@@ -59,6 +59,7 @@ export function SplitAgentPill(props: {
       <Button
         size="xs"
         variant="ghost"
+        data-fork-split-agent-pill
         {...pressHandlers(() => morphSplitPairs([threadRef], () => unpair(threadRef)))}
       >
         <ExternalLinkIcon className="size-3.5" />
@@ -84,7 +85,7 @@ export function SplitAgentPill(props: {
       .finally(() => usePendingSplitStore.setState({ pending: null }));
   };
   return (
-    <Button size="xs" variant="ghost" {...pressHandlers(splitAgent)}>
+    <Button size="xs" variant="ghost" data-fork-split-agent-pill {...pressHandlers(splitAgent)}>
       <NavigationArrowIcon className="size-3.5" />
       Split agent
     </Button>
