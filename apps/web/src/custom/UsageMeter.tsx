@@ -32,7 +32,8 @@ export function UsageMeter(props: {
   );
 }
 
-/** Circular ring variant of UsageMeter for the composer's compact quota trigger. */
+/** Circular ring variant of UsageMeter for the composer's compact quota trigger: 12px across
+    with a 1.5px stroke (2 units of the 16-unit box), the size of the glyphs beside it. */
 export function UsageCircleMeter(props: {
   readonly remaining: number | null;
   readonly className?: string;
@@ -42,16 +43,16 @@ export function UsageCircleMeter(props: {
     <svg
       aria-hidden
       viewBox="0 0 16 16"
-      className={cn("size-4 shrink-0 -rotate-90", props.className)}
+      className={cn("size-3 shrink-0 -rotate-90", props.className)}
     >
-      <circle cx="8" cy="8" r="6.25" fill="none" strokeWidth="2.5" className="stroke-current/25" />
+      <circle cx="8" cy="8" r="7" fill="none" strokeWidth="2" className="stroke-current/25" />
       {clamped !== null && clamped > 0 ? (
         <circle
           cx="8"
           cy="8"
-          r="6.25"
+          r="7"
           fill="none"
-          strokeWidth="2.5"
+          strokeWidth="2"
           pathLength={100}
           strokeDasharray="100"
           strokeDashoffset={100 - clamped}
