@@ -352,7 +352,10 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-composer-prompt]") &&
         !rule.selector.includes('[data-testid="composer-editor"]'),
     );
-    expect(theme).toMatch(/--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 8px\)/u);
+    // The cap holds 12.5rem of prompt over whatever block padding the prompt wears.
+    expect(theme).toMatch(
+      /--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 2 \* var\(--fork-composer-prompt-pad-block, 4px\)\)/u,
+    );
     expect(scrollport?.body).toMatch(/max-height:\s*var\(--fork-composer-prompt-cap\)/u);
     expect(scrollport?.body).toMatch(/overflow-y:\s*auto/u);
 
@@ -389,7 +392,8 @@ describe("fork guard: fork-composer-shell", () => {
         rule.body.includes("font-size"),
     );
     expect(promptType?.body).toMatch(/font-size:\s*14px/u);
-    expect(promptType?.body).toMatch(/line-height:\s*23px/u);
+    expect(promptType?.body).toMatch(/line-height:\s*var\(--fork-composer-prompt-line\)/u);
+    expect(theme).toMatch(/--fork-composer-prompt-line:\s*23px/u);
     const placeholderColor = rules.find(
       (rule) =>
         /:has\(>\s*\[data-testid="composer-editor"\]\)\s*~\s*div/u.test(rule.selector) &&
@@ -458,13 +462,15 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(/--fork-context-chip-bg-hover:/u);
   });
 
-  it("renders the mode control as a muted ghost button on shared geometry", () => {
+  it("renders the mode control in the row's control ink on shared geometry", () => {
     const modeInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-mode-controls]") &&
         rule.selector.endsWith("[data-fork-composer-mode-chip]"),
     );
-    expect(modeInk?.body).toMatch(/color:\s*var\(--color-muted-foreground\)/u);
+    expect(modeInk?.body).toMatch(
+      /color:\s*var\(--fork-composer-control-ink,\s*var\(--color-muted-foreground\)\)/u,
+    );
     const sharedGeometry = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-control-row]") &&
@@ -658,10 +664,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(primaryActions).toContain('data-fork-composer-action="stop"');
     const action = rules.find(
       (rule) =>
-        rule.selector.endsWith("[data-fork-composer-action]") && rule.body.includes("width: 24px"),
+        rule.selector.endsWith("[data-fork-composer-action]") &&
+        rule.body.includes("width: var(--fork-composer-action-slot)"),
     );
-    expect(action?.body).toMatch(/height:\s*24px/u);
-    expect(action?.body).toMatch(/border-radius:\s*4px/u);
+    expect(action?.body).toMatch(/height:\s*var\(--fork-composer-action-slot\)/u);
+    expect(theme).toMatch(/--fork-composer-action-slot:\s*32px/u);
+    expect(action?.body).toMatch(/border-radius:\s*8px/u);
     // Stop is flat like send; upstream's shadows read as a dark bottom lip.
     const stop = rules.find((rule) =>
       rule.selector.endsWith('.dark [data-fork-composer-action="stop"]'),
@@ -690,15 +698,19 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(
       /:is\(\[data-fork-composer-action="attach"\],\s*\[data-fork-composer-action="dictate"\]\)\s*\{[^}]*padding-inline:\s*0/u,
     );
+    // The compact row is the base: one line centres on the action slot from the two tokens, and
+    // the draft's own box sets its prompt back to 4px.
     const promptLift = rules.find(
       (rule) =>
-        rule.selector.includes(":not([data-draft-hero])") &&
+        rule.selector.includes('[data-chat-composer-overlay="true"]') &&
+        !rule.selector.includes("[data-draft-hero]") &&
         rule.selector.endsWith("[data-fork-composer-prompt]") &&
-        rule.body.includes("translate:"),
+        rule.body.includes("padding-block:"),
     );
-    expect(promptLift?.body, "text is lifted 1px to centre on send").toMatch(
-      /translate:\s*0 -1px/u,
+    expect(promptLift?.body, "one line centres on the 32px buttons").toMatch(
+      /--fork-composer-prompt-pad-block:\s*calc\(\s*\(var\(--fork-composer-action-slot\) - var\(--fork-composer-prompt-line\)\) \/ 2 \+ 4px\s*\)/u,
     );
+    expect(theme).not.toMatch(/:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt\]/u);
     expect(chatComposer).not.toMatch(
       /data-chat-composer-actions="right"[\s\S]{0,600}?\{showComposerAttachAction \? \(/u,
     );

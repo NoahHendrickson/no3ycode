@@ -9,7 +9,7 @@ import { useInletMorphPresence } from "../inletMenuMorph";
 import type { ForkDictation } from "./forkDictation";
 
 // 2px rounded bars on a 5px pitch, 3px in from either edge, up to 18px tall in
-// the 24px action row, painted in the canvas's own `color` (theme.custom.css).
+// the action slot, painted in the canvas's own `color` (theme.custom.css).
 const BAR_WIDTH = 2;
 const BAR_PITCH = 5;
 const BAR_GAP = BAR_PITCH - BAR_WIDTH;
@@ -219,7 +219,7 @@ export function ForkDictationPrimaryButton(props: {
           variant="ghost"
           size="icon-sm"
           aria-label="Cancel dictation (Escape)"
-          // Shares attach's 24px box and hover from theme.custom.css.
+          // Shares attach's box and hover from theme.custom.css.
           data-fork-composer-action="dictate-cancel"
           onPointerDown={(event) => event.preventDefault()}
           onClick={dictation.cancel}

@@ -109,7 +109,8 @@ function Card(props: {
   return (
     <div
       data-fork-draft-launchpad-card=""
-      className="flex min-w-0 flex-col overflow-hidden rounded-[var(--fork-composer-radius,8px)] border border-border bg-card pb-1"
+      // Rounds with the composer above it, not the 8px cards beside a thread (--fork-card-radius).
+      className="flex min-w-0 flex-col overflow-hidden rounded-[var(--fork-composer-radius)] border border-border bg-card pb-1"
     >
       {props.header ?? (
         <div className="flex h-9 items-center px-3 font-medium text-muted-foreground/70 text-xs">

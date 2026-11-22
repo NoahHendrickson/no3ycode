@@ -163,6 +163,29 @@
   --fork-glass-tabs-line: var(--border);
 }
 
+/* Flat Glass draws the composer vessel's 1px inner border like Basic (the drawn
+   composer has one); open, the usage drawer above carries it over its top. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-vessel] {
+  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  + [data-fork-composer-vessel] {
+  box-shadow:
+    inset 1px 0 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border),
+    inset 0 -1px 0 var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-usage-drawer] {
+  box-shadow:
+    inset 1px 1px 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is(
     [data-fork-thread-started] [data-chat-header],
@@ -1384,15 +1407,12 @@
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
       [data-fork-composer-control-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-          [data-fork-composer-mode-chip],
-          [data-fork-pr-chip]
-        )
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
     ) {
     color: #fff;
   }
 
-  & :is([data-chat-provider-model-picker-traits], [data-fork-composer-mode-chip]) {
+  & [data-chat-provider-model-picker-traits] {
     color: rgb(255 255 255 / 70%);
   }
 }
@@ -1877,27 +1897,15 @@
     color: #ffffff;
   }
 
-  & [data-fork-composer-control-row] {
-    min-height: 36px;
-    padding-block: 5px;
-  }
-
   &
     :is(
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
       [data-chat-provider-model-picker-traits],
       [data-fork-composer-control-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-          [data-fork-composer-mode-chip],
-          [data-fork-pr-chip]
-        )
+        :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip])
     ) {
     color: #ffffff;
-  }
-
-  & [data-fork-composer-mode-chip] {
-    color: rgb(255 255 255 / 80%);
   }
 
   & [data-fork-draft-launchpad-card] {

@@ -83,7 +83,7 @@
     and ComposerPrimaryActions hands it over on every path that renders send,
     including while a turn runs, where it sits to stop's left so stop keeps
     the right edge. The check wears the send button's own class list and fork
-    tone attribute; the X is a ghost in send's 24px box in pure white, from
+    tone attribute; the X is a ghost in send's box in pure white, from
     theme.custom.css. Nothing animates. The error popover renders beside the
     slot whatever it shows, with Open voice settings for a microphone
     permission error. The microphone tooltip is the word Dictate, on the popup
@@ -3620,9 +3620,14 @@
     leads the prompt row opposite Send, and the dictation mic sits beside Send.
     [data-fork-composer-control-row] in theme.custom.css is the single owner of
     the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
-    control-row slots. Send and stop remain 24px squares at 4px radius; send
-    uses Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
-    Glass. Upstream's stitched glass-shell paint and banner-frame glass are
+    control-row slots. Attach, send and stop are 32px squares at 8px radius
+    (the kit's icon button) with 16px glyphs, inside a 16px-cornered vessel and
+    prompt (--fork-composer-radius; Inlet adds its 4px inset); send uses
+    Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
+    Glass. The compact row is 8px on every side with 2px between the actions and
+    the prompt (Figma no3y-code 34:8764). The permissions chip is icon-only (the
+    mode's runtimeModeConfig icon, upstream's own; Full access draws the
+    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
   tier: 4
@@ -3634,6 +3639,7 @@
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
     - apps/web/src/custom/StopSquareIcon.tsx
+    - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
@@ -5106,16 +5112,14 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card), the composer's radius, and a 1px var(--fork-composer-border)
-    border so Cool / Neutral palettes keep their own hairline weight. The card
-    is the composer turned over: the header sits loose on that floor and the
-    file tree and the "N more files" footer (the header's following sibling
-    divs) are a well painted from --fork-composer-bg, edge to edge inside
-    the card with a hairline on its top only (the card border is the line
-    elsewhere). Radii come from --fork-composer-radius; the shared rule rounds only
-    the well's bottom corners, and Basic rounds its top as well and fills it with
-    --basic-raised (Figma kit, theme.custom.basic.css), so its hairline curves into
-    the card's sides. Path
+    paint var(--card), --fork-card-radius corners, and a 1px var(--fork-composer-border)
+    border so Cool / Neutral palettes keep their own hairline weight. The
+    header and the file tree and "N more files" footer under it (the header's
+    following sibling divs) share the card's fill, parted by a hairline on the
+    tree's top only (the card border is the line elsewhere). Radii come from
+    --fork-card-radius (8px, for cards that sit beside the composer); the tree
+    rounds its top corners too, so its hairline curves into the card's sides.
+    Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button
@@ -5481,9 +5485,10 @@
     under that wrapper, so its backdrop-filter had nothing behind it to blur
     on screen while offscreen renders blurred. Found by reparenting the
     vessel up the ancestor chain in headful Chrome; neutralising the name
-    alone restored the blur. That geometry is the drawn box (Figma 418:11501): an
-    80px prompt surface with 8px padding, the prompt line on top and the
-    send action on its own row beneath, trailing — which folds back to the compact base row the moment the thread starts. The draft composer is also capped at 42rem (the drawn
+    alone restored the blur. That geometry is the drawn box (Figma no3y-code
+    34:8009): a 100px prompt surface, the prompt line 10px from the top and
+    the 32px attach and send on their own row 12px in from the sides and the
+    bottom — which folds back to the compact base row the moment the thread starts. The draft composer is also capped at 42rem (the drawn
     663px) instead of upstream's 48rem, keyed on a data-fork-composer-stack
     stamp on ChatView's composer stack plus the overlay's data-draft-hero.
 

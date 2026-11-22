@@ -41,8 +41,9 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     expect(readSibling("../custom/Tabs.tsx")).toContain("<SegmentedMenuTabs");
     // Toggling a view preference must not dismiss the menu it lives in.
     expect(chromeRows).toContain("closeOnClick={false}");
+    expect(segmentedTabs).toContain("closeOnClick = false,");
     expect(segmentedTabs).toMatch(
-      /<MenuPrimitive\.RadioItem\s+\{\.\.\.props\}\s+closeOnClick=\{false\}/u,
+      /<MenuPrimitive\.RadioItem\s+\{\.\.\.props\}\s+closeOnClick=\{closeOnClick\}/u,
     );
     expect(sidebar).toContain("grouping={grouping}");
     expect(sidebar).toContain('const groupByProject = grouping === "project";');

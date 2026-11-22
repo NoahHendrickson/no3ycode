@@ -27,7 +27,7 @@ import { environmentPresentations } from "~/state/presentation";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
-import { UsageCircleMeter, UsageMeter } from "./UsageMeter";
+import { UsageCircleMeter } from "./UsageMeter";
 
 const FIVE_HOURS_MINS = 300;
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
@@ -106,17 +106,20 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   );
 });
 
-/** Smoothly expanding single-line vessel strip anchored above the composer (grows upward, zero shift). */
+/** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
+    vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
+    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). */
 const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly openedAt: number;
   readonly onClose: () => void;
 }) {
   return (
-    <Collapsible open={props.open}>
+    <Collapsible open={props.open} className="overflow-hidden">
       <CollapsiblePanel
+        animate={false}
         data-fork-composer-usage-drawer="true"
-        className="pointer-events-auto"
+        className="pointer-events-auto transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] data-ending-style:translate-y-full data-ending-style:duration-150 data-ending-style:ease-in data-starting-style:translate-y-full motion-reduce:transition-none"
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.stopPropagation();
@@ -328,11 +331,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
                     <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                       {shortLabel}
                     </span>
-                    <UsageMeter
-                      remaining={window.remainingPercent}
-                      className="h-2.5 w-7 rounded-[3px] border border-border bg-muted/70"
-                      fillClassName="rounded-none"
-                    />
+                    <UsageCircleMeter remaining={window.remainingPercent} />
                   </span>
                 }
               />
