@@ -39,11 +39,7 @@ import {
 import { setActiveForkPalette, useActiveForkPalette, useIsInletActive } from "./forkActivePalette";
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
-import {
-  isForkSidebarLiquidGlassApplied,
-  isForkSidebarVibrancyApplied,
-  syncForkSidebarVibrancy,
-} from "./forkSidebarVibrancy";
+import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
 import { syncForkTopbarHeightFromRoot } from "./forkTopbarHeight";
 import type { ThemePreference } from "../themePalette";
 
@@ -471,8 +467,15 @@ function syncForkPaletteFromStorage(): void {
       .then(() => {
         const glassOn = isForkSidebarVibrancyApplied();
         void syncForkGlassFloorColor(glassOn).catch(() => undefined);
+        // Sidebar-only Liquid Glass stamps its marker one more IPC round trip later, so
+        // the cutout runs for the Glass palette and reads that marker per popup. The palette
+        // is read off the root, not this call, so a superseded answer cannot start it.
         syncForkGlassPopupCutout(
-          glassOn ? "window" : isForkSidebarLiquidGlassApplied() ? "sidebar" : null,
+          glassOn
+            ? "window"
+            : document.documentElement.getAttribute(FORK_THEME_ATTRIBUTE) === COOL_DARKER_THEME
+              ? "sidebar"
+              : null,
         );
       })
       .catch(() => undefined);

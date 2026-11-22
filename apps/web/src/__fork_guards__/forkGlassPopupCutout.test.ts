@@ -140,9 +140,17 @@ describe("fork guard: fork-glass-popup-cutout", () => {
   });
 
   it.each([
-    ["an older disable answers after a newer enable", "basic", "cool-darker", "window"],
-    ["an older enable answers after a newer disable", "cool-darker", "basic", null],
-  ])("matches the glass actually on when %s", async (_label, first, second, expected) => {
+    ["an older disable answers after a newer enable", "basic", "cool-darker", "window", true],
+    ["an older enable answers after a newer disable", "cool-darker", "basic", null, false],
+    // Sidebar Liquid Glass stamps its marker a round trip after this answer (never, here).
+    [
+      "Liquid Glass answers before its marker lands",
+      "basic",
+      "cool-darker",
+      "sidebar",
+      "liquid-glass",
+    ],
+  ])("matches the glass actually on when %s", async (_label, first, second, expected, answer) => {
     // Palette flips fire the vibrancy IPC without waiting, so answers can
     // land out of order. The cutout must follow the newest palette, never a
     // superseded answer.
@@ -172,8 +180,9 @@ describe("fork guard: fork-glass-popup-cutout", () => {
         callback(0);
         return 1;
       },
+      addEventListener: () => {},
     });
-    vi.stubGlobal("document", { documentElement: root });
+    vi.stubGlobal("document", { documentElement: root, querySelector: () => null, body: null });
     vi.doMock("../hooks/useTheme", () => ({
       readThemeHalves: () => null,
       readThemePreference: () => values.get("t3code:theme") ?? "system",
@@ -189,10 +198,11 @@ describe("fork guard: fork-glass-popup-cutout", () => {
       syncForkGlassFloorColor: () => Promise.resolve(),
     }));
 
-    const answers: Array<{ enabled: boolean; resolve: (applied: boolean) => void }> = [];
+    const answers: Array<{ enabled: boolean; resolve: (mode: boolean | string) => void }> = [];
     (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
       setSidebarVibrancy: (enabled: boolean) =>
-        new Promise<boolean>((resolve) => answers.push({ enabled, resolve })),
+        new Promise<boolean | string>((resolve) => answers.push({ enabled, resolve })),
+      sidebarLiquidGlass: { setWidth: () => new Promise<boolean>(() => {}) },
     };
 
     const { setForkAppearance } = await import("../custom/forkTheme");
@@ -202,7 +212,7 @@ describe("fork guard: fork-glass-popup-cutout", () => {
 
     // The newer request answers first, the superseded one last.
     const [older, newer] = answers;
-    newer?.resolve(newer.enabled);
+    newer?.resolve(answer);
     await vi.waitFor(() => expect(cutoutCalls).toHaveLength(1));
     older?.resolve(older.enabled);
     await vi.waitFor(() => expect(cutoutCalls).toHaveLength(2));

@@ -37,6 +37,7 @@
  */
 
 import { FORK_GLASS_PICTURE_OFF_ATTRIBUTE } from "./forkGlassNewAgentPicture";
+import { isForkSidebarLiquidGlassApplied } from "./forkSidebarVibrancy";
 
 /** The root while a new agent's picture is switched off. */
 const PICTURE_OFF = `[${FORK_GLASS_PICTURE_OFF_ATTRIBUTE}="off"]`;
@@ -333,8 +334,8 @@ function within(inner: Rect, outer: Rect): boolean {
   );
 }
 
-/** "window": the whole window is glass, and popups cut through to it. "sidebar": only the docked
-    sidebar is, and popups over it are stamped rather than cut. */
+/** "window": the whole window is glass, and popups cut through to it. "sidebar": the Glass palette
+    without it, where popups over the docked sidebar are stamped while its Liquid Glass is on. */
 type CutoutMode = "window" | "sidebar";
 
 function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
@@ -405,7 +406,8 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
     }
     const holes: Array<CutoutHole> = [];
     let stages: Array<DraftStage> | undefined;
-    const sidebar = mode === "sidebar" ? sidebarGlassRect(appRoot) : null;
+    const sidebar =
+      mode === "sidebar" && isForkSidebarLiquidGlassApplied() ? sidebarGlassRect(appRoot) : null;
     for (const { popup, layer } of placed) {
       const hole = measure(popup, layer, layers[layer]?.z ?? 0);
       if (mode === "sidebar") {
