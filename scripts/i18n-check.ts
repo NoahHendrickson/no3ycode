@@ -61,10 +61,14 @@ for (const [app, [command, ...args]] of Object.entries(GENERATE)) {
     }
     for (const key of missingFrom(source, generated)) {
       /* fork:begin fork-i18n-catalog — see .fork/customizations.yaml#fork-i18n-catalog
-         Keys for upstream copy the fork removed stay in upstream's catalogs; dropping them would
-         rewrite every locale file on each sync. */
-      forkRemovedKeys.push(`${app}: ${key} ${JSON.stringify(source[key])}`);
+         Web keys for upstream copy the fork removed stay in upstream's catalogs; dropping them
+         would rewrite every locale file on each sync. Other apps keep upstream's failure. */
+      if (app === "apps/web") {
+        forkRemovedKeys.push(`${app}: ${key} ${JSON.stringify(source[key])}`);
+        continue;
+      }
       /* fork:end fork-i18n-catalog */
+      problems.push(`${app}: ${key} ${JSON.stringify(source[key])} in en.json is stale`);
     }
   } finally {
     NodeFS.rmSync(tmp, { recursive: true, force: true });

@@ -74,6 +74,7 @@ import {
 /* fork:end fork-composer-shell */
 import { PreviousWorktreeItemContent } from "./PreviousWorktreeItemContent";
 import { WorktreeRepositoriesControl } from "./WorktreeRepositoriesControl";
+import { BranchToolbarEnvModeSelector } from "./BranchToolbarEnvModeSelector";
 import { useWorktreeBaseBranch } from "../worktreeRepositoryChoiceStore";
 import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import {
@@ -857,20 +858,34 @@ export const BranchToolbar = memo(function BranchToolbar({
         />
       ) : null}
       {!showGitControls ? null : !showBranchControls ? (
-        startsNewWorktree ? (
-          <span
-            className="min-w-0 flex-initial truncate px-1.75 @xl/composer-surface:ml-auto"
-            data-composer-context-control
-          >
-            {plainProjectBaseBranch === ""
-              ? m(msg("Each repository starts from its own default branch"))
-              : m(
-                  msg("Repositories start from {branch} where they have it", {
-                    branch: plainProjectBaseBranch,
-                  }),
-                )}
-          </span>
-        ) : null
+        <>
+          {/* A plain folder has no branch picker to carry the workspace modes, so upstream's
+              selector offers them. */}
+          <BranchToolbarEnvModeSelector
+            forceNewWorktree={forceNewWorktree}
+            envLocked={envModeLocked}
+            effectiveEnvMode={effectiveEnvMode}
+            activeWorktreePath={activeWorktreePath}
+            onEnvModeChange={onEnvModeChange}
+            previousWorktreeLabel={previousWorktreeLabel}
+            previousWorktreeBranch={previousWorktreeSeed?.branch ?? null}
+            onUsePreviousWorktree={onUsePreviousWorktree}
+          />
+          {startsNewWorktree ? (
+            <span
+              className="min-w-0 flex-initial truncate px-1.75 @xl/composer-surface:ml-auto"
+              data-composer-context-control
+            >
+              {plainProjectBaseBranch === ""
+                ? m(msg("Each repository starts from its own default branch"))
+                : m(
+                    msg("Repositories start from {branch} where they have it", {
+                      branch: plainProjectBaseBranch,
+                    }),
+                  )}
+            </span>
+          ) : null}
+        </>
       ) : (
         <>
           {!envModeLocked && !forceNewWorktree ? (

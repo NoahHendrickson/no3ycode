@@ -30,6 +30,10 @@ import * as WorkspaceEntries from "../workspace/WorkspaceEntries.ts";
 import * as CheckpointCapture from "./CheckpointCaptureService.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 import * as RunFinalization from "./RunFinalizationService.ts";
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+import type { VcsStatusLocalResult } from "@t3tools/contracts";
+import { LocalCheckoutBranchFollower } from "./forkLocalCheckoutBranchFollow.ts";
+/* fork:end server-local-checkout-branch-follow */
 
 // Without a project the observer never touches enrichment, so its methods stay unimplemented.
 const layerNoProject = Layer.mergeAll(
@@ -153,6 +157,38 @@ it.effect("completes finalization without waiting for the display refresh", () =
     yield* Deferred.await(refreshed);
   }).pipe(Effect.provide(layer));
 });
+
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+it.effect("a shared-checkout thread adopts its branch before finalization returns", () => {
+  const runId = RunId.make("run_follow_before_next_turn");
+  const scopeId = CheckpointScopeId.make("scope_follow_before_next_turn");
+  const steps: string[] = [];
+  const local = { refName: "feature", isDefaultRef: false } as unknown as VcsStatusLocalResult;
+  // The status read takes a second, so a background follow would land after the repositories.
+  const layer = finalizationLayer(scopeId, runId, steps, () =>
+    Effect.sleep("1 second").pipe(Effect.as(local)),
+  ).pipe(
+    Layer.provide(
+      Layer.succeed(LocalCheckoutBranchFollower, {
+        canFollow: () => Effect.succeed(true),
+        follow: () =>
+          Effect.sync(() => {
+            steps.push("follow");
+          }),
+      }),
+    ),
+  );
+  return Effect.gen(function* () {
+    const service = yield* RunFinalization.RunFinalizationService;
+    const finalize = yield* service
+      .finalize({ threadId: ThreadId.make("thread_follow"), runId, scopeId })
+      .pipe(Effect.forkChild({ startImmediately: true }));
+    yield* TestClock.adjust("1 second");
+    yield* Fiber.join(finalize);
+    assert.deepEqual(steps, ["checkpoint", "follow", "repositories:/api"]);
+  }).pipe(Effect.provide(layer));
+});
+/* fork:end server-local-checkout-branch-follow */
 
 it.effect.each(
   (

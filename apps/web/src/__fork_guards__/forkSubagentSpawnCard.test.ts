@@ -76,9 +76,9 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     );
     // …and a member with a thread of its own opens it from the arrow after it.
     // The click's intent rides along, so it opens beside the thread or in its place.
-    expect(group).toContain("return (intent) => onOpenThread(childThreadId, undefined, intent);");
+    expect(group).toContain("open: (intent) => onOpenThread(childThreadId, undefined, intent)");
     expect(group).toMatch(
-      /data-fork-subagent-open=""[\s\S]*?\{\.\.\.trigger\(openThread\)\}[\s\S]*?<ArrowUpRightIcon/u,
+      /data-fork-subagent-open=""[\s\S]*?\{\.\.\.trigger\(openThread, \{ panel: props\.openInPanel \?\? true \}\)\}[\s\S]*?<ArrowUpRightIcon/u,
     );
     // The buttons' hover is scoped to the card, so a completion notice outside a tree gets it too.
     expect(theme).toMatch(

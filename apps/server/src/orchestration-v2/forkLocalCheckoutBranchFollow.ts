@@ -47,9 +47,11 @@ export interface LocalCheckoutBranchFollowInput {
 }
 
 export class LocalCheckoutBranchFollower extends Context.Reference<{
+  /** Whether the thread is on the shared checkout, so finalize follows before its next turn starts. */
+  readonly canFollow: (threadId: ThreadId) => Effect.Effect<boolean>;
   readonly follow: (input: LocalCheckoutBranchFollowInput) => Effect.Effect<void>;
 }>("t3/orchestration-v2/fork/LocalCheckoutBranchFollower", {
-  defaultValue: () => ({ follow: () => Effect.void }),
+  defaultValue: () => ({ canFollow: () => Effect.succeed(false), follow: () => Effect.void }),
 }) {}
 
 export type LocalCheckoutBranchFollowShell = Pick<
@@ -119,6 +121,13 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const threads = yield* ThreadManagement.ThreadManagementService;
     return LocalCheckoutBranchFollower.of({
+      canFollow: Effect.fn("LocalCheckoutBranchFollower.canFollow")(
+        function* (threadId) {
+          const thread = yield* threads.getThreadShell(threadId);
+          return thread !== null && thread.worktreePath === null && thread.branch !== null;
+        },
+        Effect.catchCause(() => Effect.succeed(false)),
+      ),
       follow: Effect.fn("LocalCheckoutBranchFollower.follow")((input) =>
         followLocalCheckoutBranch(input, {
           getThreadShell: threads.getThreadShell,

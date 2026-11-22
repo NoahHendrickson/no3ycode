@@ -47,7 +47,9 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
     expect(hunks).toContain(
       ": follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local }),",
     );
-    expect(hunks).toContain("FiberSet.run(refreshes),");
+    // A shared-checkout thread follows before finalize returns; the rest stay in the background.
+    expect(hunks).toContain("if (yield* follower.canFollow(input.threadId)) yield* refresh;");
+    expect(hunks).toContain("else yield* refresh.pipe(FiberSet.run(refreshes));");
     expect(hunks).toContain("return local;");
     expect(finalization).not.toMatch(/local\.isDefaultRef\) return;/u);
   });
@@ -58,7 +60,9 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
       "ForkLocalCheckoutBranchFollow.layer.pipe(Layer.provide(layerThreadManagementProvided))",
     );
     // Elsewhere the reference keeps its no-op default.
-    expect(follower).toContain("defaultValue: () => ({ follow: () => Effect.void })");
+    expect(follower).toContain(
+      "defaultValue: () => ({ canFollow: () => Effect.succeed(false), follow: () => Effect.void })",
+    );
   });
 
   it("keeps the policy's outcomes in the follower", () => {

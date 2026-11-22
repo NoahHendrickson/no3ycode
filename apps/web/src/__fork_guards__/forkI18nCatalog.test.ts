@@ -19,8 +19,9 @@ describe("fork guard: fork-i18n-catalog", () => {
       check.indexOf("for (const key of missingFrom(source, generated))"),
     );
     const staleBody = staleLoop.slice(0, staleLoop.indexOf("\n    }"));
-    expect(staleBody).toContain("forkRemovedKeys.push(");
-    expect(staleBody).not.toContain("problems.push(");
+    // Only web keys are kept; the other apps still fail on a stale key, as upstream does.
+    expect(staleBody).toMatch(/if \(app === "apps\/web"\) \{\s*forkRemovedKeys\.push\(/u);
+    expect(staleBody).toContain("in en.json is stale");
     expect(check).toMatch(/is missing from en\.json`\);/u);
   });
 });

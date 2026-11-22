@@ -111,9 +111,10 @@ const make = Effect.gen(function* () {
       // The refresh only updates the display, so the thread's next turn must not wait for it.
       // Never replaced by a newer one: back-to-back turns would interrupt each before it publishes.
       /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
-         The thread whose turn just ran on the shared checkout adopts the branch found
-         there, in the same background fiber; a failed refresh is logged and skips it. */
-      yield* observer.refresh({ cwd, threadId: input.threadId, runId: input.runId }).pipe(
+         The thread whose turn just ran on the shared checkout adopts the branch found there
+         before finalize returns: its next queued turn would otherwise start first and win the
+         follower's run guard. Other threads keep upstream's background refresh. */
+      const refresh = observer.refresh({ cwd, threadId: input.threadId, runId: input.runId }).pipe(
         Effect.catchTags({
           RunFinalizationRefreshError: (cause) =>
             Effect.logWarning("Failed to refresh workspace after checkpoint capture", {
@@ -126,8 +127,9 @@ const make = Effect.gen(function* () {
             ? Effect.void
             : follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local }),
         ),
-        FiberSet.run(refreshes),
       );
+      if (yield* follower.canFollow(input.threadId)) yield* refresh;
+      else yield* refresh.pipe(FiberSet.run(refreshes));
       /* fork:end server-local-checkout-branch-follow */
     }
     const repositoryScopeIds = new Set(
