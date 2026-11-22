@@ -3,8 +3,8 @@
  * `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
  *
  * Mounts the active still new-agent backdrop (`Jolly Petal`, `Mountain Dither`)
- * and `NSGlassEffectView` cards behind Chromium so the composer and project
- * launchpad refract the backdrop art directly while DOM text stays sharp on top.
+ * and `NSGlassEffectView` cards behind Chromium so the composer, launchpad, and
+ * open popups refract the backdrop art while DOM text stays sharp on top.
  */
 import { type RefObject, useEffect } from "react";
 
@@ -15,6 +15,7 @@ import { isForkSidebarLiquidGlassApplied } from "./forkSidebarVibrancy";
 
 const FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE = "data-fork-draft-liquid-glass";
 const FORK_DRAFT_GLASS_POPUP_ATTRIBUTE = "data-fork-draft-glass-popup";
+const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
 const DRAFT_POPUP_SELECTOR = [
   ':is([data-slot="menu-popup"], [data-slot="menu-sub-content"], [data-slot="popover-popup"]).dropdown-glass',
@@ -40,7 +41,6 @@ interface DraftLiquidGlassPayload {
   readonly imageKey: string;
   readonly imageBase64?: string;
   readonly image: DraftLiquidGlassRect;
-  readonly pixelated: boolean;
   readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
 }
 
@@ -123,23 +123,21 @@ function readDraftPopupElements(stageBox: DraftLiquidGlassRect): HTMLElement[] {
   return matched;
 }
 
-function buildHeroPopupMask(
-  heroBox: DraftLiquidGlassRect,
+function buildCardPopupMask(
+  cardBox: DOMRect,
   popups: ReadonlyArray<DraftLiquidGlassCard>,
 ): string | null {
-  if (popups.length === 0 || heroBox.width <= 0 || heroBox.height <= 0) return null;
   const holes: string[] = [];
-  for (const popup of popups) {
-    if (!rectsIntersect(popup, heroBox)) continue;
-    const x = popup.x - heroBox.x;
-    const y = popup.y - heroBox.y;
-    const r = popup.cornerRadius;
+  for (const p of popups) {
+    if (!rectsIntersect(cardBox, p)) continue;
+    const x = Math.round((p.x - cardBox.left) * 2) / 2;
+    const y = Math.round((p.y - cardBox.top) * 2) / 2;
     holes.push(
-      `<rect x="${x}" y="${y}" width="${popup.width}" height="${popup.height}" rx="${r}" ry="${r}" fill="black"/>`,
+      `<rect x="${x}" y="${y}" width="${p.width}" height="${p.height}" rx="${p.cornerRadius}" ry="${p.cornerRadius}" fill="black"/>`,
     );
   }
   if (holes.length === 0) return null;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${heroBox.width}" height="${heroBox.height}" viewBox="0 0 ${heroBox.width} ${heroBox.height}"><defs><mask id="m"><rect width="100%" height="100%" fill="white"/>${holes.join("")}</mask></defs><rect width="100%" height="100%" fill="white" mask="url(#m)"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${cardBox.width}" height="${cardBox.height}" viewBox="0 0 ${cardBox.width} ${cardBox.height}"><defs><mask id="m"><rect width="100%" height="100%" fill="white"/>${holes.join("")}</mask></defs><rect width="100%" height="100%" fill="white" mask="url(#m)"/></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
@@ -205,6 +203,103 @@ type DraftBackdropLayoutFor = (
   dpr: number,
 ) => { readonly cell: number; readonly left: number; readonly top: number };
 
+interface MeasuredDraftScene {
+  readonly stage: DraftLiquidGlassRect;
+  readonly image: DraftLiquidGlassRect;
+  readonly cardBoxes: ReadonlyArray<{ readonly el: HTMLElement; readonly box: DOMRect }>;
+  readonly popups: ReadonlyArray<HTMLElement>;
+  readonly popupCards: ReadonlyArray<DraftLiquidGlassCard>;
+  readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
+}
+
+function measureDraftGlassScene(
+  chatView: Element,
+  stageEl: HTMLElement,
+  layoutFor: DraftBackdropLayoutFor,
+  cells: { readonly width: number; readonly height: number },
+): MeasuredDraftScene | null {
+  const stageBox = stageEl.getBoundingClientRect();
+  if (stageBox.width <= 0 || stageBox.height <= 0) return null;
+
+  const cardBoxes: Array<{ readonly el: HTMLElement; readonly box: DOMRect }> = [];
+  const cards: DraftLiquidGlassCard[] = [];
+  for (const el of readDraftCardElements(chatView)) {
+    const clipped = clipRectToAncestors(el, chatView, stageBox);
+    if (clipped === null) continue;
+    cardBoxes.push({ el, box: el.getBoundingClientRect() });
+    cards.push({
+      ...roundRect(clipped),
+      cornerRadius: readCornerRadius(el),
+    });
+  }
+  if (cards.length === 0) return null;
+
+  const popups = readDraftPopupElements(stageBox);
+  const popupCards: DraftLiquidGlassCard[] = [];
+  for (const popup of popups) {
+    const card: DraftLiquidGlassCard = {
+      ...roundRect(popup.getBoundingClientRect()),
+      cornerRadius: readCornerRadius(popup),
+    };
+    popupCards.push(card);
+    cards.push(card);
+  }
+
+  const { cell, left, top } = layoutFor(
+    { width: stageBox.width, height: stageBox.height },
+    window.devicePixelRatio || 1,
+  );
+  return {
+    stage: roundRect(stageBox),
+    image: roundRect({
+      x: left,
+      y: top,
+      width: cells.width * cell,
+      height: cells.height * cell,
+    }),
+    cardBoxes,
+    popups,
+    popupCards,
+    cards,
+  };
+}
+
+function applyDraftPopupCutouts(
+  scene: Pick<MeasuredDraftScene, "cardBoxes" | "popups" | "popupCards">,
+  stampedPopups: Set<HTMLElement>,
+  maskedCards: Map<HTMLElement, string>,
+): Set<HTMLElement> {
+  const nextStamped = new Set<HTMLElement>(scene.popups);
+  for (const prev of stampedPopups) {
+    if (!nextStamped.has(prev)) prev.removeAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE);
+  }
+  for (const popup of scene.popups) {
+    if (!stampedPopups.has(popup)) {
+      popup.setAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE, "true");
+    }
+  }
+
+  const nextMasked = new Set<HTMLElement>();
+  for (const { el, box } of scene.cardBoxes) {
+    const nextMask = buildCardPopupMask(box, scene.popupCards);
+    if (nextMask === null) continue;
+    nextMasked.add(el);
+    if (maskedCards.get(el) !== nextMask) {
+      el.style.maskImage = nextMask;
+      el.style.webkitMaskImage = nextMask;
+      maskedCards.set(el, nextMask);
+    }
+  }
+  for (const prev of maskedCards.keys()) {
+    if (!nextMasked.has(prev)) {
+      prev.style.maskImage = "";
+      prev.style.webkitMaskImage = "";
+      maskedCards.delete(prev);
+    }
+  }
+  return nextStamped;
+}
+
 export function useForkDraftLiquidGlass(input: {
   readonly ref: RefObject<HTMLDivElement | null>;
   readonly url: string;
@@ -233,10 +328,12 @@ export function useForkDraftLiquidGlass(input: {
     let settleRemaining = 0;
     let lastSentKey = "";
     let uploadedImageKey: string | null = null;
+    let retrying = false;
     let observedCards: HTMLElement[] = [];
     let stopObservedResize: (() => void) | null = null;
     let chatObserver: MutationObserver | null = null;
-    let bodyObserver: MutationObserver | null = null;
+    let bodyChildObserver: MutationObserver | null = null;
+    const portalObservers = new Map<Element, MutationObserver>();
     let stampedPopups = new Set<HTMLElement>();
     const maskedCards = new Map<HTMLElement, string>();
 
@@ -262,6 +359,7 @@ export function useForkDraftLiquidGlass(input: {
       if (lastSentKey !== "") {
         lastSentKey = "";
         uploadedImageKey = null;
+        retrying = false;
         void setter(null).catch(() => {});
       }
     };
@@ -276,6 +374,17 @@ export function useForkDraftLiquidGlass(input: {
     const onWindowResize = () => scheduleSync();
     const onScroll = () => scheduleSync();
 
+    const handleApplyFailure = () => {
+      uploadedImageKey = null;
+      lastSentKey = "";
+      clearStampedPopups();
+      document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+      if (!retrying) {
+        retrying = true;
+        scheduleSync();
+      }
+    };
+
     const refreshObservedTargets = () => {
       const nextCards = readDraftCardElements(chatView);
       const same =
@@ -287,6 +396,44 @@ export function useForkDraftLiquidGlass(input: {
       stopObservedResize = observeResize([stageEl, chatView, ...observedCards], () =>
         scheduleSync(),
       );
+    };
+
+    const syncPortalObservers = () => {
+      const portals = new Set(document.body.querySelectorAll(PORTAL_SELECTOR));
+      for (const [portal, observer] of portalObservers) {
+        if (!portals.has(portal)) {
+          observer.disconnect();
+          portalObservers.delete(portal);
+        }
+      }
+      for (const portal of portals) {
+        if (portalObservers.has(portal)) continue;
+        const observer = new MutationObserver((records) => {
+          for (const record of records) {
+            if (
+              record.type === "attributes" &&
+              record.attributeName === FORK_DRAFT_GLASS_POPUP_ATTRIBUTE
+            ) {
+              continue;
+            }
+            scheduleSync(POPUP_SETTLE_FRAMES);
+            return;
+          }
+        });
+        observer.observe(portal, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: [
+            "style",
+            "hidden",
+            "data-ending-style",
+            "data-starting-style",
+            "data-open",
+          ],
+        });
+        portalObservers.set(portal, observer);
+      }
     };
 
     const attachActiveObservers = () => {
@@ -303,32 +450,14 @@ export function useForkDraftLiquidGlass(input: {
         attributes: true,
         attributeFilter: ["data-draft-hero", "hidden", "style", "class"],
       });
-      bodyObserver = new MutationObserver((records) => {
-        for (const record of records) {
-          if (
-            record.type === "attributes" &&
-            record.attributeName === FORK_DRAFT_GLASS_POPUP_ATTRIBUTE
-          ) {
-            continue;
-          }
-          const target = record.target instanceof Element ? record.target : null;
-          if (target !== null && chatView.contains(target)) continue;
-          scheduleSync(POPUP_SETTLE_FRAMES);
-          return;
-        }
+      // Watch only direct children of body so Base UI portals mounting/unmounting
+      // trigger sync without observing sidebar or transcript mutations.
+      syncPortalObservers();
+      bodyChildObserver = new MutationObserver(() => {
+        syncPortalObservers();
+        scheduleSync(POPUP_SETTLE_FRAMES);
       });
-      bodyObserver.observe(document.body, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: [
-          "style",
-          "hidden",
-          "data-ending-style",
-          "data-starting-style",
-          "data-open",
-        ],
-      });
+      bodyChildObserver.observe(document.body, { childList: true });
       chatView.addEventListener("scroll", onScroll, true);
       window.addEventListener("resize", onWindowResize);
     };
@@ -341,8 +470,10 @@ export function useForkDraftLiquidGlass(input: {
       observedCards = [];
       chatObserver?.disconnect();
       chatObserver = null;
-      bodyObserver?.disconnect();
-      bodyObserver = null;
+      bodyChildObserver?.disconnect();
+      bodyChildObserver = null;
+      for (const observer of portalObservers.values()) observer.disconnect();
+      portalObservers.clear();
       chatView.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onWindowResize);
     };
@@ -357,82 +488,23 @@ export function useForkDraftLiquidGlass(input: {
       }
       attachActiveObservers();
 
-      const stageBox = stageEl.getBoundingClientRect();
-      if (stageBox.width <= 0 || stageBox.height <= 0) {
-        clearNative();
-        return;
-      }
-
-      const cardElements = readDraftCardElements(chatView);
-      const cardBoxes: Array<{ readonly el: HTMLElement; readonly box: DOMRect }> = [];
-      const cards: DraftLiquidGlassCard[] = [];
-      for (const el of cardElements) {
-        const clipped = clipRectToAncestors(el, chatView, stageBox);
-        if (clipped === null) continue;
-        cardBoxes.push({ el, box: el.getBoundingClientRect() });
-        cards.push({
-          ...roundRect(clipped),
-          cornerRadius: 8,
-        });
-      }
-
-      if (cards.length === 0) {
-        clearNative();
-        return;
-      }
-
-      const activePopups = readDraftPopupElements(stageBox);
-      const nextStamped = new Set<HTMLElement>(activePopups);
-      const popupCards: DraftLiquidGlassCard[] = [];
-      for (const prev of stampedPopups) {
-        if (!nextStamped.has(prev)) prev.removeAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE);
-      }
-      for (const popup of activePopups) {
-        if (!stampedPopups.has(popup)) {
-          popup.setAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE, "true");
-        }
-        const box = popup.getBoundingClientRect();
-        const card = {
-          ...roundRect(box),
-          cornerRadius: readCornerRadius(popup),
-        };
-        popupCards.push(card);
-        cards.push(card);
-      }
-      stampedPopups = nextStamped;
-
-      const nextMasked = new Set<HTMLElement>();
-      for (const { el, box } of cardBoxes) {
-        const nextMask = buildHeroPopupMask(box, popupCards);
-        if (nextMask === null) continue;
-        nextMasked.add(el);
-        if (maskedCards.get(el) !== nextMask) {
-          el.style.maskImage = nextMask;
-          el.style.webkitMaskImage = nextMask;
-          maskedCards.set(el, nextMask);
-        }
-      }
-      for (const prev of maskedCards.keys()) {
-        if (!nextMasked.has(prev)) {
-          prev.style.maskImage = "";
-          prev.style.webkitMaskImage = "";
-          maskedCards.delete(prev);
-        }
-      }
-
-      const { cell, left, top } = layoutFor(
-        { width: stageBox.width, height: stageBox.height },
-        window.devicePixelRatio || 1,
-      );
-      const stage = roundRect(stageBox);
-      const image = roundRect({
-        x: left,
-        y: top,
-        width: cellsWidth * cell,
-        height: cellsHeight * cell,
+      const scene = measureDraftGlassScene(chatView, stageEl, layoutFor, {
+        width: cellsWidth,
+        height: cellsHeight,
       });
+      if (scene === null) {
+        clearNative();
+        return;
+      }
 
-      const key = JSON.stringify({ url, stage, image, cards });
+      stampedPopups = applyDraftPopupCutouts(scene, stampedPopups, maskedCards);
+
+      const key = JSON.stringify({
+        url,
+        stage: scene.stage,
+        image: scene.image,
+        cards: scene.cards,
+      });
       if (key !== lastSentKey) {
         lastSentKey = key;
 
@@ -440,31 +512,25 @@ export function useForkDraftLiquidGlass(input: {
         const send = (imageBase64: string | undefined) => {
           if (disposed || key !== lastSentKey) return;
           void setter({
-            stage,
+            stage: scene.stage,
             imageKey: url,
             ...(imageBase64 !== undefined ? { imageBase64 } : {}),
-            image,
-            pixelated: true,
-            cards,
+            image: scene.image,
+            cards: scene.cards,
           })
             .then((applied) => {
               if (disposed || key !== lastSentKey) return;
               if (applied) {
                 uploadedImageKey = url;
+                retrying = false;
                 document.documentElement.setAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE, "true");
               } else {
-                uploadedImageKey = null;
-                lastSentKey = "";
-                clearStampedPopups();
-                document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+                handleApplyFailure();
               }
             })
             .catch(() => {
-              if (disposed) return;
-              uploadedImageKey = null;
-              lastSentKey = "";
-              clearStampedPopups();
-              document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+              if (disposed || key !== lastSentKey) return;
+              handleApplyFailure();
             });
         };
 

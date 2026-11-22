@@ -1,7 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork sidebar Liquid Glass — see `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
- * Mounts AppKit's sidebar glass (`native/sidebar-glass/sidebar_glass.m`) under the docked sidebar.
+ * Mounts AppKit's sidebar glass (`native/sidebar-glass/sidebar_glass.m`) under the docked sidebar
+ * and behind Flat Glass new-agent draft cards.
  */
 import * as NodeFS from "node:fs";
 import * as NodeModule from "node:module";
@@ -17,29 +18,15 @@ import * as DesktopIpc from "../ipc/DesktopIpc.ts";
 import { isForkAuxiliaryWindow } from "./ForkAuxiliaryWindows.ts";
 import { forkSenderWindow, isForkGlassActive } from "./ForkGlassState.ts";
 
-const FORK_IS_SIDEBAR_LIQUID_GLASS_SUPPORTED_CHANNEL = "fork:is-sidebar-liquid-glass-supported";
-const FORK_SET_SIDEBAR_LIQUID_GLASS_RECT_CHANNEL = "fork:set-sidebar-liquid-glass-rect";
+const FORK_SET_SIDEBAR_LIQUID_GLASS_WIDTH_CHANNEL = "fork:set-sidebar-liquid-glass-width";
 const FORK_SET_DRAFT_LIQUID_GLASS_CHANNEL = "fork:set-draft-liquid-glass";
 
-/**
- * Window backing colour behind AppKit's floating sidebar capsule (`#141618`,
- * matching Glass's `--background` stage tone).
- */
+/** Window backing colour behind AppKit's floating sidebar capsule (`#141618` for Full Glass). */
 export const FORK_LIQUID_GLASS_BACKING_RGB = 0x141618;
 
-export const ForkSidebarLiquidGlassRect = Schema.Struct({
-  x: Schema.Number,
-  y: Schema.Number,
-  width: Schema.Number,
-  height: Schema.Number,
-  cornerRadius: Schema.optional(Schema.Number),
-  docked: Schema.optional(Schema.Boolean),
-});
-
-export type ForkSidebarLiquidGlassRect = typeof ForkSidebarLiquidGlassRect.Type;
-
-export const ForkSidebarLiquidGlassRectRequest = Schema.Struct({
-  rect: Schema.NullOr(ForkSidebarLiquidGlassRect),
+const ForkSidebarLiquidGlassWidthRequest = Schema.Struct({
+  width: Schema.NullOr(Schema.Number),
+  backing: Schema.optional(Schema.Number),
 });
 
 const ForkRect2D = Schema.Struct({
@@ -62,11 +49,10 @@ const ForkDraftLiquidGlassState = Schema.Struct({
   imageKey: Schema.String,
   imageBase64: Schema.optional(Schema.String),
   image: ForkRect2D,
-  pixelated: Schema.Boolean,
   cards: Schema.Array(ForkDraftLiquidGlassCard),
 });
 
-type ForkDraftLiquidGlassState = typeof ForkDraftLiquidGlassState.Type;
+export type ForkDraftLiquidGlassState = typeof ForkDraftLiquidGlassState.Type;
 
 const ForkDraftLiquidGlassRequest = Schema.Struct({
   state: Schema.NullOr(ForkDraftLiquidGlassState),
@@ -77,37 +63,12 @@ export type SidebarGlassShowOptions = {
   readonly backing: number;
 };
 
-export type DraftGlassOptions = {
-  readonly stage: {
-    readonly x: number;
-    readonly y: number;
-    readonly width: number;
-    readonly height: number;
-  };
-  readonly imageKey: string;
-  readonly imageBase64?: string;
-  readonly image: {
-    readonly x: number;
-    readonly y: number;
-    readonly width: number;
-    readonly height: number;
-  };
-  readonly pixelated: boolean;
-  readonly cards: ReadonlyArray<{
-    readonly x: number;
-    readonly y: number;
-    readonly width: number;
-    readonly height: number;
-    readonly cornerRadius: number;
-  }>;
-};
-
 export type SidebarGlassNativeAddon = {
   readonly isSupported: () => boolean;
   readonly show: (handle: Buffer, options: SidebarGlassShowOptions) => boolean;
   readonly hide: (handle: Buffer) => boolean;
-  readonly setDraftGlass?: (handle: Buffer, options: DraftGlassOptions) => boolean;
-  readonly hideDraftGlass?: (handle: Buffer) => boolean;
+  readonly setDraftGlass: (handle: Buffer, options: ForkDraftLiquidGlassState) => boolean;
+  readonly hideDraftGlass: (handle: Buffer) => boolean;
 };
 
 let cachedAddon: SidebarGlassNativeAddon | null | undefined;
@@ -144,7 +105,9 @@ function loadNativeAddon(): SidebarGlassNativeAddon | null {
       if (
         typeof loaded.isSupported === "function" &&
         typeof loaded.show === "function" &&
-        typeof loaded.hide === "function"
+        typeof loaded.hide === "function" &&
+        typeof loaded.setDraftGlass === "function" &&
+        typeof loaded.hideDraftGlass === "function"
       ) {
         cachedAddon = loaded as SidebarGlassNativeAddon;
         return cachedAddon;
@@ -164,31 +127,23 @@ export function setSidebarGlassAddonForTests(
   cachedAddon = addon;
 }
 
-/**
- * Computes the sidebar Liquid Glass width in macOS points from a CSS-pixel rect,
- * clamped to the window's content bounds.
- */
-export function buildLiquidGlassOptions(
-  rect: ForkSidebarLiquidGlassRect,
+/** Computes the sidebar Liquid Glass width in macOS points, clamped to content bounds. */
+export function clampLiquidGlassWidth(
+  cssWidth: number,
   zoomFactor: number,
   contentSize: readonly number[],
-): SidebarGlassShowOptions | null {
+): number | null {
+  if (!Number.isFinite(cssWidth) || cssWidth <= 0) return null;
   const zoom = Number.isFinite(zoomFactor) && zoomFactor > 0 ? zoomFactor : 1;
   const contentWidth = contentSize[0] ?? 0;
   const contentHeight = contentSize[1] ?? 0;
   if (contentWidth <= 0 || contentHeight <= 0) return null;
-
-  const width = Math.min(contentWidth, Math.round(rect.width * zoom));
-  if (width <= 0) return null;
-
-  return {
-    width,
-    backing: FORK_LIQUID_GLASS_BACKING_RGB,
-  };
+  const width = Math.min(contentWidth, Math.round(cssWidth * zoom));
+  return width > 0 ? width : null;
 }
 
 /** True when macOS 26+ Liquid Glass is loadable and currently available. */
-export async function isForkLiquidGlassSupported(platform: NodeJS.Platform): Promise<boolean> {
+export function isForkLiquidGlassSupported(platform: NodeJS.Platform): boolean {
   if (platform !== "darwin") return false;
   const addon = loadNativeAddon();
   if (addon === null) return false;
@@ -218,7 +173,7 @@ export function clearForkLiquidGlass(window: Electron.BrowserWindow): void {
   if (addon === null) return;
   try {
     const handle = window.getNativeWindowHandle();
-    addon.hideDraftGlass?.(handle);
+    addon.hideDraftGlass(handle);
     addon.hide(handle);
   } catch {
     // Best-effort removal on teardown.
@@ -237,13 +192,13 @@ function scaleRect(
   };
 }
 
-async function applyForkDraftLiquidGlass(
+function applyForkDraftLiquidGlass(
   window: Electron.BrowserWindow,
   state: ForkDraftLiquidGlassState | null,
-): Promise<boolean> {
+): boolean {
   if (window.isDestroyed()) return false;
   const addon = loadNativeAddon();
-  if (addon === null || !addon.setDraftGlass || !addon.hideDraftGlass) return false;
+  if (addon === null) return false;
   const handle = window.getNativeWindowHandle();
   if (state === null) {
     try {
@@ -256,12 +211,11 @@ async function applyForkDraftLiquidGlass(
 
   const rawZoom = window.webContents.getZoomFactor();
   const zoom = Number.isFinite(rawZoom) && rawZoom > 0 ? rawZoom : 1;
-  const options: DraftGlassOptions = {
+  const scaled: ForkDraftLiquidGlassState = {
     stage: scaleRect(state.stage, zoom),
     imageKey: state.imageKey,
     ...(state.imageBase64 !== undefined ? { imageBase64: state.imageBase64 } : {}),
     image: scaleRect(state.image, zoom),
-    pixelated: state.pixelated,
     cards: state.cards.map((card) => ({
       ...scaleRect(card, zoom),
       cornerRadius: card.cornerRadius * zoom,
@@ -269,30 +223,31 @@ async function applyForkDraftLiquidGlass(
   };
 
   try {
-    return addon.setDraftGlass(handle, options);
+    return addon.setDraftGlass(handle, scaled);
   } catch {
     return false;
   }
 }
 
 /** Attaches, updates, or removes the sidebar Liquid Glass view on `window`. */
-export async function applyForkLiquidGlassRect(
+export function applyForkLiquidGlassWidth(
   window: Electron.BrowserWindow,
-  rect: ForkSidebarLiquidGlassRect | null,
-): Promise<boolean> {
+  cssWidth: number | null,
+  backingRgb: number = FORK_LIQUID_GLASS_BACKING_RGB,
+): boolean {
   if (window.isDestroyed()) return false;
 
-  if (rect === null) {
+  if (cssWidth === null) {
     hideForkSidebarLiquidGlass(window);
     return true;
   }
 
-  const options = buildLiquidGlassOptions(
-    rect,
+  const width = clampLiquidGlassWidth(
+    cssWidth,
     window.webContents.getZoomFactor(),
     window.getContentSize(),
   );
-  if (options === null) {
+  if (width === null) {
     hideForkSidebarLiquidGlass(window);
     return true;
   }
@@ -300,42 +255,42 @@ export async function applyForkLiquidGlassRect(
   const addon = loadNativeAddon();
   if (addon === null) return false;
 
+  const backing =
+    Number.isFinite(backingRgb) && backingRgb >= 0 && backingRgb <= 0xffffff
+      ? Math.trunc(backingRgb)
+      : FORK_LIQUID_GLASS_BACKING_RGB;
+
   try {
-    return addon.show(window.getNativeWindowHandle(), options);
+    return addon.show(window.getNativeWindowHandle(), { width, backing });
   } catch {
     return false;
   }
 }
 
-export const isForkSidebarLiquidGlassSupported = DesktopIpc.makeIpcMethod({
-  channel: FORK_IS_SIDEBAR_LIQUID_GLASS_SUPPORTED_CHANNEL,
-  payload: Schema.Undefined,
-  result: Schema.Boolean,
-  handler: Effect.fn("desktop.ipc.fork.isSidebarLiquidGlassSupported")(function* (_request, event) {
-    const platform = yield* HostProcess.Platform;
-    const target = yield* forkSenderWindow(event);
-    if (target === null || target.isDestroyed() || isForkAuxiliaryWindow(target)) {
-      return false;
-    }
-    return yield* Effect.promise(() => isForkLiquidGlassSupported(platform));
-  }),
+const resolveLiquidGlassWindow = Effect.fn("desktop.ipc.fork.resolveLiquidGlassWindow")(function* (
+  event: DesktopIpc.DesktopIpcInvokeEvent | undefined,
+  enabling: boolean,
+) {
+  const platform = yield* HostProcess.Platform;
+  if (platform !== "darwin") return null;
+  const target = yield* forkSenderWindow(event);
+  if (target === null || target.isDestroyed() || isForkAuxiliaryWindow(target)) {
+    return null;
+  }
+  if (enabling && !isForkGlassActive(target)) {
+    return null;
+  }
+  return target;
 });
 
-export const setForkSidebarLiquidGlassRect = DesktopIpc.makeIpcMethod({
-  channel: FORK_SET_SIDEBAR_LIQUID_GLASS_RECT_CHANNEL,
-  payload: ForkSidebarLiquidGlassRectRequest,
+export const setForkSidebarLiquidGlassWidth = DesktopIpc.makeIpcMethod({
+  channel: FORK_SET_SIDEBAR_LIQUID_GLASS_WIDTH_CHANNEL,
+  payload: ForkSidebarLiquidGlassWidthRequest,
   result: Schema.Boolean,
-  handler: Effect.fn("desktop.ipc.fork.setSidebarLiquidGlassRect")(function* (request, event) {
-    const platform = yield* HostProcess.Platform;
-    if (platform !== "darwin") return false;
-    const target = yield* forkSenderWindow(event);
-    if (target === null || target.isDestroyed() || isForkAuxiliaryWindow(target)) {
-      return false;
-    }
-    if (request.rect !== null && !isForkGlassActive(target)) {
-      return false;
-    }
-    return yield* Effect.promise(() => applyForkLiquidGlassRect(target, request.rect));
+  handler: Effect.fn("desktop.ipc.fork.setSidebarLiquidGlassWidth")(function* (request, event) {
+    const target = yield* resolveLiquidGlassWindow(event, request.width !== null);
+    if (target === null) return false;
+    return applyForkLiquidGlassWidth(target, request.width, request.backing);
   }),
 });
 
@@ -344,15 +299,8 @@ export const setForkDraftLiquidGlass = DesktopIpc.makeIpcMethod({
   payload: ForkDraftLiquidGlassRequest,
   result: Schema.Boolean,
   handler: Effect.fn("desktop.ipc.fork.setDraftLiquidGlass")(function* (request, event) {
-    const platform = yield* HostProcess.Platform;
-    if (platform !== "darwin") return false;
-    const target = yield* forkSenderWindow(event);
-    if (target === null || target.isDestroyed() || isForkAuxiliaryWindow(target)) {
-      return false;
-    }
-    if (request.state !== null && !isForkGlassActive(target)) {
-      return false;
-    }
-    return yield* Effect.promise(() => applyForkDraftLiquidGlass(target, request.state));
+    const target = yield* resolveLiquidGlassWindow(event, request.state !== null);
+    if (target === null) return false;
+    return applyForkDraftLiquidGlass(target, request.state);
   }),
 });

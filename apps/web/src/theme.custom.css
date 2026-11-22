@@ -1713,8 +1713,9 @@
    leaves that button focused, and plain focus would pin the buttons on
    after the pointer had left. An open project menu pins it (the pointer is
    on the popup then, not the row), and a coarse pointer, which cannot
-   hover, always sees it. Opacity only — the buttons keep their box, so the
-   label never reflows. */
+   hover, always sees it. Project headers collapse the trailing actions to
+   zero width at rest so long project names keep the full row width until
+   hovered; status headers keep their box (opacity only). */
 :root[data-fork="noahhendrickson-t3code"]
   li[data-fork-project-section-header]
   [data-fork-section-actions] {

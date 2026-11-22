@@ -239,51 +239,25 @@
 /* On Flat Glass, list rows across the sidebar (threads, top chrome rows,
    active split pairs, project group headers, collapsed thread tabs), menus,
    selects, command palette items, Petals drawer rows, the model picker search
-   field, and the draft launchpad cards ("Start something new" and recent
-   projects) share one 8px continuous (iOS-smoothed) corner radius. CSS
-   corner-shape stays inside border-radius (unlike iOS/Figma, which extend ~1.5x
-   along the edge), so 12px with superellipse(1.6) matches an 8px iOS continuous
-   corner while non-supporting browsers fall back to 8px. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  :is([data-sidebar-version="v2"], [data-app-modal])
-  :is(
-    [data-fork-thread-row],
-    [data-fork-chrome-row],
-    li[data-fork-split-pair] > ul,
-    [data-testid="sidebar-v2-project-group-collapse"]
-  ),
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-thread-tabs]
-  [data-fork-thread-tab],
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  :is(
-    [data-slot="menu-item"],
-    [data-slot="menu-checkbox-item"],
-    [data-slot="menu-radio-item"],
-    [data-slot="menu-sub-trigger"],
-    [data-slot="select-item"],
-    [data-slot="combobox-item"],
-    [data-slot="command-item"],
-    [data-testid="bot-threads-row"]
-  ),
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-model-picker="list"]
-  > label,
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-draft-launchpad-card]
-  button {
-  border-radius: 8px;
-}
-
-/* Keep the model picker shell concentric around its 8px continuous items and
-   8px padding on Flat Glass. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-  border-radius: 14px;
+   field, and the draft launchpad cards share one 8px continuous (iOS-smoothed)
+   corner radius. CSS corner-shape stays inside border-radius (unlike iOS/Figma,
+   which extend ~1.5x along the edge), so engines supporting superellipse(1.6)
+   bump the token to 12px (18px on the concentric model picker shell) while
+   others fall back to 8px (14px). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-flat-radius: 8px;
+  --fork-flat-model-picker-radius: 14px;
 }
 
 @supports (corner-shape: superellipse(1.6)) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+    --fork-flat-radius: 12px;
+    --fork-flat-model-picker-radius: 18px;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  &
     :is([data-sidebar-version="v2"], [data-app-modal])
     :is(
       [data-fork-thread-row],
@@ -291,10 +265,8 @@
       li[data-fork-split-pair] > ul,
       [data-testid="sidebar-v2-project-group-collapse"]
     ),
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-    [data-fork-thread-tabs]
-    [data-fork-thread-tab],
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  & [data-fork-thread-tabs] [data-fork-thread-tab],
+  &
     :is(
       [data-slot="menu-item"],
       [data-slot="menu-checkbox-item"],
@@ -305,19 +277,14 @@
       [data-slot="command-item"],
       [data-testid="bot-threads-row"]
     ),
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="list"]
-    > label,
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-    [data-fork-draft-launchpad-card]
-    button {
-    border-radius: 12px;
+  & [data-fork-model-picker="list"] > label,
+  & [data-fork-draft-launchpad-card] button {
+    border-radius: var(--fork-flat-radius);
     corner-shape: superellipse(1.6);
   }
 
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-    :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-    border-radius: 18px;
+  & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
+    border-radius: var(--fork-flat-model-picker-radius);
     corner-shape: superellipse(1.6);
   }
 }

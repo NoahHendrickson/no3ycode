@@ -20,6 +20,10 @@ import type {
   ForkMusicState,
 } from "./fork/ForkMusicClient.ts";
 /* fork:end fork-music-panel */
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+import type { ForkDraftLiquidGlassState } from "./fork/ForkLiquidGlass.ts";
+import type { ForkSidebarVibrancyMode } from "./fork/ForkSidebarVibrancy.ts";
+/* fork:end fork-cool-darker-sidebar-vibrancy */
 
 const SNAP_SHOT_EVENT_TYPES = new Set([
   "requested",
@@ -540,47 +544,16 @@ const forkMusic = <T>(request: Record<string, unknown>, fallback: T): Promise<T>
  * addition does not need a preload `alwaysBundle` entry.
  */
 contextBridge.exposeInMainWorld("forkDesktopBridge", {
-  setSidebarVibrancy: (enabled: boolean): Promise<boolean> =>
+  setSidebarVibrancy: (enabled: boolean): Promise<ForkSidebarVibrancyMode> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
   sidebarLiquidGlass: {
-    isSupported: (): Promise<boolean> =>
-      ipcRenderer.invoke("fork:is-sidebar-liquid-glass-supported"),
-    setRect: (
-      rect: {
-        readonly x: number;
-        readonly y: number;
-        readonly width: number;
-        readonly height: number;
-        readonly cornerRadius?: number;
-        readonly docked?: boolean;
-      } | null,
-    ): Promise<boolean> => ipcRenderer.invoke("fork:set-sidebar-liquid-glass-rect", { rect }),
-    setDraftGlass: (
-      state: {
-        readonly stage: {
-          readonly x: number;
-          readonly y: number;
-          readonly width: number;
-          readonly height: number;
-        };
-        readonly imageKey: string;
-        readonly imageBase64?: string;
-        readonly image: {
-          readonly x: number;
-          readonly y: number;
-          readonly width: number;
-          readonly height: number;
-        };
-        readonly pixelated: boolean;
-        readonly cards: ReadonlyArray<{
-          readonly x: number;
-          readonly y: number;
-          readonly width: number;
-          readonly height: number;
-          readonly cornerRadius: number;
-        }>;
-      } | null,
-    ): Promise<boolean> => ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),
+    setWidth: (width: number | null, backing?: number): Promise<boolean> =>
+      ipcRenderer.invoke("fork:set-sidebar-liquid-glass-width", {
+        width,
+        ...(backing !== undefined ? { backing } : {}),
+      }),
+    setDraftGlass: (state: ForkDraftLiquidGlassState | null): Promise<boolean> =>
+      ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),
   },
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   // Mirrored by apps/web/src/custom/forkTopbarHeight.ts; fork/ForkTopbarHeight.ts answers it.

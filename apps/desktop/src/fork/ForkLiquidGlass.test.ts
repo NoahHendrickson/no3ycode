@@ -8,8 +8,8 @@ vi.mock("electron", () => ({
 import type * as Electron from "electron";
 
 import {
-  applyForkLiquidGlassRect,
-  buildLiquidGlassOptions,
+  applyForkLiquidGlassWidth,
+  clampLiquidGlassWidth,
   clearForkLiquidGlass,
   FORK_LIQUID_GLASS_BACKING_RGB,
   isForkLiquidGlassSupported,
@@ -30,23 +30,12 @@ function makeFakeWindow(contentSize: [number, number] = [1200, 800], zoom = 1) {
 
 describe("ForkLiquidGlass", () => {
   it("scales CSS width by zoomFactor and clamps to content bounds", () => {
-    const options = buildLiquidGlassOptions(
-      { x: 0, y: 0, width: 256, height: 700, cornerRadius: 0, docked: true },
-      1.25,
-      [1200, 800],
-    );
-
-    assert.deepStrictEqual(options, {
-      width: 320,
-      backing: FORK_LIQUID_GLASS_BACKING_RGB,
-    });
-
-    assert.isNull(
-      buildLiquidGlassOptions({ x: 0, y: 0, width: 0, height: 800, docked: true }, 1, [1200, 800]),
-    );
+    assert.strictEqual(clampLiquidGlassWidth(256, 1.25, [1200, 800]), 320);
+    assert.strictEqual(clampLiquidGlassWidth(1500, 1, [1200, 800]), 1200);
+    assert.isNull(clampLiquidGlassWidth(0, 1, [1200, 800]));
   });
 
-  it("shows, updates width, hides sidebar without clearing draft glass, and gates on darwin", async () => {
+  it("shows, updates width and backing, hides sidebar without clearing draft glass, and gates on darwin", () => {
     const showCalls: Array<readonly [Buffer, SidebarGlassShowOptions]> = [];
     const hideCalls: Array<Buffer> = [];
     const hideDraftCalls: Array<Buffer> = [];
@@ -60,6 +49,7 @@ describe("ForkLiquidGlass", () => {
         hideCalls.push(handle);
         return true;
       },
+      setDraftGlass: () => true,
       hideDraftGlass: (handle) => {
         hideDraftCalls.push(handle);
         return true;
@@ -67,22 +57,24 @@ describe("ForkLiquidGlass", () => {
     });
 
     try {
-      assert.isTrue(await isForkLiquidGlassSupported("darwin"));
-      assert.isFalse(await isForkLiquidGlassSupported("linux"));
+      assert.isTrue(isForkLiquidGlassSupported("darwin"));
+      assert.isFalse(isForkLiquidGlassSupported("linux"));
 
       const { window, handle } = makeFakeWindow([1200, 800], 1);
-      assert.isTrue(
-        await applyForkLiquidGlassRect(window, { x: 0, y: 0, width: 256, height: 800 }),
-      );
-      assert.isTrue(
-        await applyForkLiquidGlassRect(window, { x: 0, y: 0, width: 310, height: 800 }),
-      );
+      assert.isTrue(applyForkLiquidGlassWidth(window, 256));
+      assert.isTrue(applyForkLiquidGlassWidth(window, 310, 0x1f1c1b));
       assert.strictEqual(showCalls.length, 2);
       assert.strictEqual(showCalls[0]?.[0], handle);
-      assert.strictEqual(showCalls[0]?.[1].width, 256);
-      assert.strictEqual(showCalls[1]?.[1].width, 310);
+      assert.deepStrictEqual(showCalls[0]?.[1], {
+        width: 256,
+        backing: FORK_LIQUID_GLASS_BACKING_RGB,
+      });
+      assert.deepStrictEqual(showCalls[1]?.[1], {
+        width: 310,
+        backing: 0x1f1c1b,
+      });
 
-      assert.isTrue(await applyForkLiquidGlassRect(window, null));
+      assert.isTrue(applyForkLiquidGlassWidth(window, null));
       assert.strictEqual(hideCalls.length, 1);
       assert.strictEqual(hideDraftCalls.length, 0);
 

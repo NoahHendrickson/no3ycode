@@ -55,7 +55,7 @@ import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
-import { IconTab, Tabs } from "~/custom/Tabs";
+import { MenuIconTab, MenuTabs } from "~/custom/Tabs";
 import {
   isProviderInstancePickerReady,
   isProviderInstancePickerVisible,
@@ -809,15 +809,18 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       <Tooltip key={input.target}>
         <TooltipTrigger
           render={
-            <IconTab
+            <MenuIconTab
               value={input.target}
               disabled={input.disabled}
               aria-label={holdsCurrentModel ? `${input.title} (current model)` : input.title}
               aria-current={isSelected ? "true" : undefined}
               data-model-picker-provider={input.target}
+              onClick={() => {
+                if (!input.disabled) selectScope(input.target);
+              }}
               className={cn(
                 "relative aspect-auto min-w-7 flex-1",
-                input.disabled && "disabled:pointer-events-auto",
+                input.disabled && "data-disabled:pointer-events-auto",
               )}
             >
               {input.icon}
@@ -828,7 +831,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                   aria-hidden
                 />
               ) : null}
-            </IconTab>
+            </MenuIconTab>
           }
         />
         <TooltipPopup side="top" sideOffset={6} align="center" className={TOOLTIP_CLASS}>
@@ -862,23 +865,20 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   };
 
   /** Horizontal provider tabs above the search field, using the fork's segmented
-      Tabs strip. Overflowing provider lists scroll horizontally inside the bar. */
+      MenuTabs strip so the tabs stay in the menu's keyboard navigation. */
   const renderProviderTabs = () => (
     <div
       role="group"
       aria-label="Providers"
       className="flex shrink-0 items-center overflow-x-auto overscroll-contain px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       data-fork-model-picker="providers"
-      onKeyDown={(event) => {
-        if (event.key !== "Escape" && event.key !== "Tab") event.stopPropagation();
-      }}
     >
-      <Tabs
+      <MenuTabs
         size="md"
         aria-label="Providers"
-        value={[scope]}
-        onValueChange={([next]) => {
-          if (next !== undefined) selectScope(next as ModelPickerScope);
+        value={scope}
+        onValueChange={(next) => {
+          if (typeof next === "string") selectScope(next as ModelPickerScope);
         }}
         className="min-w-full"
       >
@@ -888,7 +888,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
         })}
         {providerEntries.map(renderProviderTab)}
-      </Tabs>
+      </MenuTabs>
     </div>
   );
 

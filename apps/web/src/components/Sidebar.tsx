@@ -5254,6 +5254,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       />
     );
   };
+  /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
   const handleProjectSortOrderChange = (sortOrder: typeof sidebarProjectSortOrder) => {
     if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
       snapshotVisibleProjectOrderAsManual(projectGroups);
@@ -5286,6 +5287,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       groupByProjectUnavailableReason={groupByProjectUnavailableReason}
     />
   );
+  /* fork:end fork-sidebar-chrome */
   return (
     <SidebarFolderDrop>
       <SidebarChromeHeader
@@ -5590,7 +5592,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           isFirst={isFirst}
                           collapsed={section.collapsed}
                           onToggleCollapsed={() => toggleStatusSectionCollapsed(status)}
-                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
+                          renderTrailing={renderGroupingControls}
                         />,
                         ...section.threads.map((thread) =>
                           renderThreadRow(thread, "active", { statusSection: status }),
@@ -5609,7 +5611,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           isFirst={draftsSection === null}
                           collapsed={pinnedCollapsed}
                           onToggleCollapsed={() => toggleStatusSectionCollapsed("pinned")}
-                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
+                          renderTrailing={renderGroupingControls}
                         />
                       ) : null,
                       /* fork:end sidebar-v2-status-grouping */

@@ -1,26 +1,10 @@
 /**
  * Fork sidebar glass — see `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
  *
- * Asks the desktop shell for the native window material and records what it
- * actually got. The renderer never assumes the glass turned on: the main process
- * resolves `false` where no material exists, as does a missing bridge, and only that resolved value
- * stamps the DOM marker. The CSS gate hangs off the marker rather than off the
- * palette, so a Linux or web client keeps solid fills instead of painting holes
- * into an opaque window.
- *
- * Two native modes exist:
- * - `"true"`: whole-window vibrancy (macOS < 26 `fullscreen-ui`, Windows 11
- *   acrylic, and the sidebar-less Side Chat window).
- * - `"liquid-glass"`: macOS 26+ AppKit `NSGlassEffectView` positioned strictly
- *   behind the docked sidebar while the chat stage stays opaque.
- *
- * This module imports nothing from `forkTheme`, on purpose. It used to, and
- * `forkTheme` imports it, so the cycle had to be worked around with functions
- * that deferred reading the constants until call time. Taking `enabled` as an
- * argument deletes the cycle instead of dodging it — and, more importantly,
- * stops this module guessing at palette-specific values it has no business
- * knowing. The window's opaque restore colour is resolved in the main process
- * from `nativeTheme`, because only it knows the theme being restored to.
+ * Asks the desktop shell for the native window material and stamps what it
+ * actually got (`"off"`, `"vibrancy"`, or `"liquid-glass"`). Main decides the
+ * mode in one round trip so the renderer never disagrees with Electron about
+ * whether whole-window vibrancy or macOS 26+ sidebar Liquid Glass is active.
  */
 
 import { observeResize } from "~/lib/observeResize";
@@ -28,30 +12,21 @@ import { observeResize } from "~/lib/observeResize";
 export const FORK_SIDEBAR_VIBRANCY_ATTRIBUTE = "data-fork-sidebar-vibrancy";
 export const FORK_SIDEBAR_LIQUID_GLASS_VALUE = "liquid-glass";
 
-export type ForkSidebarLiquidGlassRect = {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-  readonly cornerRadius?: number;
-  readonly docked?: boolean;
-};
+const FORK_GLASS_3D_ATTRIBUTE = "data-fork-glass-3d";
+const FULL_GLASS_BACKING_RGB = 0x141618;
+const FLAT_GLASS_BACKING_RGB = 0x1f1c1b;
+
+export type ForkSidebarVibrancyMode = "off" | "vibrancy" | "liquid-glass";
 
 type ForkSidebarLiquidGlassBridge = {
-  readonly isSupported: () => Promise<boolean>;
-  readonly setRect: (rect: ForkSidebarLiquidGlassRect | null) => Promise<boolean>;
+  readonly setWidth: (width: number | null, backing?: number) => Promise<boolean>;
 };
 
 type ForkDesktopBridge = {
-  readonly setSidebarVibrancy: (enabled: boolean) => Promise<boolean>;
-  readonly sidebarLiquidGlass?: ForkSidebarLiquidGlassBridge;
+  readonly setSidebarVibrancy: (enabled: boolean) => Promise<ForkSidebarVibrancyMode | boolean>;
+  readonly sidebarLiquidGlass?: unknown;
 };
 
-/**
- * Read off `globalThis`, not `window`. In the renderer the two are the same
- * object; in a non-DOM test environment only `globalThis` exists, and reaching
- * for `window` there would make the helper silently untestable.
- */
 function readBridge(): ForkDesktopBridge | null {
   const bridge = (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
   if (typeof bridge !== "object" || bridge === null) return null;
@@ -62,33 +37,30 @@ function readBridge(): ForkDesktopBridge | null {
 function readLiquidGlassBridge(bridge: ForkDesktopBridge): ForkSidebarLiquidGlassBridge | null {
   const candidate = bridge.sidebarLiquidGlass;
   if (typeof candidate !== "object" || candidate === null) return null;
-  return typeof candidate.isSupported === "function" && typeof candidate.setRect === "function"
-    ? candidate
-    : null;
+  const lg = candidate as { setWidth?: unknown };
+  return typeof lg.setWidth === "function" ? (candidate as ForkSidebarLiquidGlassBridge) : null;
 }
 
-function stampMarker(root: Element, mode: "off" | "vibrancy" | "liquid-glass"): void {
-  if (mode === "vibrancy") {
-    root.setAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE, "true");
-  } else if (mode === "liquid-glass") {
+function normalizeVibrancyMode(value: ForkSidebarVibrancyMode | boolean): ForkSidebarVibrancyMode {
+  if (value === "liquid-glass") return "liquid-glass";
+  if (value === "vibrancy" || value === true) return "vibrancy";
+  return "off";
+}
+
+function stampMarker(root: Element, mode: ForkSidebarVibrancyMode): void {
+  if (mode === "liquid-glass") {
     root.setAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE, FORK_SIDEBAR_LIQUID_GLASS_VALUE);
+  } else if (mode === "vibrancy") {
+    root.setAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE, "true");
   } else {
     root.removeAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE);
   }
 }
 
-/**
- * Whether whole-window glass is on right now, read from the marker rather than
- * from a sync's return value: a superseded sync still resolves with its own
- * answer, but only the newest one is allowed to stamp.
- *
- * Returns `false` in Liquid Glass mode because the stage is opaque there — the
- * floor-colour sampler and popup cutout must stay off.
- */
+/** Whether whole-window desktop vibrancy is active on the current window. */
 export function isForkSidebarVibrancyApplied(
   root: Element | null = typeof document === "undefined" ? null : document.documentElement,
 ): boolean {
-  // The theme tests hand the palette sync a bare fake root with no reader.
   if (typeof root?.getAttribute !== "function") return false;
   return root.getAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE) === "true";
 }
@@ -101,17 +73,10 @@ export function isForkSidebarLiquidGlassApplied(
   return root.getAttribute(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE) === FORK_SIDEBAR_LIQUID_GLASS_VALUE;
 }
 
-/**
- * Measures the docked sidebar's live bounding rectangle in CSS pixels.
- * Uses `[data-slot="sidebar-gap"]` because its width is non-zero only when the
- * sidebar is docked beside the stage (collapsing or switching to narrow-window
- * overlay zeroes it, and drag-resizing updates it every frame).
- */
-function readDockedSidebarGlassRect(
+function readDockedSidebarGlassWidth(
   doc: Document | null = typeof document === "undefined" ? null : document,
-  viewportHeight: number = typeof window === "undefined" ? 0 : window.innerHeight,
-): ForkSidebarLiquidGlassRect | null {
-  if (doc === null || viewportHeight <= 0) return null;
+): number | null {
+  if (doc === null) return null;
   const wrapper = doc.querySelector<HTMLElement>('[data-slot="sidebar-wrapper"]');
   if (wrapper === null) return null;
   if (wrapper.getAttribute("data-fork-sidebar-overlay") === "true") return null;
@@ -119,25 +84,26 @@ function readDockedSidebarGlassRect(
   const gap = wrapper.querySelector<HTMLElement>('[data-slot="sidebar-gap"]');
   if (gap === null) return null;
 
-  const rect = gap.getBoundingClientRect();
-  const width = Math.round(rect.width);
-  if (width <= 0) return null;
+  const width = Math.round(gap.getBoundingClientRect().width);
+  return width > 0 ? width : null;
+}
 
-  return {
-    x: Math.max(0, Math.round(rect.left)),
-    y: 0,
-    width,
-    height: Math.round(viewportHeight),
-    cornerRadius: 0,
-    docked: true,
-  };
+function readLiquidGlassBackingRgb(root: Element): number {
+  if (typeof root.getAttribute !== "function") return FULL_GLASS_BACKING_RGB;
+  return root.getAttribute(FORK_GLASS_3D_ATTRIBUTE) === "off"
+    ? FLAT_GLASS_BACKING_RGB
+    : FULL_GLASS_BACKING_RGB;
 }
 
 let stopLiquidGlassTracking: (() => void) | null = null;
 
-function rectKey(rect: ForkSidebarLiquidGlassRect | null): string {
-  if (rect === null) return "null";
-  return `${rect.x},${rect.y},${rect.width},${rect.height},${rect.cornerRadius ?? 0},${rect.docked ? 1 : 0}`;
+function stopTracking(): void {
+  stopLiquidGlassTracking?.();
+  stopLiquidGlassTracking = null;
+}
+
+function widthKey(width: number | null, backing: number): string {
+  return width === null ? "null" : `${width}:${backing}`;
 }
 
 function startLiquidGlassTracking(
@@ -145,8 +111,7 @@ function startLiquidGlassTracking(
   root: Element,
   isStale: () => boolean,
 ): void {
-  stopLiquidGlassTracking?.();
-  stopLiquidGlassTracking = null;
+  stopTracking();
 
   if (typeof document === "undefined" || typeof window === "undefined") {
     stampMarker(root, "liquid-glass");
@@ -155,26 +120,27 @@ function startLiquidGlassTracking(
 
   let active = true;
   let lastAppliedKey: string | null = null;
-  let inFlightKey: string | null = null;
-  let pushId = 0;
+  let inFlight = false;
+  let observedWrapper: Element | null = null;
   let observedGap: Element | null = null;
   let stopObservedGap: (() => void) | null = null;
+  let wrapperObserver: MutationObserver | null = null;
+  let bootstrapObserver: MutationObserver | null = null;
   let rafId: number | null = null;
 
-  const pushRect = () => {
+  const pushWidth = () => {
     rafId = null;
-    if (!active || isStale()) return;
-    const rect = readDockedSidebarGlassRect(document, window.innerHeight);
-    const key = rectKey(rect);
-    if (key === lastAppliedKey || key === inFlightKey) return;
-    inFlightKey = key;
-    pushId += 1;
-    const requestId = pushId;
+    if (!active || isStale() || inFlight) return;
+    const width = readDockedSidebarGlassWidth(document);
+    const backing = readLiquidGlassBackingRgb(root);
+    const key = widthKey(width, backing);
+    if (key === lastAppliedKey) return;
+    inFlight = true;
     void liquidGlass
-      .setRect(rect)
+      .setWidth(width, backing)
       .then((applied) => {
-        if (!active || isStale() || requestId !== pushId) return;
-        inFlightKey = null;
+        if (!active || isStale()) return;
+        inFlight = false;
         if (applied) {
           lastAppliedKey = key;
           stampMarker(root, "liquid-glass");
@@ -182,10 +148,16 @@ function startLiquidGlassTracking(
           lastAppliedKey = null;
           stampMarker(root, "off");
         }
+        // Reconcile if the sidebar resized or reversed while IPC was in flight.
+        const liveWidth = readDockedSidebarGlassWidth(document);
+        const liveBacking = readLiquidGlassBackingRgb(root);
+        if (widthKey(liveWidth, liveBacking) !== lastAppliedKey) {
+          schedulePush();
+        }
       })
       .catch(() => {
-        if (!active || isStale() || requestId !== pushId) return;
-        inFlightKey = null;
+        if (!active || isStale()) return;
+        inFlight = false;
         lastAppliedKey = null;
         stampMarker(root, "off");
       });
@@ -194,15 +166,15 @@ function startLiquidGlassTracking(
   const schedulePush = () => {
     if (!active || isStale()) return;
     if (typeof window.requestAnimationFrame !== "function") {
-      pushRect();
+      pushWidth();
       return;
     }
     if (rafId !== null) return;
-    rafId = window.requestAnimationFrame(pushRect);
+    rafId = window.requestAnimationFrame(pushWidth);
   };
 
   const syncObservedGap = () => {
-    const nextGap = document.querySelector('[data-slot="sidebar-gap"]');
+    const nextGap = observedWrapper?.querySelector('[data-slot="sidebar-gap"]') ?? null;
     if (nextGap === observedGap) return;
     stopObservedGap?.();
     stopObservedGap = null;
@@ -212,25 +184,49 @@ function startLiquidGlassTracking(
     }
   };
 
-  const mutationObserver =
-    typeof MutationObserver === "function"
-      ? new MutationObserver(() => {
-          syncObservedGap();
-          schedulePush();
-        })
-      : null;
+  const attachWrapper = () => {
+    const wrapper = document.querySelector('[data-slot="sidebar-wrapper"]');
+    if (wrapper === null || wrapper === observedWrapper) return;
+    observedWrapper = wrapper;
+    bootstrapObserver?.disconnect();
+    bootstrapObserver = null;
+    wrapperObserver?.disconnect();
+    if (typeof MutationObserver === "function") {
+      wrapperObserver = new MutationObserver(() => {
+        syncObservedGap();
+        schedulePush();
+      });
+      wrapperObserver.observe(wrapper, {
+        childList: true,
+        attributes: true,
+        attributeFilter: ["data-fork-sidebar-overlay", "data-sidebar-state", "data-state"],
+      });
+    }
+    syncObservedGap();
+    schedulePush();
+  };
 
-  syncObservedGap();
-  if (mutationObserver !== null && document.body !== null) {
-    mutationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["data-fork-sidebar-overlay", "data-sidebar-state", "data-state", "style"],
+  attachWrapper();
+  if (
+    observedWrapper === null &&
+    typeof MutationObserver === "function" &&
+    document.body !== null
+  ) {
+    bootstrapObserver = new MutationObserver(() => {
+      attachWrapper();
     });
+    bootstrapObserver.observe(document.body, { childList: true, subtree: true });
   }
+
+  const rootObserver =
+    typeof MutationObserver === "function" ? new MutationObserver(() => schedulePush()) : null;
+  rootObserver?.observe(root, {
+    attributes: true,
+    attributeFilter: [FORK_GLASS_3D_ATTRIBUTE],
+  });
+
   window.addEventListener("resize", schedulePush);
-  pushRect();
+  pushWidth();
 
   stopLiquidGlassTracking = () => {
     active = false;
@@ -241,25 +237,21 @@ function startLiquidGlassTracking(
     stopObservedGap?.();
     stopObservedGap = null;
     observedGap = null;
-    mutationObserver?.disconnect();
+    observedWrapper = null;
+    wrapperObserver?.disconnect();
+    wrapperObserver = null;
+    bootstrapObserver?.disconnect();
+    bootstrapObserver = null;
+    rootObserver?.disconnect();
     window.removeEventListener("resize", schedulePush);
   };
 }
 
-/**
- * Monotonic id for in-flight syncs. Palette changes fire this without awaiting,
- * so Glass → Dark → Glass can resolve out of order and stamp the
- * marker from a superseded request. Only the newest sync is allowed to write.
- */
 let latestSyncId = 0;
 
 /**
  * Asks the desktop shell to match `enabled`, then stamps the marker with the
- * result. Resolves with whether the glass is actually on.
- *
- * Clearing runs synchronously before the request so switching away from glass
- * never leaves a frame of transparent CSS over an already-opaque window — that
- * flash reads as the sidebar blinking black.
+ * resolved mode. Resolves with whether any glass mode is active.
  */
 export async function syncForkSidebarVibrancy(
   enabled: boolean,
@@ -272,61 +264,34 @@ export async function syncForkSidebarVibrancy(
   const isStale = () => syncId !== latestSyncId;
 
   if (!enabled) {
-    stopLiquidGlassTracking?.();
-    stopLiquidGlassTracking = null;
+    stopTracking();
     stampMarker(root, "off");
   }
 
   const bridge = readBridge();
   if (bridge === null) {
     if (!isStale()) {
-      stopLiquidGlassTracking?.();
-      stopLiquidGlassTracking = null;
+      stopTracking();
       stampMarker(root, "off");
     }
     return false;
   }
 
-  let applied = false;
+  let mode: ForkSidebarVibrancyMode = "off";
   try {
-    applied = await bridge.setSidebarVibrancy(enabled);
+    mode = normalizeVibrancyMode(await bridge.setSidebarVibrancy(enabled));
   } catch {
-    // A bridge that rejects (older shell, window already torn down) means no
-    // glass. Falling through to the opaque marker keeps the sidebar readable.
-    applied = false;
+    mode = "off";
   }
 
-  // A newer sync has already answered; this one's result describes a palette
-  // the user has left.
-  if (isStale()) return applied;
+  if (isStale()) return mode !== "off";
 
-  if (!applied) {
-    stopLiquidGlassTracking?.();
-    stopLiquidGlassTracking = null;
-    stampMarker(root, "off");
-    return false;
-  }
-
-  const isSideChat =
-    typeof root.getAttribute === "function" && root.getAttribute("data-fork-side-chat") === "true";
-  const liquidGlass = isSideChat ? null : readLiquidGlassBridge(bridge);
-  let useLiquidGlass = false;
+  const liquidGlass = mode === "liquid-glass" ? readLiquidGlassBridge(bridge) : null;
   if (liquidGlass !== null) {
-    try {
-      useLiquidGlass = await liquidGlass.isSupported();
-    } catch {
-      useLiquidGlass = false;
-    }
-  }
-
-  if (isStale()) return applied;
-
-  if (useLiquidGlass && liquidGlass !== null) {
     startLiquidGlassTracking(liquidGlass, root, isStale);
   } else {
-    stopLiquidGlassTracking?.();
-    stopLiquidGlassTracking = null;
-    stampMarker(root, "vibrancy");
+    stopTracking();
+    stampMarker(root, mode === "liquid-glass" ? "off" : mode);
   }
-  return applied;
+  return mode !== "off";
 }

@@ -140,13 +140,14 @@ describe("fork guard: fork-model-picker", () => {
   });
 
   it("scopes the list with horizontal provider icon tabs above the search field", () => {
-    // Tabs use the shared Tabs/IconTab strip, setting the scope without closing the menu.
+    // Tabs use the shared MenuTabs/MenuIconTab strip, staying in menu keyboard navigation.
     expect(content).toContain('data-fork-model-picker="providers"');
-    expect(content).toContain("<Tabs");
+    expect(content).toContain("<MenuTabs");
     expect(content).toMatch(
-      /const renderScopeTab = [\s\S]*?<IconTab[^>]*?value=\{input\.target\}/u,
+      /const renderScopeTab = [\s\S]*?<MenuIconTab[^>]*?value=\{input\.target\}/u,
     );
     expect(content).toContain("selectScope(next as ModelPickerScope)");
+    expect(content).toContain("if (!input.disabled) selectScope(input.target);");
     // Claude and Codex wear the supplied marks; the rest keep their icon.
     const glyph = readSibling("../custom/icons/ModelPickerProviderGlyph.tsx");
     expect(glyph).toContain('[ProviderDriverKind.make("claudeAgent")]: ClaudeCodeMark,');
@@ -193,7 +194,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).toContain("closest<HTMLElement>('[data-slot=\"menu-popup\"]')");
     expect(content).toContain("if (event.target === popup) redirectTypingToSearch(event);");
     // Disabled providers keep pointer events so the reason tooltip opens.
-    expect(content).toContain('input.disabled && "disabled:pointer-events-auto"');
+    expect(content).toContain('input.disabled && "data-disabled:pointer-events-auto"');
     expect(content).toContain("describeUnavailableInstance(entry)");
     expect(content).toContain("Start a new thread to switch providers.");
     expect(content).toContain("Open provider setup");

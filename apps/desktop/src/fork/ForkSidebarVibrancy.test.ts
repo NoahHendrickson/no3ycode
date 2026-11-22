@@ -9,7 +9,7 @@ import type * as DesktopIpc from "../ipc/DesktopIpc.ts";
 const { currentWindow, liquidGlassSupportedMock, clearLiquidGlassMock, releaseMock } = vi.hoisted(
   () => ({
     currentWindow: { value: null as unknown },
-    liquidGlassSupportedMock: vi.fn(async () => false),
+    liquidGlassSupportedMock: vi.fn(() => false),
     clearLiquidGlassMock: vi.fn(),
     releaseMock: vi.fn(() => "10.0.22631"),
   }),
@@ -61,17 +61,20 @@ describe("ForkSidebarVibrancy", () => {
   it.effect("gates Windows glass on build 22621", () =>
     Effect.gen(function* () {
       for (const [release, expected] of [
-        ["10.0.22621", true],
-        ["10.0.26100", true],
-        ["10.0.22000", false],
-        ["10.0.19045", false],
-        ["unexpected", false],
+        ["10.0.22621", "vibrancy"],
+        ["10.0.26100", "vibrancy"],
+        ["10.0.22000", "off"],
+        ["10.0.19045", "off"],
+        ["unexpected", "off"],
       ] as const) {
         releaseMock.mockReturnValue(release);
         const window = makeWindow();
 
         assert.strictEqual(yield* request(true), expected, release);
-        assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, expected ? 1 : 0);
+        assert.strictEqual(
+          window.setBackgroundMaterial.mock.calls.length,
+          expected === "vibrancy" ? 1 : 0,
+        );
       }
     }),
   );
@@ -97,11 +100,11 @@ describe("ForkSidebarVibrancy", () => {
 
   it.effect("clears macOS vibrancy on a window that never had glass", () =>
     Effect.gen(function* () {
-      liquidGlassSupportedMock.mockResolvedValue(false);
+      liquidGlassSupportedMock.mockReturnValue(false);
       clearLiquidGlassMock.mockClear();
       const window = makeWindow();
 
-      assert.strictEqual(yield* request(false, "darwin"), false);
+      assert.strictEqual(yield* request(false, "darwin"), "off");
       assert.deepStrictEqual(window.setVibrancy.mock.calls, [[null]]);
       assert.strictEqual(window.setBackgroundMaterial.mock.calls.length, 0);
       assert.strictEqual(clearLiquidGlassMock.mock.calls.length, 1);
@@ -110,11 +113,11 @@ describe("ForkSidebarVibrancy", () => {
 
   it.effect("clears Electron vibrancy on main macOS windows when Liquid Glass is supported", () =>
     Effect.gen(function* () {
-      liquidGlassSupportedMock.mockResolvedValue(true);
+      liquidGlassSupportedMock.mockReturnValue(true);
       clearLiquidGlassMock.mockClear();
       const mainWindow = makeWindow();
 
-      assert.strictEqual(yield* request(true, "darwin"), true);
+      assert.strictEqual(yield* request(true, "darwin"), "liquid-glass");
       assert.deepStrictEqual(mainWindow.setVibrancy.mock.calls, [[null]]);
       assert.deepStrictEqual(mainWindow.setBackgroundColor.mock.calls, [["#00000000"]]);
       assert.strictEqual(clearLiquidGlassMock.mock.calls.length, 0);
@@ -122,7 +125,7 @@ describe("ForkSidebarVibrancy", () => {
       // Auxiliary windows (Side Chat) have no sidebar and keep whole-window vibrancy.
       const auxWindow = makeWindow();
       markForkAuxiliaryWindow(auxWindow as unknown as Electron.BrowserWindow);
-      assert.strictEqual(yield* request(true, "darwin"), true);
+      assert.strictEqual(yield* request(true, "darwin"), "vibrancy");
       assert.deepStrictEqual(auxWindow.setVibrancy.mock.calls, [["fullscreen-ui"]]);
       assert.strictEqual(clearLiquidGlassMock.mock.calls.length, 1);
     }),

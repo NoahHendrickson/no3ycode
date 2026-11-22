@@ -586,9 +586,10 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopMethod).not.toContain("electronWindow.syncAllAppearance");
     expect(desktopMethod).toContain("const target = yield* forkSenderWindow(event);");
     expect(desktopMethod).toContain("const painted = target !== null && !target.isDestroyed();");
-    // An unpainted window answers false, or the renderer would stamp its Glass
+    // An unpainted window answers "off", or the renderer would stamp its Glass
     // marker over an opaque fill.
-    expect(desktopMethod).toContain("const applied = enabled && painted;");
+    expect(desktopMethod).toContain('let mode: ForkSidebarVibrancyMode = "off";');
+    expect(desktopMethod).toContain('const applied = mode !== "off";');
     // A sender that does not resolve paints nothing. Main is only the answer
     // when there is no IPC event at all, never a fallback for a lost sender,
     // or a torn-down side chat would repaint the main window.
@@ -920,7 +921,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopMethod).toMatch(
       /platform === "darwin" \|\|\s+\(platform === "win32" && supportsWindowsBackdrop\(/u,
     );
-    expect(desktopMethod).toContain("return applied;");
+    expect(desktopMethod).toContain("return mode;");
 
     // forkTheme drives it outside the synchronous chrome repaint, and owns the
     // palette decision so the helper imports nothing back — the cycle that
@@ -933,10 +934,9 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
   it("uses liquid-glass mode for sidebar-only glass while keeping the stage opaque", async () => {
     const root = makeRoot();
     (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
-      setSidebarVibrancy: (enabled: boolean) => Promise.resolve(enabled),
+      setSidebarVibrancy: (enabled: boolean) => Promise.resolve(enabled ? "liquid-glass" : "off"),
       sidebarLiquidGlass: {
-        isSupported: () => Promise.resolve(true),
-        setRect: () => Promise.resolve(true),
+        setWidth: () => Promise.resolve(true),
       },
     };
     try {
@@ -965,7 +965,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     for (const rule of liquidGlassRules) {
       expect(rule.selector).not.toContain('[data-slot="sidebar-inset"]');
     }
-    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassRect");
+    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassWidth");
     expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
 });

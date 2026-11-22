@@ -104,7 +104,6 @@ typedef struct {
 
 @interface T3DraftBackdropView : NSView
 @property(nonatomic, strong, nullable) NSBitmapImageRep *imageRep;
-@property(nonatomic, assign) BOOL pixelated;
 @end
 
 @implementation T3DraftBackdropView
@@ -126,7 +125,7 @@ typedef struct {
   if (layer == nil) return;
   layer.contentsGravity = kCAGravityResize;
   layer.opaque = YES;
-  layer.magnificationFilter = self.pixelated ? kCAFilterNearest : kCAFilterLinear;
+  layer.magnificationFilter = kCAFilterNearest;
   layer.minificationFilter = kCAFilterLinear;
   layer.contents = self.imageRep != nil ? (__bridge id)self.imageRep.CGImage : nil;
 }
@@ -308,8 +307,7 @@ static bool hide_draft_glass_on_main(NSView *rootView) {
 
 static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSString *imageKey,
                                     NSData * _Nullable imageData, NSRect imageTopDown,
-                                    bool pixelated, const T3GlassCardRect *cards,
-                                    size_t cardCount) {
+                                    const T3GlassCardRect *cards, size_t cardCount) {
   if (rootView == nil || stageTopDown.size.width <= 0 || stageTopDown.size.height <= 0 ||
       !is_liquid_glass_supported_on_main()) {
     return false;
@@ -328,22 +326,27 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
       NSMakeRect(stageTopDown.origin.x, stageAppKitY, stageTopDown.size.width, stageTopDown.size.height);
 
   T3DraftGlassHolder *holder = objc_getAssociatedObject(contentView, kDraftHolderAssocKey);
+  BOOL needsImage =
+      holder == nil || holder.imageView.imageRep == nil || ![holder.imageKey isEqualToString:imageKey];
+  NSBitmapImageRep *decodedRep = nil;
+  if (needsImage) {
+    if (imageData == nil || imageData.length == 0) {
+      return false;
+    }
+    decodedRep = [[NSBitmapImageRep alloc] initWithData:imageData];
+    if (decodedRep == nil || decodedRep.CGImage == NULL) {
+      return false;
+    }
+  }
+
   if (holder == nil) {
     holder = [[T3DraftGlassHolder alloc] initWithFrame:stageFrame];
     [contentView addSubview:holder positioned:NSWindowBelow relativeTo:nil];
     objc_setAssociatedObject(contentView, kDraftHolderAssocKey, holder,
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
   }
-
-  if (holder.imageView.imageRep == nil || ![holder.imageKey isEqualToString:imageKey]) {
-    if (imageData == nil || imageData.length == 0) {
-      return false;
-    }
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:imageData];
-    if (rep == nil || rep.CGImage == NULL) {
-      return false;
-    }
-    holder.imageView.imageRep = rep;
+  if (decodedRep != nil) {
+    holder.imageView.imageRep = decodedRep;
     holder.imageKey = imageKey;
   }
 
@@ -356,7 +359,6 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
   CGFloat imgAppKitY = stageTopDown.size.height - imageTopDown.origin.y - imageTopDown.size.height;
   holder.imageView.frame =
       NSMakeRect(imageTopDown.origin.x, imgAppKitY, imageTopDown.size.width, imageTopDown.size.height);
-  holder.imageView.pixelated = pixelated ? YES : NO;
   [holder.imageView setNeedsDisplay:YES];
 
   NSAppearance *darkAppearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
@@ -408,7 +410,6 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
 }
 
 static bool hide_sidebar_glass_on_main(NSView *rootView) {
-  hide_draft_glass_on_main(rootView);
   if (rootView == nil) return false;
   NSWindow *window = rootView.window;
   NSView *contentView = window != nil ? window.contentView : rootView;
@@ -568,40 +569,33 @@ static napi_value napi_set_draft_glass(napi_env env, napi_callback_info info) {
                           ? [[NSData alloc] initWithBase64EncodedString:imageBase64 options:0]
                           : nil;
 
-  bool pixelated = true;
-  bool hasPixelated = false;
-  if (napi_has_named_property(env, argv[1], "pixelated", &hasPixelated) == napi_ok && hasPixelated) {
-    napi_value pixVal;
-    if (napi_get_named_property(env, argv[1], "pixelated", &pixVal) == napi_ok) {
-      napi_get_value_bool(env, pixVal, &pixelated);
-    }
-  }
-
-  T3GlassCardRect cards[8];
+  T3GlassCardRect *cards = NULL;
   size_t cardCount = 0;
   napi_value cardsVal;
   bool isArray = false;
   if (napi_get_named_property(env, argv[1], "cards", &cardsVal) == napi_ok &&
       napi_is_array(env, cardsVal, &isArray) == napi_ok && isArray) {
     uint32_t arrLen = 0;
-    if (napi_get_array_length(env, cardsVal, &arrLen) == napi_ok) {
-      uint32_t limit = arrLen < 8 ? arrLen : 8;
-      for (uint32_t i = 0; i < limit; i++) {
-        napi_value elem;
-        if (napi_get_element(env, cardsVal, i, &elem) != napi_ok) continue;
-        double x = 0, y = 0, w = 0, h = 0, r = 8;
-        if (!read_double_prop(env, elem, "x", &x) || !read_double_prop(env, elem, "y", &y) ||
-            !read_double_prop(env, elem, "width", &w) ||
-            !read_double_prop(env, elem, "height", &h) || w <= 0 || h <= 0) {
-          continue;
+    if (napi_get_array_length(env, cardsVal, &arrLen) == napi_ok && arrLen > 0) {
+      cards = (T3GlassCardRect *)malloc(sizeof(T3GlassCardRect) * arrLen);
+      if (cards != NULL) {
+        for (uint32_t i = 0; i < arrLen; i++) {
+          napi_value elem;
+          if (napi_get_element(env, cardsVal, i, &elem) != napi_ok) continue;
+          double x = 0, y = 0, w = 0, h = 0, r = 8;
+          if (!read_double_prop(env, elem, "x", &x) || !read_double_prop(env, elem, "y", &y) ||
+              !read_double_prop(env, elem, "width", &w) ||
+              !read_double_prop(env, elem, "height", &h) || w <= 0 || h <= 0) {
+            continue;
+          }
+          read_double_prop(env, elem, "cornerRadius", &r);
+          cards[cardCount].x = (CGFloat)x;
+          cards[cardCount].y = (CGFloat)y;
+          cards[cardCount].width = (CGFloat)w;
+          cards[cardCount].height = (CGFloat)h;
+          cards[cardCount].cornerRadius = (CGFloat)r;
+          cardCount++;
         }
-        read_double_prop(env, elem, "cornerRadius", &r);
-        cards[cardCount].x = (CGFloat)x;
-        cards[cardCount].y = (CGFloat)y;
-        cards[cardCount].width = (CGFloat)w;
-        cards[cardCount].height = (CGFloat)h;
-        cards[cardCount].cornerRadius = (CGFloat)r;
-        cardCount++;
       }
     }
   }
@@ -609,9 +603,10 @@ static napi_value napi_set_draft_glass(napi_env env, napi_callback_info info) {
   const T3GlassCardRect *cardsPtr = cards;
   __block bool ok = false;
   run_on_main(^{
-    ok = set_draft_glass_on_main(rootView, stageRect, imageKey, imageData, imageRect, pixelated,
-                                 cardsPtr, cardCount);
+    ok = set_draft_glass_on_main(rootView, stageRect, imageKey, imageData, imageRect, cardsPtr,
+                                 cardCount);
   });
+  free(cards);
 
   napi_get_boolean(env, ok, &out);
   return out;
