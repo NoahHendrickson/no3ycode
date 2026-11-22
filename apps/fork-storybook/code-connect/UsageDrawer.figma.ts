@@ -3,12 +3,17 @@
 // component=ComposerUsageLimitsDrawer
 import figma from "figma";
 
-// The composer opens the drawer from its usage ring; each provider's windows come from the
-// usage limits the tray reads (ComposerUsageLimitsReadout.tsx).
+// The hook owns the drawer and the usage ring that opens it, as ChatComposer uses them.
 export default {
-  example: figma.tsx`<ComposerUsageLimitsDrawer open={open} onClose={() => close(true)}>
-  <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
-</ComposerUsageLimitsDrawer>`,
-  imports: ['import { ComposerUsageLimitsDrawer } from "~/custom/ComposerUsageLimitsReadout";'],
+  example: figma.tsx`const usageDrawer = useComposerUsageDrawer({
+  usageLimits: selectedProviderStatus?.usageLimits,
+  enabled: true,
+});
+
+<ComposerShell usageControls={usageDrawer.readout} topVessel={usageDrawer.drawer} />`,
+  imports: [
+    'import { ComposerShell } from "~/custom/ComposerShell";',
+    'import { useComposerUsageDrawer } from "~/custom/ComposerUsageLimitsReadout";',
+  ],
   id: "usage-drawer",
 };

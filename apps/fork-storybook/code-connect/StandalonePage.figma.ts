@@ -3,7 +3,7 @@
 // component=StandalonePage
 import figma from "figma";
 
-import { connected, nestedImports, stack } from "./shared";
+import { connected, jsxAttr, nestedImports, stack } from "./shared";
 
 // The pairing page's card: the header, then the form and actions the page passes in.
 const card = figma.selectedInstance;
@@ -14,8 +14,8 @@ const body = [...alerts, ...buttons];
 export default {
   example: figma.tsx`<StandalonePage>
   <StandalonePageHeader
-    title=${JSON.stringify(card.getString("Title"))}
-    description=${JSON.stringify(card.getString("Lead"))}
+    title=${jsxAttr(card.getString("Title"))}
+    description=${jsxAttr(card.getString("Lead"))}
   />
   ${stack(body)}
 </StandalonePage>`,

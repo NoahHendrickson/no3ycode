@@ -3,7 +3,7 @@
 // component=SidebarMenuButton
 import figma from "figma";
 
-import { glyphWithImports, jsxText } from "./shared";
+import { glyphWithImports, jsxAttr, jsxText } from "./shared";
 
 const button = figma.selectedInstance;
 const state = button.getEnum("State", { Selected: " isActive", Disabled: " disabled" }) ?? "";
@@ -12,7 +12,7 @@ const icon = glyphWithImports(button, "Glyph");
 const IMPORT = 'import { SidebarMenuButton } from "~/components/ui/sidebar";';
 
 export default {
-  example: figma.tsx`<SidebarMenuButton${state} tooltip=${JSON.stringify(label)}>
+  example: figma.tsx`<SidebarMenuButton${state} tooltip=${jsxAttr(label)}>
   ${icon?.example ?? []}
   <span>${jsxText(label)}</span>
 </SidebarMenuButton>`,

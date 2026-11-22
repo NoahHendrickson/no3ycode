@@ -16,13 +16,16 @@ const type = item.getEnum("Type", {
   Radio: "radio",
   Submenu: "submenu",
 });
+const selected = item.getEnum("Type", { "Radio selected": true }) ?? false;
+const value = slug(label);
 const disabled = item.getEnum("State", { Disabled: " disabled" });
 const icon = item.getBoolean("Icon") ? glyphWithImports(item, "Glyph") : null;
 const shortcut = item.getBoolean("Shortcut")
   ? `<MenuShortcut>${jsxText(item.getString("Keys"))}</MenuShortcut>`
   : null;
 
-// Checkbox and radio rows draw their own indicator; a radio's pick comes from its MenuRadioGroup.
+// Checkbox and radio rows draw their own indicator; Menu.figma.ts wraps radio rows in their
+// MenuRadioGroup, and a submenu row brings its own MenuSub.
 const [tag, close, parts] =
   type === "checked" || type === "checkbox"
     ? [
@@ -31,13 +34,13 @@ const [tag, close, parts] =
         ["MenuCheckboxItem"],
       ]
     : type === "radio"
-      ? [
-          `<MenuRadioItem value="${slug(label)}"${disabled ?? ""}>`,
-          "</MenuRadioItem>",
-          ["MenuRadioItem"],
-        ]
+      ? [`<MenuRadioItem value="${value}"${disabled ?? ""}>`, "</MenuRadioItem>", ["MenuRadioItem"]]
       : type === "submenu"
-        ? [`<MenuSubTrigger${disabled ?? ""}>`, "</MenuSubTrigger>", ["MenuSubTrigger"]]
+        ? [
+            `<MenuSubTrigger${disabled ?? ""}>`,
+            "</MenuSubTrigger>",
+            ["MenuSub", "MenuSubPopup", "MenuSubTrigger"],
+          ]
         : [
             `<MenuItem${attrs(type === "destructive" && ' variant="destructive"', disabled)}>`,
             "</MenuItem>",
@@ -49,18 +52,34 @@ const imports = [
 const withIcon = icon && (type === "item" || type === "destructive" || type === "submenu");
 
 export default {
-  example: withIcon
-    ? figma.tsx`${tag}
+  example:
+    type === "submenu"
+      ? figma.tsx`<MenuSub>
+  ${tag}
+    ${withIcon ? icon.example : []}${withIcon ? "\n    " : ""}${jsxText(label)}${shortcut ? `\n    ${shortcut}` : ""}
+  ${close}
+  <MenuSubPopup>{/* the submenu's rows */}</MenuSubPopup>
+</MenuSub>`
+      : withIcon
+        ? figma.tsx`${tag}
   ${icon.example}
   ${jsxText(label)}${shortcut ? `\n  ${shortcut}` : ""}
 ${close}`
-    : shortcut
-      ? figma.tsx`${tag}
+        : shortcut
+          ? figma.tsx`${tag}
   ${jsxText(label)}
   ${shortcut}
 ${close}`
-      : figma.tsx`${tag}${jsxText(label)}${close}`,
+          : figma.tsx`${tag}${jsxText(label)}${close}`,
   imports,
   id: "menu-item",
-  metadata: { nestable: true, props: { imports: [...imports, ...(withIcon ? icon.imports : [])] } },
+  metadata: {
+    nestable: true,
+    props: {
+      kind: type,
+      value,
+      selected,
+      imports: [...imports, ...(withIcon ? icon.imports : [])],
+    },
+  },
 };

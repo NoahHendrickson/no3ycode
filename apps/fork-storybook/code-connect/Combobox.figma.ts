@@ -8,9 +8,10 @@ import { connected, nestedImports, stack } from "./shared";
 const combobox = figma.selectedInstance;
 const triggers = connected(combobox, "combobox-trigger");
 const items = connected(combobox, "combobox-item");
+const values = items.map((item) => JSON.stringify(item.metadata?.props?.["value"] ?? "item"));
 
 export default {
-  example: figma.tsx`<Combobox items={items}>
+  example: figma.tsx`<Combobox items={[${values.join(", ")}]}>
   ${stack(triggers)}
   <ComboboxPopup>
     <ComboboxList>

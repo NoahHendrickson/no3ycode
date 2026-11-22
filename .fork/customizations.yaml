@@ -7710,11 +7710,11 @@
     icon set to its lucide-react shim export; a connection on a variant does not
     resolve, so the batch names the Style × Size sets), so a swapped glyph renders
     through its own connection (getInstanceSwap(...).executeTemplate()). Figma
-    drops imports nested two levels deep, so every nestable template also carries
-    its imports in metadata for its parent (Menu, Select, Dialog, Tabs, …) to
-    collect. A composite whose look comes from app data (the subagent card,
-    thread card, composer, Petals, changed files card, model picker) shows the
-    app's real call; the thread card's row is private to Sidebar.tsx, so its
+    drops imports nested two levels deep, so every template a parent collects
+    (Menu, Select, Dialog, Tabs, …) also carries its imports in metadata for
+    that parent to merge. A composite whose look comes from app data (the
+    subagent card, thread card, composer, Petals, changed files card, model
+    picker) shows the app's real call; the thread card's row is private to Sidebar.tsx, so its
     template imports nothing and the guard only checks the source defines it.
     Shared helpers live in
     code-connect/shared.ts, which the CLI bundles into each template. Templates

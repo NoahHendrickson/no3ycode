@@ -9,7 +9,7 @@ const empty = figma.selectedInstance;
 const media = empty.getBoolean("Media") ? layer(empty, "Media") : null;
 const buttons = empty.getBoolean("Actions") ? connected(empty, "button") : [];
 const sections = [
-  code(`<Empty${empty.getEnum("Size", { sm: ' size="sm"' }) ?? ""}>\n  <EmptyHeader>`),
+  code(`<Empty${empty.getEnum("Size", { sm: ' size="compact"' }) ?? ""}>\n  <EmptyHeader>`),
   ...(media
     ? [code('\n    <EmptyMedia variant="icon">'), ...media.example, code("</EmptyMedia>")]
     : []),

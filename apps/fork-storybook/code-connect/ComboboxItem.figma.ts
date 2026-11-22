@@ -3,23 +3,24 @@
 // component=ComboboxItem
 import figma from "figma";
 
-import { jsxText } from "./shared";
+import { jsxAttr, jsxText } from "./shared";
 
-// Items render from the combobox's items; `item` is the collection's entry.
+// Each row's label is its value; Combobox.figma.ts lists the values as the root's items.
 const row = figma.selectedInstance;
-const label = jsxText(row.getString("Label"));
+const value = row.getString("Label");
+const label = jsxText(value);
 const IMPORT = 'import { ComboboxItem } from "~/components/ui/combobox";';
 
 export default {
   example: row.getBoolean("Show detail")
-    ? figma.tsx`<ComboboxItem value={item}>
+    ? figma.tsx`<ComboboxItem value=${jsxAttr(value)}>
   <span className="flex min-w-0 flex-col">
     <span className="truncate">${label}</span>
     <span className="truncate text-xs text-muted-foreground">${jsxText(row.getString("Detail"))}</span>
   </span>
 </ComboboxItem>`
-    : figma.tsx`<ComboboxItem value={item}>${label}</ComboboxItem>`,
+    : figma.tsx`<ComboboxItem value=${jsxAttr(value)}>${label}</ComboboxItem>`,
   imports: [IMPORT],
   id: "combobox-item",
-  metadata: { nestable: true, props: { imports: [IMPORT] } },
+  metadata: { nestable: true, props: { imports: [IMPORT], value } },
 };

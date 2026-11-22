@@ -3,7 +3,7 @@
 // component=InputGroup
 import figma from "figma";
 
-import { jsxAttr, layer, nestedImports } from "./shared";
+import { jsxAttr, jsxText, layer, nestedImports } from "./shared";
 
 const group = figma.selectedInstance;
 const addon = group.getEnum("Addon", {
@@ -21,7 +21,7 @@ export default {
   example:
     addon === "above"
       ? figma.tsx`<InputGroup>
-  <InputGroupAddon align="block-start">${label.type === "TEXT" ? label.textContent : "Label"}</InputGroupAddon>
+  <InputGroupAddon align="block-start">${jsxText(label.type === "TEXT" ? label.textContent : "Label")}</InputGroupAddon>
   <InputGroupInput${placeholder} />
 </InputGroup>`
       : addon === "end"
