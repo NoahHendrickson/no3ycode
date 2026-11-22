@@ -128,6 +128,11 @@ export function ComposerDictationToolbar(props: {
 }) {
   // Android can drop the reduced-motion flip's final frame, leaving the toolbar invisible.
   const reducedMotion = useReducedMotion();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card's glass controls blank out under the 3D flip; swap rows instantly instead.
+  const no3yCard = useNo3yComposerStyle();
+  const skipFlip = reducedMotion || no3yCard;
+  /* fork:end no3y-mobile-redesign */
   const entering = props.showsDictation ? DICTATION_TOOLBAR_ENTERING : DRAFT_TOOLBAR_ENTERING;
   const exiting = props.showsDictation ? DICTATION_TOOLBAR_EXITING : DRAFT_TOOLBAR_EXITING;
 
@@ -137,8 +142,10 @@ export function ComposerDictationToolbar(props: {
         <Animated.View
           key={props.showsDictation ? "dictation" : "draft"}
           className="absolute inset-0"
-          entering={reducedMotion ? undefined : entering}
-          exiting={reducedMotion ? undefined : exiting}
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          entering={skipFlip ? undefined : entering}
+          exiting={skipFlip ? undefined : exiting}
+          /* fork:end no3y-mobile-redesign */
           style={{ backfaceVisibility: "hidden" }}
         >
           {props.children}
