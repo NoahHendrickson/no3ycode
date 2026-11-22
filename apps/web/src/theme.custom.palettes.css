@@ -1794,6 +1794,38 @@
   }
 }
 
+/* The Flat Glass new-agent stage's glass inner glow (Figma no3y-code 13:3284, "Rays"): a broad
+   lift up from the foot, a softer one down from the top and a bright 1px rim, over the picture
+   whichever draws it (DOM or the native Liquid Glass layer beneath the page). Always painted;
+   only its opacity moves, on the picture's 400ms clock, so the first send fades it with the
+   picture. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow:
+    inset 0 -4px 16px rgb(255 255 255 / 25%),
+    inset 0 8px 8px rgb(255 255 255 / 12%),
+    inset 0 1px 2px rgb(255 255 255 / 50%);
+  opacity: 0;
+  transition: opacity 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away]::before {
+    transition: none;
+  }
+}
+
 /* On Flat Glass, the new-agent draft composer matches Figma 19:6831's glass
    surfaces: a 16% black vessel blurred at 100px Figma (50px CSS) behind a
    subtle 16% white inside stroke, an 8% white prompt well with an 8% white
