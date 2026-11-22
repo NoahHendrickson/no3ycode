@@ -1,4 +1,4 @@
-import { msg } from "gt-react";
+import { msg, useMessages } from "gt-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import {
@@ -31,7 +31,7 @@ import { MAX_STASH_ENTRIES } from "~/promptStashStore";
 import { assetEnvironment } from "~/state/assets";
 import { useAtomQueryRunner } from "~/state/use-atom-query-runner";
 import { threadEnvironment } from "~/state/threads";
-import { useThreadProjection } from "~/state/entities";
+import { useQuietThreadProjection } from "~/state/entities";
 import { useAtomCommand } from "~/state/use-atom-command";
 import { isImageAttachment, type ChatMessage } from "~/types";
 import { cn } from "~/lib/utils";
@@ -105,7 +105,8 @@ export function ForkQueuedRunsBanner({
   readonly onEditQueuedRun: (request: EditQueuedRunRequest) => void;
   readonly onCancelEdit: () => void;
 }) {
-  const projection = useThreadProjection(
+  const messages = useMessages();
+  const projection = useQuietThreadProjection(
     scopeThreadRef(props.environmentId, props.threadId),
   )?.projection;
   const reorder = useAtomCommand(threadEnvironment.reorderQueuedRun);
@@ -133,7 +134,7 @@ export function ForkQueuedRunsBanner({
     props.environmentId,
     queuedImageAttachmentResources,
   );
-  const workflow = projection ? deriveThreadQueueWorkflowState(projection) : null;
+  const workflow = projection ? deriveThreadQueueWorkflowState(projection, messages) : null;
   const queued = workflow?.queuedRuns ?? [];
   const activeRun = workflow?.activeRun ?? null;
   // A fresh message (armed by /clear) starts its own turn: it may skip compaction, but not steer.
@@ -600,30 +601,33 @@ export function ForkQueuedRunsBanner({
                           </TooltipTrigger>
                           <TooltipPopup>{item.stashBlockedReason ?? "Move to stash"}</TooltipPopup>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger render={<span className="flex shrink-0" />}>
-                            <Button
-                              size="xs"
-                              variant="ghost-muted"
-                              disabled={
-                                item.runId === null ||
-                                busyRunId !== null ||
-                                !canSendRun(item.freshContext)
-                              }
-                              onClick={() => {
-                                if (item.runId !== null) void sendQueuedMessage(item.runId);
-                              }}
-                            >
-                              <CornerUpRightIcon />
-                              {sendLabel}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipPopup>
-                            {!canSendRun(item.freshContext)
-                              ? "There is no active run to steer"
-                              : `${workflow?.canSendNow ? "Start a turn with this message" : workflow?.promoteSkipsCompaction ? "Skip compaction and send this message" : "Send as a steer instead"}${item.serverIndex === 0 && props.steerShortcutLabel ? ` (${props.steerShortcutLabel})` : ""}`}
-                          </TooltipPopup>
-                        </Tooltip>
+                        {/* A /clear message cannot steer the running turn; like upstream, it offers no send. */}
+                        {item.freshContext && !canSendRun(true) ? null : (
+                          <Tooltip>
+                            <TooltipTrigger render={<span className="flex shrink-0" />}>
+                              <Button
+                                size="xs"
+                                variant="ghost-muted"
+                                disabled={
+                                  item.runId === null ||
+                                  busyRunId !== null ||
+                                  !canSendRun(item.freshContext)
+                                }
+                                onClick={() => {
+                                  if (item.runId !== null) void sendQueuedMessage(item.runId);
+                                }}
+                              >
+                                <CornerUpRightIcon />
+                                {sendLabel}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipPopup>
+                              {!canSendRun(item.freshContext)
+                                ? "There is no active run to steer"
+                                : `${workflow?.canSendNow ? "Start a turn with this message" : workflow?.promoteSkipsCompaction ? "Skip compaction and send this message" : "Send as a steer instead"}${item.serverIndex === 0 && props.steerShortcutLabel ? ` (${props.steerShortcutLabel})` : ""}`}
+                            </TooltipPopup>
+                          </Tooltip>
+                        )}
                         <Tooltip>
                           <TooltipTrigger
                             render={

@@ -51,6 +51,8 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
     expect(hunks).toContain("if (yield* follower.canFollow(input.threadId)) yield* refresh;");
     expect(hunks).toContain("else yield* refresh.pipe(FiberSet.run(refreshes));");
     expect(hunks).toContain("return local;");
+    // The inline follow waits on the status read only; the rescan runs on its own fiber.
+    expect(hunks).toContain("yield* workspaceEntries.refresh(cwd).pipe(FiberSet.run(rescans));");
     expect(finalization).not.toMatch(/local\.isDefaultRef\) return;/u);
   });
 
@@ -71,7 +73,8 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
     expect(follower).toContain(
       "if (checkedOut === null || input.local.isDefaultRef || isTemporaryWorktreeBranch(checkedOut))",
     );
-    expect(follower).toContain("thread.worktreePath !== null ||");
+    expect(follower).toContain("!isSharedCheckoutThread(thread) ||");
+    expect(follower).toContain("return thread.worktreePath === null && thread.branch !== null;");
     expect(follower).toContain(
       "if (thread.activeRunId !== null && thread.activeRunId !== input.runId)",
     );

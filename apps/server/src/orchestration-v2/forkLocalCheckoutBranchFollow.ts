@@ -68,6 +68,13 @@ export interface LocalCheckoutBranchFollowDeps<ShellError = never, DispatchError
   ) => Effect.Effect<unknown, DispatchError>;
 }
 
+/** A thread on the project's shared checkout with a branch on record: the only kind that follows. */
+function isSharedCheckoutThread(
+  thread: Pick<LocalCheckoutBranchFollowShell, "worktreePath" | "branch">,
+): boolean {
+  return thread.worktreePath === null && thread.branch !== null;
+}
+
 /** Returns the adopted branch, or null when the thread keeps its record. */
 export const followLocalCheckoutBranch = Effect.fn("LocalCheckoutBranchFollower.follow")(
   function* <ShellError, DispatchError>(
@@ -79,12 +86,7 @@ export const followLocalCheckoutBranch = Effect.fn("LocalCheckoutBranchFollower.
       return null;
     }
     const thread = yield* deps.getThreadShell(input.threadId);
-    if (
-      thread === null ||
-      thread.worktreePath !== null ||
-      thread.branch === null ||
-      thread.branch === checkedOut
-    ) {
+    if (thread === null || !isSharedCheckoutThread(thread) || thread.branch === checkedOut) {
       return null;
     }
     if (thread.activeRunId !== null && thread.activeRunId !== input.runId) {
@@ -124,7 +126,7 @@ export const layer = Layer.effect(
       canFollow: Effect.fn("LocalCheckoutBranchFollower.canFollow")(
         function* (threadId) {
           const thread = yield* threads.getThreadShell(threadId);
-          return thread !== null && thread.worktreePath === null && thread.branch !== null;
+          return thread !== null && isSharedCheckoutThread(thread);
         },
         Effect.catchCause((cause) =>
           Cause.hasInterruptsOnly(cause) ? Effect.interrupt : Effect.succeed(false),

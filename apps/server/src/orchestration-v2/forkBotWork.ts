@@ -57,33 +57,26 @@ export const forkBotIdFor = Effect.fn("ThreadLaunchService.forkBotIdFor")(
   ),
 );
 
-/** Tags a newly launched thread as its launcher's bot's work, and returns that bot's id. Best
-    effort: an unlinked thread lists in the sidebar like any other, so a failure here never fails
-    the launch. */
+/** Tags a newly launched thread as the work of `botId` (from forkBotIdFor). Best effort: an
+    unlinked thread lists in the sidebar like any other, so a failure here never fails the launch. */
 export const linkForkBotWork = Effect.fn("ThreadLaunchService.linkForkBotWork")(
   function* (
     threads: ThreadManagementService["Service"],
     input: {
       readonly commandId: CommandId;
       readonly threadId: ThreadId;
-      readonly launchedBy: ThreadId;
+      readonly botId: ThreadId;
     },
   ) {
-    const launcher = yield* forkBotActingShell(threads, input.launchedBy);
-    const botId = launcher === null ? null : launcherBotId(launcher);
-    if (botId === null) return null;
     yield* threads.dispatch({
       type: "thread.tag.set",
       commandId: CommandId.make(`${input.commandId}:bot-work`),
       threadId: input.threadId,
-      tag: forkBotWorkTag(botId),
+      tag: forkBotWorkTag(input.botId),
       tagged: true,
     });
-    return ThreadId.make(botId);
   },
-  Effect.catch((error) =>
-    Effect.logWarning("fork-bot-work.link-failed", { error }).pipe(Effect.as(null)),
-  ),
+  Effect.catch((error) => Effect.logWarning("fork-bot-work.link-failed", { error })),
 );
 
 /** `text` with the CREW.md of the bot `botId` after it, for the first message of a thread

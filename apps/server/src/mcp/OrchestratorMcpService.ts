@@ -3318,13 +3318,9 @@ const make = Effect.gen(function* () {
                 title: request.title,
                 index,
               });
-              /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules
-                 Only a linked thread asks the launch service, which tests often stub. */
-              const forkCrewBotId =
-                request.prompt === undefined
-                  ? null
-                  : yield* forkBotIdFor(threadManagement, scope.thread.threadId);
-              /* fork:end fork-bot-crew-rules */
+              /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+              const forkBotId = yield* forkBotIdFor(threadManagement, scope.thread.threadId);
+              /* fork:end fork-bot-work-threads */
               const initialMessage =
                 request.prompt === undefined
                   ? undefined
@@ -3337,9 +3333,9 @@ const make = Effect.gen(function* () {
                       }),
                       /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
                       text:
-                        forkCrewBotId === null
+                        forkBotId === null
                           ? request.prompt
-                          : yield* threadLaunch.withForkBotCrewRules(forkCrewBotId, request.prompt),
+                          : yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt),
                       /* fork:end fork-bot-crew-rules */
                       attachments: [],
                     };
@@ -3372,11 +3368,9 @@ const make = Effect.gen(function* () {
                   ),
                 );
               /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-              yield* linkForkBotWork(threadManagement, {
-                commandId,
-                threadId,
-                launchedBy: scope.thread.threadId,
-              });
+              if (forkBotId !== null) {
+                yield* linkForkBotWork(threadManagement, { commandId, threadId, botId: forkBotId });
+              }
               /* fork:end fork-bot-work-threads */
               // A receipt can appear after target resolution; use the committed thread's selection.
               const resolvedModelSelection = (yield* threadManagement

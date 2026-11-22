@@ -321,6 +321,60 @@ it.effect("returns from the post-turn refresh without waiting for the PR lookup"
   }).pipe(Effect.provide(layer));
 });
 
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+it.effect("returns the post-turn status without waiting for the workspace rescan", () => {
+  const threadId = ThreadId.make("thread-slow-rescan");
+  const runId = RunId.make("completed-run");
+  const rescanStarted = Deferred.makeUnsafe<void>();
+  const layer = RunFinalization.layerObserver.pipe(
+    Layer.provide(
+      Layer.mergeAll(
+        layerNoProject,
+        Layer.mock(WorkspaceEntries.WorkspaceEntries)({
+          refresh: () =>
+            Deferred.succeed(rescanStarted, undefined).pipe(Effect.andThen(Effect.never)),
+        }),
+        Layer.mock(PullRequestService.PullRequestService)({
+          refreshAfterTurn: () => Effect.void,
+        }),
+        Layer.mock(VcsStatusBroadcaster.VcsStatusBroadcaster)({
+          refreshLocalStatus: () =>
+            Effect.succeed({
+              isRepo: true,
+              hasPrimaryRemote: true,
+              isDefaultRef: true,
+              refName: "main",
+              hasWorkingTreeChanges: false,
+              workingTree: { files: [], insertions: 0, deletions: 0 },
+            }),
+        }),
+        Layer.mock(ProjectionStore.ProjectionStoreV2)({
+          getThreadShell: () =>
+            Effect.succeed({
+              id: threadId,
+              branch: "main",
+              activeRunId: null,
+            } as OrchestrationV2ThreadShell),
+        }),
+      ),
+    ),
+  );
+  return Effect.gen(function* () {
+    const observer = yield* RunFinalization.RunFinalizationObserver;
+    const refresh = yield* observer
+      .refresh({ cwd: "/repo", threadId, runId })
+      .pipe(Effect.timeoutOption("1 minute"), Effect.forkChild({ startImmediately: true }));
+    yield* TestClock.adjust("1 minute");
+    const result = yield* Fiber.join(refresh);
+    assert.isTrue(
+      Option.isSome(result),
+      "a shared-checkout thread's next turn waited on the workspace rescan",
+    );
+    yield* Deferred.await(rescanStarted);
+  }).pipe(Effect.provide(layer));
+});
+/* fork:end server-local-checkout-branch-follow */
+
 it.effect("replaces a still-running PR lookup when a newer turn finishes", () => {
   const threadId = ThreadId.make("thread-back-to-back");
   const runId = RunId.make("completed-run");

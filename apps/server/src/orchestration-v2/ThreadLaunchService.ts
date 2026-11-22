@@ -1480,15 +1480,13 @@ const make = Effect.gen(function* () {
                 },
               );
         /* fork:end server-local-thread-branch */
-        /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules
+        /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
            The claim carries the first message, so its bot is resolved before the thread exists. */
-        const forkCrewBotId =
-          input.initialMessage !== undefined &&
-          input.launchedBy !== undefined &&
-          input.reuseExistingThread !== true
+        const forkBotId =
+          input.launchedBy !== undefined && input.reuseExistingThread !== true
             ? yield* forkBotIdFor(threads, input.launchedBy)
             : null;
-        /* fork:end fork-bot-crew-rules */
+        /* fork:end fork-bot-work-threads */
         const initialMessage =
           input.initialMessage === undefined
             ? undefined
@@ -1500,9 +1498,9 @@ const make = Effect.gen(function* () {
                     .pipe(Effect.mapError(mapError(input, "dispatch-message", candidateThreadId)))),
                 /* fork:begin fork-bot-crew-rules — see .fork/customizations.yaml#fork-bot-crew-rules */
                 text:
-                  forkCrewBotId === null
+                  forkBotId === null
                     ? input.initialMessage.text
-                    : yield* forkBotCrewRules(forkCrewBotId, input.initialMessage.text),
+                    : yield* forkBotCrewRules(forkBotId, input.initialMessage.text),
                 /* fork:end fork-bot-crew-rules */
                 ...(input.initialMessage.scheduledTaskId === undefined
                   ? {}
@@ -1575,11 +1573,11 @@ const make = Effect.gen(function* () {
         }
         /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
            Tagged right after the claim; the sidebar can list it for the events in between. */
-        if (input.launchedBy !== undefined && input.reuseExistingThread !== true) {
+        if (forkBotId !== null) {
           yield* linkForkBotWork(threads, {
             commandId: input.commandId,
             threadId,
-            launchedBy: input.launchedBy,
+            botId: forkBotId,
           });
         }
         /* fork:end fork-bot-work-threads */

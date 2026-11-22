@@ -161,6 +161,9 @@ export const layerObserver = Layer.effect(
     const pullRequestLookups = yield* FiberMap.make<string>();
     const repositoryRefreshes = yield* FiberMap.make<ThreadId>();
     const identityRefreshes = yield* FiberMap.make<ProjectId>();
+    /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+    const rescans = yield* FiberSet.make<void>();
+    /* fork:end server-local-checkout-branch-follow */
     // A turn can add the first remote (`git remote add`, `gh repo create --push`), which the
     // enrichment and resolver caches would otherwise keep reporting as missing for a minute.
     const refreshMissingRepositoryIdentity = Effect.fn(
@@ -208,10 +211,12 @@ export const layerObserver = Layer.effect(
       }),
       refresh: Effect.fn("RunFinalizationService.refresh")(
         function* ({ cwd, threadId, runId }) {
-          const [, local] = yield* Effect.all(
-            [workspaceEntries.refresh(cwd), vcsStatus.refreshLocalStatus(cwd)],
-            { concurrency: "unbounded" },
-          );
+          /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
+             Finalize awaits this refresh for a shared-checkout thread's branch follow, which needs
+             only the status; the file-index rescan runs on, like the PR lookup. */
+          yield* workspaceEntries.refresh(cwd).pipe(FiberSet.run(rescans));
+          const local = yield* vcsStatus.refreshLocalStatus(cwd);
+          /* fork:end server-local-checkout-branch-follow */
           /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
              Every exit returns the status read above; see the observer shape. */
           const thread = yield* projections.getThreadShell(threadId);

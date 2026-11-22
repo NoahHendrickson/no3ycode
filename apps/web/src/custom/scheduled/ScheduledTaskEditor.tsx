@@ -246,7 +246,7 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
                 <ScheduledTaskModelPicker
                   environmentId={props.environmentId}
                   // A run bound to a thread uses that thread's model, as upstream's editor says.
-                  disabled={props.disabled || draft.threadId !== ""}
+                  disabled={props.disabled || (draft.threadId !== "" && !draft.githubPrOpened)}
                   activeInstanceId={model.activeInstanceId}
                   model={model.activeModel}
                   lockedProvider={null}

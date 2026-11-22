@@ -348,8 +348,12 @@ describe("fork guard: fork-bot-work-threads", () => {
   });
 
   it("keeps the server's link at launch and the panel in the stage", () => {
-    expect(launch).toContain("yield* linkForkBotWork(threads, {");
-    expect(mcp).toContain("yield* linkForkBotWork(threadManagement, {");
+    expect(launch).toContain(
+      "yield* linkForkBotWork(threads, { commandId: input.commandId, threadId, botId: forkBotId });",
+    );
+    expect(mcp).toContain(
+      "yield* linkForkBotWork(threadManagement, { commandId, threadId, botId: forkBotId });",
+    );
     expect(launchTool).toContain("{ launchedBy: caller.id }");
     // A bot's own rules send real work to a thread it launches; no other thread reads them.
     const rules = botSeedFiles({ name: "Mail Bot", today: "2026-11-14", threadId: "mail" })[0];
@@ -359,10 +363,8 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(rules?.contents).toContain(
       "**CREW.md holds the rules every thread you start follows.**",
     );
-    expect(launch).toContain(": yield* forkBotCrewRules(forkCrewBotId, input.initialMessage.text)");
-    expect(mcp).toContain(
-      "yield* threadLaunch.withForkBotCrewRules(forkCrewBotId, request.prompt)",
-    );
+    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
+    expect(mcp).toContain("yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt)");
     // Its threads report back, so it no longer polls them on each wake.
     expect(rules?.contents).toContain("**Your threads report to you.**");
     expect(chatView).toContain("<BotThreadsPanel");
@@ -377,7 +379,7 @@ describe("fork guard: fork-bot-work-threads", () => {
   // fork-bot-work-reports, fork-bot-crew-rules, fork-bot-digest, fork-bot-crew.
   it("reports a bot's work back to it, carries its crew rules, shows its digest and moves threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
-    expect(launch).toContain(": yield* forkBotCrewRules(forkCrewBotId, input.initialMessage.text)");
+    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
     // A Petal's asks sit above its composer in the chat column; the Threads panel lists threads only.
     expect(chatView).toMatch(
