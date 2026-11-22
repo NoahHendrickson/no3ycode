@@ -57,6 +57,9 @@ export const FORK_GLASS_POPUP_SELECTOR = [
   `[data-thread-details-panel="popover"]:is([data-fork-popup], ${PICTURE_OFF} *) > [data-thread-details-card].dropdown-glass`,
 ].join(", ");
 
+/** Sidebar mode also takes plain tooltips, so one over the docked sidebar wears its glass too. */
+const SIDEBAR_MODE_POPUP_SELECTOR = `${FORK_GLASS_POPUP_SELECTOR}, [data-slot="tooltip-popup"]:not(.dropdown-glass):not([data-fork-row-hover-card])`;
+
 /**
  * ChatView's root while its composer is a new-agent draft: the picture card's
  * host. Not while a desktop tab floats over it, when the card drops its
@@ -351,6 +354,8 @@ function overlaps(a: Rect, b: Rect): boolean {
 type CutoutMode = "window" | "sidebar";
 
 function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
+  const popupSelector =
+    mode === "sidebar" ? SIDEBAR_MODE_POPUP_SELECTOR : FORK_GLASS_POPUP_SELECTOR;
   /** Element → the mask it carries, as written, so unchanged frames write nothing. */
   const masked = new Map<HTMLElement, string>();
   /** Popup → the frost placement it carries, as written. */
@@ -537,7 +542,7 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
     if (!sameElements(containers, nextContainers)) rewatchContainers(nextContainers);
     layers = containers.flatMap(paintLayers);
     placed = layers.flatMap(({ element }, layer) =>
-      Array.from(element.querySelectorAll<HTMLElement>(FORK_GLASS_POPUP_SELECTOR), (popup) => ({
+      Array.from(element.querySelectorAll<HTMLElement>(popupSelector), (popup) => ({
         popup,
         layer,
       })),

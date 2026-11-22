@@ -123,6 +123,23 @@
   --fork-composer-border-focus: rgb(255 255 255 / 16%);
   --fork-context-chip-bg: var(--fork-flat-glass-lift-3);
   --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
+  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#312e2d) flattens to
+     #a6a5a5, the solid fallback it replaces. */
+  --fork-composer-control-ink: rgb(255 255 255 / 57%);
+}
+
+/* Split agent is the row's one action, so it reads above the project and branch chips. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-control-row]
+  [data-fork-split-agent-pill] {
+  --control-icon-color: currentColor;
+  color: rgb(255 255 255 / 85%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-control-row]
+  [data-fork-split-agent-pill]:hover:not(:disabled) {
+  color: #ffffff;
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
@@ -1706,14 +1723,21 @@
   backdrop-filter: none;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
-  [data-fork-liquid-glass-popup="solid"] {
-  background: color-mix(in srgb, #ffffff 4%, #141618);
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: color-mix(in srgb, #ffffff 4%, #141618);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-liquid-glass-popup="solid"] {
-  background: #2a2324;
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: #2a2324;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  :is(
+    [data-fork-liquid-glass-popup="solid"],
+    /* A closing tooltip gives its hole back before it fades, so it fades out solid. */
+    [data-slot="tooltip-popup"][data-fork-liquid-glass-popup="glass"][data-ending-style]
+  ) {
+  background: var(--fork-liquid-glass-sidebar);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
@@ -1918,6 +1942,8 @@
     --contrast-border: rgb(255 255 255 / 12%);
     --contrast-foreground: #ffffff;
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
+    /* Folder glyphs: the glass's quiet ink, so they tint with the picture under the card. */
+    --contrast-icon-muted: rgb(255 255 255 / 65%);
     --accent: rgb(255 255 255 / 10%);
     --contrast-accent-foreground: #ffffff;
     background: rgb(0 0 0 / 16%);

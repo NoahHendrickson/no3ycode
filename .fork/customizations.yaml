@@ -3012,14 +3012,14 @@
     session-limit ring (UsageCircleMeter in custom/UsageMeter.tsx) driven by
     useComposerUsageDrawer() in custom/ComposerUsageLimitsReadout.tsx. It reads
     the selected provider instance's ServerProvider.usageLimits snapshot, adding
-    no wire data or polling. Toggling it expands an upward-opening single-line
+    no wire data or polling. Toggling it expands an upward-opening two-line
     CollapsiblePanel (data-fork-composer-usage-drawer) mounted as a sibling of
     [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
     Black does not block backdrop blur; the vessel's top corners stay square
     until the panel unmounts after its close transition. The tray subscribes to
-    environment presentations only while open, renders icon-only provider marks
-    with compact bars (abbreviating to 5hr / 7d only from typed window
-    durations, omitting Claude's seven_day_fable id), focusable meter tooltips
+    environment presentations only while open, renders each provider as its
+    mark and name above its limits, each limit a ring with its label to the
+    right (abbreviating to 5hr / 7d only from typed window durations, omitting Claude's seven_day_fable id), focusable meter tooltips
     with remaining % and reset times, actionable limit notices, external usage
     links, and Escape / close-button dismissal restoring focus to the ring. The
     calmer #38a169 green is scoped via --success to the composer trigger and
@@ -5128,9 +5128,10 @@
     border so Cool / Neutral palettes keep their own hairline weight. The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
-    tree's top only (the card border is the line elsewhere). Radii come from
-    --fork-card-radius (8px, for cards that sit beside the composer); the tree
-    rounds its top corners too, so its hairline curves into the card's sides.
+    tree's top only (the card border is the line elsewhere). The card sets
+    --fork-card-radius to the composer's radius (16px), and its corner rules read
+    it; the tree rounds its top corners too, so its hairline curves into the
+    card's sides. On Flat Glass the tree and footer take a 4% white wash.
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
@@ -5268,6 +5269,11 @@
     position from #203 is theme-independent and stays.
     In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
+    Flat's composer control row reads its ink as a 57% white wash (what
+    the solid #a6a6a6 fallback was over the lift-2 vessel), and the Split
+    agent / Unsplit pill (stamped data-fork-split-agent-pill) reads brighter
+    than the project and branch chips: 85% white, full white on hover. The
+    new-agent draft hero keeps its own white ink.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -5368,7 +5374,7 @@
     Basic UI kit's subagent card (Figma kUDQTOR0ndxERlBCqgy3nk 89:704) instead
     of upstream's lifecycle row or its V2SubagentGroup (avatar stack, chevron,
     bordered member box). A card is the changed-files card's shape: the card
-    fill, a 1px border, 8px corners. Its header holds the provider's mark in a
+    fill, a 1px border, 12px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
     over its model and reasoning effort ("Opus 5.5 · High", upstream's
     formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
@@ -7695,8 +7701,10 @@
     toolbar (Basic's tones, Glass, Inlet's colours), moved through
     setForkBasicTone / setForkAppearance / setForkInletColor as Settings ›
     Appearance moves them. Glass stands in a desktop bridge that reports the
-    window material (appearance.ts) and a blurred wallpaper under the canvas
-    (preview-head.html), since a browser has no window behind the page. Its Vite config
+    window material (appearance.ts) as macOS 26+ sidebar Liquid Glass, and paints
+    the window backing and the app's --fork-liquid-glass-sidebar where the docked
+    sidebar goes clear (preview-head.html), since a browser has no window behind
+    the page. Its Vite config
     adds the same resolution as apps/web's (forkOverrides, brand name, React
     Compiler, Tailwind scanning apps/web plus the stories, the lucide-react shim
     alias). Foundations read tokens from the CSS itself (the @theme inline
@@ -7705,7 +7713,8 @@
     through view exports that take plain props (ForkSubagentCardView,
     BotThreadsRowView, ComposerLimitsTrayView, ComposerUsageLimitsDrawer,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
-    working-mark forms), marked @public because knip does not follow the
+    working-mark forms, BotDigestView, BotDigestAskCardView,
+    BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package
     touches no upstream file: apps/* already covers it and release smoke copies
     a fixed package list. The Figma kit "no3y code — Basic UI kit" is captured
@@ -7729,14 +7738,19 @@
     apps/fork-storybook/code-connect/*.figma.ts template names one kit component
     set (`// url=`) and maps its Figma properties to the app component's real
     props, so Dev Mode's Inspect panel, and agents reading the file through the
-    Figma MCP server, get the app's code instead of generated markup. The kit's
-    glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
-    lucide-react shim export), so a swapped glyph renders through its own
-    connection (getInstanceSwap(...).executeTemplate()); Figma drops imports
-    nested two levels deep, so glyph imports also ride in template metadata for
-    the Tabs strip to collect. The subagent card's snippet is the timeline's
-    real call (<ForkSubagentGroup row={row} …/>), since its status, open state,
-    timer and model all come from the row. Shared helpers live in
+    Figma MCP server, get the app's code instead of generated markup. Every kit
+    component with an app counterpart is connected; the guard lists their nodes.
+    The kit's glyphs are one batch (icons.figma.batch.json + .ts, each glyph's
+    icon set to its lucide-react shim export; a connection on a variant does not
+    resolve, so the batch names the Style × Size sets), so a swapped glyph renders
+    through its own connection (getInstanceSwap(...).executeTemplate()). Figma
+    drops imports nested two levels deep, so every template a parent collects
+    (Menu, Select, Dialog, Tabs, …) also carries its imports in metadata for
+    that parent to merge. A composite whose look comes from app data (the
+    subagent card, thread card, composer, Petals, changed files card, model
+    picker) shows the app's real call; the thread card's row is private to Sidebar.tsx, so its
+    template imports nothing and the guard only checks the source defines it.
+    Shared helpers live in
     code-connect/shared.ts, which the CLI bundles into each template. Templates
     use Figma's maintained template format (the Storybook and React parsers are
     deprecated) and run inside Figma, so they import only "figma" and knip
@@ -7797,3 +7811,39 @@
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
+
+- id: fork-branch-link-copy
+  intent: >
+    In a started thread, clicking the composer's read-only branch chip
+    (custom/ThreadContextReadout, or Enter/Space on it) copies the branch's
+    web page on the project's host, built from the project's
+    repositoryIdentity by custom/branchLinks (on `origin` when the identity is a fork's
+    `upstream`, since branches are pushed there): the repository root comes from
+    the host's own commit link, so webUrl mounts, HTTP remote ports and
+    Azure's SSH spellings match commit links. GitHub and GitCafe use
+    /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
+    /branch/, Azure DevOps ?version=GB<branch>; each branch segment is
+    encoded and the slashes kept, except GitCafe, which takes a slashed name as one
+    encoded refs/heads/<branch> segment. The picker links a local branch where it
+    tracks when git reports it; the chip has no tracking ref and uses origin. With no known host (or Cursor Origin, which
+    has no branch page) the click copies the name. The chip stays a span with a button role, since
+    the row's CSS gives buttons a hover fill that would replace the chip's.
+    Its right-click menu, and the branch picker's (BranchToolbarBranchSelector:
+    the composer strip with "Composer context" on, and the details panel),
+    offer "Copy branch link" beside "Copy branch name" when a link exists; the
+    picker's trigger still opens the picker on click. No server or contract
+    change; mobile is not covered.
+  tier: 4
+  files:
+    - apps/web/src/custom/branchLinks.ts
+    - apps/web/src/custom/branchLinks.test.ts
+    - apps/web/src/custom/copyBranchReference.ts
+    # Shared with fork-composer-shell; this entry owns the branch chip's copy.
+    - apps/web/src/custom/ThreadContextReadout.tsx
+  shadows: []
+  watch:
+    # Fenced imports and the right-click menu's link item.
+    - apps/web/src/components/BranchToolbarBranchSelector.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
+    - apps/web/src/custom/branchLinks.test.ts

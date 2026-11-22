@@ -220,7 +220,7 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 
   return (
-    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 px-3 py-3">
       {!hasContent ? (
         <span className="text-xs text-muted-foreground">
           No provider reports subscription limits.
@@ -233,14 +233,16 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
           >
             {pools.map((pool, index) => (
               <Fragment key={pool.driver}>
-                {index > 0 ? <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" /> : null}
+                {index > 0 ? (
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
+                ) : null}
                 <CompactProviderStrip pool={pool} now={props.now} />
               </Fragment>
             ))}
             {externalLinks.map((link, index) => (
               <Fragment key={link.url}>
                 {pools.length > 0 || index > 0 ? (
-                  <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" />
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
                 ) : null}
                 <button
                   type="button"
@@ -255,7 +257,7 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
             {notices.length > 0 ? (
               <>
                 {pools.length > 0 || externalLinks.length > 0 ? (
-                  <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" />
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
                 ) : null}
                 <Tooltip>
                   <TooltipTrigger
@@ -293,10 +295,10 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
       <button
         type="button"
         aria-label="Close usage limits"
-        className="ml-auto inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="ml-auto inline-flex size-6 shrink-0 self-start cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={props.onClose}
       >
-        <XIcon className="size-3" aria-hidden="true" />
+        <XIcon className="size-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -308,34 +310,30 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
   const windows = compactTrayWindows(pool);
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              aria-label={providerLabel}
-              className={
-                pool.driver === "claudeAgent"
-                  ? "inline-flex size-4 shrink-0 translate-y-px items-center justify-center [--fork-mark-size:14px]"
-                  : "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]"
-              }
-            >
-              {hasForkProviderMark(pool.driver) ? (
-                <ForkProviderMark driver={pool.driver} />
-              ) : (
-                <ProviderInstanceIcon
-                  driverKind={pool.driver}
-                  displayName={providerLabel}
-                  indicatorBackground="var(--card)"
-                  className="size-4"
-                  iconClassName="size-3.5 text-foreground/80"
-                />
-              )}
-            </span>
+    <div className="flex shrink-0 flex-col gap-1.5">
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+        <span
+          aria-hidden
+          className={
+            pool.driver === "claudeAgent"
+              ? "inline-flex size-4 shrink-0 translate-y-px items-center justify-center [--fork-mark-size:14px]"
+              : "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]"
           }
-        />
-        <TooltipPopup side="top">{providerLabel}</TooltipPopup>
-      </Tooltip>
+        >
+          {hasForkProviderMark(pool.driver) ? (
+            <ForkProviderMark driver={pool.driver} />
+          ) : (
+            <ProviderInstanceIcon
+              driverKind={pool.driver}
+              displayName={providerLabel}
+              indicatorBackground="var(--card)"
+              className="size-4"
+              iconClassName="size-3.5 text-foreground/80"
+            />
+          )}
+        </span>
+        <span className="whitespace-nowrap">{providerLabel}</span>
+      </span>
       <div className="flex shrink-0 items-center gap-2.5">
         {windows.map((window) => {
           const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
@@ -354,10 +352,10 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
                     aria-label={accessibleLabel}
                     className="inline-flex shrink-0 items-center gap-1 rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
+                    <UsageCircleMeter remaining={window.remainingPercent} />
                     <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                       {shortLabel}
                     </span>
-                    <UsageCircleMeter remaining={window.remainingPercent} />
                   </span>
                 }
               />

@@ -77,6 +77,10 @@ import { ComposerControl } from "./chat/ComposerControl";
 import { MiddleTruncate } from "./ui/middle-truncate";
 import { BranchPicker, BranchPickerRefItem } from "./BranchPicker";
 import { stackedThreadToast, toastManager } from "./ui/toast";
+/* fork:begin fork-branch-link-copy — see .fork/customizations.yaml#fork-branch-link-copy */
+import { refBranchUrl } from "~/custom/branchLinks";
+import { copyBranchLink } from "~/custom/copyBranchReference";
+/* fork:end fork-branch-link-copy */
 
 export interface BranchToolbarBranchSelectorHandle {
   open: () => void;
@@ -433,12 +437,26 @@ export function BranchToolbarBranchSelector({
     if (!api) return;
     event.preventDefault();
     event.stopPropagation();
-    const items: ContextMenuItem<"copy-branch-name">[] = [
+    /* fork:begin fork-branch-link-copy — see .fork/customizations.yaml#fork-branch-link-copy */
+    const branchLink = refBranchUrl(
+      activeProject?.repositoryIdentity,
+      branchByName.get(branchName) ??
+        (branchName === resolvedActiveBranch ? queriedActiveBranch : undefined) ?? {
+          name: branchName,
+        },
+    );
+    const items: ContextMenuItem<"copy-branch-name" | "copy-branch-link">[] = [
       { id: "copy-branch-name", label: gt("Copy branch name"), icon: "copy" },
+      ...(branchLink
+        ? // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+          [{ id: "copy-branch-link" as const, label: "Copy branch link", icon: "copy" }]
+        : []),
     ];
     void api.contextMenu.show(items, { x: event.clientX, y: event.clientY }).then((action) => {
       if (action === "copy-branch-name") copyBranchName(branchName);
+      if (action === "copy-branch-link" && branchLink) copyBranchLink(branchLink);
     });
+    /* fork:end fork-branch-link-copy */
   };
 
   const runBranchAction = (action: () => Promise<void>) => {

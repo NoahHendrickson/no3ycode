@@ -1112,6 +1112,36 @@
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
+/* Beside send, the mic is attach's mirror: 28px in its slot, pulled in from the cluster's 8px.
+   Inlet keeps its own mic geometry. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-chat-composer-actions="right"]
+  [data-fork-composer-action="dictate"] {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 2px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-chat-composer-actions="right"]
+  > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]):has(
+    + [data-fork-composer-action="stop"],
+    + span > [data-fork-composer-action="send"]
+  ) {
+  margin-inline-end: -6px;
+}
+
+/* A live session's cancel X sits closer to its check, like the mic beside Send. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-chat-composer-actions="right"]
+  [data-fork-composer-action="dictate-cancel"] {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 2px -4px 2px 0;
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]):is(
     :hover,
@@ -2772,6 +2802,23 @@
   position: relative;
 }
 
+/* Tooltips read at 14px with 8px corners. Inlet keeps its pill tooltips; code tooltips and the
+   sidebar's row hover cards keep their own type. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not(.font-mono) {
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 20px;
+
+  &::before {
+    border-radius: 7px;
+  }
+
+  & [data-slot="tooltip-viewport"] {
+    padding: 4px 10px;
+  }
+}
+
 /* ── Dictate tooltip (fork-local-dictation) ─────────────────────────────────
    Sizing only; the frost is the popup rule (fork-popup-surface), which every
    glass tooltip shares. A step larger than the default tooltip (12px / 8×4)
@@ -2930,6 +2977,8 @@
    other three sides. Basic paints its own raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
+  /* The composer's corners: the card is the composer turned over (fork-changed-files-card). */
+  --fork-card-radius: var(--fork-composer-radius);
   background: var(--card);
   border: 1px solid var(--fork-composer-border);
   border-radius: var(--fork-card-radius);
@@ -2955,6 +3004,13 @@
   ~ div:last-child {
   border-bottom-left-radius: calc(var(--fork-card-radius) - 1px);
   border-bottom-right-radius: calc(var(--fork-card-radius) - 1px);
+}
+
+/* On Flat Glass the tree and its footer lift 4% off the card, like the composer's prompt well. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-changed-files-state]
+  > :not([data-changed-files-header]) {
+  background: rgb(255 255 255 / 4%);
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream
