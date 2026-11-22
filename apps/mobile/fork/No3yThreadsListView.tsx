@@ -55,7 +55,6 @@ import {
   SwipeableScrollGateProvider,
   useSwipeableScrollGate,
 } from "../src/features/home/thread-swipe-actions";
-import { ThreadListFilters } from "../src/features/home/ThreadListFilters";
 import type { SavedRemoteConnection } from "../src/lib/connection";
 import { scopedProjectKey, scopedThreadKey } from "../src/lib/scopedEntities";
 import { NativeScrollViewMarker } from "../src/native/NativeScrollViewMarker";
@@ -67,7 +66,7 @@ import type { ThreadPrPresentation } from "../src/state/thread-pr-presentation";
 import { usePendingThreadOrder } from "../src/state/thread-order";
 import type { PendingNewTask } from "../src/state/use-pending-new-tasks";
 import type { WorkspaceEnvironment } from "../src/state/workspaceModel";
-import { flatGlassPalette, NO3Y_BOTTOM_NAV_CLEARANCE } from "./flatGlassTheme";
+import { flatGlassPalette } from "./flatGlassTheme";
 import {
   no3yStatusGroupedItemsAreEqual,
   type No3yStatusFilter,
@@ -75,8 +74,10 @@ import {
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { No3yStatusSectionHeader } from "./No3yStatusSectionHeader";
 import { No3yPendingDraftRow, No3yThreadRow } from "./No3yThreadRow";
+import { No3yThreadsFilterBar } from "./No3yThreadsFilterBar";
 import { useNo3yStatusGroupedList } from "./useNo3yStatusGroupedList";
 
 const ESTIMATED_NO3Y_ROW_HEIGHT = 60;
@@ -184,6 +185,7 @@ export function No3yThreadsListView(props: {
   const no3yBottomNav = useNo3yBottomNavEnabled();
   const insets = useSafeAreaInsets();
   const contentTopInset = useContentTopInset();
+  const trayContentInset = useNo3yTrayContentInset();
   const activeNewTask = useActiveNewTask();
   const serverConfigs = useServerConfigs();
   const pendingOrder = usePendingThreadOrder();
@@ -477,10 +479,32 @@ export function No3yThreadsListView(props: {
       <EmptyState title="No threads yet" detail="Tap + below to start a new agent session." />
     );
 
-  const bottomPadding = Math.max(
-    (props.contentSideInsets?.bottom ?? insets.bottom) +
-      (no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 24),
-    workspace?.bottomClearance ?? 0,
+  const bottomPadding = no3yBottomNav
+    ? trayContentInset
+    : Math.max(
+        (props.contentSideInsets?.bottom ?? insets.bottom) + 24,
+        workspace?.bottomClearance ?? 0,
+      );
+
+  const filterBar = (
+    <No3yThreadsFilterBar
+      palette={palette}
+      environments={props.environments}
+      projects={pickableProjectGroups(props.projectScopes).map((scope) => ({
+        key: scope.key,
+        label: scope.title,
+      }))}
+      selectedEnvironmentId={props.selectedEnvironmentId}
+      selectedProjectKey={props.selectedProjectKey}
+      onEnvironmentChange={props.onEnvironmentChange}
+      onProjectChange={props.onProjectChange}
+      searchQuery={props.searchQuery}
+      onSearchQueryChange={props.onSearchQueryChange}
+      statusFilter={props.statusFilter}
+      onStatusFilterChange={props.onStatusFilterChange}
+      sortOrder={props.sortOrder}
+      onSortOrderChange={props.onSortOrderChange}
+    />
   );
 
   return (
@@ -519,24 +543,11 @@ export function No3yThreadsListView(props: {
                   themeAppearance,
                 }}
                 ListHeaderComponent={
-                  <ThreadListFilters
-                    gutter={props.sidebarSurface ? 8 : 0}
-                    environments={props.environments}
-                    projects={pickableProjectGroups(props.projectScopes).map((scope) => ({
-                      key: scope.key,
-                      label: scope.title,
-                    }))}
-                    selectedEnvironmentId={props.selectedEnvironmentId}
-                    selectedProjectKey={props.selectedProjectKey}
-                    onEnvironmentChange={props.onEnvironmentChange}
-                    onProjectChange={props.onProjectChange}
-                    searchQuery={props.searchQuery}
-                    onSearchQueryChange={props.onSearchQueryChange}
-                    statusFilter={props.statusFilter}
-                    onStatusFilterChange={props.onStatusFilterChange}
-                    sortOrder={props.sortOrder}
-                    onSortOrderChange={props.onSortOrderChange}
-                  />
+                  no3yBottomNav ? null : (
+                    <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
+                      {filterBar}
+                    </View>
+                  )
                 }
                 ListHeaderComponentStyle={{ zIndex: 1 }}
                 ListFooterComponent={
@@ -580,6 +591,9 @@ export function No3yThreadsListView(props: {
           </SwipeableScrollGateProvider>
         </View>
       </ScreenContent>
+      {no3yBottomNav ? (
+        <No3yBottomTray color={palette.stageBackground}>{filterBar}</No3yBottomTray>
+      ) : null}
     </View>
   );
 }

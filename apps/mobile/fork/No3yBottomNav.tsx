@@ -1,23 +1,23 @@
 /**
- * Always-visible Flat Glass bottom navigation bar (4 items, New agent centered)
- * with long-press peek sheets — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * The always-visible dock: five icon-only items (Threads, Automations, New agent centered, Chat,
+ * Settings) with a soft pill behind the selected one, and a long-press peek card anchored above
+ * Threads, Automations and Chat — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { useAtomValue } from "@effect/atom-react";
+import CodeIcon from "@hugeicons/core-free-icons/CodeIcon";
+import MessageSquareTextIcon from "@hugeicons/core-free-icons/MessageSquareTextIcon";
+import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
+import Settings01Icon from "@hugeicons/core-free-icons/Settings01Icon";
+import ZapIcon from "@hugeicons/core-free-icons/ZapIcon";
 import { CommonActions, useNavigation, type NavigationState } from "@react-navigation/native";
-import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
-import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
-import type {
-  EnvironmentProject,
-  EnvironmentThreadShell,
-} from "@t3tools/client-runtime/state/shell";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import * as Haptics from "expo-haptics";
-import { useMemo, useState } from "react";
-import { Keyboard, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useMemo, useState, type ReactNode } from "react";
+import { Keyboard, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useKeyboardState } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ProjectFavicon } from "../src/components/ProjectFavicon";
-import { SymbolView, type AppSymbolName } from "../src/components/ui/AppSymbol";
 import { AppText as Text } from "../src/components/ui/AppText";
 import { GlassSurface } from "../src/components/ui/GlassSurface";
 import { OverlayPortal } from "../src/components/ui/OverlayPortal";
@@ -25,20 +25,23 @@ import { useAdaptiveWorkspaceLayout } from "../src/features/layout/adaptive-work
 import { isWorkspaceOverlayRoute } from "../src/features/layout/workspace-overlay-routes";
 import { openSettings } from "../src/features/settings/settings-navigation";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
+import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { isDuoDevice } from "../src/lib/device-type";
-import { uuidv4 } from "../src/lib/uuid";
 import { useDeviceType } from "../src/native/native-layout-metrics";
 import { useProjects, useServerConfigs } from "../src/state/entities";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
-import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import {
   flatGlassPalette,
-  NO3Y_BOTTOM_NAV_BAR_HEIGHT,
-  NO3Y_BOTTOM_NAV_BOTTOM_MARGIN,
+  NO3Y_DOCK_HEIGHT,
+  no3yDockBottom,
   type FlatGlassPalette,
 } from "./flatGlassTheme";
+import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
+import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
+import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import {
   buildScratchProjectKeySet,
+  hasNo3yNavPeek,
   isNo3yChatThread,
   listNo3yAutomationRunThreads,
   resolveActiveNo3yNavItem,
@@ -48,123 +51,179 @@ import {
   type No3yNavItemId,
   type No3yNavPeekEntry,
 } from "./mobileStatusGrouping";
+import { No3yBottomFade } from "./No3yBottomFade";
 import { No3yStatusMark } from "./No3yStatusMark";
 
-const PEEK_TITLES: Record<No3yNavItemId, string> = {
-  threads: "Working & needs input",
-  automations: "Recent automation runs",
-  newAgent: "Quick start in project",
-  chat: "Recent chats",
-};
+const DOCK_SIDE_PADDING = 16;
+const PEEK_CARD_MAX_WIDTH = 300;
+const PEEK_EDGE = 12;
 
-const PEEK_EMPTY_COPY: Record<No3yNavItemId, string> = {
-  threads: "No agents running or waiting for input.",
-  automations: "No recent automation runs yet.",
-  newAgent: "No projects available yet.",
-  chat: "No quick chats yet.",
-};
-
-function NavTabButton(props: {
-  readonly icon: AppSymbolName;
+const DOCK_ITEMS: ReadonlyArray<{
+  readonly id: No3yNavItemId;
   readonly label: string;
+  readonly icon: HugeIconData;
+}> = [
+  { id: "threads", label: "Threads", icon: CodeIcon },
+  { id: "automations", label: "Automations", icon: ZapIcon },
+  { id: "newAgent", label: "New agent", icon: PlusIcon },
+  { id: "chat", label: "Chat", icon: MessageSquareTextIcon },
+  { id: "settings", label: "Settings", icon: Settings01Icon },
+];
+
+const PEEK_COPY: Partial<
+  Record<No3yNavItemId, { readonly empty: string; readonly create: string }>
+> = {
+  threads: { empty: "No threads yet", create: "New thread" },
+  automations: { empty: "No automation runs yet", create: "New automation" },
+  chat: { empty: "No chats yet", create: "New chat" },
+};
+
+function DockItem(props: {
+  readonly label: string;
+  readonly icon: HugeIconData;
   readonly active: boolean;
-  readonly badgeColor?: string | null;
+  readonly peeking: boolean;
+  readonly hasPeek: boolean;
+  readonly badgeColor: string | null;
   readonly palette: FlatGlassPalette;
   readonly onPress: () => void;
   readonly onLongPress: () => void;
 }) {
-  const { palette, active } = props;
+  const { palette } = props;
+  return (
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityLabel={props.label}
+        accessibilityHint={props.hasPeek ? "Long-press to peek" : undefined}
+        accessibilityState={{ selected: props.active }}
+        delayLongPress={300}
+        onPress={props.onPress}
+        onLongPress={props.hasPeek ? props.onLongPress : undefined}
+        style={({ pressed }) => ({
+          width: 56,
+          height: 40,
+          borderRadius: 20,
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 1.5,
+          borderColor: props.peeking ? palette.peekRing : "transparent",
+          backgroundColor:
+            props.active || props.peeking
+              ? palette.activePillSurface
+              : pressed
+                ? palette.rowPressed
+                : "transparent",
+        })}
+      >
+        <View>
+          <HugeIcon
+            icon={props.icon}
+            size={22}
+            color={props.active ? palette.foreground : palette.quietInk}
+            strokeWidth={props.active ? 1.8 : 1.5}
+          />
+          {props.badgeColor ? (
+            <View
+              style={{
+                position: "absolute",
+                top: -1,
+                right: -3,
+                width: 7,
+                height: 7,
+                borderRadius: 3.5,
+                backgroundColor: props.badgeColor,
+              }}
+            />
+          ) : null}
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function PeekRow(props: {
+  readonly palette: FlatGlassPalette;
+  readonly accessibilityLabel: string;
+  readonly onPress: () => void;
+  readonly leading: ReactNode;
+  readonly title: string;
+  readonly muted?: boolean;
+  readonly trailing?: ReactNode;
+}) {
+  const { palette } = props;
   return (
     <Pressable
-      accessibilityRole="tab"
-      accessibilityLabel={props.label}
-      accessibilityHint="Long-press to peek"
-      accessibilityState={{ selected: active }}
-      delayLongPress={300}
+      accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel}
       onPress={props.onPress}
-      onLongPress={props.onLongPress}
       style={({ pressed }) => ({
-        flex: 1,
+        flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
+        gap: 12,
+        paddingHorizontal: 16,
         height: 46,
-        borderRadius: 23,
-        paddingHorizontal: 6,
-        backgroundColor: active
-          ? palette.activePillSurface
-          : pressed
-            ? palette.rowPressed
-            : "transparent",
-        opacity: pressed ? 0.85 : 1,
+        backgroundColor: pressed ? palette.rowPressed : "transparent",
       })}
     >
-      <View style={{ position: "relative", alignItems: "center", justifyContent: "center" }}>
-        <SymbolView
-          name={props.icon}
-          size={19}
-          tintColor={active ? palette.foreground : palette.quietInk}
-          type="monochrome"
-          weight={active ? "semibold" : "regular"}
-        />
-        {props.badgeColor ? (
-          <View
-            style={{
-              position: "absolute",
-              top: -2,
-              right: -7,
-              width: 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: props.badgeColor,
-            }}
-          />
-        ) : null}
-      </View>
+      <View style={{ width: 20, alignItems: "center" }}>{props.leading}</View>
       <Text
         numberOfLines={1}
+        ellipsizeMode="tail"
         style={{
-          marginTop: 2,
-          fontSize: 10,
-          lineHeight: 12,
-          fontWeight: active ? "600" : "500",
-          color: active ? palette.foreground : palette.quietInk,
+          flex: 1,
+          fontSize: 15,
+          lineHeight: 20,
+          color: props.muted ? palette.quietInk : palette.foreground,
         }}
       >
-        {props.label}
+        {props.title}
       </Text>
+      {props.trailing}
     </Pressable>
   );
 }
 
-function No3yPeekSheet(props: {
+function No3yPeekCard(props: {
   readonly item: No3yNavItemId;
+  readonly icon: HugeIconData;
   readonly entries: ReadonlyArray<No3yNavPeekEntry>;
-  readonly bottomOffset: number;
+  readonly anchorX: number;
+  readonly bottom: number;
   readonly palette: FlatGlassPalette;
   readonly onClose: () => void;
   readonly onOpenThread: (thread: EnvironmentThreadShell) => void;
-  readonly onStartInProject: (project: EnvironmentProject) => void;
-  readonly footerAction?:
-    | { readonly label: string; readonly icon: AppSymbolName; readonly onPress: () => void }
-    | undefined;
+  readonly onCreate: () => void;
 }) {
   const { palette } = props;
+  const window = useWindowDimensions();
+  const copy = PEEK_COPY[props.item];
+  const width = Math.min(PEEK_CARD_MAX_WIDTH, window.width - PEEK_EDGE * 2);
+  const left = Math.min(
+    Math.max(props.anchorX - width / 2, PEEK_EDGE),
+    window.width - PEEK_EDGE - width,
+  );
   return (
     <OverlayPortal>
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Close peek list"
+          accessibilityLabel="Close peek"
           onPress={props.onClose}
           style={[StyleSheet.absoluteFill, { backgroundColor: palette.peekBackdrop }]}
         />
-        <View
-          pointerEvents="box-none"
+        <Animated.View
+          entering={FadeIn.duration(140)}
           style={{
             position: "absolute",
-            left: 14,
-            right: 14,
-            bottom: props.bottomOffset,
+            left,
+            width,
+            bottom: props.bottom,
+            borderRadius: 22,
+            shadowColor: "#000000",
+            shadowOpacity: 0.35,
+            shadowRadius: 24,
+            shadowOffset: { width: 0, height: 10 },
           }}
         >
           <GlassSurface
@@ -172,190 +231,78 @@ function No3yPeekSheet(props: {
             tintColor={palette.panelTint}
             fallbackColor={palette.panelFallback}
             style={{
-              borderRadius: 20,
+              borderRadius: 22,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: palette.panelBorder,
-              maxHeight: 340,
+              overflow: "hidden",
+              paddingVertical: 6,
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 13,
-                  lineHeight: 16,
-                  fontWeight: "600",
-                  color: palette.quietInk,
-                }}
-              >
-                {PEEK_TITLES[props.item]}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Close peek"
-                hitSlop={10}
+            {props.entries.length === 0 && copy ? (
+              <PeekRow
+                palette={palette}
+                accessibilityLabel={copy.empty}
                 onPress={props.onClose}
-              >
-                <SymbolView
-                  name="xmark.circle.fill"
-                  size={18}
-                  tintColor={palette.faintInk}
-                  type="monochrome"
-                />
-              </Pressable>
-            </View>
-            {/* Full-width edge-to-edge divider per fork design defaults. */}
-            <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: palette.hairline }} />
-            <ScrollView
-              bounces={false}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {props.entries.length === 0 ? (
-                <View style={{ paddingHorizontal: 16, paddingVertical: 20 }}>
-                  <Text style={{ fontSize: 13, lineHeight: 18, color: palette.quietInk }}>
-                    {PEEK_EMPTY_COPY[props.item]}
-                  </Text>
-                </View>
-              ) : (
-                props.entries.map((entry, index) => (
-                  <View key={entry.key}>
-                    {index > 0 ? (
-                      <View
-                        style={{
-                          height: StyleSheet.hairlineWidth,
-                          backgroundColor: palette.hairline,
-                        }}
-                      />
-                    ) : null}
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => {
-                        props.onClose();
-                        if (entry.kind === "thread") props.onOpenThread(entry.thread);
-                        else props.onStartInProject(entry.project);
-                      }}
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                        paddingHorizontal: 16,
-                        paddingVertical: 11,
-                        backgroundColor: pressed ? palette.rowPressed : "transparent",
-                      })}
-                    >
-                      {entry.kind === "project" ? (
-                        <ProjectFavicon
-                          environmentId={entry.project.environmentId}
-                          faviconPath={entry.project.faviconPath}
-                          projectIcon={entry.project.projectIcon}
-                          size={16}
-                          projectTitle={entry.project.title}
-                          workspaceRoot={entry.project.workspaceRoot}
-                        />
-                      ) : null}
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            fontSize: 14,
-                            lineHeight: 18,
-                            fontWeight: "400",
-                            color: palette.foreground,
-                          }}
-                        >
-                          {entry.kind === "thread" ? entry.thread.title : entry.project.title}
-                        </Text>
-                        {entry.subtitle ? (
-                          <Text
-                            numberOfLines={1}
-                            style={{
-                              marginTop: 2,
-                              fontSize: 12,
-                              lineHeight: 15,
-                              color: palette.quietInk,
-                            }}
-                          >
-                            {entry.subtitle}
-                          </Text>
-                        ) : null}
-                      </View>
-                      {entry.kind === "thread" ? (
-                        <No3yStatusMark
-                          kind={entry.statusKind}
-                          seed={entry.key}
-                          palette={palette}
-                          idleMode="dot"
-                        />
-                      ) : (
-                        <SymbolView
-                          name="plus"
-                          size={16}
-                          tintColor={palette.quietInk}
-                          type="monochrome"
-                        />
-                      )}
-                    </Pressable>
-                  </View>
-                ))
-              )}
-            </ScrollView>
-            {props.footerAction ? (
-              <>
-                <View
-                  style={{ height: StyleSheet.hairlineWidth, backgroundColor: palette.hairline }}
-                />
-                <Pressable
-                  accessibilityRole="button"
+                leading={<HugeIcon icon={props.icon} size={18} color={palette.faintInk} />}
+                title={copy.empty}
+                muted
+              />
+            ) : (
+              props.entries.map((entry) => (
+                <PeekRow
+                  key={entry.key}
+                  palette={palette}
+                  accessibilityLabel={entry.thread.title}
                   onPress={() => {
                     props.onClose();
-                    props.footerAction?.onPress();
+                    props.onOpenThread(entry.thread);
                   }}
-                  style={({ pressed }) => ({
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    backgroundColor: pressed ? palette.rowPressed : "transparent",
-                  })}
-                >
-                  <SymbolView
-                    name={props.footerAction.icon}
-                    size={14}
-                    tintColor={palette.foreground}
-                    type="monochrome"
-                    weight="medium"
-                  />
-                  <Text
+                  leading={<HugeIcon icon={props.icon} size={18} color={palette.quietInk} />}
+                  title={entry.thread.title}
+                  trailing={
+                    <No3yStatusMark kind={entry.statusKind} seed={entry.key} palette={palette} />
+                  }
+                />
+              ))
+            )}
+            {copy ? (
+              <PeekRow
+                palette={palette}
+                accessibilityLabel={copy.create}
+                onPress={() => {
+                  props.onClose();
+                  props.onCreate();
+                }}
+                leading={
+                  <View
                     style={{
-                      fontSize: 13,
-                      lineHeight: 16,
-                      fontWeight: "600",
-                      color: palette.foreground,
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: palette.foreground,
                     }}
                   >
-                    {props.footerAction.label}
-                  </Text>
-                </Pressable>
-              </>
+                    <HugeIcon
+                      icon={PlusIcon}
+                      size={14}
+                      color={palette.stageBackground}
+                      strokeWidth={2.2}
+                    />
+                  </View>
+                }
+                title={copy.create}
+              />
             ) : null}
           </GlassSurface>
-        </View>
+        </Animated.View>
       </View>
     </OverlayPortal>
   );
 }
 
-/** Whether the compact iPhone Flat Glass bottom nav is active for this device/layout. */
+/** Whether the compact iPhone Flat Glass dock is active for this device/layout. */
 export function useNo3yBottomNavEnabled(): boolean {
   const deviceType = useDeviceType();
   const { layout } = useAdaptiveWorkspaceLayout();
@@ -371,6 +318,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const enabled = useNo3yBottomNavEnabled();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const window = useWindowDimensions();
   const keyboardHeight = useKeyboardState((keyboard) => keyboard.height);
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
@@ -427,53 +375,45 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
     return hasWorking ? palette.statusWorking : null;
   }, [threads, nowIso, palette.statusAttention, palette.statusFailed, palette.statusWorking]);
 
-  const peekEntries = useMemo(() => {
-    if (peekItem === null) return [];
-    return selectNo3yNavPeekItems({
-      item: peekItem,
-      threads,
-      projects,
-      scratchProjectKeys,
-      now: nowIso,
-    });
-  }, [peekItem, threads, projects, scratchProjectKeys, nowIso]);
+  const peekEntries = useMemo(
+    () =>
+      peekItem === null
+        ? []
+        : selectNo3yNavPeekItems({ item: peekItem, threads, scratchProjectKeys, now: nowIso }),
+    [peekItem, threads, scratchProjectKeys, nowIso],
+  );
 
   if (!visible) return null;
 
-  const bottomOffset = Math.max(insets.bottom, 10) + NO3Y_BOTTOM_NAV_BOTTOM_MARGIN;
+  const dockBottom = no3yDockBottom(insets.bottom);
+  const columnWidth = (window.width - DOCK_SIDE_PADDING * 2) / DOCK_ITEMS.length;
 
   const openPeek = (item: No3yNavItemId) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setPeekItem(item);
   };
 
-  const handlePressThreads = () => {
-    Keyboard.dismiss();
-    setPeekItem(null);
-    openWorkspaceTab("threads");
-  };
-
-  const handlePressAutomations = () => {
-    Keyboard.dismiss();
-    setPeekItem(null);
-    openSettings(navigation, "SettingsScheduledTasks");
-  };
-
-  const handlePressNewAgent = () => {
-    Keyboard.dismiss();
-    setPeekItem(null);
-    startNewTask();
-  };
-
-  const handlePressChat = () => {
-    Keyboard.dismiss();
-    setPeekItem(null);
+  const openChat = () => {
     navigation.dispatch((state) => {
       const home = state.routes.find((route) => route.name === "Home") ?? { name: "Home" };
       const existingChat = state.routes.find((route) => route.name === "No3yChat");
       const routes = [home, existingChat ?? { name: "No3yChat" }];
       return CommonActions.reset({ ...state, index: routes.length - 1, routes });
     });
+  };
+
+  const press: Record<No3yNavItemId, () => void> = {
+    threads: () => openWorkspaceTab("threads"),
+    automations: () => openSettings(navigation, "SettingsScheduledTasks"),
+    newAgent: startNewTask,
+    chat: openChat,
+    settings: () => openWorkspaceTab("settings"),
+  };
+
+  const create: Partial<Record<No3yNavItemId, () => void>> = {
+    threads: startNewTask,
+    automations: () => openSettings(navigation, "SettingsScheduledTaskNew"),
+    chat: openChat,
   };
 
   const handleOpenThread = (thread: EnvironmentThreadShell) => {
@@ -483,148 +423,67 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
     });
   };
 
-  const handleStartInProject = (project: EnvironmentProject) => {
-    selectDetail?.({
-      name: "Thread",
-      params: {
-        draft: {
-          requestId: uuidv4(),
-          environmentId: String(project.environmentId),
-          projectId: String(project.id),
-          title: project.title,
-        },
-      },
-    });
-  };
-
-  const peekFooterAction =
-    peekItem === "automations"
-      ? {
-          label: "New automation",
-          icon: "plus" as const,
-          onPress: () => openSettings(navigation, "SettingsScheduledTaskNew"),
-        }
-      : peekItem === "newAgent"
-        ? {
-            label: "Choose project…",
-            icon: "folder" as const,
-            onPress: () => navigation.navigate("NewTaskProject"),
-          }
-        : peekItem === "chat"
-          ? {
-              label: "Open Chat",
-              icon: "text.bubble" as const,
-              onPress: handlePressChat,
-            }
-          : undefined;
+  const peekIndex = DOCK_ITEMS.findIndex((item) => item.id === peekItem);
+  const peekDockItem = DOCK_ITEMS[peekIndex];
 
   return (
     <>
-      {peekItem !== null ? (
-        <No3yPeekSheet
+      {peekItem !== null && peekDockItem ? (
+        <No3yPeekCard
           item={peekItem}
+          icon={peekDockItem.icon}
           entries={peekEntries}
-          bottomOffset={bottomOffset + NO3Y_BOTTOM_NAV_BAR_HEIGHT + 10}
+          anchorX={DOCK_SIDE_PADDING + (peekIndex + 0.5) * columnWidth}
+          bottom={dockBottom + NO3Y_DOCK_HEIGHT + 4}
           palette={palette}
           onClose={() => setPeekItem(null)}
           onOpenThread={handleOpenThread}
-          onStartInProject={handleStartInProject}
-          footerAction={peekFooterAction}
+          onCreate={create[peekItem] ?? (() => {})}
         />
       ) : null}
       <View
         pointerEvents="box-none"
-        style={{
-          position: "absolute",
-          left: 14,
-          right: 14,
-          bottom: bottomOffset,
-          zIndex: 60,
-        }}
+        style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 60 }}
       >
-        <GlassSurface
-          glassEffectStyle="regular"
-          tintColor={palette.panelTint}
-          fallbackColor={palette.panelFallback}
+        {/* The fade stays inside the dock so it never dims the bars that sit 8pt above it. */}
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <No3yBottomFade color={palette.stageBackground} />
+          <View style={{ flex: 1, backgroundColor: palette.stageBackground }} />
+        </View>
+        <View
           style={{
-            height: NO3Y_BOTTOM_NAV_BAR_HEIGHT,
-            borderRadius: NO3Y_BOTTOM_NAV_BAR_HEIGHT / 2,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: palette.panelBorder,
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 6,
+            height: NO3Y_DOCK_HEIGHT + dockBottom,
+            paddingHorizontal: DOCK_SIDE_PADDING,
+            paddingBottom: dockBottom,
           }}
         >
-          {/* Left half: Threads + Automations */}
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 2 }}>
-            <NavTabButton
-              icon="chevron.left.forwardslash.chevron.right"
-              label="Threads"
-              active={activeItem === "threads"}
-              badgeColor={threadsBadgeColor}
-              palette={palette}
-              onPress={handlePressThreads}
-              onLongPress={() => openPeek("threads")}
-            />
-            <NavTabButton
-              icon="bolt.circle"
-              label="Automations"
-              active={activeItem === "automations"}
-              badgeColor={automationsBadgeColor}
-              palette={palette}
-              onPress={handlePressAutomations}
-              onLongPress={() => openPeek("automations")}
-            />
-          </View>
-
-          {/* Center: New agent */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="New agent"
-            accessibilityHint="Starts a new agent thread. Long-press to pick a recent project."
-            delayLongPress={300}
-            onPress={handlePressNewAgent}
-            onLongPress={() => openPeek("newAgent")}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              marginHorizontal: 6,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor:
-                activeItem === "newAgent"
-                  ? palette.centerButtonActiveSurface
-                  : palette.centerButtonSurface,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: palette.activePillBorder,
-              transform: [{ scale: pressed ? 0.94 : 1 }],
-            })}
-          >
-            <SymbolView
-              name="plus"
-              size={20}
-              tintColor={
-                activeItem === "newAgent" ? palette.centerButtonActiveInk : palette.foreground
+          {DOCK_ITEMS.map((item) => (
+            <DockItem
+              key={item.id}
+              label={item.label}
+              icon={item.icon}
+              active={activeItem === item.id}
+              peeking={peekItem === item.id}
+              hasPeek={hasNo3yNavPeek(item.id)}
+              badgeColor={
+                item.id === "threads"
+                  ? threadsBadgeColor
+                  : item.id === "automations"
+                    ? automationsBadgeColor
+                    : null
               }
-              type="monochrome"
-              weight="semibold"
-            />
-          </Pressable>
-
-          {/* Right half: Chat */}
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-            <NavTabButton
-              icon="text.bubble"
-              label="Chat"
-              active={activeItem === "chat"}
               palette={palette}
-              onPress={handlePressChat}
-              onLongPress={() => openPeek("chat")}
+              onPress={() => {
+                Keyboard.dismiss();
+                setPeekItem(null);
+                press[item.id]();
+              }}
+              onLongPress={() => openPeek(item.id)}
             />
-          </View>
-        </GlassSurface>
+          ))}
+        </View>
       </View>
     </>
   );

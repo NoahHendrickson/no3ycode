@@ -21,7 +21,6 @@ import { shouldRestoreNativeSearch } from "./workspace-tabs-state";
 import { useFloatingWorkspaceTabs, useSidebarWorkspaceTabs } from "./useSystemWorkspaceTabBar";
 import { WorkspaceTabToolbarButtons } from "./WorkspaceSectionToolbar";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { useSelectWorkspaceTab } from "./useSelectWorkspaceTab";
 import { useNo3yBottomNavEnabled } from "../../../../fork/No3yBottomNav";
 /* fork:end no3y-mobile-redesign */
 
@@ -42,7 +41,6 @@ export function WorkspaceToolbar(props: {
   const floatingTabs = useFloatingWorkspaceTabs();
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yBottomNav = useNo3yBottomNavEnabled();
-  const selectTab = useSelectWorkspaceTab();
   /* fork:end no3y-mobile-redesign */
   const duoSearch = NATIVE_LIQUID_GLASS_SUPPORTED && isDuoDevice(deviceType);
   const bottomSearch = duoSearch && sidebarTabs !== "picker";
@@ -208,17 +206,10 @@ export function WorkspaceToolbar(props: {
           {searchButton}
           {nativeToolbarCompose && foldedSearch ? <Toolbar.Spacer width={8} /> : null}
           {composeButton}
-          {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-          {no3yBottomNav && selectedTab === "threads" ? (
-            <Toolbar.Button
-              accessibilityLabel="Settings"
-              icon="gearshape"
-              onPress={() => selectTab("settings")}
-            />
-          ) : null}
-          {/* fork:end no3y-mobile-redesign */}
           {selectedTab !== "threads" ||
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
           no3yBottomNav ||
+          /* fork:end no3y-mobile-redesign */
           isDuoDevice(deviceType) ||
           (deviceType === "pad" && layout.usesSplitView) ||
           sidebarTabs === "picker" ||
@@ -229,7 +220,10 @@ export function WorkspaceToolbar(props: {
               onPress={props.onNewTask}
             />
           )}
-          {NATIVE_LIQUID_GLASS_SUPPORTED || (no3yBottomNav && selectedTab === "threads") ? null : (
+          {NATIVE_LIQUID_GLASS_SUPPORTED ||
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          (no3yBottomNav && selectedTab === "threads") ? null : (
+            /* fork:end no3y-mobile-redesign */
             <Toolbar.Button
               accessibilityLabel={searchLabel}
               icon="magnifyingglass"

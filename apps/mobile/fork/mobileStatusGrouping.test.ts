@@ -3,10 +3,7 @@
  * long-press peek selectors, and bottom-nav route state.
  */
 import { createSidebarV2CompletedHoldTracker } from "./forkStatusGrouping";
-import type {
-  EnvironmentProject,
-  EnvironmentThreadShell,
-} from "@t3tools/client-runtime/state/shell";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import {
   EnvironmentId,
   ProjectId,
@@ -31,28 +28,6 @@ const ENV_ID = EnvironmentId.make("env-1");
 const PROJECT_A = ProjectId.make("project-a");
 const PROJECT_SCRATCH = ProjectId.make("project-scratch");
 const NOW = "2026-11-22T12:00:00.000Z";
-
-function makeProject(
-  id: ProjectId,
-  title: string,
-  workspaceRoot = `/repos/${title.toLowerCase()}`,
-): EnvironmentProject {
-  return {
-    environmentId: ENV_ID,
-    id,
-    title,
-    workspaceRoot,
-    defaultModelSelection: null,
-    scripts: [],
-    createdAt: "2026-11-01T00:00:00.000Z",
-    updatedAt: "2026-11-20T00:00:00.000Z",
-    pinnedAt: null,
-    archivedAt: null,
-    repositoryIdentity: null,
-    faviconPath: null,
-    projectIcon: null,
-  };
-}
 
 function makeThread(
   id: string,
@@ -384,91 +359,80 @@ describe("buildNo3yStatusGroupedList", () => {
 });
 
 describe("selectNo3yNavPeekItems", () => {
-  it("lists working then needs-input roster threads for Threads, automation runs for Automations, recent projects for New agent, and chats for Chat", () => {
-    const projectA = makeProject(PROJECT_A, "Alpha");
-    const scratch = makeProject(PROJECT_SCRATCH, "No project");
+  it("lists up to five threads per dock item: Threads by needs-you, working, completed, then recent; automation runs; chats", () => {
     const scratchKeys = new Set([`${ENV_ID}:${PROJECT_SCRATCH}`]);
+    // Peeks order by the latest message the user wrote, as the roster does.
+    const running = (runId: string) => ({
+      status: "running" as const,
+      activeRunId: RunId.make(runId),
+      providerInstanceId: ProviderInstanceId.make("codex"),
+      providerName: null,
+      lastError: null,
+      updatedAt: NOW,
+    });
 
     const workingThread = makeThread("w1", {
-      updatedAt: "2026-11-22T11:55:00.000Z",
-      runtime: {
-        status: "running",
-        activeRunId: RunId.make("rw"),
-        providerInstanceId: ProviderInstanceId.make("codex"),
-        providerName: null,
-        lastError: null,
-        updatedAt: NOW,
-      },
+      latestUserAuthoredMessageAt: "2026-11-22T11:58:00.000Z",
+      runtime: running("rw"),
     });
     const inputThread = makeThread("i1", {
-      updatedAt: "2026-11-22T11:59:00.000Z",
+      latestUserAuthoredMessageAt: "2026-11-22T11:30:00.000Z",
       hasPendingApprovals: true,
+    });
+    const idleOlder = makeThread("idle-old", {
+      latestUserAuthoredMessageAt: "2026-11-22T09:00:00.000Z",
+    });
+    const idleNewer = makeThread("idle-new", {
+      latestUserAuthoredMessageAt: "2026-11-22T11:59:00.000Z",
+    });
+    const idleMiddle = makeThread("idle-mid", {
+      latestUserAuthoredMessageAt: "2026-11-22T10:30:00.000Z",
+    });
+    const idleOldest = makeThread("idle-oldest", {
+      latestUserAuthoredMessageAt: "2026-11-22T08:00:00.000Z",
+    });
+    const settled = makeThread("settled", {
+      latestUserAuthoredMessageAt: "2026-11-22T11:59:30.000Z",
+      settledOverride: "settled",
     });
     const workingAutomation = withSourcePatch(
       makeThread("auto-w", {
-        updatedAt: "2026-11-22T11:58:00.000Z",
-        runtime: {
-          status: "running",
-          activeRunId: RunId.make("ra"),
-          providerInstanceId: ProviderInstanceId.make("codex"),
-          providerName: null,
-          lastError: null,
-          updatedAt: NOW,
-        },
+        latestUserAuthoredMessageAt: "2026-11-22T11:58:00.000Z",
+        runtime: running("ra"),
       }),
       { scheduledTaskId: ScheduledTaskId.make("sched-1") },
     );
-    const chatThread = makeThread("chat-1", {
+    const chatOlder = makeThread("chat-1", {
       projectId: PROJECT_SCRATCH,
-      updatedAt: "2026-11-22T11:50:00.000Z",
+      latestUserAuthoredMessageAt: "2026-11-22T11:00:00.000Z",
+    });
+    const chatNewer = makeThread("chat-2", {
+      projectId: PROJECT_SCRATCH,
+      latestUserAuthoredMessageAt: "2026-11-22T11:50:00.000Z",
     });
 
-    const threads = [inputThread, workingThread, workingAutomation, chatThread];
-    const projects = [projectA, scratch];
+    const threads = [
+      idleOlder,
+      idleNewer,
+      inputThread,
+      idleMiddle,
+      workingThread,
+      idleOldest,
+      settled,
+      workingAutomation,
+      chatOlder,
+      chatNewer,
+    ];
+    const ids = (item: Parameters<typeof selectNo3yNavPeekItems>[0]["item"]) =>
+      selectNo3yNavPeekItems({ item, threads, scratchProjectKeys: scratchKeys, now: NOW }).map(
+        (entry) => String(entry.thread.id),
+      );
 
-    const threadsPeek = selectNo3yNavPeekItems({
-      item: "threads",
-      threads,
-      projects,
-      scratchProjectKeys: scratchKeys,
-      now: NOW,
-    });
-    expect(
-      threadsPeek.map((entry) => (entry.kind === "thread" ? String(entry.thread.id) : "")),
-    ).toEqual(["w1", "i1"]);
-
-    const autoPeek = selectNo3yNavPeekItems({
-      item: "automations",
-      threads,
-      projects,
-      scratchProjectKeys: scratchKeys,
-      now: NOW,
-    });
-    expect(
-      autoPeek.map((entry) => (entry.kind === "thread" ? String(entry.thread.id) : "")),
-    ).toEqual(["auto-w"]);
-
-    const newAgentPeek = selectNo3yNavPeekItems({
-      item: "newAgent",
-      threads,
-      projects,
-      scratchProjectKeys: scratchKeys,
-      now: NOW,
-    });
-    expect(
-      newAgentPeek.map((entry) => (entry.kind === "project" ? String(entry.project.id) : "")),
-    ).toEqual([String(PROJECT_A)]);
-
-    const chatPeek = selectNo3yNavPeekItems({
-      item: "chat",
-      threads,
-      projects,
-      scratchProjectKeys: scratchKeys,
-      now: NOW,
-    });
-    expect(
-      chatPeek.map((entry) => (entry.kind === "thread" ? String(entry.thread.id) : "")),
-    ).toEqual(["chat-1"]);
+    expect(ids("threads")).toEqual(["i1", "w1", "idle-new", "idle-mid", "idle-old"]);
+    expect(ids("automations")).toEqual(["auto-w"]);
+    expect(ids("chat")).toEqual(["chat-2", "chat-1"]);
+    expect(ids("newAgent")).toEqual([]);
+    expect(ids("settings")).toEqual([]);
   });
 });
 
@@ -484,9 +448,22 @@ describe("bottom nav route resolution", () => {
         { name: "Thread", params: { draft: { requestId: "1" } } },
       ]),
     ).toBe("newAgent");
-    expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "SettingsScheduledTasks" }])).toBe(
-      "automations",
-    );
+    expect(
+      resolveActiveNo3yNavItem([
+        { name: "Home" },
+        { name: "Settings" },
+        { name: "SettingsScheduledTasks" },
+      ]),
+    ).toBe("automations");
+    expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "Settings" }])).toBe("settings");
+    expect(
+      resolveActiveNo3yNavItem([
+        { name: "Home" },
+        { name: "Settings" },
+        { name: "SettingsAppearance" },
+      ]),
+    ).toBe("settings");
+    expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "SettingsAuth" }])).toBeNull();
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "No3yChat" }])).toBe("chat");
 
     expect(shouldShowNo3yBottomNav({ topRouteName: "Home", isOverlayRoute: false })).toBe(true);

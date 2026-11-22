@@ -48,7 +48,7 @@ import {
 
 export type No3yStatusFilter = "all" | SidebarV2StatusBucket;
 export type No3yThreadSortOrder = "status" | "updated_at" | "created_at";
-export type No3yNavItemId = "threads" | "automations" | "newAgent" | "chat";
+export type No3yNavItemId = "threads" | "automations" | "newAgent" | "chat" | "settings";
 
 export const NO3Y_CHAT_THREAD_TAG = "chat";
 
@@ -580,20 +580,11 @@ export function buildNo3yStatusGroupedList(input: {
   };
 }
 
-export type No3yNavPeekEntry =
-  | {
-      readonly kind: "thread";
-      readonly key: string;
-      readonly thread: EnvironmentThreadShell;
-      readonly statusKind: SidebarV2CardStatusKind | null;
-      readonly subtitle: string | null;
-    }
-  | {
-      readonly kind: "project";
-      readonly key: string;
-      readonly project: EnvironmentProject;
-      readonly subtitle: string | null;
-    };
+export interface No3yNavPeekEntry {
+  readonly key: string;
+  readonly thread: EnvironmentThreadShell;
+  readonly statusKind: SidebarV2CardStatusKind | null;
+}
 
 /**
  * Unarchived threads launched by an automation (stamped with `scheduledTaskId`),
@@ -625,108 +616,78 @@ export function listNo3yAutomationRunThreads(input: {
     );
 }
 
-/** Pure selector for the long-press peek sheet on each bottom-nav button. */
+/** Dock items with a long-press peek; New agent and Settings have none. */
+export function hasNo3yNavPeek(item: No3yNavItemId): boolean {
+  return item === "threads" || item === "automations" || item === "chat";
+}
+
+/** Threads peek order: needs you, then running, then unseen completions, then the rest. */
+function threadsPeekRank(statusKind: SidebarV2CardStatusKind | null): number {
+  switch (sidebarV2StatusBucketForKind(statusKind)) {
+    case "input":
+      return 0;
+    case "working":
+      return 1;
+    case "done":
+      return 2;
+    default:
+      return 3;
+  }
+}
+
+function peekEntry(thread: EnvironmentThreadShell, now: string): No3yNavPeekEntry {
+  return {
+    key: `${thread.environmentId}:${thread.id}`,
+    thread,
+    statusKind: resolveNo3yThreadCardStatusKind(thread, { now }),
+  };
+}
+
+const byNewestActivity = (left: EnvironmentThreadShell, right: EnvironmentThreadShell) =>
+  getThreadSortTimestamp(right, "updated_at") - getThreadSortTimestamp(left, "updated_at");
+
+/** Pure selector for the long-press peek card above each dock item. */
 export function selectNo3yNavPeekItems(input: {
   readonly item: No3yNavItemId;
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
-  readonly projects: ReadonlyArray<EnvironmentProject>;
   readonly scratchProjectKeys: ReadonlySet<string>;
   readonly now: string;
   readonly limit?: number;
 }): ReadonlyArray<No3yNavPeekEntry> {
-  const limit = input.limit ?? 6;
-  const projectByKey = new Map(
-    input.projects.map((project) => [`${project.environmentId}:${project.id}`, project] as const),
-  );
-  const rosterThreads = filterForkRosterVisibleThreads(input.threads);
+  const limit = input.limit ?? 5;
 
   if (input.item === "threads") {
-    const working: Array<{
-      readonly thread: EnvironmentThreadShell;
-      readonly statusKind: SidebarV2CardStatusKind | null;
-      readonly priority: number;
-      readonly timestamp: number;
-    }> = [];
-    for (const thread of rosterThreads) {
-      if (isNo3yChatThread(thread, input.scratchProjectKeys)) continue;
-      if (thread.settledOverride === "settled" || effectiveSnoozed(thread, { now: input.now })) {
-        continue;
-      }
-      const statusKind = resolveNo3yThreadCardStatusKind(thread, { now: input.now });
-      const bucket = sidebarV2StatusBucketForKind(statusKind);
-      if (bucket !== "working" && bucket !== "input") continue;
-      working.push({
-        thread,
-        statusKind,
-        priority: bucket === "working" ? 0 : 1,
-        timestamp: getThreadSortTimestamp(thread, "updated_at"),
-      });
-    }
-    working.sort(
-      (left, right) => left.priority - right.priority || right.timestamp - left.timestamp,
-    );
-    return working.slice(0, limit).map(({ thread, statusKind }) => ({
-      kind: "thread" as const,
-      key: `${thread.environmentId}:${thread.id}`,
-      thread,
-      statusKind,
-      subtitle: projectByKey.get(`${thread.environmentId}:${thread.projectId}`)?.title ?? null,
-    }));
+    return filterForkRosterVisibleThreads(input.threads)
+      .filter(
+        (thread) =>
+          !isNo3yChatThread(thread, input.scratchProjectKeys) &&
+          thread.settledOverride !== "settled" &&
+          !effectiveSnoozed(thread, { now: input.now }),
+      )
+      .map((thread) => peekEntry(thread, input.now))
+      .sort(
+        (left, right) =>
+          threadsPeekRank(left.statusKind) - threadsPeekRank(right.statusKind) ||
+          byNewestActivity(left.thread, right.thread),
+      )
+      .slice(0, limit);
   }
 
   if (input.item === "automations") {
-    const automationThreads = listNo3yAutomationRunThreads({ threads: input.threads });
-    return automationThreads.slice(0, limit).map((thread) => ({
-      kind: "thread" as const,
-      key: `${thread.environmentId}:${thread.id}`,
-      thread,
-      statusKind: resolveNo3yThreadCardStatusKind(thread, { now: input.now }),
-      subtitle: projectByKey.get(`${thread.environmentId}:${thread.projectId}`)?.title ?? null,
-    }));
+    return listNo3yAutomationRunThreads({ threads: input.threads })
+      .slice(0, limit)
+      .map((thread) => peekEntry(thread, input.now));
   }
 
   if (input.item === "chat") {
-    const chatThreads = rosterThreads
+    return filterForkRosterVisibleThreads(input.threads)
       .filter((thread) => isNo3yChatThread(thread, input.scratchProjectKeys))
-      .sort(
-        (left, right) =>
-          getThreadSortTimestamp(right, "updated_at") - getThreadSortTimestamp(left, "updated_at"),
-      );
-    return chatThreads.slice(0, limit).map((thread) => ({
-      kind: "thread" as const,
-      key: `${thread.environmentId}:${thread.id}`,
-      thread,
-      statusKind: resolveNo3yThreadCardStatusKind(thread, { now: input.now }),
-      subtitle: relativeTime(resolveThreadActivityTimestamp(thread) ?? thread.createdAt),
-    }));
+      .sort(byNewestActivity)
+      .slice(0, limit)
+      .map((thread) => peekEntry(thread, input.now));
   }
 
-  // "newAgent": top recent non-archived, non-scratch projects ordered by latest roster activity.
-  const latestActivityByProject = new Map<string, number>();
-  for (const thread of rosterThreads) {
-    const key = `${thread.environmentId}:${thread.projectId}`;
-    const ts = getThreadSortTimestamp(thread, "updated_at");
-    latestActivityByProject.set(key, Math.max(latestActivityByProject.get(key) ?? 0, ts));
-  }
-  const pickableProjects = input.projects.filter(
-    (project) =>
-      project.archivedAt == null &&
-      !input.scratchProjectKeys.has(`${project.environmentId}:${project.id}`),
-  );
-  pickableProjects.sort((left, right) => {
-    const leftKey = `${left.environmentId}:${left.id}`;
-    const rightKey = `${right.environmentId}:${right.id}`;
-    const delta =
-      (latestActivityByProject.get(rightKey) ?? Date.parse(right.updatedAt ?? right.createdAt)) -
-      (latestActivityByProject.get(leftKey) ?? Date.parse(left.updatedAt ?? left.createdAt));
-    return delta !== 0 ? delta : left.title.localeCompare(right.title);
-  });
-  return pickableProjects.slice(0, Math.min(limit, 5)).map((project) => ({
-    kind: "project" as const,
-    key: `${project.environmentId}:${project.id}`,
-    project,
-    subtitle: project.workspaceRoot.split("/").slice(-2).join("/") || project.workspaceRoot,
-  }));
+  return [];
 }
 
 interface RouteLike {
@@ -743,6 +704,9 @@ const AUTOMATIONS_ROUTES = new Set([
   "SettingsScheduledTaskModel",
 ]);
 
+/** Settings routes presented as modals, which belong to no dock item. */
+const SETTINGS_MODAL_ROUTES = new Set(["SettingsAuth", "SettingsWaitlist", "SettingsLegal"]);
+
 const IMMERSIVE_OR_MODAL_ROUTES = new Set([
   "ThreadDevicePreview",
   "ThreadBrowserPreview",
@@ -756,7 +720,7 @@ const IMMERSIVE_OR_MODAL_ROUTES = new Set([
   "ConnectionsNew",
 ]);
 
-/** Which of the 4 bottom-nav items should read as active for the current stack. */
+/** Which of the 5 dock items should read as active for the current stack. */
 export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavItemId | null {
   const top = routes.at(-1);
   if (!top) return "threads";
@@ -773,6 +737,7 @@ export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavI
     return "newAgent";
   }
   if (top.name === "Home" || top.name === "Thread") return "threads";
+  if (top.name.startsWith("Settings") && !SETTINGS_MODAL_ROUTES.has(top.name)) return "settings";
   return null;
 }
 

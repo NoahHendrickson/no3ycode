@@ -1,12 +1,13 @@
 /**
- * Dedicated Chat screen for no-project quick questions — see
+ * Chat screen for no-project quick questions: the chat list under the header, and a bottom tray
+ * whose prompt bar swaps to a chat search field — see
  * `.fork/customizations.yaml#no3y-mobile-redesign`.
- *
- * Layout: top search bar → Flat Glass list of no-project / chat-tagged threads →
- * quick-question prompt bar sitting directly above the always-visible nav bar.
  */
 import { useAtomValue } from "@effect/atom-react";
-import { useNavigation } from "@react-navigation/native";
+import ArrowUp02Icon from "@hugeicons/core-free-icons/ArrowUp02Icon";
+import MessageSquareTextIcon from "@hugeicons/core-free-icons/MessageSquareTextIcon";
+import Search01Icon from "@hugeicons/core-free-icons/Search01Icon";
+import XIcon from "@hugeicons/core-free-icons/XIcon";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import {
   isAtomCommandInterrupted,
@@ -20,17 +21,13 @@ import {
 import { LegendList } from "@legendapp/list/react-native";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
-import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SymbolView } from "../src/components/ui/AppSymbol";
 import { AppText as Text } from "../src/components/ui/AppText";
 import * as Dialog from "../src/components/ui/Dialog";
 import { GlassSurface } from "../src/components/ui/GlassSurface";
-import { Toolbar } from "../src/components/ui/Toolbar";
+import { useBarInset } from "../src/components/ui/useBarInset";
 import { useAdaptiveWorkspaceLayout } from "../src/features/layout/adaptive-workspace-context";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
-import { openSettings } from "../src/features/settings/settings-navigation";
 import { resolveNewTaskScratchOption } from "../src/features/threads/new-task-project-selection";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { relativeTime } from "../src/lib/time";
@@ -42,20 +39,19 @@ import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
 import { createNewTaskDraft, setComposerDraftText } from "../src/state/use-composer-drafts";
 import { useWorkspaceState } from "../src/state/workspace";
-import { flatGlassPalette, NO3Y_BOTTOM_NAV_CLEARANCE } from "./flatGlassTheme";
+import { flatGlassPalette } from "./flatGlassTheme";
+import { HugeIcon } from "./HugeIcon";
 import {
   buildScratchProjectKeySet,
   isNo3yChatThread,
   resolveNo3yThreadCardStatusKind,
 } from "./mobileStatusGrouping";
+import { No3yBottomTray, NO3Y_TRAY_BAR_HEIGHT, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { No3yStatusMark } from "./No3yStatusMark";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 
 export function No3yChatRouteScreen() {
-  const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  const keyboardHeight = useKeyboardState((keyboard) => keyboard.height);
-  const bottomNavEnabled = useNo3yBottomNavEnabled();
+  const barInset = useBarInset();
+  const trayContentInset = useNo3yTrayContentInset();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const { selectDetail } = useAdaptiveWorkspaceLayout();
@@ -69,6 +65,7 @@ export function No3yChatRouteScreen() {
     reportFailure: false,
   });
 
+  const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [prompt, setPrompt] = useState("");
   const [starting, setStarting] = useState(false);
@@ -162,9 +159,6 @@ export function No3yChatRouteScreen() {
     });
   };
 
-  const restingBottomInset =
-    Math.max(insets.bottom, 10) + (bottomNavEnabled ? NO3Y_BOTTOM_NAV_CLEARANCE : 10);
-
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
       <NativeStackScreenOptions
@@ -175,69 +169,6 @@ export function No3yChatRouteScreen() {
           unstable_headerLeftItems: () => [],
         }}
       />
-      <Toolbar placement="right">
-        <Toolbar.Button
-          accessibilityLabel="Settings"
-          icon="gearshape"
-          onPress={() => openSettings(navigation, "SettingsEnvironments")}
-        />
-      </Toolbar>
-
-      {/* Top search bar */}
-      <View style={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 8 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            height: 38,
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            backgroundColor: palette.controlSurface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: palette.controlBorder,
-          }}
-        >
-          <SymbolView
-            name="magnifyingglass"
-            size={14}
-            tintColor={palette.faintInk}
-            type="monochrome"
-          />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search chats"
-            placeholderTextColor={palette.faintInk}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            style={{
-              flex: 1,
-              fontSize: 14,
-              color: palette.foreground,
-              paddingVertical: 0,
-            }}
-          />
-          {searchQuery.length > 0 ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Clear chat search"
-              hitSlop={8}
-              onPress={() => setSearchQuery("")}
-            >
-              <SymbolView
-                name="xmark.circle.fill"
-                size={15}
-                tintColor={palette.faintInk}
-                type="monochrome"
-              />
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
-
-      {/* Chat threads list */}
       <LegendList
         data={chatThreads}
         estimatedItemSize={48}
@@ -245,10 +176,11 @@ export function No3yChatRouteScreen() {
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{
           paddingHorizontal: 8,
-          paddingTop: 4,
-          paddingBottom: restingBottomInset + 72,
+          paddingTop: barInset + 4,
+          paddingBottom: trayContentInset,
           flexGrow: 1,
         }}
         ListEmptyComponent={
@@ -261,12 +193,7 @@ export function No3yChatRouteScreen() {
               paddingBottom: 48,
             }}
           >
-            <SymbolView
-              name="text.bubble"
-              size={28}
-              tintColor={palette.faintInk}
-              type="monochrome"
-            />
+            <HugeIcon icon={MessageSquareTextIcon} size={28} color={palette.faintInk} />
             <Text
               style={{
                 marginTop: 10,
@@ -344,89 +271,105 @@ export function No3yChatRouteScreen() {
         }}
       />
 
-      {/* Quick-question prompt bar sitting directly above the bottom nav bar */}
-      <KeyboardStickyView
-        offset={{
-          closed: 0,
-          opened: Math.max(0, restingBottomInset - 8),
-        }}
-        style={{
-          position: "absolute",
-          left: 14,
-          right: 14,
-          bottom: keyboardHeight > 0 ? 8 : restingBottomInset,
-        }}
-      >
+      <No3yBottomTray color={palette.stageBackground}>
         <GlassSurface
           glassEffectStyle="regular"
           tintColor={palette.panelTint}
           fallbackColor={palette.panelFallback}
           style={{
-            borderRadius: 22,
+            height: NO3Y_TRAY_BAR_HEIGHT,
+            borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: palette.panelBorder,
             flexDirection: "row",
             alignItems: "center",
-            paddingLeft: 14,
-            paddingRight: 6,
-            paddingVertical: 6,
-            gap: 8,
+            paddingHorizontal: 6,
+            gap: 6,
           }}
         >
-          <TextInput
-            value={prompt}
-            onChangeText={setPrompt}
-            placeholder={
-              scratchOption?.ready
-                ? "Ask a quick question…"
-                : "Connect an environment to start a chat"
-            }
-            placeholderTextColor={palette.faintInk}
-            editable={!starting}
-            returnKeyType="send"
-            onSubmitEditing={() => void handleStartQuickChat()}
-            style={{
-              flex: 1,
-              minHeight: 32,
-              maxHeight: 96,
-              fontSize: 14,
-              lineHeight: 19,
-              color: palette.foreground,
-              paddingVertical: 4,
-            }}
-            multiline={false}
-          />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Start quick chat"
-            disabled={starting || !scratchOption?.ready}
-            onPress={() => void handleStartQuickChat()}
+            accessibilityLabel={searching ? "Close chat search" : "Search chats"}
+            hitSlop={6}
+            onPress={() => {
+              if (searching) setSearchQuery("");
+              setSearching(!searching);
+            }}
             style={({ pressed }) => ({
               width: 32,
               height: 32,
               borderRadius: 16,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: scratchOption?.ready
-                ? palette.centerButtonActiveSurface
-                : palette.controlSurface,
-              opacity: pressed ? 0.75 : scratchOption?.ready ? 1 : 0.45,
+              backgroundColor: pressed ? palette.rowPressed : palette.controlSurface,
             })}
           >
-            {starting ? (
-              <ActivityIndicator size="small" color={palette.centerButtonActiveInk} />
-            ) : (
-              <SymbolView
-                name="arrow.up"
-                size={15}
-                tintColor={scratchOption?.ready ? palette.centerButtonActiveInk : palette.faintInk}
-                type="monochrome"
-                weight="semibold"
-              />
-            )}
+            <HugeIcon icon={searching ? XIcon : Search01Icon} size={16} color={palette.quietInk} />
           </Pressable>
+          {searching ? (
+            <TextInput
+              key="search"
+              accessibilityLabel="Search chats"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search chats"
+              placeholderTextColor={palette.faintInk}
+              autoFocus
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              style={{ flex: 1, fontSize: 15, color: palette.foreground, paddingVertical: 0 }}
+            />
+          ) : (
+            <>
+              <TextInput
+                key="prompt"
+                accessibilityLabel="Quick question"
+                value={prompt}
+                onChangeText={setPrompt}
+                placeholder={
+                  scratchOption?.ready
+                    ? "Ask a quick question…"
+                    : "Connect an environment to start a chat"
+                }
+                placeholderTextColor={palette.faintInk}
+                editable={!starting}
+                returnKeyType="send"
+                onSubmitEditing={() => void handleStartQuickChat()}
+                style={{ flex: 1, fontSize: 15, color: palette.foreground, paddingVertical: 0 }}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Start quick chat"
+                disabled={starting || !scratchOption?.ready}
+                onPress={() => void handleStartQuickChat()}
+                style={({ pressed }) => ({
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: scratchOption?.ready
+                    ? palette.centerButtonActiveSurface
+                    : palette.controlSurface,
+                  opacity: pressed ? 0.75 : scratchOption?.ready ? 1 : 0.45,
+                })}
+              >
+                {starting ? (
+                  <ActivityIndicator size="small" color={palette.centerButtonActiveInk} />
+                ) : (
+                  <HugeIcon
+                    icon={ArrowUp02Icon}
+                    size={16}
+                    strokeWidth={2}
+                    color={scratchOption?.ready ? palette.centerButtonActiveInk : palette.faintInk}
+                  />
+                )}
+              </Pressable>
+            </>
+          )}
         </GlassSurface>
-      </KeyboardStickyView>
+      </No3yBottomTray>
     </View>
   );
 }

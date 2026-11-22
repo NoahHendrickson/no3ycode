@@ -6,11 +6,17 @@
  */
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
 
-export const NO3Y_BOTTOM_NAV_BAR_HEIGHT = 60;
-export const NO3Y_BOTTOM_NAV_BOTTOM_MARGIN = 8;
-/** Extra clearance below scrollable lists and the prompt bar so content sits cleanly above the nav bar. */
-export const NO3Y_BOTTOM_NAV_CLEARANCE =
-  NO3Y_BOTTOM_NAV_BAR_HEIGHT + NO3Y_BOTTOM_NAV_BOTTOM_MARGIN + 12;
+export const NO3Y_DOCK_HEIGHT = 48;
+/** How far the dock dips into the bottom safe area, so it sits just above the home indicator. */
+export const NO3Y_DOCK_SAFE_AREA_SINK = 8;
+/** Room above the bottom safe area that bars and lists keep so they sit 8pt above the dock. */
+export const NO3Y_BOTTOM_NAV_CLEARANCE = NO3Y_DOCK_HEIGHT - NO3Y_DOCK_SAFE_AREA_SINK + 8;
+/** The top of the soft fade behind the dock and the bottom bars. */
+export const NO3Y_BOTTOM_FADE_HEIGHT = 20;
+
+export function no3yDockBottom(bottomSafeArea: number): number {
+  return Math.max(bottomSafeArea - NO3Y_DOCK_SAFE_AREA_SINK, 8);
+}
 
 export interface FlatGlassPalette {
   readonly stageBackground: string;
@@ -26,8 +32,7 @@ export interface FlatGlassPalette {
   readonly controlSurface: string;
   readonly controlBorder: string;
   readonly activePillSurface: string;
-  readonly activePillBorder: string;
-  readonly centerButtonSurface: string;
+  readonly peekRing: string;
   readonly centerButtonActiveSurface: string;
   readonly centerButtonActiveInk: string;
   readonly peekBackdrop: string;
@@ -53,11 +58,10 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   controlSurface: "rgba(255, 255, 255, 0.08)",
   controlBorder: "rgba(255, 255, 255, 0.12)",
   activePillSurface: "rgba(255, 255, 255, 0.12)",
-  activePillBorder: "rgba(255, 255, 255, 0.18)",
-  centerButtonSurface: "rgba(255, 255, 255, 0.14)",
+  peekRing: "#2498FE",
   centerButtonActiveSurface: "#FFFFFF",
   centerButtonActiveInk: "#141618",
-  peekBackdrop: "rgba(0, 0, 0, 0.42)",
+  peekBackdrop: "rgba(0, 0, 0, 0.28)",
   statusWorking: "#24FE8A",
   statusDone: "#2498FE",
   statusAttention: "#FFCD59",
@@ -80,11 +84,10 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   controlSurface: "rgba(20, 22, 24, 0.06)",
   controlBorder: "rgba(20, 22, 24, 0.10)",
   activePillSurface: "rgba(20, 22, 24, 0.09)",
-  activePillBorder: "rgba(20, 22, 24, 0.14)",
-  centerButtonSurface: "rgba(20, 22, 24, 0.10)",
+  peekRing: "#2498FE",
   centerButtonActiveSurface: "#141618",
   centerButtonActiveInk: "#FFFFFF",
-  peekBackdrop: "rgba(0, 0, 0, 0.24)",
+  peekBackdrop: "rgba(0, 0, 0, 0.16)",
   statusWorking: "#059669",
   statusDone: "#2498FE",
   statusAttention: "#D97706",

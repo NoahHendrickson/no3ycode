@@ -7806,26 +7806,34 @@
 
 - id: no3y-mobile-redesign
   intent: >
-    Phase 1 of the no3y Code iOS UX/UI redesign on the Flat Glass visual
-    language (Glass with 3D off): an always-visible native-glass floating bottom
-    navigation bar with 4 items and New agent centered (Threads, Automations,
-    centered New agent, Chat), long-press peek sheets on each nav item to jump
-    straight into working/needs-input threads, recent automation runs, recent
-    projects, or recent chats, a top-of-screen search + filter + sort bar on
-    Threads, Mac-parity status-grouped sections (Drafts, Pinned, Needs input,
-    Completed with 5-minute hold, Working, Idle, Snoozed, Settled) and roster
-    visibility rules in apps/mobile/fork/forkStatusGrouping.ts and
-    apps/mobile/fork/forkRosterVisibility.ts (parity-guarded against web without
-    modifying web or client-runtime), Flat Glass thread cards and
-    status marks, a dedicated no-project Chat screen with a quick-question
-    prompt bar above the nav bar, a Recent runs section on Automations, and a
-    top-right Settings gear button on Threads so Settings stays reachable.
-    Prompt bars on New agent and Thread clear the bottom nav bar cleanly.
+    The no3y Code iOS redesign on the Flat Glass visual language (Glass with
+    3D off). An always-visible dock of five icon-only Hugeicons items
+    (Threads, Automations, New agent in the exact middle, Chat, Settings)
+    with a soft pill behind the selected item, on a fade to the stage colour
+    above the home indicator; Settings moved there from the top-right gear so
+    nothing frequent needs a top-of-screen reach. Long-pressing Threads,
+    Automations or Chat opens a peek card anchored above that item (the item
+    gets a ring) listing up to five threads with their status marks, needs-you
+    and working threads first on Threads, and a New thread / New automation /
+    New chat row; New agent and Settings have no peek. Frequent controls sit
+    in a bottom tray just above the dock: Threads search plus one filter/sort
+    menu (fork/No3yThreadsFilterBar.tsx, so upstream ThreadListFilters.tsx is
+    untouched), and on Chat the prompt bar, whose search button swaps it for
+    a chat search field. Chat lays its list under the glass header by the
+    measured bar inset. Icons come from @hugeicons/core-free-icons at the Mac
+    fork's version, drawn by fork/HugeIcon.tsx with react-native-svg and
+    imported by subpath so Metro bundles only the glyphs used. Threads keeps
+    Mac-parity status sections and roster visibility in
+    apps/mobile/fork/forkStatusGrouping.ts and forkRosterVisibility.ts
+    (parity-guarded against web without modifying web or client-runtime),
+    Flat Glass rows and status marks, and a Recent runs section on
+    Automations. Prompt bars on New agent and Thread clear the dock.
   tier: 4
   files:
     - apps/mobile/fork/forkStatusGrouping.ts
     - apps/mobile/fork/forkRosterVisibility.ts
     - apps/mobile/fork/flatGlassTheme.ts
+    - apps/mobile/fork/HugeIcon.tsx
     - apps/mobile/fork/No3yStatusMark.tsx
     - apps/mobile/fork/mobileStatusGrouping.ts
     - apps/mobile/fork/mobileStatusGrouping.test.ts
@@ -7833,8 +7841,11 @@
     - apps/mobile/fork/No3yStatusSectionHeader.tsx
     - apps/mobile/fork/No3yThreadRow.tsx
     - apps/mobile/fork/No3yBottomNav.tsx
+    - apps/mobile/fork/No3yBottomFade.tsx
+    - apps/mobile/fork/No3yBottomTray.tsx
     - apps/mobile/fork/No3yChatRouteScreen.tsx
     - apps/mobile/fork/No3yAutomationRunsSection.tsx
+    - apps/mobile/fork/No3yThreadsFilterBar.tsx
     - apps/mobile/fork/No3yThreadsListView.tsx
   shadows: []
   watch:
@@ -7842,11 +7853,12 @@
     - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
     - apps/mobile/src/features/home/home-list-options.ts
-    - apps/mobile/src/features/home/ThreadListFilters.tsx
     - apps/mobile/src/features/home/HomeRouteScreen.tsx
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
+    # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
+    - apps/mobile/package.json
   verify:
     - apps/web/src/__fork_guards__/no3yMobileRedesign.test.ts
     - apps/mobile/fork/mobileStatusGrouping.test.ts

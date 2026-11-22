@@ -444,7 +444,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     }).toEqual(webPartition);
   });
 
-  it("mounts the always-visible bottom nav host, Chat route, Flat Glass threads, and Automations runs in mobile seams", () => {
+  it("mounts the dock host, Chat route, Flat Glass threads, and Automations runs in mobile seams", () => {
     const stack = readRepoFile("apps/mobile/src/Stack.tsx");
     const nativeTabs = readRepoFile(
       "apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx",
@@ -453,6 +453,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const homeScreen = readRepoFile("apps/mobile/src/features/home/HomeScreen.tsx");
     const mobileGrouping = readRepoFile("apps/mobile/fork/mobileStatusGrouping.ts");
     const filters = readRepoFile("apps/mobile/src/features/home/ThreadListFilters.tsx");
+    const dock = readRepoFile("apps/mobile/fork/No3yBottomNav.tsx");
+    const mobilePackage = JSON.parse(readRepoFile("apps/mobile/package.json")) as {
+      readonly dependencies: Record<string, string>;
+    };
+    const webPackage = JSON.parse(readRepoFile("apps/web/package.json")) as {
+      readonly dependencies: Record<string, string>;
+    };
     const threadDetail = readRepoFile("apps/mobile/src/features/threads/ThreadDetailScreen.tsx");
 
     expect(stack).toContain('import { No3yBottomNavHost } from "../fork/No3yBottomNav";');
@@ -460,14 +467,20 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(stack).toContain("<No3yBottomNavHost state={props.state} />");
     expect(stack).toContain("No3yChat: createNativeStackScreen({");
     expect(nativeTabs).toContain("!compactTabs &&");
-    expect(toolbar).toContain('accessibilityLabel="Settings"');
-    expect(toolbar).toContain('icon="gearshape"');
+    expect(toolbar).toContain(
+      '!(no3yBottomNav && !workspace.settingsOpen && selectedTab === "threads")',
+    );
+    expect(dock).toContain('{ id: "settings", label: "Settings", icon: Settings01Icon }');
+    // The dock draws the same Hugeicons release the Mac fork does.
+    expect(mobilePackage.dependencies["@hugeicons/core-free-icons"]).toBe(
+      webPackage.dependencies["@hugeicons/core-free-icons"],
+    );
     expect(homeScreen).toContain("<No3yThreadsListView");
     expect(mobileGrouping).toContain('from "./forkRosterVisibility"');
     expect(mobileGrouping).toContain('from "./forkStatusGrouping"');
     expect(mobileGrouping).toContain("partitionForkStatusShelves(");
-    expect(filters).toContain('accessibilityLabel="Filter threads by status"');
-    expect(filters).toContain('accessibilityLabel="Sort threads"');
+    // Threads search, filter and sort live in fork/No3yThreadsFilterBar.tsx; upstream stays as is.
+    expect(filters).not.toContain("fork:begin");
     expect(threadDetail).toContain("no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0");
   });
 });
