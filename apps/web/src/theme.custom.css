@@ -1030,6 +1030,11 @@
   height: 16px;
 }
 
+/* Codex's cloud fills its box edge to edge and read large beside the model's name. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-model-controls] {
+  --fork-codex-mark-size: 14px;
+}
+
 /* Attach, send and stop are 28px, centred in the 32px slot so the prompt row's bottom line
    holds. */
 :root[data-fork="noahhendrickson-t3code"]
