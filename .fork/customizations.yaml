@@ -5101,9 +5101,10 @@
     border so Cool / Neutral palettes keep their own hairline weight. The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
-    tree's top only (the card border is the line elsewhere). Radii come from
-    --fork-card-radius (8px, for cards that sit beside the composer); the tree
-    rounds its top corners too, so its hairline curves into the card's sides.
+    tree's top only (the card border is the line elsewhere). The card sets
+    --fork-card-radius to the composer's radius (16px), and its corner rules read
+    it; the tree rounds its top corners too, so its hairline curves into the
+    card's sides. On Flat Glass the tree and footer take a 4% white wash.
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
@@ -5241,6 +5242,11 @@
     position from #203 is theme-independent and stays.
     In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
+    Flat's composer control row reads its ink as a 57% white wash (what
+    the solid #a6a6a6 fallback was over the lift-2 vessel), and the Split
+    agent / Unsplit pill (stamped data-fork-split-agent-pill) reads brighter
+    than the project and branch chips: 85% white, full white on hover. The
+    new-agent draft hero keeps its own white ink.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -5341,7 +5347,7 @@
     Basic UI kit's subagent card (Figma kUDQTOR0ndxERlBCqgy3nk 89:704) instead
     of upstream's lifecycle row or its V2SubagentGroup (avatar stack, chevron,
     bordered member box). A card is the changed-files card's shape: the card
-    fill, a 1px border, 8px corners. Its header holds the provider's mark in a
+    fill, a 1px border, 12px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
     over its model and reasoning effort ("Opus 5.5 · High", upstream's
     formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
@@ -7767,3 +7773,39 @@
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
+
+- id: fork-branch-link-copy
+  intent: >
+    In a started thread, clicking the composer's read-only branch chip
+    (custom/ThreadContextReadout, or Enter/Space on it) copies the branch's
+    web page on the project's host, built from the project's
+    repositoryIdentity by custom/branchLinks (on `origin` when the identity is a fork's
+    `upstream`, since branches are pushed there): the repository root comes from
+    the host's own commit link, so webUrl mounts, HTTP remote ports and
+    Azure's SSH spellings match commit links. GitHub and GitCafe use
+    /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
+    /branch/, Azure DevOps ?version=GB<branch>; each branch segment is
+    encoded and the slashes kept, except GitCafe, which takes a slashed name as one
+    encoded refs/heads/<branch> segment. The picker links a local branch where it
+    tracks when git reports it; the chip has no tracking ref and uses origin. With no known host (or Cursor Origin, which
+    has no branch page) the click copies the name. The chip stays a span with a button role, since
+    the row's CSS gives buttons a hover fill that would replace the chip's.
+    Its right-click menu, and the branch picker's (BranchToolbarBranchSelector:
+    the composer strip with "Composer context" on, and the details panel),
+    offer "Copy branch link" beside "Copy branch name" when a link exists; the
+    picker's trigger still opens the picker on click. No server or contract
+    change; mobile is not covered.
+  tier: 4
+  files:
+    - apps/web/src/custom/branchLinks.ts
+    - apps/web/src/custom/branchLinks.test.ts
+    - apps/web/src/custom/copyBranchReference.ts
+    # Shared with fork-composer-shell; this entry owns the branch chip's copy.
+    - apps/web/src/custom/ThreadContextReadout.tsx
+  shadows: []
+  watch:
+    # Fenced imports and the right-click menu's link item.
+    - apps/web/src/components/BranchToolbarBranchSelector.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
+    - apps/web/src/custom/branchLinks.test.ts
