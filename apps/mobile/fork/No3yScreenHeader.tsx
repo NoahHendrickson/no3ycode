@@ -1,5 +1,5 @@
 /**
- * The Threads screen header (title; Pull requests, Settings and Usage buttons) and the thread bar's usage button
+ * The Threads and Chat screen headers (title; 44pt glass buttons) and the thread bar's usage button
  * and ⋯ menu — see `.fork/customizations.yaml#no3y-mobile-redesign`. The usage buttons open the
  * half-height usage sheet; the ring shows how much of the thread's provider limit is left.
  */
@@ -7,14 +7,16 @@ import ArrowLeft01Icon from "@hugeicons/core-free-icons/ArrowLeft01Icon";
 import GaugeIcon from "@hugeicons/core-free-icons/GaugeIcon";
 import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import MoreHorizontalIcon from "@hugeicons/core-free-icons/MoreHorizontalIcon";
+import Search01Icon from "@hugeicons/core-free-icons/Search01Icon";
 import Settings01Icon from "@hugeicons/core-free-icons/Settings01Icon";
+import XIcon from "@hugeicons/core-free-icons/XIcon";
 import type { MenuAction } from "@react-native-menu/menu";
 import { HeaderHeightContext } from "@react-navigation/elements";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
 import { collectProviderUsageLimits, remainingPercent } from "@t3tools/shared/usageLimits";
 import { useId, type ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -37,13 +39,18 @@ function useOpenUsage() {
   return () => navigation.dispatch(StackActions.push("No3yUsage"));
 }
 
-/** Replaces the native bar on Threads; the list lays out below it. */
-export function No3yThreadsHeader() {
+/**
+ * A workspace screen's header in place of the native bar: the title at Medium 20 and its 44pt
+ * glass buttons on the right, or a search pill across the row. Content lays out below it.
+ */
+function No3yPageHeader(props: {
+  readonly title: string;
+  readonly search?: ReactNode;
+  readonly children: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
-  const openUsage = useOpenUsage();
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: palette.stageBackground }}>
       <View
@@ -53,36 +60,138 @@ export function No3yThreadsHeader() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 8,
         }}
       >
-        <Text
-          accessibilityRole="header"
-          style={{ ...NO3Y_FONT.medium, fontSize: 20, color: palette.foreground }}
-        >
-          Threads
-        </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <No3yCircleButton
-            palette={palette}
-            accessibilityLabel="Pull requests"
-            icon={GitPullRequestIcon}
-            onPress={() => openWorkspaceTab("pullRequests")}
-          />
-          <No3yCircleButton
-            palette={palette}
-            accessibilityLabel="Settings"
-            icon={Settings01Icon}
-            onPress={() => openWorkspaceTab("settings")}
-          />
-          <No3yCircleButton
-            palette={palette}
-            accessibilityLabel="Usage"
-            icon={GaugeIcon}
-            onPress={openUsage}
-          />
-        </View>
+        {props.search ?? (
+          <Text
+            accessibilityRole="header"
+            style={{ ...NO3Y_FONT.medium, fontSize: 20, color: palette.foreground }}
+          >
+            {props.title}
+          </Text>
+        )}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>{props.children}</View>
       </View>
     </View>
+  );
+}
+
+/** Replaces the native bar on Threads; the list lays out below it. */
+export function No3yThreadsHeader() {
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
+  const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
+  const openUsage = useOpenUsage();
+  return (
+    <No3yPageHeader title="Threads">
+      <No3yCircleButton
+        palette={palette}
+        accessibilityLabel="Pull requests"
+        icon={GitPullRequestIcon}
+        onPress={() => openWorkspaceTab("pullRequests")}
+      />
+      <No3yCircleButton
+        palette={palette}
+        accessibilityLabel="Settings"
+        icon={Settings01Icon}
+        onPress={() => openWorkspaceTab("settings")}
+      />
+      <No3yCircleButton
+        palette={palette}
+        accessibilityLabel="Usage"
+        icon={GaugeIcon}
+        onPress={openUsage}
+      />
+    </No3yPageHeader>
+  );
+}
+
+/**
+ * Chat's header, Threads' shape: Search, Settings and Usage, and no native bar. Search turns the
+ * row into a search pill with a close button, which clears the search.
+ */
+export function No3yChatHeader(props: {
+  readonly searching: boolean;
+  readonly searchQuery: string;
+  readonly onSearchingChange: (searching: boolean) => void;
+  readonly onSearchQueryChange: (query: string) => void;
+}) {
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
+  const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
+  const openUsage = useOpenUsage();
+  const search = props.searching ? (
+    <View
+      style={{
+        flex: 1,
+        height: NO3Y_CONTROL_SIZE,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 14,
+      }}
+    >
+      <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
+      <HugeIcon icon={Search01Icon} size={20} color={palette.foreground} filled />
+      <TextInput
+        accessibilityLabel="Search chats"
+        value={props.searchQuery}
+        onChangeText={props.onSearchQueryChange}
+        placeholder="Search chats"
+        placeholderTextColor={palette.faintInk}
+        autoFocus
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        style={{
+          flex: 1,
+          ...NO3Y_FONT.regular,
+          fontSize: 14,
+          color: palette.foreground,
+          paddingVertical: 0,
+        }}
+      />
+    </View>
+  ) : undefined;
+  return (
+    <>
+      <NativeStackScreenOptions options={{ headerShown: false }} />
+      <No3yPageHeader title="Chat" search={search}>
+        {props.searching ? (
+          <No3yCircleButton
+            palette={palette}
+            accessibilityLabel="Close chat search"
+            icon={XIcon}
+            onPress={() => {
+              props.onSearchQueryChange("");
+              props.onSearchingChange(false);
+            }}
+          />
+        ) : (
+          <>
+            <No3yCircleButton
+              palette={palette}
+              accessibilityLabel="Search chats"
+              icon={Search01Icon}
+              onPress={() => props.onSearchingChange(true)}
+            />
+            <No3yCircleButton
+              palette={palette}
+              accessibilityLabel="Settings"
+              icon={Settings01Icon}
+              onPress={() => openWorkspaceTab("settings")}
+            />
+            <No3yCircleButton
+              palette={palette}
+              accessibilityLabel="Usage"
+              icon={GaugeIcon}
+              onPress={openUsage}
+            />
+          </>
+        )}
+      </No3yPageHeader>
+    </>
   );
 }
 

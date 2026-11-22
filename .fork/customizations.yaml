@@ -7967,7 +7967,10 @@
     a See all usage link to Settings › Usage. The composer is a glass card (editor on top; 40pt +, model
     chip, mic and send below, the text's last line as far above them as its
     first sits below the card's top; no chip row above it; the model chip ends
-    in the current runtime mode's filled access shield) over a fade-to-page scrim so the
+    in the current runtime mode's access icon, the Mac's own: Supervised a
+    filled square lock, Auto-accept edits a filled pen, Auto a filled shield
+    check, Full access a stroked crossed shield, which has no filled weight;
+    fork/No3yAccess.tsx) over a fade-to-page scrim so the
     transcript never reads through; the upstream controls draw that style
     through fork/No3yComposerStyle.tsx's context and keep their behaviour.
     Above the card, the upstream full-width floating status control gives way
@@ -7995,10 +7998,9 @@
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
     (bead ring while working, never upstream's blue dot or blue "Working"), a
-    pure-white title over model and effort, elapsed time, and the latest
-    activity line (live progress, else the result; bare paths truncate in the
-    middle); a tap opens the agent's thread and a batch keeps a "Kicked off N
-    subagents" lead line. On
+    pure-white title over model and effort, and elapsed time, on a 20pt-radius
+    card with no activity line; a tap opens the agent's thread and a batch
+    keeps a "Kicked off N subagents" lead line. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -8009,8 +8011,21 @@
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
     the Mac fork's version, drawn by fork/HugeIcon.tsx with the Mac's derived
-    filled weight (a copy of hugeiconsFill.ts). Chat keeps its prompt bar and
-    search; Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
+    filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatRouteScreen.tsx)
+    has Threads' header (Chat; Search, Settings and Usage, Search turning the
+    row into a search pill with a close button), its chats newest first as
+    thread cards (fork/No3yThreadRow.tsx, swiping to archive and delete, the
+    card long-press menu, no settle or snooze), and New agent's own draft
+    composer for a No-project chat: the Chat route carries a draft for the
+    environment's No-project workspace (opened on the server if it is not yet
+    listed; fork/no3yChat.ts) and the new-task flow serves it as it serves a
+    draft thread (fenced in Stack.tsx's flow binding and new-task-flow-state's
+    live flow keys), so the model chip, model sheet, effort, access, +, the
+    prompt stash and dictation are New agent's and what is picked starts the
+    chat. NewTaskDraftScreen takes Chat's header and list in place of its own
+    header and hero through fork/No3yChatDraftSurface.ts, and a sent chat is
+    pushed over Chat (back returns there) while the route takes a fresh draft.
+    Chats opened from the list are pushed over Chat too. Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
     early return in SettingsScheduledTasksRouteScreen) has its own header
     (title, environment filter, +) and lists each automation as a card
     (schedule, next run or Paused, last error, an on/off switch, a ⋯ menu with
@@ -8045,6 +8060,9 @@
     - apps/mobile/fork/No3yBottomFade.tsx
     - apps/mobile/fork/No3yBottomTray.tsx
     - apps/mobile/fork/No3yChatRouteScreen.tsx
+    - apps/mobile/fork/No3yChatDraftSurface.ts
+    - apps/mobile/fork/no3yChat.ts
+    - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/No3yAutomationRunsSection.tsx
     - apps/mobile/fork/No3yThreadsFilterBar.tsx
     - apps/mobile/fork/No3yThreadsListView.tsx
@@ -8099,6 +8117,8 @@
     - apps/mobile/src/features/threads/ThreadRouteScreen.tsx
     - apps/mobile/src/features/threads/ThreadSettingsSheet.tsx
     - apps/mobile/src/features/threads/NewTaskDraftScreen.tsx
+    - apps/mobile/src/features/threads/NewTaskDraftRouteScreen.tsx
+    - apps/mobile/src/features/threads/new-task-flow-state.ts
     - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
     - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
     - apps/mobile/src/features/home/home-list-options.ts
@@ -8120,3 +8140,4 @@
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts
+    - apps/mobile/fork/no3yChat.test.ts

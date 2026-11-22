@@ -145,6 +145,7 @@ import { workspaceDetailRouter } from "./features/layout/workspace/workspace-det
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3yBottomNavHost } from "../fork/No3yBottomNav";
 import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
+import { isNo3yChatDraftRoute } from "../fork/no3yChat";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
 import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 import { No3yStatusSheet } from "../fork/No3yStatusSheet";
@@ -408,10 +409,17 @@ function RootStackLayout(props: {
   );
   // The flow follows the draft route even while a pushed Thread covers it, so
   // its state lives exactly as long as the route.
-  const draftRoute = props.state.routes.findLast(isDraftThreadRoute);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // Chat hosts a No-project draft, served like a draft thread.
+  const draftRoute = props.state.routes.findLast(
+    (route) => isDraftThreadRoute(route) || isNo3yChatDraftRoute(route),
+  );
   const draftRouteOnTop =
     draftRoute !== undefined &&
-    props.state.routes.findLast((route) => route.name === "Thread") === draftRoute;
+    props.state.routes.findLast(
+      (route) => route.name === "Thread" || isNo3yChatDraftRoute(route),
+    ) === draftRoute;
+  /* fork:end no3y-mobile-redesign */
   const draftParams = (
     draftRoute?.params as { draft?: { draftId?: string | string[] } } | undefined
   )?.draft;

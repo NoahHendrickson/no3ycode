@@ -29,7 +29,7 @@ import {
 } from "./flatGlassTheme";
 import { effortLevelAt, effortStopX } from "./effortSlider";
 import { HugeIcon } from "./HugeIcon";
-import { no3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
+import { No3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
 import { No3yGlassLayer } from "./No3yGlass";
@@ -388,12 +388,7 @@ export function No3yModelPicker(props: {
             }}
           >
             <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
-            <HugeIcon
-              icon={no3yAccessIcon(session.runtimeMode)}
-              size={16}
-              color={palette.foreground}
-              filled
-            />
+            <No3yAccessIcon mode={session.runtimeMode} size={16} color={palette.foreground} />
             <Text
               numberOfLines={1}
               style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}

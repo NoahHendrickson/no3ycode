@@ -590,14 +590,18 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
     expect(listView).toContain("<No3yBotsGrid");
-    // Access lives on the model chip and in the model sheet, for threads and New agent drafts.
-    expect(composerStyle).toContain("no3yAccessIcon(card.runtimeMode)");
+    // Access lives on the model chip and in the model sheet, for threads and New agent drafts,
+    // with the Mac's icons and weights: Full access's crossed shield stays a stroke.
+    expect(composerStyle).toContain("<No3yAccessIcon mode={card.runtimeMode}");
+    expect(modelPicker).toContain("<No3yAccessIcon mode={session.runtimeMode}");
     // Composer controls are a step smaller than the 44pt controls elsewhere; the shields all fill.
     expect(composerStyle).toContain("width: NO3Y_COMPOSER_CONTROL_SIZE,");
     expect(threadComposer).toContain(
       "const NO3Y_CARD_CONTROLS_CLEARANCE = 44 / 2 + NO3Y_COMPOSER_CONTROL_SIZE / 2 + NO3Y_CARD_INSET;",
     );
-    expect(readRepoFile("apps/mobile/fork/No3yAccess.tsx")).not.toContain("ShieldOffIcon");
+    const access = readRepoFile("apps/mobile/fork/No3yAccess.tsx");
+    expect(access).toContain('"approval-required": { icon: SquareLock02Icon, filled: true },');
+    expect(access).toContain('"full-access": { icon: ShieldOffIcon, filled: false },');
     expect(modelPicker).toContain("onSelect={session.onUpdateRuntimeMode}");
     expect(threadComposer).toContain("runtimeMode: props.selectedThread.runtimeMode");
     // The composer chip opens the half-sheet model picker on iPhone.
@@ -638,6 +642,22 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(subagentCards).toContain("<No3yStatusMark kind={mark} palette={palette} size={14} />");
     expect(subagentCards).toContain("<No3yProviderMark");
     expect(subagentCards).not.toContain("sky");
+    // No latest-activity line on the card.
+    expect(subagentCards).not.toContain("no3ySubagentActivity");
+    expect(subagentCards).toContain("borderRadius: 20,");
+    // Chat: Threads' header shape, thread cards, and New agent's draft composer for a No-project
+    // chat, served by the new-task flow and kept alive with its route.
+    const chat = readRepoFile("apps/mobile/fork/No3yChatRouteScreen.tsx");
+    const draftScreen = readRepoFile("apps/mobile/src/features/threads/NewTaskDraftScreen.tsx");
+    expect(chat).toContain("<NewTaskDraftRouteScreen");
+    expect(chat).toContain("<No3yChatHeader");
+    expect(chat).toContain("<No3yThreadRow");
+    expect(stack).toContain("isDraftThreadRoute(route) || isNo3yChatDraftRoute(route)");
+    expect(readRepoFile("apps/mobile/src/features/threads/new-task-flow-state.ts")).toContain(
+      "isNo3yChatDraftRoute(route)",
+    );
+    expect(draftScreen).toContain("content: no3yChat?.content ?? heroViewport,");
+    expect(draftScreen).toContain("no3yChat.onSubmitted(");
     // iOS draws the system font everywhere; Android keeps DM Sans.
     expect(globalCss).toContain('--font-sans: "System";');
     expect(fontFamilies).toContain('regular: "System", medium: "System", bold: "System"');

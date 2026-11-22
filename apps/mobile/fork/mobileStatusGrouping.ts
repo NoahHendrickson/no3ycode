@@ -680,14 +680,28 @@ export function selectNo3yNavPeekItems(input: {
   }
 
   if (input.item === "chat") {
-    return filterForkRosterVisibleThreads(input.threads)
-      .filter((thread) => isNo3yChatThread(thread, input.scratchProjectKeys))
-      .sort(byNewestActivity)
+    return listNo3yChatThreads({ ...input, searchQuery: "" })
       .slice(0, limit)
       .map((thread) => peekEntry(thread, input.now));
   }
 
   return [];
+}
+
+/** The Chat screen's list and its peek: the roster's chats, newest activity first, by title. */
+export function listNo3yChatThreads(input: {
+  readonly threads: ReadonlyArray<EnvironmentThreadShell>;
+  readonly scratchProjectKeys: ReadonlySet<string>;
+  readonly searchQuery: string;
+}): ReadonlyArray<EnvironmentThreadShell> {
+  const query = input.searchQuery.trim().toLocaleLowerCase();
+  return filterForkRosterVisibleThreads(input.threads)
+    .filter(
+      (thread) =>
+        isNo3yChatThread(thread, input.scratchProjectKeys) &&
+        (query.length === 0 || thread.title.toLocaleLowerCase().includes(query)),
+    )
+    .sort(byNewestActivity);
 }
 
 interface RouteLike {

@@ -1,74 +1,102 @@
 /**
- * Chat screen for no-project quick questions: the chat list under the header, and a bottom tray
- * whose prompt bar swaps to a chat search field — see
- * `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * Chat: Threads-style header, recent chats as thread cards, and New agent's own draft composer for
+ * a No-project chat, carried on this route and served by the new-task flow. A sent chat is pushed
+ * over Chat and the route takes a fresh draft — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { useAtomValue } from "@effect/atom-react";
-import ArrowUp02Icon from "@hugeicons/core-free-icons/ArrowUp02Icon";
 import MessageSquareTextIcon from "@hugeicons/core-free-icons/MessageSquareTextIcon";
-import Search01Icon from "@hugeicons/core-free-icons/Search01Icon";
-import XIcon from "@hugeicons/core-free-icons/XIcon";
-import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
+import { LegendList } from "@legendapp/list/react-native";
+import { HeaderHeightContext } from "@react-navigation/elements";
+import {
+  CommonActions,
+  StackActions,
+  useNavigation,
+  type StaticScreenProps,
+} from "@react-navigation/native";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
-import {
-  getThreadSortTimestamp,
-  resolveThreadActivityTimestamp,
-} from "@t3tools/client-runtime/state/thread-sort";
-import { LegendList } from "@legendapp/list/react-native";
-import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import type { EnvironmentId } from "@t3tools/contracts";
+import { createContext, use, useEffect, useMemo, useRef, useState } from "react";
+import { View } from "react-native";
+import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 
 import { AppText as Text } from "../src/components/ui/AppText";
-import * as Dialog from "../src/components/ui/Dialog";
-import { GlassSurface } from "../src/components/ui/GlassSurface";
-import { useBarInset } from "../src/components/ui/useBarInset";
-import { useAdaptiveWorkspaceLayout } from "../src/features/layout/adaptive-workspace-context";
+import { useThreadListActions } from "../src/features/home/useThreadListActions";
+import { startOpeningDetail } from "../src/features/layout/workspace/useSelectWorkspaceDetail";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
+import { NewTaskDraftRouteScreen } from "../src/features/threads/NewTaskDraftRouteScreen";
 import { resolveNewTaskScratchOption } from "../src/features/threads/new-task-project-selection";
+import { ThreadScreenFallback, ThreadScreenHost } from "../src/features/threads/ThreadScreenHost";
+import {
+  draftRouteIdentity,
+  type NewTaskDraftRouteParams,
+} from "../src/features/threads/thread-route-state";
+import { useThreadRowProviderInstanceResolver } from "../src/features/threads/thread-provider-instance";
+import { useOpenThreadPullRequests } from "../src/features/threads/use-open-thread-pull-requests";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
-import { relativeTime } from "../src/lib/time";
-import { NativeStackScreenOptions } from "../src/native/StackHeader";
+import { uuidv4 } from "../src/lib/uuid";
 import { useProjects, useServerConfigs } from "../src/state/entities";
-import { isNewTaskDraftKey } from "../src/state/new-task-draft-key";
+import { threadListEnvironmentsAtom } from "../src/state/presentation";
 import { projectEnvironment } from "../src/state/projects";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
-import { createNewTaskDraft, setComposerDraftText } from "../src/state/use-composer-drafts";
 import { useWorkspaceState } from "../src/state/workspace";
-import { flatGlassPalette } from "./flatGlassTheme";
+import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import {
   buildScratchProjectKeySet,
-  isNo3yChatThread,
+  listNo3yChatThreads,
   resolveNo3yThreadCardStatusKind,
 } from "./mobileStatusGrouping";
-import { No3yBottomTray, NO3Y_TRAY_BAR_HEIGHT, useNo3yTrayContentInset } from "./No3yBottomTray";
-import { No3yStatusMark } from "./No3yStatusMark";
+import { findNo3yChatProject, resolveNo3yChatDraftParams } from "./no3yChat";
+import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
+import { No3yChatDraftContext, type No3yChatDraftSurface } from "./No3yChatDraftSurface";
+import { No3yChatHeader } from "./No3yScreenHeader";
+import { No3yThreadRow } from "./No3yThreadRow";
 
-export function No3yChatRouteScreen() {
-  const barInset = useBarInset();
-  const trayContentInset = useNo3yTrayContentInset();
+type No3yChatRouteParams = { readonly draft?: NewTaskDraftRouteParams } | undefined;
+
+interface ChatSearch {
+  readonly searching: boolean;
+  readonly searchQuery: string;
+  readonly setSearching: (searching: boolean) => void;
+  readonly setSearchQuery: (query: string) => void;
+}
+
+// The header and list read the search here, so typing never re-renders the draft screen.
+const ChatSearchContext = createContext<ChatSearch | null>(null);
+
+function ChatHeader() {
+  const search = use(ChatSearchContext)!;
+  return (
+    <No3yChatHeader
+      searching={search.searching}
+      searchQuery={search.searchQuery}
+      onSearchingChange={search.setSearching}
+      onSearchQueryChange={search.setSearchQuery}
+    />
+  );
+}
+
+const noop = () => {};
+
+function ChatList(props: { readonly topInset: number; readonly bottomInset: number }) {
+  const { searchQuery } = use(ChatSearchContext)!;
+  const navigation = useNavigation();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const { selectDetail } = useAdaptiveWorkspaceLayout();
-
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
   const projects = useProjects();
   const serverConfigs = useServerConfigs();
-  const { environments } = useWorkspaceState();
-  const openScratch = useAtomCommand(projectEnvironment.openScratch, {
-    label: "open no-project chat",
-    reportFailure: false,
-  });
-
-  const [searching, setSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [prompt, setPrompt] = useState("");
-  const [starting, setStarting] = useState(false);
+  const { providersByEnvironmentId, pinningEnvironmentIds, titleRegenerationEnvironmentIds } =
+    useAtomValue(threadListEnvironmentsAtom);
+  const resolveProviderInstance = useThreadRowProviderInstanceResolver(providersByEnvironmentId);
+  const openThreadPullRequests = useOpenThreadPullRequests();
+  const actions = useThreadListActions();
+  const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
   const scratchProjectKeys = useMemo(() => {
     const roots = new Map(
@@ -78,291 +106,255 @@ export function No3yChatRouteScreen() {
     );
     return buildScratchProjectKeySet(projects, roots);
   }, [projects, serverConfigs]);
-
-  const scratchOption = useMemo(
-    () =>
-      resolveNewTaskScratchOption({
-        environments: environments.map((env) => ({
-          environmentId: env.environmentId,
-          connectionState: env.connectionState,
-        })),
-        serverConfigs,
-        selectedEnvironmentId: null,
-      }),
-    [environments, serverConfigs],
+  const nowIso = useThreadListNow(threads);
+  const chats = useMemo(
+    () => listNo3yChatThreads({ threads, scratchProjectKeys, searchQuery }),
+    [threads, scratchProjectKeys, searchQuery],
   );
 
-  const nowIso = useThreadListNow(threads);
-  const chatThreads = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    return filterForkRosterVisibleThreads(threads)
-      .filter((thread) => {
-        if (!isNo3yChatThread(thread, scratchProjectKeys)) return false;
-        if (query.length > 0 && !thread.title.toLocaleLowerCase().includes(query)) return false;
-        return true;
-      })
-      .sort(
-        (left, right) =>
-          getThreadSortTimestamp(right, "updated_at") - getThreadSortTimestamp(left, "updated_at"),
-      );
-  }, [threads, scratchProjectKeys, searchQuery]);
-
-  const handleOpenThread = (thread: EnvironmentThreadShell) => {
-    selectDetail?.({
+  // Pushed over Chat, as Automations pushes its runs, so back returns here.
+  const openChat = (thread: EnvironmentThreadShell) => {
+    const detail = {
       name: "Thread",
       params: { environmentId: String(thread.environmentId), threadId: String(thread.id) },
-    });
+    } as const;
+    startOpeningDetail(detail);
+    navigation.dispatch(StackActions.push("Thread", detail.params));
   };
+  const searchingFor = searchQuery.trim();
 
-  const handleStartQuickChat = async () => {
-    if (starting) return;
-    if (!scratchOption || !scratchOption.ready) {
-      Dialog.alert(
-        "No-project workspace unavailable",
-        "Connect an environment with a No-project workspace enabled to start a quick chat.",
-      );
-      return;
-    }
-    setStarting(true);
-    const result = await openScratch({ environmentId: scratchOption.environmentId, input: {} });
-    setStarting(false);
-    if (result._tag === "Failure") {
-      if (!isAtomCommandInterrupted(result)) {
+  return (
+    <LegendList
+      data={chats}
+      estimatedItemSize={64}
+      keyExtractor={(thread) => `${thread.environmentId}:${thread.id}`}
+      keyboardDismissMode="on-drag"
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      onScrollBeginDrag={() => openSwipeableRef.current?.close()}
+      style={{
+        position: "absolute",
+        top: props.topInset,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: palette.stageBackground,
+      }}
+      contentContainerStyle={{ paddingTop: 4, paddingBottom: props.bottomInset, flexGrow: 1 }}
+      extraData={themeAppearance}
+      ListEmptyComponent={
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 32,
+            paddingBottom: 48,
+          }}
+        >
+          <HugeIcon icon={MessageSquareTextIcon} size={28} color={palette.faintInk} />
+          <Text
+            style={{
+              marginTop: 10,
+              ...NO3Y_FONT.medium,
+              fontSize: 15,
+              color: palette.foreground,
+              textAlign: "center",
+            }}
+          >
+            {searchingFor.length > 0 ? "No matching chats" : "Quick chats"}
+          </Text>
+          <Text
+            style={{
+              marginTop: 4,
+              fontSize: 13,
+              lineHeight: 18,
+              color: palette.quietInk,
+              textAlign: "center",
+            }}
+          >
+            {searchingFor.length > 0
+              ? `No chats matching "${searchingFor}".`
+              : "Ask a quick question below without picking a project."}
+          </Text>
+        </View>
+      }
+      // Chats are one flat list, so a card swipes to archive rather than settle or snooze.
+      renderItem={({ item: thread }) => (
+        <No3yThreadRow
+          thread={thread}
+          variant="card"
+          statusKind={resolveNo3yThreadCardStatusKind(thread, { now: nowIso })}
+          statusSection={undefined}
+          selected={false}
+          snoozed={false}
+          pinned={thread.pinnedAt != null}
+          wokeAt={null}
+          hasQueuedMessages={false}
+          snoozePresetMinute=""
+          timeLabel=""
+          project={null}
+          providerInstance={resolveProviderInstance(thread)}
+          providers={providersByEnvironmentId.get(thread.environmentId)}
+          environmentLabel={null}
+          settlementSupported={false}
+          snoozeSupported={false}
+          snoozePresets={undefined}
+          pinningSupported={pinningEnvironmentIds.has(thread.environmentId)}
+          autoSettleOptOutSupported={false}
+          titleRegenerationSupported={titleRegenerationEnvironmentIds.has(thread.environmentId)}
+          onSelectThread={openChat}
+          onOpenThreadPullRequests={openThreadPullRequests}
+          onDeleteThread={actions.confirmDeleteThread}
+          onArchiveThread={actions.archiveThread}
+          onRenameThread={actions.renameThread}
+          onRegenerateThreadTitle={actions.regenerateThreadTitle}
+          onNewThreadOnBranch={noop}
+          onSettleThread={actions.settleThread}
+          onSnoozeThread={actions.snoozeThread}
+          onUnsnoozeThread={actions.unsnoozeThread}
+          onUnsettleThread={actions.unsettleThread}
+          onPinThread={actions.pinThread}
+          onUnpinThread={actions.unpinThread}
+          onSetThreadAutoSettle={actions.setThreadAutoSettle}
+          onSwipeableWillOpen={(methods) => {
+            if (openSwipeableRef.current !== methods) openSwipeableRef.current?.close();
+            openSwipeableRef.current = methods;
+          }}
+          onSwipeableClose={(methods) => {
+            if (openSwipeableRef.current === methods) openSwipeableRef.current = null;
+          }}
+        />
+      )}
+    />
+  );
+}
+
+/** Why no composer shows: no environment offers a No-project workspace, or opening it failed. */
+function ChatUnavailableNotice(props: { readonly message: string }) {
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
+  return (
+    <No3yBottomTray color={palette.stageBackground}>
+      <Text
+        style={{
+          ...NO3Y_FONT.regular,
+          fontSize: 14,
+          lineHeight: 18,
+          color: palette.quietInk,
+          textAlign: "center",
+          paddingVertical: 12,
+        }}
+      >
+        {props.message}
+      </Text>
+    </No3yBottomTray>
+  );
+}
+
+const renderChatList = (headerInset: number, bottomInset: number) => (
+  <ChatList topInset={headerInset} bottomInset={bottomInset} />
+);
+
+export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams>) {
+  const navigation = useNavigation();
+  const trayContentInset = useNo3yTrayContentInset();
+  const projects = useProjects();
+  const serverConfigs = useServerConfigs();
+  const { environments } = useWorkspaceState();
+  const openScratch = useAtomCommand(projectEnvironment.openScratch, {
+    label: "open no-project chat",
+    reportFailure: false,
+  });
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openFailure, setOpenFailure] = useState<string | null>(null);
+
+  const scratchOption = resolveNewTaskScratchOption({
+    environments: environments.map((env) => ({
+      environmentId: env.environmentId,
+      connectionState: env.connectionState,
+    })),
+    serverConfigs,
+    selectedEnvironmentId: null,
+  });
+  const environmentId = scratchOption?.ready ? scratchOption.environmentId : null;
+  const project = findNo3yChatProject({
+    environmentId,
+    projects,
+    scratchWorkspaceRoot:
+      environmentId === null ? null : serverConfigs.get(environmentId)?.scratchWorkspaceRoot,
+  });
+  const routeDraft = props.route.params?.draft;
+  const draft = resolveNo3yChatDraftParams(routeDraft, project, uuidv4);
+
+  const openedEnvironmentRef = useRef<EnvironmentId | null>(null);
+  useEffect(() => {
+    if (environmentId === null || project !== null) return;
+    if (openedEnvironmentRef.current === environmentId) return;
+    openedEnvironmentRef.current = environmentId;
+    void openScratch({ environmentId, input: {} }).then((result) => {
+      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
-        Dialog.alert(
-          "Could not start chat",
+        setOpenFailure(
           error instanceof Error ? error.message : "Could not open the No-project workspace.",
         );
       }
-      return;
-    }
-    const project = result.value;
-    const trimmedPrompt = prompt.trim();
-    const draftKey = createNewTaskDraft({
-      environmentId: project.environmentId,
-      projectId: project.id,
     });
-    if (trimmedPrompt.length > 0) {
-      setComposerDraftText(draftKey, trimmedPrompt);
-      setPrompt("");
+  }, [environmentId, project, openScratch]);
+
+  useEffect(() => {
+    if (draft !== null && draft !== routeDraft) {
+      navigation.dispatch(CommonActions.setParams({ draft }));
     }
-    const draftId = isNewTaskDraftKey(draftKey) ? draftKey.slice("new-task:".length) : undefined;
-    selectDetail?.({
-      name: "Thread",
-      params: {
-        draft: {
-          environmentId: String(project.environmentId),
-          projectId: String(project.id),
-          draftId,
-        },
-      },
-    });
+  }, [draft, routeDraft, navigation]);
+
+  const surface: No3yChatDraftSurface = {
+    header: <ChatHeader />,
+    content: renderChatList,
+    onSubmitted: (submittedEnvironmentId, threadId) => {
+      const detail = {
+        name: "Thread",
+        params: { environmentId: submittedEnvironmentId, threadId },
+      } as const;
+      startOpeningDetail(detail);
+      navigation.dispatch(StackActions.push("Thread", detail.params));
+      navigation.dispatch(
+        CommonActions.setParams({ draft: resolveNo3yChatDraftParams(undefined, project, uuidv4) }),
+      );
+    },
   };
+  const unavailable =
+    openFailure ??
+    (scratchOption === null
+      ? "Connect an environment with a No-project workspace to start a chat."
+      : scratchOption.ready
+        ? null
+        : "Connect an environment to start a chat.");
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-      <NativeStackScreenOptions
-        options={{
-          title: "Chat",
-          headerShown: true,
-          headerBackVisible: false,
-          unstable_headerLeftItems: () => [],
-        }}
-      />
-      <LegendList
-        data={chatThreads}
-        estimatedItemSize={48}
-        keyExtractor={(thread) => `${thread.environmentId}:${thread.id}`}
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{
-          paddingHorizontal: 8,
-          paddingTop: barInset + 4,
-          paddingBottom: trayContentInset,
-          flexGrow: 1,
-        }}
-        ListEmptyComponent={
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: 32,
-              paddingBottom: 48,
-            }}
-          >
-            <HugeIcon icon={MessageSquareTextIcon} size={28} color={palette.faintInk} />
-            <Text
-              style={{
-                marginTop: 10,
-                fontSize: 15,
-                fontWeight: "600",
-                color: palette.foreground,
-                textAlign: "center",
-              }}
-            >
-              {searchQuery.trim().length > 0 ? "No matching chats" : "Quick chats"}
-            </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 13,
-                lineHeight: 18,
-                color: palette.quietInk,
-                textAlign: "center",
-              }}
-            >
-              {searchQuery.trim().length > 0
-                ? `No chats matching "${searchQuery.trim()}".`
-                : "Ask a quick question below without picking a project."}
-            </Text>
-          </View>
-        }
-        renderItem={({ item: thread }) => {
-          const statusKind = resolveNo3yThreadCardStatusKind(thread, { now: nowIso });
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={thread.title}
-              onPress={() => handleOpenThread(thread)}
-              style={({ pressed }) => ({
-                borderRadius: 16,
-                paddingHorizontal: 12,
-                paddingVertical: 10,
-                backgroundColor: pressed ? palette.rowPressed : "transparent",
-              })}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    flex: 1,
-                    fontSize: 14,
-                    lineHeight: 18,
-                    fontWeight: "400",
-                    color: palette.titleInk,
-                  }}
-                >
-                  {thread.title}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    lineHeight: 16,
-                    fontVariant: ["tabular-nums"],
-                    color: palette.faintInk,
-                  }}
-                >
-                  {relativeTime(resolveThreadActivityTimestamp(thread) ?? thread.createdAt)}
-                </Text>
-                <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
-              </View>
-            </Pressable>
-          );
-        }}
-      />
-
-      <No3yBottomTray color={palette.stageBackground}>
-        <GlassSurface
-          glassEffectStyle="regular"
-          tintColor={palette.panelTint}
-          fallbackColor={palette.panelFallback}
-          style={{
-            height: NO3Y_TRAY_BAR_HEIGHT,
-            borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: palette.panelBorder,
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 6,
-            gap: 6,
-          }}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={searching ? "Close chat search" : "Search chats"}
-            hitSlop={6}
-            onPress={() => {
-              if (searching) setSearchQuery("");
-              setSearching(!searching);
-            }}
-            style={({ pressed }) => ({
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: pressed ? palette.rowPressed : palette.controlSurface,
-            })}
-          >
-            <HugeIcon icon={searching ? XIcon : Search01Icon} size={16} color={palette.quietInk} />
-          </Pressable>
-          {searching ? (
-            <TextInput
-              key="search"
-              accessibilityLabel="Search chats"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search chats"
-              placeholderTextColor={palette.faintInk}
-              autoFocus
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-              style={{ flex: 1, fontSize: 15, color: palette.foreground, paddingVertical: 0 }}
-            />
-          ) : (
-            <>
-              <TextInput
-                key="prompt"
-                accessibilityLabel="Quick question"
-                value={prompt}
-                onChangeText={setPrompt}
-                placeholder={
-                  scratchOption?.ready
-                    ? "Ask a quick question…"
-                    : "Connect an environment to start a chat"
-                }
-                placeholderTextColor={palette.faintInk}
-                editable={!starting}
-                returnKeyType="send"
-                onSubmitEditing={() => void handleStartQuickChat()}
-                style={{ flex: 1, fontSize: 15, color: palette.foreground, paddingVertical: 0 }}
+    <ChatSearchContext value={{ searching, searchQuery, setSearching, setSearchQuery }}>
+      <No3yChatDraftContext value={surface}>
+        {/* The header lays out above the draft body, which starts at its top. */}
+        <HeaderHeightContext value={0}>
+          <ThreadScreenHost>
+            {draft !== null && draft === routeDraft ? (
+              <NewTaskDraftRouteScreen
+                key={draftRouteIdentity(draft)}
+                route={{ ...props.route, params: draft }}
               />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Start quick chat"
-                disabled={starting || !scratchOption?.ready}
-                onPress={() => void handleStartQuickChat()}
-                style={({ pressed }) => ({
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: scratchOption?.ready
-                    ? palette.centerButtonActiveSurface
-                    : palette.controlSurface,
-                  opacity: pressed ? 0.75 : scratchOption?.ready ? 1 : 0.45,
-                })}
-              >
-                {starting ? (
-                  <ActivityIndicator size="small" color={palette.centerButtonActiveInk} />
-                ) : (
-                  <HugeIcon
-                    icon={ArrowUp02Icon}
-                    size={16}
-                    strokeWidth={2}
-                    color={scratchOption?.ready ? palette.centerButtonActiveInk : palette.faintInk}
-                  />
-                )}
-              </Pressable>
-            </>
-          )}
-        </GlassSurface>
-      </No3yBottomTray>
-    </View>
+            ) : (
+              <ThreadScreenFallback header={<ChatHeader />}>
+                <View style={{ flex: 1 }}>
+                  <ChatList topInset={0} bottomInset={trayContentInset} />
+                  {unavailable === null ? null : <ChatUnavailableNotice message={unavailable} />}
+                </View>
+              </ThreadScreenFallback>
+            )}
+          </ThreadScreenHost>
+        </HeaderHeightContext>
+      </No3yChatDraftContext>
+    </ChatSearchContext>
   );
 }

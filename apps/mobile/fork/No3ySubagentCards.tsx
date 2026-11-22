@@ -1,7 +1,7 @@
 /**
  * The transcript's subagents as the Mac fork's subagent card (`.fork/customizations.yaml#no3y-mobile-redesign`):
  * the provider's mark in a tile with the Threads list's status mark at its corner, the title over
- * model and effort, the elapsed time, and the latest activity line. A tap opens the agent's thread.
+ * model and effort, and the elapsed time; no activity line. A tap opens the agent's thread.
  */
 import ArrowRight01Icon from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import Robot01Icon from "@hugeicons/core-free-icons/Robot01Icon";
@@ -41,7 +41,7 @@ import { HugeIcon } from "./HugeIcon";
 import { hasNo3yProviderMark, No3yProviderMark } from "./No3yProviderMark";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yStatusMark } from "./No3yStatusMark";
-import { no3ySubagentActivity, no3ySubagentSpec } from "./no3ySubagentCard";
+import { no3ySubagentSpec } from "./no3ySubagentCard";
 import { no3ySubagentMarkKind } from "./no3yStatusSegments";
 
 type SubagentItem = Extract<OrchestrationV2TurnItem, { type: "subagent" }>;
@@ -167,11 +167,6 @@ function SubagentCard(props: {
   });
   const spec = no3ySubagentSpec({ modelLabel, effort, statusLabel: presentation.statusLabel });
   const mark = no3ySubagentMarkKind(agent.status);
-  const activity = no3ySubagentActivity({
-    active: isActiveSubagentStatus(agent.status),
-    progress: agent.progress,
-    result: agent.result,
-  });
   const failed = mark === "failed";
   // A task in a linked environment opens there, if this app is connected to it.
   const target = subagentThreadTarget(agent, props.environmentId, (id) => presentationById.has(id));
@@ -206,10 +201,9 @@ function SubagentCard(props: {
       disabled={target === null}
       onPress={open}
       style={({ pressed }) => ({
-        gap: 8,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        borderRadius: 12,
+        borderRadius: 20,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.controlBorder,
         backgroundColor: pressed ? palette.rowSelected : palette.controlSurface,
@@ -273,15 +267,6 @@ function SubagentCard(props: {
           <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
         ) : null}
       </View>
-      {activity !== null ? (
-        <Text
-          numberOfLines={activity.shape === "path" ? 1 : 2}
-          ellipsizeMode={activity.shape === "path" ? "middle" : "tail"}
-          style={{ fontSize: 13, color: failed ? palette.statusFailed : palette.quietInk }}
-        >
-          {activity.text}
-        </Text>
-      ) : null}
     </Pressable>
   );
 }

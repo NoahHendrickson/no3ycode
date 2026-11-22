@@ -17,7 +17,7 @@ import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { flatGlassPalette, NO3Y_COMPOSER_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
-import { no3yAccessIcon } from "./No3yAccess";
+import { No3yAccessIcon } from "./No3yAccess";
 import { No3yGlassLayer } from "./No3yGlass";
 
 /** What the card tells its controls: set while the no3y card style is on. */
@@ -167,12 +167,7 @@ export function No3yModelChip(props: {
         ) : null}
         {card ? (
           <View accessibilityLabel={`Access: ${card.runtimeMode}`}>
-            <HugeIcon
-              icon={no3yAccessIcon(card.runtimeMode)}
-              size={16}
-              color={palette.quietInk}
-              filled
-            />
+            <No3yAccessIcon mode={card.runtimeMode} size={16} color={palette.quietInk} />
           </View>
         ) : null}
       </Pressable>
