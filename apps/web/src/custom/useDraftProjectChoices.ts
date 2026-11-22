@@ -18,6 +18,7 @@ import {
   sortLogicalProjectsForSidebar,
 } from "~/components/Sidebar.logic";
 import { toastManager } from "~/components/ui/toast";
+
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -30,7 +31,11 @@ import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
 import { rememberDraftProjectPick } from "./draftProjectPickMotion";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
-import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
+import {
+  type DraftProjectAssignOptions,
+  useAssignDraftProject,
+  useDraftProjectAssignmentPending,
+} from "./useNewAgentDraft";
 
 /** How many recent projects an unassigned draft's launchpad lists before "All projects";
     the composer is centred, so the launchpad has roughly half a window to fit in. */
@@ -165,9 +170,10 @@ export function useDraftProjectChoices(props: {
       : selection.kind === "project"
         ? (selection.entry?.group.projectKey ?? "")
         : "";
-  // An unassigned draft lists its recent projects in the launchpad under the composer.
+  // No repository yet (unassigned, or No project): the launchpad lists the recent projects.
+  const needsProject = selection.kind !== "project";
   const recentEntries =
-    selection.kind === "unassigned" && draftId !== null
+    needsProject && draftId !== null
       ? rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)
       : null;
 
@@ -181,7 +187,7 @@ export function useDraftProjectChoices(props: {
   };
 
   /** Points the draft at a menu or launchpad row's value; `pill` is the row picked, which the chip opens from. */
-  const pick = (next: string, pill?: Element) => {
+  const pick = (next: string, pill?: Element, options?: DraftProjectAssignOptions) => {
     if (draftId === null || next === value) return;
     if (next === NO_PROJECT_VALUE) {
       if (noProjectEnvironmentId === null) return;
@@ -210,7 +216,7 @@ export function useDraftProjectChoices(props: {
     if (!entry) return;
     if (pill) rememberDraftProjectPick(draftId, pill);
     // A failed pick leaves the draft on its previous project, so say so.
-    void assignDraftProject(draftId, entry).catch((error: unknown) =>
+    void assignDraftProject(draftId, entry, options).catch((error: unknown) =>
       reportAssignFailure(entry.group.displayName, error),
     );
   };
@@ -219,6 +225,7 @@ export function useDraftProjectChoices(props: {
     entries,
     recentEntries,
     selection,
+    needsProject,
     value,
     pending: selection.kind !== "unassigned" && selection.pending,
     noProjectEnvironmentId,

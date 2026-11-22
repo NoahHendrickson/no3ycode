@@ -36,7 +36,7 @@ export const DEFERRED_LINT_RULES = [
   ["react/memo-dependencies", 14],
   ["react/refs", 15],
   ["react/set-state-in-effect", 5],
-  ["t3code/no-manual-memo", 124],
+  ["t3code/no-manual-memo", 123],
   ["t3code/no-outset-state-indicators", 9],
   // Section dividers in the vendored design-mode engine, kept verbatim for re-syncs.
   ["t3code/no-low-value-comments", 817],
