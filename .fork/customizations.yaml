@@ -7828,7 +7828,7 @@
     utilities, FONT_FAMILIES is System on iOS, and markdown strong/headings take
     a bold weight; Android keeps DM Sans. Controls are native glass
     (fork/No3yGlass.tsx: liquid glass, or the app's blur backdrop where it is
-    unavailable) at 40pt. A dock of four filled Hugeicons items (Threads, New
+    unavailable) at 44pt, and 40pt inside the composer card. A dock of four filled Hugeicons items (Threads, New
     agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
     on the workspace screens and New agent and hides inside a thread.
     Long-pressing Threads, Automations or Chat opens a peek card (provider
@@ -7862,8 +7862,9 @@
     The usage buttons open a half-height usage
     sheet (fork/No3yUsageSheet.tsx) embedding Settings › Usage's limits with a
     See all link. The composer is a glass card (editor on top; 40pt +, model
-    chip, mic and send below; no chip row above it; the model chip ends in the
-    current runtime mode's access shield) over a fade-to-page scrim so the
+    chip, mic and send below, the text's last line as far above them as its
+    first sits below the card's top; no chip row above it; the model chip ends
+    in the current runtime mode's filled access shield) over a fade-to-page scrim so the
     transcript never reads through; the upstream controls draw that style
     through fork/No3yComposerStyle.tsx's context and keep their behaviour.
     Above the card, the upstream full-width floating status control gives way

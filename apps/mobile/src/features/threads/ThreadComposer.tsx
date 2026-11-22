@@ -128,13 +128,17 @@ import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 import { No3yBottomScrim } from "../../../fork/No3yBottomFade";
 import { No3yComposerStyleProvider } from "../../../fork/No3yComposerStyle";
 import { No3yGlassLayer } from "../../../fork/No3yGlass";
+import { NO3Y_COMPOSER_CONTROL_SIZE } from "../../../fork/flatGlassTheme";
 /* fork:end no3y-mobile-redesign */
 
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-/** The no3y card keeps the editor this far above its row's bottom: 40pt controls and an 8pt gap. */
-const NO3Y_CARD_CONTROLS_CLEARANCE = 48;
 /** The no3y card's inset on every side; the editor adds as much again so text sits 24pt in. */
 const NO3Y_CARD_INSET = 12;
+/**
+ * The editor's bottom above its row's bottom: the controls' top in their 44pt toolbar row, plus
+ * the card inset, so the last line sits as far above the controls as the first sits below the top.
+ */
+const NO3Y_CARD_CONTROLS_CLEARANCE = 44 / 2 + NO3Y_COMPOSER_CONTROL_SIZE / 2 + NO3Y_CARD_INSET;
 /* fork:end no3y-mobile-redesign */
 
 export const COMPOSER_COLLAPSED_CHROME = 60;

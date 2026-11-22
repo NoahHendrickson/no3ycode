@@ -4,10 +4,10 @@
  * model sheet's Access menu sets it through the thread settings session, as the full sheet did.
  */
 import Shield01Icon from "@hugeicons/core-free-icons/Shield01Icon";
+import ShieldAlertIcon from "@hugeicons/core-free-icons/ShieldAlertIcon";
 import ShieldCheckIcon from "@hugeicons/core-free-icons/ShieldCheckIcon";
 import ShieldEnergyIcon from "@hugeicons/core-free-icons/ShieldEnergyIcon";
 import ShieldHalfIcon from "@hugeicons/core-free-icons/ShieldHalfIcon";
-import ShieldOffIcon from "@hugeicons/core-free-icons/ShieldOffIcon";
 import type { RuntimeMode } from "@t3tools/contracts";
 import type { ReactNode } from "react";
 
@@ -20,10 +20,11 @@ const ACCESS_ICONS: Readonly<Record<RuntimeMode, HugeIconData>> = {
   "approval-required": ShieldCheckIcon,
   "auto-accept-edits": ShieldHalfIcon,
   auto: ShieldEnergyIcon,
-  "full-access": ShieldOffIcon,
+  // ShieldOff is an open outline with no filled weight; the alert shield fills.
+  "full-access": ShieldAlertIcon,
 };
 
-/** The shield for a runtime mode: checked when supervised, open when it has full access. */
+/** The shield for a runtime mode, all with a filled weight: checked when supervised, alert at full access. */
 export function no3yAccessIcon(mode: RuntimeMode): HugeIconData {
   return ACCESS_ICONS[mode] ?? Shield01Icon;
 }

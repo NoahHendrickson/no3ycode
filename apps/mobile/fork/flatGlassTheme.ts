@@ -18,6 +18,8 @@ export const NO3Y_BOTTOM_FADE_HEIGHT = 20;
 
 /** Round buttons and pills on the no3y screens: header buttons, filter/sort, composer controls. */
 export const NO3Y_CONTROL_SIZE = 44;
+/** The controls inside the composer card (+, model chip, mic, send/stop/resume): a step smaller. */
+export const NO3Y_COMPOSER_CONTROL_SIZE = 40;
 
 /** Weights for the no3y screens; the family is the app's, the system font (SF Pro) on iOS. */
 export const NO3Y_FONT = {

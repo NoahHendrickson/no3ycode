@@ -15,7 +15,7 @@ import { Pressable, View, type PressableProps } from "react-native";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
-import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
+import { flatGlassPalette, NO3Y_COMPOSER_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { no3yAccessIcon } from "./No3yAccess";
 import { No3yGlassLayer } from "./No3yGlass";
@@ -80,15 +80,15 @@ export function No3yComposerRoundButton(
   return (
     <View
       style={{
-        width: NO3Y_CONTROL_SIZE,
-        height: NO3Y_CONTROL_SIZE,
+        width: NO3Y_COMPOSER_CONTROL_SIZE,
+        height: NO3Y_COMPOSER_CONTROL_SIZE,
         marginLeft: props.leading ? 0 : 8,
-        borderRadius: NO3Y_CONTROL_SIZE / 2,
+        borderRadius: NO3Y_COMPOSER_CONTROL_SIZE / 2,
         backgroundColor: background ?? undefined,
         opacity: props.disabled && variant !== "primary" ? 0.45 : 1,
       }}
     >
-      {background === null ? <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} /> : null}
+      {background === null ? <No3yGlassLayer radius={NO3Y_COMPOSER_CONTROL_SIZE / 2} /> : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={props.accessibilityLabel}
@@ -131,14 +131,14 @@ export function No3yModelChip(props: {
   return (
     <View
       style={{
-        height: NO3Y_CONTROL_SIZE,
+        height: NO3Y_COMPOSER_CONTROL_SIZE,
         marginLeft: 8,
         maxWidth: 220,
-        borderRadius: NO3Y_CONTROL_SIZE / 2,
+        borderRadius: NO3Y_COMPOSER_CONTROL_SIZE / 2,
         opacity: props.disabled ? 0.45 : 1,
       }}
     >
-      <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
+      <No3yGlassLayer radius={NO3Y_COMPOSER_CONTROL_SIZE / 2} />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={props.accessibilityLabel}

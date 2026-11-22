@@ -582,6 +582,12 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(listView).toContain("<No3yBotsGrid");
     // Access lives on the model chip and in the model sheet, for threads and New agent drafts.
     expect(composerStyle).toContain("no3yAccessIcon(card.runtimeMode)");
+    // Composer controls are a step smaller than the 44pt controls elsewhere; the shields all fill.
+    expect(composerStyle).toContain("width: NO3Y_COMPOSER_CONTROL_SIZE,");
+    expect(threadComposer).toContain(
+      "const NO3Y_CARD_CONTROLS_CLEARANCE = 44 / 2 + NO3Y_COMPOSER_CONTROL_SIZE / 2 + NO3Y_CARD_INSET;",
+    );
+    expect(readRepoFile("apps/mobile/fork/No3yAccess.tsx")).not.toContain("ShieldOffIcon");
     expect(modelPicker).toContain("onSelect={session.onUpdateRuntimeMode}");
     expect(threadComposer).toContain("runtimeMode: props.selectedThread.runtimeMode");
     // The composer chip opens the half-sheet model picker on iPhone.
