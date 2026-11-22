@@ -295,6 +295,13 @@
   border-radius: 8px;
 }
 
+/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row] {
+  border-radius: 12px;
+}
+
 /* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
    740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
    An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px

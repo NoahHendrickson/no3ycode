@@ -1,7 +1,10 @@
 import { ArrowLeftIcon, ArrowRightIcon, ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { memo } from "react";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
+   The header draws no brand link, so upstream's Link import goes with it. */
+import { useLocation, useNavigate } from "@tanstack/react-router";
+/* fork:end fork-sidebar-chrome */
 
 import { useAtomValue } from "@effect/atom-react";
 import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
@@ -18,10 +21,6 @@ import {
   useEnvironmentStageLabel,
 } from "../SidebarStageBackdrop";
 import { Badge } from "../ui/badge";
-/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
-import { SidebarBrandWordmark } from "~/custom/SidebarBrandWordmark";
-import { SidebarBrandMark } from "~/custom/SidebarBrandMark";
-/* fork:end fork-sidebar-chrome */
 import { Button } from "../ui/button";
 import {
   SidebarFooter,
@@ -114,11 +113,11 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
           {pillLabel}
         </Badge>
       ) : null}
-      <SidebarBrand />
       {/* fork:end fork-sidebar-chrome */}
-      {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
+      {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
+          ml-auto holds the tabs on the header's trailing edge; the header draws no brand. */}
       {modeTabs ? (
-        <div className="mr-3 flex shrink-0 [-webkit-app-region:no-drag]">{modeTabs}</div>
+        <div className="mr-3 ml-auto flex shrink-0 [-webkit-app-region:no-drag]">{modeTabs}</div>
       ) : null}
       {/* fork:end fork-chat-mode */}
     </div>
@@ -145,11 +144,9 @@ export function SidebarBrandWidthProbe({
       ref={observeWidth}
     >
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-          The fork header is [toggle][back/forward on desktop] … [brand]: the controls
-          inset, the trigger's box plus the history pair's two, the gap-2, then the
-          trailing lockup with its pr-4. The pill is not counted — it hides under the
-          15rem container query before it could clip, and the header ends on the
-          brand's pr-4, not a px-3. */}
+          The fork header is [toggle][back/forward on desktop], with no brand: the controls
+          inset, then the trigger's box plus the history pair's two. The pill is not
+          counted — it hides under the 15rem container query before it could clip. */}
       {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the inset is a runtime variable, not a scale value */}
       <div className="flex items-center gap-2 pl-[var(--workspace-controls-left)]">
         <span className="flex shrink-0">
@@ -157,10 +154,6 @@ export function SidebarBrandWidthProbe({
           {isElectron ? (
             <span className="w-[calc(2*var(--workspace-titlebar-control-size))] shrink-0" />
           ) : null}
-        </span>
-        <span className="flex h-4 items-center gap-1 pr-4">
-          <SidebarBrandMark />
-          <SidebarBrandWordmark />
         </span>
       </div>
       {/* fork:end fork-sidebar-chrome */}
@@ -207,32 +200,6 @@ function HistoryNavigationButton({
         {shortcutLabel ? ` (${shortcutLabel})` : ""}
       </TooltipPopup>
     </Tooltip>
-  );
-}
-
-function SidebarBrand() {
-  return (
-    /* The link carries its own display gate (hidden below md, flex row above)
-       since upstream 9885a845c deleted the .sidebar-brand stylesheet rule that
-       used to supply it. The lockup is a fixed mark + 4px + wordmark, sized per
-       density and both shrink-0; the link may still shrink so a 208px sidebar
-       cannot overflow the header. */
-    <Link
-      aria-label="no3y Code home"
-      // oxlint-disable-next-line shadcn/no-unknown-classes -- a theme.custom.css hook
-      className="sidebar-brand ml-auto hidden h-4 w-fit min-w-0 items-center gap-1 overflow-hidden rounded-md pr-4 text-sidebar-foreground outline-hidden ring-ring focus-visible:ring-2 md:flex"
-      to="/"
-    >
-      {/* fork:begin fork-app-identity — see .fork/customizations.yaml#fork-app-identity
-          The borrowed T3 wordmark stays gone. Figma t3-fork 676:41854 is a 16px
-          pixel mark, a 4px gap, then the 13×3 "no3y" wordmark at 8px / 40%
-          foreground — not live APP_BASE_NAME type. From 1.5x the mark is the
-          21-cell vector and below that a 15-cell redraw: a bitmap cannot resample
-          that grid without smearing. Inline so palettes can recolour its arms. */}
-      <SidebarBrandMark />
-      <SidebarBrandWordmark />
-      {/* fork:end fork-app-identity */}
-    </Link>
   );
 }
 

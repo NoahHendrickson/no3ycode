@@ -453,6 +453,15 @@
   border-radius: 10px 0 0 10px;
 }
 
+/* A Petals grid tile is 4px rounder than a row, and stays round open: it sits mid-grid, not
+   on the panel's edge. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row] {
+  border-radius: 14px;
+}
+
 /* An open split pair (fork-split-threads) is one item: its row is the shape
    that joins the panel. */
 

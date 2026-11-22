@@ -49,21 +49,41 @@ export function BotMascot(props: {
   );
 }
 
-/** The mascot on a 32px tile in its own colour at half strength, behind a 1px 24% edge, white on
-    dark and black on light (Figma Petal card), filling a full card's two text lines. */
+/** The mascot on a tile in its own colour at half strength, behind a 1px 24% edge, white on
+    dark and black on light (Figma Petal card): 32px to fill a full card's two text lines, or
+    48px in the Petals grid, notched at the bottom-right for the status badge. */
+/** The grid badge's 16px circle centred 6px in from the corner (42, 42), with a 2px gap. */
+const GRID_BADGE_NOTCH_MASK =
+  "radial-gradient(circle 10px at 42px 42px, transparent 99%, #000 100%)";
+const GRID_BADGE_NOTCH = {
+  maskImage: GRID_BADGE_NOTCH_MASK,
+  WebkitMaskImage: GRID_BADGE_NOTCH_MASK,
+} as const;
+
+const TILE_SIZE = {
+  card: { className: "size-8 rounded-[8px]", fit: 22, notch: {} },
+  grid: { className: "size-12 rounded-[10px]", fit: 28, notch: GRID_BADGE_NOTCH },
+} as const;
+
 export function BotMascotTile(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
+  readonly size?: keyof typeof TILE_SIZE;
 }) {
+  const size = TILE_SIZE[props.size ?? "card"];
   return (
     <span
       data-fork-bot-mascot-tile=""
-      className="flex size-8 shrink-0 items-center justify-center rounded-[8px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
+      className={cn(
+        "flex shrink-0 items-center justify-center shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]",
+        size.className,
+      )}
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
+        ...size.notch,
       }}
     >
-      <BotMascot shape={props.shape} mood={props.mood} fit={22} />
+      <BotMascot shape={props.shape} mood={props.mood} fit={size.fit} />
     </span>
   );
 }

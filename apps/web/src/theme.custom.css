@@ -1072,6 +1072,14 @@
   height: 16px;
 }
 
+/* A Petals grid tile's jump hint sits in its top-left corner, off the mascot (fork-bots). */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-petals-grid] [data-jump-hint] {
+  top: 2px;
+  right: auto;
+  left: 2px;
+  translate: none;
+}
+
 /* Codex's cloud fills its box edge to edge and read large beside the model's name. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-model-controls] {
   --fork-codex-mark-size: 14px;
@@ -3209,22 +3217,9 @@
 }
 /* fork:end fork-collapsed-thread-tabs */
 
-/* Under 1.5x the brand swaps to art sized for whole device pixels at 1x, and icons lose
-   the duotone wash, which reads as blur beside a 1px anti-aliased outline. */
+/* Under 1.5x icons lose the duotone wash, which reads as blur beside a 1px anti-aliased
+   outline. */
 @media (max-resolution: 1.49dppx) {
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-art="high"] {
-    display: none;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-art="low"] {
-    display: block;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-brand-wordmark] {
-    width: 39px;
-    height: 10px;
-  }
-
   :root[data-fork="noahhendrickson-t3code"] svg.lucide [opacity="0.2"] {
     display: none;
   }
