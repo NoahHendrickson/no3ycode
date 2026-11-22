@@ -1942,6 +1942,8 @@
     --contrast-border: rgb(255 255 255 / 12%);
     --contrast-foreground: #ffffff;
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
+    /* Folder glyphs: the glass's quiet ink, so they tint with the picture under the card. */
+    --contrast-icon-muted: rgb(255 255 255 / 65%);
     --accent: rgb(255 255 255 / 10%);
     --contrast-accent-foreground: #ffffff;
     background: rgb(0 0 0 / 16%);
