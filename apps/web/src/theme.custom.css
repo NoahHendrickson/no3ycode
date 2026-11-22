@@ -2802,6 +2802,23 @@
   position: relative;
 }
 
+/* Tooltips read at 14px with 8px corners. Inlet keeps its pill tooltips; code tooltips and the
+   sidebar's row hover cards keep their own type. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not(.font-mono) {
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 20px;
+
+  &::before {
+    border-radius: 7px;
+  }
+
+  & [data-slot="tooltip-viewport"] {
+    padding: 4px 10px;
+  }
+}
+
 /* ── Dictate tooltip (fork-local-dictation) ─────────────────────────────────
    Sizing only; the frost is the popup rule (fork-popup-surface), which every
    glass tooltip shares. A step larger than the default tooltip (12px / 8×4)

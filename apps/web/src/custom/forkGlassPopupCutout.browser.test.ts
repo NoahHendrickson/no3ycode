@@ -63,6 +63,24 @@ describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
     expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
   });
 
+  it("treats a plain tooltip over the sidebar as it does a menu, but never a row hover card", () => {
+    using scene = stage();
+    liquidGlass();
+    const plain = (popup: HTMLElement) => {
+      popup.className = "";
+      popup.setAttribute("data-slot", "tooltip-popup");
+      return popup;
+    };
+    const inside = plain(scene.open(40));
+    const straddling = plain(scene.open(200));
+    const hoverCard = plain(scene.open(60));
+    hoverCard.setAttribute("data-fork-row-hover-card", "");
+    syncForkGlassPopupCutout("sidebar");
+    expect(inside.getAttribute(MARK)).toBe("glass");
+    expect(straddling.getAttribute(MARK)).toBe("solid");
+    expect(hoverCard.hasAttribute(MARK)).toBe(false);
+  });
+
   it("cuts the page from under a menu the draft's native glass took, wherever it sits", () => {
     using scene = stage();
     liquidGlass();

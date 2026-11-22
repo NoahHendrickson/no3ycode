@@ -1724,12 +1724,19 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
-  [data-fork-liquid-glass-popup="solid"] {
+  :is(
+    [data-fork-liquid-glass-popup="solid"],
+    /* A closing tooltip gives its hole back before it fades, so it fades out solid. */
+    [data-slot="tooltip-popup"][data-fork-liquid-glass-popup="glass"][data-ending-style]
+  ) {
   background: color-mix(in srgb, #ffffff 4%, #141618);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-liquid-glass-popup="solid"] {
+  :is(
+    [data-fork-liquid-glass-popup="solid"],
+    [data-slot="tooltip-popup"][data-fork-liquid-glass-popup="glass"][data-ending-style]
+  ) {
   background: #2a2324;
 }
 
