@@ -7854,7 +7854,15 @@
     (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, queue, previews). iPad and Android keep the upstream control. On
+    status, queue, previews). iPad and Android keep the upstream control.
+    Subagents in the transcript draw as the Mac fork's subagent card
+    (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
+    provider's mark in a tile with the Threads list's status mark at its corner
+    (bead ring while working, never upstream's blue dot or blue "Working"), a
+    pure-white title over model and effort, elapsed time, and the latest
+    activity line (live progress, else the result; bare paths truncate in the
+    middle); a tap opens the agent's thread and a batch keeps a "Kicked off N
+    subagents" lead line. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -7913,6 +7921,9 @@
     - apps/mobile/fork/no3yStatusSheetStore.ts
     - apps/mobile/fork/no3yStatusSegments.ts
     - apps/mobile/fork/no3yStatusSegments.test.ts
+    - apps/mobile/fork/No3ySubagentCards.tsx
+    - apps/mobile/fork/no3ySubagentCard.ts
+    - apps/mobile/fork/no3ySubagentCard.test.ts
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
@@ -7935,6 +7946,7 @@
     - apps/mobile/src/features/home/HomeRouteScreen.tsx
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    - apps/mobile/src/features/threads/thread-work-log.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
     # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
     - apps/mobile/package.json
@@ -7944,3 +7956,4 @@
     - apps/mobile/fork/effortSlider.test.ts
     - apps/mobile/fork/beadRing.test.ts
     - apps/mobile/fork/no3yStatusSegments.test.ts
+    - apps/mobile/fork/no3ySubagentCard.test.ts
