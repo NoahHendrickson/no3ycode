@@ -129,6 +129,7 @@ import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspace
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 import { No3yThreadComposerChips } from "../../../fork/No3yThreadComposerChips";
+import { No3yThreadTitleStyle } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
 function firstRouteParam(value: string | string[] | undefined): string | null {
@@ -972,6 +973,9 @@ function ThreadRouteContent(
   const serverConfig = routeEnvironmentRuntime?.serverConfig ?? null;
   const renderThreadRouteBody = () => (
     <>
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3yBottomNav ? <No3yThreadTitleStyle /> : null}
+      {/* fork:end no3y-mobile-redesign */}
       <GitActionProgressOverlay
         progress={gitActionProgress}
         onDismiss={dismissGitActionResult}

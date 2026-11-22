@@ -10,6 +10,7 @@ import { ComposerInlineControl } from "./ComposerToolbar";
 import { ProviderIcon, ProviderInstanceIcon, providerInstanceNameLabel } from "./ProviderIcon";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3yModelChip, useNo3yComposerStyle } from "../../fork/No3yComposerStyle";
+import { No3yProviderMark } from "../../fork/No3yProviderMark";
 /* fork:end no3y-mobile-redesign */
 
 export function ComposerModelControl(props: {
@@ -60,10 +61,10 @@ export function ComposerModelControl(props: {
           .filter(Boolean)
           .join(", ")}
         icon={
-          <ProviderIcon
+          <No3yProviderMark
             iconUrl={props.modelOption?.providerIconUrl}
             provider={props.modelOption?.providerDriver}
-            size={14}
+            size={16}
           />
         }
         label={providerNameLabel ?? shortLabel}

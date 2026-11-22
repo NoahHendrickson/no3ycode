@@ -8,6 +8,13 @@
     /* Native text takes one family name, not Tailwind's font stack. */
     @variant ios {
       --font-mono: "ui-monospace";
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      /* iOS draws the system font (SF Pro); the weight utilities below carry what DM Sans's
+         Medium and Bold faces did. Android keeps DM Sans. */
+      --font-sans: "System";
+      --font-medium: "System";
+      --font-bold: "System";
+      /* fork:end no3y-mobile-redesign */
     }
     @variant android {
       --font-mono: "monospace";
@@ -46,10 +53,20 @@
 /* ─── Custom utilities ──────────────────────────────────────────────── */
 @utility font-t3-medium {
   font-family: var(--font-medium);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  @variant ios {
+    font-weight: 500;
+  }
+  /* fork:end no3y-mobile-redesign */
 }
 
 @utility font-t3-bold {
   font-family: var(--font-bold);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  @variant ios {
+    font-weight: 700;
+  }
+  /* fork:end no3y-mobile-redesign */
 }
 
 @utility font-t3-extrabold {

@@ -218,9 +218,6 @@
       // Fonts are configured as asset paths; Expo autolinks the native packages.
       "ignoreDependencies": [
         "@expo-google-fonts/dm-sans",
-        // fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign
-        "@expo-google-fonts/geist",
-        // fork:end no3y-mobile-redesign
         "@t3tools/mobile-review-diff-native",
         "@t3tools/mobile-terminal-native",
       ],

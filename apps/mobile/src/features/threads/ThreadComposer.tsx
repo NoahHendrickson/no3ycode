@@ -123,15 +123,17 @@ import {
   type NavigationWithFinishTransitioning,
 } from "./use-thread-settings-sheet-presentation";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { flatGlassPalette, NO3Y_FONT } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yBottomScrim } from "../../../fork/No3yBottomFade";
 import { No3yComposerStyleProvider } from "../../../fork/No3yComposerStyle";
-import { no3yHairline } from "../../../fork/No3yControls";
+import { No3yGlassLayer } from "../../../fork/No3yGlass";
 /* fork:end no3y-mobile-redesign */
 
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-/** The no3y card keeps the editor this far above its row's bottom: 32pt controls and an 8pt gap. */
-const NO3Y_CARD_CONTROLS_CLEARANCE = 40;
+/** The no3y card keeps the editor this far above its row's bottom: 40pt controls and an 8pt gap. */
+const NO3Y_CARD_CONTROLS_CLEARANCE = 48;
+/** The no3y card's inset on every side; the editor adds as much again so text sits 24pt in. */
+const NO3Y_CARD_INSET = 12;
 /* fork:end no3y-mobile-redesign */
 
 export const COMPOSER_COLLAPSED_CHROME = 60;
@@ -160,7 +162,7 @@ function useCompactComposerEditor(
 ) {
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   // The no3y card always lays the editor out full width above its controls.
-  const expandedLeft = no3yCard ? 8 : 14;
+  const expandedLeft = no3yCard ? NO3Y_CARD_INSET : 14;
   const controlsClearance = no3yCard ? NO3Y_CARD_CONTROLS_CLEARANCE : 52;
   /* fork:end no3y-mobile-redesign */
   const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
@@ -390,7 +392,6 @@ function ComposerSurface(props: {
 }) {
   const colors = useUniwindTheme();
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const no3yPalette = flatGlassPalette(useAppearancePreferences().themeAppearance);
   /* fork:end no3y-mobile-redesign */
   const targetBorderRadius =
     typeof props.style.borderRadius === "number" ? props.style.borderRadius : 0;
@@ -411,16 +412,11 @@ function ComposerSurface(props: {
   const layoutTransition = shouldAnimate ? COMPOSER_LAYOUT_TRANSITION : undefined;
 
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  // The no3y card is a flat soft fill with a hairline, not glass.
+  // The no3y card: the same glass as its controls, under a still layout.
   if (props.no3yCard) {
     return (
-      <View
-        style={[
-          props.style,
-          { backgroundColor: no3yPalette.pillFill, overflow: "visible" },
-          no3yHairline(no3yPalette),
-        ]}
-      >
+      <View style={props.style}>
+        <No3yGlassLayer radius={targetBorderRadius} />
         <No3yComposerStyleProvider value>{props.children}</No3yComposerStyleProvider>
       </View>
     );
@@ -649,8 +645,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
   const usesLargeControls = sidebarWorkspaceTabs === "picker" || deviceType === "pad";
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yCard = useNo3yBottomNavEnabled();
+  const no3yScreenColor = useUniwindTheme()["--color-screen"];
   const surfacePaddingVertical = no3yCard
-    ? 16
+    ? NO3Y_CARD_INSET
     : usesLargeControls
       ? 9
       : floatingSidebarComposer
@@ -900,6 +897,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
         }
         pointerEvents="none"
       />
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3yCard ? <No3yBottomScrim color={no3yScreenColor} /> : null}
+      {/* fork:end no3y-mobile-redesign */}
       <Animated.View
         className="relative w-full self-center"
         style={{ maxWidth: props.contentMaxWidth }}
@@ -973,7 +973,7 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
               setCompactRowWidth(event.nativeEvent.layout.width);
             }}
             /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-            style={no3yCard ? { paddingHorizontal: 16 } : undefined}
+            style={no3yCard ? { paddingHorizontal: NO3Y_CARD_INSET } : undefined}
             /* fork:end no3y-mobile-redesign */
           >
             <ComposerDictationDraftContent
@@ -1139,9 +1139,6 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   textStyle={{
                     ...bodyText,
                     color: foregroundColor,
-                    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                    ...(no3yCard ? { fontFamily: NO3Y_FONT.regular } : null),
-                    /* fork:end no3y-mobile-redesign */
                   }}
                 />
               </Animated.View>

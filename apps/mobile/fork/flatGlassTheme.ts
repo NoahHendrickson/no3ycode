@@ -5,6 +5,7 @@
  * See `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
+import { NO3Y_PAGE_COLOR } from "./no3yPageColor";
 
 /** The dock is an 80pt band from the screen bottom on a home-indicator iPhone, items centred in it. */
 export const NO3Y_DOCK_HEIGHT = 80;
@@ -15,8 +16,14 @@ export const NO3Y_BOTTOM_NAV_CLEARANCE = NO3Y_DOCK_HEIGHT - NO3Y_DOCK_SAFE_AREA_
 /** The top of the soft fade behind the dock and the bottom bars. */
 export const NO3Y_BOTTOM_FADE_HEIGHT = 20;
 
-/** Geist, embedded by app.config.ts; the no3y screens set it by PostScript name. */
-export const NO3Y_FONT = { regular: "Geist-Regular", medium: "Geist-Medium" } as const;
+/** Round buttons and pills on the no3y screens: header buttons, filter/sort, composer controls. */
+export const NO3Y_CONTROL_SIZE = 40;
+
+/** Weights for the no3y screens; the family is the app's, the system font (SF Pro) on iOS. */
+export const NO3Y_FONT = {
+  regular: { fontWeight: "400" },
+  medium: { fontWeight: "500" },
+} as const;
 
 export function no3yDockBottom(bottomSafeArea: number): number {
   return Math.max(bottomSafeArea - NO3Y_DOCK_SAFE_AREA_SINK, 0);
@@ -54,12 +61,8 @@ export interface FlatGlassPalette {
   readonly metaInk: string;
   /** Open pull request number. */
   readonly prOpen: string;
-  /** 40pt circle buttons and the composer's small round controls. */
+  /** The effort slider's track. */
   readonly circleFill: string;
-  /** Search pill and the composer card. */
-  readonly pillFill: string;
-  /** Hairline shadow around circles and pills. */
-  readonly hairlineShadow: string;
   /** Primary (send) button and its glyph. */
   readonly primaryFill: string;
   readonly primaryInk: string;
@@ -74,7 +77,7 @@ export interface FlatGlassPalette {
 }
 
 const DARK_FLAT_GLASS: FlatGlassPalette = {
-  stageBackground: "#191817",
+  stageBackground: NO3Y_PAGE_COLOR,
   panelTint: "rgba(30, 30, 30, 0.72)",
   panelFallback: "rgba(24, 27, 30, 0.88)",
   panelBorder: "rgba(255, 255, 255, 0.13)",
@@ -95,8 +98,6 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   metaInk: "#8A8A8A",
   prOpen: "rgba(94, 233, 181, 0.9)",
   circleFill: "rgba(255, 255, 255, 0.1)",
-  pillFill: "rgba(130, 130, 130, 0.1)",
-  hairlineShadow: "rgba(0, 0, 0, 0.8)",
   primaryFill: "#FFFFFF",
   primaryInk: "#191817",
   usageRingTrack: "rgba(255, 255, 255, 0.145)",
@@ -131,8 +132,6 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   metaInk: "rgba(20, 22, 24, 0.55)",
   prOpen: "#059669",
   circleFill: "rgba(20, 22, 24, 0.07)",
-  pillFill: "rgba(20, 22, 24, 0.05)",
-  hairlineShadow: "rgba(0, 0, 0, 0.25)",
   primaryFill: "#141618",
   primaryInk: "#FFFFFF",
   usageRingTrack: "rgba(20, 22, 24, 0.12)",

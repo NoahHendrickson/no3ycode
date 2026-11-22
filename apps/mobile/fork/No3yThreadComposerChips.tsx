@@ -35,6 +35,9 @@ import {
 } from "../src/state/use-composer-drafts";
 import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { No3yGlassLayer } from "./No3yGlass";
+
+const CHIP_HEIGHT = 32;
 
 /** Native menu actions for app-bar menus, each menu an inline section; ids map to handlers. */
 function menuActionsFor(menus: ReadonlyArray<AppBarMenu>) {
@@ -120,9 +123,8 @@ export function No3yThreadComposerChips(props: {
   const runtimeLabel = runtimeChoices.find((choice) => choice.mode === runtimeMode)?.label;
 
   const chip = {
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: palette.circleFill,
+    height: CHIP_HEIGHT,
+    borderRadius: CHIP_HEIGHT / 2,
     alignItems: "center",
     justifyContent: "center",
   } as const;
@@ -138,14 +140,15 @@ export function No3yThreadComposerChips(props: {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={branchLabel ? `Branch ${branchLabel}` : "Git"}
-            style={{ ...chip, flexDirection: "row", gap: 8, paddingHorizontal: 8, maxWidth: 240 }}
+            style={{ ...chip, flexDirection: "row", gap: 8, paddingHorizontal: 10, maxWidth: 240 }}
           >
+            <No3yGlassLayer radius={CHIP_HEIGHT / 2} />
             <HugeIcon icon={GitBranchIcon} size={16} color={palette.foreground} />
             <Text
               numberOfLines={1}
               style={{
                 flexShrink: 1,
-                fontFamily: NO3Y_FONT.regular,
+                ...NO3Y_FONT.regular,
                 fontSize: 12,
                 color: palette.foreground,
               }}
@@ -177,8 +180,9 @@ export function No3yThreadComposerChips(props: {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Access: ${runtimeLabel ?? runtimeMode}`}
-          style={{ ...chip, width: 32 }}
+          style={{ ...chip, width: CHIP_HEIGHT }}
         >
+          <No3yGlassLayer radius={CHIP_HEIGHT / 2} />
           <HugeIcon
             icon={runtimeMode === "full-access" ? ShieldOffIcon : Shield01Icon}
             size={16}

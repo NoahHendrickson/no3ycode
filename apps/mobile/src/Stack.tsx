@@ -146,6 +146,7 @@ import { workspaceDetailRouter } from "./features/layout/workspace/workspace-det
 import { No3yBottomNavHost } from "../fork/No3yBottomNav";
 import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
+import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 /* fork:end no3y-mobile-redesign */
 
 const settingsPage = (title: string) => pageRoute({ title, itemStyle: "standard" });
@@ -522,6 +523,11 @@ const RootStackConfig = createWorkspaceStackNavigator({
       screen: No3yChatRouteScreen,
       linking: "chat",
       options: pageRoute({ title: "Chat", duoMinimize: "never" }),
+    }),
+    // The usage buttons' half sheet; it never grows past half the screen.
+    No3yUsage: createNativeStackScreen({
+      screen: No3yUsageSheet,
+      options: sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
     }),
     /* fork:end no3y-mobile-redesign */
     PullRequest: createNativeStackScreen({

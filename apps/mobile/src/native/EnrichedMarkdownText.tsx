@@ -68,6 +68,9 @@ function enrichedStyle(
       ...body,
       color: style.strongColor,
       fontFamily: style.headingFontFamily,
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      ...(Platform.OS === "ios" ? { fontWeight: "700" as const } : null),
+      /* fork:end no3y-mobile-redesign */
       fontSize,
       lineHeight: fontSize * 1.35,
       marginTop: 8,
@@ -90,7 +93,14 @@ function enrichedStyle(
     h4: heading(4),
     h5: heading(5),
     h6: heading(6),
-    strong: { color: style.strongColor, fontFamily: style.boldFontFamily, fontWeight: "normal" },
+    strong: {
+      color: style.strongColor,
+      fontFamily: style.boldFontFamily,
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      // The iOS family is the system font, so bold comes from the weight.
+      fontWeight: Platform.OS === "ios" ? "bold" : "normal",
+      /* fork:end no3y-mobile-redesign */
+    },
     link: { color: style.linkColor, underline: false },
     code: {
       fontFamily: monospace,

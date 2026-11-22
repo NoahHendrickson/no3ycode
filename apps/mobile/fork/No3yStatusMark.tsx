@@ -3,7 +3,7 @@
  * `SidebarV2StatusIndicator.tsx` — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  *
  * Every status resolves to one mark in a fixed 16x16 trailing box so titles
- * stay aligned across rows. No continuously repainting animations are used.
+ * stay aligned across rows. Working is the looping bead ring (No3yBeadRing.tsx).
  */
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
 import { View } from "react-native";
@@ -11,45 +11,7 @@ import Svg, { Circle, Path } from "react-native-svg";
 
 import { SymbolView } from "../src/components/ui/AppSymbol";
 import { flatGlassStatusColor, type FlatGlassPalette } from "./flatGlassTheme";
-
-const BEAD_RING_RADIUS = 5.8;
-/** The line's span, then four beads trailing behind it, shrinking (angles in degrees, 0 = right). */
-const BEAD_LINE = { from: -82, to: 32 } as const;
-const BEADS = [
-  { at: -104, r: 0.95 },
-  { at: -126, r: 0.85 },
-  { at: -150, r: 0.72 },
-  { at: -176, r: 0.58 },
-] as const;
-
-function ringPoint(degrees: number): readonly [number, number] {
-  const radians = (degrees * Math.PI) / 180;
-  return [8 + BEAD_RING_RADIUS * Math.cos(radians), 8 + BEAD_RING_RADIUS * Math.sin(radians)];
-}
-
-/**
- * A still frame of the Mac's bead ring working mark (fork-working-mark): a line round the ring
- * with its tail broken into beads. Drawn still, like every mobile mark, so nothing repaints.
- */
-function BeadRingMark(props: { readonly color: string }) {
-  const [x1, y1] = ringPoint(BEAD_LINE.from);
-  const [x2, y2] = ringPoint(BEAD_LINE.to);
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Path
-        d={`M${x1} ${y1} A${BEAD_RING_RADIUS} ${BEAD_RING_RADIUS} 0 0 1 ${x2} ${y2}`}
-        stroke={props.color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        fill="none"
-      />
-      {BEADS.map((bead) => {
-        const [cx, cy] = ringPoint(bead.at);
-        return <Circle key={bead.at} cx={cx} cy={cy} r={bead.r} fill={props.color} />;
-      })}
-    </Svg>
-  );
-}
+import { No3yBeadRing } from "./No3yBeadRing";
 
 /** Half-filled circle matching the Mac sidebar's CircleHalfIcon for blocked-on-you states. */
 function HalfCircleMark(props: { readonly color: string }) {
@@ -111,7 +73,7 @@ export function No3yStatusMark(props: {
       }}
     >
       {props.kind === "working" ? (
-        <BeadRingMark color={color} />
+        <No3yBeadRing color={color} size={16} />
       ) : props.kind === "approval" ||
         props.kind === "input" ||
         props.kind === "request" ||

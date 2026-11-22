@@ -49,7 +49,7 @@ export const No3yStatusSectionHeader = memo(function No3yStatusSectionHeader(pro
         <Text
           numberOfLines={1}
           style={{
-            fontFamily: NO3Y_FONT.medium,
+            ...NO3Y_FONT.medium,
             fontSize: 14,
             lineHeight: 16,
             color: palette.sectionInk,

@@ -11,18 +11,26 @@ import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import { isReasoningSelect } from "@t3tools/client-runtime/model-traits";
 import type { ProviderOptionDescriptor } from "@t3tools/contracts";
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
+import * as Haptics from "expo-haptics";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ProviderIcon } from "../src/components/ProviderIcon";
 import { AppText as Text } from "../src/components/ui/AppText";
 import { Menu } from "../src/components/ui/Menu";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { ModelOption, ProviderGroup } from "../src/lib/modelOptions";
-import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
+import {
+  flatGlassPalette,
+  NO3Y_CONTROL_SIZE,
+  NO3Y_FONT,
+  type FlatGlassPalette,
+} from "./flatGlassTheme";
+import { effortLevelAt, effortStopX } from "./effortSlider";
 import { HugeIcon } from "./HugeIcon";
-import { No3yCircleButton, no3yHairline } from "./No3yControls";
+import { No3yProviderMark } from "./No3yProviderMark";
+import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassLayer } from "./No3yGlass";
 
 /** iPhone gets this picker in a half sheet; iPad and Android keep the full thread settings sheet. */
 export const NO3Y_MODEL_SHEET = Platform.OS === "ios" && !Platform.isPad;
@@ -82,7 +90,10 @@ function effortStopIndex(descriptor: SelectDescriptor, ultrathinkActive: boolean
 const TRACK_HEIGHT = 24;
 const THUMB_WIDTH = 20;
 
-/** The model's reasoning levels as a slider, like the Mac's effort bar; writes on release. */
+/**
+ * The model's reasoning levels as a slider, like the Mac's effort bar: a notch per level, a tap
+ * jumps to the nearest one, a drag snaps from level to level with a tick, and it writes on release.
+ */
 function EffortSlider(props: {
   readonly palette: FlatGlassPalette;
   readonly descriptor: SelectDescriptor;
@@ -96,24 +107,25 @@ function EffortSlider(props: {
   const lastIndex = descriptor.options.length - 1;
   const index = dragIndex ?? props.committedIndex;
   const option = descriptor.options[index];
-  const travel = Math.max(0, width - THUMB_WIDTH);
-  const thumbLeft = lastIndex > 0 ? (index / lastIndex) * travel : 0;
-  const indexAt = (x: number) =>
-    lastIndex > 0
-      ? Math.max(0, Math.min(lastIndex, Math.round(((x - THUMB_WIDTH / 2) / travel) * lastIndex)))
-      : 0;
+  const track = { width, thumbWidth: THUMB_WIDTH, levels: descriptor.options.length };
+  const thumbLeft = effortStopX(track, index) - THUMB_WIDTH / 2;
+  const snapTo = (x: number) => {
+    const next = effortLevelAt(track, x);
+    if (next !== index) void Haptics.selectionAsync().catch(() => {});
+    setDragIndex(next);
+  };
   const commit = (next: number) => {
     setDragIndex(null);
     const picked = descriptor.options[next];
     if (picked && next !== props.committedIndex) props.onCommit(picked.id);
   };
-  const text = { fontFamily: NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 } as const;
+  const text = { ...NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 } as const;
 
   return (
     <View style={{ gap: 8, opacity: props.disabled ? 0.45 : 1 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Text style={{ ...text, color: palette.metaInk }}>{descriptor.label}</Text>
-        <Text style={{ ...text, fontFamily: NO3Y_FONT.medium, color: palette.foreground }}>
+        <Text style={{ ...text, ...NO3Y_FONT.medium, color: palette.foreground }}>
           {option?.isDefault ? `${option.label} · Default` : option?.label}
         </Text>
       </View>
@@ -132,9 +144,9 @@ function EffortSlider(props: {
         onStartShouldSetResponder={() => !props.disabled}
         onMoveShouldSetResponder={() => !props.disabled}
         onResponderTerminationRequest={() => false}
-        onResponderGrant={(event) => setDragIndex(indexAt(event.nativeEvent.locationX))}
-        onResponderMove={(event) => setDragIndex(indexAt(event.nativeEvent.locationX))}
-        onResponderRelease={(event) => commit(indexAt(event.nativeEvent.locationX))}
+        onResponderGrant={(event) => snapTo(event.nativeEvent.locationX)}
+        onResponderMove={(event) => snapTo(event.nativeEvent.locationX)}
+        onResponderRelease={(event) => commit(effortLevelAt(track, event.nativeEvent.locationX))}
         onResponderTerminate={() => setDragIndex(null)}
         style={{
           height: TRACK_HEIGHT,
@@ -156,6 +168,23 @@ function EffortSlider(props: {
             opacity: 0.55,
           }}
         />
+        {width > 0
+          ? descriptor.options.map((level, stop) => (
+              <View
+                key={level.id}
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  left: effortStopX(track, stop) - 1,
+                  width: 2,
+                  height: 8,
+                  borderRadius: 1,
+                  backgroundColor: palette.foreground,
+                  opacity: 0.45,
+                }}
+              />
+            ))
+          : null}
         <View
           pointerEvents="none"
           style={{
@@ -207,18 +236,22 @@ function ModelRow(props: {
         opacity: option.isUnavailable ? 0.45 : 1,
       })}
     >
-      <ProviderIcon iconUrl={option.providerIconUrl} provider={option.providerDriver} size={16} />
+      <No3yProviderMark
+        iconUrl={option.providerIconUrl}
+        provider={option.providerDriver}
+        size={16}
+      />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text
           numberOfLines={1}
-          style={{ fontFamily: NO3Y_FONT.regular, fontSize: 15, color: palette.foreground }}
+          style={{ ...NO3Y_FONT.regular, fontSize: 15, color: palette.foreground }}
         >
           {option.label}
         </Text>
         {props.providerLabel ? (
           <Text
             numberOfLines={1}
-            style={{ fontFamily: NO3Y_FONT.regular, fontSize: 12, color: palette.metaInk }}
+            style={{ ...NO3Y_FONT.regular, fontSize: 12, color: palette.metaInk }}
           >
             {props.providerLabel}
           </Text>
@@ -262,6 +295,11 @@ export function No3yModelPicker(props: {
     })),
   ];
   const choiceLabel = choices.find((candidate) => candidate.id === choice)?.label ?? "Favorites";
+  const choiceDriver =
+    choice === FAVORITES
+      ? null
+      : (session.providerGroups.find((group) => group.providerKey === choice)?.models[0]
+          ?.providerDriver ?? null);
   const models = modelsFor(session, choice);
 
   const effort =
@@ -302,23 +340,21 @@ export function No3yModelPicker(props: {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Showing ${choiceLabel}. Choose favorites or a provider`}
-            style={[
-              {
-                height: 40,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                paddingLeft: 16,
-                paddingRight: 12,
-                borderRadius: 20,
-                backgroundColor: palette.circleFill,
-              },
-              no3yHairline(palette),
-            ]}
+            style={{
+              height: NO3Y_CONTROL_SIZE,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              paddingLeft: 16,
+              paddingRight: 12,
+              borderRadius: NO3Y_CONTROL_SIZE / 2,
+            }}
           >
+            <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
+            {choiceDriver ? <No3yProviderMark provider={choiceDriver} size={16} /> : null}
             <Text
               numberOfLines={1}
-              style={{ fontFamily: NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+              style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
             >
               {choiceLabel}
             </Text>
@@ -334,7 +370,7 @@ export function No3yModelPicker(props: {
         {models.length === 0 ? (
           <Text
             style={{
-              fontFamily: NO3Y_FONT.regular,
+              ...NO3Y_FONT.regular,
               fontSize: 14,
               color: palette.metaInk,
               textAlign: "center",

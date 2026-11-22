@@ -23,6 +23,7 @@ import { memo, useCallback, useMemo, useState, type ComponentProps } from "react
 import { Platform, Pressable, useWindowDimensions, View } from "react-native";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 
+import { ProjectFavicon } from "../src/components/ProjectFavicon";
 import { ProviderInstanceIcon } from "../src/components/ProviderIcon";
 import { SymbolView } from "../src/components/ui/AppSymbol";
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -68,6 +69,7 @@ import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import { formatModelSlugName } from "@t3tools/shared/model";
 import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { hasNo3yProviderMark, No3yProviderMark } from "./No3yProviderMark";
 import { No3yStatusMark } from "./No3yStatusMark";
 
 /** "claude-opus-5-5" reads "Opus 5.5": the provider mark beside it already names the family. */
@@ -150,7 +152,7 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
             <Text
               numberOfLines={1}
               style={{
-                fontFamily: NO3Y_FONT.regular,
+                ...NO3Y_FONT.regular,
                 fontSize: 16,
                 lineHeight: 18,
                 color: selected ? palette.foreground : palette.quietInk,
@@ -161,7 +163,7 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
             <Text
               numberOfLines={1}
               style={{
-                fontFamily: NO3Y_FONT.regular,
+                ...NO3Y_FONT.regular,
                 fontSize: 14,
                 lineHeight: 16,
                 color: palette.metaInk,
@@ -633,7 +635,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
               numberOfLines={1}
               style={{
                 flex: 1,
-                fontFamily: NO3Y_FONT.regular,
+                ...NO3Y_FONT.regular,
                 fontSize: 14,
                 lineHeight: 18,
                 color: selected ? palette.foreground : palette.metaInk,
@@ -645,7 +647,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
             {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
             <Text
               style={{
-                fontFamily: NO3Y_FONT.regular,
+                ...NO3Y_FONT.regular,
                 fontSize: 12,
                 lineHeight: 16,
                 fontVariant: ["tabular-nums"],
@@ -663,7 +665,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
               <Text
                 numberOfLines={1}
                 style={{
-                  fontFamily: NO3Y_FONT.regular,
+                  ...NO3Y_FONT.regular,
                   fontSize: 16,
                   lineHeight: 18,
                   color: titleRecedes ? palette.quietInk : palette.foreground,
@@ -695,7 +697,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                     numberOfLines={1}
                     style={{
                       flex: 1,
-                      fontFamily: NO3Y_FONT.regular,
+                      ...NO3Y_FONT.regular,
                       fontSize: 14,
                       lineHeight: 16,
                       color:
@@ -706,6 +708,38 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                   </Text>
                 ) : (
                   <>
+                    <View
+                      style={{
+                        flexShrink: 1,
+                        minWidth: 0,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      {props.project ? (
+                        <ProjectFavicon
+                          environmentId={thread.environmentId}
+                          faviconPath={props.project.faviconPath}
+                          projectIcon={props.project.projectIcon}
+                          size={14}
+                          projectTitle={props.project.title}
+                          workspaceRoot={props.project.workspaceRoot}
+                        />
+                      ) : null}
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          flexShrink: 1,
+                          ...NO3Y_FONT.regular,
+                          fontSize: 14,
+                          lineHeight: 16,
+                          color: palette.metaInk,
+                        }}
+                      >
+                        {props.project?.title ?? "No project"}
+                      </Text>
+                    </View>
                     {pr ? (
                       <Pressable
                         accessibilityRole="button"
@@ -723,7 +757,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         />
                         <Text
                           style={{
-                            fontFamily: NO3Y_FONT.regular,
+                            ...NO3Y_FONT.regular,
                             fontSize: 12,
                             lineHeight: 16,
                             color: prColor,
@@ -735,20 +769,28 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                     ) : null}
                     {props.providerInstance ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <ProviderInstanceIcon
-                          iconUrl={providerIconUrl}
-                          provider={props.providerInstance.driverKind}
-                          size={14}
-                          displayName={props.providerInstance.displayName}
-                          accentColor={props.providerInstance.accentColor}
-                          showBadge={props.providerInstance.showBadge}
-                          surfaceColor={palette.stageBackground}
-                        />
+                        {hasNo3yProviderMark(props.providerInstance.driverKind) &&
+                        !props.providerInstance.showBadge ? (
+                          <No3yProviderMark
+                            provider={props.providerInstance.driverKind}
+                            size={14}
+                          />
+                        ) : (
+                          <ProviderInstanceIcon
+                            iconUrl={providerIconUrl}
+                            provider={props.providerInstance.driverKind}
+                            size={14}
+                            displayName={props.providerInstance.displayName}
+                            accentColor={props.providerInstance.accentColor}
+                            showBadge={props.providerInstance.showBadge}
+                            surfaceColor={palette.stageBackground}
+                          />
+                        )}
                         <Text
                           numberOfLines={1}
                           style={{
                             maxWidth: 120,
-                            fontFamily: NO3Y_FONT.regular,
+                            ...NO3Y_FONT.regular,
                             fontSize: 14,
                             lineHeight: 15,
                             color: palette.metaInk,
@@ -758,18 +800,6 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         </Text>
                       </View>
                     ) : null}
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        flexShrink: 1,
-                        fontFamily: NO3Y_FONT.regular,
-                        fontSize: 14,
-                        lineHeight: 16,
-                        color: palette.metaInk,
-                      }}
-                    >
-                      {props.project?.title ?? "No project"}
-                    </Text>
                   </>
                 )}
               </View>

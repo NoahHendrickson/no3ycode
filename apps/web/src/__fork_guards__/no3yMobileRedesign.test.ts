@@ -466,7 +466,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const threadComposer = readRepoFile("apps/mobile/src/features/threads/ThreadComposer.tsx");
     const threadSettings = readRepoFile("apps/mobile/src/features/threads/ThreadSettingsSheet.tsx");
     const screenHeader = readRepoFile("apps/mobile/fork/No3yScreenHeader.tsx");
-    const appConfig = readRepoFile("apps/mobile/app.config.ts");
+    const globalCss = readRepoFile("apps/mobile/global.css");
+    const fontFamilies = readRepoFile("apps/mobile/src/lib/fontFamilies.ts");
+    const appearance = readRepoFile(
+      "apps/mobile/src/features/settings/appearance/AppearancePreferencesProvider.tsx",
+    );
+    const statusMark = readRepoFile("apps/mobile/fork/No3yStatusMark.tsx");
+    const composerStyle = readRepoFile("apps/mobile/fork/No3yComposerStyle.tsx");
 
     expect(stack).toContain('import { No3yBottomNavHost } from "../fork/No3yBottomNav";');
     expect(stack).toContain('import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";');
@@ -498,13 +504,27 @@ describe("fork guard: no3y-mobile-redesign", () => {
     );
     expect(threadDetail).toContain("props.no3yComposerChips");
     expect(threadRoute).toContain("<No3yThreadComposerChips");
-    expect(threadHeader).toContain("useNo3yThreadHeaderTrailing(");
+    // One usage button opening the half-height usage sheet, and a ⋯ menu holding the rest.
+    expect(threadHeader).toContain("useNo3yThreadBar(");
+    expect(threadHeader).toContain('subtitle={no3yBar ? "" : props.subtitle}');
+    expect(screenHeader).toContain('icon: "ellipsis"');
+    expect(screenHeader).toContain('StackActions.push("No3yUsage")');
+    expect(stack).toContain("No3yUsage: createNativeStackScreen({");
+    // Glass controls and card, the looping working mark.
+    expect(composerStyle).toContain("<No3yGlassLayer");
+    expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
+    expect(threadComposer).toContain("<No3yBottomScrim");
+    expect(statusMark).toContain("<No3yBeadRing");
     expect(threadComposer).toContain("no3yCard={no3yCard}");
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
     expect(stack).toContain('sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })');
-    // Geist is embedded for the no3y screens.
-    expect(appConfig).toContain("@expo-google-fonts/geist/500Medium/Geist_500Medium.ttf");
-    expect(mobilePackage.dependencies["@expo-google-fonts/geist"]).toBe("0.4.2");
+    // iOS draws the system font everywhere; Android keeps DM Sans.
+    expect(globalCss).toContain('--font-sans: "System";');
+    expect(fontFamilies).toContain('regular: "System", medium: "System", bold: "System"');
+    expect(mobilePackage.dependencies["@expo-google-fonts/geist"]).toBeUndefined();
+    // One page colour across the iOS screens, in both CSS and JS theme variables.
+    expect(appearance).toContain("withNo3yPageColor(variables, appearance, Platform.OS)");
+    expect(appearance).toContain("Uniwind.updateCSSVariables(themeName, no3yDarkPageVariables())");
   });
 });

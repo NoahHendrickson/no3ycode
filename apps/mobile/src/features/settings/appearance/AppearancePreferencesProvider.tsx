@@ -28,6 +28,13 @@ import {
 import { materialYouPaletteToMobileThemeVariables } from "../../../lib/materialYouTheme";
 import { getMobileThemeRuntimeVariables } from "../../../lib/mobileThemeVariables";
 import type { MobileThemeVariables } from "../../../lib/mobileTheme";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import {
+  NO3Y_DARK_UNIWIND_THEMES,
+  no3yDarkPageVariables,
+  withNo3yPageColor,
+} from "../../../../fork/no3yPageColor";
+/* fork:end no3y-mobile-redesign */
 import {
   createMobileThemePairPatch,
   createMobileThemeSelectionPatch,
@@ -111,9 +118,13 @@ function resolveThemeVariablesByAppearance(
 ): Readonly<Record<MobileThemeAppearance, MobileThemeVariables>> {
   const resolve = (appearance: MobileThemeAppearance) => {
     const base = getMobileThemeRuntimeVariables(themeIds[appearance], appearance, Platform.OS);
-    return themeIds[appearance] === "material-you" && palettes
-      ? materialYouPaletteToMobileThemeVariables(palettes[appearance], appearance, base)
-      : base;
+    const variables =
+      themeIds[appearance] === "material-you" && palettes
+        ? materialYouPaletteToMobileThemeVariables(palettes[appearance], appearance, base)
+        : base;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    return withNo3yPageColor(variables, appearance, Platform.OS);
+    /* fork:end no3y-mobile-redesign */
   };
   return { light: resolve("light"), dark: resolve("dark") };
 }
@@ -179,6 +190,13 @@ export function installAppearanceRuntime(): () => void {
     immediate: true,
   });
   const releasePalettes = appAtomRegistry.mount(systemColorPalettesAtom);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (Platform.OS === "ios") {
+    for (const themeName of NO3Y_DARK_UNIWIND_THEMES) {
+      Uniwind.updateCSSVariables(themeName, no3yDarkPageVariables());
+    }
+  }
+  /* fork:end no3y-mobile-redesign */
   return () => {
     unsubscribeRuntime();
     releasePalettes();

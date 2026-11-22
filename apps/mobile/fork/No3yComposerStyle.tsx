@@ -14,8 +14,9 @@ import { Pressable, View, type PressableProps } from "react-native";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
-import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
+import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
+import { No3yGlassLayer } from "./No3yGlass";
 
 const No3yComposerStyleContext = createContext(false);
 
@@ -39,7 +40,7 @@ const ACTION_ICONS: Readonly<Record<string, HugeIconData>> = {
   "arrow.turn.left.up": ArrowRight01Icon,
 };
 
-/** A 32pt round composer control; forwards the press props a native Menu injects. */
+/** A 40pt round composer control, glass unless it is Send or Stop; forwards a Menu's press props. */
 export function No3yComposerRoundButton(
   props: {
     readonly accessibilityLabel: string;
@@ -60,7 +61,7 @@ export function No3yComposerRoundButton(
       ? palette.statusFailed
       : variant === "primary" && !props.disabled
         ? palette.primaryFill
-        : palette.circleFill;
+        : null;
   const ink =
     variant === "danger"
       ? "#FFFFFF"
@@ -70,32 +71,40 @@ export function No3yComposerRoundButton(
           : palette.primaryInk
         : palette.foreground;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={props.accessibilityLabel}
-      accessibilityState={{ disabled: props.disabled }}
-      disabled={props.disabled}
-      hitSlop={6}
-      onPress={props.onPress}
-      onLongPress={props.onLongPress}
-      onTouchStart={props.onTouchStart}
-      style={({ pressed }) => ({
-        width: 32,
-        height: 32,
+    <View
+      style={{
+        width: NO3Y_CONTROL_SIZE,
+        height: NO3Y_CONTROL_SIZE,
         marginLeft: props.leading ? 0 : 8,
-        borderRadius: 16,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: background,
-        opacity: props.disabled && variant !== "primary" ? 0.45 : pressed ? 0.7 : 1,
-      })}
+        borderRadius: NO3Y_CONTROL_SIZE / 2,
+        backgroundColor: background ?? undefined,
+        opacity: props.disabled && variant !== "primary" ? 0.45 : 1,
+      }}
     >
-      <HugeIcon icon={icon} size={16} color={ink} filled={variant !== "primary"} />
-    </Pressable>
+      {background === null ? <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} /> : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={props.accessibilityLabel}
+        accessibilityState={{ disabled: props.disabled }}
+        disabled={props.disabled}
+        hitSlop={4}
+        onPress={props.onPress}
+        onLongPress={props.onLongPress}
+        onTouchStart={props.onTouchStart}
+        style={({ pressed }) => ({
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.6 : 1,
+        })}
+      >
+        <HugeIcon icon={icon} size={20} color={ink} filled={variant !== "primary"} />
+      </Pressable>
+    </View>
   );
 }
 
-/** The model chip: provider mark, model and effort, 12pt, on a soft pill. */
+/** The model chip: provider mark, model and effort on a 40pt glass pill. */
 export function No3yModelChip(props: {
   readonly accessibilityLabel: string;
   readonly icon: ReactNode;
@@ -107,41 +116,48 @@ export function No3yModelChip(props: {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const text = {
-    fontFamily: NO3Y_FONT.regular,
-    fontSize: 12,
+    ...NO3Y_FONT.regular,
+    fontSize: 14,
     color: palette.foreground,
   } as const;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={props.accessibilityLabel}
-      accessibilityState={{ disabled: props.disabled }}
-      disabled={props.disabled}
-      onPress={props.onPress}
-      style={({ pressed }) => ({
-        height: 32,
+    <View
+      style={{
+        height: NO3Y_CONTROL_SIZE,
         marginLeft: 8,
-        maxWidth: 200,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 8,
-        borderRadius: 16,
-        backgroundColor: palette.circleFill,
-        opacity: props.disabled ? 0.45 : pressed ? 0.7 : 1,
-      })}
+        maxWidth: 220,
+        borderRadius: NO3Y_CONTROL_SIZE / 2,
+        opacity: props.disabled ? 0.45 : 1,
+      }}
     >
-      <View style={{ width: 16, height: 16, alignItems: "center", justifyContent: "center" }}>
-        {props.icon}
-      </View>
-      <Text numberOfLines={1} style={{ ...text, flexShrink: 1 }}>
-        {props.label}
-      </Text>
-      {props.detail ? (
-        <Text numberOfLines={1} style={text}>
-          {props.detail}
+      <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={props.accessibilityLabel}
+        accessibilityState={{ disabled: props.disabled }}
+        disabled={props.disabled}
+        onPress={props.onPress}
+        style={({ pressed }) => ({
+          flex: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          paddingHorizontal: 12,
+          opacity: pressed ? 0.6 : 1,
+        })}
+      >
+        <View style={{ width: 18, height: 18, alignItems: "center", justifyContent: "center" }}>
+          {props.icon}
+        </View>
+        <Text numberOfLines={1} style={{ ...text, flexShrink: 1 }}>
+          {props.label}
         </Text>
-      ) : null}
-    </Pressable>
+        {props.detail ? (
+          <Text numberOfLines={1} style={{ ...text, color: palette.quietInk }}>
+            {props.detail}
+          </Text>
+        ) : null}
+      </Pressable>
+    </View>
   );
 }

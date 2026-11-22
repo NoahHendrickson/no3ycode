@@ -24,7 +24,8 @@ import {
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
 import { NO3Y_TRAY_BAR_HEIGHT } from "./No3yBottomTray";
-import { No3yCircleButton, no3yHairline } from "./No3yControls";
+import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassLayer } from "./No3yGlass";
 
 const checked = (on: boolean) => (on ? ("on" as const) : ("off" as const));
 
@@ -139,21 +140,18 @@ export function No3yThreadsFilterBar(props: {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View
-        style={[
-          {
-            flex: 1,
-            height: NO3Y_TRAY_BAR_HEIGHT,
-            borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            paddingHorizontal: 12,
-            backgroundColor: palette.pillFill,
-          },
-          no3yHairline(palette),
-        ]}
+        style={{
+          flex: 1,
+          height: NO3Y_TRAY_BAR_HEIGHT,
+          borderRadius: NO3Y_TRAY_BAR_HEIGHT / 2,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: 14,
+        }}
       >
-        <HugeIcon icon={Search01Icon} size={16} color={palette.foreground} filled />
+        <No3yGlassLayer radius={NO3Y_TRAY_BAR_HEIGHT / 2} />
+        <HugeIcon icon={Search01Icon} size={18} color={palette.foreground} filled />
         <TextInput
           accessibilityLabel="Search threads"
           value={props.searchQuery}
@@ -165,7 +163,7 @@ export function No3yThreadsFilterBar(props: {
           returnKeyType="search"
           style={{
             flex: 1,
-            fontFamily: NO3Y_FONT.regular,
+            ...NO3Y_FONT.regular,
             fontSize: 14,
             color: palette.foreground,
             paddingVertical: 0,

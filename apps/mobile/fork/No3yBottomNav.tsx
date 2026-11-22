@@ -52,6 +52,8 @@ import {
   type No3yNavPeekEntry,
 } from "./mobileStatusGrouping";
 import { No3yBottomFade } from "./No3yBottomFade";
+import { No3yGlassLayer } from "./No3yGlass";
+import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yStatusMark } from "./No3yStatusMark";
 
 const DOCK_ITEM_WIDTH = 48;
@@ -108,14 +110,10 @@ function DockItem(props: {
         justifyContent: "center",
         borderWidth: 1.5,
         borderColor: props.peeking ? palette.peekRing : "transparent",
-        backgroundColor:
-          props.active || props.peeking
-            ? palette.rowSelected
-            : pressed
-              ? palette.rowPressed
-              : "transparent",
+        backgroundColor: pressed && !props.active ? palette.rowPressed : "transparent",
       })}
     >
+      {props.active || props.peeking ? <No3yGlassLayer radius={12} /> : null}
       <View>
         <HugeIcon icon={props.icon} size={24} color={palette.foreground} filled />
         {props.badgeColor ? (
@@ -188,6 +186,7 @@ function No3yPeekCard(props: {
   readonly onClose: () => void;
   readonly onOpenThread: (thread: EnvironmentThreadShell) => void;
   readonly onCreate: () => void;
+  readonly providerDriverOf: (thread: EnvironmentThreadShell) => string | undefined;
 }) {
   const { palette } = props;
   const window = useWindowDimensions();
@@ -251,7 +250,9 @@ function No3yPeekCard(props: {
                     props.onClose();
                     props.onOpenThread(entry.thread);
                   }}
-                  leading={<HugeIcon icon={props.icon} size={18} color={palette.quietInk} />}
+                  leading={
+                    <No3yProviderMark provider={props.providerDriverOf(entry.thread)} size={18} />
+                  }
                   title={entry.thread.title}
                   trailing={<No3yStatusMark kind={entry.statusKind} palette={palette} />}
                 />
@@ -432,6 +433,13 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
           onClose={() => setPeekItem(null)}
           onOpenThread={handleOpenThread}
           onCreate={create[peekItem] ?? (() => {})}
+          providerDriverOf={(thread) =>
+            serverConfigs
+              .get(thread.environmentId)
+              ?.providers.find(
+                (provider) => provider.instanceId === thread.modelSelection.instanceId,
+              )?.driver
+          }
         />
       ) : null}
       <View

@@ -13,7 +13,7 @@ import {
 } from "./ThreadGitControls";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
-import { useNo3yThreadHeaderTrailing } from "../../../fork/No3yScreenHeader";
+import { useNo3yThreadBar } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
 export function ThreadHeader(props: {
@@ -26,7 +26,7 @@ export function ThreadHeader(props: {
   readonly inspectorMode: ThreadInspectorMode | null;
   readonly onOpenFilesInspector: () => void;
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  /** The no3y iPhone bar swaps the git, terminal and files items (now on the branch chip) for usage. */
+  /** The no3y iPhone bar: a usage button, and a ⋯ menu holding the subtitle and the bar's items. */
   readonly no3yUsage?: {
     readonly environmentId: EnvironmentId;
     readonly providerInstanceId: ProviderInstanceId;
@@ -53,13 +53,28 @@ export function ThreadHeader(props: {
     : [];
   const menus = [gitMenu, terminalMenu].filter((menu): menu is AppBarMenu => menu !== null);
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const no3yTrailing = useNo3yThreadHeaderTrailing(props.draft ? undefined : props.no3yUsage);
+  const no3yBar = useNo3yThreadBar(
+    props.draft || !props.no3yUsage
+      ? undefined
+      : {
+          ...props.no3yUsage,
+          subtitle: props.subtitle,
+          branch: props.gitControls.gitStatus?.refName ?? props.gitControls.currentBranch,
+          menus: [gitMenu, terminalMenu],
+          openFiles:
+            props.hasThreadCwd && props.gitControls.canOpenFiles
+              ? props.onOpenFilesInspector
+              : null,
+        },
+  );
   /* fork:end no3y-mobile-redesign */
 
   return (
     <AppBar
       title={props.title}
-      subtitle={props.subtitle}
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      subtitle={no3yBar ? "" : props.subtitle}
+      /* fork:end no3y-mobile-redesign */
       onBackToList={goBack}
       onCompose={props.draft ? undefined : startNewTask}
       backInSplitView={
@@ -72,9 +87,9 @@ export function ThreadHeader(props: {
           : undefined
       }
       /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      actions={no3yTrailing ? [] : actions}
-      menus={no3yTrailing ? [] : menus}
-      trailing={no3yTrailing}
+      actions={no3yBar ? [] : actions}
+      menus={no3yBar ? no3yBar.menus : menus}
+      trailing={no3yBar?.trailing}
       /* fork:end no3y-mobile-redesign */
       hideBottomBorder
     />
