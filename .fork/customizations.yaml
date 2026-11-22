@@ -2141,6 +2141,7 @@
     - apps/desktop/src/fork/ForkSidebarVibrancy.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/custom/forkDraftLiquidGlass.ts
+    - apps/web/src/custom/forkDraftLiquidGlass.browser.test.tsx
     - apps/web/src/custom/forkSidebarVibrancy.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.palettes.css
@@ -2159,6 +2160,7 @@
     - apps/desktop/src/fork/ForkLiquidGlass.test.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
+    - apps/web/src/custom/forkDraftLiquidGlass.browser.test.tsx
 
 - id: fork-glass-new-agent-stage
   intent: >

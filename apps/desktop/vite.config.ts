@@ -34,14 +34,14 @@ export default defineConfig({
     tasks: {
       build: {
         command:
-          "node scripts/build-browser-secret.mjs && node scripts/build-sidebar-glass.mjs && node scripts/build-preview-annotation-css.mjs && vp pack",
+          "node scripts/build-browser-secret.mjs && node scripts/build-sidebar-glass.mjs --optional && node scripts/build-preview-annotation-css.mjs && vp pack",
         dependsOn: ["t3#build"],
         cache: false,
       },
       // CI bundle jobs skip the Linux browser secret helper; packaging stages one per arch.
       "build:bundle": {
         command:
-          "node scripts/build-sidebar-glass.mjs && node scripts/build-preview-annotation-css.mjs && vp pack",
+          "node scripts/build-sidebar-glass.mjs --optional && node scripts/build-preview-annotation-css.mjs && vp pack",
         dependsOn: ["t3#build"],
         cache: false,
       },

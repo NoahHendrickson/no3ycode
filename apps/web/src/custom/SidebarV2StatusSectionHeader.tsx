@@ -2,7 +2,7 @@
  * The header above each status section — see
  * `.fork/customizations.yaml#sidebar-v2-status-grouping`.
  *
- * A quiet 32px row carrying the section label (13px semibold on the muted
+ * A quiet 32px row carrying the section label (12px medium on the muted
  * channel) with its filled fold caret right beside it, and the list's trailing
  * controls (add project, sort, view settings) revealed on hover/focus or while
  * one of their menus is open (`theme.custom.css` carries the reveal rules).

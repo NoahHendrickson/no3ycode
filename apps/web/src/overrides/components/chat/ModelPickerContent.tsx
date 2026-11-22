@@ -815,8 +815,10 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               aria-label={holdsCurrentModel ? `${input.title} (current model)` : input.title}
               aria-current={isSelected ? "true" : undefined}
               data-model-picker-provider={input.target}
+              // A pick goes through onValueChange; clicking the open tab again
+              // only lands here, and still clears the search back to its list.
               onClick={() => {
-                if (!input.disabled) selectScope(input.target);
+                if (isSelected && !input.disabled) selectScope(input.target);
               }}
               className={cn(
                 "relative aspect-auto min-w-7 flex-1",
@@ -868,8 +870,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       MenuTabs strip so the tabs stay in the menu's keyboard navigation. */
   const renderProviderTabs = () => (
     <div
-      role="group"
-      aria-label="Providers"
       className="flex shrink-0 items-center overflow-x-auto overscroll-contain px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       data-fork-model-picker="providers"
     >

@@ -32,7 +32,11 @@ import {
   isForkGlassActive,
   setForkGlassActive,
 } from "./ForkGlassState.ts";
-import { clearForkLiquidGlass, isForkLiquidGlassSupported } from "./ForkLiquidGlass.ts";
+import {
+  clearForkLiquidGlass,
+  isForkLiquidGlassSupported,
+  takeForkLiquidGlassLoadFailure,
+} from "./ForkLiquidGlass.ts";
 
 const FORK_SET_SIDEBAR_VIBRANCY_CHANNEL = "fork:set-sidebar-vibrancy";
 
@@ -108,7 +112,11 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
           platform === "darwin" &&
           !isForkAuxiliaryWindow(target) &&
           isForkLiquidGlassSupported(platform);
-        if (!useLiquidGlass) {
+        const loadFailure = takeForkLiquidGlassLoadFailure();
+        if (loadFailure !== null) {
+          yield* Effect.logWarning("fork liquid glass addon failed to load", loadFailure);
+        }
+        if (!useLiquidGlass && platform === "darwin") {
           clearForkLiquidGlass(target);
         }
         // Every macOS window is built with the view, so even a never-glass window clears it.
@@ -126,7 +134,12 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
           mode = "vibrancy";
         }
       }
-      target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
+      // Under Liquid Glass the addon owns the backing behind the sidebar capsule
+      // (sidebar_glass.m); clearing it here would flash the desktop through until
+      // the renderer's next width push repaints it.
+      if (mode !== "liquid-glass") {
+        target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
+      }
     }
 
     // The renderer stamps its Glass marker from this answer, so a window that

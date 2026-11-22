@@ -7,12 +7,11 @@
    here that ties with a palettes rule wins on source order. Every selector
    is marker- and palette-scoped, so no other palette sees any of it.
 
-   The 3D glass setting (custom/forkGlass3d.ts) gates the sheet through
-   its parents, kept in source order: the tokens and the selected rows hold
-   unless 3D is off, so "Selected items only" keeps them; everything else
-   needs Full. & takes a parent's specificity and :where() adds none, so
-   every rule ranks as it would written out flat. */
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+   The 3D glass setting (custom/forkGlass3d.ts) gates the whole sheet on
+   Full 3D through its parents, kept in source order so rules tie-break as
+   before. & takes a parent's specificity and :where() adds none, so every
+   rule ranks as it would written out flat. */
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The glass, once, at the root: the popups portal out of the row and the
      sort menu out of the sidebar, so nothing finer would reach them all.
      An inset hairline offset half a pixel draws a crescent that thins away
@@ -525,7 +524,7 @@
   }
 }
 
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The thread you are on, as a pane of glass (Figma t3-fork 532:6527, "thread
      card v3", State=Selected), and every row that wears the same selected
      state: the active rows above the list (Search, New agent, Usage,

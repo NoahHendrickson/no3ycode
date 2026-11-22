@@ -72,6 +72,7 @@ export type SidebarGlassNativeAddon = {
 };
 
 let cachedAddon: SidebarGlassNativeAddon | null | undefined;
+let loadFailure: { readonly path: string; readonly message: string } | null = null;
 
 function resolveAddonCandidates(): readonly string[] {
   const candidates: string[] = [];
@@ -112,12 +113,21 @@ function loadNativeAddon(): SidebarGlassNativeAddon | null {
         cachedAddon = loaded as SidebarGlassNativeAddon;
         return cachedAddon;
       }
-    } catch {
-      // Try next candidate path.
+      loadFailure = { path: candidate, message: "missing exports" };
+    } catch (error) {
+      // A wrong-arch build or a rejected signature lands here; keep trying the other paths.
+      loadFailure = { path: candidate, message: String(error) };
     }
   }
   cachedAddon = null;
   return null;
+}
+
+/** The last addon load failure, once, so the caller can log why Liquid Glass fell back. */
+export function takeForkLiquidGlassLoadFailure(): typeof loadFailure {
+  const failure = loadFailure;
+  loadFailure = null;
+  return failure;
 }
 
 /** Test hook to inject a fake native addon without touching the filesystem. */

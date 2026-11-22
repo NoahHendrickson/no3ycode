@@ -29,6 +29,7 @@ vi.mock("electron", () => ({
 vi.mock("./ForkLiquidGlass.ts", () => ({
   isForkLiquidGlassSupported: liquidGlassSupportedMock,
   clearForkLiquidGlass: clearLiquidGlassMock,
+  takeForkLiquidGlassLoadFailure: () => null,
 }));
 
 import type * as Electron from "electron";
@@ -119,7 +120,8 @@ describe("ForkSidebarVibrancy", () => {
 
       assert.strictEqual(yield* request(true, "darwin"), "liquid-glass");
       assert.deepStrictEqual(mainWindow.setVibrancy.mock.calls, [[null]]);
-      assert.deepStrictEqual(mainWindow.setBackgroundColor.mock.calls, [["#00000000"]]);
+      // The addon paints the backing; a transparent write would flash the desktop through.
+      assert.deepStrictEqual(mainWindow.setBackgroundColor.mock.calls, []);
       assert.strictEqual(clearLiquidGlassMock.mock.calls.length, 0);
 
       // Auxiliary windows (Side Chat) have no sidebar and keep whole-window vibrancy.

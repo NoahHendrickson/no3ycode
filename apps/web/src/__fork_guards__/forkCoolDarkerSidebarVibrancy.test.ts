@@ -968,4 +968,125 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopHandlers).toContain("setForkSidebarLiquidGlassWidth");
     expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
+
+  it("waits for the next sidebar change after the native glass refuses a width", async () => {
+    using dom = stubDockedSidebar(256);
+    const glass = stubLiquidGlassBridge(() => false);
+    const root = makeRoot();
+    try {
+      await syncForkSidebarVibrancy(true, root);
+      await glass.answered();
+      dom.runFrames();
+      await glass.answered();
+      // A refusal schedules nothing; retrying each frame would spin on IPC.
+      expect(dom.pendingFrames()).toBe(0);
+      expect(root.attributes.has(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(false);
+
+      // A real change (here a resize) is what earns the next attempt.
+      const attempts = glass.calls.length;
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls.length).toBe(attempts + 1);
+      expect(dom.pendingFrames()).toBe(0);
+    } finally {
+      await syncForkSidebarVibrancy(false, root);
+      glass.dispose();
+    }
+  });
+
+  it("re-sends an unchanged CSS width when the page zoom changes", async () => {
+    using dom = stubDockedSidebar(256);
+    const glass = stubLiquidGlassBridge(() => true);
+    const root = makeRoot();
+    try {
+      await syncForkSidebarVibrancy(true, root);
+      await glass.answered();
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([256]);
+
+      // Main converts CSS px to points with the zoom factor, so Cmd+= must re-send.
+      dom.window.devicePixelRatio = 2.5;
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([256, 256]);
+    } finally {
+      await syncForkSidebarVibrancy(false, root);
+      glass.dispose();
+    }
+  });
 });
+
+/** A Liquid Glass bridge whose `setWidth` answers with `applied`. */
+function stubLiquidGlassBridge(applied: () => boolean) {
+  const calls: Array<number | null> = [];
+  let pending: Array<Promise<boolean>> = [];
+  const globals = globalThis as { forkDesktopBridge?: unknown };
+  globals.forkDesktopBridge = {
+    setSidebarVibrancy: () => Promise.resolve("liquid-glass"),
+    sidebarLiquidGlass: {
+      setWidth: (width: number | null) => {
+        calls.push(width);
+        const answer = Promise.resolve(applied());
+        pending.push(answer);
+        return answer;
+      },
+    },
+  };
+  return {
+    calls,
+    /** Resolves once every `setWidth` so far has answered and the tracker has handled it. */
+    async answered() {
+      const answers = pending;
+      pending = [];
+      await Promise.all(answers);
+    },
+    dispose() {
+      delete globals.forkDesktopBridge;
+    },
+  };
+}
+
+/** A docked sidebar gap of `width` CSS px, with frames and window events run by hand. */
+function stubDockedSidebar(width: number) {
+  const gap = { getBoundingClientRect: () => ({ width }) };
+  const wrapper = {
+    getAttribute: () => null,
+    querySelector: (selector: string) => (selector === '[data-slot="sidebar-gap"]' ? gap : null),
+  };
+  let frames: Array<() => void> = [];
+  const listeners = new Map<string, () => void>();
+  const window = {
+    devicePixelRatio: 2,
+    requestAnimationFrame: (callback: () => void) => frames.push(callback),
+    cancelAnimationFrame: () => {},
+    addEventListener: (type: string, listener: () => void) => listeners.set(type, listener),
+    removeEventListener: (type: string) => listeners.delete(type),
+  };
+  const document = {
+    body: null,
+    querySelector: (selector: string) =>
+      selector === '[data-slot="sidebar-wrapper"]' ? wrapper : null,
+  };
+  const globals = globalThis as { window?: unknown; document?: unknown };
+  globals.window = window;
+  globals.document = document;
+  return {
+    window,
+    emit(type: string) {
+      listeners.get(type)?.();
+    },
+    runFrames() {
+      const queued = frames;
+      frames = [];
+      for (const frame of queued) frame();
+    },
+    pendingFrames: () => frames.length,
+    [Symbol.dispose]() {
+      delete globals.window;
+      delete globals.document;
+    },
+  };
+}

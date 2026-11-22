@@ -33,24 +33,18 @@ export function SidebarV2SectionCaret({
 }
 
 /** A section's label, 12px medium like the status headers under it. With `onToggle` it folds
-    its section: the label, an optional count, and the always-visible chevron. */
+    its section: the label and the always-visible chevron. */
 export function SidebarV2SectionLabel(props: {
-  readonly count?: number;
   readonly collapsed?: boolean;
   readonly onToggle?: (() => void) | undefined;
   readonly testId: string;
   readonly children: ReactNode;
 }) {
   const className = "text-[0.75rem] leading-4 font-medium text-muted-foreground";
-  const count =
-    props.count === undefined ? null : (
-      <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
-    );
   if (props.onToggle === undefined) {
     return (
       <span className={cn("inline-flex max-w-full items-center gap-1.5", className)}>
         <span className="truncate">{props.children}</span>
-        {count}
       </span>
     );
   }
@@ -66,7 +60,6 @@ export function SidebarV2SectionLabel(props: {
       )}
     >
       <span className="truncate">{props.children}</span>
-      {count}
       <SidebarV2SectionCaret collapsed={props.collapsed === true} className="size-3.5 shrink-0" />
     </button>
   );

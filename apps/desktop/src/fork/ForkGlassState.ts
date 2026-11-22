@@ -6,7 +6,9 @@
  * handler and `syncWindowAppearance` in `window/DesktopWindow.ts`, which repaints
  * the opaque theme fill whenever the OS appearance changes. Without shared
  * state the second one silently kills the glass while the renderer still believes
- * it is on — the window goes opaque and no marker updates.
+ * it is on — the window goes opaque and no marker updates. Under macOS Liquid
+ * Glass a third writer takes over: the native addon (sidebar_glass.m) paints the
+ * backing itself, and the vibrancy handler leaves the colour alone.
  *
  * Deliberately its own module rather than a field on either side: both of those
  * files need to read it, and importing one from the other closes a cycle. The

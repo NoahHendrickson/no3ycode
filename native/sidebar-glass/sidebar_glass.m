@@ -195,6 +195,30 @@ static NSView *root_view_from_handle(napi_env env, napi_value val) {
   return *(__unsafe_unretained NSView **)data;
 }
 
+static NSView *content_view_for(NSView *rootView) {
+  if (rootView == nil) return nil;
+  NSWindow *window = rootView.window;
+  return window != nil ? window.contentView : rootView;
+}
+
+static bool remove_holder(NSView *rootView, const void *key) {
+  NSView *contentView = content_view_for(rootView);
+  if (contentView == nil) return false;
+  NSView *holder = objc_getAssociatedObject(contentView, key);
+  if (holder == nil) return false;
+  [holder removeFromSuperview];
+  objc_setAssociatedObject(contentView, key, nil, OBJC_ASSOCIATION_ASSIGN);
+  return true;
+}
+
+static bool hide_sidebar_glass_on_main(NSView *rootView) {
+  return remove_holder(rootView, kHolderAssocKey);
+}
+
+static bool hide_draft_glass_on_main(NSView *rootView) {
+  return remove_holder(rootView, kDraftHolderAssocKey);
+}
+
 static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentView,
                                 CGFloat width) {
   CGFloat contentHeight = contentView.bounds.size.height;
@@ -222,12 +246,16 @@ static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentVie
 
 static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool hasBacking,
                                        uint32_t backingRgb) {
-  if (rootView == nil || width <= 0 || !is_liquid_glass_supported_on_main()) {
+  if (rootView == nil || width <= 0) return false;
+  if (!is_liquid_glass_supported_on_main()) {
+    // Reduce Transparency or Increase Contrast turned on while mounted: the renderer
+    // falls back to its opaque sidebar, so the glass behind it has to go too.
+    hide_sidebar_glass_on_main(rootView);
     return false;
   }
 
   NSWindow *window = rootView.window;
-  NSView *contentView = window != nil ? window.contentView : rootView;
+  NSView *contentView = content_view_for(rootView);
   if (contentView == nil) return false;
 
   T3SidebarGlassHolder *holder = objc_getAssociatedObject(contentView, kHolderAssocKey);
@@ -268,6 +296,8 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool has
       if ([glass respondsToSelector:setCornerRadius]) {
         ((void (*)(id, SEL, CGFloat))objc_msgSend)(glass, setCornerRadius, 14.0);
       }
+      // Private (no public variant setter on macOS 26); respondsToSelector keeps a
+      // removal harmless, falling back to the default glass.
       SEL setVariant = sel_registerName("set_variant:");
       if ([glass respondsToSelector:setVariant]) {
         ((void (*)(id, SEL, long long))objc_msgSend)(glass, setVariant, 16);
@@ -291,33 +321,19 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool has
   return true;
 }
 
-static bool hide_draft_glass_on_main(NSView *rootView) {
-  if (rootView == nil) return false;
-  NSWindow *window = rootView.window;
-  NSView *contentView = window != nil ? window.contentView : rootView;
-  if (contentView == nil) return false;
-
-  T3DraftGlassHolder *holder = objc_getAssociatedObject(contentView, kDraftHolderAssocKey);
-  if (holder == nil) return false;
-
-  [holder removeFromSuperview];
-  objc_setAssociatedObject(contentView, kDraftHolderAssocKey, nil, OBJC_ASSOCIATION_ASSIGN);
-  return true;
-}
-
 static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSString *imageKey,
                                     NSData * _Nullable imageData, NSRect imageTopDown,
                                     const T3GlassCardRect *cards, size_t cardCount) {
-  if (rootView == nil || stageTopDown.size.width <= 0 || stageTopDown.size.height <= 0 ||
-      !is_liquid_glass_supported_on_main()) {
+  if (rootView == nil || stageTopDown.size.width <= 0 || stageTopDown.size.height <= 0) {
+    return false;
+  }
+  Class glassCls = NSClassFromString(@"NSGlassEffectView");
+  if (glassCls == nil || !is_liquid_glass_supported_on_main()) {
+    hide_draft_glass_on_main(rootView);
     return false;
   }
 
-  Class glassCls = NSClassFromString(@"NSGlassEffectView");
-  if (glassCls == nil) return false;
-
-  NSWindow *window = rootView.window;
-  NSView *contentView = window != nil ? window.contentView : rootView;
+  NSView *contentView = content_view_for(rootView);
   if (contentView == nil) return false;
 
   CGFloat contentHeight = contentView.bounds.size.height;
@@ -341,6 +357,9 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
 
   if (holder == nil) {
     holder = [[T3DraftGlassHolder alloc] initWithFrame:stageFrame];
+    // Chromium lays out from the top; without this a live vertical resize drags the
+    // layer (anchored bottom-left) until the renderer's next update lands.
+    holder.autoresizingMask = NSViewMinYMargin;
     [contentView addSubview:holder positioned:NSWindowBelow relativeTo:nil];
     objc_setAssociatedObject(contentView, kDraftHolderAssocKey, holder,
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -406,20 +425,6 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
   }
 
   [CATransaction commit];
-  return true;
-}
-
-static bool hide_sidebar_glass_on_main(NSView *rootView) {
-  if (rootView == nil) return false;
-  NSWindow *window = rootView.window;
-  NSView *contentView = window != nil ? window.contentView : rootView;
-  if (contentView == nil) return false;
-
-  T3SidebarGlassHolder *holder = objc_getAssociatedObject(contentView, kHolderAssocKey);
-  if (holder == nil) return false;
-
-  [holder removeFromSuperview];
-  objc_setAssociatedObject(contentView, kHolderAssocKey, nil, OBJC_ASSOCIATION_ASSIGN);
   return true;
 }
 

@@ -146,8 +146,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).toMatch(
       /const renderScopeTab = [\s\S]*?<MenuIconTab[^>]*?value=\{input\.target\}/u,
     );
-    expect(content).toContain("selectScope(next as ModelPickerScope)");
-    expect(content).toContain("if (!input.disabled) selectScope(input.target);");
+    expect(content).toMatch(/onValueChange=\{\(next\) => \{[^}]*selectScope\(/u);
     // Claude and Codex wear the supplied marks; the rest keep their icon.
     const glyph = readSibling("../custom/icons/ModelPickerProviderGlyph.tsx");
     expect(glyph).toContain('[ProviderDriverKind.make("claudeAgent")]: ClaudeCodeMark,');

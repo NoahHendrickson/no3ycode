@@ -9,10 +9,11 @@
 
 import { observeResize } from "~/lib/observeResize";
 
+import { FORK_GLASS_3D_ATTRIBUTE } from "./forkGlass3d";
+
 export const FORK_SIDEBAR_VIBRANCY_ATTRIBUTE = "data-fork-sidebar-vibrancy";
 export const FORK_SIDEBAR_LIQUID_GLASS_VALUE = "liquid-glass";
 
-const FORK_GLASS_3D_ATTRIBUTE = "data-fork-glass-3d";
 const FULL_GLASS_BACKING_RGB = 0x141618;
 const FLAT_GLASS_BACKING_RGB = 0x1f1c1b;
 
@@ -102,8 +103,10 @@ function stopTracking(): void {
   stopLiquidGlassTracking = null;
 }
 
+/** Main converts CSS px to points with the zoom factor, so a zoom change (which moves
+    devicePixelRatio) has to re-send an unchanged CSS width. */
 function widthKey(width: number | null, backing: number): string {
-  return width === null ? "null" : `${width}:${backing}`;
+  return width === null ? "null" : `${width}:${backing}:${window.devicePixelRatio}`;
 }
 
 function startLiquidGlassTracking(
@@ -141,13 +144,15 @@ function startLiquidGlassTracking(
       .then((applied) => {
         if (!active || isStale()) return;
         inFlight = false;
-        if (applied) {
-          lastAppliedKey = key;
-          stampMarker(root, "liquid-glass");
-        } else {
+        if (!applied) {
+          // Refused (Reduce Transparency, or the window lost glass): retrying every
+          // frame would spin on IPC, so the next sidebar change asks again.
           lastAppliedKey = null;
           stampMarker(root, "off");
+          return;
         }
+        lastAppliedKey = key;
+        stampMarker(root, "liquid-glass");
         // Reconcile if the sidebar resized or reversed while IPC was in flight.
         const liveWidth = readDockedSidebarGlassWidth(document);
         const liveBacking = readLiquidGlassBackingRgb(root);

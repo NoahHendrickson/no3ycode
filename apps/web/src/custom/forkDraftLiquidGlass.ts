@@ -73,11 +73,12 @@ function loadImageBase64(url: string): Promise<string | null> {
   const pending = (async () => {
     try {
       const response = await fetch(url);
-      if (!response.ok) return null;
-      return arrayBufferToBase64(await response.arrayBuffer());
+      if (response.ok) return arrayBufferToBase64(await response.arrayBuffer());
     } catch {
-      return null;
+      // Fall through: a failed fetch must not stick for the session.
     }
+    imageBase64Cache.delete(url);
+    return null;
   })();
   imageBase64Cache.set(url, pending);
   return pending;
@@ -132,8 +133,10 @@ function buildCardPopupMask(
     if (!rectsIntersect(cardBox, p)) continue;
     const x = Math.round((p.x - cardBox.left) * 2) / 2;
     const y = Math.round((p.y - cardBox.top) * 2) / 2;
+    // SVG clamps rx and ry separately, so an unclamped pill radius goes elliptical.
+    const r = Math.min(p.cornerRadius, p.width / 2, p.height / 2);
     holes.push(
-      `<rect x="${x}" y="${y}" width="${p.width}" height="${p.height}" rx="${p.cornerRadius}" ry="${p.cornerRadius}" fill="black"/>`,
+      `<rect x="${x}" y="${y}" width="${p.width}" height="${p.height}" rx="${r}" ry="${r}" fill="black"/>`,
     );
   }
   if (holes.length === 0) return null;
@@ -327,6 +330,9 @@ export function useForkDraftLiquidGlass(input: {
     let rafId: number | null = null;
     let settleRemaining = 0;
     let lastSentKey = "";
+    // Set once a payload is sent and kept through failures: a refused update leaves the
+    // previous native layer mounted, so only an explicit hide may clear it.
+    let nativeShown = false;
     let uploadedImageKey: string | null = null;
     let retrying = false;
     let observedCards: HTMLElement[] = [];
@@ -356,10 +362,11 @@ export function useForkDraftLiquidGlass(input: {
     const clearNative = () => {
       clearStampedPopups();
       document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
-      if (lastSentKey !== "") {
-        lastSentKey = "";
-        uploadedImageKey = null;
-        retrying = false;
+      lastSentKey = "";
+      uploadedImageKey = null;
+      retrying = false;
+      if (nativeShown) {
+        nativeShown = false;
         void setter(null).catch(() => {});
       }
     };
@@ -398,6 +405,11 @@ export function useForkDraftLiquidGlass(input: {
       );
     };
 
+    // Tooltips and every other app popup portal here too; only a draft popup, or
+    // one already cut out, moves the glass.
+    const portalHoldsDraftPopup = (portal: Element) =>
+      stampedPopups.size > 0 || portal.querySelector(DRAFT_POPUP_SELECTOR) !== null;
+
     const syncPortalObservers = () => {
       const portals = new Set(document.body.querySelectorAll(PORTAL_SELECTOR));
       for (const [portal, observer] of portalObservers) {
@@ -408,17 +420,8 @@ export function useForkDraftLiquidGlass(input: {
       }
       for (const portal of portals) {
         if (portalObservers.has(portal)) continue;
-        const observer = new MutationObserver((records) => {
-          for (const record of records) {
-            if (
-              record.type === "attributes" &&
-              record.attributeName === FORK_DRAFT_GLASS_POPUP_ATTRIBUTE
-            ) {
-              continue;
-            }
-            scheduleSync(POPUP_SETTLE_FRAMES);
-            return;
-          }
+        const observer = new MutationObserver(() => {
+          if (portalHoldsDraftPopup(portal)) scheduleSync(POPUP_SETTLE_FRAMES);
         });
         observer.observe(portal, {
           subtree: true,
@@ -440,8 +443,27 @@ export function useForkDraftLiquidGlass(input: {
       if (observersAttached) return;
       observersAttached = true;
       refreshObservedTargets();
-      chatObserver = new MutationObserver(() => {
-        refreshObservedTargets();
+      chatObserver = new MutationObserver((records) => {
+        let relevant = false;
+        let cardSetChanged = false;
+        for (const record of records) {
+          const target =
+            record.target instanceof Element ? record.target : record.target.parentElement;
+          if (target === null) continue;
+          // Typing edits the prompt editor; the vessel's ResizeObserver already
+          // catches the growth that matters, so keystrokes never measure here.
+          if (target.closest('[contenteditable="true"]') !== null) continue;
+          // The popup cutout masks this hook writes onto the cards.
+          if (record.attributeName === "style" && maskedCards.has(target as HTMLElement)) {
+            continue;
+          }
+          relevant = true;
+          if (record.attributeName !== "style" && record.attributeName !== "class") {
+            cardSetChanged = true;
+          }
+        }
+        if (!relevant) return;
+        if (cardSetChanged) refreshObservedTargets();
         scheduleSync();
       });
       chatObserver.observe(chatView, {
@@ -455,7 +477,16 @@ export function useForkDraftLiquidGlass(input: {
       syncPortalObservers();
       bodyChildObserver = new MutationObserver(() => {
         syncPortalObservers();
-        scheduleSync(POPUP_SETTLE_FRAMES);
+        // A removed portal can take a cut-out popup with it.
+        if (stampedPopups.size > 0) {
+          scheduleSync(POPUP_SETTLE_FRAMES);
+          return;
+        }
+        for (const portal of portalObservers.keys()) {
+          if (!portalHoldsDraftPopup(portal)) continue;
+          scheduleSync(POPUP_SETTLE_FRAMES);
+          return;
+        }
       });
       bodyChildObserver.observe(document.body, { childList: true });
       chatView.addEventListener("scroll", onScroll, true);
@@ -501,6 +532,8 @@ export function useForkDraftLiquidGlass(input: {
 
       const key = JSON.stringify({
         url,
+        // Main scales CSS px by the zoom factor, so a zoom change must re-send.
+        dpr: window.devicePixelRatio,
         stage: scene.stage,
         image: scene.image,
         cards: scene.cards,
@@ -511,6 +544,7 @@ export function useForkDraftLiquidGlass(input: {
         const needsImage = uploadedImageKey !== url;
         const send = (imageBase64: string | undefined) => {
           if (disposed || key !== lastSentKey) return;
+          nativeShown = true;
           void setter({
             stage: scene.stage,
             imageKey: url,
