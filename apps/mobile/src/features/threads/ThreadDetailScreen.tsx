@@ -6,6 +6,9 @@ import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard";
+/* fork:end fork-pending-user-input */
 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
 import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
 /* fork:end fork-queued-runs-banner */
@@ -1823,28 +1826,34 @@ function ThreadDetailBody(
                           </Animated.ScrollView>
                         ) : null}
                         {props.activePendingUserInput ? (
-                          <PendingUserInputCard
-                            environmentId={props.environmentId}
-                            threadId={props.selectedThread.id}
-                            workspaceRoot={props.threadCwd}
-                            canOperateThread={props.canOperateThread}
-                            pendingUserInput={props.activePendingUserInput}
-                            maxHeight={pendingUserInputMaxHeight}
-                            collapsed={userInputCollapsed}
-                            onToggleCollapsed={handleToggleUserInputCollapsed}
-                            onStopThread={props.onStopThread}
-                            cardProgress={userInputCardProgress}
-                            cardCoverage={userInputCardCoverage}
-                            onInputFocusChange={handleOwnedInputFocusChange}
-                            drafts={props.activePendingUserInputDrafts}
-                            answers={props.activePendingUserInputAnswers}
-                            respondingUserInputId={props.respondingUserInputId}
-                            onSelectOption={props.onSelectUserInputOption}
-                            onChangeCustomAnswer={props.onChangeUserInputCustomAnswer}
-                            onSubmit={props.onSubmitUserInput}
-                            onDismiss={props.onDismissUserInput}
-                          />
-                        ) : null}
+                          // fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+                          <No3yPendingUserInputSwap>
+                            {/* fork:end fork-pending-user-input */}
+                            <PendingUserInputCard
+                              environmentId={props.environmentId}
+                              threadId={props.selectedThread.id}
+                              workspaceRoot={props.threadCwd}
+                              canOperateThread={props.canOperateThread}
+                              pendingUserInput={props.activePendingUserInput}
+                              maxHeight={pendingUserInputMaxHeight}
+                              collapsed={userInputCollapsed}
+                              onToggleCollapsed={handleToggleUserInputCollapsed}
+                              onStopThread={props.onStopThread}
+                              cardProgress={userInputCardProgress}
+                              cardCoverage={userInputCardCoverage}
+                              onInputFocusChange={handleOwnedInputFocusChange}
+                              drafts={props.activePendingUserInputDrafts}
+                              answers={props.activePendingUserInputAnswers}
+                              respondingUserInputId={props.respondingUserInputId}
+                              onSelectOption={props.onSelectUserInputOption}
+                              onChangeCustomAnswer={props.onChangeUserInputCustomAnswer}
+                              onSubmit={props.onSubmitUserInput}
+                              onDismiss={props.onDismissUserInput}
+                            />
+                            {/* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */}
+                          </No3yPendingUserInputSwap>
+                        ) : // fork:end fork-pending-user-input
+                        null}
                       </Animated.View>
                     ) : null}
                     {/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */}

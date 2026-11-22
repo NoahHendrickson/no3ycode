@@ -4883,12 +4883,26 @@
     one box. Because the card takes the whole dock row, the stash tab cannot
     sit beside it as it does beside upstream's inset drawer: the dock stacks
     and the tab sits as a floor row above the card, right-aligned.
+    On the no3y iPhone layout (fork/No3yPendingUserInputCard.tsx, swapped in
+    by a fenced wrapper in ThreadDetailScreen) the same design is a glass card
+    in the composer card's place at its width: a Questions header with the
+    position/total (2+ questions), a dismiss for dismissible prompts and a
+    collapse chevron, one question at a time with radios or checkboxes on the
+    left, the foreground/alpha selection fill and hairline, a 50% ring, outline
+    Previous / Next and a white Submit on the last question (44pt); a
+    single-select pick moves to the next question (fork/no3yQuestionPaging.ts),
+    multi-select toggles in place. Free-text answers, the collapsed bar with
+    Stop, and upstream's feed-inset mechanics carry over unchanged. iPad and
+    Android keep upstream's card.
   tier: 2
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
     - apps/web/src/overrides/components/chat/ComposerPendingUserInputPanel.tsx
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
+    - apps/mobile/fork/No3yPendingUserInputCard.tsx
+    - apps/mobile/fork/no3yQuestionPaging.ts
+    - apps/mobile/fork/no3yQuestionPaging.test.ts
   shadows:
     - apps/web/src/components/chat/ComposerPendingUserInputPanel.tsx
   watch:
@@ -4897,9 +4911,12 @@
     # data-fork-pending-user-input-action on Previous and Next/Submit; the
     # outline + 24px restyle hangs off those attributes.
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
+    # Swaps in the no3y iPhone card.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
     - apps/web/src/__fork_guards__/forkPendingUserInput.test.ts
     - apps/web/src/__fork_guards__/forkPendingUserInputQuestionAdvance.test.tsx
+    - apps/mobile/fork/no3yQuestionPaging.test.ts
 
 - id: fork-model-picker
   intent: >
