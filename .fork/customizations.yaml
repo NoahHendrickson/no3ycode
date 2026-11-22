@@ -5440,7 +5440,11 @@
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
-    become a projectless chat. The scratch folder itself is never listed as a
+    become a projectless chat. A fresh New agent draft takes that pick itself
+    (useDraftProjectChoices, once per draft) wherever a machine has a scratch
+    folder, so it opens on No project, ready to send, with the chip in the
+    bottom-left and the launchpad still offering the projects; with no scratch
+    folder it stays unassigned as above. The scratch folder itself is never listed as a
     project. With two or more machines connected, an unassigned draft also gets a
     machine chip (custom/DraftMachineChip, upstream's
     BranchToolbarEnvironmentSelector) after the project chip: it moves the
@@ -6299,7 +6303,9 @@
     new worktree. The pull requests come from the cached pullRequests.list
     query and the checkouts from the git status queries the chat uses; a
     failed or unsupported list just offers nothing. Visibility is decided before either is asked for, so a hidden
-    launchpad (short window, No project or Chat mode draft) queries nothing.
+    launchpad (short window or Chat mode draft) queries nothing. A No project
+    draft keeps the launchpad like an unassigned one: the projects, their work,
+    and a pick moves the draft off No project.
     Picking a suggestion picks its project and writes its prompt into the
     draft composer, after anything the user already wrote (once: a second
     click on the same row adds nothing). A suggestion whose project is not

@@ -45,6 +45,7 @@ import {
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
+import { isChatDraft } from "./chatMode";
 
 const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
   conflicts: CircleAlertIcon,
@@ -157,15 +158,20 @@ export function DraftLaunchpad(
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
   const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   const { draftId } = props;
-  const unassigned = choices.selection.kind === "unassigned";
+  // No repository yet: unassigned, or the No project a New agent draft starts on. The
+  // launchpad then offers the projects and their work, and a pick moves the draft.
+  const unassigned =
+    choices.selection.kind === "unassigned" || choices.selection.kind === "no-project";
+  const isChat = useComposerDraftStore((store) =>
+    draftId === null ? false : isChatDraft(store.getDraftSession(draftId)),
+  );
   const recent = recentProjectRows(choices);
-  // Decided before the queries, so a hidden launchpad (a short window, a No project
-  // or Chat mode draft) never asks the server for pull requests or git status.
+  // Decided before the queries, so a hidden launchpad (a short window or a Chat mode
+  // draft) never asks the server for pull requests or git status.
   const shown =
     draftId !== null &&
     !shortWindow &&
-    // "No project" is a chat with no repository; there is no project work to suggest.
-    choices.selection.kind !== "no-project" &&
+    !isChat &&
     (choices.entries.length > 0 || choices.noProjectEnvironmentId !== null);
   // Only the copy a pick runs on (the draft's machine), so the forge account that
   // lists "your" pull requests is the one the task will run under.

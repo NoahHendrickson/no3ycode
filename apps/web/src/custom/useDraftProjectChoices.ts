@@ -18,6 +18,8 @@ import {
   sortLogicalProjectsForSidebar,
 } from "~/components/Sidebar.logic";
 import { toastManager } from "~/components/ui/toast";
+import { useEffect } from "react";
+
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -43,6 +45,8 @@ export const SHORT_WINDOW_QUERY = "(max-height: 34rem)";
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
 export const NO_PROJECT_VALUE = "no-project";
+/** New agent drafts already moved onto No project, so a later render never re-defaults one. */
+const defaultedDraftIds = new Set<DraftId>();
 
 /** What the chip shows: nothing chosen yet, "No project", or a project.
     `pending` while a pick is still moving the draft. */
@@ -165,9 +169,10 @@ export function useDraftProjectChoices(props: {
       : selection.kind === "project"
         ? (selection.entry?.group.projectKey ?? "")
         : "";
-  // An unassigned draft lists its recent projects in the launchpad under the composer.
+  // A draft with no repository yet (unassigned, or No project) lists its recent
+  // projects in the launchpad under the composer.
   const recentEntries =
-    selection.kind === "unassigned" && draftId !== null
+    (selection.kind === "unassigned" || selection.kind === "no-project") && draftId !== null
       ? rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)
       : null;
 
@@ -218,6 +223,17 @@ export function useDraftProjectChoices(props: {
       reportAssignFailure(entry.group.displayName, error),
     );
   };
+
+  // A fresh New agent draft starts on No project, ready to send as a chat; the
+  // launchpad still offers the projects. Once per draft (several components
+  // mount this hook), and only where a machine has a No project folder.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- opens the No project folder on the server to move a fresh draft onto it
+  useEffect(() => {
+    if (draftId === null || !draftIsUnassigned || noProjectEnvironmentId === null) return;
+    if (pendingProjectKey !== null || defaultedDraftIds.has(draftId)) return;
+    defaultedDraftIds.add(draftId);
+    pick(NO_PROJECT_VALUE);
+  }, [draftId, draftIsUnassigned, noProjectEnvironmentId, pendingProjectKey, pick]);
 
   return {
     entries,
