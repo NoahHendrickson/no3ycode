@@ -7848,11 +7848,18 @@
     title, then project icon and name, PR number, provider mark and model, with
     the status mark trailing; working is the Mac's bead ring, looping on the UI
     thread and still while its screen is covered, the app is inactive or Reduce
-    Motion is on. Inside a thread the native bar has a 16pt Medium title and no
-    subtitle, one usage button (the provider's remaining-limit ring, or a gauge
-    when it reports none) and a ⋯ menu with the project, environment and branch
-    as info rows plus the git, terminal and files items, their one home,
-    reachable in every thread state. The usage buttons open a half-height usage
+    Motion is on. Inside a thread there is no native bar and no blurred strip:
+    three 44pt glass bubbles float over the transcript under a fade from the
+    page colour (fork/No3yScreenHeader.tsx's No3yThreadHeader): back, the
+    title in its own pill (16pt Medium, one line), and a pill holding one usage
+    button (the provider's remaining-limit ring, or a gauge when it reports
+    none) and a ⋯ menu with the project, environment and branch as info rows
+    plus the git, terminal and files items, their one home, reachable in every
+    thread state. The transcript's top inset is that row's (No3yThreadBarInset
+    gives the body it as its header height) and it scrolls under the bubbles;
+    the back swipe stays native. Because the bubbles are not in a UIKit
+    navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
+    The usage buttons open a half-height usage
     sheet (fork/No3yUsageSheet.tsx) embedding Settings › Usage's limits with a
     See all link. The composer is a glass card (editor on top; 40pt +, model
     chip, mic and send below; no chip row above it; the model chip ends in the

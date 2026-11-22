@@ -563,8 +563,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadRoute).toContain("<No3yThreadTitleStyle />");
     // One usage button opening the half-height usage sheet, and a ⋯ menu holding the rest.
     expect(threadHeader).toContain("useNo3yThreadBar(");
-    expect(threadHeader).toContain('subtitle={no3yBar ? "" : props.subtitle}');
     expect(screenHeader).toContain('icon: "ellipsis"');
+    // No native bar in a thread: back, title and usage + ⋯ float as glass bubbles over a top fade,
+    // and the transcript's top inset is the floating row's.
+    expect(threadHeader).toContain("if (no3yBar) return <No3yThreadHeader");
+    expect(screenHeader).toContain("<NativeStackScreenOptions options={{ headerShown: false }} />");
+    expect(screenHeader).toContain("<HeaderHeightContext value={inset}>");
+    expect(threadRoute).toContain("<No3yThreadBarInset draft=");
     expect(screenHeader).toContain('StackActions.push("No3yUsage")');
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
     // Glass controls and card, the looping working mark.

@@ -128,7 +128,7 @@ import type { ThreadInspectorMode, ThreadInspectorTarget } from "./thread-inspec
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
-import { No3yThreadTitleStyle } from "../../../fork/No3yScreenHeader";
+import { No3yThreadBarInset, No3yThreadTitleStyle } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
 function firstRouteParam(value: string | string[] | undefined): string | null {
@@ -231,16 +231,22 @@ function UnavailableThreadDraftRedirect(props: { readonly environmentId: Environ
 
 export function ThreadRouteScreen(props: ThreadRouteScreenProps) {
   return (
-    <ThreadScreenHost>
-      {props.route.params?.draft ? (
-        <NewTaskDraftRouteScreen
-          key={draftRouteIdentity(props.route.params.draft)}
-          route={{ ...props.route, params: props.route.params.draft }}
-        />
-      ) : (
-        <LiveThreadRouteController {...props} />
-      )}
-    </ThreadScreenHost>
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    <No3yThreadBarInset draft={props.route.params?.draft !== undefined}>
+      {/* fork:end no3y-mobile-redesign */}
+      <ThreadScreenHost>
+        {props.route.params?.draft ? (
+          <NewTaskDraftRouteScreen
+            key={draftRouteIdentity(props.route.params.draft)}
+            route={{ ...props.route, params: props.route.params.draft }}
+          />
+        ) : (
+          <LiveThreadRouteController {...props} />
+        )}
+      </ThreadScreenHost>
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+    </No3yThreadBarInset>
+    /* fork:end no3y-mobile-redesign */
   );
 }
 

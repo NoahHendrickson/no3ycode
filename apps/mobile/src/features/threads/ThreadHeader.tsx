@@ -13,7 +13,7 @@ import {
 } from "./ThreadGitControls";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
-import { useNo3yThreadBar } from "../../../fork/No3yScreenHeader";
+import { No3yThreadHeader, useNo3yThreadBar } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
 export function ThreadHeader(props: {
@@ -67,14 +67,14 @@ export function ThreadHeader(props: {
               : null,
         },
   );
+  // The no3y bar floats over the transcript in place of the native bar.
+  if (no3yBar) return <No3yThreadHeader title={props.title} onBack={goBack} bar={no3yBar} />;
   /* fork:end no3y-mobile-redesign */
 
   return (
     <AppBar
       title={props.title}
-      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      subtitle={no3yBar ? "" : props.subtitle}
-      /* fork:end no3y-mobile-redesign */
+      subtitle={props.subtitle}
       onBackToList={goBack}
       onCompose={props.draft ? undefined : startNewTask}
       backInSplitView={
@@ -86,11 +86,8 @@ export function ThreadHeader(props: {
             }
           : undefined
       }
-      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      actions={no3yBar ? [] : actions}
-      menus={no3yBar ? no3yBar.menus : menus}
-      trailing={no3yBar?.trailing}
-      /* fork:end no3y-mobile-redesign */
+      actions={actions}
+      menus={menus}
       hideBottomBorder
     />
   );
