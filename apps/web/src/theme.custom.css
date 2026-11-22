@@ -707,10 +707,35 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  [data-fork-composer-top-vessel]:has(
+    [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
+  )
   + [data-fork-composer-vessel] {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+/* The top corners square only while the usage drawer is out, so they follow its slide: square
+   as it starts up (it clears the corner within a frame), round in its last 40ms going down. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
+  transition:
+    border-top-left-radius 40ms linear 110ms,
+    border-top-right-radius 40ms linear 110ms;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-top-vessel]:has(
+    [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
+  )
+  + [data-fork-composer-vessel] {
+  transition-delay: 0s;
+  transition-duration: 16ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
+    transition: none;
+  }
 }
 
 :root[data-fork="noahhendrickson-t3code"]
