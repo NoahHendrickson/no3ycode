@@ -43,23 +43,24 @@ const liquidGlass = () =>
   document.documentElement.setAttribute("data-fork-sidebar-vibrancy", "liquid-glass");
 
 describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
-  it("stamps a menu wholly inside the docked sidebar for its solid fill, cutting nothing", () => {
+  it("cuts the page from under a menu wholly inside the docked sidebar, down to its glass", () => {
     using scene = stage();
     liquidGlass();
     const menu = scene.open(40);
     syncForkGlassPopupCutout("sidebar");
-    expect(menu.hasAttribute(MARK)).toBe(true);
-    expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
+    expect(menu.getAttribute(MARK)).toBe("glass");
+    expect(scene.root.style.getPropertyValue("mask-image")).toContain("svg");
   });
 
-  it("stamps a menu reaching past the sidebar too, and leaves one clear of it alone", () => {
+  it("paints a menu reaching past the sidebar solid, uncut, and leaves one clear of it alone", () => {
     using scene = stage();
     liquidGlass();
     const straddling = scene.open(200);
     const clear = scene.open(400);
     syncForkGlassPopupCutout("sidebar");
-    expect(straddling.hasAttribute(MARK)).toBe(true);
+    expect(straddling.getAttribute(MARK)).toBe("solid");
     expect(clear.hasAttribute(MARK)).toBe(false);
+    expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
   });
 
   it("stamps a menu opened after Liquid Glass lands, though the cutout started before it", async () => {
@@ -68,6 +69,6 @@ describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
     syncForkGlassPopupCutout("sidebar");
     liquidGlass();
     const menu = scene.open(40);
-    await vi.waitFor(() => expect(menu.hasAttribute(MARK)).toBe(true));
+    await vi.waitFor(() => expect(menu.getAttribute(MARK)).toBe("glass"));
   });
 });

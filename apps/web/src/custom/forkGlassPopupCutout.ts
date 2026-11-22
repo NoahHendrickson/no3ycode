@@ -71,12 +71,9 @@ const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]
 /** Base UI's portal node, which nests a portal opened from inside it. */
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
-/**
- * Under sidebar-only Liquid Glass nothing is cut: no hole looked right over the sidebar's glass,
- * and one elsewhere would open onto the desktop. A popup over the docked sidebar is only
- * stamped, so it paints a solid fill in the sidebar's colour (theme.custom.palettes.css). Any
- * popup reaching over the sidebar is, since no frost blurs the rows there.
- */
+/* Sidebar Liquid Glass sits behind the docked sidebar alone: a popup wholly over it is cut
+   through to that glass ("glass"), so it follows the wallpaper and window focus; one reaching past
+   it would open onto the desktop, so it paints the sidebar's colour ("solid") instead. */
 const SIDEBAR_GLASS_SELECTOR =
   '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
 const FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE = "data-fork-sidebar-glass-popup";
@@ -326,12 +323,22 @@ function sidebarGlassRect(appRoot: HTMLElement): Rect | null {
     : { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
 
+function within(inner: Rect, outer: Rect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  );
+}
+
 function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 /** "window": the whole window is glass, and popups cut through to it. "sidebar": the Glass palette
-    without it, where popups over the docked sidebar are stamped while its Liquid Glass is on. */
+    without it, where popups over the docked sidebar are cut or stamped while its Liquid Glass is
+    on. */
 type CutoutMode = "window" | "sidebar";
 
 function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
@@ -407,14 +414,22 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
     for (const { popup, layer } of placed) {
       const hole = measure(popup, layer, layers[layer]?.z ?? 0);
       if (mode === "sidebar") {
-        // A closing popup keeps its stamp, so it fades out on the same tint.
+        // A closing popup keeps its stamp and gives its hole back, as in window mode.
         if (hole === null) continue;
-        // Any part over the sidebar would show its rows sharp, so any overlap is solid.
-        const inside = sidebar !== null && overlaps(hole, sidebar);
-        if (inside !== popup.hasAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE)) {
-          popup.toggleAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, inside);
+        const stamp =
+          sidebar === null
+            ? null
+            : within(hole, sidebar)
+              ? "glass"
+              : overlaps(hole, sidebar)
+                ? "solid"
+                : null;
+        if (popup.getAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE) !== stamp) {
+          if (stamp === null) popup.removeAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE);
+          else popup.setAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, stamp);
           frostChanged = true;
         }
+        if (stamp === "glass") holes.push(hole);
         continue;
       }
       if (hole === null) continue;
