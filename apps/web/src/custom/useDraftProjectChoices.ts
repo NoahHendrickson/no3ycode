@@ -7,6 +7,7 @@ import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 import {
   deriveLogicalProjectKeyFromSettings,
+  getProjectOrderKey,
   pickableProjectGroups,
   selectProjectGroupingSettings,
 } from "@t3tools/client-runtime/state/project-grouping";
@@ -14,6 +15,7 @@ import type { ScopedProjectRef } from "@t3tools/contracts";
 
 import { openCommandPalette } from "~/commandPaletteBus";
 import {
+  orderItemsByPreferredIds,
   rankRecentProjectEntries,
   sortLogicalProjectsForSidebar,
 } from "~/components/Sidebar.logic";
@@ -29,6 +31,7 @@ import {
 } from "~/sidebarProjectGrouping";
 import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
+import { legacyProjectCwdPreferenceKey, useUiStateStore } from "~/uiStateStore";
 import { rememberDraftProjectPick } from "./draftProjectPickMotion";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
 import {
@@ -112,6 +115,7 @@ export function useDraftProjectChoices(props: {
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   const projectSortOrder = useClientSettings((settings) => settings.sidebarProjectSortOrder);
+  const projectOrder = useUiStateStore((store) => store.projectOrder);
   const assignDraftProject = useAssignDraftProject();
   const pendingProjectKey = useDraftProjectAssignmentPending(draftId);
   const draftIsUnassigned = useComposerDraftStore((store) =>
@@ -130,7 +134,19 @@ export function useDraftProjectChoices(props: {
   );
   const projectGroups = sortLogicalProjectsForSidebar(
     buildSidebarProjectSnapshots({
-      projects,
+      // Upstream #29846: a manual sidebar order applies here too.
+      projects:
+        projectSortOrder === "manual"
+          ? orderItemsByPreferredIds({
+              items: projects,
+              preferredIds: projectOrder,
+              getId: getProjectOrderKey,
+              getPreferenceIds: (project) => [
+                getProjectOrderKey(project),
+                legacyProjectCwdPreferenceKey(project.workspaceRoot),
+              ],
+            })
+          : projects,
       settings: projectGroupingSettings,
       primaryEnvironmentId,
       resolveEnvironmentLabel: (environmentId) => environmentLabelById.get(environmentId) ?? null,

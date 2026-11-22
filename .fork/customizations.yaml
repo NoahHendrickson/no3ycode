@@ -3428,6 +3428,8 @@
     - apps/web/src/components/WorkspacePageHeader.tsx
     # Defines .drag-region itself — the class the release rule overrides.
     - apps/web/src/index.css
+    # Fenced: upstream pins its 640px reserve in the narrow viewport.
+    - apps/web/src/components/threadSidebarWidth.test.ts
   verify:
     - apps/web/src/__fork_guards__/narrowWorkspaceLayout.test.ts
 
@@ -5603,6 +5605,8 @@
     # monogram (#11572).
     - apps/web/src/components/ProjectFavicon.tsx
     - apps/web/src/shortcuts/chatRouteCommands.ts
+    # Fenced: upstream #29846 drives its picker; the fork drives the project chip menu.
+    - apps/web/src/components/chat/DraftHeroHeadline.browser.test.tsx
   verify:
     - apps/web/src/__fork_guards__/forkNewAgentDraft.test.ts
     - apps/web/src/custom/newAgentDraft.test.ts

@@ -72,23 +72,25 @@ it("the new-thread project picker follows the manual sidebar project order", asy
   });
   // The shell snapshot has arrived once the sidebar lists the project.
   await expect.element(page.getByText("render", { exact: true }).first()).toBeVisible();
-  const trigger = document.querySelector<HTMLElement>("[data-draft-project-trigger]");
+  /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
+  const trigger = document.querySelector<HTMLElement>("[data-fork-draft-project-chip]");
   if (!trigger) throw new Error("The draft project picker did not render.");
   await userEvent.click(page.elementLocator(trigger));
-  await expect.element(page.getByRole("option", { name: "beta" })).toBeVisible();
+  // The fork menu lists projects as radio rows, without upstream's "Add project" option.
+  await expect.element(page.getByRole("menuitemradio", { name: "beta" })).toBeVisible();
 
   // The draft's own project leads; the rest keep the sidebar's order.
   await vi.waitFor(() => {
     expect(
       page
-        .getByRole("option")
+        .getByRole("menuitemradio")
         .elements()
         .map((option) => option.textContent),
     ).toEqual([
       expect.stringMatching(/render$/),
       expect.stringMatching(/beta$/),
       expect.stringMatching(/alpha$/),
-      "Add project",
     ]);
   });
+  /* fork:end fork-new-agent-draft */
 });
