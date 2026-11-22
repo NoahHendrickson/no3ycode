@@ -2,6 +2,9 @@ import type { ExpoConfig } from "expo/config";
 
 import { BRAND_ASSET_PATHS } from "../../scripts/lib/brand-assets.ts";
 import { loadRepoEnv } from "../../scripts/lib/public-config.ts";
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+import { no3yNativeConfig, no3yVariant } from "./fork/identity.ts";
+/* fork:end no3y-mobile-identity */
 
 type AppVariant = "development" | "preview" | "production";
 
@@ -117,7 +120,9 @@ function resolveAppVariant(value: string | undefined): AppVariant {
   }
 }
 
-const variant = VARIANT_CONFIG[APP_VARIANT];
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+const variant = no3yVariant(APP_VARIANT, VARIANT_CONFIG[APP_VARIANT], repoEnv);
+/* fork:end no3y-mobile-identity */
 // Copied thread links open the app. app.t3.codes/.well-known lists every variant's identifiers.
 const HOSTED_APP_HOST = "app.t3.codes";
 const iosBundleIdentifier = isIosPersonalTeamBuild
@@ -497,4 +502,6 @@ const config: ExpoConfig = {
   },
 };
 
-export default config;
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+export default no3yNativeConfig(config, repoEnv);
+/* fork:end no3y-mobile-identity */

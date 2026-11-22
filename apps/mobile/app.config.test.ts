@@ -6,7 +6,9 @@ import assetLinks from "../web/public/.well-known/assetlinks.json";
 
 // Keep config parsing independent of local env files and build credentials.
 vi.mock("../../scripts/lib/public-config.ts", () => ({
-  loadRepoEnv: () => ({ APP_VARIANT: process.env.APP_VARIANT }),
+  /* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+  loadRepoEnv: () => ({ APP_VARIANT: process.env.APP_VARIANT, NO3Y_MOBILE_IDENTITY: "0" }),
+  /* fork:end no3y-mobile-identity */
 }));
 
 afterEach(() => {

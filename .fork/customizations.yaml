@@ -5293,6 +5293,40 @@
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
 
+- id: no3y-mobile-identity
+  intent: >
+    The mobile app builds as no3y Code, signed by the fork owner's Apple team
+    (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
+    other variants), with the fork's app icons. Ping's team, bundle IDs, linked
+    domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
+    serve a different bundle, so they are swapped out or dropped, and OTA
+    updates stay off until the fork has its own Expo project.
+
+    The identity is chosen before upstream derives the widget, share-extension,
+    app-group and keychain IDs from the variant, so every target follows it.
+    It is on by default; NO3Y_MOBILE_IDENTITY=0 (in .env.local or the shell)
+    builds upstream's identity. The flag cannot live in the tracked .env,
+    which the t3-connect-official-config guard pins to the official values.
+    Upstream's app.config.test.ts pins the flag to 0 in its env mock (one
+    fenced line) so it keeps asserting upstream's identifiers.
+
+    Deliberately shared: the t3code:// scheme stays upstream's, because
+    App.tsx and the widgets hardcode it (same call as the desktop app). With
+    the App Store app also installed, the two contend for it. Push
+    notifications, Live Activities and T3 Connect sign-in still target Ping's
+    relay and Clerk and do not work in this build; connect over Tailscale.
+  tier: 4
+  files:
+    - apps/mobile/fork/identity.ts
+    - apps/mobile/fork/identity.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/app.config.ts
+    - apps/mobile/app.config.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileIdentity.test.ts
+    - apps/mobile/fork/identity.test.ts
+
 - id: fork-glass-preview-parking
   intent: >
     A preview guest that is rendering but not on screen (an agent driving the
