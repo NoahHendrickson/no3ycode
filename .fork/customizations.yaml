@@ -3620,9 +3620,14 @@
     leads the prompt row opposite Send, and the dictation mic sits beside Send.
     [data-fork-composer-control-row] in theme.custom.css is the single owner of
     the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
-    control-row slots. Send and stop remain 24px squares at 4px radius; send
-    uses Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
-    Glass. Upstream's stitched glass-shell paint and banner-frame glass are
+    control-row slots. Attach, send and stop are 32px squares at 8px radius
+    (the kit's icon button) with 16px glyphs, inside a 16px-cornered vessel and
+    prompt (--fork-composer-radius; Inlet adds its 4px inset); send uses
+    Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
+    Glass. The compact row is 8px on every side with 2px between the actions and
+    the prompt (Figma no3y-code 34:8764). The permissions chip is icon-only (the
+    mode's runtimeModeConfig icon, upstream's own), its name in the tooltip
+    and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
   tier: 4
@@ -5112,7 +5117,8 @@
     file tree and the "N more files" footer (the header's following sibling
     divs) are a well painted from --fork-composer-bg, edge to edge inside
     the card with a hairline on its top only (the card border is the line
-    elsewhere). Radii come from --fork-composer-radius; the shared rule rounds only
+    elsewhere). Radii come from --fork-card-radius (8px, the composer's old
+    radius, kept when the composer went to 16px); the shared rule rounds only
     the well's bottom corners, and Basic rounds its top as well and fills it with
     --basic-raised (Figma kit, theme.custom.basic.css), so its hairline curves into
     the card's sides. Path
@@ -5481,9 +5487,10 @@
     under that wrapper, so its backdrop-filter had nothing behind it to blur
     on screen while offscreen renders blurred. Found by reparenting the
     vessel up the ancestor chain in headful Chrome; neutralising the name
-    alone restored the blur. That geometry is the drawn box (Figma 418:11501): an
-    80px prompt surface with 8px padding, the prompt line on top and the
-    send action on its own row beneath, trailing — which folds back to the compact base row the moment the thread starts. The draft composer is also capped at 42rem (the drawn
+    alone restored the blur. That geometry is the drawn box (Figma no3y-code
+    34:8009): a 100px prompt surface, the prompt line 10px from the top and
+    the 32px attach and send on their own row 12px in from the sides and the
+    bottom — which folds back to the compact base row the moment the thread starts. The draft composer is also capped at 42rem (the drawn
     663px) instead of upstream's 48rem, keyed on a data-fork-composer-stack
     stamp on ChatView's composer stack plus the overlay's data-draft-hero.
 

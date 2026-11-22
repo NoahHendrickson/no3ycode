@@ -380,8 +380,8 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-changed-files-header]
   + div {
-  border-top-left-radius: calc(var(--fork-composer-radius) - 1px);
-  border-top-right-radius: calc(var(--fork-composer-radius) - 1px);
+  border-top-left-radius: calc(var(--fork-card-radius) - 1px);
+  border-top-right-radius: calc(var(--fork-card-radius) - 1px);
 }
 
 /* The subagent card's well sits on the raised fill (Figma kit), not the composer's prompt. */

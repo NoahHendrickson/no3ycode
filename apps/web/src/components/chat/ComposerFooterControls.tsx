@@ -42,9 +42,7 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
   const runtimeModeOption =
     props.runtimeModeOptions.find((option) => option.mode === props.runtimeMode) ??
     supervisedRuntimeModeOption;
-  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-  // Upstream reads runtimeModeOption.icon here for the permissions chip glyph.
-  /* fork:end fork-composer-shell */
+  const RuntimeModeIcon = runtimeModeOption.icon;
   // The chip opens the same Permissions toggle used in the model picker and the overflow menu.
   const permissionsTooltip = `Permissions: ${runtimeModeOption.label}. ${runtimeModeOption.description}`;
   const permissionsChip = (
@@ -74,10 +72,8 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
           }
         >
           {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-              Label only: no RuntimeModeIcon on the mode chip, and no
-              data-composer-control-label, which upstream's icon-only collapse
-              hides — with no icon that left a bare chevron. */}
-          <span>{runtimeModeOption.label}</span>
+              Icon only: the mode's name lives in the tooltip and aria-label. */}
+          <RuntimeModeIcon aria-hidden />
           {/* fork:end fork-composer-shell */}
         </TooltipTrigger>
         <TooltipPopup side="top">{permissionsTooltip}</TooltipPopup>

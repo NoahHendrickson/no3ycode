@@ -1877,11 +1877,6 @@
     color: #ffffff;
   }
 
-  & [data-fork-composer-control-row] {
-    min-height: 36px;
-    padding-block: 5px;
-  }
-
   &
     :is(
       [data-fork-composer-action="attach"],

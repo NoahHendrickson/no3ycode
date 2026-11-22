@@ -658,10 +658,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(primaryActions).toContain('data-fork-composer-action="stop"');
     const action = rules.find(
       (rule) =>
-        rule.selector.endsWith("[data-fork-composer-action]") && rule.body.includes("width: 24px"),
+        rule.selector.endsWith("[data-fork-composer-action]") && rule.body.includes("width: 32px"),
     );
-    expect(action?.body).toMatch(/height:\s*24px/u);
-    expect(action?.body).toMatch(/border-radius:\s*4px/u);
+    expect(action?.body).toMatch(/height:\s*32px/u);
+    expect(action?.body).toMatch(/border-radius:\s*8px/u);
     // Stop is flat like send; upstream's shadows read as a dark bottom lip.
     const stop = rules.find((rule) =>
       rule.selector.endsWith('.dark [data-fork-composer-action="stop"]'),
@@ -694,10 +694,10 @@ describe("fork guard: fork-composer-shell", () => {
       (rule) =>
         rule.selector.includes(":not([data-draft-hero])") &&
         rule.selector.endsWith("[data-fork-composer-prompt]") &&
-        rule.body.includes("translate:"),
+        rule.body.includes("padding-block:"),
     );
-    expect(promptLift?.body, "text is lifted 1px to centre on send").toMatch(
-      /translate:\s*0 -1px/u,
+    expect(promptLift?.body, "one line centres on the 32px buttons").toMatch(
+      /padding-block:\s*8\.5px/u,
     );
     expect(chatComposer).not.toMatch(
       /data-chat-composer-actions="right"[\s\S]{0,600}?\{showComposerAttachAction \? \(/u,

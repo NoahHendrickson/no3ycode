@@ -6,15 +6,15 @@
    ink rules: the chip ink ties an open chip's menu ink on specificity and
    must stay before it. */
 
-/* The composer, Figma 619:7512 / 629:9196: a vessel with 12px corners in the
-   frame's own colour, the prompt set 4px inside it on every side with the
-   prompt radius, and the context chips above with 8px corners. Geometry for
+/* The composer, Figma 619:7512 / 629:9196: a vessel in the frame's own colour
+   with corners 4px wider than the prompt's, so the prompt set 4px inside it on
+   every side stays concentric, and the context chips above with 8px corners. Geometry for
    every colour; the fills are each colour's tokens. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-composer-vessel] {
   /* The question drawer and banners above the prompt take the same inset. */
   --chat-composer-drawer-inset: 4px;
-  border-radius: 12px;
+  border-radius: calc(var(--fork-composer-radius) + 4px);
   transition:
     border-top-left-radius 100ms ease-out,
     border-top-right-radius 100ms ease-out;
@@ -30,7 +30,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-usage-drawer] {
-  border-radius: 12px 12px 0 0;
+  border-radius: calc(var(--fork-composer-radius) + 4px) calc(var(--fork-composer-radius) + 4px) 0 0;
 
   & > * {
     padding-bottom: 2px;

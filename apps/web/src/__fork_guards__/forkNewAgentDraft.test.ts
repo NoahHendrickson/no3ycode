@@ -265,7 +265,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       /\[data-draft-hero\]\s*\[data-chat-composer-inline-actions\]\s*\{[^}]*grid-area:\s*actions/u,
     );
     expect(css).toMatch(
-      /\[data-draft-hero\]\s*\[data-chat-composer-body="true"\]\s*\{[^}]*padding-block:\s*8px/u,
+      /\[data-draft-hero\]\s*\[data-chat-composer-body="true"\]\s*\{[^}]*padding:\s*10px 12px 12px/u,
     );
   });
 

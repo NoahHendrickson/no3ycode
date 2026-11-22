@@ -299,9 +299,9 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(chromeBridge?.body).toContain("radial-gradient");
   });
 
-  it("sets the prompt 4px inside a 12px vessel under 8px context chips", () => {
+  it("sets the prompt 4px inside a concentric vessel under 8px context chips", () => {
     const vessel = ruleBodyFor(inletRules, [TEMPLATE, "[data-fork-composer-vessel]"]);
-    expect(vessel).toContain("border-radius: 12px");
+    expect(vessel).toContain("border-radius: calc(var(--fork-composer-radius) + 4px)");
     expect(vessel).toContain("--chat-composer-drawer-inset: 4px");
     expect(
       ruleBodyFor(inletRules, [
