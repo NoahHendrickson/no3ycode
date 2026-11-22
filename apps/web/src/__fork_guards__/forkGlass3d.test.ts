@@ -36,10 +36,9 @@ describe("fork guard: fork-glass-3d", () => {
     for (const rule of selection) {
       const isTokens = compact(rule.selector) === compact(`${NOT_OFF}${PALETTE}`);
       // The collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the list laid
-      // sideways; the model picker's open provider tab (fork-model-picker) and the sidebar's
-      // chosen Code / Chat mode (fork-chat-mode) are selected too.
+      // sideways and the sidebar's chosen Code / Chat mode (fork-chat-mode) is selected too.
       const isSelectedRow =
-        /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]|\[data-fork-sidebar-mode-tabs\]|\[data-fork-model-picker="providers"\] \[data-model-picker-provider\]\[aria-current="true"\]/u.test(
+        /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]|\[data-fork-sidebar-mode-tabs\]/u.test(
           rule.selector.replace(/\s+/gu, " "),
         );
       expect(isTokens || isSelectedRow, `not a selected row: "${rule.selector}"`).toBe(true);

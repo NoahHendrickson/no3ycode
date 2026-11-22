@@ -40,7 +40,7 @@ import { setActiveForkPalette, useActiveForkPalette, useIsInletActive } from "./
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
-import { BASIC_TOPBAR_HEIGHT, syncForkTopbarHeight } from "./forkTopbarHeight";
+import { syncForkTopbarHeightFromRoot } from "./forkTopbarHeight";
 import type { ThemePreference } from "../themePalette";
 
 export const FORK_THEME_ATTRIBUTE = "data-fork-theme";
@@ -444,7 +444,7 @@ function syncForkPaletteFromStorage(): void {
     setForkDesktopThemeOverride(
       activePalette === INLET_THEME ? inletChromeOverride(inletColor) : null,
     );
-    syncForkTopbarHeight(activePalette === BASIC_THEME ? BASIC_TOPBAR_HEIGHT : null);
+    syncForkTopbarHeightFromRoot();
     // Synchronous, inside the suppressed-transition window: switching between
     // two fork palettes can keep upstream theme where it is, so applyTheme
     // no-ops and this is the only repaint of html/body overscroll and theme-color.

@@ -478,6 +478,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(readSibling("../custom/ComposerShell.tsx")).toContain(
       'data-fork-composer-vessel-context="true"',
     );
+    const compactProject = ruleBodyFor(rules, [
+      MARKER,
+      "[data-fork-composer-vessel-context]",
+      '[data-slot="composer-context-strip"][data-compact] > [data-fork-draft-project-chip]',
+    ]);
+    expect(compactProject).toMatch(/column-gap:\s*0\s*;/u);
   });
 
   it("combines workspace and branch into one caret-free split menu in the composer strip", () => {

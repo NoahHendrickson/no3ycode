@@ -41,6 +41,7 @@ artifacts/mobile-behavior/
 scripts/.e2e/
 .github/pr-assets/
 native/**/target/
+native/**/build/
 node_modules/
 .alchemy/
 *.log

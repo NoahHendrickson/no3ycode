@@ -139,31 +139,33 @@ describe("fork guard: fork-model-picker", () => {
     expect(traits).toContain("isReasoningSelect(descriptor)");
   });
 
-  it("scopes the list with a rail of provider icon tabs beside the search field", () => {
-    // Tabs are menu rows that set the scope and never close the menu.
+  it("scopes the list with horizontal provider icon tabs above the search field", () => {
+    // Tabs use the shared Tabs/IconTab strip, setting the scope without closing the menu.
     expect(content).toContain('data-fork-model-picker="providers"');
+    expect(content).toContain("<Tabs");
     expect(content).toMatch(
-      /const renderScopeTab = [\s\S]*?<MenuItem[^>]*?closeOnClick=\{false\}[\s\S]*?onClick=\{\(\) => selectScope\(input\.target\)\}/u,
+      /const renderScopeTab = [\s\S]*?<IconTab[^>]*?value=\{input\.target\}/u,
     );
+    expect(content).toContain("selectScope(next as ModelPickerScope)");
     // Claude and Codex wear the supplied marks; the rest keep their icon.
     const glyph = readSibling("../custom/icons/ModelPickerProviderGlyph.tsx");
     expect(glyph).toContain('[ProviderDriverKind.make("claudeAgent")]: ClaudeCodeMark,');
     expect(glyph).toContain('[ProviderDriverKind.make("codex")]: CodexMark,');
     expect(glyph).toContain('import codexMarkUrl from "../assets/codex-mark.png";');
     expect(content).toContain("<ModelPickerProviderGlyph");
-    // Search, then the list, then the rail: ArrowDown from the search field
-    // reaches the models first. The row is reversed to show the rail on the left.
+    // Vertical stack: horizontal provider tabs at top, then search, then models.
+    const tabsAt = content.indexOf("{renderProviderTabs()}");
     const searchAt = content.indexOf('aria-label="Search models"');
     const listAt = content.indexOf("{renderModelList()}");
-    const railAt = content.indexOf("{renderProviderRail()}");
+    expect(tabsAt).toBeGreaterThan(-1);
+    expect(searchAt).toBeGreaterThan(tabsAt);
     expect(listAt).toBeGreaterThan(searchAt);
-    expect(railAt).toBeGreaterThan(listAt);
-    expect(content).toContain("flex min-h-0 flex-row-reverse");
+    expect(content).toContain("flex min-h-0 flex-col");
     // No ancestor-:last-child variants (group-last/*): Chromium restyles far more on
     // DOM changes, and MessagesTimeline's huge-list browser test slowed past its timeout.
     expect(content).not.toMatch(/group-last\//u);
-    // Many providers scroll inside the rail instead of growing the popup.
-    expect(content).toMatch(/className="flex max-h-92 shrink-0 flex-col gap-1 overflow-y-auto/u);
+    // Many providers scroll horizontally inside the tab strip instead of growing the popup.
+    expect(content).toMatch(/className="flex shrink-0 items-center overflow-x-auto/u);
     // Favorites leads the tabs, then one per provider instance.
     expect(content.indexOf('target: "favorites"')).toBeLessThan(
       content.indexOf("{providerEntries.map(renderProviderTab)}"),
@@ -191,7 +193,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).toContain("closest<HTMLElement>('[data-slot=\"menu-popup\"]')");
     expect(content).toContain("if (event.target === popup) redirectTypingToSearch(event);");
     // Disabled providers keep pointer events so the reason tooltip opens.
-    expect(content).toContain('input.disabled && "data-disabled:pointer-events-auto"');
+    expect(content).toContain('input.disabled && "disabled:pointer-events-auto"');
     expect(content).toContain("describeUnavailableInstance(entry)");
     expect(content).toContain("Start a new thread to switch providers.");
     expect(content).toContain("Open provider setup");

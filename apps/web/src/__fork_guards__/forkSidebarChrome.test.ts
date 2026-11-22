@@ -494,7 +494,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
-      '"text-[0.8125rem] leading-4 font-semibold text-muted-foreground"',
+      '"text-[0.75rem] leading-4 font-medium text-muted-foreground"',
     );
   });
 

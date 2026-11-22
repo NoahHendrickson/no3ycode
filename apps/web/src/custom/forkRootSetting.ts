@@ -28,8 +28,10 @@ export function createForkRootSetting<T extends string | number | boolean, E>(op
   readonly defaultValue: T;
   /** The attribute's value for a setting value; null removes it. */
   readonly attributeValue: (value: T) => string | null;
+  /** Optional side-effect invoked whenever the attribute is applied. */
+  readonly onApply?: (value: T) => void;
 }): ForkRootSetting<T> {
-  const { storageKey, attribute, schema, defaultValue, attributeValue } = options;
+  const { storageKey, attribute, schema, defaultValue, attributeValue, onApply } = options;
   // One module-level store per setting, so the setter is stable without a
   // memo and every mounted hook hears a change made by any of them.
   const listeners = new Set<() => void>();
@@ -48,6 +50,7 @@ export function createForkRootSetting<T extends string | number | boolean, E>(op
     const stamp = attributeValue(value);
     if (stamp === null) document.documentElement.removeAttribute(attribute);
     else document.documentElement.setAttribute(attribute, stamp);
+    onApply?.(value);
   };
 
   const sync = () => {

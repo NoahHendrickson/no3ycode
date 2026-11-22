@@ -46,11 +46,15 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     // One line has no room for a mark nearly every thread carries.
     expect(marks).not.toContain("<SidebarV2CheckoutMark");
     expect(sidebar).toContain("<SidebarV2CompactCardLead project={props.project} />");
+    expect(marks).toMatch(
+      /return props\.project \? \(\s*<ProjectFavicon project=\{props\.project\} className="size-4" \/>\s*\) : \(\s*<SidebarV2ProjectFolderMark className="size-4 shrink-0 text-muted-foreground" \/>/u,
+    );
   });
 
   it("hints the drawn compact height", () => {
     const px = SIDEBAR_V2_CARD_ALIGNMENT_PX;
-    expect(sidebarV2CompactCardHeight()).toBe(px.cardPadY * 2 + px.titleLine);
+    expect(sidebarV2CompactCardHeight()).toBe(px.compactCardPadY * 2 + px.titleLine);
+    expect(sidebarV2CompactCardHeight()).toBe(32);
     expect(sidebar).toContain(`[contain-intrinsic-size:auto_${sidebarV2CompactCardHeight()}px]`);
   });
 

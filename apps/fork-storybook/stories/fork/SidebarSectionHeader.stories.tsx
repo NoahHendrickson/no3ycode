@@ -1,7 +1,10 @@
 import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useArgs } from "storybook/preview-api";
+import { FolderPlusIcon } from "lucide-react";
 
+import { ArrowUpDownIcon, SettingsIcon } from "~/custom/icons/lucide-hugeicons";
+import { PROJECTS_ROW_BUTTON } from "~/custom/SidebarV2ChromeRows";
 import { SidebarV2StatusSectionHeader } from "~/custom/SidebarV2StatusSectionHeader";
 import {
   SIDEBAR_V2_STATUS_SECTION_LABELS,
@@ -15,12 +18,40 @@ type HeaderProps = ComponentProps<typeof SidebarV2StatusSectionHeader>;
 
 const SECTIONS = Object.keys(SIDEBAR_V2_STATUS_SECTION_LABELS) as SidebarV2StatusHeaderKey[];
 
-/** The header in the sidebar's list. `hover` hovers a row of its section, one of the two triggers
-    theme.custom.css shows the caret on (the header itself is the other). */
+function MockTrailingControls() {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Add a project"
+        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
+      >
+        <FolderPlusIcon className="size-4 shrink-0" />
+      </button>
+      <button
+        type="button"
+        aria-label="Sort projects"
+        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
+      >
+        <ArrowUpDownIcon weight="stroke" className="size-4 shrink-0" />
+      </button>
+      <button
+        type="button"
+        aria-label="Filter projects"
+        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
+      >
+        <SettingsIcon className="size-4 shrink-0" />
+      </button>
+    </>
+  );
+}
+
+/** The header in the sidebar's list. `hover` hovers a row of its section, revealing the trailing
+    list controls (`data-fork-section-actions`) just like hovering the header itself. */
 function Header({ hover = false, ...props }: HeaderProps & { readonly hover?: boolean }) {
   return (
     <ul className="w-64 list-none p-0">
-      <SidebarV2StatusSectionHeader {...props} />
+      <SidebarV2StatusSectionHeader renderTrailing={() => <MockTrailingControls />} {...props} />
       {hover ? <li data-fork-status-section="" hidden {...forcedStateProps("hover")} /> : null}
     </ul>
   );
@@ -33,7 +64,6 @@ const meta = {
   parameters: { surface: "sidebar" },
   args: {
     section: "working",
-    count: 3,
     isFirst: true,
     collapsed: false,
     onToggleCollapsed: () => {},
@@ -57,8 +87,8 @@ export const Playground: Story = {
   },
 };
 
-/** At rest and hovered, open and folded: the caret shows only on hover, pointing at what a click
-    does (up to fold, down to open). Matches the Figma kit's Collapsible section header. */
+/** At rest and hovered, open and folded: the 12px medium label keeps its chevron always visible
+    (down when open, right when folded), while the trailing list controls fade in on hover. */
 export const States: Story = {
   render: (args) => (
     <Matrix
@@ -76,7 +106,7 @@ export const Sections: Story = {
   render: (args) => (
     <Stack gap={1}>
       {SECTIONS.map((section, index) => (
-        <Header key={section} {...args} section={section} count={index + 1} isFirst={index === 0} />
+        <Header key={section} {...args} section={section} isFirst={index === 0} />
       ))}
     </Stack>
   ),

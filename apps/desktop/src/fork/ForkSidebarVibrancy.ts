@@ -25,12 +25,14 @@ import * as Schema from "effect/Schema";
 import * as Electron from "electron";
 
 import * as DesktopIpc from "../ipc/DesktopIpc.ts";
+import { isForkAuxiliaryWindow } from "./ForkAuxiliaryWindows.ts";
 import {
   FORK_VIBRANCY_MATERIAL,
   forkSenderWindow,
   isForkGlassActive,
   setForkGlassActive,
 } from "./ForkGlassState.ts";
+import { clearForkLiquidGlass, isForkLiquidGlassSupported } from "./ForkLiquidGlass.ts";
 
 const FORK_SET_SIDEBAR_VIBRANCY_CHANNEL = "fork:set-sidebar-vibrancy";
 
@@ -94,8 +96,19 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
       const hadGlass = isForkGlassActive(target);
       setForkGlassActive(target, enabled);
       if (platform !== "win32") {
+        // Main macOS 26+ windows use native Liquid Glass under the sidebar only
+        // (`ForkLiquidGlass`), which conflicts with Electron's `NSVisualEffectView`.
+        // Side chat and macOS < 26 keep whole-window vibrancy.
+        const useLiquidGlass =
+          enabled &&
+          platform === "darwin" &&
+          !isForkAuxiliaryWindow(target) &&
+          (yield* Effect.promise(() => isForkLiquidGlassSupported(platform)));
+        if (!useLiquidGlass) {
+          clearForkLiquidGlass(target);
+        }
         // Every macOS window is built with the view, so even a never-glass window clears it.
-        target.setVibrancy(enabled ? FORK_VIBRANCY_MATERIAL : null);
+        target.setVibrancy(enabled && !useLiquidGlass ? FORK_VIBRANCY_MATERIAL : null);
       } else if (enabled !== hadGlass) {
         // Every call reruns DWM's frame setup and "none" also paints white, so
         // only a real change of glass may reach it.

@@ -17,7 +17,9 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { COOL_DARKER_THEME, FORK_THEME_ATTRIBUTE } from "../custom/forkTheme";
 import {
+  FORK_SIDEBAR_LIQUID_GLASS_VALUE,
   FORK_SIDEBAR_VIBRANCY_ATTRIBUTE,
+  isForkSidebarLiquidGlassApplied,
   isForkSidebarVibrancyApplied,
   syncForkSidebarVibrancy,
 } from "../custom/forkSidebarVibrancy";
@@ -926,5 +928,44 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(forkTheme).toContain("syncForkSidebarVibrancy");
     expect(forkVibrancy).not.toContain('from "./forkTheme"');
     expect(forkVibrancy).toContain(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE);
+  });
+
+  it("uses liquid-glass mode for sidebar-only glass while keeping the stage opaque", async () => {
+    const root = makeRoot();
+    (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
+      setSidebarVibrancy: (enabled: boolean) => Promise.resolve(enabled),
+      sidebarLiquidGlass: {
+        isSupported: () => Promise.resolve(true),
+        setRect: () => Promise.resolve(true),
+      },
+    };
+    try {
+      await expect(syncForkSidebarVibrancy(true, root)).resolves.toBe(true);
+      expect(root.attributes.get(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(
+        FORK_SIDEBAR_LIQUID_GLASS_VALUE,
+      );
+      expect(isForkSidebarLiquidGlassApplied(root)).toBe(true);
+      // Whole-window vibrancy marker stays false so floor-color and popup cutouts stay off.
+      expect(isForkSidebarVibrancyApplied(root)).toBe(false);
+
+      await expect(syncForkSidebarVibrancy(false, root)).resolves.toBe(false);
+      expect(root.attributes.has(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(false);
+    } finally {
+      delete (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
+    }
+
+    // No started-thread liquid-glass CSS rule may clear or tint the stage inset.
+    const liquidGlassRules = glassRules.filter(
+      (rule) =>
+        rule.selector.includes(
+          `[${FORK_SIDEBAR_VIBRANCY_ATTRIBUTE}="${FORK_SIDEBAR_LIQUID_GLASS_VALUE}"]`,
+        ) && !rule.selector.includes("[data-fork-draft-liquid-glass"),
+    );
+    expect(liquidGlassRules.length).toBeGreaterThan(0);
+    for (const rule of liquidGlassRules) {
+      expect(rule.selector).not.toContain('[data-slot="sidebar-inset"]');
+    }
+    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassRect");
+    expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
 });

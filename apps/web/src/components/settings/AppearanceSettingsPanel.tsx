@@ -222,6 +222,7 @@ export function AppearanceSettingsPanel() {
             value={appearance}
             basicTone={basicTone}
             inletColor={inletColor}
+            glass3d={glass3d}
             onChange={setAppearance}
           />
         </div>

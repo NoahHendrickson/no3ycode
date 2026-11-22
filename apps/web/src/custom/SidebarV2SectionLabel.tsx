@@ -6,7 +6,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
 
-/** The filled caret: down while its section is folded, up while it is open. */
+/** The filled chevron: down while its section is open, right while it is folded. */
 export function SidebarV2SectionCaret({
   collapsed,
   className,
@@ -16,23 +16,24 @@ export function SidebarV2SectionCaret({
     <svg
       aria-hidden
       viewBox="0 0 14 14"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth={1}
-      strokeLinejoin="round"
+      fill="none"
       {...props}
-      className={cn(className, !collapsed && "rotate-180")}
+      className={cn("transition-transform duration-150", className, collapsed && "-rotate-90")}
     >
-      {/* An 11 x 5.5 caret, inset half the stroke so the round joins soften
-          the corners without growing it. Centred on the box, so the 180°
-          flip stays in place. */}
-      <path d="M2.71 4.75H11.29L7 9.04Z" />
+      <path
+        d="M7 8.75C7.92231 8.75 10.5 5.25003 10.5 5.25003L3.5 5.25C3.50854 5.26159 6.07917 8.75 7 8.75Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={0.875}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
-/** A section's label, 13px semibold like the status headers under it. With `onToggle` it folds
-    its section: the label, an optional count, and the caret, shown on hover or while folded. */
+/** A section's label, 12px medium like the status headers under it. With `onToggle` it folds
+    its section: the label, an optional count, and the always-visible chevron. */
 export function SidebarV2SectionLabel(props: {
   readonly count?: number;
   readonly collapsed?: boolean;
@@ -40,7 +41,7 @@ export function SidebarV2SectionLabel(props: {
   readonly testId: string;
   readonly children: ReactNode;
 }) {
-  const className = "text-[0.8125rem] leading-4 font-semibold text-muted-foreground";
+  const className = "text-[0.75rem] leading-4 font-medium text-muted-foreground";
   const count =
     props.count === undefined ? null : (
       <span className="shrink-0 text-muted-foreground/60 tabular-nums">{props.count}</span>
@@ -66,13 +67,7 @@ export function SidebarV2SectionLabel(props: {
     >
       <span className="truncate">{props.children}</span>
       {count}
-      <SidebarV2SectionCaret
-        collapsed={props.collapsed === true}
-        className={cn(
-          "size-3.5 shrink-0 opacity-0 transition-[opacity,rotate] group-hover/section:opacity-100 group-focus-visible/section:opacity-100",
-          props.collapsed === true && "opacity-100",
-        )}
-      />
+      <SidebarV2SectionCaret collapsed={props.collapsed === true} className="size-3.5 shrink-0" />
     </button>
   );
 }

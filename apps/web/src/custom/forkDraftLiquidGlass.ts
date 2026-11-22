@@ -1,0 +1,503 @@
+/**
+ * Native macOS Liquid Glass behind the Flat Glass new-agent composer — see
+ * `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
+ *
+ * Mounts the active still new-agent backdrop (`Jolly Petal`, `Mountain Dither`)
+ * and `NSGlassEffectView` cards behind Chromium so the composer and project
+ * launchpad refract the backdrop art directly while DOM text stays sharp on top.
+ */
+import { type RefObject, useEffect } from "react";
+
+import { observeResize } from "~/lib/observeResize";
+
+import { FORK_GLASS_3D_ATTRIBUTE } from "./forkGlass3d";
+import { isForkSidebarLiquidGlassApplied } from "./forkSidebarVibrancy";
+
+const FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE = "data-fork-draft-liquid-glass";
+const FORK_DRAFT_GLASS_POPUP_ATTRIBUTE = "data-fork-draft-glass-popup";
+
+const DRAFT_POPUP_SELECTOR = [
+  ':is([data-slot="menu-popup"], [data-slot="menu-sub-content"], [data-slot="popover-popup"]).dropdown-glass',
+  '[data-slot="select-popup"] > .dropdown-glass',
+  '.dropdown-glass:has(> [data-slot="combobox-popup"])',
+].join(", ");
+
+const POPUP_SETTLE_FRAMES = 6;
+
+interface DraftLiquidGlassRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+interface DraftLiquidGlassCard extends DraftLiquidGlassRect {
+  readonly cornerRadius: number;
+}
+
+interface DraftLiquidGlassPayload {
+  readonly stage: DraftLiquidGlassRect;
+  readonly imageKey: string;
+  readonly imageBase64?: string;
+  readonly image: DraftLiquidGlassRect;
+  readonly pixelated: boolean;
+  readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
+}
+
+type DraftLiquidGlassSetter = (state: DraftLiquidGlassPayload | null) => Promise<boolean>;
+
+function readDraftLiquidGlassSetter(): DraftLiquidGlassSetter | null {
+  const bridge = (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
+  if (typeof bridge !== "object" || bridge === null) return null;
+  const lg = (bridge as { sidebarLiquidGlass?: unknown }).sidebarLiquidGlass;
+  if (typeof lg !== "object" || lg === null) return null;
+  const setter = (lg as { setDraftGlass?: unknown }).setDraftGlass;
+  return typeof setter === "function" ? (setter as DraftLiquidGlassSetter) : null;
+}
+
+const imageBase64Cache = new Map<string, Promise<string | null>>();
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function loadImageBase64(url: string): Promise<string | null> {
+  const existing = imageBase64Cache.get(url);
+  if (existing !== undefined) return existing;
+  const pending = (async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return arrayBufferToBase64(await response.arrayBuffer());
+    } catch {
+      return null;
+    }
+  })();
+  imageBase64Cache.set(url, pending);
+  return pending;
+}
+
+function isFlatDraftLiquidGlassEligible(): boolean {
+  if (typeof document === "undefined") return false;
+  return (
+    isForkSidebarLiquidGlassApplied() &&
+    document.documentElement.getAttribute(FORK_GLASS_3D_ATTRIBUTE) === "off"
+  );
+}
+
+function roundRect(rect: DraftLiquidGlassRect): DraftLiquidGlassRect {
+  return {
+    x: Math.round(rect.x * 2) / 2,
+    y: Math.round(rect.y * 2) / 2,
+    width: Math.round(rect.width * 2) / 2,
+    height: Math.round(rect.height * 2) / 2,
+  };
+}
+
+function rectsIntersect(a: DraftLiquidGlassRect, b: DraftLiquidGlassRect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function readCornerRadius(el: HTMLElement): number {
+  const parsed = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8;
+}
+
+function readDraftPopupElements(stageBox: DraftLiquidGlassRect): HTMLElement[] {
+  const matched: HTMLElement[] = [];
+  for (const el of document.body.querySelectorAll<HTMLElement>(DRAFT_POPUP_SELECTOR)) {
+    if (el.hasAttribute("data-ending-style") || el.closest("[data-ending-style], [hidden]")) {
+      continue;
+    }
+    const box = el.getBoundingClientRect();
+    if (box.width <= 0 || box.height <= 0) continue;
+    if (!rectsIntersect(box, stageBox)) continue;
+    matched.push(el);
+  }
+  return matched;
+}
+
+function buildHeroPopupMask(
+  heroBox: DraftLiquidGlassRect,
+  popups: ReadonlyArray<DraftLiquidGlassCard>,
+): string | null {
+  if (popups.length === 0 || heroBox.width <= 0 || heroBox.height <= 0) return null;
+  const holes: string[] = [];
+  for (const popup of popups) {
+    if (!rectsIntersect(popup, heroBox)) continue;
+    const x = popup.x - heroBox.x;
+    const y = popup.y - heroBox.y;
+    const r = popup.cornerRadius;
+    holes.push(
+      `<rect x="${x}" y="${y}" width="${popup.width}" height="${popup.height}" rx="${r}" ry="${r}" fill="black"/>`,
+    );
+  }
+  if (holes.length === 0) return null;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${heroBox.width}" height="${heroBox.height}" viewBox="0 0 ${heroBox.width} ${heroBox.height}"><defs><mask id="m"><rect width="100%" height="100%" fill="white"/>${holes.join("")}</mask></defs><rect width="100%" height="100%" fill="white" mask="url(#m)"/></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+function readDraftCardElements(chatView: Element): HTMLElement[] {
+  const hero = chatView.querySelector('[data-chat-composer-overlay="true"][data-draft-hero]');
+  if (hero === null) return [];
+  const selectors = [
+    "[data-fork-composer-vessel]",
+    "[data-fork-draft-launchpad-card]",
+    "[data-fork-composer-usage-drawer]:not([hidden])",
+  ];
+  const elements: HTMLElement[] = [];
+  for (const selector of selectors) {
+    for (const el of hero.querySelectorAll<HTMLElement>(selector)) {
+      elements.push(el);
+    }
+  }
+  return elements;
+}
+
+function isClipOverflow(value: string): boolean {
+  return value === "auto" || value === "scroll" || value === "hidden" || value === "clip";
+}
+
+function clipRectToAncestors(
+  el: HTMLElement,
+  stopAt: Element,
+  stageBox: DOMRect,
+): DraftLiquidGlassRect | null {
+  const box = el.getBoundingClientRect();
+  let left = Math.max(box.left, stageBox.left);
+  let top = Math.max(box.top, stageBox.top);
+  let right = Math.min(box.right, stageBox.right);
+  let bottom = Math.min(box.bottom, stageBox.bottom);
+
+  let parent = el.parentElement;
+  while (parent !== null && parent !== stopAt) {
+    const style = getComputedStyle(parent);
+    const clipX = isClipOverflow(style.overflowX);
+    const clipY = isClipOverflow(style.overflowY);
+    if (clipX || clipY) {
+      const parentBox = parent.getBoundingClientRect();
+      if (clipX) {
+        left = Math.max(left, parentBox.left);
+        right = Math.min(right, parentBox.right);
+      }
+      if (clipY) {
+        top = Math.max(top, parentBox.top);
+        bottom = Math.min(bottom, parentBox.bottom);
+      }
+    }
+    parent = parent.parentElement;
+  }
+
+  const width = right - left;
+  const height = bottom - top;
+  if (width <= 0 || height <= 0) return null;
+  return { x: left, y: top, width, height };
+}
+
+type DraftBackdropLayoutFor = (
+  box: { width: number; height: number },
+  dpr: number,
+) => { readonly cell: number; readonly left: number; readonly top: number };
+
+export function useForkDraftLiquidGlass(input: {
+  readonly ref: RefObject<HTMLDivElement | null>;
+  readonly url: string;
+  readonly cells: { readonly width: number; readonly height: number };
+  readonly layoutFor: DraftBackdropLayoutFor;
+}): void {
+  const { ref, url, cells, layoutFor } = input;
+  const cellsWidth = cells.width;
+  const cellsHeight = cells.height;
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- syncs draft DOM geometry and popups with the native macOS Liquid Glass layer
+  useEffect(() => {
+    const setter = readDraftLiquidGlassSetter();
+    const stageEl = ref.current;
+    if (setter === null || stageEl === null) return;
+    // Split mode can show two draft panes at once, while AppKit holds one draft
+    // backdrop layer per window; keep the CSS blur fallback in split panes.
+    if (stageEl.closest("[data-fork-split-pane]") !== null) return;
+
+    const chatView = stageEl.closest("[data-chat-column-maximized-away]") ?? stageEl.parentElement;
+    if (chatView === null) return;
+
+    let disposed = false;
+    let observersAttached = false;
+    let rafId: number | null = null;
+    let settleRemaining = 0;
+    let lastSentKey = "";
+    let uploadedImageKey: string | null = null;
+    let observedCards: HTMLElement[] = [];
+    let stopObservedResize: (() => void) | null = null;
+    let chatObserver: MutationObserver | null = null;
+    let bodyObserver: MutationObserver | null = null;
+    let stampedPopups = new Set<HTMLElement>();
+    const maskedCards = new Map<HTMLElement, string>();
+
+    const clearCardMasks = () => {
+      for (const el of maskedCards.keys()) {
+        el.style.maskImage = "";
+        el.style.webkitMaskImage = "";
+      }
+      maskedCards.clear();
+    };
+
+    const clearStampedPopups = () => {
+      for (const popup of stampedPopups) {
+        popup.removeAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE);
+      }
+      stampedPopups = new Set();
+      clearCardMasks();
+    };
+
+    const clearNative = () => {
+      clearStampedPopups();
+      document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+      if (lastSentKey !== "") {
+        lastSentKey = "";
+        uploadedImageKey = null;
+        void setter(null).catch(() => {});
+      }
+    };
+
+    const scheduleSync = (settleFrames = 0) => {
+      if (disposed) return;
+      if (settleFrames > settleRemaining) settleRemaining = settleFrames;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(sync);
+    };
+
+    const onWindowResize = () => scheduleSync();
+    const onScroll = () => scheduleSync();
+
+    const refreshObservedTargets = () => {
+      const nextCards = readDraftCardElements(chatView);
+      const same =
+        nextCards.length === observedCards.length &&
+        nextCards.every((el, idx) => el === observedCards[idx]);
+      if (same && stopObservedResize !== null) return;
+      stopObservedResize?.();
+      observedCards = nextCards;
+      stopObservedResize = observeResize([stageEl, chatView, ...observedCards], () =>
+        scheduleSync(),
+      );
+    };
+
+    const attachActiveObservers = () => {
+      if (observersAttached) return;
+      observersAttached = true;
+      refreshObservedTargets();
+      chatObserver = new MutationObserver(() => {
+        refreshObservedTargets();
+        scheduleSync();
+      });
+      chatObserver.observe(chatView, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["data-draft-hero", "hidden", "style", "class"],
+      });
+      bodyObserver = new MutationObserver((records) => {
+        for (const record of records) {
+          if (
+            record.type === "attributes" &&
+            record.attributeName === FORK_DRAFT_GLASS_POPUP_ATTRIBUTE
+          ) {
+            continue;
+          }
+          const target = record.target instanceof Element ? record.target : null;
+          if (target !== null && chatView.contains(target)) continue;
+          scheduleSync(POPUP_SETTLE_FRAMES);
+          return;
+        }
+      });
+      bodyObserver.observe(document.body, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: [
+          "style",
+          "hidden",
+          "data-ending-style",
+          "data-starting-style",
+          "data-open",
+        ],
+      });
+      chatView.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", onWindowResize);
+    };
+
+    const detachActiveObservers = () => {
+      if (!observersAttached) return;
+      observersAttached = false;
+      stopObservedResize?.();
+      stopObservedResize = null;
+      observedCards = [];
+      chatObserver?.disconnect();
+      chatObserver = null;
+      bodyObserver?.disconnect();
+      bodyObserver = null;
+      chatView.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onWindowResize);
+    };
+
+    const sync = () => {
+      rafId = null;
+      if (disposed) return;
+      if (!isFlatDraftLiquidGlassEligible()) {
+        detachActiveObservers();
+        clearNative();
+        return;
+      }
+      attachActiveObservers();
+
+      const stageBox = stageEl.getBoundingClientRect();
+      if (stageBox.width <= 0 || stageBox.height <= 0) {
+        clearNative();
+        return;
+      }
+
+      const cardElements = readDraftCardElements(chatView);
+      const cardBoxes: Array<{ readonly el: HTMLElement; readonly box: DOMRect }> = [];
+      const cards: DraftLiquidGlassCard[] = [];
+      for (const el of cardElements) {
+        const clipped = clipRectToAncestors(el, chatView, stageBox);
+        if (clipped === null) continue;
+        cardBoxes.push({ el, box: el.getBoundingClientRect() });
+        cards.push({
+          ...roundRect(clipped),
+          cornerRadius: 8,
+        });
+      }
+
+      if (cards.length === 0) {
+        clearNative();
+        return;
+      }
+
+      const activePopups = readDraftPopupElements(stageBox);
+      const nextStamped = new Set<HTMLElement>(activePopups);
+      const popupCards: DraftLiquidGlassCard[] = [];
+      for (const prev of stampedPopups) {
+        if (!nextStamped.has(prev)) prev.removeAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE);
+      }
+      for (const popup of activePopups) {
+        if (!stampedPopups.has(popup)) {
+          popup.setAttribute(FORK_DRAFT_GLASS_POPUP_ATTRIBUTE, "true");
+        }
+        const box = popup.getBoundingClientRect();
+        const card = {
+          ...roundRect(box),
+          cornerRadius: readCornerRadius(popup),
+        };
+        popupCards.push(card);
+        cards.push(card);
+      }
+      stampedPopups = nextStamped;
+
+      const nextMasked = new Set<HTMLElement>();
+      for (const { el, box } of cardBoxes) {
+        const nextMask = buildHeroPopupMask(box, popupCards);
+        if (nextMask === null) continue;
+        nextMasked.add(el);
+        if (maskedCards.get(el) !== nextMask) {
+          el.style.maskImage = nextMask;
+          el.style.webkitMaskImage = nextMask;
+          maskedCards.set(el, nextMask);
+        }
+      }
+      for (const prev of maskedCards.keys()) {
+        if (!nextMasked.has(prev)) {
+          prev.style.maskImage = "";
+          prev.style.webkitMaskImage = "";
+          maskedCards.delete(prev);
+        }
+      }
+
+      const { cell, left, top } = layoutFor(
+        { width: stageBox.width, height: stageBox.height },
+        window.devicePixelRatio || 1,
+      );
+      const stage = roundRect(stageBox);
+      const image = roundRect({
+        x: left,
+        y: top,
+        width: cellsWidth * cell,
+        height: cellsHeight * cell,
+      });
+
+      const key = JSON.stringify({ url, stage, image, cards });
+      if (key !== lastSentKey) {
+        lastSentKey = key;
+
+        const needsImage = uploadedImageKey !== url;
+        const send = (imageBase64: string | undefined) => {
+          if (disposed || key !== lastSentKey) return;
+          void setter({
+            stage,
+            imageKey: url,
+            ...(imageBase64 !== undefined ? { imageBase64 } : {}),
+            image,
+            pixelated: true,
+            cards,
+          })
+            .then((applied) => {
+              if (disposed || key !== lastSentKey) return;
+              if (applied) {
+                uploadedImageKey = url;
+                document.documentElement.setAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE, "true");
+              } else {
+                uploadedImageKey = null;
+                lastSentKey = "";
+                clearStampedPopups();
+                document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+              }
+            })
+            .catch(() => {
+              if (disposed) return;
+              uploadedImageKey = null;
+              lastSentKey = "";
+              clearStampedPopups();
+              document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+            });
+        };
+
+        if (needsImage) {
+          void loadImageBase64(url).then((base64) => {
+            if (disposed || key !== lastSentKey || base64 === null) return;
+            send(base64);
+          });
+        } else {
+          send(undefined);
+        }
+      }
+
+      if (settleRemaining > 0) {
+        settleRemaining -= 1;
+        rafId = requestAnimationFrame(sync);
+      }
+    };
+
+    const rootObserver = new MutationObserver(() => scheduleSync());
+    rootObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-fork-theme", "data-fork-sidebar-vibrancy", FORK_GLASS_3D_ATTRIBUTE],
+    });
+
+    sync();
+
+    return () => {
+      disposed = true;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      detachActiveObservers();
+      rootObserver.disconnect();
+      clearNative();
+    };
+  }, [ref, url, cellsWidth, cellsHeight, layoutFor]);
+}

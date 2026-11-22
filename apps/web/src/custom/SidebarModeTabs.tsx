@@ -21,6 +21,7 @@ export function SidebarModeTabs(props: {
   return (
     <Tabs
       aria-label="Sidebar mode"
+      size="md"
       value={[props.mode]}
       onValueChange={(value) => {
         const next = value[0];

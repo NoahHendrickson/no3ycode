@@ -132,7 +132,7 @@ export function ScheduledPage() {
         <WorkspacePageHeader electron={isElectron} data-fork-stage-card-title="">
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <ZapIcon className="size-4 text-muted-foreground" aria-hidden />
-            <span className="font-medium">Automations</span>
+            <span className="font-normal">Automations</span>
           </div>
         </WorkspacePageHeader>
         <ScrollArea className="min-h-0 flex-1" data-fork-stage-card-body="">

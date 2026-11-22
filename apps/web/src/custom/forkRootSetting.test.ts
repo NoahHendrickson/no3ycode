@@ -114,13 +114,13 @@ describe("the Glass settings", () => {
     expect(await stamp('"full"')).toEqual({});
   });
 
-  it("stamps the 3D mode short of Full", async () => {
-    expect(await stamp('"selection"')).toEqual({ "data-fork-glass-3d": "selection" });
+  it("stamps Flat mode on the root", async () => {
     expect(await stamp('"off"')).toEqual({ "data-fork-glass-3d": "off" });
   });
 
-  it("reads an unknown stored value as Full", async () => {
+  it("reads an unknown or retired stored value as Full 3D", async () => {
     expect(await stamp("false")).toEqual({});
+    expect(await stamp('"selection"')).toEqual({});
   });
 
   it("stands the portrait down for any other new agent background", async () => {

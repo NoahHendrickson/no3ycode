@@ -464,16 +464,14 @@ describe("fork guard: fork-inlet-theme", () => {
       (rule) => rule.selector.includes('[data-side="top"]') && rule.selector.endsWith("::after"),
     )?.body;
     expect(upward).toContain("var(--anchor-width)");
-    const rail = inletRules.find(
-      (rule) =>
-        rule.selector.includes('[data-fork-model-picker="providers"]') &&
-        rule.selector.endsWith('[aria-current="true"]::after'),
+    const providers = inletRules.find((rule) =>
+      rule.selector.endsWith('[data-fork-model-picker="providers"]'),
     )?.body;
-    expect(rail).toContain("radial-gradient");
+    expect(providers).toContain("padding: 4px 4px 0");
     const list = inletRules.find((rule) =>
       rule.selector.endsWith('[data-fork-model-picker="list"]'),
     )?.body;
-    expect(list).toContain("margin: 4px 4px 4px 0");
+    expect(list).toContain("margin: 4px");
     // The morph finds the docked details card's button by its stamp, not its label.
     const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
     expect(panelControls).toContain('data-fork-details-toggle=""');

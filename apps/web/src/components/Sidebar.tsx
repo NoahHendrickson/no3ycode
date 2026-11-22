@@ -351,7 +351,11 @@ import {
   threadRowSurfaceClassName,
 } from "~/custom/sidebarV2RowPolicy";
 /* fork:end sidebar-v2-card-rows */
-import { SidebarV2ChromeActionRows, SidebarV2ProjectScopeRow } from "~/custom/SidebarV2ChromeRows";
+import {
+  SidebarV2ChromeActionRows,
+  SidebarV2ProjectScopeRow,
+  SidebarV2ThreadControls,
+} from "~/custom/SidebarV2ChromeRows";
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
 import { isChatModeMoveMenuId } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
@@ -1716,7 +1720,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   );
   /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
      The flat card's repo line leads its project name with the same favicon
-     the slim row and the project menu draw, at the line's 12px mark size.
+     the slim row and the project menu draw, sized to the 16px repo line.
      Pre-built here beside the terminal glyph and handed to the fork card as a
      slot for the same reason. A favicon-less project draws upstream's title
      monogram in the project's own hue, so a flat or status-grouped list still
@@ -1726,7 +1730,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
      triple (#10714); a thread whose project record has not landed yet hands
      the meta a null slot, which draws SidebarV2ProjectFolderMark. */
   const projectIcon =
-    props.project === null ? null : <ProjectFavicon project={props.project} className="size-3" />;
+    props.project === null ? null : <ProjectFavicon project={props.project} className="size-4" />;
   /* fork:end sidebar-v2-card-rows */
   const draftIndicator = hasUnsentDraft ? (
     <Tooltip>
@@ -2153,10 +2157,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
            so it equals the drawn card exactly — 8 + 18 + 4 + 16 + 8 = 54,
            sidebarV2CardHeight() in custom/sidebarV2CardAlignment. */
         /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards
-           A compact card is the title line alone, 8 + 18 + 8 = 34,
+           A compact card is the title line alone, 7 + 18 + 7 = 32,
            sidebarV2CompactCardHeight(). */
         props.compact === true
-          ? "[contain-intrinsic-size:auto_34px]"
+          ? "[contain-intrinsic-size:auto_32px]"
           : /* fork:end sidebar-v2-compact-cards */
             /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
                A bot's avatar card: 6 + 16 + 2 + 14 + 6 = 44 (custom/bots/SidebarV2BotCardBody). */
@@ -2223,7 +2227,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 "relative z-10 flex flex-col",
                 SIDEBAR_V2_CARD_ALIGNMENT.rowGap,
                 SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
-                SIDEBAR_V2_CARD_ALIGNMENT.cardPadY,
+                /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+                props.compact === true
+                  ? SIDEBAR_V2_CARD_ALIGNMENT.compactCardPadY
+                  : SIDEBAR_V2_CARD_ALIGNMENT.cardPadY,
+                /* fork:end sidebar-v2-compact-cards */
               )}
             >
               {/* fork:end sidebar-v2-card-rows */}
@@ -2402,9 +2410,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
   const setBotWork = useSetBotWork();
   /* fork:end fork-bot-crew */
-  /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
-  const threadsSectionCollapsed = !modePolicy.chat && isListSectionCollapsed("threads");
-  /* fork:end sidebar-v2-threads-fold */
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -3208,7 +3213,23 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     () => splitSidebarV2DraftsSection(visibleActiveSections),
     [visibleActiveSections],
   );
+  // Hide the standalone Threads row whenever grouping headers are on screen
+  // (they carry the add-project, sort, and view controls directly on hover);
+  // keep Threads as the fallback for ungrouped or empty lists.
+  const hasGroupingHeaders =
+    !modePolicy.chat &&
+    (statusGrouped
+      ? draftsSection !== null ||
+        pinnedSectionShown ||
+        listSections.some((section) => section.kind === "status") ||
+        snoozedSectionShown ||
+        settledSectionShown
+      : groupByProject && listSections.some((section) => section.header !== null));
   /* fork:end sidebar-v2-status-grouping */
+  /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
+  const threadsSectionCollapsed =
+    !modePolicy.chat && !hasGroupingHeaders && isListSectionCollapsed("threads");
+  /* fork:end sidebar-v2-threads-fold */
   // Positional consumers read this: resolveAdjacentThreadId (arrow nav),
   // rangeSelectTo (shift-select) and planForwardNavigation (where you land
   // after settling or snoozing the thread you are viewing). It has to be the
@@ -5233,6 +5254,38 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       />
     );
   };
+  const handleProjectSortOrderChange = (sortOrder: typeof sidebarProjectSortOrder) => {
+    if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
+      snapshotVisibleProjectOrderAsManual(projectGroups);
+    }
+    void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
+  };
+  const groupByProjectUnavailableReason =
+    visibleProjectCount > 1
+      ? null
+      : scopedProjectKeys !== null
+        ? "Grouping applies when the sidebar shows more than one project"
+        : "Grouping applies once you have more than one project";
+  const renderGroupingControls = (onAnyMenuOpenChange: (open: boolean) => void) => (
+    <SidebarV2ThreadControls
+      projectGroups={projectGroups}
+      projectScopeKeys={projectScopeKeys}
+      scopedProjectDisplayName={scopedProjectsLabel}
+      onProjectScopeChange={setProjectScopeKeys}
+      onAnyMenuOpenChange={onAnyMenuOpenChange}
+      onProjectActions={(event, project) => {
+        void handleProjectSettings(event, project);
+      }}
+      grouping={grouping}
+      onGroupingChange={setGrouping}
+      compactCards={compactCards}
+      onCompactCardsChange={setCompactCards}
+      projectSortOrder={sidebarProjectSortOrder}
+      onProjectSortOrderChange={handleProjectSortOrderChange}
+      onAddProject={openAddProjectCommandPalette}
+      groupByProjectUnavailableReason={groupByProjectUnavailableReason}
+    />
+  );
   return (
     <SidebarFolderDrop>
       <SidebarChromeHeader
@@ -5266,7 +5319,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             />
             {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
             <SidebarV2BotsRow
-              count={botThreads.length}
               collapsed={botsSectionCollapsed}
               onToggleCollapsed={() => toggleListSectionCollapsed("bots")}
               onNewBot={() => {
@@ -5307,49 +5359,42 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               ) : null}
             </SidebarV2BotsRow>
             {/* fork:end fork-bots */}
-            <SidebarV2ProjectScopeRow
-              /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
-              collapsed={threadsSectionCollapsed}
-              onToggleCollapsed={() => toggleListSectionCollapsed("threads")}
-              /* fork:end sidebar-v2-threads-fold */
-              projectGroups={projectGroups}
-              projectScopeKeys={projectScopeKeys}
-              scopedProjectDisplayName={scopedProjectsLabel}
-              onProjectScopeChange={setProjectScopeKeys}
-              menuOpen={projectScopeMenuState.open}
-              onMenuOpenChange={(open) => dispatchProjectScopeMenu({ type: "open-changed", open })}
-              onProjectActions={(event, project) => {
-                void handleProjectSettings(event, project);
-              }}
-              /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
-             One grouping value; the menu's radios pick it. */
-              grouping={grouping}
-              onGroupingChange={setGrouping}
-              /* fork:end sidebar-v2-status-grouping */
-              /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
-              compactCards={compactCards}
-              onCompactCardsChange={setCompactCards}
-              /* fork:end sidebar-v2-compact-cards */
-              // The same client setting the legacy sidebar's sort menu edits.
-              projectSortOrder={sidebarProjectSortOrder}
-              onProjectSortOrderChange={(sortOrder) => {
-                if (sortOrder === "manual" && sidebarProjectSortOrder !== "manual") {
-                  snapshotVisibleProjectOrderAsManual(projectGroups);
+            {!hasGroupingHeaders ? (
+              <SidebarV2ProjectScopeRow
+                /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */
+                collapsed={threadsSectionCollapsed}
+                onToggleCollapsed={() => toggleListSectionCollapsed("threads")}
+                /* fork:end sidebar-v2-threads-fold */
+                projectGroups={projectGroups}
+                projectScopeKeys={projectScopeKeys}
+                scopedProjectDisplayName={scopedProjectsLabel}
+                onProjectScopeChange={setProjectScopeKeys}
+                menuOpen={projectScopeMenuState.open}
+                onMenuOpenChange={(open) =>
+                  dispatchProjectScopeMenu({ type: "open-changed", open })
                 }
-                void updateClientSettings({ sidebarProjectSortOrder: sortOrder });
-              }}
-              onAddProject={openAddProjectCommandPalette}
-              // An option that visibly does nothing teaches nothing. Where headers
-              // are suppressed — one project on screen, by scope or by having only
-              // one — it says so instead of quietly ignoring the click.
-              groupByProjectUnavailableReason={
-                visibleProjectCount > 1
-                  ? null
-                  : scopedProjectKeys !== null
-                    ? "Grouping applies when the sidebar shows more than one project"
-                    : "Grouping applies once you have more than one project"
-              }
-            />
+                onProjectActions={(event, project) => {
+                  void handleProjectSettings(event, project);
+                }}
+                /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
+               One grouping value; the menu's radios pick it. */
+                grouping={grouping}
+                onGroupingChange={setGrouping}
+                /* fork:end sidebar-v2-status-grouping */
+                /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
+                compactCards={compactCards}
+                onCompactCardsChange={setCompactCards}
+                /* fork:end sidebar-v2-compact-cards */
+                // The same client setting the legacy sidebar's sort menu edits.
+                projectSortOrder={sidebarProjectSortOrder}
+                onProjectSortOrderChange={handleProjectSortOrderChange}
+                onAddProject={openAddProjectCommandPalette}
+                // An option that visibly does nothing teaches nothing. Where headers
+                // are suppressed — one project on screen, by scope or by having only
+                // one — it says so instead of quietly ignoring the click.
+                groupByProjectUnavailableReason={groupByProjectUnavailableReason}
+              />
+            ) : null}
             {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */}
           </>
         )}
@@ -5471,6 +5516,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     // relative: the list motion's leaving rows are placed against it.
                     "relative flex flex-col",
                     SIDEBAR_V2_CARD_ALIGNMENT.listGap,
+                    hasGroupingHeaders && "mt-6",
                     // An action sweep owns the pointer: rows it passes over
                     // neither show hover actions nor open tooltips, even
                     // controls that opt back in, like the Woke pill.
@@ -5541,10 +5587,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         <SidebarV2StatusSectionHeader
                           key={`status-section-header:${status}`}
                           section={status}
-                          count={section.threadCount}
                           isFirst={isFirst}
                           collapsed={section.collapsed}
                           onToggleCollapsed={() => toggleStatusSectionCollapsed(status)}
+                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
                         />,
                         ...section.threads.map((thread) =>
                           renderThreadRow(thread, "active", { statusSection: status }),
@@ -5560,10 +5606,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         <SidebarV2StatusSectionHeader
                           key="status-section-header:pinned"
                           section="pinned"
-                          count={pinnedThreads.length}
                           isFirst={draftsSection === null}
                           collapsed={pinnedCollapsed}
                           onToggleCollapsed={() => toggleStatusSectionCollapsed("pinned")}
+                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
                         />
                       ) : null,
                       /* fork:end sidebar-v2-status-grouping */
@@ -5737,6 +5783,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                                       ? undefined
                                       : () => settleAllThreadsInProject(header.projectKey)
                                   }
+                                  renderTrailingListControls={renderGroupingControls}
                                 />,
                               ]
                             : []),
@@ -5813,10 +5860,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         <SidebarV2StatusSectionHeader
                           key="status-section-header:snoozed"
                           section="snoozed"
-                          count={snoozedThreads.length}
                           isFirst={items.every((item) => item === null)}
                           collapsed={!snoozedShelfExpanded}
                           onToggleCollapsed={toggleSnoozedShelf}
+                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
                         />,
                       );
                     } else /* fork:end sidebar-v2-status-grouping */
@@ -5880,12 +5927,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         <SidebarV2StatusSectionHeader
                           key="status-section-header:settled"
                           section="settled"
-                          count={settledCount}
-                          // First only when nothing painted above it, so it
-                          // takes the first-header air under the Projects row.
+                          // First only when nothing painted above it.
                           isFirst={items.every((item) => item === null)}
                           collapsed={!settledShelfExpanded}
                           onToggleCollapsed={toggleSettledShelf}
+                          renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}
                         />,
                       );
                     } else /* fork:end sidebar-v2-status-grouping */

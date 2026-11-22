@@ -542,6 +542,46 @@ const forkMusic = <T>(request: Record<string, unknown>, fallback: T): Promise<T>
 contextBridge.exposeInMainWorld("forkDesktopBridge", {
   setSidebarVibrancy: (enabled: boolean): Promise<boolean> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
+  sidebarLiquidGlass: {
+    isSupported: (): Promise<boolean> =>
+      ipcRenderer.invoke("fork:is-sidebar-liquid-glass-supported"),
+    setRect: (
+      rect: {
+        readonly x: number;
+        readonly y: number;
+        readonly width: number;
+        readonly height: number;
+        readonly cornerRadius?: number;
+        readonly docked?: boolean;
+      } | null,
+    ): Promise<boolean> => ipcRenderer.invoke("fork:set-sidebar-liquid-glass-rect", { rect }),
+    setDraftGlass: (
+      state: {
+        readonly stage: {
+          readonly x: number;
+          readonly y: number;
+          readonly width: number;
+          readonly height: number;
+        };
+        readonly imageKey: string;
+        readonly imageBase64?: string;
+        readonly image: {
+          readonly x: number;
+          readonly y: number;
+          readonly width: number;
+          readonly height: number;
+        };
+        readonly pixelated: boolean;
+        readonly cards: ReadonlyArray<{
+          readonly x: number;
+          readonly y: number;
+          readonly width: number;
+          readonly height: number;
+          readonly cornerRadius: number;
+        }>;
+      } | null,
+    ): Promise<boolean> => ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),
+  },
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   // Mirrored by apps/web/src/custom/forkTopbarHeight.ts; fork/ForkTopbarHeight.ts answers it.
   setTopbarHeight: (height: number | null): Promise<boolean> =>
