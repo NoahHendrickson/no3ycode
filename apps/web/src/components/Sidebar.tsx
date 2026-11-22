@@ -346,6 +346,7 @@ import { triggerModelName } from "~/custom/modelPickerDisplayName";
 import {
   THREAD_TITLE_TYPE,
   threadCardTitleClassName,
+  threadCardRecedeStatus,
   threadCardTitleRecedes,
   threadRowShape,
   threadRowSurfaceClassName,
@@ -1352,8 +1353,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   // card would recede its surface while forcing its title forward. Monitoring
   // keeps its title forward (not idle, not done).
   const cardRecedes = threadCardTitleRecedes({
-    isDone: topStatus?.mark === "dot" && topStatus.tone === "done",
-    isIdle: topStatus === null,
+    ...threadCardRecedeStatus(topStatus),
     isActive: props.isActive,
     isSelected,
     /* fork:begin sidebar-v2-status-grouping — see .fork/customizations.yaml#sidebar-v2-status-grouping
