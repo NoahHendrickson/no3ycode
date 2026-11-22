@@ -92,6 +92,11 @@ import {
   formatNextScheduledTaskRun,
   formatScheduledTaskInterval,
 } from "./scheduledTaskPresentation";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
+import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSection";
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+/* fork:end no3y-mobile-redesign */
 
 type ScheduledTaskRoutes = {
   SettingsScheduledTaskNew: undefined;
@@ -408,6 +413,17 @@ export function SettingsScheduledTasksRouteScreen() {
   const { startEditor, resetEditor } = useScheduledTaskEditor();
   const navigation = useNavigation<NativeStackNavigationProp<ScheduledTaskRoutes>>();
   const insets = useSafeAreaInsets();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  const visibleProjectKeys =
+    selectedProjectKey === null || !selectedGroup
+      ? null
+      : new Set(
+          selectedGroup.members.map(
+            (member) => `${member.project.environmentId}:${member.project.id}`,
+          ),
+        );
+  /* fork:end no3y-mobile-redesign */
   const environmentMenu = useSettingsEnvironmentMenu();
   const newTask = () => {
     if (visibleEnvironments.length === 0) return;
@@ -435,8 +451,23 @@ export function SettingsScheduledTasksRouteScreen() {
         showsVerticalScrollIndicator={false}
         className="flex-1"
         contentContainerClassName="gap-5 px-5 pt-4"
-        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
+        contentContainerStyle={{
+          paddingBottom:
+            Math.max(insets.bottom, 18) +
+            18 +
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            (no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0),
+          /* fork:end no3y-mobile-redesign */
+        }}
       >
+        {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+        {Platform.OS === "ios" ? (
+          <No3yAutomationRunsSection
+            environmentIds={visibleEnvironments.map((environment) => environment.environmentId)}
+            projectKeys={visibleProjectKeys}
+          />
+        ) : null}
+        {/* fork:end no3y-mobile-redesign */}
         {visibleEnvironments.length > 0 ? (
           visibleEnvironments.map((environment) => (
             <EnvironmentTasks

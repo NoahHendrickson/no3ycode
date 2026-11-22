@@ -3090,8 +3090,12 @@
     The count comes from the shells the client already holds, with no new
     wire data or polling. A run opened from Automations carries a
     history-state flag, and the thread header shows a back arrow only for
-    that history entry; it steps back to the list that opened it. Mobile is
-    out of scope and keeps listing these threads.
+    that history entry; it steps back to the list that opened it. On mobile
+    (no3y-mobile-redesign), the iOS Threads list and long-press peek enforce
+    the same roster predicate in apps/mobile/fork/forkRosterVisibility.ts
+    (parity-guarded against web) so automation runs stay hidden unless pinned
+    and instead appear on the Automations screen (SettingsScheduledTasks) and
+    its peek sheet.
   tier: 4
   files:
     - apps/web/src/custom/scheduledRunsOffSidebar.ts
@@ -7799,3 +7803,50 @@
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
+
+- id: no3y-mobile-redesign
+  intent: >
+    Phase 1 of the no3y Code iOS UX/UI redesign on the Flat Glass visual
+    language (Glass with 3D off): an always-visible native-glass floating bottom
+    navigation bar with 4 items and New agent centered (Threads, Automations,
+    centered New agent, Chat), long-press peek sheets on each nav item to jump
+    straight into working/needs-input threads, recent automation runs, recent
+    projects, or recent chats, a top-of-screen search + filter + sort bar on
+    Threads, Mac-parity status-grouped sections (Drafts, Pinned, Needs input,
+    Completed with 5-minute hold, Working, Idle, Snoozed, Settled) and roster
+    visibility rules in apps/mobile/fork/forkStatusGrouping.ts and
+    apps/mobile/fork/forkRosterVisibility.ts (parity-guarded against web without
+    modifying web or client-runtime), Flat Glass thread cards and
+    status marks, a dedicated no-project Chat screen with a quick-question
+    prompt bar above the nav bar, a Recent runs section on Automations, and a
+    top-right Settings gear button on Threads so Settings stays reachable.
+    Prompt bars on New agent and Thread clear the bottom nav bar cleanly.
+  tier: 4
+  files:
+    - apps/mobile/fork/forkStatusGrouping.ts
+    - apps/mobile/fork/forkRosterVisibility.ts
+    - apps/mobile/fork/flatGlassTheme.ts
+    - apps/mobile/fork/No3yStatusMark.tsx
+    - apps/mobile/fork/mobileStatusGrouping.ts
+    - apps/mobile/fork/mobileStatusGrouping.test.ts
+    - apps/mobile/fork/useNo3yStatusGroupedList.ts
+    - apps/mobile/fork/No3yStatusSectionHeader.tsx
+    - apps/mobile/fork/No3yThreadRow.tsx
+    - apps/mobile/fork/No3yBottomNav.tsx
+    - apps/mobile/fork/No3yChatRouteScreen.tsx
+    - apps/mobile/fork/No3yAutomationRunsSection.tsx
+    - apps/mobile/fork/No3yThreadsListView.tsx
+  shadows: []
+  watch:
+    - apps/mobile/src/Stack.tsx
+    - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
+    - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
+    - apps/mobile/src/features/home/home-list-options.ts
+    - apps/mobile/src/features/home/ThreadListFilters.tsx
+    - apps/mobile/src/features/home/HomeRouteScreen.tsx
+    - apps/mobile/src/features/home/HomeScreen.tsx
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileRedesign.test.ts
+    - apps/mobile/fork/mobileStatusGrouping.test.ts

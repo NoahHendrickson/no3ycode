@@ -142,6 +142,10 @@ import { deriveLayout } from "./lib/layout";
 import { useNativeLayoutMetrics } from "./native/native-layout-metrics";
 import { isPresentedRoute } from "./native/workspace-stack-projection";
 import { workspaceDetailRouter } from "./features/layout/workspace/workspace-detail-selection";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yBottomNavHost } from "../fork/No3yBottomNav";
+import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
+/* fork:end no3y-mobile-redesign */
 
 const settingsPage = (title: string) => pageRoute({ title, itemStyle: "standard" });
 
@@ -423,6 +427,9 @@ function RootStackLayout(props: {
                 workspaceRouteName={workspaceLocation.routeName}
               >
                 {props.children}
+                {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                <No3yBottomNavHost state={props.state} />
+                {/* fork:end no3y-mobile-redesign */}
                 <HardwareKeyboardCommandOverlay />
               </AdaptiveWorkspaceLayout>
             </AndroidWorkspaceTabsProvider>
@@ -504,6 +511,13 @@ const RootStackConfig = createWorkspaceStackNavigator({
         ...getCompactBrandHeaderOptions(),
       },
     }),
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    No3yChat: createNativeStackScreen({
+      screen: No3yChatRouteScreen,
+      linking: "chat",
+      options: pageRoute({ title: "Chat", duoMinimize: "never" }),
+    }),
+    /* fork:end no3y-mobile-redesign */
     PullRequest: createNativeStackScreen({
       screen: PullRequestRouteScreen,
       linking: {

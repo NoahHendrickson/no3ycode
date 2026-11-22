@@ -1,6 +1,10 @@
 import { ChildThreadApprovals } from "./ChildThreadApprovals";
 import { useOpenThreadInspector } from "./thread-inspector-navigation";
 import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceTabBar";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+/* fork:end no3y-mobile-redesign */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import {
   isAtomCommandInterrupted,
@@ -547,6 +551,9 @@ function ThreadDetailBody(
   // keyboardDidHide makes the composer land low, then jump back above the safe area.
   const bottomBarInset = useDuoBottomBarInset();
   const hasSidebarTabBar = useSidebarWorkspaceTabs() === "picker";
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
   // A pushed screen temporarily inherits the outgoing tab bar's safe area.
   // Use the window edge so hiding that bar cannot move the composer mid-push.
   const bottomSafeArea =
@@ -558,12 +565,16 @@ function ThreadDetailBody(
       ? Math.max(bottomSafeArea, 12) - (layout.usesSplitView ? 5 : 0)
       : undefined);
   // The Duo's floating sidebar pill ends three points below the composer's usual gutter.
-  const composerBottomInset = Math.max(
-    0,
-    (alignedBottomInset !== undefined
-      ? alignedBottomInset - THREAD_COMPOSER_BOTTOM_GUTTER
-      : Math.max(bottomSafeArea, 12)) - (hasSidebarTabBar ? 3 : 0),
-  );
+  const composerBottomInset =
+    Math.max(
+      0,
+      (alignedBottomInset !== undefined
+        ? alignedBottomInset - THREAD_COMPOSER_BOTTOM_GUTTER
+        : Math.max(bottomSafeArea, 12)) - (hasSidebarTabBar ? 3 : 0),
+    ) +
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    (no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0);
+  /* fork:end no3y-mobile-redesign */
   const composerKeyboardOffset = composerBottomInset;
   const contentPresentationKind = props.contentPresentation.kind;
   const realThreadSyncLabel = (() => {

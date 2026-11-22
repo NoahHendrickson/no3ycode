@@ -158,10 +158,12 @@ export function WorkspaceNativeTabs(props: {
           );
         })}
       </Tabs.Host>
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
       {(deviceType === "pad" ||
-        compactTabs ||
         (layout.variant === "medium" &&
           !workspaceUsesColumns(selectedTab, workspace.settingsOpen))) &&
+      !compactTabs &&
+      /* fork:end no3y-mobile-redesign */
       !props.hidden &&
       !props.tabsInSidebarColumn &&
       !hiddenWithSidebar ? (

@@ -119,4 +119,16 @@ describe("fork guard: fork-scheduled-runs-off-sidebar", () => {
     expect(projectionStore).toContain("scheduledTaskId: projection.thread.scheduledTaskId");
     expect(projectionStore).toContain("scheduledTaskId: input.state.thread.scheduledTaskId");
   });
+
+  it("keeps mobile honoring the roster predicate and showing runs on Automations", () => {
+    const mobileGrouping = readSibling("../../../mobile/fork/mobileStatusGrouping.ts");
+    const mobileScheduled = readSibling(
+      "../../../mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx",
+    );
+    expect(mobileGrouping).toContain(
+      'import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";',
+    );
+    expect(mobileGrouping).toContain("filterForkRosterVisibleThreads(input.threads)");
+    expect(mobileScheduled).toContain("<No3yAutomationRunsSection");
+  });
 });

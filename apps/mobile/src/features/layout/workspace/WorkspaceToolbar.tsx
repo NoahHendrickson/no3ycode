@@ -20,6 +20,10 @@ import { useWorkspaceTabs } from "./WorkspaceTabsContext";
 import { shouldRestoreNativeSearch } from "./workspace-tabs-state";
 import { useFloatingWorkspaceTabs, useSidebarWorkspaceTabs } from "./useSystemWorkspaceTabBar";
 import { WorkspaceTabToolbarButtons } from "./WorkspaceSectionToolbar";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useSelectWorkspaceTab } from "./useSelectWorkspaceTab";
+import { useNo3yBottomNavEnabled } from "../../../../fork/No3yBottomNav";
+/* fork:end no3y-mobile-redesign */
 
 const SEARCH_LABELS = {
   threads: "Search threads",
@@ -36,6 +40,10 @@ export function WorkspaceToolbar(props: {
   const deviceType = useDeviceType();
   const sidebarTabs = useSidebarWorkspaceTabs();
   const floatingTabs = useFloatingWorkspaceTabs();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  const selectTab = useSelectWorkspaceTab();
+  /* fork:end no3y-mobile-redesign */
   const duoSearch = NATIVE_LIQUID_GLASS_SUPPORTED && isDuoDevice(deviceType);
   const bottomSearch = duoSearch && sidebarTabs !== "picker";
   // On the Duo, compose belongs to the threads tab, in the detail column's bar when unfolded.
@@ -150,6 +158,9 @@ export function WorkspaceToolbar(props: {
           // Without Liquid Glass, Settings keeps its search field out instead of a search button,
           // which would take the header's trailing items from the scope filter.
           headerSearchBarOptions:
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            !(no3yBottomNav && !workspace.settingsOpen && selectedTab === "threads") &&
+            /* fork:end no3y-mobile-redesign */
             (NATIVE_LIQUID_GLASS_SUPPORTED ||
               tab.searchMode !== "resting" ||
               workspace.settingsOpen) &&
@@ -197,7 +208,17 @@ export function WorkspaceToolbar(props: {
           {searchButton}
           {nativeToolbarCompose && foldedSearch ? <Toolbar.Spacer width={8} /> : null}
           {composeButton}
+          {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+          {no3yBottomNav && selectedTab === "threads" ? (
+            <Toolbar.Button
+              accessibilityLabel="Settings"
+              icon="gearshape"
+              onPress={() => selectTab("settings")}
+            />
+          ) : null}
+          {/* fork:end no3y-mobile-redesign */}
           {selectedTab !== "threads" ||
+          no3yBottomNav ||
           isDuoDevice(deviceType) ||
           (deviceType === "pad" && layout.usesSplitView) ||
           sidebarTabs === "picker" ||
@@ -208,7 +229,7 @@ export function WorkspaceToolbar(props: {
               onPress={props.onNewTask}
             />
           )}
-          {NATIVE_LIQUID_GLASS_SUPPORTED ? null : (
+          {NATIVE_LIQUID_GLASS_SUPPORTED || (no3yBottomNav && selectedTab === "threads") ? null : (
             <Toolbar.Button
               accessibilityLabel={searchLabel}
               icon="magnifyingglass"

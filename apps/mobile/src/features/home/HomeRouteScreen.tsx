@@ -128,6 +128,10 @@ export function HomeRouteScreen() {
     options: listOptions,
     setSelectedEnvironmentId,
     setSelectedProjectKey,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    setStatusFilter,
+    setThreadSortOrder,
+    /* fork:end no3y-mobile-redesign */
   } = useHomeListOptions(availableEnvironmentIds);
   const selectedEnvironmentId = listOptions.selectedEnvironmentId;
   // A legacy per-environment scratch key resolves here on every render; the stored
@@ -238,6 +242,12 @@ export function HomeRouteScreen() {
           searchQuery={searchQuery}
           selectedEnvironmentId={selectedEnvironmentId}
           selectedProjectKey={selectedProjectKey}
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          statusFilter={listOptions.statusFilter}
+          threadSortOrder={listOptions.threadSortOrder}
+          onStatusFilterChange={setStatusFilter}
+          onThreadSortOrderChange={setThreadSortOrder}
+          /* fork:end no3y-mobile-redesign */
           threads={threads}
           visible={visible}
         />
