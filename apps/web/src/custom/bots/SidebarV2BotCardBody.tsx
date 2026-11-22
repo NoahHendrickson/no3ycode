@@ -52,7 +52,7 @@ export function SidebarV2BotGridBody(props: {
           {props.statusMark}
         </span>
       </span>
-      <span className="mt-0.5 flex h-4 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-4">
+      <span className="mt-0.5 flex h-4 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-4 font-medium">
         {props.title}
       </span>
     </div>
