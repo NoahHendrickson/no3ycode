@@ -27,8 +27,9 @@ interface Ask {
 
 interface DigestProps {
   readonly status: string | null;
-  readonly hiddenCount: number;
   readonly asks: ReadonlyArray<Ask>;
+  /** How many of the last asks start dismissed. */
+  readonly dismissed?: number;
 }
 
 const environmentId = EnvironmentId.make("story");
@@ -77,11 +78,20 @@ function links(ask: Ask): BotDigestLinks {
   };
 }
 
-/** The digest as BotDigestAsks draws it, from plain asks: the pager moves between them. */
+/** The digest as BotDigestAsks draws it, from plain asks: the pager moves between them, and
+    Dismiss and "Show N dismissed" hide and bring back asks. Asks are keyed by position. */
 function Digest(props: DigestProps) {
   const [page, setPage] = useState(0);
-  const at = Math.min(page, Math.max(0, props.asks.length - 1));
-  const ask = props.asks[at];
+  const [dismissed, setDismissed] = useState<ReadonlyArray<number>>(() =>
+    props.asks.flatMap((_, index) =>
+      index >= props.asks.length - (props.dismissed ?? 0) ? [index] : [],
+    ),
+  );
+  if (props.asks.length === 0 && props.status === null) return null;
+  const shown = props.asks.flatMap((_, index) => (dismissed.includes(index) ? [] : [index]));
+  const at = Math.min(page, Math.max(0, shown.length - 1));
+  const shownIndex = shown[at];
+  const ask = shownIndex === undefined ? undefined : props.asks[shownIndex];
   const tile =
     ask === undefined
       ? null
@@ -92,20 +102,20 @@ function Digest(props: DigestProps) {
   return (
     <BotDigestView
       status={props.status}
-      hiddenCount={props.hiddenCount}
-      onShowDismissed={noop}
-      askKeys={props.asks.map((entry) => entry.question)}
+      hiddenCount={dismissed.length}
+      onShowDismissed={() => setDismissed([])}
+      askKeys={shown.map(String)}
       at={at}
       onPage={setPage}
     >
-      {ask === undefined || tile === null ? null : (
+      {shownIndex === undefined || ask === undefined || tile === null ? null : (
         <BotDigestAskCardView
-          key={ask.question}
+          key={shownIndex}
           question={ask.question}
           detail={ask.detail}
           icon={tile.icon}
           toneClassName={tile.toneClassName}
-          onDismiss={noop}
+          onDismiss={() => setDismissed([...dismissed, shownIndex])}
           links={
             <BotDigestLinkRow links={links(ask)} environmentId={environmentId} localVisits={{}} />
           }
@@ -202,7 +212,7 @@ const meta = {
   },
   argTypes: {
     hiddenCount: { control: { type: "number", min: 0 } },
-    askCount: { control: { type: "range", min: 0, max: 5 } },
+    askCount: { control: { type: "range", min: 0, max: 6 } },
     tile: {
       control: "inline-radio",
       options: ["needs input", "open", "draft", "merged", "closed"],
@@ -217,12 +227,18 @@ const meta = {
       thread: "Nightly dependency bumps",
       answers: args.answers,
     };
-    const rest = [CHANNEL, REVIEW, ...PULL_REQUEST_ASKS.map(([, ask]) => ask)];
+    const pool = [first, CHANNEL, ...PULL_REQUEST_ASKS.map(([, ask]) => ask)];
+    // The dismissed asks follow the shown ones, round the pool again past its end.
+    const asks = Array.from(
+      { length: args.askCount + args.hiddenCount },
+      (_, index) => pool[index % pool.length]!,
+    );
     return (
       <Digest
+        key={`${args.askCount}:${args.hiddenCount}`}
         status={args.status === "" ? null : args.status}
-        hiddenCount={args.hiddenCount}
-        asks={[first, ...rest].slice(0, args.askCount)}
+        asks={asks}
+        dismissed={args.hiddenCount}
       />
     );
   },
@@ -236,27 +252,27 @@ export const Playground: Story = {};
 /** The status line alone: nothing needs the owner. */
 export const StatusOnly: Story = {
   name: "Status only",
-  render: () => <Digest status={STATUS} hiddenCount={0} asks={[]} />,
+  render: () => <Digest status={STATUS} asks={[]} />,
 };
 
 /** An ask the bot offered answers to: each is an outline button, and Reply steps back to ghost
     beside them. Without a status line the strip reads "Needs you". */
 export const OfferedAnswers: Story = {
   name: "Offered answers",
-  render: () => <Digest status={null} hiddenCount={0} asks={[PUSH]} />,
+  render: () => <Digest status={null} asks={[PUSH]} />,
 };
 
 /** An ask with no offered answers: Reply is the way to answer, so it is the outline button. The
     detail clamps at two lines. */
 export const ReplyOnly: Story = {
   name: "Reply only",
-  render: () => <Digest status={STATUS} hiddenCount={0} asks={[CHANNEL]} />,
+  render: () => <Digest status={STATUS} asks={[CHANNEL]} />,
 };
 
 /** Two or more asks show one at a time, with the pager in the strip: the dot on show is a dash. */
 export const SeveralAsks: Story = {
   name: "Several asks",
-  render: () => <Digest status={STATUS} hiddenCount={0} asks={[PUSH, CHANNEL, REVIEW]} />,
+  render: () => <Digest status={STATUS} asks={[PUSH, CHANNEL, REVIEW]} />,
 };
 
 /** An ask about a pull request takes its tile from the pull request's state. */
@@ -265,7 +281,7 @@ export const PullRequestStates: Story = {
   render: () => (
     <Stack gap={2}>
       {PULL_REQUEST_ASKS.map(([name, ask]) => (
-        <Digest key={name} status={`${name} pull request`} hiddenCount={0} asks={[ask]} />
+        <Digest key={name} status={`${name} pull request`} asks={[ask]} />
       ))}
     </Stack>
   ),
@@ -277,8 +293,8 @@ export const DismissedHidden: Story = {
   name: "Dismissed hidden",
   render: () => (
     <Stack gap={2}>
-      <Digest status={STATUS} hiddenCount={2} asks={[CHANNEL]} />
-      <Digest status={STATUS} hiddenCount={3} asks={[]} />
+      <Digest status={STATUS} asks={[CHANNEL, PUSH, REVIEW]} dismissed={2} />
+      <Digest status={STATUS} asks={[PUSH, CHANNEL, REVIEW]} dismissed={3} />
     </Stack>
   ),
 };
