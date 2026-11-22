@@ -9,6 +9,7 @@ import { AsyncResult, Atom } from "effect/reactivity";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  type LucideIcon,
   MessageCircleQuestionIcon,
   ReplyIcon,
   XIcon,
@@ -16,7 +17,10 @@ import {
 import * as Schema from "effect/Schema";
 import { type ReactNode, useState } from "react";
 
-import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
+import {
+  PullRequestGlyph,
+  type PullRequestStatePresentation,
+} from "~/components/pullRequest/pullRequestIcons";
 import { Button } from "~/components/ui/button";
 import { toastManager } from "~/components/ui/toast";
 import { useComposerDraftStore } from "~/composerDraftStore";
@@ -157,7 +161,55 @@ function BotDigestAsksFor(props: {
   const line =
     item === undefined ? null : resolveBotDigestLine(item, threads, botRef.environmentId);
   const ask = line === null ? null : splitBotDigestAsk(line.text);
-  const offered = item !== undefined && item.answers.length > 0;
+  return (
+    <BotDigestView
+      status={status}
+      hiddenCount={hiddenCount}
+      onShowDismissed={() => setDismissed(NO_DISMISSED)}
+      askKeys={asks.map((entry) => entry.source)}
+      at={at}
+      onPage={setPage}
+    >
+      {item === undefined || line === null || ask === null ? null : (
+        <BotDigestAskCard
+          key={item.source}
+          question={ask.question}
+          detail={ask.detail}
+          pullRequest={line.links.pullRequests[0] ?? null}
+          environmentId={botRef.environmentId}
+          onDismiss={() => dismiss(item.source)}
+          links={
+            <BotDigestLinkRow
+              links={line.links}
+              environmentId={botRef.environmentId}
+              localVisits={localVisits}
+            />
+          }
+          actions={
+            <BotDigestAskActions
+              answers={item.answers}
+              onAnswer={(choice) => void answer(item, choice)}
+              onReply={() => reply(item, line.question)}
+            />
+          }
+        />
+      )}
+    </BotDigestView>
+  );
+}
+
+/** @public — the digest as drawn, from plain data; Storybook renders it on its own. `askKeys`
+    names the asks on the pager, `at` the one on show, and `children` is its card. */
+export function BotDigestView(props: {
+  readonly status: string | null;
+  readonly hiddenCount: number;
+  readonly onShowDismissed: () => void;
+  readonly askKeys: ReadonlyArray<string>;
+  readonly at: number;
+  readonly onPage: (index: number) => void;
+  readonly children?: ReactNode;
+}) {
+  const { askKeys, at, onPage } = props;
   return (
     <div data-fork-bot-digest="" className="pb-2">
       {/* The composer's two layers, worn by its stamps so each theme paints it as the composer: the
@@ -165,38 +217,38 @@ function BotDigestAsksFor(props: {
       <div data-fork-composer-vessel="true" className="flex min-w-0 flex-col rounded-lg">
         <div className="flex min-h-8 items-center gap-2 py-1 pr-1.5 pl-3 text-xs text-muted-foreground">
           <span data-testid="bot-digest-status" className="min-w-0 flex-1 truncate">
-            {status ?? "Needs you"}
+            {props.status ?? "Needs you"}
           </span>
-          {hiddenCount === 0 ? null : (
+          {props.hiddenCount === 0 ? null : (
             <Button
               size="micro"
               variant="ghost"
-              onClick={() => setDismissed(NO_DISMISSED)}
+              onClick={props.onShowDismissed}
               data-testid="bot-digest-show-dismissed"
             >
-              Show {hiddenCount} dismissed
+              Show {props.hiddenCount} dismissed
             </Button>
           )}
-          {asks.length < 2 ? null : (
+          {askKeys.length < 2 ? null : (
             <span className="flex shrink-0 items-center gap-0.5">
               <Button
                 size="icon-micro"
                 variant="ghost"
                 aria-label="Previous ask"
                 disabled={at === 0}
-                onClick={() => setPage(at - 1)}
+                onClick={() => onPage(at - 1)}
               >
                 <ChevronLeftIcon />
               </Button>
               {/* A dot per ask, the one on show a rounded dash; each opens its ask. */}
               <span className="flex items-center gap-1 px-0.5">
-                {asks.map((ask, index) => (
+                {askKeys.map((key, index) => (
                   <button
-                    key={ask.source}
+                    key={key}
                     type="button"
-                    aria-label={`Ask ${index + 1} of ${asks.length}`}
+                    aria-label={`Ask ${index + 1} of ${askKeys.length}`}
                     aria-current={index === at ? "true" : undefined}
-                    onClick={() => setPage(index)}
+                    onClick={() => onPage(index)}
                     className={cn(
                       "h-1.5 cursor-pointer rounded-full transition-[width,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                       index === at
@@ -210,66 +262,56 @@ function BotDigestAsksFor(props: {
                 size="icon-micro"
                 variant="ghost"
                 aria-label="Next ask"
-                disabled={at === asks.length - 1}
-                onClick={() => setPage(at + 1)}
+                disabled={at === askKeys.length - 1}
+                onClick={() => onPage(at + 1)}
               >
                 <ChevronRightIcon />
               </Button>
             </span>
           )}
         </div>
-        {item === undefined || line === null || ask === null ? null : (
-          <BotDigestAskCard
-            key={item.source}
-            question={ask.question}
-            detail={ask.detail}
-            pullRequest={line.links.pullRequests[0] ?? null}
-            environmentId={botRef.environmentId}
-            onDismiss={() => dismiss(item.source)}
-            links={
-              <BotDigestLinkRow
-                links={line.links}
-                environmentId={botRef.environmentId}
-                localVisits={localVisits}
-              />
-            }
-            actions={
-              <>
-                {offered
-                  ? item.answers.map((choice) => (
-                      <Button
-                        key={choice}
-                        size="xs"
-                        variant="outline"
-                        onClick={() => void answer(item, choice)}
-                        data-testid="bot-digest-answer"
-                      >
-                        {choice}
-                      </Button>
-                    ))
-                  : null}
-                <Button
-                  size="xs"
-                  // Beside answers it is for anything else; alone it is the way to answer.
-                  variant={offered ? "ghost" : "outline"}
-                  onClick={() => reply(item, line.question)}
-                  data-testid="bot-digest-reply"
-                >
-                  <ReplyIcon />
-                  Reply
-                </Button>
-              </>
-            }
-          />
-        )}
+        {props.children}
       </div>
     </div>
   );
 }
 
+/** @public — an ask's buttons: each offered answer, then Reply. */
+export function BotDigestAskActions(props: {
+  readonly answers: ReadonlyArray<string>;
+  readonly onAnswer: (choice: string) => void;
+  readonly onReply: () => void;
+}) {
+  const offered = props.answers.length > 0;
+  return (
+    <>
+      {props.answers.map((choice) => (
+        <Button
+          key={choice}
+          size="xs"
+          variant="outline"
+          onClick={() => props.onAnswer(choice)}
+          data-testid="bot-digest-answer"
+        >
+          {choice}
+        </Button>
+      ))}
+      <Button
+        size="xs"
+        // Beside answers it is for anything else; alone it is the way to answer.
+        variant={offered ? "ghost" : "outline"}
+        onClick={props.onReply}
+        data-testid="bot-digest-reply"
+      >
+        <ReplyIcon />
+        Reply
+      </Button>
+    </>
+  );
+}
+
 /** One ask as the vessel's surface. A tile leads it in the ask's colour: the state of the pull request it is
-    about (open, draft, merged, closed), or the sidebar's needs-input colour. Beside the tile it
-    reads top to bottom: the question, its detail, what it links, then what you can do. */
+    about (open, draft, merged, closed), or the sidebar's needs-input colour. */
 function BotDigestAskCard(props: {
   readonly question: string;
   readonly detail: string | null;
@@ -280,10 +322,47 @@ function BotDigestAskCard(props: {
   readonly onDismiss: () => void;
 }) {
   const { state } = useBotPullRequestState(props.pullRequest, props.environmentId);
-  const Icon =
-    props.pullRequest === null
-      ? MessageCircleQuestionIcon
-      : (state?.Icon ?? PullRequestGlyph.pullRequest);
+  const tile = botDigestAskTile(props.pullRequest !== null, state);
+  return (
+    <BotDigestAskCardView
+      question={props.question}
+      detail={props.detail}
+      icon={tile.icon}
+      toneClassName={tile.toneClassName}
+      links={props.links}
+      actions={props.actions}
+      onDismiss={props.onDismiss}
+    />
+  );
+}
+
+/** @public — an ask's tile: its pull request's state glyph and tone (the plain glyph while its
+    state is unknown), else the sidebar's needs-input question. */
+export function botDigestAskTile(
+  hasPullRequest: boolean,
+  state: PullRequestStatePresentation | null,
+): { readonly icon: LucideIcon; readonly toneClassName: string } {
+  if (!hasPullRequest) {
+    return { icon: MessageCircleQuestionIcon, toneClassName: "text-sidebar-v2-status-input" };
+  }
+  return {
+    icon: state?.Icon ?? PullRequestGlyph.pullRequest,
+    toneClassName: state?.toneClassName ?? "text-muted-foreground",
+  };
+}
+
+/** @public — the ask card as drawn; Storybook renders it on its own. Beside the tile it reads
+    top to bottom: the question, its detail, what it links, then what you can do. */
+export function BotDigestAskCardView(props: {
+  readonly question: string;
+  readonly detail: string | null;
+  readonly icon: LucideIcon;
+  readonly toneClassName: string;
+  readonly links: ReactNode;
+  readonly actions: ReactNode;
+  readonly onDismiss: () => void;
+}) {
+  const Icon = props.icon;
   return (
     <div data-fork-composer-box="true">
       <div
@@ -295,9 +374,7 @@ function BotDigestAskCard(props: {
           aria-hidden
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
-            props.pullRequest === null
-              ? "text-sidebar-v2-status-input"
-              : (state?.toneClassName ?? "text-muted-foreground"),
+            props.toneClassName,
           )}
         >
           <Icon className="size-4" />

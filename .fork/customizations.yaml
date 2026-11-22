@@ -7674,7 +7674,8 @@
     through view exports that take plain props (ForkSubagentCardView,
     BotThreadsRowView, ComposerLimitsTrayView, ComposerUsageLimitsDrawer,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
-    working-mark forms), marked @public because knip does not follow the
+    working-mark forms, BotDigestView, BotDigestAskCardView,
+    BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package
     touches no upstream file: apps/* already covers it and release smoke copies
     a fixed package list. The Figma kit "no3y code — Basic UI kit" is captured
