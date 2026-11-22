@@ -115,6 +115,7 @@ describe("fork guard: fork-bot-work-threads", () => {
       resolveSidebarRouteReveal({
         reveal: { observedKey: null, pendingKey: null },
         routeKey: key,
+        routeKeyInPlace: false,
         isSearching: false,
         scopedProjectKeys: new Set(["environment-test:another-project"]),
         delegatedUnderParent: new Set(),
@@ -358,8 +359,10 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(rules?.contents).toContain(
       "**CREW.md holds the rules every thread you start follows.**",
     );
-    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
-    expect(mcp).toContain("yield* threadLaunch.withForkBotCrewRules(forkBotId, request.prompt)");
+    expect(launch).toContain(": yield* forkBotCrewRules(forkCrewBotId, input.initialMessage.text)");
+    expect(mcp).toContain(
+      "yield* threadLaunch.withForkBotCrewRules(forkCrewBotId, request.prompt)",
+    );
     // Its threads report back, so it no longer polls them on each wake.
     expect(rules?.contents).toContain("**Your threads report to you.**");
     expect(chatView).toContain("<BotThreadsPanel");
@@ -374,7 +377,7 @@ describe("fork guard: fork-bot-work-threads", () => {
   // fork-bot-work-reports, fork-bot-crew-rules, fork-bot-digest, fork-bot-crew.
   it("reports a bot's work back to it, carries its crew rules, shows its digest and moves threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
-    expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
+    expect(launch).toContain(": yield* forkBotCrewRules(forkCrewBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
     // A Petal's asks sit above its composer in the chat column; the Threads panel lists threads only.
     expect(chatView).toMatch(

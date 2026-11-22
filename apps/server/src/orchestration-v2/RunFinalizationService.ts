@@ -10,6 +10,7 @@ import {
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as FiberMap from "effect/FiberMap";
+import * as FiberSet from "effect/FiberSet";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -24,6 +25,8 @@ import * as ProjectionStore from "./ProjectionStore.ts";
 /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
 import { LocalCheckoutBranchFollower } from "./forkLocalCheckoutBranchFollow.ts";
 /* fork:end server-local-checkout-branch-follow */
+
+const REPOSITORY_REFRESH_CONCURRENCY = 4;
 
 export class RunFinalizationError extends Schema.TaggedError<RunFinalizationError>()(
   "RunFinalizationError",
@@ -52,10 +55,16 @@ export class RunFinalizationObserver extends Context.Reference<{
        can follow the branch a local thread's turn ran on without a second
        git status; null when no observer is installed. */
   }) => Effect.Effect<VcsStatusLocalResult | null, RunFinalizationRefreshError>;
+  /** Local status of the tracked repositories a run checkpointed. Returns before it finishes. */
+  readonly refreshRepositories: (input: {
+    readonly threadId: ThreadId;
+    readonly cwds: ReadonlyArray<string>;
+  }) => Effect.Effect<void>;
 }>("t3/orchestration-v2/RunFinalizationObserver", {
   defaultValue: () => ({
     refresh: () => Effect.succeed(null),
     refreshAfterTurn: () => Effect.void,
+    refreshRepositories: () => Effect.void,
   }),
   /* fork:end server-local-checkout-branch-follow */
 }) {}
@@ -78,6 +87,7 @@ const make = Effect.gen(function* () {
   /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
   const follower = yield* LocalCheckoutBranchFollower;
   /* fork:end server-local-checkout-branch-follow */
+  const refreshes = yield* FiberSet.make<void>();
 
   const finalize: RunFinalizationService["Service"]["finalize"] = Effect.fn(
     "RunFinalizationService.finalize",
@@ -98,27 +108,39 @@ const make = Effect.gen(function* () {
       );
     const cwd = projection.checkpointScopes.find((scope) => scope.id === input.scopeId)?.cwd;
     if (cwd !== undefined) {
-      // Retrying a display refresh after the checkpoint is durable blocks the next turn.
+      // The refresh only updates the display, so the thread's next turn must not wait for it.
+      // Never replaced by a newer one: back-to-back turns would interrupt each before it publishes.
       /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow
-         The thread whose turn just ran on the shared checkout adopts the
-         branch found there; the follower never fails the finalization. A
-         failed refresh is logged as upstream does and skips the follow. */
-      const local = yield* observer
-        .refresh({ cwd, threadId: input.threadId, runId: input.runId })
-        .pipe(
-          Effect.catchTags({
-            RunFinalizationRefreshError: (cause) =>
-              Effect.logWarning("Failed to refresh workspace after checkpoint capture", {
-                ...input,
-                cause,
-              }).pipe(Effect.as(null)),
-          }),
-        );
-      if (local !== null) {
-        yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local });
-      }
+         The thread whose turn just ran on the shared checkout adopts the branch found
+         there, in the same background fiber; a failed refresh is logged and skips it. */
+      yield* observer.refresh({ cwd, threadId: input.threadId, runId: input.runId }).pipe(
+        Effect.catchTags({
+          RunFinalizationRefreshError: (cause) =>
+            Effect.logWarning("Failed to refresh workspace after checkpoint capture", {
+              ...input,
+              cause,
+            }).pipe(Effect.as(null)),
+        }),
+        Effect.flatMap((local) =>
+          local === null
+            ? Effect.void
+            : follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local }),
+        ),
+        FiberSet.run(refreshes),
+      );
       /* fork:end server-local-checkout-branch-follow */
     }
+    const repositoryScopeIds = new Set(
+      projection.checkpoints.flatMap((checkpoint) =>
+        checkpoint.runId === input.runId ? [checkpoint.scopeId] : [],
+      ),
+    );
+    const cwds = projection.checkpointScopes.flatMap((scope) =>
+      typeof scope.repositoryPath === "string" && repositoryScopeIds.has(scope.id)
+        ? [scope.cwd]
+        : [],
+    );
+    if (cwds.length > 0) yield* observer.refreshRepositories({ threadId: input.threadId, cwds });
   });
   return RunFinalizationService.of({ finalize });
 });
@@ -135,6 +157,7 @@ export const layerObserver = Layer.effect(
     const projects = yield* ProjectService.ProjectService;
     const enrichment = yield* ProjectEnrichment.ProjectEnrichmentService;
     const pullRequestLookups = yield* FiberMap.make<string>();
+    const repositoryRefreshes = yield* FiberMap.make<ThreadId>();
     const identityRefreshes = yield* FiberMap.make<ProjectId>();
     // A turn can add the first remote (`git remote add`, `gh repo create --push`), which the
     // enrichment and resolver caches would otherwise keep reporting as missing for a minute.
@@ -160,6 +183,27 @@ export const layerObserver = Layer.effect(
     );
     return {
       refreshAfterTurn: pullRequests.refreshAfterTurn,
+      // A project can track dozens of repositories, so the next turn must not wait for them all.
+      // A newer turn's refresh replaces a running one.
+      refreshRepositories: Effect.fn("RunFinalizationService.refreshRepositories")(function* ({
+        threadId,
+        cwds,
+      }) {
+        yield* Effect.forEach(
+          cwds,
+          (cwd) =>
+            vcsStatus.refreshLocalStatus(cwd).pipe(
+              Effect.catch((error) =>
+                Effect.logWarning("failed to refresh repository status after run completion", {
+                  threadId,
+                  cwd,
+                  detail: error.message,
+                }),
+              ),
+            ),
+          { concurrency: REPOSITORY_REFRESH_CONCURRENCY, discard: true },
+        ).pipe(FiberMap.run(repositoryRefreshes, threadId));
+      }),
       refresh: Effect.fn("RunFinalizationService.refresh")(
         function* ({ cwd, threadId, runId }) {
           const [, local] = yield* Effect.all(

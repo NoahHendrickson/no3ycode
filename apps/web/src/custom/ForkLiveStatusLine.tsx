@@ -2,6 +2,7 @@
  * The one-line live status — see `.fork/customizations.yaml#fork-working-row-last`.
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
+import { useMessages } from "gt-react";
 import { ChevronRightIcon } from "lucide-react";
 import { use, type ReactNode } from "react";
 import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
@@ -18,8 +19,13 @@ function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-li
   const ctx = use(TimelineRowCtx);
   const activity = use(TimelineRowActivityCtx);
   const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
+  const messages = useMessages();
   const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true);
-  return forkStatusLineLabel(live, activity, threadReadLabel(toolLabel, target)?.text ?? toolLabel);
+  return forkStatusLineLabel(
+    live,
+    activity,
+    threadReadLabel(toolLabel, live.entry, target, messages)?.text ?? toolLabel,
+  );
 }
 
 function StatusLabel({ live }: { live: ForkLiveRow }) {

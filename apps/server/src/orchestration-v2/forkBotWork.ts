@@ -45,6 +45,18 @@ function launcherBotId(launcher: Pick<OrchestrationV2ThreadShell, "id" | "tags">
   return forkBotWorkTag(launcher.id).length <= THREAD_TAG_MAX_LENGTH ? launcher.id : null;
 }
 
+/** The bot a thread launched by `launchedBy` will work for, before that thread exists. */
+export const forkBotIdFor = Effect.fn("ThreadLaunchService.forkBotIdFor")(
+  function* (threads: ThreadManagementService["Service"], launchedBy: ThreadId) {
+    const launcher = yield* forkBotActingShell(threads, launchedBy);
+    const botId = launcher === null ? null : launcherBotId(launcher);
+    return botId === null ? null : ThreadId.make(botId);
+  },
+  Effect.catch((error) =>
+    Effect.logWarning("fork-bot-work.resolve-failed", { error }).pipe(Effect.as(null)),
+  ),
+);
+
 /** Tags a newly launched thread as its launcher's bot's work, and returns that bot's id. Best
     effort: an unlinked thread lists in the sidebar like any other, so a failure here never fails
     the launch. */

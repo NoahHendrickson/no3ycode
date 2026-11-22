@@ -16,12 +16,15 @@ export function resolveThreadDetailsCardDensity(
 
 export function resolveThreadDetailsCardLayout({
   container,
+  narrowestWidth = container.width,
   lane,
   frame,
   overlapsDetailsCard = false,
   topInset = 0,
 }: {
   container: { width: number; height: number };
+  // While a panel animates the container, the card fits only if it fits at both ends.
+  narrowestWidth?: number;
   lane: { padding: number; minChatWidth: number };
   frame: PreviewMiniPlayerFrame | null;
   overlapsDetailsCard?: boolean;
@@ -33,7 +36,11 @@ export function resolveThreadDetailsCardLayout({
   /* fork:begin fork-details-card-overlay — see .fork/customizations.yaml#fork-details-card-overlay
      Upstream's dock threshold, kept on purpose though the card now floats over the chat. */
   /* fork:end fork-details-card-overlay */
-  if (x - DETAILS_CARD_CLEARANCE - lane.padding < lane.minChatWidth) return null;
+  // The transition ends are sampled once, so a resize mid-animation can leave them
+  // wider than the container is now.
+  const fitWidth = Math.min(narrowestWidth, container.width);
+  if (fitWidth - width - gap - DETAILS_CARD_CLEARANCE - lane.padding < lane.minChatWidth)
+    return null;
   const y = gap + topInset;
   const height =
     overlapsDetailsCard && frame && frame.x + frame.width > x - gap && frame.x < x + width + gap

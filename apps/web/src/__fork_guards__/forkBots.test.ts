@@ -145,9 +145,13 @@ describe("fork guard: fork-bots", () => {
       backgroundWake: false,
     });
     const quiet = isQuietBotCompletion(news, run);
-    gate.observe("mail", undefined, step(false, null), { archived: false, quiet });
-    gate.observe("mail", step(false, null), step(false, 1), { archived: false, quiet });
-    gate.observe("mail", step(false, 1), step(true, 1), { archived: false, quiet });
+    gate.observe("mail", undefined, step(false, null), { archived: false, quiet, snoozed: false });
+    gate.observe("mail", step(false, null), step(false, 1), {
+      archived: false,
+      quiet,
+      snoozed: false,
+    });
+    gate.observe("mail", step(false, 1), step(true, 1), { archived: false, quiet, snoozed: false });
     expect(notified).toEqual(["completion"]);
   });
 
@@ -173,7 +177,7 @@ describe("fork guard: fork-bots", () => {
         completedAt: outcome === "working" ? null : Number(run),
         backgroundWake: false,
       };
-      gate.observe("bot", prior, next, { archived: false, quiet: true });
+      gate.observe("bot", prior, next, { archived: false, quiet: true, snoozed: false });
       prior = next;
     };
     wake("0", "working");

@@ -98,7 +98,6 @@
     [class*="outline-offset-"],
     [data-workspace-area]
   ),
-:root[data-fork="noahhendrickson-t3code"] [class*="focus-visible:-outline-offset-1"]:focus-visible,
 :root[data-fork="noahhendrickson-t3code"] [class*="focus-visible:-outline-offset-2"]:focus-visible,
 :root[data-fork="noahhendrickson-t3code"] [class*="focus-within:-outline-offset-2"]:focus-within {
   outline-width: var(--fork-focus-ring-width);

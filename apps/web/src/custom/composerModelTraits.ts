@@ -30,7 +30,8 @@ import {
   type PromptUltrathink,
 } from "../components/chat/TraitsPicker";
 import type { DraftId } from "../composerDraftStore";
-import { getProviderModelCapabilities } from "../providerModels";
+import { m } from "../i18n/messages";
+import { getProviderModelCapabilities, keepsUnavailableModelOptions } from "../providerModels";
 
 /** The composer's traits input: the model, its options and where a pick persists. */
 export type ComposerModelTraitsInput = {
@@ -114,16 +115,15 @@ export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
 
   const caps = getProviderModelCapabilities(models, model, provider, includePlanAgent);
   const modelOptions = withImplicitFastModeDefault(caps, input.modelOptions);
-  // OpenCode keeps a model's saved options even when its catalog drops it;
-  // they show read-only.
   const modelIsUnavailable =
-    (provider === "opencode" || provider === "cursor") &&
+    keepsUnavailableModelOptions(provider, model) &&
     !models.some((candidate) => candidate.slug === normalizeModelSlug(model, provider));
   const descriptors = modelIsUnavailable
     ? buildUnavailableModelOptionDescriptors(
         includePlanAgent
           ? modelOptions
           : modelOptions?.filter((option) => option.id !== "agent" || option.value !== "plan"),
+        m,
       )
     : getProviderOptionDescriptors({ caps, selections: modelOptions });
   if (descriptors.length === 0) return null;
@@ -152,11 +152,14 @@ export function resolveComposerModelTraits(input: ComposerModelTraitsInput) {
     ultrathinkPromptControlled,
     ultrathinkInBodyText,
     modelIsUnavailable,
-    trigger: buildTraitsTriggerDisplay({
-      descriptors: shown,
-      primarySelectDescriptorId: primarySelect?.id ?? null,
-      ultrathinkPromptControlled,
-      labelSeparator: " ",
-    }),
+    trigger: buildTraitsTriggerDisplay(
+      {
+        descriptors: shown,
+        primarySelectDescriptorId: primarySelect?.id ?? null,
+        ultrathinkPromptControlled,
+        labelSeparator: " ",
+      },
+      m,
+    ),
   };
 }

@@ -89,7 +89,7 @@ function MenuSearchInput({
   /* fork:end fork-sidebar-chrome */
 }) {
   return (
-    <div className="min-w-0 shrink-0 px-2 pt-1.5 pb-1">
+    <label className="block min-w-0 shrink-0 cursor-text px-2 pt-1.5 pb-1">
       <div
         className={cn(
           "relative -translate-y-px border-b border-border/70 pb-1.5 transition-colors focus-within:border-ring",
@@ -123,7 +123,7 @@ function MenuSearchInput({
           }}
         />
       </div>
-    </div>
+    </label>
   );
 }
 

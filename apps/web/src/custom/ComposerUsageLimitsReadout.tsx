@@ -10,11 +10,12 @@ import {
   collectLimitPools,
   cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitPool,
   type LimitPoolWindow,
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
+import { formatResetsIn } from "@t3tools/shared/usageLimitsCopy";
+import { m } from "~/i18n/messages";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
 import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
 
@@ -339,7 +340,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
         {windows.map((window) => {
           const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
           const nextReset = nextRefill ?? window.resets[0];
-          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m) : null;
           const fullLabel = fullWindowLabel(pool, window);
           const shortLabel = compactWindowLabel(pool, window);
           const accessibleLabel = `${providerLabel} ${fullLabel}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`;

@@ -23,7 +23,9 @@ describe("fork-image-attachment-no-chip", () => {
   it("never auto-inserts an inline chip for an attached image", () => {
     expect(composer).toContain("const imageAttachmentsGetChips = false;");
     expect(composer.match(/const imageAttachmentsGetChips\b/gu)).toHaveLength(1);
-    expect(composer).toContain("if (storedImages.length > 0 && imageAttachmentsGetChips) {");
+    expect(composer).toContain(
+      "if (storedImages.length > 0 && imageAttachmentsGetChips && !movedThread) {",
+    );
     expect(composer.match(/storedImages\.map\(imageContextReference\)/gu)).toHaveLength(1);
     // The import, the gated insertion above, and removeComposerImage's lookup.
     expect(composer.match(/\bimageContextReference\b/gu)).toHaveLength(3);

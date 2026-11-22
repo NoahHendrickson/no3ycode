@@ -159,7 +159,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       "const draftProjectAssignmentPending = useDraftProjectAssignmentPending(draftId) !== null;",
     );
     expect(chatView).toMatch(
-      /sendDisabledReason=\{[\s\S]{0,1200}?draftProjectAssignmentPending\s*\?\s*"Preparing project"/u,
+      /sendDisabledReason=\{[\s\S]{0,1400}?draftProjectAssignmentPending\s*\?\s*(?:\/\*[^*]*\*\/\s*)?"Preparing project"/u,
     );
     const choices = readSibling("../custom/useDraftProjectChoices.ts");
     const pill = readSibling("../custom/DraftProjectPill.tsx");

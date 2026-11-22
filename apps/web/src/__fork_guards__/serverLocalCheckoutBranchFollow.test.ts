@@ -43,9 +43,11 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
       "Effect.Effect<VcsStatusLocalResult | null, RunFinalizationRefreshError>",
     );
     expect(hunks).toContain("const follower = yield* LocalCheckoutBranchFollower;");
+    // Upstream runs the refresh in a background fiber; the follow rides the same fiber.
     expect(hunks).toContain(
-      "yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local });",
+      ": follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local }),",
     );
+    expect(hunks).toContain("FiberSet.run(refreshes),");
     expect(hunks).toContain("return local;");
     expect(finalization).not.toMatch(/local\.isDefaultRef\) return;/u);
   });

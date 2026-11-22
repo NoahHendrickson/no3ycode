@@ -14,16 +14,20 @@ import { withOwningBot } from "../../custom/bots/botWorkRoster";
 export interface SidebarRouteReveal {
   observedKey: string | null;
   pendingKey: string | null;
+  // A draft's first send names its thread without navigating; the user is not looking for it.
+  pendingInPlace?: boolean;
 }
 
 export function pendingSidebarRouteReveal(
   reveal: SidebarRouteReveal,
   routeKey: string | null,
+  inPlace = false,
 ): string | null {
   if (routeKey === null) return null;
   if (reveal.observedKey !== routeKey) {
     reveal.observedKey = routeKey;
     reveal.pendingKey = routeKey;
+    reveal.pendingInPlace = inPlace;
   }
   return reveal.pendingKey;
 }
@@ -35,9 +39,13 @@ export function completeSidebarRouteReveal(reveal: SidebarRouteReveal): void {
 // Each route change and each mount scroll to the open thread once. Render records
 // the route, so a thread left before its row mounted still counts as a change.
 // The row can mount after the route, once its shells arrive, so its ref scrolls.
-export function useActiveRowReveal(reveal: SidebarRouteReveal, routeKey: string | null) {
+export function useActiveRowReveal(
+  reveal: SidebarRouteReveal,
+  routeKey: string | null,
+  inPlace = false,
+) {
   const mountRevealOwed = useRef(true);
-  pendingSidebarRouteReveal(reveal, routeKey);
+  pendingSidebarRouteReveal(reveal, routeKey, inPlace);
   // Returns a ref cleanup while it waits on a hidden row, so an unmount releases the wait.
   const revealRow = (row: HTMLElement | null, rowKey: string): (() => void) | undefined => {
     if (row === null) return undefined;
@@ -52,11 +60,12 @@ export function useActiveRowReveal(reveal: SidebarRouteReveal, routeKey: string 
       });
       return stopWaiting;
     }
+    const revealInPlace = reveal.pendingKey === rowKey && reveal.pendingInPlace === true;
     completeSidebarRouteReveal(reveal);
     mountRevealOwed.current = false;
     // A row under the pointer was just clicked, so it is in view; scrolling it would force a
     // layout mid-commit. Keyboard activation can come from a focused row scrolled out of view.
-    if (row.matches(":hover")) return undefined;
+    if (revealInPlace || row.matches(":hover")) return undefined;
     row.scrollIntoView({ block: "nearest" });
     return undefined;
   };
@@ -71,6 +80,7 @@ type RevealableThread = Parameters<typeof filterSidebarV2VisibleThreads>[0][numb
 export function resolveSidebarRouteReveal<T extends RevealableThread>(input: {
   readonly reveal: SidebarRouteReveal;
   readonly routeKey: string | null;
+  readonly routeKeyInPlace: boolean;
   readonly isSearching: boolean;
   readonly scopedProjectKeys: ReadonlySet<string> | null;
   readonly delegatedUnderParent: ReadonlySet<string>;
@@ -78,7 +88,7 @@ export function resolveSidebarRouteReveal<T extends RevealableThread>(input: {
 }): { readonly pendingKey: string | null; readonly widensScope: boolean } {
   const { reveal, routeKey, isSearching, scopedProjectKeys, delegatedUnderParent, findThread } =
     input;
-  const pendingKey = pendingSidebarRouteReveal(reveal, routeKey);
+  const pendingKey = pendingSidebarRouteReveal(reveal, routeKey, input.routeKeyInPlace);
   // Search results replace the thread list; the reveal waits for it to return.
   const thread = pendingKey === null || isSearching ? undefined : findThread(pendingKey);
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads

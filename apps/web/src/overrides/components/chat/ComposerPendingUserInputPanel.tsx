@@ -1,4 +1,5 @@
 import { type RuntimeRequestId, type ScopedThreadRef } from "@t3tools/contracts";
+import { useGT } from "gt-react";
 import { memo } from "react";
 import { CheckIcon } from "lucide-react";
 
@@ -100,6 +101,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onAdvance: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
 }) {
+  const gt = useGT();
   // Upstream #9786: a client without the operate scope sees the questions but
   // cannot answer. The hook owns the click, number-key and auto-advance guards
   // from the same two inputs; the option buttons mirror them visually.
@@ -152,8 +154,8 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
           // real button and needs none of upstream's click/keydown containment.
           <ComposerBanner.Dismiss
             className="ms-auto"
-            aria-label="Dismiss question without answering"
-            title="Dismiss question without answering"
+            aria-label={gt("Dismiss question without answering")}
+            title={gt("Dismiss question without answering")}
             disabled={isResponding}
             data-pending-user-input-dismiss
             onClick={() => {

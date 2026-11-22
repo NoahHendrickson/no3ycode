@@ -1,4 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
+import { useGT } from "gt-react";
 import * as Schema from "effect/Schema";
 import {
   useEffect,
@@ -20,6 +21,7 @@ import {
 import { getLocalStorageItem, removeLocalStorageItem } from "../hooks/useLocalStorage";
 import {
   isRichTextBoldShortcut,
+  isSidebarToggleShortcut,
   resolveShortcutCommand,
   shortcutLabelForCommand,
 } from "../keybindings";
@@ -128,11 +130,10 @@ function readInitialThreadSidebarWidth(): number {
   try {
     return resolveInitialThreadSidebarWidth(
       getLocalStorageItem(THREAD_SIDEBAR_WIDTH_STORAGE_KEY, Schema.Finite),
-      window.innerWidth,
     );
   } catch (error) {
     console.error("Could not read persisted thread sidebar width.", error);
-    return resolveInitialThreadSidebarWidth(null, window.innerWidth);
+    return resolveInitialThreadSidebarWidth(null);
   }
 }
 
@@ -328,6 +329,7 @@ function registerAppShellCommands(router: AnyRouter, shellElement: Element): () 
    floats while the sidebar is collapsed. Only the button goes; the host div stays mounted:
    it carries the sidebar.toggle keybinding and the app shell command registrations. */
 function SidebarControl({ showSidebar }: { readonly showSidebar: boolean }) {
+  const gt = useGT();
   const router = useRouter();
   const usagePageOpen = useLocation({ select: (location) => location.pathname === "/usage" });
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
@@ -367,8 +369,14 @@ function SidebarControl({ showSidebar }: { readonly showSidebar: boolean }) {
         return;
       }
       if (
-        resolveShortcutCommand(event, keybindings, { context: { usagePageOpen } }) !==
-        "sidebar.toggle"
+        !isSidebarToggleShortcut(event, keybindings, {
+          context: {
+            terminalFocus: isTerminalFocused(),
+            previewFocus: isPreviewFocused(),
+            ...readRoutePanelsOpen(router),
+            usagePageOpen,
+          },
+        })
       )
         return;
 
@@ -385,7 +393,7 @@ function SidebarControl({ showSidebar }: { readonly showSidebar: boolean }) {
       window.removeEventListener("keydown", onKeyDown, true);
       unsubscribe?.();
     };
-  }, [keybindings, showSidebar, toggleSidebar, usagePageOpen]);
+  }, [keybindings, router, showSidebar, toggleSidebar, usagePageOpen]);
 
   // The control lives as long as the shell, so it carries the shell's commands. Created
   // once so re-renders never re-register them.
@@ -409,7 +417,7 @@ function SidebarControl({ showSidebar }: { readonly showSidebar: boolean }) {
             render={
               <SidebarTrigger
                 className="pointer-events-auto [&_svg]:size-4!"
-                aria-label="Toggle main sidebar"
+                aria-label={gt("Toggle main sidebar")}
                 /* fork:begin fork-sidebar-peek — see .fork/customizations.yaml#fork-sidebar-peek */
                 {...peekTriggerProps}
                 /* fork:end fork-sidebar-peek */
@@ -421,7 +429,9 @@ function SidebarControl({ showSidebar }: { readonly showSidebar: boolean }) {
               Inlet hides it while the card is open (theme.custom.inlet-peek.css). */}
           <TooltipPopup side="right" data-fork-peek-tooltip="">
             {/* fork:end fork-sidebar-peek */}
-            Toggle main sidebar{shortcutLabel ? ` (${shortcutLabel})` : ""}
+            {shortcutLabel
+              ? gt("Toggle main sidebar ({shortcut})", { shortcut: shortcutLabel })
+              : gt("Toggle main sidebar")}
           </TooltipPopup>
         </Tooltip>
       ) : null}
@@ -437,7 +447,8 @@ export function AppSidebarLayout({
   children: ReactNode;
   showSidebar?: boolean;
 }) {
-  const sidebarArea = workspaceAreaProps("sidebar", 0, "Threads");
+  const gt = useGT();
+  const sidebarArea = workspaceAreaProps("sidebar", 0, gt("Threads"));
   const [sidebarRouteReveal] = useState<SidebarRouteReveal>(() => ({
     observedKey: null,
     pendingKey: null,
@@ -460,7 +471,7 @@ export function AppSidebarLayout({
     } catch (error) {
       console.error("Could not clear persisted thread sidebar width.", error);
     }
-    setSidebarWidth(resolveInitialThreadSidebarWidth(null, viewportWidth));
+    setSidebarWidth(resolveInitialThreadSidebarWidth(null));
   };
   const isWindowFullscreen = useSyncExternalStore(
     subscribeToWindowFullscreen,
@@ -512,7 +523,7 @@ export function AppSidebarLayout({
               /* fork:end fork-sidebar-peek */
               {...sidebarArea}
               role="navigation"
-              aria-label="Threads"
+              aria-label={gt("Threads")}
               resizable={{
                 maxWidth: sidebarMaximumWidth,
                 minWidth: sidebarMinimumWidth,
