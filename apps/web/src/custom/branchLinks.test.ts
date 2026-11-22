@@ -136,6 +136,9 @@ describe("projectBranchUrl", () => {
     expect(
       refBranchUrl(fork, { name: "upstream/main", isRemote: true, remoteName: "upstream" }),
     ).toBe("https://github.com/acme/app/tree/main");
+    expect(refBranchUrl(fork, { name: "release", upstreamRef: "upstream/release" })).toBe(
+      "https://github.com/acme/app/tree/release",
+    );
   });
 });
 

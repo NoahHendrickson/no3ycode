@@ -68,15 +68,15 @@ export function projectBranchUrl(
 /** The link for a ref the branch picker lists: a remote ref on the project's own remote or origin. */
 export function refBranchUrl(
   identity: RepositoryIdentity | null | undefined,
-  ref: Pick<VcsRef, "name" | "isRemote" | "remoteName">,
+  ref: Pick<VcsRef, "name" | "isRemote" | "remoteName" | "upstreamRef">,
 ): string | null {
   if (identity == null) return null;
-  if (ref.isRemote !== true) return projectBranchUrl(identity, ref.name);
+  // A local branch links where it tracks when git knows; otherwise where it would be pushed.
+  const remoteRef = ref.isRemote === true ? ref.name : ref.upstreamRef;
+  if (remoteRef === undefined) return projectBranchUrl(identity, ref.name);
   for (const target of [identity, pushIdentity(identity)]) {
     const prefix = `${target.locator.remoteName}/`;
-    if (ref.remoteName === target.locator.remoteName && ref.name.startsWith(prefix)) {
-      return branchUrlOn(target, ref.name.slice(prefix.length));
-    }
+    if (remoteRef.startsWith(prefix)) return branchUrlOn(target, remoteRef.slice(prefix.length));
   }
-  return null;
+  return ref.isRemote === true ? null : projectBranchUrl(identity, ref.name);
 }

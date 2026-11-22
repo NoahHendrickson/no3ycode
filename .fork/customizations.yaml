@@ -7783,7 +7783,9 @@
     Azure's SSH spellings match commit links. GitHub and GitCafe use
     /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
     /branch/, Azure DevOps ?version=GB<branch>; each branch segment is
-    encoded and the slashes kept. With no known host (or Cursor Origin, which
+    encoded and the slashes kept, except GitCafe, which takes a slashed name as one
+    encoded refs/heads/<branch> segment. The picker links a local branch where it
+    tracks when git reports it; the chip has no tracking ref and uses origin. With no known host (or Cursor Origin, which
     has no branch page) the click copies the name. The chip stays a span with a button role, since
     the row's CSS gives buttons a hover fill that would replace the chip's.
     Its right-click menu, and the branch picker's (BranchToolbarBranchSelector:
