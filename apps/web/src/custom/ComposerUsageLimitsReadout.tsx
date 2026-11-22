@@ -27,7 +27,7 @@ import { environmentPresentations } from "~/state/presentation";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
-import { UsageCircleMeter, UsageMeter } from "./UsageMeter";
+import { UsageCircleMeter } from "./UsageMeter";
 
 const FIVE_HOURS_MINS = 300;
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
@@ -106,7 +106,9 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   );
 });
 
-/** Smoothly expanding single-line vessel strip anchored above the composer (grows upward, zero shift). */
+/** Single-line vessel strip anchored above the composer (grows upward, zero shift). It opens and
+    closes without a height tween: Liquid Glass redraws its native card from the page each frame
+    and could not keep up, and the composer's squared top corners snap with it. */
 const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly openedAt: number;
@@ -115,6 +117,7 @@ const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props:
   return (
     <Collapsible open={props.open}>
       <CollapsiblePanel
+        animate={false}
         data-fork-composer-usage-drawer="true"
         className="pointer-events-auto"
         onKeyDown={(event) => {
@@ -328,11 +331,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
                     <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                       {shortLabel}
                     </span>
-                    <UsageMeter
-                      remaining={window.remainingPercent}
-                      className="h-2.5 w-7 rounded-[3px] border border-border bg-muted/70"
-                      fillClassName="rounded-none"
-                    />
+                    <UsageCircleMeter remaining={window.remainingPercent} />
                   </span>
                 }
               />
