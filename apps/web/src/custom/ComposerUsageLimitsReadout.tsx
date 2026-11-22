@@ -188,9 +188,26 @@ export function compactTrayWindows(pool: LimitPool): readonly LimitPoolWindow[] 
 /** Mounted only while the strip is open, so the composer never subscribes to every environment's providers. */
 function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () => void }) {
   const presentations = useAtomValue(environmentPresentations.presentationsWithProvidersAtom);
-  const pools = collectLimitPools(collectLimitAccounts(presentations), props.now);
-  const notices = actionableLimitNotices(presentations);
-  const externalLinks = collectExternalUsageLinks(presentations);
+  return (
+    <ComposerLimitsTrayView
+      pools={collectLimitPools(collectLimitAccounts(presentations), props.now)}
+      notices={actionableLimitNotices(presentations)}
+      externalLinks={collectExternalUsageLinks(presentations)}
+      now={props.now}
+      onClose={props.onClose}
+    />
+  );
+}
+
+/** @public — the strip as drawn, from plain data; Storybook renders it on its own. */
+export function ComposerLimitsTrayView(props: {
+  readonly pools: readonly LimitPool[];
+  readonly notices: readonly string[];
+  readonly externalLinks: ReadonlyArray<{ readonly label: string; readonly url: string }>;
+  readonly now: number;
+  readonly onClose: () => void;
+}) {
+  const { pools, notices, externalLinks } = props;
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 
   return (
