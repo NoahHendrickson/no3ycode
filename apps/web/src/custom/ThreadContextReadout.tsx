@@ -10,10 +10,16 @@
  * `data-fork-context-chip`, so the row's CSS paints them like the draft's
  * interactive chips.
  */
+import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
+import type { KeyboardEvent, MouseEvent } from "react";
+
 import { resolveBranchToolbarValue, type EnvMode } from "~/components/BranchToolbar.logic";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
+import { readLocalApi } from "~/localApi";
 
+import { projectBranchUrl } from "./branchLinks";
 import { READ_ONLY_CONTEXT_CHIP_CLASS_NAME } from "./composerContextStrip";
+import { copyBranchLink, copyBranchReference } from "./copyBranchReference";
 import { FolderIcon, GitBranchIcon } from "./icons/lucide-hugeicons";
 import { WorktreeIcon } from "./icons/WorktreeIcon";
 
@@ -34,7 +40,7 @@ export function resolveThreadContextBranch(input: {
 }
 
 export function ThreadContextReadout(props: {
-  readonly project: ProjectFaviconProject;
+  readonly project: ProjectFaviconProject & Pick<EnvironmentProject, "repositoryIdentity">;
   readonly isGitRepo: boolean;
   readonly envMode: EnvMode;
   readonly activeWorktreePath: string | null;
@@ -44,6 +50,36 @@ export function ThreadContextReadout(props: {
 }) {
   const branch = resolveThreadContextBranch(props);
   const BranchIcon = props.activeWorktreePath !== null ? WorktreeIcon : GitBranchIcon;
+  const branchUrl = branch ? projectBranchUrl(props.project.repositoryIdentity, branch) : null;
+  const copyBranch = () => {
+    if (branch) copyBranchReference({ branch, url: branchUrl });
+  };
+  const onBranchKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    copyBranch();
+  };
+  const onBranchContextMenu = (event: MouseEvent) => {
+    const api = readLocalApi();
+    if (!branch || !api) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const link = branchUrl;
+    void api.contextMenu
+      .show(
+        [
+          { id: "copy-branch-name" as const, label: "Copy branch name", icon: "copy" },
+          ...(link
+            ? [{ id: "copy-branch-link" as const, label: "Copy branch link", icon: "copy" }]
+            : []),
+        ],
+        { x: event.clientX, y: event.clientY },
+      )
+      .then((action) => {
+        if (action === "copy-branch-name") copyBranchReference({ branch, url: null });
+        if (action === "copy-branch-link" && link) copyBranchLink(link);
+      });
+  };
   return (
     <>
       <span
@@ -60,11 +96,19 @@ export function ThreadContextReadout(props: {
         <span className="min-w-0 truncate">{props.project.title}</span>
       </span>
       {branch ? (
+        // A span, not a button: the row's CSS gives buttons a hover fill that would replace the chip's.
         <span
+          role="button"
+          tabIndex={0}
+          aria-label={branchUrl !== null ? `Copy link to ${branch}` : `Copy branch name ${branch}`}
           data-fork-context-chip
           data-composer-context-control
+          data-fork-branch-link-chip
           data-testid="thread-branch-readout"
           className={READ_ONLY_CONTEXT_CHIP_CLASS_NAME}
+          onClick={copyBranch}
+          onKeyDown={onBranchKeyDown}
+          onContextMenu={onBranchContextMenu}
         >
           <BranchIcon className="size-3 shrink-0" />
           <span className="min-w-0 truncate">{branch}</span>
