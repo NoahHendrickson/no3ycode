@@ -5440,11 +5440,14 @@
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
-    become a projectless chat. A fresh New agent draft takes that pick itself
-    (useDraftProjectChoices, once per draft) wherever a machine has a scratch
-    folder, so it opens on No project, ready to send, with the chip in the
-    bottom-left and the launchpad still offering the projects; with no scratch
-    folder it stays unassigned as above. The scratch folder itself is never listed as a
+    become a projectless chat. New agent starts its draft there itself
+    (placeNewAgentDraftOnScratch, from startNewAgentDraft and the machine
+    chip) wherever the machine has a scratch folder: the draft keeps the New
+    agent key with the scratch project as its project, so it is still the one
+    New agent returns to, keeps the machine chip, the sidebar's lit row and the
+    settings it carried, and opens on No project, ready to send, with the
+    launchpad still offering the projects. With no scratch folder it stays
+    unassigned as above. The scratch folder itself is never listed as a
     project. With two or more machines connected, an unassigned draft also gets a
     machine chip (custom/DraftMachineChip, upstream's
     BranchToolbarEnvironmentSelector) after the project chip: it moves the
@@ -6299,8 +6302,8 @@
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
     request (custom/draftLaunchpadSuggestions). Before a pick, the same git
     work comes from each listed project's own checkout, named for its
-    project; picking one moves the draft into that checkout ("local"), never a
-    new worktree. The pull requests come from the cached pullRequests.list
+    project; picking one moves the draft into that checkout ("local", pinned to
+    that machine), never a new worktree; each suggestion carries that policy. The pull requests come from the cached pullRequests.list
     query and the checkouts from the git status queries the chat uses; a
     failed or unsupported list just offers nothing. Visibility is decided before either is asked for, so a hidden
     launchpad (short window or Chat mode draft) queries nothing. A No project

@@ -16,8 +16,8 @@ import { usePullRequestList } from "~/state/pullRequests";
 import { vcsEnvironment } from "~/state/vcs";
 import {
   deriveLaunchpadSuggestions,
+  type LaunchpadCheckout,
   type LaunchpadGitStatus,
-  type LaunchpadProjectCheckout,
   type LaunchpadSuggestion,
   type LaunchpadSuggestionKind,
 } from "./draftLaunchpadSuggestions";
@@ -78,28 +78,22 @@ const launchpadGitStatusAtom = Atom.family((status: ReturnType<typeof vcsEnviron
     };
   }).pipe(Atom.withEquality(Equal.equals)),
 );
-const NO_LAUNCHPAD_GIT_STATUS_ATOM: ReturnType<typeof launchpadGitStatusAtom> = Atom.make(null);
-
-interface RecentCheckout extends Omit<LaunchpadProjectCheckout, "git"> {
+/** Where a checkout lives: all its git status query needs. */
+interface CheckoutLocation {
+  readonly environmentId: EnvironmentId;
   readonly cwd: string;
 }
 
-/** The recent projects' own checkouts, for a draft with no project yet. Keyed by their JSON so
-    one list of projects is one atom across renders. */
-const recentCheckoutsAtom = Atom.family((key: string) => {
-  const checkouts = JSON.parse(key) as ReadonlyArray<RecentCheckout>;
-  return Atom.make((get): LaunchpadProjectCheckout[] =>
-    checkouts.flatMap(({ cwd, ...checkout }) => {
-      const git = get(
-        launchpadGitStatusAtom(
-          vcsEnvironment.status({ environmentId: checkout.project.environmentId, input: { cwd } }),
-        ),
-      );
-      return git === null ? [] : [{ ...checkout, git }];
-    }),
+/** The statuses of a list of checkouts, in order (null where a folder is not a repository).
+    Keyed by their locations alone, so one list of checkouts is one atom across renders. */
+const checkoutStatusesAtom = Atom.family((key: string) => {
+  const locations: ReadonlyArray<CheckoutLocation> = JSON.parse(key);
+  return Atom.make((get) =>
+    locations.map(({ environmentId, cwd }) =>
+      get(launchpadGitStatusAtom(vcsEnvironment.status({ environmentId, input: { cwd } }))),
+    ),
   ).pipe(Atom.withEquality(Equal.equals));
 });
-const NO_RECENT_CHECKOUTS_ATOM: ReturnType<typeof recentCheckoutsAtom> = Atom.make([]);
 
 /** One list request per environment, covering the given projects. */
 function pullRequestTargets(
@@ -149,8 +143,8 @@ export function DraftLaunchpad(
   props: Parameters<typeof useDraftProjectChoices>[0] & {
     /** The checkout a picked project's thread will run in, when it is the project's own
         checkout (not a new worktree); its git status offers commit, pull and open-PR work. */
-    readonly checkout: { readonly environmentId: EnvironmentId; readonly cwd: string } | null;
-    /** A multi-model send makes fresh worktrees, so checkout work has nowhere to run. */
+    readonly checkout: CheckoutLocation | null;
+    /** A multi-model send makes fresh worktrees, so no checkout's work has anywhere to run. */
     readonly multiModel: boolean;
   },
 ) {
@@ -158,10 +152,8 @@ export function DraftLaunchpad(
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
   const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   const { draftId } = props;
-  // No repository yet: unassigned, or the No project a New agent draft starts on. The
-  // launchpad then offers the projects and their work, and a pick moves the draft.
-  const unassigned =
-    choices.selection.kind === "unassigned" || choices.selection.kind === "no-project";
+  // No repository yet: the launchpad offers the projects and their work, and a pick moves the draft.
+  const { needsProject } = choices;
   const isChat = useComposerDraftStore((store) =>
     draftId === null ? false : isChatDraft(store.getDraftSession(draftId)),
   );
@@ -177,7 +169,7 @@ export function DraftLaunchpad(
   // lists "your" pull requests is the one the task will run under.
   const projectRefs: ScopedProjectRef[] = !shown
     ? []
-    : unassigned
+    : needsProject
       ? recent.map((entry) => ({
           environmentId: entry.targetProject.environmentId,
           projectId: entry.targetProject.id,
@@ -188,36 +180,31 @@ export function DraftLaunchpad(
         : [props.activeProjectRef];
   const authored = usePullRequestList(pullRequestTargets(projectRefs, "authored"));
   const reviewing = usePullRequestList(pullRequestTargets(projectRefs, "reviewing"));
-  // While a pick is pending, `checkout` still names the previous project's checkout.
-  const checkout = !shown || unassigned || choices.pending ? null : props.checkout;
-  const git = useAtomValue(
-    checkout === null
-      ? NO_LAUNCHPAD_GIT_STATUS_ATOM
-      : launchpadGitStatusAtom(
-          vcsEnvironment.status({
-            environmentId: checkout.environmentId,
-            input: { cwd: checkout.cwd },
-          }),
-        ),
-  );
-
-  // With no project picked yet, each recent project's own checkout offers its git work too;
-  // picking one moves the draft into that checkout (see the row's onClick).
-  const recentCheckouts = useAtomValue(
-    !shown || !unassigned || choices.pending || props.multiModel
-      ? NO_RECENT_CHECKOUTS_ATOM
-      : recentCheckoutsAtom(
-          JSON.stringify(
-            recent.map((entry): RecentCheckout => ({
-              project: {
-                environmentId: entry.targetProject.environmentId,
-                projectId: entry.targetProject.id,
-              },
-              name: entry.group.displayName,
-              cwd: entry.targetProject.workspaceRoot,
-            })),
-          ),
-        ),
+  // The checkouts whose git work to offer: with no project yet, each recent project's own (a
+  // pick moves the draft into it); otherwise the picked project's, which a pending pick has
+  // not reached yet.
+  const checkoutOwners: ReadonlyArray<CheckoutLocation & Omit<LaunchpadCheckout, "git">> =
+    !shown || props.multiModel
+      ? []
+      : needsProject
+        ? recent.map((entry) => ({
+            environmentId: entry.targetProject.environmentId,
+            cwd: entry.targetProject.workspaceRoot,
+            project: {
+              environmentId: entry.targetProject.environmentId,
+              projectId: entry.targetProject.id,
+            },
+            name: entry.group.displayName,
+          }))
+        : props.checkout === null || choices.pending
+          ? []
+          : [{ ...props.checkout, project: null, name: null }];
+  const statuses = useAtomValue(
+    checkoutStatusesAtom(
+      JSON.stringify(
+        checkoutOwners.map(({ environmentId, cwd }): CheckoutLocation => ({ environmentId, cwd })),
+      ),
+    ),
   );
 
   if (!shown || draftId === null) return null;
@@ -225,8 +212,10 @@ export function DraftLaunchpad(
   const suggestions = deriveLaunchpadSuggestions({
     authored: authored.data?.entries ?? [],
     reviewing: reviewing.data?.entries ?? [],
-    git,
-    projectCheckouts: recentCheckouts,
+    checkouts: checkoutOwners.flatMap(({ project, name }, index) => {
+      const git = statuses[index] ?? null;
+      return git === null ? [] : [{ project, name, git }];
+    }),
   });
   const entryFor = (project: LaunchpadSuggestion["project"]) =>
     project === null
@@ -238,11 +227,14 @@ export function DraftLaunchpad(
           ),
         ) ?? null);
 
-  // An unassigned draft's suggestions span projects, so each leads with its project's
+  // With no project yet the suggestions span projects, so each leads with its project's
   // icon and picking one picks that project; one whose project isn't pickable is left out.
   const rows = suggestions
-    .map((suggestion) => ({ suggestion, entry: unassigned ? entryFor(suggestion.project) : null }))
-    .filter((row) => !unassigned || row.entry !== null);
+    .map((suggestion) => ({
+      suggestion,
+      entry: needsProject ? entryFor(suggestion.project) : null,
+    }))
+    .filter((row) => !needsProject || row.entry !== null);
   const suggestionCard =
     rows.length === 0 ? null : (
       <Card label="Start something new">
@@ -255,15 +247,10 @@ export function DraftLaunchpad(
               className={ROW_CLASS_NAME}
               onClick={(event) => {
                 if (entry !== null) {
-                  // Git work belongs to the project's own checkout, never a new worktree.
-                  const checkoutWork =
-                    suggestion.kind === "commit" ||
-                    suggestion.kind === "pull" ||
-                    suggestion.kind === "open-pr";
                   choices.pick(
                     entry.group.projectKey,
                     event.currentTarget,
-                    checkoutWork ? { envMode: "local" } : undefined,
+                    suggestion.envMode === null ? undefined : { envMode: suggestion.envMode },
                   );
                 }
                 // A draft can already hold what the user wrote before picking.
@@ -295,7 +282,7 @@ export function DraftLaunchpad(
       </Card>
     );
 
-  if (!unassigned) {
+  if (!needsProject) {
     return suggestionCard === null ? null : <LaunchpadRoot>{suggestionCard}</LaunchpadRoot>;
   }
   return (

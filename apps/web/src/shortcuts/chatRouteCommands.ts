@@ -105,13 +105,14 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
        the shortcut lands back on the draft that still needs one. */
     const context = readThreadContext();
     if (isUnassignedDraft(context.activeDraftThread)) {
-      void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+      void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
       return;
     }
     // With no current or open project, such as when every project is archived, the
     // draft asks for one, as the New agent button does.
     void startNewThreadFromContext(context).then((started) => {
-      if (!started) void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+      if (!started)
+        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
     });
     /* fork:end fork-new-agent-draft */
   };
@@ -142,7 +143,7 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
            the draft asks for the project itself. Upstream opens the palette's "New thread in…"
            with several project groups, else starts in the current project. */
         claim(event);
-        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
         /* fork:end fork-new-agent-draft */
       },
       "preview.toggle": (event) => {

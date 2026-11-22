@@ -23,6 +23,9 @@ export interface LaunchpadSuggestion {
   readonly prompt: string;
   /** The project a pick from an unassigned draft moves it to; null for checkout work. */
   readonly project: { readonly environmentId: EnvironmentId; readonly projectId: ProjectId } | null;
+  /** "local" for git work, which belongs to the project's own checkout, never a new worktree;
+      null takes the project's default. */
+  readonly envMode: "local" | null;
 }
 
 export type LaunchpadPullRequest = PullRequestListEntry & { readonly environmentId: EnvironmentId };
@@ -57,6 +60,7 @@ function pullRequestSuggestion(
         id,
         kind,
         project,
+        envMode: null,
         title: `Resolve conflicts on ${ref}`,
         meta: "Conflicts",
         prompt: `Resolve the merge conflicts on ${at}. Bring ${pr.headBranch} up to date with ${pr.baseBranch}, resolve the conflicts, run the affected tests, and push.`,
@@ -66,6 +70,7 @@ function pullRequestSuggestion(
         id,
         kind,
         project,
+        envMode: null,
         title: `Fix checks on ${ref}`,
         meta: "Checks failing",
         prompt: `The checks on ${at} are failing. Read the failing job logs, find the root cause, and push a fix to ${pr.headBranch}.`,
@@ -75,6 +80,7 @@ function pullRequestSuggestion(
         id,
         kind,
         project,
+        envMode: null,
         title: `Address review on ${ref}`,
         meta: "Changes requested",
         prompt: `Changes were requested on ${at}. Read the review comments, make the changes, and push them to ${pr.headBranch}.`,
@@ -84,6 +90,7 @@ function pullRequestSuggestion(
         id,
         kind,
         project,
+        envMode: null,
         title: `Review ${ref}`,
         meta: "Review requested",
         prompt: `Review ${at}. Read the diff, then summarize the real issues ranked by severity.`,
@@ -93,6 +100,7 @@ function pullRequestSuggestion(
         id,
         kind: "merge",
         project,
+        envMode: null,
         title: `Merge ${ref}`,
         meta: "Ready to merge",
         prompt: `${at} is approved and its checks pass. Confirm it is still mergeable, then merge it.`,
@@ -116,32 +124,28 @@ function authoredKind(pr: LaunchpadPullRequest): LaunchpadSuggestionKind | null 
   return null;
 }
 
-/** A recent project's own checkout, for a draft with no project yet: its work names the
-    project, and picking it moves the draft there. */
-export interface LaunchpadProjectCheckout {
-  readonly project: NonNullable<LaunchpadSuggestion["project"]>;
-  readonly name: string;
+/** A checkout whose git work to offer: the picked project's own (no project or name, since the
+    draft already names it), or, for a draft with no project yet, a recent project's, whose work
+    names the project and picking it moves the draft there. */
+export interface LaunchpadCheckout {
+  readonly project: LaunchpadSuggestion["project"];
+  readonly name: string | null;
   readonly git: LaunchpadGitStatus;
 }
 
-function gitSuggestions(
-  git: LaunchpadGitStatus,
-  checkout: Omit<LaunchpadProjectCheckout, "git"> | null = null,
-): LaunchpadSuggestion[] {
+function gitSuggestions({ project, name, git }: LaunchpadCheckout): LaunchpadSuggestion[] {
   const suggestions: LaunchpadSuggestion[] = [];
   const branch = git.refName;
-  const project = checkout?.project ?? null;
   const id = (kind: string) =>
-    checkout === null
-      ? kind
-      : `${kind}:${checkout.project.environmentId}:${checkout.project.projectId}`;
-  const where = checkout === null ? "" : ` in ${checkout.name}`;
+    project === null ? kind : `${kind}:${project.environmentId}:${project.projectId}`;
+  const where = name === null ? "" : ` in ${name}`;
   if (git.changedFileCount > 0) {
     const files = `${git.changedFileCount} ${plural(git.changedFileCount, "changed file", "changed files")}`;
     suggestions.push({
       id: id("commit"),
       kind: "commit",
       project,
+      envMode: "local",
       title: `Commit ${files}${where}`,
       meta: "Uncommitted",
       prompt: `Look at the uncommitted changes in this checkout (${files}), group them into sensible commits, and commit them.`,
@@ -153,10 +157,8 @@ function gitSuggestions(
       id: id("pull"),
       kind: "pull",
       project,
-      title:
-        checkout === null
-          ? `Pull ${commits} on ${branch}`
-          : `Pull ${commits} into ${checkout.name}`,
+      envMode: "local",
+      title: name === null ? `Pull ${commits} on ${branch}` : `Pull ${commits} into ${name}`,
       meta: "Behind",
       prompt: `Pull the ${commits} on ${branch} into this checkout and summarize what changed.`,
     });
@@ -172,6 +174,7 @@ function gitSuggestions(
       id: id("open-pr"),
       kind: "open-pr",
       project,
+      envMode: "local",
       title: `Open a pull request for ${branch}${where}`,
       meta: "No PR",
       prompt: `Open a pull request for ${branch}. Summarize what the branch changes in the description.`,
@@ -188,9 +191,7 @@ function gitSuggestions(
 export function deriveLaunchpadSuggestions(input: {
   readonly authored: ReadonlyArray<LaunchpadPullRequest>;
   readonly reviewing: ReadonlyArray<LaunchpadPullRequest>;
-  readonly git: LaunchpadGitStatus | null;
-  /** Recent projects' own checkouts, for a draft that has no project yet. */
-  readonly projectCheckouts?: ReadonlyArray<LaunchpadProjectCheckout>;
+  readonly checkouts: ReadonlyArray<LaunchpadCheckout>;
 }): LaunchpadSuggestion[] {
   const fixes: LaunchpadSuggestion[] = [];
   const merges: LaunchpadSuggestion[] = [];
@@ -209,11 +210,8 @@ export function deriveLaunchpadSuggestions(input: {
     seen.add(pr.url);
     reviews.push(pullRequestSuggestion(pr, "review"));
   }
-  return [
-    ...fixes,
-    ...reviews,
-    ...(input.git === null ? [] : gitSuggestions(input.git)),
-    ...(input.projectCheckouts ?? []).flatMap((checkout) => gitSuggestions(checkout.git, checkout)),
-    ...merges,
-  ].slice(0, LAUNCHPAD_SUGGESTION_LIMIT);
+  return [...fixes, ...reviews, ...input.checkouts.flatMap(gitSuggestions), ...merges].slice(
+    0,
+    LAUNCHPAD_SUGGESTION_LIMIT,
+  );
 }

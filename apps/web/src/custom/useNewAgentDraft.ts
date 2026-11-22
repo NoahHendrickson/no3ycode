@@ -14,6 +14,9 @@
  * are the same calls upstream makes.
  */
 import { useAtomValue } from "@effect/atom-react";
+import { scopeProjectRef } from "@t3tools/client-runtime/environment";
+import { isScratchProject } from "@t3tools/client-runtime/state/projects";
+import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import {
   DEFAULT_RUNTIME_MODE,
   DEFAULT_SERVER_SETTINGS,
@@ -37,15 +40,63 @@ import {
 import { readT3ProjectFile } from "../lib/t3ProjectFileDefaults";
 import { newDraftId, newThreadId } from "../lib/utils";
 import type { SidebarProjectGroupMember, SidebarProjectSnapshot } from "../sidebarProjectGrouping";
-import { readThreadShell } from "../state/entities";
+import { useScratchProject } from "../hooks/useScratchProject";
+import { readProjects, readThreadShell } from "../state/entities";
 import { usePrimaryEnvironmentId } from "../state/environments";
 import { environmentServerConfigsAtom } from "../state/server";
 import { resolveThreadRouteTarget } from "../threadRoutes";
 import {
   isUnassignedDraft,
   NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+  NEW_AGENT_DRAFT_PROJECT_ID,
   newAgentDraftProjectRef,
 } from "./newAgentDraft";
+
+/** What placing a New agent draft on No project needs: the useScratchProject pair. */
+export interface NewAgentScratch {
+  readonly scratchWorkspaceRootFor: (environmentId: EnvironmentId | null) => string | null;
+  readonly openScratchProject: (
+    environmentId: EnvironmentId,
+    failureTitle?: string,
+  ) => Promise<EnvironmentProject | null>;
+}
+
+/** Puts a New agent draft on its machine's No project under its own key, so New agent still
+    returns to it with the settings it carried. Synchronous once the scratch project is loaded;
+    after opening it, writes only if the draft is still unplaced on that machine with no pick in
+    flight. Without a scratch folder it stays unassigned. */
+export async function placeNewAgentDraftOnScratch(
+  draftId: DraftId,
+  scratch: NewAgentScratch,
+): Promise<void> {
+  const { getDraftSession, setLogicalProjectDraftThreadId } = useComposerDraftStore.getState();
+  const unplacedOn = (environmentId?: EnvironmentId) => {
+    const session = getDraftSession(draftId);
+    return (
+      isUnassignedDraft(session) &&
+      session?.promotedTo == null &&
+      session?.projectId === NEW_AGENT_DRAFT_PROJECT_ID &&
+      (environmentId === undefined || session.environmentId === environmentId) &&
+      readPendingDraftProjectKey(draftId) === null
+    );
+  };
+  const environmentId = getDraftSession(draftId)?.environmentId;
+  if (environmentId === undefined || !unplacedOn()) return;
+  const root = scratch.scratchWorkspaceRootFor(environmentId);
+  if (root === null) return;
+  const known = readProjects().find(
+    (project) => project.environmentId === environmentId && isScratchProject(project, root),
+  );
+  const project =
+    known ?? (await scratch.openScratchProject(environmentId, "Could not open No project"));
+  if (project === null || !unplacedOn(environmentId)) return;
+  setLogicalProjectDraftThreadId(
+    NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+    scopeProjectRef(project.environmentId, project.id),
+    draftId,
+    {},
+  );
+}
 
 /** Opens the unassigned draft. Reuses the live one when there is one — the
     prompt is editable before a project is chosen, so a second click goes
@@ -57,17 +108,20 @@ export function useStartNewAgentDraft(): (options?: {
 }) => Promise<DraftId | null> {
   const router = useRouter();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
-  return useCallback(
-    (options) => startNewAgentDraft(router, primaryEnvironmentId, options),
-    [primaryEnvironmentId, router],
-  );
+  const { scratchWorkspaceRootFor, openScratchProject } = useScratchProject();
+  return (options) =>
+    startNewAgentDraft(router, primaryEnvironmentId, {
+      ...options,
+      scratch: { scratchWorkspaceRootFor, openScratchProject },
+    });
 }
 
 /** The hook's body as a plain function, for the shortcut dispatcher (no React). */
 export async function startNewAgentDraft(
   router: AnyRouter,
   primaryEnvironmentId: EnvironmentId | null,
-  options?: { replace?: boolean },
+  /** `scratch` starts the draft on No project where its machine has one. */
+  options?: { readonly replace?: boolean; readonly scratch?: NewAgentScratch },
 ): Promise<DraftId | null> {
   {
     {
@@ -95,6 +149,7 @@ export async function startNewAgentDraft(
         readThreadShell({ environmentId: existing.environmentId, threadId: existing.threadId }) ===
           null
       ) {
+        if (options?.scratch) void placeNewAgentDraftOnScratch(existing.draftId, options.scratch);
         await navigateTo(existing.draftId);
         return existing.draftId;
       }
@@ -154,6 +209,7 @@ export async function startNewAgentDraft(
         // Seeded, not explicit: a project default may still replace it.
         setModelSelection(draftId, carryModelSelection, { replaceOptions: true });
       }
+      if (options?.scratch) void placeNewAgentDraftOnScratch(draftId, options.scratch);
       await navigateTo(draftId);
       return draftId;
     }
@@ -173,6 +229,12 @@ export function moveUnassignedDraft(draftId: DraftId, environmentId: Environment
     draftId,
     { environmentSelection: "manual", loadBalancedEnvironmentId: null },
   );
+}
+
+/** Work that only makes sense in the project's own checkout (commit, pull) sets "local", which
+    also pins the draft to that checkout's machine. */
+export interface DraftProjectAssignOptions {
+  readonly envMode?: DraftThreadEnvMode;
 }
 
 /** What a pick needs to know about its target: the logical key the draft
@@ -255,8 +317,7 @@ export async function assignDraftProject(
   draftId: DraftId,
   pick: DraftProjectPick,
   settings: ServerSettings,
-  /** Work that only makes sense in the project's own checkout (commit, pull) sets "local". */
-  options?: { readonly envMode?: DraftThreadEnvMode },
+  options?: DraftProjectAssignOptions,
 ): Promise<void> {
   const request = { projectKey: "resolve" in pick ? pick.pendingKey : pick.group.projectKey };
   latestAssignmentByDraftId.set(draftId, request);
@@ -301,6 +362,10 @@ export async function assignDraftProject(
   if (!session || session.promotedTo != null) return;
   const envMode = options?.envMode ?? projectSettings.defaultThreadEnvMode;
   setLogicalProjectDraftThreadId(entry.group.projectKey, projectRef, draftId, {
+    // Checkout work names one machine's checkout, so routing must not move it to another.
+    ...(options?.envMode === "local"
+      ? { environmentSelection: "manual" as const, loadBalancedEnvironmentId: null }
+      : {}),
     branch: null,
     worktreePath: null,
     envMode,
@@ -329,7 +394,7 @@ export async function assignDraftProject(
 export function useAssignDraftProject(): (
   draftId: DraftId,
   pick: DraftProjectPick,
-  options?: Parameters<typeof assignDraftProject>[3],
+  options?: DraftProjectAssignOptions,
 ) => Promise<void> {
   const environmentServerConfigs = useAtomValue(environmentServerConfigsAtom);
   return useCallback(

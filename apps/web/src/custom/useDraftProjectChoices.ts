@@ -18,7 +18,6 @@ import {
   sortLogicalProjectsForSidebar,
 } from "~/components/Sidebar.logic";
 import { toastManager } from "~/components/ui/toast";
-import { useEffect } from "react";
 
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
@@ -32,7 +31,11 @@ import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
 import { rememberDraftProjectPick } from "./draftProjectPickMotion";
 import { isUnassignedDraft, resolveNoProjectEnvironmentId } from "./newAgentDraft";
-import { useAssignDraftProject, useDraftProjectAssignmentPending } from "./useNewAgentDraft";
+import {
+  type DraftProjectAssignOptions,
+  useAssignDraftProject,
+  useDraftProjectAssignmentPending,
+} from "./useNewAgentDraft";
 
 /** How many recent projects an unassigned draft's launchpad lists before "All projects";
     the composer is centred, so the launchpad has roughly half a window to fit in. */
@@ -45,8 +48,6 @@ export const SHORT_WINDOW_QUERY = "(max-height: 34rem)";
 /** The radio value of the "No project" row, and its pending key while the
     scratch project opens; never a logical project key. */
 export const NO_PROJECT_VALUE = "no-project";
-/** New agent drafts already moved onto No project, so a later render never re-defaults one. */
-const defaultedDraftIds = new Set<DraftId>();
 
 /** What the chip shows: nothing chosen yet, "No project", or a project.
     `pending` while a pick is still moving the draft. */
@@ -169,10 +170,10 @@ export function useDraftProjectChoices(props: {
       : selection.kind === "project"
         ? (selection.entry?.group.projectKey ?? "")
         : "";
-  // A draft with no repository yet (unassigned, or No project) lists its recent
-  // projects in the launchpad under the composer.
+  // No repository yet (unassigned, or No project): the launchpad lists the recent projects.
+  const needsProject = selection.kind !== "project";
   const recentEntries =
-    (selection.kind === "unassigned" || selection.kind === "no-project") && draftId !== null
+    needsProject && draftId !== null
       ? rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)
       : null;
 
@@ -186,11 +187,7 @@ export function useDraftProjectChoices(props: {
   };
 
   /** Points the draft at a menu or launchpad row's value; `pill` is the row picked, which the chip opens from. */
-  const pick = (
-    next: string,
-    pill?: Element,
-    options?: Parameters<typeof assignDraftProject>[2],
-  ) => {
+  const pick = (next: string, pill?: Element, options?: DraftProjectAssignOptions) => {
     if (draftId === null || next === value) return;
     if (next === NO_PROJECT_VALUE) {
       if (noProjectEnvironmentId === null) return;
@@ -224,21 +221,11 @@ export function useDraftProjectChoices(props: {
     );
   };
 
-  // A fresh New agent draft starts on No project, ready to send as a chat; the
-  // launchpad still offers the projects. Once per draft (several components
-  // mount this hook), and only where a machine has a No project folder.
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- opens the No project folder on the server to move a fresh draft onto it
-  useEffect(() => {
-    if (draftId === null || !draftIsUnassigned || noProjectEnvironmentId === null) return;
-    if (pendingProjectKey !== null || defaultedDraftIds.has(draftId)) return;
-    defaultedDraftIds.add(draftId);
-    pick(NO_PROJECT_VALUE);
-  }, [draftId, draftIsUnassigned, noProjectEnvironmentId, pendingProjectKey, pick]);
-
   return {
     entries,
     recentEntries,
     selection,
+    needsProject,
     value,
     pending: selection.kind !== "unassigned" && selection.pending,
     noProjectEnvironmentId,

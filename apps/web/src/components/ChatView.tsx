@@ -4340,12 +4340,10 @@ export default function ChatView(props: ChatViewProps) {
                               draftId={draftId}
                               activeProjectRef={activeProjectRef}
                               activeProjectTitle={activeProject?.title ?? null}
+                              // A multi-model send makes fresh worktrees even in "local" mode.
                               multiModel={multipleModelSelections !== null}
                               checkout={
-                                // A multi-model send makes fresh worktrees even in "local" mode.
-                                envMode === "local" &&
-                                multipleModelSelections === null &&
-                                gitStatusCwd !== null
+                                envMode === "local" && gitStatusCwd !== null
                                   ? { environmentId, cwd: gitStatusCwd }
                                   : null
                               }
