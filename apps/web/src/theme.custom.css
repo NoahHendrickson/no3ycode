@@ -1128,6 +1128,16 @@
   margin-inline-end: -6px;
 }
 
+/* A live session's cancel X sits the same 2px from its check. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-composer-actions="right"]
+  [data-fork-composer-action="dictate-cancel"] {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 2px -4px 2px 2px;
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]):is(
     :hover,
