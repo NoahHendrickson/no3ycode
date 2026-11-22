@@ -11,39 +11,29 @@
     overflow: visible;
   }
 
-  /* Glass (data-fork-sidebar-vibrancy, set through appearance.ts's stand-in bridge) is a
-     see-through window over the desktop, which macOS blurs. A browser shows nothing behind it,
-     so a blurred stand-in wallpaper sits under the canvas instead, and under each docs example. */
-  html[data-fork-sidebar-vibrancy="true"] {
-    --story-wallpaper:
-      /* macOS lays its dark window material over the blurred desktop; Glass's own fills (popups at
-         68%, the sidebar at 60%) then sit on top, so the desktop needs colour everywhere a story
-         puts a surface, the middle included, or the glass reads as a flat dark panel. */
-      linear-gradient(rgb(20 22 24 / 0.35), rgb(20 22 24 / 0.35)),
-      radial-gradient(45% 45% at 50% 48%, rgb(176 86 196 / 0.85), transparent 72%),
-      radial-gradient(55% 55% at 15% 20%, rgb(240 128 80 / 0.95), transparent 72%),
-      radial-gradient(55% 60% at 85% 25%, rgb(70 120 235 / 0.95), transparent 72%),
-      radial-gradient(70% 55% at 50% 100%, rgb(40 170 150 / 0.9), transparent 72%),
-      /* An image layer, not a colour: Glass clears :root's background-color !important. */
-      linear-gradient(#2a2d3a, #2a2d3a);
-    background: var(--story-wallpaper);
-    background-attachment: fixed;
+  /* Glass stands in for a macOS 26+ main window (appearance.ts): Liquid Glass under the docked
+     sidebar only. The app clears html, body and that sidebar, so the page paints the window's
+     backing (forkSidebarVibrancy.ts) and the sidebar paints the glass as measured on screen over
+     it, the colour a menu reaching past the sidebar takes (theme.custom.palettes.css). A menu
+     wholly over the sidebar shows that glass in the app, so it takes the same colour here. */
+  html[data-fork-sidebar-vibrancy="liquid-glass"] {
+    --story-liquid-glass: color-mix(in srgb, #ffffff 4%, #141618);
+    /* An image layer, not a colour: Glass clears html's background-color. */
+    background-image: linear-gradient(#141618, #141618);
   }
-  html[data-fork-sidebar-vibrancy="true"] .docs-story {
-    background: var(--story-wallpaper);
+  html[data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"] {
+    --story-liquid-glass: #2a2324;
+    background-image: linear-gradient(#1f1c1b, #1f1c1b);
   }
-  /* The desktop window has no fill of its own under Glass; the story canvas stands in for it, so
-     it drops its fill too and the app's translucent surfaces sit on the wallpaper. */
-  html[data-fork-sidebar-vibrancy="true"] [data-story-canvas] {
-    background-color: transparent;
-  }
-  /* Where the app would put the inset under the surface, the canvas paints the inset's Glass fill
-     (theme.custom.glass-stage.css / palettes.css): the panel round a chat view, the stage behind a
-     page with no card. The sidebar and bare canvases draw their own fills. */
-  html[data-fork-sidebar-vibrancy="true"] [data-story-canvas][data-chat-column-maximized-away] {
-    background-image: linear-gradient(var(--fork-glass-panel), var(--fork-glass-panel));
-  }
-  html[data-fork-sidebar-vibrancy="true"] [data-story-canvas][data-app-modal] {
-    background-image: linear-gradient(var(--fork-glass-stage), var(--fork-glass-stage));
+  html[data-fork-sidebar-vibrancy="liquid-glass"]
+    :is(
+      [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"])
+        [data-slot="sidebar-container"][data-sidebar-version="v2"],
+      [data-fork-liquid-glass-popup="glass"]
+    ) {
+    background-image: linear-gradient(
+      var(--story-liquid-glass),
+      var(--story-liquid-glass)
+    ) !important;
   }
 </style>

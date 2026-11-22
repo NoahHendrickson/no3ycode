@@ -34,11 +34,14 @@ export function Surface({
   name,
   children,
   inline = false,
+  glass = false,
 }: {
   name: SurfaceName;
   children: ReactNode;
   /** On a docs page the example sits in the page's flow, so it sizes to its content. */
   inline?: boolean;
+  /** Under Glass the sidebar canvas is the docked sidebar, so Liquid Glass clears it as the app does. */
+  glass?: boolean;
 }) {
   const height = inline ? "min-h-48" : "min-h-screen";
   if (name === "app-sidebar") {
@@ -57,13 +60,20 @@ export function Surface({
     );
   }
   const { scope, layout } = CANVASES[name];
-  return (
+  const canvas = (
     <div
       {...scope}
+      {...(glass && name === "sidebar" ? { "data-slot": "sidebar-container" } : {})}
       data-story-canvas=""
       className={`${LAYOUTS[layout]} ${height} bg-background text-foreground`}
     >
       {children}
+    </div>
+  );
+  if (!glass || name !== "sidebar") return canvas;
+  return (
+    <div data-slot="sidebar-wrapper" className="contents">
+      {canvas}
     </div>
   );
 }

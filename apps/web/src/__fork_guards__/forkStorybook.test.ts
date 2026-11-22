@@ -53,12 +53,18 @@ describe("fork-storybook", () => {
     const themes = read(`${storybook}../stories/storyTheme.ts`);
     expect(themes).toContain("BASIC_TONES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
-    // Glass shows through only once the bridge reports the window material, as on the desktop,
-    // and the wallpaper standing in for the desktop paints only then.
-    expect(appearance).toContain("setSidebarVibrancy:");
-    expect(read(`${storybook}preview-head.html`)).toMatch(
-      /html\[data-fork-sidebar-vibrancy="true"\] \{[^}]*background: var\(--story-wallpaper\)/u,
+    // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, the stand-in glass
+    // paints only once the app stamps that marker, and the sidebar canvas is docked under Glass.
+    expect(appearance).toMatch(
+      /setSidebarVibrancy: async \(enabled: boolean\) => \(enabled \? "liquid-glass"/u,
     );
+    expect(appearance).toContain("sidebarLiquidGlass: { setWidth:");
+    const head = read(`${storybook}preview-head.html`);
+    expect(head).toMatch(
+      /html\[data-fork-sidebar-vibrancy="liquid-glass"\] \{[^}]*--story-liquid-glass:/u,
+    );
+    expect(head).toContain('[data-fork-liquid-glass-popup="glass"]');
+    expect(preview).toContain('glass={storyTheme(context.globals).palette === "glass"}');
   });
 
   it("resolves modules as the app's Vite config does", () => {
