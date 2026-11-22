@@ -2811,21 +2811,9 @@
     keep the same safe-area variable and place the glyph at the ordinary 16px
     edge inset.
 
-    The brand stays on the trailing edge and ends 16px from it. It is Figma
-    t3-fork 676:41854: the 16px pixel mark (custom/SidebarBrandMark.tsx, an
-    inline SVG of 676:42956's 21-cell pinwheel whose body, light and outline
-    colours are --fork-brand-mark-* variables with the design's colours as
-    fallbacks, so a palette can recolour it), a 4px gap, then the 13x3 "no3y"
-    wordmark at 8px and 40% sidebar-foreground, on every theme including Inlet.
-    Under 1.5x device pixels the 21 cells cannot land on 16 pixels, so
-    SidebarBrandMarkLowDensity swaps in a hand-drawn 15-cell flower and the
-    wordmark draws at 39x9: one and three device pixels per cell at 1x. The link
-    carries its own display gate, hidden below 48rem and a flex row above,
-    because upstream 9885a845c deleted the .sidebar-brand stylesheet rule that
-    used to supply it; without the inline flex the block-level mark pushed the
-    name below the header. The lockup is a fixed 55px and both halves are
-    shrink-0; the link may still shrink so a 208px sidebar cannot overflow the
-    header. Search, New agent, Usage, Automations and Pull requests remain
+    The header draws no brand: the pixel flower and the "no3y" wordmark were
+    removed, so the Code / Chat tabs take ml-auto to hold the trailing edge and
+    the width probe measures the controls alone. Search, New agent, Usage, Automations and Pull requests remain
     labeled action rows; Threads remains a static label whose trailing add,
     sort and filter buttons own adding a project, the sort order and the
     scope / group-by menu.
@@ -2894,9 +2882,6 @@
     - apps/web/src/custom/sidebarV2ProjectSort.ts
     - apps/web/src/custom/useScrollGutterWidth.ts
     - apps/web/src/custom/SidebarStageDitherArt.tsx
-    - apps/web/src/custom/SidebarBrandMark.tsx
-    - apps/web/src/custom/SidebarBrandMarkLowDensity.tsx
-    - apps/web/src/custom/SidebarBrandWordmark.tsx
     - apps/web/src/custom/assets/sidebar-stage-dither-dev.png
     - apps/web/src/theme.custom.css
   shadows: []
