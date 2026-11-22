@@ -7698,14 +7698,19 @@
     apps/fork-storybook/code-connect/*.figma.ts template names one kit component
     set (`// url=`) and maps its Figma properties to the app component's real
     props, so Dev Mode's Inspect panel, and agents reading the file through the
-    Figma MCP server, get the app's code instead of generated markup. The kit's
-    glyphs are one batch (icons.figma.batch.json + .ts, each glyph to its
-    lucide-react shim export), so a swapped glyph renders through its own
-    connection (getInstanceSwap(...).executeTemplate()); Figma drops imports
-    nested two levels deep, so glyph imports also ride in template metadata for
-    the Tabs strip to collect. The subagent card's snippet is the timeline's
-    real call (<ForkSubagentGroup row={row} …/>), since its status, open state,
-    timer and model all come from the row. Shared helpers live in
+    Figma MCP server, get the app's code instead of generated markup. Every kit
+    component with an app counterpart is connected; the guard lists their nodes.
+    The kit's glyphs are one batch (icons.figma.batch.json + .ts, each glyph's
+    icon set to its lucide-react shim export; a connection on a variant does not
+    resolve, so the batch names the Style × Size sets), so a swapped glyph renders
+    through its own connection (getInstanceSwap(...).executeTemplate()). Figma
+    drops imports nested two levels deep, so every nestable template also carries
+    its imports in metadata for its parent (Menu, Select, Dialog, Tabs, …) to
+    collect. A composite whose look comes from app data (the subagent card,
+    thread card, composer, Petals, changed files card, model picker) shows the
+    app's real call; the thread card's row is private to Sidebar.tsx, so its
+    template imports nothing and the guard only checks the source defines it.
+    Shared helpers live in
     code-connect/shared.ts, which the CLI bundles into each template. Templates
     use Figma's maintained template format (the Storybook and React parsers are
     deprecated) and run inside Figma, so they import only "figma" and knip
