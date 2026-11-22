@@ -116,16 +116,33 @@ function authoredKind(pr: LaunchpadPullRequest): LaunchpadSuggestionKind | null 
   return null;
 }
 
-function gitSuggestions(git: LaunchpadGitStatus): LaunchpadSuggestion[] {
+/** A recent project's own checkout, for a draft with no project yet: its work names the
+    project, and picking it moves the draft there. */
+export interface LaunchpadProjectCheckout {
+  readonly project: NonNullable<LaunchpadSuggestion["project"]>;
+  readonly name: string;
+  readonly git: LaunchpadGitStatus;
+}
+
+function gitSuggestions(
+  git: LaunchpadGitStatus,
+  checkout: Omit<LaunchpadProjectCheckout, "git"> | null = null,
+): LaunchpadSuggestion[] {
   const suggestions: LaunchpadSuggestion[] = [];
   const branch = git.refName;
+  const project = checkout?.project ?? null;
+  const id = (kind: string) =>
+    checkout === null
+      ? kind
+      : `${kind}:${checkout.project.environmentId}:${checkout.project.projectId}`;
+  const where = checkout === null ? "" : ` in ${checkout.name}`;
   if (git.changedFileCount > 0) {
     const files = `${git.changedFileCount} ${plural(git.changedFileCount, "changed file", "changed files")}`;
     suggestions.push({
-      id: "commit",
+      id: id("commit"),
       kind: "commit",
-      project: null,
-      title: `Commit ${files}`,
+      project,
+      title: `Commit ${files}${where}`,
       meta: "Uncommitted",
       prompt: `Look at the uncommitted changes in this checkout (${files}), group them into sensible commits, and commit them.`,
     });
@@ -133,10 +150,13 @@ function gitSuggestions(git: LaunchpadGitStatus): LaunchpadSuggestion[] {
   if (branch !== null && git.hasUpstream && git.behindCount > 0) {
     const commits = `${git.behindCount} new ${plural(git.behindCount, "commit", "commits")}`;
     suggestions.push({
-      id: "pull",
+      id: id("pull"),
       kind: "pull",
-      project: null,
-      title: `Pull ${commits} on ${branch}`,
+      project,
+      title:
+        checkout === null
+          ? `Pull ${commits} on ${branch}`
+          : `Pull ${commits} into ${checkout.name}`,
       meta: "Behind",
       prompt: `Pull the ${commits} on ${branch} into this checkout and summarize what changed.`,
     });
@@ -149,10 +169,10 @@ function gitSuggestions(git: LaunchpadGitStatus): LaunchpadSuggestion[] {
     git.aheadOfDefaultCount > 0
   ) {
     suggestions.push({
-      id: "open-pr",
+      id: id("open-pr"),
       kind: "open-pr",
-      project: null,
-      title: `Open a pull request for ${branch}`,
+      project,
+      title: `Open a pull request for ${branch}${where}`,
       meta: "No PR",
       prompt: `Open a pull request for ${branch}. Summarize what the branch changes in the description.`,
     });
@@ -169,6 +189,8 @@ export function deriveLaunchpadSuggestions(input: {
   readonly authored: ReadonlyArray<LaunchpadPullRequest>;
   readonly reviewing: ReadonlyArray<LaunchpadPullRequest>;
   readonly git: LaunchpadGitStatus | null;
+  /** Recent projects' own checkouts, for a draft that has no project yet. */
+  readonly projectCheckouts?: ReadonlyArray<LaunchpadProjectCheckout>;
 }): LaunchpadSuggestion[] {
   const fixes: LaunchpadSuggestion[] = [];
   const merges: LaunchpadSuggestion[] = [];
@@ -191,6 +213,7 @@ export function deriveLaunchpadSuggestions(input: {
     ...fixes,
     ...reviews,
     ...(input.git === null ? [] : gitSuggestions(input.git)),
+    ...(input.projectCheckouts ?? []).flatMap((checkout) => gitSuggestions(checkout.git, checkout)),
     ...merges,
   ].slice(0, LAUNCHPAD_SUGGESTION_LIMIT);
 }

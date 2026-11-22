@@ -181,7 +181,11 @@ export function useDraftProjectChoices(props: {
   };
 
   /** Points the draft at a menu or launchpad row's value; `pill` is the row picked, which the chip opens from. */
-  const pick = (next: string, pill?: Element) => {
+  const pick = (
+    next: string,
+    pill?: Element,
+    options?: Parameters<typeof assignDraftProject>[2],
+  ) => {
     if (draftId === null || next === value) return;
     if (next === NO_PROJECT_VALUE) {
       if (noProjectEnvironmentId === null) return;
@@ -210,7 +214,7 @@ export function useDraftProjectChoices(props: {
     if (!entry) return;
     if (pill) rememberDraftProjectPick(draftId, pill);
     // A failed pick leaves the draft on its previous project, so say so.
-    void assignDraftProject(draftId, entry).catch((error: unknown) =>
+    void assignDraftProject(draftId, entry, options).catch((error: unknown) =>
       reportAssignFailure(entry.group.displayName, error),
     );
   };

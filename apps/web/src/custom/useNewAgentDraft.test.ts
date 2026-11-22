@@ -113,6 +113,10 @@ describe("assignDraftProject", () => {
     expect(Date.parse(session()?.createdAt ?? "")).toBeGreaterThan(
       Date.parse("2026-09-08T09:00:00.000Z"),
     );
+
+    // Checkout work (a launchpad commit or pull) keeps the draft in the project's own checkout.
+    await assignDraftProject(draftId, target("b"), settings, { envMode: "local" });
+    expect(session()).toMatchObject({ projectId: "proj-b", envMode: "local" });
   });
 
   it("applies the project's own permissions, worktree origin and model", async () => {

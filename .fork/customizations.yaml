@@ -6293,10 +6293,12 @@
     requests you opened; open pull requests that request your review; and,
     when the picked project runs in its own checkout rather than a new
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
-    request (custom/draftLaunchpadSuggestions). The pull requests come from
-    the cached pullRequests.list query and the checkout from the git status
-    ChatView already subscribes to; a failed or unsupported list just offers
-    nothing. Visibility is decided before either is asked for, so a hidden
+    request (custom/draftLaunchpadSuggestions). Before a pick, the same git
+    work comes from each listed project's own checkout, named for its
+    project; picking one moves the draft into that checkout ("local"), never a
+    new worktree. The pull requests come from the cached pullRequests.list
+    query and the checkouts from the git status queries the chat uses; a
+    failed or unsupported list just offers nothing. Visibility is decided before either is asked for, so a hidden
     launchpad (short window, No project or Chat mode draft) queries nothing.
     Picking a suggestion picks its project and writes its prompt into the
     draft composer, after anything the user already wrote (once: a second

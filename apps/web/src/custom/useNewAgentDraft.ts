@@ -25,7 +25,11 @@ import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { type AnyRouter, useRouter } from "@tanstack/react-router";
 import { useCallback, useSyncExternalStore } from "react";
 
-import { type DraftId, useComposerDraftStore } from "../composerDraftStore";
+import {
+  type DraftId,
+  type DraftThreadEnvMode,
+  useComposerDraftStore,
+} from "../composerDraftStore";
 import {
   hasExplicitComposerModelSelection,
   resolveNewDraftStartFromOrigin,
@@ -251,6 +255,8 @@ export async function assignDraftProject(
   draftId: DraftId,
   pick: DraftProjectPick,
   settings: ServerSettings,
+  /** Work that only makes sense in the project's own checkout (commit, pull) sets "local". */
+  options?: { readonly envMode?: DraftThreadEnvMode },
 ): Promise<void> {
   const request = { projectKey: "resolve" in pick ? pick.pendingKey : pick.group.projectKey };
   latestAssignmentByDraftId.set(draftId, request);
@@ -293,7 +299,7 @@ export async function assignDraftProject(
   // it would resurrect it.
   const session = getDraftSession(draftId);
   if (!session || session.promotedTo != null) return;
-  const envMode = projectSettings.defaultThreadEnvMode;
+  const envMode = options?.envMode ?? projectSettings.defaultThreadEnvMode;
   setLogicalProjectDraftThreadId(entry.group.projectKey, projectRef, draftId, {
     branch: null,
     worktreePath: null,
@@ -323,16 +329,18 @@ export async function assignDraftProject(
 export function useAssignDraftProject(): (
   draftId: DraftId,
   pick: DraftProjectPick,
+  options?: Parameters<typeof assignDraftProject>[3],
 ) => Promise<void> {
   const environmentServerConfigs = useAtomValue(environmentServerConfigsAtom);
   return useCallback(
-    (draftId, pick) =>
+    (draftId, pick, options) =>
       assignDraftProject(
         draftId,
         pick,
         environmentServerConfigs.get(
           "resolve" in pick ? pick.environmentId : pick.targetProject.environmentId,
         )?.settings ?? DEFAULT_SERVER_SETTINGS,
+        options,
       ),
     [environmentServerConfigs],
   );

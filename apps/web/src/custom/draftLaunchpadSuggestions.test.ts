@@ -119,6 +119,35 @@ describe("deriveLaunchpadSuggestions", () => {
     expect(suggestions.every((suggestion) => suggestion.project === null)).toBe(true);
   });
 
+  it("names the project for a draft with no project yet, and picks it", () => {
+    const project = (id: string) => ({ environmentId, projectId: ProjectId.make(id) });
+    const suggestions = deriveLaunchpadSuggestions({
+      authored: [],
+      reviewing: [],
+      git: null,
+      projectCheckouts: [
+        {
+          project: project("lumen"),
+          name: "lumen",
+          git: { ...cleanGit, changedFileCount: 3, behindCount: 4 },
+        },
+        { project: project("orbit"), name: "orbit", git: { ...cleanGit, behindCount: 2 } },
+        { project: project("docs"), name: "docs", git: cleanGit },
+      ],
+    });
+    expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
+      "Commit 3 changed files in lumen",
+      "Pull 4 new commits into lumen",
+      "Pull 2 new commits into orbit",
+    ]);
+    expect(suggestions.map((suggestion) => suggestion.project?.projectId)).toEqual([
+      "lumen",
+      "lumen",
+      "orbit",
+    ]);
+    expect(new Set(suggestions.map((suggestion) => suggestion.id)).size).toBe(3);
+  });
+
   it("offers no git work for a clean, current default branch or a branch with an open PR", () => {
     expect(kinds({ authored: [], reviewing: [], git: cleanGit })).toEqual([]);
     expect(

@@ -224,7 +224,7 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(pill).not.toContain("rounded-full");
     // A pick that fails to resolve tells the user, rather than surfacing as
     // an unhandled rejection with the draft silently left where it was.
-    expect(choices).toMatch(/void assignDraftProject\(draftId, entry\)\.catch\(/u);
+    expect(choices).toMatch(/void assignDraftProject\(draftId, entry, options\)\.catch\(/u);
     expect(choices).toContain("toastManager.add({");
     // Same project list and member rule as the palette and the grouped header.
     expect(choices).toContain("buildSidebarProjectPickerEntries({");

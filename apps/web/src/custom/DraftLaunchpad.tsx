@@ -17,6 +17,7 @@ import { vcsEnvironment } from "~/state/vcs";
 import {
   deriveLaunchpadSuggestions,
   type LaunchpadGitStatus,
+  type LaunchpadProjectCheckout,
   type LaunchpadSuggestion,
   type LaunchpadSuggestionKind,
 } from "./draftLaunchpadSuggestions";
@@ -78,6 +79,27 @@ const launchpadGitStatusAtom = Atom.family((status: ReturnType<typeof vcsEnviron
 );
 const NO_LAUNCHPAD_GIT_STATUS_ATOM: ReturnType<typeof launchpadGitStatusAtom> = Atom.make(null);
 
+interface RecentCheckout extends Omit<LaunchpadProjectCheckout, "git"> {
+  readonly cwd: string;
+}
+
+/** The recent projects' own checkouts, for a draft with no project yet. Keyed by their JSON so
+    one list of projects is one atom across renders. */
+const recentCheckoutsAtom = Atom.family((key: string) => {
+  const checkouts = JSON.parse(key) as ReadonlyArray<RecentCheckout>;
+  return Atom.make((get): LaunchpadProjectCheckout[] =>
+    checkouts.flatMap(({ cwd, ...checkout }) => {
+      const git = get(
+        launchpadGitStatusAtom(
+          vcsEnvironment.status({ environmentId: checkout.project.environmentId, input: { cwd } }),
+        ),
+      );
+      return git === null ? [] : [{ ...checkout, git }];
+    }),
+  ).pipe(Atom.withEquality(Equal.equals));
+});
+const NO_RECENT_CHECKOUTS_ATOM: ReturnType<typeof recentCheckoutsAtom> = Atom.make([]);
+
 /** One list request per environment, covering the given projects. */
 function pullRequestTargets(
   projectRefs: ReadonlyArray<ScopedProjectRef>,
@@ -127,6 +149,8 @@ export function DraftLaunchpad(
     /** The checkout a picked project's thread will run in, when it is the project's own
         checkout (not a new worktree); its git status offers commit, pull and open-PR work. */
     readonly checkout: { readonly environmentId: EnvironmentId; readonly cwd: string } | null;
+    /** A multi-model send makes fresh worktrees, so checkout work has nowhere to run. */
+    readonly multiModel: boolean;
   },
 ) {
   const choices = useDraftProjectChoices(props);
@@ -171,12 +195,32 @@ export function DraftLaunchpad(
         ),
   );
 
+  // With no project picked yet, each recent project's own checkout offers its git work too;
+  // picking one moves the draft into that checkout (see the row's onClick).
+  const recentCheckouts = useAtomValue(
+    !shown || !unassigned || choices.pending || props.multiModel
+      ? NO_RECENT_CHECKOUTS_ATOM
+      : recentCheckoutsAtom(
+          JSON.stringify(
+            recent.map((entry): RecentCheckout => ({
+              project: {
+                environmentId: entry.targetProject.environmentId,
+                projectId: entry.targetProject.id,
+              },
+              name: entry.group.displayName,
+              cwd: entry.targetProject.workspaceRoot,
+            })),
+          ),
+        ),
+  );
+
   if (!shown || draftId === null) return null;
 
   const suggestions = deriveLaunchpadSuggestions({
     authored: authored.data?.entries ?? [],
     reviewing: reviewing.data?.entries ?? [],
     git,
+    projectCheckouts: recentCheckouts,
   });
   const entryFor = (project: LaunchpadSuggestion["project"]) =>
     project === null
@@ -204,7 +248,18 @@ export function DraftLaunchpad(
               type="button"
               className={ROW_CLASS_NAME}
               onClick={(event) => {
-                if (entry !== null) choices.pick(entry.group.projectKey, event.currentTarget);
+                if (entry !== null) {
+                  // Git work belongs to the project's own checkout, never a new worktree.
+                  const checkoutWork =
+                    suggestion.kind === "commit" ||
+                    suggestion.kind === "pull" ||
+                    suggestion.kind === "open-pr";
+                  choices.pick(
+                    entry.group.projectKey,
+                    event.currentTarget,
+                    checkoutWork ? { envMode: "local" } : undefined,
+                  );
+                }
                 // A draft can already hold what the user wrote before picking.
                 const written =
                   useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
