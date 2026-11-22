@@ -553,7 +553,7 @@ export function UsageLimitsPooled({
   const [segmentPopover] = useState(() => PopoverCreateHandle<SegmentPayload>());
   const segmentPopoverActions = useRef<PopoverPrimitive.Root.Actions | null>(null);
   const pools = collectLimitPools(collectLimitAccounts(presentations), now);
-  const notices = actionableLimitNotices(presentations);
+  const notices = actionableLimitNotices(presentations, m);
   const externalLinks = collectExternalUsageLinks(presentations, m);
   return (
     <div className="flex flex-col gap-4">

@@ -20,7 +20,7 @@ function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-li
   const activity = use(TimelineRowActivityCtx);
   const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
   const messages = useMessages();
-  const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true);
+  const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true, messages);
   return forkStatusLineLabel(
     live,
     activity,

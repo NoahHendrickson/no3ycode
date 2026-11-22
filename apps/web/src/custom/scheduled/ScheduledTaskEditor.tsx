@@ -245,7 +245,8 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
               <div data-fork-composer-model-controls="true" className="flex min-w-0 items-center">
                 <ScheduledTaskModelPicker
                   environmentId={props.environmentId}
-                  disabled={props.disabled}
+                  // A run bound to a thread uses that thread's model, as upstream's editor says.
+                  disabled={props.disabled || draft.threadId !== ""}
                   activeInstanceId={model.activeInstanceId}
                   model={model.activeModel}
                   lockedProvider={null}

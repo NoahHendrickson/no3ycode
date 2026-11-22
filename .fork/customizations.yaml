@@ -912,11 +912,11 @@
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
-    # Upstream's render-isolation case spies an export the fork's rows never render.
+    # Upstream's render-isolation case spies an export the fork's rows never render. Its
+    # keyboard-opened thread menu case is not ported: the cards do not install upstream's sidebar
+    # tree (attachSidebarTree, which the fork's rows never carried). Follow-up.
     - apps/web/src/components/Sidebar.browser.test.tsx
-    # Not ported (2026-11-22): upstream's keyboard-opened thread menu case (Shift+F10 on the card
-    # reads as a mouse open in headless Chromium) and its linked-issue sidebar badge, which the
-    # cards do not render yet. Both are follow-ups.
+    # Upstream's linked-issue sidebar badge case is not ported: the cards do not render it yet.
     - apps/web/src/components/ChatView.browser.test.tsx
     # Upstream's Sidebar.drag.browser.test.tsx is deleted, not ported: it drags a search
     # result out of the boring sidebar's folders, and the fork renders neither.

@@ -197,8 +197,8 @@ describe("sidebar thread rename", () => {
 });
 
 // fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-// Upstream's "sidebar thread menu" case is not ported: Shift+F10 on the fork's card row reaches
-// contextmenu with button 0 in headless Chromium, so it reads as a mouse open. Follow-up.
+// Upstream's "sidebar thread menu" case is not ported: upstream's sidebar tree (attachSidebarTree)
+// turns Shift+F10 into a keyboard contextmenu, and the fork's card rows do not install it. Follow-up.
 // fork:end sidebar-v2-card-rows
 
 describe("sidebar settled pagination", () => {

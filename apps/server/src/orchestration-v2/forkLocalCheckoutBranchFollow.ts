@@ -126,7 +126,9 @@ export const layer = Layer.effect(
           const thread = yield* threads.getThreadShell(threadId);
           return thread !== null && thread.worktreePath === null && thread.branch !== null;
         },
-        Effect.catchCause(() => Effect.succeed(false)),
+        Effect.catchCause((cause) =>
+          Cause.hasInterruptsOnly(cause) ? Effect.interrupt : Effect.succeed(false),
+        ),
       ),
       follow: Effect.fn("LocalCheckoutBranchFollower.follow")((input) =>
         followLocalCheckoutBranch(input, {

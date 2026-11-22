@@ -23,6 +23,8 @@ import {
   sidebarV2StatusBucketForKind,
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
+import { m } from "~/i18n/messages";
+
 import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
@@ -88,7 +90,8 @@ export interface BotWork {
 /** Running now, waiting on a thread included and a guest's message ignored: the window
     title's rule for "working". */
 function isRunning(thread: EnvironmentThreadShell): boolean {
-  return resolveWindowTitleThreadStatus(thread) === THREAD_STATUS_TEXT.working;
+  // The title is resolved in the UI language, so the constant it is compared with must be too.
+  return resolveWindowTitleThreadStatus(thread, m) === m(THREAD_STATUS_TEXT.working);
 }
 
 /** Per bot (`environmentId:threadId`), its work in one pass. Archived threads are put away, and
