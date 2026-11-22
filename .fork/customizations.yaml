@@ -5341,7 +5341,7 @@
     Basic UI kit's subagent card (Figma kUDQTOR0ndxERlBCqgy3nk 89:704) instead
     of upstream's lifecycle row or its V2SubagentGroup (avatar stack, chevron,
     bordered member box). A card is the changed-files card's shape: the card
-    fill, a 1px border, 8px corners. Its header holds the provider's mark in a
+    fill, a 1px border, 12px corners. Its header holds the provider's mark in a
     32px tile with the sidebar status mark in a badge at its corner, the title
     over its model and reasoning effort ("Opus 5.5 · High", upstream's
     formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
