@@ -8,12 +8,12 @@ import { View } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { NO3Y_BOTTOM_NAV_CLEARANCE } from "./flatGlassTheme";
+import { NO3Y_BOTTOM_NAV_CLEARANCE, NO3Y_CONTROL_SIZE } from "./flatGlassTheme";
 import { No3yBottomFade } from "./No3yBottomFade";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 
 /** Height of the bars the tray holds; lists pad by it so their last row clears the tray. */
-export const NO3Y_TRAY_BAR_HEIGHT = 40;
+export const NO3Y_TRAY_BAR_HEIGHT = NO3Y_CONTROL_SIZE;
 
 /** Where the tray's bar rests above the screen bottom: over the dock when it shows. */
 export function useNo3yTrayRestingInset(): number {

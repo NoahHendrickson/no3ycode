@@ -136,7 +136,7 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
             borderRadius: 8,
             paddingLeft: 8,
             paddingRight: 10,
-            paddingVertical: 8,
+            paddingVertical: 12,
             backgroundColor: selected
               ? palette.rowSelected
               : pressed
@@ -608,7 +608,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
           borderRadius: 8,
           paddingLeft: 8,
           paddingRight: 10,
-          paddingVertical: 8,
+          paddingVertical: 12,
           backgroundColor: selected
             ? palette.rowSelected
             : pressed

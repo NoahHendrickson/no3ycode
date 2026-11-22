@@ -151,7 +151,7 @@ export function No3yThreadsFilterBar(props: {
         }}
       >
         <No3yGlassLayer radius={NO3Y_TRAY_BAR_HEIGHT / 2} />
-        <HugeIcon icon={Search01Icon} size={18} color={palette.foreground} filled />
+        <HugeIcon icon={Search01Icon} size={20} color={palette.foreground} filled />
         <TextInput
           accessibilityLabel="Search threads"
           value={props.searchQuery}

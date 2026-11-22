@@ -48,7 +48,7 @@ export function No3yCircleButton(props: {
         })}
       >
         {props.icon ? (
-          <HugeIcon icon={props.icon} size={18} color={palette.foreground} filled />
+          <HugeIcon icon={props.icon} size={20} color={palette.foreground} filled />
         ) : null}
         {props.children}
       </Pressable>

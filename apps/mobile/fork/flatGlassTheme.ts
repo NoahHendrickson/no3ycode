@@ -17,7 +17,7 @@ export const NO3Y_BOTTOM_NAV_CLEARANCE = NO3Y_DOCK_HEIGHT - NO3Y_DOCK_SAFE_AREA_
 export const NO3Y_BOTTOM_FADE_HEIGHT = 20;
 
 /** Round buttons and pills on the no3y screens: header buttons, filter/sort, composer controls. */
-export const NO3Y_CONTROL_SIZE = 40;
+export const NO3Y_CONTROL_SIZE = 44;
 
 /** Weights for the no3y screens; the family is the app's, the system font (SF Pro) on iOS. */
 export const NO3Y_FONT = {
