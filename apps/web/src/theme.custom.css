@@ -1112,6 +1112,22 @@
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
+/* Beside send, the mic is attach's mirror: 28px in its slot, 2px from send, not the cluster's 8px. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-composer-actions="right"]
+  [data-fork-composer-action="dictate"] {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 2px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-composer-actions="right"]
+  > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]) {
+  margin-inline-end: -6px;
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]):is(
     :hover,
