@@ -1030,6 +1030,15 @@
   height: 16px;
 }
 
+/* Send and stop are 28px, centred in the 32px slot so the prompt row's bottom line holds. */
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-fork-composer-action="send"], [data-fork-composer-action="stop"]) {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 2px;
+}
+
 /* Attach (+) and dictate (mic) sit inside the prompt row as 32px ghost squares
    matching the send button, using the control row's ink and hover. */
 :root[data-fork="noahhendrickson-t3code"]
