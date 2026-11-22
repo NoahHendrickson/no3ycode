@@ -6,6 +6,9 @@ import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
+import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
+/* fork:end fork-queued-runs-banner */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import {
   isAtomCommandInterrupted,
@@ -1844,6 +1847,14 @@ function ThreadDetailBody(
                         ) : null}
                       </Animated.View>
                     ) : null}
+                    {/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */}
+                    {no3yBottomNav && !props.draftMode ? (
+                      <No3yQueuedRunsBanner
+                        environmentId={props.environmentId}
+                        threadId={props.selectedThread.id}
+                      />
+                    ) : null}
+                    {/* fork:end fork-queued-runs-banner */}
                   </ComposerPanels>
                 </View>
 

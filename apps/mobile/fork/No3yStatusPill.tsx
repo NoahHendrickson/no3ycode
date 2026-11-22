@@ -112,7 +112,8 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
         : null,
     childInputCount: childInputs.length,
     extension: extension !== null,
-    queuedCount: props.queuedCount,
+    // Queued messages live in the banner above the composer (No3yQueuedRunsBanner.tsx).
+    queuedCount: 0,
     deviceCount: props.devicePreview?.count ?? 0,
     browserCount: props.browserPreview?.count ?? 0,
   });
@@ -151,7 +152,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       needs: child.hasPendingApprovals ? "approval" : "input",
       onOpen: () => openLinkedThread({ environmentId: child.environmentId, threadId: child.id }),
     })),
-    queue: props.queuedCount > 0 ? { count: props.queuedCount, onPress: props.onOpenQueue } : null,
+    queue: null,
     devicePreview: props.devicePreview,
     browserPreview: props.browserPreview,
   };

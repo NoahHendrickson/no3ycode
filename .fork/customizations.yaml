@@ -6430,13 +6430,24 @@
     or from guests are not stashable. An image the stash cannot keep aborts the move,
     since removing the run deletes the server copy. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
-    Mobile keeps upstream's queue.
+    On the no3y iPhone layout (fork/No3yQueuedRunsBanner.tsx, mounted last in
+    ThreadDetailScreen's composer panels so it sits right above the composer
+    card at its width, and stays while a question hides the composer) the
+    same banner is a collapsible glass card: one line per message with the
+    sender for non-owners, Send now / Steer, Edit and Remove buttons, and
+    Move up / Move down plus the same actions in each row's long-press menu,
+    on the same mobile queue commands; a held queue offers Resume. There is
+    no prompt stash on mobile, so no stash bookmark, and the status pill no
+    longer counts the queue. iPad and Android keep upstream's queue sheet.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
     - apps/web/src/custom/stashQueuedRun.ts
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
+    - apps/mobile/fork/No3yQueuedRunsBanner.tsx
+    - apps/mobile/fork/no3yQueuedRuns.ts
+    - apps/mobile/fork/no3yQueuedRuns.test.ts
   shadows: []
   watch:
     # Owns the queue mount, the timeline footer and the composer props.
@@ -6451,8 +6462,11 @@
     - apps/web/src/components/chat/useComposerStash.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
+    # Mounts the no3y iPhone banner above the composer.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
     - apps/web/src/__fork_guards__/forkQueuedRunsBanner.test.ts
+    - apps/mobile/fork/no3yQueuedRuns.test.ts
 
 - id: fork-composer-approval-notice
   intent: >
@@ -7849,12 +7863,13 @@
     to one 30pt glass pill right-aligned with the card's edge
     (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
     amber dot when something there needs the user (transient status, background
-    processes, monitors, subagents as a robot, Pi status, queue, previews), with
+    processes, monitors, subagents as a robot, Pi status, previews; queued
+    messages are in the queued-runs banner above the card), with
     the scroll-to-end button beside it. A tap opens a half-height sheet
     (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, queue, previews). iPad and Android keep the upstream control.
+    status, previews). iPad and Android keep the upstream control.
     Subagents in the transcript draw as the Mac fork's subagent card
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
