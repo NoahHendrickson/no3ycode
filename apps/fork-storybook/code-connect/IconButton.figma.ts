@@ -3,7 +3,7 @@
 // component=Button
 import figma from "figma";
 
-import { BUTTON_VARIANTS, glyph } from "./shared";
+import { BUTTON_VARIANTS, glyphWithImports } from "./shared";
 
 const button = figma.selectedInstance;
 const variant = button.getEnum("Variant", BUTTON_VARIANTS);
@@ -15,6 +15,8 @@ const size =
     "icon-lg": "icon-lg",
   }) ?? "icon";
 const disabled = button.getEnum("State", { Disabled: true });
+const icon = glyphWithImports(button, "Glyph");
+const BUTTON_IMPORT = 'import { Button } from "~/components/ui/button";';
 
 const attrs = [
   variant ? ` variant="${variant}"` : "",
@@ -24,9 +26,9 @@ const attrs = [
 
 export default {
   example: figma.tsx`<Button${attrs} aria-label="…">
-  ${glyph(button, "Glyph")?.example ?? []}
+  ${icon?.example ?? []}
 </Button>`,
-  imports: ['import { Button } from "~/components/ui/button";'],
+  imports: [BUTTON_IMPORT],
   id: "icon-button",
-  metadata: { nestable: true },
+  metadata: { nestable: true, props: { imports: [BUTTON_IMPORT, ...(icon?.imports ?? [])] } },
 };
