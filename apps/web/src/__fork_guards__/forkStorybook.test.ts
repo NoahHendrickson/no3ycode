@@ -63,11 +63,17 @@ describe("fork-storybook", () => {
       /\[data-fork-liquid-glass-popup="solid"\] \{\s*background: var\(--fork-liquid-glass-sidebar\);/u,
     );
     expect(head).toContain("var(--fork-liquid-glass-sidebar)");
-    for (const [, hex] of read("../custom/forkSidebarVibrancy.ts").matchAll(
-      /_GLASS_BACKING_RGB = 0x([0-9a-f]{6});/gu,
-    )) {
-      expect(head).toContain(`linear-gradient(#${hex}, #${hex})`);
-    }
+    const vibrancy = read("../custom/forkSidebarVibrancy.ts");
+    const backing = (name: string) =>
+      new RegExp(`${name} = 0x([0-9a-f]{6});`, "u").exec(vibrancy)?.[1] ?? "missing";
+    const full = backing("FULL_GLASS_BACKING_RGB");
+    const flat = backing("FLAT_GLASS_BACKING_RGB");
+    expect(head).toContain(
+      `html[data-fork-sidebar-vibrancy="liquid-glass"] { background-image: linear-gradient(#${full}, #${full}); }`,
+    );
+    expect(head).toContain(
+      `html[data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"] { background-image: linear-gradient(#${flat}, #${flat}); }`,
+    );
     const selector = /SIDEBAR_GLASS_SELECTOR =\s*'([^']+)'/u.exec(
       read("../custom/forkGlassPopupCutout.ts"),
     )?.[1];
