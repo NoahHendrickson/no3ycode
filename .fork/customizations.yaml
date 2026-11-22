@@ -361,7 +361,7 @@
     first V2 launch carries the fork's drafts over and never upstream's.
     The fork presents as "no3y Code": bundle id com.t3tools.t3code.fork,
     installs as "no3y Code.app", ships no3y-Code-* artifacts, packages the
-    green-grid mark from assets/fork on all three platforms (plus web splash
+    sparkle mark from assets/fork on all three platforms (plus web splash
     and favicon), and keeps all filesystem state under ~/.t3-fork. The bundle
     id and the base directory are the stable identities and must never change
     across display renames; display strings are safe to rename precisely
@@ -389,35 +389,34 @@
     is excluded from the test, fmt and lint discovery lists in vite.config.ts
     and from the four .repos exclusions in .vscode/settings.json, the way
     .repos already was.
-    The rendered app carries the name too: the sidebar brand drops the T3
-    wordmark and draws Figma t3-fork 676:41854 — the 16px pixel mark and the
-    13x3 "no3y" wordmark owned by fork-sidebar-chrome. APP_BASE_NAME still
+    The rendered app carries the name too: the sidebar header draws no brand
+    (fork-sidebar-chrome), so neither upstream's T3 wordmark nor its name
+    appears there. APP_BASE_NAME still
     names the packaged app and branding.ts's bridge-less fallback, which
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
     apps/web/public for local/dev and into the packaged desktop client at
     build time via FORK_WEB_ICON_ASSETS + the shared applyWebIconOverrides
-    path). The layered Icon Composer projects in assets/fork/app-icon.icon and
-    assets/fork/dev-app-icon.icon are the Figma source of truth (file t3-fork,
-    node 598:6597), so the surrounding tile receives the system Liquid Glass
-    treatment on macOS without rasterizing the mark. Production fills the
-    tile with the Figma green (#37C570); development keeps a solid orange
-    tile so installed variants remain distinguishable in the Dock.
-    Glass stays off on the mark layer itself so the pixel grid remains crisp
-    (glass on it melts the cells into blobs); the system treatment belongs to
-    the surrounding tile. Every app-icon raster, including the Linux PNG, the
-    Windows ICO and the apps/web/public apple-touch copy, is rendered from
-    these projects by `node .fork/export-icons.ts` (macOS only; `--check`
-    reports stale files), so every packaged channel carries the same artwork.
-    The macOS Dock exports add only a transparent outer canvas around the
-    rendered artwork, matching the standard Mac icon footprint. The local dev
-    splash uses the orange family, while packaged builds stamp the green
-    production family. Web favicons and the project icon are the bare leaf
-    with no tile (t3-fork 556:28871): assets/fork/n3-project-icon.svg is
-    the earlier 23-cell leaf (it did not follow the sidebar mark to 676:42956)
-    as integer cells with crispEdges, literal fills, and a #373737 outline, and the n3-web-favicon*
-    rasters (with apps/web/public copies) are rendered from it at an exact
-    multiple of its 23-cell grid, then downscaled; export-icons.ts leaves
-    them alone. Filenames still say n3-* for path stability. t3.json's
+    path). The brand mark is the sparkle (Figma OnHdu0r2mAwMEiC4s7Gvjv
+    39:4), one path drawn identically everywhere. The layered Icon Composer
+    projects in assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon
+    are its app-icon source of truth: a white sparkle about 60% of the tile
+    wide, its area centroid on the tile centre. Production fills the tile with
+    #00C26B; development keeps a solid orange tile so installed variants
+    remain distinguishable in the Dock. Glass is on for the mark layer as well
+    as the tile — the smooth shape takes the system treatment cleanly. Every
+    app-icon raster, including the Linux PNG, the Windows ICO, the 192/512
+    installable web icons and the apps/web/public apple-touch and icon copies,
+    is rendered from these projects by `node .fork/export-icons.ts` (macOS
+    only; `--check` reports stale files), so every packaged channel carries
+    the same artwork. The macOS Dock exports add only a transparent outer
+    canvas around the rendered artwork, matching the standard Mac icon
+    footprint. The local dev splash uses the orange family, while packaged
+    builds stamp the green production family. Web favicons and the project
+    icon are the bare sparkle in #00C26B with no tile, which stays legible at
+    16px: assets/fork/n3-project-icon.svg carries the same path, and the
+    n3-web-favicon* rasters (with apps/web/public copies) are rendered from it
+    as vectors at 16 and 32px; export-icons.ts leaves them alone. Filenames
+    still say n3-* for path stability. t3.json's
     iconPath points at n3-project-icon.svg, never upstream's
     assets/dev/blueprint-*. The apple-touch icons keep the tile because iOS
     fills transparency with black.
@@ -459,7 +458,7 @@
     - assets/fork/n3-windows.ico
     - assets/fork/n3-dev-web-apple-touch-180.png
     - assets/fork/n3-web-apple-touch-180.png
-    # Installable web icons (upstream #30420), from the 1024 masters.
+    # Installable web icons (upstream #30420), rendered by export-icons.ts.
     - assets/fork/n3-web-icon-192x192.png
     - assets/fork/n3-web-icon-512x512.png
     - assets/fork/n3-dev-web-icon-192x192.png

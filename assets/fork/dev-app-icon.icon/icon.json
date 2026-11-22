@@ -6,9 +6,9 @@
     {
       "layers": [
         {
-          "glass": false,
+          "glass": true,
           "image-name": "mark.svg",
-          "name": "Pixel Mark",
+          "name": "Sparkle",
           "position": {
             "scale": 1,
             "translation-in-points": [0, 0]

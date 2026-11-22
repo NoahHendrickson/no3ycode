@@ -11,8 +11,8 @@
  * macOS platform so each one carries the system Liquid Glass tile; the Dock
  * PNG pads the 1024 render onto a transparent 1272 canvas, the standard Mac
  * icon footprint. `--check` renders into memory and fails on any stale file.
- * Web favicons are not rendered here: they are the bare leaf from Figma
- * (t3-fork 556:28871, assets/fork/n3-project-icon.svg), committed as rasters.
+ * Web favicons are not rendered here: they are the bare sparkle
+ * (assets/fork/n3-project-icon.svg) with no tile, committed as rasters.
  */
 
 import * as NodeChildProcess from "node:child_process";
@@ -93,6 +93,8 @@ function variantOutputs(source: string, prefix: string): Map<string, Buffer> {
     [`assets/fork/${prefix}-macos-1024.png`, macos],
     [`assets/fork/${prefix}-macos-dock.png`, padToDockCanvas(macos)],
     [`assets/fork/${prefix}-web-apple-touch-180.png`, render(source, 180)],
+    [`assets/fork/${prefix}-web-icon-192x192.png`, render(source, 192)],
+    [`assets/fork/${prefix}-web-icon-512x512.png`, render(source, 512)],
   ]);
 }
 
@@ -110,10 +112,13 @@ try {
   const development = variantOutputs("assets/fork/dev-app-icon.icon", "n3-dev");
   for (const [path, contents] of development) outputs.set(path, contents);
   // `vp run dev` serves apps/web/public, so it carries the development family.
-  outputs.set(
-    "apps/web/public/apple-touch-icon.png",
-    development.get("assets/fork/n3-dev-web-apple-touch-180.png")!,
-  );
+  for (const [target, source] of [
+    ["apple-touch-icon.png", "n3-dev-web-apple-touch-180.png"],
+    ["icon-192x192.png", "n3-dev-web-icon-192x192.png"],
+    ["icon-512x512.png", "n3-dev-web-icon-512x512.png"],
+  ] as const) {
+    outputs.set(`apps/web/public/${target}`, development.get(`assets/fork/${source}`)!);
+  }
 } finally {
   NodeFS.rmSync(workDir, { recursive: true, force: true });
 }

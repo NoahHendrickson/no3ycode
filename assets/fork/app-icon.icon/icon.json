@@ -1,14 +1,14 @@
 {
   "fill": {
-    "solid": "srgb:0.21569,0.77255,0.43922,1.00000"
+    "solid": "srgb:0.00000,0.76078,0.41961,1.00000"
   },
   "groups": [
     {
       "layers": [
         {
-          "glass": false,
+          "glass": true,
           "image-name": "mark.svg",
-          "name": "Pixel Mark",
+          "name": "Sparkle",
           "position": {
             "scale": 1,
             "translation-in-points": [0, 0]
