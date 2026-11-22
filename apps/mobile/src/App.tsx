@@ -37,6 +37,9 @@ import {
   installAgentNotificationNavigation,
   setAgentNotificationPathname,
 } from "./features/agent-awareness/notificationNavigation";
+/* fork:begin no3y-push — see .fork/customizations.yaml#no3y-push */
+import { installNo3yPushRegistration } from "../fork/pushRegistration";
+/* fork:end no3y-push */
 import {
   installAppShortcuts,
   recordAppShortcutNavigationState,
@@ -204,6 +207,9 @@ const appServiceDisposers = [
   installComposerAttachmentUploads(),
   startIncomingShareInbox(),
   installAgentNotificationNavigation(linkToAppPath),
+  /* fork:begin no3y-push — see .fork/customizations.yaml#no3y-push */
+  installNo3yPushRegistration(),
+  /* fork:end no3y-push */
   installAppShortcuts(linkToAppPath),
   installAppUpdateChecks(),
   installShowcaseCapture(rootPathnameFromState),

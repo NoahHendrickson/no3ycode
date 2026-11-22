@@ -5327,6 +5327,39 @@
     - apps/web/src/__fork_guards__/no3yMobileIdentity.test.ts
     - apps/mobile/fork/identity.test.ts
 
+- id: no3y-push
+  intent: >
+    The no3y iOS app gets agent notifications without Ping's relay. A small
+    push service on the Mac (apps/mobile/fork/push-service/no3yPush.mts) pairs
+    with the local T3 server as an ordinary read-only client, watches the
+    orchestration shell stream, and pushes to APNs with the fork's own key
+    (~/.no3y-push, never in the repo) when a thread finishes, fails, or waits
+    on an approval or an answer. It decides that with the official
+    projectThreadAwarenessV2 rule, imported rather than copied, and holds a
+    completion for 5 seconds like the relay does. No server, contract, or web
+    code changes, so upstream syncs only touch it if the shell stream's wire
+    shape changes.
+
+    The phone registers its APNs token by POSTing to /no3y-push/register on
+    each saved Tailscale HTTPS route; Tailscale Serve mounts the service there
+    beside the T3 server, so it is reachable only inside the tailnet. The app
+    asks for notification permission at launch for this. Payloads match the
+    relay's shape so upstream's tap handler opens the thread.
+
+    The service runs from the main checkout as a login item (`node
+    no3yPush.mts install`), so it follows whatever `custom` has checked out.
+  tier: 4
+  files:
+    - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/no3yPush.mts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/App.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yPush.test.ts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+
 - id: fork-glass-preview-parking
   intent: >
     A preview guest that is rendering but not on screen (an agent driving the
