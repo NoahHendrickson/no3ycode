@@ -348,8 +348,8 @@ describe("fork guard: fork-bot-work-threads", () => {
   });
 
   it("keeps the server's link at launch and the panel in the stage", () => {
-    expect(launch).toContain(
-      "yield* linkForkBotWork(threads, { commandId: input.commandId, threadId, botId: forkBotId });",
+    expect(launch).toMatch(
+      /yield\* linkForkBotWork\(threads, \{\s*commandId: input\.commandId,\s*threadId,\s*botId: forkBotId,?\s*\}\);/u,
     );
     expect(mcp).toContain(
       "yield* linkForkBotWork(threadManagement, { commandId, threadId, botId: forkBotId });",
