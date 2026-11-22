@@ -5241,6 +5241,11 @@
     position from #203 is theme-independent and stays.
     In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
+    Flat's composer control row reads its ink as a 57% white wash (what
+    the solid #a6a6a6 fallback was over the lift-2 vessel), and the Split
+    agent / Unsplit pill (stamped data-fork-split-agent-pill) reads brighter
+    than the project and branch chips: 85% white, full white on hover. The
+    new-agent draft hero keeps its own white ink.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -7766,3 +7771,40 @@
     - apps/web/src/components/settings/ScheduledTasksSettings.tsx
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
+
+- id: fork-branch-link-copy
+  intent: >
+    In a started thread, clicking the composer's read-only branch chip
+    (custom/ThreadContextReadout, or Enter/Space on it) copies the branch's
+    web page on the project's host, built from the project's
+    repositoryIdentity by custom/branchLinks: the repository root comes from
+    the host's own commit link, so webUrl mounts, HTTP remote ports and
+    Azure's SSH spellings match commit links. GitHub and GitCafe use
+    /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
+    /branch/, Azure DevOps ?version=GB<branch>; each branch segment is
+    encoded and the slashes kept. With no known host (or Cursor Origin, which
+    has no branch page) the click copies the name; when git status says the
+    checked-out branch has no upstream it copies the name and says the
+    branch isn't pushed yet. The chip stays a span with a button role, since
+    the row's CSS gives buttons a hover fill that would replace the chip's.
+    Its right-click menu, and the branch picker's (BranchToolbarBranchSelector:
+    the composer strip with "Composer context" on, and the details panel),
+    offer "Copy branch link" beside "Copy branch name" when a link exists; the
+    picker's trigger still opens the picker on click. No server or contract
+    change; mobile is not covered.
+  tier: 4
+  files:
+    - apps/web/src/custom/branchLinks.ts
+    - apps/web/src/custom/branchLinks.test.ts
+    - apps/web/src/custom/copyBranchReference.ts
+    # Shared with fork-composer-shell; this entry owns the branch chip's copy.
+    - apps/web/src/custom/ThreadContextReadout.tsx
+  shadows: []
+  watch:
+    # Fenced imports and the right-click menu's link item.
+    - apps/web/src/components/BranchToolbarBranchSelector.tsx
+    # The readout's statusCwd prop, inside the fork-composer-shell fence.
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
+    - apps/web/src/custom/branchLinks.test.ts
