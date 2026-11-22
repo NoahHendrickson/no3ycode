@@ -30,17 +30,9 @@ export function copyBranchLink(url: string): void {
 export function copyBranchReference(input: {
   readonly branch: string;
   readonly url: string | null;
-  readonly unpushed: boolean;
 }): void {
   if (input.url === null) {
     copyWithToast(input.branch, "branch name", "Branch name copied", input.branch);
-  } else if (input.unpushed) {
-    copyWithToast(
-      input.branch,
-      "branch name",
-      "Branch name copied",
-      `${input.branch} isn't pushed yet, so it has no link.`,
-    );
   } else {
     copyBranchLink(input.url);
   }

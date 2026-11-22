@@ -22,10 +22,7 @@ describe("fork guard: fork-branch-link-copy", () => {
     expect(chip).toContain("onClick={copyBranch}");
     expect(chip).toContain("onKeyDown={onBranchKeyDown}");
     expect(chip).toContain("onContextMenu={onBranchContextMenu}");
-    expect(readout).toContain("copyBranchReference({ branch, url: branchUrl, unpushed })");
-    expect(readSibling("../components/ChatView.tsx")).toMatch(
-      /<ThreadContextReadout[\s\S]*?statusCwd=\{gitStatusCwd\}/u,
-    );
+    expect(readout).toContain("copyBranchReference({ branch, url: branchUrl })");
   });
 
   it("offers Copy branch link in the branch picker's right-click menu", () => {

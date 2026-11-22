@@ -7783,9 +7783,7 @@
     /tree/<branch>, GitLab /-/tree/, Forgejo /src/branch/, Bitbucket
     /branch/, Azure DevOps ?version=GB<branch>; each branch segment is
     encoded and the slashes kept. With no known host (or Cursor Origin, which
-    has no branch page) the click copies the name; when git status says the
-    checked-out branch has no upstream it copies the name and says the
-    branch isn't pushed yet. The chip stays a span with a button role, since
+    has no branch page) the click copies the name. The chip stays a span with a button role, since
     the row's CSS gives buttons a hover fill that would replace the chip's.
     Its right-click menu, and the branch picker's (BranchToolbarBranchSelector:
     the composer strip with "Composer context" on, and the details panel),

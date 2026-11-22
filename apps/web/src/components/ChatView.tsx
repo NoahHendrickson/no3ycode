@@ -3654,7 +3654,6 @@ export default function ChatView(props: ChatViewProps) {
         activeWorktreePath={activeWorktreePath}
         activeThreadBranch={activeThreadBranch}
         currentGitBranch={currentGitBranch}
-        statusCwd={gitStatusCwd}
       />
     ) : null;
   // What leads the context row: a draft's project chooser or a server thread's

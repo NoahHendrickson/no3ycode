@@ -10,15 +10,12 @@
  * `data-fork-context-chip`, so the row's CSS paints them like the draft's
  * interactive chips.
  */
-import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
-import { AsyncResult, Atom } from "effect/reactivity";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 import { resolveBranchToolbarValue, type EnvMode } from "~/components/BranchToolbar.logic";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { readLocalApi } from "~/localApi";
-import { vcsEnvironment } from "~/state/vcs";
 
 import { projectBranchUrl } from "./branchLinks";
 import { READ_ONLY_CONTEXT_CHIP_CLASS_NAME } from "./composerContextStrip";
@@ -42,15 +39,6 @@ export function resolveThreadContextBranch(input: {
   return resolveBranchToolbarValue(input);
 }
 
-/** The checked-out branch when git reports it has no upstream; a string, so pushes alone re-render. */
-const unpushedRefAtom = Atom.family((status: ReturnType<typeof vcsEnvironment.status>) =>
-  Atom.map(status, (result) => {
-    const data = AsyncResult.getOrElse(result, () => null);
-    return data !== null && !data.hasUpstream ? data.refName : null;
-  }),
-);
-const NO_UNPUSHED_REF_ATOM: Atom.Atom<string | null> = Atom.make(null);
-
 export function ThreadContextReadout(props: {
   readonly project: ProjectFaviconProject & Pick<EnvironmentProject, "repositoryIdentity">;
   readonly isGitRepo: boolean;
@@ -59,25 +47,12 @@ export function ThreadContextReadout(props: {
   readonly activeThreadBranch: string | null;
   /** The live ref from git status; null before it resolves. */
   readonly currentGitBranch: string | null;
-  /** The checkout ChatView reads git status from. */
-  readonly statusCwd: string | null;
 }) {
   const branch = resolveThreadContextBranch(props);
   const BranchIcon = props.activeWorktreePath !== null ? WorktreeIcon : GitBranchIcon;
-  const unpushedRef = useAtomValue(
-    props.statusCwd === null
-      ? NO_UNPUSHED_REF_ATOM
-      : unpushedRefAtom(
-          vcsEnvironment.status({
-            environmentId: props.project.environmentId,
-            input: { cwd: props.statusCwd },
-          }),
-        ),
-  );
   const branchUrl = branch ? projectBranchUrl(props.project.repositoryIdentity, branch) : null;
-  const unpushed = branch !== null && unpushedRef === branch;
   const copyBranch = () => {
-    if (branch) copyBranchReference({ branch, url: branchUrl, unpushed });
+    if (branch) copyBranchReference({ branch, url: branchUrl });
   };
   const onBranchKeyDown = (event: KeyboardEvent) => {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -89,7 +64,7 @@ export function ThreadContextReadout(props: {
     if (!branch || !api) return;
     event.preventDefault();
     event.stopPropagation();
-    const link = unpushed ? null : branchUrl;
+    const link = branchUrl;
     void api.contextMenu
       .show(
         [
@@ -101,8 +76,7 @@ export function ThreadContextReadout(props: {
         { x: event.clientX, y: event.clientY },
       )
       .then((action) => {
-        if (action === "copy-branch-name")
-          copyBranchReference({ branch, url: null, unpushed: false });
+        if (action === "copy-branch-name") copyBranchReference({ branch, url: null });
         if (action === "copy-branch-link" && link) copyBranchLink(link);
       });
   };
@@ -126,11 +100,7 @@ export function ThreadContextReadout(props: {
         <span
           role="button"
           tabIndex={0}
-          aria-label={
-            branchUrl !== null && !unpushed
-              ? `Copy link to ${branch}`
-              : `Copy branch name ${branch}`
-          }
+          aria-label={branchUrl !== null ? `Copy link to ${branch}` : `Copy branch name ${branch}`}
           data-fork-context-chip
           data-composer-context-control
           data-fork-branch-link-chip
