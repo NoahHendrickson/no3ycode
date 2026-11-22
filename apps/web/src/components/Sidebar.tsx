@@ -2181,9 +2181,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                A bot's avatar card: 6 + 16 + 2 + 14 + 6 = 44 (custom/bots/SidebarV2BotCardBody). */
             cardKind === "bot"
             ? "[contain-intrinsic-size:auto_44px]"
-            : // A grid tile: 8 + 48 + 2 + 16 + 6 = 80 (SidebarV2BotGridBody).
+            : // A grid tile: 8 + 48 + 2 + 16 + 8 = 82 (SidebarV2BotGridBody).
               cardKind === "bot-grid"
-              ? "[contain-intrinsic-size:66px_80px]"
+              ? "[contain-intrinsic-size:64px_82px]"
               : /* fork:end fork-bots */
                 "[contain-intrinsic-size:auto_54px]",
         /* fork:end sidebar-v2-card-rows */

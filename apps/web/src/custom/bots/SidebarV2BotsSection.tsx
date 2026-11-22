@@ -253,13 +253,14 @@ export function SidebarV2BotsRow(props: {
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
         {/* 4px under the header row, so the first card never meets its buttons; none when
             folded away to nothing or empty. */}
-        {/* The grid fits as many 66px cells as the width holds, spread edge to edge. */}
+        {/* The grid fits as many 64px cells as the width holds, spread edge to edge. */}
         <ul
           role="presentation"
+          data-fork-petals-grid={props.layout === "grid" ? "" : undefined}
           className={cn(
             "mt-1 empty:mt-0",
             props.layout === "grid"
-              ? "grid grid-cols-[repeat(auto-fill,66px)] justify-between gap-y-1 px-0.5"
+              ? "grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-y-1 px-0.5"
               : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
           )}
         >

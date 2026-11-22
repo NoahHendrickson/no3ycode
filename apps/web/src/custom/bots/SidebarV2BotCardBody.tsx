@@ -31,7 +31,8 @@ export function sidebarV2CardKind(
 }
 
 /** A bot in the Petals grid: its 48px tile with the status mark in a notch cut from its corner,
-    and its name under it. 8 + 48 + 2 + 16 + 6 = 80px tall, in a 66px cell. */
+    and its name under it. The tile keeps 8px to the cell's sides and top, and the name 8px to
+    its bottom: 8 + 48 + 2 + 16 + 8 = 82px tall, in a 64px cell. */
 export function SidebarV2BotGridBody(props: {
   readonly shell: BotShell & { readonly id: string };
   readonly mood: BotMascotMood;
@@ -41,7 +42,7 @@ export function SidebarV2BotGridBody(props: {
   readonly title: ReactNode;
 }) {
   return (
-    <div className="relative z-10 flex flex-col items-center px-1 pt-2 pb-1.5">
+    <div className="relative z-10 flex flex-col items-center px-1 py-2">
       <span className="relative">
         <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} size="grid" />
         <span

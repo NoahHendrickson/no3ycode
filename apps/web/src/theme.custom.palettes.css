@@ -306,6 +306,11 @@
     corner-shape: superellipse(1.6);
   }
 
+  /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
+  & [data-sidebar-version="v2"] [data-fork-petals-grid] [data-fork-thread-row] {
+    border-radius: calc(var(--fork-flat-radius) + 4px);
+  }
+
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
     border-radius: var(--fork-flat-model-picker-radius);
     corner-shape: superellipse(1.6);
