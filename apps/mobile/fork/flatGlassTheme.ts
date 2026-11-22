@@ -80,6 +80,8 @@ export interface FlatGlassPalette {
   readonly statusFailed: string;
   readonly statusMonitoring: string;
   readonly statusIdleBorder: string;
+  /** The user's sent bubble: a translucent wash over the page, like the Mac's glass bubble. */
+  readonly userBubble: string;
 }
 
 const DARK_FLAT_GLASS: FlatGlassPalette = {
@@ -115,6 +117,7 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   statusFailed: "#FF6B60",
   statusMonitoring: "rgba(255, 255, 255, 0.45)",
   statusIdleBorder: "rgba(255, 255, 255, 0.55)",
+  userBubble: "rgba(255, 255, 255, 0.09)",
 };
 
 const LIGHT_FLAT_GLASS: FlatGlassPalette = {
@@ -150,6 +153,7 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   statusFailed: "#DC2626",
   statusMonitoring: "rgba(20, 22, 24, 0.40)",
   statusIdleBorder: "rgba(20, 22, 24, 0.42)",
+  userBubble: "rgba(20, 22, 24, 0.06)",
 };
 
 export function flatGlassPalette(appearance: "dark" | "light"): FlatGlassPalette {

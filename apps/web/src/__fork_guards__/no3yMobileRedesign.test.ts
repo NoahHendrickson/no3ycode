@@ -611,6 +611,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(statusPill).toContain('StackActions.push("No3yThreadStatus", { threadKey })');
     expect(statusPill).toContain("subagents: Robot01Icon");
     expect(statusPill).toContain("<No3yGlassLayer radius={PILL_HEIGHT / 2} />");
+    // The user's bubble is a translucent wash on the no3y layout.
+    expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(
+      "flatGlassPalette(themeAppearance).userBubble",
+    );
     // Transcript subagents draw as the Mac fork's card with the Threads list's status marks.
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");

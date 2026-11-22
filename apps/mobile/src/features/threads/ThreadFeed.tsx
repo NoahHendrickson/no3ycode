@@ -187,6 +187,10 @@ import {
 import { uuidv4 } from "../../lib/uuid";
 import { resolveNativeMarkdownTypography } from "../../lib/appearancePreferences";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { flatGlassPalette } from "../../../fork/flatGlassTheme";
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+/* fork:end no3y-mobile-redesign */
 import { PierreEntryIcon } from "../../components/PierreEntryIcon";
 import {
   normalizeNativeMarkdownUrl,
@@ -2824,7 +2828,12 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     [androidButtonSize, androidIconSize],
   );
   const screenColor = theme["--color-screen"];
-  const userBubbleColor = theme["--color-user-bubble"];
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBubble = useNo3yBottomNavEnabled();
+  const userBubbleColor = no3yBubble
+    ? flatGlassPalette(themeAppearance).userBubble
+    : theme["--color-user-bubble"];
+  /* fork:end no3y-mobile-redesign */
   const openSkillInstructions = (path: string) => {
     void Haptics.selectionAsync();
     navigation.navigate("ThreadFile", {

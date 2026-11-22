@@ -7925,6 +7925,8 @@
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
     status, previews). iPad and Android keep the upstream control.
+    The user's sent bubble is a translucent wash (white 9% on the dark page,
+    flatGlassTheme's userBubble), as the Mac's glass bubble is, not a grey fill.
     Subagents in the transcript draw as the Mac fork's subagent card
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
@@ -8020,6 +8022,7 @@
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     - apps/mobile/src/features/threads/thread-work-log.tsx
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
     # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
     - apps/mobile/package.json
