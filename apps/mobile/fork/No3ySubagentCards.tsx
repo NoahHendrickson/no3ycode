@@ -234,19 +234,17 @@ function SubagentCard(props: {
           <View
             style={{
               position: "absolute",
-              right: -4,
-              bottom: -4,
-              width: 16,
-              height: 16,
-              borderRadius: 8,
+              right: -5,
+              bottom: -5,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: palette.stageBackground,
             }}
           >
-            <View style={{ transform: [{ scale: 0.75 }] }}>
-              <No3yStatusMark kind={mark} palette={palette} />
-            </View>
+            <No3yStatusMark kind={mark} palette={palette} size={14} />
           </View>
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>

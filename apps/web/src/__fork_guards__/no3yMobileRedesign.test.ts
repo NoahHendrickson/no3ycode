@@ -577,6 +577,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
     expect(threadComposer).toContain("<No3yBottomScrim");
     expect(statusMark).toContain("<No3yBeadRing");
+    // Card-size status marks are 20pt, scaled whole from their 16pt drawing.
+    expect(statusMark).toContain("const size = props.size ?? NO3Y_STATUS_MARK_SIZE;");
+    expect(readRepoFile("apps/mobile/fork/flatGlassTheme.ts")).toContain(
+      "export const NO3Y_STATUS_MARK_SIZE = 20;",
+    );
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
     expect(listView).toContain("<No3yBotsGrid");
@@ -605,7 +610,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");
     expect(workLog).toContain("<No3ySubagentCardsSwap");
-    expect(subagentCards).toContain("<No3yStatusMark kind={mark} palette={palette} />");
+    expect(subagentCards).toContain("<No3yStatusMark kind={mark} palette={palette} size={14} />");
     expect(subagentCards).toContain("<No3yProviderMark");
     expect(subagentCards).not.toContain("sky");
     // iOS draws the system font everywhere; Android keeps DM Sans.
