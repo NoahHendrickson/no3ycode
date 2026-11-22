@@ -375,15 +375,6 @@
   background: var(--basic-raised);
 }
 
-/* The changed-files well is a panel of its own (Figma kit), rounded at the top as well, so its
-   hairline curves down into the card's sides. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-changed-files-header]
-  + div {
-  border-top-left-radius: calc(var(--fork-card-radius) - 1px);
-  border-top-right-radius: calc(var(--fork-card-radius) - 1px);
-}
-
 /* The subagent card's well sits on the raised fill (Figma kit), not the composer's prompt. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-subagent-well] {
   background-color: var(--basic-raised);

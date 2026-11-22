@@ -2870,10 +2870,13 @@
   border-radius: calc(var(--fork-card-radius) - 1px) calc(var(--fork-card-radius) - 1px) 0 0;
 }
 
+/* Rounded at the top too, so the hairline curves down into the card's sides. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-header]
   + div {
   box-shadow: inset 0 1px 0 var(--fork-composer-border);
+  border-top-left-radius: calc(var(--fork-card-radius) - 1px);
+  border-top-right-radius: calc(var(--fork-card-radius) - 1px);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])

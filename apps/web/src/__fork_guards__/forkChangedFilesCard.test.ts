@@ -48,7 +48,7 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
   });
 
-  it("draws the file tree as the composer's outlined well under a loose header", () => {
+  it("draws the file tree under a loose header, parted by a rounded hairline", () => {
     // The rules hang off the header's following sibling divs: the tree's
     // root wrapper (a fragment or another tag would drop the well) and the
     // "N more files" footer.
@@ -67,7 +67,9 @@ describe("fork guard: fork-changed-files-card", () => {
     ).toBeUndefined();
     const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
     expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
-    // The shared rule rounds only the bottom, so Basic's rounded top has nothing to compete with.
+    // The tree's top corners round too, so its hairline curves into the card's sides.
+    expect(top?.body).toMatch(/border-top-left-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u);
+    // The bottom rule rounds only the bottom, so it never competes with that top.
     const bottom = rules.find((rule) =>
       rule.selector.endsWith("[data-changed-files-header] ~ div:last-child"),
     );
@@ -81,15 +83,7 @@ describe("fork guard: fork-changed-files-card", () => {
         rule.selector.endsWith('[data-fork-theme="basic"] [data-changed-files-header] ~ div'),
       )?.body,
     ).toMatch(/background:\s*var\(--basic-raised\)/u);
-    const basic = cssRules(readSibling("../theme.custom.basic.css")).find((rule) =>
-      rule.selector
-        .replace(/\s+/gu, " ")
-        .endsWith('[data-fork-theme="basic"] [data-changed-files-header] + div'),
-    );
-    expect(basic?.body).toMatch(
-      /border-top-left-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u,
-    );
-    expect(basic?.body).toMatch(
+    expect(top?.body).toMatch(
       /border-top-right-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u,
     );
   });
