@@ -45,6 +45,13 @@ it.each([
   });
   expect(config.owner).toBeUndefined();
   expect(config.updates).toEqual({ enabled: false });
+  // The launch screen is the green sparkle on the dark page the launch animation starts from.
+  expect(pluginOptions(config, "expo-splash-screen")).toMatchObject({
+    image: "./fork/assets/no3y-splash-sparkle.png",
+    imageWidth: 220,
+    backgroundColor: "#191817",
+    dark: { image: "./fork/assets/no3y-splash-sparkle.png", backgroundColor: "#191817" },
+  });
   expect(config.extra?.eas?.projectId).toBeUndefined();
 });
 

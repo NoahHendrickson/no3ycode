@@ -5317,7 +5317,8 @@
   intent: >
     The mobile app builds as no3y Code, signed by the fork owner's Apple team
     (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
-    other variants), with the fork's app icons. Ping's team, bundle IDs, linked
+    other variants), with the fork's app icons and, on iOS, the sparkle
+    launch screen (no3y-launch-sparkle). Ping's team, bundle IDs, linked
     domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
     serve a different bundle, so they are swapped out or dropped, and OTA
     updates stay off until the fork has its own Expo project.
@@ -7835,6 +7836,34 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
+- id: no3y-launch-sparkle
+  intent: >
+    A cold launch of the no3y iPhone app opens on the new sparkle logo. The
+    iOS launch screen is the green (#00C26B) sparkle at 220pt on the dark page
+    (#191817) (fork/identity.ts sets expo-splash-screen's iOS options;
+    fork/assets/no3y-splash-sparkle.png is rendered from the logo SVG). The
+    JS overlay (fork/No3yLaunchSparkle.tsx, mounted in App.tsx) draws the same
+    frame, hides the native splash under it, and twinkles on the UI thread: a
+    squeeze and spring back with a slight turn and a white glint across the
+    mark. When the first screen is ready (where SplashScreenCoordinator hides
+    the splash) it scales up and fades, after a 320ms floor so a fast launch
+    does not flicker (fork/no3yLaunch.ts); it never waits for the twinkle, so
+    it never delays the app. Once per process, so returning from the
+    background does not replay it; Reduce Motion only fades; iPad, Android and
+    upstream's identity build skip it. The app icons are not touched here.
+  tier: 3
+  files:
+    - apps/mobile/fork/No3yLaunchSparkle.tsx
+    - apps/mobile/fork/no3yLaunch.ts
+    - apps/mobile/fork/no3yLaunch.test.ts
+    - apps/mobile/fork/assets/no3y-splash-sparkle.png
+  shadows: []
+  watch:
+    - apps/mobile/src/App.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yLaunchSparkle.test.ts
+    - apps/mobile/fork/no3yLaunch.test.ts
+    - apps/mobile/fork/identity.test.ts
 - id: no3y-prompt-stash
   intent: >
     iOS has a device-local prompt stash like the Mac's promptStashStore: the
