@@ -5101,9 +5101,10 @@
     border so Cool / Neutral palettes keep their own hairline weight. The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
-    tree's top only (the card border is the line elsewhere). Radii come from
-    --fork-card-radius (8px, for cards that sit beside the composer); the tree
-    rounds its top corners too, so its hairline curves into the card's sides.
+    tree's top only (the card border is the line elsewhere). The card sets
+    --fork-card-radius to the composer's radius (16px), and its corner rules read
+    it; the tree rounds its top corners too, so its hairline curves into the
+    card's sides. On Flat Glass the tree and footer take a 4% white wash.
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
