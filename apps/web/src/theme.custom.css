@@ -1127,7 +1127,7 @@
   [data-chat-composer-actions="right"]
   > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]):has(
     + [data-fork-composer-action="stop"],
-    + span:has(> [data-fork-composer-action="send"])
+    + span > [data-fork-composer-action="send"]
   ) {
   margin-inline-end: -6px;
 }
