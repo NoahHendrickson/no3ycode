@@ -5,6 +5,7 @@ import { ComposerShell } from "~/custom/ComposerShell";
 /** The composer's vessel at rest (nothing pending, desktop), holding only the controls a story
     passes. */
 export function StoryComposer(props: {
+  context?: ReactNode;
   modeControls?: ReactNode;
   usageControls?: ReactNode;
   topVessel?: ReactNode;
@@ -12,6 +13,7 @@ export function StoryComposer(props: {
   return (
     <ComposerShell
       approvalPending={false}
+      context={props.context}
       collapsedMobile={false}
       mobilePendingActionsVisible={false}
       modelControls={null}

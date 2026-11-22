@@ -63,7 +63,7 @@ describe("fork guard: fork-split-threads", () => {
     );
     // An embedded side chat inherits its parent's pane but is not in the pair.
     expect(chatView).toMatch(
-      /const splitAgentPill =\s*!isDraftHeroState &&[\s\S]{0,120}!embedded &&/u,
+      /const splitAgentToggle =\s*!isDraftHeroState &&[\s\S]{0,120}!embedded &&/u,
     );
     // Global singletons and broadcasts: the PR-link dialog and palette find.
     expect(chatView).toContain(
@@ -110,10 +110,20 @@ describe("fork guard: fork-split-threads", () => {
     );
   });
 
-  it("offers the pill above the composer", () => {
+  it("offers the split toggle in the header, just before the details toggle", () => {
+    const header = readSibling("../custom/splitThreads/SplitPaneHeaderControls.tsx");
     expect(chatView).toMatch(
-      /fork:begin fork-split-threads[\s\S]*?<SplitAgentPill[\s\S]*?fork:end fork-split-threads/u,
+      /fork:begin fork-split-threads[\s\S]*?<SplitAgentToggle[\s\S]*?fork:end fork-split-threads/u,
     );
+    expect(chatView).toContain("splitAgentToggle={splitAgentToggle}");
+    // Only where the composer was: never on a provider-native subagent thread.
+    expect(chatView).toContain(
+      "splitAgentToggleShown(splitPane, isServerThread && composerMounted)",
+    );
+    expect(header).toMatch(
+      /\{props\.splitAgentToggle\}\s*<div[^>]*>\s*\{props\.panelToggleControls\}/u,
+    );
+    expect(chatView).not.toMatch(/const composerContextTrailing =[^;]*SplitAgent/u);
   });
 
   it("paints pairs and takes card drops in the sidebar", () => {

@@ -23,6 +23,7 @@ import {
   resolveComposerShellVisibility,
 } from "../custom/ComposerShell";
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
+import { hasUnseenApproval, resolveCollapsedTaskIds } from "../custom/composerBackgroundWork.logic";
 import { resolveThreadContextBranch } from "../custom/ThreadContextReadout";
 import { cssRules, ruleBodyFor } from "./cssRules";
 
@@ -824,41 +825,38 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain("composerControlsHostRef");
   });
 
-  it("moves background liveness off the banner stack onto a context-strip pill with stop", () => {
-    const pill = readSibling("../custom/ComposerMonitoringPill.tsx");
+  it("moves background work off the banner stack into a toggled section of the top drawer", () => {
+    const work = readSibling("../custom/ComposerBackgroundWork.tsx");
+    const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
+    const composer = readSibling("../components/chat/ChatComposer.tsx");
     const strip = readSibling("../custom/composerContextStrip.tsx");
     const branchToolbar = readSibling("../components/BranchToolbar.tsx");
-    expect(pill).toContain("export function ComposerBackgroundLivenessPill");
-    expect(pill).toContain('readonly kind: "monitoring"');
-    expect(pill).toContain('readonly kind: "working"');
-    expect(pill).toContain("SidebarV2WorkingMark");
-    expect(pill).toContain("SidebarV2MonitoringMark");
-    expect(pill).toContain("StopSquareIcon");
-    expect(pill).toContain('role="status"');
-    expect(pill).toContain("data-fork-liveness-mark");
-    expect(pill).toContain("data-fork-monitoring-pill");
-    expect(pill).toContain("data-fork-monitoring-stop");
-    expect(pill).toContain("Stop background work");
-    // The count opens the list of what is running; a subagent's row opens its
-    // thread. The popup is a popover-popup, so it takes the one frost recipe.
-    expect(pill).toContain("data-fork-monitoring-list");
-    expect(pill).toContain("data-fork-monitoring-tasks");
-    expect(pill).toContain("onClick={() => props.onOpenThread(childThreadId)}");
-    // The pill takes upstream's pending-work roster as is; ChatView hands the
-    // presentation over and the strip derives liveness and the list from it.
-    expect(pill).toContain("readonly tasks: ReadonlyArray<PendingBackgroundWorkItem>;");
-    expect(strip).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
-    expect(strip).toContain("tasks: input.presentation.items,");
+    // The context row carries only an icon toggle; the list and Stop live in the drawer.
+    expect(work).toContain("export function useComposerBackgroundWork");
+    expect(work).toContain("data-fork-background-work-toggle");
+    expect(work).toContain("aria-expanded={open}");
+    expect(work).toContain("SidebarV2WorkingMark");
+    expect(work).toContain("SidebarV2MonitoringMark");
+    expect(work).toContain('role="status"');
+    expect(work).toContain("data-fork-background-work ");
+    expect(work).toContain("data-fork-monitoring-stop");
+    expect(work).toContain("Stop background work");
+    expect(work).toContain("StopSquareIcon");
+    expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
+    expect(work).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
+    // One drawer surface: the work section stacks above the usage tray, so every theme's
+    // drawer paint and the Liquid Glass card cover both.
+    expect(usage).toContain("readonly backgroundWork: ComposerBackgroundWorkVessel | null;");
+    expect(usage).toContain("open={drawerOpen}");
+    expect(usage).toContain("work.content");
+    expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
+    expect(chatView).toContain("useComposerBackgroundWork(");
+    // A subagent's approval waits right above the composer; each arrival makes the drawer give way.
+    expect(chatView).toContain("useAtomValue(childThreadApprovalsAtom(activeThreadRef));");
     expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
-    // The live region sits beside the trigger: inside it, "Stopping..." is
-    // presentational and never announced.
-    expect(pill).toMatch(/<span role="status" className="sr-only">[\s\S]{0,80}<Popover>/u);
-    expect(shellCss).toContain("button[data-fork-monitoring-list]");
-    expect(shellCss).toContain(
-      "button[data-fork-monitoring-list]:is(:hover, [data-pressed], [data-popup-open]):not(:disabled)",
-    );
-    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
-    expect(strip).toContain("resolveComposerLivenessPillProps");
+    expect(chatView).toContain("backgroundWork={composerBackgroundWork.vessel}");
+    expect(chatView).toContain("trailing: composerContextTrailing");
+    expect(chatView).toContain("const composerContextTrailing = composerBackgroundWork.toggle;");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
     expect(branchToolbar).toContain("trailing?: ReactNode");
@@ -869,24 +867,35 @@ describe("fork guard: fork-composer-shell", () => {
       "return renderComposerContextStripFallback({ leading, trailing });",
     );
     expect(branchToolbar).not.toMatch(/<ComposerSurface\.ContextStrip ref=\{setStripElement\}>/u);
-    expect(chatView).toContain("resolveComposerLivenessPillProps");
-    expect(chatView).toContain("renderComposerLivenessPill");
-    expect(chatView).toContain("trailing: composerContextTrailing");
-    expect(chatView).toMatch(/const composerContextTrailing =[\s\S]*?\{composerLivenessPill\}/u);
     expect(chatView).not.toContain("backgroundLivenessBannerItem");
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
-    // Pill chrome lives with fork-composer-shell, not theme.custom.css sprawl.
-    expect(shellCss).toContain("[data-fork-monitoring-pill]");
-    expect(shellCss).toContain("button[data-fork-monitoring-stop]");
+    expect(shellCss).toMatch(
+      /button\[data-fork-background-work-toggle\]\s*\{[^}]*width:\s*26px[^}]*padding-inline:\s*0/u,
+    );
     expect(shellCss).toContain("[data-fork-liveness-mark]");
-    expect(shellCss).toMatch(
-      /button\[data-fork-monitoring-stop\]\s*\{[^}]*width:\s*24px[^}]*height:\s*24px/u,
-    );
-    expect(shellCss).toMatch(
-      /button\[data-fork-monitoring-stop\]:disabled\s*\{[^}]*background:\s*transparent/u,
-    );
-    expect(theme).not.toContain("[data-fork-monitoring-pill]");
+    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
+  });
+
+  it("opens the background-work drawer for work it has not shown and holds a collapse", () => {
+    const tasks = (...ids: string[]) => ids.map((taskId) => ({ taskId }));
+    const collapsed = new Set(["monitor", "a"]);
+    // A task ending keeps the collapse.
+    expect(resolveCollapsedTaskIds(tasks("monitor"), collapsed)).toBe(collapsed);
+    // One starting spends it, so the drawer stays open after that task ends too.
+    const reopened = resolveCollapsedTaskIds(tasks("monitor", "subagent"), collapsed);
+    expect(reopened).toBeNull();
+    expect(resolveCollapsedTaskIds(tasks("monitor"), reopened)).toBeNull();
+  });
+
+  it("collapses the background-work drawer once per subagent approval that arrives", () => {
+    const ids = (...values: string[]) => new Set(values);
+    expect(hasUnseenApproval(ids("a"), ids())).toBe(true);
+    // The user reopens over A: no new arrival, so the drawer stays as they left it.
+    expect(hasUnseenApproval(ids("a"), ids("a"))).toBe(false);
+    // B arrives while A still waits.
+    expect(hasUnseenApproval(ids("a", "b"), ids("a"))).toBe(true);
+    expect(hasUnseenApproval(ids("b"), ids("a", "b"))).toBe(false);
   });
 
   it("ends the transcript above the composer instead of hiding it behind", () => {

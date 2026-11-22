@@ -24,6 +24,7 @@ import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ensureLocalApi } from "~/localApi";
 import { environmentPresentations } from "~/state/presentation";
+import type { ComposerBackgroundWorkVessel } from "./ComposerBackgroundWork";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
@@ -32,14 +33,25 @@ import { UsageCircleMeter } from "./UsageMeter";
 const FIVE_HOURS_MINS = 300;
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
 
-/** Owns the composer usage drawer's atomic open/clock state and focus restoration. */
+/** Owns the composer's top drawer: the usage tray's open/clock state and focus restoration, with
+    the background-work section (owned by ChatView) stacked above it while that is open. */
 export function useComposerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
+  readonly backgroundWork: ComposerBackgroundWorkVessel | null;
 }) {
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const open = props.enabled && openedAt !== null;
+  const work = props.backgroundWork;
+  const workOpen = work?.open === true;
+  const drawerOpen = open || workOpen;
+  // The panel keeps its children through the close slide, so it keeps the sections it last showed.
+  const [lastShown, setLastShown] = useState({ work: false, usage: false });
+  if (drawerOpen && (lastShown.work !== workOpen || lastShown.usage !== open)) {
+    setLastShown({ work: workOpen, usage: open });
+  }
+  const shown = drawerOpen ? { work: workOpen, usage: open } : lastShown;
 
   const toggle = () => {
     setOpenedAt((current) => (current === null ? Date.now() : null));
@@ -62,11 +74,24 @@ export function useComposerUsageDrawer(props: {
         onClose={() => close(false)}
       />
     ) : null,
-    drawer: props.enabled ? (
-      <ComposerUsageLimitsDrawer open={open} onClose={() => close(true)}>
-        <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
-      </ComposerUsageLimitsDrawer>
-    ) : null,
+    drawer:
+      props.enabled || work !== null ? (
+        <ComposerUsageLimitsDrawer
+          open={drawerOpen}
+          onClose={() => {
+            if (workOpen) work?.onCollapse();
+            if (open) close(true);
+          }}
+        >
+          {shown.work && work !== null ? work.content : null}
+          {shown.work && work !== null && shown.usage ? (
+            <div aria-hidden className="h-px shrink-0 bg-border" />
+          ) : null}
+          {shown.usage && props.enabled ? (
+            <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
+          ) : null}
+        </ComposerUsageLimitsDrawer>
+      ) : null,
   };
 }
 
