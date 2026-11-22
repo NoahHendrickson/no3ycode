@@ -10,7 +10,7 @@ export default {
   enabled: true,
 });
 
-<ComposerShell usageControls={usageDrawer.readout} topVessel={usageDrawer.drawer} />`,
+<ComposerShell {...shellProps} usageControls={usageDrawer.readout} topVessel={usageDrawer.drawer} />`,
   imports: [
     'import { ComposerShell } from "~/custom/ComposerShell";',
     'import { useComposerUsageDrawer } from "~/custom/ComposerUsageLimitsReadout";',
