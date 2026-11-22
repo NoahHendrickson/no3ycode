@@ -1675,19 +1675,19 @@
    measured on screen over its #1f1c1b backing (forkSidebarVibrancy.ts), on Full Glass its
    backing with a 4% lift. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
-  [data-fork-sidebar-glass-popup] {
+  [data-fork-liquid-glass-popup] {
   background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
-  [data-fork-sidebar-glass-popup="solid"] {
+  [data-fork-liquid-glass-popup="solid"] {
   background: color-mix(in srgb, #ffffff 4%, #141618);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-sidebar-glass-popup="solid"] {
+  [data-fork-liquid-glass-popup="solid"] {
   background: #2a2324;
 }
 
@@ -1993,7 +1993,8 @@
   .dropdown-glass[data-fork-draft-glass-popup="true"] {
   --contrast-muted-foreground: rgb(255 255 255 / 72%);
   --contrast-border: rgb(255 255 255 / 14%);
-  background: rgb(255 255 255 / 10%);
+  /* The page is cut away beneath it (forkGlassPopupCutout.ts), so the native card is the menu. */
+  background: transparent;
   border-color: transparent;
   box-shadow: none;
   -webkit-backdrop-filter: none;

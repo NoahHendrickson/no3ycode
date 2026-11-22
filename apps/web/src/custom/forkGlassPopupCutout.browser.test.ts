@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 
-const MARK = "data-fork-sidebar-glass-popup";
+const MARK = "data-fork-liquid-glass-popup";
 
 /** #root with a docked v2 sidebar 300px wide; `open` portals a menu at `left`. */
 function stage() {
@@ -61,6 +61,16 @@ describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
     expect(straddling.getAttribute(MARK)).toBe("solid");
     expect(clear.hasAttribute(MARK)).toBe(false);
     expect(scene.root.style.getPropertyValue("mask-image")).toBe("");
+  });
+
+  it("cuts the page from under a menu the draft's native glass took, wherever it sits", () => {
+    using scene = stage();
+    liquidGlass();
+    const menu = scene.open(400);
+    menu.setAttribute("data-fork-draft-glass-popup", "true");
+    syncForkGlassPopupCutout("sidebar");
+    expect(menu.getAttribute(MARK)).toBe("glass");
+    expect(scene.root.style.getPropertyValue("mask-image")).toContain("svg");
   });
 
   it("stamps a menu opened after Liquid Glass lands, though the cutout started before it", async () => {

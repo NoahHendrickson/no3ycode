@@ -71,12 +71,14 @@ const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]
 /** Base UI's portal node, which nests a portal opened from inside it. */
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
-/* Sidebar Liquid Glass sits behind the docked sidebar alone: a popup wholly over it is cut
-   through to that glass ("glass"), so it follows the wallpaper and window focus; one reaching past
-   it would open onto the desktop, so it paints the sidebar's colour ("solid") instead. */
+/* Liquid Glass sits behind the docked sidebar and, on a new agent's draft, behind each popup the
+   draft glass took (forkDraftLiquidGlass.ts). A popup over either is cut through to it ("glass");
+   one reaching past the sidebar would open onto the desktop, so it paints the sidebar's colour. */
 const SIDEBAR_GLASS_SELECTOR =
   '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
-const FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE = "data-fork-sidebar-glass-popup";
+const FORK_LIQUID_GLASS_POPUP_ATTRIBUTE = "data-fork-liquid-glass-popup";
+/** Stamped by forkDraftLiquidGlass.ts on a popup it puts a native glass card behind. */
+const DRAFT_GLASS_POPUP_ATTRIBUTE = "data-fork-draft-glass-popup";
 
 /** Stamped on a popup that frosts over the draft card instead of cutting it. */
 const FORK_GLASS_FROST_ATTRIBUTE = "data-fork-glass-frost";
@@ -87,7 +89,14 @@ const FORK_GLASS_OVER_PICTURE_ATTRIBUTE = "data-fork-glass-over-picture";
 type DraftStage = { readonly rect: Rect; readonly attribute: string };
 
 /** The attributes Base UI moves on a popup's subtree when it closes or repositions. */
-const POPUP_ATTRIBUTES = ["style", "hidden", "data-ending-style", "data-side", "data-align"];
+const POPUP_ATTRIBUTES = [
+  "style",
+  "hidden",
+  "data-ending-style",
+  "data-side",
+  "data-align",
+  DRAFT_GLASS_POPUP_ATTRIBUTE,
+];
 
 /**
  * Frames a popup must hold still before frame tracking stops. Tooltip and
@@ -416,17 +425,18 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
       if (mode === "sidebar") {
         // A closing popup keeps its stamp and gives its hole back, as in window mode.
         if (hole === null) continue;
-        const stamp =
-          sidebar === null
+        const stamp = popup.hasAttribute(DRAFT_GLASS_POPUP_ATTRIBUTE)
+          ? "glass"
+          : sidebar === null
             ? null
             : within(hole, sidebar)
               ? "glass"
               : overlaps(hole, sidebar)
                 ? "solid"
                 : null;
-        if (popup.getAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE) !== stamp) {
-          if (stamp === null) popup.removeAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE);
-          else popup.setAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, stamp);
+        if (popup.getAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE) !== stamp) {
+          if (stamp === null) popup.removeAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE);
+          else popup.setAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE, stamp);
           frostChanged = true;
         }
         if (stamp === "glass") holes.push(hole);
@@ -553,8 +563,8 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode):
     masked.clear();
     for (const popup of frosted.keys()) clearFrost(popup);
     frosted.clear();
-    for (const popup of body.querySelectorAll(`[${FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE}]`)) {
-      popup.removeAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE);
+    for (const popup of body.querySelectorAll(`[${FORK_LIQUID_GLASS_POPUP_ATTRIBUTE}]`)) {
+      popup.removeAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE);
     }
   };
 }
