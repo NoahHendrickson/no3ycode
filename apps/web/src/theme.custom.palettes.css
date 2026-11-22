@@ -1667,6 +1667,18 @@
   background: transparent;
 }
 
+/* The popups' frost does not blur the clear sidebar over the native glass: a menu opened there
+   read as a see-through tint over sharp rows. Popups take a near-opaque fill instead, which
+   reads the same with or without the blur. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
+  --fork-popup-fill:
+    linear-gradient(
+      color-mix(in srgb, var(--contrast-foreground) 8%, transparent),
+      color-mix(in srgb, var(--contrast-foreground) 8%, transparent)
+    ),
+    color-mix(in srgb, var(--popover) 94%, transparent);
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
     [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
