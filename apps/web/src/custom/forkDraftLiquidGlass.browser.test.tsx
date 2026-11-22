@@ -123,4 +123,33 @@ describe("useForkDraftLiquidGlass", () => {
     await screen.rerender(<DrawerStage drawer="closing" />);
     await vi.waitFor(() => expect(sent.at(-1)).toEqual({ height: 120, animated: 0.15 }));
   });
+
+  it("puts native glass under a popup wholly inside the stage, not one reaching past it", async () => {
+    const setDraftGlass = vi.fn((_state: unknown) => Promise.resolve(true));
+    using _window = stubLiquidGlassWindow(setDraftGlass);
+    await using screen = await render(<DraftStage />);
+    await vi.waitFor(() => expect(setDraftGlass).toHaveBeenCalled());
+
+    const stageBox = screen.container
+      .querySelector("[data-chat-column-maximized-away]")!
+      .getBoundingClientRect();
+    const portal = document.createElement("div");
+    portal.setAttribute("data-base-ui-portal", "");
+    const menu = (left: number) => {
+      const popup = document.createElement("div");
+      popup.className = "dropdown-glass";
+      popup.setAttribute("data-slot", "menu-popup");
+      popup.style.cssText = `position:fixed;left:${left}px;top:${stageBox.top + 40}px;width:160px;height:120px`;
+      portal.append(popup);
+      return popup;
+    };
+    const inside = menu(stageBox.left + 40);
+    // Over the sidebar on its left, where the sidebar's solid fill must hold.
+    const straddling = menu(stageBox.left - 80);
+    using _portal = { [Symbol.dispose]: () => portal.remove() };
+    document.body.append(portal);
+
+    await vi.waitFor(() => expect(inside.hasAttribute("data-fork-draft-glass-popup")).toBe(true));
+    expect(straddling.hasAttribute("data-fork-draft-glass-popup")).toBe(false);
+  });
 });

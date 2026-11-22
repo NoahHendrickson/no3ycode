@@ -107,6 +107,17 @@ function roundRect(rect: DraftLiquidGlassRect): DraftLiquidGlassRect {
   };
 }
 
+/** Native glass sits behind the stage alone, so only a popup wholly inside it can stand on it;
+    one reaching over the sidebar keeps the sidebar's solid fill (forkGlassPopupCutout.ts). */
+function rectWithin(inner: DraftLiquidGlassRect, outer: DraftLiquidGlassRect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  );
+}
+
 function rectsIntersect(a: DraftLiquidGlassRect, b: DraftLiquidGlassRect): boolean {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
@@ -145,7 +156,7 @@ function readDraftPopupElements(stageBox: DraftLiquidGlassRect): HTMLElement[] {
     }
     const box = el.getBoundingClientRect();
     if (box.width <= 0 || box.height <= 0) continue;
-    if (!rectsIntersect(box, stageBox)) continue;
+    if (!rectWithin(box, stageBox)) continue;
     matched.push(el);
   }
   return matched;
