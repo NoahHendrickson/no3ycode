@@ -164,7 +164,7 @@
 }
 
 /* Flat Glass draws the composer vessel's 1px inner border like Basic (the drawn
-   composer has one); open, the usage drawer above takes the top edge. */
+   composer has one); open, the usage drawer above carries it over its top. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-fork-composer-vessel] {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
@@ -177,6 +177,13 @@
     inset 1px 0 0 var(--fork-composer-border),
     inset -1px 0 0 var(--fork-composer-border),
     inset 0 -1px 0 var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-composer-usage-drawer] {
+  box-shadow:
+    inset 1px 1px 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
@@ -1986,6 +1993,11 @@
 
   & [data-fork-composer-vessel]::after {
     content: none;
+  }
+
+  /* The native card is drawn from the page and cannot follow the drawer's slide. */
+  & [data-fork-composer-usage-drawer] {
+    transition: none;
   }
 }
 

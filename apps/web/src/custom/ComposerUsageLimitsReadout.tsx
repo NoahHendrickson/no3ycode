@@ -106,20 +106,20 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   );
 });
 
-/** Single-line vessel strip anchored above the composer (grows upward, zero shift). It opens and
-    closes without a height tween: Liquid Glass redraws its native card from the page each frame
-    and could not keep up, and the composer's squared top corners snap with it. */
+/** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
+    vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
+    The Liquid Glass draft turns the slide off in CSS, since its native card cannot follow it. */
 const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly openedAt: number;
   readonly onClose: () => void;
 }) {
   return (
-    <Collapsible open={props.open}>
+    <Collapsible open={props.open} className="overflow-hidden">
       <CollapsiblePanel
         animate={false}
         data-fork-composer-usage-drawer="true"
-        className="pointer-events-auto"
+        className="pointer-events-auto transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] data-ending-style:translate-y-full data-ending-style:duration-150 data-ending-style:ease-in data-starting-style:translate-y-full motion-reduce:transition-none"
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.stopPropagation();
