@@ -582,6 +582,14 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
     expect(stack).toContain('sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })');
+    // The compact status pill replaces the floating control on the no3y layout and opens its sheet.
+    const statusPill = readRepoFile("apps/mobile/fork/No3yStatusPill.tsx");
+    expect(threadDetail).toContain("<No3yStatusPillSwap");
+    expect(threadDetail).toContain("enabled={no3yBottomNav}");
+    expect(stack).toContain("No3yThreadStatus: createNativeStackScreen({");
+    expect(statusPill).toContain('StackActions.push("No3yThreadStatus", { threadKey })');
+    expect(statusPill).toContain("subagents: Robot01Icon");
+    expect(statusPill).toContain("<No3yGlassLayer radius={PILL_HEIGHT / 2} />");
     // iOS draws the system font everywhere; Android keeps DM Sans.
     expect(globalCss).toContain('--font-sans: "System";');
     expect(fontFamilies).toContain('regular: "System", medium: "System", bold: "System"');

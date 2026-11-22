@@ -7844,7 +7844,17 @@
     chip, mic and send below; no chip row above it; the model chip ends in the
     current runtime mode's access shield) over a fade-to-page scrim so the
     transcript never reads through; the upstream controls draw that style
-    through fork/No3yComposerStyle.tsx's context and keep their behaviour. On
+    through fork/No3yComposerStyle.tsx's context and keep their behaviour.
+    Above the card, the upstream full-width floating status control gives way
+    to one 30pt glass pill right-aligned with the card's edge
+    (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
+    amber dot when something there needs the user (transient status, background
+    processes, monitors, subagents as a robot, Pi status, queue, previews), with
+    the scroll-to-end button beside it. A tap opens a half-height sheet
+    (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
+    upstream control had (stop background work, force stop, wake, un-settle,
+    dismiss, reconnect, open subagents, open a child that needs the user, Pi
+    status, queue, previews). iPad and Android keep the upstream control. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -7898,6 +7908,11 @@
     - apps/mobile/fork/forkBots.ts
     - apps/mobile/fork/botMascotArt.ts
     - apps/mobile/fork/No3yBotsGrid.tsx
+    - apps/mobile/fork/No3yStatusPill.tsx
+    - apps/mobile/fork/No3yStatusSheet.tsx
+    - apps/mobile/fork/no3yStatusSheetStore.ts
+    - apps/mobile/fork/no3yStatusSegments.ts
+    - apps/mobile/fork/no3yStatusSegments.test.ts
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
@@ -7928,3 +7943,4 @@
     - apps/mobile/fork/mobileStatusGrouping.test.ts
     - apps/mobile/fork/effortSlider.test.ts
     - apps/mobile/fork/beadRing.test.ts
+    - apps/mobile/fork/no3yStatusSegments.test.ts

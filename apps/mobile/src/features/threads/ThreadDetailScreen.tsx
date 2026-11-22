@@ -4,6 +4,7 @@ import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceT
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
 /* fork:end no3y-mobile-redesign */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import {
@@ -1613,49 +1614,61 @@ function ThreadDetailBody(
                 pushes the resting content floor up by the same amount. */}
               <View onLayout={handleComposerOverlayLayout} className="w-full">
                 <View className="w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-                  <FloatingWorkingControl
-                    colorScheme={isDarkMode ? "dark" : "light"}
-                    status={floatingStatus}
-                    extensionStatus={
-                      floatingStatus !== null &&
-                      (floatingStatus.kind === "working" ||
-                        floatingStatus.kind === "compacting" ||
-                        floatingStatus.kind === "background" ||
-                        floatingStatus.kind === "goal" ||
-                        floatingStatus.kind === "lifecycle")
-                        ? extensionStatus
-                        : null
-                    }
-                    lift={floatingControlLift}
-                    devicePreview={
-                      devicePreviews.length > 0
-                        ? { count: devicePreviews.length, onPress: openDevicePreview }
-                        : null
-                    }
-                    browserPreview={
-                      browserTabs.tabs.length > 0
-                        ? { count: browserTabs.tabs.length, onPress: () => openBrowserPreview() }
-                        : null
-                    }
-                    showScrollToEnd={showScrollToEndButton}
-                    onScrollToEnd={handleScrollToEnd}
-                    agents={agentsSegment}
-                    onOpenAgents={() => {
-                      Keyboard.dismiss();
-                      navigation.navigate("ThreadAgents", {
-                        environmentId: props.environmentId,
-                        threadId: props.selectedThread.id,
-                      });
-                    }}
-                    queuedCount={queuedCount}
-                    onOpenQueue={() => {
-                      Keyboard.dismiss();
-                      navigation.navigate("ThreadQueue", {
-                        environmentId: props.environmentId,
-                        threadId: props.selectedThread.id,
-                      });
-                    }}
-                  />
+                  {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                  <No3yStatusPillSwap
+                    enabled={no3yBottomNav}
+                    environmentId={props.environmentId}
+                    threadId={props.selectedThread.id}
+                    backgroundWork={pendingBackgroundWork}
+                    detailRef={props.selectedThreadDetailRef}
+                  >
+                    {/* fork:end no3y-mobile-redesign */}
+                    <FloatingWorkingControl
+                      colorScheme={isDarkMode ? "dark" : "light"}
+                      status={floatingStatus}
+                      extensionStatus={
+                        floatingStatus !== null &&
+                        (floatingStatus.kind === "working" ||
+                          floatingStatus.kind === "compacting" ||
+                          floatingStatus.kind === "background" ||
+                          floatingStatus.kind === "goal" ||
+                          floatingStatus.kind === "lifecycle")
+                          ? extensionStatus
+                          : null
+                      }
+                      lift={floatingControlLift}
+                      devicePreview={
+                        devicePreviews.length > 0
+                          ? { count: devicePreviews.length, onPress: openDevicePreview }
+                          : null
+                      }
+                      browserPreview={
+                        browserTabs.tabs.length > 0
+                          ? { count: browserTabs.tabs.length, onPress: () => openBrowserPreview() }
+                          : null
+                      }
+                      showScrollToEnd={showScrollToEndButton}
+                      onScrollToEnd={handleScrollToEnd}
+                      agents={agentsSegment}
+                      onOpenAgents={() => {
+                        Keyboard.dismiss();
+                        navigation.navigate("ThreadAgents", {
+                          environmentId: props.environmentId,
+                          threadId: props.selectedThread.id,
+                        });
+                      }}
+                      queuedCount={queuedCount}
+                      onOpenQueue={() => {
+                        Keyboard.dismiss();
+                        navigation.navigate("ThreadQueue", {
+                          environmentId: props.environmentId,
+                          threadId: props.selectedThread.id,
+                        });
+                      }}
+                    />
+                    {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                  </No3yStatusPillSwap>
+                  {/* fork:end no3y-mobile-redesign */}
                   <ComposerPanels
                     className="w-full"
                     style={Platform.OS === "android" ? composerPanelsHeightStyle : undefined}
