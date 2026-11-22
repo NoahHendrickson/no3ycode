@@ -61,9 +61,10 @@ describe("fork guard: fork-changed-files-card", () => {
       ...rule,
       selector: rule.selector.replace(/\s+/gu, " "),
     }));
-    const fill = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div"));
-    expect(fill?.selector).toContain(MARKER);
-    expect(fill?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
+    // The tree under the header keeps the card's fill: no shared well fill (Basic paints its own).
+    expect(
+      rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div")),
+    ).toBeUndefined();
     const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
     expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
     // The shared rule rounds only the bottom, so Basic's rounded top has nothing to compete with.

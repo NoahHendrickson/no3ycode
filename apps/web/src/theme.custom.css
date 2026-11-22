@@ -2852,13 +2852,11 @@
    step (--secondary is the chip step, not a card). Freeze the card to
    --card so each palette's stage tokens actually show.
 
-   The card is the composer turned over: the composer is a floor with an
-   outlined prompt well on top and its controls loose below; here the header
-   sits loose on the floor and the file tree is the outlined well beneath it,
-   in the prompt's fill and hairline. The whole card takes that hairline too.
-   The well strokes only its top: the card border is the line on its other
-   three sides, so a translucent well never stacks two hairlines. Everything
-   under the header is well, including the "N more files" footer. */
+   The header and the file tree under it share the card's fill, parted by the
+   prompt's hairline, which the whole card takes too. A lighter well under the
+   header sat so close to that hairline's tone that the card's sides vanished
+   beside it. The tree strokes only its top: the card border is the line on its
+   other three sides. Basic paints its own raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
   background: var(--card);
@@ -2870,12 +2868,6 @@
   [data-changed-files-header] {
   background: var(--card);
   border-radius: calc(var(--fork-card-radius) - 1px) calc(var(--fork-card-radius) - 1px) 0 0;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-changed-files-header]
-  ~ div {
-  background: var(--fork-composer-bg);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
