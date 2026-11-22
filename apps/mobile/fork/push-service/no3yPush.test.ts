@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import { extractAgentNotificationDeepLink } from "../../src/features/agent-awareness/notificationPayload";
 import {
   apnsPayload,
+  isAutomationRunWithoutThread,
   observeThread,
   pairingTokenFromUrl,
   type ApnsNotification,
@@ -40,6 +41,7 @@ const thread = (
   pendingRuntimeRequest: null,
   settledOverride: null,
   updatedAt: DateTime.makeUnsafe("2026-11-22T12:00:00.000Z"),
+  latestRunId: null,
   ...overrides,
 });
 
@@ -93,6 +95,38 @@ it("sends a payload the app's notification tap handler opens", () => {
   });
   const response = { notification: { request: { content: { data: payload.body } } } };
   expect(extractAgentNotificationDeepLink(response)).toBe("/threads/env-1/thread-1");
+});
+
+describe("automation runs that make no thread stay silent", () => {
+  const run = { threadId: "thread-1", latestRunId: "run-2", launchedByAutomation: false };
+  const user = (runId: string, scheduledTaskId?: string) => ({
+    type: "user_message",
+    runId,
+    ...(scheduledTaskId ? { scheduledTaskId } : {}),
+  });
+
+  it.each([
+    [
+      "an automation posting into a thread with history",
+      [user("run-1"), user("run-2", "task")],
+      false,
+      true,
+    ],
+    ["an automation run whose history is paged out", [user("run-2", "task")], true, true],
+    ["an automation run that started the thread", [user("run-2", "task")], false, false],
+    ["the owner's own message", [user("run-1"), user("run-2")], false, false],
+  ])("%s", (_name, turnItems, hasMoreHistory, silent) => {
+    expect(isAutomationRunWithoutThread(run, { turnItems, hasMoreHistory })).toBe(silent);
+  });
+
+  it("alerts for a run of a thread the automation launched", () => {
+    expect(
+      isAutomationRunWithoutThread(
+        { ...run, launchedByAutomation: true },
+        { turnItems: [user("run-1"), user("run-2", "task")], hasMoreHistory: false },
+      ),
+    ).toBe(false);
+  });
 });
 
 it("reads the token from a pairing link", () => {

@@ -5336,7 +5336,13 @@
     (~/.no3y-push, never in the repo) when a thread finishes, fails, or waits
     on an approval or an answer. It decides that with the official
     projectThreadAwarenessV2 rule, imported rather than copied, and holds a
-    completion for 5 seconds like the relay does. No server, contract, or web
+    completion for 5 seconds like the relay does. An automation that makes no
+    thread stays silent: before alerting, the service reads the thread's
+    recent turn items, and a run started by an automation's message in a
+    thread that already had history (an automation bound to an existing
+    thread, such as a bot check-in) sends nothing. Runs an automation
+    launches as new threads still alert. If that read fails it alerts anyway,
+    since a missed approval costs more than an extra notification. No server, contract, or web
     code changes, so upstream syncs only touch it if the shell stream's wire
     shape changes.
 

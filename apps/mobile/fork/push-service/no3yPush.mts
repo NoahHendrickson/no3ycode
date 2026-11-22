@@ -281,14 +281,42 @@ const decodeEnvironmentId = Schema.decodeUnknownSync(EnvironmentId);
 
 export interface Tracker {
   readonly environmentId: EnvironmentId;
-  readonly notify: (notification: ApnsNotification) => void;
+  readonly notify: (notification: ApnsNotification, run: AlertRun) => void;
   readonly projectTitles: Map<string, string>;
   readonly lastKeys: Map<string, string | null>;
   readonly settleTimers: Map<string, ReturnType<typeof setTimeout>>;
 }
 
 type ThreadShell = Extract<OrchestrationV2ShellStreamItem, { kind: "thread.updated" }>["thread"];
-type ObservedThread = ProjectThreadAwarenessV2Input["thread"] & Pick<ThreadShell, "projectId">;
+type ObservedThread = ProjectThreadAwarenessV2Input["thread"] &
+  Pick<ThreadShell, "projectId" | "latestRunId" | "scheduledTaskId">;
+
+export interface AlertRun {
+  readonly threadId: string;
+  readonly latestRunId: string | null;
+  readonly launchedByAutomation: boolean;
+}
+
+interface TurnItemSummary {
+  readonly type: string;
+  readonly runId?: string | null;
+  readonly scheduledTaskId?: string;
+}
+
+/** An automation that posted into a thread with history made no thread, so it stays silent. */
+export function isAutomationRunWithoutThread(
+  run: AlertRun,
+  snapshot: {
+    readonly hasMoreHistory: boolean;
+    readonly turnItems: ReadonlyArray<TurnItemSummary>;
+  },
+): boolean {
+  if (run.launchedByAutomation || run.latestRunId === null) return false;
+  const messages = snapshot.turnItems.filter((item) => item.type === "user_message");
+  const index = messages.findIndex((item) => item.runId === run.latestRunId);
+  if (index === -1 || messages[index]?.scheduledTaskId === undefined) return false;
+  return index > 0 || snapshot.hasMoreHistory;
+}
 
 function awareness(tracker: Tracker, thread: ObservedThread) {
   return projectThreadAwarenessV2({
@@ -306,15 +334,20 @@ export function observeThread(tracker: Tracker, thread: ObservedThread, silent: 
   if (silent || key === null || key === previous || state === null) return;
 
   clearTimeout(tracker.settleTimers.get(thread.id));
+  const run: AlertRun = {
+    threadId: thread.id,
+    latestRunId: thread.latestRunId,
+    launchedByAutomation: thread.scheduledTaskId !== undefined,
+  };
   if (state.phase !== "completed") {
-    tracker.notify(notificationForState(state));
+    tracker.notify(notificationForState(state), run);
     return;
   }
   tracker.settleTimers.set(
     thread.id,
     setTimeout(() => {
       tracker.settleTimers.delete(thread.id);
-      if (tracker.lastKeys.get(thread.id) === key) tracker.notify(notificationForState(state));
+      if (tracker.lastKeys.get(thread.id) === key) tracker.notify(notificationForState(state), run);
     }, COMPLETION_SETTLE_MS),
   );
 }
@@ -357,13 +390,48 @@ async function environmentId(config: Config): Promise<EnvironmentId> {
   return decodeEnvironmentId(((await response.json()) as { environmentId: unknown }).environmentId);
 }
 
+async function alertUnlessSilent(config: Config, notification: ApnsNotification, run: AlertRun) {
+  try {
+    const response = await fetch(
+      new URL(
+        `/api/orchestration/threads/${encodeURIComponent(run.threadId)}/bounded`,
+        config.serverOrigin,
+      ),
+      {
+        headers: {
+          authorization: `Bearer ${config.accessToken}`,
+          "x-t3-orchestration-protocol": "2",
+        },
+      },
+    );
+    if (response.ok) {
+      const snapshot = (await response.json()) as {
+        hasMoreHistory: boolean;
+        projection: { turnItems: TurnItemSummary[] };
+      };
+      const items = {
+        hasMoreHistory: snapshot.hasMoreHistory,
+        turnItems: snapshot.projection.turnItems,
+      };
+      if (isAutomationRunWithoutThread(run, items)) {
+        log(
+          `silent "${notification.body}" for ${run.threadId}: automation run in an existing thread`,
+        );
+        return;
+      }
+    }
+  } catch (error) {
+    // Alert anyway: a missed approval costs more than an extra notification.
+    log(`could not check what started ${run.threadId}: ${String(error)}`);
+  }
+  log(`alert "${notification.body}" for ${run.threadId}`);
+  await notifyAll(notification);
+}
+
 async function watchOnce(config: Config) {
   const tracker: Tracker = {
     environmentId: await environmentId(config),
-    notify: (notification) => {
-      log(`alert "${notification.body}" for ${notification.threadId}`);
-      void notifyAll(notification);
-    },
+    notify: (notification, run) => void alertUnlessSilent(config, notification, run),
     projectTitles: new Map(),
     lastKeys: new Map(),
     settleTimers: new Map(),
