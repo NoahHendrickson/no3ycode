@@ -211,7 +211,7 @@ const meta = {
     answers: PUSH.answers,
   },
   argTypes: {
-    hiddenCount: { control: { type: "number", min: 0 } },
+    hiddenCount: { control: { type: "range", min: 0, max: 6 } },
     askCount: { control: { type: "range", min: 0, max: 6 } },
     tile: {
       control: "inline-radio",
