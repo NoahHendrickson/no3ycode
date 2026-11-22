@@ -116,16 +116,8 @@ describe("fork guard: fork-workspace-header", () => {
     );
   });
 
-  it("inverts the project/title weight and drops the favicon", () => {
-    // The project is the landmark; the title is prose. Reverting either half
-    // gives two competing bold runs, which is what upstream had.
-    //
-    // The semibold must be anchored to the project name itself. A loose
-    // class-pair match also hits the `/` separator, which keeps the test green
-    // after the name reverts to upstream's font-medium — the exact
-    // tripwire-dressed-as-proof failure the pill-scoping test above was
-    // rewritten to eliminate.
-    expect(chatHeader).toMatch(/text-sm font-semibold">\s*\{activeProjectName\}/u);
+  it("keeps project and title at 14px regular and drops the favicon", () => {
+    expect(chatHeader).toMatch(/text-sm font-normal">\s*\{activeProjectName\}/u);
     // The muted colour lives on the breadcrumb trigger and cascades to the
     // name; hover restores foreground, which is upstream's affordance.
     expect(chatHeader).toMatch(

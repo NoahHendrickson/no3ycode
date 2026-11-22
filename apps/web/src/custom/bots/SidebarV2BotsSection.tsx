@@ -56,7 +56,7 @@ export function useSidebarV2CompactBots(): [boolean, (value: boolean) => void] {
 
 /** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. Drawn
     as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
-    34px line with the mascot at one pixel per cell. */
+    32px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
   readonly compact: boolean;
   /** The mascot offered first; the button beside the name steps through the rest. */
@@ -94,7 +94,7 @@ export function SidebarV2NewBotRow(props: {
       data-thread-selection-safe
       className={cn(
         "flex list-none items-center gap-x-2",
-        props.compact ? "h-[34px]" : "h-11",
+        props.compact ? "h-8" : "h-11",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
@@ -149,10 +149,9 @@ export function SidebarV2NewBotRow(props: {
   );
 }
 
-/** The Bots section above the Threads row, in its shape: label, count, fold caret, view options
+/** The Bots section above the Threads row, in its shape: label, fold chevron, view options
     and a plus that names a new bot. Its cards are its children. */
 export function SidebarV2BotsRow(props: {
-  readonly count: number;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
   readonly onNewBot: () => void;
@@ -166,7 +165,6 @@ export function SidebarV2BotsRow(props: {
       <div className="flex h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
-            count={props.count}
             collapsed={props.collapsed}
             onToggle={props.onToggleCollapsed}
             testId="sidebar-v2-bots-section-toggle"

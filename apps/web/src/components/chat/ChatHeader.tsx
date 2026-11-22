@@ -284,9 +284,8 @@ export const ChatHeader = memo(function ChatHeader({
         className="flex-1 overflow-clip [overflow-clip-margin:2px]"
       >
         {/* fork:begin fork-workspace-header — see .fork/customizations.yaml#fork-workspace-header
-            Keep upstream's actionable breadcrumb and thread menu behavior, but
-            preserve the fork hierarchy: project semibold without a duplicate
-            favicon, thread title regular. */}
+            Keep upstream's actionable breadcrumb and thread menu behavior, with
+            both project and thread title at 14px regular and no duplicate favicon. */}
         {activeProject && !isBotThread ? (
           <>
             <WorkspaceBreadcrumbItem className="shrink">
@@ -301,7 +300,7 @@ export const ChatHeader = memo(function ChatHeader({
                     />
                   }
                 >
-                  <WorkspaceBreadcrumbText className="max-w-40 text-sm font-semibold">
+                  <WorkspaceBreadcrumbText className="max-w-40 text-sm font-normal">
                     {activeProjectName}
                   </WorkspaceBreadcrumbText>
                 </TooltipTrigger>
@@ -329,7 +328,7 @@ export const ChatHeader = memo(function ChatHeader({
                 >
                   <WorkspaceBreadcrumbText
                     aria-hidden
-                    className={collapseParentTitle ? "w-0" : undefined}
+                    className={cn("font-normal", collapseParentTitle && "w-0")}
                   >
                     {parentThreadLink.title}
                   </WorkspaceBreadcrumbText>

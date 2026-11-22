@@ -7,12 +7,11 @@
    here that ties with a palettes rule wins on source order. Every selector
    is marker- and palette-scoped, so no other palette sees any of it.
 
-   The 3D glass setting (custom/forkGlass3d.ts) gates the sheet through
-   its parents, kept in source order: the tokens and the selected rows hold
-   unless 3D is off, so "Selected items only" keeps them; everything else
-   needs Full. & takes a parent's specificity and :where() adds none, so
-   every rule ranks as it would written out flat. */
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+   The 3D glass setting (custom/forkGlass3d.ts) gates the whole sheet on
+   Full 3D through its parents, kept in source order so rules tie-break as
+   before. & takes a parent's specificity and :where() adds none, so every
+   rule ranks as it would written out flat. */
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The glass, once, at the root: the popups portal out of the row and the
      sort menu out of the sidebar, so nothing finer would reach them all.
      An inset hairline offset half a pixel draws a crescent that thins away
@@ -525,7 +524,7 @@
   }
 }
 
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The thread you are on, as a pane of glass (Figma t3-fork 532:6527, "thread
      card v3", State=Selected), and every row that wears the same selected
      state: the active rows above the list (Search, New agent, Usage,
@@ -801,45 +800,6 @@
       }
     }
   }
-
-  /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
-     The model picker's rail tab for the open scope is a selected item, so it
-     wears the selected rows' glass at Selected items only too, its dark edge
-     1px proud of the tab's 4px corners. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"] {
-    box-shadow:
-      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-      var(--fork-glass-selected-shadow);
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: var(--fork-glass-selected-glint);
-    pointer-events: none;
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    padding: 1px;
-    border-radius: 5px;
-    background: var(--fork-glass-dark-edge);
-    mask:
-      linear-gradient(#000 0 0) content-box exclude,
-      linear-gradient(#000 0 0);
-    pointer-events: none;
-  }
-  /* fork:end fork-model-picker */
 }
 
 :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {

@@ -713,7 +713,8 @@
     (the slim rows and the project menu already draw it). A favicon-less
     project draws upstream's title monogram there, so a list not grouped by
     project still tells projects apart; the meta's own
-    SidebarV2ProjectFolderMark draws only for a null slot.
+    SidebarV2ProjectFolderMark draws only for a null slot. Both fill the
+    repo line's 16px height.
 
     Surface encodes interaction and nothing else. A row is filled on hover and
     when selected or routed to; it is never filled because of its status.
@@ -769,8 +770,8 @@
     20px in: the same edge as the group header's folder mark (list pad 8 +
     the header's px-12). The repo line carries no indent of its own. Cards
     sit 2px apart on the list ul's gap-0.5; the li itself carries no padding,
-    so contain-intrinsic-size is the drawn 54 exactly. Every mark on the repo
-    line is 12px, with a 1x8 hairline between the runtime glyph and the
+    so contain-intrinsic-size is the drawn 54 exactly. Runtime and checkout
+    marks are 12px, with a 1x8 hairline between the runtime glyph and the
     branch. The model label is caption 11/15, named as the iconless picker
     trigger names it (triggerModelName): the card carries no provider icon,
     so only a reseller says whose it is ("Cursor Opus 5.5"; Claude's own
@@ -1231,13 +1232,11 @@
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
     Completed titles are full strength, Working and Idle recede, and the open
-    or selected card never does. Section headers are a muted semibold label
-    with its count, a step under the card title's size, on the cards' inset,
-    with no mark or hairline; clicking collapses. A small filled caret on the
-    right edge appears only while the pointer is over the header or any row in
-    its section, or the header is keyboard-focused,
-    pointing at what a click does (up collapses an open section, down expands
-    a closed one), so the toggle is discoverable without resting chrome.
+    or selected card never does. Section headers are a muted 12px medium label
+    (no count) with an always-visible filled chevron on the cards' inset and no
+    hairline; clicking collapses (down when expanded, rotated right when
+    collapsed). Hovering the header or any row in its section reveals the shared
+    trailing thread controls (add project, sort, view settings).
 
     buildSidebarV2StatusSections is the whole pipeline; the activeSections
     memo dispatches to it or to project grouping, and both return
@@ -1281,8 +1280,8 @@
     in the Threads filter menu, set apart from the Group by tabs. Device-local
     (localStorage), default off; the full two-line card is unchanged.
 
-    A compact card is the full card's title line alone, in the same padding,
-    so its height is sidebarV2CompactCardHeight() (34) and its
+    A compact card is the full card's title line alone, with 7px vertical
+    padding so its height is sidebarV2CompactCardHeight() (32) and its
     contain-intrinsic-size hint must match. Some of the repo line's facts ride
     ahead of the trailing group as marks: a cloud for a remote thread, the
     terminal glyph and the PR badge. The worktree/branch mark is left off (and
@@ -1292,9 +1291,8 @@
     it is one.
 
     The project favicon leads a compact card's title (SidebarV2CompactCardLead),
-    since there is no repo line to name the project. It draws at 12px in an
-    18px rounded tile tinted with the foreground, so every favicon sits on the
-    same quiet ground in every palette. Under a project header
+    since there is no repo line to name the project. It draws at 16px directly
+    beside the title. Under a project header
     (projectTitleHidden) it is left off because the header already names it.
 
     Only card-variant rows (pinned, active, working) go compact. The snoozed and
@@ -1957,8 +1955,16 @@
 
     The renderer trusts the resolved value, never the request.
     custom/forkSidebarVibrancy.ts stamps :root with
-    data-fork-sidebar-vibrancy="true" only when the main process confirms the
-    glass, and the CSS in theme.custom.palettes.css gates on that marker rather
+    data-fork-sidebar-vibrancy="true" only when the main process confirms
+    whole-window glass, or data-fork-sidebar-vibrancy="liquid-glass" on macOS
+    26+ main windows where apps/desktop/src/fork/ForkLiquidGlass.ts loads our
+    native macOS addon (native/sidebar-glass/sidebar_glass.m) to mount AppKit's
+    NSSplitViewItem.sidebarWithViewController: on macOS 27+ (or a sidebar-variant
+    NSGlassEffectView on macOS 26) strictly behind the docked sidebar while
+    keeping the chat stage opaque (and clearing Electron's NSVisualEffectView so
+    the two never conflict). Side Chat, macOS < 26, and
+    Windows 11 keep whole-window vibrancy. The CSS in theme.custom.palettes.css
+    gates on that marker rather
     than on the palette. A web, remote, Linux or Windows client running Cool
     Darker therefore keeps the solid #181b1e panel instead of punching
     transparent holes into an opaque window. forkTheme.ts drives it from
@@ -2128,23 +2134,33 @@
     and must not make the window transparent for any other palette.
   tier: 2
   files:
+    - apps/desktop/scripts/build-sidebar-glass.mjs
     - apps/desktop/src/fork/ForkGlassState.ts
+    - apps/desktop/src/fork/ForkLiquidGlass.ts
+    - apps/desktop/src/fork/ForkLiquidGlass.test.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
+    - apps/web/src/custom/forkDraftLiquidGlass.ts
+    - apps/web/src/custom/forkDraftLiquidGlass.browser.test.tsx
     - apps/web/src/custom/forkSidebarVibrancy.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.palettes.css
+    - native/sidebar-glass/sidebar_glass.m
   watch:
     - apps/desktop/src/preload.ts
     - apps/desktop/src/ipc/DesktopIpcHandlers.ts
     - apps/desktop/src/electron/ElectronWindow.ts
     - apps/desktop/src/window/DesktopWindow.ts
+    - apps/desktop/vite.config.ts
+    - scripts/build-desktop-artifact.ts
     - apps/web/src/custom/designMode/panel/ForkDesignPanel.tsx
     - apps/web/src/custom/designMode/ForkLayersTree.tsx
     - apps/web/src/components/ui/switch.tsx
   verify:
+    - apps/desktop/src/fork/ForkLiquidGlass.test.ts
     - apps/desktop/src/fork/ForkSidebarVibrancy.test.ts
     - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
+    - apps/web/src/custom/forkDraftLiquidGlass.browser.test.tsx
 
 - id: fork-glass-new-agent-stage
   intent: >
@@ -4667,6 +4683,7 @@
   tier: 3
   files:
     - apps/web/src/custom/forkGlassPopupCutout.ts
+    - apps/web/src/custom/forkGlassPopupCutout.browser.test.ts
     - apps/web/src/custom/forkTheme.ts
     - apps/web/src/theme.custom.palettes.css
   watch:
@@ -5019,10 +5036,11 @@
     tree) are gone. Settings keeps upstream's separate traits pickers. The exported
     helpers of ModelPickerContent stay upstream's
     verbatim and both shadows keep upstream's relative imports. Reaches every
-    entry point through ProviderModelPicker (composer and Settings). Under
-    Glass (theme.custom.glass-surfaces.css), the open scope's rail tab wears
-    the selected rows' glass unless 3D is off, and at Full the effort thumb
-    wears the send button's glass and the selected trait segments are the
+    entry point through ProviderModelPicker (composer and Settings). Provider
+    scopes sit in a horizontal top segmented Tabs strip above the search field,
+    model list, and reasoning/traits panel. Under Glass
+    (theme.custom.glass-surfaces.css), at Full 3D the effort thumb wears the
+    send button's glass and the selected provider and trait tabs wear the
     segmented tabs' glass chips. An editable select whose one value is
     already in force (Cyber Access for a login without Daybreak) offers no
     choice (composerModelTraits' offersChoice): it gets no row and stays out of
@@ -5216,27 +5234,23 @@
 - id: fork-glass-3d
   intent: >
     Settings → Appearance → Interface → 3D glass (shown only under Glass)
-    picks how much of Glass gets depth. Full (default): the stage card a
+    switches between Full 3D and Flat. Full 3D (default): the stage card a
     thread sits in (fork-glass-stage-card) and the glints, sheens and halos
     on selected rows, chips, tabs, the send/stop buttons and popups
-    (theme.custom.glass-surfaces.css). Selected items only: just the selected
-    thread card, the active top sidebar rows and the model picker's selected
-    provider tab (fork-model-picker). Off: the flat stage and
-    fills Glass had before #203. The lighter tint (#214) and everything else
-    stays in every mode. The setting stamps data-fork-glass-3d="selection" or
-    "off" on the root before first render (absent at Full). The sheets nest
-    under parents that carry the gate through a zero-specificity :where():
-    the stage sheet needs Full; the surfaces sheet keeps source order across
-    alternating parents, the tokens and selected rows under "not off" and everything else
-    under Full. & takes a parent's specificity, so every rule
-    ranks as it did flat. The card-inset and radius tokens are shared with the
-    new-agent picture and live in the palettes sheet, outside the setting,
-    with a rule that returns the picture's corners to 8px short of Full. Both
-    Glass settings are configurations of custom/forkRootSetting.ts:
-    device-local (localStorage) like the palette, and Restore defaults resets
-    them. The macOS traffic-light position from #203 is theme-independent and
-    stays.
-    Below Full 3D, with no card to edge the column, the collapsed thread tab
+    (theme.custom.glass-surfaces.css). Flat (`off`): the flat stage and
+    fills without the 3D card/surfaces layer. The lighter tint (#214) and
+    everything else stays in every mode. The setting stamps
+    data-fork-glass-3d="off" on the root before first render (absent at Full
+    3D). The sheets nest under parents that carry the gate through a
+    zero-specificity :where(): both stage and surfaces skip Flat. & takes a
+    parent's specificity, so every rule ranks as it did flat. The card-inset
+    and radius tokens are shared with the new-agent picture and live in the
+    palettes sheet, outside the setting, with a rule that returns the
+    picture's corners to 8px in Flat. Both Glass settings are configurations
+    of custom/forkRootSetting.ts: device-local (localStorage) like the
+    palette, and Restore defaults resets them. The macOS traffic-light
+    position from #203 is theme-independent and stays.
+    In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
   tier: 4
   files:
@@ -7590,11 +7604,15 @@
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: sidebar-v2-threads-fold
   intent: >
-    The Threads row's label folds the whole thread list under it, with a
-    caret shown on hover or while folded (custom/SidebarV2SectionLabel, shared
-    with the Bots row and the status section headers). Per device; Chat never
-    folds. The collapse state shares one store with the Bots section
-    (custom/bots/SidebarV2BotsSection useSidebarV2CollapsedListSections).
+    When the thread list renders ungrouped (no status or project headers), the
+    standalone Threads row's label folds the whole thread list under it, with an
+    always-visible filled chevron (custom/SidebarV2SectionLabel, shared with
+    the Petals row and status section headers). When grouped by status or
+    project, the standalone Threads row is hidden and each grouping header
+    exposes its own collapse toggle plus hover-revealed thread controls. Per
+    device; Chat never folds. The collapse state shares one store with the
+    Petals section (custom/bots/SidebarV2BotsSection
+    useSidebarV2CollapsedListSections).
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2SectionLabel.tsx

@@ -85,6 +85,10 @@ import {
   addCliCommandToPath,
 } from "./methods/cliCommand.ts";
 /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+import {
+  setForkDraftLiquidGlass,
+  setForkSidebarLiquidGlassWidth,
+} from "../fork/ForkLiquidGlass.ts";
 import { setForkSidebarVibrancy } from "../fork/ForkSidebarVibrancy.ts";
 /* fork:end fork-cool-darker-sidebar-vibrancy */
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
@@ -192,6 +196,8 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
 
   /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
   yield* ipc.handle(setForkSidebarVibrancy);
+  yield* ipc.handle(setForkSidebarLiquidGlassWidth);
+  yield* ipc.handle(setForkDraftLiquidGlass);
   /* fork:end fork-cool-darker-sidebar-vibrancy */
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   yield* ipc.handle(setForkTopbarHeight);

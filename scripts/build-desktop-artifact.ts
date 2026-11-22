@@ -1018,6 +1018,12 @@ export const DESKTOP_FILE_EXCLUSIONS = [
   "!apps/desktop/resources/browser-secret/**/*",
   "!apps/desktop/prod-resources/browser-secret",
   "!apps/desktop/prod-resources/browser-secret/**/*",
+  /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+  "!apps/desktop/resources/sidebar-glass",
+  "!apps/desktop/resources/sidebar-glass/**/*",
+  "!apps/desktop/prod-resources/sidebar-glass",
+  "!apps/desktop/prod-resources/sidebar-glass/**/*",
+  /* fork:end fork-cool-darker-sidebar-vibrancy */
   "!apps/desktop/prod-resources/windows-server",
   "!apps/desktop/prod-resources/windows-server/**/*",
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz",
@@ -1151,6 +1157,11 @@ export const LINUX_CAPTURE_EXTRA_RESOURCES = [
 export const LINUX_BROWSER_SECRET_EXTRA_RESOURCES = [
   { from: "apps/desktop/prod-resources/browser-secret", to: "browser-secret" },
 ] as const;
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+export const MAC_SIDEBAR_GLASS_EXTRA_RESOURCES = [
+  { from: "apps/desktop/prod-resources/sidebar-glass", to: "sidebar-glass" },
+] as const;
+/* fork:end fork-cool-darker-sidebar-vibrancy */
 
 export interface MacPasskeySigningConfiguration {
   readonly appId: string;
@@ -2523,6 +2534,35 @@ export const stageBrowserSecret = Effect.fn("stageBrowserSecret")(function* (inp
   );
 });
 
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+export const stageSidebarGlass = Effect.fn("stageSidebarGlass")(function* (input: {
+  readonly repoRoot: string;
+  readonly stageResourcesDir: string;
+  readonly platform: typeof BuildPlatform.Type;
+  readonly arch: typeof BuildArch.Type;
+  readonly verbose: boolean;
+}) {
+  if (input.platform !== "mac") return;
+  const hostPlatform = yield* HostProcess.Platform;
+  if (hostPlatform !== "darwin") return;
+  const path = yield* Path.Path;
+  yield* runCommand(
+    ChildProcess.make(
+      "node",
+      [
+        path.join(input.repoRoot, "apps/desktop/scripts/build-sidebar-glass.mjs"),
+        "--arch",
+        input.arch,
+        "--output",
+        path.join(input.stageResourcesDir, "sidebar-glass", "sidebar_glass.node"),
+      ],
+      { cwd: input.repoRoot },
+    ),
+    { label: "build macOS sidebar Liquid Glass addon", verbose: input.verbose },
+  );
+});
+/* fork:end fork-cool-darker-sidebar-vibrancy */
+
 const generateMacIconSet = Effect.fn("build-desktop-artifact.generateMacIconSet")(function* (
   sourcePng: string,
   targetIcns: string,
@@ -2866,6 +2906,9 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       ...DESKTOP_EXTRA_RESOURCES,
       ...(platform === "linux" ? LINUX_CAPTURE_EXTRA_RESOURCES : []),
       ...(platform === "linux" ? LINUX_BROWSER_SECRET_EXTRA_RESOURCES : []),
+      /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+      ...(platform === "mac" ? MAC_SIDEBAR_GLASS_EXTRA_RESOURCES : []),
+      /* fork:end fork-cool-darker-sidebar-vibrancy */
       ...(platform === "win" ? WINDOWS_SERVER_EXTRA_RESOURCES : []),
       ...(platform === "win" && wslRuntimeBundled ? WSL_RUNTIME_EXTRA_RESOURCES : []),
     ],
@@ -3915,6 +3958,15 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
     arch: options.arch,
     verbose: options.verbose,
   });
+  /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+  yield* stageSidebarGlass({
+    repoRoot,
+    stageResourcesDir,
+    platform: options.platform,
+    arch: options.arch,
+    verbose: options.verbose,
+  });
+  /* fork:end fork-cool-darker-sidebar-vibrancy */
 
   yield* assertPlatformBuildResources(
     options.platform,

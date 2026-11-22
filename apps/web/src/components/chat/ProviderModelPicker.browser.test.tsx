@@ -85,8 +85,8 @@ it("keeps each registry image when adding a model from another ACP agent", async
   await vi.waitFor(() => expect(imageWidths()).toEqual([11]));
   await screen.getByRole("button", { name: "First model", exact: true }).click();
   // fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
-  // The fork's picker rail tabs and rows are menu items.
-  await page.getByRole("menuitem", { name: "Second agent", exact: true }).click();
+  // The fork's picker provider tabs are menu radio items and model rows are menu items.
+  await page.getByRole("menuitemradio", { name: "Second agent", exact: true }).click();
   await userEvent.keyboard("{Shift>}");
   try {
     await page.getByRole("menuitem", { name: /Second model/ }).click();

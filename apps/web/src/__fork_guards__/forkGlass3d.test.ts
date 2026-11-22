@@ -1,7 +1,7 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /* Fork guard, see `.fork/customizations.yaml#fork-glass-3d`. The 3D glass setting gates depth
-   through parent rules on a root attribute; a rule outside them ignores the setting, and one
-   in a selection parent that is not a selected row leaks depth into "Selected items only". */
+   through parent rules on a root attribute; a rule outside them ignores the setting and
+   leaks depth into Flat. */
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
@@ -20,7 +20,6 @@ const compact = (value: string) => value.replace(/\s+/gu, "");
 
 const FORK_ROOT = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
 const FULL = `${FORK_ROOT}:where(:not([${FORK_GLASS_3D_ATTRIBUTE}]))`;
-const NOT_OFF = `${FORK_ROOT}:where(:not([${FORK_GLASS_3D_ATTRIBUTE}="off"]))`;
 const PALETTE = `.dark[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"]`;
 
 describe("fork guard: fork-glass-3d", () => {
@@ -28,23 +27,9 @@ describe("fork guard: fork-glass-3d", () => {
     expect(topLevelHeaders(readSibling("../theme.custom.glass-stage.css"))).toEqual([FULL]);
   });
 
-  it("keeps only the tokens, the selected rows and the quick-start buttons with selected items only", () => {
+  it("needs Full for every glass surface", () => {
     const sheet = readSibling("../theme.custom.glass-surfaces.css");
-    expect(topLevelHeaders(sheet)).toEqual([NOT_OFF, FULL, NOT_OFF, FULL]);
-    const selection = cssRules(sheet).filter((rule) => rule.selector.includes(NOT_OFF));
-    expect(selection.length).toBeGreaterThan(0);
-    for (const rule of selection) {
-      const isTokens = compact(rule.selector) === compact(`${NOT_OFF}${PALETTE}`);
-      // The collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the list laid
-      // sideways; the model picker's open provider tab (fork-model-picker) and the sidebar's
-      // chosen Code / Chat mode (fork-chat-mode) are selected too.
-      const isSelectedRow =
-        /\[data-thread-item\]|\[data-fork-chrome-row\]|\[data-fork-thread-tabs\]|\[data-fork-sidebar-mode-tabs\]|\[data-fork-model-picker="providers"\] \[data-model-picker-provider\]\[aria-current="true"\]/u.test(
-          rule.selector.replace(/\s+/gu, " "),
-        );
-      expect(isTokens || isSelectedRow, `not a selected row: "${rule.selector}"`).toBe(true);
-      expect(rule.selector, rule.selector).not.toContain("data-fork-thread-sort");
-    }
+    expect(topLevelHeaders(sheet)).toEqual([FULL, FULL, FULL, FULL]);
   });
 
   it("keeps the card geometry outside the setting and the picture's old corners short of Full", () => {

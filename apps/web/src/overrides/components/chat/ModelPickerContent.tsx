@@ -55,6 +55,7 @@ import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
+import { MenuIconTab, MenuTabs } from "~/custom/Tabs";
 import {
   isProviderInstancePickerReady,
   isProviderInstancePickerVisible,
@@ -193,8 +194,6 @@ const EMPTY_MODEL_JUMP_LABELS = new Map<string, string>();
 
 /** Every row shares one shape: 32px, 4px corners, 12px medium label. */
 const ROW_CLASS = "h-8 min-h-8 rounded-[4px] px-2 py-0 text-xs font-medium sm:min-h-8 sm:text-xs";
-/** A provider tab: a 32px square, so the rail lines up with the search field and rows. */
-const TAB_CLASS = "relative size-8 min-h-8 justify-center rounded-[4px] p-0 sm:min-h-8";
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
   "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100";
@@ -795,8 +794,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     />
   );
 
-  /** One of the rail's tabs. It sets the scope rather than choosing a model,
-      so it never closes the menu. */
+  /** One of the top bar's provider tabs. It sets the scope rather than choosing
+      a model, so it never closes the menu. */
   const renderScopeTab = (input: {
     target: ModelPickerScope;
     icon: ReactNode;
@@ -806,37 +805,38 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   }) => {
     const isSelected = scope === input.target;
     const holdsCurrentModel = !isSelected && input.target === props.activeInstanceId;
-    // The tab itself is the trigger: the menu moves focus to the item, so a
-    // trigger inside it would only ever open on hover.
     return (
       <Tooltip key={input.target}>
         <TooltipTrigger
           render={
-            <MenuItem
+            <MenuIconTab
+              value={input.target}
               disabled={input.disabled}
-              closeOnClick={false}
               aria-label={holdsCurrentModel ? `${input.title} (current model)` : input.title}
               aria-current={isSelected ? "true" : undefined}
               data-model-picker-provider={input.target}
+              // A pick goes through onValueChange; clicking the open tab again
+              // only lands here, and still clears the search back to its list.
+              onClick={() => {
+                if (isSelected && !input.disabled) selectScope(input.target);
+              }}
               className={cn(
-                TAB_CLASS,
-                isSelected && "bg-foreground/8",
+                "relative aspect-auto min-w-7 flex-1",
                 input.disabled && "data-disabled:pointer-events-auto",
               )}
-              onClick={() => selectScope(input.target)}
-            />
+            >
+              {input.icon}
+              {holdsCurrentModel ? (
+                // Where the current model lives, when the list shows another scope.
+                <span
+                  className="pointer-events-none absolute top-1 right-1 size-1.5 rounded-full bg-foreground/60"
+                  aria-hidden
+                />
+              ) : null}
+            </MenuIconTab>
           }
-        >
-          {input.icon}
-          {holdsCurrentModel ? (
-            // Where the current model lives, when the list shows another scope.
-            <span
-              className="pointer-events-none absolute top-1 right-1 size-1.5 rounded-full bg-foreground/60"
-              aria-hidden
-            />
-          ) : null}
-        </TooltipTrigger>
-        <TooltipPopup side="left" sideOffset={8} align="center" className={TOOLTIP_CLASS}>
+        />
+        <TooltipPopup side="top" sideOffset={6} align="center" className={TOOLTIP_CLASS}>
           {input.title}
         </TooltipPopup>
       </Tooltip>
@@ -866,23 +866,29 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     });
   };
 
-  /** The provider tabs, top to bottom. They follow the list in the menu's
-      arrow order, so ArrowDown from the search field reaches the models first.
-      Capped at the list column's tallest, so many providers scroll here
-      instead of growing the popup. */
-  const renderProviderRail = () => (
+  /** Horizontal provider tabs above the search field, using the fork's segmented
+      MenuTabs strip so the tabs stay in the menu's keyboard navigation. */
+  const renderProviderTabs = () => (
     <div
-      role="group"
-      aria-label="Providers"
-      className="flex max-h-92 shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain border-e border-border px-1 pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex shrink-0 items-center overflow-x-auto overscroll-contain px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       data-fork-model-picker="providers"
     >
-      {renderScopeTab({
-        target: "favorites",
-        title: "Favorites",
-        icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
-      })}
-      {providerEntries.map(renderProviderTab)}
+      <MenuTabs
+        size="md"
+        aria-label="Providers"
+        value={scope}
+        onValueChange={(next) => {
+          if (typeof next === "string") selectScope(next as ModelPickerScope);
+        }}
+        className="min-w-full"
+      >
+        {renderScopeTab({
+          target: "favorites",
+          title: "Favorites",
+          icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
+        })}
+        {providerEntries.map(renderProviderTab)}
+      </MenuTabs>
     </div>
   );
 
@@ -965,17 +971,14 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
 
   return (
     <TooltipProvider delay={0}>
-      {/* Flush with the popup's edges past its 4px scroll padding, so the rail's
-          divider runs edge to edge: to the panel under the list, or to the
-          popup's bottom when nothing follows. Reversed so the rail, last in
-          the DOM, shows on the left. */}
       <div
         ref={contentRef}
-        className="-mx-1 -mt-1 flex min-h-0 flex-row-reverse last:-mb-1"
+        className="-mx-1 -mt-1 flex min-h-0 flex-col last:-mb-1"
         data-model-picker-content="true"
         data-fork-model-picker="true"
         onKeyDownCapture={redirectTypingToSearch}
       >
+        {renderProviderTabs()}
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
           <label className="flex h-8 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -994,7 +997,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           {/* Scrolls on its own so whatever the host renders below stays put. */}
           <div className="flex max-h-80 min-h-0 flex-col overflow-y-auto">{renderModelList()}</div>
         </div>
-        {renderProviderRail()}
       </div>
     </TooltipProvider>
   );

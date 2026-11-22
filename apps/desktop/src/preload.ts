@@ -20,6 +20,10 @@ import type {
   ForkMusicState,
 } from "./fork/ForkMusicClient.ts";
 /* fork:end fork-music-panel */
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+import type { ForkDraftLiquidGlassState } from "./fork/ForkLiquidGlass.ts";
+import type { ForkSidebarVibrancyMode } from "./fork/ForkSidebarVibrancy.ts";
+/* fork:end fork-cool-darker-sidebar-vibrancy */
 
 const SNAP_SHOT_EVENT_TYPES = new Set([
   "requested",
@@ -540,8 +544,17 @@ const forkMusic = <T>(request: Record<string, unknown>, fallback: T): Promise<T>
  * addition does not need a preload `alwaysBundle` entry.
  */
 contextBridge.exposeInMainWorld("forkDesktopBridge", {
-  setSidebarVibrancy: (enabled: boolean): Promise<boolean> =>
+  setSidebarVibrancy: (enabled: boolean): Promise<ForkSidebarVibrancyMode> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
+  sidebarLiquidGlass: {
+    setWidth: (width: number | null, backing?: number): Promise<boolean> =>
+      ipcRenderer.invoke("fork:set-sidebar-liquid-glass-width", {
+        width,
+        ...(backing !== undefined ? { backing } : {}),
+      }),
+    setDraftGlass: (state: ForkDraftLiquidGlassState | null): Promise<boolean> =>
+      ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),
+  },
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   // Mirrored by apps/web/src/custom/forkTopbarHeight.ts; fork/ForkTopbarHeight.ts answers it.
   setTopbarHeight: (height: number | null): Promise<boolean> =>

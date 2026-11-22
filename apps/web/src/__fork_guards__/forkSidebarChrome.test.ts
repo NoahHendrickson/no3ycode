@@ -487,14 +487,14 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(merged).toContain("data-[active=true]:font-normal");
     expect(merged).not.toContain("font-medium");
     // The action rows read it; the Threads label spells its own, matching
-    // the status-section labels under it (13px semibold) so the list's
+    // the status-section labels under it (12px medium) so the list's
     // headings read as one family.
     expect(rows).toContain("CHROME_TYPE");
     expect(rows.split("CHROME_TYPE").length - 1).toBeGreaterThanOrEqual(2);
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
-      '"text-[0.8125rem] leading-4 font-semibold text-muted-foreground"',
+      '"text-[0.75rem] leading-4 font-medium text-muted-foreground"',
     );
   });
 

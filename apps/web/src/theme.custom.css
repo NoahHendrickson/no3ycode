@@ -180,47 +180,6 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Status section caret — see
-   `.fork/customizations.yaml#sidebar-v2-status-grouping`.
-
-   The caret shows while the pointer is anywhere in its section, not just on
-   the header. Same flat-list walk as the project header actions reveal
-   below, and the same invariant: a row belongs to the nearest preceding
-   header. Rows in a section carry data-fork-status-section (the pinned
-   block's wrapper and Settled's "Show more" too); the snoozed shelf's rows
-   carry nothing, so they never light the section above them.
-
-   Hover only where the pointer can hover: a tap would otherwise leave the
-   caret stuck up. Hiding waits 100ms so crossing the 2px gap between cards
-   does not blink it; showing is immediate. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-status-section-caret] {
-  visibility: hidden;
-  transition-property: rotate, visibility;
-  transition-duration: var(--default-transition-duration, 150ms), 0s;
-  transition-timing-function: var(--default-transition-timing-function, ease);
-  transition-delay: 0s, 100ms;
-}
-:root[data-fork="noahhendrickson-t3code"]
-  li[data-fork-status-section-header]:has(:focus-visible)
-  [data-fork-status-section-caret] {
-  visibility: visible;
-  transition-delay: 0s;
-}
-@media (hover: hover) {
-  :root[data-fork="noahhendrickson-t3code"]
-    li[data-fork-status-section-header]:hover
-    [data-fork-status-section-caret],
-  :root[data-fork="noahhendrickson-t3code"]
-    li[data-fork-status-section-header]:has(~ li[data-fork-status-section]:hover):not(
-      :has(~ li[data-fork-status-section-header] ~ li[data-fork-status-section]:hover)
-    )
-    [data-fork-status-section-caret] {
-    visibility: visible;
-    transition-delay: 0s;
-  }
-}
-
-/* ---------------------------------------------------------------------------
    Workspace header split pills — see
    `.fork/customizations.yaml#fork-workspace-header`.
 
@@ -1400,6 +1359,18 @@
     gap: 1px;
   }
 
+  & > :is([data-fork-draft-project-chip], [data-fork-context-chip="project"]) {
+    column-gap: 6px;
+  }
+
+  &[data-compact] > [data-fork-draft-project-chip] {
+    column-gap: 0;
+  }
+
+  & > [data-fork-draft-project-chip] > svg {
+    margin-inline: 0;
+  }
+
   & [data-fork-context-chip] {
     opacity: 1;
   }
@@ -1742,12 +1713,25 @@
    leaves that button focused, and plain focus would pin the buttons on
    after the pointer had left. An open project menu pins it (the pointer is
    on the popup then, not the row), and a coarse pointer, which cannot
-   hover, always sees it. Opacity only — the buttons keep their box, so the
-   label never reflows. */
+   hover, always sees it. Project headers collapse the trailing actions to
+   zero width at rest so long project names keep the full row width until
+   hovered; status headers keep their box (opacity only). */
 :root[data-fork="noahhendrickson-t3code"]
   li[data-fork-project-section-header]
   [data-fork-section-actions] {
   opacity: 0;
+  width: 0;
+  overflow: hidden;
+  margin-inline-end: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-out;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  li[data-fork-status-section-header]
+  [data-fork-section-actions] {
+  opacity: 0;
+  pointer-events: none;
   transition: opacity 120ms ease-out;
 }
 
@@ -1763,6 +1747,25 @@
   )
   [data-fork-section-actions] {
   opacity: 1;
+  width: auto;
+  overflow: visible;
+  margin-inline-end: -0.75rem;
+  pointer-events: auto;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  li[data-fork-status-section-header]:is(:hover, :has(:focus-visible))
+  [data-fork-section-actions],
+:root[data-fork="noahhendrickson-t3code"]
+  li[data-fork-status-section-header]
+  [data-fork-section-actions][data-fork-menu-open],
+:root[data-fork="noahhendrickson-t3code"]
+  li[data-fork-status-section-header]:has(~ li[data-fork-status-section]:hover):not(
+    :has(~ li[data-fork-status-section-header] ~ li[data-fork-status-section]:hover)
+  )
+  [data-fork-section-actions] {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (pointer: coarse) {
@@ -1770,6 +1773,17 @@
     li[data-fork-project-section-header]
     [data-fork-section-actions] {
     opacity: 1;
+    width: auto;
+    overflow: visible;
+    margin-inline-end: -0.75rem;
+    pointer-events: auto;
+  }
+
+  :root[data-fork="noahhendrickson-t3code"]
+    li[data-fork-status-section-header]
+    [data-fork-section-actions] {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 

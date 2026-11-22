@@ -304,6 +304,7 @@
    Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
+  gap: 2px;
   padding: 2px;
   border-radius: 8px;
   background-color: var(--basic-wash-2);
@@ -475,10 +476,15 @@
   }
 }
 
-/* A section header's icon button (Threads: add, sort, settings; Petals: view, new) holds the
+/* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
    selected row's fill while its menu is open, so the open menu names the button it came from. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-fork-projects-row], [data-fork-bots-row])
+  :is(
+    [data-fork-projects-row],
+    [data-fork-bots-row],
+    [data-fork-status-section-header],
+    [data-fork-project-section-header]
+  )
   button[data-popup-open] {
   background-color: var(--sidebar-row-selected);
   color: var(--sidebar-foreground);

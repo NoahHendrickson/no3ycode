@@ -77,6 +77,7 @@ async function click(target: Parameters<typeof userEvent.click>[0]) {
 }
 
 const menuItem = (name: RegExp) => page.getByRole("menuitem", { name });
+const providerTab = (name: RegExp) => page.getByRole("menuitemradio", { name });
 
 // With favorites set, the menu opens scoped to Favorites; the provider's tab
 // in the rail swaps the list to its models.
@@ -117,7 +118,7 @@ async function openProviderPage(activeModel: string) {
     ),
   );
   await click(document.querySelector("button")!);
-  await click(menuItem(new RegExp(`^${entry.displayName}`)));
+  await click(providerTab(new RegExp(`^${entry.displayName}`)));
 }
 
 describe("ProviderModelPicker legacy favorites (fork menu)", () => {

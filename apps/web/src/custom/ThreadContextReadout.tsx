@@ -47,7 +47,7 @@ export function ThreadContextReadout(props: {
   return (
     <>
       <span
-        data-fork-context-chip
+        data-fork-context-chip="project"
         data-composer-context-control
         data-testid="thread-project-readout"
         className={`${READ_ONLY_CONTEXT_CHIP_CLASS_NAME} max-w-72 shrink-0`}

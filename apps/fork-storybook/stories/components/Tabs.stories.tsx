@@ -147,6 +147,9 @@ function annotateStrip(kind: "icon" | "word") {
     const glyph = tabElement.querySelector("svg")?.getBoundingClientRect().width;
     const spec = [
       `inset ${px(track.style.paddingTop)}`,
+      track.style.columnGap && track.style.columnGap !== "normal"
+        ? `gap ${px(track.style.columnGap)}`
+        : null,
       kind === "word" ? `sides ${px(tab.style.paddingLeft)}` : null,
       kind === "word" ? `type ${px(tab.style.fontSize)}/${tab.style.fontWeight}` : null,
       glyph ? `glyph ${Math.round(glyph / SCALE)}` : null,
@@ -225,9 +228,9 @@ export const Playground: Story = {
   ),
 };
 
-/** Square tabs for one glyph each. The size is the strip's height in every theme: `sm` 28px (the
-    sidebar's Code / Chat switch), `md` 32px, `lg` 36px. Basic insets its track 2px, so its tabs
-    are 24, 28 and 32px. */
+/** Square tabs for one glyph each. The size is the strip's height in every theme: `sm` 28px,
+    `md` 32px (the sidebar's Code / Chat switch and the model picker's provider bar), `lg` 36px.
+    Basic and Flat Glass inset the track 2px with a 2px gap, so their tabs are 24, 28 and 32px. */
 export const Icon: Story = {
   name: "Icon tabs",
   render: () => (

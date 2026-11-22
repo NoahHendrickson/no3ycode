@@ -2,24 +2,18 @@
  * The header above each status section — see
  * `.fork/customizations.yaml#sidebar-v2-status-grouping`.
  *
- * A quiet label and its count, the way a group header reads in a list of
- * cards: name and count semibold on the muted channel, a step under the card
- * title's 14px, and the count beside it fainter still. It starts on the
- * cards' 12px inset so the label lines up with the titles under it. No mark,
- * no hairline. A small filled caret on the right edge shows only while the
- * pointer is over the header or any row in its section, or the header is
- * keyboard-focused (`theme.custom.css` carries the rule), pointing at what a
- * click does: up to collapse an open section, down to expand a closed one. It
- * is always laid out, so appearing never shifts the row.
+ * A quiet 32px row carrying the section label (12px medium on the muted
+ * channel) with its filled fold caret right beside it, and the list's trailing
+ * controls (add project, sort, view settings) revealed on hover/focus or while
+ * one of their menus is open (`theme.custom.css` carries the reveal rules).
  *
  * The pinned block takes the same header while status grouping is on, and the
  * settled tail takes it in every grouping, so every group in the list reads the
  * same way; `section` is "pinned" or "settled" there.
- *
- * Clicking it collapses the section; the count is already on screen, so a
- * collapsed header needs nothing extra to say how many cards it hides. The
- * first header takes 12px of its own below the Projects row.
  */
+import type { ReactNode } from "react";
+import { useState } from "react";
+
 import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
@@ -32,47 +26,52 @@ import {
 
 export function SidebarV2StatusSectionHeader(props: {
   readonly section: SidebarV2StatusHeaderKey;
-  readonly count: number;
   readonly isFirst: boolean;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
+  /** Trailing list controls (add project, sort, view settings), revealed on
+      hover/focus or while a menu is open. */
+  readonly renderTrailing?: ((onMenuOpenChange: (open: boolean) => void) => ReactNode) | undefined;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <li data-thread-selection-safe data-fork-status-section-header="" className="list-none">
+    <li
+      data-thread-selection-safe
+      data-fork-status-section-header=""
+      className={cn(
+        "flex h-8 w-full list-none items-center gap-1.5",
+        SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
+        // The row is h-8 (8px above the 16px label), so mt-2 on top of the 2px
+        // list gap puts 18px from the previous card's bottom edge to the label.
+        props.isFirst ? "mt-0" : "mt-2",
+        SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
+      )}
+    >
       <button
         type="button"
         onClick={props.onToggleCollapsed}
         aria-expanded={!props.collapsed}
         data-testid="sidebar-v2-status-section-toggle"
         data-status={props.section}
-        className={cn(
-          "flex w-full cursor-pointer items-center gap-1.5 text-left text-[0.8125rem] leading-4",
-          SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
-          // The first header still needs air under the Projects row: the list
-          // has no top padding, and this label has no 32px row of its own the
-          // way a project header does.
-          // Between sections, the project groups' 24px gap (headerLead 22 on
-          // top of the list gap), so a status group reads as far apart from
-          // the next as a project group does.
-          props.isFirst ? "mt-3" : SIDEBAR_V2_CARD_ALIGNMENT.headerLead,
-          SIDEBAR_V2_CARD_ALIGNMENT.shelfHeaderTrail,
-        )}
+        className="inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-[0.75rem] leading-4 font-medium text-muted-foreground hover:text-sidebar-foreground focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
       >
-        <span className="truncate font-semibold text-muted-foreground">
-          {SIDEBAR_V2_STATUS_SECTION_LABELS[props.section]}
-        </span>
-        <span className="shrink-0 font-semibold text-muted-foreground/60 tabular-nums">
-          {props.count}
-        </span>
+        <span className="truncate">{SIDEBAR_V2_STATUS_SECTION_LABELS[props.section]}</span>
         <SidebarV2SectionCaret
           data-fork-status-section-caret=""
           collapsed={props.collapsed}
-          className={cn(
-            "ms-auto size-3.5 shrink-0 text-muted-foreground",
-            SIDEBAR_V2_TRAILING_OFFSET.statusCaret,
-          )}
+          className="size-3.5 shrink-0"
         />
       </button>
+      {props.renderTrailing ? (
+        <span
+          data-fork-section-actions=""
+          data-fork-menu-open={menuOpen ? "" : undefined}
+          className={cn("-me-3 flex shrink-0 items-center", SIDEBAR_V2_TRAILING_OFFSET.headerPlus)}
+        >
+          {props.renderTrailing(setMenuOpen)}
+        </span>
+      ) : null}
     </li>
   );
 }

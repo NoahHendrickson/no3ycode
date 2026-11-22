@@ -48,8 +48,12 @@ export function IconTab({
 /** Icon tabs inside a menu (the Threads menu's Group by): its items join the menu's keyboard
     navigation. The shape is the switch's at `sm`, with the pick cut from the menu's own surface
     and the track showing through its border; Basic draws every strip alike. */
-export function MenuTabs({ className, ...props }: ComponentProps<typeof SegmentedMenuTabs>) {
-  return <SegmentedMenuTabs {...props} className={cn(TRACK, TRACK_HEIGHT.sm, className)} />;
+export function MenuTabs({
+  className,
+  size = "sm",
+  ...props
+}: ComponentProps<typeof SegmentedMenuTabs> & { readonly size?: TabsSize }) {
+  return <SegmentedMenuTabs {...props} className={cn(TRACK, TRACK_HEIGHT[size], className)} />;
 }
 
 export function MenuIconTab({

@@ -15,8 +15,8 @@
  * The line reads, left to right: where the agent runs (laptop or cloud), a
  * hairline, which checkout it is on (branch or worktree mark plus the branch
  * name), the terminal glyph if a terminal is live, then the pull request
- * badge; the model label sits on the far right. Every mark is the design's
- * 12px. Tones follow the component set: everything on the line at
+ * badge; the model label sits on the far right. Tones follow the component
+ * set: everything on the line at
  * `--muted-foreground`, the PR badge in its state colour, the model label the
  * caption style (11/15) on the same muted channel.
  *
@@ -90,7 +90,6 @@ export interface SidebarV2ThreadCardMetaProps {
     and the model label. */
 const REPO_ROW =
   "flex h-4 min-w-0 items-center justify-between gap-3 text-[0.75rem] leading-4 text-muted-foreground";
-/** Every mark on the line is the design's 12px. */
 const MARK = "size-3 shrink-0";
 
 /** The design's folder mark for the repo line, decorative like every other
@@ -163,7 +162,9 @@ export function SidebarV2ThreadCardMeta(props: SidebarV2ThreadCardMetaProps) {
                     : "flex min-w-0 items-center gap-1"
                 }
               >
-                {props.projectIconSlot ?? <SidebarV2ProjectFolderMark className={MARK} />}
+                {props.projectIconSlot ?? (
+                  <SidebarV2ProjectFolderMark className="size-4 shrink-0" />
+                )}
                 <span className="truncate">{props.projectTitle}</span>
               </span>
             )
