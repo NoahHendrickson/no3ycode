@@ -1,7 +1,10 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 // Layout for the specimen pages, kept neutral so the component under it is the only thing styled
 // by the theme: labels sit in the muted ink, grids align on fixed label columns.
+
+/** The canvas centres its story; a popup opens below its trigger, so the trigger sits at the top. */
+export const POPUP_ANCHOR: CSSProperties = { alignSelf: "flex-start", paddingTop: 24 };
 
 export function Stack({ children, gap = 6 }: { children: ReactNode; gap?: number }) {
   return (

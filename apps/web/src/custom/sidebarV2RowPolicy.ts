@@ -29,6 +29,7 @@
  */
 import { cn } from "~/lib/utils";
 
+import type { SidebarV2CardTopStatus } from "./sidebarV2CardStatus";
 import type { SidebarV2StatusBucket } from "./sidebarV2StatusGrouping";
 
 /** Does a card's *title* step back?
@@ -65,6 +66,12 @@ export function threadCardTitleRecedes(input: {
     return input.statusSection !== "input" && input.statusSection !== "done";
   }
   return input.isDone || input.isIdle;
+}
+
+/** A card's Done and Idle for `threadCardTitleRecedes`, read off the mark it draws: the
+    unread-done dot, or no mark at all. */
+export function threadCardRecedeStatus(status: SidebarV2CardTopStatus) {
+  return { isDone: status?.mark === "dot" && status.tone === "done", isIdle: status === null };
 }
 
 /** The surface every Sidebar V2 row shares.

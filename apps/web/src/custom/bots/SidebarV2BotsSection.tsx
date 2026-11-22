@@ -162,6 +162,38 @@ export function SidebarV2NewBotRow(props: {
   );
 }
 
+/** @public — the Petals grid's columns: as many 64px cells as the width holds, spread edge to
+    edge. Storybook lays its tiles out on it too. */
+export const PETALS_GRID_CLASS_NAME =
+  "grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-x-1 gap-y-1 px-0.5";
+
+/** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
+    while the layout is List. Storybook opens it on its own. */
+export function PetalViewOptionsMenu(props: {
+  readonly layout: PetalLayout;
+  readonly onLayoutChange: (layout: PetalLayout) => void;
+  readonly compactCards: boolean;
+  readonly onCompactCardsChange: (compactCards: boolean) => void;
+}) {
+  return (
+    <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="sidebar" className="min-w-48">
+      <PetalLayoutPicker layout={props.layout} onLayoutChange={props.onLayoutChange} />
+      {props.layout === "list" ? (
+        <>
+          <MenuSeparator className="-mx-1" />
+          <OptionCheckboxItem
+            checked={props.compactCards}
+            onCheckedChange={props.onCompactCardsChange}
+            testId="sidebar-v2-compact-bots-toggle"
+          >
+            Compact cards
+          </OptionCheckboxItem>
+        </>
+      ) : null}
+    </MenuPopup>
+  );
+}
+
 /** The Bots section above the Threads row, in its shape: label, fold chevron, view options
     and a plus that names a new bot. Its cards are its children. */
 export function SidebarV2BotsRow(props: {
@@ -210,26 +242,12 @@ export function SidebarV2BotsRow(props: {
               </TooltipTrigger>
               <TooltipPopup side="right">View options</TooltipPopup>
             </Tooltip>
-            <MenuPopup
-              align="end"
-              data-fork-glass-rim
-              data-fork-tab-menu="sidebar"
-              className="min-w-48"
-            >
-              <PetalLayoutPicker layout={props.layout} onLayoutChange={props.onLayoutChange} />
-              {props.layout === "list" ? (
-                <>
-                  <MenuSeparator className="-mx-1" />
-                  <OptionCheckboxItem
-                    checked={props.compactCards}
-                    onCheckedChange={props.onCompactCardsChange}
-                    testId="sidebar-v2-compact-bots-toggle"
-                  >
-                    Compact cards
-                  </OptionCheckboxItem>
-                </>
-              ) : null}
-            </MenuPopup>
+            <PetalViewOptionsMenu
+              layout={props.layout}
+              onLayoutChange={props.onLayoutChange}
+              compactCards={props.compactCards}
+              onCompactCardsChange={props.onCompactCardsChange}
+            />
           </Menu>
           <Tooltip>
             <TooltipTrigger
@@ -254,15 +272,15 @@ export function SidebarV2BotsRow(props: {
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
         {/* 4px under the header row, so the first card never meets its buttons; none when
             folded away to nothing or empty. */}
-        {/* The grid fits as many 64px cells as the width holds, spread edge to edge. Its cells pad
-            8px under their names, so the grid gives that back to the gap below it. */}
+        {/* The grid's cells pad 8px under their names, so the grid gives that back to the gap
+            below it. */}
         <ul
           role="presentation"
           data-fork-petals-grid={props.layout === "grid" ? "" : undefined}
           className={cn(
             "mt-1 empty:mt-0",
             props.layout === "grid"
-              ? "-mb-2 grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-x-1 gap-y-1 px-0.5"
+              ? cn("-mb-2", PETALS_GRID_CLASS_NAME)
               : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
           )}
         >

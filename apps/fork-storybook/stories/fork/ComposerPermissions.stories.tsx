@@ -1,45 +1,35 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { RuntimeMode } from "@t3tools/contracts";
-import { type CSSProperties, useState } from "react";
+import { type ComponentProps, useState } from "react";
+import { useArgs } from "storybook/preview-api";
 
 import {
   ComposerFooterModeControls,
   ComposerPermissionsSection,
-  type RuntimeModeOption,
 } from "~/components/chat/ComposerFooterControls";
-import { runtimeModeConfig, runtimeModeOptions } from "~/components/chat/runtimeModeConfig";
+import { composerFloatingLayerProps } from "~/components/chat/composerEventScope";
+import { resolveRuntimeModeOptions, runtimeModeOptions } from "~/components/chat/runtimeModeConfig";
 import { Button } from "~/components/ui/button";
 import { Menu, MenuPopup, MenuTrigger } from "~/components/ui/menu";
-import { ComposerShell } from "~/custom/ComposerShell";
 
-import { Row, Stack } from "../Specimen.tsx";
+import { POPUP_ANCHOR, Row, Stack } from "../Specimen.tsx";
+import { StoryComposer } from "../StoryComposer.tsx";
 
-const OPTIONS: ReadonlyArray<RuntimeModeOption> = runtimeModeOptions.map((mode) => ({
-  mode,
-  ...runtimeModeConfig[mode],
-}));
+type SectionProps = ComponentProps<typeof ComposerPermissionsSection>;
 
-// A managed policy that rules Full access out, as resolveRuntimeModeOptions marks it.
-const MANAGED_OPTIONS: ReadonlyArray<RuntimeModeOption> = OPTIONS.map((option) =>
-  option.mode === "full-access"
-    ? { ...option, disabledReason: "Your organization does not allow Full access." }
-    : option,
-);
-
-// The canvas centres; a popup opens below its trigger.
-const TOP: CSSProperties = { alignSelf: "flex-start", paddingTop: 24 };
+const OPTIONS = resolveRuntimeModeOptions(runtimeModeOptions, undefined);
+const MANAGED_OPTIONS = resolveRuntimeModeOptions(runtimeModeOptions, {
+  organization: "Acme",
+  lockedSettings: [],
+  limits: { maxRuntimeMode: "auto-accept-edits" },
+});
 
 /** The chip in the composer's control row, where the theme makes it icon-only. */
 function Chip({ mode }: { mode: RuntimeMode }) {
   const [runtimeMode, setRuntimeMode] = useState(mode);
   return (
     <div className="w-72">
-      <ComposerShell
-        approvalPending={false}
-        collapsedMobile={false}
-        mobilePendingActionsVisible={false}
-        modelControls={null}
-        readoutControls={null}
+      <StoryComposer
         modeControls={
           <ComposerFooterModeControls
             runtimeMode={runtimeMode}
@@ -53,26 +43,33 @@ function Chip({ mode }: { mode: RuntimeMode }) {
   );
 }
 
-/** The chip's menu, open: the fork's menu tab strip, and the shown mode named under it. */
-function PermissionsMenu({
+/** The chip's menu, open, with the composer popup's marker: the fork's menu tab strip, and the
+    shown mode named under it. */
+function PermissionsMenu(props: SectionProps) {
+  return (
+    <Menu defaultOpen modal={false}>
+      <MenuTrigger render={<Button variant="outline" size="sm" />}>Permissions</MenuTrigger>
+      <MenuPopup align="start" {...composerFloatingLayerProps} data-fork-glass-selection>
+        <ComposerPermissionsSection {...props} />
+      </MenuPopup>
+    </Menu>
+  );
+}
+
+function PickedMenu({
   mode,
   options = OPTIONS,
 }: {
   mode: RuntimeMode;
-  options?: ReadonlyArray<RuntimeModeOption>;
+  options?: SectionProps["runtimeModeOptions"];
 }) {
   const [runtimeMode, setRuntimeMode] = useState(mode);
   return (
-    <Menu defaultOpen modal={false}>
-      <MenuTrigger render={<Button variant="outline" size="sm" />}>Permissions</MenuTrigger>
-      <MenuPopup align="start" data-fork-glass-selection>
-        <ComposerPermissionsSection
-          runtimeMode={runtimeMode}
-          runtimeModeOptions={options}
-          onRuntimeModeChange={setRuntimeMode}
-        />
-      </MenuPopup>
-    </Menu>
+    <PermissionsMenu
+      runtimeMode={runtimeMode}
+      runtimeModeOptions={options}
+      onRuntimeModeChange={setRuntimeMode}
+    />
   );
 }
 
@@ -94,13 +91,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Picking a mode moves the `runtimeMode` control; the options control feeds the menu. */
 export const Playground: Story = {
   parameters: { surface: "stage" },
-  render: (args) => (
-    <div style={TOP}>
-      <PermissionsMenu key={args.runtimeMode} mode={args.runtimeMode} />
-    </div>
-  ),
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<SectionProps>();
+    return (
+      <div style={POPUP_ANCHOR}>
+        <PermissionsMenu
+          runtimeMode={args.runtimeMode}
+          runtimeModeOptions={args.runtimeModeOptions}
+          onRuntimeModeChange={(runtimeMode) => updateArgs({ runtimeMode })}
+        />
+      </div>
+    );
+  },
 };
 
 /** The chip for each mode. Full access draws the filled shield; the label stays for screen
@@ -117,13 +122,14 @@ export const Chips: Story = {
   ),
 };
 
-/** The strip with each mode picked, and with Full access ruled out by a managed policy. */
+/** The strip with each mode picked, and with a managed policy capping threads at Auto-accept
+    edits, which rules Auto and Full access out. */
 export const Menus: Story = {
   parameters: { surface: "stage" },
   render: () => (
     <div
       style={{
-        ...TOP,
+        ...POPUP_ANCHOR,
         display: "grid",
         gridTemplateColumns: "repeat(3, 320px)",
         rowGap: 200,
@@ -132,9 +138,9 @@ export const Menus: Story = {
       }}
     >
       {OPTIONS.map((option) => (
-        <PermissionsMenu key={option.mode} mode={option.mode} />
+        <PickedMenu key={option.mode} mode={option.mode} />
       ))}
-      <PermissionsMenu mode="approval-required" options={MANAGED_OPTIONS} />
+      <PickedMenu mode="approval-required" options={MANAGED_OPTIONS} />
     </div>
   ),
 };

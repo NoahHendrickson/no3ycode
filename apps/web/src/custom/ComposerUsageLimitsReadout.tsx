@@ -16,7 +16,7 @@ import {
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
-import { Fragment, memo, type RefObject, useRef, useState } from "react";
+import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { providerClients } from "~/components/settings/providerDriverMeta";
@@ -63,12 +63,15 @@ export function useComposerUsageDrawer(props: {
       />
     ) : null,
     drawer: props.enabled ? (
-      <ComposerUsageLimitsDrawer open={open} openedAt={openedAt ?? 0} onClose={() => close(true)} />
+      <ComposerUsageLimitsDrawer open={open} onClose={() => close(true)}>
+        <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
+      </ComposerUsageLimitsDrawer>
     ) : null,
   };
 }
 
-const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
+/** @public — the ring trigger, from plain props; Storybook draws it beside an open drawer. */
+export const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   triggerRef,
   usageLimits,
   open,
@@ -108,11 +111,12 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
 
 /** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
     vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
-    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). */
-const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
+    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). Its tray is
+    `children`, mounted only while the panel is open. @public — Storybook fills it with the view. */
+export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
-  readonly openedAt: number;
   readonly onClose: () => void;
+  readonly children: ReactNode;
 }) {
   return (
     <Collapsible open={props.open} className="overflow-hidden">
@@ -127,7 +131,7 @@ const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props:
           }
         }}
       >
-        <ComposerLimitsTray now={props.openedAt} onClose={props.onClose} />
+        {props.children}
       </CollapsiblePanel>
     </Collapsible>
   );
@@ -199,14 +203,18 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
   );
 }
 
-/** @public — the strip as drawn, from plain data; Storybook renders it on its own. */
-export function ComposerLimitsTrayView(props: {
+export interface ComposerLimitsTrayViewProps {
   readonly pools: readonly LimitPool[];
   readonly notices: readonly string[];
-  readonly externalLinks: ReadonlyArray<{ readonly label: string; readonly url: string }>;
+  readonly externalLinks: ReadonlyArray<
+    Pick<ReturnType<typeof collectExternalUsageLinks>[number], "label" | "url">
+  >;
   readonly now: number;
   readonly onClose: () => void;
-}) {
+}
+
+/** @public — the strip as drawn, from plain data; Storybook renders it on its own. */
+export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
   const { pools, notices, externalLinks } = props;
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 

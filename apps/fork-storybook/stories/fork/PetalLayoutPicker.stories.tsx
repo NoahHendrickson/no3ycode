@@ -1,43 +1,40 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { CSSProperties } from "react";
+import type { ComponentProps } from "react";
 import { useArgs } from "storybook/preview-api";
 
 import { Button } from "~/components/ui/button";
-import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
+import { Menu, MenuTrigger } from "~/components/ui/menu";
 import { type PetalLayout, PetalLayoutPicker } from "~/custom/bots/PetalLayoutPicker";
+import { PetalViewOptionsMenu } from "~/custom/bots/SidebarV2BotsSection";
 import { SettingsIcon } from "~/custom/icons/lucide-hugeicons";
-import { OptionCheckboxItem } from "~/custom/SidebarV2ChromeRows";
 
-type PickerProps = Parameters<typeof PetalLayoutPicker>[0];
+import { POPUP_ANCHOR } from "../Specimen.tsx";
 
-// The canvas centres; a popup opens below its trigger.
-const TOP: CSSProperties = { alignSelf: "flex-start", paddingTop: 24 };
+type PickerProps = ComponentProps<typeof PetalLayoutPicker>;
 
-/** The Petals row's View options menu, as SidebarV2BotsSection opens it: the picker, and Compact
-    cards under it while the layout is List. */
+/** The Petals row's View options, open. The trigger carries the tab-trigger stamp the sidebar's
+    gives it, so Inlet joins it to the popup's tab. */
 function ViewOptions({ layout, onLayoutChange }: PickerProps) {
   return (
     <Menu defaultOpen modal={false}>
       <MenuTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label="Petal view options" />}
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Petal view options"
+            data-fork-tab-trigger=""
+          />
+        }
       >
         <SettingsIcon className="size-4 shrink-0" />
       </MenuTrigger>
-      <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="sidebar" className="min-w-48">
-        <PetalLayoutPicker layout={layout} onLayoutChange={onLayoutChange} />
-        {layout === "list" ? (
-          <>
-            <MenuSeparator className="-mx-1" />
-            <OptionCheckboxItem
-              checked={false}
-              onCheckedChange={() => {}}
-              testId="story-compact-cards"
-            >
-              Compact cards
-            </OptionCheckboxItem>
-          </>
-        ) : null}
-      </MenuPopup>
+      <PetalViewOptionsMenu
+        layout={layout}
+        onLayoutChange={onLayoutChange}
+        compactCards={false}
+        onCompactCardsChange={() => {}}
+      />
     </Menu>
   );
 }
@@ -59,7 +56,7 @@ export const Playground: Story = {
   render: function Render(args) {
     const [, updateArgs] = useArgs<PickerProps>();
     return (
-      <div style={TOP}>
+      <div style={POPUP_ANCHOR}>
         <ViewOptions
           layout={args.layout}
           onLayoutChange={(layout: PetalLayout) => updateArgs({ layout })}
@@ -72,7 +69,7 @@ export const Playground: Story = {
 /** Each layout picked: List keeps the Compact cards toggle under it, Grid has none. */
 export const Layouts: Story = {
   render: () => (
-    <div style={{ ...TOP, display: "flex", gap: 240 }}>
+    <div style={{ ...POPUP_ANCHOR, display: "flex", gap: 240 }}>
       <ViewOptions layout="list" onLayoutChange={() => {}} />
       <ViewOptions layout="grid" onLayoutChange={() => {}} />
     </div>
