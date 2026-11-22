@@ -203,7 +203,8 @@ export function No3yThreadBarInset(props: {
   return <HeaderHeightContext value={inset}>{props.children}</HeaderHeightContext>;
 }
 
-function menuActions(items: ReadonlyArray<AppBarMenuItem>): MenuAction[] {
+/** An AppBar menu as native menu actions, for the fork's own glass header buttons. */
+export function menuActions(items: ReadonlyArray<AppBarMenuItem>): MenuAction[] {
   return items.map((item) =>
     "items" in item
       ? {
@@ -224,7 +225,10 @@ function menuActions(items: ReadonlyArray<AppBarMenuItem>): MenuAction[] {
   );
 }
 
-function findMenuItem(items: ReadonlyArray<AppBarMenuItem>, id: string): (() => void) | null {
+export function findMenuItem(
+  items: ReadonlyArray<AppBarMenuItem>,
+  id: string,
+): (() => void) | null {
   for (const item of items) {
     if ("items" in item) {
       const found = findMenuItem(item.items, id);

@@ -8010,7 +8010,22 @@
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
     the Mac fork's version, drawn by fork/HugeIcon.tsx with the Mac's derived
     filled weight (a copy of hugeiconsFill.ts). Chat keeps its prompt bar and
-    search; Automations keeps a Recent runs section. Threads keeps Mac-parity
+    search; Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
+    early return in SettingsScheduledTasksRouteScreen) has its own header
+    (title, environment filter, +) and lists each automation as a card
+    (schedule, next run or Paused, last error, an on/off switch, a ⋯ menu with
+    Edit, Open thread, Run now and Delete; a tap edits), then its runs as
+    cards with 20pt status marks, grouped Needs you / Working / Recent with the
+    automation's name on the meta line, a page of 25 at a time with Show more,
+    and a long-press menu (Open, Settle, Rename, Archive, Delete). A run is
+    pushed over Automations, so back returns there with its scroll position:
+    upstream's selectWorkspaceDetail rebuilt the stack as Home + the run,
+    which dropped Automations and sent back to Threads. The dock reads
+    Automations while a run opened from it is on top. On iOS dark themes the
+    grouped-card token (a cool grey #1a1b1b in the default theme) is the 4%
+    white wash on the page, flattened to #222120 because rows nest in and
+    lift out of those cards; the glass fallback and selected-row tokens follow
+    (fork/no3yPageColor.ts). Threads keeps Mac-parity
     status sections and roster visibility in
     apps/mobile/fork/forkStatusGrouping.ts and forkRosterVisibility.ts
     (parity-guarded against web without modifying web or client-runtime).
@@ -8065,6 +8080,9 @@
     - apps/mobile/fork/no3yLiveStatus.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/No3yLiveStatusLine.tsx
+    - apps/mobile/fork/No3yAutomationsScreen.tsx
+    - apps/mobile/fork/no3yAutomationRuns.ts
+    - apps/mobile/fork/no3yAutomationRuns.test.ts
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
@@ -8101,3 +8119,4 @@
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/no3yAutomationRuns.test.ts

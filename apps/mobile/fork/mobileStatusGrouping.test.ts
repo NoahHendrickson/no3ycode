@@ -465,6 +465,13 @@ describe("bottom nav route resolution", () => {
     ).toBe("settings");
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "SettingsAuth" }])).toBeNull();
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "No3yChat" }])).toBe("chat");
+    expect(
+      resolveActiveNo3yNavItem([
+        { name: "Home" },
+        { name: "SettingsScheduledTasks" },
+        { name: "Thread" },
+      ]),
+    ).toBe("automations");
 
     const show = (topRoute: { name: string; params?: object }, isOverlayRoute = false) =>
       shouldShowNo3yBottomNav({ topRoute, isOverlayRoute });

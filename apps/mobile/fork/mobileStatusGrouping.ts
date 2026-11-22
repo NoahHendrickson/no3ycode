@@ -735,6 +735,11 @@ export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavI
   if (!top) return "threads";
   if (top.name === "No3yChat") return "chat";
   if (AUTOMATIONS_ROUTES.has(top.name)) return "automations";
+  // A run opened from Automations is pushed over it, and back returns there.
+  const below = routes.at(-2);
+  if (top.name === "Thread" && below !== undefined && AUTOMATIONS_ROUTES.has(below.name)) {
+    return "automations";
+  }
   if (top.name === "NewTaskProject" || top.name.startsWith("NewTask") || isDraftThreadRoute(top)) {
     return "newAgent";
   }

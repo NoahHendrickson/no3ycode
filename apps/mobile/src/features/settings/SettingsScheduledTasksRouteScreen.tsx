@@ -95,6 +95,7 @@ import {
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
 import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSection";
+import { No3yAutomationsScreen } from "../../../fork/No3yAutomationsScreen";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
 /* fork:end no3y-mobile-redesign */
 
@@ -430,6 +431,41 @@ export function SettingsScheduledTasksRouteScreen() {
     resetEditor();
     navigation.navigate("SettingsScheduledTaskNew");
   };
+
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (no3yBottomNav) {
+    return (
+      <No3yAutomationsScreen
+        environments={visibleEnvironments}
+        projectIdsFor={(environmentId) =>
+          selectedProjectKey === null
+            ? null
+            : (selectedGroup?.members
+                .filter((member) => member.project.environmentId === environmentId)
+                .map((member) => member.project.id) ?? [])
+        }
+        projectKeys={visibleProjectKeys}
+        now={now}
+        describeSchedule={describeSchedule}
+        onEdit={(environment, task) => {
+          startEditor({
+            environmentId: environment.environmentId,
+            environmentLabel: environment.label,
+            draft: editDraft(task),
+          });
+          navigation.navigate("SettingsScheduledTaskEdit");
+        }}
+        onNew={newTask}
+        environmentMenu={environmentMenu}
+        emptyMessage={
+          availableTargets.length === 0
+            ? "Connect an environment to view and create automations."
+            : "No environments match these filters. Change the filter above."
+        }
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
 
   return (
     <SettingsScreen

@@ -7,8 +7,10 @@
 import { BUILT_IN_THEME_IDS } from "@t3tools/shared/themePalettes";
 
 export const NO3Y_PAGE_COLOR = "#191817";
+/** rgba(255, 255, 255, 0.04) over the page, flattened. */
+export const NO3Y_CARD_COLOR = "#222120";
 
-/** The page-colour tokens, with the alpha each theme gives them. */
+/** The page-colour and card tokens, with the alpha each theme gives them. */
 const NO3Y_DARK_PAGE_VARIABLES = {
   "--color-screen": NO3Y_PAGE_COLOR,
   "--color-sheet": "rgba(25, 24, 23, 0.98)",
@@ -18,6 +20,12 @@ const NO3Y_DARK_PAGE_VARIABLES = {
   "--color-header": "rgba(25, 24, 23, 0.97)",
   "--color-status-bar": NO3Y_PAGE_COLOR,
   "--color-sidebar-search": NO3Y_PAGE_COLOR,
+  // Grouped cards: the composite of a 4% white wash on the page, not the themes' cool grey.
+  // Opaque, because rows nest in these cards and lift out of them while dragged.
+  "--color-grouped-card": NO3Y_CARD_COLOR,
+  "--color-glass-fallback": "rgba(34, 33, 32, 0.9)",
+  // A selected row reads one more 4% step up.
+  "--color-thread-selected": "#2b2a29",
 } as const;
 
 /** The Uniwind theme names whose dark page tokens the override replaces. */

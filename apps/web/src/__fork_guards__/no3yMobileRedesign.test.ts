@@ -619,6 +619,18 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const feed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
     expect(feed).toContain("no3yLiveLast ? no3yLiveRowLast(presentation) : presentation");
     expect(feed).toContain("<No3yLiveStatusLine");
+    // Automations: the fork screen, runs pushed over it so back returns there, grouped-card washed.
+    const scheduled = readRepoFile(
+      "apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx",
+    );
+    const automations = readRepoFile("apps/mobile/fork/No3yAutomationsScreen.tsx");
+    expect(scheduled).toContain("<No3yAutomationsScreen");
+    expect(automations).toContain(
+      'navigation.dispatch(StackActions.push("Thread", detail.params));',
+    );
+    expect(readRepoFile("apps/mobile/fork/no3yPageColor.ts")).toContain(
+      '"--color-grouped-card": NO3Y_CARD_COLOR,',
+    );
     // Transcript subagents draw as the Mac fork's card with the Threads list's status marks.
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");
