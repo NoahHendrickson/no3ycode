@@ -76,8 +76,9 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
           }
         >
           {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-              Icon only: the mode's name lives in the tooltip and aria-label. */}
-          <ChipIcon aria-hidden />
+              Icon only: the mode's name lives in the tooltip and aria-label. A text- class keeps
+              Button's muted icon ink off it, so it takes the chip's ink like its neighbours. */}
+          <ChipIcon aria-hidden className="text-current" />
           {/* fork:end fork-composer-shell */}
         </TooltipTrigger>
         <TooltipPopup side="top">{permissionsTooltip}</TooltipPopup>

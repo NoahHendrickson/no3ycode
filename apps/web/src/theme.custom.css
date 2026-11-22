@@ -965,16 +965,14 @@
   opacity: 1;
 }
 
+/* The permissions chip included: icon-only now, it reads in the model's and usage's ink. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-control-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-    [data-fork-composer-mode-chip],
-    [data-fork-pr-chip]
-  ) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
-/* Icon-only now, so it takes the row's control ink like the model and usage beside it. */
+/* Light builds keep the muted ink beside their own neighbours. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-mode-controls]
   [data-fork-composer-mode-chip] {
