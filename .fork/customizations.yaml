@@ -7884,9 +7884,14 @@
     gives the body it as its header height) and it scrolls under the bubbles;
     the back swipe stays native. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
-    The usage buttons open a half-height usage
-    sheet (fork/No3yUsageSheet.tsx) embedding Settings › Usage's limits with a
-    See all link. The composer is a glass card (editor on top; 40pt +, model
+    The usage buttons (thread ring and Threads gauge alike) open a compact
+    sheet sized to its content (fork/No3yUsageSheet.tsx), the Mac composer's
+    usage drawer on a phone: one row per provider with every account's
+    environments (its mark, then each window's bar side by side with its
+    label, % left and reset time; 5hr / 7d only from typed window durations,
+    Claude's seven_day_fable left out, the calmer #38a169 green; rules copied
+    into fork/no3yUsageCompact.ts), actionable limit notices, usage links and
+    a See all usage link to Settings › Usage. The composer is a glass card (editor on top; 40pt +, model
     chip, mic and send below, the text's last line as far above them as its
     first sits below the card's top; no chip row above it; the model chip ends
     in the current runtime mode's filled access shield) over a fade-to-page scrim so the
@@ -7958,6 +7963,8 @@
     - apps/mobile/fork/effortSlider.ts
     - apps/mobile/fork/effortSlider.test.ts
     - apps/mobile/fork/No3yUsageSheet.tsx
+    - apps/mobile/fork/no3yUsageCompact.ts
+    - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/No3yProviderMark.tsx
     - apps/mobile/fork/assets/codex-mark.png
     - apps/mobile/fork/no3yPageColor.ts
@@ -7972,6 +7979,7 @@
     - apps/mobile/fork/No3ySubagentCards.tsx
     - apps/mobile/fork/no3ySubagentCard.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
+    - apps/mobile/fork/no3yUsageCompact.test.ts
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx

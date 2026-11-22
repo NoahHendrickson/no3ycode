@@ -525,10 +525,13 @@ const RootStackConfig = createWorkspaceStackNavigator({
       linking: "chat",
       options: pageRoute({ title: "Chat", duoMinimize: "never" }),
     }),
-    // The usage buttons' half sheet; it never grows past half the screen.
+    // The usage buttons' compact sheet, sized to its rows.
     No3yUsage: createNativeStackScreen({
       screen: No3yUsageSheet,
-      options: sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
+      options: {
+        ...sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
+        sheetAllowedDetents: "fitToContents",
+      },
     }),
     // The thread status pill's half sheet (fork/No3yStatusPill.tsx), the usage sheet's shape.
     No3yThreadStatus: createNativeStackScreen({

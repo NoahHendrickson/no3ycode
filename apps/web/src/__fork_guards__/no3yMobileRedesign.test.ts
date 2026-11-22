@@ -572,6 +572,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadRoute).toContain("<No3yThreadBarInset draft=");
     expect(screenHeader).toContain('StackActions.push("No3yUsage")');
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
+    // The usage sheet is the Mac drawer's compact rows, sized to them.
+    expect(stack).toContain('sheetAllowedDetents: "fitToContents",');
+    const usageSheet = readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx");
+    expect(usageSheet).toContain("compactTrayWindows(pool)");
+    expect(usageSheet).toContain('const CALM_GREEN = "#38a169";');
     // Glass controls and card, the looping working mark.
     expect(composerStyle).toContain("<No3yGlassLayer");
     expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
