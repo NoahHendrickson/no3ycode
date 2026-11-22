@@ -134,7 +134,6 @@ export function useDraftProjectChoices(props: {
   );
   const projectGroups = sortLogicalProjectsForSidebar(
     buildSidebarProjectSnapshots({
-      // Upstream #29846: a manual sidebar order applies here too.
       projects:
         projectSortOrder === "manual"
           ? orderItemsByPreferredIds({
