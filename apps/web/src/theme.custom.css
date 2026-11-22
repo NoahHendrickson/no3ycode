@@ -1126,13 +1126,13 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   > [data-fork-dictation-mic]:has([data-fork-composer-action="dictate"]):has(
-    + :is([data-fork-composer-action="send"], [data-fork-composer-action="stop"]),
-    + * :is([data-fork-composer-action="send"], [data-fork-composer-action="stop"])
+    + [data-fork-composer-action="stop"],
+    + span:has(> [data-fork-composer-action="send"])
   ) {
   margin-inline-end: -6px;
 }
 
-/* A live session's cancel X sits the same 2px from its check. */
+/* A live session's cancel X sits closer to its check, like the mic beside Send. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate-cancel"] {
