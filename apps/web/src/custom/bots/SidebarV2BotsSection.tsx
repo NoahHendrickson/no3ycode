@@ -19,7 +19,8 @@ import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
 import { BotMascot, BotMascotTile } from "./BotMascot";
 import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
-import { type PetalLayout, PetalLayoutPicker } from "./PetalLayoutPicker";
+import { PetalLayout, PetalLayoutPicker } from "./PetalLayoutPicker";
+import type { SidebarV2CardView } from "./SidebarV2BotCardBody";
 
 export type SidebarV2ListSection = "bots" | "threads";
 
@@ -56,25 +57,25 @@ export function useSidebarV2CompactBots(): [boolean, (value: boolean) => void] {
 }
 
 const BOTS_LAYOUT_STORAGE_KEY = "t3code:fork:sidebar-v2-bots-layout:v1";
-const BotsLayout = Schema.Literals(["list", "grid"]);
 
 /** Petals as a list of cards, or as a grid of mascot tiles with their names under them. */
 export function useSidebarV2BotsLayout(): [PetalLayout, (value: PetalLayout) => void] {
-  return useLocalStorage(BOTS_LAYOUT_STORAGE_KEY, "list", BotsLayout);
+  return useLocalStorage(BOTS_LAYOUT_STORAGE_KEY, "list", PetalLayout);
 }
 
 /** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. Drawn
     as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
     32px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
-  readonly compact: boolean;
-  /** In the grid, the row spans every column. */
-  readonly grid: boolean;
+  /** The Petals' view: the compact line, or the full card (which the grid's row also draws,
+      spanning every column). */
+  readonly view: SidebarV2CardView;
   /** The mascot offered first; the button beside the name steps through the rest. */
   readonly initialMascot: BotMascotShape;
   readonly onCreate: (name: string, mascot: BotMascotShape) => Promise<unknown>;
   readonly onDone: () => void;
 }) {
+  const compact = props.view === "compact";
   const [name, setName] = useState("");
   const [mascot, setMascot] = useState(props.initialMascot);
   const [creating, setCreating] = useState(false);
@@ -105,8 +106,8 @@ export function SidebarV2NewBotRow(props: {
       data-thread-selection-safe
       className={cn(
         "flex list-none items-center gap-x-2",
-        props.compact ? "h-8" : "h-11",
-        props.grid && "col-span-full",
+        compact ? "h-8" : "h-11",
+        props.view === "grid" && "col-span-full",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
@@ -129,10 +130,10 @@ export function SidebarV2NewBotRow(props: {
         }
         className={cn(
           "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          props.compact ? "-mx-[7px]" : "-mx-[2px]",
+          compact ? "-mx-[7px]" : "-mx-[2px]",
         )}
       >
-        {props.compact ? (
+        {compact ? (
           <BotMascot shape={mascot} mood="Idle" />
         ) : (
           <BotMascotTile shape={mascot} mood="Idle" />
@@ -154,7 +155,7 @@ export function SidebarV2NewBotRow(props: {
         // Where the card's title sits, and as tall as the row allows.
         className={cn(
           "min-w-0 flex-1 rounded-md border border-sidebar-border bg-transparent px-2 text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-muted-foreground/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          props.compact ? "h-7" : "h-8",
+          compact ? "h-7" : "h-8",
         )}
       />
     </li>
@@ -261,7 +262,7 @@ export function SidebarV2BotsRow(props: {
           className={cn(
             "mt-1 empty:mt-0",
             props.layout === "grid"
-              ? "-mb-2 grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-y-1 px-0.5"
+              ? "-mb-2 grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-x-1 gap-y-1 px-0.5"
               : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
           )}
         >

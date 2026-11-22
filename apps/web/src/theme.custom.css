@@ -1072,6 +1072,14 @@
   height: 16px;
 }
 
+/* A Petals grid tile's jump hint sits in its top-left corner, off the mascot (fork-bots). */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-petals-grid] [data-jump-hint] {
+  top: 2px;
+  right: auto;
+  left: 2px;
+  translate: none;
+}
+
 /* Codex's cloud fills its box edge to edge and read large beside the model's name. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-model-controls] {
   --fork-codex-mark-size: 14px;

@@ -223,13 +223,14 @@ describe("fork guard: fork-bots", () => {
   });
 
   it("draws a bot card as one kind, chosen once per row", () => {
-    expect(sidebarV2CardKind(bot("b").source, false)).toBe("bot");
-    expect(sidebarV2CardKind(bot("b").source, true)).toBe("bot-compact");
+    expect(sidebarV2CardKind(bot("b").source, "card")).toBe("bot");
+    expect(sidebarV2CardKind(bot("b").source, "compact")).toBe("bot-compact");
+    expect(sidebarV2CardKind(bot("b").source, "grid")).toBe("bot-grid");
     const plain = makeThreadFixture({ id: "plain" as Thread["id"] }).source;
-    expect(sidebarV2CardKind(plain, false)).toBe("card");
-    expect(sidebarV2CardKind(plain, true)).toBe("compact");
-    expect(sidebar).toContain(
-      "const cardKind = sidebarV2CardKind(thread.source, props.compact === true, props.botGrid === true);",
+    expect(sidebarV2CardKind(plain, "card")).toBe("card");
+    expect(sidebarV2CardKind(plain, "compact")).toBe("compact");
+    expect(sidebar).toMatch(
+      /const cardKind = sidebarV2CardKind\(\s*thread\.source,\s*props\.petalView \?\? \(props\.compact === true \? "compact" : "card"\),?\s*\);/u,
     );
     expect(sidebar).toContain("<SidebarV2BotCardBody");
     // A full bot card puts its mascot on a tile in its own colour (Figma Petal card).
@@ -238,7 +239,7 @@ describe("fork guard: fork-bots", () => {
     expect(cardBody).toContain("<BotMascotTile");
     // The new-Petal draft previews the card it becomes: the tile, in the same 32px column.
     const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
-    expect(botsSection).toContain('props.compact ? "-mx-[7px]" : "-mx-[2px]"');
+    expect(botsSection).toContain('compact ? "-mx-[7px]" : "-mx-[2px]"');
     expect(botsSection).toContain('<BotMascotTile shape={mascot} mood="Idle" />');
     // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
     expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
@@ -247,10 +248,25 @@ describe("fork guard: fork-bots", () => {
     expect(sidebar).toContain("<BotMascotLead");
   });
 
+  it("draws Petals as grid tiles from one view, with the layout picker in the menu", () => {
+    const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
+    // One view from the two saved settings, so Compact cards cannot leak into the grid.
+    expect(sidebar).toMatch(
+      /const petalView: SidebarV2CardView =\s*botsLayout === "grid" \? "grid" : compactBots \? "compact" : "card";/u,
+    );
+    expect(sidebar).toContain("<SidebarV2BotGridBody");
+    expect(sidebar).toContain('"bot-grid": "[contain-intrinsic-size:64px_82px]"');
+    expect(sidebar).toContain('cardKind === "bot-grid"\n          ? "tile"');
+    // The tile's hover card opens beyond the section, not over its neighbours.
+    expect(sidebar).toContain("petalTileHoverAnchor(threadKey)");
+    expect(botsSection).toContain("<PetalLayoutPicker");
+    expect(botsSection).toContain("data-fork-petals-grid");
+  });
+
   it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
-    expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+compact: compactBots,/);
-    expect(sidebar).toContain("options.compact ??");
+    expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+petalView,/);
+    expect(sidebar).toContain('options.petalView === "compact") ??');
     expect(sidebar).not.toContain("createPortal");
     expect(sidebar).toContain('onToggleCollapsed={() => toggleListSectionCollapsed("threads")}');
     expect(sidebar).toContain("return threadsSectionCollapsed ? [] : items;");

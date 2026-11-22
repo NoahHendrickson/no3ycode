@@ -104,9 +104,7 @@ export function threadRowOpenSurfaceClassName(shape: ThreadRowShape): string {
 export function threadRowShape(input: {
   readonly variant: "card" | "slim";
   readonly compact: boolean;
-  readonly grid?: boolean;
 }): ThreadRowShape {
-  if (input.grid === true) return "tile";
   if (input.compact) return "pill";
   return input.variant === "slim" ? "shelf" : "card";
 }

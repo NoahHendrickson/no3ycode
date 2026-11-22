@@ -60,25 +60,30 @@ const GRID_BADGE_NOTCH = {
   WebkitMaskImage: GRID_BADGE_NOTCH_MASK,
 } as const;
 
+const TILE_SIZE = {
+  card: { className: "size-8 rounded-[8px]", fit: 22, notch: {} },
+  grid: { className: "size-12 rounded-[10px]", fit: 28, notch: GRID_BADGE_NOTCH },
+} as const;
+
 export function BotMascotTile(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;
-  readonly size?: "card" | "grid";
+  readonly size?: keyof typeof TILE_SIZE;
 }) {
-  const grid = props.size === "grid";
+  const size = TILE_SIZE[props.size ?? "card"];
   return (
     <span
       data-fork-bot-mascot-tile=""
       className={cn(
         "flex shrink-0 items-center justify-center shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]",
-        grid ? "size-12 rounded-[10px]" : "size-8 rounded-[8px]",
+        size.className,
       )}
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
-        ...(grid ? GRID_BADGE_NOTCH : {}),
+        ...size.notch,
       }}
     >
-      <BotMascot shape={props.shape} mood={props.mood} fit={grid ? 28 : 22} />
+      <BotMascot shape={props.shape} mood={props.mood} fit={size.fit} />
     </span>
   );
 }

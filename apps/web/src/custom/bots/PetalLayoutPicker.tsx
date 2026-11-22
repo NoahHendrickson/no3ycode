@@ -3,15 +3,14 @@
  * option draws its layout in miniature, so the choice reads before it is made.
  */
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import * as Schema from "effect/Schema";
+import type { ComponentType } from "react";
 
 import { cn } from "~/lib/utils";
 
-export type PetalLayout = "list" | "grid";
-
-const OPTIONS = [
-  { value: "list", label: "List" },
-  { value: "grid", label: "Grid" },
-] as const satisfies ReadonlyArray<{ value: PetalLayout; label: string }>;
+export const PetalLayout = Schema.Literals(["list", "grid"]);
+export type PetalLayout = typeof PetalLayout.Type;
+const isPetalLayout = Schema.is(PetalLayout);
 
 /** A mascot tile beside a name line, three times: the list. */
 function ListSketch() {
@@ -51,6 +50,11 @@ function GridSketch() {
   );
 }
 
+const OPTIONS = [
+  { value: "list", label: "List", Sketch: ListSketch },
+  { value: "grid", label: "Grid", Sketch: GridSketch },
+] as const satisfies ReadonlyArray<{ value: PetalLayout; label: string; Sketch: ComponentType }>;
+
 export function PetalLayoutPicker(props: {
   readonly layout: PetalLayout;
   readonly onLayoutChange: (layout: PetalLayout) => void;
@@ -58,7 +62,9 @@ export function PetalLayoutPicker(props: {
   return (
     <MenuPrimitive.RadioGroup
       value={props.layout}
-      onValueChange={(value) => props.onLayoutChange(value as PetalLayout)}
+      onValueChange={(value) => {
+        if (isPetalLayout(value)) props.onLayoutChange(value);
+      }}
       aria-label="Petal layout"
       className="grid grid-cols-2 gap-1.5 p-1.5"
     >
@@ -78,7 +84,7 @@ export function PetalLayoutPicker(props: {
                 : "border-border text-muted-foreground data-highlighted:text-foreground",
             )}
           >
-            {option.value === "list" ? <ListSketch /> : <GridSketch />}
+            <option.Sketch />
             {option.label}
           </MenuPrimitive.RadioItem>
         );

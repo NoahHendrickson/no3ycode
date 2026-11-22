@@ -35,7 +35,10 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(sidebar).toContain("compactCards={compactCards}");
     // Slim shelf rows are already one line; they only take the pill.
     // Bots have their own toggle (fork-bots); every other card takes this one.
-    expect(sidebar).toMatch(/compact=\{[^}]*?options\.compact \?\?[^}]*?compactCards\s*\}/u);
+    // The Petals section's own view wins for its rows; every other row reads Compact cards.
+    expect(sidebar).toMatch(
+      /compact=\{[\s\S]*?options\.petalView === "compact"\) \?\?[\s\S]*?compactCards\s*\}/u,
+    );
   });
 
   it("swaps the repo line for marks on the title line", () => {
@@ -59,9 +62,7 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
   });
 
   it("gives a compact card a pill, not the shelf row's corner", () => {
-    expect(sidebar).toMatch(
-      /shape: threadRowShape\(\{\s+variant,\s+compact: props\.compact === true,/u,
-    );
+    expect(sidebar).toMatch(/threadRowShape\(\{ variant, compact: props\.compact === true \}\)/u);
   });
 
   it("names a worktree checkout in the hover card", () => {

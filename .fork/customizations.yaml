@@ -7054,8 +7054,10 @@
 
     In Code, a Bots row sits above the Threads row and in its shape (custom/
     bots/SidebarV2BotsSection): the label, a count, a caret that folds the
-    section, a view-options gear with the bots' own Compact cards (per device,
-    off by default, apart from sidebar-v2-compact-cards), and a plus that names
+    section, a view-options gear with a List / Grid layout picker
+    (custom/bots/PetalLayoutPicker, each option sketched) and, for List, the
+    bots' own Compact cards (both per device, off by default, apart from
+    sidebar-v2-compact-cards), and a plus that names
     a new bot in place. Its cards are its children, one per bot, oldest first,
     built by the same row factory as the threads; a folded Bots section keeps
     the open bot's card. Chat lists chats alone, so it has no Bots row. Bots
@@ -7063,8 +7065,17 @@
     Every label the user sees calls them Petals (the section, its buttons,
     toasts and the user docs); code, tags, folders and storage keep `bot`.
 
-    A sidebar row picks its card kind once (card, compact, bot, bot-compact;
-    custom/bots/SidebarV2BotCardBody sidebarV2CardKind). A bot card draws
+    A sidebar row picks its card kind once (card, compact, bot, bot-compact,
+    bot-grid; custom/bots/SidebarV2BotCardBody sidebarV2CardKind) from one view
+    (card, compact or grid; the Petals section derives its own from the two
+    settings, so Compact cards never reaches the grid), and the kind alone sets
+    the row's offscreen size hint and, for a tile, its shape. In Grid a bot
+    draws SidebarV2BotGridBody: an 82px tile in a 64px cell (8 + 48 + 2 + 16 +
+    8), the mascot tile notched at its corner for the status mark, the name in
+    medium 10px under it, the jump hint in its top-left corner and a sweep's
+    verb badge over its top. A tile drops a card's working timer and hover
+    actions (its context menu keeps them), and its hover card opens beyond the
+    section, level with the tile. A bot card draws
     SidebarV2BotCardBody: a 44px grid (6 + 16 + 2 + 14 + 6) with the mascot on
     a 32px tile beside both lines (BotMascotTile: the mascot's body colour at
     50%, 8px corners, a 1px 24% inner edge, white on dark and black on light;
