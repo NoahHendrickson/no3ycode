@@ -11,10 +11,17 @@
    every side stays concentric, and the context chips above with 8px corners. Geometry for
    every colour; the fills are each colour's tokens. */
 
+/* The inset and the concentric radius, once: the usage drawer sits in the top vessel, a sibling,
+   so it cannot inherit them from the vessel. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
+  --fork-inlet-vessel-inset: 4px;
+  --fork-inlet-vessel-radius: calc(var(--fork-composer-radius) + var(--fork-inlet-vessel-inset));
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-fork-composer-vessel] {
   /* The question drawer and banners above the prompt take the same inset. */
-  --chat-composer-drawer-inset: 4px;
-  border-radius: calc(var(--fork-composer-radius) + 4px);
+  --chat-composer-drawer-inset: var(--fork-inlet-vessel-inset);
+  border-radius: var(--fork-inlet-vessel-radius);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
@@ -28,7 +35,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-usage-drawer] {
-  border-radius: calc(var(--fork-composer-radius) + 4px) calc(var(--fork-composer-radius) + 4px) 0 0;
+  border-radius: var(--fork-inlet-vessel-radius) var(--fork-inlet-vessel-radius) 0 0;
 
   & > * {
     padding-bottom: 2px;

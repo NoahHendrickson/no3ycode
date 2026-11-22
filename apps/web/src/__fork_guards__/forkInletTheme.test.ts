@@ -301,8 +301,12 @@ describe("fork guard: fork-inlet-theme", () => {
 
   it("sets the prompt 4px inside a concentric vessel under 8px context chips", () => {
     const vessel = ruleBodyFor(inletRules, [TEMPLATE, "[data-fork-composer-vessel]"]);
-    expect(vessel).toContain("border-radius: calc(var(--fork-composer-radius) + 4px)");
-    expect(vessel).toContain("--chat-composer-drawer-inset: 4px");
+    expect(vessel).toContain("border-radius: var(--fork-inlet-vessel-radius)");
+    expect(vessel).toContain("--chat-composer-drawer-inset: var(--fork-inlet-vessel-inset)");
+    expect(inlet).toContain(
+      "--fork-inlet-vessel-radius: calc(var(--fork-composer-radius) + var(--fork-inlet-vessel-inset))",
+    );
+    expect(inlet).toContain("--fork-inlet-vessel-inset: 4px");
     expect(
       ruleBodyFor(inletRules, [
         TEMPLATE,

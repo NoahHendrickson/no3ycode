@@ -118,6 +118,7 @@ describe("fork guard: fork-touch-affordances", () => {
         "[data-chat-composer-transition-actions][data-fork-composer-action]::after",
       ),
     );
-    expect(hitArea?.body).toContain("inset: -4px");
+    // The 28px send grows back to its 32px slot.
+    expect(hitArea?.body).toContain("inset: -2px");
   });
 });

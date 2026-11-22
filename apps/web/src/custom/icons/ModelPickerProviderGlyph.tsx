@@ -1,8 +1,7 @@
 /* The model picker's provider marks, see `.fork/customizations.yaml#fork-model-picker`.
-   Codex's art is a one-colour cloud, so it masks a solid purple over a white patch that fills
-   the prompt cutout. Other providers keep their instance icon. Hosts restyle the two fork
-   marks only through --fork-mark-ink, --fork-mark-cutout and --fork-mark-size (Codex's alone
-   through --fork-codex-mark-size). */
+   Codex's cloud masks a solid purple over a white patch that fills the prompt cutout; other
+   providers keep their instance icon. Hosts restyle the marks only through --fork-mark-ink,
+   --fork-mark-cutout and --fork-mark-size (Codex's alone through --fork-codex-mark-size). */
 import { ProviderDriverKind } from "@t3tools/contracts";
 import type { CSSProperties, JSX } from "react";
 

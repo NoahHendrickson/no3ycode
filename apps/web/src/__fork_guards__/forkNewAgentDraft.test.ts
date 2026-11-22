@@ -282,10 +282,10 @@ describe("fork guard: fork-new-agent-draft", () => {
       'export const DRAFT_HERO_TRANSITION_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";',
     );
     expect(css).toMatch(
-      /\[data-chat-composer-body="true"\]\s*\{\s*transition:\s*padding-block 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
+      /\[data-chat-composer-body="true"\]\s*\{\s*transition:\s*padding 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
     );
     expect(css).toMatch(
-      /\[data-fork-composer-prompt\]\s*\{\s*min-height:\s*0;\s*transition:\s*min-height 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
+      /\[data-fork-composer-prompt\]\s*\{\s*min-height:\s*0;\s*transition:\s*min-height 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\),\s*padding-block 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
     );
     // The draft composer is capped at the drawn 42rem and eases back out.
     expect(chatView).toContain('data-fork-composer-stack="true"');

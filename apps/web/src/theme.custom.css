@@ -349,25 +349,25 @@
   padding-top: 0;
 }
 
-/* The body wrapper carries the surface's px-2 py-2.5. The drawn draft box is
-   100px: the prompt 10px from the top, attach and send on a 32px row 12px in
-   from the sides and the bottom. The thread composer's compact row is 8px on
-   every side. */
+/* The compact row every started thread uses is the base, and the drawn draft box overrides it.
+   The body wrapper carries the surface's px-2 py-2.5: the compact row is 8px on every side; the
+   100px draft box puts the prompt 10px from the top and attach and send on a 32px row 12px in
+   from the sides and the bottom. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-chat-composer-overlay="true"]
+  [data-chat-composer-body="true"] {
+  padding: 8px;
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-chat-composer-body="true"] {
   padding: 10px 12px 12px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-chat-composer-body="true"] {
-  padding: 8px;
-}
-
 /* Attach and send sit 2px either side of the prompt on the compact row. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt-row] {
   column-gap: 2px;
 }
@@ -385,14 +385,16 @@
   gap: 0;
 }
 
-/* The row is items-end; 8.5px of block padding (inside the wrapper's -4px
-   margin, see the base prompt rule) makes a one-line prompt's margin box the
-   32px of the buttons, so the 23px line centres on them and later lines grow
-   upward from the same bottom edge. */
+/* The row is items-end. The block padding (inside the wrapper's -4px margin, see the base
+   prompt rule) makes a one-line prompt's margin box the action slot, so the line centres on the
+   buttons and later lines grow upward from the same bottom edge. The draft's own box sets 4px. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt] {
-  padding-block: 8.5px;
+  --fork-composer-prompt-pad-block: calc(
+    (var(--fork-composer-action-slot) - var(--fork-composer-prompt-line)) / 2 + 4px
+  );
+  padding-block: var(--fork-composer-prompt-pad-block);
 }
 
 /* 10px + 46px puts the action row at y=56, matching the drawn frame. 54px
@@ -402,6 +404,7 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-fork-composer-prompt] {
+  --fork-composer-prompt-pad-block: 4px;
   grid-area: prompt;
   min-height: 54px;
 }
@@ -435,12 +438,14 @@
    on the base elements, not under data-draft-hero, so both directions ease.
    Reduced motion drops it, the same query upstream skips its slide on. */
 :root[data-fork="noahhendrickson-t3code"] [data-chat-composer-body="true"] {
-  transition: padding-block 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: padding 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
   min-height: 0;
-  transition: min-height 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    min-height 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    padding-block 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Tiptap's editor wears -m-1/p-1 so chip outlines and glyph ink land inside
@@ -679,7 +684,7 @@
 
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-composer-radius: 16px;
-  /* The thread details and changed-files cards keep the old 8px corners. */
+  /* Cards that sit beside the composer (thread details, changed files). */
   --fork-card-radius: 8px;
   --fork-composer-bg: var(--card);
   --fork-composer-border: var(--border);
@@ -861,8 +866,10 @@
   color: var(--muted-foreground);
 }
 
-:root[data-fork="noahhendrickson-t3code"] {
-  --fork-composer-prompt-cap: calc(12.5rem + 8px);
+/* The cap sits on the prompt, so it holds 12.5rem of prompt whatever block padding the compact
+   row gives it (the base 4px each side, or the compact centring above). */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
+  --fork-composer-prompt-cap: calc(12.5rem + 2 * var(--fork-composer-prompt-pad-block, 4px));
 }
 
 /* The placeholder has to move with the prompt, or the two disagree about both
@@ -886,12 +893,11 @@
       :has(> [data-testid="composer-editor"]) ~ div,
       [data-fork-dictation-preview]
     ) {
-    /* The design's body/md: 14px Geist on a 23px line. The 24px action is
-       what sets the 44px base row (10 + 24 + 10); the one-line 23px prompt
-       sits centred beside it, and each wrapped line adds 23px. Below sm the
-       type stays 16px so iOS does not zoom on focus. */
+    /* The design's body/md: 14px Geist on a 23px line. The 32px action slot sets the 48px
+       compact row (8 + 32 + 8); the one-line prompt sits centred beside it, and each wrapped
+       line adds one more. Below sm the type stays 16px so iOS does not zoom on focus. */
     font-size: 14px;
-    line-height: 23px;
+    line-height: var(--fork-composer-prompt-line);
   }
 
   :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
@@ -972,6 +978,26 @@
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
+/* Icon-only: upstream's label stays for screen readers, and the icon reads in the chip's ink
+   like the model and usage beside it (so upstream's emphasized ink adds nothing here). */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-mode-chip]
+  [data-composer-control-label] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-mode-chip] svg {
+  color: currentColor;
+}
+
 /* Light builds keep the muted ink beside their own neighbours. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-mode-controls]
@@ -1009,6 +1035,19 @@
   background: var(--fork-composer-control-hover);
 }
 
+/* The action slot and the prompt's line, which the compact row centres the prompt between. Below
+   40rem the editor keeps upstream's 16px leading-relaxed, a 26px line. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-composer-action-slot: 32px;
+  --fork-composer-prompt-line: 26px;
+}
+
+@media (width >= 40rem) {
+  :root[data-fork="noahhendrickson-t3code"] {
+    --fork-composer-prompt-line: 23px;
+  }
+}
+
 /* The stamped actions are the exception to the pill rule: 32px squares at an
    8px radius (the kit's icon button). Send and stop are the only filled
    controls in the composer; the dictation cancel X is a ghost that shares
@@ -1019,9 +1058,12 @@
    ComposerPrimaryActions also hoists a labelled Refine submit into the same
    cluster as a direct child. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action] {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
+  /* Above the prompt, whose -4px margin reaches into the 2px gap beside it. */
+  position: relative;
+  z-index: 1;
+  width: var(--fork-composer-action-slot);
+  height: var(--fork-composer-action-slot);
+  min-height: var(--fork-composer-action-slot);
   border-radius: 8px;
 }
 
@@ -1408,6 +1450,10 @@
     flex: 0 1 auto;
     min-width: 0;
     min-height: 0;
+  }
+
+  /* 4px from each chip's icon to its label; the project chip keeps 6px below. */
+  & :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
     gap: 4px;
   }
 
@@ -2114,12 +2160,12 @@
 
 /* Pending Previous / Next sit in the prompt row with items-end. Upstream's
    sm outline pills are taller than the one-line prompt, so the placeholder
-   hangs low in the surface. Pin height to the 24px composer control row.
-   Compact Previous is icon-sm (a square) — also pin width so it stays 24×24
-   beside stop/send rather than a 28×24 squat pill. */
+   hangs low in the surface. Pin height to stop and send's 28px box and 8px
+   corners. Compact Previous is icon-sm (a square) — also pin width so it stays
+   28×28 beside them rather than a wider squat pill. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action] {
-  height: 24px;
-  border-radius: 4px;
+  height: 28px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -2127,7 +2173,7 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-pending-user-input-action="previous"][aria-label="Previous question"] {
-  width: 24px;
+  width: 28px;
   padding: 0;
 }
 
@@ -2988,9 +3034,9 @@
     user-select: none;
   }
 
-  /* The collapsed phone row's send takes the open composer's 24px box (the
-     [data-fork-composer-action] rule); the tap target stays the 32px the row
-     was laid out around. */
+  /* The collapsed phone row's send takes the open composer's 28px box (the
+     [data-fork-composer-action] rules); the tap target stays the 32px slot the
+     row was laid out around. */
   :root[data-fork="noahhendrickson-t3code"]
     [data-chat-composer-transition-actions][data-fork-composer-action] {
     position: relative;
@@ -3000,7 +3046,7 @@
     [data-chat-composer-transition-actions][data-fork-composer-action]::after {
     content: "";
     position: absolute;
-    inset: -4px;
+    inset: -2px;
   }
 }
 

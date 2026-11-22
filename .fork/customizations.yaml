@@ -83,7 +83,7 @@
     and ComposerPrimaryActions hands it over on every path that renders send,
     including while a turn runs, where it sits to stop's left so stop keeps
     the right edge. The check wears the send button's own class list and fork
-    tone attribute; the X is a ghost in send's 24px box in pure white, from
+    tone attribute; the X is a ghost in send's box in pure white, from
     theme.custom.css. Nothing animates. The error popover renders beside the
     slot whatever it shows, with Open voice settings for a microphone
     permission error. The microphone tooltip is the word Dictate, on the popup
@@ -5112,17 +5112,14 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card), the composer's radius, and a 1px var(--fork-composer-border)
-    border so Cool / Neutral palettes keep their own hairline weight. The card
-    is the composer turned over: the header sits loose on that floor and the
-    file tree and the "N more files" footer (the header's following sibling
-    divs) are a well painted from --fork-composer-bg, edge to edge inside
-    the card with a hairline on its top only (the card border is the line
-    elsewhere). Radii come from --fork-card-radius (8px, the composer's old
-    radius, kept when the composer went to 16px); the shared rule rounds only
-    the well's bottom corners, and Basic rounds its top as well and fills it with
-    --basic-raised (Figma kit, theme.custom.basic.css), so its hairline curves into
-    the card's sides. Path
+    paint var(--card), --fork-card-radius corners, and a 1px var(--fork-composer-border)
+    border so Cool / Neutral palettes keep their own hairline weight. The
+    header and the file tree and "N more files" footer under it (the header's
+    following sibling divs) share the card's fill, parted by a hairline on the
+    tree's top only (the card border is the line elsewhere). Radii come from
+    --fork-card-radius (8px, for cards that sit beside the composer); the tree
+    rounds its top corners too, so its hairline curves into the card's sides.
+    Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     The header actions (fold toggle, Open diff) are ghost-muted Buttons
     upstream and stay borderless: selected as header > div button

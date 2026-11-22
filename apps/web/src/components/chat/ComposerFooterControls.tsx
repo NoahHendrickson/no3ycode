@@ -11,6 +11,7 @@ import { ProviderModelPicker } from "./ProviderModelPicker";
 import { runtimeModeConfig } from "./runtimeModeConfig";
 import { useComposerMenuState } from "./useComposerMenuState";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import { ComposerControlIcon } from "./ComposerControl";
 import { ComposerRuntimeModeTrigger } from "../../custom/ComposerShell";
 import { ShieldOffFilledIcon } from "../../custom/icons/ShieldOffFilledIcon";
 import { MenuIconTab, MenuTabs } from "../../custom/Tabs";
@@ -75,11 +76,20 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
             />
           }
         >
-          {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-              Icon only: the mode's name lives in the tooltip and aria-label. A text- class keeps
-              Button's muted icon ink off it, so it takes the chip's ink like its neighbours. */}
-          <ChipIcon aria-hidden className="text-current" />
-          {/* fork:end fork-composer-shell */}
+          <ComposerControlIcon
+            /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+            icon={ChipIcon}
+            /* fork:end fork-composer-shell */
+            size={size}
+            // Match the label, not full foreground: the chip's presence already marks the mode.
+            {...(props.emphasized ? { className: "text-current" } : {})}
+          />
+          <span
+            data-composer-control-label
+            className={accessDisplay === "icon" ? "sr-only" : undefined}
+          >
+            {runtimeModeOption.label}
+          </span>
         </TooltipTrigger>
         <TooltipPopup side="top">{permissionsTooltip}</TooltipPopup>
       </Tooltip>
