@@ -108,7 +108,7 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
 
 /** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
     vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
-    The Liquid Glass draft turns the slide off in CSS, since its native card cannot follow it. */
+    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). */
 const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly openedAt: number;

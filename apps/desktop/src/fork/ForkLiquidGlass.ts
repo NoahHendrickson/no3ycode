@@ -44,12 +44,22 @@ const ForkDraftLiquidGlassCard = Schema.Struct({
   cornerRadius: Schema.Number,
 });
 
+/** Seconds and cubic-bezier control points of a CSS move AppKit replays on the cards. */
+const ForkDraftLiquidGlassAnimation = Schema.Struct({
+  duration: Schema.Number,
+  x1: Schema.Number,
+  y1: Schema.Number,
+  x2: Schema.Number,
+  y2: Schema.Number,
+});
+
 const ForkDraftLiquidGlassState = Schema.Struct({
   stage: ForkRect2D,
   imageKey: Schema.String,
   imageBase64: Schema.optional(Schema.String),
   image: ForkRect2D,
   cards: Schema.Array(ForkDraftLiquidGlassCard),
+  animation: Schema.optional(ForkDraftLiquidGlassAnimation),
 });
 
 export type ForkDraftLiquidGlassState = typeof ForkDraftLiquidGlassState.Type;
@@ -230,6 +240,7 @@ function applyForkDraftLiquidGlass(
       ...scaleRect(card, zoom),
       cornerRadius: card.cornerRadius * zoom,
     })),
+    ...(state.animation !== undefined ? { animation: state.animation } : {}),
   };
 
   try {

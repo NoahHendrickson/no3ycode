@@ -25,6 +25,11 @@ const DRAFT_POPUP_SELECTOR = [
 
 const POPUP_SETTLE_FRAMES = 6;
 
+/** The usage drawer's slide in and out (ComposerUsageLimitsReadout). The native card replays it
+    in AppKit, since per-frame updates from the page lag the glass. */
+const USAGE_DRAWER_OPEN_ANIMATION = { duration: 0.2, x1: 0.23, y1: 1, x2: 0.32, y2: 1 };
+const USAGE_DRAWER_CLOSE_ANIMATION = { duration: 0.15, x1: 0.4, y1: 0, x2: 1, y2: 1 };
+
 interface DraftLiquidGlassRect {
   readonly x: number;
   readonly y: number;
@@ -42,6 +47,7 @@ interface DraftLiquidGlassPayload {
   readonly imageBase64?: string;
   readonly image: DraftLiquidGlassRect;
   readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
+  readonly animation?: typeof USAGE_DRAWER_OPEN_ANIMATION;
 }
 
 type DraftLiquidGlassSetter = (state: DraftLiquidGlassPayload | null) => Promise<boolean>;
@@ -171,7 +177,7 @@ function readDraftCardElements(chatView: Element): HTMLElement[] {
   const selectors = [
     "[data-fork-composer-vessel]",
     "[data-fork-draft-launchpad-card]",
-    "[data-fork-composer-usage-drawer]:not([hidden])",
+    "[data-fork-composer-usage-drawer]:not([hidden], [data-ending-style])",
   ];
   const elements: HTMLElement[] = [];
   for (const selector of selectors) {
@@ -234,6 +240,7 @@ interface MeasuredDraftScene {
   readonly popups: ReadonlyArray<HTMLElement>;
   readonly popupCards: ReadonlyArray<DraftLiquidGlassCard>;
   readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
+  readonly drawerOpen: boolean;
 }
 
 function measureDraftGlassScene(
@@ -250,12 +257,16 @@ function measureDraftGlassScene(
   let vesselCard: number | null = null;
   let drawer: DraftLiquidGlassCard | null = null;
   for (const el of readDraftCardElements(chatView)) {
-    const clipped = clipRectToAncestors(el, chatView, stageBox);
+    // The drawer slides inside a clipping wrapper that keeps its resting box; the card
+    // takes that box, and AppKit animates the move.
+    const isDrawer = el.hasAttribute("data-fork-composer-usage-drawer");
+    const measured = isDrawer && el.parentElement !== null ? el.parentElement : el;
+    const clipped = clipRectToAncestors(measured, chatView, stageBox);
     if (clipped === null) continue;
     cardBoxes.push({ el, box: el.getBoundingClientRect() });
     // An open usage drawer and the vessel under it read as one shape, so they
     // are one native card: the drawer is folded into the vessel below.
-    if (el.hasAttribute("data-fork-composer-usage-drawer")) {
+    if (isDrawer) {
       drawer = { ...clipped, cornerRadius: readCornerRadius(el) };
       continue;
     }
@@ -305,6 +316,7 @@ function measureDraftGlassScene(
     popups,
     popupCards,
     cards,
+    drawerOpen: drawer !== null,
   };
 }
 
@@ -371,6 +383,7 @@ export function useForkDraftLiquidGlass(input: {
     let rafId: number | null = null;
     let settleRemaining = 0;
     let lastSentKey = "";
+    let lastDrawerOpen: boolean | null = null;
     // Set once a payload is sent and kept through failures: a refused update leaves the
     // previous native layer mounted, so only an explicit hide may clear it.
     let nativeShown = false;
@@ -404,6 +417,7 @@ export function useForkDraftLiquidGlass(input: {
       clearStampedPopups();
       document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
       lastSentKey = "";
+      lastDrawerOpen = null;
       uploadedImageKey = null;
       retrying = false;
       if (nativeShown) {
@@ -511,7 +525,7 @@ export function useForkDraftLiquidGlass(input: {
         subtree: true,
         childList: true,
         attributes: true,
-        attributeFilter: ["data-draft-hero", "hidden", "style", "class"],
+        attributeFilter: ["data-draft-hero", "hidden", "style", "class", "data-ending-style"],
       });
       // Watch only direct children of body so Base UI portals mounting/unmounting
       // trigger sync without observing sidebar or transcript mutations.
@@ -571,6 +585,16 @@ export function useForkDraftLiquidGlass(input: {
 
       stampedPopups = applyDraftPopupCutouts(scene, stampedPopups, maskedCards);
 
+      const animation =
+        lastDrawerOpen === null ||
+        lastDrawerOpen === scene.drawerOpen ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? undefined
+          : scene.drawerOpen
+            ? USAGE_DRAWER_OPEN_ANIMATION
+            : USAGE_DRAWER_CLOSE_ANIMATION;
+      lastDrawerOpen = scene.drawerOpen;
+
       const key = JSON.stringify({
         url,
         // Main scales CSS px by the zoom factor, so a zoom change must re-send.
@@ -592,6 +616,7 @@ export function useForkDraftLiquidGlass(input: {
             ...(imageBase64 !== undefined ? { imageBase64 } : {}),
             image: scene.image,
             cards: scene.cards,
+            ...(animation !== undefined ? { animation } : {}),
           })
             .then((applied) => {
               if (disposed || key !== lastSentKey) return;

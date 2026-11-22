@@ -1994,11 +1994,6 @@
   & [data-fork-composer-vessel]::after {
     content: none;
   }
-
-  /* The native card is drawn from the page and cannot follow the drawer's slide. */
-  & [data-fork-composer-usage-drawer] {
-    transition: none;
-  }
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]

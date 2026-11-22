@@ -102,6 +102,17 @@ typedef struct {
   CGFloat cornerRadius;
 } T3GlassCardRect;
 
+/* A card move the page animates in CSS: AppKit runs it on the same curve, since
+   per-frame updates from the page cannot keep up with the glass. */
+typedef struct {
+  bool enabled;
+  double duration;
+  float x1;
+  float y1;
+  float x2;
+  float y2;
+} T3GlassCardAnimation;
+
 @interface T3DraftBackdropView : NSView
 @property(nonatomic, strong, nullable) NSBitmapImageRep *imageRep;
 @end
@@ -323,7 +334,8 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool has
 
 static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSString *imageKey,
                                     NSData * _Nullable imageData, NSRect imageTopDown,
-                                    const T3GlassCardRect *cards, size_t cardCount) {
+                                    const T3GlassCardRect *cards, size_t cardCount,
+                                    T3GlassCardAnimation animation) {
   if (rootView == nil || stageTopDown.size.width <= 0 || stageTopDown.size.height <= 0) {
     return false;
   }
@@ -386,6 +398,9 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
   SEL setStyle = sel_registerName("setStyle:");
   SEL setTintColor = sel_registerName("setTintColor:");
 
+  NSMutableArray<NSView *> *animatedViews = [NSMutableArray array];
+  NSMutableArray<NSValue *> *animatedFrames = [NSMutableArray array];
+
   while (holder.cardViews.count > cardCount) {
     NSView *extra = holder.cardViews.lastObject;
     [extra removeFromSuperview];
@@ -402,7 +417,12 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
     NSView *cardView = nil;
     if (i < holder.cardViews.count) {
       cardView = holder.cardViews[i];
-      cardView.frame = cardFrame;
+      if (animation.enabled && !NSEqualRects(cardView.frame, cardFrame)) {
+        [animatedViews addObject:cardView];
+        [animatedFrames addObject:[NSValue valueWithRect:cardFrame]];
+      } else {
+        cardView.frame = cardFrame;
+      }
     } else {
       cardView = [[glassCls alloc] initWithFrame:cardFrame];
       cardView.wantsLayer = YES;
@@ -425,6 +445,18 @@ static bool set_draft_glass_on_main(NSView *rootView, NSRect stageTopDown, NSStr
   }
 
   [CATransaction commit];
+
+  if (animatedViews.count > 0) {
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+      context.duration = animation.duration;
+      context.timingFunction = [CAMediaTimingFunction
+          functionWithControlPoints:animation.x1:animation.y1:animation.x2:animation.y2];
+      context.allowsImplicitAnimation = YES;
+      for (NSUInteger i = 0; i < animatedViews.count; i++) {
+        animatedViews[i].animator.frame = animatedFrames[i].rectValue;
+      }
+    }];
+  }
   return true;
 }
 
@@ -605,11 +637,26 @@ static napi_value napi_set_draft_glass(napi_env env, napi_callback_info info) {
     }
   }
 
+  T3GlassCardAnimation animation = {false, 0, 0, 0, 1, 1};
+  napi_value animationVal;
+  napi_valuetype animationType = napi_undefined;
+  if (napi_get_named_property(env, argv[1], "animation", &animationVal) == napi_ok &&
+      napi_typeof(env, animationVal, &animationType) == napi_ok && animationType == napi_object) {
+    double duration = 0, x1 = 0, y1 = 0, x2 = 1, y2 = 1;
+    if (read_double_prop(env, animationVal, "duration", &duration) && duration > 0 &&
+        read_double_prop(env, animationVal, "x1", &x1) &&
+        read_double_prop(env, animationVal, "y1", &y1) &&
+        read_double_prop(env, animationVal, "x2", &x2) &&
+        read_double_prop(env, animationVal, "y2", &y2)) {
+      animation = (T3GlassCardAnimation){true, duration, (float)x1, (float)y1, (float)x2, (float)y2};
+    }
+  }
+
   const T3GlassCardRect *cardsPtr = cards;
   __block bool ok = false;
   run_on_main(^{
     ok = set_draft_glass_on_main(rootView, stageRect, imageKey, imageData, imageRect, cardsPtr,
-                                 cardCount);
+                                 cardCount, animation);
   });
   free(cards);
 
