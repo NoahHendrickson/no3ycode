@@ -568,7 +568,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // and the transcript's top inset is the floating row's.
     expect(threadHeader).toContain("if (no3yBar) return <No3yThreadHeader");
     expect(screenHeader).toContain("<NativeStackScreenOptions options={{ headerShown: false }} />");
-    expect(screenHeader).toContain("<HeaderHeightContext value={inset}>");
+    expect(screenHeader).toContain("<HeaderHeightContext value={props.draft ? 0 : inset}>");
     expect(threadRoute).toContain("<No3yThreadBarInset draft=");
     expect(screenHeader).toContain('StackActions.push("No3yUsage")');
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
@@ -656,8 +656,18 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/src/features/threads/new-task-flow-state.ts")).toContain(
       "isNo3yChatDraftRoute(route)",
     );
-    expect(draftScreen).toContain("content: no3yChat?.content ?? heroViewport,");
-    expect(draftScreen).toContain("no3yChat.onSubmitted(");
+    expect(draftScreen).toContain("content: no3ySurface?.content ?? heroViewport,");
+    expect(draftScreen).toContain("no3ySurface.onSubmitted(");
+    // New agent: its header with Search, project tiles in place of the hero, and glass worktree,
+    // branch and machine pills above the composer in place of the context controls.
+    const newAgent = readRepoFile("apps/mobile/fork/No3yNewAgent.tsx");
+    expect(readRepoFile("apps/mobile/fork/No3yDraftSurface.tsx")).toContain(
+      "return chat ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);",
+    );
+    expect(draftScreen).toContain("no3ySurface.controls");
+    expect(newAgent).toContain("rankNo3yProjectTiles({");
+    expect(newAgent).toContain("controls: <DraftPills />,");
+    expect(newAgent).toContain("header: <NewAgentHeader />,");
     // iOS draws the system font everywhere; Android keeps DM Sans.
     expect(globalCss).toContain('--font-sans: "System";');
     expect(fontFamilies).toContain('regular: "System", medium: "System", bold: "System"');

@@ -1,5 +1,5 @@
 /**
- * The Threads and Chat screen headers (title; 44pt glass buttons) and the thread bar's usage button
+ * The Threads, Chat and New agent headers (title; 44pt glass buttons) and the thread bar's usage button
  * and ⋯ menu — see `.fork/customizations.yaml#no3y-mobile-redesign`. The usage buttons open the
  * half-height usage sheet; the ring shows how much of the thread's provider limit is left.
  */
@@ -107,20 +107,26 @@ export function No3yThreadsHeader() {
   );
 }
 
-/**
- * Chat's header, Threads' shape: Search, Settings and Usage, and no native bar. Search turns the
- * row into a search pill with a close button, which clears the search.
- */
-export function No3yChatHeader(props: {
+export interface No3yHeaderSearch {
   readonly searching: boolean;
   readonly searchQuery: string;
   readonly onSearchingChange: (searching: boolean) => void;
   readonly onSearchQueryChange: (query: string) => void;
-}) {
+}
+
+/**
+ * A page header with a Search button and no native bar. Search turns the row into a search pill
+ * with a close button, which clears the search; `children` are the buttons after Search.
+ */
+function No3ySearchHeader(
+  props: No3yHeaderSearch & {
+    readonly title: string;
+    readonly subject: string;
+    readonly children?: ReactNode;
+  },
+) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
-  const openUsage = useOpenUsage();
   const search = props.searching ? (
     <View
       style={{
@@ -135,10 +141,10 @@ export function No3yChatHeader(props: {
       <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
       <HugeIcon icon={Search01Icon} size={20} color={palette.foreground} filled />
       <TextInput
-        accessibilityLabel="Search chats"
+        accessibilityLabel={`Search ${props.subject}`}
         value={props.searchQuery}
         onChangeText={props.onSearchQueryChange}
-        placeholder="Search chats"
+        placeholder={`Search ${props.subject}`}
         placeholderTextColor={palette.faintInk}
         autoFocus
         autoCapitalize="none"
@@ -157,11 +163,11 @@ export function No3yChatHeader(props: {
   return (
     <>
       <NativeStackScreenOptions options={{ headerShown: false }} />
-      <No3yPageHeader title="Chat" search={search}>
+      <No3yPageHeader title={props.title} search={search}>
         {props.searching ? (
           <No3yCircleButton
             palette={palette}
-            accessibilityLabel="Close chat search"
+            accessibilityLabel={`Close ${props.subject} search`}
             icon={XIcon}
             onPress={() => {
               props.onSearchQueryChange("");
@@ -172,27 +178,45 @@ export function No3yChatHeader(props: {
           <>
             <No3yCircleButton
               palette={palette}
-              accessibilityLabel="Search chats"
+              accessibilityLabel={`Search ${props.subject}`}
               icon={Search01Icon}
               onPress={() => props.onSearchingChange(true)}
             />
-            <No3yCircleButton
-              palette={palette}
-              accessibilityLabel="Settings"
-              icon={Settings01Icon}
-              onPress={() => openWorkspaceTab("settings")}
-            />
-            <No3yCircleButton
-              palette={palette}
-              accessibilityLabel="Usage"
-              icon={GaugeIcon}
-              onPress={openUsage}
-            />
+            {props.children}
           </>
         )}
       </No3yPageHeader>
     </>
   );
+}
+
+/** Chat's header, Threads' shape: Search, Settings and Usage. */
+export function No3yChatHeader(props: No3yHeaderSearch) {
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
+  const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
+  const openUsage = useOpenUsage();
+  return (
+    <No3ySearchHeader {...props} title="Chat" subject="chats">
+      <No3yCircleButton
+        palette={palette}
+        accessibilityLabel="Settings"
+        icon={Settings01Icon}
+        onPress={() => openWorkspaceTab("settings")}
+      />
+      <No3yCircleButton
+        palette={palette}
+        accessibilityLabel="Usage"
+        icon={GaugeIcon}
+        onPress={openUsage}
+      />
+    </No3ySearchHeader>
+  );
+}
+
+/** New agent's header: its title and Search, which narrows the project tiles. */
+export function No3yNewAgentHeader(props: No3yHeaderSearch) {
+  return <No3ySearchHeader {...props} title="New agent" subject="projects" />;
 }
 
 /** The share of the provider's tightest current limit that is left, or null when it reports none. */
@@ -300,7 +324,8 @@ function useNo3yThreadBarInset(): number {
 
 /**
  * Gives the thread screen's body the floating bar's height as its header height, so the
- * transcript starts below the bubbles and still scrolls under them. Off for drafts.
+ * transcript starts below the bubbles and still scrolls under them. A draft lays New agent's
+ * header out above its body, so its body starts at its own top.
  */
 export function No3yThreadBarInset(props: {
   readonly draft: boolean;
@@ -308,8 +333,10 @@ export function No3yThreadBarInset(props: {
 }) {
   const enabled = useNo3yBottomNavEnabled();
   const inset = useNo3yThreadBarInset();
-  if (!enabled || props.draft) return props.children;
-  return <HeaderHeightContext value={inset}>{props.children}</HeaderHeightContext>;
+  if (!enabled) return props.children;
+  return (
+    <HeaderHeightContext value={props.draft ? 0 : inset}>{props.children}</HeaderHeightContext>
+  );
 }
 
 /** An AppBar menu as native menu actions, for the fork's own glass header buttons. */

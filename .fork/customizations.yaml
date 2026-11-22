@@ -8022,10 +8022,22 @@
     draft thread (fenced in Stack.tsx's flow binding and new-task-flow-state's
     live flow keys), so the model chip, model sheet, effort, access, +, the
     prompt stash and dictation are New agent's and what is picked starts the
-    chat. NewTaskDraftScreen takes Chat's header and list in place of its own
-    header and hero through fork/No3yChatDraftSurface.ts, and a sent chat is
-    pushed over Chat (back returns there) while the route takes a fresh draft.
-    Chats opened from the list are pushed over Chat too. Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
+    chat. A sent chat is pushed over Chat (back returns there) while the route
+    takes a fresh draft; chats opened from the list are pushed over Chat too.
+    NewTaskDraftScreen takes a surface (fork/No3yDraftSurface.tsx) in place of
+    its header, hero and context/workspace controls (a clone banner stays):
+    Chat's, or on iPhone New agent's (fork/No3yNewAgent.tsx): a "New agent"
+    header with Search and no native bar, then up to eight recent projects as
+    two-column tiles (favicon, name, "N working" or how long ago; 4% wash, the
+    selected one lifted with a hairline) ranked as the Mac launchpad ranks, by
+    the roster-visible threads newest first and never by chats, else the first
+    pickable projects, the selected project always kept
+    (fork/no3yProjectTiles.ts); Search narrows them to every match. Under them
+    "No project" (the No-project workspace, opened as the picker opens it) and
+    "All projects (N)" (the project picker). Directly above the composer sit
+    glass pills for the workspace mode and the base branch (by name) and, with
+    two or more machines, the machine, each opening its existing picker; they
+    exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
     early return in SettingsScheduledTasksRouteScreen) has its own header
     (title, environment filter, +) and lists each automation as a card
     (schedule, next run or Paused, last error, an on/off switch, a ⋯ menu with
@@ -8060,7 +8072,10 @@
     - apps/mobile/fork/No3yBottomFade.tsx
     - apps/mobile/fork/No3yBottomTray.tsx
     - apps/mobile/fork/No3yChatRouteScreen.tsx
-    - apps/mobile/fork/No3yChatDraftSurface.ts
+    - apps/mobile/fork/No3yDraftSurface.tsx
+    - apps/mobile/fork/No3yNewAgent.tsx
+    - apps/mobile/fork/no3yProjectTiles.ts
+    - apps/mobile/fork/no3yProjectTiles.test.ts
     - apps/mobile/fork/no3yChat.ts
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/No3yAutomationRunsSection.tsx
@@ -8141,3 +8156,4 @@
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts
     - apps/mobile/fork/no3yChat.test.ts
+    - apps/mobile/fork/no3yProjectTiles.test.ts

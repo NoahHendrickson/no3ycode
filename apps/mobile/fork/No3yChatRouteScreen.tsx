@@ -53,7 +53,7 @@ import {
 } from "./mobileStatusGrouping";
 import { findNo3yChatProject, resolveNo3yChatDraftParams } from "./no3yChat";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
-import { No3yChatDraftContext, type No3yChatDraftSurface } from "./No3yChatDraftSurface";
+import { No3yChatDraftContext, type No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yChatHeader } from "./No3yScreenHeader";
 import { No3yThreadRow } from "./No3yThreadRow";
 
@@ -310,9 +310,10 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
     }
   }, [draft, routeDraft, navigation]);
 
-  const surface: No3yChatDraftSurface = {
+  const surface: No3yDraftSurface = {
     header: <ChatHeader />,
     content: renderChatList,
+    controls: null,
     onSubmitted: (submittedEnvironmentId, threadId) => {
       const detail = {
         name: "Thread",

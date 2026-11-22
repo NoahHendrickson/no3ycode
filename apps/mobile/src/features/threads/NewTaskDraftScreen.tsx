@@ -98,7 +98,7 @@ import { appAtomRegistry } from "../../state/atom-registry";
 
 import { readEnvironmentScope, useEnvironmentScope } from "../../state/session";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { useNo3yChatDraftSurface } from "../../../fork/No3yChatDraftSurface";
+import { useNo3yDraftSurface } from "../../../fork/No3yDraftSurface";
 /* fork:end no3y-mobile-redesign */
 
 // Below this (keyboard up on iPad, phone landscape) the hero cannot fit above the composer,
@@ -163,7 +163,7 @@ export function NewTaskDraftScreen(props: {
 }) {
   const [creationMetadata] = useState(makeTurnCommandMetadata);
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const no3yChat = useNo3yChatDraftSurface();
+  const no3ySurface = useNo3yDraftSurface();
   /* fork:end no3y-mobile-redesign */
   const projects = useProjects();
   const flow = useNewTaskFlow();
@@ -681,7 +681,8 @@ export function NewTaskDraftScreen(props: {
     promptInputRef.current?.blur();
     /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
     // Chat pushes the sent chat over itself and takes a fresh draft instead.
-    if (no3yChat) no3yChat.onSubmitted(String(message.environmentId), String(message.threadId));
+    if (no3ySurface?.onSubmitted)
+      no3ySurface.onSubmitted(String(message.environmentId), String(message.threadId));
     else
       /* fork:end no3y-mobile-redesign */
       navigation.dispatch(
@@ -937,13 +938,18 @@ export function NewTaskDraftScreen(props: {
           />
         </View>
       ) : null}
-      {viewportHeight < SHORT_DRAFT_VIEWPORT_HEIGHT &&
-      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      !no3yChat
-        ? /* fork:end no3y-mobile-redesign */
-          contextControls
-        : null}
-      {flow.canChooseWorkspace ? workspaceControls : null}
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3ySurface ? (
+        no3ySurface.controls
+      ) : (
+        /* fork:end no3y-mobile-redesign */
+        <>
+          {viewportHeight < SHORT_DRAFT_VIEWPORT_HEIGHT ? contextControls : null}
+          {flow.canChooseWorkspace ? workspaceControls : null}
+        </>
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      )}
+      {/* fork:end no3y-mobile-redesign */}
     </View>
   );
 
@@ -952,7 +958,7 @@ export function NewTaskDraftScreen(props: {
       <ThreadScreenFallback
         header={
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          no3yChat?.header ?? (
+          no3ySurface?.header ?? (
             /* fork:end no3y-mobile-redesign */ <AppBar title="New thread" onBack={goBack} />
           )
         }
@@ -991,14 +997,14 @@ export function NewTaskDraftScreen(props: {
         environmentId={selectedProject.environmentId}
         header={
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          no3yChat?.header ?? (
+          no3ySurface?.header ?? (
             /* fork:end no3y-mobile-redesign */
             <DraftThreadHeader thread={thread} project={selectedProject} cwd={flow.workspaceCwd} />
           )
         }
         draftMode={{
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          content: no3yChat?.content ?? heroViewport,
+          content: no3ySurface?.content ?? heroViewport,
           /* fork:end no3y-mobile-redesign */
           controls: draftControls,
           editorRef: promptInputRef,
