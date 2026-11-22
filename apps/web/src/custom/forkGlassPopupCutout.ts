@@ -70,6 +70,15 @@ const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]
 /** Base UI's portal node, which nests a portal opened from inside it. */
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
+/**
+ * Under sidebar-only Liquid Glass the native glass sits behind the docked sidebar alone, so a hole
+ * elsewhere would open onto the desktop: only a popup wholly inside the sidebar is cut, and it is
+ * stamped so its tint matches the sidebar's (theme.custom.palettes.css).
+ */
+const SIDEBAR_GLASS_SELECTOR =
+  '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
+const FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE = "data-fork-sidebar-glass-popup";
+
 /** Stamped on a popup that frosts over the draft card instead of cutting it. */
 const FORK_GLASS_FROST_ATTRIBUTE = "data-fork-glass-frost";
 /** Stamped instead over a draft showing another picture. */
@@ -306,7 +315,28 @@ export function cutoutMaskStyle(
   };
 }
 
-function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
+function sidebarGlassRect(appRoot: HTMLElement): Rect | null {
+  const sidebar = appRoot.querySelector(SIDEBAR_GLASS_SELECTOR);
+  if (sidebar === null) return null;
+  const rect = sidebar.getBoundingClientRect();
+  return rect.width < 1
+    ? null
+    : { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+}
+
+function within(inner: Rect, outer: Rect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  );
+}
+
+/** "window": the whole window is glass. "sidebar": only the docked sidebar is. */
+type CutoutMode = "window" | "sidebar";
+
+function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
   /** Element → the mask it carries, as written, so unchanged frames write nothing. */
   const masked = new Map<HTMLElement, string>();
   /** Popup → the frost placement it carries, as written. */
@@ -374,8 +404,20 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
     }
     const holes: Array<CutoutHole> = [];
     let stages: Array<DraftStage> | undefined;
+    const sidebar = mode === "sidebar" ? sidebarGlassRect(appRoot) : null;
     for (const { popup, layer } of placed) {
       const hole = measure(popup, layer, layers[layer]?.z ?? 0);
+      if (mode === "sidebar") {
+        // A closing popup keeps its stamp, so it fades out on the same tint.
+        if (hole === null) continue;
+        const inside = sidebar !== null && within(hole, sidebar);
+        if (inside !== popup.hasAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE)) {
+          popup.toggleAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE, inside);
+          frostChanged = true;
+        }
+        if (inside) holes.push(hole);
+        continue;
+      }
       if (hole === null) continue;
       stages ??= draftStages(appRoot);
       // The frost layer paints only on dropdown-glass (theme.custom.glass.css).
@@ -497,24 +539,28 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
     masked.clear();
     for (const popup of frosted.keys()) clearFrost(popup);
     frosted.clear();
+    for (const popup of body.querySelectorAll(`[${FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE}]`)) {
+      popup.removeAttribute(FORK_SIDEBAR_GLASS_POPUP_ATTRIBUTE);
+    }
   };
 }
 
 let stop: (() => void) | null = null;
+let running: CutoutMode | null = null;
 
 /**
- * Called with whether glass is on. Idempotent: a palette sync that leaves glass
- * where it was keeps the running cutout instead of tearing it down.
+ * Called with where the glass is: the whole window, the docked sidebar alone, or nowhere.
+ * Idempotent: a palette sync that leaves it where it was keeps the running cutout instead of
+ * tearing it down.
  */
-export function syncForkGlassPopupCutout(glassOn: boolean): void {
-  if (glassOn === (stop !== null)) return;
-  if (!glassOn) {
-    stop?.();
-    stop = null;
-    return;
-  }
-  if (typeof document === "undefined") return;
+export function syncForkGlassPopupCutout(mode: CutoutMode | null): void {
+  if (mode === running) return;
+  stop?.();
+  stop = null;
+  running = null;
+  if (mode === null || typeof document === "undefined") return;
   const appRoot = document.getElementById("root");
   if (appRoot === null) return;
-  stop = startCutout(document.body, appRoot);
+  stop = startCutout(document.body, appRoot, mode);
+  running = mode;
 }

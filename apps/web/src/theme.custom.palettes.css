@@ -1667,9 +1667,11 @@
   background: transparent;
 }
 
-/* The popups' frost does not blur the clear sidebar over the native glass: a menu opened there
-   read as a see-through tint over sharp rows. Popups take a near-opaque fill instead, which
-   reads the same with or without the blur. */
+/* No backdrop-filter blurs on screen over the native glass (the "NO backdrop-filter" note
+   above), so a popup's frost left the rows under it sharp. A popup wholly over the docked
+   sidebar has the page cut away beneath it instead (forkGlassPopupCutout.ts) and sits straight
+   on the sidebar's glass, in its clear wash with a faint lift. Any other popup takes a
+   near-opaque fill, which reads the same with or without the blur. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
   --fork-popup-fill:
     linear-gradient(
@@ -1677,6 +1679,12 @@
       color-mix(in srgb, var(--contrast-foreground) 8%, transparent)
     ),
     color-mix(in srgb, var(--popover) 94%, transparent);
+
+  & [data-fork-sidebar-glass-popup] {
+    background: rgb(255 255 255 / 4%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]

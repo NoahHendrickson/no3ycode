@@ -140,8 +140,8 @@ describe("fork guard: fork-glass-popup-cutout", () => {
   });
 
   it.each([
-    ["an older disable answers after a newer enable", "basic", "cool-darker", true],
-    ["an older enable answers after a newer disable", "cool-darker", "basic", false],
+    ["an older disable answers after a newer enable", "basic", "cool-darker", "window"],
+    ["an older enable answers after a newer disable", "cool-darker", "basic", null],
   ])("matches the glass actually on when %s", async (_label, first, second, expected) => {
     // Palette flips fire the vibrancy IPC without waiting, so answers can
     // land out of order. The cutout must follow the newest palette, never a
@@ -181,9 +181,9 @@ describe("fork guard: fork-glass-popup-cutout", () => {
       syncBrowserChromeTheme: vi.fn(),
       setForkDesktopThemeOverride: vi.fn(),
     }));
-    const cutoutCalls: Array<boolean> = [];
+    const cutoutCalls: Array<string | null> = [];
     vi.doMock("../custom/forkGlassPopupCutout", () => ({
-      syncForkGlassPopupCutout: (glassOn: boolean) => cutoutCalls.push(glassOn),
+      syncForkGlassPopupCutout: (mode: string | null) => cutoutCalls.push(mode),
     }));
     vi.doMock("../custom/forkGlassFloorColor", () => ({
       syncForkGlassFloorColor: () => Promise.resolve(),

@@ -39,7 +39,11 @@ import {
 import { setActiveForkPalette, useActiveForkPalette, useIsInletActive } from "./forkActivePalette";
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
-import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
+import {
+  isForkSidebarLiquidGlassApplied,
+  isForkSidebarVibrancyApplied,
+  syncForkSidebarVibrancy,
+} from "./forkSidebarVibrancy";
 import { syncForkTopbarHeightFromRoot } from "./forkTopbarHeight";
 import type { ThemePreference } from "../themePalette";
 
@@ -467,7 +471,9 @@ function syncForkPaletteFromStorage(): void {
       .then(() => {
         const glassOn = isForkSidebarVibrancyApplied();
         void syncForkGlassFloorColor(glassOn).catch(() => undefined);
-        syncForkGlassPopupCutout(glassOn);
+        syncForkGlassPopupCutout(
+          glassOn ? "window" : isForkSidebarLiquidGlassApplied() ? "sidebar" : null,
+        );
       })
       .catch(() => undefined);
   }
