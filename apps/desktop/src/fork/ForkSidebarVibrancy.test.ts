@@ -120,8 +120,8 @@ describe("ForkSidebarVibrancy", () => {
 
       assert.strictEqual(yield* request(true, "darwin"), "liquid-glass");
       assert.deepStrictEqual(mainWindow.setVibrancy.mock.calls, [[null]]);
-      // The addon paints the backing; a transparent write would flash the desktop through.
-      assert.deepStrictEqual(mainWindow.setBackgroundColor.mock.calls, []);
+      // Transparent even under Liquid Glass: the call also clears the web view's base colour.
+      assert.deepStrictEqual(mainWindow.setBackgroundColor.mock.calls, [["#00000000"]]);
       assert.strictEqual(clearLiquidGlassMock.mock.calls.length, 0);
 
       // Auxiliary windows (Side Chat) have no sidebar and keep whole-window vibrancy.

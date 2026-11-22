@@ -134,12 +134,9 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
           mode = "vibrancy";
         }
       }
-      // Under Liquid Glass the addon owns the backing behind the sidebar capsule
-      // (sidebar_glass.m); clearing it here would flash the desktop through until
-      // the renderer's next width push repaints it.
-      if (mode !== "liquid-glass") {
-        target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
-      }
+      // Also sets the web view's base colour, so Liquid Glass needs the transparent
+      // write too: an opaque base paints over the native glass behind Chromium.
+      target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
     }
 
     // The renderer stamps its Glass marker from this answer, so a window that
