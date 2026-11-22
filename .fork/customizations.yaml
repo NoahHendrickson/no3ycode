@@ -2985,14 +2985,14 @@
     session-limit ring (UsageCircleMeter in custom/UsageMeter.tsx) driven by
     useComposerUsageDrawer() in custom/ComposerUsageLimitsReadout.tsx. It reads
     the selected provider instance's ServerProvider.usageLimits snapshot, adding
-    no wire data or polling. Toggling it expands an upward-opening single-line
+    no wire data or polling. Toggling it expands an upward-opening two-line
     CollapsiblePanel (data-fork-composer-usage-drawer) mounted as a sibling of
     [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
     Black does not block backdrop blur; the vessel's top corners stay square
     until the panel unmounts after its close transition. The tray subscribes to
-    environment presentations only while open, renders icon-only provider marks
-    with compact bars (abbreviating to 5hr / 7d only from typed window
-    durations, omitting Claude's seven_day_fable id), focusable meter tooltips
+    environment presentations only while open, renders each provider as its
+    mark and name above its limits, each limit a ring with its label to the
+    right (abbreviating to 5hr / 7d only from typed window durations, omitting Claude's seven_day_fable id), focusable meter tooltips
     with remaining % and reset times, actionable limit notices, external usage
     links, and Escape / close-button dismissal restoring focus to the ring. The
     calmer #38a169 green is scoped via --success to the composer trigger and

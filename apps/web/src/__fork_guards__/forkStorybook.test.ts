@@ -60,7 +60,7 @@ describe("fork-storybook", () => {
     expect(preview).toContain("dockedSidebar={");
     const head = read(`${storybook}preview-head.html`).replace(/\s+/gu, " ");
     expect(read("../theme.custom.palettes.css")).toMatch(
-      /\[data-fork-liquid-glass-popup="solid"\] \{\s*background: var\(--fork-liquid-glass-sidebar\);/u,
+      /\[data-fork-liquid-glass-popup="solid"\][^{]*\{\s*background: var\(--fork-liquid-glass-sidebar\);/u,
     );
     expect(head).toContain("var(--fork-liquid-glass-sidebar)");
     const vibrancy = read("../custom/forkSidebarVibrancy.ts");
