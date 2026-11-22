@@ -71,7 +71,8 @@ export function PetalLayoutPicker(props: {
             closeOnClick={false}
             data-testid={`sidebar-v2-petal-layout-${option.value}`}
             className={cn(
-              "flex cursor-pointer flex-col items-center gap-1.5 rounded-md border px-1 pt-2 pb-1.5 text-xs font-medium outline-none select-none data-highlighted:bg-accent",
+              // The menu rows' hover (theme.custom.css): an 8% wash, not the palette's opaque accent.
+              "flex cursor-pointer flex-col items-center gap-1.5 rounded-md border px-1 pt-2 pb-1.5 text-xs font-medium outline-none select-none data-highlighted:bg-foreground/8",
               selected
                 ? "border-primary text-foreground"
                 : "border-border text-muted-foreground data-highlighted:text-foreground",
