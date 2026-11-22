@@ -418,7 +418,7 @@ export function ForkSubagentCardView(props: {
     <div
       data-fork-subagent-card=""
       data-work-entry-id={member.id}
-      className="w-full min-w-0 overflow-clip rounded-[8px] border border-border bg-card"
+      className="w-full min-w-0 overflow-clip rounded-[12px] border border-border bg-card"
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
         {details.length === 0 ? (
@@ -476,7 +476,7 @@ export function ForkSubagentCardView(props: {
           id={wellId}
           hidden={!open}
           data-fork-subagent-well=""
-          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[7px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
+          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[11px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
         >
           {details.map(({ term, detail }) => (
             <Fragment key={term}>
