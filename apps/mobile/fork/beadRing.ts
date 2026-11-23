@@ -11,13 +11,27 @@ const RING_RADIUS = 20;
 export const BEAD_RING_HALF_WIDTH = 2.5;
 const PIECES = 4;
 const LINE_LENGTH = 38;
+/** How much further the line reaches while the pieces are strung out, before it pulls back. */
+const STRETCH = 7;
 /** The gap between pieces once they are fully apart. */
 const GAP = 13.2;
 /** One loop turns exactly once, so a loop repeats as drawn with no rotation layer. */
 const SPIN = (2 * Math.PI - (PIECES * GAP) / RING_RADIUS) / BEAD_RING_PERIOD;
 
-/** The SVG path (56x56 units, stroke it 2 x half width, round caps) at `progress` 0..1 of a loop. */
-export function beadRingPath(progress: number): string {
+/** How much the loop's speed swings either way: 1.6x joined, 0.4x apart. Under 1 so it never
+    runs backwards. */
+const EASE_DEPTH = 0.6;
+
+/** How far into its loop the ring is drawn at `progress` 0..1 of a loop: fastest while joined, easing
+    down as the pieces string out to 0.4x when they hang furthest apart, then back up as they merge. */
+export function beadRingEase(progress: number): number {
+  "worklet";
+  return progress + (EASE_DEPTH / (2 * Math.PI)) * Math.sin(2 * Math.PI * progress);
+}
+
+/** The SVG path (56x56 units, stroke it 2 x half width, round caps) at `progress` 0..1 of a loop.
+    The still frame passes `stretch` 0 to keep the design frame. */
+export function beadRingPath(progress: number, stretch = STRETCH): string {
   "worklet";
   const p = progress - Math.floor(progress);
   const t = p * BEAD_RING_PERIOD;
@@ -35,7 +49,7 @@ export function beadRingPath(progress: number): string {
   // The line's trailing end: a steady spin, plus the line moving on while it pulls.
   const tailOfLine = t * SPIN + (pulling ? strung : PIECES * GAP) / RING_RADIUS;
   const tails = [tailOfLine];
-  const heads = [tailOfLine + LINE_LENGTH / RING_RADIUS];
+  const heads = [tailOfLine + (LINE_LENGTH + (stretch * strung) / (PIECES * GAP)) / RING_RADIUS];
   for (let k = 0; k < PIECES; k++) {
     const front = tails[k]! - gaps[k]! / RING_RADIUS;
     heads.push(front);

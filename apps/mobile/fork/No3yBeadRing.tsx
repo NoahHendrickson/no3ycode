@@ -8,7 +8,6 @@ import { NavigationContext } from "@react-navigation/native";
 import { use, useEffect, useSyncExternalStore } from "react";
 import Animated, {
   cancelAnimation,
-  Easing,
   useAnimatedProps,
   useSharedValue,
   withRepeat,
@@ -21,11 +20,12 @@ import {
   BEAD_RING_HALF_WIDTH,
   BEAD_RING_PERIOD,
   BEAD_RING_STILL_PROGRESS,
+  beadRingEase,
   beadRingPath,
 } from "./beadRing";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const STILL_PATH = beadRingPath(BEAD_RING_STILL_PROGRESS);
+const STILL_PATH = beadRingPath(BEAD_RING_STILL_PROGRESS, 0);
 const noSubscription = () => () => {};
 
 /** Whether the screen hosting the mark is focused; marks outside a screen (overlays) count as on. */
@@ -61,7 +61,7 @@ export function No3yBeadRing(props: { readonly color: string; readonly size: num
     progress.set(0);
     progress.set(
       withRepeat(
-        withTiming(1, { duration: BEAD_RING_PERIOD * 1000, easing: Easing.linear }),
+        withTiming(1, { duration: BEAD_RING_PERIOD * 1000, easing: beadRingEase }),
         -1,
         false,
       ),
