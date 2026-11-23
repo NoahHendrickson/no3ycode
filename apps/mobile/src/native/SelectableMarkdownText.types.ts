@@ -68,6 +68,10 @@ export interface MarkdownLinkCustomization {
   readonly label?: string;
   readonly icon?: import("react-native").ImageSourcePropType;
   readonly chip?: { readonly accent?: string; readonly tintsIcon: boolean };
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  /** A neutral capsule in body ink: fill and hairline. */
+  readonly capsule?: { readonly surface: string; readonly border: string };
+  /* fork:end no3y-subagent-link-chip */
 }
 
 export interface SelectableMarkdownTextProps {

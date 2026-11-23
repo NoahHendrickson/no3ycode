@@ -22,6 +22,9 @@ import { useEnvironmentQuery } from "../../state/query";
 import { ContextChip, ContextChipLabel } from "../ContextChip";
 import { UnresolvedChip } from "../contextChipParts";
 import { ThreadContextChip } from "../ThreadContextChip";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { ForkSubagentLinkChip } from "../../custom/ForkSubagentLinkChip";
+/* fork:end no3y-subagent-link-chip */
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 /** `label` is the link's written text; an autolink has none. */
@@ -133,11 +136,20 @@ export function MarkdownThreadLink(props: {
   }
   const ref = resolved?.ref ?? writtenRef;
   const title = resolved?.metadata.title.trim() || props.label || gt("Thread");
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
   return (
-    <ThreadContextChip
-      record={{ ...ref, title }}
-      projectId={resolved?.metadata.projectId ?? null}
+    <ForkSubagentLinkChip
+      threadRef={ref}
       copyMarkdown={formatHostedThreadLink(ref, title, configuredHostedAppUrl())}
-    />
+    >
+      {/* fork:end no3y-subagent-link-chip */}
+      <ThreadContextChip
+        record={{ ...ref, title }}
+        projectId={resolved?.metadata.projectId ?? null}
+        copyMarkdown={formatHostedThreadLink(ref, title, configuredHostedAppUrl())}
+      />
+      {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+    </ForkSubagentLinkChip>
   );
+  /* fork:end no3y-subagent-link-chip */
 }

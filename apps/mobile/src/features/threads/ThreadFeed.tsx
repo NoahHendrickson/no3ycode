@@ -234,6 +234,9 @@ import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
 import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast } from "../../../fork/no3yLiveStatus";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { useNo3ySubagentLinkChips } from "../../../fork/useNo3ySubagentLinkChips";
+/* fork:end no3y-subagent-link-chip */
 import { PierreEntryIcon } from "../../components/PierreEntryIcon";
 import {
   normalizeNativeMarkdownUrl,
@@ -1338,11 +1341,18 @@ const AssistantMarkdownContent = memo(function AssistantMarkdownContent(props: {
   readonly skills?: ReadonlyArray<SelectableMarkdownSkill> | undefined;
 }) {
   const gt = useGT();
-  const liveMarkdown = useLiveThreadLinkLabels(
-    props.markdown,
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  const subagentChips = useNo3ySubagentLinkChips(
     props.environmentId,
-    useLinkedEnvironments(hasThreadLinks(props.markdown) ? props.environmentId : null),
+    props.citationSource?.threadId ?? null,
+    useLiveThreadLinkLabels(
+      props.markdown,
+      props.environmentId,
+      useLinkedEnvironments(hasThreadLinks(props.markdown) ? props.environmentId : null),
+    ),
   );
+  const liveMarkdown = subagentChips.markdown;
+  /* fork:end no3y-subagent-link-chip */
   const [quoteSelection, setQuoteSelection] = useState<{
     markdown: string;
     selectors: ReturnType<typeof collectMobileAssistantTextSelectors>;
@@ -1370,6 +1380,9 @@ const AssistantMarkdownContent = memo(function AssistantMarkdownContent(props: {
     onFileContextMenuAction: (href, actionId) =>
       props.linkHandlers.onFileContextMenuAction(href, actionId, props.reply),
     linkCustomization: (href) =>
+      /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+      subagentChips.customization(href) ??
+      /* fork:end no3y-subagent-link-chip */
       withChipIcon(props.linkHandlers.linkCustomization?.(href), threadIcons.get(href)),
   };
 

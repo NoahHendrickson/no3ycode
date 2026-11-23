@@ -92,6 +92,9 @@ import { parseComposerContextHref } from "@t3tools/shared/composerContextReferen
 import { parseThreadLinkHref } from "@t3tools/shared/threadLinks";
 import { AssistantCitationEmbed } from "./chat/AssistantCitationChip";
 import { MarkdownThreadLink } from "./chat/MarkdownThreadLink";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { ForkSubagentLinkScope, useForkSubagentLinkText } from "../custom/ForkSubagentLinkChip";
+/* fork:end no3y-subagent-link-chip */
 import { artifactTemplateFromHastProperties } from "@t3tools/shared/codexArtifactTemplates";
 import {
   decodeMarkdownLinkEscapes,
@@ -2040,7 +2043,9 @@ const MarkdownSource = memo(function MarkdownSource({
 });
 
 function ChatMarkdown({
-  text,
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  text: writtenText,
+  /* fork:end no3y-subagent-link-chip */
   className,
   inline = false,
   lineBreaks = false,
@@ -2049,6 +2054,18 @@ function ChatMarkdown({
   renderInsights = false,
   ...props
 }: ChatMarkdownProps) {
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  // Assistant messages only: user text stays as written, and task lists keep their offsets.
+  const subagentScope =
+    inline || extensions.userMessage === true || props.onTaskListChange
+      ? null
+      : { familyRef: props.threadRef ?? null };
+  const text = useForkSubagentLinkText(
+    writtenText,
+    subagentScope,
+    props.threadRef?.environmentId ?? props.environmentId ?? null,
+  );
+  /* fork:end no3y-subagent-link-chip */
   // Streaming re-renders only the last block; offsets for task edits, and extensions that read
   // the whole message, need the whole text.
   const streamingBlocks =
@@ -2082,18 +2099,24 @@ function ChatMarkdown({
       onCopy={handleCopy}
     >
       <ChatMarkdownRendererContext value={componentState}>
-        <SharedTooltipProvider>
-          {blocks.map((source, index) => (
-            <MarkdownSource
-              // oxlint-disable-next-line react/no-array-index-key -- streamed blocks only change at the end
-              key={index}
-              text={source}
-              markdown={markdown}
-              // Every block before the last is finished, so its parse can be reused.
-              cache={!props.isStreaming || index < blocks.length - 1}
-            />
-          ))}
-        </SharedTooltipProvider>
+        {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+        <ForkSubagentLinkScope value={subagentScope}>
+          {/* fork:end no3y-subagent-link-chip */}
+          <SharedTooltipProvider>
+            {blocks.map((source, index) => (
+              <MarkdownSource
+                // oxlint-disable-next-line react/no-array-index-key -- streamed blocks only change at the end
+                key={index}
+                text={source}
+                markdown={markdown}
+                // Every block before the last is finished, so its parse can be reused.
+                cache={!props.isStreaming || index < blocks.length - 1}
+              />
+            ))}
+          </SharedTooltipProvider>
+          {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+        </ForkSubagentLinkScope>
+        {/* fork:end no3y-subagent-link-chip */}
       </ChatMarkdownRendererContext>
       {localMediaPreview ? (
         <ExpandedImageDialog preview={localMediaPreview} onClose={closeLocalMediaPreview} />
