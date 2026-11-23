@@ -741,6 +741,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
       expect(feed).toContain(helper);
     }
     expect(feed).toContain("<No3yLiveStatusLine");
+    // Where upstream says Thinking (the thinking row and live reasoning), the line shows a word.
+    expect(feed.split("forkThinkingWord(no3yLiveWordSeed(entry))")).toHaveLength(3);
     // Automations: the fork screen, runs pushed over it so back returns there, grouped-card washed.
     const scheduled = readRepoFile(
       "apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx",

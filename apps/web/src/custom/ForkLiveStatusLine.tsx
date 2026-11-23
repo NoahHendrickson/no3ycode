@@ -3,6 +3,7 @@
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
 import { ChevronRightIcon } from "lucide-react";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { use, type ReactNode } from "react";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
@@ -20,7 +21,8 @@ export function ForkLiveStatusLine({
   const ctx = use(TimelineRowCtx);
   const live = row.forkLive;
   const groupId = live?.groupId;
-  const label = forkStatusLineLabel(live, use(TimelineRowActivityCtx));
+  const label =
+    forkStatusLineLabel(live, use(TimelineRowActivityCtx)) ?? forkThinkingWord(row.forkWordSeed);
   const content = (
     <>
       <SidebarV2WorkingMark seed={row.id} />

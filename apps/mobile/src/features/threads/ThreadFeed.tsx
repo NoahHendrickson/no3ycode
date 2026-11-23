@@ -236,7 +236,9 @@ import {
   NO3Y_LIVE_ROW_ID,
   no3yLivePresentation,
   no3yLiveRowLast,
+  no3yLiveWordSeed,
 } from "../../../fork/no3yLiveStatus";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import {
   createNo3yTranscriptSpacing,
   type No3yRowGap,
@@ -249,6 +251,9 @@ import GitForkIcon from "@hugeicons/core-free-icons/GitForkIcon";
 import { HugeIcon } from "../../../fork/HugeIcon";
 import { No3ySentBubbleRise } from "../../../fork/No3ySentBubbleRise";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { useNo3ySubagentLinkChips } from "../../../fork/useNo3ySubagentLinkChips";
+/* fork:end no3y-subagent-link-chip */
 import { PierreEntryIcon } from "../../components/PierreEntryIcon";
 import {
   normalizeNativeMarkdownUrl,
@@ -1367,13 +1372,25 @@ const AssistantMarkdownContent = memo(function AssistantMarkdownContent(props: {
   readonly onUseArtifactTemplate?: ((template: CodexArtifactTemplate) => void) | undefined;
   readonly renderImage: MarkdownImageRenderer;
   readonly skills?: ReadonlyArray<SelectableMarkdownSkill> | undefined;
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  /** The thread the message is in, whose family holds the idle subagents it links to. */
+  readonly no3ySubagentChips?: { readonly threadId: ThreadId; readonly streaming?: boolean };
+  /* fork:end no3y-subagent-link-chip */
 }) {
   const gt = useGT();
-  const liveMarkdown = useLiveThreadLinkLabels(
-    props.markdown,
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  const subagentChips = useNo3ySubagentLinkChips(
     props.environmentId,
-    useLinkedEnvironments(hasThreadLinks(props.markdown) ? props.environmentId : null),
+    props.no3ySubagentChips?.threadId ?? null,
+    useLiveThreadLinkLabels(
+      props.markdown,
+      props.environmentId,
+      useLinkedEnvironments(hasThreadLinks(props.markdown) ? props.environmentId : null),
+    ),
+    props.no3ySubagentChips?.streaming === true,
   );
+  const liveMarkdown = subagentChips.markdown;
+  /* fork:end no3y-subagent-link-chip */
   const [quoteSelection, setQuoteSelection] = useState<{
     markdown: string;
     selectors: ReturnType<typeof collectMobileAssistantTextSelectors>;
@@ -1401,6 +1418,9 @@ const AssistantMarkdownContent = memo(function AssistantMarkdownContent(props: {
     onFileContextMenuAction: (href, actionId) =>
       props.linkHandlers.onFileContextMenuAction(href, actionId, props.reply),
     linkCustomization: (href) =>
+      /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+      subagentChips.customization(href) ??
+      /* fork:end no3y-subagent-link-chip */
       withChipIcon(props.linkHandlers.linkCustomization?.(href), threadIcons.get(href)),
   };
 
@@ -2113,10 +2133,13 @@ function renderFeedEntry(
         startedAt={entry.type === "thinking" ? entry.createdAt : props.no3y.liveStartedAt}
         label={
           entry.type === "thinking"
-            ? // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
-              (entry.providerStartingLabel ?? entry.label ?? "Thinking")
+            ? (entry.providerStartingLabel ??
+              entry.label ??
+              forkThinkingWord(no3yLiveWordSeed(entry)))
             : entry.type === "work-toggle"
-              ? entry.summary
+              ? entry.summaryKind === "reasoning"
+                ? forkThinkingWord(no3yLiveWordSeed(entry))
+                : entry.summary
               : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
                 (entry.activities[0]?.groupStandIn?.label ?? "Working")
         }
@@ -2255,6 +2278,9 @@ function renderFeedEntry(
           <AssistantMarkdownContent
             markdown={entry.text}
             environmentId={props.environmentId}
+            /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+            no3ySubagentChips={{ threadId: props.threadId }}
+            /* fork:end no3y-subagent-link-chip */
             markdownStyles={markdownStyles.assistant}
             linkHandlers={props.markdownLinkHandlers}
             onUseArtifactTemplate={props.onUseArtifactTemplate}
@@ -2844,6 +2870,9 @@ function renderFeedEntry(
               markdown={renderedText}
               environmentId={props.environmentId}
               citationSource={{ threadId: props.threadId, messageId: message.id }}
+              /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+              no3ySubagentChips={{ threadId: props.threadId, streaming: message.streaming }}
+              /* fork:end no3y-subagent-link-chip */
               onCiteAssistantText={props.onCiteAssistantText}
               markdownStyles={styles}
               linkHandlers={props.markdownLinkHandlers}
@@ -3978,6 +4007,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     <AssistantMarkdownContent
       markdown={text}
       environmentId={props.environmentId}
+      /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+      no3ySubagentChips={{ threadId: props.threadId }}
+      /* fork:end no3y-subagent-link-chip */
       markdownStyles={markdownStyles.assistant}
       linkHandlers={markdownLinkHandlers}
       renderImage={renderMarkdownImage}

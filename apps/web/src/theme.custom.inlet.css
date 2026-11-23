@@ -561,7 +561,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   color: var(--foreground);
 }
 
@@ -572,7 +572,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   --control-icon-color: currentColor;
   border-radius: 8px;
 }

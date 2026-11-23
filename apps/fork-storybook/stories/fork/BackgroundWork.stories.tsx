@@ -1,13 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ThreadId } from "@t3tools/contracts";
-import { useState } from "react";
 
 import {
-  ComposerBackgroundWorkSection,
-  ComposerBackgroundWorkToggle,
+  ComposerBackgroundWorkChip,
   type ComposerBackgroundWorkViewProps,
 } from "~/custom/ComposerBackgroundWork";
-import { ComposerUsageLimitsDrawer } from "~/custom/ComposerUsageLimitsReadout";
 
 import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
@@ -39,26 +36,11 @@ const WORKING: ComposerBackgroundWorkViewProps = {
   presentation: { title: "Working", items: TASKS, waiting: true },
 };
 
-/** The composer with the work section out above it: the context-row icon and the section's
-    collapse share one open state, starting open as it does when work starts. */
+/** The composer with the work chip above it. */
 function Composer(props: ComposerBackgroundWorkViewProps) {
-  const [open, setOpen] = useState(true);
   return (
     <div className="mt-28 w-[736px] max-w-full">
-      <StoryComposer
-        context={
-          <ComposerBackgroundWorkToggle
-            {...props}
-            open={open}
-            onToggle={() => setOpen((current) => !current)}
-          />
-        }
-        topVessel={
-          <ComposerUsageLimitsDrawer open={open} onClose={() => setOpen(false)}>
-            <ComposerBackgroundWorkSection {...props} onCollapse={() => setOpen(false)} />
-          </ComposerUsageLimitsDrawer>
-        }
-      />
+      <StoryComposer statusChips={<ComposerBackgroundWorkChip {...props} />} />
     </div>
   );
 }
@@ -74,8 +56,8 @@ const meta: Meta<typeof Composer> = {
 export default meta;
 type Story = StoryObj<typeof Composer>;
 
-/** Subagents and monitors list in the composer's top drawer, a subagent's row opening its thread;
-    the icon in the context row shows and hides it. */
+/** Subagents and monitors ride a chip above the composer; its label lists them, a subagent's row
+    opening its thread, and the square stops them. */
 export const Playground: Story = {};
 
 /** Working and monitoring, stopping, and a client without the operate scope (Stop inert). */

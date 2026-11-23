@@ -1,41 +1,30 @@
 /**
  * The selected provider's session quota as a ring in the composer's control row, opening every
- * provider's limits as a menu, and the composer's top drawer for background work — see
- * `.fork/customizations.yaml#fork-composer-usage-limits`.
+ * provider's limits as a menu — see `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
 import { remainingPercent } from "@t3tools/shared/usageLimits";
-import { memo, type ReactNode, useState } from "react";
+import { useGT } from "gt-react";
+import { memo, useState } from "react";
 
 import { UsageLimitsPooled } from "~/components/usage/UsageLimitsPooled";
-import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { environmentPresentations } from "~/state/presentation";
-import type { ComposerDrawerSection } from "./ComposerBackgroundWork";
 import { UsageCircleMeter } from "./UsageMeter";
 
-/** The composer's usage ring, and its top drawer holding the background-work section (owned by ChatView). */
-export function composerUsageDrawer(props: {
+/** The composer's usage ring, or nothing while the footer is compact. */
+export function composerUsageReadout(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
-  readonly backgroundWork: ComposerDrawerSection | null;
 }) {
-  const work = props.backgroundWork;
-  return {
-    readout: props.enabled ? <ComposerUsageLimitsReadout usageLimits={props.usageLimits} /> : null,
-    drawer:
-      work !== null ? (
-        <ComposerUsageLimitsDrawer open={work.open} onClose={() => work.onCollapse(true)}>
-          {work.content}
-        </ComposerUsageLimitsDrawer>
-      ) : null,
-  };
+  return props.enabled ? <ComposerUsageLimitsReadout usageLimits={props.usageLimits} /> : null;
 }
 
 const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
 }) {
+  const gt = useGT();
   // The menu's clock advances on open rather than ticking while it shows.
   const [openedAt, setOpenedAt] = useState(() => Date.now());
   const session = props.usageLimits?.windows.find((window) => window.kind === "session");
@@ -63,6 +52,7 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
         width="sm"
         padding="none"
         data-fork-tab-menu="composer"
+        aria-label={gt("Usage limits")}
       >
         <ComposerLimitsMenu now={openedAt} />
       </PopoverPopup>
@@ -82,31 +72,3 @@ function ComposerLimitsMenu(props: { readonly now: number }) {
     </div>
   );
 }
-
-/** The strip anchored above the composer (zero shift). It slides up out of the
-    vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
-    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). @public —
-    Storybook fills it with the background-work view. */
-export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
-  readonly open: boolean;
-  readonly onClose: () => void;
-  readonly children: ReactNode;
-}) {
-  return (
-    <Collapsible open={props.open} className="overflow-hidden">
-      <CollapsiblePanel
-        animate={false}
-        data-fork-composer-usage-drawer="true"
-        className="pointer-events-auto transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] data-ending-style:translate-y-full data-ending-style:duration-150 data-ending-style:ease-in data-starting-style:translate-y-full motion-reduce:transition-none"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.stopPropagation();
-            props.onClose();
-          }
-        }}
-      >
-        {props.children}
-      </CollapsiblePanel>
-    </Collapsible>
-  );
-});

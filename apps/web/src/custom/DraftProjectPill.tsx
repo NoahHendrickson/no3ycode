@@ -4,7 +4,6 @@
     (custom/DraftLaunchpad). See `.fork/customizations.yaml#fork-new-agent-draft`. */
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 
-import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import type { DraftId } from "~/composerDraftStore";
@@ -106,12 +105,6 @@ function DraftProjectChip(props: {
       >
         {selection.kind === "no-project" ? (
           <MessageSquareDashedIcon className="size-3 shrink-0 text-current" />
-        ) : selection.kind === "project" && selection.entry ? (
-          <ProjectFavicon
-            project={selection.entry.targetProject}
-            className="size-3 shrink-0"
-            fallbackIcon={FolderIcon}
-          />
         ) : (
           <FolderIcon className="size-3 shrink-0 text-current" />
         )}

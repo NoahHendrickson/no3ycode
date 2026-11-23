@@ -6,6 +6,7 @@ import {
   NO3Y_LIVE_ROW_ID,
   no3yLivePresentation,
   no3yLiveRowLast,
+  no3yLiveWordSeed,
   no3yTurnTimerLabel,
 } from "./no3yLiveStatus";
 
@@ -75,16 +76,31 @@ describe("no3y live status line", () => {
     });
 
     it("leaves live reasoning, a thinking row, or an idle feed as the one status line", () => {
+      const input = { startedAt: start, keepLiveFold: false };
       const reasoning = [toggle({ summaryKind: "reasoning" })];
-      expect(no3yLivePresentation(reasoning, { startedAt: start, keepLiveFold: false })).toBe(
-        reasoning,
-      );
+      expect(no3yLivePresentation(reasoning, input)).toEqual(reasoning);
       const thinking = [row({ type: "thinking", id: NO3Y_LIVE_ROW_ID })];
-      expect(no3yLivePresentation(thinking, { startedAt: start, keepLiveFold: false })).toBe(
-        thinking,
-      );
+      expect(no3yLivePresentation(thinking, input)).toEqual(thinking);
+      expect(no3yLivePresentation(thinking, input)).toBe(no3yLivePresentation(thinking, input));
       const idle = [toggle({})];
       expect(no3yLivePresentation(idle, { startedAt: null, keepLiveFold: false })).toBe(idle);
+    });
+
+    it("seeds the thinking word from the row above, holding until a new row or step lands", () => {
+      const input = { startedAt: start, keepLiveFold: false };
+      const thinking = row({ type: "thinking", id: NO3Y_LIVE_ROW_ID });
+      const seed = (rows: PendingThreadFeedEntry[]) =>
+        no3yLiveWordSeed(no3yLivePresentation(rows, input).at(-1)!);
+      const reply = row({ type: "message", id: "reply" });
+      const first = no3yLivePresentation([reply, thinking], input).at(-1);
+      // Re-derived rows with the same row above keep the same live row, so it doesn't re-render.
+      expect(no3yLivePresentation([reply, thinking], input).at(-1)).toBe(first);
+      expect(seed([reply, thinking])).toBe("reply");
+      expect(seed([reply, row({ type: "message", id: "next" }), thinking])).toBe("next");
+      // Live reasoning seeds from its own group, so each new step moves the word.
+      expect(seed([toggle({ summaryKind: "reasoning", hiddenCount: 1 })])).not.toBe(
+        seed([toggle({ summaryKind: "reasoning", hiddenCount: 2 })]),
+      );
     });
 
     it("keeps a lone tool shimmering only while it runs", () => {

@@ -10,7 +10,11 @@ type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
 type WorkLiveRow = Extract<MessagesTimelineRow, { kind: "work-live" }>;
 export type ForkLiveRow = Extract<MessagesTimelineRow, { kind: "thinking" | "work-live" }>;
 /** `forkLive` is the folded live row, or null for a plain Thinking line under a running tool. */
-export type ForkStatusLineRow = WorkingRow & { readonly forkLive: ForkLiveRow | null };
+export type ForkStatusLineRow = WorkingRow & {
+  readonly forkLive: ForkLiveRow | null;
+  /** Picks the thinking word (forkThinkingWord); it changes only when a new row or step lands. */
+  readonly forkWordSeed: string;
+};
 /** A finished tool upstream still holds as the live row, drawn settled. */
 type ForkSettledToolRow = WorkLiveRow & { readonly forkSettled: true };
 
@@ -40,10 +44,21 @@ export function isForkSettledTool(row: MessagesTimelineRow): boolean {
   return "forkSettled" in row;
 }
 
-function mergedWorkingRow(working: WorkingRow, live: ForkLiveRow | null): ForkStatusLineRow {
+// A group's id holds while it grows, so its newest entry marks each new tool.
+function rowSeed(row: MessagesTimelineRow | undefined): string {
+  if (row?.kind === "work-live") return row.entry.id;
+  if (row?.kind === "work") return row.groupedEntries.at(-1)?.id ?? row.id;
+  return row?.id ?? "";
+}
+
+function mergedWorkingRow(
+  working: WorkingRow,
+  live: ForkLiveRow | null,
+  forkWordSeed: string,
+): ForkStatusLineRow {
   const cached = mergedByWorking.get(working);
-  if (cached?.forkLive === live) return cached;
-  const merged = { ...working, forkLive: live };
+  if (cached?.forkLive === live && cached.forkWordSeed === forkWordSeed) return cached;
+  const merged = { ...working, forkLive: live, forkWordSeed };
   mergedByWorking.set(working, merged);
   return merged;
 }
@@ -60,9 +75,12 @@ function fold(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
     return workingIndex === rows.length - 1 ? rows : [...rest, working];
   }
   if (live.kind === "thinking" || live.entry.itemType === "reasoning") {
-    return [...rest.toSpliced(liveIndex, 1), mergedWorkingRow(working, live)];
+    const above = rest.toSpliced(liveIndex, 1);
+    const seed = live.kind === "work-live" ? live.entry.id : rowSeed(above.at(-1));
+    return [...above, mergedWorkingRow(working, live, seed)];
   }
-  return [...rest.toSpliced(liveIndex, 1, settled(live)), mergedWorkingRow(working, null)];
+  const above = rest.toSpliced(liveIndex, 1, settled(live));
+  return [...above, mergedWorkingRow(working, null, rowSeed(above.at(-1)))];
 }
 
 export function forkLiveStatusRows(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
@@ -88,15 +106,18 @@ export function forkStatusLineRow(
   return isForkStatusLine(row) && !awaitingUser ? row : null;
 }
 
-/** One-line text for the status line; upstream's richer previews stay in the open group. */
+/**
+ * One-line text for the status line; upstream's richer previews stay in the open group.
+ * Null is the thinking slot, which shows forkThinkingWord.
+ */
 export function forkStatusLineLabel(
   live: ForkLiveRow | null,
   activity: {
     readonly providerStartingLabel: string | null;
     readonly liveAnswerPreview: string | null;
   },
-): string {
+): string | null {
   const label = live?.kind === "thinking" ? live.label : undefined;
-  if (live?.kind === "work-live") return "Thinking";
-  return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? "Thinking";
+  if (live?.kind === "work-live") return null;
+  return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? null;
 }

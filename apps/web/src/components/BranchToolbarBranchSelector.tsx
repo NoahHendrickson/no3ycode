@@ -1,6 +1,5 @@
 import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import { ComposerContextLabel } from "./ComposerContextLabel";
-import { useRightPanelStore } from "../rightPanelStore";
 import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
@@ -32,7 +31,6 @@ import {
 import { useComposerDraftStore, type DraftId } from "../composerDraftStore";
 import { writeTextToClipboard } from "../hooks/useCopyToClipboard";
 import { readLocalApi } from "../localApi";
-import { useOpenPrLink } from "../lib/openPullRequestLink";
 import { usePaginatedBranches } from "../state/queries";
 import { useProjectClone } from "../state/projectClones";
 import { readThreadShell, useProject, useQuietThreadShell } from "../state/entities";
@@ -66,11 +64,7 @@ import {
   shouldIncludeBranchPickerItem,
   toBranchActionErrorMessage,
 } from "./BranchToolbar.logic";
-import {
-  ThreadPullRequestBadgeControl,
-  resolveDisplayedThreadPr,
-  useThreadDisplayedPullRequest,
-} from "./ThreadStatusIndicators";
+import { resolveDisplayedThreadPr } from "./ThreadStatusIndicators";
 
 import { ComboboxItem, ComboboxTrigger } from "./ui/combobox";
 import { ComposerControl } from "./chat/ComposerControl";
@@ -774,18 +768,9 @@ export function BranchToolbarBranchSelector({
     threadBranch: branchPrBranch,
     gitStatus: branchStatusQuery.data,
   });
-  const {
-    badge: prBadge,
-    number: prNumber,
-    url: prUrl,
-    status: prStatus,
-  } = useThreadDisplayedPullRequest(
-    environmentId,
-    serverThread,
-    branchPr,
-    branchStatusQuery.data?.sourceControlProvider,
-  );
-  const openPrLink = useOpenPrLink(threadRef);
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+     The PR chip rides above the composer (custom/ComposerPullRequestChip), not in this group. */
+  /* fork:end fork-composer-shell */
   const linkedIssues = serverThread?.issues ?? [];
 
   const branchItemsDisabled = isInitialBranchesLoadPending || isBranchActionPending;
@@ -938,30 +923,6 @@ export function BranchToolbarBranchSelector({
           className,
         )}
       >
-        {displayMode !== "panel" ? (
-          <ThreadPullRequestBadgeControl
-            render={
-              <ComposerControl
-                size="xs"
-                /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-                   The glyph and number keep PR-state ink (theme.custom.css exempts them
-                   from the white chip text); the fill stays the sibling chips' glass.
-                   Rides the far end of the strip. */
-                data-fork-pr-chip
-                /* fork:end fork-composer-shell */
-              />
-            }
-            badge={prBadge}
-            pullRequests={serverThread?.pullRequests ?? []}
-            number={prNumber}
-            url={prUrl}
-            status={prStatus}
-            onOpenList={() => useRightPanelStore.getState().open(threadRef, "pull-requests")}
-            onOpenPullRequest={(event, targetUrl = prUrl) => {
-              if (targetUrl) openPrLink(event, targetUrl);
-            }}
-          />
-        ) : null}
         <span
           className="flex min-w-0"
           onMouseDownCapture={(event) => {

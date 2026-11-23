@@ -3014,26 +3014,17 @@
   intent: >
     The composer vessel's right control slot ends with a 16px circular
     session-limit ring (UsageCircleMeter in custom/UsageMeter.tsx) driven by
-    composerUsageDrawer() in custom/ComposerUsageLimitsReadout.tsx. It reads
+    composerUsageReadout() in custom/ComposerUsageLimitsReadout.tsx. It reads
     the selected provider instance's ServerProvider.usageLimits snapshot, adding
     no wire data or polling. Clicking it opens a popover menu above it
     (data-fork-tab-menu="composer", so Inlet hangs it from the ring like the
-    model menu) holding every provider's limits as UsageLimitsPooled's compact
-    list (fork-usage-limits-surface). The menu subscribes to environment
-    presentations only while open, and its clock advances on open. The calmer
-    #38a169 green is scoped via --success to the composer trigger and drawer so
-    the Usage settings page keeps each theme's --success token. Hidden when the
-    provider reports no session window or when the footer collapses.
-    It also builds the composer's top drawer
-    (data-fork-composer-usage-drawer, a CollapsiblePanel mounted as a sibling
-    of [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
-    Black does not block backdrop blur), which carries fork-composer-shell's
-    background-work section. The drawer floats above the vessel, over the
-    transcript, so opening it never pushes the chat up (or moves the draft
-    hero's launchpad). The background-work section opens by itself, so each
-    subagent approval arriving right above the composer collapses it once
-    (the toggle reopens it), and ChatView lifts Scroll to end by however far
-    the open drawer rises above the composer overlay.
+    model menu; named "Usage limits") holding every provider's limits as
+    UsageLimitsPooled's compact list (fork-usage-limits-surface). The menu
+    subscribes to environment presentations only while open, and its clock
+    advances on open. The calmer #38a169 green is scoped via --success to the
+    ring and its menu so the Usage settings page keeps each theme's --success
+    token. Hidden when the provider reports no session window or when the
+    footer collapses. Nothing fills the composer's top vessel any more.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3629,18 +3620,18 @@
     The chat composer is one outer 8px vessel (12px on Inlet) wrapping the
     prompt surface and a single control row beneath it. BranchToolbar's context
     strip (project pill on drafts, environment picker on multi-env projects,
-    combined workspace + branch trigger, PR chip, and a trailing
-    background-work icon toggle) sits in the control row's left slot inside
-    [data-fork-composer-vessel-context], while Model, runtime Mode (muted ghost
-    label, no colored fill or caret), and the circular Usage trigger sit in the
-    right slot. Background work (subagents, monitors) lists in a section of
-    the composer's top drawer (the data-fork-composer-usage-drawer
-    surface), with Stop and a collapse button;
-    a subagent's row opens its thread. The drawer opens by itself whenever a
-    task it has not shown starts, and a collapse holds until new work
-    arrives (custom/ComposerBackgroundWork.tsx). Because the drawer takes
-    space (see fork-composer-usage-limits), auto-opening never covers what
-    sits above the composer. On narrow composers the
+    combined workspace + branch trigger) sits in the control row's left slot
+    inside [data-fork-composer-vessel-context], while Model, runtime Mode
+    (muted ghost label, no colored fill or caret), and the circular Usage
+    trigger sit in the right slot. A row of status chips sits above the
+    vessel, in flow so the transcript ends above it, and hides when empty: the
+    thread's PR (custom/ComposerPullRequestChip, resolved as the branch picker
+    resolves it; open, merged and closed PRs fill with their state's colour
+    under a bright top rim, a draft stays neutral) and background work (subagents,
+    monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
+    list (a subagent's row opens its thread; a command reads as its gist,
+    without its cd lead-in or output redirects) and whose square stops it all.
+    Neither shows on the draft hero. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
@@ -3668,7 +3659,7 @@
     appearanceFonts.ts), and the control and context rows are 14px regular.
     On Flat Glass the thread composer (not a new agent's draft) paints no
     vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
-    and the control row sits on the stage; an open top drawer, attached
+    and the control row sits on the stage; attached
     banners and the Questions card are lift-1 trays over it with an 8%
     hairline; the prompt keeps its round corners and its frame fills the
     wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
@@ -3681,8 +3672,11 @@
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/ComposerPullRequestChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
+    - apps/web/src/custom/composerPullRequestChip.logic.ts
+    - apps/web/src/custom/composerPullRequestChip.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
@@ -3697,6 +3691,8 @@
   watch:
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
+    # Exports its shell reader for the background-work list's command gist.
+    - packages/client-runtime/src/work-log/commandLabel.ts
     # The prompt's default size when fonts are not set separately, and its test.
     - apps/web/src/appearanceFonts.ts
     - apps/web/src/appearanceFonts.browser.test.ts
@@ -5272,7 +5268,7 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the composer's background-work toggle and drawer,
+    transcript working row, the background-work chip above the composer,
     subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
@@ -5743,9 +5739,8 @@
     - apps/web/src/components/ChatView.tsx
     # Fenced user-facing note on starting an agent and choosing its project.
     - docs/user/thread-sidebar.md
-    # Fenced: an explicit fallbackIcon (the project chip's folder mark, also
-    # the thread context readout's) suppresses upstream's automatic title
-    # monogram (#11572).
+    # Fenced: an explicit fallbackIcon (the launchpad's and the draft project
+    # menu's folder marks) suppresses upstream's automatic title monogram.
     - apps/web/src/components/ProjectFavicon.tsx
     - apps/web/src/shortcuts/chatRouteCommands.ts
     # Fenced: upstream #29846 drives its picker; the fork drives the project chip menu.
@@ -6204,14 +6199,21 @@
     group is open, so the toggle keeps keyboard focus. While compaction or
     worktree setup owns the line, folded reasoning renders its upstream row
     above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. The working row has no
-    divider, and neither does the turn's fold row ("Worked for …") once the
+    and reasoning previews stay in the open group. Where upstream says
+    "Thinking", the line shows a word from @t3tools/shared/forkThinkingWords
+    ("Yapping", "Cooking", ...) seeded by what last landed: the row above the
+    line (a group's newest entry), or the live reasoning step itself. The word
+    holds until a new row or step lands. The no3y iOS line takes its word from
+    the same module (no3yLiveWordSeed, no3y-mobile-redesign). The working row
+    has no divider, and neither does the turn's fold row ("Worked for …") once the
     turn ends (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
     - apps/web/src/custom/ForkLiveStatusLine.tsx
     - apps/web/src/theme.custom.css
+    - packages/shared/src/forkThinkingWords.ts
+    - packages/shared/src/forkThinkingWords.test.ts
   shadows: []
   watch:
     # Fenced import and the fold wrapping useStableRows' result.
@@ -6226,9 +6228,12 @@
     # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
     # LiveWorkEntryTimelineRow's labels here.
     - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # Unfenced (strict JSON): the `./forkThinkingWords` subpath export.
+    - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkWorkingRowLast.test.ts
     - apps/web/src/custom/forkWorkingRowLast.test.ts
+    - packages/shared/src/forkThinkingWords.test.ts
 
 - id: fork-transcript-spacing
   intent: >
@@ -7941,7 +7946,7 @@
     registrations, Basic's ramp swept across every tone), so a token added
     upstream appears without a story edit. Fork/ stories draw fork components
     through view exports that take plain props (ForkSubagentCardView,
-    BotThreadsRowView, ComposerUsageLimitsDrawer,
+    BotThreadsRowView,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
     BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
@@ -8530,6 +8535,7 @@
     - apps/mobile/fork/No3ySentBubbleRise.tsx
     - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
+    - packages/shared/src/forkThinkingWords.ts
     - apps/mobile/fork/No3yAutomationsScreen.tsx
     - apps/mobile/fork/no3yAutomationRuns.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts
@@ -8684,3 +8690,57 @@
     - apps/web/src/index.css
   verify:
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
+
+- id: no3y-subagent-link-chip
+  intent: >
+    On mobile and desktop/web, a link in an assistant message to a subagent thread (a
+    delegated task or subagent child) reads as a neutral capsule instead of the thread
+    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
+    the child's short title (the head before ": ", so "Sol review r2: composer status
+    chips" reads "Sol review r2"), and the child's live status as the Threads list's /
+    sidebar's mark in its colour (working mark, dot for done or failed, half circle for
+    needs-you, muted dot for waiting, idle ring for stopped or unknown). Status follows the
+    sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
+    another thread or parked on background work reads as waiting. No mark animates in a message. On mobile the marks are white PNGs drawn from
+    No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
+    aria-hidden, with the status in the link's accessible name, and keeps the thread hover
+    card. A period that closes the line right after the chip is dropped from the rendered
+    text only; mid-line periods, code spans and fenced code stay, and while a reply streams
+    only a period before a newline goes. A live child is always in the shell; an idle one is
+    read from the family of the thread the message is in (one cached read per thread, so
+    links to ordinary or archived threads never trigger one). A cached family row is stale
+    when the shell removed the child after the read, or when it is still live while the shell
+    has dropped the child: the chip shows the idle mark and that family is re-read once. Links to ordinary threads keep upstream's chip. User
+    messages, tool output, PR bodies, file previews and the composer are unchanged: on web only
+    TimelineAssistantRows opts in; on mobile the reply, sent-message and reasoning rows pass
+    their thread. Mobile's native pill reads only the label and link text, so screen readers
+    there do not hear the status yet.
+  tier: 4
+  files:
+    - apps/mobile/fork/no3ySubagentLinkChip.ts
+    - apps/mobile/fork/useNo3ySubagentLinkChips.ts
+    - apps/mobile/fork/assets/status-marks/working.png
+    - apps/mobile/fork/assets/status-marks/dot.png
+    - apps/mobile/fork/assets/status-marks/half.png
+    - apps/mobile/fork/assets/status-marks/idle.png
+    - apps/web/src/custom/forkSubagentLinkLogic.ts
+    - apps/web/src/custom/ForkSubagentLinkChip.tsx
+    - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
+  shadows: []
+  watch:
+    # The capsule field on MarkdownLinkCustomization.
+    - apps/mobile/src/native/SelectableMarkdownText.types.ts
+    # The capsule's pill style.
+    - apps/mobile/src/native/useEnrichedLinkVariants.ts
+    # Assistant markdown reads the chips and the trimmed text.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Exposes the shell's per-thread removal sequence without importing the shell module.
+    - apps/mobile/src/state/threads.ts
+    # Wraps the thread chip so a subagent link renders the capsule.
+    - apps/web/src/components/chat/MarkdownThreadLink.tsx
+    # Drops the period after a subagent chip before parsing.
+    - apps/web/src/components/ChatMarkdown.tsx
+    # Opts assistant messages into the capsule.
+    - apps/web/src/components/chat/TimelineAssistantRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
