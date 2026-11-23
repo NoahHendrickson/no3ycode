@@ -40,7 +40,7 @@ import { useAtomCommand } from "../src/state/use-atom-command";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
-import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, NO3Y_RISE_IN } from "./no3yMotion";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
 import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
 
@@ -152,8 +152,7 @@ export function No3yQueuedRunsBanner(props: {
 
   return (
     <Animated.View
-      entering={NO3Y_RISE_IN}
-      exiting={NO3Y_FADE_OUT}
+      entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
       style={{ marginHorizontal: 16, marginBottom: 6, borderRadius: RADIUS }}
     >

@@ -46,7 +46,7 @@ import {
   type No3yStatusSegment,
 } from "./no3yStatusSegments";
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
-import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT } from "./no3yMotion";
+import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
 
 const PILL_HEIGHT = 30;
 const PILL_GAP = 8;
@@ -199,8 +199,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
     >
       {props.showScrollToEnd ? (
         <Animated.View
-          entering={NO3Y_FADE_IN}
-          exiting={NO3Y_FADE_OUT}
+          entering={NO3Y_GLASS_IN}
           layout={NO3Y_LAYOUT}
           style={{ width: PILL_HEIGHT, height: PILL_HEIGHT }}
         >
@@ -223,8 +222,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       ) : null}
       {segments.length > 0 ? (
         <Animated.View
-          entering={NO3Y_FADE_IN}
-          exiting={NO3Y_FADE_OUT}
+          entering={NO3Y_GLASS_IN}
           layout={NO3Y_LAYOUT}
           style={{ height: PILL_HEIGHT }}
         >

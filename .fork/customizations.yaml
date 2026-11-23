@@ -7928,18 +7928,19 @@
     unavailable) at 44pt, and 40pt inside the composer card. A dock of four filled Hugeicons items (Threads, New
     agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
     on the workspace screens and New agent and hides inside a thread. A dock
-    switch moves the way the dock was travelled (Threads, New agent, Chat,
-    Automations): the press records its direction, the root stack's native
-    push or pop is off for that switch, and the arriving screen eases in from
-    24pt that side with a fade over 220ms (a 150ms fade under Reduce Motion;
-    fork/no3yDockMove.ts, fork/no3yDockMotion.ts). Motion elsewhere uses fork/no3yMotion.ts's
+    switch is a plain swap: the press marks it and the root stack runs it
+    without the native push or pop (fork/no3yDockMove.ts), and nothing fades
+    in: a fade there once hid the composer's glass (expo-glass-effect installs
+    its UIGlassEffect once, and one installed under a fading ancestor never
+    renders). Motion elsewhere uses fork/no3yMotion.ts's
     UI-thread presets, retargeted mid-flight and instant under Reduce Motion:
     a 200ms eased layout slide for Threads rows (folding a status section,
     settling a card), chats, Petals, project tiles, automation tiles and run
-    rows; 180ms fades in and 140ms out for pills above the composer (status
-    pill, scroll-to-end, New agent's pills), the live status line, queued rows,
-    usage rows and the Automations or Runs content; an 8pt rise for the peek
-    card and the queued banner; and 180ms eased toggles for section chevrons,
+    rows; 180ms fades in and 140ms out for the live status line, queued rows,
+    usage rows and the Automations or Runs content, which hold no glass; glass
+    only ever moves by transform: pills above the composer (status pill,
+    scroll-to-end, New agent's pills) grow in from 92%, and the peek card and
+    queued banner rise 8pt; and 180ms eased toggles for section chevrons,
     the Automations | Runs wash and a picked project tile's lift. Keyboard
     moves and streaming updates are never animated.
     Long-pressing Threads, Automations or Chat opens a peek card (provider
@@ -8140,9 +8141,7 @@
     - apps/mobile/fork/no3yUsageCompact.ts
     - apps/mobile/fork/no3yWorkspaceTabs.ts
     - apps/mobile/fork/no3yMotion.ts
-    - apps/mobile/fork/no3yDockMotion.ts
     - apps/mobile/fork/no3yDockMove.ts
-    - apps/mobile/fork/no3yDockMove.test.ts
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/No3yProviderMark.tsx
     - apps/mobile/fork/assets/codex-mark.png
@@ -8208,4 +8207,3 @@
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/no3yProjectTiles.test.ts
     - apps/mobile/fork/forkBots.test.ts
-    - apps/mobile/fork/no3yDockMove.test.ts

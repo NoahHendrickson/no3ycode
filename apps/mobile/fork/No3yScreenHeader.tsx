@@ -19,7 +19,6 @@ import { collectProviderUsageLimits, remainingPercent } from "@t3tools/shared/us
 import { Atom } from "effect/reactivity";
 import { useId, type ReactNode } from "react";
 import { Pressable, TextInput, View } from "react-native";
-import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -36,7 +35,6 @@ import { HugeIcon } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
-import { useNo3yDockEnterStyle } from "./no3yDockMotion";
 import { useLendNo3yWorkspaceTabSelect } from "./no3yWorkspaceTabs";
 
 /** Opens the half-height usage sheet (fork/No3yUsageSheet.tsx). */
@@ -345,17 +343,10 @@ export function No3yThreadBarInset(props: {
 }) {
   const enabled = useNo3yBottomNavEnabled();
   const inset = useNo3yThreadBarInset();
-  const dockEnterStyle = useNo3yDockEnterStyle();
   if (!enabled) return props.children;
-  if (props.draft) {
-    // New agent is a dock tab: it eases in the way the dock was travelled.
-    return (
-      <HeaderHeightContext value={0}>
-        <Animated.View style={dockEnterStyle}>{props.children}</Animated.View>
-      </HeaderHeightContext>
-    );
-  }
-  return <HeaderHeightContext value={inset}>{props.children}</HeaderHeightContext>;
+  return (
+    <HeaderHeightContext value={props.draft ? 0 : inset}>{props.children}</HeaderHeightContext>
+  );
 }
 
 /** An AppBar menu as native menu actions, for the fork's own glass header buttons. */

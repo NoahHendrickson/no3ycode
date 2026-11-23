@@ -61,7 +61,6 @@ import {
 } from "./mobileStatusGrouping";
 import { groupNo3yRuns, no3yAutomationTileStatus, NO3Y_RUNS_PAGE } from "./no3yAutomationRuns";
 import { No3yCircleButton } from "./No3yControls";
-import { useNo3yDockEnterStyle } from "./no3yDockMotion";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yGlassLayer } from "./No3yGlass";
 import { findMenuItem, menuActions } from "./No3yScreenHeader";
@@ -166,77 +165,74 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const [tab, setTab] = useState(lastTab);
-  const dockEnterStyle = useNo3yDockEnterStyle();
   const changeTab = (next: AutomationsTab) => {
     lastTab = next;
     setTab(next);
   };
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-      <Animated.View style={dockEnterStyle}>
-        <NativeStackScreenOptions options={{ headerShown: false }} />
-        <View
-          style={{
-            paddingTop: insets.top,
-            height: insets.top + 68,
-            paddingHorizontal: 16,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-          }}
+      <NativeStackScreenOptions options={{ headerShown: false }} />
+      <View
+        style={{
+          paddingTop: insets.top,
+          height: insets.top + 68,
+          paddingHorizontal: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
+        <View style={{ flex: 1 }} />
+        <Menu
+          accessibilityLabel={props.environmentMenu.title}
+          actions={menuActions(props.environmentMenu.items)}
+          onPressAction={({ nativeEvent }) =>
+            findMenuItem(props.environmentMenu.items, nativeEvent.event)?.()
+          }
         >
-          <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
-          <View style={{ flex: 1 }} />
-          <Menu
-            accessibilityLabel={props.environmentMenu.title}
-            actions={menuActions(props.environmentMenu.items)}
-            onPressAction={({ nativeEvent }) =>
-              findMenuItem(props.environmentMenu.items, nativeEvent.event)?.()
-            }
-          >
-            <No3yCircleButton
-              palette={palette}
-              accessibilityLabel={props.environmentMenu.title}
-              icon={ListFilterIcon}
-            />
-          </Menu>
           <No3yCircleButton
             palette={palette}
-            accessibilityLabel="New automation"
-            icon={PlusIcon}
-            disabled={props.environments.length === 0}
-            onPress={props.onNew}
+            accessibilityLabel={props.environmentMenu.title}
+            icon={ListFilterIcon}
           />
-        </View>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 4,
-            paddingBottom: Math.max(insets.bottom, 18) + 18 + NO3Y_BOTTOM_NAV_CLEARANCE,
-            gap: 24,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          {props.environments.length === 0 ? (
-            <Text style={{ fontSize: 15, color: palette.metaInk }}>{props.emptyMessage}</Text>
-          ) : (
-            // The tab's content fades in as the switch changes.
-            <Animated.View key={tab} entering={NO3Y_FADE_IN} style={{ gap: 24 }}>
-              {props.environments.map((environment) => (
-                <EnvironmentAutomations
-                  key={environment.environmentId}
-                  environment={environment}
-                  showEnvironment={props.environments.length > 1}
-                  palette={palette}
-                  tab={tab}
-                  {...props}
-                />
-              ))}
-            </Animated.View>
-          )}
-        </ScrollView>
-      </Animated.View>
+        </Menu>
+        <No3yCircleButton
+          palette={palette}
+          accessibilityLabel="New automation"
+          icon={PlusIcon}
+          disabled={props.environments.length === 0}
+          onPress={props.onNew}
+        />
+      </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 4,
+          paddingBottom: Math.max(insets.bottom, 18) + 18 + NO3Y_BOTTOM_NAV_CLEARANCE,
+          gap: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {props.environments.length === 0 ? (
+          <Text style={{ fontSize: 15, color: palette.metaInk }}>{props.emptyMessage}</Text>
+        ) : (
+          // The tab's content fades in as the switch changes.
+          <Animated.View key={tab} entering={NO3Y_FADE_IN} style={{ gap: 24 }}>
+            {props.environments.map((environment) => (
+              <EnvironmentAutomations
+                key={environment.environmentId}
+                environment={environment}
+                showEnvironment={props.environments.length > 1}
+                palette={palette}
+                tab={tab}
+                {...props}
+              />
+            ))}
+          </Animated.View>
+        )}
+      </ScrollView>
     </View>
   );
 }

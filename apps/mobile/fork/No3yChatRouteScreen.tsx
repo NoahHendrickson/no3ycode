@@ -22,7 +22,6 @@ import { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { createContext, use, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useThreadListActions } from "../src/features/home/useThreadListActions";
@@ -51,7 +50,6 @@ import { HugeIcon } from "./HugeIcon";
 import { listNo3yChatThreads, resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
 import { findNo3yChatProject, resolveNo3yChatDraftParams } from "./no3yChat";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
-import { useNo3yDockEnterStyle } from "./no3yDockMotion";
 import { NO3Y_LAYOUT } from "./no3yMotion";
 import { No3yChatDraftContext, type No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yChatHeader } from "./No3yScreenHeader";
@@ -261,7 +259,6 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
     reportFailure: false,
   });
   const [searching, setSearching] = useState(false);
-  const dockEnterStyle = useNo3yDockEnterStyle();
   const [searchQuery, setSearchQuery] = useState("");
   const [openFailure, setOpenFailure] = useState<string | null>(null);
 
@@ -334,23 +331,21 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
       <No3yChatDraftContext value={surface}>
         {/* The header lays out above the draft body, which starts at its top. */}
         <HeaderHeightContext value={0}>
-          <Animated.View style={dockEnterStyle}>
-            <ThreadScreenHost>
-              {draft !== null && draft === routeDraft ? (
-                <NewTaskDraftRouteScreen
-                  key={draftRouteIdentity(draft)}
-                  route={{ ...props.route, params: draft }}
-                />
-              ) : (
-                <ThreadScreenFallback header={<ChatHeader />}>
-                  <View style={{ flex: 1 }}>
-                    <ChatList topInset={0} bottomInset={trayContentInset} />
-                    {unavailable === null ? null : <ChatUnavailableNotice message={unavailable} />}
-                  </View>
-                </ThreadScreenFallback>
-              )}
-            </ThreadScreenHost>
-          </Animated.View>
+          <ThreadScreenHost>
+            {draft !== null && draft === routeDraft ? (
+              <NewTaskDraftRouteScreen
+                key={draftRouteIdentity(draft)}
+                route={{ ...props.route, params: draft }}
+              />
+            ) : (
+              <ThreadScreenFallback header={<ChatHeader />}>
+                <View style={{ flex: 1 }}>
+                  <ChatList topInset={0} bottomInset={trayContentInset} />
+                  {unavailable === null ? null : <ChatUnavailableNotice message={unavailable} />}
+                </View>
+              </ThreadScreenFallback>
+            )}
+          </ThreadScreenHost>
         </HeaderHeightContext>
       </No3yChatDraftContext>
     </ChatSearchContext>

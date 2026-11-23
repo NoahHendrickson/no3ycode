@@ -47,7 +47,7 @@ import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassT
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import type { No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yGlassLayer } from "./No3yGlass";
-import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
+import { NO3Y_FADE_IN, NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
 import {
   no3yProjectTileStatus,
@@ -342,8 +342,7 @@ function DraftPill(props: {
   return (
     <Animated.View
       layout={NO3Y_LAYOUT}
-      entering={NO3Y_FADE_IN}
-      exiting={NO3Y_FADE_OUT}
+      entering={NO3Y_GLASS_IN}
       style={{ maxWidth: "100%", flexShrink: 1 }}
     >
       <Pressable

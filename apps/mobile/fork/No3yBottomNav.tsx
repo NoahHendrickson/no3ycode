@@ -39,8 +39,8 @@ import {
 import { isNo3yChatThread } from "./no3yChatRule";
 import { useNo3ySentChats } from "./no3yChatTagging";
 import { selectNo3yWorkspaceTab } from "./no3yWorkspaceTabs";
-import { recordNo3yDockMove } from "./no3yDockMove";
-import { NO3Y_RISE_IN } from "./no3yMotion";
+import { markNo3yDockSwitch } from "./no3yDockMove";
+import { NO3Y_GLASS_RISE_IN } from "./no3yMotion";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
@@ -209,7 +209,7 @@ function No3yPeekCard(props: {
           style={[StyleSheet.absoluteFill, { backgroundColor: palette.peekBackdrop }]}
         />
         <Animated.View
-          entering={NO3Y_RISE_IN}
+          entering={NO3Y_GLASS_RISE_IN}
           style={{
             position: "absolute",
             left,
@@ -475,7 +475,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
               onPress={() => {
                 Keyboard.dismiss();
                 setPeekItem(null);
-                recordNo3yDockMove(activeItem, item.id);
+                markNo3yDockSwitch();
                 press[item.id]();
               }}
               onLongPress={() => openPeek(item.id)}
