@@ -2048,12 +2048,12 @@ function renderFeedEntry(
   ) {
     return (
       <No3yLiveStatusLine
+        environmentId={props.environmentId}
         minHeight={props.workRowSizing.estimatedRowHeight}
         startedAt={entry.type === "thinking" ? entry.createdAt : props.no3y.liveStartedAt}
         label={
           entry.type === "thinking"
-            ? // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
-              (entry.providerStartingLabel ?? entry.label ?? "Thinking")
+            ? (entry.providerStartingLabel ?? entry.label ?? null)
             : entry.type === "work-toggle"
               ? entry.summary
               : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)

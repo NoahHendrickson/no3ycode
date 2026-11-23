@@ -6193,13 +6193,17 @@
     own row above a plain "Working for …" line. While compaction or worktree
     setup owns the line, a folded running tool renders its upstream row
     above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. The working row has no
+    and reasoning previews stay in the open group. Where upstream says
+    "Thinking", the line rotates through forkThinkingWords ("Yapping",
+    "Cooking", ...), one word per four seconds from a start the turn's start
+    time picks; the no3y iOS line does the same from its own copy of the list. The working row has no
     divider, and neither does the turn's fold row ("Worked for …") once the
     turn ends (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
     - apps/web/src/custom/ForkLiveStatusLine.tsx
+    - apps/web/src/custom/forkThinkingWords.ts
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
@@ -8407,6 +8411,7 @@
     - apps/mobile/fork/no3yLiveStatus.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/No3yLiveStatusLine.tsx
+    - apps/mobile/fork/no3yThinkingWords.ts
     - apps/mobile/fork/No3yAutomationsScreen.tsx
     - apps/mobile/fork/no3yAutomationRuns.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts

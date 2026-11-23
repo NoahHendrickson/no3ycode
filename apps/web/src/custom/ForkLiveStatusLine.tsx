@@ -8,32 +8,56 @@ import { use, type ReactNode } from "react";
 import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { threadReadLabel, useThreadReadTarget } from "~/components/chat/TimelineWorkEntryRow";
+import { toServerClock } from "@t3tools/client-runtime/clock";
+import { tickTextContent } from "~/lib/tickTextContent";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
+import { forkThinkingWord } from "./forkThinkingWords";
 import {
   forkStatusLineLabel,
   type ForkLiveRow,
   type ForkStatusLineRow,
 } from "./forkWorkingRowLast";
 
-function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-live" }> }) {
+// Ticks through the DOM like the turn timer, so a word change never re-renders the row.
+function ThinkingWord({ startedAt }: { startedAt: string }) {
+  const { activeThreadEnvironmentId } = use(TimelineRowCtx);
+  return (
+    <span
+      ref={tickTextContent(
+        (nowMs) => forkThinkingWord(startedAt, toServerClock(activeThreadEnvironmentId, nowMs)),
+        true,
+      )}
+    />
+  );
+}
+
+function WorkStatusLabel({
+  live,
+  startedAt,
+}: {
+  live: Extract<ForkLiveRow, { kind: "work-live" }>;
+  startedAt: string;
+}) {
   const ctx = use(TimelineRowCtx);
   const activity = use(TimelineRowActivityCtx);
   const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
   const messages = useMessages();
   const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true, messages);
-  return forkStatusLineLabel(
-    live,
-    activity,
-    threadReadLabel(toolLabel, live.entry, target, messages)?.text ?? toolLabel,
+  return (
+    forkStatusLineLabel(
+      live,
+      activity,
+      threadReadLabel(toolLabel, live.entry, target, messages)?.text ?? toolLabel,
+    ) ?? <ThinkingWord startedAt={startedAt} />
   );
 }
 
-function StatusLabel({ live }: { live: ForkLiveRow }) {
+function StatusLabel({ live, startedAt }: { live: ForkLiveRow; startedAt: string }) {
   const activity = use(TimelineRowActivityCtx);
   return live.kind === "work-live" ? (
-    <WorkStatusLabel live={live} />
+    <WorkStatusLabel live={live} startedAt={startedAt} />
   ) : (
-    forkStatusLineLabel(live, activity, "")
+    (forkStatusLineLabel(live, activity, "") ?? <ThinkingWord startedAt={startedAt} />)
   );
 }
 
@@ -53,7 +77,7 @@ export function ForkLiveStatusLine({
     <>
       <SidebarV2WorkingMark seed={row.id} />
       <span className="min-w-0 truncate">
-        <StatusLabel live={live} />
+        <StatusLabel live={live} startedAt={row.createdAt ?? ""} />
       </span>
       {timer ? (
         <>

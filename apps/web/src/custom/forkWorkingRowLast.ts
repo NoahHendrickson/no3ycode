@@ -58,7 +58,10 @@ export function isForkStatusLine(row: WorkingRow): row is ForkStatusLineRow {
   return "forkLive" in row;
 }
 
-/** One-line text for the folded live row; upstream's richer previews stay in the open group. */
+/**
+ * One-line text for the folded live row; upstream's richer previews stay in the open group.
+ * Null is the thinking slot, which rotates through forkThinkingWords.
+ */
 export function forkStatusLineLabel(
   live: ForkLiveRow,
   activity: {
@@ -66,9 +69,9 @@ export function forkStatusLineLabel(
     readonly liveAnswerPreview: string | null;
   },
   toolLabel: string,
-): string {
+): string | null {
   if (live.kind === "thinking") {
-    return activity.providerStartingLabel ?? live.label ?? activity.liveAnswerPreview ?? "Thinking";
+    return activity.providerStartingLabel ?? live.label ?? activity.liveAnswerPreview ?? null;
   }
-  return live.entry.itemType === "reasoning" ? "Thinking" : toolLabel;
+  return live.entry.itemType === "reasoning" ? null : toolLabel;
 }

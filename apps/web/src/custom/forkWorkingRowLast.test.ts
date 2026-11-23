@@ -9,6 +9,7 @@ import {
   isForkStatusLine,
   type ForkLiveRow,
 } from "./forkWorkingRowLast";
+import { FORK_THINKING_WORDS, forkThinkingWord } from "./forkThinkingWords";
 
 type Entries = Parameters<typeof deriveMessagesTimelineRows>[0]["timelineEntries"];
 
@@ -130,7 +131,7 @@ describe("forkStatusLineLabel", () => {
     ({ kind: "work-live", entry: { itemType } }) as unknown as ForkLiveRow;
 
   it.each([
-    ["the thinking line", thinking, activity, "Thinking"],
+    ["the thinking line", thinking, activity, null],
     [
       "a provider startup",
       thinking,
@@ -144,8 +145,21 @@ describe("forkStatusLineLabel", () => {
       "Tiger cubs",
     ],
     ["a running tool", tool("command_execution"), activity, "Running rg"],
-    ["live reasoning", tool("reasoning"), activity, "Thinking"],
+    ["live reasoning", tool("reasoning"), activity, null],
   ])("labels %s", (_, live, state, label) => {
     expect(forkStatusLineLabel(live, state, "Running rg")).toBe(label);
+  });
+});
+
+describe("forkThinkingWord", () => {
+  it("holds a word for four seconds of the turn, then moves to the next", () => {
+    const startedAt = "2026-01-01T00:00:03.750Z";
+    const startMs = Date.parse(startedAt);
+    const first = forkThinkingWord(startedAt, startMs);
+    expect(forkThinkingWord(startedAt, startMs + 3_999)).toBe(first);
+    const next = FORK_THINKING_WORDS.indexOf(first as never) + 1;
+    expect(forkThinkingWord(startedAt, startMs + 4_000)).toBe(
+      FORK_THINKING_WORDS[next % FORK_THINKING_WORDS.length],
+    );
   });
 });
