@@ -5,18 +5,21 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
 import {
-  collectExternalUsageLinks,
   collectLimitAccounts,
   collectLimitPools,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitPool,
   type LimitPoolWindow,
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
+import {
+  collectExternalUsageLinks,
+  cursorUsageWindowDetails,
+  formatResetsIn,
+} from "@t3tools/shared/usageLimitsCopy";
+import { m } from "~/i18n/messages";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
-import { Fragment, memo, type RefObject, useRef, useState } from "react";
+import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { providerClients } from "~/components/settings/providerDriverMeta";
@@ -24,22 +27,35 @@ import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ensureLocalApi } from "~/localApi";
 import { environmentPresentations } from "~/state/presentation";
+import type { ComposerDrawerSection } from "./ComposerBackgroundWork";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
-import { UsageCircleMeter, UsageMeter } from "./UsageMeter";
+import { UsageCircleMeter } from "./UsageMeter";
 
 const FIVE_HOURS_MINS = 300;
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
 
-/** Owns the composer usage drawer's atomic open/clock state and focus restoration. */
+/** Owns the composer's top drawer: the usage tray's open/clock state and focus restoration, with
+    the background-work section (owned by ChatView) stacked above it while that is open. */
 export function useComposerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
+  readonly backgroundWork: ComposerDrawerSection | null;
 }) {
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const open = props.enabled && openedAt !== null;
+  const work = props.backgroundWork;
+  const workOpen = work?.open === true;
+  const drawerOpen = open || workOpen;
+  // The panel keeps its children through the close slide, so a closed drawer keeps the sections it
+  // last showed. Work that has ended has nothing left to show, so it leaves at once.
+  const [lastShown, setLastShown] = useState({ work: false, usage: false });
+  if (drawerOpen && (lastShown.work !== workOpen || lastShown.usage !== open)) {
+    setLastShown({ work: workOpen, usage: open });
+  }
+  const shown = drawerOpen ? { work: workOpen, usage: open } : lastShown;
 
   const toggle = () => {
     setOpenedAt((current) => (current === null ? Date.now() : null));
@@ -62,13 +78,30 @@ export function useComposerUsageDrawer(props: {
         onClose={() => close(false)}
       />
     ) : null,
-    drawer: props.enabled ? (
-      <ComposerUsageLimitsDrawer open={open} openedAt={openedAt ?? 0} onClose={() => close(true)} />
-    ) : null,
+    drawer:
+      props.enabled || work !== null ? (
+        <ComposerUsageLimitsDrawer
+          open={drawerOpen}
+          // Escape closes every section and returns focus to one trigger, the ring when usage was open.
+          onClose={() => {
+            if (work?.open) work.onCollapse(!open);
+            if (open) close(true);
+          }}
+        >
+          {shown.work && work !== null ? work.content : null}
+          {shown.work && work !== null && shown.usage ? (
+            <div aria-hidden className="h-px shrink-0 bg-border" />
+          ) : null}
+          {shown.usage && props.enabled ? (
+            <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
+          ) : null}
+        </ComposerUsageLimitsDrawer>
+      ) : null,
   };
 }
 
-const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
+/** @public — the ring trigger, from plain props; Storybook draws it beside an open drawer. */
+export const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   triggerRef,
   usageLimits,
   open,
@@ -106,17 +139,21 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
   );
 });
 
-/** Smoothly expanding single-line vessel strip anchored above the composer (grows upward, zero shift). */
-const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
+/** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
+    vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
+    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). Its tray is
+    `children`, mounted only while the panel is open. @public — Storybook fills it with the view. */
+export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
-  readonly openedAt: number;
   readonly onClose: () => void;
+  readonly children: ReactNode;
 }) {
   return (
-    <Collapsible open={props.open}>
+    <Collapsible open={props.open} className="overflow-hidden">
       <CollapsiblePanel
+        animate={false}
         data-fork-composer-usage-drawer="true"
-        className="pointer-events-auto"
+        className="pointer-events-auto transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] data-ending-style:translate-y-full data-ending-style:duration-150 data-ending-style:ease-in data-starting-style:translate-y-full motion-reduce:transition-none"
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.stopPropagation();
@@ -124,7 +161,7 @@ const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props:
           }
         }}
       >
-        <ComposerLimitsTray now={props.openedAt} onClose={props.onClose} />
+        {props.children}
       </CollapsiblePanel>
     </Collapsible>
   );
@@ -132,7 +169,8 @@ const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props:
 
 /** Full descriptive label for tooltips and accessible text. */
 function fullWindowLabel(pool: LimitPool, window: LimitPoolWindow): string {
-  const details = pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
+  const details =
+    pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
   return (details?.label ?? window.label).replaceAll(" · ", " ");
 }
 
@@ -185,13 +223,35 @@ export function compactTrayWindows(pool: LimitPool): readonly LimitPoolWindow[] 
 /** Mounted only while the strip is open, so the composer never subscribes to every environment's providers. */
 function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () => void }) {
   const presentations = useAtomValue(environmentPresentations.presentationsWithProvidersAtom);
-  const pools = collectLimitPools(collectLimitAccounts(presentations), props.now);
-  const notices = actionableLimitNotices(presentations);
-  const externalLinks = collectExternalUsageLinks(presentations);
+  return (
+    <ComposerLimitsTrayView
+      pools={collectLimitPools(collectLimitAccounts(presentations), props.now)}
+      notices={actionableLimitNotices(presentations)}
+      externalLinks={collectExternalUsageLinks(presentations, m)}
+      now={props.now}
+      onClose={props.onClose}
+    />
+  );
+}
+
+export interface ComposerLimitsTrayViewProps {
+  readonly pools: readonly LimitPool[];
+  readonly notices: readonly string[];
+  readonly externalLinks: ReadonlyArray<
+    Pick<ReturnType<typeof collectExternalUsageLinks>[number], "label" | "url">
+  >;
+  readonly now: number;
+  readonly onClose: () => void;
+}
+
+/** @public — the strip as drawn, from plain data; Storybook renders it on its own. */
+export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
+  const { pools, notices, externalLinks } = props;
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 
+  // 8px at the end, so the close X lines up with a composer banner's dismiss X below it.
   return (
-    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 py-3 ps-3 pe-2">
       {!hasContent ? (
         <span className="text-xs text-muted-foreground">
           No provider reports subscription limits.
@@ -204,14 +264,16 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
           >
             {pools.map((pool, index) => (
               <Fragment key={pool.driver}>
-                {index > 0 ? <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" /> : null}
+                {index > 0 ? (
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
+                ) : null}
                 <CompactProviderStrip pool={pool} now={props.now} />
               </Fragment>
             ))}
             {externalLinks.map((link, index) => (
               <Fragment key={link.url}>
                 {pools.length > 0 || index > 0 ? (
-                  <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" />
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
                 ) : null}
                 <button
                   type="button"
@@ -226,7 +288,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
             {notices.length > 0 ? (
               <>
                 {pools.length > 0 || externalLinks.length > 0 ? (
-                  <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" />
+                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
                 ) : null}
                 <Tooltip>
                   <TooltipTrigger
@@ -264,10 +326,10 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
       <button
         type="button"
         aria-label="Close usage limits"
-        className="ml-auto inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="ml-auto inline-flex size-6 shrink-0 self-start cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={props.onClose}
       >
-        <XIcon className="size-3" aria-hidden="true" />
+        <XIcon className="size-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -279,39 +341,35 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
   const windows = compactTrayWindows(pool);
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              aria-label={providerLabel}
-              className={
-                pool.driver === "claudeAgent"
-                  ? "inline-flex size-4 shrink-0 translate-y-px items-center justify-center [--fork-mark-size:14px]"
-                  : "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]"
-              }
-            >
-              {hasForkProviderMark(pool.driver) ? (
-                <ForkProviderMark driver={pool.driver} />
-              ) : (
-                <ProviderInstanceIcon
-                  driverKind={pool.driver}
-                  displayName={providerLabel}
-                  indicatorBackground="var(--card)"
-                  className="size-4"
-                  iconClassName="size-3.5 text-foreground/80"
-                />
-              )}
-            </span>
+    <div className="flex shrink-0 flex-col gap-1.5">
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+        <span
+          aria-hidden
+          className={
+            pool.driver === "claudeAgent"
+              ? "inline-flex size-4 shrink-0 translate-y-px items-center justify-center [--fork-mark-size:14px]"
+              : "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]"
           }
-        />
-        <TooltipPopup side="top">{providerLabel}</TooltipPopup>
-      </Tooltip>
+        >
+          {hasForkProviderMark(pool.driver) ? (
+            <ForkProviderMark driver={pool.driver} />
+          ) : (
+            <ProviderInstanceIcon
+              driverKind={pool.driver}
+              displayName={providerLabel}
+              indicatorBackground="var(--card)"
+              className="size-4"
+              iconClassName="size-3.5 text-foreground/80"
+            />
+          )}
+        </span>
+        <span className="whitespace-nowrap">{providerLabel}</span>
+      </span>
       <div className="flex shrink-0 items-center gap-2.5">
         {windows.map((window) => {
           const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
           const nextReset = nextRefill ?? window.resets[0];
-          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m) : null;
           const fullLabel = fullWindowLabel(pool, window);
           const shortLabel = compactWindowLabel(pool, window);
           const accessibleLabel = `${providerLabel} ${fullLabel}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`;
@@ -325,14 +383,10 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
                     aria-label={accessibleLabel}
                     className="inline-flex shrink-0 items-center gap-1 rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
+                    <UsageCircleMeter remaining={window.remainingPercent} />
                     <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                       {shortLabel}
                     </span>
-                    <UsageMeter
-                      remaining={window.remainingPercent}
-                      className="h-2.5 w-7 rounded-[3px] border border-border bg-muted/70"
-                      fillClassName="rounded-none"
-                    />
                   </span>
                 }
               />

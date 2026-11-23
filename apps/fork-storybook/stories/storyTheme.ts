@@ -1,3 +1,4 @@
+import { FORK_GLASS_3D_MODE_LABELS, type ForkGlass3dMode } from "~/custom/forkGlass3d";
 import {
   BASIC_TONE_OPTIONS,
   BASIC_TONES,
@@ -10,10 +11,10 @@ import {
   type InletColor,
 } from "~/custom/forkTheme";
 
-/** What the toolbar's Theme picks: a Basic tone, Glass, or an Inlet colour. */
+/** What the toolbar's Theme picks: a Basic tone, Glass (Full 3D or Flat), or an Inlet colour. */
 export type StoryTheme =
   | { readonly palette: "basic"; readonly tone: BasicTone }
-  | { readonly palette: "glass" }
+  | { readonly palette: "glass"; readonly glass3d: ForkGlass3dMode }
   | { readonly palette: "inlet"; readonly color: InletColor };
 
 /** The toolbar's choices, in Settings › Appearance's order: Basic's tones, Glass, Inlet's colours. */
@@ -23,7 +24,16 @@ export const STORY_THEME_ITEMS = [
     title: `Basic · ${BASIC_TONE_OPTIONS[tone].label}`,
     right: BASIC_TONE_OPTIONS[tone].appearance,
   })),
-  { value: "glass", title: COOL_DARKER_LABEL, right: "dark" },
+  {
+    value: "glass",
+    title: `${COOL_DARKER_LABEL} · ${FORK_GLASS_3D_MODE_LABELS.full}`,
+    right: "dark",
+  },
+  {
+    value: "glass_off",
+    title: `${COOL_DARKER_LABEL} · ${FORK_GLASS_3D_MODE_LABELS.off}`,
+    right: "dark",
+  },
   ...INLET_COLORS.map((color) => ({
     value: `inlet_${color}`,
     title: `${INLET_LABEL} · ${INLET_COLOR_OPTIONS[color].label}`,
@@ -39,7 +49,8 @@ export function storyTheme(globals: Readonly<Record<string, unknown>>): StoryThe
   const value = STORY_THEME_ITEMS.some((item) => item.value === raw)
     ? (raw as string)
     : DEFAULT_STORY_THEME;
-  if (value === "glass") return { palette: "glass" };
+  if (value === "glass") return { palette: "glass", glass3d: "full" };
+  if (value === "glass_off") return { palette: "glass", glass3d: "off" };
   const [palette, choice] = value.split("_");
   if (palette === "inlet" && (INLET_COLORS as ReadonlyArray<string>).includes(choice ?? "")) {
     return { palette: "inlet", color: choice as InletColor };
@@ -57,7 +68,9 @@ export function storyThemeKey(globals: Readonly<Record<string, unknown>>): strin
     ? `basic_${theme.tone}`
     : theme.palette === "inlet"
       ? `inlet_${theme.color}`
-      : "glass";
+      : theme.glass3d === "off"
+        ? "glass_off"
+        : "glass";
 }
 
 /** Basic's tone for the Basic-only stories (the ramp, the tone table); null under Glass or Inlet. */

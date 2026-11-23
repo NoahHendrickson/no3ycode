@@ -28,7 +28,6 @@ import { AppActivityIndicator } from "../src/components/ui/AppActivityIndicator"
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { FloatingWorkingControl } from "../src/features/threads/floating-working-control";
-import type { FloatingWorkingStatus } from "../src/features/threads/floating-working-status";
 import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
 import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
 import { useOpenLinkedThread } from "../src/features/threads/useOpenLinkedThread";
@@ -38,6 +37,7 @@ import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassT
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yBeadRing } from "./No3yBeadRing";
 import { No3yGlassLayer } from "./No3yGlass";
+import type { No3yPillStatus } from "./no3yPillStatus";
 import {
   no3yStatusSegments,
   no3ySubagentMarkKind,
@@ -62,6 +62,8 @@ interface No3yPillExtras {
   readonly backgroundWork: PendingBackgroundWorkPresentation | null;
   /** The loaded thread detail the upstream agents segment reads, or null before it loads. */
   readonly detailRef: ScopedThreadRef | null;
+  /** The pill's own status: upstream's, plus the states upstream moved into the feed. */
+  readonly no3yStatus: No3yPillStatus | null;
 }
 
 /**
@@ -82,6 +84,7 @@ export function No3yStatusPillSwap(
       threadId={props.threadId}
       backgroundWork={props.backgroundWork}
       detailRef={props.detailRef}
+      no3yStatus={props.no3yStatus}
     />
   );
 }
@@ -95,7 +98,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
   const threadKey = scopedThreadKey(props.environmentId, props.threadId);
   const turn = useThreadTurnSubagents(props.detailRef);
   const childInputs = useChildThreadInputs(threadRef);
-  const status = props.status;
+  const status = props.no3yStatus;
   const extension =
     status?.kind === "extension"
       ? { label: status.label, onPress: status.onPress }
@@ -268,7 +271,7 @@ const SEGMENT_ICONS: Readonly<Record<Exclude<No3yStatusSegment["kind"], "status"
 
 function PillSegment(props: {
   readonly segment: No3yStatusSegment;
-  readonly status: FloatingWorkingStatus | null;
+  readonly status: No3yPillStatus | null;
   readonly palette: FlatGlassPalette;
 }) {
   const { segment, palette, status } = props;
@@ -309,7 +312,7 @@ function StatusIcon(props: { readonly icon: HugeIconData; readonly color: string
 
 /** The mark for a transient status: the bead ring while working, a spinner while waiting on it. */
 export function No3yStatusGlyph(props: {
-  readonly status: FloatingWorkingStatus;
+  readonly status: No3yPillStatus;
   readonly palette: FlatGlassPalette;
 }) {
   const { status, palette } = props;
@@ -346,7 +349,6 @@ export function No3yStatusGlyph(props: {
       return <StatusIcon icon={ComputerTerminal01Icon} color={ink} />;
     case "child-input":
       return <StatusIcon icon={Robot01Icon} color={ink} />;
-    case "syncing":
     case "preparing":
       return <Spinner />;
   }
@@ -370,7 +372,7 @@ function plural(count: number, noun: string) {
 
 function segmentAccessibilityLabel(
   segment: No3yStatusSegment,
-  status: FloatingWorkingStatus | null,
+  status: No3yPillStatus | null,
   agentsLabel: string | undefined,
 ): string {
   const needs = segment.needsYou ? ", needs you" : "";

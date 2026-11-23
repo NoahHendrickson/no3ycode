@@ -55,7 +55,7 @@ describe("fork-tabs", () => {
     const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
     expect(at).toBeGreaterThan(-1);
     expect(basic.slice(at)).toMatch(
-      /\{\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*0\.75rem;/u,
+      /\{\s*gap: 2px;\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*0\.75rem;/u,
     );
     // The model menu's option strips are Tabs, so this rule draws them too.
     expect(read("../custom/ComposerModelPicker.tsx")).toMatch(
@@ -72,7 +72,11 @@ describe("fork-tabs", () => {
       "../components/settings/ScheduledTasksSettings.tsx",
     ]) {
       const source = read(path);
-      const label = source.indexOf('aria-label="Days to run"');
+      // Upstream's label is translated; the fork's editor keeps the literal.
+      const label = Math.max(
+        source.indexOf('aria-label="Days to run"'),
+        source.indexOf('aria-label={gt("Days to run")}'),
+      );
       const tag = source.slice(
         source.lastIndexOf("<ToggleGroup", label),
         source.indexOf(">", label),

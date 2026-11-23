@@ -40,8 +40,10 @@ describe("applyAppearanceFontVariables", () => {
     };
     try {
       applyAppearanceFontVariables(root, { ...preferences, separate: false });
-      expect(composerFontSize()).toBe("17.5px");
-      expect(touchComposerFontSize()).toBe("17.5px");
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      expect(composerFontSize()).toBe("20px");
+      expect(touchComposerFontSize()).toBe("20px");
+      /* fork:end fork-composer-shell */
 
       applyAppearanceFontVariables(root, { ...preferences, separate: true });
       expect(composerFontSize()).toBe("14px");

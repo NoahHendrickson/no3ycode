@@ -11,9 +11,9 @@ import {
   collectExternalUsageLinks,
   collectLimitAccounts,
   collectLimitPools,
-  formatResetsIn,
   type LimitPool,
 } from "@t3tools/shared/usageLimits";
+import { formatResetsIn } from "@t3tools/shared/usageLimitsCopy";
 import { useEffect, useEffectEvent, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";

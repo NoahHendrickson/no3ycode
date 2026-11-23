@@ -628,7 +628,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(usageSheet).toContain('const CALM_GREEN = "#38a169";');
     // Glass controls and card, the looping working mark.
     expect(composerStyle).toContain("<No3yGlassLayer");
-    expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
+    // Upstream moved the composer surface into its own module.
+    expect(readRepoFile("apps/mobile/src/components/ComposerSurface.tsx")).toContain(
+      "<No3yGlassLayer radius={targetBorderRadius} />",
+    );
     expect(threadComposer).toContain("<No3yBottomScrim");
     expect(threadComposer).toContain("paddingHorizontal={no3yCard ? NO3Y_CARD_INSET : 0}");
     expect(statusMark).toContain("<No3yBeadRing");

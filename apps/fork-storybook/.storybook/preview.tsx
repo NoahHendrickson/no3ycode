@@ -10,7 +10,7 @@ import "~/theme.custom.focus-rings.css";
 
 import type { Decorator, Preview } from "@storybook/react-vite";
 
-import { initializeForkGlass3d } from "~/custom/forkGlass3d";
+import { FORK_GLASS_3D_ATTRIBUTE, initializeForkGlass3d } from "~/custom/forkGlass3d";
 import { applyForkMarker } from "~/custom/forkMarker";
 import {
   COOL_DARKER_THEME,
@@ -40,6 +40,7 @@ const withSurface: Decorator = (Story, context) => {
     <Surface
       name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
       inline={context.viewMode === "docs"}
+      dockedSidebar={storyTheme(context.globals).palette === "glass"}
     >
       <Story />
     </Surface>
@@ -64,6 +65,11 @@ const preview: Preview = {
   // through selectors extended in place, once per sheet rather than from a render.
   beforeEach: ({ globals }) => {
     const theme = storyTheme(globals);
+    if (theme.palette === "glass" && theme.glass3d === "off") {
+      document.documentElement.setAttribute(FORK_GLASS_3D_ATTRIBUTE, "off");
+    } else {
+      document.documentElement.removeAttribute(FORK_GLASS_3D_ATTRIBUTE);
+    }
     if (theme.palette === "basic") setForkBasicTone(theme.tone, setTheme);
     else if (theme.palette === "glass") setForkAppearance(COOL_DARKER_THEME, setTheme);
     else {

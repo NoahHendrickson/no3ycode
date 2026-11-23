@@ -122,7 +122,6 @@ describe("fork guard: sidebar-v2-card-rows", () => {
   });
 
   it("leads the flat card's project with its favicon, title monogram as the fallback", () => {
-    // 12px, like every other mark on the repo line (Figma 364:17299).
     // Flat mode names the project on every card, and the favicon is what the
     // slim rows and the project menu already use for it. The slot is built on
     // the row's side from the project record upstream hands down (#10714)
@@ -133,10 +132,12 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // mark only for a null slot.
     expect(sidebarV2).toContain("projectIconSlot={projectIcon}");
     expect(sidebarV2).toMatch(
-      /const projectIcon =[^;]*?<ProjectFavicon\s+project=\{props\.project\}\s+className="[^"]*"\s+\/>/u,
+      /const projectIcon =[^;]*?<ProjectFavicon\s+project=\{props\.project\}\s+className="size-4"\s+\/>/u,
     );
     const meta = readSibling("../custom/SidebarV2ThreadCardMeta.tsx");
-    expect(meta).toContain("props.projectIconSlot ?? <SidebarV2ProjectFolderMark");
+    expect(meta).toMatch(
+      /props\.projectIconSlot \?\? \(\s*<SidebarV2ProjectFolderMark className="size-4 shrink-0" \/>/u,
+    );
   });
 
   it("rides the PR badge on the repo line, after the checkout cluster", () => {
@@ -210,14 +211,12 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // nothing. Pinning the outer condition is what makes that regression fail.
     expect(meta).toContain("props.hasWorktree || props.branch ?");
     expect(meta).toContain("const Mark = props.hasWorktree ? WorktreeIcon : GitBranchIcon;");
-    // Every mark on the line is the component set's 12px (364:17299) — the
-    // runtime glyph leads, then a hairline, then the checkout cluster.
+    // The runtime and checkout marks use the component set's 12px (364:17299).
     expect(meta).toContain('const MARK = "size-3 shrink-0"');
     expect(meta).toContain("<Mark aria-hidden className={MARK} />");
     // The folder mark is the exported SidebarV2ProjectFolderMark, drawn for a
     // null project slot; it carries the aria-hidden, the meta the size.
     expect(meta).toContain("<FolderIcon aria-hidden className={props.className} />");
-    expect(meta).toContain("<SidebarV2ProjectFolderMark className={MARK} />");
     expect(meta).toContain("<CloudIcon aria-hidden className={MARK} />");
     expect(meta).toContain("<LaptopIcon aria-hidden className={MARK} />");
     expect(meta).toContain('className="h-2 w-px shrink-0 rounded-full bg-foreground/12"');

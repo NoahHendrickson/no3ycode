@@ -18,12 +18,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
-import type {
-  FloatingStatusAction,
-  FloatingWorkingStatus,
-} from "../src/features/threads/floating-working-status";
+import type { FloatingStatusAction } from "../src/features/threads/floating-working-status";
 import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
+import type { No3yPillStatus } from "./no3yPillStatus";
 import { no3ySheetBackground } from "./no3ySheet";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yCircleButton } from "./No3yControls";
@@ -396,7 +394,7 @@ function WorkingSince(props: { readonly startedAt: string; readonly palette: Fla
 /** The transient status, its full message, and the action the floating control offered. */
 function StatusRow(props: {
   readonly palette: FlatGlassPalette;
-  readonly status: Exclude<FloatingWorkingStatus, { kind: "background" | "child-input" }>;
+  readonly status: Exclude<No3yPillStatus, { kind: "background" | "child-input" }>;
 }) {
   const { palette, status } = props;
   const leading = <No3yStatusGlyph status={status} palette={palette} />;
@@ -453,7 +451,6 @@ function StatusRow(props: {
           onPress={status.onPress}
         />
       );
-    case "syncing":
     case "preparing":
       return <Row palette={palette} leading={leading} title={status.label} />;
   }

@@ -111,9 +111,9 @@ describe("fork guard: fork-music-panel", () => {
 
   it("retires the Music tab through the stores' own migrations", () => {
     // Versions bumped past upstream, so both stores migrate what was persisted with Music in it.
-    expect(rightPanelStore).toMatch(fenced("const RIGHT_PANEL_STORAGE_VERSION = 15;"));
+    expect(rightPanelStore).toMatch(fenced("const RIGHT_PANEL_STORAGE_VERSION = 17;"));
     expect(rightPanelStore).toMatch(fenced('if \\(kind === "music"\\) return \\[\\];'));
-    expect(closedViewStore).toMatch(fenced("version: 3,"));
+    expect(closedViewStore).toMatch(fenced("version: 4,"));
     // closedViewStore's migrate keeps only the kinds isClosedViewEntry knows, which no longer include it.
     expect(closedViewStore).not.toContain('case "music"');
     const { byThreadKey } = migratePersistedRightPanelState({

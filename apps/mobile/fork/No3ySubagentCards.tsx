@@ -33,7 +33,7 @@ import {
 } from "../src/features/threads/threadAgentsPresentation";
 import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { WorkLogBlock } from "../src/features/threads/work-log-layout";
-import { useEnvironments } from "../src/state/environments";
+import { useLinkedThreadReach } from "../src/state/linkedThread";
 import { useEnvironmentServerConfig } from "../src/state/entities";
 import { environmentThreadDetails } from "../src/state/threads";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
@@ -146,7 +146,7 @@ function SubagentCard(props: {
   const { agent, palette } = props;
   const navigation = useNavigation();
   const openInspector = useOpenThreadInspector();
-  const { presentationById } = useEnvironments();
+  const reach = useLinkedThreadReach(props.environmentId, [agent]);
   // A task in a linked environment runs a provider instance of that environment.
   const config = useEnvironmentServerConfig(
     agent.remoteChild?.environmentId ?? props.environmentId,
@@ -169,7 +169,12 @@ function SubagentCard(props: {
   const mark = no3ySubagentMarkKind(agent.status);
   const failed = mark === "failed";
   // A task in a linked environment opens there, if this app is connected to it.
-  const target = subagentThreadTarget(agent, props.environmentId, (id) => presentationById.has(id));
+  const target = subagentThreadTarget(
+    agent,
+    props.environmentId,
+    reach.ownConnection,
+    reach.isLinked,
+  );
   const driver = provider?.driver ?? (agent.remoteChild === undefined ? agent.driver : undefined);
   const open = () => {
     if (target === null) return;

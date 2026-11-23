@@ -92,10 +92,10 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
-    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*24px/u);
+    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
     // Compact Previous stays square.
     expect(theme).toMatch(
-      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*24px/u,
+      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*28px/u,
     );
 
     const outline = cssRules(theme).find(

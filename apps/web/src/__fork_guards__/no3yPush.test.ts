@@ -21,11 +21,11 @@ describe("fork guard: no3y-push", () => {
     expect(app).toMatch(/appServiceDisposers = \[[\s\S]*installNo3yPushRegistration\(\),/u);
   });
 
-  it("registers at the path the Mac push service is mounted on", () => {
+  it("registers at the path the Mac push service serves", () => {
+    // Both sides read the mount path from no3yConstants; only the route below it is spelled twice.
     const registration = readRepoFile("apps/mobile/fork/pushRegistration.ts");
     const service = readRepoFile("apps/mobile/fork/push-service/no3yPush.mts");
-    expect(registration).toContain('NO3Y_PUSH_REGISTER_PATH = "/no3y-push/register"');
-    expect(service).toContain('const MOUNT_PATH = "/no3y-push"');
+    expect(registration).toContain("`${origin}${NO3Y_PUSH_MOUNT_PATH}/register`");
     expect(service).toContain('path !== "/register"');
   });
 });

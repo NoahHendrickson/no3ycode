@@ -462,6 +462,8 @@
    the list through a concave corner above and below, as the open thread's
    row runs into the chat panel. The shell is what hangs from the button. */
 
+/* The model picker's top horizontal provider strip sits inside the shell,
+   above the inset model list card. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="menu-popup"]:has([data-fork-model-picker]) {
   /* It hangs from the composer, so it is drawn in the composer's materials:
@@ -476,7 +478,7 @@
   border-radius: var(--fork-inlet-menu-radius);
 
   & [data-fork-model-picker="list"] {
-    margin: 4px 4px 4px 0;
+    margin: 4px;
     border-radius: calc(var(--fork-inlet-menu-radius) - 4px);
     background: var(--popover);
   }
@@ -488,44 +490,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-model-picker="providers"] {
-  --fork-inlet-rail-fillet: 6px;
-  border-inline-end-width: 0;
-  padding-inline-end: var(--fork-inlet-rail-fillet);
-  /* Inset by the list's 4px margin plus corners, so the first and last tabs'
-     fillets stay inside the rail and clear of the list's rounded corners. */
-  padding-top: 12px;
-  padding-bottom: 12px;
-
-  & [aria-current="true"] {
-    background: var(--popover);
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-
-  & [aria-current="true"]::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    left: 100%;
-    width: var(--fork-inlet-rail-fillet);
-    top: calc(-1 * var(--fork-inlet-rail-fillet));
-    bottom: calc(-1 * var(--fork-inlet-rail-fillet));
-    background:
-      radial-gradient(
-          circle at 0 0,
-          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
-        )
-        right top / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
-      radial-gradient(
-          circle at 0 100%,
-          transparent calc(var(--fork-inlet-rail-fillet) - 0.5px),
-          var(--popover) calc(var(--fork-inlet-rail-fillet) + 0.5px)
-        )
-        right bottom / var(--fork-inlet-rail-fillet) var(--fork-inlet-rail-fillet) no-repeat,
-      linear-gradient(var(--popover), var(--popover)) 0 var(--fork-inlet-rail-fillet) / 100%
-        calc(100% - 2 * var(--fork-inlet-rail-fillet)) no-repeat;
-  }
+  padding: 4px 4px 0;
 }
 
 /* ── The mode menu, hung from the mode chip ──────────────────────────────────

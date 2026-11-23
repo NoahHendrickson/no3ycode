@@ -1,3 +1,4 @@
+import { msg } from "gt-react";
 import { ScheduledTaskModelPicker } from "./ScheduledTaskModelPicker";
 import { ScheduledTriggerTabs } from "./ScheduledTriggerTabs";
 import {
@@ -74,7 +75,7 @@ import { WorktreeBaseBranchPicker } from "~/components/WorktreeBaseBranchPicker"
 import { usePrimaryCloudLinkState } from "~/cloud/cloudLinkState";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { useEnvironmentSettings } from "~/hooks/useSettings";
+import { useClientSettings, useEnvironmentSettings } from "~/hooks/useSettings";
 import { getCustomModelOptionsByInstance } from "~/modelSelection";
 import {
   applyProviderInstanceSettings,
@@ -244,7 +245,8 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
               <div data-fork-composer-model-controls="true" className="flex min-w-0 items-center">
                 <ScheduledTaskModelPicker
                   environmentId={props.environmentId}
-                  disabled={props.disabled}
+                  // A run bound to a thread uses that thread's model, as upstream's editor says.
+                  disabled={props.disabled || (draft.threadId !== "" && !draft.githubPrOpened)}
                   activeInstanceId={model.activeInstanceId}
                   model={model.activeModel}
                   lockedProvider={null}
@@ -288,6 +290,7 @@ export function ScheduledTaskEditor(props: ScheduledTaskEditorProps) {
  * portals out of the detail's disabled fieldset, so it carries its own.
  */
 function TriggerPill(props: ScheduledTaskEditorProps) {
+  const timestampFormat = useClientSettings((settings) => settings.timestampFormat);
   const timeZone = useEnvironmentQuery(
     serverEnvironment.scheduledTasksLive({ environmentId: props.environmentId, input: {} }),
   ).data?.timeZone;
@@ -314,7 +317,7 @@ function TriggerPill(props: ScheduledTaskEditorProps) {
         render={<ComposerControl size="xs" className="min-w-0 shrink" />}
       >
         <TriggerIcon aria-hidden />
-        <span className="shrink-0">{draftTriggerLabel(draft, timeZone)}</span>
+        <span className="shrink-0">{draftTriggerLabel(draft, timeZone, timestampFormat)}</span>
         {repositories ? <span className="min-w-0 truncate">/ {repositories}</span> : null}
       </PopoverTrigger>
       <PopoverPopup align="start" className="w-[min(32rem,calc(100vw-2rem))]">
@@ -737,7 +740,13 @@ function WebhookEndpointField(props: {
     serverEnvironment.rotateScheduledTaskWebhookToken.permissionAtom(environmentId),
   );
   const httpBaseUrl = useEnvironmentHttpBaseUrl(environmentId);
-  const { copyToClipboard, isCopied } = useCopyToClipboard({ target: "webhook URL" });
+  const { copyToClipboard, isCopied } = useCopyToClipboard({
+    target: {
+      target: "webhook URL",
+      unavailableMessage: msg("Clipboard API is unavailable while copying webhook URL."),
+      failureMessage: msg("Failed to copy webhook URL to the clipboard."),
+    },
+  });
   const rotate = useAtomCommand(serverEnvironment.rotateScheduledTaskWebhookToken, {
     label: "scheduled task rotate webhook token",
   });

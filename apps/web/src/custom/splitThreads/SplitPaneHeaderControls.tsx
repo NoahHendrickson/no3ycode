@@ -1,12 +1,6 @@
-/**
- * A pane's controls in the thread header — see `.fork/customizations.yaml#fork-split-threads`.
- *
- * Float lifts a started thread into a window over the chat column; inside
- * that window the same spot reads Dock, which lands it beside the column's
- * thread as a split. The window has no room for panels, so it drops the panel
- * toggles until it docks. A split pane's unsent draft gets an X that closes
- * the pane.
- */
+/** A pane's header controls (fork-split-threads). Float lifts a thread into a window over the
+ * column, where the same spot reads Dock; the window drops the split and panel toggles until it
+ * docks. The split toggle sits just before details; an unsent split draft gets a closing X. */
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { PictureInPicture2, SquareSplitHorizontal, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -48,6 +42,8 @@ function PaneActionButton(props: {
 
 export function SplitPaneHeaderControls(props: {
   readonly panelToggleControls: ReactNode;
+  /** SplitAgentToggle, when the pane can split or is split. */
+  readonly splitAgentToggle: ReactNode;
   /** The pane's thread while it is an unsent draft, else null. */
   readonly draftId: DraftId | null;
   readonly threadRef: ScopedThreadRef | null;
@@ -75,9 +71,12 @@ export function SplitPaneHeaderControls(props: {
         />
       ) : null}
       {splitPane.floating ? null : (
-        <div className="pointer-events-auto flex h-full items-center">
-          {props.panelToggleControls}
-        </div>
+        <>
+          {props.splitAgentToggle}
+          <div className="pointer-events-auto flex h-full items-center">
+            {props.panelToggleControls}
+          </div>
+        </>
       )}
       {splitPane.split && draftId !== null && threadRef !== null ? (
         <PaneActionButton

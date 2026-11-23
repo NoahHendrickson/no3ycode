@@ -1,6 +1,8 @@
 /** Fork-owned — see `.fork/customizations.yaml#no3y-mobile-identity`. */
 import type { ExpoConfig } from "expo/config";
 
+import { NO3Y_APPLE_TEAM_ID, NO3Y_BUNDLE_IDENTIFIER } from "./no3yConstants.ts";
+
 type AppVariant = "development" | "preview" | "production";
 
 interface UpstreamVariant {
@@ -15,10 +17,6 @@ interface UpstreamVariant {
 }
 
 type RepoEnv = Readonly<Record<string, string | undefined>>;
-
-export const NO3Y_APPLE_TEAM_ID = "4WDT6B6JDX";
-
-const NO3Y_BUNDLE_IDENTIFIER = "com.noahhendrickson.no3ycode";
 
 const fromRepoRoot = (relativePath: string) => `../../${relativePath}`;
 

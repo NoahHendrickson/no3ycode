@@ -25,12 +25,18 @@ import * as Schema from "effect/Schema";
 import * as Electron from "electron";
 
 import * as DesktopIpc from "../ipc/DesktopIpc.ts";
+import { isForkAuxiliaryWindow } from "./ForkAuxiliaryWindows.ts";
 import {
   FORK_VIBRANCY_MATERIAL,
   forkSenderWindow,
   isForkGlassActive,
   setForkGlassActive,
 } from "./ForkGlassState.ts";
+import {
+  clearForkLiquidGlass,
+  isForkLiquidGlassSupported,
+  takeForkLiquidGlassLoadFailure,
+} from "./ForkLiquidGlass.ts";
 
 const FORK_SET_SIDEBAR_VIBRANCY_CHANNEL = "fork:set-sidebar-vibrancy";
 
@@ -66,10 +72,13 @@ export const ForkSidebarVibrancyRequest = Schema.Struct({
   enabled: Schema.Boolean,
 });
 
+export const ForkSidebarVibrancyMode = Schema.Literals(["off", "vibrancy", "liquid-glass"]);
+export type ForkSidebarVibrancyMode = typeof ForkSidebarVibrancyMode.Type;
+
 export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
   channel: FORK_SET_SIDEBAR_VIBRANCY_CHANNEL,
   payload: ForkSidebarVibrancyRequest,
-  result: Schema.Boolean,
+  result: ForkSidebarVibrancyMode,
   handler: Effect.fn("desktop.ipc.fork.setSidebarVibrancy")(function* (request, event) {
     const platform = yield* HostProcess.Platform;
 
@@ -88,31 +97,58 @@ export const setForkSidebarVibrancy = DesktopIpc.makeIpcMethod({
     // repaint them with the app's fill instead of their own.
     const target = yield* forkSenderWindow(event);
     const painted = target !== null && !target.isDestroyed();
+    let mode: ForkSidebarVibrancyMode = "off";
     if (painted) {
       // Set before painting, so an appearance sync racing this call sees the
       // new owner and does not repaint the fill out from under the material.
       const hadGlass = isForkGlassActive(target);
       setForkGlassActive(target, enabled);
       if (platform !== "win32") {
+        // Main macOS 26+ windows use native Liquid Glass under the sidebar only
+        // (`ForkLiquidGlass`), which conflicts with Electron's `NSVisualEffectView`.
+        // Side chat and macOS < 26 keep whole-window vibrancy.
+        const useLiquidGlass =
+          enabled &&
+          platform === "darwin" &&
+          !isForkAuxiliaryWindow(target) &&
+          isForkLiquidGlassSupported(platform);
+        const loadFailure = takeForkLiquidGlassLoadFailure();
+        if (loadFailure !== null) {
+          yield* Effect.logWarning("fork liquid glass addon failed to load", loadFailure);
+        }
+        if (!useLiquidGlass && platform === "darwin") {
+          clearForkLiquidGlass(target);
+        }
         // Every macOS window is built with the view, so even a never-glass window clears it.
-        target.setVibrancy(enabled ? FORK_VIBRANCY_MATERIAL : null);
-      } else if (enabled !== hadGlass) {
-        // Every call reruns DWM's frame setup and "none" also paints white, so
-        // only a real change of glass may reach it.
-        target.setBackgroundMaterial(enabled ? FORK_WINDOWS_BACKDROP_MATERIAL : "none");
+        target.setVibrancy(enabled && !useLiquidGlass ? FORK_VIBRANCY_MATERIAL : null);
+        if (enabled) {
+          mode = useLiquidGlass ? "liquid-glass" : "vibrancy";
+        }
+      } else {
+        if (enabled !== hadGlass) {
+          // Every call reruns DWM's frame setup and "none" also paints white, so
+          // only a real change of glass may reach it.
+          target.setBackgroundMaterial(enabled ? FORK_WINDOWS_BACKDROP_MATERIAL : "none");
+        }
+        if (enabled) {
+          mode = "vibrancy";
+        }
       }
+      // Also sets the web view's base colour, so Liquid Glass needs the transparent
+      // write too: an opaque base paints over the native glass behind Chromium.
       target.setBackgroundColor(enabled ? TRANSPARENT_BACKGROUND : opaqueWindowBackground());
     }
 
     // The renderer stamps its Glass marker from this answer, so a window that
     // was never painted must not report glass on.
-    const applied = enabled && painted;
+    const applied = mode !== "off";
     yield* Effect.logDebug("fork sidebar vibrancy applied", {
       requested: request.enabled,
       applied,
+      mode,
       platform,
     });
 
-    return applied;
+    return mode;
   }),
 });

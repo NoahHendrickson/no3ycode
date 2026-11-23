@@ -34,7 +34,7 @@ import { useSearchScrollRestoration } from "../src/features/layout/workspace/use
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { ThreadListV2ShowMoreRow } from "../src/features/threads/thread-list-v2-items";
 import { useThreadRowProviderInstanceResolver } from "../src/features/threads/thread-provider-instance";
-import { THREAD_SIDEBAR_ROW_LAYOUT } from "../src/features/threads/threadListAnimations";
+import { THREAD_LIST_ROW_LAYOUT } from "../src/features/threads/threadListAnimations";
 import {
   THREAD_LIST_V2_SETTLED_INITIAL_COUNT,
   THREAD_LIST_V2_SETTLED_PAGE_COUNT,
@@ -519,7 +519,7 @@ export function No3yThreadsListView(props: {
               <AnimatedLegendList
                 // Rows slide into the room a folded section or a settled card leaves.
                 itemLayoutAnimation={
-                  props.sidebarSurface || no3yBottomNav ? THREAD_SIDEBAR_ROW_LAYOUT : undefined
+                  props.sidebarSurface || no3yBottomNav ? THREAD_LIST_ROW_LAYOUT : undefined
                 }
                 ref={listRef}
                 onLoad={() => {

@@ -2,8 +2,8 @@
  * What the no3y thread status pill shows — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  * One segment per active kind (icon + count), with a needs-you flag the pill draws as an amber dot.
  */
-import type { FloatingWorkingStatus } from "../src/features/threads/floating-working-status";
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
+import type { No3yPillStatus } from "./no3yPillStatus";
 
 export type No3yStatusSegmentKind =
   | "status"
@@ -24,7 +24,7 @@ export interface No3yStatusSegment {
 }
 
 export interface No3yStatusPillInput {
-  readonly status: FloatingWorkingStatus | null;
+  readonly status: No3yPillStatus | null;
   /** The thread's pending background task kinds. */
   readonly backgroundKinds: ReadonlyArray<string>;
   readonly subagents: { readonly live: number; readonly total: number } | null;
@@ -40,14 +40,14 @@ export interface No3yStatusPillInput {
  * child input and extensions, and the transcript's live status line already says the turn is
  * working and for how long (stop is the composer's button).
  */
-const FOLDED_STATUS_KINDS: ReadonlySet<FloatingWorkingStatus["kind"]> = new Set([
+const FOLDED_STATUS_KINDS: ReadonlySet<No3yPillStatus["kind"]> = new Set([
   "background",
   "child-input",
   "extension",
   "working",
 ]);
 
-export function statusNeedsYou(status: FloatingWorkingStatus): boolean {
+export function statusNeedsYou(status: No3yPillStatus): boolean {
   return (
     (status.kind === "connection" && status.tone === "unavailable") ||
     (status.kind === "stop" && status.unresponsive)

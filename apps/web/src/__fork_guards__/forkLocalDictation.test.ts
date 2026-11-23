@@ -204,7 +204,7 @@ describe("fork local dictation", () => {
     // Fork start gates stay out of upstream's `disabled`, which also cancels a live recording.
     expect(composer).not.toMatch(/const dictationDisabled =[^;]*isSendBusy/u);
     // A live session keeps stop beside the check while a turn runs.
-    expect(composer).toContain("hasSendableContent={composerSendState.hasSendableContent}");
+    expect(composer).toContain("hasSendableContent={hasMessageToSend}");
     // The mic follows the editor's gate, not send's: an unassigned new-agent
     // draft (fork-new-agent-draft) blocks send until a project is chosen but
     // keeps the prompt editable, and dictation only writes into the prompt.

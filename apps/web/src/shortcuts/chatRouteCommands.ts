@@ -1,19 +1,24 @@
 import { AuthPreviewOperateScope, type EnvironmentId } from "@t3tools/contracts";
 import type { AnyRouter } from "@tanstack/react-router";
+import { msg } from "gt-react";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
+import { m } from "~/i18n/messages";
 import { isPreviewAvailableFor } from "../browser/previewRuntime";
 import { isCommandPaletteOpen } from "../commandPaletteBus";
 import { useComposerDraftStore } from "../composerDraftStore";
 import { dispatchPreviewAction, type PreviewAction } from "../components/preview/previewActionBus";
 import { isAppModalPage } from "../components/sidebar/mainAppLocation";
+import { isBrowserSurfaceFocused } from "../lib/previewFocus";
 import {
   createNewThreadHandler,
   readLastUsedProjectKey,
   resolveDefaultProjectRef,
 } from "../hooks/useHandleNewThread";
 import { createScratchProjectActions } from "../hooks/useScratchProject";
+import { getClientSettings } from "../hooks/useSettings";
 import { startNewThreadFromContext } from "../lib/chatThreadActions";
+import { selectProjectGroupingSettings } from "@t3tools/client-runtime/state/project-grouping";
 import { selectActiveRightPanel, useRightPanelStore } from "../rightPanelStore";
 import { appAtomRegistry } from "../rpc/atomRegistry";
 import { readProjects, readThreadShell } from "../state/entities";
@@ -55,6 +60,13 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
     const target = readRouteTarget();
     return target?.kind === "server" ? target.threadRef : null;
   };
+  const readRouteEnvironmentId = () => {
+    const target = readRouteTarget();
+    if (!target) return null;
+    return target.kind === "server"
+      ? target.threadRef.environmentId
+      : (useComposerDraftStore.getState().getDraftSession(target.draftId)?.environmentId ?? null);
+  };
   const readPreviewOpen = () => {
     const threadRef = readRouteThreadRef();
     // Store-only on purpose: the URL-aware arbitration lives in ChatView's
@@ -81,6 +93,7 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
         useUiStateStore.getState().projectOrder,
         lastUsedProjectKey,
         appAtomRegistry.get(defaultProjectFallbackReadyAtom(lastUsedProjectKey)),
+        selectProjectGroupingSettings(getClientSettings()),
       ),
       handleNewThread,
     };
@@ -105,13 +118,14 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
        the shortcut lands back on the draft that still needs one. */
     const context = readThreadContext();
     if (isUnassignedDraft(context.activeDraftThread)) {
-      void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+      void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
       return;
     }
     // With no current or open project, such as when every project is archived, the
     // draft asks for one, as the New agent button does.
     void startNewThreadFromContext(context).then((started) => {
-      if (!started) void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+      if (!started)
+        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
     });
     /* fork:end fork-new-agent-draft */
   };
@@ -120,8 +134,15 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
     (action: PreviewAction): CommandHandler =>
     (event) => {
       claim(event);
-      const threadRef = readRouteThreadRef();
-      if (threadRef && canOperatePreview(threadRef.environmentId)) dispatchPreviewAction(action);
+      const environmentId = readRouteEnvironmentId();
+      if (environmentId && canOperatePreview(environmentId)) dispatchPreviewAction(action);
+    };
+  // Unclaimed, zoom keys reach the desktop menu accelerators or the browser's own zoom.
+  const zoomCommand =
+    (action: PreviewAction): CommandHandler =>
+    (event) => {
+      if (!isBrowserSurfaceFocused()) return false;
+      previewCommand(action)(event);
     };
 
   return registerCommands(
@@ -142,7 +163,7 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
            the draft asks for the project itself. Upstream opens the palette's "New thread in…"
            with several project groups, else starts in the current project. */
         claim(event);
-        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom));
+        void startNewAgentDraft(router, appAtomRegistry.get(primaryEnvironmentIdAtom), { scratch });
         /* fork:end fork-new-agent-draft */
       },
       "preview.toggle": (event) => {
@@ -155,8 +176,8 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
           toastManager.add(
             stackedThreadToast({
               type: "info",
-              title: "Preview is desktop-only",
-              description: "Open T3 Code in the desktop app to use the in-app preview.",
+              title: m(msg("Preview is desktop-only")),
+              description: m(msg("Open T3 Code in the desktop app to use the in-app preview.")),
             }),
           );
           return;
@@ -165,9 +186,9 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
       },
       "preview.refresh": previewCommand("refresh"),
       "preview.focusUrl": previewCommand("focus-url"),
-      "preview.zoomIn": previewCommand("zoom-in"),
-      "preview.zoomOut": previewCommand("zoom-out"),
-      "preview.resetZoom": previewCommand("reset-zoom"),
+      "preview.zoomIn": zoomCommand("zoom-in"),
+      "preview.zoomOut": zoomCommand("zoom-out"),
+      "preview.resetZoom": zoomCommand("reset-zoom"),
       "preview.find": previewCommand("find"),
     },
     {

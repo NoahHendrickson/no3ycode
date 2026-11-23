@@ -6,11 +6,9 @@
 import type { PendingBackgroundWorkItem } from "@t3tools/client-runtime/state/thread-execution";
 import { useSyncExternalStore } from "react";
 
-import type {
-  FloatingStatusAction,
-  FloatingWorkingStatus,
-} from "../src/features/threads/floating-working-status";
+import type { FloatingStatusAction } from "../src/features/threads/floating-working-status";
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
+import type { No3yPillStatus } from "./no3yPillStatus";
 
 export interface No3yStatusOpener {
   readonly count: number;
@@ -18,7 +16,7 @@ export interface No3yStatusOpener {
 }
 
 export interface No3yStatusSheetModel {
-  readonly status: FloatingWorkingStatus | null;
+  readonly status: No3yPillStatus | null;
   readonly extension: { readonly label: string; readonly onPress: () => void } | null;
   readonly background: {
     readonly items: ReadonlyArray<PendingBackgroundWorkItem>;

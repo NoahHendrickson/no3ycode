@@ -587,7 +587,7 @@ const GROUPING_TABS = [
   icon: ReactNode;
 }>;
 
-interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectGroup> {
+export interface SidebarV2ThreadControlsProps<TProject extends SidebarV2ChromeProjectGroup> {
   readonly projectGroups: ReadonlyArray<TProject>;
   /** Project keys the list is scoped to; empty means every project. */
   readonly projectScopeKeys: ReadonlySet<string>;
@@ -595,8 +595,11 @@ interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectG
       showing all projects. */
   readonly scopedProjectDisplayName: string | null;
   readonly onProjectScopeChange: (scopeKeys: ReadonlySet<string>) => void;
-  readonly menuOpen: boolean;
-  readonly onMenuOpenChange: (open: boolean) => void;
+  readonly menuOpen?: boolean | undefined;
+  readonly onMenuOpenChange?: ((open: boolean) => void) | undefined;
+  /** Fires whenever either the Sort or Settings menu opens or closes, so a
+      hover-revealed grouping header pins its controls while a menu is open. */
+  readonly onAnyMenuOpenChange?: ((open: boolean) => void) | undefined;
   readonly onProjectActions: (event: ReactMouseEvent<HTMLButtonElement>, project: TProject) => void;
   /** How the active cards are sectioned. The two switches below each pick
       their mode or clear back to flat, so they cannot both be on. */
@@ -612,6 +615,13 @@ interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectG
   readonly projectSortOrder: SidebarProjectSortOrder;
   readonly onProjectSortOrderChange: (sortOrder: SidebarProjectSortOrder) => void;
   readonly onAddProject: () => void;
+}
+
+interface SidebarV2ProjectScopeRowProps<
+  TProject extends SidebarV2ChromeProjectGroup,
+> extends SidebarV2ThreadControlsProps<TProject> {
+  readonly menuOpen: boolean;
+  readonly onMenuOpenChange: (open: boolean) => void;
   /** Folds the whole list under this row — see `fork-bots`. Omitted where the row cannot fold. */
   readonly collapsed?: boolean;
   readonly onToggleCollapsed?: () => void;
@@ -620,16 +630,6 @@ interface SidebarV2ProjectScopeRowProps<TProject extends SidebarV2ChromeProjectG
 export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProjectGroup>(
   props: SidebarV2ProjectScopeRowProps<TProject>,
 ) {
-  const hasProjects = props.projectGroups.length > 0;
-  const isScoped = props.projectScopeKeys.size > 0;
-  const filterAriaLabel = isScoped
-    ? `Filter threads by project — showing ${props.scopedProjectDisplayName ?? "selected projects"}. Opens project filter and group-by.`
-    : "Filter threads by project and group-by";
-  const filterTooltip = isScoped
-    ? `Showing ${props.scopedProjectDisplayName ?? "selected projects"}`
-    : "Filter projects";
-  const sortTooltip = `Sort projects — ${SORT_ORDER_LABELS[props.projectSortOrder]}`;
-
   return (
     // Figma 368:21211 — the project headers' row shape: a muted label, 13px
     // semibold like the status-section labels, on the same 12px inset as the cards' prompt, then sort and filter
@@ -654,119 +654,171 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
           </SidebarV2SectionLabel>
         </span>
         <div className="-me-3 flex shrink-0 items-center">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <SidebarMenuButton
-                  size="sm"
-                  type="button"
-                  className={PROJECTS_ROW_BUTTON}
-                  aria-label="Add a project"
-                  data-testid="sidebar-v2-add-project"
-                  onClick={props.onAddProject}
-                />
-              }
-            >
-              <FolderPlusIcon className="size-4 shrink-0" />
-            </TooltipTrigger>
-            <TooltipPopup side="right">Add a project</TooltipPopup>
-          </Tooltip>
-          {/* Sort and filter act on projects, so they wait for the first one;
-              Add a project is the row's way in before then. */}
-          {hasProjects ? (
-            <>
-              <Menu>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <MenuTrigger
-                        render={
-                          <SidebarMenuButton
-                            size="sm"
-                            type="button"
-                            className={PROJECTS_ROW_BUTTON}
-                            aria-label={sortTooltip}
-                            data-testid="sidebar-v2-project-sort"
-                            data-fork-tab-trigger=""
-                          />
-                        }
-                      />
-                    }
-                  >
-                    {/* Regular, not the shim's bold pin: the faders beside it are
-                    duotone, whose outline is the regular weight, and the row's
-                    other marks are duotone too. Bold read a stroke heavier
-                    than every neighbour. */}
-                    <ArrowUpDownIcon weight="stroke" className="size-4 shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipPopup side="right">{sortTooltip}</TooltipPopup>
-                </Tooltip>
-                <MenuPopup
-                  align="end"
-                  data-fork-glass-rim
-                  data-fork-thread-sort
-                  data-fork-tab-menu="sidebar"
-                  className="min-w-48"
-                >
-                  <MenuRadioGroup
-                    value={props.projectSortOrder}
-                    onValueChange={(value) =>
-                      props.onProjectSortOrderChange(value as SidebarProjectSortOrder)
-                    }
-                  >
-                    {SORT_ORDERS.map((sortOrder) => (
-                      <MenuRadioItem
-                        key={sortOrder}
-                        value={sortOrder}
-                        closeOnClick
-                        className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
-                      >
-                        {SORT_ORDER_LABELS[sortOrder]}
-                      </MenuRadioItem>
-                    ))}
-                  </MenuRadioGroup>
-                </MenuPopup>
-              </Menu>
-              <Menu open={props.menuOpen} onOpenChange={props.onMenuOpenChange}>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <MenuTrigger
-                        render={
-                          <SidebarMenuButton
-                            size="sm"
-                            type="button"
-                            className={cn(
-                              PROJECTS_ROW_BUTTON,
-                              // The active scope lifts the glyph to foreground.
-                              isScoped && "text-sidebar-foreground",
-                            )}
-                            aria-label={filterAriaLabel}
-                            data-testid="sidebar-v2-project-filter"
-                            data-fork-tab-trigger=""
-                          />
-                        }
-                      />
-                    }
-                  >
-                    <SettingsIcon className="size-4 shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipPopup side="right">{filterTooltip}</TooltipPopup>
-                </Tooltip>
-                <MenuPopup
-                  align="end"
-                  data-fork-glass-rim
-                  data-fork-tab-menu="sidebar"
-                  className="min-w-56"
-                >
-                  <ThreadsViewMenuContent {...props} />
-                </MenuPopup>
-              </Menu>
-            </>
-          ) : null}
+          <SidebarV2ThreadControls {...props} />
         </div>
       </div>
     </SidebarGroup>
+  );
+}
+
+/** Add project, Sort, and Settings (grouping / compact / project scope) buttons.
+    Shared by the standalone Threads fallback row and every grouping header. */
+export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectGroup>(
+  props: SidebarV2ThreadControlsProps<TProject>,
+) {
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [uncontrolledFilterMenuOpen, setUncontrolledFilterMenuOpen] = useState(false);
+  const filterMenuOpen = props.menuOpen ?? uncontrolledFilterMenuOpen;
+  const hasProjects = props.projectGroups.length > 0;
+  const isScoped = props.projectScopeKeys.size > 0;
+  const filterAriaLabel = isScoped
+    ? `Filter threads by project — showing ${props.scopedProjectDisplayName ?? "selected projects"}. Opens project filter and group-by.`
+    : "Filter threads by project and group-by";
+  const filterTooltip = isScoped
+    ? `Showing ${props.scopedProjectDisplayName ?? "selected projects"}`
+    : "Filter projects";
+  const sortTooltip = `Sort projects — ${SORT_ORDER_LABELS[props.projectSortOrder]}`;
+
+  const handleSortMenuOpenChange = (open: boolean) => {
+    setSortMenuOpen(open);
+    props.onAnyMenuOpenChange?.(open || filterMenuOpen);
+  };
+
+  const handleFilterMenuOpenChange = (open: boolean) => {
+    if (props.onMenuOpenChange) {
+      props.onMenuOpenChange(open);
+    } else {
+      setUncontrolledFilterMenuOpen(open);
+    }
+    props.onAnyMenuOpenChange?.(sortMenuOpen || open);
+  };
+
+  const handleProjectActions = (event: ReactMouseEvent<HTMLButtonElement>, project: TProject) => {
+    if (props.onMenuOpenChange === undefined) {
+      setUncontrolledFilterMenuOpen(false);
+      props.onAnyMenuOpenChange?.(sortMenuOpen);
+    }
+    props.onProjectActions(event, project);
+  };
+
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <SidebarMenuButton
+              size="sm"
+              type="button"
+              className={PROJECTS_ROW_BUTTON}
+              aria-label="Add a project"
+              data-testid="sidebar-v2-add-project"
+              onClick={(event) => {
+                event.stopPropagation();
+                props.onAddProject();
+              }}
+            />
+          }
+        >
+          <FolderPlusIcon className="size-4 shrink-0" />
+        </TooltipTrigger>
+        <TooltipPopup side="top">Add a project</TooltipPopup>
+      </Tooltip>
+      {/* Sort and filter act on projects, so they wait for the first one;
+          Add a project is the row's way in before then. */}
+      {hasProjects ? (
+        <>
+          <Menu open={sortMenuOpen} onOpenChange={handleSortMenuOpenChange}>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <MenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        size="sm"
+                        type="button"
+                        className={PROJECTS_ROW_BUTTON}
+                        aria-label={sortTooltip}
+                        data-testid="sidebar-v2-project-sort"
+                        data-fork-tab-trigger=""
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    }
+                  />
+                }
+              >
+                {/* Regular, not the shim's bold pin: the faders beside it are
+                duotone, whose outline is the regular weight, and the row's
+                other marks are duotone too. Bold read a stroke heavier
+                than every neighbour. */}
+                <ArrowUpDownIcon weight="stroke" className="size-4 shrink-0" />
+              </TooltipTrigger>
+              <TooltipPopup side="top">{sortTooltip}</TooltipPopup>
+            </Tooltip>
+            <MenuPopup
+              align="end"
+              data-fork-glass-rim
+              data-fork-thread-sort
+              data-fork-tab-menu="sidebar"
+              className="min-w-48"
+            >
+              <MenuRadioGroup
+                value={props.projectSortOrder}
+                onValueChange={(value) =>
+                  props.onProjectSortOrderChange(value as SidebarProjectSortOrder)
+                }
+              >
+                {SORT_ORDERS.map((sortOrder) => (
+                  <MenuRadioItem
+                    key={sortOrder}
+                    value={sortOrder}
+                    closeOnClick
+                    className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                  >
+                    {SORT_ORDER_LABELS[sortOrder]}
+                  </MenuRadioItem>
+                ))}
+              </MenuRadioGroup>
+            </MenuPopup>
+          </Menu>
+          <Menu open={filterMenuOpen} onOpenChange={handleFilterMenuOpenChange}>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <MenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        size="sm"
+                        type="button"
+                        className={cn(
+                          PROJECTS_ROW_BUTTON,
+                          // The active scope lifts the glyph to foreground.
+                          isScoped && "text-sidebar-foreground",
+                        )}
+                        aria-label={filterAriaLabel}
+                        data-testid="sidebar-v2-project-filter"
+                        data-fork-tab-trigger=""
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    }
+                  />
+                }
+              >
+                <SettingsIcon className="size-4 shrink-0" />
+              </TooltipTrigger>
+              <TooltipPopup side="top">{filterTooltip}</TooltipPopup>
+            </Tooltip>
+            <MenuPopup
+              align="end"
+              data-fork-glass-rim
+              data-fork-tab-menu="sidebar"
+              className="min-w-56"
+            >
+              <ThreadsViewMenuContent {...props} onProjectActions={handleProjectActions} />
+            </MenuPopup>
+          </Menu>
+        </>
+      ) : null}
+    </>
   );
 }
 

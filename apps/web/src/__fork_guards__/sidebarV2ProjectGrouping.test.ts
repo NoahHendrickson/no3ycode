@@ -41,8 +41,9 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     expect(readSibling("../custom/Tabs.tsx")).toContain("<SegmentedMenuTabs");
     // Toggling a view preference must not dismiss the menu it lives in.
     expect(chromeRows).toContain("closeOnClick={false}");
+    expect(segmentedTabs).toContain("closeOnClick = false,");
     expect(segmentedTabs).toMatch(
-      /<MenuPrimitive\.RadioItem\s+\{\.\.\.props\}\s+closeOnClick=\{false\}/u,
+      /<MenuPrimitive\.RadioItem\s+\{\.\.\.props\}\s+closeOnClick=\{closeOnClick\}/u,
     );
     expect(sidebar).toContain("grouping={grouping}");
     expect(sidebar).toContain('const groupByProject = grouping === "project";');
@@ -117,16 +118,11 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     expect(header).toContain("FolderOpenIcon");
     expect(header).toContain("FolderClosedIcon");
     expect(header).toContain("ChevronDownIcon");
-    // Hover group is on the row; collapse is a behind-layer so the trailing
-    // buttons can paint above it. A flex-1 collapse sibling was eating plus
-    // clicks. The layer stops one 32px column short of the row's end per
-    // trailing button (Figma 364:11451, 368:21126) so the label button's
-    // hover fill never lies under them.
-    expect(header).toContain("group/collapse relative flex h-8 w-full");
-    expect(header).toContain("absolute inset-y-0 left-0 z-0");
-    expect(header).toContain(
-      'trailingCount === 2 ? "right-16" : trailingCount === 1 ? "right-8" : "right-0"',
-    );
+    // Hover group is on the flex-1 label wrapper; collapse is a behind-layer
+    // inside it so the ghost hover fill stops strictly to the left of the
+    // trailing actions regardless of how many controls are shown.
+    expect(header).toContain("group/collapse relative -ms-3 flex h-8 min-w-0 flex-1 items-center");
+    expect(header).toContain("absolute inset-0 z-0");
     expect(header).toContain('"-me-3 relative z-10 flex shrink-0 items-center"');
     // The design's 32px buttons are SidebarV2IconButton's header box, and -me-3 pulls the group
     // out of the row's padding onto the list edge the trailing derivation measures from.
@@ -163,7 +159,7 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     expect(header).toContain("props.onSettleAllThreads?.()");
     expect(header).toContain("props.onProjectSettings?.()");
     // An open menu pins the buttons: the pointer is on the popup, not the row.
-    expect(header).toContain('data-fork-menu-open={menuOpen ? "" : undefined}');
+    expect(header).toContain('data-fork-menu-open={anyMenuOpen ? "" : undefined}');
     expect(sidebar).toContain(
       'data-fork-project-section={props.projectTitleHidden === true ? "" : undefined}',
     );
@@ -327,7 +323,7 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     // what lands the folder mark on the same 20px edge as each card's prompt
     // below it. Derived, never a literal here.
     expect(headerRow).toContain("SIDEBAR_V2_CARD_ALIGNMENT.headerPad");
-    expect(headerRow).toContain("SIDEBAR_V2_CARD_ALIGNMENT.headerGap");
+    expect(header).toContain("SIDEBAR_V2_CARD_ALIGNMENT.headerGap");
     expect(headerRow).not.toContain("px-3");
     expect(headerRow).not.toContain("px-2.5");
   });

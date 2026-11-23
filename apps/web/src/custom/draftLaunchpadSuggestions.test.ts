@@ -61,7 +61,7 @@ describe("deriveLaunchpadSuggestions", () => {
           pr(4, { checksState: "pending" }),
         ],
         reviewing: [pr(5, { viewerReviewRequested: true })],
-        git: null,
+        checkouts: [],
       }),
     ).toEqual([
       "conflicts:conflicts:https://github.com/owner/a/pull/2",
@@ -83,7 +83,7 @@ describe("deriveLaunchpadSuggestions", () => {
           pr(2, { viewerReviewRequested: false }),
           pr(3, { viewerReviewRequested: true, state: "merged" }),
         ],
-        git: null,
+        checkouts: [],
       }),
     ).toEqual(["checks:checks:https://github.com/owner/a/pull/1"]);
   });
@@ -93,7 +93,7 @@ describe("deriveLaunchpadSuggestions", () => {
       kinds({
         authored: [pr(1, { isDraft: true, reviewDecision: "approved", checksState: "passing" })],
         reviewing: [],
-        git: null,
+        checkouts: [],
       }),
     ).toEqual([]);
   });
@@ -102,14 +102,20 @@ describe("deriveLaunchpadSuggestions", () => {
     const suggestions = deriveLaunchpadSuggestions({
       authored: [],
       reviewing: [],
-      git: {
-        ...cleanGit,
-        refName: "feature",
-        isDefaultRef: false,
-        changedFileCount: 1,
-        behindCount: 3,
-        aheadOfDefaultCount: 2,
-      },
+      checkouts: [
+        {
+          project: null,
+          name: null,
+          git: {
+            ...cleanGit,
+            refName: "feature",
+            isDefaultRef: false,
+            changedFileCount: 1,
+            behindCount: 3,
+            aheadOfDefaultCount: 2,
+          },
+        },
+      ],
     });
     expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
       "Commit 1 changed file",
@@ -117,21 +123,52 @@ describe("deriveLaunchpadSuggestions", () => {
       "Open a pull request for feature",
     ]);
     expect(suggestions.every((suggestion) => suggestion.project === null)).toBe(true);
+    // Git work stays in the project's own checkout.
+    expect(suggestions.every((suggestion) => suggestion.envMode === "local")).toBe(true);
+  });
+
+  it("names the project for a draft with no project yet, and picks it", () => {
+    const project = (id: string) => ({ environmentId, projectId: ProjectId.make(id) });
+    const suggestions = deriveLaunchpadSuggestions({
+      authored: [],
+      reviewing: [],
+      checkouts: [
+        {
+          project: project("lumen"),
+          name: "lumen",
+          git: { ...cleanGit, changedFileCount: 3, behindCount: 4 },
+        },
+        { project: project("orbit"), name: "orbit", git: { ...cleanGit, behindCount: 2 } },
+        { project: project("docs"), name: "docs", git: cleanGit },
+      ],
+    });
+    expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
+      "Commit 3 changed files in lumen",
+      "Pull 4 new commits into lumen",
+      "Pull 2 new commits into orbit",
+    ]);
+    expect(suggestions.map((suggestion) => suggestion.project?.projectId)).toEqual([
+      "lumen",
+      "lumen",
+      "orbit",
+    ]);
+    expect(new Set(suggestions.map((suggestion) => suggestion.id)).size).toBe(3);
   });
 
   it("offers no git work for a clean, current default branch or a branch with an open PR", () => {
-    expect(kinds({ authored: [], reviewing: [], git: cleanGit })).toEqual([]);
+    const checkout = (git: typeof cleanGit) => [{ project: null, name: null, git }];
+    expect(kinds({ authored: [], reviewing: [], checkouts: checkout(cleanGit) })).toEqual([]);
     expect(
       kinds({
         authored: [],
         reviewing: [],
-        git: {
+        checkouts: checkout({
           ...cleanGit,
           refName: "feature",
           isDefaultRef: false,
           aheadOfDefaultCount: 2,
           hasOpenPullRequest: true,
-        },
+        }),
       }),
     ).toEqual([]);
   });
@@ -141,7 +178,7 @@ describe("deriveLaunchpadSuggestions", () => {
       deriveLaunchpadSuggestions({
         authored: [1, 2, 3, 4, 5].map((number) => pr(number, { checksState: "failing" })),
         reviewing: [],
-        git: null,
+        checkouts: [],
       }),
     ).toHaveLength(4);
   });

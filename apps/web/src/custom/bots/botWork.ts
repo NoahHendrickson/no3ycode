@@ -5,13 +5,7 @@
  */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 
-import { THREAD_STATUS_TEXT } from "@t3tools/client-runtime/state/thread-activity-announcement";
-
-import {
-  resolveSidebarThreadStatus,
-  resolveWindowTitleThreadStatus,
-  type SidebarThreadStatus,
-} from "~/components/Sidebar.logic";
+import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "~/components/Sidebar.logic";
 
 import {
   resolveSidebarV2CardStatus,
@@ -23,6 +17,7 @@ import {
   sidebarV2StatusBucketForKind,
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
+
 import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
@@ -88,7 +83,15 @@ export interface BotWork {
 /** Running now, waiting on a thread included and a guest's message ignored: the window
     title's rule for "working". */
 function isRunning(thread: EnvironmentThreadShell): boolean {
-  return resolveWindowTitleThreadStatus(thread) === THREAD_STATUS_TEXT.working;
+  switch (resolveSidebarThreadStatus({ ...thread, pendingGuestMessageCount: 0 })) {
+    case "preparing":
+    case "working":
+      return true;
+    case "waiting":
+      return thread.runtime?.status === "running";
+    default:
+      return false;
+  }
 }
 
 /** Per bot (`environmentId:threadId`), its work in one pass. Archived threads are put away, and

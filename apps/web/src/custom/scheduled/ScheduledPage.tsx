@@ -65,6 +65,7 @@ import { WorkspacePageContainer } from "~/components/WorkspacePageContainer";
 import { WorkspacePageHeader } from "~/components/WorkspacePageHeader";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { isElectron } from "~/env";
+import { useClientSettings } from "~/hooks/useSettings";
 import { useProjects } from "~/state/entities";
 import { type EnvironmentPresentation } from "~/state/environments";
 import { useEnvironmentQuery } from "~/state/query";
@@ -132,7 +133,7 @@ export function ScheduledPage() {
         <WorkspacePageHeader electron={isElectron} data-fork-stage-card-title="">
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <ZapIcon className="size-4 text-muted-foreground" aria-hidden />
-            <span className="font-medium">Automations</span>
+            <span className="font-normal">Automations</span>
           </div>
         </WorkspacePageHeader>
         <ScrollArea className="min-h-0 flex-1" data-fork-stage-card-body="">
@@ -359,6 +360,7 @@ function TaskRow(props: {
   readonly timeZone: string | undefined;
 }) {
   const { environmentId, task } = props;
+  const timestampFormat = useClientSettings((settings) => settings.timestampFormat);
   const navigate = useNavigate();
   const projects = useProjects();
   const projectLabel = automationProjectIds(task)
@@ -442,7 +444,7 @@ function TaskRow(props: {
         <div className="flex flex-col">
           <span className="inline-flex items-center gap-1.5">
             <TriggerIcon className="size-3.5 text-muted-foreground" aria-hidden />
-            {scheduleLabel(task.schedule, props.timeZone, task.nextRunAt)}
+            {scheduleLabel(task.schedule, timestampFormat, props.timeZone, task.nextRunAt)}
           </span>
           <span className="text-muted-foreground">
             {!task.enabled

@@ -1,31 +1,26 @@
 /**
  * Glass 3D setting — see `.fork/customizations.yaml#fork-glass-3d`.
  *
- * How much of Glass gets depth. Full: the stage card a thread sits in
- * (theme.custom.glass-stage.css) and the glints, sheens and halos on the
- * selected rows, chips, tabs, buttons and popups
- * (theme.custom.glass-surfaces.css). Selected items only: just the selected
- * thread card, the active top sidebar rows, the recent-project buttons and the
- * model picker's selected provider tab.
- * Off: the flat stage and fills Glass had before either. The sheets key on
- * the root attribute below.
+ * Switches Glass between Full 3D (stage card in theme.custom.glass-stage.css
+ * plus glints, sheens and halos in theme.custom.glass-surfaces.css) and Flat
+ * (`data-fork-glass-3d="off"`).
  */
 import * as Schema from "effect/Schema";
 
 import { createForkRootSetting } from "./forkRootSetting";
+import { syncForkTopbarHeightFromRoot } from "./forkTopbarHeight";
 
-/** Absent at Full; "selection" or "off" otherwise. */
+/** Absent at Full 3D; "off" at Flat. */
 export const FORK_GLASS_3D_ATTRIBUTE = "data-fork-glass-3d";
 
-export const FORK_GLASS_3D_MODES = ["full", "selection", "off"] as const;
+export const FORK_GLASS_3D_MODES = ["full", "off"] as const;
 export type ForkGlass3dMode = (typeof FORK_GLASS_3D_MODES)[number];
 
 export const DEFAULT_FORK_GLASS_3D_MODE: ForkGlass3dMode = "full";
 
 export const FORK_GLASS_3D_MODE_LABELS: Record<ForkGlass3dMode, string> = {
-  full: "Full",
-  selection: "Selected items only",
-  off: "Off",
+  full: "Full 3D",
+  off: "Flat",
 };
 
 const ForkGlass3dModeSchema = Schema.Literals(FORK_GLASS_3D_MODES);
@@ -37,4 +32,5 @@ export const { initialize: initializeForkGlass3d, useValue: useForkGlass3d } =
     schema: ForkGlass3dModeSchema,
     defaultValue: DEFAULT_FORK_GLASS_3D_MODE,
     attributeValue: (mode) => (mode === DEFAULT_FORK_GLASS_3D_MODE ? null : mode),
+    onApply: () => syncForkTopbarHeightFromRoot(),
   });

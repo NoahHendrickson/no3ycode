@@ -6,6 +6,8 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell
 import {
   DEFAULT_CLIENT_SETTINGS,
   EnvironmentId,
+  // oxlint-disable-next-line no-unused-vars -- fork:begin sidebar-v2-card-rows: only the thread menu case used it; kept for the next sync fork:end sidebar-v2-card-rows
+  type LocalApi,
   ProjectId,
   ThreadId,
   type ScopedThreadRef,
@@ -22,6 +24,8 @@ import { useThreadRouteTarget } from "../hooks/useThreadRouteTarget";
 import { useProjects, useServerConfigs, useQuietThreadShells } from "../state/entities";
 import { readEnvironmentScope, useEnvironmentScope } from "../state/session";
 import { useOrchestrationCommand } from "../state/use-orchestration-command";
+// oxlint-disable-next-line no-unused-vars -- fork:begin sidebar-v2-card-rows: only the thread menu case used it; kept for the next sync fork:end sidebar-v2-card-rows
+import { readLocalApi } from "../localApi";
 import type { Project } from "../types";
 import Sidebar from "./Sidebar";
 import { SidebarProvider } from "./ui/sidebar";
@@ -36,6 +40,7 @@ vi.mock("../hooks/useThreadRouteTarget", { spy: true });
 vi.mock("./sidebar/SidebarThreadRow", { spy: true });
 vi.mock("../state/session", { spy: true });
 vi.mock("../state/use-orchestration-command", { spy: true });
+vi.mock("../localApi", { spy: true });
 vi.mock(import("../state/server"), async (original) => {
   const { Atom } = await import("effect/reactivity");
   const { compileResolvedKeybindingsConfig } = await import("@t3tools/shared/keybindings");
@@ -43,6 +48,7 @@ vi.mock(import("../state/server"), async (original) => {
   const keybindings = compileResolvedKeybindingsConfig([
     { key: "mod+1", command: "thread.jump.1" },
     { key: "mod+2", command: "thread.jump.2" },
+    { key: "mod+shift+[", command: "thread.previous" },
   ]);
   return { ...(await original()), primaryServerKeybindingsAtom: Atom.make(keybindings) };
 });
@@ -118,6 +124,11 @@ describe("sidebar header new thread", () => {
   });
 });
 
+// fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows
+// Upstream's "sidebar numbered jumps" case is not ported: it drives the upstream draft block's
+// sidebar-draft-row; the fork folds draft cards into the thread order, so jumps already reach them.
+// fork:end sidebar-v2-draft-rows
+
 function threadShell(projectId: ProjectId, index: number): EnvironmentThreadShell {
   return makeThreadFixture({
     environmentId: EnvironmentId.make("local"),
@@ -184,6 +195,11 @@ describe("sidebar thread rename", () => {
     },
   );
 });
+
+// fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+// Upstream's "sidebar thread menu" case is not ported: upstream's sidebar tree (attachSidebarTree)
+// turns Shift+F10 into a keyboard contextmenu, and the fork's card rows do not install it. Follow-up.
+// fork:end sidebar-v2-card-rows
 
 describe("sidebar settled pagination", () => {
   it("keeps the viewport in place when showing more settled threads", async () => {

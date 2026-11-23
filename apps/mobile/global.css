@@ -62,11 +62,7 @@
 
 @utility font-t3-bold {
   font-family: var(--font-bold);
-  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  @variant ios {
-    font-weight: 700;
-  }
-  /* fork:end no3y-mobile-redesign */
+  font-weight: 700;
 }
 
 @utility font-t3-extrabold {

@@ -299,10 +299,14 @@ describe("fork guard: fork-inlet-theme", () => {
     expect(chromeBridge?.body).toContain("radial-gradient");
   });
 
-  it("sets the prompt 4px inside a 12px vessel under 8px context chips", () => {
+  it("sets the prompt 4px inside a concentric vessel under 8px context chips", () => {
     const vessel = ruleBodyFor(inletRules, [TEMPLATE, "[data-fork-composer-vessel]"]);
-    expect(vessel).toContain("border-radius: 12px");
-    expect(vessel).toContain("--chat-composer-drawer-inset: 4px");
+    expect(vessel).toContain("border-radius: var(--fork-inlet-vessel-radius)");
+    expect(vessel).toContain("--chat-composer-drawer-inset: var(--fork-inlet-vessel-inset)");
+    expect(inlet).toContain(
+      "--fork-inlet-vessel-radius: calc(var(--fork-composer-radius) + var(--fork-inlet-vessel-inset))",
+    );
+    expect(inlet).toContain("--fork-inlet-vessel-inset: 4px");
     expect(
       ruleBodyFor(inletRules, [
         TEMPLATE,
@@ -464,16 +468,14 @@ describe("fork guard: fork-inlet-theme", () => {
       (rule) => rule.selector.includes('[data-side="top"]') && rule.selector.endsWith("::after"),
     )?.body;
     expect(upward).toContain("var(--anchor-width)");
-    const rail = inletRules.find(
-      (rule) =>
-        rule.selector.includes('[data-fork-model-picker="providers"]') &&
-        rule.selector.endsWith('[aria-current="true"]::after'),
+    const providers = inletRules.find((rule) =>
+      rule.selector.endsWith('[data-fork-model-picker="providers"]'),
     )?.body;
-    expect(rail).toContain("radial-gradient");
+    expect(providers).toContain("padding: 4px 4px 0");
     const list = inletRules.find((rule) =>
       rule.selector.endsWith('[data-fork-model-picker="list"]'),
     )?.body;
-    expect(list).toContain("margin: 4px 4px 4px 0");
+    expect(list).toContain("margin: 4px");
     // The morph finds the docked details card's button by its stamp, not its label.
     const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
     expect(panelControls).toContain('data-fork-details-toggle=""');

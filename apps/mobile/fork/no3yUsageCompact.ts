@@ -3,15 +3,17 @@
  * Copied from the Mac's apps/web/src/custom/ComposerUsageLimitsReadout.tsx and usageLimitNotices.ts.
  */
 import {
-  collectLimitNotices,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  limitsNotice,
   remainingPercent,
   type LimitPool,
   type LimitPoolWindow,
   type LimitPresentations,
 } from "@t3tools/shared/usageLimits";
+import {
+  collectLimitNotices,
+  cursorUsageWindowDetails,
+  limitsNotice,
+} from "@t3tools/shared/usageLimitsCopy";
 import type { ServerProviderUsageWindow } from "@t3tools/contracts";
 
 const FIVE_HOURS_MINS = 300;

@@ -5,8 +5,9 @@
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinks";
+import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinksCopy";
 import { useNavigate } from "@tanstack/react-router";
+import { useMessages } from "gt-react";
 
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -59,13 +60,14 @@ export function BotDigestLinkRow(props: {
   readonly localVisits: BotDigestThreads["localVisits"];
 }) {
   const { links } = props;
+  const messages = useMessages();
   if (links.threads.length === 0 && links.pullRequests.length === 0) return null;
   return (
     <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground">
       {links.threads.map(({ link, label, shell }) =>
         shell === undefined ? (
           <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
-            {label || unknownThreadLinkLabel(link, props.environmentId)}
+            {label || unknownThreadLinkLabel(link, props.environmentId, messages)}
           </span>
         ) : (
           <BotDigestThreadChip

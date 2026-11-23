@@ -49,8 +49,8 @@ export function BotMascot(props: {
   );
 }
 
-/** The mascot on a 32px tile in its own colour at half strength, behind a 1px 24% edge, white on
-    dark and black on light (Figma Petal card), filling a full card's two text lines. */
+/** The mascot on a 32px tile in its own colour at half strength, behind a 1px 24% edge, white
+    on dark and black on light (Figma Petal card), to fill a full card's two text lines. */
 export function BotMascotTile(props: {
   readonly shape: BotMascotShape;
   readonly mood: BotMascotMood;

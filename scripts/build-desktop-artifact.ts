@@ -44,6 +44,7 @@ import {
 import { loadRepoEnv } from "./lib/public-config.ts";
 import { selectDesktopRuntimeExternalDependencies } from "./lib/desktop-external-packages.ts";
 import { resolveCatalogDependencies } from "./lib/resolve-catalog.ts";
+import { resolveTaggedSourceVersion } from "./lib/tagged-source-version.ts";
 
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
@@ -1018,6 +1019,14 @@ export const DESKTOP_FILE_EXCLUSIONS = [
   "!apps/desktop/resources/browser-secret/**/*",
   "!apps/desktop/prod-resources/browser-secret",
   "!apps/desktop/prod-resources/browser-secret/**/*",
+  /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+  "!apps/desktop/resources/sidebar-glass",
+  "!apps/desktop/resources/sidebar-glass/**/*",
+  "!apps/desktop/prod-resources/sidebar-glass",
+  "!apps/desktop/prod-resources/sidebar-glass/**/*",
+  /* fork:end fork-cool-darker-sidebar-vibrancy */
+  "!apps/desktop/prod-resources/apple-speech",
+  "!apps/desktop/prod-resources/apple-speech/**/*",
   "!apps/desktop/prod-resources/windows-server",
   "!apps/desktop/prod-resources/windows-server/**/*",
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz",
@@ -1150,6 +1159,14 @@ export const LINUX_CAPTURE_EXTRA_RESOURCES = [
 ] as const;
 export const LINUX_BROWSER_SECRET_EXTRA_RESOURCES = [
   { from: "apps/desktop/prod-resources/browser-secret", to: "browser-secret" },
+] as const;
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+export const MAC_SIDEBAR_GLASS_EXTRA_RESOURCES = [
+  { from: "apps/desktop/prod-resources/sidebar-glass", to: "sidebar-glass" },
+] as const;
+/* fork:end fork-cool-darker-sidebar-vibrancy */
+export const MAC_APPLE_SPEECH_EXTRA_RESOURCES = [
+  { from: "apps/desktop/prod-resources/apple-speech", to: "apple-speech" },
 ] as const;
 
 export interface MacPasskeySigningConfiguration {
@@ -2274,6 +2291,13 @@ export const copyDirectoryPreservingSymlinks = Effect.fn("copyDirectoryPreservin
 
 export const verifyPackagedBundleIsSelfContained = Effect.fn("verifyPackagedBundleIsSelfContained")(
   function* (input: { readonly asarPath: string; readonly verbose: boolean }) {
+    // A PR preview's bundle is untrusted and this job may hold signing secrets, so never run it.
+    if (yield* Config.Boolean("T3CODE_DESKTOP_UNTRUSTED_BUNDLE").pipe(Config.withDefault(false))) {
+      yield* Effect.log(
+        "[desktop-artifact] Skipped the bundle self-check for an untrusted bundle.",
+      );
+      return;
+    }
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
 
@@ -2520,6 +2544,60 @@ export const stageBrowserSecret = Effect.fn("stageBrowserSecret")(function* (inp
       { cwd: input.repoRoot },
     ),
     { label: "build Linux browser secret helper", verbose: input.verbose },
+  );
+});
+
+/* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+export const stageSidebarGlass = Effect.fn("stageSidebarGlass")(function* (input: {
+  readonly repoRoot: string;
+  readonly stageResourcesDir: string;
+  readonly platform: typeof BuildPlatform.Type;
+  readonly arch: typeof BuildArch.Type;
+  readonly verbose: boolean;
+}) {
+  if (input.platform !== "mac") return;
+  const hostPlatform = yield* HostProcess.Platform;
+  if (hostPlatform !== "darwin") return;
+  const path = yield* Path.Path;
+  yield* runCommand(
+    ChildProcess.make(
+      "node",
+      [
+        path.join(input.repoRoot, "apps/desktop/scripts/build-sidebar-glass.mjs"),
+        "--arch",
+        input.arch,
+        "--output",
+        path.join(input.stageResourcesDir, "sidebar-glass", "sidebar_glass.node"),
+      ],
+      { cwd: input.repoRoot },
+    ),
+    { label: "build macOS sidebar Liquid Glass addon", verbose: input.verbose },
+  );
+});
+/* fork:end fork-cool-darker-sidebar-vibrancy */
+
+export const stageAppleSpeech = Effect.fn("stageAppleSpeech")(function* (input: {
+  readonly repoRoot: string;
+  readonly stageResourcesDir: string;
+  readonly platform: typeof BuildPlatform.Type;
+  readonly arch: typeof BuildArch.Type;
+  readonly verbose: boolean;
+}) {
+  if (input.platform !== "mac") return;
+  const path = yield* Path.Path;
+  yield* runCommand(
+    ChildProcess.make(
+      "node",
+      [
+        path.join(input.repoRoot, "apps/desktop/scripts/build-apple-speech.mjs"),
+        "--arch",
+        input.arch,
+        "--output",
+        path.join(input.stageResourcesDir, "apple-speech", "t3-apple-speech"),
+      ],
+      { cwd: input.repoRoot },
+    ),
+    { label: "build macOS Apple Speech helper", verbose: input.verbose },
   );
 });
 
@@ -2866,6 +2944,10 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       ...DESKTOP_EXTRA_RESOURCES,
       ...(platform === "linux" ? LINUX_CAPTURE_EXTRA_RESOURCES : []),
       ...(platform === "linux" ? LINUX_BROWSER_SECRET_EXTRA_RESOURCES : []),
+      /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+      ...(platform === "mac" ? MAC_SIDEBAR_GLASS_EXTRA_RESOURCES : []),
+      /* fork:end fork-cool-darker-sidebar-vibrancy */
+      ...(platform === "mac" ? MAC_APPLE_SPEECH_EXTRA_RESOURCES : []),
       ...(platform === "win" ? WINDOWS_SERVER_EXTRA_RESOURCES : []),
       ...(platform === "win" && wslRuntimeBundled ? WSL_RUNTIME_EXTRA_RESOURCES : []),
     ],
@@ -2914,6 +2996,8 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
         // fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
         NSMicrophoneUsageDescription:
           "no3y Code uses your microphone for voice input, and lets commands run by terminals and coding agents use it.",
+        NSSpeechRecognitionUsageDescription:
+          "no3y Code transcribes your dictation on this Mac when you choose Apple Speech.",
         // fork:end fork-local-dictation
         // macOS lists an app under Default web browser only when it opens web
         // pages as documents as well as http and https links (see protocols).
@@ -3013,6 +3097,13 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
         },
       },
     };
+    // electron-updater replaces an installed AppImage in place only when its name has no x.y.z version.
+    if (buildConfig.publish) {
+      buildConfig.appImage = {
+        artifactName:
+          updateChannel === "nightly" ? "T3-Code-Nightly-${arch}.${ext}" : "T3-Code-${arch}.${ext}",
+      };
+    }
     buildConfig.deb = {
       // FPM runs outside the staged app directory, so source paths must be absolute.
       fpm: [
@@ -3766,7 +3857,8 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
       }),
   });
 
-  const appVersion = options.version ?? serverPackageJson.version;
+  const appVersion =
+    options.version ?? resolveTaggedSourceVersion(repoRoot, serverPackageJson.version);
   const iconAssets = resolveDesktopBuildIconAssets(appVersion);
   const commitHash = yield* resolveGitCommitHash(repoRoot);
   const mkdir = options.keepStage ? fs.makeTempDirectory : fs.makeTempDirectoryScoped;
@@ -3909,6 +4001,22 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
       });
   }
   yield* stageBrowserSecret({
+    repoRoot,
+    stageResourcesDir,
+    platform: options.platform,
+    arch: options.arch,
+    verbose: options.verbose,
+  });
+  /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
+  yield* stageSidebarGlass({
+    repoRoot,
+    stageResourcesDir,
+    platform: options.platform,
+    arch: options.arch,
+    verbose: options.verbose,
+  });
+  /* fork:end fork-cool-darker-sidebar-vibrancy */
+  yield* stageAppleSpeech({
     repoRoot,
     stageResourcesDir,
     platform: options.platform,

@@ -1,3 +1,4 @@
+import { useGT } from "gt-react";
 import { workspaceAreaProps } from "../../lib/workspaceFocus";
 import {
   useLayoutEffect,
@@ -49,7 +50,8 @@ export function ThreadDetailsCard({
   forkGlassPopup?: boolean;
   /* fork:end fork-popup-surface */
 }) {
-  const detailsArea = workspaceAreaProps("details", 3, "Thread details");
+  const gt = useGT();
+  const detailsArea = workspaceAreaProps("details", 3, gt("Thread details"));
   const canvas = useChatCanvas();
   const preferredPlacement = canvas?.preferredDetailsCard ?? null;
   const placement = canvas?.detailsCardPlacement ?? null;

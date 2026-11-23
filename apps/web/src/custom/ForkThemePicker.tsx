@@ -22,6 +22,7 @@ import {
   type InletColor,
 } from "./forkTheme";
 import { ForkSwatchPicker } from "./ForkSwatchPicker";
+import type { ForkGlass3dMode } from "./forkGlass3d";
 
 const FORK_PALETTE_DESCRIPTIONS = {
   [BASIC_THEME]: "One colour, light borders.",
@@ -45,9 +46,27 @@ function basicPreview(tone: BasicTone): ThemeCardPreviewColors {
   };
 }
 
-function previewFor(palette: ForkPalette, tone: BasicTone, inletColor: InletColor) {
+function previewFor(
+  palette: ForkPalette,
+  tone: BasicTone,
+  inletColor: InletColor,
+  glass3d: ForkGlass3dMode,
+) {
   if (palette === BASIC_THEME) return basicPreview(tone);
   if (palette === COOL_DARKER_THEME) {
+    if (glass3d === "off") {
+      const base = "#1f1c1b";
+      const lift = (percent: number) => `color-mix(in srgb, #ffffff ${percent}%, ${base})`;
+      return {
+        sidebar: base,
+        canvas: base,
+        surface: lift(8),
+        accentSurface: lift(8),
+        accent: lift(16),
+        messageSurface: lift(4),
+        messageAction: "#ffffff",
+      };
+    }
     return {
       sidebar: "#181b1e",
       canvas: "#141618",
@@ -74,6 +93,7 @@ export function ForkThemePicker(props: {
   readonly value: ForkPalettePreference;
   readonly basicTone: BasicTone;
   readonly inletColor: InletColor;
+  readonly glass3d?: ForkGlass3dMode;
   readonly onChange: (palette: ForkPalette) => void;
 }) {
   return (
@@ -98,7 +118,16 @@ export function ForkThemePicker(props: {
           >
             <ThemeWireframe
               className="h-[7.5rem]"
-              panes={[{ colors: previewFor(palette, props.basicTone, props.inletColor) }]}
+              panes={[
+                {
+                  colors: previewFor(
+                    palette,
+                    props.basicTone,
+                    props.inletColor,
+                    props.glass3d ?? "full",
+                  ),
+                },
+              ]}
             />
             <span className="flex flex-col gap-0.5 px-0.5 pb-0.5">
               <span
