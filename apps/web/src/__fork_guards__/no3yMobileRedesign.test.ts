@@ -629,6 +629,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
       "no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))",
     );
     expect(threadRoute).toContain("<No3yThreadTitleStyle />");
+    // The ring follows the composer's model and shows the limit that will interrupt first.
+    expect(threadRoute).toContain(
+      "providerInstanceId: (selectedThreadWithDraftSettings ?? selectedThread)",
+    );
+    expect(screenHeader).toContain("no3yRingUsageWindow(driver, account.limits.windows)");
     // One usage button opening the half-height usage sheet, and a ⋯ menu holding the rest.
     expect(threadHeader).toContain("useNo3yThreadBar(");
     expect(screenHeader).toContain('icon: "ellipsis"');
@@ -638,7 +643,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(screenHeader).toContain("<NativeStackScreenOptions options={{ headerShown: false }} />");
     expect(screenHeader).toContain("<HeaderHeightContext value={props.draft ? 0 : inset}>");
     expect(threadRoute).toContain("<No3yThreadBarInset draft=");
-    expect(screenHeader).toContain('StackActions.push("No3yUsage")');
+    expect(screenHeader).toContain('StackActions.push("No3yUsage", driver === undefined');
+    expect(readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx")).not.toContain("peekRing");
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
     // The usage sheet is the Mac drawer's compact rows in a half sheet that scrolls, refreshed
     // on open, with explicit checking / offline / empty states.

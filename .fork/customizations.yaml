@@ -7974,8 +7974,12 @@
     three 44pt glass bubbles float over the transcript under a fade from the
     page colour (fork/No3yScreenHeader.tsx's No3yThreadHeader): back, the
     title in its own pill (16pt Medium, one line), and a pill holding one usage
-    button (the provider's remaining-limit ring, or a gauge when it reports
-    none) and a ⋯ menu with the project, environment and branch as info rows
+    button (a ring for the model the composer chip shows, a switch in the
+    model sheet included: the share left of its limit that will interrupt
+    first, the least left among its windows with Claude's seven_day_fable
+    left out, the shorter window on a tie, named only in its accessibility
+    label; fork/no3yUsageCompact.ts; a gauge when it reports none; the sheet it
+    opens lists that provider first with that window marked) and a ⋯ menu with the project, environment and branch as info rows
     plus the git, terminal and files items, their one home, reachable in every
     thread state. The transcript's top inset is that row's (No3yThreadBarInset
     gives the body it as its header height) and it scrolls under the bubbles;
@@ -7993,7 +7997,8 @@
     label, % left and reset time; 5hr / 7d only from typed window durations,
     Claude's seven_day_fable left out, the calmer #38a169 green; rules copied
     into fork/no3yUsageCompact.ts), actionable limit notices, usage links and
-    a See all usage link to Settings › Usage. The composer is a glass card (editor on top; 40pt +, model
+    a See all usage link (white, with a chevron) to Settings › Usage, 24pt
+    clear of the grabber and of the rounded bottom. The composer is a glass card (editor on top; 40pt +, model
     chip, mic and send below, the dictation row's cancel, waveform, confirm and
     stop or send at the same 12pt inset so stop never sits in the rounded corner, the text's last line as far above them as its
     first sits below the card's top; no chip row above it; the model chip ends

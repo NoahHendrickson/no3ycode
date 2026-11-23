@@ -1,11 +1,12 @@
 /**
- * The no3y usage sheet, sized to its content (`.fork/customizations.yaml#no3y-mobile-redesign`):
+ * The no3y usage half sheet (`.fork/customizations.yaml#no3y-mobile-redesign`):
  * the Mac composer's usage drawer as one compact row per provider (its mark, then a 5hr / 7d bar
  * each with % left and reset), limit notices, usage links and a "See all usage" link.
  */
 import Alert02Icon from "@hugeicons/core-free-icons/Alert02Icon";
+import ArrowRight01Icon from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import { useAtomValue } from "@effect/atom-react";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, type StaticScreenProps } from "@react-navigation/native";
 import {
   collectExternalUsageLinks,
   collectLimitAccounts,
@@ -29,6 +30,7 @@ import { NO3Y_FADE_IN, NO3Y_FADE_OUT } from "./no3yMotion";
 import { No3yProviderMark } from "./No3yProviderMark";
 import {
   actionableLimitNotices,
+  bindingPoolWindow,
   compactTrayWindows,
   compactWindowLabel,
   fullWindowLabel,
@@ -39,14 +41,18 @@ import {
 /** The Mac drawer's calmer green; amber and red keep the palette's. */
 const CALM_GREEN = "#38a169";
 
-export function No3yUsageSheet() {
+export function No3yUsageSheet(props: StaticScreenProps<{ readonly driver?: string } | undefined>) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const limits = useRefreshLimits(null, true);
   const presentations = useAtomValue(environmentPresentations.presentationsWithProvidersAtom);
-  const pools = collectLimitPools(collectLimitAccounts(presentations), limits.now);
+  // A thread's ring opens the sheet with its provider first, its binding window marked.
+  const threadDriver = props.route.params?.driver;
+  const pools = [...collectLimitPools(collectLimitAccounts(presentations), limits.now)].sort(
+    (left, right) => Number(right.driver === threadDriver) - Number(left.driver === threadDriver),
+  );
   const notices = actionableLimitNotices(presentations);
   const externalLinks = collectExternalUsageLinks(presentations);
   const failed = limits.failedLabels;
@@ -73,8 +79,9 @@ export function No3yUsageSheet() {
       style={{ backgroundColor: palette.stageBackground }}
       contentContainerStyle={{
         paddingHorizontal: 16,
-        paddingTop: 24,
-        paddingBottom: Math.max(insets.bottom, 16),
+        // 24pt clear of the grabber, which sits in the sheet's top 12pt, and of the rounded bottom.
+        paddingTop: 36,
+        paddingBottom: insets.bottom + 24,
         gap: 14,
       }}
       showsVerticalScrollIndicator={false}
@@ -98,7 +105,12 @@ export function No3yUsageSheet() {
       ) : null}
       {pools.map((pool) => (
         <Animated.View key={pool.driver} entering={NO3Y_FADE_IN}>
-          <ProviderRow pool={pool} now={limits.now} palette={palette} />
+          <ProviderRow
+            pool={pool}
+            now={limits.now}
+            palette={palette}
+            bindingId={pool.driver === threadDriver ? (bindingPoolWindow(pool)?.id ?? null) : null}
+          />
         </Animated.View>
       ))}
       {[...notices, ...failed.map((label) => `${label}: could not refresh limits`)].map(
@@ -126,15 +138,16 @@ export function No3yUsageSheet() {
           accessibilityRole="link"
           accessibilityLabel="See all usage"
           hitSlop={8}
-          style={{ marginLeft: "auto" }}
+          style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 2 }}
           onPress={() => {
             navigation.goBack();
             openSettings(navigation, "SettingsUsage");
           }}
         >
-          <Text style={{ ...NO3Y_FONT.medium, fontSize: 13, color: palette.peekRing }}>
+          <Text style={{ ...NO3Y_FONT.medium, fontSize: 13, color: palette.foreground }}>
             See all usage
           </Text>
+          <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.foreground} />
         </Pressable>
       </View>
     </ScrollView>
@@ -145,6 +158,8 @@ function ProviderRow(props: {
   readonly pool: LimitPool;
   readonly now: number;
   readonly palette: FlatGlassPalette;
+  /** The window that will interrupt the thread first, marked with a dot. */
+  readonly bindingId: string | null;
 }) {
   const { pool, palette } = props;
   return (
@@ -173,17 +188,24 @@ function ProviderRow(props: {
               : tone === "low"
                 ? palette.statusAttention
                 : palette.statusFailed;
+          const binding = window.id === props.bindingId;
           return (
             <View
               key={`${window.kind}:${window.id}`}
               accessible
-              accessibilityLabel={`${fullWindowLabel(pool, window)}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`}
+              accessibilityLabel={`${fullWindowLabel(pool, window)}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}${binding ? ", the limit this thread hits first" : ""}`}
               style={{ flexGrow: 1, flexBasis: 110, gap: 4 }}
             >
               <View style={{ flexDirection: "row", alignItems: "baseline" }}>
                 <Text
-                  style={{ flex: 1, ...NO3Y_FONT.medium, fontSize: 12, color: palette.quietInk }}
+                  style={{
+                    flex: 1,
+                    ...NO3Y_FONT.medium,
+                    fontSize: 12,
+                    color: binding ? palette.foreground : palette.quietInk,
+                  }}
                 >
+                  {binding ? "● " : ""}
                   {compactWindowLabel(pool, window)}
                 </Text>
                 <Text

@@ -1000,9 +1000,11 @@ function ThreadRouteContent(
                 onOpenFilesInspector={handleOpenFilesInspector}
                 onReturnToThread={props.onReturnToThread}
                 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                // The model the composer chip shows, a switch in the sheet included.
                 no3yUsage={{
                   environmentId: selectedThread.environmentId,
-                  providerInstanceId: selectedThread.modelSelection.instanceId,
+                  providerInstanceId: (selectedThreadWithDraftSettings ?? selectedThread)
+                    .modelSelection.instanceId,
                 }}
                 /* fork:end no3y-mobile-redesign */
               />

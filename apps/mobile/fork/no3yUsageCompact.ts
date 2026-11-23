@@ -7,12 +7,15 @@ import {
   cursorUsageWindowDetails,
   displayLimitWindows,
   limitsNotice,
+  remainingPercent,
   type LimitPool,
   type LimitPoolWindow,
   type LimitPresentations,
 } from "@t3tools/shared/usageLimits";
+import type { ServerProviderUsageWindow } from "@t3tools/contracts";
 
 const FIVE_HOURS_MINS = 300;
+const CLAUDE_FABLE_WINDOW_ID = "seven_day_fable";
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
 
 /** Full descriptive label, for accessibility. */
@@ -64,7 +67,7 @@ export function compactWindowLabel(pool: LimitPool, window: LimitPoolWindow): st
 export function compactTrayWindows(pool: LimitPool): readonly LimitPoolWindow[] {
   const windows = displayLimitWindows(pool);
   if (pool.driver !== "claudeAgent") return windows;
-  return windows.filter((window) => window.id !== "seven_day_fable");
+  return windows.filter((window) => window.id !== CLAUDE_FABLE_WINDOW_ID);
 }
 
 /** Derived from upstream's helper, so a rewording there cannot bring the line back. */
@@ -98,4 +101,75 @@ export function no3yUsageSheetState(input: {
   if (input.pools > 0 || input.notices > 0 || input.links > 0) return null;
   if (input.connected === 0) return "offline";
   return input.checked ? "empty" : "checking";
+}
+
+/**
+ * The limit that will interrupt first: the least left, the shorter window on a tie (an unknown
+ * duration counts as longest). Null when there is no window.
+ */
+export function pickBindingUsageWindow<T>(
+  windows: ReadonlyArray<T>,
+  remainingOf: (window: T) => number,
+  durationMinsOf: (window: T) => number | null | undefined,
+): T | null {
+  let best: T | null = null;
+  for (const window of windows) {
+    if (best === null) {
+      best = window;
+      continue;
+    }
+    const left = remainingOf(window) - remainingOf(best);
+    const shorter =
+      (durationMinsOf(window) ?? Number.POSITIVE_INFINITY) <
+      (durationMinsOf(best) ?? Number.POSITIVE_INFINITY);
+    if (left < 0 || (left === 0 && shorter)) best = window;
+  }
+  return best;
+}
+
+/** A window's tiny ring label: 5h, 7d, else its duration in hours or days, else its own label. */
+export function ringWindowLabel(window: {
+  readonly id: string;
+  readonly label: string;
+  readonly windowDurationMins?: number | undefined;
+}): string {
+  const mins = window.windowDurationMins;
+  if (window.id === "seven_day") return "7d";
+  if (mins === undefined || mins <= 0) return window.label;
+  if (mins < 24 * 60) return `${Math.round(mins / 60)}h`;
+  return `${Math.round(mins / (24 * 60))}d`;
+}
+
+/**
+ * The thread ring's window among one account's: the binding one by pickBindingUsageWindow, with
+ * Claude's seven_day_fable breakdown left out as in the sheet. Null when it reports none.
+ */
+export function no3yRingUsageWindow(
+  driver: string,
+  windows: ReadonlyArray<ServerProviderUsageWindow>,
+): { readonly remainingPercent: number; readonly label: string; readonly id: string } | null {
+  const shown = windows.filter(
+    (window) => driver !== "claudeAgent" || window.id !== CLAUDE_FABLE_WINDOW_ID,
+  );
+  const binding = pickBindingUsageWindow(
+    shown,
+    remainingPercent,
+    (window) => window.windowDurationMins,
+  );
+  return binding === null
+    ? null
+    : {
+        remainingPercent: remainingPercent(binding),
+        label: ringWindowLabel(binding),
+        id: binding.id,
+      };
+}
+
+/** The sheet's binding window in a pool, by the ring's rule. */
+export function bindingPoolWindow(pool: LimitPool): LimitPoolWindow | null {
+  return pickBindingUsageWindow(
+    compactTrayWindows(pool),
+    (window) => window.remainingPercent,
+    uniformWindowDurationMins,
+  );
 }

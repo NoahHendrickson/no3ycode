@@ -5,6 +5,7 @@ import {
   compactTrayWindows,
   compactWindowLabel,
   usageBarTone,
+  no3yRingUsageWindow,
   no3yUsageSheetState,
 } from "./no3yUsageCompact";
 
@@ -76,5 +77,47 @@ describe("no3y usage sheet state", () => {
     expect(no3yUsageSheetState({ ...base, connected: 0 })).toBe("offline");
     expect(no3yUsageSheetState({ ...base, pools: 1 })).toBeNull();
     expect(no3yUsageSheetState({ ...base, checked: true, notices: 1 })).toBeNull();
+  });
+});
+
+describe("no3y usage ring window", () => {
+  const window = (id: string, usedPercent: number, mins?: number) => ({
+    id,
+    kind: id.startsWith("five") ? ("session" as const) : ("weekly" as const),
+    label: id,
+    usedPercent,
+    ...(mins === undefined ? {} : { windowDurationMins: mins }),
+  });
+  const fiveHour = (used: number) => window("five_hour", used, 300);
+  const weekly = (used: number) => window("seven_day", used, 10080);
+
+  it("shows the limit that will interrupt first: the least left", () => {
+    expect(no3yRingUsageWindow("claudeAgent", [fiveHour(70), weekly(20)])).toEqual({
+      id: "five_hour",
+      label: "5h",
+      remainingPercent: 30,
+    });
+    expect(no3yRingUsageWindow("claudeAgent", [fiveHour(10), weekly(85)])).toEqual({
+      id: "seven_day",
+      label: "7d",
+      remainingPercent: 15,
+    });
+  });
+
+  it("takes the shorter window on a tie, whatever the order", () => {
+    expect(no3yRingUsageWindow("codex", [weekly(40), fiveHour(40)])?.id).toBe("five_hour");
+    expect(no3yRingUsageWindow("codex", [fiveHour(40), weekly(40)])?.id).toBe("five_hour");
+  });
+
+  it("leaves Claude's Fable breakdown out, and reports nothing without windows", () => {
+    expect(
+      no3yRingUsageWindow("claudeAgent", [fiveHour(10), window("seven_day_fable", 95, 10080)])?.id,
+    ).toBe("five_hour");
+    expect(no3yRingUsageWindow("claudeAgent", [])).toBeNull();
+    expect(no3yRingUsageWindow("claudeAgent", [window("seven_day_fable", 95, 10080)])).toBeNull();
+  });
+
+  it("labels an unknown duration by the provider's own label", () => {
+    expect(no3yRingUsageWindow("cursor", [window("monthly", 50)])?.label).toBe("monthly");
   });
 });

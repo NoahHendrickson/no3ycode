@@ -1,7 +1,7 @@
 /**
  * The Threads, Chat and New agent headers (title; 44pt glass buttons) and the thread bar's usage button
  * and ⋯ menu — see `.fork/customizations.yaml#no3y-mobile-redesign`. The usage buttons open the
- * half-height usage sheet; the ring shows how much of the thread's provider limit is left.
+ * half-height usage sheet; the ring shows what is left of the limit that interrupts first.
  */
 import ArrowLeft01Icon from "@hugeicons/core-free-icons/ArrowLeft01Icon";
 import GaugeIcon from "@hugeicons/core-free-icons/GaugeIcon";
@@ -15,7 +15,7 @@ import type { MenuAction } from "@react-native-menu/menu";
 import { HeaderHeightContext } from "@react-navigation/elements";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
-import { collectProviderUsageLimits, remainingPercent } from "@t3tools/shared/usageLimits";
+import { collectProviderUsageLimits } from "@t3tools/shared/usageLimits";
 import { Atom } from "effect/reactivity";
 import { useId, type ReactNode } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -35,12 +35,16 @@ import { HugeIcon } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
+import { no3yRingUsageWindow } from "./no3yUsageCompact";
 import { useLendNo3yWorkspaceTabSelect } from "./no3yWorkspaceTabs";
 
-/** Opens the half-height usage sheet (fork/No3yUsageSheet.tsx). */
+/** Opens the half-height usage sheet (fork/No3yUsageSheet.tsx), a thread's provider first. */
 function useOpenUsage() {
   const navigation = useNavigation();
-  return () => navigation.dispatch(StackActions.push("No3yUsage"));
+  return (driver?: string) =>
+    navigation.dispatch(
+      StackActions.push("No3yUsage", driver === undefined ? undefined : { driver }),
+    );
 }
 
 /**
@@ -107,7 +111,7 @@ export function No3yThreadsHeader() {
         palette={palette}
         accessibilityLabel="Usage"
         icon={GaugeIcon}
-        onPress={openUsage}
+        onPress={() => openUsage()}
       />
     </No3yPageHeader>
   );
@@ -214,7 +218,7 @@ export function No3yChatHeader(props: No3yHeaderSearch) {
         palette={palette}
         accessibilityLabel="Usage"
         icon={GaugeIcon}
-        onPress={openUsage}
+        onPress={() => openUsage()}
       />
     </No3ySearchHeader>
   );
@@ -227,12 +231,12 @@ export function No3yNewAgentHeader(props: No3yHeaderSearch) {
 
 const IDLE_ATOM = Atom.make(undefined);
 
-/** The share of the provider's tightest current limit that is left, or null when it reports none. */
-function useProviderUsageRemaining(
+/** The thread's provider's limit that will interrupt first, or null when it reports none. */
+function useProviderUsageWindow(
   usage:
     | { readonly environmentId: EnvironmentId; readonly providerInstanceId: ProviderInstanceId }
     | undefined,
-): number | null {
+): (NonNullable<ReturnType<typeof no3yRingUsageWindow>> & { readonly driver: string }) | null {
   const configs = useServerConfigs();
   // The ring reads limits nothing else may have fetched: keep them fresh (throttled per machine).
   useAtomMount(usage ? limitsAutoRefreshSetAtom(String(usage.environmentId)) : IDLE_ATOM);
@@ -249,16 +253,19 @@ function useProviderUsageRemaining(
   const account =
     report?.accounts.find((candidate) => candidate.instanceId === instanceId) ??
     report?.accounts[0];
-  const windows = account?.limits.windows ?? [];
-  if (windows.length === 0) return null;
-  return Math.min(...windows.map(remainingPercent));
+  const driver = config.providers.find((provider) => provider.instanceId === instanceId)?.driver;
+  if (account === undefined || driver === undefined) return null;
+  const window = no3yRingUsageWindow(driver, account.limits.windows);
+  return window === null ? null : { ...window, driver };
 }
 
 /** What the no3y thread bar shows: the usage button and the ⋯ menu that holds the rest. */
 export interface No3yThreadBar {
   readonly menu: AppBarMenu;
-  /** The provider's remaining limit, or null when it reports none (the bar shows a gauge). */
+  /** The limit that will interrupt first, or null when none is reported (the bar shows a gauge). */
   readonly remaining: number | null;
+  /** That limit's window, "5h" or "7d", for its accessibility label. */
+  readonly windowLabel: string | null;
   readonly openUsage: () => void;
 }
 
@@ -281,8 +288,8 @@ export function useNo3yThreadBar(
     | undefined,
 ): No3yThreadBar | undefined {
   const enabled = useNo3yBottomNavEnabled();
-  const remaining = useProviderUsageRemaining(input);
-  const openUsage = useOpenUsage();
+  const usageWindow = useProviderUsageWindow(input);
+  const openUsageSheet = useOpenUsage();
   if (!enabled || input === undefined) return undefined;
   const info = [
     ...input.subtitle.split(" · ").filter((part) => part.length > 0),
@@ -318,7 +325,12 @@ export function useNo3yThreadBar(
         : []),
     ],
   };
-  return { menu, remaining, openUsage };
+  return {
+    menu,
+    remaining: usageWindow?.remainingPercent ?? null,
+    windowLabel: usageWindow?.label ?? null,
+    openUsage: () => openUsageSheet(usageWindow?.driver),
+  };
 }
 
 /** The floating row's height under the status bar: 44pt bubbles with 8pt above and below. */
@@ -401,7 +413,7 @@ export function No3yThreadHeader(props: {
   const palette = flatGlassPalette(themeAppearance);
   const fadeId = `no3y-top-fade-${useId().replace(/[^\w-]/g, "")}`;
   const height = useNo3yThreadBarInset() + TOP_FADE_TAIL;
-  const { menu, remaining, openUsage } = props.bar;
+  const { menu, remaining, windowLabel, openUsage } = props.bar;
   return (
     <>
       <NativeStackScreenOptions options={{ headerShown: false }} />
@@ -466,8 +478,12 @@ export function No3yThreadHeader(props: {
             <No3yGlassLayer radius={BUBBLE / 2} />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={remaining === null ? "Usage" : `${remaining}% of usage left`}
-              onPress={openUsage}
+              accessibilityLabel={
+                remaining === null
+                  ? "Usage"
+                  : `${remaining}% of the ${windowLabel ?? ""} usage limit left`
+              }
+              onPress={() => openUsage()}
               style={({ pressed }) => ({
                 width: BUBBLE,
                 height: BUBBLE,
