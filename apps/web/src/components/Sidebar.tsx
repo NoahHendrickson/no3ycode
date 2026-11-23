@@ -35,7 +35,9 @@ import { SIDEBAR_V2_PROJECT_HEADER_SORTING_STRATEGY } from "~/custom/SidebarV2Pr
 import { sidebarV2ProjectSectionCollision } from "~/custom/sidebarV2ProjectGrouping";
 /* fork:end sidebar-v2-project-grouping */
 import { restrictToFirstScrollableAncestor, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { CSS } from "@dnd-kit/utilities";
+/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+import { forkSidebarSortableTranslate } from "../custom/forkTypographyScale";
+/* fork:end fork-typography-settings */
 import {
   canSnooze,
   effectiveSnoozed,
@@ -2196,7 +2198,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       style={
         sortable
           ? {
-              transform: CSS.Translate.toString(sortable.transform),
+              /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+              transform: forkSidebarSortableTranslate(sortable.transform),
+              /* fork:end fork-typography-settings */
               transition: sortable.transition,
             }
           : undefined

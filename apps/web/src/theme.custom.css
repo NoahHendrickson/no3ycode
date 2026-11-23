@@ -168,6 +168,66 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Sidebar and chat stream size — see
+   `.fork/customizations.yaml#fork-typography-settings`.
+
+   The sidebar zooms its content and footer only while its root attribute is
+   set: its rows have fixed rem heights, so scaling the type alone would crowd
+   them. The header stays at 100%: it holds the macOS traffic-light inset and
+   must match the workspace top bar's height. Zoom sits inside the container,
+   so the width the resize handle sets stays the width you see. The descendant
+   match also reaches the narrow-web sheet, which has no sidebar-inner. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-zoom]
+  [data-sidebar-version="v2"]
+  :is([data-slot="sidebar-content"], [data-slot="sidebar-footer"]) {
+  zoom: var(--fork-sidebar-zoom, 1);
+}
+
+/* The chat stream is always on: message and tool-row text (text-sm) is 1rem so
+   it matches the composer's text-base, and every size multiplies Chat stream
+   size (1 at 100%). Line-height companions are unitless ratios and follow on
+   their own. Code keeps Code font size, which is in px and outside these. */
+:root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+}
+
+/* What the tokens can't reach. text-2xs and text-3xs are @theme inline, so
+   their utilities bake index.css's sizes; 4xs and 5xs size icon badges to
+   fixed overlays and stay put. Markdown headings and tables are literal rem in
+   index.css. h1-h3 equal xl / lg / base, and h4-h6 follow the body so no
+   heading sits below it. */
+:root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
+  .text-2xs {
+    font-size: calc(0.6875rem * var(--fork-chat-text-scale, 1));
+  }
+  .text-3xs {
+    font-size: calc(0.625rem * var(--fork-chat-text-scale, 1));
+  }
+  .chat-markdown {
+    h1 {
+      font-size: var(--text-xl);
+    }
+    h2 {
+      font-size: var(--text-lg);
+    }
+    h3 {
+      font-size: var(--text-base);
+    }
+    :is(h4, h5, h6) {
+      font-size: var(--text-sm);
+    }
+    table {
+      font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Sidebar footer inset — see `.fork/customizations.yaml#fork-sidebar-chrome`.
 
    Upstream's footer is px-inset / py-1, so the Settings / Pull Requests icons
