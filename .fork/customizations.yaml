@@ -2993,7 +2993,9 @@
     the composer's limits menu (fork-composer-usage-limits), drops the cards
     for dividers between providers and steps the type and meter down;
     there each provider folds to its header (mark, name, banked credits,
-    lowest share left, chevron), Codex and Claude starting open.
+    lowest share left, chevron), Codex and Claude starting open. The compact
+    menu offers no reset-credit redemption: it is itself a popover, which would
+    stack above the confirm dialog, so credits are spent from the Usage page.
     The card is the Scheduled page's (fork-scheduled-page owns it).
   tier: 4
   files:
@@ -3012,29 +3014,20 @@
   intent: >
     The composer vessel's right control slot ends with a 16px circular
     session-limit ring (UsageCircleMeter in custom/UsageMeter.tsx) driven by
-    useComposerUsageDrawer() in custom/ComposerUsageLimitsReadout.tsx. It reads
+    composerUsageReadout() in custom/ComposerUsageLimitsReadout.tsx. It reads
     the selected provider instance's ServerProvider.usageLimits snapshot, adding
-    no wire data or polling. Toggling it expands an upward-opening two-line
-    CollapsiblePanel (data-fork-composer-usage-drawer) mounted as a sibling of
-    [data-fork-composer-vessel] so Chromium's backdrop root on Glass / Inlet
-    Black does not block backdrop blur; the vessel's top corners stay square
-    until the panel unmounts after its close transition. The tray subscribes to
-    environment presentations only while open, renders each provider as its
-    mark and name above its limits, each limit a ring with its label to the
-    right (abbreviating to 5hr / 7d only from typed window durations, omitting Claude's seven_day_fable id), focusable meter tooltips
-    with remaining % and reset times, actionable limit notices, external usage
-    links, and Escape / close-button dismissal restoring focus to the ring. The
-    calmer #38a169 green is scoped via --success to the composer trigger and
-    drawer so the Usage settings page keeps each theme's --success token. Hidden
-    when the provider reports no session window or when the footer collapses.
-    The drawer floats above the vessel, over the transcript (and over the
-    status chips above the composer), so opening it never pushes the chat up
-    (or moves the draft hero's launchpad), and ChatView lifts Scroll to end by
-    however far the open drawer rises above the composer overlay.
+    no wire data or polling. Clicking it opens a popover menu above it
+    (data-fork-tab-menu="composer", so Inlet hangs it from the ring like the
+    model menu; named "Usage limits") holding every provider's limits as
+    UsageLimitsPooled's compact list (fork-usage-limits-surface). The menu
+    subscribes to environment presentations only while open, and its clock
+    advances on open. The calmer #38a169 green is scoped via --success to the
+    ring and its menu so the Usage settings page keeps each theme's --success
+    token. Hidden when the provider reports no session window or when the
+    footer collapses. Nothing fills the composer's top vessel any more.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
-    - apps/web/src/custom/ComposerUsageLimitsReadout.test.ts
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
     - apps/web/src/components/ChatView.tsx
@@ -3666,7 +3659,7 @@
     appearanceFonts.ts), and the control and context rows are 14px regular.
     On Flat Glass the thread composer (not a new agent's draft) paints no
     vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
-    and the control row sits on the stage; an open usage drawer, attached
+    and the control row sits on the stage; attached
     banners and the Questions card are lift-1 trays over it with an 8%
     hairline; the prompt keeps its round corners and its frame fills the
     wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
@@ -7953,7 +7946,7 @@
     registrations, Basic's ramp swept across every tone), so a token added
     upstream appears without a story edit. Fork/ stories draw fork components
     through view exports that take plain props (ForkSubagentCardView,
-    BotThreadsRowView, ComposerLimitsTrayView, ComposerUsageLimitsDrawer,
+    BotThreadsRowView,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
     BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the

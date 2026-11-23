@@ -43,15 +43,17 @@ function provider(overrides: Partial<ServerProvider>): ServerProvider {
 }
 
 describe("fork guard: fork-composer-usage-limits", () => {
-  it("renders the circular limits meter at the far right and its upward vessel drawer", () => {
+  it("renders the circular limits meter at the far right, opening the limits menu", () => {
     const composer = readSibling("../components/chat/ChatComposer.tsx");
-    expect(composer).toContain("useComposerUsageDrawer(");
-    expect(composer).toContain("usageControls={usageDrawer.readout}");
-    expect(composer).toContain("topVessel={usageDrawer.drawer}");
+    expect(composer).toContain("composerUsageReadout(");
+    expect(composer).toContain("usageControls={usageReadout}");
+    expect(composer).not.toContain("topVessel=");
     const readout = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     expect(readout).toContain("<UsageCircleMeter");
-    expect(readout).toContain('data-fork-composer-usage-drawer="true"');
-    expect(readout).toContain("actionableLimitNotices(");
+    expect(readout).toContain("<PopoverTrigger");
+    expect(readout).toContain(
+      "<UsageLimitsPooled presentations={presentations} now={props.now} compact />",
+    );
   });
 });
 

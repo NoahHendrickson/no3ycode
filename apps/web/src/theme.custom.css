@@ -804,7 +804,10 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-usage-limits], [data-fork-composer-usage-drawer]) {
+  :is(
+    [data-fork-composer-usage-limits],
+    [data-slot="popover-popup"][data-fork-tab-menu="composer"]
+  ) {
   --success: #38a169;
 }
 
