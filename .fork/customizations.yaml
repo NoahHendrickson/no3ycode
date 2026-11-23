@@ -8497,3 +8497,44 @@
   verify:
     - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
     - apps/web/src/custom/branchLinks.test.ts
+
+- id: fork-typography-settings
+  intent: >
+    Settings → Appearance → Typography offers the interface font as presets:
+    Geist (the fork default, an empty preference that geist-typography's stack
+    fills), Inter (bundled by upstream's main.tsx import) and System. Custom…
+    opens upstream's any-installed-font field, and any value that matches no
+    preset shows as Custom. The section also has Sidebar size and Chat stream
+    size, 80–150% in steps, stored per device (a contracts field would put a
+    fork key in a schema upstream owns), so mobile and other devices keep
+    their own sizes. Both are percentages so they compose with upstream's
+    Interface font size. Each stamps a root attribute only when it is not
+    100%, so the default size runs none of the CSS. Sidebar size zooms the
+    sidebar's content and footer as a whole (its rows have fixed rem
+    heights, so text alone would crowd them). The header stays at 100%: it
+    holds the macOS traffic-light inset and matches the workspace top bar.
+    Zoom sits inside the container, so the width the resize handle sets is
+    the width you see. At every size, message and tool-row text (text-sm) in
+    the chat stream defaults to 1rem so it matches the composer (text-base),
+    and markdown h4-h6 follow it so no heading sits below the body. Chat
+    stream size rescales Tailwind's non-inline
+    --text-* tokens, plus the text-2xs / text-3xs utilities (@theme inline,
+    so they bake their size) and the markdown heading sizes, inside
+    [data-timeline-root]. Code blocks keep Code font size; 4xs/5xs icon
+    badges and the few literal text-[13px] captions stay put. The Custom
+    font field names Geist Variable (the bundled face) as the default, since an empty preference renders
+    Geist.
+  tier: 4
+  files:
+    - apps/web/src/custom/forkTypographyScale.ts
+    - apps/web/src/theme.custom.css
+  shadows:
+    - apps/web/src/components/settings/TypographySettings.tsx
+  watch:
+    - apps/web/src/main.tsx
+    # The selectors key on these DOM hooks and on the text scale staying non-inline @theme.
+    - apps/web/src/components/ui/sidebar.tsx
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/index.css
+  verify:
+    - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
