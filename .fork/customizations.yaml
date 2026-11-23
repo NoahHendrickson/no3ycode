@@ -3124,8 +3124,12 @@
     The count comes from the shells the client already holds, with no new
     wire data or polling. A run opened from Automations carries a
     history-state flag, and the thread header shows a back arrow only for
-    that history entry; it steps back to the list that opened it. Mobile is
-    out of scope and keeps listing these threads.
+    that history entry; it steps back to the list that opened it. On mobile
+    (no3y-mobile-redesign), the iOS Threads list and long-press peek enforce
+    the same roster predicate in apps/mobile/fork/forkRosterVisibility.ts
+    (parity-guarded against web) so automation runs stay hidden unless pinned
+    and instead appear on the Automations screen (SettingsScheduledTasks) and
+    its peek sheet.
   tier: 4
   files:
     - apps/web/src/custom/scheduledRunsOffSidebar.ts
@@ -4947,12 +4951,26 @@
     one box. Because the card takes the whole dock row, the stash tab cannot
     sit beside it as it does beside upstream's inset drawer: the dock stacks
     and the tab sits as a floor row above the card, right-aligned.
+    On the no3y iPhone layout (fork/No3yPendingUserInputCard.tsx, swapped in
+    by a fenced wrapper in ThreadDetailScreen) the same design is a glass card
+    in the composer card's place at its width: a Questions header with the
+    position/total (2+ questions), a dismiss for dismissible prompts and a
+    collapse chevron, one question at a time with radios or checkboxes on the
+    left, the foreground/alpha selection fill and hairline, a 50% ring, outline
+    Previous / Next and a white Submit on the last question (44pt); a
+    single-select pick moves to the next question (fork/no3yQuestionPaging.ts),
+    multi-select toggles in place. Free-text answers, the collapsed bar with
+    Stop, and upstream's feed-inset mechanics carry over unchanged. iPad and
+    Android keep upstream's card.
   tier: 2
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
     - apps/web/src/overrides/components/chat/ComposerPendingUserInputPanel.tsx
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
+    - apps/mobile/fork/No3yPendingUserInputCard.tsx
+    - apps/mobile/fork/no3yQuestionPaging.ts
+    - apps/mobile/fork/no3yQuestionPaging.test.ts
   shadows:
     - apps/web/src/components/chat/ComposerPendingUserInputPanel.tsx
   watch:
@@ -4961,9 +4979,12 @@
     # data-fork-pending-user-input-action on Previous and Next/Submit; the
     # outline + 24px restyle hangs off those attributes.
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
+    # Swaps in the no3y iPhone card.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
     - apps/web/src/__fork_guards__/forkPendingUserInput.test.ts
     - apps/web/src/__fork_guards__/forkPendingUserInputQuestionAdvance.test.tsx
+    - apps/mobile/fork/no3yQuestionPaging.test.ts
 
 - id: fork-model-picker
   intent: >
@@ -5356,7 +5377,7 @@
   shadows: []
   watch:
     - apps/mobile/src/features/threads/new-task-flow-provider.tsx
-    - apps/mobile/src/features/threads/NewTaskDraftScreen.tsx
+    - apps/mobile/src/state/use-thread-composer-state.ts
     - apps/mobile/src/features/threads/projectThreadCreationValidation.ts
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
@@ -5365,7 +5386,8 @@
   intent: >
     The mobile app builds as no3y Code, signed by the fork owner's Apple team
     (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
-    other variants), with the fork's app icons. Ping's team, bundle IDs, linked
+    other variants), with the fork's app icons and, on iOS, the sparkle
+    launch screen (no3y-launch-sparkle). Ping's team, bundle IDs, linked
     domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
     serve a different bundle, so they are swapped out or dropped, and OTA
     updates stay off until the fork has its own Expo project.
@@ -6530,13 +6552,25 @@
     or from guests are not stashable. An image the stash cannot keep aborts the move,
     since removing the run deletes the server copy. ChatView mounts it in the composer dock, not the
     timeline footer; client-runtime carries the reorderQueuedRun command.
-    Mobile keeps upstream's queue.
+    On the no3y iPhone layout (fork/No3yQueuedRunsBanner.tsx, mounted last in
+    ThreadDetailScreen's composer panels so it sits right above the composer
+    card at its width, and stays while a question hides the composer) the
+    same banner is a collapsible glass card: one line per message with the
+    sender for non-owners, Send now / Steer, Edit and Remove buttons, and
+    Move up / Move down plus the same actions in each row's long-press menu,
+    on the same mobile queue commands; a held queue offers Resume. Its
+    long-press menu's Move to stash puts a text-only, owner-written message in
+    the iOS prompt stash (no3y-prompt-stash) and takes it back if removing the
+    run fails. The status pill no longer counts the queue. iPad and Android keep upstream's queue sheet.
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
     - apps/web/src/custom/stashQueuedRun.ts
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
+    - apps/mobile/fork/No3yQueuedRunsBanner.tsx
+    - apps/mobile/fork/no3yQueuedRuns.ts
+    - apps/mobile/fork/no3yQueuedRuns.test.ts
   shadows: []
   watch:
     # Owns the queue mount, the timeline footer and the composer props.
@@ -6551,8 +6585,11 @@
     - apps/web/src/components/chat/useComposerStash.ts
     - packages/client-runtime/src/operations/commands.ts
     - packages/client-runtime/src/state/threadCommands.ts
+    # Mounts the no3y iPhone banner above the composer.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
     - apps/web/src/__fork_guards__/forkQueuedRunsBanner.test.ts
+    - apps/mobile/fork/no3yQueuedRuns.test.ts
 
 - id: fork-composer-approval-notice
   intent: >
@@ -7936,6 +7973,490 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
+- id: no3y-launch-sparkle
+  intent: >
+    A cold launch of the no3y iPhone app opens on the new sparkle logo. The
+    iOS launch screen is the green (#00C26B) sparkle at 220pt on the dark page
+    (#191817) (fork/identity.ts sets expo-splash-screen's iOS options;
+    fork/assets/no3y-splash-sparkle.png is rendered from the logo SVG). The
+    JS overlay (fork/No3yLaunchSparkle.tsx, mounted in App.tsx) draws the same
+    frame, hides the native splash under it, and twinkles on the UI thread: a
+    squeeze and spring back with a slight turn and a white glint across the
+    mark. When the first screen is ready (where SplashScreenCoordinator hides
+    the splash) it scales up and fades, after a 320ms floor so a fast launch
+    does not flicker (fork/no3yLaunch.ts); it never waits for the twinkle, so
+    it never delays the app. Once per process, so returning from the
+    background does not replay it; Reduce Motion only fades; iPad, Android and
+    upstream's identity build skip it. The app icons are not touched here.
+  tier: 3
+  files:
+    - apps/mobile/fork/No3yLaunchSparkle.tsx
+    - apps/mobile/fork/no3yLaunch.ts
+    - apps/mobile/fork/no3yLaunch.test.ts
+    - apps/mobile/fork/assets/no3y-splash-sparkle.png
+  shadows: []
+  watch:
+    - apps/mobile/src/App.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yLaunchSparkle.test.ts
+    - apps/mobile/fork/no3yLaunch.test.ts
+    - apps/mobile/fork/identity.test.ts
+- id: no3y-prompt-stash
+  intent: >
+    iOS has a device-local prompt stash like the Mac's promptStashStore: the
+    no3y composer's + menu offers "Stash prompt" (moves the composer's text
+    into the stash and clears it) and "Stashed prompts (N)", a half sheet
+    (fork/No3yPromptStashSheet.tsx) listing each stashed prompt's first line,
+    project and age; a tap restores it (straight in when the composer is
+    empty, else Replace or Add below), a swipe deletes it. The queued-messages
+    banner's Move to stash feeds the same stash. Newest first, at most 20,
+    saved as JSON in the app's documents directory (fork/no3yPromptStash.ts
+    holds the rules). Text only: mobile drafts keep attachments in their own
+    store, so stashing leaves them in the composer. No server or contract
+    data.
+  tier: 3
+  files:
+    - apps/mobile/fork/no3yPromptStash.ts
+    - apps/mobile/fork/no3yPromptStash.test.ts
+    - apps/mobile/fork/No3yPromptStashSheet.tsx
+  shadows: []
+  watch:
+    - apps/mobile/src/features/threads/ComposerAttachmentButton.tsx
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/Stack.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yPromptStash.test.ts
+    - apps/mobile/fork/no3yPromptStash.test.ts
+- id: no3y-voice-prepare-cache
+  intent: >
+    Dictation on mobile starts without waiting on the environment. Each tap
+    used to fetch the voice destination's speech status (or check the cloud
+    key) before recording could prepare, a round trip to the Mac over the
+    network. fork/no3yVoicePrepareCache.ts keeps the last successful result
+    for five minutes per connection and destination (a new connection or a
+    different destination misses; errors are never cached), one fetch is
+    shared between overlapping callers, and a tap that gives up never cancels
+    it. The composer's mic warms it while it shows
+    (fork/useVoicePreparePrefetch.ts), so a tap usually skips the round trip.
+    Mobile only; the shared voice controller and the server are untouched.
+  tier: 3
+  files:
+    - apps/mobile/fork/no3yVoicePrepareCache.ts
+    - apps/mobile/fork/no3yVoicePrepareCache.test.ts
+    - apps/mobile/fork/useVoicePreparePrefetch.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/features/voice-input/voiceDestination.ts
+    - apps/mobile/src/features/voice-input/ComposerDictationControl.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yVoicePrepareCache.test.ts
+    - apps/mobile/fork/no3yVoicePrepareCache.test.ts
+- id: no3y-mobile-redesign
+  intent: >
+    The no3y Code iOS redesign from the owner's Figma mocks (Threads list and
+    inside a thread). One page colour, #191817, on every iOS screen: the dark
+    themes' page tokens are replaced on iOS in both the Uniwind CSS variables
+    and the JS theme variables (fork/no3yPageColor.ts), so nothing changes
+    colour on push/pop. iOS draws the system font (SF Pro) everywhere:
+    global.css points the font tokens at System with weights on the medium/bold
+    utilities, FONT_FAMILIES is System on iOS, and markdown strong/headings take
+    a bold weight; Android keeps DM Sans. Controls are native glass
+    (fork/No3yGlass.tsx: liquid glass, or the app's blur backdrop where it is
+    unavailable) at 44pt, and 40pt inside the composer card. A dock of four filled Hugeicons items (Threads, New
+    agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
+    on Home and Settings pages and hides inside a thread; a sheet
+    over those screens never hides it (it reads the routes beneath formSheets,
+    which cover it natively; hiding it only brought it back late, once the
+    sheet's route left the stack after its dismissal; fork/no3yDockMove.ts).
+    The dock's four destinations are tabs of Home (fork/No3yHomePanes.tsx,
+    in place of HomeRouteScreen in WorkspaceRootScreen's Threads branch): a
+    dock tap only changes Home's tab state (fork/no3yHomeTabs.ts), so it is
+    instant (react-native-screens v5 animates every push and pop with no
+    per-transition option, which is why they are not stack routes). Over a
+    page pushed on Home (a Settings page, an automation's editor) or over Pull
+    requests, Home is brought back first. Each tab mounts on its first visit
+    and stays mounted while hidden (upstream's WorkspaceTabPanes, Activity),
+    keeping its scroll, search, filters and draft; pushes for threads, runs
+    and settings keep their native animation, and back returns to the tab.
+    Every New agent entry (startNewTask, the peeks) and Settings' Scheduled
+    tasks link (openSettings) open their tab; the `chat` and
+    settings/scheduled-tasks links open it from their old routes
+    (fork/No3yHomeTabRedirect.tsx). Nothing fades in on a switch: a fade there once
+    hid the composer's glass (expo-glass-effect installs its UIGlassEffect
+    once, and one installed under a fading ancestor never renders). Motion elsewhere uses fork/no3yMotion.ts's
+    UI-thread presets, retargeted mid-flight and instant under Reduce Motion:
+    a 200ms eased layout slide for Threads rows (folding a status section,
+    settling a card), chats, Petals, project rows, automation tiles and run
+    rows; 180ms fades in and 140ms out for the live status line, queued rows,
+    usage rows and the Automations or Runs content, which hold no glass; glass
+    only ever moves by transform: pills above the composer (status pill,
+    scroll-to-end, New agent's pills) grow in from 92%, and the peek card and
+    queued banner rise 8pt; and 180ms eased toggles for section chevrons,
+    the Automations | Runs wash and a picked project row's lift. Keyboard
+    moves and streaming updates are never animated.
+    Long-pressing Threads, Automations or Chat opens a peek card (provider
+    marks, status marks, a New thread / New automation / New chat row). Threads
+    replaces the native bar with its own header (Threads title; Pull requests,
+    Settings and Usage buttons; Pull requests selects Home's Pull requests tab
+    the old tab bar reached, which resetting the stack alone never did, and the
+    dock's Threads selects Threads back with the selector Home's header lends
+    it, fork/no3yWorkspaceTabs.ts) and keeps a bottom tray above the dock: a glass search pill, a
+    filter button and a sort button whose menus, on iOS 26, morph out of the
+    glass button and collapse back into it (fork/No3yGlassMenuButton.tsx: a
+    SwiftUI Menu with the glass button style through @expo/ui, a circle or a
+    capsule, its RN label sized to its content so SwiftUI centres it, its
+    items mapped from the same menu actions by fork/No3yMenuItems.tsx; earlier
+    iOS keeps the RN glass button under the UIMenu; the thread header's ⋯
+    becomes its own glass bubble beside the usage one for it, and the
+    Automations filter and the model sheet's Favorites/provider and Access
+    menus use it too) (fork/No3yThreadsFilterBar.tsx; upstream
+    ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
+    listing rule, fork/forkBots.ts) sit above the status sections under
+    "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
+    tiles, five to a row and wrapping: 12pt-radius tiles on the 4% wash, the
+    bare pixel mascot centred (art copied in fork/botMascotArt.ts, 26pt), the
+    12pt name centred under it, no status line, and a 20pt mark in the top-right
+    corner that, over an idle petal, takes its launched work's need of you or
+    running state (botWorkByBot and withBotWorkAttention ported); a tap opens the bot, a long press offers rename, archive and delete,
+    search narrows them, and the grid is gone when there are none; bot work
+    stays off the list. Thread titles are pure white on every surface whatever
+    their status, read state or shelf (the shared recede rule stays
+    parity-guarded but never colours a mobile title). Thread cards show the
+    title, then project icon and name, PR mark, provider mark and model (a
+    failed or usage-limited card puts its error there instead, on one line in
+    the meta line's own type and muted ink; the mark carries the colour), with
+    the status mark trailing (20pt at card size everywhere, scaled whole from
+    its 16pt drawing); working is the Mac's bead ring, looping on the UI
+    thread and still while its screen is covered, the app is inactive or Reduce
+    Motion is on. A PR mark (thread cards, the runs table;
+    fork/No3yPullRequestMark.tsx) is the Mac's by state, glyph and number in
+    one colour: open git-pull-request in emerald, merged git-merge in violet,
+    closed pull-request-closed in red, draft pull-request-draft in muted zinc
+    (the Mac's PULL_REQUEST_STATE_PRESENTATION tones, copied into
+    flatGlassTheme; fork/no3yPullRequestTone.ts). Inside a thread there is no native bar and no blurred strip:
+    three 44pt glass bubbles float over the transcript under a fade from the
+    page colour (fork/No3yScreenHeader.tsx's No3yThreadHeader): back, the
+    title in its own pill (16pt Medium, one line), and a pill holding one usage
+    button (a ring for the model the composer chip shows, a switch in the
+    model sheet included: the share left of its limit that will interrupt
+    first: the session (shortest) window, unless the weekly (longest) has 20%
+    or less left (WEEKLY_BINDING_REMAINING_PERCENT), since shares of windows of
+    different lengths do not compare; Claude's seven_day_fable left out;
+    named only in its accessibility label; fork/no3yUsageCompact.ts; a gauge when it reports none; the sheet it
+    opens lists that provider first with that window marked) and a ⋯ menu with the project, environment and branch as info rows
+    plus the git, terminal and files items, their one home, reachable in every
+    thread state. The transcript's top inset is that row's (No3yThreadBarInset
+    gives the body it as its header height) and it scrolls under the bubbles;
+    the back swipe stays native. Because the bubbles are not in a UIKit
+    navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
+    On iOS 26 the no3y half sheets (usage, model, status, prompt stash) have
+    a clear body and route content, so the native sheet owns the surface and
+    its display-concentric shape; their opaque page-coloured bodies drew a
+    second, smaller corner inside the sheet's (fork/no3ySheet.ts; earlier iOS
+    keeps the page colour).
+    The usage buttons (thread ring and Threads gauge alike) open a half sheet
+    that scrolls (fork/No3yUsageSheet.tsx; a fitToContents sheet was sized on
+    iOS before the limits arrived and clipped them), which asks every
+    connected machine for fresh limits on open and says "Checking usage
+    limits…", that no environment is connected, or that none reports limits
+    until there are rows; the thread ring keeps its machine's limits refreshed
+    (throttled) while a thread is open. It is the Mac composer's
+    usage drawer on a phone: one row per provider with every account's
+    environments (its mark, then each window's bar side by side with its
+    label, % left and reset time; 5hr / 7d only from typed window durations,
+    Claude's seven_day_fable left out, the calmer #38a169 green; rules copied
+    into fork/no3yUsageCompact.ts), actionable limit notices, usage links and
+    a See all usage link (white, with a chevron) to Settings › Usage, 24pt
+    clear of the grabber and of the rounded bottom. The composer is a glass card (editor on top; 40pt +, model
+    chip, mic and send below, the dictation row's cancel, waveform, confirm and
+    stop or send at the same 12pt inset so stop never sits in the rounded corner, the text's last line as far above them as its
+    first sits below the card's top; no chip row above it; the model chip ends
+    in the current runtime mode's access icon, the Mac's own: Supervised a
+    filled square lock, Auto-accept edits a filled pen, Auto a filled shield
+    check, Full access a stroked crossed shield, which has no filled weight;
+    fork/No3yAccess.tsx) over a fade-to-page scrim so the
+    transcript never reads through; the upstream controls draw that style
+    through fork/No3yComposerStyle.tsx's context and keep their behaviour.
+    Above the card, the upstream full-width floating status control gives way
+    to one 30pt glass pill right-aligned with the card's edge
+    (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
+    amber dot when something there needs the user (transient status other than
+    a working turn, which the transcript's live status line already shows with
+    its time, so a running turn alone draws no pill and stop stays on the
+    composer; background
+    processes, monitors, subagents as a robot, Pi status, previews; queued
+    messages are in the queued-runs banner above the card), with
+    the scroll-to-end button beside it. A tap opens a half-height sheet
+    (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
+    upstream control had (stop background work, force stop, wake, un-settle,
+    dismiss, reconnect, open subagents, open a child that needs the user, Pi
+    status, previews). iPad and Android keep the upstream control.
+    Upstream moved working, compacting, background work and snooze/settle
+    out of its floating status into the feed's closing status lines, and
+    syncing into the thread header. The pill keeps them: fork/no3yPillStatus.ts
+    rebuilds its status in the old order from what upstream still computes,
+    and the feed's closing status lines are hidden on iPhone so nothing shows
+    twice. Syncing stays in the header, which the no3y header keeps.
+    The Mac's "Resume with less context" notice (fork-resume-compaction-banner)
+    replaces upstream's compact-on-next-send there: one 44pt glass pill stacked
+    on the composer, above the queued banner, in the thread header bubbles'
+    style with its controls nested inside (fork/No3yCompactBanner.tsx, rising
+    in): a shrink icon, "Resume with less context" with the token count muted
+    (it gives way first when short of room), a glass Compact pill that sends
+    `/compact` now as the Mac's compactContext does, and an X, Keep full
+    history, dismissing it for that thread and snapshot for the session. The
+    offer is client-runtime's compactBeforeSendTokens, which applies the Mac's
+    shouldOfferResumeCompaction (fork/no3yResumeCompaction.ts), and a send on
+    the no3y layout never compacts first (fenced in use-thread-composer-state, read from the dock-published layout flag in fork/no3yHomeTabs.ts).
+    The user's sent bubble is a translucent wash (white 9% on the dark page,
+    flatGlassTheme's userBubble), as the Mac's glass bubble is, not a grey fill.
+    A live turn ends in one status line, as on the Mac (fork-working-row-last):
+    the feed's single live row (thinking, a running tool group, or a lone
+    running call; fork/no3yLiveStatus.ts) moves to the end of the derived rows,
+    so an open group's details sit above it, and draws as
+    fork/No3yLiveStatusLine.tsx: the bead ring, what the agent is doing now,
+    the turn timer, and a chevron that opens the running group. Upstream's
+    derivation is untouched. The finished turn's "Worked for …" fold row has
+    no divider.
+    Subagents in the transcript draw as the Mac fork's subagent card
+    (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
+    provider's mark in a tile with the Threads list's status mark at its corner
+    (bead ring while working, never upstream's blue dot or blue "Working"), a
+    pure-white title over model and effort, and elapsed time, on a 20pt-radius
+    card with no activity line; a tap opens the agent's thread and a batch
+    keeps a "Kicked off N subagents" lead line. On
+    iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
+    with a close button, a Favorites/provider select, an Access menu (the
+    session's runtime mode: the thread's composer draft settings, or the New
+    agent draft's mode), the model list (long-press to favorite) and an effort
+    slider (24pt plus the safe area clear of the sheet's rounded bottom) with a
+    notch per level, tap-to-jump and snapping drags with a haptic
+    tick, driving the same thread settings session so picks, favorites and
+    options save exactly as before. Claude and Codex draw the Mac fork's own
+    marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
+    providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
+    the Mac fork's version, drawn by fork/HugeIcon.tsx with the Mac's derived
+    filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatTab.tsx)
+    has Threads' header (Chat; Search, Settings and Usage, Search turning the
+    row into a search pill with a close button), its chats newest first as
+    thread cards (fork/No3yThreadRow.tsx, swiping to archive and delete, the
+    card long-press menu, no settle or snooze), and New agent's own draft
+    composer for a No-project chat: the Chat tab keeps a draft for the
+    environment's No-project workspace (opened on the server if it is not yet
+    listed; fork/no3yChat.ts), as New agent's tab keeps its own. With no draft
+    thread on the stack, the root new-task flow serves the shown tab's draft
+    as it serves a draft thread (fenced in Stack.tsx's flow binding;
+    new-task-flow-state keeps both tabs' flows live; the project picker over
+    New agent sets the tab's project; a tab never pushes the picker itself,
+    fork/no3yInPlaceProject.ts, since upstream's pick-then-leave flow
+    replaced Home and pushed the picker again, trapping the user; New agent
+    starts every draft with no project, its send blocked and its placeholder
+    saying "Pick a project above to start" until one is picked), and a hidden tab holds the flow value it
+    last had (fork/No3yHomeDraftGate.tsx) so it never renders the other tab's
+    draft. The model chip, model sheet, effort, access, +, the prompt stash and
+    dictation are New agent's and what is picked starts the chat. A sent chat
+    or New agent thread is pushed over Home (back returns to the tab) while the
+    tab takes a fresh draft; chats opened from the list are pushed too.
+    A chat is what the Mac calls one (fork/no3yChatRule.ts, parity-guarded
+    against chatMode.ts isChatThread): tagged `chat`, or sent from this phone
+    and still waiting for its tag; a No-project thread without the tag is code
+    on both. A phone chat is tagged with the existing thread.tag.set command
+    once the server lists it (fork/no3yChatTagging.ts, the Mac's chatTagging
+    shape), so it shows in the Mac's Chat list too.
+    NewTaskDraftScreen takes a surface (fork/No3yDraftSurface.tsx) in place of
+    its header, hero and context/workspace controls (a clone banner stays):
+    a Home tab's, or New agent's on another iPhone draft (fork/No3yNewAgent.tsx): a "New agent"
+    header with Search and no native bar, then one scrolling column of 48pt
+    pill glass rows, 8pt apart, above the pinned composer (the list runs to
+    the screen bottom behind the composer and keyboard and pads its end, never
+    sized from the keyboard; rows fade out under the header and into the
+    composer scrim; the composer rides the keyboard only for its own editor,
+    so a header search leaves it at rest under the keyboard and opening or
+    closing search never moves it, fork/no3yKeyboardOwner.ts) (No3yGlassLayer, as
+    the controls; only a 20pt icon and the name, 16pt, one line; the picked
+    one brightened with a hairline and a small check; growing in, never
+    fading, as glass does): "No project" (the No-project workspace, opened as
+    the picker opens it) first, then every project, those with roster-visible
+    threads newest activity first (as the Mac launchpad ranks, never by
+    chats), then the rest in the scopes' own most-recently-updated order
+    (fork/no3yProjectTiles.ts); Search narrows them to every match. There is
+    no All projects step. Directly above the composer sit glass pills for the
+    workspace mode and the base branch (by name) and, with two or more
+    machines, the machine, each opening its existing picker, once a project is
+    picked; they exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, the
+    Home tab, drawn by a fenced early return in SettingsScheduledTasksRouteScreen,
+    whose own route only redirects to the tab; the Settings scope its filter
+    uses stays while the no3y layout is on) has its own header: a
+    glass "Automations | Runs" switch (the last tab kept for the session),
+    then the environment filter and +. Automations shows each automation as a
+    two-column tile (name on up to two lines, schedule, a result line with a
+    20pt mark: Running now, Paused, Last run failed, the next run or how long
+    since the last, fork/no3yAutomationRuns.ts; the fork Switch, #00bc7d with a
+    white thumb; an off tile dims all but its switch); a tap edits and a long
+    press offers Run now, Edit, Open thread and Delete. Runs is the Mac's
+    compact runs table: 40pt one-line rows with full-width hairlines (status
+    mark, run title, automation and project, PR mark,
+    relative time), needs you first, then working, then the rest newest first,
+    a page of 25 at a time with Show more, and a long-press menu (Open,
+    Settle, Rename, Archive, Delete). A run, and an automation's editor, is
+    pushed over Home, so back returns to Automations with its scroll position.
+    On iOS dark themes the
+    grouped-card token (a cool grey #1a1b1b in the default theme) is the 4%
+    white wash on the page, flattened to #222120 because rows nest in and
+    lift out of those cards; the glass fallback and selected-row tokens follow
+    (fork/no3yPageColor.ts). Threads keeps Mac-parity
+    status sections and roster visibility in
+    apps/mobile/fork/forkStatusGrouping.ts and forkRosterVisibility.ts
+    (parity-guarded against web without modifying web or client-runtime).
+  tier: 4
+  files:
+    - apps/mobile/fork/forkStatusGrouping.ts
+    - apps/mobile/fork/forkRosterVisibility.ts
+    - apps/mobile/fork/flatGlassTheme.ts
+    - apps/mobile/fork/HugeIcon.tsx
+    - apps/mobile/fork/No3yStatusMark.tsx
+    - apps/mobile/fork/mobileStatusGrouping.ts
+    - apps/mobile/fork/mobileStatusGrouping.test.ts
+    - apps/mobile/fork/useNo3yStatusGroupedList.ts
+    - apps/mobile/fork/No3yStatusSectionHeader.tsx
+    - apps/mobile/fork/No3yThreadRow.tsx
+    - apps/mobile/fork/No3yBottomNav.tsx
+    - apps/mobile/fork/no3yBottomNavEnabled.ts
+    - apps/mobile/fork/no3yIphone.ts
+    - apps/mobile/fork/No3yBottomFade.tsx
+    - apps/mobile/fork/No3yBottomTray.tsx
+    - apps/mobile/fork/No3yChatTab.tsx
+    - apps/mobile/fork/No3yHomePanes.tsx
+    - apps/mobile/fork/No3yHomeDraftGate.tsx
+    - apps/mobile/fork/No3yHomeTabRedirect.tsx
+    - apps/mobile/fork/no3yHomeTabs.ts
+    - apps/mobile/fork/no3yHomeTabs.test.ts
+    - apps/mobile/fork/No3yPullRequestMark.tsx
+    - apps/mobile/fork/No3yCompactBanner.tsx
+    - apps/mobile/fork/no3yInPlaceProject.ts
+    - apps/mobile/fork/no3ySheet.ts
+    - apps/mobile/fork/no3yKeyboardOwner.ts
+    - apps/mobile/fork/no3yKeyboardOwner.test.ts
+    - apps/mobile/fork/No3yGlassMenuButton.tsx
+    - apps/mobile/fork/No3yMenuItems.tsx
+    - apps/mobile/fork/no3yInPlaceProject.test.ts
+    - apps/mobile/fork/no3yResumeCompaction.ts
+    - apps/mobile/fork/no3yResumeCompaction.test.ts
+    - apps/mobile/fork/no3yPullRequestTone.ts
+    - apps/mobile/fork/no3yPullRequestTone.test.ts
+    - apps/mobile/fork/No3yDraftSurface.tsx
+    - apps/mobile/fork/No3yNewAgent.tsx
+    - apps/mobile/fork/no3yProjectTiles.ts
+    - apps/mobile/fork/no3yProjectTiles.test.ts
+    - apps/mobile/fork/no3yChat.ts
+    - apps/mobile/fork/no3yChatRule.ts
+    - apps/mobile/fork/no3yChatTagging.ts
+    - apps/mobile/fork/no3yChat.test.ts
+    - apps/mobile/fork/No3yAutomationRunsSection.tsx
+    - apps/mobile/fork/No3yThreadsFilterBar.tsx
+    - apps/mobile/fork/No3yThreadsListView.tsx
+    - apps/mobile/fork/hugeiconsFill.ts
+    - apps/mobile/fork/No3yControls.tsx
+    - apps/mobile/fork/No3yScreenHeader.tsx
+    - apps/mobile/fork/No3yComposerStyle.tsx
+    - apps/mobile/fork/No3yAccess.tsx
+    - apps/mobile/fork/No3yModelPicker.tsx
+    - apps/mobile/fork/No3yGlass.tsx
+    - apps/mobile/fork/No3yBeadRing.tsx
+    - apps/mobile/fork/beadRing.ts
+    - apps/mobile/fork/beadRing.test.ts
+    - apps/mobile/fork/effortSlider.ts
+    - apps/mobile/fork/effortSlider.test.ts
+    - apps/mobile/fork/No3yUsageSheet.tsx
+    - apps/mobile/fork/no3yUsageCompact.ts
+    - apps/mobile/fork/no3yWorkspaceTabs.ts
+    - apps/mobile/fork/no3yMotion.ts
+    - apps/mobile/fork/no3yDockMove.ts
+    - apps/mobile/fork/no3yDockMove.test.ts
+    - apps/mobile/fork/no3yUsageCompact.test.ts
+    - apps/mobile/fork/No3yProviderMark.tsx
+    - apps/mobile/fork/assets/codex-mark.png
+    - apps/mobile/fork/no3yPageColor.ts
+    - apps/mobile/fork/forkBots.ts
+    - apps/mobile/fork/forkBots.test.ts
+    - apps/mobile/fork/botMascotArt.ts
+    - apps/mobile/fork/No3yBotsGrid.tsx
+    - apps/mobile/fork/No3yStatusPill.tsx
+    - apps/mobile/fork/No3yStatusSheet.tsx
+    - apps/mobile/fork/no3yStatusSheetStore.ts
+    - apps/mobile/fork/no3yStatusSegments.ts
+    - apps/mobile/fork/no3yStatusSegments.test.ts
+    - apps/mobile/fork/no3yPillStatus.ts
+    - apps/mobile/fork/no3yPillStatus.test.ts
+    - apps/mobile/fork/No3ySubagentCards.tsx
+    - apps/mobile/fork/no3ySubagentCard.ts
+    - apps/mobile/fork/no3ySubagentCard.test.ts
+    - apps/mobile/fork/no3yLiveStatus.ts
+    - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/No3yLiveStatusLine.tsx
+    - apps/mobile/fork/No3yAutomationsScreen.tsx
+    - apps/mobile/fork/no3yAutomationRuns.ts
+    - apps/mobile/fork/no3yAutomationRuns.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/Stack.tsx
+    - apps/mobile/global.css
+    - apps/mobile/src/lib/fontFamilies.ts
+    - apps/mobile/src/lib/filePreview.test.ts
+    - apps/mobile/src/native/EnrichedMarkdownText.tsx
+    - apps/mobile/src/features/settings/appearance/AppearancePreferencesProvider.tsx
+    - apps/mobile/src/components/ComposerToolbar.tsx
+    - apps/mobile/src/components/ComposerModelControl.tsx
+    - apps/mobile/src/components/ComposerSurface.tsx
+    - apps/mobile/src/features/threads/ComposerAttachmentButton.tsx
+    - apps/mobile/src/features/voice-input/ComposerDictationControl.tsx
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/features/threads/ThreadHeader.tsx
+    - apps/mobile/src/features/threads/ThreadRouteScreen.tsx
+    - apps/mobile/src/features/threads/ThreadSettingsSheet.tsx
+    - apps/mobile/src/features/threads/NewTaskDraftScreen.tsx
+    - apps/mobile/src/features/threads/NewTaskDraftRouteScreen.tsx
+    - apps/mobile/src/features/threads/new-task-flow-state.ts
+    - apps/mobile/src/features/layout/workspace/WorkspaceNativeTabs.ios.tsx
+    - apps/mobile/src/features/layout/workspace/WorkspaceToolbar.tsx
+    - apps/mobile/src/features/home/home-list-options.ts
+    - apps/mobile/src/features/home/HomeRouteScreen.tsx
+    - apps/mobile/src/features/home/HomeScreen.tsx
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    - apps/mobile/src/features/threads/thread-work-log.tsx
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
+    - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.test.tsx
+    - apps/mobile/src/components/ComposerEditor.ios.test.tsx
+    - apps/mobile/src/features/settings/settings-navigation.ts
+    - apps/mobile/src/features/layout/AdaptiveWorkspaceLayout.tsx
+    - apps/mobile/src/features/layout/workspace/WorkspaceRootScreen.tsx
+    - apps/mobile/src/features/threads/NewTaskRouteScreen.tsx
+    - apps/mobile/src/features/threads/new-task-flow-provider.tsx
+    - apps/mobile/src/state/use-thread-composer-state.ts
+    # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
+    - apps/mobile/package.json
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileRedesign.test.ts
+    - apps/web/src/__fork_guards__/no3yHermesArrayMethods.test.ts
+    - apps/mobile/fork/mobileStatusGrouping.test.ts
+    - apps/mobile/fork/effortSlider.test.ts
+    - apps/mobile/fork/beadRing.test.ts
+    - apps/mobile/fork/no3yStatusSegments.test.ts
+    - apps/mobile/fork/no3yPillStatus.test.ts
+    - apps/mobile/fork/no3ySubagentCard.test.ts
+    - apps/mobile/fork/no3yUsageCompact.test.ts
+    - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/no3yAutomationRuns.test.ts
+    - apps/mobile/fork/no3yChat.test.ts
+    - apps/mobile/fork/no3yProjectTiles.test.ts
+    - apps/mobile/fork/forkBots.test.ts
+    - apps/mobile/fork/no3yDockMove.test.ts
+    - apps/mobile/fork/no3yHomeTabs.test.ts
+    - apps/mobile/fork/no3yPullRequestTone.test.ts
+    - apps/mobile/fork/no3yResumeCompaction.test.ts
+    - apps/mobile/fork/no3yInPlaceProject.test.ts
+    - apps/mobile/fork/no3yKeyboardOwner.test.ts
 - id: fork-branch-link-copy
   intent: >
     In a started thread, clicking the composer's read-only branch chip

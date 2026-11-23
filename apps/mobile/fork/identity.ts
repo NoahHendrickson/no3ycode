@@ -68,6 +68,33 @@ export function no3yVariant<V extends UpstreamVariant>(
   };
 }
 
+/** The page colour the launch sparkle animation (fork/No3yLaunchSparkle.tsx) starts on. */
+export const NO3Y_SPLASH_BACKGROUND = "#191817";
+/** Drawn at this width, centred, the frame the JS animation's first frame matches. */
+export const NO3Y_SPLASH_IMAGE_WIDTH = 220;
+const NO3Y_SPLASH_IMAGE = "./fork/assets/no3y-splash-sparkle.png";
+
+// The iOS launch screen shows the green sparkle on the dark page; Android keeps upstream's.
+function withNo3ySplash(plugins: ExpoConfig["plugins"]): ExpoConfig["plugins"] {
+  return plugins?.map((plugin) => {
+    if (!Array.isArray(plugin) || plugin[0] !== "expo-splash-screen") return plugin;
+    const options = (plugin[1] ?? {}) as Record<string, unknown>;
+    const ios = {
+      image: NO3Y_SPLASH_IMAGE,
+      imageWidth: NO3Y_SPLASH_IMAGE_WIDTH,
+      backgroundColor: NO3Y_SPLASH_BACKGROUND,
+    };
+    return [
+      plugin[0],
+      {
+        ...options,
+        ...ios,
+        dark: { image: ios.image, backgroundColor: ios.backgroundColor },
+      },
+    ];
+  });
+}
+
 // Ping's Apple team, linked domains and Expo project cannot sign or serve a different bundle.
 export function no3yNativeConfig(config: ExpoConfig, env: RepoEnv): ExpoConfig {
   if (!isNo3yMobileIdentity(env)) return config;
@@ -77,6 +104,7 @@ export function no3yNativeConfig(config: ExpoConfig, env: RepoEnv): ExpoConfig {
     ...config,
     ios,
     updates: { enabled: false },
+    plugins: withNo3ySplash(config.plugins),
     extra: { ...config.extra, eas: { observe: config.extra?.eas?.observe } },
   };
   delete next.owner;

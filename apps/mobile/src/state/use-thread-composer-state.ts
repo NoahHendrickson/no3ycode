@@ -139,6 +139,9 @@ import { enqueueThreadOutboxMessage } from "./thread-outbox";
 import { dispatchingQueuedMessageIdsAtom, useThreadOutboxMessages } from "./use-thread-outbox";
 import { threadEnvironment } from "./threads";
 import { useAtomCommand } from "./use-atom-command";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { readNo3yHomeTabs } from "../../fork/no3yHomeTabs";
+/* fork:end no3y-mobile-redesign */
 
 const EMPTY_QUEUE_WORKFLOW_ATOM = Atom.make<null>(null).pipe(
   Atom.withLabel("mobile-thread-queue-workflow:empty"),
@@ -892,6 +895,10 @@ export function useThreadComposerState(input: {
     // A fresh session drops the context a compaction would summarize. Only a send the notice
     // announced compacts, since the notice's minute clock can trail the exact deadline.
     const compactBeforeSend =
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      // The no3y layout offers the Mac's Compact instead, so a send there is a plain send.
+      !readNo3yHomeTabs().enabled &&
+      /* fork:end no3y-mobile-redesign */
       compactTokens !== null &&
       !freshContext &&
       followUpDispatchMode === null &&

@@ -127,6 +127,21 @@ import {
   useThreadSettingsSheetPresentation,
   type NavigationWithFinishTransitioning,
 } from "./use-thread-settings-sheet-presentation";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yBottomScrim } from "../../../fork/No3yBottomFade";
+import { NO3Y_COMPOSER_CONTROL_SIZE } from "../../../fork/flatGlassTheme";
+/* fork:end no3y-mobile-redesign */
+
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+/** The no3y card's inset on every side; the editor adds as much again so text sits 24pt in. */
+const NO3Y_CARD_INSET = 12;
+/**
+ * The editor's bottom above its row's bottom: the controls' top in their 44pt toolbar row, plus
+ * the card inset, so the last line sits as far above the controls as the first sits below the top.
+ */
+const NO3Y_CARD_CONTROLS_CLEARANCE = 44 / 2 + NO3Y_COMPOSER_CONTROL_SIZE / 2 + NO3Y_CARD_INSET;
+/* fork:end no3y-mobile-redesign */
 
 export const COMPOSER_COLLAPSED_CHROME = 60;
 export const THREAD_COMPOSER_BOTTOM_GUTTER = COMPOSER_BOTTOM_GUTTER;
@@ -465,7 +480,12 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
   );
   const isVoiceInputPresented = voicePresentation.statusKind === "active";
   const isExpanded = isFocused || settingsSheetPresentation.keepsComposerExpanded;
-  const { usesLargeControls, paddingVertical: surfacePaddingVertical } = useComposerChrome();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const { usesLargeControls, paddingVertical } = useComposerChrome();
+  const no3yCard = useNo3yBottomNavEnabled();
+  const no3yScreenColor = useUniwindTheme()["--color-screen"];
+  const surfacePaddingVertical = no3yCard ? NO3Y_CARD_INSET : paddingVertical;
+  /* fork:end no3y-mobile-redesign */
   const [compactRowWidth, setCompactRowWidth] = useState(0);
   const compactAttachmentLimit = compactRowWidth >= 500 ? 3 : 1;
   // Animate only while typing; a thread switch or restored draft lands in place.
@@ -473,8 +493,17 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
     bodyText,
     draftMessage,
     Platform.OS === "ios" && isFocused,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    no3yCard
+      ? { inset: NO3Y_CARD_INSET, controlsClearance: NO3Y_CARD_CONTROLS_CLEARANCE }
+      : undefined,
+    /* fork:end no3y-mobile-redesign */
   );
-  const showsCompactDictation = isVoiceInputPresented;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card keeps the draft text in view while dictating; only its control row swaps.
+  const showsCompactDictation = isVoiceInputPresented && !no3yCard;
+  const no3yDictating = no3yCard && isVoiceInputPresented;
+  /* fork:end no3y-mobile-redesign */
   const isToolbarVisible = isVoiceInputPresented;
   const hasEditingAttachments =
     (queuedEdit !== null && queuedEdit.existingAttachments.length > 0) ||
@@ -704,7 +733,12 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
       : null;
   const compactTokens = compactBeforeSend ? formatTokens(compactBeforeSend.tokens) : null;
   const compactControl =
-    compactBeforeSend && compactTokens !== null ? (
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // The no3y card offers compaction in its own banner above the composer instead.
+    !no3yCard &&
+    /* fork:end no3y-mobile-redesign */
+    compactBeforeSend &&
+    compactTokens !== null ? (
       <ComposerInlineControl
         size={usesLargeControls ? "large" : "regular"}
         icon="arrow.down.right.and.arrow.up.left"
@@ -729,6 +763,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
       onLayout={(event) => props.onHeightChange?.(event.nativeEvent.layout.height)}
       className="px-[12px]"
       style={{
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        ...(no3yCard ? { paddingHorizontal: 16 } : null),
+        /* fork:end no3y-mobile-redesign */
         paddingTop: 6,
         paddingBottom: (props.bottomInset ?? 0) + THREAD_COMPOSER_BOTTOM_GUTTER,
         backgroundColor:
@@ -744,6 +781,9 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
         }
         pointerEvents="none"
       />
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3yCard ? <No3yBottomScrim color={no3yScreenColor} /> : null}
+      {/* fork:end no3y-mobile-redesign */}
       <Animated.View
         className="relative w-full self-center"
         style={{ maxWidth: props.contentMaxWidth }}
@@ -794,8 +834,13 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
 
         <ComposerSurface
           animateLayout={false}
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          no3yCard={no3yCard ? { runtimeMode: props.selectedThread.runtimeMode } : undefined}
+          /* fork:end no3y-mobile-redesign */
           style={{
-            borderRadius: usesLargeControls ? 31 : 27,
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            borderRadius: no3yCard ? 32 : usesLargeControls ? 31 : 27,
+            /* fork:end no3y-mobile-redesign */
             borderCurve: "circular",
             overflow: "hidden",
             paddingVertical: surfacePaddingVertical,
@@ -827,19 +872,36 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
               compactEditor.onRowLayout(event);
               setCompactRowWidth(event.nativeEvent.layout.width);
             }}
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            style={no3yCard ? { paddingHorizontal: NO3Y_CARD_INSET } : undefined}
+            /* fork:end no3y-mobile-redesign */
           >
             <ComposerDictationDraftContent
               className="flex-row items-end"
               compact
               hidden={showsCompactDictation}
             >
-              <ComposerAttachmentButton
-                size={usesLargeControls ? "large" : "regular"}
-                disabled={isSubmissionLocked}
-                supportsFiles={props.serverConfig !== null}
-                onPickMedia={props.onPickDraftMedia}
-                onPickFiles={props.onPickDraftFiles}
-              />
+              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+              {no3yDictating ? null : (
+                /* fork:end no3y-mobile-redesign */
+                <ComposerAttachmentButton
+                  size={usesLargeControls ? "large" : "regular"}
+                  disabled={isSubmissionLocked}
+                  supportsFiles={props.serverConfig !== null}
+                  onPickMedia={props.onPickDraftMedia}
+                  onPickFiles={props.onPickDraftFiles}
+                  /* fork:begin no3y-prompt-stash — see .fork/customizations.yaml#no3y-prompt-stash */
+                  no3yStash={
+                    no3yCard && props.draftKey
+                      ? { draftKey: props.draftKey, projectTitle: project?.title ?? null }
+                      : undefined
+                  }
+                  /* fork:end no3y-prompt-stash */
+                />
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              )}
+              {no3yCard && !no3yDictating ? modelControl : null}
+              {/* fork:end no3y-mobile-redesign */}
               <Animated.View
                 className="min-w-0 flex-1"
                 onLayout={compactEditor.onEditorLayout}
@@ -1019,55 +1081,63 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
                   ) : null}
                 </View>
               ) : null}
-              <View
-                className="min-w-0 shrink flex-row items-center"
-                style={
-                  compactEditor.isExpanded ? { flex: 1, justifyContent: "flex-end" } : undefined
-                }
-              >
-                <Animated.View
-                  key={compactEditor.isExpanded ? "expanded" : "compact"}
+              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+              {no3yDictating ? null : (
+                /* fork:end no3y-mobile-redesign */
+                <View
                   className="min-w-0 shrink flex-row items-center"
-                  entering={compactEditor.toolbarControlsEntering}
+                  style={
+                    compactEditor.isExpanded ? { flex: 1, justifyContent: "flex-end" } : undefined
+                  }
                 >
-                  {compactControl}
-                  {modelControl}
-                </Animated.View>
-                <ComposerDictationStartAction
-                  size={usesLargeControls ? "large" : "regular"}
-                  state={voiceInput.state}
-                  isAvailable={voiceInput.isAvailable}
-                  disabled={isSubmissionLocked}
-                  onStart={voiceInput.start}
-                  onCancel={voiceInput.cancel}
-                />
-                {showStopAction ? (
-                  <ComposerActionButton
+                  <Animated.View
+                    key={compactEditor.isExpanded ? "expanded" : "compact"}
+                    className="min-w-0 shrink flex-row items-center"
+                    entering={compactEditor.toolbarControlsEntering}
+                  >
+                    {compactControl}
+                    {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                    {no3yCard ? null : modelControl}
+                    {/* fork:end no3y-mobile-redesign */}
+                  </Animated.View>
+                  <ComposerDictationStartAction
                     size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel={gt("Stop agent")}
-                    icon="stop.fill"
-                    variant="danger"
-                    disabled={!props.canOperateThread}
-                    onPress={props.onStopThread}
+                    state={voiceInput.state}
+                    isAvailable={voiceInput.isAvailable}
+                    disabled={isSubmissionLocked}
+                    onStart={voiceInput.start}
+                    onCancel={voiceInput.cancel}
                   />
-                ) : showResumeAction ? (
-                  <ComposerActionButton
-                    size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel={gt("Resume thread")}
-                    icon="play"
-                    disabled={!props.canOperateThread || resumingQueue}
-                    onPress={() => void handleResumeQueue()}
-                  />
-                ) : (
-                  <SendActionButton
-                    size={usesLargeControls ? "large" : "regular"}
-                    accessibilityLabel={sendBlockedReason ?? sendLabel}
-                    presentation={sendPresentation}
-                    disabled={!canSend}
-                    onSend={handleSend}
-                  />
-                )}
-              </View>
+                  {showStopAction ? (
+                    <ComposerActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel={gt("Stop agent")}
+                      icon="stop.fill"
+                      variant="danger"
+                      disabled={!props.canOperateThread}
+                      onPress={props.onStopThread}
+                    />
+                  ) : showResumeAction ? (
+                    <ComposerActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel={gt("Resume thread")}
+                      icon="play"
+                      disabled={!props.canOperateThread || resumingQueue}
+                      onPress={() => void handleResumeQueue()}
+                    />
+                  ) : (
+                    <SendActionButton
+                      size={usesLargeControls ? "large" : "regular"}
+                      accessibilityLabel={sendBlockedReason ?? sendLabel}
+                      presentation={sendPresentation}
+                      disabled={!canSend}
+                      onSend={handleSend}
+                    />
+                  )}
+                </View>
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              )}
+              {/* fork:end no3y-mobile-redesign */}
             </ComposerDictationDraftContent>
           </View>
           <Animated.View
@@ -1083,7 +1153,10 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
             >
               <ComposerToolbarRow
                 paddingBottom={0}
-                paddingHorizontal={0}
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                /* The card's inset, as its draft row has; flush, stop sat in the rounded corner. */
+                paddingHorizontal={no3yCard ? NO3Y_CARD_INSET : 0}
+                /* fork:end no3y-mobile-redesign */
                 paddingTop={0}
                 style={{ gap: 0 }}
               >

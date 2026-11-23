@@ -8,11 +8,18 @@ import type { ThreadListFilters } from "../../persistence/mobile-preferences";
 import { saveMobilePreferences } from "../../state/preferences";
 import { useAtomCommand } from "../../state/use-atom-command";
 import type { HomeProjectSortOrder } from "./homeThreadList";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { No3yStatusFilter, No3yThreadSortOrder } from "../../../fork/mobileStatusGrouping";
+/* fork:end no3y-mobile-redesign */
 
 export interface HomeListOptions {
   readonly selectedEnvironmentId: EnvironmentId | null;
   readonly selectedProjectKey: string | null;
   readonly projectSortOrder: HomeProjectSortOrder;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  readonly statusFilter: No3yStatusFilter;
+  readonly threadSortOrder: No3yThreadSortOrder;
+  /* fork:end no3y-mobile-redesign */
 }
 
 export interface ResolvedHomeListOptions extends HomeListOptions {
@@ -27,6 +34,10 @@ function defaultHomeListOptions(filters?: ThreadListFilters): HomeListOptions {
       DEFAULT_SIDEBAR_PROJECT_SORT_ORDER === "manual"
         ? "updated_at"
         : DEFAULT_SIDEBAR_PROJECT_SORT_ORDER,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    statusFilter: "all",
+    threadSortOrder: "status",
+    /* fork:end no3y-mobile-redesign */
   };
 }
 
@@ -102,10 +113,22 @@ export function useHomeListOptions(availableEnvironmentIds: ReadonlySet<Environm
   const setProjectSortOrder = (value: HomeProjectSortOrder) => {
     updateOptions({ projectSortOrder: value });
   };
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const setStatusFilter = (value: No3yStatusFilter) => {
+    updateOptions({ statusFilter: value });
+  };
+  const setThreadSortOrder = (value: No3yThreadSortOrder) => {
+    updateOptions({ threadSortOrder: value });
+  };
+  /* fork:end no3y-mobile-redesign */
   return {
     options: resolvedOptions,
     setSelectedEnvironmentId,
     setSelectedProjectKey,
     setProjectSortOrder,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    setStatusFilter,
+    setThreadSortOrder,
+    /* fork:end no3y-mobile-redesign */
   } as const;
 }

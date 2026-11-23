@@ -101,6 +101,13 @@ import { appAtomRegistry } from "../../state/atom-registry";
 import { mobilePreferencesAtom } from "../../state/preferences";
 
 import { readEnvironmentScope, useEnvironmentScope } from "../../state/session";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yDraftSurface } from "../../../fork/No3yDraftSurface";
+import {
+  no3yInPlaceSkipsPicker,
+  no3yProjectPickBlockReason,
+} from "../../../fork/no3yInPlaceProject";
+/* fork:end no3y-mobile-redesign */
 
 // Below this (keyboard up on iPad, phone landscape) the hero cannot fit above the composer,
 // so the project and environment pickers move into the composer controls instead.
@@ -166,6 +173,10 @@ export function NewTaskDraftScreen(props: {
   const gt = useGT();
   const m = useMessages();
   const [creationMetadata] = useState(makeTurnCommandMetadata);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3ySurface = useNo3yDraftSurface();
+  const no3yPicksInPlace = no3ySurface?.picksProjectInPlace === true;
+  /* fork:end no3y-mobile-redesign */
   const projects = useProjects();
   const flow = useNewTaskFlow();
   const navigation = useNavigation();
@@ -467,7 +478,13 @@ export function NewTaskDraftScreen(props: {
         return;
       }
 
-      if (projects.length > 0) {
+      if (
+        projects.length > 0 &&
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        // A Home tab has no route to swap for the picker; Chat waits for its project instead.
+        !no3yPicksInPlace
+        /* fork:end no3y-mobile-redesign */
+      ) {
         // oxlint-disable-next-line react/set-state-in-effect -- Route-driven project resolution starts the return-to-picker flow when no project matches.
         setIsReturningToProjectPicker(true);
       }
@@ -487,6 +504,10 @@ export function NewTaskDraftScreen(props: {
         lastProject: saved?.lastThreadProject,
       },
     );
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // A Home tab picks on its rows: no picker to open, no route to leave.
+    if (no3yPicksInPlace && no3yInPlaceSkipsPicker(selection.kind)) return;
+    /* fork:end no3y-mobile-redesign */
     if (selection.kind === "preserve") {
       initialPickerRef.current = null;
       return;
@@ -519,6 +540,9 @@ export function NewTaskDraftScreen(props: {
     selectedProject,
     selectedProjectKey,
     setProject,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    no3yPicksInPlace,
+    /* fork:end no3y-mobile-redesign */
   ]);
 
   const { loadBranches } = flow;
@@ -698,11 +722,17 @@ export function NewTaskDraftScreen(props: {
       return null;
     }
     promptInputRef.current?.blur();
-    navigation.dispatch(
-      CommonActions.setParams(
-        submittedThreadParams(String(message.environmentId), String(message.threadId)),
-      ),
-    );
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // Chat pushes the sent chat over itself and takes a fresh draft instead.
+    if (no3ySurface?.onSubmitted)
+      no3ySurface.onSubmitted(String(message.environmentId), String(message.threadId));
+    else
+      /* fork:end no3y-mobile-redesign */
+      navigation.dispatch(
+        CommonActions.setParams(
+          submittedThreadParams(String(message.environmentId), String(message.threadId)),
+        ),
+      );
     // The composer has moved to the submitted thread; a pick still converting
     // would otherwise resurrect this draft.
     abortComposerDraftOperations(draftKey);
@@ -722,6 +752,13 @@ export function NewTaskDraftScreen(props: {
   // an empty loading surface here flashes between two already-cached threads.
   if (!selectedProject) return null;
 
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yPickBlockReason = no3yProjectPickBlockReason({
+    inPlace: no3yPicksInPlace,
+    draftNamesProject: props.initialProjectRef?.projectId !== undefined,
+    selectedProjectKey,
+  });
+  /* fork:end no3y-mobile-redesign */
   const setupBlockReason =
     isIncomingShareReady && !isImportingShare
       ? cloneBlocksStart
@@ -1006,14 +1043,31 @@ export function NewTaskDraftScreen(props: {
           />
         </View>
       ) : null}
-      {viewportHeight < SHORT_DRAFT_VIEWPORT_HEIGHT ? contextControls : null}
-      {flow.canChooseWorkspace ? workspaceControls : null}
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3ySurface ? (
+        no3ySurface.controls
+      ) : (
+        /* fork:end no3y-mobile-redesign */
+        <>
+          {viewportHeight < SHORT_DRAFT_VIEWPORT_HEIGHT ? contextControls : null}
+          {flow.canChooseWorkspace ? workspaceControls : null}
+        </>
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      )}
+      {/* fork:end no3y-mobile-redesign */}
     </View>
   );
 
   if (!flow.selectedModel) {
     return (
-      <ThreadScreenFallback header={<AppBar title={gt("New thread")} onBack={goBack} />}>
+      <ThreadScreenFallback
+        header={
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          no3ySurface?.header ?? (
+            /* fork:end no3y-mobile-redesign */ <AppBar title={gt("New thread")} onBack={goBack} />
+          )
+        }
+      >
         <View className="flex-1 justify-end gap-3 p-4">
           {environmentControl}
           <Text className="text-foreground-muted">
@@ -1060,13 +1114,23 @@ export function NewTaskDraftScreen(props: {
       <ThreadScreenBinding
         environmentId={selectedProject.environmentId}
         header={
-          <DraftThreadHeader thread={thread} project={selectedProject} cwd={flow.workspaceCwd} />
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          no3ySurface?.header ?? (
+            /* fork:end no3y-mobile-redesign */
+            <DraftThreadHeader thread={thread} project={selectedProject} cwd={flow.workspaceCwd} />
+          )
         }
         draftMode={{
-          content: heroViewport,
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          content: no3ySurface?.content ?? heroViewport,
+          /* fork:end no3y-mobile-redesign */
           controls: draftControls,
           editorRef: promptInputRef,
-          sendBlockedReason: setupBlockReason,
+          sendBlockedReason:
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            no3yPickBlockReason ??
+            /* fork:end no3y-mobile-redesign */
+            setupBlockReason,
           interactionLocked: isComposerInteractionLocked,
         }}
         canOperateThread={canOperate}

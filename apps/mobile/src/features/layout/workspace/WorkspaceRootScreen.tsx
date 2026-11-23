@@ -45,6 +45,10 @@ import {
   useSystemWorkspaceTabBar,
 } from "./useSystemWorkspaceTabBar";
 import { openSettings } from "../../settings/settings-navigation";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yBottomNavEnabled } from "../../../../fork/no3yBottomNavEnabled";
+import { No3yHomePanes } from "../../../../fork/No3yHomePanes";
+/* fork:end no3y-mobile-redesign */
 
 const TAB_TITLES = WORKSPACE_TAB_LABELS;
 
@@ -107,6 +111,9 @@ function WorkspaceRootContent() {
   const keyboardHeight = useKeyboardState((keyboard) => keyboard.height);
   const workspace = useWorkspaceTabs()!;
   const { state } = workspace;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yHome = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
   // Settings is a workspace tab too; its list takes the place of the selected tab's.
   const settingsOpen = workspace.settingsOpen;
   const headerOnly = use(NativeWorkspaceTabActivityContext)?.headerOnly === true;
@@ -177,7 +184,14 @@ function WorkspaceRootContent() {
           ) : enabled.length === 0 ? (
             <WorkspaceNoTabs />
           ) : state.selectedTab === "threads" ? (
-            <HomeRouteScreen />
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            // The dock's destinations are tabs under Threads (fork/No3yHomePanes.tsx).
+            no3yHome ? (
+              <No3yHomePanes threads={<HomeRouteScreen />} insets={insets} />
+            ) : (
+              /* fork:end no3y-mobile-redesign */
+              <HomeRouteScreen />
+            )
           ) : state.selectedTab === "pullRequests" ? (
             <PullRequestsScreen />
           ) : state.selectedTab === "issues" ? (

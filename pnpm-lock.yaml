@@ -623,6 +623,9 @@ importers:
       '@formatjs/intl-pluralrules':
         specifier: 5.4.6
         version: 5.4.6
+      '@hugeicons/core-free-icons':
+        specifier: 4.4.0
+        version: 4.4.0
       '@legendapp/list':
         specifier: 3.7.3
         version: 3.7.3(patch_hash=85979836ae620bdc6b40e29e3da04afd0a1a3a925ef00bdb3788e9b6fa2153f4)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(@types/react@19.3.0)(bufferutil@4.1.0)(react@19.3.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(react@19.3.0)

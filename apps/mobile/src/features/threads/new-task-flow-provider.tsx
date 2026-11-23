@@ -234,6 +234,10 @@ type NewTaskFlowContextValue = {
 };
 
 const NewTaskFlowContext = React.createContext<NewTaskFlowContextValue | null>(null);
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// A no3y Home tab holds its own flow while another tab's is served (fork/No3yHomePanes.tsx).
+export { NewTaskFlowContext as No3yNewTaskFlowContext };
+/* fork:end no3y-mobile-redesign */
 
 export function NewTaskFlowProvider(
   props: React.PropsWithChildren<{

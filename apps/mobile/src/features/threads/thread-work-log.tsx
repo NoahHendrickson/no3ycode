@@ -1,5 +1,8 @@
 import { Button } from "../../components/ui/Button";
 import { ThreadSubagentGroup } from "./thread-subagent-group";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3ySubagentCardsSwap } from "../../../fork/No3ySubagentCards";
+/* fork:end no3y-mobile-redesign */
 import { ProposedPlanCard } from "./ProposedPlanCard";
 import {
   WorkLogLabel,
@@ -519,7 +522,13 @@ export function ThreadWorkLog(props: ThreadWorkLogProps) {
   }
 
   if (props.activities[0]?.projectedItem.item.type === "subagent") {
-    return <ThreadSubagentGroup {...props} />;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    return (
+      <No3ySubagentCardsSwap activities={props.activities} environmentId={props.environmentId}>
+        <ThreadSubagentGroup {...props} />
+      </No3ySubagentCardsSwap>
+    );
+    /* fork:end no3y-mobile-redesign */
   }
 
   if (

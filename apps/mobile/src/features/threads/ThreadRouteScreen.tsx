@@ -133,6 +133,10 @@ import { useStartSideChat } from "./useStartSideChat";
 import { useThreadStatusAnnouncements } from "./useThreadStatusAnnouncements";
 import type { ThreadInspectorMode, ThreadInspectorTarget } from "./thread-inspector-navigation";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yThreadBarInset, No3yThreadTitleStyle } from "../../../fork/No3yScreenHeader";
+/* fork:end no3y-mobile-redesign */
 
 function firstRouteParam(value: string | string[] | undefined): string | null {
   const first = Array.isArray(value) ? value[0] : value;
@@ -239,16 +243,22 @@ function UnavailableThreadDraftRedirect(props: { readonly environmentId: Environ
 
 export function ThreadRouteScreen(props: ThreadRouteScreenProps) {
   return (
-    <ThreadScreenHost>
-      {props.route.params?.draft ? (
-        <NewTaskDraftRouteScreen
-          key={draftRouteIdentity(props.route.params.draft)}
-          route={{ ...props.route, params: props.route.params.draft }}
-        />
-      ) : (
-        <LiveThreadRouteController {...props} />
-      )}
-    </ThreadScreenHost>
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    <No3yThreadBarInset draft={props.route.params?.draft !== undefined}>
+      {/* fork:end no3y-mobile-redesign */}
+      <ThreadScreenHost>
+        {props.route.params?.draft ? (
+          <NewTaskDraftRouteScreen
+            key={draftRouteIdentity(props.route.params.draft)}
+            route={{ ...props.route, params: props.route.params.draft }}
+          />
+        ) : (
+          <LiveThreadRouteController {...props} />
+        )}
+      </ThreadScreenHost>
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+    </No3yThreadBarInset>
+    /* fork:end no3y-mobile-redesign */
   );
 }
 
@@ -367,6 +377,9 @@ function ThreadRouteContent(
   const gt = useGT();
   const m = useMessages();
   const { layout, showInspector, toggleAuxiliaryPane } = useAdaptiveWorkspaceLayout();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
   const { connectionState } = useRemoteConnectionStatus();
   const { onReconnectEnvironment } = useRemoteConnections();
   const {
@@ -1031,6 +1044,9 @@ function ThreadRouteContent(
   const serverConfig = routeEnvironmentRuntime?.serverConfig ?? null;
   const renderThreadRouteBody = () => (
     <>
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {no3yBottomNav ? <No3yThreadTitleStyle /> : null}
+      {/* fork:end no3y-mobile-redesign */}
       <GitActionProgressOverlay
         progress={gitActionProgress}
         onDismiss={dismissGitActionResult}
@@ -1049,6 +1065,14 @@ function ThreadRouteContent(
                 inspectorMode={inspectorMode}
                 onOpenFilesInspector={handleOpenFilesInspector}
                 onReturnToThread={props.onReturnToThread}
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                // The model the composer chip shows, a switch in the sheet included.
+                no3yUsage={{
+                  environmentId: selectedThread.environmentId,
+                  providerInstanceId: (selectedThreadWithDraftSettings ?? selectedThread)
+                    .modelSelection.instanceId,
+                }}
+                /* fork:end no3y-mobile-redesign */
               />
             )
           }

@@ -20,6 +20,13 @@ import { useAndroidControlSizing } from "../../components/ui/useAndroidControlSi
 import { cn } from "../../lib/cn";
 import type { VoiceComposerPresentation } from "./voiceInputPresentation";
 import { VOICE_WAVEFORM_SAMPLE_COUNT } from "./voiceInputMetering";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import Mic01Icon from "@hugeicons/core-free-icons/Mic01Icon";
+import { No3yComposerRoundButton, useNo3yComposerStyle } from "../../../fork/No3yComposerStyle";
+/* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+import { useVoicePreparePrefetch } from "../../../fork/useVoicePreparePrefetch";
+/* fork:end no3y-voice-prepare-cache */
 
 const DICTATION_TIMING = {
   duration: 220,
@@ -125,6 +132,11 @@ export function ComposerDictationToolbar(props: {
 }) {
   // Android can drop the reduced-motion flip's final frame, leaving the toolbar invisible.
   const reducedMotion = useReducedMotion();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card's glass controls blank out under the 3D flip; swap rows instantly instead.
+  const no3yCard = useNo3yComposerStyle();
+  const skipFlip = reducedMotion || no3yCard;
+  /* fork:end no3y-mobile-redesign */
   const entering = props.showsDictation ? DICTATION_TOOLBAR_ENTERING : DRAFT_TOOLBAR_ENTERING;
   const exiting = props.showsDictation ? DICTATION_TOOLBAR_EXITING : DRAFT_TOOLBAR_EXITING;
 
@@ -134,8 +146,10 @@ export function ComposerDictationToolbar(props: {
         <Animated.View
           key={props.showsDictation ? "dictation" : "draft"}
           className="absolute inset-0"
-          entering={reducedMotion ? undefined : entering}
-          exiting={reducedMotion ? undefined : exiting}
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          entering={skipFlip ? undefined : entering}
+          exiting={skipFlip ? undefined : exiting}
+          /* fork:end no3y-mobile-redesign */
           style={{ backfaceVisibility: "hidden" }}
         >
           {props.children}
@@ -447,8 +461,34 @@ export function ComposerDictationStartAction(props: {
   readonly onCancel: () => void;
 }) {
   const gt = useGT();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yCard = useNo3yComposerStyle();
+  /* fork:end no3y-mobile-redesign */
+  /* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+  useVoicePreparePrefetch(props.isAvailable);
+  /* fork:end no3y-voice-prepare-cache */
   if (!props.isAvailable) return null;
   const openSettings = props.state.phase === "error" && props.state.errorAction === "settings";
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (no3yCard) {
+    return (
+      <No3yComposerRoundButton
+        // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+        accessibilityLabel={openSettings ? "Open microphone settings" : "Start dictation"}
+        icon={Mic01Icon}
+        disabled={props.disabled}
+        onPress={
+          openSettings
+            ? () => {
+                props.onCancel();
+                void Linking.openSettings();
+              }
+            : props.onStart
+        }
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   return (
     <VoiceActionButton
       size={props.size}

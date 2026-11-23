@@ -100,6 +100,14 @@ import {
   formatNextScheduledTaskRun,
   formatScheduledTaskInterval,
 } from "./scheduledTaskPresentation";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSection";
+import { No3yAutomationsScreen } from "../../../fork/No3yAutomationsScreen";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yHomeTabRedirect } from "../../../fork/No3yHomeTabRedirect";
+import { NO3Y_IPHONE } from "../../../fork/no3yIphone";
+import { useRoute } from "@react-navigation/native";
+/* fork:end no3y-mobile-redesign */
 
 type ScheduledTaskRoutes = {
   SettingsScheduledTaskNew: undefined;
@@ -459,12 +467,67 @@ export function SettingsScheduledTasksRouteScreen() {
   const { startEditor, resetEditor } = useScheduledTaskEditor();
   const navigation = useNavigation<NativeStackNavigationProp<ScheduledTaskRoutes>>();
   const insets = useSafeAreaInsets();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  // Automations is a Home tab there; this page's own route (a link) opens that tab.
+  const no3yInHome = useRoute().name === "Home";
+  const no3yMessages = useMessages();
+  const no3yLocale = useLocale();
+  const visibleProjectKeys =
+    selectedProjectKey === null || !selectedGroup
+      ? null
+      : new Set(
+          selectedGroup.members.map(
+            (member) => `${member.project.environmentId}:${member.project.id}`,
+          ),
+        );
+  /* fork:end no3y-mobile-redesign */
   const environmentMenu = useSettingsEnvironmentMenu();
   const newTask = () => {
     if (visibleEnvironments.length === 0) return;
     resetEditor();
     navigation.navigate("SettingsScheduledTaskNew");
   };
+
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (no3yBottomNav) {
+    if (!no3yInHome) return <No3yHomeTabRedirect tab="automations" />;
+    return (
+      <No3yAutomationsScreen
+        environments={visibleEnvironments}
+        projectIdsFor={(environmentId) =>
+          selectedProjectKey === null
+            ? null
+            : (selectedGroup?.members
+                .filter((member) => member.project.environmentId === environmentId)
+                .map((member) => member.project.id) ?? [])
+        }
+        projectKeys={visibleProjectKeys}
+        now={now}
+        describeSchedule={(task, timeZone) =>
+          describeSchedule(task, timeZone, no3yMessages, no3yLocale)
+        }
+        onEdit={(environment, task) => {
+          startEditor({
+            environmentId: environment.environmentId,
+            environmentLabel: environment.label,
+            draft: editDraft(task),
+          });
+          navigation.navigate("SettingsScheduledTaskEdit");
+        }}
+        onNew={newTask}
+        environmentMenu={environmentMenu}
+        emptyMessage={
+          availableTargets.length === 0
+            ? // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+              "Connect an environment to view and create automations."
+            : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+              "No environments match these filters. Change the filter above."
+        }
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
 
   return (
     <SettingsScreen
@@ -488,6 +551,14 @@ export function SettingsScheduledTasksRouteScreen() {
         contentContainerClassName="gap-5 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
+        {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+        {NO3Y_IPHONE ? (
+          <No3yAutomationRunsSection
+            environmentIds={visibleEnvironments.map((environment) => environment.environmentId)}
+            projectKeys={visibleProjectKeys}
+          />
+        ) : null}
+        {/* fork:end no3y-mobile-redesign */}
         {visibleEnvironments.length > 0 ? (
           visibleEnvironments.map((environment) => (
             <EnvironmentTasks

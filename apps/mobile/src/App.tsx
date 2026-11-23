@@ -3,6 +3,9 @@ import { installComposerAttachmentUploads } from "./state/composer-attachment-up
 import { installThreadOutboxDelivery } from "./state/threadOutboxDelivery";
 import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
+/* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */
+import { markNo3yLaunchReady, No3yLaunchSparkle } from "../fork/No3yLaunchSparkle";
+/* fork:end no3y-launch-sparkle */
 import { requireNativeModule } from "expo";
 import { useLocale } from "gt-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -259,6 +262,9 @@ function SplashScreenCoordinator() {
     hidden.current = true;
     settleLaunchSplashHomeRows();
     void SplashScreen.hide();
+    /* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */
+    markNo3yLaunchReady();
+    /* fork:end no3y-launch-sparkle */
   }, [isReady, shellCachesRead, homeRowsPending, waitEnded]);
 
   return null;
@@ -332,6 +338,9 @@ function AppContent() {
           </SafeAreaProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>
+      {/* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */}
+      <No3yLaunchSparkle />
+      {/* fork:end no3y-launch-sparkle */}
     </>
   );
 }

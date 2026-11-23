@@ -2,6 +2,27 @@ import { ChildThreadApprovals } from "./ChildThreadApprovals";
 import { errorDisplayMessage } from "@t3tools/client-runtime/errors";
 import { useOpenThreadInspector } from "./thread-inspector-navigation";
 import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceTabBar";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
+import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
+/* fork:end no3y-mobile-redesign */
+/* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard";
+/* fork:end fork-pending-user-input */
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yCompactBanner } from "../../../fork/No3yCompactBanner";
+import {
+  claimNo3yKeyboard,
+  no3yComposerFollowsKeyboard,
+  useNo3yKeyboardOwner,
+} from "../../../fork/no3yKeyboardOwner";
+import { NO3Y_PICK_PROJECT_REASON } from "../../../fork/no3yInPlaceProject";
+/* fork:end no3y-mobile-redesign */
+/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
+import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
+/* fork:end fork-queued-runs-banner */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import {
   isAtomCommandInterrupted,
@@ -493,6 +514,9 @@ function ThreadDetailBody(
   }, [isKeyboardVisible, liveKeyboardHeight]);
   const handleOwnedInputFocusChange = (focused: boolean) => {
     ownedInputFocusedRef.current = focused;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    if (focused) claimNo3yKeyboard("composer");
+    /* fork:end no3y-mobile-redesign */
     if (focused) {
       if (deviceType === "duo-folded" || deviceType === "duo-unfolded")
         setComposerOwnsKeyboard(true);
@@ -553,7 +577,13 @@ function ThreadDetailBody(
   const [sendingWithKeyboard, setSendingWithKeyboard] = useState(false);
   if (sendingWithKeyboard && !isKeyboardVisible) setSendingWithKeyboard(false);
   const hasSidebarTabBar = useSidebarWorkspaceTabs() === "picker";
-  const composerBottomInset = useComposerBottomInset();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  const upstreamComposerBottomInset = useComposerBottomInset();
+  const composerBottomInset = no3yBottomNav
+    ? no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))
+    : upstreamComposerBottomInset;
+  /* fork:end no3y-mobile-redesign */
   const composerKeyboardOffset = composerBottomInset;
   const contentPresentationKind = props.contentPresentation.kind;
   const interruptThreadTurn = useAtomCommand(threadEnvironment.interruptTurn, {
@@ -917,7 +947,40 @@ function ThreadDetailBody(
     }
     return null;
   })();
-  const showWorkingControl = floatingStatus !== null;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yStatus = no3yBottomNav
+    ? no3yPillStatus({
+        upstream: floatingStatus,
+        connectionState: props.connectionStateLabel,
+        open:
+          props.activePendingApproval === null &&
+          props.activePendingUserInput === null &&
+          props.creationState?.kind !== "preparing" &&
+          props.creationState?.kind !== "failed",
+        compacting: props.isCompacting && contentPresentationKind === "ready",
+        workingSince: contentPresentationKind === "ready" ? props.activeWorkStartedAt : null,
+        background:
+          backgroundLine !== null && pendingBackgroundWork !== null
+            ? {
+                label: backgroundLine.label,
+                accessibilityLabel: backgroundLine.accessibilityLabel ?? backgroundLine.label,
+                waiting: pendingBackgroundWork.waiting,
+                onPress: backgroundLine.onOpen ?? (() => {}),
+                action: backgroundLine.action,
+              }
+            : null,
+        lifecycle:
+          lifecycleLine !== null
+            ? {
+                state: lifecycleSnoozed ? "snoozed" : settled ? "settled" : "woke",
+                label: lifecycleLine.label,
+                action: lifecycleLine.action,
+              }
+            : null,
+      })
+    : null;
+  const showWorkingControl = (no3yBottomNav ? no3yStatus : floatingStatus) !== null;
+  /* fork:end no3y-mobile-redesign */
   const showFloatingStatus =
     showWorkingControl ||
     queuedCount > 0 ||
@@ -1048,10 +1111,18 @@ function ThreadDetailBody(
   const reservedKeyboardHeight =
     lastKnownKeyboardHeight > 0 ? lastKnownKeyboardHeight : ESTIMATED_KEYBOARD_HEIGHT;
   // Waiting for a visibility render misses the first keyboard frames.
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yKeyboardOwner = useNo3yKeyboardOwner();
+  /* fork:end no3y-mobile-redesign */
   const keyboardStickyEnabled =
-    Platform.OS === "ios"
-      ? deviceType !== "duo-unfolded" || (composerOwnsKeyboard && !sidebarSearchActive)
-      : !keyboardStateSuspect;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // A header search owns this keyboard: the composer stays at rest under it.
+    !no3yComposerFollowsKeyboard({ no3yLayout: no3yBottomNav, owner: no3yKeyboardOwner })
+      ? false
+      : /* fork:end no3y-mobile-redesign */
+        Platform.OS === "ios"
+        ? deviceType !== "duo-unfolded" || (composerOwnsKeyboard && !sidebarSearchActive)
+        : !keyboardStateSuspect;
   const estimatedOverlayHeight = composerOverlapHeight;
   const contentInsetEndAdjustment = useSharedValue(estimatedOverlayHeight);
   const onComposerLayout = useCallback(
@@ -1541,7 +1612,10 @@ function ThreadDetailBody(
                   workspaceRoot={props.threadCwd}
                   feed={props.selectedThreadFeed}
                   pendingHandoff={props.pendingHandoff}
-                  statusLines={statusLines}
+                  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                  // The no3y pill carries background work and snooze/settle, as on the Mac.
+                  statusLines={no3yBottomNav ? NO3Y_NO_STATUS_LINES : statusLines}
+                  /* fork:end no3y-mobile-redesign */
                   worktreeSetup={props.worktreeSetup}
                   preparingWorktree={
                     props.creationState?.kind === "preparing" &&
@@ -1664,44 +1738,57 @@ function ThreadDetailBody(
                 pushes the resting content floor up by the same amount. */}
               <View onLayout={handleComposerOverlayLayout} className="w-full">
                 <View className="w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-                  <FloatingWorkingControl
-                    colorScheme={isDarkMode ? "dark" : "light"}
-                    status={floatingStatus}
-                    extensionStatus={
-                      floatingStatus !== null && floatingStatus.kind === "goal"
-                        ? extensionStatus
-                        : null
-                    }
-                    lift={floatingControlLift}
-                    devicePreview={
-                      devicePreviews.length > 0
-                        ? { count: devicePreviews.length, onPress: openDevicePreview }
-                        : null
-                    }
-                    browserPreview={
-                      browserTabs.tabs.length > 0
-                        ? { count: browserTabs.tabs.length, onPress: () => openBrowserPreview() }
-                        : null
-                    }
-                    showScrollToEnd={showScrollToEndButton}
-                    onScrollToEnd={handleScrollToEnd}
-                    agents={agentsSegment}
-                    onOpenAgents={() => {
-                      Keyboard.dismiss();
-                      navigation.navigate("ThreadAgents", {
-                        environmentId: props.environmentId,
-                        threadId: props.selectedThread.id,
-                      });
-                    }}
-                    queuedCount={queuedCount}
-                    onOpenQueue={() => {
-                      Keyboard.dismiss();
-                      navigation.navigate("ThreadQueue", {
-                        environmentId: props.environmentId,
-                        threadId: props.selectedThread.id,
-                      });
-                    }}
-                  />
+                  {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                  <No3yStatusPillSwap
+                    enabled={no3yBottomNav}
+                    environmentId={props.environmentId}
+                    threadId={props.selectedThread.id}
+                    backgroundWork={pendingBackgroundWork}
+                    detailRef={props.selectedThreadDetailRef}
+                    no3yStatus={no3yStatus}
+                  >
+                    {/* fork:end no3y-mobile-redesign */}
+                    <FloatingWorkingControl
+                      colorScheme={isDarkMode ? "dark" : "light"}
+                      status={floatingStatus}
+                      extensionStatus={
+                        floatingStatus !== null && floatingStatus.kind === "goal"
+                          ? extensionStatus
+                          : null
+                      }
+                      lift={floatingControlLift}
+                      devicePreview={
+                        devicePreviews.length > 0
+                          ? { count: devicePreviews.length, onPress: openDevicePreview }
+                          : null
+                      }
+                      browserPreview={
+                        browserTabs.tabs.length > 0
+                          ? { count: browserTabs.tabs.length, onPress: () => openBrowserPreview() }
+                          : null
+                      }
+                      showScrollToEnd={showScrollToEndButton}
+                      onScrollToEnd={handleScrollToEnd}
+                      agents={agentsSegment}
+                      onOpenAgents={() => {
+                        Keyboard.dismiss();
+                        navigation.navigate("ThreadAgents", {
+                          environmentId: props.environmentId,
+                          threadId: props.selectedThread.id,
+                        });
+                      }}
+                      queuedCount={queuedCount}
+                      onOpenQueue={() => {
+                        Keyboard.dismiss();
+                        navigation.navigate("ThreadQueue", {
+                          environmentId: props.environmentId,
+                          threadId: props.selectedThread.id,
+                        });
+                      }}
+                    />
+                    {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                  </No3yStatusPillSwap>
+                  {/* fork:end no3y-mobile-redesign */}
                   <ComposerPanels
                     className="w-full"
                     style={Platform.OS === "android" ? composerPanelsHeightStyle : undefined}
@@ -1752,6 +1839,17 @@ function ThreadDetailBody(
                     {freshSessionAvailable ? (
                       <FreshSessionNotice threadKey={selectedThreadKey} />
                     ) : null}
+                    {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                    {/* The Mac's "Resume with less context": Compact now, send stays plain. */}
+                    {no3yBottomNav ? (
+                      <No3yCompactBanner
+                        threadKey={selectedThreadKey}
+                        tokens={props.compactBeforeSend?.tokens ?? null}
+                        thread={props.selectedThread}
+                        canCompact={props.canOperateThread}
+                      />
+                    ) : null}
+                    {/* fork:end no3y-mobile-redesign */}
                     {props.canOperateThread ? (
                       <ManagedRuntimeModeNotice
                         threadKey={selectedThreadKey}
@@ -1839,35 +1937,49 @@ function ThreadDetailBody(
                           </Animated.ScrollView>
                         ) : null}
                         {props.activePendingUserInput ? (
-                          <PendingUserInputCard
-                            environmentId={props.environmentId}
-                            threadId={props.selectedThread.id}
-                            workspaceRoot={props.threadCwd}
-                            canOperateThread={props.canOperateThread}
-                            pendingUserInput={props.activePendingUserInput}
-                            maxHeight={pendingUserInputMaxHeight}
-                            collapsed={userInputCollapsed}
-                            onToggleCollapsed={handleToggleUserInputCollapsed}
-                            onStopThread={props.onStopThread}
-                            cardProgress={userInputCardProgress}
-                            cardCoverage={userInputCardCoverage}
-                            onLayout={
-                              Platform.OS === "ios"
-                                ? (event) => userInputCardTop.set(event.nativeEvent.layout.y)
-                                : undefined
-                            }
-                            onInputFocusChange={handleOwnedInputFocusChange}
-                            drafts={props.activePendingUserInputDrafts}
-                            answers={props.activePendingUserInputAnswers}
-                            respondingUserInputId={props.respondingUserInputId}
-                            onSelectOption={props.onSelectUserInputOption}
-                            onChangeCustomAnswer={props.onChangeUserInputCustomAnswer}
-                            onSubmit={props.onSubmitUserInput}
-                            onDismiss={props.onDismissUserInput}
-                          />
-                        ) : null}
+                          // fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+                          <No3yPendingUserInputSwap>
+                            {/* fork:end fork-pending-user-input */}
+                            <PendingUserInputCard
+                              environmentId={props.environmentId}
+                              threadId={props.selectedThread.id}
+                              workspaceRoot={props.threadCwd}
+                              canOperateThread={props.canOperateThread}
+                              pendingUserInput={props.activePendingUserInput}
+                              maxHeight={pendingUserInputMaxHeight}
+                              collapsed={userInputCollapsed}
+                              onToggleCollapsed={handleToggleUserInputCollapsed}
+                              onStopThread={props.onStopThread}
+                              cardProgress={userInputCardProgress}
+                              cardCoverage={userInputCardCoverage}
+                              onLayout={
+                                Platform.OS === "ios"
+                                  ? (event) => userInputCardTop.set(event.nativeEvent.layout.y)
+                                  : undefined
+                              }
+                              onInputFocusChange={handleOwnedInputFocusChange}
+                              drafts={props.activePendingUserInputDrafts}
+                              answers={props.activePendingUserInputAnswers}
+                              respondingUserInputId={props.respondingUserInputId}
+                              onSelectOption={props.onSelectUserInputOption}
+                              onChangeCustomAnswer={props.onChangeUserInputCustomAnswer}
+                              onSubmit={props.onSubmitUserInput}
+                              onDismiss={props.onDismissUserInput}
+                            />
+                            {/* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */}
+                          </No3yPendingUserInputSwap>
+                        ) : // fork:end fork-pending-user-input
+                        null}
                       </Animated.View>
                     ) : null}
+                    {/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */}
+                    {no3yBottomNav && !props.draftMode ? (
+                      <No3yQueuedRunsBanner
+                        environmentId={props.environmentId}
+                        threadId={props.selectedThread.id}
+                      />
+                    ) : null}
+                    {/* fork:end fork-queued-runs-banner */}
                   </ComposerPanels>
                 </View>
 
@@ -1924,7 +2036,14 @@ function ThreadDetailBody(
                             ? props.activePendingApproval.supportsFeedback
                               ? gt("Send feedback to decline this request")
                               : gt("Send a message to decline and redirect the agent")
-                            : gt("Ask anything")
+                            : /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                              no3yBottomNav
+                              ? props.draftMode?.sendBlockedReason === NO3Y_PICK_PROJECT_REASON
+                                ? NO3Y_PICK_PROJECT_REASON
+                                : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+                                  "What do you want to do?"
+                              : /* fork:end no3y-mobile-redesign */
+                                gt("Ask anything")
                         }
                         contentMaxWidth={contentMaxWidth}
                         draftControls={props.draftMode?.controls(draftViewportHeight)}

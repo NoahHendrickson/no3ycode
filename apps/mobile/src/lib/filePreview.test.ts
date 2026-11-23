@@ -280,6 +280,10 @@ vi.mock("../components/ui/FilePreviewModal", () => ({
 vi.mock("../components/ui/VideoPreviewModal", () => ({ VideoPreviewModal: () => null }));
 vi.mock("../components/ComposerContextSheet", () => ({}));
 vi.mock("../native/useOpenPullRequest", () => ({ useOpenPullRequest: () => vi.fn() }));
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// The no3y live line draws react-native-svg, which ships Flow source; the dock is off here.
+vi.mock("../../fork/No3yLiveStatusLine", () => ({ No3yLiveStatusLine: () => null }));
+/* fork:end no3y-mobile-redesign */
 vi.mock("../native/useMarkdownImageSource", () => ({ useMarkdownImageSource: () => vi.fn() }));
 vi.mock("../native/useEnrichedLinkVariants", () => ({
   enrichedThreadLinkCustomization: () => undefined,

@@ -156,6 +156,18 @@ import { deriveLayout } from "./lib/layout";
 import { useNativeLayoutMetrics } from "./native/native-layout-metrics";
 import { isPresentedRoute } from "./native/workspace-stack-projection";
 import { workspaceDetailRouter } from "./features/layout/workspace/workspace-detail-selection";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useAtomValue } from "@effect/atom-react";
+import { No3yBottomNavHost } from "../fork/No3yBottomNav";
+import { No3yChatLinkScreen } from "../fork/No3yHomeTabRedirect";
+import { no3yHomeTabsAtom, resolveNo3yHomeDraftFlow } from "../fork/no3yHomeTabs";
+import { registerNo3ySheetRoutes } from "../fork/no3yDockMove";
+import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
+import { no3ySheetOptions } from "../fork/no3ySheet";
+import { No3yUsageSheet } from "../fork/No3yUsageSheet";
+import { No3yStatusSheet } from "../fork/No3yStatusSheet";
+import { No3yPromptStashSheet } from "../fork/No3yPromptStashSheet";
+/* fork:end no3y-mobile-redesign */
 
 const settingsPage = () => pageRoute({ itemStyle: "standard" });
 
@@ -218,12 +230,17 @@ const ROUTE_TITLES: Readonly<Record<string, string>> = {
 
 // Thread settings keep the Duo's vertical bar so cancel, search, filter and confirm sit in the
 // rail. The picker stack spans the sheet so its header reaches the rail, and insets its content.
-const THREAD_SETTINGS_ROUTE = sheetRoute({
-  detent: "full",
-  header: "none",
-  android: "card",
-  spansRail: true,
-});
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// The iPhone model picker (fork/No3yModelPicker.tsx) is a half sheet that never grows.
+const THREAD_SETTINGS_ROUTE = NO3Y_MODEL_SHEET
+  ? no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }))
+  : /* fork:end no3y-mobile-redesign */
+    sheetRoute({
+      detent: "full",
+      header: "none",
+      android: "card",
+      spansRail: true,
+    });
 
 // Search sheets push on Android like the branch picker; a formSheet there leaves the list's
 // header peeking above it once the keyboard opens.
@@ -478,6 +495,14 @@ function RootStackLayout(props: {
   const draftRouteOnTop =
     draftRoute !== undefined &&
     props.state.routes.findLast((route) => route.name === "Thread") === draftRoute;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // With no draft route on the stack, New agent's or Chat's draft is served while its Home tab
+  // shows; the Settings scope stays for Automations, a Home tab on the no3y layout.
+  const no3yHomeTabs = useAtomValue(no3yHomeTabsAtom);
+  const no3yHomeDraft = resolveNo3yHomeDraftFlow(props.state.routes, no3yHomeTabs);
+  const flowKey =
+    no3yHomeDraft?.flowKey ?? (draftRoute === undefined ? undefined : newTaskFlowKey(draftRoute));
+  /* fork:end no3y-mobile-redesign */
   const draftParams = (
     draftRoute?.params as { draft?: { draftId?: string | string[] } } | undefined
   )?.draft;
@@ -487,13 +512,22 @@ function RootStackLayout(props: {
 
   return (
     <NewTaskFlowProvider
-      active={draftRouteOnTop}
-      flowKey={draftRoute === undefined ? undefined : newTaskFlowKey(draftRoute)}
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      active={no3yHomeDraft?.active ?? draftRouteOnTop}
+      flowKey={flowKey}
+      /* fork:end no3y-mobile-redesign */
       routeDraftId={routeDraftId}
     >
       <HardwareKeyboardCommandProvider pathname={pathname}>
         <ShowcaseReadyMarker />
-        <SettingsEnvironmentFilterProvider open={settingsOpen}>
+        <SettingsEnvironmentFilterProvider
+          open={
+            settingsOpen ||
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            no3yHomeTabs.enabled
+            /* fork:end no3y-mobile-redesign */
+          }
+        >
           <WorkspaceConnectionStatusProvider>
             <AndroidWorkspaceTabsProvider state={props.state}>
               <AdaptiveWorkspaceLayout
@@ -502,6 +536,9 @@ function RootStackLayout(props: {
                 workspaceRouteName={workspaceLocation.routeName}
               >
                 {props.children}
+                {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                <No3yBottomNavHost state={props.state} />
+                {/* fork:end no3y-mobile-redesign */}
                 <HardwareKeyboardCommandOverlay />
               </AdaptiveWorkspaceLayout>
             </AndroidWorkspaceTabsProvider>
@@ -582,6 +619,31 @@ const RootStackConfig = createWorkspaceStackNavigator({
         ...compactBrandHeaderOptions,
       },
     }),
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // Chat is a Home tab (fork/No3yHomePanes.tsx); its old link opens that tab.
+    No3yChat: createNativeStackScreen({
+      screen: No3yChatLinkScreen,
+      linking: "chat",
+      // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+      options: pageRoute({ title: "Chat", duoMinimize: "never" }),
+    }),
+    // The usage buttons' sheet. A fixed half sheet that scrolls: iOS sized a fitToContents sheet
+    // once, before the limits arrived, and clipped the rows that came after.
+    No3yUsage: createNativeStackScreen({
+      screen: No3yUsageSheet,
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),
+    }),
+    // The composer's stashed prompts (fork/No3yPromptStashSheet.tsx).
+    No3yPromptStash: createNativeStackScreen({
+      screen: No3yPromptStashSheet,
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, header: "none" })),
+    }),
+    // The thread status pill's half sheet (fork/No3yStatusPill.tsx), the usage sheet's shape.
+    No3yThreadStatus: createNativeStackScreen({
+      screen: No3yStatusSheet,
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),
+    }),
+    /* fork:end no3y-mobile-redesign */
     PullRequest: createNativeStackScreen({
       screen: PullRequestRouteScreen,
       linking: {
@@ -903,6 +965,16 @@ registerPresentedRoutes(
     return options && typeof options === "object" && isPresentedRoute(options) ? [name] : [];
   }),
 );
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+registerNo3ySheetRoutes(
+  Object.entries(RootStackConfig.config.screens ?? {}).flatMap(([name, screen]) => {
+    const options = (screen as { readonly options?: { readonly presentation?: unknown } }).options;
+    return options && typeof options === "object" && options.presentation === "formSheet"
+      ? [name]
+      : [];
+  }),
+);
+/* fork:end no3y-mobile-redesign */
 
 export const RootStack = RootStackConfig.with(function AdaptiveRootStack({ Navigator }) {
   const { width, height } = useWindowDimensions();

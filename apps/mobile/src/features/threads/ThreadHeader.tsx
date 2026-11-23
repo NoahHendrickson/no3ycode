@@ -13,6 +13,10 @@ import {
   useThreadGitMenuDefinition,
   type ThreadGitControlsProps,
 } from "./ThreadGitControls";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
+import { No3yThreadHeader, useNo3yThreadBar } from "../../../fork/No3yScreenHeader";
+/* fork:end no3y-mobile-redesign */
 
 export function ThreadHeader(props: {
   readonly title: string;
@@ -23,6 +27,13 @@ export function ThreadHeader(props: {
   readonly hasThreadCwd: boolean;
   readonly inspectorMode: ThreadInspectorMode | null;
   readonly onOpenFilesInspector: () => void;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** The no3y iPhone bar: a usage button, and a ⋯ menu holding the subtitle and the bar's items. */
+  readonly no3yUsage?: {
+    readonly environmentId: EnvironmentId;
+    readonly providerInstanceId: ProviderInstanceId;
+  };
+  /* fork:end no3y-mobile-redesign */
 }) {
   const gt = useGT();
   const m = useMessages();
@@ -45,6 +56,24 @@ export function ThreadHeader(props: {
       ]
     : [];
   const menus = [gitMenu, terminalMenu].filter((menu): menu is AppBarMenu => menu !== null);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yBar = useNo3yThreadBar(
+    props.draft || !props.no3yUsage
+      ? undefined
+      : {
+          ...props.no3yUsage,
+          subtitle: props.subtitle,
+          branch: props.gitControls.gitStatus?.refName ?? props.gitControls.currentBranch,
+          menus: [gitMenu, terminalMenu],
+          openFiles:
+            props.hasThreadCwd && props.gitControls.canOpenFiles
+              ? props.onOpenFilesInspector
+              : null,
+        },
+  );
+  // The no3y bar floats over the transcript in place of the native bar.
+  if (no3yBar) return <No3yThreadHeader title={props.title} onBack={goBack} bar={no3yBar} />;
+  /* fork:end no3y-mobile-redesign */
 
   return (
     <AppBar

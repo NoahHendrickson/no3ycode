@@ -11,6 +11,12 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { RuntimeMode } from "@t3tools/contracts";
+
+import { No3yComposerStyleProvider } from "../../fork/No3yComposerStyle";
+import { No3yGlassLayer } from "../../fork/No3yGlass";
+/* fork:end no3y-mobile-redesign */
 
 import { useAdaptiveWorkspaceLayout } from "../features/layout/AdaptiveWorkspaceLayout";
 import { useSidebarWorkspaceTabs } from "../features/layout/workspace/useSystemWorkspaceTabBar";
@@ -44,7 +50,19 @@ const EXPANDED_EDITOR_INSET = 14;
 // Room under the expanded editor for the toolbar row.
 const EXPANDED_EDITOR_BOTTOM = 52;
 
-export function useCompactComposerEditor(text: ScaledTextRole, value: string, animate: boolean) {
+export function useCompactComposerEditor(
+  text: ScaledTextRole,
+  value: string,
+  animate: boolean,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  no3yCard?: { readonly inset: number; readonly controlsClearance: number },
+  /* fork:end no3y-mobile-redesign */
+) {
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card always lays the editor out full width above its controls.
+  const expandedInset = no3yCard?.inset ?? EXPANDED_EDITOR_INSET;
+  const expandedBottom = no3yCard?.controlsClearance ?? EXPANDED_EDITOR_BOTTOM;
+  /* fork:end no3y-mobile-redesign */
   const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
   const [compactWidth, setCompactWidth] = useState(0);
   const contentHeight = contentSize.height;
@@ -61,13 +79,18 @@ export function useCompactComposerEditor(text: ScaledTextRole, value: string, an
   // A line that fits the expanded editor may still overflow its compact slot.
   // Compare its measured width too so widening cannot trigger a collapse loop.
   const isExpanded =
-    value.length > 0 &&
-    (contentHeight > text.lineHeight * 1.5 ||
-      (compactWidth > 0 && contentSize.width > compactWidth));
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    no3yCard !== undefined ||
+    /* fork:end no3y-mobile-redesign */
+    (value.length > 0 &&
+      (contentHeight > text.lineHeight * 1.5 ||
+        (compactWidth > 0 && contentSize.width > compactWidth)));
   const compactRowHeight = Math.max(44, minimum);
   const compactBottom = (compactRowHeight - minimum) / 2;
   const isRTL = I18nManager.isRTL;
-  const expandedRowHeight = height + EXPANDED_EDITOR_BOTTOM;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const expandedRowHeight = height + expandedBottom;
+  /* fork:end no3y-mobile-redesign */
   const expansion = useDerivedValue(() => {
     const target = isExpanded ? 1 : 0;
     return animate
@@ -95,9 +118,11 @@ export function useCompactComposerEditor(text: ScaledTextRole, value: string, an
       opacity: isExpanded || editorWidth.value > 0 ? 1 : 0,
       height,
       top: compactBottom * (1 - progress),
-      left: compactInsets.left + (EXPANDED_EDITOR_INSET - compactInsets.left) * progress,
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      left: compactInsets.left + (expandedInset - compactInsets.left) * progress,
       // Snapping the far edge keeps the line from rewrapping while the near edge moves.
-      right: isExpanded ? EXPANDED_EDITOR_INSET : compactInsets.right,
+      right: isExpanded ? expandedInset : compactInsets.right,
+      /* fork:end no3y-mobile-redesign */
     };
   });
   const containerStyle = useAnimatedStyle(() => ({
@@ -173,6 +198,9 @@ export function ComposerSurface(props: {
   readonly children: ReactNode;
   readonly style: ViewStyle;
   readonly animateLayout?: boolean;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  readonly no3yCard?: { readonly runtimeMode: RuntimeMode };
+  /* fork:end no3y-mobile-redesign */
 }) {
   const colors = useUniwindTheme();
   const targetBorderRadius =
@@ -193,6 +221,19 @@ export function ComposerSurface(props: {
   }));
   const layoutTransition = shouldAnimate ? COMPOSER_LAYOUT_TRANSITION : undefined;
 
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The no3y card: the same glass as its controls, under a still layout.
+  if (props.no3yCard) {
+    return (
+      <Animated.View style={props.style}>
+        <No3yGlassLayer radius={targetBorderRadius} />
+        <No3yComposerStyleProvider value={props.no3yCard}>
+          {props.children}
+        </No3yComposerStyleProvider>
+      </Animated.View>
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   // Animate every native frame or glass and content jump to final height inside the clip.
   return (
     <Animated.View

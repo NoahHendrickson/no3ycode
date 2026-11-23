@@ -26,7 +26,19 @@ vi.mock("react-native", () => ({
 vi.mock("@react-navigation/native", () => ({
   useNavigation: () => ({ isFocused: () => false }),
   usePreventRemove: () => {},
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  useRoute: () => ({ name: "SettingsScheduledTasks" }),
+  /* fork:end no3y-mobile-redesign */
 }));
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+// These cases cover the upstream page; the no3y Automations tab is tested in apps/mobile/fork.
+vi.mock("../../../fork/no3yBottomNavEnabled", () => ({ useNo3yBottomNavEnabled: () => false }));
+vi.mock("../../../fork/No3yAutomationsScreen", () => ({ No3yAutomationsScreen: () => null }));
+vi.mock("../../../fork/No3yAutomationRunsSection", () => ({
+  No3yAutomationRunsSection: () => null,
+}));
+vi.mock("../../../fork/No3yHomeTabRedirect", () => ({ No3yHomeTabRedirect: () => null }));
+/* fork:end no3y-mobile-redesign */
 vi.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ bottom: 0 }) }));
 vi.mock("@expo/ui/community/datetime-picker", () => ({ DateTimePicker: () => null }));
 vi.mock("../../components/ui/Dialog", () => ({ alert: mocks.alert }));

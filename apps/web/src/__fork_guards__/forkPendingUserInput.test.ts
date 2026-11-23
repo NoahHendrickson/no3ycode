@@ -191,4 +191,16 @@ describe("fork guard: fork-pending-user-input", () => {
     );
     expect(topless).toEqual([]);
   });
+
+  it("draws the no3y iPhone Questions card in the composer's place, never a blue primary", () => {
+    const mobileThreadDetail = readSibling(
+      "../../../mobile/src/features/threads/ThreadDetailScreen.tsx",
+    );
+    const mobileCard = readSibling("../../../mobile/fork/No3yPendingUserInputCard.tsx");
+    expect(mobileThreadDetail).toContain("<No3yPendingUserInputSwap>");
+    expect(mobileCard).toContain("<No3yGlassLayer radius={CARD_RADIUS} />");
+    expect(mobileCard).toContain("backgroundColor: props.selected ? palette.primaryFill");
+    expect(mobileCard).toContain("no3yQuestionAfterSelect({");
+    expect(mobileCard).not.toMatch(/bg-primary|border-primary|peekRing/u);
+  });
 });

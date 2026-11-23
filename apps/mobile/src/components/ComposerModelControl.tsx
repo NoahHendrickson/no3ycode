@@ -9,6 +9,10 @@ import { resolveProviderOptionDescriptors } from "../lib/providerOptions";
 import { AppText as Text } from "./ui/AppText";
 import { ComposerInlineControl } from "./ComposerToolbar";
 import { ProviderIcon, ProviderInstanceIcon, providerInstanceNameLabel } from "./ProviderIcon";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yModelChip, useNo3yComposerStyle } from "../../fork/No3yComposerStyle";
+import { No3yProviderMark } from "../../fork/No3yProviderMark";
+/* fork:end no3y-mobile-redesign */
 
 export function ComposerModelControl(props: {
   readonly modelOption: ModelOption | null;
@@ -24,6 +28,9 @@ export function ComposerModelControl(props: {
 }) {
   const gt = useGT();
   const m = useMessages();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yCard = useNo3yComposerStyle();
+  /* fork:end no3y-mobile-redesign */
   const descriptors = resolveProviderOptionDescriptors({
     capabilities: props.modelOption?.capabilities,
     selections: props.selection?.options,
@@ -52,6 +59,28 @@ export function ComposerModelControl(props: {
       })
     : null;
   const shortLabel = props.modelOption?.shortName ?? label;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (no3yCard) {
+    return (
+      <No3yModelChip
+        accessibilityLabel={["Model and reasoning settings", label, summary]
+          .filter(Boolean)
+          .join(", ")}
+        icon={
+          <No3yProviderMark
+            iconUrl={props.modelOption?.providerIconUrl}
+            provider={props.modelOption?.providerDriver}
+            size={16}
+          />
+        }
+        label={providerNameLabel ?? shortLabel}
+        detail={summary}
+        disabled={props.disabled}
+        onPress={props.onPress}
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   return (
     <ComposerInlineControl
       accessibilityLabel={[
