@@ -5361,6 +5361,94 @@
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
 
+- id: no3y-mobile-identity
+  intent: >
+    The mobile app builds as no3y Code, signed by the fork owner's Apple team
+    (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
+    other variants), with the fork's app icons. Ping's team, bundle IDs, linked
+    domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
+    serve a different bundle, so they are swapped out or dropped, and OTA
+    updates stay off until the fork has its own Expo project.
+
+    The identity is chosen before upstream derives the widget, share-extension,
+    app-group and keychain IDs from the variant, so every target follows it.
+    It is on by default; NO3Y_MOBILE_IDENTITY=0 (in .env.local or the shell)
+    builds upstream's identity. The flag cannot live in the tracked .env,
+    which the t3-connect-official-config guard pins to the official values.
+    Upstream's app.config.test.ts pins the flag to 0 in its env mock (one
+    fenced line) so it keeps asserting upstream's identifiers.
+
+    Deliberately shared: the t3code:// scheme stays upstream's, because
+    App.tsx and the widgets hardcode it (same call as the desktop app). With
+    the App Store app also installed, the two contend for it. Push
+    notifications come from the Mac instead of Ping's relay (see no3y-push).
+    Live Activities and T3 Connect sign-in still target Ping's relay and Clerk
+    and do not work in this build; connect over Tailscale. The team ID, bundle
+    ID and push mount path live once in no3yConstants.ts, shared with the
+    push service and the phone's registration.
+  tier: 4
+  files:
+    - apps/mobile/fork/identity.ts
+    - apps/mobile/fork/identity.test.ts
+    - apps/mobile/fork/no3yConstants.ts
+  shadows: []
+  watch:
+    - apps/mobile/app.config.ts
+    - apps/mobile/app.config.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileIdentity.test.ts
+    - apps/mobile/fork/identity.test.ts
+
+- id: no3y-push
+  intent: >
+    The no3y iOS app gets agent notifications without Ping's relay. A small
+    push service on the Mac (apps/mobile/fork/push-service/no3yPush.mts) pairs
+    with the local T3 server as an ordinary read-only client, watches the
+    orchestration shell stream, and pushes to APNs with the fork's own key
+    (~/.no3y-push, never in the repo) when a thread finishes, fails, or waits
+    on an approval or an answer. The phase comes from the official
+    projectThreadAwarenessV2 rule (imported). The per-thread policy around it
+    restates AgentAwarenessRelay's, so a sync that changes the relay's policy
+    needs the same change here: a subagent's wait alerts on its top-level
+    thread, a completion is held for 5 seconds and still alerts if the thread
+    is settled during the hold, and what changed while the socket was down
+    alerts on reconnect. Automations alert only
+    when they put a thread on the thread list: a run hidden from the roster
+    (scheduledTaskId set and not pinned, the fork-scheduled-runs-off-sidebar
+    rule) sends nothing, and before alerting the service reads the thread's
+    recent turn items so a run started by an automation's message in a thread
+    that already had history (an automation bound to an existing thread, such
+    as a bot check-in) sends nothing either. Runs from automations that list
+    their runs, and pinned runs, still alert. If that read fails it alerts
+    anyway, since a missed approval costs more than an extra notification.
+    No server, contract, or web
+    code changes, so upstream syncs only touch it if the shell stream's wire
+    shape changes.
+
+    The phone registers its APNs token and its bundle ID (the APNs topic, so
+    dev and preview builds get pushes too) by POSTing to /no3y-push/register
+    on each saved Tailscale HTTPS route; Tailscale Serve mounts the service there
+    beside the T3 server, so it is reachable only inside the tailnet. A no3y
+    build asks for notification permission at launch for this; an upstream-
+    identity build (NO3Y_MOBILE_IDENTITY=0) skips it. Payloads match the
+    relay's shape so upstream's tap handler opens the thread.
+
+    The service runs from the main checkout as a login item (`node
+    no3yPush.mts install`), so it follows whatever `custom` has checked out.
+  tier: 4
+  files:
+    - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/no3yPush.mts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/App.tsx
+    - apps/server/src/relay/AgentAwarenessRelay.ts
+    - packages/shared/src/agentAwareness.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yPush.test.ts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+
 - id: fork-glass-preview-parking
   intent: >
     A preview guest that is rendering but not on screen (an agent driving the
