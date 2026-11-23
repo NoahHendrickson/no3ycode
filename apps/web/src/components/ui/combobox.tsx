@@ -108,7 +108,7 @@ function ComboboxSearchInput(props: React.ComponentProps<typeof ComboboxInput>) 
   return (
     /* fork:begin fork-full-width-search-divider — see .fork/customizations.yaml#fork-full-width-search-divider
        The side padding sits inside the underline, so it runs edge to edge of the popup. */
-    <div className="min-w-0 shrink-0 pt-2.5">
+    <label className="block min-w-0 shrink-0 cursor-text pt-2.5">
       <div className="relative -translate-y-px border-b border-border/70 px-3 pb-1.5 transition-colors focus-within:border-ring">
         <SearchIcon
           aria-hidden="true"
@@ -123,7 +123,7 @@ function ComboboxSearchInput(props: React.ComponentProps<typeof ComboboxInput>) 
           unstyled
         />
       </div>
-    </div>
+    </label>
   );
 }
 

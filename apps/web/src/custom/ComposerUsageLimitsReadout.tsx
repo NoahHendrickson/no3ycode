@@ -5,16 +5,19 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
 import {
-  collectExternalUsageLinks,
   collectLimitAccounts,
   collectLimitPools,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitPool,
   type LimitPoolWindow,
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
+import {
+  collectExternalUsageLinks,
+  cursorUsageWindowDetails,
+  formatResetsIn,
+} from "@t3tools/shared/usageLimitsCopy";
+import { m } from "~/i18n/messages";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
 import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
 
@@ -24,6 +27,7 @@ import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ensureLocalApi } from "~/localApi";
 import { environmentPresentations } from "~/state/presentation";
+import type { ComposerDrawerSection } from "./ComposerBackgroundWork";
 import { XIcon } from "./icons/lucide-hugeicons";
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import { actionableLimitNotices } from "./usageLimitNotices";
@@ -32,14 +36,26 @@ import { UsageCircleMeter } from "./UsageMeter";
 const FIVE_HOURS_MINS = 300;
 const SEVEN_DAYS_MINS = 7 * 24 * 60;
 
-/** Owns the composer usage drawer's atomic open/clock state and focus restoration. */
+/** Owns the composer's top drawer: the usage tray's open/clock state and focus restoration, with
+    the background-work section (owned by ChatView) stacked above it while that is open. */
 export function useComposerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
+  readonly backgroundWork: ComposerDrawerSection | null;
 }) {
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const open = props.enabled && openedAt !== null;
+  const work = props.backgroundWork;
+  const workOpen = work?.open === true;
+  const drawerOpen = open || workOpen;
+  // The panel keeps its children through the close slide, so a closed drawer keeps the sections it
+  // last showed. Work that has ended has nothing left to show, so it leaves at once.
+  const [lastShown, setLastShown] = useState({ work: false, usage: false });
+  if (drawerOpen && (lastShown.work !== workOpen || lastShown.usage !== open)) {
+    setLastShown({ work: workOpen, usage: open });
+  }
+  const shown = drawerOpen ? { work: workOpen, usage: open } : lastShown;
 
   const toggle = () => {
     setOpenedAt((current) => (current === null ? Date.now() : null));
@@ -62,11 +78,25 @@ export function useComposerUsageDrawer(props: {
         onClose={() => close(false)}
       />
     ) : null,
-    drawer: props.enabled ? (
-      <ComposerUsageLimitsDrawer open={open} onClose={() => close(true)}>
-        <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
-      </ComposerUsageLimitsDrawer>
-    ) : null,
+    drawer:
+      props.enabled || work !== null ? (
+        <ComposerUsageLimitsDrawer
+          open={drawerOpen}
+          // Escape closes every section and returns focus to one trigger, the ring when usage was open.
+          onClose={() => {
+            if (work?.open) work.onCollapse(!open);
+            if (open) close(true);
+          }}
+        >
+          {shown.work && work !== null ? work.content : null}
+          {shown.work && work !== null && shown.usage ? (
+            <div aria-hidden className="h-px shrink-0 bg-border" />
+          ) : null}
+          {shown.usage && props.enabled ? (
+            <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
+          ) : null}
+        </ComposerUsageLimitsDrawer>
+      ) : null,
   };
 }
 
@@ -139,7 +169,8 @@ export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer
 
 /** Full descriptive label for tooltips and accessible text. */
 function fullWindowLabel(pool: LimitPool, window: LimitPoolWindow): string {
-  const details = pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
+  const details =
+    pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
   return (details?.label ?? window.label).replaceAll(" · ", " ");
 }
 
@@ -196,7 +227,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
     <ComposerLimitsTrayView
       pools={collectLimitPools(collectLimitAccounts(presentations), props.now)}
       notices={actionableLimitNotices(presentations)}
-      externalLinks={collectExternalUsageLinks(presentations)}
+      externalLinks={collectExternalUsageLinks(presentations, m)}
       now={props.now}
       onClose={props.onClose}
     />
@@ -218,8 +249,9 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
   const { pools, notices, externalLinks } = props;
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 
+  // 8px at the end, so the close X lines up with a composer banner's dismiss X below it.
   return (
-    <div className="flex min-w-0 items-center gap-2 px-3 py-3">
+    <div className="flex min-w-0 items-center gap-2 py-3 ps-3 pe-2">
       {!hasContent ? (
         <span className="text-xs text-muted-foreground">
           No provider reports subscription limits.
@@ -337,7 +369,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
         {windows.map((window) => {
           const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
           const nextReset = nextRefill ?? window.resets[0];
-          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m) : null;
           const fullLabel = fullWindowLabel(pool, window);
           const shortLabel = compactWindowLabel(pool, window);
           const accessibleLabel = `${providerLabel} ${fullLabel}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`;

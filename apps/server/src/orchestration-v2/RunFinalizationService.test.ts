@@ -1,6 +1,7 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, it } from "@effect/vitest";
 import {
+  CheckpointRef,
   CheckpointScopeId,
   ProjectId,
   RunId,
@@ -29,6 +30,10 @@ import * as WorkspaceEntries from "../workspace/WorkspaceEntries.ts";
 import * as CheckpointCapture from "./CheckpointCaptureService.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 import * as RunFinalization from "./RunFinalizationService.ts";
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+import type { VcsStatusLocalResult } from "@t3tools/contracts";
+import { LocalCheckoutBranchFollower } from "./forkLocalCheckoutBranchFollow.ts";
+/* fork:end server-local-checkout-branch-follow */
 
 // Without a project the observer never touches enrichment, so its methods stay unimplemented.
 const layerNoProject = Layer.mergeAll(
@@ -36,48 +41,154 @@ const layerNoProject = Layer.mergeAll(
   Layer.mock(ProjectEnrichment.ProjectEnrichmentService)({}),
 );
 
-it.effect("completes finalization when the post-checkpoint workspace refresh fails", () => {
-  const threadId = ThreadId.make("thread_refresh_failure");
-  const runId = RunId.make("run_refresh_failure");
-  const scopeId = CheckpointScopeId.make("scope_refresh_failure");
-  const captured: string[] = [];
-  const layer = RunFinalization.layer.pipe(
+const finalizationLayer = (
+  scopeId: CheckpointScopeId,
+  runId: RunId,
+  steps: string[],
+  refresh: (typeof RunFinalization.RunFinalizationObserver)["Service"]["refresh"],
+) => {
+  const usedRepositoryScopeId = CheckpointScopeId.make(`${scopeId}_api`);
+  const idleRepositoryScopeId = CheckpointScopeId.make(`${scopeId}_docs`);
+  const repositoryCheckpoint = (repositoryScopeId: CheckpointScopeId, checkpointRunId: RunId) => ({
+    scopeId: repositoryScopeId,
+    runId: checkpointRunId,
+    ordinalWithinScope: 1,
+    appRunOrdinal: null,
+    status: "ready" as const,
+    ref: CheckpointRef.make(`refs/t3/test/${repositoryScopeId}`),
+  });
+  return RunFinalization.layer.pipe(
     Layer.provide(
       Layer.mergeAll(
         Layer.mock(CheckpointCapture.CheckpointCaptureServiceV2)({
           execute: () =>
             Effect.sync(() => {
-              captured.push("checkpoint");
+              steps.push("checkpoint");
             }),
         }),
         Layer.mock(ProjectionStore.ProjectionStoreV2)({
           getCheckpointContext: () =>
             Effect.succeed({
               runs: [],
-              checkpointScopes: [{ id: scopeId, runId, kind: "root_run" as const, cwd: "/repo" }],
-              checkpoints: [],
+              checkpointScopes: [
+                { id: scopeId, runId, kind: "root_run" as const, cwd: "/repo" },
+                {
+                  id: usedRepositoryScopeId,
+                  runId,
+                  kind: "manual" as const,
+                  cwd: "/api",
+                  repositoryPath: "/api",
+                },
+                {
+                  id: idleRepositoryScopeId,
+                  runId,
+                  kind: "manual" as const,
+                  cwd: "/docs",
+                  repositoryPath: "/docs",
+                },
+              ],
+              checkpoints: [
+                repositoryCheckpoint(usedRepositoryScopeId, runId),
+                repositoryCheckpoint(idleRepositoryScopeId, RunId.make("run_before")),
+              ],
             }),
         }),
         Layer.succeed(RunFinalization.RunFinalizationObserver, {
-          refresh: () =>
-            Effect.gen(function* () {
-              captured.push("refresh");
-              return yield* new RunFinalization.RunFinalizationRefreshError({
-                cwd: "/repo",
-                cause: new Error("Git command timed out"),
-              });
-            }),
+          refresh,
           refreshAfterTurn: () => Effect.void,
+          refreshRepositories: ({ cwds }) =>
+            Effect.sync(() => {
+              steps.push(`repositories:${cwds.join(",")}`);
+            }),
         }),
       ),
     ),
   );
+};
+
+it.effect("completes finalization when the post-checkpoint workspace refresh fails", () => {
+  const threadId = ThreadId.make("thread_refresh_failure");
+  const runId = RunId.make("run_refresh_failure");
+  const scopeId = CheckpointScopeId.make("scope_refresh_failure");
+  const captured: string[] = [];
+  const layer = finalizationLayer(scopeId, runId, captured, () =>
+    Effect.gen(function* () {
+      captured.push("refresh");
+      return yield* new RunFinalization.RunFinalizationRefreshError({
+        cwd: "/repo",
+        cause: new Error("Git command timed out"),
+      });
+    }),
+  );
   return Effect.gen(function* () {
     const service = yield* RunFinalization.RunFinalizationService;
     yield* service.finalize({ threadId, runId, scopeId });
-    assert.deepEqual(captured, ["checkpoint", "refresh"]);
+    // Only the tracked repository this run checkpointed is refreshed.
+    assert.deepEqual(captured, ["checkpoint", "refresh", "repositories:/api"]);
   }).pipe(Effect.provide(layer));
 });
+
+it.effect("completes finalization without waiting for the display refresh", () => {
+  const threadId = ThreadId.make("thread_slow_refresh");
+  const runId = RunId.make("run_slow_refresh");
+  const scopeId = CheckpointScopeId.make("scope_slow_refresh");
+  const steps: string[] = [];
+  const release = Deferred.makeUnsafe<void>();
+  const refreshed = Deferred.makeUnsafe<void>();
+  const layer = finalizationLayer(scopeId, runId, steps, () =>
+    Deferred.await(release).pipe(
+      Effect.andThen(Deferred.succeed(refreshed, undefined)),
+      /* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+      Effect.as(null),
+      /* fork:end server-local-checkout-branch-follow */
+    ),
+  );
+  return Effect.gen(function* () {
+    const service = yield* RunFinalization.RunFinalizationService;
+    const finalize = yield* service
+      .finalize({ threadId, runId, scopeId })
+      .pipe(Effect.timeoutOption("1 minute"), Effect.forkChild({ startImmediately: true }));
+    yield* TestClock.adjust("1 minute");
+    assert.isTrue(
+      Option.isSome(yield* Fiber.join(finalize)),
+      "finalization waited on the display refresh, blocking the thread's next turn",
+    );
+    yield* Deferred.succeed(release, undefined);
+    yield* Deferred.await(refreshed);
+  }).pipe(Effect.provide(layer));
+});
+
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+it.effect("a shared-checkout thread adopts its branch before finalization returns", () => {
+  const runId = RunId.make("run_follow_before_next_turn");
+  const scopeId = CheckpointScopeId.make("scope_follow_before_next_turn");
+  const steps: string[] = [];
+  const local = { refName: "feature", isDefaultRef: false } as unknown as VcsStatusLocalResult;
+  // The status read takes a second, so a background follow would land after the repositories.
+  const layer = finalizationLayer(scopeId, runId, steps, () =>
+    Effect.sleep("1 second").pipe(Effect.as(local)),
+  ).pipe(
+    Layer.provide(
+      Layer.succeed(LocalCheckoutBranchFollower, {
+        canFollow: () => Effect.succeed(true),
+        follow: () =>
+          Effect.sync(() => {
+            steps.push("follow");
+          }),
+      }),
+    ),
+  );
+  return Effect.gen(function* () {
+    const service = yield* RunFinalization.RunFinalizationService;
+    const finalize = yield* service
+      .finalize({ threadId: ThreadId.make("thread_follow"), runId, scopeId })
+      .pipe(Effect.forkChild({ startImmediately: true }));
+    yield* TestClock.adjust("1 second");
+    yield* Fiber.join(finalize);
+    assert.deepEqual(steps, ["checkpoint", "follow", "repositories:/api"]);
+  }).pipe(Effect.provide(layer));
+});
+/* fork:end server-local-checkout-branch-follow */
 
 it.effect.each(
   (
@@ -209,6 +320,60 @@ it.effect("returns from the post-turn refresh without waiting for the PR lookup"
     );
   }).pipe(Effect.provide(layer));
 });
+
+/* fork:begin server-local-checkout-branch-follow — see .fork/customizations.yaml#server-local-checkout-branch-follow */
+it.effect("returns the post-turn status without waiting for the workspace rescan", () => {
+  const threadId = ThreadId.make("thread-slow-rescan");
+  const runId = RunId.make("completed-run");
+  const rescanStarted = Deferred.makeUnsafe<void>();
+  const layer = RunFinalization.layerObserver.pipe(
+    Layer.provide(
+      Layer.mergeAll(
+        layerNoProject,
+        Layer.mock(WorkspaceEntries.WorkspaceEntries)({
+          refresh: () =>
+            Deferred.succeed(rescanStarted, undefined).pipe(Effect.andThen(Effect.never)),
+        }),
+        Layer.mock(PullRequestService.PullRequestService)({
+          refreshAfterTurn: () => Effect.void,
+        }),
+        Layer.mock(VcsStatusBroadcaster.VcsStatusBroadcaster)({
+          refreshLocalStatus: () =>
+            Effect.succeed({
+              isRepo: true,
+              hasPrimaryRemote: true,
+              isDefaultRef: true,
+              refName: "main",
+              hasWorkingTreeChanges: false,
+              workingTree: { files: [], insertions: 0, deletions: 0 },
+            }),
+        }),
+        Layer.mock(ProjectionStore.ProjectionStoreV2)({
+          getThreadShell: () =>
+            Effect.succeed({
+              id: threadId,
+              branch: "main",
+              activeRunId: null,
+            } as OrchestrationV2ThreadShell),
+        }),
+      ),
+    ),
+  );
+  return Effect.gen(function* () {
+    const observer = yield* RunFinalization.RunFinalizationObserver;
+    const refresh = yield* observer
+      .refresh({ cwd: "/repo", threadId, runId })
+      .pipe(Effect.timeoutOption("1 minute"), Effect.forkChild({ startImmediately: true }));
+    yield* TestClock.adjust("1 minute");
+    const result = yield* Fiber.join(refresh);
+    assert.isTrue(
+      Option.isSome(result),
+      "a shared-checkout thread's next turn waited on the workspace rescan",
+    );
+    yield* Deferred.await(rescanStarted);
+  }).pipe(Effect.provide(layer));
+});
+/* fork:end server-local-checkout-branch-follow */
 
 it.effect("replaces a still-running PR lookup when a newer turn finishes", () => {
   const threadId = ThreadId.make("thread-back-to-back");

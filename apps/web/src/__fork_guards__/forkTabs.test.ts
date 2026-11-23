@@ -72,7 +72,11 @@ describe("fork-tabs", () => {
       "../components/settings/ScheduledTasksSettings.tsx",
     ]) {
       const source = read(path);
-      const label = source.indexOf('aria-label="Days to run"');
+      // Upstream's label is translated; the fork's editor keeps the literal.
+      const label = Math.max(
+        source.indexOf('aria-label="Days to run"'),
+        source.indexOf('aria-label={gt("Days to run")}'),
+      );
       const tag = source.slice(
         source.lastIndexOf("<ToggleGroup", label),
         source.indexOf(">", label),

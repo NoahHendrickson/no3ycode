@@ -109,6 +109,25 @@
     - apps/web/src/__fork_guards__/forkLocalDictation.test.ts
     - apps/web/src/__fork_guards__/forkDictationHotkey.test.ts
 
+- id: fork-i18n-catalog
+  intent: >
+    Upstream translates the app with GT catalogs (apps/web/src/i18n/translations)
+    and CI's i18n:check fails when the catalogs drift from the source. The fork
+    removes upstream copy (thread search, the speech pill, the resting
+    composer's strings), so en.json keeps keys the fork's source no longer has.
+    The check lists those as kept instead of failing: dropping them would
+    rewrite every locale file and conflict on each sync. Keys missing from
+    en.json still fail, so fork copy stays plain English (the
+    no-untranslated-copy rule warns in fork-owned paths, see
+    fork-lint-cleanliness) until the fork decides to translate it.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - scripts/i18n-check.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkI18nCatalog.test.ts
+
 - id: ci-on-custom
   intent: >
     CI runs on pushes to custom and does not run on pushes to main. Custom is
@@ -119,9 +138,11 @@
     with a deploy key (see fork-sync-mirror.yml), which unlike GITHUB_TOKEN
     does trigger push workflows, main must stay out of the push trigger list
     or every hourly mirror advance schedules a full CI run. For the same
-    reason the agent context budget gate compares a PR with its base branch,
-    not main: the fork's own MCP tools make custom's budget larger than the
-    mirror's, so a main baseline would fail every fork PR. vp run
+    reason the agent context budget gate must compare a PR with its base
+    branch, not main: the fork's own MCP tools make custom's budget larger than
+    the mirror's. Upstream now reads the merge commit's first parent (HEAD^1),
+    which is the base branch, so that file carries no fence; the guard keeps it
+    from going back to fetching main. vp run
     check:changed defaults to origin/custom for the same reason: diffing
     against the mirror treats every fork customization as a change, so each
     run rechecks hundreds of files and their browser tests. An explicit ref
@@ -187,10 +208,8 @@
 
     The required Release Smoke check installs without the lockfile, so a
     dependency reached only through a range moves the day a new release ships.
-    pnpm-workspace.yaml overrides pins unenv to 2.0.0-rc.24 (2026-11-14):
-    @cloudflare/unenv-preset peers on exactly that release, and rc.25 broke the
-    install on every open pull request. Drop the pin when upstream pins or
-    moves it.
+    The fork pinned unenv to 2.0.0-rc.24 for that reason (2026-11-14); upstream
+    now carries the same override, so pnpm-workspace.yaml has no fork fence.
   tier: 4
   files: []
   shadows: []
@@ -198,7 +217,6 @@
     - .github/workflows/ci.yml
     - .github/workflows/mobile-fingerprint-check.yml
     - apps/web/src/lib/imageCompression.test.ts
-    - pnpm-workspace.yaml
   verify:
     - apps/web/src/__fork_guards__/ciRunners.test.ts
 
@@ -474,6 +492,9 @@
     - apps/desktop/src/backend/DesktopBackendPool.test.ts
     - t3.json
     - apps/desktop/src/main.ts
+    # SSH remotes download the upstream release the fork is synced to.
+    - apps/desktop/src/ssh/DesktopSshEnvironment.ts
+    - apps/desktop/src/ssh/DesktopSshEnvironment.test.ts
     - apps/desktop/src/app/DesktopStartupRecovery.ts
     # The launcher's ownership marker (the fork's must not contain upstream's)
     # and its moved notice, which names the fork.
@@ -890,8 +911,12 @@
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
-    # Upstream's render-isolation case spies an export the fork's rows never render.
+    # Upstream's render-isolation case spies an export the fork's rows never render. Its
+    # keyboard-opened thread menu case is not ported: the cards do not install upstream's sidebar
+    # tree (attachSidebarTree, which the fork's rows never carried). Follow-up.
     - apps/web/src/components/Sidebar.browser.test.tsx
+    # Upstream's linked-issue sidebar badge case is not ported: the cards do not render it yet.
+    - apps/web/src/components/ChatView.browser.test.tsx
     # Upstream's Sidebar.drag.browser.test.tsx is deleted, not ported: it drags a search
     # result out of the boring sidebar's folders, and the fork renders neither.
     # The card's JumpHintBadge carries the test's [data-jump-hint]; the test holds for
@@ -1428,6 +1453,8 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    # Upstream's numbered-jumps case drives its draft block; a fenced note declines it.
+    - apps/web/src/components/Sidebar.browser.test.tsx
   verify:
     - apps/web/src/__fork_guards__/sidebarV2DraftRows.test.ts
     - apps/web/src/custom/sidebarV2DraftRows.test.ts
@@ -1798,7 +1825,7 @@
     it may not carry a backdrop-filter. Composer popups are found by the
     data-chat-composer-floating-layer upstream already stamps on them; the
     fork's own popups that are not composer layers (the draft's project
-    menu, the liveness list, the thread sort and settings menus, the thread
+    menu, the thread sort and settings menus, the thread
     details card) carry data-fork-glass-rim. The selected segment of every
     segmented toggle group (tabs, and the pickers drawn as tabs) and of the
     fork's SegmentedTabs is one more chip of it, as is the design panel's
@@ -2997,6 +3024,12 @@
     calmer #38a169 green is scoped via --success to the composer trigger and
     drawer so the Usage settings page keeps each theme's --success token. Hidden
     when the provider reports no session window or when the footer collapses.
+    The same drawer also carries fork-composer-shell's background-work
+    section above the tray; a closed drawer keeps the sections it showed
+    through its close slide. The drawer sits in the composer's flow, so opening
+    it pushes the transcript up instead of covering the approval cards, Petal
+    asks or last transcript lines above the composer; only the draft hero,
+    whose composer is centred over its launchpad, floats it above the vessel.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3400,6 +3433,8 @@
     - apps/web/src/components/WorkspacePageHeader.tsx
     # Defines .drag-region itself — the class the release rule overrides.
     - apps/web/src/index.css
+    # Fenced: upstream pins its 640px reserve in the narrow viewport.
+    - apps/web/src/components/threadSidebarWidth.test.ts
   verify:
     - apps/web/src/__fork_guards__/narrowWorkspaceLayout.test.ts
 
@@ -3586,12 +3621,20 @@
     The chat composer is one outer 8px vessel (12px on Inlet) wrapping the
     prompt surface and a single control row beneath it. BranchToolbar's context
     strip (project pill on drafts, environment picker on multi-env projects,
-    combined workspace + branch trigger, PR chip, and trailing background
-    liveness pill) sits in the control row's left slot inside
+    combined workspace + branch trigger, PR chip, and a trailing
+    background-work icon toggle) sits in the control row's left slot inside
     [data-fork-composer-vessel-context], while Model, runtime Mode (muted ghost
     label, no colored fill or caret), and the circular Usage trigger sit in the
-    right slot. On narrow composers the control row wraps so the left context
-    slot and liveness stop pill never get squeezed off-screen; while collapsed
+    right slot. Background work (subagents, monitors) lists in a section of
+    the composer's top drawer, stacked above the usage tray in the same
+    data-fork-composer-usage-drawer surface, with Stop and a collapse button;
+    a subagent's row opens its thread. The drawer opens by itself whenever a
+    task it has not shown starts, and a collapse holds until new work
+    arrives (custom/ComposerBackgroundWork.tsx). Because the drawer takes
+    space (see fork-composer-usage-limits), auto-opening never covers what
+    sits above the composer. On narrow composers the
+    control row wraps so the left context slot never gets squeezed
+    off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
     omitted so nothing slabs onto the collapsed pill. ScheduledTaskEditor keeps
     the floating [data-fork-composer-context-row] chip row above its vessel.
@@ -3611,14 +3654,27 @@
     Glass. The compact row is 8px on every side with 2px between the actions and
     the prompt (Figma no3y-code 34:8764). The permissions chip is icon-only (the
     mode's runtimeModeConfig icon, upstream's own; Full access draws the
-    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
+    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
+    Typed text defaults to 16px (text-base, so it still follows the interface
+    size; a separate prompt size in Settings → Typography still wins:
+    appearanceFonts.ts), and the control and context rows are 14px regular.
+    On Flat Glass the thread composer (not a new agent's draft) paints no
+    vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
+    and the control row sits on the stage; an open usage drawer, attached
+    banners and the Questions card are lift-1 trays over it with an 8%
+    hairline; the prompt keeps its round corners and its frame fills the
+    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
+    scoped to the thread composer's form).
+    Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
   tier: 4
   files:
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
-    - apps/web/src/custom/ComposerMonitoringPill.tsx
+    - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/composerBackgroundWork.logic.ts
+    - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
@@ -3626,12 +3682,16 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.flat-glass-composer.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
   watch:
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
+    # The prompt's default size when fonts are not set separately, and its test.
+    - apps/web/src/appearanceFonts.ts
+    - apps/web/src/appearanceFonts.browser.test.ts
     # Centers the draft composer with the launchpad below it and docks it once
     # the thread starts, passes BranchToolbar as contextStrip (with monitoring
     # trailing), and keeps that strip mounted when the thread's worktree
@@ -5187,7 +5247,8 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the composer liveness pill, subagent members):
+    transcript working row, the composer's background-work toggle and drawer,
+    subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
     into beads and merges back). Until one is picked, Inlet and Basic draw the
@@ -5242,10 +5303,8 @@
     In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
     Flat's composer control row reads its ink as a 57% white wash (what
-    the solid #a6a6a6 fallback was over the lift-2 vessel), and the Split
-    agent / Unsplit pill (stamped data-fork-split-agent-pill) reads brighter
-    than the project and branch chips: 85% white, full white on hover. The
-    new-agent draft hero keeps its own white ink.
+    the solid #a6a6a6 fallback was over the lift-2 vessel). The new-agent
+    draft hero keeps its own white ink.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -5300,6 +5359,94 @@
     - apps/mobile/src/features/threads/projectThreadCreationValidation.ts
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
+
+- id: no3y-mobile-identity
+  intent: >
+    The mobile app builds as no3y Code, signed by the fork owner's Apple team
+    (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
+    other variants), with the fork's app icons. Ping's team, bundle IDs, linked
+    domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
+    serve a different bundle, so they are swapped out or dropped, and OTA
+    updates stay off until the fork has its own Expo project.
+
+    The identity is chosen before upstream derives the widget, share-extension,
+    app-group and keychain IDs from the variant, so every target follows it.
+    It is on by default; NO3Y_MOBILE_IDENTITY=0 (in .env.local or the shell)
+    builds upstream's identity. The flag cannot live in the tracked .env,
+    which the t3-connect-official-config guard pins to the official values.
+    Upstream's app.config.test.ts pins the flag to 0 in its env mock (one
+    fenced line) so it keeps asserting upstream's identifiers.
+
+    Deliberately shared: the t3code:// scheme stays upstream's, because
+    App.tsx and the widgets hardcode it (same call as the desktop app). With
+    the App Store app also installed, the two contend for it. Push
+    notifications come from the Mac instead of Ping's relay (see no3y-push).
+    Live Activities and T3 Connect sign-in still target Ping's relay and Clerk
+    and do not work in this build; connect over Tailscale. The team ID, bundle
+    ID and push mount path live once in no3yConstants.ts, shared with the
+    push service and the phone's registration.
+  tier: 4
+  files:
+    - apps/mobile/fork/identity.ts
+    - apps/mobile/fork/identity.test.ts
+    - apps/mobile/fork/no3yConstants.ts
+  shadows: []
+  watch:
+    - apps/mobile/app.config.ts
+    - apps/mobile/app.config.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileIdentity.test.ts
+    - apps/mobile/fork/identity.test.ts
+
+- id: no3y-push
+  intent: >
+    The no3y iOS app gets agent notifications without Ping's relay. A small
+    push service on the Mac (apps/mobile/fork/push-service/no3yPush.mts) pairs
+    with the local T3 server as an ordinary read-only client, watches the
+    orchestration shell stream, and pushes to APNs with the fork's own key
+    (~/.no3y-push, never in the repo) when a thread finishes, fails, or waits
+    on an approval or an answer. The phase comes from the official
+    projectThreadAwarenessV2 rule (imported). The per-thread policy around it
+    restates AgentAwarenessRelay's, so a sync that changes the relay's policy
+    needs the same change here: a subagent's wait alerts on its top-level
+    thread, a completion is held for 5 seconds and still alerts if the thread
+    is settled during the hold, and what changed while the socket was down
+    alerts on reconnect. Automations alert only
+    when they put a thread on the thread list: a run hidden from the roster
+    (scheduledTaskId set and not pinned, the fork-scheduled-runs-off-sidebar
+    rule) sends nothing, and before alerting the service reads the thread's
+    recent turn items so a run started by an automation's message in a thread
+    that already had history (an automation bound to an existing thread, such
+    as a bot check-in) sends nothing either. Runs from automations that list
+    their runs, and pinned runs, still alert. If that read fails it alerts
+    anyway, since a missed approval costs more than an extra notification.
+    No server, contract, or web
+    code changes, so upstream syncs only touch it if the shell stream's wire
+    shape changes.
+
+    The phone registers its APNs token and its bundle ID (the APNs topic, so
+    dev and preview builds get pushes too) by POSTing to /no3y-push/register
+    on each saved Tailscale HTTPS route; Tailscale Serve mounts the service there
+    beside the T3 server, so it is reachable only inside the tailnet. A no3y
+    build asks for notification permission at launch for this; an upstream-
+    identity build (NO3Y_MOBILE_IDENTITY=0) skips it. Payloads match the
+    relay's shape so upstream's tap handler opens the thread.
+
+    The service runs from the main checkout as a login item (`node
+    no3yPush.mts install`), so it follows whatever `custom` has checked out.
+  tier: 4
+  files:
+    - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/no3yPush.mts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/App.tsx
+    - apps/server/src/relay/AgentAwarenessRelay.ts
+    - packages/shared/src/agentAwareness.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yPush.test.ts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
 
 - id: fork-glass-preview-parking
   intent: >
@@ -5575,6 +5722,8 @@
     # monogram (#11572).
     - apps/web/src/components/ProjectFavicon.tsx
     - apps/web/src/shortcuts/chatRouteCommands.ts
+    # Fenced: upstream #29846 drives its picker; the fork drives the project chip menu.
+    - apps/web/src/components/chat/DraftHeroHeadline.browser.test.tsx
   verify:
     - apps/web/src/__fork_guards__/forkNewAgentDraft.test.ts
     - apps/web/src/custom/newAgentDraft.test.ts
@@ -6091,12 +6240,12 @@
 
 - id: fork-split-threads
   intent: >
-    Two threads can share the chat column side by side. A "Split agent" chip
-    beside the project and branch chips in the composer's context row (on a
-    started thread, wide windows only) opens a new draft on the same project,
+    Two threads can share the chat column side by side. A split icon toggle in
+    the thread header's control cluster, just before the details toggle (on a
+    started thread, wide windows only), opens a new draft on the same project,
     worktree and branch in a pane beside the current thread; in a split the
-    same chip reads "Unsplit" and dissolves the pair, leaving that thread on
-    screen alone. Both act on a mouse press rather than its release (the
+    same toggle shows pressed, reads "Unsplit", and dissolves the pair,
+    leaving that thread on screen alone. Both act on a mouse press rather than its release (the
     click that follows is swallowed, since it lands on the other action),
     so mounting the new pane overlaps the press. Until it is sent, a split
     draft carries an X in its header that hands the route to the other pane
@@ -6215,7 +6364,7 @@
     - apps/web/src/custom/splitThreads/splitPaneContext.ts
     - apps/web/src/custom/splitThreads/SplitThreadPanes.tsx
     - apps/web/src/custom/splitThreads/splitPaneSlots.ts
-    - apps/web/src/custom/splitThreads/SplitAgentPill.tsx
+    - apps/web/src/custom/splitThreads/SplitAgentToggle.tsx
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
     - apps/web/src/custom/splitThreads/splitPaneNavigation.ts
@@ -7075,9 +7224,11 @@
     (card, compact or grid; the Petals section derives its own from the two
     settings, so Compact cards never reaches the grid), and the kind alone sets
     the row's offscreen size hint and, for a tile, its shape. In Grid a bot
-    draws SidebarV2BotGridBody: an 82px tile in a 64px cell (8 + 48 + 2 + 16 +
-    8), the mascot tile notched at its corner for the status mark, the name in
-    medium 10px under it, the jump hint in its top-left corner and a sweep's
+    draws SidebarV2BotGridBody: a 56px tile (4 + 36 + 12 + 4) washed 4% in the
+    sidebar's ink, the columns sharing the width at least 64px each and 8px
+    apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 28px in a 36px box over its name in
+    medium 10px, the
+    status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the
     section, level with the tile. A bot card draws
@@ -7201,10 +7352,12 @@
     What a bot starts is its work, kept out of the sidebar and shown on the bot's own
     conversation. A top-level thread a bot launches (t3_thread_launch, create_threads), and one
     launched by such a thread or by a bot's subagent, carries the thread tag
-    bot-work:<bot thread id>, written on the server at launch before its first message
+    bot-work:<bot thread id>, written on the server at launch
     (orchestration-v2/forkBotWork, called from ThreadLaunchService.launch with launchedBy and
-    from OrchestratorMcpService.createThreads). The tag is its own command after the thread is
-    created, so the sidebar can list the thread for the one event in between.
+    from OrchestratorMcpService.createThreads). The tag is its own command after thread.create,
+    which since the 2026-11-22 sync also carries the first message, so the sidebar can list
+    the thread for the few events in between. The bot is resolved before the create
+    (forkBotIdFor) so its CREW.md rides that first message (fork-bot-crew-rules).
     Best effort: a failed tag only lists the thread like any other. No contract field.
     Automation runs are not linked, a GitHub task's included: a task launches its runs unbound
     and does not record which thread made it.
@@ -7299,6 +7452,8 @@
     - apps/server/src/orchestration-v2/ThreadLaunchService.ts
     - apps/server/src/orchestration-v2/ThreadLaunchService.test.ts
     - apps/server/src/mcp/OrchestratorMcpService.ts
+    # Upstream mocks that launch threads stub getThreadShell for the pre-create bot lookup.
+    - apps/server/src/mcp/OrchestratorMcpService.test.ts
     - apps/server/src/mcp/toolkits/project/handlers.ts
     - apps/server/src/scheduledTasks/ScheduledTaskService.ts
     - apps/web/src/components/Sidebar.logic.ts

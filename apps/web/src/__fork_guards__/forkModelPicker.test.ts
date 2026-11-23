@@ -155,7 +155,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).toContain("<ModelPickerProviderGlyph");
     // Vertical stack: horizontal provider tabs at top, then search, then models.
     const tabsAt = content.indexOf("{renderProviderTabs()}");
-    const searchAt = content.indexOf('aria-label="Search models"');
+    const searchAt = content.indexOf('aria-label={gt("Search models")}');
     const listAt = content.indexOf("{renderModelList()}");
     expect(tabsAt).toBeGreaterThan(-1);
     expect(searchAt).toBeGreaterThan(tabsAt);
@@ -187,7 +187,7 @@ describe("fork guard: fork-model-picker", () => {
     // later: focusing it from the click races the menu's focus-out check
     // against the removed row and closes the menu.
     expect(content).toMatch(
-      /setShowLegacy\(options\?\.showLegacy \?\? false\);\s*window\.requestAnimationFrame\(focusSearchInput\);\s*window\.setTimeout\(focusSearchInput, 0\);/u,
+      /setShowLegacy\(options\?\.showLegacy \?\? false\);[\s\S]{0,200}?window\.requestAnimationFrame\(focusSearchInput\);\s*window\.setTimeout\(focusSearchInput, 0\);/u,
     );
     // The menu parks focus on the popup after a swap; typing still searches.
     expect(content).toContain("closest<HTMLElement>('[data-slot=\"menu-popup\"]')");

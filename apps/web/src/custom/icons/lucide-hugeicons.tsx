@@ -432,6 +432,15 @@ export const ChartNoAxesColumnIcon = icon(
   "themed",
 );
 export const Unlink2 = icon("unlink-2", Hg.UnlinkIcon, "stroke");
+export const Link2OffIcon = icon("link-2-off", Hg.Unlink02Icon, "stroke");
+export const CableIcon = icon("cable", Hg.CableIcon, "stroke");
+export const ClipboardCopyIcon = icon("clipboard-copy", Hg.ClipboardCopyIcon, "stroke");
+export const AtSignIcon = icon("at-sign", Hg.AtSignIcon, "stroke");
+export const AppWindowIcon = icon("app-window", Hg.AppWindowIcon, "stroke");
+export const CircleHelpIcon = icon("circle-help", Hg.HelpCircleIcon, "stroke");
+export const UnfoldVerticalIcon = icon("unfold-vertical", Hg.UnfoldVerticalIcon, "stroke");
+export const FoldVerticalIcon = icon("fold-vertical", Hg.FoldVerticalIcon, "stroke");
+export const ClockAlertIcon = icon("clock-alert", Hg.ClockAlertIcon, "stroke");
 export const CloudDownloadIcon = icon("cloud-download", Hg.CloudDownloadIcon, "stroke");
 export const PencilIcon = icon("pencil", Hg.PencilIcon, "stroke");
 export const CircleSlashIcon = icon("circle-slash", Hg.CircleSlashIcon, "stroke");

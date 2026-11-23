@@ -101,7 +101,10 @@ export function applyAppearanceFontVariables(
   root.style.fontSize = `${clampInterfaceFontSize(preferences.sizeInterface)}px`;
   root.style.setProperty(
     "--font-size-prompt",
-    preferences.separate ? `${clampPromptFontSize(preferences.sizePrompt)}px` : "var(--text-sm)",
+    preferences.separate
+      ? `${clampPromptFontSize(preferences.sizePrompt)}px`
+      : /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        "var(--text-base)" /* fork:end fork-composer-shell */,
   );
   const code = clampCodeFontSize(preferences.sizeCode);
   root.style.setProperty("--font-size-code", `${code}px`);
@@ -274,6 +277,18 @@ function resolveGenericFamilyLabel(generic: string): string | null {
     return monoLike ? "SF Mono" : "SF Pro";
   }
   return null;
+}
+
+// Synthetic Apple labels are not necessarily available as named CSS families.
+export function displayFontFamily(family: string): string {
+  const label = family
+    .trim()
+    .replace(/^(['"])(.*)\1$/, "$2")
+    .trim()
+    .toLowerCase();
+  if (label === "sf pro") return appearanceFontStack(family, DEFAULT_SANS_FONT_STACK);
+  if (label === "sf mono") return DEFAULT_CODE_FONT_STACK;
+  return cssFontFamilies(family) ?? "";
 }
 
 export function resolveDefaultFamilyLabel(stack: string): string | null {

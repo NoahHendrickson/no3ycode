@@ -67,8 +67,8 @@ export function useSidebarV2BotsLayout(): [PetalLayout, (value: PetalLayout) => 
     as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
     32px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
-  /** The Petals' view: the compact line, or the full card (which the grid's row also draws,
-      spanning every column). */
+  /** The Petals' view: the compact line, or the full card (which the grid also draws, below
+      its tiles). */
   readonly view: SidebarV2CardView;
   /** The mascot offered first; the button beside the name steps through the rest. */
   readonly initialMascot: BotMascotShape;
@@ -107,7 +107,6 @@ export function SidebarV2NewBotRow(props: {
       className={cn(
         "flex list-none items-center gap-x-2",
         compact ? "h-8" : "h-11",
-        props.view === "grid" && "col-span-full",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
@@ -162,10 +161,10 @@ export function SidebarV2NewBotRow(props: {
   );
 }
 
-/** @public — the Petals grid's columns: as many 64px cells as the width holds, spread edge to
-    edge. Storybook lays its tiles out on it too. */
-export const PETALS_GRID_CLASS_NAME =
-  "grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-x-1 gap-y-1 px-0.5";
+/** @public — the Petals grid's columns: as many tiles at least 64px wide as the width holds,
+    sharing it equally, 8px apart. auto-fit, so a short row still spans the sidebar. Storybook
+    lays its tiles out on it too. */
+export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(64px,1fr))] gap-2";
 
 /** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
     while the layout is List. Storybook opens it on its own. */
@@ -206,6 +205,9 @@ export function SidebarV2BotsRow(props: {
   readonly compactCards: boolean;
   readonly onCompactCardsChange: (compactCards: boolean) => void;
   readonly children: ReactNode;
+  /** The row naming a new Petal. The grid draws it under its tiles: a spanning grid item would
+      fill auto-fit's empty columns and squeeze the tiles while the name is typed. */
+  readonly naming: ReactNode;
 }) {
   return (
     <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
@@ -272,20 +274,24 @@ export function SidebarV2BotsRow(props: {
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
         {/* 4px under the header row, so the first card never meets its buttons; none when
             folded away to nothing or empty. */}
-        {/* The grid's cells pad 8px under their names, so the grid gives that back to the gap
-            below it. */}
         <ul
           role="presentation"
           data-fork-petals-grid={props.layout === "grid" ? "" : undefined}
           className={cn(
             "mt-1 empty:mt-0",
             props.layout === "grid"
-              ? cn("-mb-2", PETALS_GRID_CLASS_NAME)
+              ? PETALS_GRID_CLASS_NAME
               : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
           )}
         >
           {props.children}
+          {props.layout === "grid" ? null : props.naming}
         </ul>
+        {props.layout === "grid" && props.naming ? (
+          <ul role="presentation" className="mt-2">
+            {props.naming}
+          </ul>
+        ) : null}
       </TooltipProvider>
     </SidebarGroup>
   );

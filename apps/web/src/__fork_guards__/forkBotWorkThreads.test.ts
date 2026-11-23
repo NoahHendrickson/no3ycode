@@ -115,6 +115,7 @@ describe("fork guard: fork-bot-work-threads", () => {
       resolveSidebarRouteReveal({
         reveal: { observedKey: null, pendingKey: null },
         routeKey: key,
+        routeKeyInPlace: false,
         isSearching: false,
         scopedProjectKeys: new Set(["environment-test:another-project"]),
         delegatedUnderParent: new Set(),
@@ -347,8 +348,12 @@ describe("fork guard: fork-bot-work-threads", () => {
   });
 
   it("keeps the server's link at launch and the panel in the stage", () => {
-    expect(launch).toContain("yield* linkForkBotWork(threads, {");
-    expect(mcp).toContain("yield* linkForkBotWork(threadManagement, {");
+    expect(launch).toMatch(
+      /yield\* linkForkBotWork\(threads, \{\s*commandId: input\.commandId,\s*threadId,\s*botId: forkBotId,?\s*\}\);/u,
+    );
+    expect(mcp).toContain(
+      "yield* linkForkBotWork(threadManagement, { commandId, threadId, botId: forkBotId });",
+    );
     expect(launchTool).toContain("{ launchedBy: caller.id }");
     // A bot's own rules send real work to a thread it launches; no other thread reads them.
     const rules = botSeedFiles({ name: "Mail Bot", today: "2026-11-14", threadId: "mail" })[0];

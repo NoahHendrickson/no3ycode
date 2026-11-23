@@ -22,8 +22,8 @@ import {
   resolveSubagentMetadata,
 } from "@t3tools/client-runtime/state/subagent-display";
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
-import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
-import { useNavigate } from "@tanstack/react-router";
+import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
+import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -39,6 +39,8 @@ import {
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
 import { TimelineRowCtx, WorkGroupViewCtx } from "~/components/chat/timelineRowContext";
+import { SideThreadsOpenContext, useSideThreadTrigger } from "~/hooks/useSideThreadTrigger";
+import { useLinkedThreadOpener } from "~/state/linkedThreadView";
 import {
   EnvironmentSubagentAvatar,
   SubagentNotificationLink,
@@ -49,11 +51,9 @@ import { Button } from "~/components/ui/button";
 import { MiddleTruncate } from "~/components/ui/middle-truncate";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
-import { useEnvironment } from "~/state/environments";
 import { serverEnvironment } from "~/state/server";
 import { useQuietThreadShell } from "~/state/entities";
 import { environmentThreadDetails } from "~/state/threads";
-import { buildThreadRouteParams } from "~/threadRoutes";
 
 import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
 import {
@@ -68,13 +68,19 @@ import {
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "./SidebarV2StatusIndicator";
 
 type EventRow = Extract<MessagesTimelineRow, { readonly kind: "event" }>;
+/** MessagesTimeline's opener: the click's intent opens a subagent beside the thread or in its place. */
+type OpenThread = (
+  threadId: ThreadId,
+  environmentId?: EnvironmentId,
+  intent?: SideThreadOpenIntent,
+) => void;
 
 /** Every subagent of the row renders as a card in one keyed list, so a lone card that gains a
     neighbour stays mounted (and keeps focus) as the batch's lead line appears above it. */
 export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
   readonly row: EventRow;
   readonly environmentId: EnvironmentId;
-  readonly onOpenThread: (threadId: ThreadId) => void;
+  readonly onOpenThread: OpenThread;
 }) {
   const { row, environmentId, onOpenThread } = props;
   const members = forkSubagentMembers(row);
@@ -116,7 +122,7 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
   readonly titleId?: string | undefined;
   readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
-  readonly onOpenThread: (threadId: ThreadId) => void;
+  readonly onOpenThread: OpenThread;
 }) {
   const { item, titleId, anchorKey, environmentId, onOpenThread } = props;
   const live = useAtomValue(
@@ -135,6 +141,7 @@ const LiveSubagentCard = memo(function LiveSubagentCard(props: {
       member={member}
       titleId={titleId}
       environmentId={environmentId}
+      parentRef={scopeThreadRef(environmentId, item.threadId)}
       onOpenThread={onOpenThread}
       disclosure={{
         open: chosen.has(openKey),
@@ -181,6 +188,7 @@ export function ForkSubagentNotice(
     <ForkSubagentCard
       member={forkSubagentRowFromAgent(agent)}
       environmentId={parentRef.environmentId}
+      parentRef={parentRef}
       onOpenThread={notice.onOpenThread}
       disclosure={{
         open: chosen.has(entryId),
@@ -232,19 +240,23 @@ function SubagentBatchLead(props: {
     in when this client is connected there; null when there is nowhere to go. Mirrors upstream's
     SubagentLifecycleRow (V2LifecycleRow.tsx), which the card replaces. */
 function useOpenSubagentThread(
-  member: Pick<ForkSubagentTreeRow, "childThreadId" | "remote">,
-  onOpenThread: (threadId: ThreadId) => void,
-): (() => void) | null {
+  member: Pick<ForkSubagentTreeRow, "childThreadId" | "remote" | "title">,
+  parentRef: ScopedThreadRef,
+  onOpenThread: OpenThread,
+): {
+  readonly open: ((intent: SideThreadOpenIntent) => void) | null;
+  /** A task on a connected linked environment opens there, on the main screen only. */
+  readonly panel: boolean;
+} {
   const { childThreadId, remote } = member;
-  const remoteEnvironment = useEnvironment(remote?.environmentId ?? null);
-  const navigate = useNavigate();
-  if (childThreadId !== null) return () => onOpenThread(childThreadId);
-  if (remote === undefined || remoteEnvironment === null) return null;
-  return () =>
-    void navigate({
-      to: "/$environmentId/$threadId",
-      params: buildThreadRouteParams(scopeThreadRef(remote.environmentId, remote.threadId)),
-    });
+  // A task in a linked environment opens there, or read-only through this one.
+  const remoteOpener = useLinkedThreadOpener(parentRef, remote, member.title);
+  const canOpen = use(SideThreadsOpenContext);
+  const panel = childThreadId !== null || remoteOpener?.mode === "linked";
+  if (!canOpen) return { open: null, panel };
+  if (childThreadId !== null)
+    return { open: (intent) => onOpenThread(childThreadId, undefined, intent), panel };
+  return { open: remoteOpener?.open ?? null, panel };
 }
 
 /** Where a card keeps whether it is open and tells the timeline it opened or folded. */
@@ -263,10 +275,12 @@ function ForkSubagentCard(props: {
   readonly member: ForkSubagentTreeRow;
   readonly titleId?: string | undefined;
   readonly environmentId: EnvironmentId;
-  readonly onOpenThread: (threadId: ThreadId) => void;
+  /** The thread the subagent runs under; a linked environment's task opens through it. */
+  readonly parentRef: ScopedThreadRef;
+  readonly onOpenThread: OpenThread;
   readonly disclosure: ForkSubagentCardDisclosure;
 }) {
-  const { member, titleId, environmentId, onOpenThread, disclosure } = props;
+  const { member, titleId, environmentId, parentRef, onOpenThread, disclosure } = props;
   const [open, setOpen] = useState(disclosure.open);
   const toggle = () => {
     disclosure.report(open);
@@ -274,7 +288,7 @@ function ForkSubagentCard(props: {
     disclosure.remember(!open);
     setOpen(!open);
   };
-  const openThread = useOpenSubagentThread(member, onOpenThread);
+  const opener = useOpenSubagentThread(member, parentRef, onOpenThread);
   // An untitled subagent (a completion notice's record often is) takes its child thread's title,
   // which is generated from the ask; the model falls back to the ask itself.
   const childTitle = useQuietThreadShell(
@@ -302,7 +316,8 @@ function ForkSubagentCard(props: {
       environmentId={environmentId}
       open={open}
       onToggle={toggle}
-      openThread={openThread}
+      openThread={opener.open}
+      openInPanel={opener.panel}
     />
   );
 }
@@ -317,10 +332,13 @@ export function ForkSubagentCardView(props: {
   readonly open: boolean;
   readonly onToggle: () => void;
   /** Null when the subagent has no thread to open. */
-  readonly openThread: (() => void) | null;
+  readonly openThread: ((intent: SideThreadOpenIntent) => void) | null;
+  /** False when the thread can only open in the main view. */
+  readonly openInPanel?: boolean | undefined;
 }) {
   const { member, titleId, environmentId, open, onToggle, openThread } = props;
   const wellId = useId();
+  const trigger = useSideThreadTrigger();
   const remote = member.remote;
   const failed = member.mark === "failed";
   // The status is the tile's badge; the line under the title says what it runs on.
@@ -461,7 +479,7 @@ export function ForkSubagentCardView(props: {
                   size="icon-xs"
                   data-fork-subagent-open=""
                   aria-label={`Open ${member.title} thread`}
-                  onClick={openThread}
+                  {...trigger(openThread, { panel: props.openInPanel ?? true })}
                 />
               }
             >

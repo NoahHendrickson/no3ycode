@@ -95,7 +95,7 @@ const THREAD_ROW_RADIUS = {
   shelf: "rounded-md",
   pill: "rounded-full",
   // A bot's tile in the Petals grid (fork-bots).
-  tile: "rounded-[16px]",
+  tile: "rounded-[12px]",
 } as const;
 
 export type ThreadRowShape = keyof typeof THREAD_ROW_RADIUS;

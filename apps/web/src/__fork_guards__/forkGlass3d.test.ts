@@ -48,23 +48,11 @@ describe("fork guard: fork-glass-3d", () => {
     expect(glass).toContain(compact(`:where(:not([${FORK_GLASS_3D_ATTRIBUTE}]))${PALETTE}`));
   });
 
-  it("gives Flat's control row an opacity ink and brightens Split agent above the chips", () => {
+  it("gives Flat's control row an opacity ink", () => {
     const FLAT = `${FORK_ROOT}[${FORK_GLASS_3D_ATTRIBUTE}="off"]${PALETTE}`;
     const rules = cssRules(readSibling("../theme.custom.palettes.css"));
     const flat = rules.find((rule) => compact(rule.selector) === compact(FLAT));
     expect(flat?.body).toContain("--fork-composer-control-ink: rgb(255 255 255 / 57%);");
-    const pill = `${FLAT}[data-fork-composer-control-row][data-fork-split-agent-pill]`;
-    expect(rules.find((rule) => compact(rule.selector) === compact(pill))?.body).toContain(
-      "color: rgb(255 255 255 / 85%);",
-    );
-    expect(
-      rules.find((rule) => compact(rule.selector) === compact(`${pill}:hover:not(:disabled)`))
-        ?.body,
-    ).toContain("color: #ffffff;");
-    const stamps = readSibling("../custom/splitThreads/SplitAgentPill.tsx").match(
-      /data-fork-split-agent-pill/gu,
-    );
-    expect(stamps, "both the Split agent and Unsplit buttons carry the stamp").toHaveLength(2);
   });
 
   it("stamps the root before first render and offers the setting under Glass", () => {

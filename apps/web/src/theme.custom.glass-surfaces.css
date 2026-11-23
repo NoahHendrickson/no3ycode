@@ -87,19 +87,10 @@
      host do neither: they start inside the 1px border, so the glint read as
      a line a pixel in from the edge. So the chips carry it on ::after, laid
      over the border box. That is the touch hit-area's pseudo-element, so on a
-     coarse pointer the chips keep the light as their own inset shadows. The
-     monitoring pill has no border and its ::after sits flush; its own label
-     and stop buttons match the chip selector and are left out, or they would
-     draw a pill inside the pill. */
+     coarse pointer the chips keep the light as their own inset shadows. */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-composer-context-row]
-    :is(
-      button,
-      [data-slot="button"],
-      [data-fork-context-chip],
-      [data-fork-pr-chip],
-      [data-fork-monitoring-pill]
-    ):not([data-fork-monitoring-pill] *) {
+    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-rim);
@@ -108,13 +99,7 @@
   @media (pointer: fine) {
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(
-        button,
-        [data-slot="button"],
-        [data-fork-context-chip],
-        [data-fork-pr-chip],
-        [data-fork-monitoring-pill]
-      ):not([data-fork-monitoring-pill] *) {
+      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
       position: relative;
       box-shadow:
         var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
@@ -123,23 +108,10 @@
 
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
-        [data-fork-monitoring-pill] *
-      )::after {
+      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])::after {
       content: "";
       position: absolute;
       inset: -1px;
-      border-radius: inherit;
-      box-shadow: var(--fork-glass-light);
-      pointer-events: none;
-    }
-
-    &.dark[data-fork-theme="cool-darker"]
-      [data-fork-composer-context-row]
-      [data-fork-monitoring-pill]::after {
-      content: "";
-      position: absolute;
-      inset: 0;
       border-radius: inherit;
       box-shadow: var(--fork-glass-light);
       pointer-events: none;

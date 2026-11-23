@@ -50,13 +50,10 @@ describe("fork guard: fork-changed-files-card", () => {
   });
 
   it("draws the file tree under a loose header, parted by a rounded hairline", () => {
-    // The rules hang off the header's following sibling divs: the tree's
-    // root wrapper (a fragment or another tag would drop the well) and the
+    // The rules hang off the header's following sibling divs: the p-2 wrapper around the tree
+    // or its repository groups (a fragment or another tag would drop the well) and the
     // "N more files" footer.
-    expect(changedFiles).toMatch(/<\/div>\s*<ChangedFilesTree\b/u);
-    expect(changedFiles).toMatch(
-      /function ChangedFilesRows[\s\S]*?return \(\s*<div className="p-2">/u,
-    );
+    expect(changedFiles).toMatch(/<\/div>\s*<div className="p-2">\s*\{groups \?/u);
     expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
     const rules = cssRules(theme).map((rule) => ({
       ...rule,
