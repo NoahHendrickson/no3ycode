@@ -5309,6 +5309,7 @@
   shadows: []
   watch:
     - apps/mobile/src/features/threads/new-task-flow-provider.tsx
+    - apps/mobile/src/state/use-thread-composer-state.ts
     - apps/mobile/src/features/threads/projectThreadCreationValidation.ts
   verify:
     - apps/web/src/__fork_guards__/mobileCurrentCheckoutBranch.test.ts
@@ -8041,13 +8042,17 @@
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
     status, previews). iPad and Android keep the upstream control.
-    The compact-before-send notice is one 44pt glass pill stacked on the
-    composer, above the queued banner, in the thread header bubbles' style
-    with its controls nested inside (fork/No3yCompactBanner.tsx, rising in): a
-    shrink icon, "Next message compacts history" with the token count muted
-    (it gives way first when short of room), and an X that keeps the full history
-    (the Mac's dismiss); once kept it reads "keeps full history" with a glass
-    Compact pill (fork/no3yCompactCopy.ts).
+    The Mac's "Resume with less context" notice (fork-resume-compaction-banner)
+    replaces upstream's compact-on-next-send there: one 44pt glass pill stacked
+    on the composer, above the queued banner, in the thread header bubbles'
+    style with its controls nested inside (fork/No3yCompactBanner.tsx, rising
+    in): a shrink icon, "Resume with less context" with the token count muted
+    (it gives way first when short of room), a glass Compact pill that sends
+    `/compact` now as the Mac's compactContext does, and an X, Keep full
+    history, dismissing it for that thread and snapshot for the session. The
+    offer is client-runtime's compactBeforeSendTokens, which applies the Mac's
+    shouldOfferResumeCompaction (fork/no3yResumeCompaction.ts), and a send on
+    the no3y layout never compacts first (fenced in use-thread-composer-state, read from the dock-published layout flag in fork/no3yHomeTabs.ts).
     The user's sent bubble is a translucent wash (white 9% on the dark page,
     flatGlassTheme's userBubble), as the Mac's glass bubble is, not a grey fill.
     A live turn ends in one status line, as on the Mac (fork-working-row-last):
@@ -8168,8 +8173,8 @@
     - apps/mobile/fork/No3yCompactBanner.tsx
     - apps/mobile/fork/no3yInPlaceProject.ts
     - apps/mobile/fork/no3yInPlaceProject.test.ts
-    - apps/mobile/fork/no3yCompactCopy.ts
-    - apps/mobile/fork/no3yCompactCopy.test.ts
+    - apps/mobile/fork/no3yResumeCompaction.ts
+    - apps/mobile/fork/no3yResumeCompaction.test.ts
     - apps/mobile/fork/no3yPullRequestTone.ts
     - apps/mobile/fork/no3yPullRequestTone.test.ts
     - apps/mobile/fork/No3yDraftSurface.tsx
@@ -8255,6 +8260,7 @@
     - apps/mobile/src/features/layout/workspace/WorkspaceRootScreen.tsx
     - apps/mobile/src/features/threads/NewTaskRouteScreen.tsx
     - apps/mobile/src/features/threads/new-task-flow-provider.tsx
+    - apps/mobile/src/state/use-thread-composer-state.ts
     # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
     - apps/mobile/package.json
   verify:
@@ -8274,5 +8280,5 @@
     - apps/mobile/fork/no3yDockMove.test.ts
     - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/no3yPullRequestTone.test.ts
-    - apps/mobile/fork/no3yCompactCopy.test.ts
+    - apps/mobile/fork/no3yResumeCompaction.test.ts
     - apps/mobile/fork/no3yInPlaceProject.test.ts

@@ -1730,11 +1730,13 @@ function ThreadDetailBody(
                       <FreshSessionNotice threadKey={selectedThreadKey} />
                     ) : null}
                     {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-                    {props.compactBeforeSend && no3yBottomNav ? (
+                    {/* The Mac's "Resume with less context": Compact now, send stays plain. */}
+                    {no3yBottomNav ? (
                       <No3yCompactBanner
-                        tokens={props.compactBeforeSend.tokens}
-                        keepFullHistory={props.compactBeforeSend.keepFullHistory}
-                        onToggleKeepFullHistory={props.compactBeforeSend.toggleKeepFullHistory}
+                        threadKey={selectedThreadKey}
+                        tokens={props.compactBeforeSend?.tokens ?? null}
+                        thread={props.selectedThread}
+                        canCompact={props.canOperateThread}
                       />
                     ) : /* fork:end no3y-mobile-redesign */
                     props.compactBeforeSend ? (
