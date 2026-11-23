@@ -8196,6 +8196,7 @@
     - apps/mobile/package.json
   verify:
     - apps/web/src/__fork_guards__/no3yMobileRedesign.test.ts
+    - apps/web/src/__fork_guards__/no3yHermesArrayMethods.test.ts
     - apps/mobile/fork/mobileStatusGrouping.test.ts
     - apps/mobile/fork/effortSlider.test.ts
     - apps/mobile/fork/beadRing.test.ts

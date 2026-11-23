@@ -88,7 +88,8 @@ function PetalCard(props: {
       .flatMap((task) =>
         task.threadId === bot.id && task.enabled && task.nextRunAt !== null ? [task.nextRunAt] : [],
       )
-      .toSorted()[0] ?? null;
+      // Hermes has no Array#toSorted; flatMap already returned a fresh array.
+      .sort()[0] ?? null;
   const line =
     mark.attention !== null
       ? { text: no3yBotWorkStatusText(mark.attention) }
