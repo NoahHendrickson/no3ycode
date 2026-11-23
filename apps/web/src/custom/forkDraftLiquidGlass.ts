@@ -61,6 +61,27 @@ function readDraftLiquidGlassSetter(): DraftLiquidGlassSetter | null {
   return typeof setter === "function" ? (setter as DraftLiquidGlassSetter) : null;
 }
 
+// AppKit holds one draft layer per window. Its hide waits two frames, so the page has painted its
+// opaque stage over the layer first: hiding sooner shows the window's black base through the
+// still-transparent stage while the thread renders. A draft shown in between cancels it.
+let pendingNativeHide: number | null = null;
+
+function cancelPendingNativeHide(): void {
+  if (pendingNativeHide === null) return;
+  cancelAnimationFrame(pendingNativeHide);
+  pendingNativeHide = null;
+}
+
+function hideNativeAfterPaint(setter: DraftLiquidGlassSetter): void {
+  cancelPendingNativeHide();
+  pendingNativeHide = requestAnimationFrame(() => {
+    pendingNativeHide = requestAnimationFrame(() => {
+      pendingNativeHide = null;
+      void setter(null).catch(() => {});
+    });
+  });
+}
+
 const imageBase64Cache = new Map<string, Promise<string | null>>();
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -433,7 +454,7 @@ export function useForkDraftLiquidGlass(input: {
       retrying = false;
       if (nativeShown) {
         nativeShown = false;
-        void setter(null).catch(() => {});
+        hideNativeAfterPaint(setter);
       }
     };
 
@@ -621,6 +642,7 @@ export function useForkDraftLiquidGlass(input: {
         const send = (imageBase64: string | undefined) => {
           if (disposed || key !== lastSentKey) return;
           nativeShown = true;
+          cancelPendingNativeHide();
           void setter({
             stage: scene.stage,
             imageKey: url,
