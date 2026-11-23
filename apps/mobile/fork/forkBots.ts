@@ -76,54 +76,6 @@ export type No3yBotThreadStatus =
   | "waiting"
   | "ready";
 
-/** A Petal card's second line: what it is doing, did last, or does next (the Mac's botStatusLine). */
-export type No3yBotStatusLine = { readonly text: string } | { readonly nextWakeAt: string };
-
-/** The first line of a message as plain words: markdown marks and link targets dropped. */
-function botMessageSummary(text: string): string {
-  const line =
-    text
-      .split("\n")
-      .map((candidate) => candidate.trim())
-      .find((candidate) => candidate !== "" && !/^(```|---|\*\*\*)/.test(candidate)) ?? "";
-  return line
-    .replace(/^(#{1,6}|[-*+]|\d+\.|>)\s+/, "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/(\*\*|__|`)/g, "")
-    .trim();
-}
-
-/** An unread report is the news; once it is read, when the bot next checks. */
-export function no3yBotStatusLine(input: {
-  readonly shell: { readonly latestVisibleMessage?: { readonly text: string } | null };
-  readonly status: No3yBotThreadStatus;
-  readonly isUnread: boolean;
-  readonly nextWakeAt: string | null;
-}): No3yBotStatusLine {
-  switch (input.status) {
-    case "working":
-    case "preparing":
-      return { text: "Working on it…" };
-    case "approval":
-      return { text: "Needs your approval" };
-    case "input":
-    case "request":
-      return { text: "Waiting for your reply" };
-    case "failed":
-      return { text: "Last run failed" };
-    case "limited":
-      return { text: "Hit a usage limit" };
-    case "waiting":
-    case "ready":
-      break;
-  }
-  const report = input.shell.latestVisibleMessage;
-  const summary = report == null ? "" : botMessageSummary(report.text);
-  if (summary !== "" && (input.isUnread || input.nextWakeAt === null)) return { text: summary };
-  if (input.nextWakeAt !== null) return { nextWakeAt: input.nextWakeAt };
-  return { text: "Tell it what its job is" };
-}
-
 /** The part of a bot's launched work that needs its owner, the most pressing kind first. */
 export interface No3yBotWorkAttention {
   readonly status: "approval" | "input" | "failed";
@@ -218,19 +170,6 @@ export function no3yBotWorkByBot<T extends BotWorkThread>(
     };
   }
   return byBot;
-}
-
-/** A Petal card's line for its work (the Mac's botWorkStatusText). */
-export function no3yBotWorkStatusText(attention: No3yBotWorkAttention): string {
-  if (attention.count > 1) return `${attention.count} threads need you`;
-  switch (attention.status) {
-    case "approval":
-      return "A thread needs your approval";
-    case "input":
-      return "A thread is waiting for your reply";
-    case "failed":
-      return "A thread failed";
-  }
 }
 
 /**

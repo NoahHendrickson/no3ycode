@@ -608,10 +608,5 @@ export function botMascotSprite(shape: BotMascotShape, mood: BotMascotMood): Bot
   return sprite;
 }
 
-/** The mascot's body colour, which tints the tile it sits on in a Petal card. */
-export function botMascotBaseColor(shape: BotMascotShape): string {
-  return SHAPES[shape].colors[0];
-}
-
 export const isBotMascotShape = (value: string): value is BotMascotShape =>
   (BOT_MASCOT_SHAPES as ReadonlyArray<string>).includes(value);
