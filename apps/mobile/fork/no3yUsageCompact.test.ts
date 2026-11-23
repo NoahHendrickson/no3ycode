@@ -1,7 +1,12 @@
 import type { LimitPool, LimitPoolWindow } from "@t3tools/shared/usageLimits";
 import { describe, expect, it } from "vite-plus/test";
 
-import { compactTrayWindows, compactWindowLabel, usageBarTone } from "./no3yUsageCompact";
+import {
+  compactTrayWindows,
+  compactWindowLabel,
+  usageBarTone,
+  no3yUsageSheetState,
+} from "./no3yUsageCompact";
 
 function poolWindow(input: {
   readonly id: string;
@@ -60,5 +65,16 @@ describe("no3y compact usage labels", () => {
 
   it("tones the bar by share left", () => {
     expect([80, 50, 49, 20, 19].map(usageBarTone)).toEqual(["good", "good", "low", "low", "out"]);
+  });
+});
+
+describe("no3y usage sheet state", () => {
+  const base = { connected: 1, checked: false, pools: 0, notices: 0, links: 0 };
+  it("says it is checking until the refresh lands, then why there is nothing", () => {
+    expect(no3yUsageSheetState(base)).toBe("checking");
+    expect(no3yUsageSheetState({ ...base, checked: true })).toBe("empty");
+    expect(no3yUsageSheetState({ ...base, connected: 0 })).toBe("offline");
+    expect(no3yUsageSheetState({ ...base, pools: 1 })).toBeNull();
+    expect(no3yUsageSheetState({ ...base, checked: true, notices: 1 })).toBeNull();
   });
 });

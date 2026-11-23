@@ -10,11 +10,13 @@ import MoreHorizontalIcon from "@hugeicons/core-free-icons/MoreHorizontalIcon";
 import Search01Icon from "@hugeicons/core-free-icons/Search01Icon";
 import Settings01Icon from "@hugeicons/core-free-icons/Settings01Icon";
 import XIcon from "@hugeicons/core-free-icons/XIcon";
+import { useAtomMount } from "@effect/atom-react";
 import type { MenuAction } from "@react-native-menu/menu";
 import { HeaderHeightContext } from "@react-navigation/elements";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
 import { collectProviderUsageLimits, remainingPercent } from "@t3tools/shared/usageLimits";
+import { Atom } from "effect/reactivity";
 import { useId, type ReactNode } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +26,7 @@ import { AppText as Text } from "../src/components/ui/AppText";
 import type { AppBarMenu, AppBarMenuItem } from "../src/components/ui/AppBar.types";
 import { Menu } from "../src/components/ui/Menu";
 import { useAdaptiveWorkspaceLayout } from "../src/features/layout/adaptive-workspace-context";
+import { limitsAutoRefreshSetAtom } from "../src/features/usage/usageLimitsRefresh";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { NativeStackScreenOptions } from "../src/native/StackHeader";
 import { useServerConfigs } from "../src/state/entities";
@@ -32,6 +35,7 @@ import { HugeIcon } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
+import { useLendNo3yWorkspaceTabSelect } from "./no3yWorkspaceTabs";
 
 /** Opens the half-height usage sheet (fork/No3yUsageSheet.tsx). */
 function useOpenUsage() {
@@ -82,6 +86,8 @@ export function No3yThreadsHeader() {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const { openWorkspaceTab } = useAdaptiveWorkspaceLayout();
+  // openWorkspaceTab alone resets the stack but leaves Home on Threads; this also selects the tab.
+  const selectTab = useLendNo3yWorkspaceTabSelect();
   const openUsage = useOpenUsage();
   return (
     <No3yPageHeader title="Threads">
@@ -89,7 +95,7 @@ export function No3yThreadsHeader() {
         palette={palette}
         accessibilityLabel="Pull requests"
         icon={GitPullRequestIcon}
-        onPress={() => openWorkspaceTab("pullRequests")}
+        onPress={() => selectTab("pullRequests")}
       />
       <No3yCircleButton
         palette={palette}
@@ -219,6 +225,8 @@ export function No3yNewAgentHeader(props: No3yHeaderSearch) {
   return <No3ySearchHeader {...props} title="New agent" subject="projects" />;
 }
 
+const IDLE_ATOM = Atom.make(undefined);
+
 /** The share of the provider's tightest current limit that is left, or null when it reports none. */
 function useProviderUsageRemaining(
   usage:
@@ -226,6 +234,8 @@ function useProviderUsageRemaining(
     | undefined,
 ): number | null {
   const configs = useServerConfigs();
+  // The ring reads limits nothing else may have fetched: keep them fresh (throttled per machine).
+  useAtomMount(usage ? limitsAutoRefreshSetAtom(String(usage.environmentId)) : IDLE_ATOM);
   const config = usage ? configs.get(usage.environmentId) : undefined;
   if (!config || !usage) return null;
   const instanceId = usage.providerInstanceId;

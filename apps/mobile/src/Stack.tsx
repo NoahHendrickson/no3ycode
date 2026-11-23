@@ -534,13 +534,11 @@ const RootStackConfig = createWorkspaceStackNavigator({
       linking: "chat",
       options: pageRoute({ title: "Chat", duoMinimize: "never" }),
     }),
-    // The usage buttons' compact sheet, sized to its rows.
+    // The usage buttons' sheet. A fixed half sheet that scrolls: iOS sized a fitToContents sheet
+    // once, before the limits arrived, and clipped the rows that came after.
     No3yUsage: createNativeStackScreen({
       screen: No3yUsageSheet,
-      options: {
-        ...sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
-        sheetAllowedDetents: "fitToContents",
-      },
+      options: sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
     }),
     // The composer's stashed prompts (fork/No3yPromptStashSheet.tsx).
     No3yPromptStash: createNativeStackScreen({

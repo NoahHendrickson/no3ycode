@@ -13,7 +13,8 @@ import {
   formatResetsIn,
   type LimitPool,
 } from "@t3tools/shared/usageLimits";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useEffectEvent, useState } from "react";
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -29,6 +30,7 @@ import {
   compactTrayWindows,
   compactWindowLabel,
   fullWindowLabel,
+  no3yUsageSheetState,
   usageBarTone,
 } from "./no3yUsageCompact";
 
@@ -46,20 +48,47 @@ export function No3yUsageSheet() {
   const notices = actionableLimitNotices(presentations);
   const externalLinks = collectExternalUsageLinks(presentations);
   const failed = limits.failedLabels;
+  const connected = [...presentations.values()].filter(
+    (presentation) => presentation.connection.phase === "connected",
+  ).length;
+  // Opening the sheet asks every connected machine for fresh limits, so it never shows a stale
+  // or never-fetched empty state; the spinner shows until that answer lands.
+  const [checked, setChecked] = useState(false);
+  const refreshOnOpen = useEffectEvent(() => {
+    void limits.refresh().finally(() => setChecked(true));
+  });
+  useEffect(() => refreshOnOpen(), []);
+  const state = no3yUsageSheetState({
+    connected,
+    checked,
+    pools: pools.length,
+    notices: notices.length + failed.length,
+    links: externalLinks.length,
+  });
   const muted = { fontSize: 12, color: palette.metaInk } as const;
   return (
-    <View
-      style={{
-        backgroundColor: palette.stageBackground,
+    <ScrollView
+      style={{ backgroundColor: palette.stageBackground }}
+      contentContainerStyle={{
         paddingHorizontal: 16,
         paddingTop: 24,
         paddingBottom: Math.max(insets.bottom, 16),
         gap: 14,
       }}
+      showsVerticalScrollIndicator={false}
     >
-      {pools.length === 0 && notices.length === 0 && externalLinks.length === 0 ? (
+      {state === "checking" ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <ActivityIndicator size="small" color={palette.quietInk} />
+          <Text style={{ fontSize: 14, color: palette.metaInk }}>Checking usage limits…</Text>
+        </View>
+      ) : state === "offline" ? (
         <Text style={{ fontSize: 14, color: palette.metaInk }}>
-          No provider reports subscription limits.
+          Connect to an environment to see its usage limits.
+        </Text>
+      ) : state === "empty" ? (
+        <Text style={{ fontSize: 14, color: palette.metaInk }}>
+          No provider on your connected environments reports subscription limits.
         </Text>
       ) : null}
       {pools.map((pool) => (
@@ -101,7 +130,7 @@ export function No3yUsageSheet() {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

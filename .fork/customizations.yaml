@@ -7931,8 +7931,10 @@
     Long-pressing Threads, Automations or Chat opens a peek card (provider
     marks, status marks, a New thread / New automation / New chat row). Threads
     replaces the native bar with its own header (Threads title; Pull requests,
-    Settings and Usage buttons, Pull requests opening the PR list the old tab
-    bar reached) and keeps a bottom tray above the dock: a glass search pill, a
+    Settings and Usage buttons; Pull requests selects Home's Pull requests tab
+    the old tab bar reached, which resetting the stack alone never did, and the
+    dock's Threads selects Threads back with the selector Home's header lends
+    it, fork/no3yWorkspaceTabs.ts) and keeps a bottom tray above the dock: a glass search pill, a
     filter button and a sort button (fork/No3yThreadsFilterBar.tsx; upstream
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
     listing rule, fork/forkBots.ts) sit above the status sections under
@@ -7964,8 +7966,13 @@
     gives the body it as its header height) and it scrolls under the bubbles;
     the back swipe stays native. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
-    The usage buttons (thread ring and Threads gauge alike) open a compact
-    sheet sized to its content (fork/No3yUsageSheet.tsx), the Mac composer's
+    The usage buttons (thread ring and Threads gauge alike) open a half sheet
+    that scrolls (fork/No3yUsageSheet.tsx; a fitToContents sheet was sized on
+    iOS before the limits arrived and clipped them), which asks every
+    connected machine for fresh limits on open and says "Checking usage
+    limits…", that no environment is connected, or that none reports limits
+    until there are rows; the thread ring keeps its machine's limits refreshed
+    (throttled) while a thread is open. It is the Mac composer's
     usage drawer on a phone: one row per provider with every account's
     environments (its mark, then each window's bar side by side with its
     label, % left and reset time; 5hr / 7d only from typed window durations,
@@ -8116,6 +8123,7 @@
     - apps/mobile/fork/effortSlider.test.ts
     - apps/mobile/fork/No3yUsageSheet.tsx
     - apps/mobile/fork/no3yUsageCompact.ts
+    - apps/mobile/fork/no3yWorkspaceTabs.ts
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/No3yProviderMark.tsx
     - apps/mobile/fork/assets/codex-mark.png

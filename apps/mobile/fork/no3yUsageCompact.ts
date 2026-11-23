@@ -83,3 +83,19 @@ export function usageBarTone(remaining: number): "good" | "low" | "out" {
   if (remaining >= 20) return "low";
   return "out";
 }
+
+/**
+ * What the usage sheet says when it has no rows: still checking, no connected machine, or nothing
+ * reported; null once there is something to list.
+ */
+export function no3yUsageSheetState(input: {
+  readonly connected: number;
+  readonly checked: boolean;
+  readonly pools: number;
+  readonly notices: number;
+  readonly links: number;
+}): "checking" | "offline" | "empty" | null {
+  if (input.pools > 0 || input.notices > 0 || input.links > 0) return null;
+  if (input.connected === 0) return "offline";
+  return input.checked ? "empty" : "checking";
+}

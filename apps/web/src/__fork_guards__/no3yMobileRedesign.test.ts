@@ -640,8 +640,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadRoute).toContain("<No3yThreadBarInset draft=");
     expect(screenHeader).toContain('StackActions.push("No3yUsage")');
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
-    // The usage sheet is the Mac drawer's compact rows, sized to them.
-    expect(stack).toContain('sheetAllowedDetents: "fitToContents",');
+    // The usage sheet is the Mac drawer's compact rows in a half sheet that scrolls, refreshed
+    // on open, with explicit checking / offline / empty states.
+    expect(stack).not.toContain('sheetAllowedDetents: "fitToContents",');
+    expect(readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx")).toContain("no3yUsageSheetState({");
+    expect(screenHeader).toContain("limitsAutoRefreshSetAtom(String(usage.environmentId))");
     const usageSheet = readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx");
     expect(usageSheet).toContain("compactTrayWindows(pool)");
     expect(usageSheet).toContain('const CALM_GREEN = "#38a169";');
@@ -656,7 +659,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
       "export const NO3Y_STATUS_MARK_SIZE = 20;",
     );
     // Pull requests from the Threads header, bots above the sections, access on New agent.
-    expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
+    expect(screenHeader).toContain('selectTab("pullRequests")');
+    expect(dock).toContain('selectNo3yWorkspaceTab("threads", openWorkspaceTab)');
     expect(listView).toContain("<No3yBotsGrid");
     expect(readRepoFile("apps/mobile/fork/No3yBotsGrid.tsx")).toContain("<PetalCard");
     expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).not.toContain(

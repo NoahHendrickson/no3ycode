@@ -38,6 +38,7 @@ import {
 } from "./flatGlassTheme";
 import { isNo3yChatThread } from "./no3yChatRule";
 import { useNo3ySentChats } from "./no3yChatTagging";
+import { selectNo3yWorkspaceTab } from "./no3yWorkspaceTabs";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
@@ -389,7 +390,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   };
 
   const press: Record<No3yNavItemId, () => void> = {
-    threads: () => openWorkspaceTab("threads"),
+    threads: () => selectNo3yWorkspaceTab("threads", openWorkspaceTab),
     automations: () => openSettings(navigation, "SettingsScheduledTasks"),
     newAgent: startNewTask,
     chat: openChat,
