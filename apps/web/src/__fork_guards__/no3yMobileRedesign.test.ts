@@ -580,6 +580,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(mobileGrouping).toContain('from "./forkRosterVisibility"');
     expect(mobileGrouping).toContain('from "./forkStatusGrouping"');
     expect(mobileGrouping).toContain("partitionForkStatusShelves(");
+    // The filter and sort menus morph out of their glass buttons on iOS 26 (SwiftUI glass Menu).
+    expect(readRepoFile("apps/mobile/fork/No3yThreadsFilterBar.tsx")).toContain(
+      "<No3yGlassMenuButton",
+    );
+    expect(readRepoFile("apps/mobile/fork/No3yGlassMenuButton.tsx")).toContain(
+      'buttonStyle("glass"),',
+    );
     // Threads search, filter and sort live in fork/No3yThreadsFilterBar.tsx; upstream stays as is.
     expect(filters).not.toContain("fork:begin");
     // Inside a thread there is no dock: the composer card sits low.

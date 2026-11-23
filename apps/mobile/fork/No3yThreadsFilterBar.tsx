@@ -9,7 +9,6 @@ import XIcon from "@hugeicons/core-free-icons/XIcon";
 import type { EnvironmentId } from "@t3tools/contracts";
 import { Pressable, TextInput, View } from "react-native";
 
-import { Menu } from "../src/components/ui/Menu";
 import type { MenuProps } from "../src/components/ui/Menu.types";
 import type {
   HomeListFilterMenuEnvironment,
@@ -24,7 +23,7 @@ import {
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
 import { NO3Y_TRAY_BAR_HEIGHT } from "./No3yBottomTray";
-import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { No3yGlassLayer } from "./No3yGlass";
 
 const checked = (on: boolean) => (on ? ("on" as const) : ("off" as const));
@@ -180,30 +179,25 @@ export function No3yThreadsFilterBar(props: {
           </Pressable>
         ) : null}
       </View>
-      <Menu
+      {/* Morphs out of the button on iOS 26 (fork/No3yGlassMenuButton.tsx). */}
+      <No3yGlassMenuButton
+        palette={palette}
         title="Filter threads"
+        accessibilityLabel="Filter threads"
+        icon={ListFilterIcon}
+        selected={filtered}
         actions={filterActions}
-        onPressAction={({ nativeEvent }) => select(nativeEvent.event)}
-      >
-        <No3yCircleButton
-          palette={palette}
-          accessibilityLabel="Filter threads"
-          icon={ListFilterIcon}
-          selected={filtered}
-        />
-      </Menu>
-      <Menu
+        onPressAction={select}
+      />
+      <No3yGlassMenuButton
+        palette={palette}
         title="Sort threads"
+        accessibilityLabel="Sort threads"
+        icon={ArrowUpDownIcon}
+        selected={sorted}
         actions={sortActions}
-        onPressAction={({ nativeEvent }) => select(nativeEvent.event)}
-      >
-        <No3yCircleButton
-          palette={palette}
-          accessibilityLabel="Sort threads"
-          icon={ArrowUpDownIcon}
-          selected={sorted}
-        />
-      </Menu>
+        onPressAction={select}
+      />
     </View>
   );
 }

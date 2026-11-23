@@ -7965,7 +7965,11 @@
     the old tab bar reached, which resetting the stack alone never did, and the
     dock's Threads selects Threads back with the selector Home's header lends
     it, fork/no3yWorkspaceTabs.ts) and keeps a bottom tray above the dock: a glass search pill, a
-    filter button and a sort button (fork/No3yThreadsFilterBar.tsx; upstream
+    filter button and a sort button whose menus, on iOS 26, morph out of the
+    glass button and collapse back into it (fork/No3yGlassMenuButton.tsx: a
+    SwiftUI Menu with the glass button style through @expo/ui, its items
+    mapped from the same menu actions by fork/No3yMenuItems.tsx; earlier iOS
+    keeps the RN glass button under the UIMenu) (fork/No3yThreadsFilterBar.tsx; upstream
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
     listing rule, fork/forkBots.ts) sit above the status sections under
     "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
@@ -8178,6 +8182,8 @@
     - apps/mobile/fork/No3yCompactBanner.tsx
     - apps/mobile/fork/no3yInPlaceProject.ts
     - apps/mobile/fork/no3ySheet.ts
+    - apps/mobile/fork/No3yGlassMenuButton.tsx
+    - apps/mobile/fork/No3yMenuItems.tsx
     - apps/mobile/fork/no3yInPlaceProject.test.ts
     - apps/mobile/fork/no3yResumeCompaction.ts
     - apps/mobile/fork/no3yResumeCompaction.test.ts
