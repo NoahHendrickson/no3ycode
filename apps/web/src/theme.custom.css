@@ -3234,6 +3234,33 @@
   --context-chip-thread: var(--info-foreground);
 }
 
+/* Inline code chip — see `.fork/customizations.yaml#fork-inline-code-chip`.
+   Transcript replies wear inline code as a link-blue chip, and file links take the
+   same chip. User bubbles, file previews, PR bodies and tool details keep upstream's. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-inline-code-wash: color-mix(in srgb, var(--info) 12%, transparent);
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark {
+  --fork-inline-code-wash: color-mix(in srgb, var(--info) 16%, transparent);
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
+  .chat-markdown
+  :not(pre)
+  > code,
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
+  .chat-markdown
+  .chat-markdown-file-link:not([data-state="invalid"]) {
+  border-radius: 5px;
+  background: var(--fork-inline-code-wash);
+  padding-inline: 4px;
+  color: var(--info-foreground);
+  font-size: 0.95em;
+}
+
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
    The tab strip is the window's titlebar row, above the thread panes, and clears the window
    controls itself. Under it the panes lay out as they do beside an open sidebar: headers drop
@@ -3387,5 +3414,13 @@
    rule under it, like the live status line it replaces. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-row-kind="turn-fold"] > * {
   border-bottom-width: 0;
+}
+
+/* A running tool keeps its row in the transcript; the status line below carries the
+   motion, so the row's label drops upstream's endlessly repainting shine. */
+:root[data-fork="noahhendrickson-t3code"] [data-timeline-row-kind="work-live"] .live-tool-shine {
+  animation: none;
+  background: none;
+  color: inherit;
 }
 /* fork:end fork-working-row-last */
