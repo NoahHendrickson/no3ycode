@@ -1157,6 +1157,8 @@ describe("MessagesTimeline messages", () => {
     } else {
       await vi.waitFor(async () => {
         await act(() => {
+          // Otherwise the scrollToIndex above can land after this on a slow runner.
+          props.listRef.current!.cancelScroll();
           viewport.scrollTop += header().getBoundingClientRect().bottom - (visibleBottom() - 8);
           viewport.dispatchEvent(new Event("scroll"));
         });

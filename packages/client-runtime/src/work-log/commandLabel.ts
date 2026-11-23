@@ -1453,3 +1453,12 @@ function isPowerShellScript(command: string): boolean {
   }
   return false;
 }
+
+/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+   The composer's background-work list trims a command to its gist with this same reader. */
+export const forkShellCommandParsing = {
+  splitFirstShellCommand,
+  tokenizeShellCommand,
+  indexAfterShellRedirection,
+};
+/* fork:end fork-composer-shell */

@@ -197,7 +197,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       /composerContextStrip = showComposerContextStrip \?[\s\S]{0,2500}?\{\.\.\.\(composerContextLeading \? \{ leading: composerContextLeading \} : \{\}\)\}/u,
     );
     expect(chatView).toMatch(
-      /renderComposerContextStripFallback\(\{\s*leading: composerContextLeading,\s*trailing: composerContextTrailing,\s*\}\)/u,
+      /renderComposerContextStripFallback\(\{\s*leading: composerContextLeading,\s*\}\)/u,
     );
     // The chip is the context row's leading value; a server thread's readout
     // is the other source (fork-composer-shell).
@@ -345,8 +345,8 @@ describe("fork guard: fork-new-agent-draft", () => {
 
   it("keeps the folder mark over upstream's title monogram where the fork names one", () => {
     // Upstream #11572 draws a monogram for any titled project before it looks
-    // at fallbackIcon, which would hide the draft project chip's and the
-    // thread context readout's folder marks.
+    // at fallbackIcon, which would hide the launchpad's and the draft project
+    // menu's folder marks.
     const favicon = readSibling("../components/ProjectFavicon.tsx");
     expect(favicon).toContain(
       "const fallbackProjectName = input.fallbackIcon ? undefined : project.title;",

@@ -5,7 +5,6 @@
  * background pills open the half-height No3yStatusSheet.tsx with every item and its actions.
  */
 import Alert02Icon from "@hugeicons/core-free-icons/Alert02Icon";
-import AlertCircleIcon from "@hugeicons/core-free-icons/AlertCircleIcon";
 import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowShrink02Icon from "@hugeicons/core-free-icons/ArrowShrink02Icon";
 import CheckmarkCircle02Icon from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
@@ -559,9 +558,7 @@ function PullRequestPill(props: {
         <PillText color={colors.ink}>{`${look.more}+`}</PillText>
       ) : null}
       {look.checks === "pending" ? <ChecksRunningMark color={palette.statusAttention} /> : null}
-      {look.checks === "failing" ? (
-        <HugeIcon icon={AlertCircleIcon} size={ICON_SIZE} color={palette.prClosed} />
-      ) : null}
+      {look.checks === "failing" ? <ChecksFailingMark color={palette.statusFailed} /> : null}
     </Pill>
   );
 }
@@ -583,6 +580,24 @@ function ChecksRunningMark(props: { readonly color: string }) {
           fill={props.color}
         />
         <Circle cx={7} cy={7} r={6.5} stroke={props.color} />
+      </Svg>
+    </View>
+  );
+}
+
+/** The checks-failing mark: a solid dot the size of the running mark's inner pie. */
+function ChecksFailingMark(props: { readonly color: string }) {
+  return (
+    <View
+      style={{
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Svg width={14} height={14} viewBox="0 0 14 14">
+        <Circle cx={7} cy={7} r={4} fill={props.color} />
       </Svg>
     </View>
   );

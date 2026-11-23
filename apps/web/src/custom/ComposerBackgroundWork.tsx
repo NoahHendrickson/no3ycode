@@ -3,22 +3,14 @@ import type {
   PendingBackgroundWorkPresentation,
 } from "@t3tools/client-runtime/state/thread-execution";
 import type { ThreadId } from "@t3tools/contracts";
-import { type ReactNode, type RefObject, useRef, useState } from "react";
 
-import { Button } from "~/components/ui/button";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { ComposerControl } from "~/components/chat/ComposerControl";
+import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 
-import { hasUnseenApproval, resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
-import { ChevronDownIcon, ChevronRightIcon } from "./icons/lucide-hugeicons";
+import { glanceCommandLabel } from "./composerBackgroundWork.logic";
+import { ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
-
-/** The work section ChatComposer stacks into its top drawer, above the usage tray. */
-export interface ComposerDrawerSection {
-  readonly open: boolean;
-  readonly content: ReactNode;
-  readonly onCollapse: (restoreFocus: boolean) => void;
-}
 
 export interface ComposerBackgroundWorkViewProps {
   readonly presentation: PendingBackgroundWorkPresentation;
@@ -41,138 +33,70 @@ function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): str
   return "Working";
 }
 
-function BackgroundWorkMark(props: Pick<ComposerBackgroundWorkViewProps, "presentation" | "seed">) {
+/** Background work as a chip above the composer (fork-composer-shell): the label opens the task
+ * list, a subagent's row opens its thread, and the square stops it all. @public — Storybook draws it. */
+export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProps) {
+  const label = resolveBackgroundWorkLabel(props);
   return (
-    <span data-fork-liveness-mark className="flex size-[14px] shrink-0 items-center justify-center">
-      {props.presentation.waiting ? (
-        <SidebarV2WorkingMark seed={props.seed} />
-      ) : (
-        <SidebarV2MonitoringMark />
-      )}
-    </span>
-  );
-}
-
-/** Background work as a context-row toggle and a top-drawer section (fork-composer-shell). It opens
- * whenever an unseen task starts; a collapse holds until one does. The drawer floats over what sits
- * above the composer, so each subagent approval arriving there collapses it once; the toggle still
- * reopens it. */
-export function useComposerBackgroundWork(
-  view: ComposerBackgroundWorkViewProps | null,
-  approvalIds: ReadonlySet<string>,
-) {
-  // The tasks on screen when the drawer was collapsed.
-  const [collapsedTaskIds, setCollapsedTaskIds] = useState<ReadonlySet<string> | null>(null);
-  const [seenApprovalIds, setSeenApprovalIds] = useState<ReadonlySet<string>>(() => new Set());
-  const toggleRef = useRef<HTMLButtonElement | null>(null);
-  const tasks = view?.presentation.items ?? [];
-  let heldTaskIds = resolveCollapsedTaskIds(tasks, collapsedTaskIds);
-  const approvalArrived = hasUnseenApproval(approvalIds, seenApprovalIds);
-  if (approvalArrived || approvalIds.size !== seenApprovalIds.size) {
-    setSeenApprovalIds(approvalIds);
-    if (approvalArrived) heldTaskIds = new Set(tasks.map((task) => task.taskId));
-  }
-  if (heldTaskIds !== collapsedTaskIds) setCollapsedTaskIds(heldTaskIds);
-  if (view === null) return { toggle: null, section: null };
-
-  const open = heldTaskIds === null;
-  const collapse = (restoreFocus: boolean) => {
-    setCollapsedTaskIds(new Set(tasks.map((task) => task.taskId)));
-    if (restoreFocus) toggleRef.current?.focus();
-  };
-
-  return {
-    toggle: (
-      <ComposerBackgroundWorkToggle
-        {...view}
-        triggerRef={toggleRef}
-        open={open}
-        onToggle={() => (open ? collapse(false) : setCollapsedTaskIds(null))}
-      />
-    ),
-    section: {
-      open,
-      onCollapse: collapse,
-      content: <ComposerBackgroundWorkSection {...view} onCollapse={() => collapse(true)} />,
-    } satisfies ComposerDrawerSection,
-  };
-}
-
-/** @public — the context-row icon, from plain props; Storybook draws it. */
-export function ComposerBackgroundWorkToggle({
-  triggerRef,
-  open,
-  onToggle,
-  ...view
-}: ComposerBackgroundWorkViewProps & {
-  readonly triggerRef?: RefObject<HTMLButtonElement | null>;
-  readonly open: boolean;
-  readonly onToggle: () => void;
-}) {
-  const label = resolveBackgroundWorkLabel(view);
-  return (
-    <>
+    <span data-fork-composer-status-chip="background-work">
       {/* A button's children are presentational, so "Stopping..." is announced from here. */}
       <span role="status" className="sr-only">
         {label}
       </span>
-      <Tooltip>
-        <TooltipTrigger
+      <Popover>
+        <PopoverTrigger
           render={
-            <button
-              ref={triggerRef}
-              type="button"
-              data-fork-background-work-toggle
-              aria-expanded={open}
-              data-pressed={open ? "" : undefined}
-              aria-label={`${label}: ${open ? "hide" : "show"} background work`}
-              onClick={onToggle}
+            <ComposerControl
+              size="xs"
+              data-fork-status-chip-main
+              aria-label={`${label}: show background work`}
             />
           }
         >
-          <BackgroundWorkMark presentation={view.presentation} seed={view.seed} />
-        </TooltipTrigger>
-        <TooltipPopup side="top">{label}</TooltipPopup>
-      </Tooltip>
-    </>
-  );
-}
-
-/** @public — the drawer section, from plain props; Storybook draws it. */
-export function ComposerBackgroundWorkSection(
-  props: ComposerBackgroundWorkViewProps & { readonly onCollapse: () => void },
-) {
-  const label = resolveBackgroundWorkLabel(props);
-  return (
-    <div data-fork-background-work className="flex min-w-0 flex-col gap-1 px-3 pt-2.5 pb-2">
-      <div className="flex min-w-0 items-center gap-2">
-        <BackgroundWorkMark presentation={props.presentation} seed={props.seed} />
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{label}</span>
-        <Button
-          variant="ghost"
-          size="xs"
-          aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
-          disabled={props.stopping || !props.canStop}
-          onClick={props.onStop}
+          <span
+            data-fork-liveness-mark
+            aria-hidden
+            className="flex size-[14px] shrink-0 items-center justify-center"
+          >
+            {props.presentation.waiting ? (
+              <SidebarV2WorkingMark seed={props.seed} />
+            ) : (
+              <SidebarV2MonitoringMark />
+            )}
+          </span>
+          <span aria-hidden className="min-w-0 truncate">
+            {label}
+          </span>
+        </PopoverTrigger>
+        <PopoverPopup
+          side="top"
+          align="start"
+          sideOffset={6}
+          width="sm"
+          padding="compact"
+          data-fork-glass-rim
         >
-          <StopSquareIcon size={10} />
-          Stop
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Hide background work"
-          onClick={props.onCollapse}
-        >
-          <ChevronDownIcon aria-hidden="true" />
-        </Button>
-      </div>
-      <ul data-fork-monitoring-tasks className="-mx-2 flex max-h-40 flex-col overflow-y-auto">
-        {props.presentation.items.map((task) => (
-          <BackgroundWorkTaskRow key={task.taskId} task={task} onOpenThread={props.onOpenThread} />
-        ))}
-      </ul>
-    </div>
+          <ul data-fork-monitoring-tasks className="flex max-h-60 flex-col overflow-y-auto">
+            {props.presentation.items.map((task) => (
+              <BackgroundWorkTaskRow
+                key={task.taskId}
+                task={task}
+                onOpenThread={props.onOpenThread}
+              />
+            ))}
+          </ul>
+        </PopoverPopup>
+      </Popover>
+      <ComposerControl
+        size="xs"
+        data-fork-status-chip-stop
+        aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
+        disabled={props.stopping || !props.canStop}
+        onClick={props.onStop}
+      >
+        <StopSquareIcon size={10} />
+      </ComposerControl>
+    </span>
   );
 }
 
@@ -183,25 +107,27 @@ function BackgroundWorkTaskRow(props: {
   const { task } = props;
   const childThreadId = task.childThreadId;
   if (childThreadId === undefined) {
+    const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
       <li className="flex">
         <span data-fork-monitoring-task aria-description={task.kind}>
-          <span className="min-w-0 flex-1 truncate">{task.label}</span>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
         </span>
       </li>
     );
   }
   return (
     <li className="flex">
-      <button
-        type="button"
+      {/* Closes the list: the thread may open beside this composer, which stays mounted. */}
+      <PopoverClose
+        render={<button type="button" />}
         data-fork-monitoring-task
         aria-label={`Open ${task.label}`}
         onClick={() => props.onOpenThread(childThreadId)}
       >
         <span className="min-w-0 flex-1 truncate">{task.label}</span>
         <ChevronRightIcon aria-hidden className="size-3.5 shrink-0 opacity-60" />
-      </button>
+      </PopoverClose>
     </li>
   );
 }

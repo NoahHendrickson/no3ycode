@@ -254,7 +254,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   border: 1px solid var(--basic-wash-2);
   border-radius: 8px;
   box-shadow: none;
@@ -264,7 +264,7 @@
    hairline it reads as a second, blurred border. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])::before {
+  :is(button, [data-slot="button"], [data-fork-context-chip])::before {
   box-shadow: none;
 }
 

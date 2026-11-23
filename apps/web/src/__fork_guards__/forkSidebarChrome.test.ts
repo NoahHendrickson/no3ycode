@@ -460,7 +460,8 @@ describe("fork guard: fork-sidebar-chrome", () => {
     const footer = themeRules.find(
       (rule) =>
         rule.selector.includes('[data-fork="noahhendrickson-t3code"]') &&
-        rule.selector.includes('[data-slot="sidebar-footer"]'),
+        rule.selector.includes('[data-slot="sidebar-footer"]') &&
+        rule.body.includes("padding-bottom"),
     );
     expect(footer?.body).toContain("padding-bottom: var(--sidebar-content-inset)");
     expect(sidebarPrimitive).toContain('data-slot="sidebar-footer"');
