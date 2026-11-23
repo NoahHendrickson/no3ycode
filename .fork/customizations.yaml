@@ -7778,8 +7778,9 @@
     On the no3y iPhone composer (fork/No3yBotDigest.tsx, fenced in ThreadDetailScreen beside
     ChildThreadApprovals, under the no3y layout) the same digest is a 24pt-radius glass card
     rising in above the composer (the panel stack above the composer draws over the composer's
-    fade-to-page scrim on the no3y layout, a fenced zIndex, so the scrim never darkens the card's
-    bottom edge; the card carries the composer's own No3yBottomScrim, so the transcript never
+    fade-to-page scrim on the no3y layout, a fenced animated zIndex, so the scrim never darkens the
+    bottom edge of the card or any other banner there; it drops back under the composer while the
+    composer's command popover, drawn inside the composer on iOS, is open; the card carries the composer's own No3yBottomScrim, so the transcript never
     reads through it, and sits under the banners before it so that scrim never covers them):
     the status strip with the pager and, at its end, the X
     that dismisses the ask on show (so the question runs the card's full width), then

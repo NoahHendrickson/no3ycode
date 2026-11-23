@@ -55,7 +55,11 @@ import { useEnvironmentQuery } from "../src/state/query";
 import { environmentSession } from "../src/state/session";
 import { environmentThreadShells, threadEnvironment } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
-import { getComposerDraftSnapshot, setComposerDraftText } from "../src/state/use-composer-drafts";
+import {
+  getComposerDraftSnapshot,
+  rememberComposerDraftSelection,
+  setComposerDraftText,
+} from "../src/state/use-composer-drafts";
 import { useThreadPr } from "../src/state/use-thread-pr";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
@@ -220,7 +224,10 @@ function BotDigestFor(props: {
     if (draftKey === null) return;
     const existing = getComposerDraftSnapshot(draftKey).text.trimEnd();
     const quote = quoteBotDigestAsk(ask.source);
-    setComposerDraftText(draftKey, existing === "" ? quote : `${existing}\n\n${quote}`);
+    const next = existing === "" ? quote : `${existing}\n\n${quote}`;
+    setComposerDraftText(draftKey, next);
+    // The iOS editor otherwise keeps its old caret, so typing would land before the quote.
+    rememberComposerDraftSelection(draftKey, next, { start: next.length, end: next.length });
   };
 
   const links = item === undefined ? null : resolveBotDigestLinks(item, shells, bot.environmentId);

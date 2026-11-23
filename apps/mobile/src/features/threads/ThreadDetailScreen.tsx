@@ -1268,6 +1268,13 @@ function ThreadDetailBody(
       { duration: 180, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System },
     ),
   );
+  /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+  // The panels draw over the composer's scrim so it never fades their bottoms, but drop under the
+  // composer while its iOS command popover (drawn inside the composer) is open.
+  const no3yPanelsLayer = useAnimatedStyle(() => ({
+    zIndex: composerPopoverHeight.value > 0 ? 0 : 1,
+  }));
+  /* fork:end fork-bot-digest */
   const floatingControlLift = useDerivedValue(
     () =>
       Math.max(
@@ -1740,16 +1747,12 @@ function ThreadDetailBody(
                 list's bottom inset, so any padding above the pill/composer
                 pushes the resting content floor up by the same amount. */}
               <View onLayout={handleComposerOverlayLayout} className="w-full">
-                <View
+                {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+                <Animated.View
                   className="w-full self-center"
-                  style={{
-                    maxWidth: contentMaxWidth,
-                    /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-                    // Above the composer card, so its glass shadow falls behind the digest card.
-                    ...(no3yBottomNav ? { zIndex: 1 } : null),
-                    /* fork:end fork-bot-digest */
-                  }}
+                  style={[{ maxWidth: contentMaxWidth }, no3yBottomNav ? no3yPanelsLayer : null]}
                 >
+                  {/* fork:end fork-bot-digest */}
                   {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
                   <No3yStatusPillSwap
                     enabled={no3yBottomNav}
@@ -2005,7 +2008,9 @@ function ThreadDetailBody(
                     ) : null}
                     {/* fork:end fork-queued-runs-banner */}
                   </ComposerPanels>
-                </View>
+                  {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+                </Animated.View>
+                {/* fork:end fork-bot-digest */}
 
                 <View style={composerSlotHidden ? { display: "none" } : undefined}>
                   {isProviderSubagent ? (
