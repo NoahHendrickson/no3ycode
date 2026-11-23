@@ -140,6 +140,7 @@ export function MarkdownThreadLink(props: {
   return (
     <ForkSubagentLinkChip
       threadRef={ref}
+      title={title}
       copyMarkdown={formatHostedThreadLink(ref, title, configuredHostedAppUrl())}
     >
       {/* fork:end no3y-subagent-link-chip */}

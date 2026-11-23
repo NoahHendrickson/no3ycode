@@ -21,17 +21,22 @@ export function isNo3ySubagentChipThread(
   return shell.lineage.relationshipToParent === "subagent" || shell.delegatedFrom != null;
 }
 
-/** Null for a child that never ran or was stopped: the capsule shows the idle ring. */
+/** Null for a child that never ran or was stopped: the capsule shows the idle mark. */
 export function no3ySubagentChipKind(
   shell: Pick<
     EnvironmentThreadShell,
-    "hasPendingApprovals" | "hasPendingUserInput" | "runtime" | "blockedOnThreadWait" | "latestRun"
+    | "hasPendingApprovals"
+    | "hasPendingUserInput"
+    | "pendingSubagentRequest"
+    | "runtime"
+    | "blockedOnThreadWait"
+    | "latestRun"
   >,
 ): No3ySubagentChipKind | null {
-  if (shell.hasPendingApprovals) return "approval";
-  if (shell.hasPendingUserInput) return "input";
+  // Mirrors resolveSidebarThreadStatus, including requests from the child's own children.
+  if (shell.hasPendingApprovals || shell.pendingSubagentRequest === "approval") return "approval";
+  if (shell.hasPendingUserInput || shell.pendingSubagentRequest === "user_input") return "input";
   const status = shell.runtime?.status;
-  // Mirrors resolveSidebarThreadStatus: blocked on another thread, or parked on background work.
   if ((status === "running" && shell.blockedOnThreadWait === true) || status === "idle") {
     return "waiting";
   }
@@ -47,23 +52,56 @@ export function no3ySubagentChipLabel(title: string): string {
   return head.length >= 3 ? head : title;
 }
 
+const FENCED_CODE = /(^|\n)(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:\n\2[^\n]*|$)/g;
+const INLINE_CODE = /`[^`\n]+`/g;
+const THREAD_LINK_HREF = /\]\(<?(t3-thread:\/\/v[12]\/[^\s>)]+)>?\)/g;
+
+/** Code renders literally, so its text is hidden (same length, newlines kept) before scanning. */
+function maskCode(markdown: string): string {
+  return markdown
+    .replace(FENCED_CODE, (code) => code.replace(/[^\n]/g, "#"))
+    .replace(INLINE_CODE, (code) => "#".repeat(code.length));
+}
+
+function matchesOf(pattern: RegExp, text: string): RegExpExecArray[] {
+  const matches: RegExpExecArray[] = [];
+  // exec rather than matchAll: Hermes' matchAll drops capture details.
+  for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
+    matches.push(match);
+  }
+  return matches;
+}
+
+/** The `t3-thread` hrefs of the markdown's inline links outside code. */
+export function no3ySubagentChipHrefs(markdown: string): ReadonlyArray<string> {
+  const pattern = new RegExp(THREAD_LINK_HREF);
+  return [...new Set(matchesOf(pattern, maskCode(markdown)).map((match) => match[1] ?? ""))];
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
- * Drops the period that closes a line right after one of `hrefs`: the capsule already ends the
- * line, and the dot would sit on its own past the pill's gap. Mid-line periods stay, since they
- * still separate sentences.
+ * Drops the period that closes a line right after one of `hrefs`, outside code: the capsule
+ * already ends the line. Mid-line periods stay. While `streaming`, the end of the text is not yet
+ * the end of a line, so only a period before a newline goes.
  */
-export function dropPeriodAfterSubagentChips(markdown: string, hrefs: Iterable<string>): string {
-  let next = markdown;
+export function dropPeriodAfterSubagentChips(
+  markdown: string,
+  hrefs: Iterable<string>,
+  streaming = false,
+): string {
+  const masked = maskCode(markdown);
+  const periods: number[] = [];
   for (const href of hrefs) {
-    const target = escapeRegExp(href);
-    next = next.replace(
-      new RegExp(`(\\]\\(<?${target}>?\\))\\.(?=[ \\t]*(?:\\r?\\n|$))`, "g"),
-      "$1",
-    );
+    const end = streaming ? "\\r?\\n" : "\\r?\\n|$";
+    const pattern = new RegExp(`\\]\\(<?${escapeRegExp(href)}>?\\)\\.(?=[ \\t]*(?:${end}))`, "g");
+    for (const match of matchesOf(pattern, masked)) periods.push(match.index + match[0].length - 1);
+  }
+  let next = markdown;
+  for (const index of periods.sort((a, b) => b - a)) {
+    next = next.slice(0, index) + next.slice(index + 1);
   }
   return next;
 }

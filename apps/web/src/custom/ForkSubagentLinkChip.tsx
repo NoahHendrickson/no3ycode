@@ -34,9 +34,11 @@ import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useProject } from "~/state/entities";
+import { environmentShell } from "~/state/shell";
 import { environmentThreadShells, threadFamilies } from "~/state/threads";
 import {
   dropPeriodAfterSubagentLinks,
+  forkSubagentLinkHrefs,
   forkSubagentLinkKind,
   forkSubagentLinkLabel,
   isForkSubagentLinkThread,
@@ -45,7 +47,7 @@ import {
 import { CircleHalfIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2IdleMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 
-/** Null outside assistant messages, which keep upstream's thread chip. */
+/** Provided around assistant messages only; everything else keeps upstream's thread chip. */
 interface ForkSubagentLinkScopeValue {
   /** The thread the message is in; its family holds the idle children it links to. */
   readonly familyRef: ScopedThreadRef | null;
@@ -67,6 +69,7 @@ export function ForkSubagentLinkScope(props: {
 interface SubagentLink {
   readonly shell: EnvironmentThreadShell;
   readonly kind: ForkSubagentLinkKind | null;
+  /** Empty for an untitled child; the chip falls back to the link's title. */
   readonly label: string;
   /** Set when the family read predates the child going idle; keyed by the stale row. */
   readonly staleKey: string | null;
@@ -77,7 +80,6 @@ const NO_HREFS_ATOM = Atom.make(NO_HREFS).pipe(Atom.withLabel("fork-subagent-lin
 const NO_LINK_ATOM = Atom.make<SubagentLink | null>(null).pipe(
   Atom.withLabel("fork-subagent-link:none"),
 );
-const THREAD_LINK_HREFS = /\]\(<?(t3-thread:\/\/v[12]\/[^\s>)]+)>?\)/g;
 // A stale read is refreshed once per row snapshot, so a server that disagrees cannot loop.
 const refreshedFamilies = new Set<string>();
 
@@ -87,6 +89,14 @@ const linkKey = (ref: ScopedThreadRef, familyRef: ScopedThreadRef | null) =>
     ref.threadId,
     familyRef?.environmentId === ref.environmentId ? familyRef.threadId : null,
   ]);
+
+// Narrowed to one thread so shell deltas for other threads do not recompute the chip.
+const removedSequenceAtom = Atom.family((key: string) => {
+  const [environmentId, threadId] = JSON.parse(key) as [EnvironmentId, ThreadId];
+  return Atom.make(
+    (get) => get(environmentShell.stateValueAtom(environmentId)).removedAt.get(threadId) ?? -1,
+  ).pipe(Atom.withLabel(`fork-subagent-link-removed:${key}`));
+});
 
 const subagentLinkAtom = Atom.family((key: string) => {
   const [environmentId, threadId, familyThreadId] = JSON.parse(key) as [
@@ -98,18 +108,23 @@ const subagentLinkAtom = Atom.family((key: string) => {
     let shell = get(environmentThreadShells.threadShellAtom({ environmentId, threadId }));
     let staleKey: string | null = null;
     if (shell === null && familyThreadId !== null) {
-      const row = selectEnvironmentQueryData(
+      const read = selectEnvironmentQueryData(
         get(threadFamilies.familyAtom(environmentId, familyThreadId)),
-      )?.threads.find((thread) => thread.id === threadId);
+      );
+      const row = read?.threads.find((thread) => thread.id === threadId);
       shell = row ? presentThreadShell(environmentId, row) : null;
-      // The shell keeps every live child, so a live row it dropped predates the child idling.
-      if (row && isLiveSubagentShell(row)) staleKey = `${key}:${shell?.updatedAt}`;
+      // The read predates the shell dropping the child (idle, archived), or the shell keeps every
+      // live child, so a live row it lacks is older than the child idling.
+      const removed = get(removedSequenceAtom(JSON.stringify([environmentId, threadId])));
+      if (row && read && (removed > read.snapshotSequence || isLiveSubagentShell(row))) {
+        staleKey = `${key}:${read.snapshotSequence}`;
+      }
     }
     if (shell === null || !isForkSubagentLinkThread(shell)) return null;
     return {
       shell,
       kind: staleKey === null ? forkSubagentLinkKind(shell) : null,
-      label: forkSubagentLinkLabel(shell.title),
+      label: shell.title.trim() ? forkSubagentLinkLabel(shell.title) : "",
       staleKey,
     };
   }).pipe(Atom.withLabel(`fork-subagent-link:${key}`));
@@ -137,19 +152,20 @@ const subagentHrefsAtom = Atom.family((key: string) => {
 /** The message without the period that closes a line after a subagent chip. */
 export function useForkSubagentLinkText(
   text: string,
-  scope: ForkSubagentLinkScopeValue | null,
   environmentId: EnvironmentId | null,
+  streaming: boolean,
 ): string {
+  const scope = use(ForkSubagentLinkScopeContext);
   const hrefs =
     scope !== null && environmentId !== null && hasThreadLinks(text)
-      ? [...new Set(Array.from(text.matchAll(THREAD_LINK_HREFS), (match) => match[1] ?? ""))]
+      ? forkSubagentLinkHrefs(text)
       : NO_HREFS;
   const subagents = useAtomValue(
     hrefs.length === 0
       ? NO_HREFS_ATOM
       : subagentHrefsAtom(JSON.stringify([environmentId, scope?.familyRef ?? null, hrefs])),
   );
-  return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents);
+  return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents, streaming);
 }
 
 const MARK_SLOT = "flex h-[14px] w-[12px] shrink-0 items-center justify-center";
@@ -199,6 +215,8 @@ function SubagentLinkMark(props: {
 /** Renders `children`, the upstream chip, unless the link names a subagent in an assistant message. */
 export function ForkSubagentLinkChip(props: {
   readonly threadRef: ScopedThreadRef;
+  /** Upstream's resolved title, for a child whose own title is empty. */
+  readonly title: string;
   readonly copyMarkdown?: string | undefined;
   readonly children: ReactNode;
 }) {
@@ -219,6 +237,7 @@ export function ForkSubagentLinkChip(props: {
   const project = useProject(projectId ? scopeProjectRef(environmentId, projectId) : null);
   if (link === null) return props.children;
   const status = statusLabel(link.kind, gt);
+  const title = link.shell.title.trim() || props.title;
   return (
     <Tooltip>
       <TooltipTrigger
@@ -231,19 +250,19 @@ export function ForkSubagentLinkChip(props: {
                 draggable={false}
               />
             }
-            aria-label={gt("Thread, {title}", { title: `${link.shell.title}, ${status}` })}
+            aria-label={gt("Thread, {title}", { title: `${title}, ${status}` })}
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
             className="gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] text-foreground no-underline [--context-chip-ink:currentColor]"
           >
             <SubagentLinkMark kind={link.kind} seed={key} />
-            <ContextChipLabel>{link.label}</ContextChipLabel>
+            <ContextChipLabel>{link.label || props.title}</ContextChipLabel>
           </ContextChip>
         }
       />
       <ThreadHoverCardPopup side="top">
         <ThreadChipHoverCard
-          title={link.shell.title}
+          title={title}
           project={project}
           shell={link.shell}
           unreadable={false}

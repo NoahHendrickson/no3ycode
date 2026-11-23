@@ -19,11 +19,13 @@ import type { MarkdownLinkCustomization } from "../src/native/SelectableMarkdown
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { appAtomRegistry } from "../src/state/atom-registry";
 import { resolveThreadLink } from "../src/state/entities";
+import { environmentShell } from "../src/state/shell";
 import { environmentThreadShells, threadFamilies } from "../src/state/threads";
 import { flatGlassPalette, flatGlassStatusColor } from "./flatGlassTheme";
 import {
   dropPeriodAfterSubagentChips,
   isNo3ySubagentChipThread,
+  no3ySubagentChipHrefs,
   no3ySubagentChipKind,
   no3ySubagentChipLabel,
   type No3ySubagentChipKind,
@@ -31,7 +33,8 @@ import {
 
 interface SubagentLinkChip {
   readonly kind: No3ySubagentChipKind | null;
-  readonly label: string;
+  /** Unset for an empty title, so the pill keeps the link's text. */
+  readonly label: string | undefined;
 }
 
 interface SubagentLinkChips {
@@ -40,7 +43,6 @@ interface SubagentLinkChips {
   readonly staleKey: string | null;
 }
 
-const THREAD_LINK_HREFS = /\]\(<?(t3-thread:\/\/v[12]\/[^\s>)]+)>?\)/g;
 const NO_CHIPS: SubagentLinkChips = { chips: new Map(), staleKey: null };
 const NO_CHIPS_ATOM = Atom.make(NO_CHIPS).pipe(Atom.withLabel("no3y-subagent-link-chips:empty"));
 
@@ -61,6 +63,14 @@ function markIcon(kind: No3ySubagentChipKind | null): ImageSourcePropType {
   return kind === null ? MARK_ICONS.idle : MARK_ICONS.dot;
 }
 
+// Narrowed to one thread so shell deltas for other threads do not recompute the chips.
+const removedSequenceAtom = Atom.family((key: string) => {
+  const [environmentId, threadId] = JSON.parse(key) as [EnvironmentId, ThreadId];
+  return Atom.make(
+    (get) => get(environmentShell.stateValueAtom(environmentId)).removedAt.get(threadId) ?? -1,
+  ).pipe(Atom.withLabel(`no3y-subagent-link-removed:${key}`));
+});
+
 const subagentLinkChipsAtom = Atom.family((key: string) => {
   const [environmentId, familyThreadId, hrefs] = JSON.parse(key) as [
     EnvironmentId,
@@ -71,11 +81,10 @@ const subagentLinkChipsAtom = Atom.family((key: string) => {
     const chips = new Map<string, SubagentLinkChip>();
     let staleKey: string | null = null;
     // Read only when a link misses the shell; it covers every child of the message's thread.
-    const familyRows = () =>
+    const family = () =>
       familyThreadId === null
-        ? []
-        : (selectEnvironmentQueryData(get(threadFamilies.familyAtom(environmentId, familyThreadId)))
-            ?.threads ?? []);
+        ? null
+        : selectEnvironmentQueryData(get(threadFamilies.familyAtom(environmentId, familyThreadId)));
     for (const href of hrefs) {
       const link = parseThreadLinkHref(href);
       if (!link) continue;
@@ -84,18 +93,21 @@ const subagentLinkChipsAtom = Atom.family((key: string) => {
       let shell: EnvironmentThreadShell | null = get(environmentThreadShells.threadShellAtom(ref));
       let staleRow = false;
       if (shell === null && ref.environmentId === environmentId) {
-        const row = familyRows().find((thread) => thread.id === ref.threadId);
+        const read = family();
+        const row = read?.threads.find((thread) => thread.id === ref.threadId);
         shell = row ? presentThreadShell(environmentId, row) : null;
-        // The shell keeps every live child, so a live row it dropped predates the child idling.
-        if (row && isLiveSubagentShell(row)) {
+        // The read predates the shell dropping the child (idle, archived), or the shell keeps every
+        // live child, so a live row it lacks is older than the child idling.
+        const removed = get(removedSequenceAtom(JSON.stringify([environmentId, ref.threadId])));
+        if (row && read && (removed > read.snapshotSequence || isLiveSubagentShell(row))) {
           staleRow = true;
-          staleKey = `${environmentId}:${familyThreadId}:${row.id}:${shell?.updatedAt}`;
+          staleKey = `${environmentId}:${familyThreadId}:${row.id}:${read.snapshotSequence}`;
         }
       }
       if (!shell || !isNo3ySubagentChipThread(shell)) continue;
       chips.set(href, {
         kind: staleRow ? null : no3ySubagentChipKind(shell),
-        label: no3ySubagentChipLabel(shell.title),
+        label: shell.title.trim() ? no3ySubagentChipLabel(shell.title) : undefined,
       });
     }
     return chips.size === 0 && staleKey === null ? NO_CHIPS : { chips, staleKey };
@@ -108,14 +120,13 @@ export function useNo3ySubagentLinkChips(
   /** The thread the message is in; its family holds the idle children it links to. */
   familyThreadId: ThreadId | null,
   markdown: string,
+  streaming: boolean,
 ): {
   readonly markdown: string;
   readonly customization: (href: string) => MarkdownLinkCustomization | undefined;
 } {
   const { themeAppearance } = useAppearancePreferences();
-  const hrefs = hasThreadLinks(markdown)
-    ? [...new Set(Array.from(markdown.matchAll(THREAD_LINK_HREFS), (match) => match[1] ?? ""))]
-    : [];
+  const hrefs = hasThreadLinks(markdown) ? no3ySubagentChipHrefs(markdown) : [];
   const { chips, staleKey } = useAtomValue(
     hrefs.length === 0
       ? NO_CHIPS_ATOM
@@ -129,7 +140,8 @@ export function useNo3ySubagentLinkChips(
   }, [staleKey, environmentId, familyThreadId]);
   const palette = flatGlassPalette(themeAppearance);
   return {
-    markdown: chips.size === 0 ? markdown : dropPeriodAfterSubagentChips(markdown, chips.keys()),
+    markdown:
+      chips.size === 0 ? markdown : dropPeriodAfterSubagentChips(markdown, chips.keys(), streaming),
     customization: (href) => {
       const chip = chips.get(href);
       if (!chip) return undefined;

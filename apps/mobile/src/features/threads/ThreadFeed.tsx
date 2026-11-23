@@ -1372,17 +1372,22 @@ const AssistantMarkdownContent = memo(function AssistantMarkdownContent(props: {
   readonly onUseArtifactTemplate?: ((template: CodexArtifactTemplate) => void) | undefined;
   readonly renderImage: MarkdownImageRenderer;
   readonly skills?: ReadonlyArray<SelectableMarkdownSkill> | undefined;
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  /** The thread the message is in, whose family holds the idle subagents it links to. */
+  readonly no3ySubagentChips?: { readonly threadId: ThreadId; readonly streaming?: boolean };
+  /* fork:end no3y-subagent-link-chip */
 }) {
   const gt = useGT();
   /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
   const subagentChips = useNo3ySubagentLinkChips(
     props.environmentId,
-    props.citationSource?.threadId ?? null,
+    props.no3ySubagentChips?.threadId ?? null,
     useLiveThreadLinkLabels(
       props.markdown,
       props.environmentId,
       useLinkedEnvironments(hasThreadLinks(props.markdown) ? props.environmentId : null),
     ),
+    props.no3ySubagentChips?.streaming === true,
   );
   const liveMarkdown = subagentChips.markdown;
   /* fork:end no3y-subagent-link-chip */
@@ -2273,6 +2278,9 @@ function renderFeedEntry(
           <AssistantMarkdownContent
             markdown={entry.text}
             environmentId={props.environmentId}
+            /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+            no3ySubagentChips={{ threadId: props.threadId }}
+            /* fork:end no3y-subagent-link-chip */
             markdownStyles={markdownStyles.assistant}
             linkHandlers={props.markdownLinkHandlers}
             onUseArtifactTemplate={props.onUseArtifactTemplate}
@@ -2862,6 +2870,9 @@ function renderFeedEntry(
               markdown={renderedText}
               environmentId={props.environmentId}
               citationSource={{ threadId: props.threadId, messageId: message.id }}
+              /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+              no3ySubagentChips={{ threadId: props.threadId, streaming: message.streaming }}
+              /* fork:end no3y-subagent-link-chip */
               onCiteAssistantText={props.onCiteAssistantText}
               markdownStyles={styles}
               linkHandlers={props.markdownLinkHandlers}
@@ -3996,6 +4007,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     <AssistantMarkdownContent
       markdown={text}
       environmentId={props.environmentId}
+      /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+      no3ySubagentChips={{ threadId: props.threadId }}
+      /* fork:end no3y-subagent-link-chip */
       markdownStyles={markdownStyles.assistant}
       linkHandlers={markdownLinkHandlers}
       renderImage={renderMarkdownImage}

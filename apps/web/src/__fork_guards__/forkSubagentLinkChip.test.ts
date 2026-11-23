@@ -19,6 +19,7 @@ type Shell = Parameters<typeof web.forkSubagentLinkKind>[0];
 const base: Shell = {
   hasPendingApprovals: false,
   hasPendingUserInput: false,
+  pendingSubagentRequest: null,
   runtime: null,
   blockedOnThreadWait: false,
   latestRun: null,
@@ -36,6 +37,7 @@ const mobile = (await import(
   readonly no3ySubagentChipKind: typeof web.forkSubagentLinkKind;
   readonly no3ySubagentChipLabel: typeof web.forkSubagentLinkLabel;
   readonly dropPeriodAfterSubagentChips: typeof web.dropPeriodAfterSubagentLinks;
+  readonly no3ySubagentChipHrefs: typeof web.forkSubagentLinkHrefs;
 };
 const implementations = [
   {
@@ -43,12 +45,14 @@ const implementations = [
     kind: web.forkSubagentLinkKind,
     label: web.forkSubagentLinkLabel,
     drop: web.dropPeriodAfterSubagentLinks,
+    hrefs: web.forkSubagentLinkHrefs,
   },
   {
     name: "mobile",
     kind: mobile.no3ySubagentChipKind,
     label: mobile.no3ySubagentChipLabel,
     drop: mobile.dropPeriodAfterSubagentChips,
+    hrefs: mobile.no3ySubagentChipHrefs,
   },
 ];
 
@@ -56,6 +60,10 @@ describe.each(implementations)("fork guard: no3y-subagent-link-chip ($name)", (i
   it("reads a child's status the way the sidebar does", () => {
     expect(impl.kind({ ...base, hasPendingApprovals: true })).toBe("approval");
     expect(impl.kind({ ...base, hasPendingUserInput: true })).toBe("input");
+    // Its own child is blocked on the user.
+    const running = { ...base, runtime: runtime("running") };
+    expect(impl.kind({ ...running, pendingSubagentRequest: "approval" })).toBe("approval");
+    expect(impl.kind({ ...running, pendingSubagentRequest: "user_input" })).toBe("input");
     expect(impl.kind({ ...base, runtime: runtime("running") })).toBe("working");
     expect(impl.kind({ ...base, runtime: runtime("running"), blockedOnThreadWait: true })).toBe(
       "waiting",
@@ -87,6 +95,22 @@ describe.each(implementations)("fork guard: no3y-subagent-link-chip ($name)", (i
     expect(impl.drop(`[r2](${HREF}). Then more.`, [HREF])).toBe(`[r2](${HREF}). Then more.`);
     expect(impl.drop(`[x](${HREF}2).`, [HREF])).toBe(`[x](${HREF}2).`);
   });
+
+  it("leaves code alone", () => {
+    const fenced = `\`\`\`md\n[x](${HREF}).\n\`\`\`\nAfter [r2](${HREF}).`;
+    expect(impl.drop(fenced, [HREF])).toBe(fenced.slice(0, -1));
+    const inline = `Write \`[x](${HREF}).\``;
+    expect(impl.drop(inline, [HREF])).toBe(inline);
+    expect(impl.hrefs(`\`[x](${HREF})\``)).toEqual([]);
+    expect(impl.hrefs(`[a](${HREF}) and [b](${HREF})`)).toEqual([HREF]);
+  });
+
+  it("keeps the period at the end of text still streaming in", () => {
+    expect(impl.drop(`running: [r2](${HREF}).`, [HREF], true)).toBe(`running: [r2](${HREF}).`);
+    expect(impl.drop(`running: [r2](${HREF}).\n\nMore`, [HREF], true)).toBe(
+      `running: [r2](${HREF})\n\nMore`,
+    );
+  });
 });
 
 describe("fork guard: no3y-subagent-link-chip wiring", () => {
@@ -96,13 +120,16 @@ describe("fork guard: no3y-subagent-link-chip wiring", () => {
     );
     const chatMarkdown = readRepoFile("apps/web/src/components/ChatMarkdown.tsx");
     expect(chatMarkdown).toContain("useForkSubagentLinkText(");
-    expect(chatMarkdown).toContain("<ForkSubagentLinkScope value={subagentScope}>");
+    // Assistant rows opt in; tool output, PR bodies and file previews keep upstream's chip.
+    const assistantRows = readRepoFile("apps/web/src/components/chat/TimelineAssistantRows.tsx");
+    expect(assistantRows.split("<ForkSubagentLinkScope value=").length - 1).toBe(2);
   });
 
   it("renders the capsule for assistant messages on mobile", () => {
-    expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(
-      "subagentChips.customization(href) ??",
-    );
+    const threadFeed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
+    expect(threadFeed).toContain("subagentChips.customization(href) ??");
+    // Replies, sent messages and reasoning all name the thread whose family holds idle children.
+    expect(threadFeed.split("no3ySubagentChips={{ threadId: props.threadId").length - 1).toBe(3);
     expect(readRepoFile("apps/mobile/src/native/useEnrichedLinkVariants.ts")).toContain(
       "if (link.capsule) {",
     );
