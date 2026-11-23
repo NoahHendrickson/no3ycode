@@ -1,13 +1,12 @@
 /** Fork-owned — see `.fork/customizations.yaml#no3y-push`. */
 import * as Option from "effect/Option";
+import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
 import { AppState, Platform } from "react-native";
 
 import { environmentCatalog } from "../src/connection/catalog";
 import { appAtomRegistry } from "../src/state/atom-registry";
-
-// The Mac push service is mounted here by Tailscale Serve, next to the T3 server.
-export const NO3Y_PUSH_REGISTER_PATH = "/no3y-push/register";
+import { isNo3yBundleIdentifier, NO3Y_PUSH_MOUNT_PATH } from "./no3yConstants";
 
 type Catalog = ReturnType<typeof readCatalog>;
 
@@ -37,7 +36,10 @@ export function no3yPushOrigins(catalog: Catalog): ReadonlyArray<string> {
 }
 
 export function installNo3yPushRegistration(): () => void {
-  if (Platform.OS !== "ios") return () => {};
+  // The topic is this build's bundle ID: dev and preview tokens fail on production's.
+  const topic = Application.applicationId;
+  // An upstream-identity build (NO3Y_MOBILE_IDENTITY=0) uses upstream's own notification flow.
+  if (Platform.OS !== "ios" || !isNo3yBundleIdentifier(topic)) return () => {};
   let disposed = false;
   let token: string | null = null;
   const registered = new Set<string>();
@@ -48,10 +50,10 @@ export function installNo3yPushRegistration(): () => void {
       const key = `${origin} ${token}`;
       if (registered.has(key)) continue;
       registered.add(key);
-      void fetch(`${origin}${NO3Y_PUSH_REGISTER_PATH}`, {
+      void fetch(`${origin}${NO3Y_PUSH_MOUNT_PATH}/register`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, topic }),
       })
         .then((response) => {
           if (!response.ok) registered.delete(key);
