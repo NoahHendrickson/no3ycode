@@ -585,7 +585,7 @@ function ChecksRunningMark(props: { readonly color: string }) {
   );
 }
 
-/** The checks-failing mark: a solid dot the size of the running mark's ring. */
+/** The checks-failing mark: a solid dot the size of the running mark's inner pie. */
 function ChecksFailingMark(props: { readonly color: string }) {
   return (
     <View
@@ -597,7 +597,7 @@ function ChecksFailingMark(props: { readonly color: string }) {
       }}
     >
       <Svg width={14} height={14} viewBox="0 0 14 14">
-        <Circle cx={7} cy={7} r={7} fill={props.color} />
+        <Circle cx={7} cy={7} r={4} fill={props.color} />
       </Svg>
     </View>
   );
