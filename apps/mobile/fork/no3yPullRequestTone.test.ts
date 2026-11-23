@@ -65,15 +65,12 @@ describe("no3y pull request tone", () => {
 });
 
 describe("no3y pull request pill", () => {
-  it("marks running and failing checks on a single open pull request only", () => {
-    expect(pill([linkedPr(240, { checksState: "pending" })])).toEqual({
+  it("shows only the state of a single pull request, never its checks", () => {
+    expect(pill([linkedPr(240, { checksState: "failing" })])).toEqual({
       tone: "open",
       several: false,
       more: 0,
-      checks: "pending",
     });
-    expect(pill([linkedPr(240, { checksState: "failing" })]).checks).toBe("failing");
-    expect(pill([linkedPr(240, { state: "merged", checksState: "pending" })]).checks).toBeNull();
   });
 
   it("counts how many more a stack or several linked pull requests hold", () => {
@@ -82,9 +79,9 @@ describe("no3y pull request pill", () => {
       linkedPr(1),
       linkedPr(2, { baseBranch: "change-1" }),
       linkedPr(3, { baseBranch: "change-2" }),
-      linkedPr(4, { baseBranch: "change-3", checksState: "pending" }),
+      linkedPr(4, { baseBranch: "change-3" }),
     ];
-    expect(pill(stack)).toMatchObject({ several: true, more: 3, checks: null });
+    expect(pill(stack)).toMatchObject({ several: true, more: 3 });
     expect(pill([linkedPr(7), linkedPr(8)])).toMatchObject({ several: true, more: 1 });
   });
 });
