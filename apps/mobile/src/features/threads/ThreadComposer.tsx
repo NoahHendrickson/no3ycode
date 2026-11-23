@@ -124,7 +124,7 @@ import {
 } from "./use-thread-settings-sheet-presentation";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { RuntimeMode } from "@t3tools/contracts";
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yBottomScrim } from "../../../fork/No3yBottomFade";
 import { No3yComposerStyleProvider } from "../../../fork/No3yComposerStyle";
 import { No3yGlassLayer } from "../../../fork/No3yGlass";

@@ -182,10 +182,10 @@ function environmentTranscriber(
     /* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
   };
   const destinationKey = provider ? `cloud:${provider}:${model ?? ""}` : "environment";
-  // The shared fetch outlives one tap's abort, so it never takes the caller's signal.
-  const prepare = (signal: AbortSignal) =>
-    voicePrepareCache.read(prepared, destinationKey, () => prepareDestination(), signal);
-  warmLatestVoicePrepare = () => void prepare(new AbortController().signal).catch(() => {});
+  // The shared fetch takes the cache's signal, which aborts once every waiting tap has.
+  const prepare = (signal?: AbortSignal) =>
+    voicePrepareCache.read(prepared, destinationKey, prepareDestination, signal);
+  warmLatestVoicePrepare = () => void prepare().catch(() => {});
   return createEnvironmentTranscriber({
     canSend,
     prepare,

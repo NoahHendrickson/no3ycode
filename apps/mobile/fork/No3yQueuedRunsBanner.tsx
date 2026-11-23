@@ -253,6 +253,7 @@ export function No3yQueuedRunsBanner(props: {
                     controls.canDismiss &&
                     attachments.length === 0 &&
                     context?.guest === undefined &&
+                    (context?.records.length ?? 0) === 0 &&
                     text.trim().length > 0
                   }
                   canReorder={busyRunId === null}

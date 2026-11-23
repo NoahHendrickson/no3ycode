@@ -77,7 +77,11 @@ export function No3yCompactBanner(props: {
     if (compacting || !props.canCompact) return;
     setCompacting(true);
     compactNow(props.thread).then(
-      () => setCompacting(false),
+      () => {
+        setCompacting(false);
+        // The offer stays until the server compacts; hiding it keeps a second tap from paying twice.
+        dismissNo3yResumeCompaction(offer.key);
+      },
       (error: unknown) => {
         setCompacting(false);
         Dialog.alert(

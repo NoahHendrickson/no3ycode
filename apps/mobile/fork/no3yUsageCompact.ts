@@ -116,7 +116,8 @@ const KIND_MINS: Readonly<Record<string, number>> = {
 /**
  * The limit that will interrupt first. Shares of windows of different lengths do not compare (55%
  * of a week outlasts 69% of five hours), so it is the shortest window, the session, unless the
- * longest, the weekly, has WEEKLY_BINDING_REMAINING_PERCENT or less left. Null without windows.
+ * longest, the weekly, has WEEKLY_BINDING_REMAINING_PERCENT or less left. A spent window blocks
+ * now, the weekly first since it outlasts the session. Null without windows.
  */
 export function pickBindingUsageWindow<T>(
   windows: ReadonlyArray<T>,
@@ -134,6 +135,8 @@ export function pickBindingUsageWindow<T>(
   const weekly = byLength
     .filter((window) => minutes(window) === minutes(longest))
     .reduce((least, window) => (remainingOf(window) < remainingOf(least) ? window : least));
+  if (remainingOf(weekly) <= 0) return weekly;
+  if (remainingOf(session) <= 0) return session;
   return remainingOf(weekly) <= WEEKLY_BINDING_REMAINING_PERCENT ? weekly : session;
 }
 
@@ -146,6 +149,7 @@ export function ringWindowLabel(window: {
   const mins = window.windowDurationMins;
   if (window.id === "seven_day") return "7d";
   if (mins === undefined || mins <= 0) return window.label;
+  if (mins < 60) return `${mins}m`;
   if (mins < 24 * 60) return `${Math.round(mins / 60)}h`;
   return `${Math.round(mins / (24 * 60))}d`;
 }

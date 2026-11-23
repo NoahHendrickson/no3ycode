@@ -93,10 +93,9 @@ import {
   formatScheduledTaskInterval,
 } from "./scheduledTaskPresentation";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
 import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSection";
 import { No3yAutomationsScreen } from "../../../fork/No3yAutomationsScreen";
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yHomeTabRedirect } from "../../../fork/No3yHomeTabRedirect";
 import { useRoute } from "@react-navigation/native";
 /* fork:end no3y-mobile-redesign */
@@ -492,14 +491,7 @@ export function SettingsScheduledTasksRouteScreen() {
         showsVerticalScrollIndicator={false}
         className="flex-1"
         contentContainerClassName="gap-5 px-5 pt-4"
-        contentContainerStyle={{
-          paddingBottom:
-            Math.max(insets.bottom, 18) +
-            18 +
-            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-            (no3yBottomNav ? NO3Y_BOTTOM_NAV_CLEARANCE : 0),
-          /* fork:end no3y-mobile-redesign */
-        }}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
         {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
         {Platform.OS === "ios" ? (

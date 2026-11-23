@@ -21,7 +21,7 @@ import { shouldRestoreNativeSearch } from "./workspace-tabs-state";
 import { useFloatingWorkspaceTabs, useSidebarWorkspaceTabs } from "./useSystemWorkspaceTabBar";
 import { WorkspaceTabToolbarButtons } from "./WorkspaceSectionToolbar";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { useNo3yBottomNavEnabled } from "../../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../../fork/no3yBottomNavEnabled";
 /* fork:end no3y-mobile-redesign */
 
 const SEARCH_LABELS = {

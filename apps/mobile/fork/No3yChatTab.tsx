@@ -285,7 +285,11 @@ export function No3yChatTab() {
     openedEnvironmentRef.current = environmentId;
     setOpenFailure(null);
     void openScratch({ environmentId, input: {} }).then((result) => {
-      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+      if (result._tag !== "Failure") return;
+      // An interrupted open never ran, so the next render may try again; a real failure waits.
+      if (isAtomCommandInterrupted(result)) {
+        if (openedEnvironmentRef.current === environmentId) openedEnvironmentRef.current = null;
+      } else {
         const error = squashAtomCommandFailure(result);
         setOpenFailure(
           error instanceof Error ? error.message : "Could not open the No-project workspace.",
@@ -314,8 +318,9 @@ export function No3yChatTab() {
       setNo3yHomeDraft("chat", resolveNo3yChatDraftParams(undefined, project, uuidv4));
     },
   };
+  // A failure belongs to the connection it happened on; a disconnect shows its own notice.
   const unavailable =
-    openFailure ??
+    (environmentId === null ? null : openFailure) ??
     (scratchOption === null
       ? "Connect an environment with a No-project workspace to start a chat."
       : scratchOption.ready

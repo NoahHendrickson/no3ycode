@@ -64,9 +64,15 @@ export function stashPromptText(text: string, projectTitle: string | null): stri
 
 /** Moves the composer's text into the stash; attachments stay in the composer. */
 export function stashComposerPrompt(draftKey: string, projectTitle: string | null) {
-  const text = getComposerDraftSnapshot(draftKey).text;
+  const draft = getComposerDraftSnapshot(draftKey);
+  const text = draft.text;
   if (text.trim().length === 0) {
     Dialog.alert("Nothing to stash", "Type a prompt first.");
+    return;
+  }
+  // Clearing the text drops its thread and file references, which the text-only stash cannot hold.
+  if ((draft.context?.records.length ?? 0) > 0) {
+    Dialog.alert("Can't stash this prompt", "Remove its thread or file references first.");
     return;
   }
   stashPromptText(text, projectTitle);

@@ -39,7 +39,7 @@ import {
 } from "./useSystemWorkspaceTabBar";
 import { openSettings } from "../../settings/settings-navigation";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { useNo3yBottomNavEnabled } from "../../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../../fork/no3yBottomNavEnabled";
 import { No3yHomePanes } from "../../../../fork/No3yHomePanes";
 /* fork:end no3y-mobile-redesign */
 

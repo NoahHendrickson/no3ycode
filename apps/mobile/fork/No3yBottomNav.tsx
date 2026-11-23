@@ -13,7 +13,7 @@ import { useNavigation, type NavigationState } from "@react-navigation/native";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Keyboard, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useKeyboardState } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,8 +26,6 @@ import { isWorkspaceOverlayRoute } from "../src/features/layout/workspace-overla
 import { openSettings } from "../src/features/settings/settings-navigation";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
-import { isDuoDevice } from "../src/lib/device-type";
-import { useDeviceType } from "../src/native/native-layout-metrics";
 import { useServerConfigs } from "../src/state/entities";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import {
@@ -49,6 +47,7 @@ import { NO3Y_GLASS_RISE_IN } from "./no3yMotion";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import {
   hasNo3yNavPeek,
   listNo3yAutomationRunThreads,
@@ -305,16 +304,6 @@ function No3yPeekCard(props: {
 }
 
 /** Whether the compact iPhone Flat Glass dock is active for this device/layout. */
-export function useNo3yBottomNavEnabled(): boolean {
-  const deviceType = useDeviceType();
-  const { layout } = useAdaptiveWorkspaceLayout();
-  return (
-    Platform.OS === "ios" &&
-    deviceType !== "pad" &&
-    !layout.usesSplitView &&
-    !isDuoDevice(deviceType)
-  );
-}
 
 export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const enabled = useNo3yBottomNavEnabled();
@@ -364,7 +353,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const automationsBadgeColor = useMemo(() => {
     let hasWorking = false;
     for (const thread of listNo3yAutomationRunThreads({ threads })) {
-      if (thread.pinnedAt != null) continue;
+      if (thread.pinnedAt != null || thread.settledOverride === "settled") continue;
       const kind = resolveNo3yThreadCardStatusKind(thread, { now: nowIso });
       if (kind === "approval" || kind === "input" || kind === "request" || kind === "limited") {
         return palette.statusAttention;

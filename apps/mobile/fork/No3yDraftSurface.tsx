@@ -6,7 +6,7 @@
  */
 import { createContext, use, type ReactNode } from "react";
 
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { NO3Y_NEW_AGENT_SURFACE } from "./No3yNewAgent";
 
 export interface No3yDraftSurface {

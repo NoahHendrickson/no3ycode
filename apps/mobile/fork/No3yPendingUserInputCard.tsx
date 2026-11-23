@@ -44,7 +44,7 @@ import {
   type FlatGlassPalette,
 } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { No3yGlassLayer } from "./No3yGlass";
 import { no3yQuestionAfterSelect, no3yQuestionFooter } from "./no3yQuestionPaging";
 

@@ -15,7 +15,7 @@ describe("no3y-voice-prepare-cache", () => {
     const dictation = read("../../../mobile/src/features/voice-input/ComposerDictationControl.tsx");
     expect(destination).toContain("const voicePrepareCache = createVoicePrepareCache<string>();");
     expect(destination).toContain(
-      "voicePrepareCache.read(prepared, destinationKey, () => prepareDestination(), signal)",
+      "voicePrepareCache.read(prepared, destinationKey, prepareDestination, signal)",
     );
     expect(dictation).toContain("useVoicePreparePrefetch(props.isAvailable);");
   });

@@ -127,7 +127,7 @@ import { useThreadStatusAnnouncements } from "./useThreadStatusAnnouncements";
 import type { ThreadInspectorMode, ThreadInspectorTarget } from "./thread-inspector-navigation";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yThreadBarInset, No3yThreadTitleStyle } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 

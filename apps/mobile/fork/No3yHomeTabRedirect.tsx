@@ -8,7 +8,7 @@ import { View } from "react-native";
 
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { flatGlassPalette } from "./flatGlassTheme";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { setNo3yHomeTabsEnabled, showNo3yHomeTab, type No3yHomeTab } from "./no3yHomeTabs";
 
 export function No3yHomeTabRedirect(props: { readonly tab: No3yHomeTab }) {

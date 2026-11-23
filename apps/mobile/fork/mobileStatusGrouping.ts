@@ -36,6 +36,7 @@ import {
 import { relativeTime } from "../src/lib/time";
 import type { PendingNewTask } from "../src/state/use-pending-new-tasks";
 import type { ThreadMoveAvailability } from "../src/features/threads/threadOrder";
+import { isDraftThreadRoute } from "../src/features/threads/thread-route-state";
 import {
   resolveThreadListV2Status,
   resolveThreadListV2WokeAt,
@@ -706,15 +707,6 @@ const IMMERSIVE_OR_MODAL_ROUTES = new Set([
   "Connections",
   "ConnectionsNew",
 ]);
-
-function isDraftThreadRoute(route: RouteLike): boolean {
-  return (
-    route.name === "Thread" &&
-    route.params !== undefined &&
-    "draft" in route.params &&
-    Boolean((route.params as { readonly draft?: unknown }).draft)
-  );
-}
 
 /**
  * Which dock item should read as active for the current stack; Settings has none. Home reads

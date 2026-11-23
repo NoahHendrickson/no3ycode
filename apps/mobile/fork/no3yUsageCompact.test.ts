@@ -108,11 +108,16 @@ describe("no3y usage ring window", () => {
     expect(ring("codex", [window("secondary", 0, 10_080), window("primary", 90, 300)])).toBe(
       "7d 0",
     );
+    // A spent session blocks sends now, whatever the weekly has left.
+    expect(ring("codex", [window("primary", 0, 300), window("secondary", 15, 10_080)])).toBe(
+      "5h 0",
+    );
   });
 
   it("shows whichever window is reported alone", () => {
     expect(ring("claudeAgent", [window("seven_day", 55, 10_080)])).toBe("7d 55");
     expect(ring("claudeAgent", [window("five_hour", 69, 300)])).toBe("5h 69");
+    expect(ring("codex", [window("primary", 50, 30)])).toBe("30m 50");
     expect(ring("claudeAgent", [])).toBeNull();
   });
 

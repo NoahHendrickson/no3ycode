@@ -103,7 +103,7 @@ import { deriveHomeEmptyState } from "./home-empty-state";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { No3yStatusFilter, No3yThreadSortOrder } from "../../../fork/mobileStatusGrouping";
 import { No3yThreadsListView } from "../../../fork/No3yThreadsListView";
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yThreadsHeader } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
@@ -122,10 +122,10 @@ interface HomeScreenProps {
   readonly selectedEnvironmentId: EnvironmentId | null;
   readonly selectedProjectKey: string | null;
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  readonly statusFilter?: No3yStatusFilter;
-  readonly threadSortOrder?: No3yThreadSortOrder;
-  readonly onStatusFilterChange?: (filter: No3yStatusFilter) => void;
-  readonly onThreadSortOrderChange?: (order: No3yThreadSortOrder) => void;
+  readonly statusFilter: No3yStatusFilter;
+  readonly threadSortOrder: No3yThreadSortOrder;
+  readonly onStatusFilterChange: (filter: No3yStatusFilter) => void;
+  readonly onThreadSortOrderChange: (order: No3yThreadSortOrder) => void;
   /* fork:end no3y-mobile-redesign */
   readonly projectSortOrder: HomeProjectSortOrder;
   readonly projectGroupingMode: SidebarProjectGroupingMode;
@@ -633,7 +633,8 @@ export function HomeScreen(props: HomeScreenProps) {
         "this environment");
   const emptyState = deriveHomeEmptyState(props.catalogState, props.projects.length);
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  // The dock layout hides the native header, so an empty list keeps Settings and Usage here.
+  // The dock layout hides the native header, so an empty list keeps Settings and Usage here,
+  // and only that layout swaps in the Flat Glass list.
   const no3yBottomNav = useNo3yBottomNavEnabled();
   /* fork:end no3y-mobile-redesign */
 
@@ -757,8 +758,8 @@ export function HomeScreen(props: HomeScreenProps) {
   }
 
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const useNo3yFlatGlassList: boolean = Platform.OS === "ios";
-  if (useNo3yFlatGlassList) {
+  // The phone dock layout only: iPad keeps upstream's list, which has no Chat tab or Petal grid.
+  if (no3yBottomNav) {
     return (
       <No3yThreadsListView
         visible={props.visible}
@@ -781,8 +782,8 @@ export function HomeScreen(props: HomeScreenProps) {
         searchMatchedQuery={threadSearch.query}
         selectedEnvironmentId={props.selectedEnvironmentId}
         selectedProjectKey={props.selectedProjectKey}
-        statusFilter={props.statusFilter ?? "all"}
-        sortOrder={props.threadSortOrder ?? "status"}
+        statusFilter={props.statusFilter}
+        sortOrder={props.threadSortOrder}
         now={now}
         queuedThreadKeys={queuedThreadKeys}
         providersByEnvironmentId={providersByEnvironmentId}
@@ -798,8 +799,8 @@ export function HomeScreen(props: HomeScreenProps) {
         onSearchQueryChange={props.onSearchQueryChange}
         onEnvironmentChange={props.onEnvironmentChange}
         onProjectChange={props.onProjectChange}
-        onStatusFilterChange={props.onStatusFilterChange ?? (() => {})}
-        onSortOrderChange={props.onThreadSortOrderChange ?? (() => {})}
+        onStatusFilterChange={props.onStatusFilterChange}
+        onSortOrderChange={props.onThreadSortOrderChange}
         onSelectThread={props.onSelectThread}
         onArchiveThread={props.onArchiveThread}
         onDeleteThread={props.onDeleteThread}

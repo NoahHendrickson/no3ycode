@@ -36,7 +36,7 @@ import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../src/native/native-glass";
 import { No3yGlassLayer } from "./No3yGlass";
 import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { claimNo3yKeyboard } from "./no3yKeyboardOwner";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
 import { no3yRingUsageWindow } from "./no3yUsageCompact";
 import { useLendNo3yWorkspaceTabSelect } from "./no3yWorkspaceTabs";

@@ -74,10 +74,26 @@ describe("voice prepare cache", () => {
     const fetch = () => new Promise<string>((done) => (resolve = done));
     const controller = new AbortController();
     const aborted = cache.read(connection, "environment", fetch, controller.signal);
-    const waiting = cache.read(connection, "environment", fetch);
+    const waiting = cache.read(connection, "environment", fetch, new AbortController().signal);
     controller.abort(new Error("cancelled"));
     resolve("en");
     await expect(aborted).rejects.toThrow("cancelled");
     expect(await waiting).toBe("en");
+  });
+
+  it("cancels a hung fetch once its last caller aborts, so the next read fetches again", async () => {
+    const { cache } = setup();
+    const connection = {};
+    let fetchSignal: AbortSignal | undefined;
+    const hung = (signal: AbortSignal) => {
+      fetchSignal = signal;
+      return new Promise<string>(() => {});
+    };
+    const controller = new AbortController();
+    const first = cache.read(connection, "environment", hung, controller.signal);
+    controller.abort(new Error("cancelled"));
+    await expect(first).rejects.toThrow("cancelled");
+    expect(fetchSignal?.aborted).toBe(true);
+    expect(await cache.read(connection, "environment", () => Promise.resolve("en"))).toBe("en");
   });
 });

@@ -6,32 +6,17 @@
 export const VOICE_PREPARE_TTL_MS = 5 * 60_000;
 
 export interface VoicePrepareCache<T> {
-  /** The fresh value for this connection and destination, else one shared fetch of it. */
+  /**
+   * The fresh value for this connection and destination, else one shared fetch of it. Callers
+   * with a signal keep the fetch alive; when the last of them aborts, the fetch is cancelled so
+   * a hung one cannot hold up the next tap. A read without a signal (a prefetch) holds nothing.
+   */
   readonly read: (
     connection: object,
     destination: string,
-    fetch: () => Promise<T>,
+    fetch: (signal: AbortSignal) => Promise<T>,
     signal?: AbortSignal,
   ) => Promise<T>;
-}
-
-function abortable<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(signal.reason);
-  return new Promise<T>((resolve, reject) => {
-    const abort = () => reject(signal.reason);
-    signal.addEventListener("abort", abort, { once: true });
-    promise.then(
-      (value) => {
-        signal.removeEventListener("abort", abort);
-        resolve(value);
-      },
-      (error: unknown) => {
-        signal.removeEventListener("abort", abort);
-        reject(error);
-      },
-    );
-  });
 }
 
 export function createVoicePrepareCache<T>(
@@ -41,7 +26,13 @@ export function createVoicePrepareCache<T>(
   const now = options.now ?? Date.now;
   type Slot = { readonly connection: object; readonly destination: string };
   let entry: (Slot & { readonly value: T; readonly at: number }) | null = null;
-  let pending: (Slot & { readonly promise: Promise<T> }) | null = null;
+  let pending:
+    | (Slot & {
+        readonly promise: Promise<T>;
+        readonly controller: AbortController;
+        waiters: number;
+      })
+    | null = null;
   const same = (slot: Slot | null, connection: object, destination: string) =>
     slot !== null && slot.connection === connection && slot.destination === destination;
   return {
@@ -50,7 +41,8 @@ export function createVoicePrepareCache<T>(
         return Promise.resolve(entry!.value);
       }
       if (!same(pending, connection, destination)) {
-        const promise = fetch().then(
+        const controller = new AbortController();
+        const promise = fetch(controller.signal).then(
           (value) => {
             if (pending?.promise === promise) pending = null;
             entry = { connection, destination, value, at: now() };
@@ -61,10 +53,37 @@ export function createVoicePrepareCache<T>(
             throw error;
           },
         );
-        pending = { connection, destination, promise };
+        pending = { connection, destination, promise, controller, waiters: 0 };
       }
-      // A caller giving up does not cancel the shared fetch another caller may be waiting on.
-      return abortable(pending!.promise, signal);
+      const shared = pending!;
+      if (!signal) return shared.promise;
+      if (signal.aborted) return Promise.reject(signal.reason);
+      shared.waiters += 1;
+      return new Promise<T>((resolve, reject) => {
+        const leave = () => {
+          shared.waiters -= 1;
+          signal.removeEventListener("abort", abort);
+        };
+        const abort = () => {
+          leave();
+          reject(signal.reason);
+          if (shared.waiters === 0 && pending === shared) {
+            pending = null;
+            shared.controller.abort(signal.reason);
+          }
+        };
+        signal.addEventListener("abort", abort, { once: true });
+        shared.promise.then(
+          (value) => {
+            leave();
+            resolve(value);
+          },
+          (error: unknown) => {
+            leave();
+            reject(error);
+          },
+        );
+      });
     },
   };
 }

@@ -189,7 +189,7 @@ import { resolveNativeMarkdownTypography } from "../../lib/appearancePreferences
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { flatGlassPalette } from "../../../fork/flatGlassTheme";
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
 import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast } from "../../../fork/no3yLiveStatus";
 /* fork:end no3y-mobile-redesign */

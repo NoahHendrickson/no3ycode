@@ -3,7 +3,7 @@ import { useOpenThreadInspector } from "./thread-inspector-navigation";
 import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceTabBar";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
-import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */

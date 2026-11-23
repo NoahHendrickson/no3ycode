@@ -8179,6 +8179,7 @@
     - apps/mobile/fork/No3yStatusSectionHeader.tsx
     - apps/mobile/fork/No3yThreadRow.tsx
     - apps/mobile/fork/No3yBottomNav.tsx
+    - apps/mobile/fork/no3yBottomNavEnabled.ts
     - apps/mobile/fork/No3yBottomFade.tsx
     - apps/mobile/fork/No3yBottomTray.tsx
     - apps/mobile/fork/No3yChatTab.tsx
@@ -8256,6 +8257,7 @@
     - apps/mobile/src/Stack.tsx
     - apps/mobile/global.css
     - apps/mobile/src/lib/fontFamilies.ts
+    - apps/mobile/src/lib/filePreview.test.ts
     - apps/mobile/src/native/EnrichedMarkdownText.tsx
     - apps/mobile/src/features/settings/appearance/AppearancePreferencesProvider.tsx
     - apps/mobile/src/components/ComposerToolbar.tsx

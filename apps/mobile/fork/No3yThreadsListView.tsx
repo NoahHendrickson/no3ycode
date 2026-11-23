@@ -72,7 +72,7 @@ import {
   type No3yStatusGroupedListItem,
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { No3yBotsGrid } from "./No3yBotsGrid";
 import { listNo3yBots } from "./forkBots";

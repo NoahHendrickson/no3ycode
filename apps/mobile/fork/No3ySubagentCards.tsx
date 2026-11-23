@@ -39,7 +39,7 @@ import { environmentThreadDetails } from "../src/state/threads";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { hasNo3yProviderMark, No3yProviderMark } from "./No3yProviderMark";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { No3yStatusMark } from "./No3yStatusMark";
 import { no3ySubagentSpec } from "./no3ySubagentCard";
 import { no3ySubagentMarkKind } from "./no3yStatusSegments";

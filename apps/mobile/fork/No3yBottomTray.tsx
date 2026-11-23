@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NO3Y_BOTTOM_NAV_CLEARANCE, NO3Y_CONTROL_SIZE } from "./flatGlassTheme";
 import { No3yBottomFade } from "./No3yBottomFade";
-import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
+import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 
 /** Height of the bars the tray holds; lists pad by it so their last row clears the tray. */
 export const NO3Y_TRAY_BAR_HEIGHT = NO3Y_CONTROL_SIZE;
