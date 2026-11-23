@@ -10,7 +10,7 @@ import SlidersHorizontalIcon from "@hugeicons/core-free-icons/SlidersHorizontalI
 import StarIcon from "@hugeicons/core-free-icons/StarIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import { isReasoningSelect } from "@t3tools/client-runtime/model-traits";
-import type { ProviderOptionDescriptor, RuntimeMode } from "@t3tools/contracts";
+import type { ModelSelection, ProviderOptionDescriptor, RuntimeMode } from "@t3tools/contracts";
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
 import type { MenuAction } from "@react-native-menu/menu";
@@ -46,6 +46,8 @@ export interface No3yModelPickerSession {
   readonly favoritesLoaded: boolean;
   readonly toggleFavorite: (option: ModelOption) => void;
   readonly displayedDescriptors: ReadonlyArray<ProviderOptionDescriptor>;
+  readonly displayedModelSelection: ModelSelection | null;
+  readonly reportedModelSelection: ModelSelection | null;
   readonly promptTraits: {
     readonly primarySelectDescriptor: ProviderOptionDescriptor | null;
     readonly ultrathinkPromptControlled: boolean;
@@ -320,6 +322,13 @@ export function No3yModelPicker(props: {
   const otherOptions = session.displayedDescriptors.filter(
     (descriptor) => descriptor.id !== effort?.id,
   );
+  // What the provider reports wins, as in the full settings sheet's rows.
+  const currentValue = (descriptor: ProviderOptionDescriptor) =>
+    getProviderOptionCurrentValue(
+      descriptor,
+      session.displayedModelSelection,
+      session.reportedModelSelection,
+    );
   const optionActions: MenuAction[] = otherOptions.map((descriptor) =>
     descriptor.type === "select"
       ? {
@@ -328,16 +337,13 @@ export function No3yModelPicker(props: {
           subactions: descriptor.options.map((option) => ({
             id: `select:${descriptor.id}:${option.id}`,
             title: option.label,
-            state:
-              option.id === getProviderOptionCurrentValue(descriptor)
-                ? ("on" as const)
-                : ("off" as const),
+            state: option.id === currentValue(descriptor) ? ("on" as const) : ("off" as const),
           })),
         }
       : {
           id: `toggle:${descriptor.id}`,
           title: descriptor.label,
-          state: descriptor.currentValue ? ("on" as const) : ("off" as const),
+          state: currentValue(descriptor) === true ? ("on" as const) : ("off" as const),
         },
   );
   const pressOption = (actionId: string) => {
@@ -349,7 +355,7 @@ export function No3yModelPicker(props: {
           return;
         }
       } else if (actionId === `toggle:${descriptor.id}`) {
-        session.applyOptionChange(descriptor.id, !(descriptor.currentValue ?? false));
+        session.applyOptionChange(descriptor.id, currentValue(descriptor) !== true);
         return;
       }
     }

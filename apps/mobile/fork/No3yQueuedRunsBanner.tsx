@@ -211,7 +211,11 @@ export function No3yQueuedRunsBanner(props: {
       {expanded ? (
         <Animated.View entering={NO3Y_FADE_IN} exiting={NO3Y_FADE_OUT}>
           {/* A long queue scrolls under its header, which stays reachable above the keyboard. */}
-          <ScrollView style={{ maxHeight: QUEUE_ROWS_MAX_HEIGHT }} bounces={false}>
+          <ScrollView
+            style={{ maxHeight: QUEUE_ROWS_MAX_HEIGHT }}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
               const controls = resolveThreadQueueRowControls({
                 busy: busyRunId !== null,

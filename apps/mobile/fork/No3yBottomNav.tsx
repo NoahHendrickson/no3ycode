@@ -63,8 +63,7 @@ import { No3yBottomFade } from "./No3yBottomFade";
 import { No3yGlassLayer } from "./No3yGlass";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yStatusMark } from "./No3yStatusMark";
-import { scheduledTaskEditorSessionAtom } from "../src/features/settings/scheduled-task-editor-state";
-import { appAtomRegistry } from "../src/state/atom-registry";
+import { takeScheduledTaskNewLink } from "../src/features/settings/scheduled-task-editor-state";
 
 const DOCK_ITEM_WIDTH = 48;
 const DOCK_ITEM_HEIGHT = 36;
@@ -411,8 +410,8 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const create: Partial<Record<No3yNavItemId, () => void>> = {
     threads: show("newAgent"),
     automations: () => {
-      // A fresh form: the last edited task's session would otherwise save over that task.
-      appAtomRegistry.set(scheduledTaskEditorSessionAtom, null);
+      // A fresh form, as a new-task link gets: unsaved edits wait for the editor's discard prompt.
+      takeScheduledTaskNewLink({ routes: [{ name: "SettingsScheduledTaskNew" }] });
       openSettings(navigation, "SettingsScheduledTaskNew");
     },
     chat: show("chat"),

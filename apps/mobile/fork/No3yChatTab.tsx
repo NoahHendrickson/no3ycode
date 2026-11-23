@@ -276,15 +276,16 @@ export function No3yChatTab() {
 
   const openedEnvironmentRef = useRef<EnvironmentId | null>(null);
   useEffect(() => {
-    if (environmentId === null || project !== null) return;
-    if (openedEnvironmentRef.current === environmentId) return;
+    // One attempt per connection: a disconnect lets the next connection try again.
+    if (environmentId === null) {
+      openedEnvironmentRef.current = null;
+      return;
+    }
+    if (project !== null || openedEnvironmentRef.current === environmentId) return;
     openedEnvironmentRef.current = environmentId;
     setOpenFailure(null);
     void openScratch({ environmentId, input: {} }).then((result) => {
-      if (result._tag !== "Failure") return;
-      // Lets the next connection of this environment try again.
-      openedEnvironmentRef.current = null;
-      if (!isAtomCommandInterrupted(result)) {
+      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
         setOpenFailure(
           error instanceof Error ? error.message : "Could not open the No-project workspace.",
