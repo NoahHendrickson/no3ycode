@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   no3yElapsedLabel,
+  no3yGroupBackground,
   no3ySubagentMarkKind,
   no3yStatusSegments,
   type No3yStatusPillInput,
@@ -18,8 +19,11 @@ const idle: No3yStatusPillInput = {
   browserCount: 0,
 };
 
-const summary = (input: Partial<No3yStatusPillInput>) =>
-  no3yStatusSegments({ ...idle, ...input }).map(
+const summary = (input: Partial<No3yStatusPillInput>, group = false) =>
+  (group
+    ? no3yGroupBackground(no3yStatusSegments({ ...idle, ...input }))
+    : no3yStatusSegments({ ...idle, ...input })
+  ).map(
     (segment) =>
       `${segment.kind}${segment.count === null ? "" : `:${segment.count}`}${segment.needsYou ? "!" : ""}${segment.quiet ? "~" : ""}`,
   );
@@ -90,6 +94,32 @@ describe("no3y status pill segments", () => {
         status: { kind: "stop", label: "Not responding", unresponsive: true, action: null },
       }),
     ).toEqual(["status!"]);
+  });
+
+  it("groups two or more kinds of background work into one pill, keeping a lone kind as itself", () => {
+    const offline = {
+      kind: "connection",
+      tone: "unavailable",
+      label: "Offline",
+      onPress: () => {},
+    } as const;
+    expect(
+      summary(
+        {
+          status: offline,
+          backgroundKinds: ["command", "monitor"],
+          subagents: { live: 2, total: 2 },
+          childInputCount: 1,
+          browserCount: 1,
+        },
+        true,
+      ),
+    ).toEqual(["status!", "background:4!", "browser:1"]);
+    expect(summary({ backgroundKinds: ["monitor", "monitor"] }, true)).toEqual(["monitors:2"]);
+    // Finished subagents are not running work: they keep their own quiet pill beside a monitor.
+    expect(
+      summary({ backgroundKinds: ["monitor"], subagents: { live: 0, total: 3 } }, true),
+    ).toEqual(["monitors:1", "subagents:3~"]);
   });
 
   it("keeps extension, queue and previews reachable as their own segments", () => {

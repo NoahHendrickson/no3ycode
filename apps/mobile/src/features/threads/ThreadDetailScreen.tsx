@@ -5,7 +5,7 @@ import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceT
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
-import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
+import { No3yStatusPillSwap, no3yThreadHasPullRequest } from "../../../fork/No3yStatusPill";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
@@ -986,7 +986,10 @@ function ThreadDetailBody(
     queuedCount > 0 ||
     agentsSegment !== null ||
     devicePreviews.length > 0 ||
-    browserTabs.tabs.length > 0;
+    browserTabs.tabs.length > 0 ||
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    (no3yBottomNav && no3yThreadHasPullRequest(props.selectedThread));
+  /* fork:end no3y-mobile-redesign */
   const selectedThreadFeed = props.selectedThreadFeed;
   // A palette message result opens the thread at that message: earlier
   // history loads until the message is in the feed, which then scrolls to it.

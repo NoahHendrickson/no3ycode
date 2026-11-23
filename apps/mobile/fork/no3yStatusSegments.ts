@@ -1,5 +1,5 @@
 /**
- * What the no3y thread status pill shows — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * What the no3y pills above the composer show — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  * One segment per active kind (icon + count), with a needs-you flag the pill draws as an amber dot.
  */
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
@@ -10,6 +10,8 @@ export type No3yStatusSegmentKind =
   | "processes"
   | "monitors"
   | "subagents"
+  /** Two or more of processes, monitors and subagents, as one pill. */
+  | "background"
   | "extension"
   | "queue"
   | "devices"
@@ -85,6 +87,35 @@ export function no3yStatusSegments(input: No3yStatusPillInput): ReadonlyArray<No
   if (input.deviceCount > 0) push("devices", input.deviceCount);
   if (input.browserCount > 0) push("browser", input.browserCount);
   return segments;
+}
+
+const BACKGROUND_KINDS: ReadonlySet<No3yStatusSegmentKind> = new Set([
+  "processes",
+  "monitors",
+  "subagents",
+]);
+
+/**
+ * Folds processes, monitors and subagents into one "background" segment once two kinds run.
+ * Finished subagents are not running, so they keep their own quiet pill and its agents button.
+ */
+export function no3yGroupBackground(
+  segments: ReadonlyArray<No3yStatusSegment>,
+): ReadonlyArray<No3yStatusSegment> {
+  const members = segments.filter(
+    (segment) => BACKGROUND_KINDS.has(segment.kind) && !segment.quiet,
+  );
+  const first = members[0];
+  if (first === undefined || members.length < 2) return segments;
+  const group: No3yStatusSegment = {
+    kind: "background",
+    count: members.reduce((total, segment) => total + (segment.count ?? 0), 0),
+    needsYou: members.some((segment) => segment.needsYou),
+    quiet: false,
+  };
+  const at = segments.indexOf(first);
+  const rest = segments.filter((segment) => !members.includes(segment));
+  return [...rest.slice(0, at), group, ...rest.slice(at)];
 }
 
 /** A subagent's status as the Threads list's status mark, so both read the same way. */

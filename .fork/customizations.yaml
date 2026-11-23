@@ -8183,19 +8183,24 @@
     transcript never reads through; the upstream controls draw that style
     through fork/No3yComposerStyle.tsx's context and keep their behaviour.
     Above the card, the upstream full-width floating status control gives way
-    to one 30pt glass pill right-aligned with the card's edge
-    (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
-    amber dot when something there needs the user (transient status other than
-    a working turn, which the transcript's live status line already shows with
-    its time, so a running turn alone draws no pill and stop stays on the
-    composer; background
-    processes, monitors, subagents as a robot, Pi status, previews; queued
-    messages are in the queued-runs banner above the card), with
-    the scroll-to-end button beside it. A tap opens a half-height sheet
+    to a row of 32pt glass pills 12pt above the card, scrolling sideways from
+    24pt inside its edge (fork/No3yStatusPill.tsx, Figma "no3y code" 60:2786):
+    a transient status other than a working turn (the transcript's live status
+    line already shows that, so a running turn alone draws no pill and stop
+    stays on the composer), the thread's pull request on its state's tinted
+    glass (open green, merged purple, closed red, draft plain; a stack or
+    several as layers plus how many more; a running or failing checks mark),
+    then background processes, monitors and subagents, which fold into one
+    "N background tasks" pill once two kinds run, then Pi status and previews.
+    An amber dot marks what needs the user; queued messages are in the
+    queued-runs banner above the card; scroll-to-end sits at the row's right.
+    The status and background pills open a half-height sheet
     (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, previews). iPad and Android keep the upstream control.
+    status, previews); the others open their own target (the pull request or
+    the list of them, the agents sheet, Pi status, the preview). iPad and
+    Android keep the upstream control.
     Upstream moved working, compacting, background work and snooze/settle
     out of its floating status into the feed's closing status lines, and
     syncing into the thread header. The pill keeps them: fork/no3yPillStatus.ts

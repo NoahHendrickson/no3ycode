@@ -47,6 +47,8 @@ export interface FlatGlassPalette {
   readonly panelFallback: string;
   readonly panelBorder: string;
   readonly hairline: string;
+  /** The rim under the small pills above the composer (fork/No3yStatusPill.tsx). */
+  readonly pillShadow: string;
   readonly foreground: string;
   /** Every thread title, whatever its status, read state or shelf: pure white in dark. */
   readonly titleInk: string;
@@ -95,6 +97,7 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   panelFallback: "rgba(24, 27, 30, 0.88)",
   panelBorder: "rgba(255, 255, 255, 0.13)",
   hairline: "rgba(255, 255, 255, 0.12)",
+  pillShadow: "0px 0px 2px 1px rgba(0, 0, 0, 0.4)",
   foreground: "#E8E8E8",
   titleInk: "#FFFFFF",
   quietInk: "rgba(255, 255, 255, 0.65)",
@@ -136,6 +139,7 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   panelFallback: "rgba(248, 249, 251, 0.92)",
   panelBorder: "rgba(20, 22, 24, 0.10)",
   hairline: "rgba(20, 22, 24, 0.10)",
+  pillShadow: "0px 0px 2px 1px rgba(0, 0, 0, 0.08)",
   foreground: "#141618",
   titleInk: "#141618",
   quietInk: "rgba(20, 22, 24, 0.60)",

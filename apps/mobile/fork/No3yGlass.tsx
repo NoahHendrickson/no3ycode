@@ -12,7 +12,7 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../src/native/native-glass";
 import { flatGlassPalette } from "./flatGlassTheme";
 
-export function No3yGlassLayer(props: { readonly radius: number }) {
+export function No3yGlassLayer(props: { readonly radius: number; readonly tint?: string }) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   if (NATIVE_LIQUID_GLASS_SUPPORTED) {
@@ -21,6 +21,7 @@ export function No3yGlassLayer(props: { readonly radius: number }) {
         pointerEvents="none"
         glassEffectStyle="regular"
         colorScheme={themeAppearance === "dark" ? "dark" : "light"}
+        {...(props.tint === undefined ? {} : { tintColor: props.tint })}
         style={[StyleSheet.absoluteFill, { borderRadius: props.radius, overflow: "hidden" }]}
       />
     );
@@ -39,6 +40,9 @@ export function No3yGlassLayer(props: { readonly radius: number }) {
       ]}
     >
       <GlassBackdrop fallbackColor={palette.panelFallback} />
+      {props.tint === undefined ? null : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: props.tint }]} />
+      )}
     </View>
   );
 }
