@@ -377,8 +377,8 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     );
   }
   // The compaction or setup label owns the line; folded live reasoning keeps its row above it.
-  const forkRunningTool =
-    isForkStatusLine(row) && row.forkLive.kind === "work-live" ? (
+  const forkFoldedReasoning =
+    isForkStatusLine(row) && row.forkLive?.kind === "work-live" ? (
       <WorkLogBlock>
         <LiveWorkEntryTimelineRow row={row.forkLive} />
       </WorkLogBlock>
@@ -403,7 +403,7 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       /* fork:end fork-working-row-last */
     >
       {/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */}
-      {forkRunningTool}
+      {forkFoldedReasoning}
       {/* fork:end fork-working-row-last */}
       <div
         /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain

@@ -6177,30 +6177,36 @@
   intent: >
     A live turn shows one status line at the bottom, the way Claude Code
     does: the working mark, what the agent is doing now ("Thinking", a
-    startup label), and the turn's timer. A running tool is not folded into
-    it: the tool keeps its own upstream row in the transcript (its toggle
-    opens the group in place) and the line below it reads "Thinking" with
-    the timer, matching the no3y iPhone transcript. Upstream derives the
-    working row at the head of the active turn (the slot the turn's fold
-    divider takes when it ends) with a bottom border, and draws the thinking
-    line or running tool as a second row. The fork reorders and folds
-    useStableRows' output, so upstream's row derivation, row equality and
-    their tests stay untouched: the working row moves to the end, and the
-    turn's latest plain thinking row (or live reasoning, which reads
-    "Thinking" anyway) is removed from wherever it sits and carried on a
-    copy of the working row as `forkLive`, which renders ForkLiveStatusLine.
-    With a running tool and nothing to fold, the copy carries a synthetic
-    thinking row instead. While the turn waits on an approval or an answer
-    (TimelineRowActivityCtx's awaitingUser) that stand-in gives way to
-    upstream's "Working for …", since nothing is thinking; pending approvals
-    reach the transcript as plain `work` rows, so the fold cannot tell. Folded reasoning's open group stays
-    in place above the line, and the line stays mounted while its group is
-    open, so the toggle keeps keyboard focus. Upstream's failed-tool shape,
-    a `thinking` row with a groupId, keeps its own row above a plain
-    "Working for …" line. While compaction or worktree setup owns the line,
-    folded reasoning renders its upstream row above it. Labels are one rule
-    in forkStatusLineLabel; upstream's thought and reasoning previews stay
-    in the open group. The working row has no
+    startup label), and the turn's timer. Upstream derives the working row
+    at the head of the active turn (the slot the turn's fold divider takes
+    when it ends) with a bottom border, and draws at most one live activity
+    row (a thinking line, live reasoning, or the running tool) at the
+    turn's tail. The fork reorders and folds useStableRows' output, so
+    upstream's row derivation, row equality and their tests stay untouched:
+    the working row moves to the end and branches on that live row. A plain
+    thinking row or live reasoning is removed from wherever it sits and
+    carried on a copy of the working row as `forkLive`, which renders
+    ForkLiveStatusLine. A running tool keeps its own upstream row in the
+    transcript (its toggle opens the group in place) and the copy carries
+    `forkLive: null`, a plain "Thinking" line with the timer, matching the
+    no3y iPhone transcript. Upstream keeps the latest tool as the active
+    live row after it succeeds; out of the line it would still read
+    "Running", so a tool with an end status is handed over settled
+    (`active: false`, `forkSettled`, which row motion still counts as the
+    live slot). A tool with no status stays running, as upstream counts it.
+    The in-place row's label drops upstream's endlessly repainting
+    live-tool-shine; the line carries the motion. While the turn waits on
+    an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
+    line gives way to upstream's "Working for …", since nothing is
+    thinking; pending approvals reach the transcript as plain `work` rows,
+    so the fold cannot tell. Upstream's failed-tool shape, a `thinking` row
+    with a groupId, keeps its own row above a plain "Working for …" line,
+    even beside an earlier tool still running. Folded reasoning's open group
+    stays in place above the line, and the line stays mounted while its
+    group is open, so the toggle keeps keyboard focus. While compaction or
+    worktree setup owns the line, folded reasoning renders its upstream row
+    above it. Labels are one rule in forkStatusLineLabel; upstream's thought
+    and reasoning previews stay in the open group. The working row has no
     divider, and neither does the turn's fold row ("Worked for …") once the
     turn ends (theme.custom.css).
   tier: 4
@@ -6231,14 +6237,17 @@
     Reply text, tool rows and the live status line sit 16px apart, the way
     the no3y iPhone transcript spaces them; upstream's gaps there run from
     4px to 18px depending on which rows meet. A pass after
-    fork-working-row-last's fold computes, per row, the space its upper
-    neighbour already draws (TimelineRowContent's padding, WorkLogBlock's,
-    a reply's py-0.5, the status line's pt-1) and tops it up to 16px as
+    fork-working-row-last's fold reads one box per row (boxOf: the space it
+    draws above and below its content, from TimelineRowContent's padding,
+    WorkLogBlock's, a reply's or ungrouped tool row's py-0.5, a reasoning
+    trace's py-1 and the status line's pt-1) and tops the gap up to 16px as
     padding on the row's root. Only reply-to-tool, tool-to-reply and
     anything-to-live-line gaps are spaced (a send_to_user sent message counts
-    as a reply); user bubbles and every other row keep upstream's spacing. A row whose gap changes reaches the list as a
-    copy so its memoised content re-renders; rows whose gap holds keep
-    their identity. All palettes.
+    as a reply); user bubbles and every other row keep upstream's spacing.
+    A row whose gap changes reaches the list as a copy carrying it as
+    `forkGapTop`, so its memoised content re-renders; rows whose gap holds
+    keep their identity. The guard pins every padding boxOf reads, including
+    the list of kinds upstream gives pb-2. All palettes.
   tier: 3
   files:
     - apps/web/src/custom/forkTranscriptSpacing.ts

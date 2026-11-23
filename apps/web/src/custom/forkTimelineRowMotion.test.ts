@@ -67,6 +67,19 @@ describe("createTimelineRowMotion", () => {
     expect(motion.takeEntrance("b")).toBe(true);
   });
 
+  it("records no insertion when the live tool finishes and is drawn settled", () => {
+    const tool = {
+      kind: "work-live",
+      id: "live-activity-row",
+      active: true,
+    } as MessagesTimelineRow;
+    const settled = { ...tool, active: false, forkSettled: true } as unknown as MessagesTimelineRow;
+    const working = { kind: "working", id: "working" } as MessagesTimelineRow;
+    const motion = primed([message("a"), tool, working]);
+    motion.observe([message("a"), settled, working], "thread", true);
+    expect(motion.insertedRecently()).toBe(false);
+  });
+
   it("keeps the status line still when its folded group opens", () => {
     const working = { kind: "working", id: "working-indicator-row" } as MessagesTimelineRow;
     const openDetails = {

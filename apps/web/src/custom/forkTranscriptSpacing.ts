@@ -8,110 +8,90 @@ import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.log
 
 const FORK_TRANSCRIPT_GAP = 16;
 
-type Kind = "reply" | "work" | "live" | "other";
+type Spacing = "reply" | "work" | "live" | "other";
 
-function kindOf(row: MessagesTimelineRow): Kind {
+/** What a row already draws above and below its content, and how it is spaced. */
+interface Box {
+  readonly spacing: Spacing;
+  readonly top: number;
+  readonly bottom: number;
+}
+
+type SpacedRow = MessagesTimelineRow & { readonly forkGapTop: number };
+
+// Mirrors upstream's paddings, each pinned by the fork-transcript-spacing guard:
+// TimelineRowContent's pb-* chain, WorkLogBlock's pb-*, a reply's or ungrouped
+// WorkLogRow's py-0.5, a reasoning trace's and subagent tree's py-1, the line's pt-1.
+function boxOf(row: MessagesTimelineRow): Box {
   switch (row.kind) {
-    case "message":
-      return row.message.role === "assistant" ? "reply" : "other";
+    case "message": {
+      const outer = row.groupedWithNext
+        ? 4
+        : row.message.role === "assistant" && !row.showAssistantMeta
+          ? 8
+          : 16;
+      return row.message.role === "assistant"
+        ? { spacing: "reply", top: 2, bottom: outer + 2 }
+        : { spacing: "other", top: 0, bottom: outer };
+    }
     case "sent-message":
-      return "reply";
-    case "work":
+      return { spacing: "reply", top: 2, bottom: 8 + 2 };
+    case "work": {
+      const block = row.continuesWorkLog ? 0 : row.isExpandedToolGroup ? 4 : 8;
+      if (!row.isExpandedToolGroup) return { spacing: "work", top: 2, bottom: block + 2 };
+      // An expanded group's list draws py-0; a reasoning trace is one py-1 WorkLogDetails.
+      const trace = row.groupedEntries.every((entry) => entry.itemType === "reasoning") ? 4 : 0;
+      return { spacing: "work", top: 0, bottom: block + trace };
+    }
     case "work-live":
     case "work-toggle":
     case "thinking":
-      return "work";
+      return {
+        spacing: "work",
+        top: 2,
+        bottom: (row.continuesWorkLog || row.expanded === true ? 0 : 8) + 2,
+      };
     case "working":
-      return "live";
-    default:
-      return "other";
-  }
-}
-
-// A row's own top and bottom padding: a reply's py-0.5, and a tool row's
-// WorkLogRow py-0.5 outside an expanded group's list (which draws py-0).
-function ownPadding(row: MessagesTimelineRow): number {
-  switch (row.kind) {
-    case "message":
-      return row.message.role === "assistant" ? 2 : 0;
-    case "sent-message":
-    case "work-live":
-    case "work-toggle":
-    case "thinking":
-      return 2;
-    case "work":
-      return row.isExpandedToolGroup ? 0 : 2;
-    default:
-      return 0;
-  }
-}
-
-// The padding below a row's content: TimelineRowContent's, or WorkLogBlock's for
-// tool rows and subagent groups. Mirrors TimelineRowContent's class chain.
-function outerPadding(row: MessagesTimelineRow): number {
-  switch (row.kind) {
-    case "work":
-      if (row.continuesWorkLog) return 0;
-      if (!row.isExpandedToolGroup) return 8;
-      // An expanded reasoning trace is one WorkLogDetails, which adds py-1.
-      return row.groupedEntries.every((entry) => entry.itemType === "reasoning") ? 4 + 4 : 4;
-    case "work-live":
-    case "work-toggle":
-    case "thinking":
-      return row.continuesWorkLog || row.expanded === true ? 0 : 8;
+      // The fold leaves it last, so nothing reads its bottom.
+      return { spacing: "live", top: 4, bottom: 0 };
     case "event":
-      if (row.projectedItem.item.type !== "subagent") return 8;
-      // ForkSubagentGroup's tree adds py-1 inside its WorkLogBlock.
-      return (row.continuesWorkLog ? 0 : 8) + 4;
+      return row.projectedItem.item.type === "subagent"
+        ? { spacing: "other", top: 4, bottom: (row.continuesWorkLog ? 0 : 8) + 4 }
+        : { spacing: "other", top: 0, bottom: 8 };
     case "turn-fold":
-    case "working":
-      return 6;
-    case "message":
-      if (row.groupedWithNext) return 4;
-      return row.message.role === "assistant" && !row.showAssistantMeta ? 8 : 16;
+      return { spacing: "other", top: 0, bottom: 6 };
     case "worktree-setup":
     case "attempt-fold":
     case "html-render":
-    case "sent-message":
     case "mcp-app":
     case "viewed-images":
-      return 8;
+      return { spacing: "other", top: 0, bottom: 8 };
     default:
-      return 16;
+      return { spacing: "other", top: 0, bottom: 16 };
   }
 }
 
-// The space above a row's content: the live line's pt-1, or the row's own padding.
-function leadingSpace(row: MessagesTimelineRow, kind: Kind): number {
-  return kind === "live" ? 4 : ownPadding(row);
-}
-
-/** Extra space above `row` given the row above it, or 0. */
 function gapAbove(row: MessagesTimelineRow, previous: MessagesTimelineRow | undefined): number {
   if (previous === undefined) return 0;
-  const kind = kindOf(row);
-  const above = kindOf(previous);
+  const below = boxOf(row);
+  const above = boxOf(previous);
   const spaced =
-    kind === "live" ||
-    (kind === "reply" && above === "work") ||
-    (kind === "work" && above === "reply");
-  if (!spaced) return 0;
-  const drawn = outerPadding(previous) + ownPadding(previous) + leadingSpace(row, kind);
-  return Math.max(0, FORK_TRANSCRIPT_GAP - drawn);
+    below.spacing === "live" ||
+    (below.spacing === "reply" && above.spacing === "work") ||
+    (below.spacing === "work" && above.spacing === "reply");
+  return spaced ? Math.max(0, FORK_TRANSCRIPT_GAP - (above.bottom + below.top)) : 0;
 }
 
 // A row whose gap changes is handed to the list as a copy, so its memoised
 // content re-renders; rows whose gap holds keep their identity.
 const spacedRows = new WeakMap<MessagesTimelineRow[], MessagesTimelineRow[]>();
-const copies = new WeakMap<MessagesTimelineRow, MessagesTimelineRow>();
-const gapOf = new WeakMap<MessagesTimelineRow, number>();
+const copies = new WeakMap<MessagesTimelineRow, SpacedRow>();
 
-function spacedRow(row: MessagesTimelineRow, gap: number): MessagesTimelineRow {
+function spacedRow(row: MessagesTimelineRow, gap: number): SpacedRow {
   const copy = copies.get(row);
-  if (copy && gapOf.get(copy) === gap) return copy;
-  const next = { ...row };
+  if (copy?.forkGapTop === gap) return copy;
+  const next = { ...row, forkGapTop: gap };
   copies.set(row, next);
-  gapOf.set(next, gap);
   return next;
 }
 
@@ -133,6 +113,5 @@ export function forkSpaceTranscript(rows: MessagesTimelineRow[]): MessagesTimeli
 }
 
 export function forkTranscriptGapStyle(row: MessagesTimelineRow): CSSProperties | undefined {
-  const gap = gapOf.get(row);
-  return gap === undefined ? undefined : { paddingTop: gap };
+  return "forkGapTop" in row ? { paddingTop: (row as SpacedRow).forkGapTop } : undefined;
 }
