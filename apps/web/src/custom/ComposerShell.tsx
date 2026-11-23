@@ -88,11 +88,12 @@ export const ComposerShell = memo(function ComposerShell({
     <div className="relative flex min-w-0 flex-col">
       {/* Sibling of the vessel (not its child): the vessel's backdrop-filter makes it a
           Chromium Backdrop Root, which would stop a child from blurring the picture. It floats
-          over the transcript rather than pushing it up (ComposerShell.css). */}
+          over the transcript rather than pushing it up; a subagent approval arriving above
+          the composer collapses its background-work section (useComposerBackgroundWork). */}
       {!collapsedMobile && topVessel ? (
         <div
           data-fork-composer-top-vessel="true"
-          className="pointer-events-none relative z-20 flex flex-col"
+          className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"
         >
           {topVessel}
         </div>

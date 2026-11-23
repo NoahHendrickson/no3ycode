@@ -60,13 +60,3 @@
   outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
-
-/* The drawer floats above the vessel over whatever sits above the composer, so opening it
-   never moves the transcript (or, on the draft hero, the launchpad it is centred over). */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay]
-  [data-fork-composer-top-vessel] {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 100%;
-}
