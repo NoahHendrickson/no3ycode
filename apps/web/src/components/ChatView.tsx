@@ -4527,11 +4527,11 @@ export default function ChatView(props: ChatViewProps) {
                       {/* fork:end fork-new-agent-draft */}
                     </div>
                     {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
-                    {/* The composer's floor: the fork lifts upstream's 1rem/1.25rem dock
-                        offset to one 2rem; the safe-area term stays to clear a phone's
+                    {/* The composer's floor: the fork evens upstream's 1rem/1.25rem dock
+                        offset to one 1rem; the safe-area term stays to clear a phone's
                         home indicator. Height is on a spacer, not overlay padding: the overlay's
                         measured height drives the transcript inset and the cutoff mask. */}
-                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+2rem)]" />
+                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+1rem)]" />
                     {/* fork:end fork-composer-shell */}
                   </div>
                 </div>

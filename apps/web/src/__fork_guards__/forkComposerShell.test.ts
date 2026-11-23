@@ -851,12 +851,11 @@ describe("fork guard: fork-composer-shell", () => {
     expect(usage).toContain("work.content");
     expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
     expect(chatView).toContain("useComposerBackgroundWork(");
-    // In flow, so an open drawer never covers the approval cards and asks above the composer;
-    // only the draft hero floats it.
+    // The drawer floats over the transcript, so opening it never pushes the chat up.
     const shell = readSibling("../custom/ComposerShell.tsx");
     expect(shell).toContain('className="pointer-events-none relative z-20 flex flex-col"');
     expect(shellCss).toMatch(
-      /\[data-draft-hero\]\s*\[data-fork-composer-top-vessel\]\s*\{[^}]*position:\s*absolute/u,
+      /\[data-chat-composer-overlay\]\s*\[data-fork-composer-top-vessel\]\s*\{[^}]*position:\s*absolute/u,
     );
     expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
     expect(chatView).toContain("backgroundWork={composerBackgroundWork.section}");

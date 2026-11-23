@@ -61,10 +61,10 @@
   outline-offset: -2px;
 }
 
-/* The draft hero centres its composer over the launchpad, where an in-flow drawer would push
-   both down: there the drawer floats above the vessel instead. */
+/* The drawer floats above the vessel over whatever sits above the composer, so opening it
+   never moves the transcript (or, on the draft hero, the launchpad it is centred over). */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay][data-draft-hero]
+  [data-chat-composer-overlay]
   [data-fork-composer-top-vessel] {
   position: absolute;
   inset-inline: 0;

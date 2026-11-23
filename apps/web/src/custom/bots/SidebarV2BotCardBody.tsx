@@ -49,8 +49,9 @@ export function petalTileHoverAnchor(threadKey: string) {
 }
 
 /** A bot in the Petals grid (Figma no3y-code 11:3126): a tile washed 4% in the sidebar's ink,
-    the mascot fitted to 28px in a 36px box over its 10px name, 4 + 36 + 12 + 4 = 56px tall, and
-    the status mark in its top-right corner. */
+    the mascot fitted to 24px in a 28px box over its 10px name, 8 + 28 + 12 + 10 = 58px tall (the
+    box's own 2px slack evens the gaps above the mascot and below the name), and the status mark
+    in its top-right corner. */
 export function SidebarV2BotGridBody(props: {
   readonly shell: Parameters<typeof botMascotShape>[0];
   readonly mood: BotMascotMood;
@@ -67,9 +68,9 @@ export function SidebarV2BotGridBody(props: {
   readonly sweepBadge: ReactNode | null;
 }) {
   return (
-    <div className="relative z-10 flex flex-col items-center bg-sidebar-foreground/4 px-2 pt-1 pb-1">
-      <span className="flex size-9 items-center justify-center">
-        <BotMascot shape={botMascotShape(props.shell)} mood={props.mood} fit={28} />
+    <div className="relative z-10 flex flex-col items-center bg-sidebar-foreground/4 px-1 pt-2 pb-2.5">
+      <span className="flex size-7 items-center justify-center">
+        <BotMascot shape={botMascotShape(props.shell)} mood={props.mood} fit={24} />
       </span>
       <span
         data-fork-bot-grid-badge=""
