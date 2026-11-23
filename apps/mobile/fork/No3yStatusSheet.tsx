@@ -24,6 +24,7 @@ import type {
 } from "../src/features/threads/floating-working-status";
 import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
+import { no3ySheetBackground } from "./no3ySheet";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yCircleButton } from "./No3yControls";
 import { No3yStatusGlyph } from "./No3yStatusPill";
@@ -202,7 +203,7 @@ export function No3yStatusSheet({ route }: StaticScreenProps<{ readonly threadKe
     }
   }
   return (
-    <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
+    <View style={{ flex: 1, backgroundColor: no3ySheetBackground(palette.stageBackground) }}>
       <View
         style={{
           flexDirection: "row",

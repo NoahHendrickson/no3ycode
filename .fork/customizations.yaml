@@ -8005,6 +8005,11 @@
     gives the body it as its header height) and it scrolls under the bubbles;
     the back swipe stays native. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
+    On iOS 26 the no3y half sheets (usage, model, status, prompt stash) have
+    a clear body and route content, so the native sheet owns the surface and
+    its display-concentric shape; their opaque page-coloured bodies drew a
+    second, smaller corner inside the sheet's (fork/no3ySheet.ts; earlier iOS
+    keeps the page colour).
     The usage buttons (thread ring and Threads gauge alike) open a half sheet
     that scrolls (fork/No3yUsageSheet.tsx; a fitToContents sheet was sized on
     iOS before the limits arrived and clipped them), which asks every
@@ -8172,6 +8177,7 @@
     - apps/mobile/fork/No3yPullRequestMark.tsx
     - apps/mobile/fork/No3yCompactBanner.tsx
     - apps/mobile/fork/no3yInPlaceProject.ts
+    - apps/mobile/fork/no3ySheet.ts
     - apps/mobile/fork/no3yInPlaceProject.test.ts
     - apps/mobile/fork/no3yResumeCompaction.ts
     - apps/mobile/fork/no3yResumeCompaction.test.ts

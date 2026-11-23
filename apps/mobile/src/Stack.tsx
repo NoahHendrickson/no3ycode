@@ -149,6 +149,7 @@ import { No3yChatLinkScreen } from "../fork/No3yHomeTabRedirect";
 import { no3yHomeTabsAtom, resolveNo3yHomeDraftFlow } from "../fork/no3yHomeTabs";
 import { registerNo3ySheetRoutes } from "../fork/no3yDockMove";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
+import { no3ySheetOptions } from "../fork/no3ySheet";
 import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 import { No3yStatusSheet } from "../fork/No3yStatusSheet";
 import { No3yPromptStashSheet } from "../fork/No3yPromptStashSheet";
@@ -161,7 +162,7 @@ const settingsPage = (title: string) => pageRoute({ title, itemStyle: "standard"
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 // The iPhone model picker (fork/No3yModelPicker.tsx) is a half sheet that never grows.
 const THREAD_SETTINGS_ROUTE = NO3Y_MODEL_SHEET
-  ? sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })
+  ? no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }))
   : /* fork:end no3y-mobile-redesign */
     sheetRoute({
       detent: "full",
@@ -551,17 +552,17 @@ const RootStackConfig = createWorkspaceStackNavigator({
     // once, before the limits arrived, and clipped the rows that came after.
     No3yUsage: createNativeStackScreen({
       screen: No3yUsageSheet,
-      options: sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),
     }),
     // The composer's stashed prompts (fork/No3yPromptStashSheet.tsx).
     No3yPromptStash: createNativeStackScreen({
       screen: No3yPromptStashSheet,
-      options: sheetRoute({ detent: 0.5, header: "none" }),
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, header: "none" })),
     }),
     // The thread status pill's half sheet (fork/No3yStatusPill.tsx), the usage sheet's shape.
     No3yThreadStatus: createNativeStackScreen({
       screen: No3yStatusSheet,
-      options: sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" }),
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),
     }),
     /* fork:end no3y-mobile-redesign */
     PullRequest: createNativeStackScreen({

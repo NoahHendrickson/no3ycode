@@ -33,6 +33,7 @@ import { No3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
 import { No3yGlassLayer } from "./No3yGlass";
+import { no3ySheetBackground } from "./no3ySheet";
 
 /** iPhone gets this picker in a half sheet; iPad and Android keep the full thread settings sheet. */
 export const NO3Y_MODEL_SHEET = Platform.OS === "ios" && !Platform.isPad;
@@ -319,7 +320,7 @@ export function No3yModelPicker(props: {
     effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
+    <View style={{ flex: 1, backgroundColor: no3ySheetBackground(palette.stageBackground) }}>
       <View
         style={{
           flexDirection: "row",

@@ -25,6 +25,7 @@ import { openSettings } from "../src/features/settings/settings-navigation";
 import { useRefreshLimits } from "../src/features/usage/UsageLimitsSection";
 import { environmentPresentations } from "../src/state/presentation";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
+import { no3ySheetBackground } from "./no3ySheet";
 import { HugeIcon } from "./HugeIcon";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT } from "./no3yMotion";
 import { No3yProviderMark } from "./No3yProviderMark";
@@ -76,7 +77,7 @@ export function No3yUsageSheet(props: StaticScreenProps<{ readonly driver?: stri
   const muted = { fontSize: 12, color: palette.metaInk } as const;
   return (
     <ScrollView
-      style={{ backgroundColor: palette.stageBackground }}
+      style={{ backgroundColor: no3ySheetBackground(palette.stageBackground) }}
       contentContainerStyle={{
         paddingHorizontal: 16,
         // 24pt clear of the grabber, which sits in the sheet's top 12pt, and of the rounded bottom.

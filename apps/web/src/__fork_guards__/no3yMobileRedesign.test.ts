@@ -604,6 +604,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(screenHeader).toContain('StackActions.push("No3yUsage", driver === undefined');
     expect(readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx")).not.toContain("peekRing");
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
+    // The native sheet owns the half sheets' surface and shape on iOS 26 (one concentric corner).
+    expect(stack).toContain(
+      'options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),',
+    );
+    expect(readRepoFile("apps/mobile/fork/No3yUsageSheet.tsx")).toContain(
+      "backgroundColor: no3ySheetBackground(palette.stageBackground)",
+    );
     // The usage sheet is the Mac drawer's compact rows in a half sheet that scrolls, refreshed
     // on open, with explicit checking / offline / empty states.
     expect(stack).not.toContain('sheetAllowedDetents: "fitToContents",');

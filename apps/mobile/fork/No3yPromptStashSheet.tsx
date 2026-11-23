@@ -22,6 +22,7 @@ import { uuidv4 } from "../src/lib/uuid";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { getComposerDraftSnapshot, setComposerDraftText } from "../src/state/use-composer-drafts";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
+import { no3ySheetBackground } from "./no3ySheet";
 import { No3yCircleButton } from "./No3yControls";
 import {
   createPromptStash,
@@ -99,7 +100,9 @@ export function No3yPromptStashSheet({ route }: StaticScreenProps<{ readonly dra
     ]);
   };
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.stageBackground }}>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: no3ySheetBackground(palette.stageBackground) }}
+    >
       <View
         style={{
           flexDirection: "row",
