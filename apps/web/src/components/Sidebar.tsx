@@ -5381,6 +5381,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               onLayoutChange={setBotsLayout}
               compactCards={compactBots}
               onCompactCardsChange={setCompactBots}
+              naming={
+                namingBot ? (
+                  <SidebarV2NewBotRow
+                    view={petalView}
+                    initialMascot={nextBotMascotShape(
+                      botThreads.map((bot) => botMascotShape(bot.source)),
+                    )}
+                    onCreate={createBot}
+                    onDone={() => setNamingBot(false)}
+                  />
+                ) : null
+              }
             >
               {/* A folded Bots section keeps the open bot's card. */}
               {botThreads
@@ -5401,16 +5413,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     /* fork:end fork-bot-work-threads */
                   }),
                 )}
-              {namingBot ? (
-                <SidebarV2NewBotRow
-                  view={petalView}
-                  initialMascot={nextBotMascotShape(
-                    botThreads.map((bot) => botMascotShape(bot.source)),
-                  )}
-                  onCreate={createBot}
-                  onDone={() => setNamingBot(false)}
-                />
-              ) : null}
             </SidebarV2BotsRow>
             {/* fork:end fork-bots */}
             {!hasGroupingHeaders ? (

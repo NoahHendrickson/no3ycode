@@ -3635,7 +3635,8 @@
     and the control row sits on the stage; an open usage drawer, attached
     banners and the Questions card are lift-1 trays over it with an 8%
     hairline; the prompt keeps its round corners and its frame fills the
-    wedges beside them (kit 289:5475).
+    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
+    scoped to the thread composer's form).
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3653,6 +3654,7 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.flat-glass-composer.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts

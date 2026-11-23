@@ -67,8 +67,8 @@ export function useSidebarV2BotsLayout(): [PetalLayout, (value: PetalLayout) => 
     as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
     32px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
-  /** The Petals' view: the compact line, or the full card (which the grid's row also draws,
-      spanning every column). */
+  /** The Petals' view: the compact line, or the full card (which the grid also draws, below
+      its tiles). */
   readonly view: SidebarV2CardView;
   /** The mascot offered first; the button beside the name steps through the rest. */
   readonly initialMascot: BotMascotShape;
@@ -107,7 +107,6 @@ export function SidebarV2NewBotRow(props: {
       className={cn(
         "flex list-none items-center gap-x-2",
         compact ? "h-8" : "h-11",
-        props.view === "grid" && "col-span-full",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
@@ -206,6 +205,9 @@ export function SidebarV2BotsRow(props: {
   readonly compactCards: boolean;
   readonly onCompactCardsChange: (compactCards: boolean) => void;
   readonly children: ReactNode;
+  /** The row naming a new Petal. The grid draws it under its tiles: a spanning grid item would
+      fill auto-fit's empty columns and squeeze the tiles while the name is typed. */
+  readonly naming: ReactNode;
 }) {
   return (
     <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
@@ -283,7 +285,13 @@ export function SidebarV2BotsRow(props: {
           )}
         >
           {props.children}
+          {props.layout === "grid" ? null : props.naming}
         </ul>
+        {props.layout === "grid" && props.naming ? (
+          <ul role="presentation" className="mt-2">
+            {props.naming}
+          </ul>
+        ) : null}
       </TooltipProvider>
     </SidebarGroup>
   );

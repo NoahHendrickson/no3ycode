@@ -893,10 +893,10 @@
       :has(> [data-testid="composer-editor"]) ~ div,
       [data-fork-dictation-preview]
     ) {
-    /* 16px Geist on a 24px line. The 32px action slot sets the 48px compact row (8 + 32 + 8);
-       the one-line prompt sits centred beside it, and each wrapped line adds one more. Below sm
-       the type stays 16px so iOS does not zoom on focus. */
-    font-size: 16px;
+    /* The prompt size (16px by default, appearanceFonts.ts) on a 1.5 line. The 32px action
+       slot sets the 48px compact row (8 + 32 + 8); the one-line prompt sits centred beside it,
+       and each wrapped line adds one more. Below sm the type stays 16px so iOS does not zoom. */
+    font-size: var(--font-size-prompt, 1rem);
     line-height: var(--fork-composer-prompt-line);
   }
 
@@ -1044,7 +1044,7 @@
 
 @media (width >= 40rem) {
   :root[data-fork="noahhendrickson-t3code"] {
-    --fork-composer-prompt-line: 24px;
+    --fork-composer-prompt-line: calc(var(--font-size-prompt, 1rem) * 1.5);
   }
 }
 

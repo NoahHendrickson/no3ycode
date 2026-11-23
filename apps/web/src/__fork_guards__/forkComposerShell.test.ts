@@ -391,9 +391,11 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-testid="composer-editor"]') &&
         rule.body.includes("font-size"),
     );
-    expect(promptType?.body).toMatch(/font-size:\s*16px/u);
+    expect(promptType?.body).toMatch(/font-size:\s*var\(--font-size-prompt, 1rem\)/u);
     expect(promptType?.body).toMatch(/line-height:\s*var\(--fork-composer-prompt-line\)/u);
-    expect(theme).toMatch(/--fork-composer-prompt-line:\s*24px/u);
+    expect(theme).toMatch(
+      /--fork-composer-prompt-line:\s*calc\(var\(--font-size-prompt, 1rem\) \* 1\.5\)/u,
+    );
     const placeholderColor = rules.find(
       (rule) =>
         /:has\(>\s*\[data-testid="composer-editor"\]\)\s*~\s*div/u.test(rule.selector) &&
