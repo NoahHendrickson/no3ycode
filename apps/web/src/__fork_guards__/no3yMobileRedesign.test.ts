@@ -668,14 +668,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('selectTab("pullRequests")');
     expect(dock).toContain('selectNo3yWorkspaceTab("threads", openWorkspaceTab)');
-    // Dock switches are a plain swap: the native push or pop is off for them, and nothing fades.
-    expect(dock).toContain("markNo3yDockSwitch();");
     // A sheet never hides the dock: it reads the routes beneath formSheets.
     expect(dock).toContain(
       "no3yRoutesUnderSheets(props.state.routes.slice(0, props.state.index + 1))",
     );
     expect(stack).toContain("registerNo3ySheetRoutes(");
-    expect(stack).toContain("...no3yDockScreenOptions(),");
     // Never fade an ancestor of glass: a UIGlassEffect installed mid-fade never renders.
     expect(readRepoFile("apps/mobile/fork/No3yStatusPill.tsx")).not.toContain("NO3Y_FADE_IN");
     expect(readRepoFile("apps/mobile/fork/No3yBottomNav.tsx")).toContain("NO3Y_GLASS_RISE_IN");

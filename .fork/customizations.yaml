@@ -7930,12 +7930,13 @@
     on the workspace screens and New agent and hides inside a thread; a sheet
     over those screens never hides it (it reads the routes beneath formSheets,
     which cover it natively; hiding it only brought it back late, once the
-    sheet's route left the stack after its dismissal). A dock
-    switch is a plain swap: the press marks it and the root stack runs it
-    without the native push or pop (fork/no3yDockMove.ts), and nothing fades
-    in: a fade there once hid the composer's glass (expo-glass-effect installs
-    its UIGlassEffect once, and one installed under a fading ancestor never
-    renders). Motion elsewhere uses fork/no3yMotion.ts's
+    sheet's route left the stack after its dismissal; fork/no3yDockMove.ts).
+    A dock switch is the workspace stack's own push or pop: its react-native-
+    screens v5 host animates every push and pop and has no per-transition
+    animation option, so an instant switch needs a native change or a dock
+    that is not stack routes. Nothing fades in on a switch: a fade there once
+    hid the composer's glass (expo-glass-effect installs its UIGlassEffect
+    once, and one installed under a fading ancestor never renders). Motion elsewhere uses fork/no3yMotion.ts's
     UI-thread presets, retargeted mid-flight and instant under Reduce Motion:
     a 200ms eased layout slide for Threads rows (folding a status section,
     settling a card), chats, Petals, project tiles, automation tiles and run
@@ -7979,9 +7980,10 @@
     title in its own pill (16pt Medium, one line), and a pill holding one usage
     button (a ring for the model the composer chip shows, a switch in the
     model sheet included: the share left of its limit that will interrupt
-    first, the least left among its windows with Claude's seven_day_fable
-    left out, the shorter window on a tie, named only in its accessibility
-    label; fork/no3yUsageCompact.ts; a gauge when it reports none; the sheet it
+    first: the session (shortest) window, unless the weekly (longest) has 20%
+    or less left (WEEKLY_BINDING_REMAINING_PERCENT), since shares of windows of
+    different lengths do not compare; Claude's seven_day_fable left out;
+    named only in its accessibility label; fork/no3yUsageCompact.ts; a gauge when it reports none; the sheet it
     opens lists that provider first with that window marked) and a ⋯ menu with the project, environment and branch as info rows
     plus the git, terminal and files items, their one home, reachable in every
     thread state. The transcript's top inset is that row's (No3yThreadBarInset

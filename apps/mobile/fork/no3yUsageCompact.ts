@@ -103,28 +103,38 @@ export function no3yUsageSheetState(input: {
   return input.checked ? "empty" : "checking";
 }
 
+/** A weekly window this close to empty binds before the session does. */
+export const WEEKLY_BINDING_REMAINING_PERCENT = 20;
+
+/** Typical minutes per window kind, for windows that report no duration. */
+const KIND_MINS: Readonly<Record<string, number>> = {
+  session: 300,
+  weekly: 7 * 24 * 60,
+  monthly: 30 * 24 * 60,
+};
+
 /**
- * The limit that will interrupt first: the least left, the shorter window on a tie (an unknown
- * duration counts as longest). Null when there is no window.
+ * The limit that will interrupt first. Shares of windows of different lengths do not compare (55%
+ * of a week outlasts 69% of five hours), so it is the shortest window, the session, unless the
+ * longest, the weekly, has WEEKLY_BINDING_REMAINING_PERCENT or less left. Null without windows.
  */
 export function pickBindingUsageWindow<T>(
   windows: ReadonlyArray<T>,
   remainingOf: (window: T) => number,
   durationMinsOf: (window: T) => number | null | undefined,
+  kindOf: (window: T) => string,
 ): T | null {
-  let best: T | null = null;
-  for (const window of windows) {
-    if (best === null) {
-      best = window;
-      continue;
-    }
-    const left = remainingOf(window) - remainingOf(best);
-    const shorter =
-      (durationMinsOf(window) ?? Number.POSITIVE_INFINITY) <
-      (durationMinsOf(best) ?? Number.POSITIVE_INFINITY);
-    if (left < 0 || (left === 0 && shorter)) best = window;
-  }
-  return best;
+  const minutes = (window: T) =>
+    durationMinsOf(window) ?? KIND_MINS[kindOf(window)] ?? Number.POSITIVE_INFINITY;
+  const byLength = [...windows].sort((left, right) => minutes(left) - minutes(right));
+  const session = byLength[0];
+  const longest = byLength.at(-1);
+  if (session === undefined || longest === undefined) return null;
+  // Of several weeklies (Claude's per-model ones), the one with least left.
+  const weekly = byLength
+    .filter((window) => minutes(window) === minutes(longest))
+    .reduce((least, window) => (remainingOf(window) < remainingOf(least) ? window : least));
+  return remainingOf(weekly) <= WEEKLY_BINDING_REMAINING_PERCENT ? weekly : session;
 }
 
 /** A window's tiny ring label: 5h, 7d, else its duration in hours or days, else its own label. */
@@ -155,6 +165,7 @@ export function no3yRingUsageWindow(
     shown,
     remainingPercent,
     (window) => window.windowDurationMins,
+    (window) => window.kind,
   );
   return binding === null
     ? null
@@ -171,5 +182,6 @@ export function bindingPoolWindow(pool: LimitPool): LimitPoolWindow | null {
     compactTrayWindows(pool),
     (window) => window.remainingPercent,
     uniformWindowDurationMins,
+    (window) => window.kind,
   );
 }

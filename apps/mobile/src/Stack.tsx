@@ -146,7 +146,7 @@ import { workspaceDetailRouter } from "./features/layout/workspace/workspace-det
 import { No3yBottomNavHost } from "../fork/No3yBottomNav";
 import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
 import { isNo3yChatDraftRoute } from "../fork/no3yChat";
-import { no3yDockScreenOptions, registerNo3ySheetRoutes } from "../fork/no3yDockMove";
+import { registerNo3ySheetRoutes } from "../fork/no3yDockMove";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
 import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 import { No3yStatusSheet } from "../fork/No3yStatusSheet";
@@ -502,13 +502,9 @@ const RootStackConfig = createWorkspaceStackNavigator({
   UNSTABLE_router: workspaceDetailRouter,
   // React Navigation calls layouts inline; compiled components would share the navigator's memo cache.
   layout: (props) => <RootStackLayout {...props} />,
-  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  // A dock switch turns the native push or pop off; the arriving screen eases in itself.
-  screenOptions: () => ({
+  screenOptions: {
     headerShown: false,
-    ...no3yDockScreenOptions(),
-  }),
-  /* fork:end no3y-mobile-redesign */
+  },
   screens: {
     ...(__DEV__
       ? {

@@ -39,7 +39,7 @@ import {
 import { isNo3yChatThread } from "./no3yChatRule";
 import { useNo3ySentChats } from "./no3yChatTagging";
 import { selectNo3yWorkspaceTab } from "./no3yWorkspaceTabs";
-import { markNo3yDockSwitch, no3yRoutesUnderSheets } from "./no3yDockMove";
+import { no3yRoutesUnderSheets } from "./no3yDockMove";
 import { NO3Y_GLASS_RISE_IN } from "./no3yMotion";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
@@ -476,7 +476,6 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
               onPress={() => {
                 Keyboard.dismiss();
                 setPeekItem(null);
-                markNo3yDockSwitch();
                 press[item.id]();
               }}
               onLongPress={() => openPeek(item.id)}

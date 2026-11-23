@@ -81,43 +81,49 @@ describe("no3y usage sheet state", () => {
 });
 
 describe("no3y usage ring window", () => {
-  const window = (id: string, usedPercent: number, mins?: number) => ({
+  const window = (id: string, remaining: number, mins?: number) => ({
     id,
-    kind: id.startsWith("five") ? ("session" as const) : ("weekly" as const),
+    kind: mins !== undefined && mins < 24 * 60 ? ("session" as const) : ("weekly" as const),
     label: id,
-    usedPercent,
+    usedPercent: 100 - remaining,
     ...(mins === undefined ? {} : { windowDurationMins: mins }),
   });
-  const fiveHour = (used: number) => window("five_hour", used, 300);
-  const weekly = (used: number) => window("seven_day", used, 10080);
+  const ring = (driver: string, windows: ReturnType<typeof window>[]) => {
+    const picked = no3yRingUsageWindow(driver, windows);
+    return picked === null ? null : `${picked.label} ${picked.remainingPercent}`;
+  };
 
-  it("shows the limit that will interrupt first: the least left", () => {
-    expect(no3yRingUsageWindow("claudeAgent", [fiveHour(70), weekly(20)])).toEqual({
-      id: "five_hour",
-      label: "5h",
-      remainingPercent: 30,
-    });
-    expect(no3yRingUsageWindow("claudeAgent", [fiveHour(10), weekly(85)])).toEqual({
-      id: "seven_day",
-      label: "7d",
-      remainingPercent: 15,
-    });
-  });
-
-  it("takes the shorter window on a tie, whatever the order", () => {
-    expect(no3yRingUsageWindow("codex", [weekly(40), fiveHour(40)])?.id).toBe("five_hour");
-    expect(no3yRingUsageWindow("codex", [fiveHour(40), weekly(40)])?.id).toBe("five_hour");
-  });
-
-  it("leaves Claude's Fable breakdown out, and reports nothing without windows", () => {
+  it("shows the session unless the weekly is nearly spent", () => {
+    // Claude 5hr 69% / 7d 55%: the session cuts off first.
     expect(
-      no3yRingUsageWindow("claudeAgent", [fiveHour(10), window("seven_day_fable", 95, 10080)])?.id,
-    ).toBe("five_hour");
-    expect(no3yRingUsageWindow("claudeAgent", [])).toBeNull();
-    expect(no3yRingUsageWindow("claudeAgent", [window("seven_day_fable", 95, 10080)])).toBeNull();
+      ring("claudeAgent", [window("five_hour", 69, 300), window("seven_day", 55, 10_080)]),
+    ).toBe("5h 69");
+    // Codex primary 100% / secondary 35%.
+    expect(ring("codex", [window("primary", 100, 300), window("secondary", 35, 10_080)])).toBe(
+      "5h 100",
+    );
+    expect(ring("codex", [window("primary", 80, 300), window("secondary", 15, 10_080)])).toBe(
+      "7d 15",
+    );
+    expect(ring("codex", [window("secondary", 0, 10_080), window("primary", 90, 300)])).toBe(
+      "7d 0",
+    );
   });
 
-  it("labels an unknown duration by the provider's own label", () => {
-    expect(no3yRingUsageWindow("cursor", [window("monthly", 50)])?.label).toBe("monthly");
+  it("shows whichever window is reported alone", () => {
+    expect(ring("claudeAgent", [window("seven_day", 55, 10_080)])).toBe("7d 55");
+    expect(ring("claudeAgent", [window("five_hour", 69, 300)])).toBe("5h 69");
+    expect(ring("claudeAgent", [])).toBeNull();
+  });
+
+  it("leaves Claude's Fable breakdown out", () => {
+    expect(
+      ring("claudeAgent", [
+        window("five_hour", 69, 300),
+        window("seven_day", 55, 10_080),
+        window("seven_day_fable", 5, 10_080),
+      ]),
+    ).toBe("5h 69");
+    expect(ring("claudeAgent", [window("seven_day_fable", 5, 10_080)])).toBeNull();
   });
 });
