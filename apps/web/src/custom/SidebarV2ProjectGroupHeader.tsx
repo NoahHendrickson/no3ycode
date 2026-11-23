@@ -66,7 +66,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { type SortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { forkSidebarSortableTranslate } from "./forkTypographyScale";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { cn } from "~/lib/utils";
@@ -144,7 +144,7 @@ export function SidebarV2ProjectGroupHeader(props: {
       style={
         props.reorderable
           ? {
-              transform: CSS.Translate.toString(sortable.transform),
+              transform: forkSidebarSortableTranslate(sortable.transform),
               transition: sortable.transition,
             }
           : undefined
