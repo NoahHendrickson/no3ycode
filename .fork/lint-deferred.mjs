@@ -50,5 +50,5 @@ export const DEFERRED_LINT_RULES = [
   ["t3code/no-frame-waits-in-browser-tests", 1],
   // Upstream translated the app in the 2026-11-22 sync; fork copy stays English (fork-i18n-catalog).
   // +11 for fork-typography-settings: the font presets, their aria label and the two size rows.
-  ["t3code/no-untranslated-copy", 901],
+  ["t3code/no-untranslated-copy", 899],
 ];
