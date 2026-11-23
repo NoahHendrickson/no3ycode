@@ -9,6 +9,9 @@ import { No3yStatusPillSwap } from "../../../fork/No3yStatusPill";
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
 import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard";
 /* fork:end fork-pending-user-input */
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yCompactBanner } from "../../../fork/No3yCompactBanner";
+/* fork:end no3y-mobile-redesign */
 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
 import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
 /* fork:end fork-queued-runs-banner */
@@ -1725,7 +1728,15 @@ function ThreadDetailBody(
                     {freshSessionAvailable ? (
                       <FreshSessionNotice threadKey={selectedThreadKey} />
                     ) : null}
-                    {props.compactBeforeSend ? (
+                    {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+                    {props.compactBeforeSend && no3yBottomNav ? (
+                      <No3yCompactBanner
+                        tokens={props.compactBeforeSend.tokens}
+                        keepFullHistory={props.compactBeforeSend.keepFullHistory}
+                        onToggleKeepFullHistory={props.compactBeforeSend.toggleKeepFullHistory}
+                      />
+                    ) : /* fork:end no3y-mobile-redesign */
+                    props.compactBeforeSend ? (
                       <View className="px-4 pb-3">
                         <Notice
                           message={

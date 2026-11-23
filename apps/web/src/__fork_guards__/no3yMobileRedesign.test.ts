@@ -687,6 +687,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // The compact status pill replaces the floating control on the no3y layout and opens its sheet.
     const statusPill = readRepoFile("apps/mobile/fork/No3yStatusPill.tsx");
     expect(threadDetail).toContain("<No3yStatusPillSwap");
+    // The compact-before-send notice is a glass row stacked on the composer, not a floating card.
+    expect(threadDetail).toContain("{props.compactBeforeSend && no3yBottomNav ? (");
     expect(threadDetail).toContain("enabled={no3yBottomNav}");
     expect(stack).toContain("No3yThreadStatus: createNativeStackScreen({");
     expect(statusPill).toContain('StackActions.push("No3yThreadStatus", { threadKey })');

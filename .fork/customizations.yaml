@@ -8041,6 +8041,12 @@
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
     status, previews). iPad and Android keep the upstream control.
+    The compact-before-send notice is one glass row stacked on the composer
+    as the queued banner is (fork/No3yCompactBanner.tsx, the Mac's composer
+    banner treatment, rising in): a shrink icon, "Next message compacts
+    history" with the token count muted, and an X that keeps the full history
+    (the Mac's dismiss); once kept it reads "keeps full history" with a glass
+    Compact pill (fork/no3yCompactCopy.ts).
     The user's sent bubble is a translucent wash (white 9% on the dark page,
     flatGlassTheme's userBubble), as the Mac's glass bubble is, not a grey fill.
     A live turn ends in one status line, as on the Mac (fork-working-row-last):
@@ -8154,6 +8160,9 @@
     - apps/mobile/fork/no3yHomeTabs.ts
     - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/No3yPullRequestMark.tsx
+    - apps/mobile/fork/No3yCompactBanner.tsx
+    - apps/mobile/fork/no3yCompactCopy.ts
+    - apps/mobile/fork/no3yCompactCopy.test.ts
     - apps/mobile/fork/no3yPullRequestTone.ts
     - apps/mobile/fork/no3yPullRequestTone.test.ts
     - apps/mobile/fork/No3yDraftSurface.tsx
@@ -8258,3 +8267,4 @@
     - apps/mobile/fork/no3yDockMove.test.ts
     - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/no3yPullRequestTone.test.ts
+    - apps/mobile/fork/no3yCompactCopy.test.ts
