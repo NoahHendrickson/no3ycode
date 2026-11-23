@@ -281,8 +281,13 @@ vi.mock("../components/ui/VideoPreviewModal", () => ({ VideoPreviewModal: () => 
 vi.mock("../components/ComposerContextSheet", () => ({}));
 vi.mock("../native/useOpenPullRequest", () => ({ useOpenPullRequest: () => vi.fn() }));
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-// The no3y live line draws react-native-svg, which ships Flow source; the dock is off here.
+// The no3y live line, Hugeicons and the send rise load native modules shipped as Flow source; the
+// dock is off here.
 vi.mock("../../fork/No3yLiveStatusLine", () => ({ No3yLiveStatusLine: () => null }));
+vi.mock("../../fork/HugeIcon", () => ({ HugeIcon: () => null }));
+vi.mock("../../fork/No3ySentBubbleRise", () => ({
+  No3ySentBubbleRise: ({ children }: { children?: ReactNode }) => children,
+}));
 /* fork:end no3y-mobile-redesign */
 vi.mock("../native/useMarkdownImageSource", () => ({ useMarkdownImageSource: () => vi.fn() }));
 vi.mock("../native/useEnrichedLinkVariants", () => ({

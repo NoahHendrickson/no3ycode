@@ -98,6 +98,9 @@ export interface FlatGlassPalette {
   readonly userBubble: string;
   /** A card on the page: a 4% wash. */
   readonly cardWash: string;
+  /** Inline code in a reply: link-blue ink on a blue-tinted chip. */
+  readonly inlineCodeInk: string;
+  readonly inlineCodeWash: string;
 }
 
 const DARK_FLAT_GLASS: FlatGlassPalette = {
@@ -148,6 +151,8 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   statusIdleBorder: "rgba(255, 255, 255, 0.55)",
   userBubble: "rgba(255, 255, 255, 0.09)",
   cardWash: "rgba(255, 255, 255, 0.04)",
+  inlineCodeInk: "#7CC2FF",
+  inlineCodeWash: "rgba(36, 152, 254, 0.16)",
 };
 
 const LIGHT_FLAT_GLASS: FlatGlassPalette = {
@@ -198,6 +203,8 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   statusIdleBorder: "rgba(20, 22, 24, 0.42)",
   userBubble: "rgba(20, 22, 24, 0.06)",
   cardWash: "rgba(20, 22, 24, 0.04)",
+  inlineCodeInk: "#0A64C2",
+  inlineCodeWash: "rgba(36, 152, 254, 0.12)",
 };
 
 export function flatGlassPalette(appearance: "dark" | "light"): FlatGlassPalette {

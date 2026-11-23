@@ -2,6 +2,8 @@ import { Button } from "../../components/ui/Button";
 import { ThreadSubagentGroup } from "./thread-subagent-group";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3ySubagentCardsSwap } from "../../../fork/No3ySubagentCards";
+import { useNo3yBottomNavEnabled, useNo3yWorkTextClass } from "../../../fork/no3yBottomNavEnabled";
+import { No3yWorkLogIcon, no3yWorkIcon } from "../../../fork/no3yWorkIcons";
 /* fork:end no3y-mobile-redesign */
 import { ProposedPlanCard } from "./ProposedPlanCard";
 import {
@@ -138,6 +140,9 @@ function WorkLogIcon(props: {
   readonly highlighted?: boolean;
 }) {
   const colorClassName = props.highlighted ? "accent-foreground" : props.colorClassName;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3y = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
   if (props.icon === "t3-code") {
     return (
       <T3Wordmark height={10} {...(colorClassName ? { colorClassName } : { color: props.color })} />
@@ -151,6 +156,12 @@ function WorkLogIcon(props: {
       />
     );
   }
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yIcon = no3y ? no3yWorkIcon(props.icon) : undefined;
+  if (no3yIcon) {
+    return <No3yWorkLogIcon icon={no3yIcon} color={props.color} colorClassName={colorClassName} />;
+  }
+  /* fork:end no3y-mobile-redesign */
   return (
     <SymbolView
       name={
@@ -900,6 +911,9 @@ const ThreadWorkLogRow = function ThreadWorkLogRow(
   const { row, expanded } = props;
   const gt = useGT();
   const messages = useMessages();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yTextClass = useNo3yWorkTextClass();
+  /* fork:end no3y-mobile-redesign */
   const openLinkedThread = useOpenLinkedThread();
   const canSignInToMcp = useAtomValue(
     threadEnvironment.mcpSignInStart.permissionAtom(props.environmentId),
@@ -1152,6 +1166,9 @@ const ThreadWorkLogRow = function ThreadWorkLogRow(
             icon={icon}
             iconSubtleColor={props.iconSubtleColor}
             label={displayText}
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            textClassName={no3yTextClass}
+            /* fork:end no3y-mobile-redesign */
             showIcon
             themeAppearance={props.themeAppearance}
             toolIcon={toolIcon}
@@ -1426,6 +1443,9 @@ export function ThreadWorkGroupToggle(props: {
   readonly onToggle: () => void;
 }) {
   const gt = useGT();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yTextClass = useNo3yWorkTextClass();
+  /* fork:end no3y-mobile-redesign */
   const statusLabel = props.hasFailure
     ? gt("{preview}, tool call failed", { preview: props.summary })
     : props.summary;
@@ -1451,7 +1471,12 @@ export function ThreadWorkGroupToggle(props: {
             selectable={false}
             numberOfLines={4}
             ellipsizeMode="tail"
-            className="min-w-0 flex-1 py-0.5 text-sm text-foreground-muted"
+            className={cn(
+              "min-w-0 flex-1 py-0.5 text-sm text-foreground-muted",
+              /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              no3yTextClass,
+              /* fork:end no3y-mobile-redesign */
+            )}
           >
             {props.thought}
           </Text>
@@ -1486,6 +1511,9 @@ export function ThreadWorkGroupToggle(props: {
                 icon={icon}
                 iconSubtleColor={props.iconSubtleColor}
                 label={props.summary}
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                textClassName={no3yTextClass}
+                /* fork:end no3y-mobile-redesign */
                 showIcon
                 themeAppearance={props.themeAppearance}
                 toolIcon={props.toolIcon}
