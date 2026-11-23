@@ -51,21 +51,13 @@ const SERVER_CONFIG = "apps/server/src/config.ts";
 const BUILD_SCRIPT = "scripts/build-desktop-artifact.ts";
 const FORK_RELEASE_WORKFLOW = ".github/workflows/fork-release.yml";
 
-// Every 1-row rect inside a `<g fill>` group, expanded to "x,y" -> lowercase hex fill.
-const cellFills = (svg: string) => {
-  const cells = new Map<string, string>();
-  let grouped = 0;
-  for (const [, fill = "", body = ""] of svg.matchAll(/<g fill="([^"]+)">([\s\S]*?)<\/g>/gu)) {
-    const hex = (/#[0-9a-f]{6}/iu.exec(fill)?.[0] ?? fill).toLowerCase();
-    for (const [, w, x, y] of body.matchAll(
-      /<rect height="1" width="(\d+)" x="(\d+)" y="(\d+)" \/>/gu,
-    )) {
-      grouped += 1;
-      for (let dx = 0; dx < Number(w); dx += 1) cells.set(`${Number(x) + dx},${y}`, hex);
-    }
-  }
-  expect(svg.match(/<rect\b/gu)?.length ?? 0).toBe(grouped);
-  return cells;
+// The one drawn shape of a single-path SVG: its path data and lowercase fill.
+const soleShape = (svg: string) => {
+  expect(svg.match(/<(?:rect|circle|ellipse|polygon|image|g)\b/gu)).toBeNull();
+  expect(svg.match(/<path\b/gu)).toHaveLength(1);
+  const paths = [...svg.matchAll(/<path\b[^>]*\bd="([^"]+)"[^>]*\bfill="([^"]+)"/gu)];
+  expect(paths).toHaveLength(1);
+  return { d: paths[0]?.[1] ?? "", fill: paths[0]?.[2]?.toLowerCase() ?? "" };
 };
 
 describe("fork guard: fork-app-identity", () => {
@@ -182,7 +174,7 @@ describe("fork guard: fork-app-identity", () => {
 
     // Dev (`vp run dev`) serves apps/web/public — the orange apple-touch family
     // there, while packaged builds stamp the green production family above.
-    // Favicons are one flat Figma tile, so dev serves the production set.
+    // Favicons are the bare mark with no tile, so dev serves the production set.
     for (const [source, target] of [
       ["assets/fork/n3-web-favicon.ico", "apps/web/public/favicon.ico"],
       ["assets/fork/n3-web-favicon-16x16.png", "apps/web/public/favicon-16x16.png"],
@@ -213,19 +205,29 @@ describe("fork guard: fork-app-identity", () => {
     ) as IconComposerProject;
     expect(developmentIcon.fill?.solid).toBe("srgb:1.00000,0.41569,0.00000,1.00000");
     for (const icon of [productionIcon, developmentIcon]) {
+      // The smooth sparkle takes the system glass on the mark itself.
       expect(icon.groups[0]?.layers[0]).toMatchObject({
-        glass: false,
+        glass: true,
         "image-name": "mark.svg",
       });
       expect(icon.groups[0]?.translucency?.enabled).toBe(true);
     }
-    // Production is the Figma green tile; development stays a solid orange tile.
-    expect(productionIcon.fill?.solid).toBe("srgb:0.21569,0.77255,0.43922,1.00000");
-    expect(productionIcon.groups).toHaveLength(1);
+    // Production is a black tile under the Figma glows (no3y app icon, 54:3507), a flat image
+    // with no glass; development stays a solid orange tile.
+    expect(productionIcon.fill?.solid).toBe("srgb:0.00000,0.00000,0.00000,1.00000");
+    expect(productionIcon.groups).toHaveLength(2);
+    expect(productionIcon.groups[1]?.layers).toMatchObject([
+      { glass: false, "image-name": "background.png" },
+    ]);
+    expect(productionIcon.groups[1]?.translucency?.enabled).toBe(false);
     expect(developmentIcon.groups).toHaveLength(1);
 
+    // One white sparkle, the same drawing as the project icon and favicons.
     const mark = read("assets/fork/app-icon.icon/Assets/mark.svg");
     expect(mark).toContain('viewBox="0 0 1024 1024"');
+    const markShape = soleShape(mark);
+    expect(markShape.fill).toBe("#ffffff");
+    expect(markShape.d).toBe(soleShape(read("assets/fork/n3-project-icon.svg")).d);
     expect(
       NodeFS.readFileSync(NodePath.join(repoRoot, "assets/fork/dev-app-icon.icon/Assets/mark.svg")),
     ).toEqual(
@@ -244,24 +246,11 @@ describe("fork guard: fork-app-identity", () => {
 
   it("shows the fork's own icon beside this repo's project", () => {
     expect(JSON.parse(read("t3.json")).iconPath).toBe("assets/fork/n3-project-icon.svg");
-    const icon = read("assets/fork/n3-project-icon.svg");
-    expect(icon).toContain('viewBox="0 0 23 23"');
-    // The bare 23-cell leaf (t3-fork 556:28871) with a #373737 outline and no
-    // backdrop. It keeps that drawing while the sidebar mark moved to Figma
-    // 676:42956; the web favicons are rendered from it, so they move together.
-    const icon23 = cellFills(icon);
-    expect(icon23.size).toBe(253);
-    expect([...new Set(icon23.values())].toSorted()).toEqual([
-      "#008755",
-      "#08b776",
-      "#26b846",
-      "#373737",
-      "#3aed62",
-      "#f95b1c",
-      "#fcb01a",
-      "#ff8f0c",
-      "#ffd233",
-    ]);
+    // The bare sparkle in the tile's green with no backdrop; the web favicons
+    // are rendered from it, so they move together.
+    const icon = soleShape(read("assets/fork/n3-project-icon.svg"));
+    expect(icon.fill).toBe("#00c26b");
+    expect(icon.d).toMatch(/^M407\.129 346\.602C/u);
   });
 
   it("keeps packaged state out of the shared ~/.t3 base directory", () => {
