@@ -104,6 +104,10 @@ export function No3yGlassMenuButton(
   }
 
   const circle = props.icon !== undefined;
+  // SwiftUI sizes the glass from its own padding around the 20pt label, not from this host:
+  // `large` drew past the 44pt slot, so the header control takes `regular` and the 40pt
+  // composer ones `small`.
+  const glassSize = size >= NO3Y_CONTROL_SIZE ? "regular" : "small";
   return (
     <Host
       // A circle has the control's size; a capsule takes its width from its label.
@@ -141,7 +145,7 @@ export function No3yGlassMenuButton(
         modifiers={[
           buttonStyle("glass"),
           buttonBorderShape(circle ? "circle" : "capsule"),
-          controlSize("large"),
+          controlSize(glassSize),
           menuIndicator("hidden"),
           accessibilityLabel(props.accessibilityLabel),
         ]}

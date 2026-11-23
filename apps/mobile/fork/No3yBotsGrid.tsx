@@ -30,9 +30,9 @@ import { No3yStatusMark } from "./No3yStatusMark";
 
 const GRID_INSET = 16;
 const GRID_GAP = 8;
-const PER_ROW = 4;
-const TILE_RADIUS = 16;
-const MASCOT_SIZE = 34;
+const PER_ROW = 5;
+const TILE_RADIUS = 12;
+const MASCOT_SIZE = 26;
 
 function BotMascot(props: {
   readonly shape: BotMascotShape;
@@ -90,15 +90,15 @@ function PetalCard(props: {
         onPress={() => props.onOpen(bot)}
         style={({ pressed }) => ({
           alignItems: "center",
-          gap: 8,
-          paddingTop: 16,
-          paddingBottom: 12,
-          paddingHorizontal: 6,
+          gap: 6,
+          paddingTop: 10,
+          paddingBottom: 10,
+          paddingHorizontal: 4,
           borderRadius: TILE_RADIUS,
           backgroundColor: pressed ? palette.rowSelected : palette.cardWash,
         })}
       >
-        <View style={{ position: "absolute", top: 8, right: 8 }}>
+        <View style={{ position: "absolute", top: 6, right: 6 }}>
           <No3yStatusMark kind={mark.kind} palette={palette} idleMode="dot" />
         </View>
         <View style={{ height: MASCOT_SIZE, justifyContent: "center" }}>
@@ -108,8 +108,8 @@ function PetalCard(props: {
           numberOfLines={1}
           style={{
             ...NO3Y_FONT.regular,
-            fontSize: 15,
-            lineHeight: 20,
+            fontSize: 12,
+            lineHeight: 16,
             color: palette.titleInk,
             textAlign: "center",
             alignSelf: "stretch",

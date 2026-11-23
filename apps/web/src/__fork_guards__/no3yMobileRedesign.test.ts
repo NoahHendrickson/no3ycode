@@ -675,10 +675,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/fork/No3yStatusPill.tsx")).not.toContain("NO3Y_FADE_IN");
     expect(readRepoFile("apps/mobile/fork/No3yBottomNav.tsx")).toContain("NO3Y_GLASS_RISE_IN");
     expect(listView).toContain("<No3yBotsGrid");
-    // Petals as the Mac's tiles: four to a row, bare mascot and name, a corner mark, no status line.
+    // Petals as the Mac's tiles: five to a row, bare mascot and name, a corner mark, no status line.
     const botsGrid = readRepoFile("apps/mobile/fork/No3yBotsGrid.tsx");
     expect(botsGrid).toContain("<PetalCard");
-    expect(botsGrid).toContain("const PER_ROW = 4;");
+    expect(botsGrid).toContain("const PER_ROW = 5;");
     expect(botsGrid).not.toContain("StatusLine");
     expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).not.toContain(
       'statusKind === "limited" ? palette.statusAttention : palette.statusFailed',
