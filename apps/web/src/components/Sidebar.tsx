@@ -700,7 +700,7 @@ const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // A bot's avatar card, 6 + 16 + 2 + 14 + 6 (fork-bots, custom/bots/SidebarV2BotCardBody).
   bot: "[contain-intrinsic-size:auto_44px]",
   "bot-compact": "[contain-intrinsic-size:auto_32px]",
-  // A Petals grid tile, 4 + 36 + 10 + 6 (fork-bots).
+  // A Petals grid tile, 4 + 36 + 12 + 4 (fork-bots).
   "bot-grid": "[contain-intrinsic-size:auto_56px]",
 };
 /* fork:end sidebar-v2-card-rows */
