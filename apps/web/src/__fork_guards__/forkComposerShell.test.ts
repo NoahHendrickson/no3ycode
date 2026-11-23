@@ -851,13 +851,14 @@ describe("fork guard: fork-composer-shell", () => {
     expect(usage).toContain("work.content");
     expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
     expect(chatView).toContain("useComposerBackgroundWork(");
-    // In flow, so an open drawer never covers the approval cards and asks above the composer;
-    // only the draft hero floats it.
+    // The drawer floats over the transcript, so opening it never pushes the chat up; a subagent
+    // approval arriving right above the composer collapses its background-work section once.
     const shell = readSibling("../custom/ComposerShell.tsx");
-    expect(shell).toContain('className="pointer-events-none relative z-20 flex flex-col"');
-    expect(shellCss).toMatch(
-      /\[data-draft-hero\]\s*\[data-fork-composer-top-vessel\]\s*\{[^}]*position:\s*absolute/u,
+    expect(shell).toContain(
+      'className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"',
     );
+    expect(chatView).toContain("useAtomValue(childThreadApprovalsAtom(activeThreadRef));");
+    expect(chatView).toContain("composerChildApprovalIds,");
     expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
     expect(chatView).toContain("backgroundWork={composerBackgroundWork.section}");
     expect(chatView).toContain("trailing: composerContextTrailing");

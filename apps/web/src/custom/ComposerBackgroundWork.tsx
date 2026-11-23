@@ -8,7 +8,7 @@ import { type ReactNode, type RefObject, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
-import { resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
+import { hasUnseenApproval, resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
 import { ChevronDownIcon, ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
@@ -54,13 +54,24 @@ function BackgroundWorkMark(props: Pick<ComposerBackgroundWorkViewProps, "presen
 }
 
 /** Background work as a context-row toggle and a top-drawer section (fork-composer-shell). It opens
- * whenever an unseen task starts; a collapse holds until one does. */
-export function useComposerBackgroundWork(view: ComposerBackgroundWorkViewProps | null) {
+ * whenever an unseen task starts; a collapse holds until one does. The drawer floats over what sits
+ * above the composer, so each subagent approval arriving there collapses it once; the toggle still
+ * reopens it. */
+export function useComposerBackgroundWork(
+  view: ComposerBackgroundWorkViewProps | null,
+  approvalIds: ReadonlySet<string>,
+) {
   // The tasks on screen when the drawer was collapsed.
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<ReadonlySet<string> | null>(null);
+  const [seenApprovalIds, setSeenApprovalIds] = useState<ReadonlySet<string>>(() => new Set());
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const tasks = view?.presentation.items ?? [];
-  const heldTaskIds = resolveCollapsedTaskIds(tasks, collapsedTaskIds);
+  let heldTaskIds = resolveCollapsedTaskIds(tasks, collapsedTaskIds);
+  const approvalArrived = hasUnseenApproval(approvalIds, seenApprovalIds);
+  if (approvalArrived || approvalIds.size !== seenApprovalIds.size) {
+    setSeenApprovalIds(approvalIds);
+    if (approvalArrived) heldTaskIds = new Set(tasks.map((task) => task.taskId));
+  }
   if (heldTaskIds !== collapsedTaskIds) setCollapsedTaskIds(heldTaskIds);
   if (view === null) return { toggle: null, section: null };
 

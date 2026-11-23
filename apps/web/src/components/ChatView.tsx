@@ -361,6 +361,7 @@ import {
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
 import { useComposerBackgroundWork } from "~/custom/ComposerBackgroundWork";
+import { childThreadApprovalsAtom } from "../state/threads";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2581,7 +2582,23 @@ export default function ChatView(props: ChatViewProps) {
             ),
           })
         : nextHeight;
-    setScrollToEndClearance(clearance);
+    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+    // The composer's top drawer floats above the overlay, outside its measured height.
+    const topVessel = composerOverlayElement?.querySelector<HTMLElement>(
+      '[data-fork-composer-top-vessel="true"]',
+    );
+    const drawerRise =
+      composerOverlayElement && topVessel
+        ? Math.max(
+            0,
+            Math.ceil(
+              composerOverlayElement.getBoundingClientRect().top -
+                topVessel.getBoundingClientRect().top,
+            ),
+          )
+        : 0;
+    setScrollToEndClearance(clearance + drawerRise);
+    /* fork:end fork-composer-usage-limits */
   };
   const publishComposerOverlayHeightStable = useStableCallback(publishComposerOverlayHeight);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the composer overlay element before paint for a new thread or composer mount
@@ -2631,10 +2648,16 @@ export default function ChatView(props: ChatViewProps) {
     const stack = isDraftHeroState
       ? composerOverlayElement.querySelector<HTMLElement>('[data-chat-composer-stack="true"]')
       : null;
-    return observeResize(
-      stack ? [composerOverlayElement, stack] : composerOverlayElement,
-      updateHeight,
+    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+    // The floating top drawer opens without resizing the overlay; Scroll to end has to clear it.
+    const topVessel = composerOverlayElement.querySelector<HTMLElement>(
+      '[data-fork-composer-top-vessel="true"]',
     );
+    const observed = [composerOverlayElement, stack, topVessel].filter(
+      (element): element is HTMLElement => element !== null,
+    );
+    return observeResize(observed, updateHeight);
+    /* fork:end fork-composer-usage-limits */
   }, [
     composerOverlayElement,
     isDraftHeroState,
@@ -2787,6 +2810,11 @@ export default function ChatView(props: ChatViewProps) {
      a section of the composer's top drawer (custom/ComposerBackgroundWork). Stop handler and
      task list come from useThreadLifecycle, like upstream's row. */
   const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
+  // ChildThreadApprovals sits right above the composer, where the floating drawer would cover it.
+  const composerChildApprovals = useAtomValue(childThreadApprovalsAtom(activeThreadRef));
+  const composerChildApprovalIds = new Set(
+    composerChildApprovals.map((entry) => `${entry.thread.threadId}:${entry.approval.requestId}`),
+  );
   const composerBackgroundWork = useComposerBackgroundWork(
     composerBackgroundWorkPresentation && activeThread
       ? {
@@ -2798,6 +2826,7 @@ export default function ChatView(props: ChatViewProps) {
           onOpenThread: onOpenRelatedThreadStable,
         }
       : null,
+    composerChildApprovalIds,
   );
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = hasCompactableConversation({
@@ -4527,11 +4556,11 @@ export default function ChatView(props: ChatViewProps) {
                       {/* fork:end fork-new-agent-draft */}
                     </div>
                     {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
-                    {/* The composer's floor: the fork lifts upstream's 1rem/1.25rem dock
-                        offset to one 2rem; the safe-area term stays to clear a phone's
+                    {/* The composer's floor: the fork evens upstream's 1rem/1.25rem dock
+                        offset to one 1rem; the safe-area term stays to clear a phone's
                         home indicator. Height is on a spacer, not overlay padding: the overlay's
                         measured height drives the transcript inset and the cutoff mask. */}
-                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+2rem)]" />
+                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+1rem)]" />
                     {/* fork:end fork-composer-shell */}
                   </div>
                 </div>

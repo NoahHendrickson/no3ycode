@@ -3029,16 +3029,19 @@
     when the provider reports no session window or when the footer collapses.
     The same drawer also carries fork-composer-shell's background-work
     section above the tray; a closed drawer keeps the sections it showed
-    through its close slide. The drawer sits in the composer's flow, so opening
-    it pushes the transcript up instead of covering the approval cards, Petal
-    asks or last transcript lines above the composer; only the draft hero,
-    whose composer is centred over its launchpad, floats it above the vessel.
+    through its close slide. The drawer floats above the vessel, over the
+    transcript, so opening it never pushes the chat up (or moves the draft
+    hero's launchpad). The background-work section opens by itself, so each
+    subagent approval arriving right above the composer collapses it once
+    (the toggle reopens it), and ChatView lifts Scroll to end by however far
+    the open drawer rises above the composer overlay.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/ComposerUsageLimitsReadout.test.ts
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
+    - apps/web/src/components/ChatView.tsx
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
@@ -7264,9 +7267,9 @@
     (card, compact or grid; the Petals section derives its own from the two
     settings, so Compact cards never reaches the grid), and the kind alone sets
     the row's offscreen size hint and, for a tile, its shape. In Grid a bot
-    draws SidebarV2BotGridBody: a 56px tile (4 + 36 + 12 + 4) washed 4% in the
-    sidebar's ink, the columns sharing the width at least 64px each and 8px
-    apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 28px in a 36px box over its name in
+    draws SidebarV2BotGridBody: a 58px tile (8 + 28 + 12 + 10) washed 4% in the
+    sidebar's ink, the columns sharing the width at least 56px each and 8px
+    apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 24px in a 28px box over its name in
     medium 10px, the
     status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover

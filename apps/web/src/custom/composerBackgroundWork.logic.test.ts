@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
+import { hasUnseenApproval, resolveCollapsedTaskIds } from "./composerBackgroundWork.logic";
 
 describe("resolveCollapsedTaskIds", () => {
   it("holds a collapse until a task it has not seen starts, then stays spent", () => {
@@ -12,5 +12,15 @@ describe("resolveCollapsedTaskIds", () => {
     const reopened = resolveCollapsedTaskIds(tasks("monitor", "subagent"), collapsed);
     expect(reopened).toBeNull();
     expect(resolveCollapsedTaskIds(tasks("monitor"), reopened)).toBeNull();
+  });
+});
+
+describe("hasUnseenApproval", () => {
+  it("is true only while an approval the drawer has not made way for is pending", () => {
+    const ids = (...values: string[]) => new Set(values);
+    expect(hasUnseenApproval(ids("a"), ids())).toBe(true);
+    expect(hasUnseenApproval(ids("a"), ids("a"))).toBe(false);
+    expect(hasUnseenApproval(ids("a", "b"), ids("a"))).toBe(true);
+    expect(hasUnseenApproval(ids("b"), ids("a", "b"))).toBe(false);
   });
 });

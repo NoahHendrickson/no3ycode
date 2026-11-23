@@ -161,10 +161,10 @@ export function SidebarV2NewBotRow(props: {
   );
 }
 
-/** @public — the Petals grid's columns: as many tiles at least 64px wide as the width holds,
+/** @public — the Petals grid's columns: as many tiles at least 56px wide as the width holds,
     sharing it equally, 8px apart. auto-fit, so a short row still spans the sidebar. Storybook
     lays its tiles out on it too. */
-export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(64px,1fr))] gap-2";
+export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(56px,1fr))] gap-2";
 
 /** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
     while the layout is List. Storybook opens it on its own. */

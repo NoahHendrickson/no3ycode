@@ -60,13 +60,3 @@
   outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
-
-/* The draft hero centres its composer over the launchpad, where an in-flow drawer would push
-   both down: there the drawer floats above the vessel instead. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-chat-composer-overlay][data-draft-hero]
-  [data-fork-composer-top-vessel] {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 100%;
-}
