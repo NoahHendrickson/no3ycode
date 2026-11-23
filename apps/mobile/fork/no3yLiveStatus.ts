@@ -29,6 +29,32 @@ type LiveRows = ReadonlyArray<PendingThreadFeedEntry | PendingFoldFeedEntry>;
 type ThinkingRow = Extract<PendingThreadFeedEntry, { readonly type: "thinking" }>;
 type WorkRow = Extract<PendingThreadFeedEntry, { readonly type: "work-toggle" | "activity-group" }>;
 const presented = new WeakMap<object, { key: string; rows: LiveRows }>();
+// The live row is copied once per seed, so only a new seed re-renders it.
+const stampedLive = new WeakMap<object, { readonly seed: string; readonly row: LiveRow }>();
+const wordSeeds = new WeakMap<object, string>();
+type LiveRow = LiveRows[number];
+
+// A group's id holds while it grows, so its newest activity or count marks each new tool.
+function rowSeed(row: LiveRow | undefined): string {
+  if (row?.type === "activity-group") return row.activities.at(-1)?.id ?? row.id;
+  if (row?.type === "work-toggle") return `${row.id}:${row.hiddenCount}:${row.summary}`;
+  return row?.id ?? "";
+}
+
+function stamped(live: LiveRow, above: LiveRow | undefined): LiveRow {
+  const seed = live.type === "work-toggle" ? `${live.groupId}:${live.hiddenCount}` : rowSeed(above);
+  const prior = stampedLive.get(live);
+  if (prior?.seed === seed) return prior.row;
+  const row = { ...live };
+  stampedLive.set(live, { seed, row });
+  wordSeeds.set(row, seed);
+  return row;
+}
+
+/** Picks the live row's thinking word (forkThinkingWord); it changes only when something lands. */
+export function no3yLiveWordSeed(row: object): string {
+  return wordSeeds.get(row) ?? "";
+}
 
 /**
  * The no3y live turn: the status line owns the timer, so the live fold (kept only to host the setup
@@ -62,6 +88,10 @@ export function no3yLivePresentation(
       runId: tool.runId,
     };
     next.push(tool, thinking);
+  }
+  const liveIndex = next.findIndex((row) => row.id === NO3Y_LIVE_ROW_ID);
+  if (liveIndex >= 0 && input.startedAt !== null) {
+    next[liveIndex] = stamped(next[liveIndex]!, next[liveIndex - 1]);
   }
   const result =
     next.length === rows.length && next.every((row, i) => row === rows[i]) ? rows : next;

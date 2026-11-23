@@ -101,6 +101,19 @@ describe("forkLiveStatusRows", () => {
     expect(statusLine(result)).toBeNull();
   });
 
+  it("seeds the thinking word from what last landed, so it holds until something new does", () => {
+    const seed = (entries: Entries) => {
+      const last = forkLiveStatusRows(derive(entries)).at(-1);
+      return last?.kind === "working" && isForkStatusLine(last) ? last.forkWordSeed : undefined;
+    };
+    const running = seed([command("first", 5, "inProgress")]);
+    expect(seed([command("first", 5, "inProgress")])).toBe(running);
+    expect(seed([command("first", 5, "completed"), command("second", 6, "inProgress")])).not.toBe(
+      running,
+    );
+    expect(seed([reasoning(5)])).toBe("thought");
+  });
+
   it("keeps a tool with no lifecycle status running, as upstream does", () => {
     const rows = derive([command("first", 5, undefined)]);
     expect(rows.find((row) => row.kind === "work-live")?.active).toBe(true);
@@ -195,7 +208,7 @@ describe("forkStatusLineLabel", () => {
   } as unknown as ForkLiveRow;
 
   it.each([
-    ["the thinking line", thinking, activity, "Thinking"],
+    ["the thinking line", thinking, activity, null],
     [
       "a provider startup",
       thinking,
@@ -208,8 +221,8 @@ describe("forkStatusLineLabel", () => {
       { ...activity, liveAnswerPreview: "Tiger cubs" },
       "Tiger cubs",
     ],
-    ["live reasoning", reasoning, activity, "Thinking"],
-    ["a running tool's line", null, activity, "Thinking"],
+    ["live reasoning", reasoning, activity, null],
+    ["a running tool's line", null, activity, null],
   ])("labels %s", (_, live, state, label) => {
     expect(forkStatusLineLabel(live, state)).toBe(label);
   });

@@ -236,7 +236,9 @@ import {
   NO3Y_LIVE_ROW_ID,
   no3yLivePresentation,
   no3yLiveRowLast,
+  no3yLiveWordSeed,
 } from "../../../fork/no3yLiveStatus";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import {
   createNo3yTranscriptSpacing,
   type No3yRowGap,
@@ -2113,10 +2115,13 @@ function renderFeedEntry(
         startedAt={entry.type === "thinking" ? entry.createdAt : props.no3y.liveStartedAt}
         label={
           entry.type === "thinking"
-            ? // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
-              (entry.providerStartingLabel ?? entry.label ?? "Thinking")
+            ? (entry.providerStartingLabel ??
+              entry.label ??
+              forkThinkingWord(no3yLiveWordSeed(entry)))
             : entry.type === "work-toggle"
-              ? entry.summary
+              ? entry.summaryKind === "reasoning"
+                ? forkThinkingWord(no3yLiveWordSeed(entry))
+                : entry.summary
               : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
                 (entry.activities[0]?.groupStandIn?.label ?? "Working")
         }

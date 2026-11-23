@@ -30,6 +30,12 @@ describe("fork guard: fork-working-row-last", () => {
     );
   });
 
+  it("shows a word where upstream says Thinking", () => {
+    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toContain(
+      "?? forkThinkingWord(row.forkWordSeed)",
+    );
+  });
+
   it("stills the shine on a running tool's transcript row", () => {
     const rule = cssRules(readSibling("../theme.custom.css")).find((candidate) =>
       candidate.selector.includes('[data-timeline-row-kind="work-live"] .live-tool-shine'),

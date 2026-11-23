@@ -6206,14 +6206,21 @@
     group is open, so the toggle keeps keyboard focus. While compaction or
     worktree setup owns the line, folded reasoning renders its upstream row
     above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. The working row has no
-    divider, and neither does the turn's fold row ("Worked for …") once the
+    and reasoning previews stay in the open group. Where upstream says
+    "Thinking", the line shows a word from @t3tools/shared/forkThinkingWords
+    ("Yapping", "Cooking", ...) seeded by what last landed: the row above the
+    line (a group's newest entry), or the live reasoning step itself. The word
+    holds until a new row or step lands. The no3y iOS line takes its word from
+    the same module (no3yLiveWordSeed, no3y-mobile-redesign). The working row
+    has no divider, and neither does the turn's fold row ("Worked for …") once the
     turn ends (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
     - apps/web/src/custom/ForkLiveStatusLine.tsx
     - apps/web/src/theme.custom.css
+    - packages/shared/src/forkThinkingWords.ts
+    - packages/shared/src/forkThinkingWords.test.ts
   shadows: []
   watch:
     # Fenced import and the fold wrapping useStableRows' result.
@@ -6228,9 +6235,12 @@
     # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
     # LiveWorkEntryTimelineRow's labels here.
     - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # Unfenced (strict JSON): the `./forkThinkingWords` subpath export.
+    - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkWorkingRowLast.test.ts
     - apps/web/src/custom/forkWorkingRowLast.test.ts
+    - packages/shared/src/forkThinkingWords.test.ts
 
 - id: fork-transcript-spacing
   intent: >
@@ -8532,6 +8542,7 @@
     - apps/mobile/fork/No3ySentBubbleRise.tsx
     - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
+    - packages/shared/src/forkThinkingWords.ts
     - apps/mobile/fork/No3yAutomationsScreen.tsx
     - apps/mobile/fork/no3yAutomationRuns.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts
