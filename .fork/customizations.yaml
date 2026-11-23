@@ -6176,22 +6176,35 @@
 - id: fork-working-row-last
   intent: >
     A live turn shows one status line at the bottom, the way Claude Code
-    does: the working mark, what the agent is doing now ("Thinking",
-    "Running vp", a startup label), the turn's timer, and a chevron that
-    opens the running tool group. Upstream derives the working row at the
-    head of the active turn (the slot the turn's fold divider takes when it
-    ends) with a bottom border, and draws the thinking line or running tool
-    as a second row. The fork reorders and folds useStableRows' output, so
+    does: the working mark, what the agent is doing now ("Thinking", a
+    startup label), and the turn's timer. Upstream derives the working row
+    at the head of the active turn (the slot the turn's fold divider takes
+    when it ends) with a bottom border, and draws at most one live activity
+    row (a thinking line, live reasoning, or the running tool) at the
+    turn's tail. The fork reorders and folds useStableRows' output, so
     upstream's row derivation, row equality and their tests stay untouched:
-    the working row moves to the end, and the turn's latest live row (a
-    plain thinking row, or an active work-live that is not an approval) is
-    removed from wherever it sits and carried on a copy of the working row
-    as `forkLive`, which renders ForkLiveStatusLine. An open group's details
-    and viewed images stay in place above the line, and the line stays
-    mounted while its group is open, so the toggle keeps keyboard focus.
-    Upstream's failed-tool shape, a `thinking` row with a groupId, keeps its
-    own row above a plain "Working for …" line. While compaction or worktree
-    setup owns the line, a folded running tool renders its upstream row
+    the working row moves to the end and branches on that live row. A plain
+    thinking row or live reasoning is removed from wherever it sits and
+    carried on a copy of the working row as `forkLive`, which renders
+    ForkLiveStatusLine. A running tool keeps its own upstream row in the
+    transcript (its toggle opens the group in place) and the copy carries
+    `forkLive: null`, a plain "Thinking" line with the timer, matching the
+    no3y iPhone transcript. Upstream keeps the latest tool as the active
+    live row after it succeeds; out of the line it would still read
+    "Running", so a tool with an end status is handed over settled
+    (`active: false`, `forkSettled`, which row motion still counts as the
+    live slot). A tool with no status stays running, as upstream counts it.
+    The in-place row's label drops upstream's endlessly repainting
+    live-tool-shine; the line carries the motion. While the turn waits on
+    an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
+    line gives way to upstream's "Working for …", since nothing is
+    thinking; pending approvals reach the transcript as plain `work` rows,
+    so the fold cannot tell. Upstream's failed-tool shape, a `thinking` row
+    with a groupId, keeps its own row above a plain "Working for …" line,
+    even beside an earlier tool still running. Folded reasoning's open group
+    stays in place above the line, and the line stays mounted while its
+    group is open, so the toggle keeps keyboard focus. While compaction or
+    worktree setup owns the line, folded reasoning renders its upstream row
     above it. Labels are one rule in forkStatusLineLabel; upstream's thought
     and reasoning previews stay in the open group. The working row has no
     divider, and neither does the turn's fold row ("Worked for …") once the
@@ -6218,6 +6231,59 @@
   verify:
     - apps/web/src/__fork_guards__/forkWorkingRowLast.test.ts
     - apps/web/src/custom/forkWorkingRowLast.test.ts
+
+- id: fork-transcript-spacing
+  intent: >
+    Reply text, tool rows and the live status line sit 16px apart, the way
+    the no3y iPhone transcript spaces them; upstream's gaps there run from
+    4px to 18px depending on which rows meet. A pass after
+    fork-working-row-last's fold reads one box per row (boxOf: the space it
+    draws above and below its content, from TimelineRowContent's padding,
+    WorkLogBlock's, a reply's or ungrouped tool row's py-0.5, a reasoning
+    trace's py-1 and the status line's pt-1) and tops the gap up to 16px as
+    padding on the row's root. Only reply-to-tool, tool-to-reply and
+    anything-to-live-line gaps are spaced (a send_to_user sent message counts
+    as a reply); user bubbles and every other row keep upstream's spacing.
+    A row whose gap changes reaches the list as a copy carrying it as
+    `forkGapTop`, so its memoised content re-renders; rows whose gap holds
+    keep their identity. The guard pins every padding boxOf reads, including
+    the list of kinds upstream gives pb-2. All palettes.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkTranscriptSpacing.ts
+  shadows: []
+  watch:
+    # Fenced wrap of the folded rows and the style on TimelineRowContent's root;
+    # outerPadding/ownPadding mirror these files' row paddings.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/WorkLog.tsx
+    - apps/web/src/components/chat/TimelineAssistantRows.tsx
+    - apps/web/src/custom/ForkSubagentGroup.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkTranscriptSpacing.test.ts
+    - apps/web/src/custom/forkTranscriptSpacing.test.ts
+
+- id: fork-inline-code-chip
+  intent: >
+    Inline code in a reply is a link-blue chip: --info-foreground ink on
+    --info at 12% (16% in dark), 5px corners, 4px either side, at 0.95em.
+    File links wear the same chip, as file references do on the no3y iPhone
+    transcript. Thread links are ContextChips without the file-link class and
+    keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's
+    data-message-role / data-timeline-row-kind to assistant replies and sent
+    messages, since ChatMarkdown also draws file previews, PR bodies and tool
+    details, which keep upstream's code. User bubbles keep upstream's ink-on-wash code, and invalid
+    file links keep upstream's look. All palettes.
+  tier: 3
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Upstream's inline code rule this overrides, and the row attributes it scopes by.
+    - apps/web/src/index.css
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInlineCodeChip.test.ts
 
 - id: fork-settings-glass
   intent: >
@@ -8183,19 +8249,27 @@
     transcript never reads through; the upstream controls draw that style
     through fork/No3yComposerStyle.tsx's context and keep their behaviour.
     Above the card, the upstream full-width floating status control gives way
-    to one 30pt glass pill right-aligned with the card's edge
-    (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
-    amber dot when something there needs the user (transient status other than
-    a working turn, which the transcript's live status line already shows with
-    its time, so a running turn alone draws no pill and stop stays on the
-    composer; background
-    processes, monitors, subagents as a robot, Pi status, previews; queued
-    messages are in the queued-runs banner above the card), with
-    the scroll-to-end button beside it. A tap opens a half-height sheet
+    to a row of 32pt glass pills 12pt above the card, scrolling sideways from
+    24pt inside its edge (fork/No3yStatusPill.tsx, Figma "no3y code" 60:2786):
+    a transient status other than a working turn (the transcript's live status
+    line already shows that, so a running turn alone draws no pill and stop
+    stays on the composer), the thread's pull request on its state's tinted
+    glass (open green, merged purple, closed red, draft plain; a stack or
+    several as layers plus how many more; a running or failing checks mark),
+    then background processes, monitors and subagents, which fold into one
+    "N background tasks" pill once two kinds of live work run (finished
+    subagents and child requests keep their own pill), then Pi status and
+    previews. ThreadDetailScreen resolves the pull request once (useThreadPr)
+    and counts it toward the feed's clearance. An amber dot marks what needs
+    the user; queued messages are in the queued-runs banner above the card;
+    scroll-to-end sits at the row's right. The status and background pills,
+    and a subagents pill with a child waiting, open a half-height sheet
     (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, previews). iPad and Android keep the upstream control.
+    status, previews); the others open their own target (the pull request or
+    the list of them, the agents sheet, Pi status, the preview). iPad and
+    Android keep the upstream control.
     Upstream moved working, compacting, background work and snooze/settle
     out of its floating status into the feed's closing status lines, and
     syncing into the thread header. The pill keeps them: fork/no3yPillStatus.ts
@@ -8223,6 +8297,61 @@
     the turn timer, and a chevron that opens the running group. Upstream's
     derivation is untouched. The finished turn's "Worked for …" fold row has
     no divider.
+    Tool rows set their labels at the reply's paragraph size (text-base), and
+    reply text, tool rows and the live line sit 16pt apart
+    (fork/no3yTranscriptSpacing.ts): tool rows keep their fixed list sizes,
+    so the gap is a spacer on the measured neighbour, a reply above or below
+    or the live line above, and the row sizing reads the body line height.
+    Inline code in a reply is link-blue ink on a blue-tinted chip
+    (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
+    inlineCodeBackgroundColor style) at 0.95 of the body size
+    (inlineCodeFontScale, upstream 0.9), with 5pt corners and 4pt of room
+    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip). File
+    references in a reply (both the embed-label and the resolved file link,
+    marked fileReference) wear the same ink, wash and chip shape instead of
+    the teal mention chip, keeping their file icon. A table's header row
+    takes the palette's 4% cardWash (tableHeaderBackgroundColor) instead of
+    the dark code block fill. The native
+    library draws that chip, so apps/mobile/deps carries a fork build of
+    enriched-markdown: Julius's fork/t3-mobile plus its open #15, the shipped
+    blockquote lift, code.borderRadius/code.paddingHorizontal (iOS kerns the
+    padding outside the span so copied text stays the code; a chip at a line
+    start stops at the view's edge), and a numeric
+    strong.fontWeight, which lets replies set bold text and headings at
+    medium (emphasisFontWeight "500"). Its source is branch
+    no3y/inline-code-chip of NoahHendrickson/enriched-markdown (commit
+    9584829b). When upstream bumps the tarball, rebuild this change on top of
+    theirs (deps/README.md) rather than taking theirs, or the chip loses its
+    shape.
+    While a turn runs, the status line carries the timer: no3yLivePresentation
+    (fork/no3yLiveStatus.ts), applied after the pending-turn appender so its
+    live-run guard still sees the fold, drops upstream's live "Working for …"
+    fold and the pending turn's fold placeholder (the fold stays, timer
+    hidden, while it hosts the setup chip). A running tool stays in the
+    transcript, re-id'd to work-live:<group> and no longer shimmering, with a
+    Thinking line and the turn timer right below it; live reasoning already
+    reads "Thinking", so it keeps the live row. The no3y feed reads top-down: the list does not align short
+    content to its end, so a first message sits at the top of the screen.
+    A message the user just sent (still pending from this device, once per
+    session; a draft's message keeps the time the draft began, so the
+    fresh-timestamp check misses it) rises from just above the composer into
+    place over 300ms (fork/No3ySentBubbleRise.tsx; only that bubble mounts the
+    animation hooks). It waits on the UI thread for the list to show and place
+    its row and for the keyboard to settle, because LegendList parks a new row
+    off-screen and the JS thread is busy right after a send; a row still
+    unplaced after ~1.5s is revealed in place. A new thread's lone prompt
+    nudges LegendList with a no-op scroll: otherwise the list keeps it hidden
+    until the reply arrives, seconds later. Sent
+    messages and replies show no time under them, only their copy and fork
+    buttons at 32pt with 16pt glyphs (NO3Y_MESSAGE_ACTION_SIZE), drawn with
+    the desktop's Hugeicons (CopyIcon, CheckIcon once copied, GitForkIcon)
+    and shifted so the glyph, not its button, meets the text or bubble edge;
+    a pending message keeps its "Pending" label. The settled "Worked for …"
+    row is regular weight and starts at the reply text's edge. Work rows
+    (commands, reads, edits, searches, tools) draw the desktop's Hugeicons
+    instead of SF Symbols (fork/no3yWorkIcons.tsx, keyed by upstream's symbol,
+    with the web fork's themed glyphs filled); the pull-request glyph, the T3
+    wordmark and the browser app icon stay upstream's.
     Subagents in the transcript draw as the Mac fork's subagent card
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
@@ -8398,6 +8527,10 @@
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yLiveStatus.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/no3yTranscriptSpacing.ts
+    - apps/mobile/fork/no3yTranscriptSpacing.test.ts
+    - apps/mobile/fork/No3ySentBubbleRise.tsx
+    - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
     - apps/mobile/fork/No3yAutomationsScreen.tsx
     - apps/mobile/fork/no3yAutomationRuns.ts
@@ -8405,6 +8538,11 @@
   shadows: []
   watch:
     - apps/mobile/src/Stack.tsx
+    - apps/mobile/src/native/SelectableMarkdownText.types.ts
+    - apps/mobile/src/features/threads/CopyTextButton.tsx
+    - apps/mobile/src/native/useEnrichedLinkVariants.ts
+    - apps/mobile/deps/README.md
+    - pnpm-workspace.yaml
     - apps/mobile/global.css
     - apps/mobile/src/lib/fontFamilies.ts
     - apps/mobile/src/lib/filePreview.test.ts
@@ -8429,6 +8567,7 @@
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     - apps/mobile/src/features/threads/thread-work-log.tsx
+    - apps/mobile/src/features/threads/work-log-layout.tsx
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.test.tsx
@@ -8452,6 +8591,7 @@
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
+    - apps/mobile/fork/no3yTranscriptSpacing.test.ts
     - apps/mobile/fork/no3yAutomationRuns.test.ts
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/no3yProjectTiles.test.ts
@@ -8497,3 +8637,52 @@
   verify:
     - apps/web/src/__fork_guards__/forkBranchLinkCopy.test.ts
     - apps/web/src/custom/branchLinks.test.ts
+
+- id: fork-typography-settings
+  intent: >
+    Settings → Appearance → Typography offers the interface font as presets:
+    Geist (the fork default, an empty preference that geist-typography's stack
+    fills, labelled Geist Variable, the bundled face), Inter (bundled by
+    upstream's main.tsx import) and System. Custom… opens upstream's
+    any-installed-font field, and any value that matches no preset shows as
+    Custom. The section also has Sidebar size and Chat stream size, 80–150% in
+    steps, stored per device (a contracts field would put a fork key in a
+    schema upstream owns), so mobile and other devices keep their own sizes.
+    Both are percentages so they compose with upstream's Interface font size.
+    The controls live in custom/ForkTypographyControls; the shadow only mounts
+    them. Sidebar size stamps a root attribute when it is not 100% and zooms
+    the sidebar's content and footer as a whole (its rows have fixed rem
+    heights, so text alone would crowd them), in the docked panel and the
+    narrow-web sheet alike. The header stays at 100%: it holds the macOS
+    traffic-light inset and matches the workspace top bar. Zoom sits inside
+    the container, so the width the resize handle sets is the width you see.
+    dnd-kit measures in visual px while a transform inside zoom is local, so
+    every sidebar sortable divides its translation by the zoom, and the list
+    motion's drop release unzooms its rects. The chat stream rules are always
+    on: inside [data-timeline-root], message and tool-row text (text-sm) is
+    1rem so it matches the composer (text-base), and every type token, the
+    text-2xs / text-3xs utilities (@theme inline, so they bake their size),
+    markdown headings and tables multiply Chat stream size (1 at 100%).
+    Headings read the scaled tokens, with h4-h6 on the body size so no heading
+    sits below it. Code blocks keep Code font size; 4xs/5xs icon badges and
+    the few literal text-[13px] captions stay put.
+  tier: 4
+  files:
+    - apps/web/src/custom/forkTypographyScale.ts
+    - apps/web/src/custom/ForkTypographyControls.tsx
+    - apps/web/src/overrides/components/settings/TypographySettings.tsx
+    - apps/web/src/theme.custom.css
+  shadows:
+    - apps/web/src/components/settings/TypographySettings.tsx
+  watch:
+    - apps/web/src/main.tsx
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/Sidebar.motion.ts
+    - apps/web/src/components/sidebar/SidebarListMarkers.tsx
+    - apps/web/src/components/sidebar/SidebarThreadRow.tsx
+    # The selectors key on these DOM hooks and on the text scale staying non-inline @theme.
+    - apps/web/src/components/ui/sidebar.tsx
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/index.css
+  verify:
+    - apps/web/src/__fork_guards__/forkTypographySettings.test.ts

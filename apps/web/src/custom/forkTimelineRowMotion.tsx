@@ -21,12 +21,16 @@ import {
   type ComponentPropsWithoutRef,
 } from "react";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import { isForkSettledTool } from "./forkWorkingRowLast";
 
 // The live activity line: the thinking row, the working row, and a running
 // tool group. They reuse their ids across turns and sit at the tail.
+// A finished tool the fold draws settled still holds upstream's live slot.
 function isLiveRow(row: MessagesTimelineRow): boolean {
   return (
-    row.kind === "thinking" || row.kind === "working" || (row.kind === "work-live" && row.active)
+    row.kind === "thinking" ||
+    row.kind === "working" ||
+    (row.kind === "work-live" && (row.active || isForkSettledTool(row)))
   );
 }
 function isOpenGroupRow(row: MessagesTimelineRow): boolean {
@@ -100,7 +104,7 @@ export function createTimelineRowMotion(): TimelineRowMotion {
           start -= 1;
         }
       }
-      if (start > 0 && !isLiveRow(rows[start]!) && isLiveRow(rows[start - 1]!)) start -= 1;
+      if (start > 0 && isOpenGroupRow(rows[start]!) && isLiveRow(rows[start - 1]!)) start -= 1;
       for (let index = start; index >= 0; index -= 1) {
         const row = rows[index]!;
         if (isLiveRow(row)) {

@@ -5,6 +5,7 @@
  * draws the weight the Mac derives in hugeiconsFill.ts (a copy lives beside this file).
  */
 import { useId, type ComponentType } from "react";
+import type { ColorValue } from "react-native";
 import Svg, {
   Circle,
   Defs,
@@ -35,12 +36,12 @@ const ELEMENTS = {
   polyline: Polyline,
 } as unknown as Readonly<Record<string, ComponentType<Attributes>>>;
 
-function drawElements(elements: IconSvgElement, color: string) {
+function drawElements(elements: IconSvgElement, color: ColorValue) {
   return elements.map(([tag, attrs], index) => {
     const Element = ELEMENTS[tag];
     if (!Element) return null;
     const { key, ...rest } = attrs;
-    const drawn: Record<string, string | number> = {};
+    const drawn: Record<string, ColorValue | number> = {};
     for (const [name, value] of Object.entries(rest)) {
       drawn[name] = value === "currentColor" ? color : value;
     }
@@ -52,7 +53,7 @@ function drawElements(elements: IconSvgElement, color: string) {
 export function HugeIcon(props: {
   readonly icon: HugeIconData;
   readonly size: number;
-  readonly color: string;
+  readonly color: ColorValue;
   readonly strokeWidth?: number;
   readonly filled?: boolean;
 }) {

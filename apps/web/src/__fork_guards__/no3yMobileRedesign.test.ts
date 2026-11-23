@@ -701,7 +701,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
     expect(stack).toContain('sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })');
-    // The compact status pill replaces the floating control on the no3y layout and opens its sheet.
+    // The pills above the composer replace the floating control on the no3y layout; status and
+    // background work open its sheet, two or more kinds of background work share one pill.
     const statusPill = readRepoFile("apps/mobile/fork/No3yStatusPill.tsx");
     expect(threadDetail).toContain("<No3yStatusPillSwap");
     // The composer rides the keyboard only for its own editor; a header search leaves it at rest.
@@ -721,15 +722,24 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadDetail).toContain("enabled={no3yBottomNav}");
     expect(stack).toContain("No3yThreadStatus: createNativeStackScreen({");
     expect(statusPill).toContain('StackActions.push("No3yThreadStatus", { threadKey })');
-    expect(statusPill).toContain("subagents: Robot01Icon");
+    expect(statusPill).toContain("{pills.map(renderPill)}");
+    expect(statusPill).toContain("const spec = pillSpec(segment, targets);");
+    // The screen resolves the pull request once; the pill draws it and the feed keeps clear of it.
+    expect(threadDetail).toContain(
+      "useThreadPr(no3yPullRequestThread(props.selectedThread, no3yBottomNav))",
+    );
+    expect(threadDetail).toContain("pullRequest={no3yPullRequest}");
     expect(statusPill).toContain("<No3yGlassLayer radius={PILL_HEIGHT / 2} />");
     // The user's bubble is a translucent wash on the no3y layout.
     expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(
       "flatGlassPalette(themeAppearance).userBubble",
     );
-    // A live turn ends in one status line; the live row moves last and draws as it.
+    // A live turn ends in one status line: the live fold drops, a running tool stays a row with
+    // Thinking below it, and the live row moves last and draws as the status line.
     const feed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
-    expect(feed).toContain("no3yLiveLast ? no3yLiveRowLast(presentation) : presentation");
+    for (const helper of ["no3yLiveRowLast(presentation)", "no3yLivePresentation("]) {
+      expect(feed).toContain(helper);
+    }
     expect(feed).toContain("<No3yLiveStatusLine");
     // Automations: the fork screen, runs pushed over it so back returns there, grouped-card washed.
     const scheduled = readRepoFile(

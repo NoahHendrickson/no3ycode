@@ -1,28 +1,35 @@
 /**
- * The no3y thread status pill (`.fork/customizations.yaml#no3y-mobile-redesign`): one small glass
- * pill right-aligned above the composer card, a segment per active kind. A tap opens the
- * half-height No3yStatusSheet.tsx with every item and the actions the upstream control offered.
+ * The no3y pills above the composer (`.fork/customizations.yaml#no3y-mobile-redesign`): a row of
+ * small glass pills, one per thing going on (status, the thread's pull request, background work,
+ * Pi status, previews). Two or more kinds of background work share one pill. The status and
+ * background pills open the half-height No3yStatusSheet.tsx with every item and its actions.
  */
 import Alert02Icon from "@hugeicons/core-free-icons/Alert02Icon";
 import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowShrink02Icon from "@hugeicons/core-free-icons/ArrowShrink02Icon";
 import CheckmarkCircle02Icon from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import BotMessageSquareIcon from "@hugeicons/core-free-icons/BotMessageSquareIcon";
 import Clock01Icon from "@hugeicons/core-free-icons/Clock01Icon";
+import ComputerActivityIcon from "@hugeicons/core-free-icons/ComputerActivityIcon";
 import ComputerTerminal01Icon from "@hugeicons/core-free-icons/ComputerTerminal01Icon";
+import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import Globe02Icon from "@hugeicons/core-free-icons/Globe02Icon";
+import Layers01Icon from "@hugeicons/core-free-icons/Layers01Icon";
 import LeftToRightListNumberIcon from "@hugeicons/core-free-icons/LeftToRightListNumberIcon";
 import PuzzleIcon from "@hugeicons/core-free-icons/PuzzleIcon";
-import Radar01Icon from "@hugeicons/core-free-icons/Radar01Icon";
 import Robot01Icon from "@hugeicons/core-free-icons/Robot01Icon";
 import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon";
+import SquareStackIcon from "@hugeicons/core-free-icons/SquareStackIcon";
 import Target02Icon from "@hugeicons/core-free-icons/Target02Icon";
 import WifiDisconnected02Icon from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
 import { StackActions, useNavigation } from "@react-navigation/native";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { PendingBackgroundWorkPresentation } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
-import { Fragment, useEffect, type ComponentProps, type ReactElement } from "react";
-import { Keyboard, Pressable, View } from "react-native";
+import { useEffect, type ComponentProps, type ReactElement, type ReactNode } from "react";
+import { Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import Svg, { Circle, Path } from "react-native-svg";
 
 import { AppActivityIndicator } from "../src/components/ui/AppActivityIndicator";
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -30,14 +37,17 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import type { FloatingWorkingControl } from "../src/features/threads/floating-working-control";
 import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
 import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
+import { useOpenThreadPullRequests } from "../src/features/threads/use-open-thread-pull-requests";
 import { useOpenLinkedThread } from "../src/features/threads/useOpenLinkedThread";
 import { scopedThreadKey } from "../src/lib/scopedEntities";
 import { useChildThreadInputs } from "../src/state/entities";
+import type { ThreadPrPresentation } from "../src/state/use-thread-pr";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yBeadRing } from "./No3yBeadRing";
 import { No3yGlassLayer } from "./No3yGlass";
 import type { No3yPillStatus } from "./no3yPillStatus";
+import { no3yPullRequestPill, type No3yPullRequestPill } from "./no3yPullRequestTone";
 import {
   no3yStatusSegments,
   no3ySubagentMarkKind,
@@ -46,13 +56,19 @@ import {
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
 
-const PILL_HEIGHT = 30;
-const PILL_GAP = 8;
+const PILL_HEIGHT = 32;
+const PILL_RADIUS = 14;
+/** Between the pills and the composer card below them. */
+const ROW_GAP = 12;
 // The composer card starts this far below the overlay's anchor (upstream's COMPOSER_CAPSULE_INSET).
 const COMPOSER_CAPSULE_INSET = 6;
-// The no3y composer card's side inset (ThreadComposer's no3y padding), so the pill ends at its edge.
+// The no3y composer card's side inset (ThreadComposer's no3y padding).
 const CARD_SIDE_INSET = 16;
-const ICON_SIZE = 15;
+/** The pills start this far in from the card's left edge. */
+const ROW_INSET = 24;
+/** Room above and below the pills inside the scrolling row, so their shadow is not clipped. */
+const SHADOW_ROOM = 4;
+const ICON_SIZE = 16;
 
 type UpstreamProps = ComponentProps<typeof FloatingWorkingControl>;
 
@@ -64,6 +80,9 @@ interface No3yPillExtras {
   readonly detailRef: ScopedThreadRef | null;
   /** The pill's own status: upstream's, plus the states upstream moved into the feed. */
   readonly no3yStatus: No3yPillStatus | null;
+  readonly thread: EnvironmentThreadShell;
+  /** The thread's pull request as useThreadPr resolves it; the screen keeps the feed clear of it. */
+  readonly pullRequest: ThreadPrPresentation | null;
 }
 
 /**
@@ -85,6 +104,8 @@ export function No3yStatusPillSwap(
       backgroundWork={props.backgroundWork}
       detailRef={props.detailRef}
       no3yStatus={props.no3yStatus}
+      thread={props.thread}
+      pullRequest={props.pullRequest}
     />
   );
 }
@@ -105,8 +126,10 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       : (props.extensionStatus ?? null);
   const backgroundItems = props.backgroundWork?.items ?? [];
   const turnSubagents = props.agents !== null ? (turn?.subagents ?? []) : [];
-  const segments = no3yStatusSegments({
+  const openPullRequests = useOpenThreadPullRequests();
+  const pills = no3yStatusSegments({
     status,
+    pullRequest: props.pullRequest !== null,
     backgroundKinds: backgroundItems.map((item) => item.kind),
     subagents:
       props.agents !== null && turn !== null
@@ -169,15 +192,62 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
     transform: [{ translateY: -(lift?.value ?? 0) }],
   }));
 
-  if (segments.length === 0 && !props.showScrollToEnd) return null;
+  if (pills.length === 0 && !props.showScrollToEnd) return null;
 
   const openSheet = () => {
     Keyboard.dismiss();
     navigation.dispatch(StackActions.push("No3yThreadStatus", { threadKey }));
   };
-  const accessibilityLabel = segments
-    .map((segment) => segmentAccessibilityLabel(segment, status, props.agents?.accessibilityLabel))
-    .join(", ");
+  const targets: PillTargets = {
+    sheet: openSheet,
+    agents:
+      props.agents !== null
+        ? () => {
+            Keyboard.dismiss();
+            props.onOpenAgents();
+          }
+        : null,
+    agentsLabel: props.agents?.accessibilityLabel,
+    extension,
+    devices: props.devicePreview?.onPress ?? null,
+    browser: props.browserPreview?.onPress ?? null,
+  };
+  const { pullRequest } = props;
+  const renderPill = (segment: No3yStatusSegment) => {
+    if (segment.kind === "pullRequest") {
+      return pullRequest === null ? null : (
+        <PullRequestPill
+          key={segment.kind}
+          pr={pullRequest}
+          look={no3yPullRequestPill(pullRequest, props.thread.pullRequests ?? [])}
+          palette={palette}
+          onPress={() => openPullRequests(props.thread, pullRequest)}
+        />
+      );
+    }
+    const spec = pillSpec(segment, targets);
+    const ink = spec.quiet ? palette.quietInk : palette.foreground;
+    return (
+      <Pill
+        key={segment.kind}
+        accessibilityLabel={`${spec.accessibilityLabel}${spec.needsYou ? ", needs you" : ""}`}
+        accessibilityHint={spec.onPress === openSheet ? "Opens the thread's activity" : undefined}
+        onPress={spec.onPress}
+        palette={palette}
+      >
+        {spec.icon === null ? (
+          segment.kind === "status" ? (
+            <No3yStatusGlyph status={segment.status} palette={palette} />
+          ) : null
+        ) : (
+          <HugeIcon icon={spec.icon} filled={spec.filled} size={ICON_SIZE} color={ink} />
+        )}
+        <PillText color={ink}>{spec.text}</PillText>
+        {spec.chevron ? <HugeIcon icon={ArrowDown01Icon} size={ICON_SIZE} color={ink} /> : null}
+        {spec.needsYou ? <NeedsYouDot palette={palette} /> : null}
+      </Pill>
+    );
+  };
 
   return (
     <Animated.View
@@ -187,22 +257,44 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           position: "absolute",
           left: 0,
           right: 0,
-          top: -(PILL_HEIGHT + PILL_GAP - COMPOSER_CAPSULE_INSET),
+          top: -(PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET) - SHADOW_ROOM,
           zIndex: 20,
           flexDirection: "row",
-          justifyContent: "flex-end",
           alignItems: "center",
-          gap: PILL_GAP,
-          paddingHorizontal: CARD_SIDE_INSET,
         },
         liftStyle,
       ]}
     >
+      {/* Only as wide as its pills, and only there with pills, so the transcript takes touches. */}
+      {pills.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ flexGrow: 0, flexShrink: 1 }}
+          contentContainerStyle={{
+            alignItems: "center",
+            gap: 8,
+            paddingLeft: CARD_SIDE_INSET + ROW_INSET,
+            paddingRight: 8,
+            paddingVertical: SHADOW_ROOM,
+          }}
+        >
+          {pills.map(renderPill)}
+        </ScrollView>
+      ) : null}
       {props.showScrollToEnd ? (
         <Animated.View
           entering={NO3Y_GLASS_IN}
           layout={NO3Y_LAYOUT}
-          style={{ width: PILL_HEIGHT, height: PILL_HEIGHT }}
+          style={{
+            width: PILL_HEIGHT,
+            height: PILL_HEIGHT,
+            marginLeft: "auto",
+            marginRight: CARD_SIDE_INSET,
+            boxShadow: palette.pillShadow,
+            borderRadius: PILL_HEIGHT / 2,
+          }}
         >
           <No3yGlassLayer radius={PILL_HEIGHT / 2} />
           <Pressable
@@ -221,87 +313,292 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           </Pressable>
         </Animated.View>
       ) : null}
-      {segments.length > 0 ? (
-        <Animated.View
-          entering={NO3Y_GLASS_IN}
-          layout={NO3Y_LAYOUT}
-          style={{ height: PILL_HEIGHT }}
-        >
-          <No3yGlassLayer radius={PILL_HEIGHT / 2} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={accessibilityLabel}
-            accessibilityHint="Opens the thread's activity"
-            hitSlop={7}
-            onPress={openSheet}
-            style={({ pressed }) => ({
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              paddingHorizontal: 10,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            {segments.map((segment, index) => (
-              <Fragment key={segment.kind}>
-                {index > 0 ? (
-                  <View style={{ width: 1, height: 14, backgroundColor: palette.hairline }} />
-                ) : null}
-                <PillSegment segment={segment} status={status} palette={palette} />
-              </Fragment>
-            ))}
-          </Pressable>
-        </Animated.View>
-      ) : null}
     </Animated.View>
   );
 }
 
-const SEGMENT_ICONS: Readonly<Record<Exclude<No3yStatusSegment["kind"], "status">, HugeIconData>> =
-  {
-    processes: ComputerTerminal01Icon,
-    monitors: Radar01Icon,
-    subagents: Robot01Icon,
-    extension: PuzzleIcon,
-    queue: LeftToRightListNumberIcon,
-    devices: SmartPhone01Icon,
-    browser: Globe02Icon,
-  };
+/**
+ * The thread ThreadDetailScreen resolves its pull request from (useThreadPr) for the pills: the
+ * thread itself on the no3y layout, and elsewhere the thread without pull request references, so
+ * the upstream layouts start no pull request read of their own.
+ */
+export function no3yPullRequestThread(
+  thread: EnvironmentThreadShell,
+  enabled: boolean,
+): EnvironmentThreadShell {
+  if (enabled) return thread;
+  const { linkedPullRequest: _linked, branchPullRequest: _branch, ...rest } = thread;
+  return { ...rest, pullRequests: NO_PULL_REQUESTS };
+}
 
-function PillSegment(props: {
-  readonly segment: No3yStatusSegment;
-  readonly status: No3yPillStatus | null;
+const NO_PULL_REQUESTS: EnvironmentThreadShell["pullRequests"] = [];
+
+/** One pill: glass (tinted for a pull request), a 16pt icon, 12pt text. */
+function Pill(props: {
+  readonly accessibilityLabel: string;
+  readonly accessibilityHint?: string | undefined;
+  readonly onPress: () => void;
   readonly palette: FlatGlassPalette;
+  readonly tint?: string | undefined;
+  /** An inner glow, as a box shadow: the stacked pull request's purple-to-green. */
+  readonly glow?: string | undefined;
+  readonly children: ReactNode;
 }) {
-  const { segment, palette, status } = props;
-  const ink = segment.quiet ? palette.quietInk : palette.foreground;
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-      {segment.kind === "status" ? (
-        status === null ? null : (
-          <No3yStatusGlyph status={status} palette={palette} />
-        )
-      ) : (
-        <HugeIcon icon={SEGMENT_ICONS[segment.kind]} size={ICON_SIZE} color={ink} />
-      )}
-      {segment.count !== null ? (
-        <Text
-          style={{
-            ...NO3Y_FONT.medium,
-            fontSize: 13,
-            fontVariant: ["tabular-nums"],
-            color: ink,
-          }}
-        >
-          {segment.count}
-        </Text>
-      ) : null}
-      {segment.needsYou ? (
+    <Animated.View
+      entering={NO3Y_GLASS_IN}
+      layout={NO3Y_LAYOUT}
+      style={{
+        height: PILL_HEIGHT,
+        borderRadius: PILL_RADIUS,
+        boxShadow: props.palette.pillShadow,
+      }}
+    >
+      <No3yGlassLayer radius={PILL_RADIUS} tint={props.tint} />
+      {props.glow === undefined ? null : (
         <View
-          style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.statusAttention }}
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: PILL_RADIUS, boxShadow: props.glow }]}
         />
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={props.accessibilityLabel}
+        accessibilityHint={props.accessibilityHint}
+        hitSlop={6}
+        onPress={props.onPress}
+        style={({ pressed }) => ({
+          flex: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          paddingHorizontal: 8,
+          opacity: pressed ? 0.6 : 1,
+        })}
+      >
+        {props.children}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function PillText(props: { readonly color: string; readonly children: ReactNode }) {
+  return (
+    <Text
+      numberOfLines={1}
+      style={{
+        ...NO3Y_FONT.regular,
+        fontSize: 12,
+        fontVariant: ["tabular-nums"],
+        color: props.color,
+      }}
+    >
+      {props.children}
+    </Text>
+  );
+}
+
+function NeedsYouDot(props: { readonly palette: FlatGlassPalette }) {
+  return (
+    <View
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginLeft: 2,
+        backgroundColor: props.palette.statusAttention,
+      }}
+    />
+  );
+}
+
+/** Where the pills go when tapped, from the upstream control's props. */
+interface PillTargets {
+  /** The thread's activity sheet (No3yStatusSheet.tsx). */
+  readonly sheet: () => void;
+  readonly agents: (() => void) | null;
+  readonly agentsLabel: string | undefined;
+  readonly extension: { readonly label: string; readonly onPress: () => void } | null;
+  readonly devices: (() => void) | null;
+  readonly browser: (() => void) | null;
+}
+
+interface PillSpec {
+  /** Null for the status pill, which draws its status glyph. */
+  readonly icon: HugeIconData | null;
+  readonly filled: boolean;
+  readonly text: string;
+  readonly accessibilityLabel: string;
+  readonly onPress: () => void;
+  /** The background group's chevron: it opens into the activity sheet. */
+  readonly chevron: boolean;
+  readonly needsYou: boolean;
+  readonly quiet: boolean;
+}
+
+function counted(count: number, one: string, many: string) {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/** Every pill but the pull request's: its icon, words and target, decided once per kind. */
+function pillSpec(
+  segment: Exclude<No3yStatusSegment, { readonly kind: "pullRequest" }>,
+  targets: PillTargets,
+): PillSpec {
+  const spec = (
+    icon: HugeIconData | null,
+    text: string,
+    onPress: () => void,
+    extra: Partial<Pick<PillSpec, "filled" | "chevron" | "accessibilityLabel">> = {},
+  ): PillSpec => ({
+    icon,
+    text,
+    onPress,
+    accessibilityLabel: extra.accessibilityLabel ?? text,
+    filled: extra.filled ?? false,
+    chevron: extra.chevron ?? false,
+    needsYou: segment.kind === "extension" ? false : segment.needsYou,
+    quiet: segment.kind === "extension" || segment.kind === "status" ? false : segment.quiet,
+  });
+  switch (segment.kind) {
+    case "status": {
+      const { status } = segment;
+      const text =
+        status.kind === "compacting"
+          ? "Compacting"
+          : status.kind === "working"
+            ? "Working"
+            : status.label;
+      return spec(null, text, targets.sheet);
+    }
+    case "extension":
+      return spec(
+        PuzzleIcon,
+        targets.extension?.label ?? "Pi",
+        targets.extension?.onPress ?? targets.sheet,
+      );
+    case "subagents":
+      return spec(
+        BotMessageSquareIcon,
+        counted(segment.count, "subagent", "subagents"),
+        // A child request can come from an earlier turn or a side chat, which only Activity lists.
+        segment.needsYou || targets.agents === null ? targets.sheet : targets.agents,
+        targets.agentsLabel === undefined ? {} : { accessibilityLabel: targets.agentsLabel },
+      );
+    case "processes":
+      return spec(
+        ComputerTerminal01Icon,
+        counted(segment.count, "process", "processes"),
+        targets.sheet,
+      );
+    case "monitors":
+      return spec(
+        ComputerActivityIcon,
+        segment.count === 1 ? "Monitoring" : `${segment.count} monitors`,
+        targets.sheet,
+      );
+    case "backgroundGroup":
+      return spec(
+        SquareStackIcon,
+        counted(segment.count, "background task", "background tasks"),
+        targets.sheet,
+        { filled: true, chevron: true },
+      );
+    case "queue":
+      return spec(LeftToRightListNumberIcon, `${segment.count} queued`, targets.sheet);
+    case "devices":
+      return spec(
+        SmartPhone01Icon,
+        segment.count === 1 ? "Device" : `${segment.count} devices`,
+        targets.devices ?? targets.sheet,
+      );
+    case "browser":
+      return spec(
+        Globe02Icon,
+        segment.count === 1 ? "Browser" : `${segment.count} tabs`,
+        targets.browser ?? targets.sheet,
+      );
+  }
+}
+
+/**
+ * The thread's pull request on its state's tinted glass (palette.prPill), a stack or several as
+ * the layers glyph with how many more, and a running or failing checks mark on an open one.
+ */
+function PullRequestPill(props: {
+  readonly pr: ThreadPrPresentation;
+  readonly look: No3yPullRequestPill;
+  readonly palette: FlatGlassPalette;
+  readonly onPress: () => void;
+}) {
+  const { pr, look, palette } = props;
+  const colors = look.several ? { ink: palette.foreground } : palette.prPill[look.tone];
+  const checks =
+    look.checks === "pending"
+      ? ", checks running"
+      : look.checks === "failing"
+        ? ", checks failing"
+        : "";
+  return (
+    <Pill
+      accessibilityLabel={`${pr.accessibilityLabel}${checks}`}
+      onPress={props.onPress}
+      palette={palette}
+      tint={colors.tint}
+      glow={look.several ? palette.prStackGlow : undefined}
+    >
+      <HugeIcon
+        icon={look.several ? Layers01Icon : GitPullRequestIcon}
+        filled={look.several}
+        size={ICON_SIZE}
+        color={colors.ink}
+      />
+      <PillText color={colors.ink}>{pr.number}</PillText>
+      {look.several && look.more > 0 ? (
+        <PillText color={colors.ink}>{`${look.more}+`}</PillText>
       ) : null}
+      {look.checks === "pending" ? <ChecksRunningMark color={palette.statusAttention} /> : null}
+      {look.checks === "failing" ? <ChecksFailingMark color={palette.statusFailed} /> : null}
+    </Pill>
+  );
+}
+
+/** Figma's checks-running mark: a ring with a three-quarter pie. */
+function ChecksRunningMark(props: { readonly color: string }) {
+  return (
+    <View
+      style={{
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+        <Path
+          d="M11 7C11 7.79113 10.7654 8.56448 10.3259 9.22228C9.88635 9.88008 9.26164 10.3928 8.53073 10.6955C7.79983 10.9983 6.99556 11.0775 6.21964 10.9231C5.44371 10.7688 4.73098 10.3878 4.17157 9.82843C3.61216 9.26902 3.2312 8.55629 3.07686 7.78036C2.92252 7.00444 3.00173 6.20017 3.30448 5.46927C3.60723 4.73836 4.11992 4.11365 4.77772 3.67412C5.43552 3.2346 6.20887 3 7 3V7H11Z"
+          fill={props.color}
+        />
+        <Circle cx={7} cy={7} r={6.5} stroke={props.color} />
+      </Svg>
+    </View>
+  );
+}
+
+/** The checks-failing mark: a solid dot the size of the running mark's inner pie. */
+function ChecksFailingMark(props: { readonly color: string }) {
+  return (
+    <View
+      style={{
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Svg width={14} height={14} viewBox="0 0 14 14">
+        <Circle cx={7} cy={7} r={4} fill={props.color} />
+      </Svg>
     </View>
   );
 }
@@ -364,37 +661,4 @@ function Spinner() {
       />
     </View>
   );
-}
-
-function plural(count: number, noun: string) {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-
-function segmentAccessibilityLabel(
-  segment: No3yStatusSegment,
-  status: No3yPillStatus | null,
-  agentsLabel: string | undefined,
-): string {
-  const needs = segment.needsYou ? ", needs you" : "";
-  const count = segment.count ?? 0;
-  switch (segment.kind) {
-    case "status":
-      if (status === null) return "";
-      if (status.kind === "compacting") return "Compacting";
-      return `${"label" in status ? status.label : ""}${needs}`;
-    case "processes":
-      return `${count} background ${count === 1 ? "process" : "processes"}`;
-    case "monitors":
-      return plural(count, "monitor");
-    case "subagents":
-      return `${agentsLabel ?? plural(count, "subagent")}${needs}`;
-    case "extension":
-      return "Pi status";
-    case "queue":
-      return `${count} queued`;
-    case "devices":
-      return plural(count, "device preview");
-    case "browser":
-      return plural(count, "browser tab");
-  }
 }
