@@ -15,6 +15,7 @@ import {
 } from "@t3tools/shared/usageLimits";
 import { useEffect, useEffectEvent, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -24,6 +25,7 @@ import { useRefreshLimits } from "../src/features/usage/UsageLimitsSection";
 import { environmentPresentations } from "../src/state/presentation";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT } from "./no3yMotion";
 import { No3yProviderMark } from "./No3yProviderMark";
 import {
   actionableLimitNotices,
@@ -78,10 +80,13 @@ export function No3yUsageSheet() {
       showsVerticalScrollIndicator={false}
     >
       {state === "checking" ? (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Animated.View
+          exiting={NO3Y_FADE_OUT}
+          style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+        >
           <ActivityIndicator size="small" color={palette.quietInk} />
           <Text style={{ fontSize: 14, color: palette.metaInk }}>Checking usage limits…</Text>
-        </View>
+        </Animated.View>
       ) : state === "offline" ? (
         <Text style={{ fontSize: 14, color: palette.metaInk }}>
           Connect to an environment to see its usage limits.
@@ -92,7 +97,9 @@ export function No3yUsageSheet() {
         </Text>
       ) : null}
       {pools.map((pool) => (
-        <ProviderRow key={pool.driver} pool={pool} now={limits.now} palette={palette} />
+        <Animated.View key={pool.driver} entering={NO3Y_FADE_IN}>
+          <ProviderRow pool={pool} now={limits.now} palette={palette} />
+        </Animated.View>
       ))}
       {[...notices, ...failed.map((label) => `${label}: could not refresh limits`)].map(
         (notice) => (

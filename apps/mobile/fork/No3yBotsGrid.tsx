@@ -6,6 +6,7 @@
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { useMemo } from "react";
 import { Pressable, View } from "react-native";
+import Animated from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -35,6 +36,7 @@ import {
   type No3yBotWork,
 } from "./forkBots";
 import { resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT } from "./no3yMotion";
 import { No3yStatusMark } from "./No3yStatusMark";
 
 const GRID_INSET = 16;
@@ -207,8 +209,11 @@ export function No3yBotsGrid(props: {
         </Text>
       </View>
       {rows.map((row) => (
-        <View
+        <Animated.View
           key={`${row[0]!.environmentId}:${row[0]!.id}`}
+          layout={NO3Y_LAYOUT}
+          entering={NO3Y_FADE_IN}
+          exiting={NO3Y_FADE_OUT}
           style={{ flexDirection: "row", gap: GRID_GAP }}
         >
           {row.map((bot) => (
@@ -224,7 +229,7 @@ export function No3yBotsGrid(props: {
             />
           ))}
           {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
-        </View>
+        </Animated.View>
       ))}
     </View>
   );

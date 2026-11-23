@@ -18,6 +18,7 @@ import {
 } from "@t3tools/client-runtime/state/runtime";
 import { useEffect, useSyncExternalStore } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import Animated, { interpolateColor, useAnimatedStyle } from "react-native-reanimated";
 import { KeyboardController } from "react-native-keyboard-controller";
 
 import { ProjectFavicon } from "../src/components/ProjectFavicon";
@@ -46,6 +47,7 @@ import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassT
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import type { No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
 import {
   no3yProjectTileStatus,
@@ -98,51 +100,59 @@ function ProjectTile(props: {
 }) {
   const { palette, tile } = props;
   const project = tile.scope.representative;
+  // The picked tile lifts: its wash brightens and its hairline shows, eased rather than cut.
+  const lift = useNo3yToggleProgress(props.selected);
+  const liftStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      lift.get(),
+      [0, 1],
+      [palette.cardWash, palette.activePillSurface],
+    ),
+    borderColor: interpolateColor(lift.get(), [0, 1], ["rgba(255,255,255,0)", palette.hairline]),
+  }));
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${tile.scope.title}, ${props.status}`}
-      accessibilityState={{ selected: props.selected, disabled: props.disabled }}
-      disabled={props.disabled}
-      onPress={props.onPress}
-      style={({ pressed }) => ({
-        flex: 1,
-        minWidth: 0,
-        gap: 10,
-        padding: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: props.selected ? palette.hairline : "transparent",
-        backgroundColor: props.selected
-          ? palette.activePillSurface
-          : pressed
-            ? palette.rowSelected
-            : palette.cardWash,
-      })}
+    <Animated.View
+      layout={NO3Y_LAYOUT}
+      entering={NO3Y_FADE_IN}
+      style={[{ flex: 1, minWidth: 0, borderRadius: 16, borderWidth: 1 }, liftStyle]}
     >
-      <ProjectFavicon
-        environmentId={project.environmentId}
-        faviconPath={project.faviconPath}
-        projectIcon={project.projectIcon}
-        projectTitle={tile.scope.title}
-        workspaceRoot={project.workspaceRoot}
-        size={28}
-      />
-      <View style={{ gap: 2 }}>
-        <Text
-          numberOfLines={1}
-          style={{ ...NO3Y_FONT.medium, fontSize: 15, lineHeight: 20, color: palette.titleInk }}
-        >
-          {tile.scope.title}
-        </Text>
-        <Text
-          numberOfLines={1}
-          style={{ ...NO3Y_FONT.regular, fontSize: 13, lineHeight: 17, color: palette.metaInk }}
-        >
-          {props.status}
-        </Text>
-      </View>
-    </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${tile.scope.title}, ${props.status}`}
+        accessibilityState={{ selected: props.selected, disabled: props.disabled }}
+        disabled={props.disabled}
+        onPress={props.onPress}
+        style={({ pressed }) => ({
+          gap: 10,
+          padding: 13,
+          borderRadius: 15,
+          backgroundColor: pressed ? palette.rowPressed : "transparent",
+        })}
+      >
+        <ProjectFavicon
+          environmentId={project.environmentId}
+          faviconPath={project.faviconPath}
+          projectIcon={project.projectIcon}
+          projectTitle={tile.scope.title}
+          workspaceRoot={project.workspaceRoot}
+          size={28}
+        />
+        <View style={{ gap: 2 }}>
+          <Text
+            numberOfLines={1}
+            style={{ ...NO3Y_FONT.medium, fontSize: 15, lineHeight: 20, color: palette.titleInk }}
+          >
+            {tile.scope.title}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={{ ...NO3Y_FONT.regular, fontSize: 13, lineHeight: 17, color: palette.metaInk }}
+          >
+            {props.status}
+          </Text>
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -255,7 +265,11 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
         {searchQuery.trim().length > 0 ? "Projects" : "Recent projects"}
       </Text>
       {rows.map((row) => (
-        <View key={row[0]!.scope.key} style={{ flexDirection: "row", gap: 10 }}>
+        <Animated.View
+          key={row[0]!.scope.key}
+          layout={NO3Y_LAYOUT}
+          style={{ flexDirection: "row", gap: 10 }}
+        >
           {row.map((tile) => (
             <ProjectTile
               key={tile.scope.key}
@@ -268,7 +282,7 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
             />
           ))}
           {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
-        </View>
+        </Animated.View>
       ))}
       {tiles.length === 0 ? (
         <Text style={{ ...linkStyle, color: palette.quietInk, paddingHorizontal: 4 }}>
@@ -326,31 +340,38 @@ function DraftPill(props: {
 }) {
   const { palette } = props;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={props.accessibilityLabel}
-      disabled={props.disabled}
-      onPress={props.onPress}
-      style={({ pressed }) => ({
-        height: PILL_HEIGHT,
-        maxWidth: "100%",
-        flexShrink: 1,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        paddingHorizontal: 12,
-        opacity: props.disabled ? 0.45 : pressed ? 0.6 : 1,
-      })}
+    <Animated.View
+      layout={NO3Y_LAYOUT}
+      entering={NO3Y_FADE_IN}
+      exiting={NO3Y_FADE_OUT}
+      style={{ maxWidth: "100%", flexShrink: 1 }}
     >
-      <No3yGlassLayer radius={PILL_HEIGHT / 2} />
-      <HugeIcon icon={props.icon} size={16} color={palette.foreground} filled />
-      <Text
-        numberOfLines={1}
-        style={{ flexShrink: 1, ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={props.accessibilityLabel}
+        disabled={props.disabled}
+        onPress={props.onPress}
+        style={({ pressed }) => ({
+          height: PILL_HEIGHT,
+          maxWidth: "100%",
+          flexShrink: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          paddingHorizontal: 12,
+          opacity: props.disabled ? 0.45 : pressed ? 0.6 : 1,
+        })}
       >
-        {props.label}
-      </Text>
-    </Pressable>
+        <No3yGlassLayer radius={PILL_HEIGHT / 2} />
+        <HugeIcon icon={props.icon} size={16} color={palette.foreground} filled />
+        <Text
+          numberOfLines={1}
+          style={{ flexShrink: 1, ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+        >
+          {props.label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 

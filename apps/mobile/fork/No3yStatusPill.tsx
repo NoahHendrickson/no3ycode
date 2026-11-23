@@ -46,6 +46,7 @@ import {
   type No3yStatusSegment,
 } from "./no3yStatusSegments";
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT } from "./no3yMotion";
 
 const PILL_HEIGHT = 30;
 const PILL_GAP = 8;
@@ -197,7 +198,12 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       ]}
     >
       {props.showScrollToEnd ? (
-        <View style={{ width: PILL_HEIGHT, height: PILL_HEIGHT }}>
+        <Animated.View
+          entering={NO3Y_FADE_IN}
+          exiting={NO3Y_FADE_OUT}
+          layout={NO3Y_LAYOUT}
+          style={{ width: PILL_HEIGHT, height: PILL_HEIGHT }}
+        >
           <No3yGlassLayer radius={PILL_HEIGHT / 2} />
           <Pressable
             accessibilityRole="button"
@@ -213,10 +219,15 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           >
             <HugeIcon icon={ArrowDown01Icon} size={ICON_SIZE} color={palette.foreground} />
           </Pressable>
-        </View>
+        </Animated.View>
       ) : null}
       {segments.length > 0 ? (
-        <View style={{ height: PILL_HEIGHT }}>
+        <Animated.View
+          entering={NO3Y_FADE_IN}
+          exiting={NO3Y_FADE_OUT}
+          layout={NO3Y_LAYOUT}
+          style={{ height: PILL_HEIGHT }}
+        >
           <No3yGlassLayer radius={PILL_HEIGHT / 2} />
           <Pressable
             accessibilityRole="button"
@@ -242,7 +253,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
               </Fragment>
             ))}
           </Pressable>
-        </View>
+        </Animated.View>
       ) : null}
     </Animated.View>
   );

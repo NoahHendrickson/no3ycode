@@ -23,6 +23,7 @@ import { Atom } from "effect/reactivity";
 import * as Haptics from "expo-haptics";
 import { useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import * as Dialog from "../src/components/ui/Dialog";
@@ -39,6 +40,7 @@ import { useAtomCommand } from "../src/state/use-atom-command";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, NO3Y_RISE_IN } from "./no3yMotion";
 import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
 import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
 
@@ -149,7 +151,12 @@ export function No3yQueuedRunsBanner(props: {
   };
 
   return (
-    <View style={{ marginHorizontal: 16, marginBottom: 6, borderRadius: RADIUS }}>
+    <Animated.View
+      entering={NO3Y_RISE_IN}
+      exiting={NO3Y_FADE_OUT}
+      layout={NO3Y_LAYOUT}
+      style={{ marginHorizontal: 16, marginBottom: 6, borderRadius: RADIUS }}
+    >
       <No3yGlassLayer radius={RADIUS} />
       <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
         <Pressable
@@ -199,8 +206,9 @@ export function No3yQueuedRunsBanner(props: {
           </Pressable>
         ) : null}
       </View>
-      {expanded
-        ? queuedRuns.map(({ run, text, attachments, context, message }, index) => {
+      {expanded ? (
+        <Animated.View entering={NO3Y_FADE_IN} exiting={NO3Y_FADE_OUT}>
+          {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
             const controls = resolveThreadQueueRowControls({
               busy: busyRunId !== null,
               // A fresh message starts its own turn: it may skip compaction, but not steer into one.
@@ -243,9 +251,10 @@ export function No3yQueuedRunsBanner(props: {
                 onAction={(action) => void act(run.id, action)}
               />
             );
-          })
-        : null}
-    </View>
+          })}
+        </Animated.View>
+      ) : null}
+    </Animated.View>
   );
 }
 

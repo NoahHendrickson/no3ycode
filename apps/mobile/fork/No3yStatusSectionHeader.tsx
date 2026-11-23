@@ -6,6 +6,7 @@
 import ChevronDownIcon from "@hugeicons/core-free-icons/ChevronDownIcon";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
@@ -15,6 +16,7 @@ import {
   type SidebarV2StatusHeaderKey,
 } from "./forkStatusGrouping";
 import { HugeIcon } from "./HugeIcon";
+import { useNo3yToggleProgress } from "./no3yMotion";
 
 export const No3yStatusSectionHeader = memo(function No3yStatusSectionHeader(props: {
   readonly section: SidebarV2StatusHeaderKey;
@@ -27,6 +29,10 @@ export const No3yStatusSectionHeader = memo(function No3yStatusSectionHeader(pro
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const label = SIDEBAR_V2_STATUS_SECTION_LABELS[props.section];
+  const open = useNo3yToggleProgress(!props.collapsed);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${(open.get() - 1) * 90}deg` }],
+  }));
 
   return (
     <View style={{ paddingTop: props.isFirst ? 10 : 20, paddingHorizontal: 18 }}>
@@ -57,17 +63,14 @@ export const No3yStatusSectionHeader = memo(function No3yStatusSectionHeader(pro
         >
           {label}
         </Text>
-        <View
-          style={{
-            width: 20,
-            height: 24,
-            alignItems: "center",
-            justifyContent: "center",
-            transform: [{ rotate: props.collapsed ? "-90deg" : "0deg" }],
-          }}
+        <Animated.View
+          style={[
+            { width: 20, height: 24, alignItems: "center", justifyContent: "center" },
+            chevronStyle,
+          ]}
         >
           <HugeIcon icon={ChevronDownIcon} size={14} color={palette.sectionInk} filled />
-        </View>
+        </Animated.View>
       </Pressable>
     </View>
   );

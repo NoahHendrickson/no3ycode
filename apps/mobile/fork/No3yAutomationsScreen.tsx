@@ -27,6 +27,7 @@ import type {
 } from "@t3tools/client-runtime/state/shell";
 import { useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -60,6 +61,8 @@ import {
 } from "./mobileStatusGrouping";
 import { groupNo3yRuns, no3yAutomationTileStatus, NO3Y_RUNS_PAGE } from "./no3yAutomationRuns";
 import { No3yCircleButton } from "./No3yControls";
+import { useNo3yDockEnterStyle } from "./no3yDockMotion";
+import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yGlassLayer } from "./No3yGlass";
 import { findMenuItem, menuActions } from "./No3yScreenHeader";
 import { No3yStatusMark } from "./No3yStatusMark";
@@ -85,48 +88,75 @@ export interface No3yAutomationsScreenProps {
   readonly emptyMessage: string;
 }
 
+function TabSegment(props: {
+  readonly label: string;
+  readonly selected: boolean;
+  readonly palette: FlatGlassPalette;
+  readonly onPress: () => void;
+}) {
+  const { palette } = props;
+  // The selected wash fades between the segments rather than jumping.
+  const on = useNo3yToggleProgress(props.selected);
+  const washStyle = useAnimatedStyle(() => ({ opacity: on.get() }));
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityLabel={props.label}
+      accessibilityState={{ selected: props.selected }}
+      onPress={props.onPress}
+      style={{
+        height: SEGMENT_HEIGHT - 6,
+        paddingHorizontal: 14,
+        justifyContent: "center",
+      }}
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: (SEGMENT_HEIGHT - 6) / 2,
+            backgroundColor: palette.activePillSurface,
+          },
+          washStyle,
+        ]}
+      />
+      <Text
+        style={{
+          ...NO3Y_FONT.medium,
+          fontSize: 15,
+          color: props.selected ? palette.titleInk : palette.quietInk,
+        }}
+      >
+        {props.label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function TabSwitch(props: {
   readonly tab: AutomationsTab;
   readonly palette: FlatGlassPalette;
   readonly onChange: (tab: AutomationsTab) => void;
 }) {
-  const { palette } = props;
-  const segment = (tab: AutomationsTab, label: string) => {
-    const selected = props.tab === tab;
-    return (
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityLabel={label}
-        accessibilityState={{ selected }}
-        onPress={() => props.onChange(tab)}
-        style={{
-          height: SEGMENT_HEIGHT - 6,
-          paddingHorizontal: 14,
-          borderRadius: (SEGMENT_HEIGHT - 6) / 2,
-          justifyContent: "center",
-          backgroundColor: selected ? palette.activePillSurface : "transparent",
-        }}
-      >
-        <Text
-          style={{
-            ...NO3Y_FONT.medium,
-            fontSize: 15,
-            color: selected ? palette.titleInk : palette.quietInk,
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    );
-  };
   return (
     <View
       accessibilityRole="tablist"
       style={{ height: SEGMENT_HEIGHT, flexDirection: "row", alignItems: "center", padding: 3 }}
     >
       <No3yGlassLayer radius={SEGMENT_HEIGHT / 2} />
-      {segment("automations", "Automations")}
-      {segment("runs", "Runs")}
+      <TabSegment
+        label="Automations"
+        selected={props.tab === "automations"}
+        palette={props.palette}
+        onPress={() => props.onChange("automations")}
+      />
+      <TabSegment
+        label="Runs"
+        selected={props.tab === "runs"}
+        palette={props.palette}
+        onPress={() => props.onChange("runs")}
+      />
     </View>
   );
 }
@@ -136,71 +166,77 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const [tab, setTab] = useState(lastTab);
+  const dockEnterStyle = useNo3yDockEnterStyle();
   const changeTab = (next: AutomationsTab) => {
     lastTab = next;
     setTab(next);
   };
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-      <NativeStackScreenOptions options={{ headerShown: false }} />
-      <View
-        style={{
-          paddingTop: insets.top,
-          height: insets.top + 68,
-          paddingHorizontal: 16,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
-        <View style={{ flex: 1 }} />
-        <Menu
-          accessibilityLabel={props.environmentMenu.title}
-          actions={menuActions(props.environmentMenu.items)}
-          onPressAction={({ nativeEvent }) =>
-            findMenuItem(props.environmentMenu.items, nativeEvent.event)?.()
-          }
+      <Animated.View style={dockEnterStyle}>
+        <NativeStackScreenOptions options={{ headerShown: false }} />
+        <View
+          style={{
+            paddingTop: insets.top,
+            height: insets.top + 68,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
         >
+          <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
+          <View style={{ flex: 1 }} />
+          <Menu
+            accessibilityLabel={props.environmentMenu.title}
+            actions={menuActions(props.environmentMenu.items)}
+            onPressAction={({ nativeEvent }) =>
+              findMenuItem(props.environmentMenu.items, nativeEvent.event)?.()
+            }
+          >
+            <No3yCircleButton
+              palette={palette}
+              accessibilityLabel={props.environmentMenu.title}
+              icon={ListFilterIcon}
+            />
+          </Menu>
           <No3yCircleButton
             palette={palette}
-            accessibilityLabel={props.environmentMenu.title}
-            icon={ListFilterIcon}
+            accessibilityLabel="New automation"
+            icon={PlusIcon}
+            disabled={props.environments.length === 0}
+            onPress={props.onNew}
           />
-        </Menu>
-        <No3yCircleButton
-          palette={palette}
-          accessibilityLabel="New automation"
-          icon={PlusIcon}
-          disabled={props.environments.length === 0}
-          onPress={props.onNew}
-        />
-      </View>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 18) + 18 + NO3Y_BOTTOM_NAV_CLEARANCE,
-          gap: 24,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {props.environments.length === 0 ? (
-          <Text style={{ fontSize: 15, color: palette.metaInk }}>{props.emptyMessage}</Text>
-        ) : (
-          props.environments.map((environment) => (
-            <EnvironmentAutomations
-              key={environment.environmentId}
-              environment={environment}
-              showEnvironment={props.environments.length > 1}
-              palette={palette}
-              tab={tab}
-              {...props}
-            />
-          ))
-        )}
-      </ScrollView>
+        </View>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 4,
+            paddingBottom: Math.max(insets.bottom, 18) + 18 + NO3Y_BOTTOM_NAV_CLEARANCE,
+            gap: 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {props.environments.length === 0 ? (
+            <Text style={{ fontSize: 15, color: palette.metaInk }}>{props.emptyMessage}</Text>
+          ) : (
+            // The tab's content fades in as the switch changes.
+            <Animated.View key={tab} entering={NO3Y_FADE_IN} style={{ gap: 24 }}>
+              {props.environments.map((environment) => (
+                <EnvironmentAutomations
+                  key={environment.environmentId}
+                  environment={environment}
+                  showEnvironment={props.environments.length > 1}
+                  palette={palette}
+                  tab={tab}
+                  {...props}
+                />
+              ))}
+            </Animated.View>
+          )}
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -321,7 +357,12 @@ function EnvironmentAutomations(
       ) : (
         <View style={{ gap: 10 }}>
           {rows.map((row) => (
-            <View key={row[0]!.id} style={{ flexDirection: "row", gap: 10 }}>
+            <Animated.View
+              key={row[0]!.id}
+              layout={NO3Y_LAYOUT}
+              exiting={NO3Y_FADE_OUT}
+              style={{ flexDirection: "row", gap: 10 }}
+            >
               {row.map((task) => (
                 <AutomationTile
                   key={task.id}
@@ -351,7 +392,7 @@ function EnvironmentAutomations(
                 />
               ))}
               {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
-            </View>
+            </Animated.View>
           ))}
         </View>
       )}
@@ -619,18 +660,19 @@ function AutomationRuns(props: {
       {shown.map((thread) => {
         const scheduledTaskId = thread.source.scheduledTaskId;
         return (
-          <RunRow
-            key={thread.id}
-            thread={thread}
-            kind={kindOf(thread)}
-            automation={
-              scheduledTaskId === undefined ? undefined : props.taskTitles.get(scheduledTaskId)
-            }
-            project={projectOf(thread)}
-            palette={palette}
-            actions={actions}
-            onOpen={() => props.onOpen(thread)}
-          />
+          <Animated.View key={thread.id} layout={NO3Y_LAYOUT} exiting={NO3Y_FADE_OUT}>
+            <RunRow
+              thread={thread}
+              kind={kindOf(thread)}
+              automation={
+                scheduledTaskId === undefined ? undefined : props.taskTitles.get(scheduledTaskId)
+              }
+              project={projectOf(thread)}
+              palette={palette}
+              actions={actions}
+              onOpen={() => props.onOpen(thread)}
+            />
+          </Animated.View>
         );
       })}
       {runs.length > limit ? (

@@ -23,6 +23,7 @@ import {
   type ScrollViewProps,
 } from "react-native";
 import { GestureDetector, useNativeGesture } from "react-native-gesture-handler";
+import Animated from "react-native-reanimated";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -76,6 +77,7 @@ import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { No3yBotsGrid } from "./No3yBotsGrid";
 import { listNo3yBots } from "./forkBots";
+import { useNo3yDockEnterStyle } from "./no3yDockMotion";
 import { No3yThreadsHeader } from "./No3yScreenHeader";
 import { No3yStatusSectionHeader } from "./No3yStatusSectionHeader";
 import { No3yPendingDraftRow, No3yThreadRow } from "./No3yThreadRow";
@@ -185,6 +187,7 @@ export function No3yThreadsListView(props: {
   const palette = flatGlassPalette(themeAppearance);
   const workspace = useWorkspaceTabs();
   const no3yBottomNav = useNo3yBottomNavEnabled();
+  const dockEnterStyle = useNo3yDockEnterStyle();
   const insets = useSafeAreaInsets();
   const barTopInset = useContentTopInset();
   // The no3y Threads header lays out above the list instead of over it.
@@ -511,100 +514,105 @@ export function No3yThreadsListView(props: {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-      {no3yBottomNav ? <No3yThreadsHeader /> : null}
-      <ScreenContent surface="screen">
-        <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-          <SwipeableScrollGateProvider enabled={swipeEnabled} activation={swipeRowActivation}>
-            <GestureDetector gesture={homeScrollGesture}>
-              <AnimatedLegendList
-                itemLayoutAnimation={props.sidebarSurface ? THREAD_SIDEBAR_ROW_LAYOUT : undefined}
-                ref={listRef}
-                onLoad={() => {
-                  settleLaunchSplashHomeRows();
-                  activateVisibleRows(items);
-                }}
-                onTouchStart={(event) => trackListTouches(event, true)}
-                onTouchEnd={(event) => trackListTouches(event, false)}
-                onTouchCancel={(event) => trackListTouches(event, false)}
-                renderScrollComponent={renderFlatGlassScrollView}
-                data={items}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.key}
-                getItemType={(item) => item.type}
-                itemsAreEqual={no3yStatusGroupedItemsAreEqual}
-                estimatedItemSize={ESTIMATED_NO3Y_ROW_HEIGHT}
-                drawDistance={NO3Y_DRAW_DISTANCE}
-                recycleItems
-                extraData={{
-                  activeNewTask,
-                  projectByKey: props.projectByKey,
-                  projectTitleByProjectKey: props.projectTitleByProjectKey,
-                  savedConnectionsById: props.savedConnectionsById,
-                  searchQuery: props.searchQuery,
-                  selectedThreadKey: props.selectedThreadKey,
-                  searchMatchByKey: props.searchMatchByKey,
-                  themeAppearance,
-                }}
-                ListHeaderComponent={
-                  no3yBottomNav ? (
-                    <No3yBotsGrid
-                      bots={bots}
-                      threads={props.threads}
-                      now={props.now}
-                      onOpen={selectThread}
-                      onRename={props.onRenameThread}
-                      onArchive={props.onArchiveThread}
-                      onDelete={props.onDeleteThread}
-                    />
-                  ) : (
-                    <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
-                      {filterBar}
-                    </View>
-                  )
-                }
-                ListHeaderComponentStyle={{ zIndex: 1 }}
-                ListFooterComponent={
-                  settledShelfExpanded && hiddenSettledCount > 0 ? (
-                    <ThreadListV2ShowMoreRow
-                      hiddenCount={hiddenSettledCount}
-                      {...(olderSettledShelf.loading
-                        ? { state: "loading" as const }
-                        : olderSettledShelf.failed
-                          ? { state: "failed" as const }
-                          : {})}
-                      onPress={() => {
-                        olderSettledShelf.retry();
-                        showMoreSettled();
-                      }}
-                    />
-                  ) : null
-                }
-                ListEmptyComponent={listEmpty}
-                style={{ flex: 1 }}
-                automaticallyAdjustsScrollIndicatorInsets
-                contentInsetAdjustmentBehavior="never"
-                contentInset={{ top: contentTopInset }}
-                initialScrollOffset={
-                  initialScrollOffset > 0 ? initialScrollOffset - contentTopInset : undefined
-                }
-                showsVerticalScrollIndicator={false}
-                keyboardDismissMode="on-drag"
-                keyboardShouldPersistTaps="handled"
-                {...scrollGateHandlers}
-                scrollEventThrottle={16}
-                contentContainerStyle={{
-                  paddingLeft: props.contentSideInsets?.left ?? 0,
-                  paddingRight: props.contentSideInsets?.right ?? 0,
-                  paddingBottom: bottomPadding,
-                }}
-              />
-            </GestureDetector>
-          </SwipeableScrollGateProvider>
-        </View>
-      </ScreenContent>
-      {no3yBottomNav ? (
-        <No3yBottomTray color={palette.stageBackground}>{filterBar}</No3yBottomTray>
-      ) : null}
+      <Animated.View style={dockEnterStyle}>
+        {no3yBottomNav ? <No3yThreadsHeader /> : null}
+        <ScreenContent surface="screen">
+          <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
+            <SwipeableScrollGateProvider enabled={swipeEnabled} activation={swipeRowActivation}>
+              <GestureDetector gesture={homeScrollGesture}>
+                <AnimatedLegendList
+                  // Rows slide into the room a folded section or a settled card leaves.
+                  itemLayoutAnimation={
+                    props.sidebarSurface || no3yBottomNav ? THREAD_SIDEBAR_ROW_LAYOUT : undefined
+                  }
+                  ref={listRef}
+                  onLoad={() => {
+                    settleLaunchSplashHomeRows();
+                    activateVisibleRows(items);
+                  }}
+                  onTouchStart={(event) => trackListTouches(event, true)}
+                  onTouchEnd={(event) => trackListTouches(event, false)}
+                  onTouchCancel={(event) => trackListTouches(event, false)}
+                  renderScrollComponent={renderFlatGlassScrollView}
+                  data={items}
+                  renderItem={renderItem}
+                  keyExtractor={(item) => item.key}
+                  getItemType={(item) => item.type}
+                  itemsAreEqual={no3yStatusGroupedItemsAreEqual}
+                  estimatedItemSize={ESTIMATED_NO3Y_ROW_HEIGHT}
+                  drawDistance={NO3Y_DRAW_DISTANCE}
+                  recycleItems
+                  extraData={{
+                    activeNewTask,
+                    projectByKey: props.projectByKey,
+                    projectTitleByProjectKey: props.projectTitleByProjectKey,
+                    savedConnectionsById: props.savedConnectionsById,
+                    searchQuery: props.searchQuery,
+                    selectedThreadKey: props.selectedThreadKey,
+                    searchMatchByKey: props.searchMatchByKey,
+                    themeAppearance,
+                  }}
+                  ListHeaderComponent={
+                    no3yBottomNav ? (
+                      <No3yBotsGrid
+                        bots={bots}
+                        threads={props.threads}
+                        now={props.now}
+                        onOpen={selectThread}
+                        onRename={props.onRenameThread}
+                        onArchive={props.onArchiveThread}
+                        onDelete={props.onDeleteThread}
+                      />
+                    ) : (
+                      <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
+                        {filterBar}
+                      </View>
+                    )
+                  }
+                  ListHeaderComponentStyle={{ zIndex: 1 }}
+                  ListFooterComponent={
+                    settledShelfExpanded && hiddenSettledCount > 0 ? (
+                      <ThreadListV2ShowMoreRow
+                        hiddenCount={hiddenSettledCount}
+                        {...(olderSettledShelf.loading
+                          ? { state: "loading" as const }
+                          : olderSettledShelf.failed
+                            ? { state: "failed" as const }
+                            : {})}
+                        onPress={() => {
+                          olderSettledShelf.retry();
+                          showMoreSettled();
+                        }}
+                      />
+                    ) : null
+                  }
+                  ListEmptyComponent={listEmpty}
+                  style={{ flex: 1 }}
+                  automaticallyAdjustsScrollIndicatorInsets
+                  contentInsetAdjustmentBehavior="never"
+                  contentInset={{ top: contentTopInset }}
+                  initialScrollOffset={
+                    initialScrollOffset > 0 ? initialScrollOffset - contentTopInset : undefined
+                  }
+                  showsVerticalScrollIndicator={false}
+                  keyboardDismissMode="on-drag"
+                  keyboardShouldPersistTaps="handled"
+                  {...scrollGateHandlers}
+                  scrollEventThrottle={16}
+                  contentContainerStyle={{
+                    paddingLeft: props.contentSideInsets?.left ?? 0,
+                    paddingRight: props.contentSideInsets?.right ?? 0,
+                    paddingBottom: bottomPadding,
+                  }}
+                />
+              </GestureDetector>
+            </SwipeableScrollGateProvider>
+          </View>
+        </ScreenContent>
+        {no3yBottomNav ? (
+          <No3yBottomTray color={palette.stageBackground}>{filterBar}</No3yBottomTray>
+        ) : null}
+      </Animated.View>
     </View>
   );
 }

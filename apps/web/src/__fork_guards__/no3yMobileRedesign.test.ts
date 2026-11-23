@@ -636,7 +636,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // and the transcript's top inset is the floating row's.
     expect(threadHeader).toContain("if (no3yBar) return <No3yThreadHeader");
     expect(screenHeader).toContain("<NativeStackScreenOptions options={{ headerShown: false }} />");
-    expect(screenHeader).toContain("<HeaderHeightContext value={props.draft ? 0 : inset}>");
+    expect(screenHeader).toContain("<HeaderHeightContext value={inset}>");
     expect(threadRoute).toContain("<No3yThreadBarInset draft=");
     expect(screenHeader).toContain('StackActions.push("No3yUsage")');
     expect(stack).toContain("No3yUsage: createNativeStackScreen({");
@@ -662,6 +662,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('selectTab("pullRequests")');
     expect(dock).toContain('selectNo3yWorkspaceTab("threads", openWorkspaceTab)');
+    // Dock switches slide the way the dock was travelled, with the native push or pop off.
+    expect(dock).toContain("recordNo3yDockMove(activeItem, item.id);");
+    expect(stack).toContain("...no3yDockScreenOptions(),");
+    expect(listView).toContain("const dockEnterStyle = useNo3yDockEnterStyle();");
     expect(listView).toContain("<No3yBotsGrid");
     expect(readRepoFile("apps/mobile/fork/No3yBotsGrid.tsx")).toContain("<PetalCard");
     expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).not.toContain(

@@ -6,6 +6,7 @@
 import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowUp01Icon from "@hugeicons/core-free-icons/ArrowUp01Icon";
 import { Pressable, View } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
@@ -14,6 +15,7 @@ import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { No3yBeadRing } from "./No3yBeadRing";
 import { no3yTurnTimerLabel } from "./no3yLiveStatus";
+import { NO3Y_FADE_IN } from "./no3yMotion";
 
 export function No3yLiveStatusLine(props: {
   readonly label: string;
@@ -58,22 +60,25 @@ export function No3yLiveStatusLine(props: {
     paddingHorizontal: 2,
   } as const;
   return props.group ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${props.label}${timer ? `, ${timer}` : ""}`}
-      accessibilityState={{ expanded: props.group.expanded }}
-      onPress={props.group.onToggle}
-      style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.6 : 1 }]}
-    >
-      {content}
-    </Pressable>
+    <Animated.View entering={NO3Y_FADE_IN}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${props.label}${timer ? `, ${timer}` : ""}`}
+        accessibilityState={{ expanded: props.group.expanded }}
+        onPress={props.group.onToggle}
+        style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        {content}
+      </Pressable>
+    </Animated.View>
   ) : (
-    <View
+    <Animated.View
+      entering={NO3Y_FADE_IN}
       accessible
       accessibilityLabel={`${props.label}${timer ? `, ${timer}` : ""}`}
       style={rowStyle}
     >
       {content}
-    </View>
+    </Animated.View>
   );
 }
