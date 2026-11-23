@@ -113,6 +113,9 @@ export function No3yGlassMenuButton(
     <Host
       // A circle has the control's size; a capsule takes its width from its label.
       {...(circle ? {} : { matchContents: { horizontal: true } })}
+      // The hosting view otherwise insets its content for the home indicator and keyboard,
+      // lifting the glass off its slot: 1pt at rest, up to ~20pt while the keyboard moves.
+      ignoreSafeArea="all"
       alignment="center"
       style={{
         ...(circle ? { width: size } : null),
