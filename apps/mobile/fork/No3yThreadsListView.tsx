@@ -549,6 +549,7 @@ export function No3yThreadsListView(props: {
                   no3yBottomNav ? (
                     <No3yBotsGrid
                       bots={bots}
+                      threads={props.threads}
                       now={props.now}
                       onOpen={selectThread}
                       onRename={props.onRenameThread}

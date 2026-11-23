@@ -49,7 +49,11 @@ import {
   botMascotSprite as webBotMascotSprite,
 } from "../custom/bots/botMascotArt";
 import { botMascotShape as webBotMascotShape } from "../custom/bots/botMascotTags";
-import { listSidebarBots as webListSidebarBots } from "../custom/bots/botThreads";
+import {
+  botStatusLine as webBotStatusLine,
+  listSidebarBots as webListSidebarBots,
+} from "../custom/bots/botThreads";
+import { botWorkStatusText as webBotWorkStatusText } from "../custom/bots/botWork";
 import { isChatThread as webIsChatThread, shellThreadKey } from "../custom/chatMode";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
@@ -466,6 +470,8 @@ describe("fork guard: no3y-mobile-redesign", () => {
       {
         readonly listNo3yBots: typeof webListSidebarBots;
         readonly no3yBotMascotShape: typeof webBotMascotShape;
+        readonly no3yBotStatusLine: typeof webBotStatusLine;
+        readonly no3yBotWorkStatusText: typeof webBotWorkStatusText;
       },
       { readonly botMascotSprite: typeof webBotMascotSprite },
     ];
@@ -493,6 +499,42 @@ describe("fork guard: no3y-mobile-redesign", () => {
     for (const thread of fixtures) {
       const shell = { id: thread.id, tags: thread.source.tags };
       expect(bots.no3yBotMascotShape(shell)).toBe(webBotMascotShape(shell));
+    }
+    // Petal cards say what the Mac's say, for every status, report and wake.
+    const statuses = [
+      "working",
+      "preparing",
+      "approval",
+      "input",
+      "request",
+      "failed",
+      "limited",
+      "waiting",
+      "ready",
+    ] as const;
+    const reports = [null, { text: "## **Done**: see [notes](https://x.test)\nmore" }];
+    for (const status of statuses) {
+      for (const report of reports) {
+        for (const isUnread of [false, true]) {
+          for (const nextWakeAt of [null, NOW]) {
+            const input = {
+              shell: { tags: ["bot"], latestVisibleMessage: report } as never,
+              status,
+              isUnread,
+              nextWakeAt,
+            };
+            expect(bots.no3yBotStatusLine(input)).toEqual(webBotStatusLine(input));
+          }
+        }
+      }
+    }
+    for (const attention of [
+      { status: "approval", count: 1 },
+      { status: "input", count: 1 },
+      { status: "failed", count: 1 },
+      { status: "failed", count: 3 },
+    ] as const) {
+      expect(bots.no3yBotWorkStatusText(attention)).toBe(webBotWorkStatusText(attention));
     }
     for (const shape of WEB_BOT_MASCOT_SHAPES) {
       for (const mood of WEB_BOT_MASCOT_MOODS) {
@@ -616,6 +658,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
     expect(listView).toContain("<No3yBotsGrid");
+    expect(readRepoFile("apps/mobile/fork/No3yBotsGrid.tsx")).toContain("<PetalCard");
     // Access lives on the model chip and in the model sheet, for threads and New agent drafts,
     // with the Mac's icons and weights: Full access's crossed shield stays a stroke.
     expect(composerStyle).toContain("<No3yAccessIcon mode={card.runtimeMode}");

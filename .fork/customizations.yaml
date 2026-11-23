@@ -7935,9 +7935,14 @@
     bar reached) and keeps a bottom tray above the dock: a glass search pill, a
     filter button and a sort button (fork/No3yThreadsFilterBar.tsx; upstream
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
-    listing rule, fork/forkBots.ts) sit above the status sections as a wrapping
-    grid of Petal tiles (mascot art copied in fork/botMascotArt.ts, name, status
-    mark); a tap opens the bot, a long press offers rename, archive and delete,
+    listing rule, fork/forkBots.ts) sit above the status sections under
+    "Petals" and their count, as the Mac's Petal cards in two columns: the
+    mascot (art copied in fork/botMascotArt.ts) on a 32pt tile in its colour at
+    half strength behind a 1px 24% edge, the name, the Mac's status line
+    (botStatusLine and botWorkStatusText ported and parity-guarded: working,
+    needs you, the unread report, "Next check …" from its automations), and a
+    20pt mark that, over an idle petal, takes its launched work's need of you
+    or running state (botWorkByBot and withBotWorkAttention ported); a tap opens the bot, a long press offers rename, archive and delete,
     search narrows them, and the grid is gone when there are none; bot work
     stays off the list. Thread titles are pure white on every surface whatever
     their status, read state or shelf (the shared recede rule stays
@@ -8114,6 +8119,7 @@
     - apps/mobile/fork/assets/codex-mark.png
     - apps/mobile/fork/no3yPageColor.ts
     - apps/mobile/fork/forkBots.ts
+    - apps/mobile/fork/forkBots.test.ts
     - apps/mobile/fork/botMascotArt.ts
     - apps/mobile/fork/No3yBotsGrid.tsx
     - apps/mobile/fork/No3yStatusPill.tsx
@@ -8171,3 +8177,4 @@
     - apps/mobile/fork/no3yAutomationRuns.test.ts
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/no3yProjectTiles.test.ts
+    - apps/mobile/fork/forkBots.test.ts
