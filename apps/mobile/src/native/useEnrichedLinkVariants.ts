@@ -159,6 +159,26 @@ export function useEnrichedLinkVariants(
     () =>
       Object.fromEntries(
         [...links].map(([url, link]) => {
+          /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+          if (link.capsule) {
+            return [
+              enrichedLinkVariantPattern(url),
+              {
+                pill: {
+                  borderColor: link.capsule.border,
+                  borderWidth: 1,
+                  borderRadius: 999,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                },
+                fontFamily: FONT_FAMILIES.medium,
+                color: textStyle.color,
+                underline: false,
+                backgroundColor: link.capsule.surface,
+              },
+            ];
+          }
+          /* fork:end no3y-subagent-link-chip */
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
           // A file reference wears inline code's chip and ink when the reply styles one.
           const codeChip =

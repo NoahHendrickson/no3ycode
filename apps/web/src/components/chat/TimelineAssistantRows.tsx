@@ -41,6 +41,9 @@ import { MESSAGE_HEADING_LEVEL, MessageAuthorHeading } from "./TimelineRowParts"
 import { useAtomValue } from "@effect/atom-react";
 import { AsyncResult, Atom } from "effect/reactivity";
 import { vcsEnvironment } from "../../state/vcs";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { ForkSubagentLinkScope } from "../../custom/ForkSubagentLinkChip";
+/* fork:end no3y-subagent-link-chip */
 
 const NO_VCS_STATUS = Atom.make(AsyncResult.initial());
 
@@ -68,24 +71,30 @@ export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind
             request={ctx.citationRequest}
             listRef={ctx.listRef}
           >
-            <ChatMarkdown
-              text={messageText}
-              renderInsights
-              cwd={ctx.markdownCwd}
-              agentDirectories={() =>
-                ctx.threadRef && row.projectedItem
-                  ? agentWorkingDirectories(readThreadTurnItems(ctx.threadRef), row.projectedItem)
-                  : []
-              }
-              threadRef={ctx.threadRef ?? undefined}
-              isStreaming={Boolean(row.message.streaming)}
-              lineBreaks={shouldPreserveAssistantLineBreaks(messageText)}
-              skills={ctx.skills}
-              headingLevelOffset={MESSAGE_HEADING_LEVEL}
-              onUseArtifactTemplate={ctx.onUseArtifactTemplate}
-              onRunShellCommand={ctx.onRunShellCommand}
-              onImageExpand={ctx.onImageExpand}
-            />
+            {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+            <ForkSubagentLinkScope value={{ familyRef: ctx.threadRef ?? null }}>
+              {/* fork:end no3y-subagent-link-chip */}
+              <ChatMarkdown
+                text={messageText}
+                renderInsights
+                cwd={ctx.markdownCwd}
+                agentDirectories={() =>
+                  ctx.threadRef && row.projectedItem
+                    ? agentWorkingDirectories(readThreadTurnItems(ctx.threadRef), row.projectedItem)
+                    : []
+                }
+                threadRef={ctx.threadRef ?? undefined}
+                isStreaming={Boolean(row.message.streaming)}
+                lineBreaks={shouldPreserveAssistantLineBreaks(messageText)}
+                skills={ctx.skills}
+                headingLevelOffset={MESSAGE_HEADING_LEVEL}
+                onUseArtifactTemplate={ctx.onUseArtifactTemplate}
+                onRunShellCommand={ctx.onRunShellCommand}
+                onImageExpand={ctx.onImageExpand}
+              />
+              {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+            </ForkSubagentLinkScope>
+            {/* fork:end no3y-subagent-link-chip */}
           </AssistantCitationSource>
         </div>
         {ctx.onOpenTurnDiff ? (
@@ -134,17 +143,23 @@ export function SentMessageTimelineRow({
         request={ctx.citationRequest}
         listRef={ctx.listRef}
       >
-        <ChatMarkdown
-          text={row.text}
-          cwd={ctx.markdownCwd}
-          threadRef={ctx.threadRef ?? undefined}
-          lineBreaks={shouldPreserveAssistantLineBreaks(row.text)}
-          skills={ctx.skills}
-          headingLevelOffset={MESSAGE_HEADING_LEVEL}
-          onUseArtifactTemplate={ctx.onUseArtifactTemplate}
-          onRunShellCommand={ctx.onRunShellCommand}
-          onImageExpand={ctx.onImageExpand}
-        />
+        {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+        <ForkSubagentLinkScope value={{ familyRef: ctx.threadRef ?? null }}>
+          {/* fork:end no3y-subagent-link-chip */}
+          <ChatMarkdown
+            text={row.text}
+            cwd={ctx.markdownCwd}
+            threadRef={ctx.threadRef ?? undefined}
+            lineBreaks={shouldPreserveAssistantLineBreaks(row.text)}
+            skills={ctx.skills}
+            headingLevelOffset={MESSAGE_HEADING_LEVEL}
+            onUseArtifactTemplate={ctx.onUseArtifactTemplate}
+            onRunShellCommand={ctx.onRunShellCommand}
+            onImageExpand={ctx.onImageExpand}
+          />
+          {/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */}
+        </ForkSubagentLinkScope>
+        {/* fork:end no3y-subagent-link-chip */}
       </AssistantCitationSource>
     </div>
   );

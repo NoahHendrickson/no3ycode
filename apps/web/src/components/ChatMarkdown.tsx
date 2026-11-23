@@ -92,6 +92,9 @@ import { parseComposerContextHref } from "@t3tools/shared/composerContextReferen
 import { parseThreadLinkHref } from "@t3tools/shared/threadLinks";
 import { AssistantCitationEmbed } from "./chat/AssistantCitationChip";
 import { MarkdownThreadLink } from "./chat/MarkdownThreadLink";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { useForkSubagentLinkText } from "../custom/ForkSubagentLinkChip";
+/* fork:end no3y-subagent-link-chip */
 import { artifactTemplateFromHastProperties } from "@t3tools/shared/codexArtifactTemplates";
 import {
   decodeMarkdownLinkEscapes,
@@ -2040,7 +2043,9 @@ const MarkdownSource = memo(function MarkdownSource({
 });
 
 function ChatMarkdown({
-  text,
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  text: writtenText,
+  /* fork:end no3y-subagent-link-chip */
   className,
   inline = false,
   lineBreaks = false,
@@ -2049,6 +2054,13 @@ function ChatMarkdown({
   renderInsights = false,
   ...props
 }: ChatMarkdownProps) {
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  const text = useForkSubagentLinkText(
+    writtenText,
+    props.threadRef?.environmentId ?? props.environmentId ?? null,
+    props.isStreaming === true,
+  );
+  /* fork:end no3y-subagent-link-chip */
   // Streaming re-renders only the last block; offsets for task edits, and extensions that read
   // the whole message, need the whole text.
   const streamingBlocks =

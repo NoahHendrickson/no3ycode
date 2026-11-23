@@ -8697,3 +8697,57 @@
     - apps/web/src/index.css
   verify:
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
+
+- id: no3y-subagent-link-chip
+  intent: >
+    On mobile and desktop/web, a link in an assistant message to a subagent thread (a
+    delegated task or subagent child) reads as a neutral capsule instead of the thread
+    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
+    the child's short title (the head before ": ", so "Sol review r2: composer status
+    chips" reads "Sol review r2"), and the child's live status as the Threads list's /
+    sidebar's mark in its colour (working mark, dot for done or failed, half circle for
+    needs-you, muted dot for waiting, idle ring for stopped or unknown). Status follows the
+    sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
+    another thread or parked on background work reads as waiting. No mark animates in a message. On mobile the marks are white PNGs drawn from
+    No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
+    aria-hidden, with the status in the link's accessible name, and keeps the thread hover
+    card. A period that closes the line right after the chip is dropped from the rendered
+    text only; mid-line periods, code spans and fenced code stay, and while a reply streams
+    only a period before a newline goes. A live child is always in the shell; an idle one is
+    read from the family of the thread the message is in (one cached read per thread, so
+    links to ordinary or archived threads never trigger one). A cached family row is stale
+    when the shell removed the child after the read, or when it is still live while the shell
+    has dropped the child: the chip shows the idle mark and that family is re-read once. Links to ordinary threads keep upstream's chip. User
+    messages, tool output, PR bodies, file previews and the composer are unchanged: on web only
+    TimelineAssistantRows opts in; on mobile the reply, sent-message and reasoning rows pass
+    their thread. Mobile's native pill reads only the label and link text, so screen readers
+    there do not hear the status yet.
+  tier: 4
+  files:
+    - apps/mobile/fork/no3ySubagentLinkChip.ts
+    - apps/mobile/fork/useNo3ySubagentLinkChips.ts
+    - apps/mobile/fork/assets/status-marks/working.png
+    - apps/mobile/fork/assets/status-marks/dot.png
+    - apps/mobile/fork/assets/status-marks/half.png
+    - apps/mobile/fork/assets/status-marks/idle.png
+    - apps/web/src/custom/forkSubagentLinkLogic.ts
+    - apps/web/src/custom/ForkSubagentLinkChip.tsx
+    - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
+  shadows: []
+  watch:
+    # The capsule field on MarkdownLinkCustomization.
+    - apps/mobile/src/native/SelectableMarkdownText.types.ts
+    # The capsule's pill style.
+    - apps/mobile/src/native/useEnrichedLinkVariants.ts
+    # Assistant markdown reads the chips and the trimmed text.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Exposes the shell's per-thread removal sequence without importing the shell module.
+    - apps/mobile/src/state/threads.ts
+    # Wraps the thread chip so a subagent link renders the capsule.
+    - apps/web/src/components/chat/MarkdownThreadLink.tsx
+    # Drops the period after a subagent chip before parsing.
+    - apps/web/src/components/ChatMarkdown.tsx
+    # Opts assistant messages into the capsule.
+    - apps/web/src/components/chat/TimelineAssistantRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
