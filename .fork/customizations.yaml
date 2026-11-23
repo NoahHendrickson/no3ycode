@@ -7947,7 +7947,9 @@
     stays off the list. Thread titles are pure white on every surface whatever
     their status, read state or shelf (the shared recede rule stays
     parity-guarded but never colours a mobile title). Thread cards show the
-    title, then project icon and name, PR number, provider mark and model, with
+    title, then project icon and name, PR number, provider mark and model (a
+    failed or usage-limited card puts its error there instead, on one line in
+    the meta line's own type and muted ink; the mark carries the colour), with
     the status mark trailing (20pt at card size everywhere, scaled whole from
     its 16pt drawing); working is the Mac's bead ring, looping on the UI
     thread and still while its screen is covered, the app is inactive or Reduce

@@ -678,6 +678,8 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
               >
                 {(statusKind === "failed" || statusKind === "limited") &&
                 thread.runtime?.lastError ? (
+                  // The meta line's own type and ink, as the Mac's card; the status mark carries
+                  // the warning colour.
                   <Text
                     numberOfLines={1}
                     style={{
@@ -685,11 +687,10 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                       ...NO3Y_FONT.regular,
                       fontSize: 14,
                       lineHeight: 16,
-                      color:
-                        statusKind === "limited" ? palette.statusAttention : palette.statusFailed,
+                      color: palette.metaInk,
                     }}
                   >
-                    {thread.runtime.lastError}
+                    {thread.runtime.lastError.replace(/\s+/g, " ").trim()}
                   </Text>
                 ) : (
                   <>

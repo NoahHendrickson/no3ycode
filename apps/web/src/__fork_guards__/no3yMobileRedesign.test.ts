@@ -659,6 +659,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(screenHeader).toContain('openWorkspaceTab("pullRequests")');
     expect(listView).toContain("<No3yBotsGrid");
     expect(readRepoFile("apps/mobile/fork/No3yBotsGrid.tsx")).toContain("<PetalCard");
+    expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).not.toContain(
+      'statusKind === "limited" ? palette.statusAttention : palette.statusFailed',
+    );
     // Access lives on the model chip and in the model sheet, for threads and New agent drafts,
     // with the Mac's icons and weights: Full access's crossed shield stays a stroke.
     expect(composerStyle).toContain("<No3yAccessIcon mode={card.runtimeMode}");
