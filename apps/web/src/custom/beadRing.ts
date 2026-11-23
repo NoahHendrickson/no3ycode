@@ -10,11 +10,23 @@ const RING_RADIUS = 20;
 const HALF_WIDTH = 2.5;
 const PIECES = 4;
 const LINE_LENGTH = 38;
+/** How much further the line reaches while the pieces are strung out, before it pulls back. */
+const STRETCH = 7;
 /** The gap between pieces once they are fully apart. */
 const GAP = 13.2;
 /** The steady spin (rad/s, ~1.92), set so that with the line moving on by every gap a loop turns
     exactly once: a loop then repeats as drawn and plays as one film, with no rotation layer. */
 const SPIN = (2 * Math.PI - (PIECES * GAP) / RING_RADIUS) / BEAD_RING_PERIOD;
+
+/** How much the loop's speed swings either way: 1.6x joined, 0.4x apart. Under 1 so it never
+    runs backwards. */
+const EASE_DEPTH = 0.6;
+
+/** How far into its loop the ring is drawn at `progress` 0..1 of a loop: fast through the joined
+    frames (the snap apart and the merge back), slowing to 0.4x while the pieces hang apart. */
+function beadRingEase(progress: number): number {
+  return progress + (EASE_DEPTH / (2 * Math.PI)) * Math.sin(2 * Math.PI * progress);
+}
 
 /** Draws one frame. `t` is seconds since start. Expects a 56×56 unit transform. */
 export function drawBeadRing(t: number, ctx: CanvasRenderingContext2D, color: string): void {
@@ -42,7 +54,7 @@ export function drawBeadRing(t: number, ctx: CanvasRenderingContext2D, color: st
   // Each piece's back and front end (angles): the line first, then the pieces going backwards.
   // Every end is round, and `back`/`forward` say how far it reaches (r is round).
   const tails = [B];
-  const heads = [B + LINE_LENGTH / R];
+  const heads = [B + (LINE_LENGTH + (STRETCH * strung) / M) / R];
   const back = [r];
   const forward = [r];
   for (let k = 0; k < n; k++) {
@@ -135,7 +147,7 @@ export function bakeBeadRingFilm(frames: number, framePx: number): string {
   const scale = framePx / 56;
   for (let index = 0; index < frames; index++) {
     ctx.setTransform(scale, 0, 0, scale, 0, index * framePx);
-    drawBeadRing(((index + 0.5) / frames) * BEAD_RING_PERIOD, ctx, "#000");
+    drawBeadRing(beadRingEase((index + 0.5) / frames) * BEAD_RING_PERIOD, ctx, "#000");
   }
   const dataUrl = canvas.toDataURL("image/png");
   const bytes = Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(",") + 1)), (char) =>
