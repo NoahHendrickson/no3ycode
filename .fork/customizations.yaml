@@ -7949,13 +7949,13 @@
     once, and one installed under a fading ancestor never renders). Motion elsewhere uses fork/no3yMotion.ts's
     UI-thread presets, retargeted mid-flight and instant under Reduce Motion:
     a 200ms eased layout slide for Threads rows (folding a status section,
-    settling a card), chats, Petals, project tiles, automation tiles and run
+    settling a card), chats, Petals, project rows, automation tiles and run
     rows; 180ms fades in and 140ms out for the live status line, queued rows,
     usage rows and the Automations or Runs content, which hold no glass; glass
     only ever moves by transform: pills above the composer (status pill,
     scroll-to-end, New agent's pills) grow in from 92%, and the peek card and
     queued banner rise 8pt; and 180ms eased toggles for section chevrons,
-    the Automations | Runs wash and a picked project tile's lift. Keyboard
+    the Automations | Runs wash and a picked project row's lift. Keyboard
     moves and streaming updates are never animated.
     Long-pressing Threads, Automations or Chat opens a peek card (provider
     marks, status marks, a New thread / New automation / New chat row). Threads
@@ -8091,8 +8091,10 @@
     its header, hero and context/workspace controls (a clone banner stays):
     a Home tab's, or New agent's on another iPhone draft (fork/No3yNewAgent.tsx): a "New agent"
     header with Search and no native bar, then up to eight recent projects as
-    two-column tiles (favicon, name, "N working" or how long ago; 4% wash, the
-    selected one lifted with a hairline) ranked as the Mac launchpad ranks, by
+    one column of 48pt pill glass rows, 8pt apart (No3yGlassLayer, as the
+    controls; only a 20pt favicon and the name, 16pt, one line; the selected
+    one brightened with a hairline and a small check; growing in, never
+    fading, as glass does) ranked as the Mac launchpad ranks, by
     the roster-visible threads newest first and never by chats, else the first
     pickable projects, the selected project always kept
     (fork/no3yProjectTiles.ts); Search narrows them to every match. Under them

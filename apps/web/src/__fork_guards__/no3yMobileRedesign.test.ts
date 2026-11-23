@@ -753,6 +753,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     );
     expect(draftScreen).toContain("no3ySurface.controls");
     expect(newAgent).toContain("rankNo3yProjectTiles({");
+    // Projects as one column of glass rows: favicon and name only.
+    expect(newAgent).toContain("<No3yGlassLayer radius={ROW_HEIGHT / 2} />");
+    expect(newAgent).not.toContain("no3yProjectTileStatus");
     expect(newAgent).toContain("controls: <DraftPills />,");
     expect(newAgent).toContain("header: <NewAgentHeader />,");
     // iOS draws the system font everywhere; Android keeps DM Sans.

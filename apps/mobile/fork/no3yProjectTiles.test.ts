@@ -2,15 +2,14 @@ import type {
   EnvironmentProject,
   EnvironmentThreadShell,
 } from "@t3tools/client-runtime/state/shell";
-import { EnvironmentId, ProjectId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
+import { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import type { HomeProjectScope } from "../src/features/home/homeThreadList";
 import { makeThreadShellFixture } from "../src/test-fixtures";
-import { no3yProjectTileStatus, rankNo3yProjectTiles } from "./no3yProjectTiles";
+import { rankNo3yProjectTiles } from "./no3yProjectTiles";
 
 const ENV = EnvironmentId.make("env-1");
-const NOW = "2026-11-22T12:00:00.000Z";
 
 function scope(id: string): HomeProjectScope {
   const project = {
@@ -64,14 +63,13 @@ const rank = (overrides: Partial<Parameters<typeof rankNo3yProjectTiles>[0]> = {
       }),
     ],
     sentChatKeys: new Set(),
-    now: NOW,
     searchQuery: "",
     selectedScopeKey: null,
     limit: 8,
     ...overrides,
   }).map((tile) => tile.scope.key);
 
-describe("no3y New agent project tiles", () => {
+describe("no3y New agent project rows", () => {
   it("lists projects with roster threads, newest activity first", () => {
     expect(rank()).toEqual(["c", "b", "a"]);
     expect(rank({ limit: 2 })).toEqual(["c", "b"]);
@@ -85,31 +83,5 @@ describe("no3y New agent project tiles", () => {
   it("falls back to the first projects when none has a thread, and searches them all", () => {
     expect(rank({ threads: [] })).toEqual(["a", "b", "c", "d"]);
     expect(rank({ searchQuery: "d" })).toEqual(["d"]);
-  });
-
-  it("says how many work there, else how long since the last activity", () => {
-    const running = {
-      status: "running" as const,
-      activeRunId: RunId.make("r"),
-      providerInstanceId: ProviderInstanceId.make("codex"),
-      providerName: null,
-      lastError: null,
-      updatedAt: NOW,
-    };
-    const [tile] = rankNo3yProjectTiles({
-      scopes,
-      threads: [thread("w", "a", "2026-11-22T11:00:00.000Z", { runtime: running })],
-      sentChatKeys: new Set(),
-      now: NOW,
-      searchQuery: "",
-      selectedScopeKey: null,
-      limit: 8,
-    });
-    const nowMs = Date.parse(NOW);
-    expect(no3yProjectTileStatus(tile!, nowMs)).toBe("1 working");
-    expect(no3yProjectTileStatus({ ...tile!, working: 0 }, nowMs)).toBe("1h ago");
-    expect(no3yProjectTileStatus({ ...tile!, working: 0, lastActivityMs: 0 }, nowMs)).toBe(
-      "No threads",
-    );
   });
 });

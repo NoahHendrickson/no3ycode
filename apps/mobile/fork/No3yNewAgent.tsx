@@ -1,5 +1,5 @@
 /**
- * New agent on no3y iPhone: a "New agent" header with Search, recent projects as tiles above the
+ * New agent on no3y iPhone: a "New agent" header with Search, recent projects as glass rows above the
  * composer (No project and All projects under them), and glass worktree, branch and machine pills
  * directly above the composer card — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
@@ -9,6 +9,7 @@ import Folder01Icon from "@hugeicons/core-free-icons/Folder01Icon";
 import FolderTreeIcon from "@hugeicons/core-free-icons/FolderTreeIcon";
 import GitBranchIcon from "@hugeicons/core-free-icons/GitBranchIcon";
 import LaptopIcon from "@hugeicons/core-free-icons/LaptopIcon";
+import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import { useNavigation } from "@react-navigation/native";
 import { pickableProjectGroups } from "@t3tools/client-runtime/state/project-grouping";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
@@ -36,7 +37,6 @@ import {
   resolveNewTaskScratchOption,
 } from "../src/features/threads/new-task-project-selection";
 import { resolveProjectThreadCreationBranch } from "../src/features/threads/projectThreadCreationValidation";
-import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { useServerConfigs } from "../src/state/entities";
 import { projectEnvironment } from "../src/state/projects";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
@@ -47,16 +47,14 @@ import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassT
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import type { No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yGlassLayer } from "./No3yGlass";
-import { NO3Y_FADE_IN, NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
+import { NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
-import {
-  no3yProjectTileStatus,
-  rankNo3yProjectTiles,
-  type No3yProjectTile,
-} from "./no3yProjectTiles";
+import { rankNo3yProjectTiles, type No3yProjectTile } from "./no3yProjectTiles";
 
 const TILE_LIMIT = 8;
 const PILL_HEIGHT = 34;
+const ROW_HEIGHT = 48;
+const ROW_GAP = 8;
 
 // The header and the tiles are published separately into the thread screen, so they share search
 // through this store rather than props.
@@ -89,9 +87,8 @@ function NewAgentHeader() {
   );
 }
 
-function ProjectTile(props: {
+function ProjectRow(props: {
   readonly tile: No3yProjectTile;
-  readonly status: string;
   readonly selected: boolean;
   readonly disabled: boolean;
   readonly palette: FlatGlassPalette;
@@ -99,57 +96,73 @@ function ProjectTile(props: {
 }) {
   const { palette, tile } = props;
   const project = tile.scope.representative;
-  // The picked tile lifts: its wash brightens and its hairline shows, eased rather than cut.
+  // The picked row brightens and shows its hairline over the glass, eased rather than cut.
   const lift = useNo3yToggleProgress(props.selected);
   const liftStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       lift.get(),
       [0, 1],
-      [palette.cardWash, palette.activePillSurface],
+      ["rgba(255,255,255,0)", palette.activePillSurface],
     ),
     borderColor: interpolateColor(lift.get(), [0, 1], ["rgba(255,255,255,0)", palette.hairline]),
   }));
   return (
-    <Animated.View
-      layout={NO3Y_LAYOUT}
-      entering={NO3Y_FADE_IN}
-      style={[{ flex: 1, minWidth: 0, borderRadius: 16, borderWidth: 1 }, liftStyle]}
-    >
+    // Glass only ever moves by transform, so the row grows in rather than fading.
+    <Animated.View layout={NO3Y_LAYOUT} entering={NO3Y_GLASS_IN}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${tile.scope.title}, ${props.status}`}
+        accessibilityLabel={tile.scope.title}
         accessibilityState={{ selected: props.selected, disabled: props.disabled }}
         disabled={props.disabled}
         onPress={props.onPress}
         style={({ pressed }) => ({
+          height: ROW_HEIGHT,
+          flexDirection: "row",
+          alignItems: "center",
           gap: 10,
-          padding: 13,
-          borderRadius: 15,
-          backgroundColor: pressed ? palette.rowPressed : "transparent",
+          paddingHorizontal: 16,
+          opacity: pressed ? 0.6 : 1,
         })}
       >
+        <No3yGlassLayer radius={ROW_HEIGHT / 2} />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              borderRadius: ROW_HEIGHT / 2,
+              borderWidth: 1,
+            },
+            liftStyle,
+          ]}
+        />
         <ProjectFavicon
           environmentId={project.environmentId}
           faviconPath={project.faviconPath}
           projectIcon={project.projectIcon}
           projectTitle={tile.scope.title}
           workspaceRoot={project.workspaceRoot}
-          size={28}
+          size={20}
         />
-        <View style={{ gap: 2 }}>
-          <Text
-            numberOfLines={1}
-            style={{ ...NO3Y_FONT.medium, fontSize: 15, lineHeight: 20, color: palette.titleInk }}
-          >
-            {tile.scope.title}
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={{ ...NO3Y_FONT.regular, fontSize: 13, lineHeight: 17, color: palette.metaInk }}
-          >
-            {props.status}
-          </Text>
-        </View>
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            ...NO3Y_FONT.medium,
+            fontSize: 16,
+            lineHeight: 20,
+            color: palette.titleInk,
+          }}
+        >
+          {tile.scope.title}
+        </Text>
+        {props.selected ? (
+          <HugeIcon icon={Tick02Icon} size={16} color={palette.metaInk} strokeWidth={2} />
+        ) : null}
       </Pressable>
     </Animated.View>
   );
@@ -165,8 +178,6 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
   const serverConfigs = useServerConfigs();
   const { connectedEnvironments } = useRemoteConnectionStatus();
   const openScratch = useAtomCommand(projectEnvironment.openScratch, { reportFailure: false });
-  const nowIso = useThreadListNow(threads);
-
   const sentChatKeys = useNo3ySentChats();
   const scopes = pickableProjectGroups(flow.projectScopes).filter(
     (scope) =>
@@ -187,7 +198,6 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
     scopes,
     threads,
     sentChatKeys,
-    now: nowIso,
     searchQuery,
     selectedScopeKey,
     limit: TILE_LIMIT,
@@ -203,7 +213,6 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
     selectedEnvironmentId: flow.selectedEnvironmentId,
   });
   const locked = flow.submitting;
-  const nowMs = Date.parse(nowIso);
 
   const pickScope = (scope: HomeProjectScope) =>
     flow.setProject(
@@ -228,8 +237,6 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
     navigation.navigate("NewTaskProject");
   };
 
-  const rows: Array<ReadonlyArray<No3yProjectTile>> = [];
-  for (let index = 0; index < tiles.length; index += 2) rows.push(tiles.slice(index, index + 2));
   const linkStyle = { ...NO3Y_FONT.regular, fontSize: 14, lineHeight: 20 };
 
   return (
@@ -244,7 +251,7 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: "flex-end",
-        gap: 10,
+        gap: ROW_GAP,
         paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 4,
@@ -263,25 +270,15 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
       >
         {searchQuery.trim().length > 0 ? "Projects" : "Recent projects"}
       </Text>
-      {rows.map((row) => (
-        <Animated.View
-          key={row[0]!.scope.key}
-          layout={NO3Y_LAYOUT}
-          style={{ flexDirection: "row", gap: 10 }}
-        >
-          {row.map((tile) => (
-            <ProjectTile
-              key={tile.scope.key}
-              tile={tile}
-              status={no3yProjectTileStatus(tile, nowMs)}
-              selected={tile.scope.key === selectedScopeKey}
-              disabled={locked}
-              palette={palette}
-              onPress={() => pickScope(tile.scope)}
-            />
-          ))}
-          {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
-        </Animated.View>
+      {tiles.map((tile) => (
+        <ProjectRow
+          key={tile.scope.key}
+          tile={tile}
+          selected={tile.scope.key === selectedScopeKey}
+          disabled={locked}
+          palette={palette}
+          onPress={() => pickScope(tile.scope)}
+        />
       ))}
       {tiles.length === 0 ? (
         <Text style={{ ...linkStyle, color: palette.quietInk, paddingHorizontal: 4 }}>
