@@ -212,9 +212,14 @@ describe("fork guard: fork-app-identity", () => {
       });
       expect(icon.groups[0]?.translucency?.enabled).toBe(true);
     }
-    // Production is the #00C26B green tile; development stays a solid orange tile.
-    expect(productionIcon.fill?.solid).toBe("srgb:0.00000,0.76078,0.41961,1.00000");
-    expect(productionIcon.groups).toHaveLength(1);
+    // Production is a black tile under the Figma glows (no3y app icon, 54:3507), a flat image
+    // with no glass; development stays a solid orange tile.
+    expect(productionIcon.fill?.solid).toBe("srgb:0.00000,0.00000,0.00000,1.00000");
+    expect(productionIcon.groups).toHaveLength(2);
+    expect(productionIcon.groups[1]?.layers).toMatchObject([
+      { glass: false, "image-name": "background.png" },
+    ]);
+    expect(productionIcon.groups[1]?.translucency?.enabled).toBe(false);
     expect(developmentIcon.groups).toHaveLength(1);
 
     // One white sparkle, the same drawing as the project icon and favicons.

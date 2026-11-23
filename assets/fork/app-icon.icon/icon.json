@@ -1,6 +1,6 @@
 {
   "fill": {
-    "solid": "srgb:0.00000,0.76078,0.41961,1.00000"
+    "solid": "srgb:0.00000,0.00000,0.00000,1.00000"
   },
   "groups": [
     {
@@ -22,6 +22,27 @@
       "translucency": {
         "enabled": true,
         "value": 0.2
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name": "background.png",
+          "name": "Glow",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [0, 0]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
       }
     }
   ],

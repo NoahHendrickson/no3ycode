@@ -417,9 +417,12 @@
     path). The brand mark is the sparkle (Figma OnHdu0r2mAwMEiC4s7Gvjv
     39:4), one path drawn identically everywhere. The layered Icon Composer
     projects in assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon
-    are its app-icon source of truth: a white sparkle about 60% of the tile
-    wide, its area centroid on the tile centre. Production fills the tile with
-    #00C26B; development keeps a solid orange tile so installed variants
+    are its app-icon source of truth: a white sparkle placed as in the no3y
+    app icon design (Figma 1qVCaK2XuosbVJtYqa3n0n 54:3507), about 56% of the
+    tile wide. Production is a black tile under that design's blurred glows,
+    rendered from Figma to Assets/background.png and layered as a flat image
+    (no glass) beneath the mark, since Icon Composer cannot draw SVG blur
+    filters; development keeps a solid orange tile so installed variants
     remain distinguishable in the Dock. Glass is on for the mark layer as well
     as the tile — the smooth shape takes the system treatment cleanly. Every
     app-icon raster, including the Linux PNG, the Windows ICO, the 192/512
@@ -429,7 +432,7 @@
     the same artwork. The macOS Dock exports add only a transparent outer
     canvas around the rendered artwork, matching the standard Mac icon
     footprint. The local dev splash uses the orange family, while packaged
-    builds stamp the green production family. Web favicons and the project
+    builds stamp the black production family. Web favicons and the project
     icon are the bare sparkle in #00C26B with no tile, which stays legible at
     16px: assets/fork/n3-project-icon.svg carries the same path, and the
     n3-web-favicon* rasters (with apps/web/public copies) are rendered from it
