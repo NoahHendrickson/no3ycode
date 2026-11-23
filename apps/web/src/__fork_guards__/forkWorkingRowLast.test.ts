@@ -24,7 +24,7 @@ describe("fork guard: fork-working-row-last", () => {
 
   it("renders the folded live row as the status line", () => {
     expect(readSibling("../components/chat/TimelineWorkGroupRows.tsx")).toMatch(
-      /if \(isForkStatusLine\(row\) && !shimmer\) \{\s*return \(\s*<ForkLiveStatusLine/u,
+      /if \(forkLine && !shimmer\) \{\s*return \(\s*<ForkLiveStatusLine/u,
     );
   });
 

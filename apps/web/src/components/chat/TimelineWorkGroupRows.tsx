@@ -67,7 +67,7 @@ import { SidebarV2WorkingMark } from "~/custom/SidebarV2StatusIndicator";
 /* fork:end fork-chat-working-rain */
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
-import { isForkStatusLine } from "~/custom/forkWorkingRowLast";
+import { forkStatusLineRow, isForkStatusLine } from "~/custom/forkWorkingRowLast";
 import { WorkLogBlock } from "./WorkLog";
 /* fork:end fork-working-row-last */
 
@@ -362,10 +362,11 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
   const compacting = row.compacting === true || isCompacting;
   const shimmer = isPreparingWorktree || compacting;
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  if (isForkStatusLine(row) && !shimmer) {
+  const forkLine = forkStatusLineRow(row, use(TimelineRowActivityCtx).awaitingUser);
+  if (forkLine && !shimmer) {
     return (
       <ForkLiveStatusLine
-        row={row}
+        row={forkLine}
         timer={row.createdAt ? <WorkingTimer createdAt={row.createdAt} /> : null}
         trailing={
           backgroundWorktreeSetup ? (
@@ -375,7 +376,7 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       />
     );
   }
-  // The compaction or setup label owns the line; a running tool keeps its upstream row above it.
+  // The compaction or setup label owns the line; folded live reasoning keeps its row above it.
   const forkRunningTool =
     isForkStatusLine(row) && row.forkLive.kind === "work-live" ? (
       <WorkLogBlock>

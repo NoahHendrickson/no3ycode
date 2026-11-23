@@ -2,12 +2,9 @@
  * The one-line live status — see `.fork/customizations.yaml#fork-working-row-last`.
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
-import { useMessages } from "gt-react";
 import { ChevronRightIcon } from "lucide-react";
 import { use, type ReactNode } from "react";
-import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
-import { threadReadLabel, useThreadReadTarget } from "~/components/chat/TimelineWorkEntryRow";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import {
   forkStatusLineLabel,
@@ -15,26 +12,8 @@ import {
   type ForkStatusLineRow,
 } from "./forkWorkingRowLast";
 
-function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-live" }> }) {
-  const ctx = use(TimelineRowCtx);
-  const activity = use(TimelineRowActivityCtx);
-  const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
-  const messages = useMessages();
-  const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true, messages);
-  return forkStatusLineLabel(
-    live,
-    activity,
-    threadReadLabel(toolLabel, live.entry, target, messages)?.text ?? toolLabel,
-  );
-}
-
 function StatusLabel({ live }: { live: ForkLiveRow }) {
-  const activity = use(TimelineRowActivityCtx);
-  return live.kind === "work-live" ? (
-    <WorkStatusLabel live={live} />
-  ) : (
-    forkStatusLineLabel(live, activity, "")
-  );
+  return forkStatusLineLabel(live, use(TimelineRowActivityCtx));
 }
 
 export function ForkLiveStatusLine({

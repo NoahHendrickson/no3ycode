@@ -100,7 +100,7 @@ export function createTimelineRowMotion(): TimelineRowMotion {
           start -= 1;
         }
       }
-      if (start > 0 && !isLiveRow(rows[start]!) && isLiveRow(rows[start - 1]!)) start -= 1;
+      if (start > 0 && isOpenGroupRow(rows[start]!) && isLiveRow(rows[start - 1]!)) start -= 1;
       for (let index = start; index >= 0; index -= 1) {
         const row = rows[index]!;
         if (isLiveRow(row)) {

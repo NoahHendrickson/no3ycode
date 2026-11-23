@@ -5,7 +5,7 @@ import { createTimelineRowMotion, slideStartOffset } from "./forkTimelineRowMoti
 const message = (id: string) => ({ kind: "message", id }) as MessagesTimelineRow;
 const work = (id: string) => ({ kind: "work-toggle", id }) as MessagesTimelineRow;
 const details = (groupId: string) =>
-  ({ kind: "work", id: `${groupId}:details` }) as MessagesTimelineRow;
+  ({ kind: "work", id: `${groupId}:details`, isExpandedToolGroup: true }) as MessagesTimelineRow;
 const live = { kind: "thinking", id: "live-activity-row" } as MessagesTimelineRow;
 
 function primed(rows: MessagesTimelineRow[]) {
@@ -57,6 +57,14 @@ describe("createTimelineRowMotion", () => {
     // Collapsing the group later does not replay anything.
     motion.observe([message("a"), message("b"), live], "thread", true);
     expect(motion.takeEntrance(live.id)).toBe(false);
+  });
+
+  it("enters commentary landing between a running tool and the status line", () => {
+    const tool = { kind: "work-live", id: "tool", active: true } as MessagesTimelineRow;
+    const working = { kind: "working", id: "working" } as MessagesTimelineRow;
+    const motion = primed([message("a"), tool, working]);
+    motion.observe([message("a"), tool, message("b"), working], "thread", true);
+    expect(motion.takeEntrance("b")).toBe(true);
   });
 
   it("keeps the status line still when its folded group opens", () => {

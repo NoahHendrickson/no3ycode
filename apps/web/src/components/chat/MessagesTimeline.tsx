@@ -15,6 +15,9 @@ import { ForkTimelineRowFrame, useTimelineRowMotion } from "~/custom/forkTimelin
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { forkLiveStatusRows } from "~/custom/forkWorkingRowLast";
 /* fork:end fork-working-row-last */
+/* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
+import { forkSpaceTranscript, forkTranscriptGapStyle } from "~/custom/forkTranscriptSpacing";
+/* fork:end fork-transcript-spacing */
 import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { deriveTimelineMinimapItems } from "./timelineMinimapItems";
@@ -791,8 +794,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:end fork-bots */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  const rows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
+  const foldedRows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
   /* fork:end fork-working-row-last */
+  /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
+  const rows = forkSpaceTranscript(foldedRows);
+  /* fork:end fork-transcript-spacing */
   /* fork:begin fork-transcript-row-motion — see .fork/customizations.yaml#fork-transcript-row-motion */
   const rowMotion = useTimelineRowMotion(rows, listIdentityKey, forkTimelineSynced);
   /* fork:end fork-transcript-row-motion */
@@ -1723,6 +1729,9 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
           ? "group/assistant"
           : null,
       )}
+      /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
+      style={forkTranscriptGapStyle(row)}
+      /* fork:end fork-transcript-spacing */
       data-timeline-row-id={row.id}
       data-timeline-row-kind={row.kind}
       data-message-id={
