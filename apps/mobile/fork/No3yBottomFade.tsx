@@ -6,10 +6,10 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { NO3Y_BOTTOM_FADE_HEIGHT } from "./flatGlassTheme";
 
 /** Transparent at the top to `color` at the bottom. */
-export function No3yBottomFade(props: { readonly color: string }) {
+export function No3yBottomFade(props: { readonly color: string; readonly height?: number }) {
   const id = `no3y-fade-${useId().replace(/[^\w-]/g, "")}`;
   return (
-    <Svg width="100%" height={NO3Y_BOTTOM_FADE_HEIGHT} pointerEvents="none">
+    <Svg width="100%" height={props.height ?? NO3Y_BOTTOM_FADE_HEIGHT} pointerEvents="none">
       <Defs>
         <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={props.color} stopOpacity={0} />

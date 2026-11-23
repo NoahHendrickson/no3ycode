@@ -45,6 +45,7 @@ import { useNo3ySentChats } from "./no3yChatTagging";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import type { No3yDraftSurface } from "./No3yDraftSurface";
+import { No3yBottomFade } from "./No3yBottomFade";
 import { No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
@@ -53,6 +54,7 @@ import { rankNo3yProjectTiles } from "./no3yProjectTiles";
 const PILL_HEIGHT = 34;
 const ROW_HEIGHT = 48;
 const ROW_GAP = 8;
+const TOP_FADE = 20;
 
 // The header and the tiles are published separately into the thread screen, so they share search
 // through this store rather than props.
@@ -166,7 +168,7 @@ function ProjectTiles(props: {
   readonly requirePick: boolean;
 }) {
   const flow = useNewTaskFlow();
-  const { searchQuery } = useNewAgentSearch();
+  const { searching: searchOpen, searchQuery } = useNewAgentSearch();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
@@ -233,80 +235,94 @@ function ProjectTiles(props: {
       : scratchOption;
 
   return (
-    <ScrollView
-      style={{
-        position: "absolute",
-        top: props.topInset,
-        bottom: props.bottomInset,
-        left: 0,
-        right: 0,
-      }}
-      contentContainerStyle={{
-        flexGrow: 1,
-        justifyContent: "flex-end",
-        gap: ROW_GAP,
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 4,
-      }}
-      keyboardDismissMode="on-drag"
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <Text
-        style={{
-          ...NO3Y_FONT.medium,
-          fontSize: 13,
-          color: palette.sectionInk,
-          paddingHorizontal: 4,
+    // The list runs to the screen bottom, under the composer (whose scrim fades it) and the
+    // keyboard, and pads its end clear of them: its frame never depends on the keyboard or the
+    // composer's measured height, which once left it three rows tall after a search.
+    <>
+      <ScrollView
+        style={{ position: "absolute", top: props.topInset, bottom: 0, left: 0, right: 0 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          // At rest the rows sit just above the composer; a search lists its matches from the top.
+          justifyContent: searchOpen ? "flex-start" : "flex-end",
+          gap: ROW_GAP,
+          paddingHorizontal: 16,
+          paddingTop: TOP_FADE,
+          paddingBottom: props.bottomInset,
         }}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {picked ? "Projects" : "Pick a project"}
-      </Text>
-      {noProjectRow === null ? null : (
-        <ProjectRow
-          label="No project"
-          leading={<HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />}
-          selected={picked && flow.isScratchDraft}
-          disabled={locked || !noProjectRow.ready}
-          palette={palette}
-          onPress={() => void pickNoProject()}
-        />
-      )}
-      {tiles.map((tile) => (
-        <ProjectRow
-          key={tile.scope.key}
-          label={tile.scope.title}
-          leading={
-            <ProjectFavicon
-              environmentId={tile.scope.representative.environmentId}
-              faviconPath={tile.scope.representative.faviconPath}
-              projectIcon={tile.scope.representative.projectIcon}
-              projectTitle={tile.scope.title}
-              workspaceRoot={tile.scope.representative.workspaceRoot}
-              size={20}
-            />
-          }
-          selected={tile.scope.key === selectedScopeKey}
-          disabled={locked}
-          palette={palette}
-          onPress={() => pickScope(tile.scope)}
-        />
-      ))}
-      {tiles.length === 0 && noProjectRow === null ? (
         <Text
           style={{
-            ...NO3Y_FONT.regular,
-            fontSize: 14,
-            lineHeight: 20,
-            color: palette.quietInk,
+            ...NO3Y_FONT.medium,
+            fontSize: 13,
+            color: palette.sectionInk,
             paddingHorizontal: 4,
           }}
         >
-          {searching ? "No matching projects" : "No projects yet"}
+          {picked ? "Projects" : "Pick a project"}
         </Text>
-      ) : null}
-    </ScrollView>
+        {noProjectRow === null ? null : (
+          <ProjectRow
+            label="No project"
+            leading={<HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />}
+            selected={picked && flow.isScratchDraft}
+            disabled={locked || !noProjectRow.ready}
+            palette={palette}
+            onPress={() => void pickNoProject()}
+          />
+        )}
+        {tiles.map((tile) => (
+          <ProjectRow
+            key={tile.scope.key}
+            label={tile.scope.title}
+            leading={
+              <ProjectFavicon
+                environmentId={tile.scope.representative.environmentId}
+                faviconPath={tile.scope.representative.faviconPath}
+                projectIcon={tile.scope.representative.projectIcon}
+                projectTitle={tile.scope.title}
+                workspaceRoot={tile.scope.representative.workspaceRoot}
+                size={20}
+              />
+            }
+            selected={tile.scope.key === selectedScopeKey}
+            disabled={locked}
+            palette={palette}
+            onPress={() => pickScope(tile.scope)}
+          />
+        ))}
+        {tiles.length === 0 && noProjectRow === null ? (
+          <Text
+            style={{
+              ...NO3Y_FONT.regular,
+              fontSize: 14,
+              lineHeight: 20,
+              color: palette.quietInk,
+              paddingHorizontal: 4,
+            }}
+          >
+            {searching ? "No matching projects" : "No projects yet"}
+          </Text>
+        ) : null}
+      </ScrollView>
+      {/* Rows scroll out under the header through a fade, not a cut. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: props.topInset,
+          left: 0,
+          right: 0,
+          height: TOP_FADE,
+          transform: [{ scaleY: -1 }],
+        }}
+      >
+        <No3yBottomFade color={palette.stageBackground} height={TOP_FADE} />
+      </View>
+    </>
   );
 }
 

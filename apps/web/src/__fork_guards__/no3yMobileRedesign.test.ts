@@ -792,6 +792,10 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(newAgent).toContain("rankNo3yProjectTiles({");
     // Projects as one column of glass rows: favicon and name only.
     expect(newAgent).toContain("<No3yGlassLayer radius={ROW_HEIGHT / 2} />");
+    // The list runs to the screen bottom and pads its end: its frame never follows the keyboard.
+    expect(newAgent).toContain(
+      'style={{ position: "absolute", top: props.topInset, bottom: 0, left: 0, right: 0 }}',
+    );
     expect(newAgent).not.toContain("no3yProjectTileStatus");
     expect(newAgent).toContain("controls: <DraftPills requirePick />,");
     expect(newAgent).toContain("header: <NewAgentHeader />,");
