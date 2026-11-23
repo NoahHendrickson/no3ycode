@@ -5,16 +5,19 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
 import {
-  collectExternalUsageLinks,
   collectLimitAccounts,
   collectLimitPools,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitPool,
   type LimitPoolWindow,
   remainingPercent,
 } from "@t3tools/shared/usageLimits";
+import {
+  collectExternalUsageLinks,
+  cursorUsageWindowDetails,
+  formatResetsIn,
+} from "@t3tools/shared/usageLimitsCopy";
+import { m } from "~/i18n/messages";
 import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
 import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
 
@@ -166,7 +169,8 @@ export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer
 
 /** Full descriptive label for tooltips and accessible text. */
 function fullWindowLabel(pool: LimitPool, window: LimitPoolWindow): string {
-  const details = pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
+  const details =
+    pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
   return (details?.label ?? window.label).replaceAll(" · ", " ");
 }
 
@@ -223,7 +227,7 @@ function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () 
     <ComposerLimitsTrayView
       pools={collectLimitPools(collectLimitAccounts(presentations), props.now)}
       notices={actionableLimitNotices(presentations)}
-      externalLinks={collectExternalUsageLinks(presentations)}
+      externalLinks={collectExternalUsageLinks(presentations, m)}
       now={props.now}
       onClose={props.onClose}
     />
@@ -365,7 +369,7 @@ function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: n
         {windows.map((window) => {
           const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
           const nextReset = nextRefill ?? window.resets[0];
-          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m) : null;
           const fullLabel = fullWindowLabel(pool, window);
           const shortLabel = compactWindowLabel(pool, window);
           const accessibleLabel = `${providerLabel} ${fullLabel}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`;

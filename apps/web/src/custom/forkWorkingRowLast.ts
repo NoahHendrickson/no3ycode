@@ -68,7 +68,7 @@ export function forkStatusLineLabel(
   toolLabel: string,
 ): string {
   if (live.kind === "thinking") {
-    return activity.providerStartingLabel ?? activity.liveAnswerPreview ?? "Thinking";
+    return activity.providerStartingLabel ?? live.label ?? activity.liveAnswerPreview ?? "Thinking";
   }
   return live.entry.itemType === "reasoning" ? "Thinking" : toolLabel;
 }

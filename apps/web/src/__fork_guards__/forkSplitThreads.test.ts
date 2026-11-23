@@ -59,7 +59,7 @@ describe("fork guard: fork-split-threads", () => {
     );
     // The focus primitive itself stays ungated: a pane's own controls use it.
     expect(chatView).toMatch(
-      /const focusComposer = \(\) => \{\s*composerRef\.current\?\.focusAtEnd\(\);/u,
+      /const \{ focusComposer: focusComposerStable, scheduleComposerFocus: scheduleComposerFocusStable \} =\s*useComposerFocus\(composerRef\);/u,
     );
     // An embedded side chat inherits its parent's pane but is not in the pair.
     expect(chatView).toMatch(

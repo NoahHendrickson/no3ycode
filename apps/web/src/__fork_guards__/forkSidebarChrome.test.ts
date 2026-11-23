@@ -42,7 +42,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // effect would make the shortcut itself conditional on the sidebar being
     // open — the one state in which you need it most.
     // Formatting may break the comparison across lines; match the token pair.
-    const effect = layout.search(/!==\s*"sidebar\.toggle"/u);
+    const effect = layout.search(/!isSidebarToggleShortcut\(event,/u);
     const earlyReturn = layout.indexOf("{showSidebar && !isSidebarVisible ? (");
     expect(effect).toBeGreaterThanOrEqual(0);
     expect(earlyReturn).toBeGreaterThan(effect);

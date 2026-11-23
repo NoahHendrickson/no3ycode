@@ -382,9 +382,9 @@ describe("fork guard: fork-app-identity", () => {
 
   it("points SSH remotes at the upstream release the fork is synced to", () => {
     // The fork's own app version names no upstream release archive.
-    const main = read("apps/desktop/src/main.ts");
-    expect(main).toContain("return { archiveVersion: serverPackageJson.version };");
-    expect(main).not.toContain("archiveVersion: environment.appVersion");
+    const ssh = read("apps/desktop/src/ssh/DesktopSshEnvironment.ts");
+    expect(ssh).toContain("archiveVersion: serverPackageJson.version,");
+    expect(ssh).not.toContain("archiveVersion: environment.appVersion");
   });
 
   it("keeps the packaged compile cache out of upstream's cache directory", () => {

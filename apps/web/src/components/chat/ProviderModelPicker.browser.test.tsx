@@ -4,6 +4,7 @@ import {
   ProviderInstanceId,
   type ModelSelection,
 } from "@t3tools/contracts";
+import { compileResolvedKeybindingsConfig } from "@t3tools/shared/keybindings";
 import { useState } from "react";
 import { expect, it, vi } from "vite-plus/test";
 import { page, userEvent } from "vite-plus/test/browser";
@@ -103,6 +104,76 @@ it("keeps each registry image when adding a model from another ACP agent", async
    ComposerModelPicker, whose traits panel is covered by composerModelTraits.test.ts. */
 /* fork:end fork-model-picker */
 
+it("lists a model reported twice by one provider once, with contiguous jump shortcuts", async () => {
+  const instanceId = ProviderInstanceId.make("claude");
+  const entries = deriveProviderInstanceEntries([
+    {
+      instanceId,
+      driver: ProviderDriverKind.make("claudeAgent"),
+      enabled: true,
+      installed: true,
+      version: null,
+      status: "ready",
+      auth: { status: "authenticated" },
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      models: [],
+      slashCommands: [],
+      skills: [],
+    },
+  ]);
+  const options = new Map([
+    [
+      instanceId,
+      ["a", "b", "c", "c", "d", "d"].map((slug) => ({
+        slug,
+        name: `Model ${slug.toUpperCase()}`,
+      })),
+    ],
+  ]);
+  const keybindings = compileResolvedKeybindingsConfig(
+    ([1, 2, 3, 4, 5, 6] as const).map((index) => ({
+      key: `mod+${index}`,
+      command: `modelPicker.jump.${index}` as const,
+      when: "modelPickerOpen",
+    })),
+  );
+
+  await using screen = await render(
+    <ProviderModelPicker
+      environmentId={null}
+      activeInstanceId={instanceId}
+      model="a"
+      lockedProvider={null}
+      instanceEntries={entries}
+      modelOptionsByInstance={options}
+      keybindings={keybindings}
+      triggerAriaLabel="Choose model"
+      onInstanceModelChange={() => {}}
+    />,
+  );
+  await screen.getByRole("button", { name: "Choose model" }).click();
+  // fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+  // The fork's model rows are menu items.
+  await expect.element(page.getByRole("menuitem", { name: /Model A/ })).toBeVisible();
+  await vi.waitFor(() =>
+    expect(
+      page
+        .getByRole("menuitem")
+        .elements()
+        // fork:end fork-model-picker
+        .map((row) => [
+          row.textContent?.match(/Model [A-Z]/)?.[0],
+          row.querySelector("kbd")?.textContent?.slice(-1),
+        ]),
+    ).toEqual([
+      ["Model A", "1"],
+      ["Model B", "2"],
+      ["Model C", "3"],
+      ["Model D", "4"],
+    ]),
+  );
+});
+
 it("opens on the active provider when every favorite belongs to a disabled provider", async () => {
   const entries = deriveProviderInstanceEntries(
     ["Codex", "Claude"].map((name) => ({
@@ -147,4 +218,65 @@ it("opens on the active provider when every favorite belongs to a disabled provi
   // The fork's rows are menu items that drop the provider name ("model", not "Codex model").
   await expect.element(page.getByRole("menuitem", { name: /^model\b/ })).toBeVisible();
   // fork:end fork-model-picker
+});
+
+it("keeps the touch keyboard down while choosing a provider", async () => {
+  const entries = deriveProviderInstanceEntries(
+    ["Codex", "Claude"].map((name) => ({
+      instanceId: ProviderInstanceId.make(name.toLowerCase()),
+      driver: ProviderDriverKind.make(name.toLowerCase()),
+      enabled: true,
+      installed: true,
+      version: null,
+      status: "ready" as const,
+      auth: { status: "authenticated" as const },
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      models: [
+        { slug: name.toLowerCase(), name: `${name} model`, isCustom: false, capabilities: {} },
+      ],
+      slashCommands: [],
+      skills: [],
+    })),
+  );
+  const [codex] = entries;
+  const matchMedia = window.matchMedia.bind(window);
+  using _touch = vi.spyOn(window, "matchMedia").mockImplementation((query) =>
+    query === "(pointer: coarse)"
+      ? ({
+          matches: true,
+          media: query,
+          onchange: null,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          addListener: () => {},
+          removeListener: () => {},
+          dispatchEvent: () => false,
+        } as MediaQueryList)
+      : matchMedia(query),
+  );
+
+  await using screen = await render(
+    <ProviderModelPicker
+      environmentId={null}
+      activeInstanceId={codex!.instanceId}
+      model="codex"
+      lockedProvider={null}
+      instanceEntries={entries}
+      modelOptionsByInstance={new Map(entries.map((entry) => [entry.instanceId, entry.models]))}
+      triggerAriaLabel="Choose model"
+      onInstanceModelChange={() => {}}
+    />,
+  );
+  await screen.getByRole("button", { name: "Choose model" }).click();
+  // fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+  // The fork's picker is a menu: its own placeholder, menu radio provider tabs and menu item
+  // rows that drop the provider name.
+  const search = page.getByPlaceholder("Search models");
+  const popup = search.element().closest('[data-slot="menu-popup"]');
+  await vi.waitFor(() => expect(document.activeElement).toBe(popup));
+
+  await page.getByRole("menuitemradio", { name: /^Claude/ }).click();
+  await expect.element(page.getByRole("menuitem", { name: /^model\b/ })).toBeVisible();
+  // fork:end fork-model-picker
+  await expect.element(search).not.toHaveFocus();
 });

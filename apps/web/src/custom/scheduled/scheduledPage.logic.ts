@@ -15,6 +15,7 @@ import {
   type ScheduledTaskWebhookDeliveryOutcome,
 } from "@t3tools/contracts";
 
+import type { TimestampFormat } from "@t3tools/contracts/settings";
 import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
 import { formatRelativeTime } from "~/timestampFormat";
 
@@ -223,6 +224,7 @@ export function draftTriggerLabel(
     readonly weekdays: ReadonlySet<number>;
   },
   timeZone?: string,
+  timestampFormat: TimestampFormat = "24-hour",
 ): string {
   if (draft.githubPrOpened) return "GitHub PR opened";
   if (draft.scheduleMode === "webhook") return "On webhook";
@@ -243,7 +245,11 @@ export function draftTriggerLabel(
     draft.weekdays.size === 7
       ? []
       : [...draft.weekdays].toSorted((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
-  return scheduleLabel({ type: "fixed_time", timeOfDay: draft.timeOfDay, weekdays }, timeZone);
+  return scheduleLabel(
+    { type: "fixed_time", timeOfDay: draft.timeOfDay, weekdays },
+    timestampFormat,
+    timeZone,
+  );
 }
 
 /** Past instants read "5m ago"; future ones (a next run) read "in 5m". */

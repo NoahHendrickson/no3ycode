@@ -45,33 +45,38 @@ function launcherBotId(launcher: Pick<OrchestrationV2ThreadShell, "id" | "tags">
   return forkBotWorkTag(launcher.id).length <= THREAD_TAG_MAX_LENGTH ? launcher.id : null;
 }
 
-/** Tags a newly launched thread as its launcher's bot's work, and returns that bot's id. Best
-    effort: an unlinked thread lists in the sidebar like any other, so a failure here never fails
-    the launch. */
+/** The bot a thread launched by `launchedBy` will work for, before that thread exists. */
+export const forkBotIdFor = Effect.fn("ThreadLaunchService.forkBotIdFor")(
+  function* (threads: ThreadManagementService["Service"], launchedBy: ThreadId) {
+    const launcher = yield* forkBotActingShell(threads, launchedBy);
+    const botId = launcher === null ? null : launcherBotId(launcher);
+    return botId === null ? null : ThreadId.make(botId);
+  },
+  Effect.catch((error) =>
+    Effect.logWarning("fork-bot-work.resolve-failed", { error }).pipe(Effect.as(null)),
+  ),
+);
+
+/** Tags a newly launched thread as the work of `botId` (from forkBotIdFor). Best effort: an
+    unlinked thread lists in the sidebar like any other, so a failure here never fails the launch. */
 export const linkForkBotWork = Effect.fn("ThreadLaunchService.linkForkBotWork")(
   function* (
     threads: ThreadManagementService["Service"],
     input: {
       readonly commandId: CommandId;
       readonly threadId: ThreadId;
-      readonly launchedBy: ThreadId;
+      readonly botId: ThreadId;
     },
   ) {
-    const launcher = yield* forkBotActingShell(threads, input.launchedBy);
-    const botId = launcher === null ? null : launcherBotId(launcher);
-    if (botId === null) return null;
     yield* threads.dispatch({
       type: "thread.tag.set",
       commandId: CommandId.make(`${input.commandId}:bot-work`),
       threadId: input.threadId,
-      tag: forkBotWorkTag(botId),
+      tag: forkBotWorkTag(input.botId),
       tagged: true,
     });
-    return ThreadId.make(botId);
   },
-  Effect.catch((error) =>
-    Effect.logWarning("fork-bot-work.link-failed", { error }).pipe(Effect.as(null)),
-  ),
+  Effect.catch((error) => Effect.logWarning("fork-bot-work.link-failed", { error })),
 );
 
 /** `text` with the CREW.md of the bot `botId` after it, for the first message of a thread

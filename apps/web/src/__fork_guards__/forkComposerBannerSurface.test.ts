@@ -103,15 +103,13 @@ describe("fork guard: fork-composer-banner-surface", () => {
     // two variables the fork rules override.
     expect(surface).toContain("from-(--chat-composer-attached-tint)");
     expect(surface).toContain("bg-(--chat-composer-attached-surface)/(--glass-opacity)");
-    // The severity tints the rule overrides are still expressed through the
-    // same variables; a sync that paints them another way slips past this rule.
-    // Since upstream #10437-era banner work, info and success share the
-    // neutral outline; only error and warning still tint through the variable.
-    for (const variant of ["error", "warning"]) {
-      expect(banner, variant).toMatch(
-        new RegExp(`${variant}:\\s*"\\[--chat-composer-attached-outline:color-mix\\(`, "u"),
-      );
-    }
+    // Severity tints must still go through the variables the rule overrides. Info and success
+    // share the neutral outline; error (upstream's errorColors) and warning tint through it.
+    expect(banner).toMatch(
+      /const errorColors =\s*"\[--chat-composer-attached-outline:color-mix\(/u,
+    );
+    expect(banner).toMatch(/error: errorColors,/u);
+    expect(banner).toMatch(/warning:\s*"\[--chat-composer-attached-outline:color-mix\(/u);
     for (const variant of ["info", "success"]) {
       expect(banner, variant).toMatch(new RegExp(`${variant}:\\s*neutralOutline`, "u"));
     }

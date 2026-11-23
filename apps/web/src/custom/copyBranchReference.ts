@@ -3,10 +3,10 @@
  * `.fork/customizations.yaml#fork-branch-link-copy`.
  */
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
-import { writeTextToClipboard } from "~/hooks/useCopyToClipboard";
+import { namedClipboardTarget, writeTextToClipboard } from "~/hooks/useCopyToClipboard";
 
 function copyWithToast(value: string, target: string, title: string, description: string): void {
-  void writeTextToClipboard(value, target).then(
+  void writeTextToClipboard(value, namedClipboardTarget(target)).then(
     (didCopy) => {
       if (didCopy) toastManager.add({ type: "success", title, description });
     },

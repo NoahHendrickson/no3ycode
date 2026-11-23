@@ -7,11 +7,8 @@
 import {
   CHATGPT_USAGE_URL,
   collectLimitAccounts,
-  collectExternalUsageLinks,
   collectLimitPools,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitAccount,
   type LimitPool,
   type LimitPoolMember,
@@ -19,8 +16,8 @@ import {
   paceRemainingPercent,
   remainingPercent,
   type ResetCreditChoice,
-  resetCreditChoices,
 } from "@t3tools/shared/usageLimits";
+import { T, useGT, useMessages } from "gt-react";
 import type { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { AlertTriangleIcon, ExternalLinkIcon, TicketIcon } from "lucide-react";
 import {
@@ -49,6 +46,12 @@ import { ScheduledCard } from "~/custom/scheduled/scheduledPageChrome";
 import { UsageMeter } from "~/custom/UsageMeter";
 import { actionableLimitNotices } from "~/custom/usageLimitNotices";
 import { PaceIcon, ResetCreditDialog, useResetCredit } from "./UsageLimits";
+import {
+  collectExternalUsageLinks,
+  cursorUsageWindowDetails,
+  formatResetsIn,
+  resetCreditChoices,
+} from "@t3tools/shared/usageLimitsCopy";
 
 function accountInitials(email: string): string {
   const [local = "", domain = ""] = email.split("@");
@@ -65,10 +68,11 @@ function accountHue(email: string): number {
 
 function AccountChip({ email }: { readonly email: string }) {
   const hue = accountHue(email);
+  const gt = useGT();
   return (
     <span
       role="img"
-      aria-label={`Account ${accountInitials(email)}`}
+      aria-label={gt("Account {initials}", { initials: accountInitials(email) })}
       className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-3xs leading-none font-semibold"
       style={{ backgroundColor: `oklch(0.85 0.08 ${hue})`, color: `oklch(0.35 0.1 ${hue})` }}
     >
@@ -151,16 +155,18 @@ function SegmentPopover({
   readonly onRedeem: (choice: ResetCreditChoice) => void;
 }) {
   const timestampFormat = usePrimarySettings((settings) => settings.timestampFormat);
+  const gt = useGT();
+  const m = useMessages();
   const remaining = remainingPercent(window);
   const timeLeft = paceRemainingPercent(window, now);
-  const resetsIn = formatResetsIn(window, now);
+  const resetsIn = formatResetsIn(window, now, m, "in");
   const where =
     account.environments.length > 0
       ? account.environments.map((environment) => environment.label).join(", ")
       : account.sourceLabel;
   const choices =
     redeem && account.redeem && account.limits.resetCredits?.availableCount
-      ? resetCreditChoices(account.limits.resetCredits, account.redeem.input, now, true)
+      ? resetCreditChoices(account.limits.resetCredits, account.redeem.input, now, true, m)
       : [];
   return (
     <div className="flex w-72 max-w-[calc(100vw-3rem)] flex-col gap-2.5 text-xs">
@@ -174,30 +180,44 @@ function SegmentPopover({
         {account.email ? (
           <RedactedSensitiveText
             value={account.email}
-            ariaLabel="Toggle account email visibility"
-            revealTooltip="Click to reveal email"
-            hideTooltip="Click to hide email"
+            ariaLabel={gt("Toggle account email visibility")}
+            revealTooltip={gt("Click to reveal email")}
+            hideTooltip={gt("Click to hide email")}
             className="w-fit"
           />
         ) : null}
       </div>
       <div className="flex flex-col gap-1 border-t border-border/60 pt-2.5">
-        {account.plan ? <Row label="Plan">{account.plan}</Row> : null}
+        {account.plan ? (
+          <Row label={gt("Plan", { $context: "subscription plan" })}>{account.plan}</Row>
+        ) : null}
         {where ? (
-          <Row label={account.environments.length > 0 ? "Signed in" : "Via"}>{where}</Row>
+          <Row
+            label={
+              account.environments.length > 0
+                ? gt("Signed in")
+                : gt("Via", { $context: "signed in through a source" })
+            }
+          >
+            {where}
+          </Row>
         ) : null}
       </div>
       <div className="flex flex-col gap-1 border-t border-border/60 pt-2.5">
-        <Row label="Left">{remaining}%</Row>
+        <Row label={gt("Left", { $context: "remaining usage" })}>{remaining}%</Row>
         {window.resetsAt ? (
-          <Row label="Resets">
-            {formatUpcomingTimestamp(window.resetsAt, timestampFormat, now)}
-            {resetsIn ? ` · ${resetsIn.replace("resets in ", "in ")}` : ""}
+          <Row label={gt("Resets", { $context: "when the usage window resets" })}>
+            {formatUpcomingTimestamp(window.resetsAt, timestampFormat, now, undefined, m)}
+            {resetsIn ? ` · ${resetsIn}` : ""}
           </Row>
         ) : null}
-        {timeLeft !== null ? <Row label="Even pace">{timeLeft}% left by now</Row> : null}
+        {timeLeft !== null ? (
+          <Row label={gt("Even pace")}>{gt("{timeLeft}% left by now", { timeLeft })}</Row>
+        ) : null}
         {reset && reset.restoresPercent > 0 ? (
-          <Row label="Restores">+{reset.restoresPercent}% of pool</Row>
+          <Row label={gt("Restores", { $context: "a reset credit restores part of the pool" })}>
+            {gt("+{percent}% of pool", { percent: reset.restoresPercent })}
+          </Row>
         ) : null}
       </div>
       {choices.length > 0 && redeem ? (
@@ -213,7 +233,7 @@ function SegmentPopover({
                   className="ms-auto"
                   onClick={() => onRedeem(choice)}
                 >
-                  {redeem.busy ? "Using…" : choice.actionLabel}
+                  {redeem.busy ? gt("Using…") : choice.actionLabel}
                 </Button>
               ) : null}
             </span>
@@ -311,6 +331,7 @@ function RedeemableSegment({
   readonly redeemAt: NonNullable<LimitAccount["redeem"]>;
 }) {
   const redeem = useResetCredit(redeemAt.environmentId);
+  const gt = useGT();
   return (
     <>
       <SegmentTriggers redeem={redeem} {...props} />
@@ -326,7 +347,7 @@ function RedeemableSegment({
       {redeem.busy || redeem.status ? (
         <span role="status" className="order-last basis-full text-xs text-muted-foreground">
           <AccountName account={props.account} className="font-medium text-foreground" />{" "}
-          {redeem.busy ? "Using reset credit…" : redeem.status}
+          {redeem.busy ? gt("Using reset credit…") : redeem.status}
         </span>
       ) : null}
     </>
@@ -346,8 +367,27 @@ function SegmentTriggers({
   const payload: SegmentPayload = { account, window, reset, redeem };
   const remaining = remainingPercent(window);
   const timeLeft = paceRemainingPercent(window, now);
-  const resetsIn = formatResetsIn(window, now);
+  const m = useMessages();
+  const resetsIn = formatResetsIn(window, now, m);
   const credits = account.limits.resetCredits?.availableCount ?? 0;
+  const gt = useGT();
+  const segmentLabel = [
+    gt("{name}: {remaining}% left", {
+      name:
+        account.displayName ?? (account.email ? accountInitials(account.email) : account.driver),
+      remaining,
+    }),
+    resetsIn,
+    timeLeft === null ? null : gt("{timeLeft}% of the window left", { timeLeft }),
+    credits
+      ? gt(
+          "{count, plural, one {{count} reset credit banked} other {{count} reset credits banked}}",
+          { count: credits },
+        )
+      : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
   return (
     <PopoverTrigger
       handle={popover}
@@ -356,7 +396,7 @@ function SegmentTriggers({
       render={
         <button
           type="button"
-          aria-label={`${account.displayName ?? (account.email ? accountInitials(account.email) : account.driver)}: ${remaining}% left${resetsIn ? `, ${resetsIn}` : ""}${timeLeft === null ? "" : `, ${timeLeft}% of the window left`}${credits ? `, ${credits} reset ${credits === 1 ? "credit" : "credits"} banked` : ""}`}
+          aria-label={segmentLabel}
           className="group/segment flex h-4 min-w-0 flex-1 cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       }
@@ -385,7 +425,9 @@ function PoolWindowRow({
   // The soonest reset that hands anything back; an untouched account resets to no effect.
   const nextRefill = pool.resets.find((reset) => reset.restoresPercent > 0);
   const nextReset = nextRefill ?? pool.resets[0];
-  const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+  const m = useMessages();
+  const gt = useGT();
+  const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m, "refill") : null;
   const pooled = pool.columns.length > 1;
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -399,11 +441,13 @@ function PoolWindowRow({
         <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap tabular-nums">
           {pool.pace ? <PaceIcon pace={pool.pace} /> : null}
           <span className="font-medium text-foreground">{pool.remainingPercent}%</span>
-          <span className="sr-only">left</span>
+          <span className="sr-only">
+            <T context="remaining usage percentage">left</T>
+          </span>
           {resetsIn ? (
             <span className="font-medium text-muted-foreground">
               {pooled && nextRefill ? `+${nextRefill.restoresPercent}% ` : ""}
-              {resetsIn.replace("resets in ", "↻ ")}
+              {resetsIn}
             </span>
           ) : null}
         </span>
@@ -418,6 +462,16 @@ function PoolWindowRow({
               reset={restores.get(member.account.key)}
               now={now}
             />
+          ) : pool.kind === "monthly" && member.account.limits.zeroSpendCap ? (
+            <span
+              key={member.account.key}
+              className="flex h-4 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap text-muted-foreground"
+            >
+              {pooled ? (
+                <AccountName account={member.account} className="min-w-0 truncate" />
+              ) : null}
+              {gt("$0 cap")}
+            </span>
           ) : (
             <UsageMeter
               key={member.account.key}
@@ -440,6 +494,8 @@ function PoolSection({ pool, now }: { readonly pool: LimitPool; readonly now: nu
     (total, account) => total + (account.limits.resetCredits?.availableCount ?? 0),
     0,
   );
+  const gt = useGT();
+  const m = useMessages();
   return (
     <ScheduledCard className="flex flex-col gap-3 p-4">
       <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -455,8 +511,13 @@ function PoolSection({ pool, now }: { readonly pool: LimitPool; readonly now: nu
           {credits ? (
             <span className="inline-flex items-center gap-1">
               <TicketIcon className="size-3.5" aria-hidden />
-              {credits}
-              <span className="sr-only">reset {credits === 1 ? "credit" : "credits"} banked</span>
+              <span aria-hidden>{credits}</span>
+              <span className="sr-only">
+                {gt(
+                  "{count, plural, one {{count} reset credit banked} other {{count} reset credits banked}}",
+                  { count: credits },
+                )}
+              </span>
             </span>
           ) : null}
         </span>
@@ -464,7 +525,7 @@ function PoolSection({ pool, now }: { readonly pool: LimitPool; readonly now: nu
       <div className="flex flex-col gap-3">
         {windows.map((window) => {
           const details =
-            pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
+            pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
           return (
             <PoolWindowRow
               key={`${window.kind}:${window.id}`}
@@ -487,16 +548,18 @@ export function UsageLimitsPooled({
   readonly presentations: Parameters<typeof collectLimitAccounts>[0];
   readonly now: number;
 }) {
+  const gt = useGT();
+  const m = useMessages();
   const [segmentPopover] = useState(() => PopoverCreateHandle<SegmentPayload>());
   const segmentPopoverActions = useRef<PopoverPrimitive.Root.Actions | null>(null);
   const pools = collectLimitPools(collectLimitAccounts(presentations), now);
-  const notices = actionableLimitNotices(presentations);
-  const externalLinks = collectExternalUsageLinks(presentations);
+  const notices = actionableLimitNotices(presentations, m);
+  const externalLinks = collectExternalUsageLinks(presentations, m);
   return (
     <div className="flex flex-col gap-4">
       {pools.length === 0 && notices.length === 0 && externalLinks.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No provider on the selected environments reports subscription limits.
+          <T>No provider on the selected environments reports subscription limits.</T>
         </p>
       ) : null}
       <SegmentPopoverContext value={segmentPopover}>
@@ -535,7 +598,7 @@ export function UsageLimitsPooled({
               </p>
               {link.url === CHATGPT_USAGE_URL ? (
                 <p className="text-xs text-muted-foreground">
-                  View usage in ChatGPT with your connected account.
+                  <T>View usage in ChatGPT with your connected account.</T>
                 </p>
               ) : link.message ? (
                 <p className="max-w-xl text-xs text-muted-foreground">{link.message}</p>
@@ -547,7 +610,7 @@ export function UsageLimitsPooled({
             size="xs"
             onClick={() => void ensureLocalApi().shell.openExternal(link.url)}
           >
-            Manage usage
+            {gt("Manage usage")}
             <ExternalLinkIcon className="size-3.5" aria-hidden="true" />
           </Button>
         </ScheduledCard>
