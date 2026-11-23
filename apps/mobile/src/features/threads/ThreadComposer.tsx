@@ -1252,7 +1252,10 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
             >
               <ComposerToolbarRow
                 paddingBottom={0}
-                paddingHorizontal={0}
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                /* The card's inset, as its draft row has; flush, stop sat in the rounded corner. */
+                paddingHorizontal={no3yCard ? NO3Y_CARD_INSET : 0}
+                /* fork:end no3y-mobile-redesign */
                 paddingTop={0}
                 style={{ gap: 0 }}
               >

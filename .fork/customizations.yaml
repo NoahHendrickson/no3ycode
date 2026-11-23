@@ -7979,7 +7979,8 @@
     Claude's seven_day_fable left out, the calmer #38a169 green; rules copied
     into fork/no3yUsageCompact.ts), actionable limit notices, usage links and
     a See all usage link to Settings › Usage. The composer is a glass card (editor on top; 40pt +, model
-    chip, mic and send below, the text's last line as far above them as its
+    chip, mic and send below, the dictation row's cancel, waveform, confirm and
+    stop or send at the same 12pt inset so stop never sits in the rounded corner, the text's last line as far above them as its
     first sits below the card's top; no chip row above it; the model chip ends
     in the current runtime mode's access icon, the Mac's own: Supervised a
     filled square lock, Auto-accept edits a filled pen, Auto a filled shield

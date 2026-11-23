@@ -652,6 +652,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(composerStyle).toContain("<No3yGlassLayer");
     expect(threadComposer).toContain("<No3yGlassLayer radius={targetBorderRadius} />");
     expect(threadComposer).toContain("<No3yBottomScrim");
+    expect(threadComposer).toContain("paddingHorizontal={no3yCard ? NO3Y_CARD_INSET : 0}");
     expect(statusMark).toContain("<No3yBeadRing");
     // Card-size status marks are 20pt, scaled whole from their 16pt drawing.
     expect(statusMark).toContain("const size = props.size ?? NO3Y_STATUS_MARK_SIZE;");
