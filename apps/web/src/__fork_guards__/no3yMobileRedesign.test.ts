@@ -679,6 +679,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(access).toContain('"approval-required": { icon: SquareLock02Icon, filled: true },');
     expect(access).toContain('"full-access": { icon: ShieldOffIcon, filled: false },');
     expect(modelPicker).toContain("onSelect={session.onUpdateRuntimeMode}");
+    expect(modelPicker).toContain("paddingBottom: insets.bottom + 24,");
     expect(threadComposer).toContain("runtimeMode: props.selectedThread.runtimeMode");
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");

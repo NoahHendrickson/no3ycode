@@ -440,7 +440,8 @@ export function No3yModelPicker(props: {
           style={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: Math.max(insets.bottom, 16),
+            // 24pt clear of the sheet's rounded bottom, as the usage sheet keeps its rows.
+            paddingBottom: insets.bottom + 24,
             borderTopWidth: 1,
             borderTopColor: palette.hairline,
           }}

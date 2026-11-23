@@ -8057,7 +8057,8 @@
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
     agent draft's mode), the model list (long-press to favorite) and an effort
-    slider with a notch per level, tap-to-jump and snapping drags with a haptic
+    slider (24pt plus the safe area clear of the sheet's rounded bottom) with a
+    notch per level, tap-to-jump and snapping drags with a haptic
     tick, driving the same thread settings session so picks, favorites and
     options save exactly as before. Claude and Codex draw the Mac fork's own
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
