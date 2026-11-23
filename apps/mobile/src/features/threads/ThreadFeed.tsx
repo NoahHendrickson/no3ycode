@@ -234,12 +234,12 @@ import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
 import {
   NO3Y_LIVE_ROW_ID,
-  no3yDropLiveFold,
+  no3yLivePresentation,
   no3yLiveRowLast,
-  no3ySplitLiveTool,
 } from "../../../fork/no3yLiveStatus";
 import {
   createNo3yTranscriptSpacing,
+  type No3yRowGap,
   deriveNo3yWorkRowSizing,
   NO3Y_INLINE_CODE_CHIP,
   NO3Y_MESSAGE_ACTION_INSET,
@@ -440,8 +440,8 @@ function UserMessageCopyButton(props: {
   readonly onCopy: (() => Promise<void>) | undefined;
   readonly tintColor: ColorValue;
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  /** The no3y footer: Hugeicons glyphs at its larger action size. */
-  readonly no3y?: { readonly button: number; readonly icon: number };
+  readonly size?: { readonly button: number; readonly icon: number };
+  readonly hugeIcons?: boolean;
   /* fork:end no3y-mobile-redesign */
 }) {
   const gt = useGT();
@@ -453,9 +453,9 @@ function UserMessageCopyButton(props: {
       onCopy={props.onCopy}
       tintColor={props.tintColor}
       /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      buttonSize={props.no3y?.button ?? 28}
-      iconSize={props.no3y?.icon ?? 13}
-      hugeIcons={props.no3y !== undefined}
+      buttonSize={props.size?.button ?? 28}
+      iconSize={props.size?.icon ?? 13}
+      hugeIcons={props.hugeIcons}
       /* fork:end no3y-mobile-redesign */
     />
   );
@@ -564,7 +564,7 @@ function AssistantForkButton(props: {
       {busy ? (
         <AppActivityIndicator size="small" />
       ) : /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      props.hugeIcons && typeof props.iconColor === "string" ? (
+      props.hugeIcons ? (
         <HugeIcon icon={GitForkIcon} size={props.iconSize} color={props.iconColor} />
       ) : (
         /* fork:end no3y-mobile-redesign */
@@ -2392,10 +2392,9 @@ function renderFeedEntry(
     const styles = isUser ? markdownStyles.user : markdownStyles.assistant;
     const timestampLabel = props.formatMessageTime(isUser ? message.createdAt : message.updatedAt);
     /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-    const userMessagePending =
-      Boolean(entry.pendingMessage) &&
-      !entry.acknowledged &&
-      entry.id !== props.pendingFoldMessageId;
+    // Still pending from this device: a message the user just sent here.
+    const sentHere = Boolean(entry.pendingMessage) && !entry.acknowledged;
+    const userMessagePending = sentHere && entry.id !== props.pendingFoldMessageId;
     // no3y keeps a message's send state but never its sent time.
     const showUserMetaLabel = props.no3y === null || userMessagePending;
     /* fork:end no3y-mobile-redesign */
@@ -2797,7 +2796,7 @@ function renderFeedEntry(
                   }
                   tintColor={iconSubtleColor}
                   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                  {...(props.no3y ? { no3y: props.replyActionSize } : null)}
+                  {...(props.no3y ? { size: props.replyActionSize, hugeIcons: true } : null)}
                   /* fork:end no3y-mobile-redesign */
                 />
               ) : null}
@@ -2810,7 +2809,8 @@ function renderFeedEntry(
       // device, not a fresh timestamp, is what marks one the user just sent.
       return props.no3y ? (
         <No3ySentBubbleRise
-          rise={enterAnimated || (Boolean(entry.pendingMessage) && !entry.acknowledged)}
+          messageId={message.id}
+          rise={sentHere}
           visible={props.no3y.listReady}
           composerInset={props.no3y.composerInset}
           composerKeyboardOffset={props.no3y.composerKeyboardOffset}
@@ -3236,25 +3236,7 @@ function useThreadFeedPresentation(
     locale,
   );
   return appendPendingThreadMessages(
-    no3yLiveLast
-      ? no3yLiveRowLast(
-          no3ySplitLiveTool(
-            // Setup still running after the agent took over rides on the live Working row.
-            props.worktreeSetup &&
-              worktreeSetupHandedOff(props.worktreeSetup) &&
-              props.worktreeSetup.snapshot.phase === "running"
-              ? presentation
-              : no3yDropLiveFold(presentation),
-            props.activeWorkStartedAt,
-            (startedAt, tool): ThreadFeedEntry => ({
-              type: "thinking",
-              id: NO3Y_LIVE_ROW_ID,
-              createdAt: startedAt,
-              runId: "runId" in tool ? tool.runId : null,
-            }),
-          ),
-        )
-      : presentation,
+    no3yLiveLast ? no3yLiveRowLast(presentation) : presentation,
     /* fork:end no3y-mobile-redesign */
     props.feed,
     props.queuedMessages,
@@ -4064,14 +4046,18 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     const state = listRef.current?.getState();
     if (!state) return;
     /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-    // LegendList shows rows once it rechecks their sizes, which a list too short to scroll does
-    // only on its next data change: a new thread's first message would stay hidden until the
-    // reply arrives. A no-op scroll runs that check now.
+    // An unscrollable list rechecks row sizes, and shows them, only on its next data change, so
+    // a new thread's lone prompt hid until the reply (upstream's layout too). A no-op scroll runs
+    // the check now. Only for a lone prompt: with a reply it would cancel the initial end scroll.
+    const firstPromptOnly =
+      props.feed.length === 1 &&
+      props.feed[0]?.type === "message" &&
+      props.feed[0].message.role === "user";
     if (
       settling &&
       !ready &&
       no3yBubble &&
-      state.contentLength <= state.scrollLength &&
+      firstPromptOnly &&
       no3yNudgedListKey.current !== feedThreadKey
     ) {
       no3yNudgedListKey.current = feedThreadKey;
@@ -4132,15 +4118,25 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     setInteractionState((current) => ({ ...current, revealedMessageId: jumpToMessageId }));
   }
   const [appendPendingTurn] = useState(createPendingTurnAppender);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // As on web, setup still running after the agent took the turn rides on the live Working row.
+  const setupRidesLiveRow = props.worktreeSetup
+    ? worktreeSetupHandedOff(props.worktreeSetup) &&
+      props.worktreeSetup.snapshot.phase === "running"
+    : false;
+  const pendingTurnFeed = appendPendingTurn(
+    useThreadFeedPresentation(props, expandedTurnIds, expandedWorkGroups, revealedMessageId),
+    { zen: props.toolCallVisibility === "zen" },
+    m,
+  );
   const presentedFeed = appendGuestPendingMessages(
-    appendPendingTurn(
-      useThreadFeedPresentation(props, expandedTurnIds, expandedWorkGroups, revealedMessageId),
-      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      // The no3y status line already says "Sending…", so it skips the fold's placeholder.
-      { zen: props.toolCallVisibility === "zen" || no3yBubble },
-      /* fork:end no3y-mobile-redesign */
-      m,
-    ),
+    no3yBubble
+      ? no3yLivePresentation(pendingTurnFeed, {
+          startedAt: props.activeWorkStartedAt,
+          keepLiveFold: setupRidesLiveRow,
+        })
+      : pendingTurnFeed,
+    /* fork:end no3y-mobile-redesign */
     guestShare,
     m,
   );
@@ -4160,12 +4156,11 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   const setupAnchorIndex = presentedFeed.findIndex(
     (entry) => entry.type === "message" && entry.message.role === "user",
   );
-  // As on web, setup still running after the agent took the turn rides on the live Working row.
   const setupFoldRowId =
-    props.worktreeSetup &&
-    worktreeSetupHandedOff(props.worktreeSetup) &&
-    props.worktreeSetup.snapshot.phase === "running"
-      ? (presentedFeed.find(
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    setupRidesLiveRow
+      ? /* fork:end no3y-mobile-redesign */
+        (presentedFeed.find(
           (entry, index) =>
             index > setupAnchorIndex &&
             entry.type === "run-fold" &&
@@ -4178,8 +4173,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     setupAnchorIndex: props.worktreeSetup || props.preparingWorktree ? setupAnchorIndex : undefined,
   });
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const [no3ySpacing] = useState(createNo3yTranscriptSpacing);
-  const listFeed = no3yBubble ? no3ySpacing.space(groupedFeed) : groupedFeed;
+  const [no3ySpace] = useState(createNo3yTranscriptSpacing);
+  const listFeed: ReadonlyArray<GroupedThreadFeedRow & { readonly no3yGap?: No3yRowGap }> =
+    no3yBubble ? no3ySpace(groupedFeed) : groupedFeed;
   /* fork:end no3y-mobile-redesign */
   const { contentInsetEndAdjustment } = props;
   const attachList = (list: LegendListRef | null) => {
@@ -4492,7 +4488,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     }
   }, [textSizeKey, contentWidth, hasHtmlRenders, listRef]);
 
-  const renderItem = (info: { item: GroupedThreadFeedRow; index: number }) => (
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const renderItem = (info: { item: (typeof listFeed)[number]; index: number }) => (
+    /* fork:end no3y-mobile-redesign */
     <DisclosureRow
       key={info.item.id}
       itemKey={info.item.id}
@@ -4507,9 +4505,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
       >
         <ThreadMediaVisibility rowId={info.item.id} setRetainedRowId={setRetainedMediaRowId}>
           {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-          {no3yBubble && no3ySpacing.gapOf(info.item)?.top ? (
-            <View style={{ height: no3ySpacing.gapOf(info.item)?.top }} />
-          ) : null}
+          {info.item.no3yGap?.top ? <View style={{ height: info.item.no3yGap.top }} /> : null}
           {/* fork:end no3y-mobile-redesign */}
           {info.item.type === "message" &&
           info.item.message.projectedItem?.item.type === "user_message" &&
@@ -4603,9 +4599,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             <WorktreePreparingHeader />
           ) : null}
           {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-          {no3yBubble && no3ySpacing.gapOf(info.item)?.bottom ? (
-            <View style={{ height: no3ySpacing.gapOf(info.item)?.bottom }} />
-          ) : null}
+          {info.item.no3yGap?.bottom ? <View style={{ height: info.item.no3yGap.bottom }} /> : null}
           {/* fork:end no3y-mobile-redesign */}
         </ThreadMediaVisibility>
       </MessageImageGalleryScope>
@@ -4656,7 +4650,14 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             maintainScrollAtEndThreshold={THREAD_FEED_MAINTAIN_SCROLL_AT_END_THRESHOLD}
             maintainVisibleContentPosition
             data={listFeed}
-            extraData={listAppearanceData}
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            // A rising bubble starts once the list shows its rows, so readiness re-renders them.
+            extraData={
+              no3yBubble
+                ? { ...listAppearanceData, no3yListReady: loadedListKey === feedThreadKey }
+                : listAppearanceData
+            }
+            /* fork:end no3y-mobile-redesign */
             renderItem={renderItem}
             viewabilityConfig={THREAD_MEDIA_VIEWABILITY_CONFIG}
             keyExtractor={(entry) => entry.id}

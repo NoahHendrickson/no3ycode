@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import type { PendingThreadFeedEntry } from "../src/features/threads/pending-thread-feed";
+
 import {
   NO3Y_LIVE_ROW_ID,
-  no3yDropLiveFold,
+  no3yLivePresentation,
   no3yLiveRowLast,
-  no3ySplitLiveTool,
   no3yTurnTimerLabel,
 } from "./no3yLiveStatus";
 
@@ -23,50 +24,88 @@ describe("no3y live status line", () => {
     expect(no3yLiveRowLast(none)).toBe(none);
   });
 
-  it("drops only the live fold row, keeping a settled one", () => {
-    const rows = [
-      { id: "settled", type: "run-fold" },
-      { id: "live", type: "run-fold", workingSince: "2026-11-22T00:00:00.000Z" },
-      { id: NO3Y_LIVE_ROW_ID, type: "thinking" },
-    ];
-    expect(no3yDropLiveFold(rows).map((row) => row.id)).toEqual(["settled", NO3Y_LIVE_ROW_ID]);
-    expect(no3yDropLiveFold(rows)).toBe(no3yDropLiveFold(rows));
-    const settled = rows.slice(0, 1);
-    expect(no3yDropLiveFold(settled)).toBe(settled);
-  });
-
-  it("splits a running tool out of the live row and puts Thinking below it", () => {
+  describe("live presentation", () => {
     const start = "2026-11-22T00:00:00.000Z";
-    type Row = {
-      id: string;
-      type: string;
-      groupId?: string;
-      activities?: Array<{ groupStandIn: { groupId: string } }>;
-    };
-    const thinking = (): Row => ({ id: NO3Y_LIVE_ROW_ID, type: "thinking" });
-    const lone: Row[] = [
-      { id: "reply", type: "message" },
-      {
+    // Rows carry only the fields the live presentation reads.
+    const row = (fields: Record<string, unknown>) => fields as unknown as PendingThreadFeedEntry;
+    const toggle = (fields: Record<string, unknown>) =>
+      row({
+        type: "work-toggle",
         id: NO3Y_LIVE_ROW_ID,
-        type: "activity-group",
-        activities: [{ groupStandIn: { groupId: "g1" } }],
-      },
-    ];
-    const split = no3ySplitLiveTool(lone, start, thinking);
-    expect(split.map((row) => [row.id, row.type])).toEqual([
-      ["reply", "message"],
-      ["work-live:g1", "activity-group"],
-      [NO3Y_LIVE_ROW_ID, "thinking"],
-    ]);
-    expect(no3ySplitLiveTool(lone, start, thinking)).toBe(split);
-    const group: Row[] = [{ id: NO3Y_LIVE_ROW_ID, type: "work-toggle", groupId: "g2" }];
-    expect(no3ySplitLiveTool(group, start, thinking).map((row) => row.id)).toEqual([
-      "work-live:g2",
-      NO3Y_LIVE_ROW_ID,
-    ]);
-    const alreadyThinking: Row[] = [{ id: NO3Y_LIVE_ROW_ID, type: "thinking" }];
-    expect(no3ySplitLiveTool(alreadyThinking, start, thinking)).toBe(alreadyThinking);
-    expect(no3ySplitLiveTool(lone, null, thinking)).toBe(lone);
+        groupId: "g",
+        summaryKind: "command",
+        shimmer: true,
+        runId: "r",
+        ...fields,
+      });
+    const ids = (rows: ReadonlyArray<{ readonly id: string }>) => rows.map((entry) => entry.id);
+
+    it("drops the live fold and the pending placeholder unless the fold hosts setup", () => {
+      const rows = [
+        row({ type: "run-fold", id: "settled" }),
+        row({ type: "run-fold", id: "live", workingSince: start }),
+        { type: "pending-fold" as const, id: "pending", createdAt: start, messageId: "m" },
+      ];
+      expect(ids(no3yLivePresentation(rows, { startedAt: start, keepLiveFold: false }))).toEqual([
+        "settled",
+      ]);
+      expect(ids(no3yLivePresentation(rows, { startedAt: start, keepLiveFold: true }))).toEqual([
+        "settled",
+        "live",
+      ]);
+    });
+
+    it("keeps a running tool as a row with Thinking right below it, above queued messages", () => {
+      const rows = [
+        row({ type: "message", id: "reply" }),
+        toggle({}),
+        row({ type: "message", id: "queued" }),
+      ];
+      const presented = no3yLivePresentation(rows, { startedAt: start, keepLiveFold: false });
+      expect(presented.map((entry) => [entry.id, entry.type])).toEqual([
+        ["reply", "message"],
+        ["work-live:g", "work-toggle"],
+        [NO3Y_LIVE_ROW_ID, "thinking"],
+        ["queued", "message"],
+      ]);
+      // The status line animates; the tool row above it stops shimmering.
+      expect(presented[1]).toMatchObject({ shimmer: false });
+      expect(presented[2]).toMatchObject({ createdAt: start, runId: "r" });
+      expect(no3yLivePresentation(rows, { startedAt: start, keepLiveFold: false })).toBe(presented);
+    });
+
+    it("leaves live reasoning, a thinking row, or an idle feed as the one status line", () => {
+      const reasoning = [toggle({ summaryKind: "reasoning" })];
+      expect(no3yLivePresentation(reasoning, { startedAt: start, keepLiveFold: false })).toBe(
+        reasoning,
+      );
+      const thinking = [row({ type: "thinking", id: NO3Y_LIVE_ROW_ID })];
+      expect(no3yLivePresentation(thinking, { startedAt: start, keepLiveFold: false })).toBe(
+        thinking,
+      );
+      const idle = [toggle({})];
+      expect(no3yLivePresentation(idle, { startedAt: null, keepLiveFold: false })).toBe(idle);
+    });
+
+    it("keeps a lone tool shimmering only while it runs", () => {
+      const lone = (lifecycleStatus: string) =>
+        row({
+          type: "activity-group",
+          id: NO3Y_LIVE_ROW_ID,
+          runId: "r",
+          activities: [{ live: true, lifecycleStatus, groupStandIn: { groupId: "g" } }],
+        });
+      for (const [status, live] of [
+        ["inProgress", true],
+        ["completed", false],
+      ] as const) {
+        const [tool] = no3yLivePresentation([lone(status)], {
+          startedAt: start,
+          keepLiveFold: false,
+        });
+        expect(tool).toMatchObject({ id: "work-live:g", activities: [{ live }] });
+      }
+    });
   });
 
   it("formats the turn timer", () => {

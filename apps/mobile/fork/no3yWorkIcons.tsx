@@ -21,7 +21,11 @@ import Wrench01Icon from "@hugeicons/core-free-icons/Wrench01Icon";
 import XIcon from "@hugeicons/core-free-icons/XIcon";
 import ZapIcon from "@hugeicons/core-free-icons/ZapIcon";
 
-import type { HugeIconData } from "./HugeIcon";
+import type { ColorValue } from "react-native";
+import { useResolveClassNames } from "uniwind";
+
+import type { AppSymbolName } from "../src/components/ui/AppSymbol";
+import { HugeIcon, type HugeIconData } from "./HugeIcon";
 
 export interface No3yWorkIcon {
   readonly icon: HugeIconData;
@@ -31,7 +35,18 @@ export interface No3yWorkIcon {
 const stroke = (icon: HugeIconData): No3yWorkIcon => ({ icon, filled: false });
 const themed = (icon: HugeIconData): No3yWorkIcon => ({ icon, filled: true });
 
+/** Upstream's work-row icon names: an SF Symbol, or one of the work log's own kinds. */
+type WorkRowIconName =
+  | AppSymbolName
+  | "browser"
+  | "computer"
+  | "device"
+  | "t3-code"
+  | "pull-request";
+
 const BY_SYMBOL: Readonly<Record<string, No3yWorkIcon>> = {
+  browser: themed(GlobeIcon),
+  device: themed(SmartphoneIcon),
   terminal: stroke(TerminalIcon),
   eye: themed(EyeIcon),
   "square.and.pencil": themed(SquarePenIcon),
@@ -51,8 +66,24 @@ const BY_SYMBOL: Readonly<Record<string, No3yWorkIcon>> = {
   xmark: stroke(XIcon),
 };
 
-/** The Hugeicon for a work row's SF Symbol, or undefined to keep the symbol. */
-export function no3yWorkIcon(symbol: string | { readonly ios?: string }): No3yWorkIcon | undefined {
-  const name = typeof symbol === "string" ? symbol : symbol.ios;
-  return name === undefined ? undefined : BY_SYMBOL[name];
+/** The Hugeicon for a work row's icon, or undefined to keep upstream's. */
+export function no3yWorkIcon(icon: WorkRowIconName): No3yWorkIcon | undefined {
+  return BY_SYMBOL[typeof icon === "string" ? icon : icon.ios];
+}
+
+/** Draws a mapped work-row icon; only the no3y layout mounts it, so only it resolves tint classes. */
+export function No3yWorkLogIcon(props: {
+  readonly icon: No3yWorkIcon;
+  readonly color: ColorValue;
+  readonly colorClassName?: string;
+}) {
+  const classColor = useResolveClassNames(props.colorClassName ?? "").accentColor;
+  return (
+    <HugeIcon
+      icon={props.icon.icon}
+      filled={props.icon.filled}
+      size={16}
+      color={props.colorClassName === undefined ? props.color : (classColor ?? props.color)}
+    />
+  );
 }

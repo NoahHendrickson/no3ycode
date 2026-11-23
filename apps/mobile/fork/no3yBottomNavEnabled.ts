@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 import { useAdaptiveWorkspaceLayout } from "../src/features/layout/adaptive-workspace-context";
 import { isDuoDevice } from "../src/lib/device-type";
 import { useDeviceType } from "../src/native/native-layout-metrics";
+import { NO3Y_WORK_TEXT_CLASS } from "./no3yTranscriptSpacing";
 
 export function useNo3yBottomNavEnabled(): boolean {
   const deviceType = useDeviceType();
@@ -22,5 +23,5 @@ export function useNo3yBottomNavEnabled(): boolean {
 
 /** Tool row labels match the reply's paragraph size on the no3y layout (fork/no3yTranscriptSpacing.ts). */
 export function useNo3yWorkTextClass(): string | undefined {
-  return useNo3yBottomNavEnabled() ? "text-base" : undefined;
+  return useNo3yBottomNavEnabled() ? NO3Y_WORK_TEXT_CLASS : undefined;
 }

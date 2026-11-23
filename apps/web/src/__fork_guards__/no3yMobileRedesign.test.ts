@@ -730,7 +730,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // A live turn ends in one status line: the live fold drops, a running tool stays a row with
     // Thinking below it, and the live row moves last and draws as the status line.
     const feed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
-    for (const helper of ["no3yDropLiveFold(", "no3ySplitLiveTool(", "no3yLiveRowLast("]) {
+    for (const helper of ["no3yLiveRowLast(presentation)", "no3yLivePresentation("]) {
       expect(feed).toContain(helper);
     }
     expect(feed).toContain("<No3yLiveStatusLine");

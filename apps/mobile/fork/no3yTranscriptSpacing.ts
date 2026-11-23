@@ -21,6 +21,9 @@ export const NO3Y_INLINE_CODE_CHIP = { radius: 5, paddingHorizontal: 4 } as cons
 export const NO3Y_MESSAGE_ACTION_INSET =
   (NO3Y_MESSAGE_ACTION_SIZE.button - NO3Y_MESSAGE_ACTION_SIZE.icon) / 2;
 
+/** Tool-row labels and thinking text at the reply's paragraph size: MOBILE_TYPOGRAPHY.body, which the sizing below reads. */
+export const NO3Y_WORK_TEXT_CLASS = "text-base";
+
 /** Tool rows set in the reply's body size, so a row only locks to its fixed height when body text fits. */
 export function deriveNo3yWorkRowSizing(input: {
   readonly baseFontSize: number;
@@ -41,23 +44,40 @@ export function deriveNo3yWorkRowSizing(input: {
   };
 }
 
-/** `work-block` is a tool row that keeps its own `mb-1`; `work` has none. */
-export type No3yRowKind = "reply" | "user" | "work" | "work-block" | "live" | "other";
+/**
+ * `work-block` is a tool row that keeps its own `mb-1`; `work` has none. `user-grouped` is a
+ * prompt sitting close to its own response (`mb-1` instead of `mb-2`).
+ */
+export type No3yRowKind =
+  | "reply"
+  | "user"
+  | "user-grouped"
+  | "work"
+  | "work-block"
+  | "live"
+  | "other";
 
 export interface No3yRowGap {
   readonly top: number;
   readonly bottom: number;
 }
 
-export function no3yRowKind(row: ThreadFeedRow): No3yRowKind {
+type SpacedRow = ThreadFeedRow & {
+  readonly userMessageGrouping?: { readonly groupedWithNext: boolean };
+};
+
+export function no3yRowKind(row: SpacedRow): No3yRowKind {
   if (row.id === NO3Y_LIVE_ROW_ID) return "live";
   switch (row.type) {
     case "message":
-      return row.message.role === "assistant"
+      if (row.message.role === "user") {
+        return row.userMessageGrouping?.groupedWithNext ? "user-grouped" : "user";
+      }
+      // A reply with no text or attachments yet renders nothing, so it takes no gap.
+      return row.message.role === "assistant" &&
+        (row.message.text.trim() !== "" || (row.message.attachments?.length ?? 0) > 0)
         ? "reply"
-        : row.message.role === "user"
-          ? "user"
-          : "other";
+        : "other";
     case "work-toggle":
     case "thinking":
       return "work";
@@ -68,10 +88,13 @@ export function no3yRowKind(row: ThreadFeedRow): No3yRowKind {
   }
 }
 
-// The bottom margin each kind already draws: replies mb-1, user bubbles mb-2, WorkLogBlock mb-1.
+// The bottom margin each kind already draws: replies mb-1, user bubbles mb-2 (mb-1 grouped),
+// WorkLogBlock mb-1. A reply with its footer draws mb-5, but it ends a turn, so no tool row or
+// live line follows it.
 const TRAILING_SPACE: Record<No3yRowKind, number> = {
   reply: 4,
   user: 8,
+  "user-grouped": 4,
   work: 0,
   "work-block": 4,
   live: 0,
@@ -96,25 +119,23 @@ export function no3yTranscriptGaps(kinds: ReadonlyArray<No3yRowKind>): Array<No3
 }
 
 /**
- * Hands the list a copy of each row whose gap changed, so a row re-renders when a neighbour
- * arrives (rows that already have their gap keep their identity).
+ * Hands the list a copy of each row whose gap changed, carrying the gap, so a row re-renders when
+ * a neighbour arrives (rows that already have their gap keep their identity).
  */
 export function createNo3yTranscriptSpacing() {
-  const copies = new WeakMap<ThreadFeedRow, ThreadFeedRow>();
-  const gaps = new WeakMap<ThreadFeedRow, No3yRowGap>();
-  const space = <Row extends ThreadFeedRow>(rows: ReadonlyArray<Row>): ReadonlyArray<Row> => {
+  const copies = new WeakMap<object, unknown>();
+  return <Row extends SpacedRow>(
+    rows: ReadonlyArray<Row>,
+  ): ReadonlyArray<Row & { readonly no3yGap?: No3yRowGap }> => {
     const rowGaps = no3yTranscriptGaps(rows.map(no3yRowKind));
     return rows.map((row, index) => {
       const gap = rowGaps[index];
       if (!gap) return row;
-      const copy = copies.get(row) as Row | undefined;
-      const current = copy ? gaps.get(copy) : undefined;
-      if (copy && current?.top === gap.top && current.bottom === gap.bottom) return copy;
-      const next = { ...row };
+      const copy = copies.get(row) as (Row & { readonly no3yGap: No3yRowGap }) | undefined;
+      if (copy?.no3yGap.top === gap.top && copy.no3yGap.bottom === gap.bottom) return copy;
+      const next = { ...row, no3yGap: gap };
       copies.set(row, next);
-      gaps.set(next, gap);
       return next;
     });
   };
-  return { space, gapOf: (row: ThreadFeedRow): No3yRowGap | null => gaps.get(row) ?? null };
 }

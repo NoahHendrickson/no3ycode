@@ -72,7 +72,7 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
       })}
     >
       {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-      {props.hugeIcons && typeof props.tintColor === "string" ? (
+      {props.hugeIcons && props.tintColor !== undefined ? (
         <HugeIcon
           icon={copied ? CheckIcon : CopyIcon}
           size={props.iconSize ?? 13}

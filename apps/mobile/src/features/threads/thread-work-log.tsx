@@ -3,9 +3,7 @@ import { ThreadSubagentGroup } from "./thread-subagent-group";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3ySubagentCardsSwap } from "../../../fork/No3ySubagentCards";
 import { useNo3yBottomNavEnabled, useNo3yWorkTextClass } from "../../../fork/no3yBottomNavEnabled";
-import { HugeIcon } from "../../../fork/HugeIcon";
-import { no3yWorkIcon } from "../../../fork/no3yWorkIcons";
-import { useResolveClassNames } from "uniwind";
+import { No3yWorkLogIcon, no3yWorkIcon } from "../../../fork/no3yWorkIcons";
 /* fork:end no3y-mobile-redesign */
 import { ProposedPlanCard } from "./ProposedPlanCard";
 import {
@@ -144,7 +142,6 @@ function WorkLogIcon(props: {
   const colorClassName = props.highlighted ? "accent-foreground" : props.colorClassName;
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3y = useNo3yBottomNavEnabled();
-  const classColor = useResolveClassNames(colorClassName ?? "").accentColor;
   /* fork:end no3y-mobile-redesign */
   if (props.icon === "t3-code") {
     return (
@@ -160,15 +157,9 @@ function WorkLogIcon(props: {
     );
   }
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const hugeColor = colorClassName === undefined ? props.color : classColor;
-  const hugeIcon =
-    no3y && typeof hugeColor === "string"
-      ? no3yWorkIcon(
-          props.icon === "browser" ? "globe" : props.icon === "device" ? "iphone" : props.icon,
-        )
-      : undefined;
-  if (hugeIcon && typeof hugeColor === "string") {
-    return <HugeIcon icon={hugeIcon.icon} filled={hugeIcon.filled} size={16} color={hugeColor} />;
+  const no3yIcon = no3y ? no3yWorkIcon(props.icon) : undefined;
+  if (no3yIcon) {
+    return <No3yWorkLogIcon icon={no3yIcon} color={props.color} colorClassName={colorClassName} />;
   }
   /* fork:end no3y-mobile-redesign */
   return (

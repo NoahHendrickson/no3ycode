@@ -8249,22 +8249,25 @@
     9584829b). When upstream bumps the tarball, rebuild this change on top of
     theirs (deps/README.md) rather than taking theirs, or the chip loses its
     shape.
-    While a turn runs, the status line carries the timer, so upstream's live
-    "Working for …" fold row and the pending turn's fold placeholder are
-    dropped (no3yDropLiveFold, the pending appender's zen option). A running
-    tool stays in the transcript as a live work row (no3ySplitLiveTool
-    re-ids upstream's single live row to work-live:<group>) and a Thinking
-    line with the turn timer sits below it, instead of the tool becoming the
-    status line. The no3y feed reads top-down: the list does not align short
+    While a turn runs, the status line carries the timer: no3yLivePresentation
+    (fork/no3yLiveStatus.ts), applied after the pending-turn appender so its
+    live-run guard still sees the fold, drops upstream's live "Working for …"
+    fold and the pending turn's fold placeholder (the fold stays, timer
+    hidden, while it hosts the setup chip). A running tool stays in the
+    transcript, re-id'd to work-live:<group> and no longer shimmering, with a
+    Thinking line and the turn timer right below it; live reasoning already
+    reads "Thinking", so it keeps the live row. The no3y feed reads top-down: the list does not align short
     content to its end, so a first message sits at the top of the screen.
-    A message the user just sent (still pending from this device; a draft's
-    message keeps the time the draft began, so the fresh-timestamp check
-    misses it) rises from the composer's top edge into place over 300ms
-    (fork/No3ySentBubbleRise.tsx). It waits on the UI thread for the list to
-    show and place its row, because LegendList parks a new row off-screen and
-    the JS thread is busy right after a send. A new thread's feed nudges
-    LegendList with a no-op scroll when it fits on screen: otherwise the list
-    keeps its rows hidden until the reply arrives, seconds later. Sent
+    A message the user just sent (still pending from this device, once per
+    session; a draft's message keeps the time the draft began, so the
+    fresh-timestamp check misses it) rises from just above the composer into
+    place over 300ms (fork/No3ySentBubbleRise.tsx; only that bubble mounts the
+    animation hooks). It waits on the UI thread for the list to show and place
+    its row and for the keyboard to settle, because LegendList parks a new row
+    off-screen and the JS thread is busy right after a send; a row still
+    unplaced after ~1.5s is revealed in place. A new thread's lone prompt
+    nudges LegendList with a no-op scroll: otherwise the list keeps it hidden
+    until the reply arrives, seconds later. Sent
     messages and replies show no time under them, only their copy and fork
     buttons at 32pt with 16pt glyphs (NO3Y_MESSAGE_ACTION_SIZE), drawn with
     the desktop's Hugeicons (CopyIcon, CheckIcon once copied, GitForkIcon)
@@ -8272,7 +8275,7 @@
     a pending message keeps its "Pending" label. The settled "Worked for …"
     row is regular weight and starts at the reply text's edge. Work rows
     (commands, reads, edits, searches, tools) draw the desktop's Hugeicons
-    instead of SF Symbols (fork/no3yWorkIcons.ts, keyed by upstream's symbol,
+    instead of SF Symbols (fork/no3yWorkIcons.tsx, keyed by upstream's symbol,
     with the web fork's themed glyphs filled); the pull-request glyph, the T3
     wordmark and the browser app icon stay upstream's.
     Subagents in the transcript draw as the Mac fork's subagent card
@@ -8453,7 +8456,7 @@
     - apps/mobile/fork/no3yTranscriptSpacing.ts
     - apps/mobile/fork/no3yTranscriptSpacing.test.ts
     - apps/mobile/fork/No3ySentBubbleRise.tsx
-    - apps/mobile/fork/no3yWorkIcons.ts
+    - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
     - apps/mobile/fork/No3yAutomationsScreen.tsx
     - apps/mobile/fork/no3yAutomationRuns.ts

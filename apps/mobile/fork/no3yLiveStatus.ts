@@ -4,6 +4,11 @@
  * live row (thinking, or the running tool) moves to the end so an open group sits above it.
  */
 
+import type {
+  PendingFoldFeedEntry,
+  PendingThreadFeedEntry,
+} from "../src/features/threads/pending-thread-feed";
+
 /** The id upstream's feed derivation gives its single live row (threadActivity's LIVE_ACTIVITY_ROW_ID). */
 export const NO3Y_LIVE_ROW_ID = "live-activity-row";
 
@@ -20,54 +25,70 @@ export function no3yLiveRowLast<Row extends { readonly id: string }>(rows: Row[]
   return next;
 }
 
-const withoutLiveFold = new WeakMap<object, unknown>();
-
-/** Drops upstream's live "Working for …" fold row; the status line already carries the timer. */
-export function no3yDropLiveFold<
-  Row extends { readonly type: string; readonly workingSince?: string },
->(rows: Row[]): Row[] {
-  const isLiveFold = (row: Row) => row.type === "run-fold" && row.workingSince !== undefined;
-  if (!rows.some(isLiveFold)) return rows;
-  const cached = withoutLiveFold.get(rows) as Row[] | undefined;
-  if (cached) return cached;
-  const next = rows.filter((row) => !isLiveFold(row));
-  withoutLiveFold.set(rows, next);
-  return next;
-}
-
-type No3yLiveRow = {
-  readonly id: string;
-  readonly type: string;
-  readonly groupId?: string;
-  readonly activities?: ReadonlyArray<{ readonly groupStandIn?: { readonly groupId: string } }>;
-};
-const splitLiveTool = new WeakMap<object, { startedAt: string; rows: unknown }>();
+type LiveRows = ReadonlyArray<PendingThreadFeedEntry | PendingFoldFeedEntry>;
+type ThinkingRow = Extract<PendingThreadFeedEntry, { readonly type: "thinking" }>;
+type WorkRow = Extract<PendingThreadFeedEntry, { readonly type: "work-toggle" | "activity-group" }>;
+const presented = new WeakMap<object, { key: string; rows: LiveRows }>();
 
 /**
- * Upstream folds a running tool into the single live row. no3y keeps the tool in the transcript,
- * under the live work id upstream gives a running group, and puts a Thinking line with the turn
- * timer below it.
+ * The no3y live turn: the status line owns the timer, so the live fold (kept only to host the setup
+ * chip) and the pending placeholder drop; a running tool stays a row with Thinking below it. Runs
+ * after the pending-turn appender, which reads the live fold to know a run is under way.
  */
-export function no3ySplitLiveTool<Row extends No3yLiveRow>(
-  rows: Row[],
-  startedAt: string | null,
-  thinking: (startedAt: string, tool: Row) => Row,
-): Row[] {
-  const index = rows.findIndex((row) => row.id === NO3Y_LIVE_ROW_ID);
-  const live = rows[index];
-  if (startedAt === null || live === undefined || live.type === "thinking") return rows;
-  const groupId = live.groupId ?? live.activities?.[0]?.groupStandIn?.groupId;
-  if (groupId === undefined) return rows;
-  const cached = splitLiveTool.get(rows);
-  if (cached?.startedAt === startedAt) return cached.rows as Row[];
-  const next = [
-    ...rows.slice(0, index),
-    { ...live, id: `work-live:${groupId}` },
-    ...rows.slice(index + 1),
-    thinking(startedAt, live),
-  ];
-  splitLiveTool.set(rows, { startedAt, rows: next });
-  return next;
+export function no3yLivePresentation(
+  rows: LiveRows,
+  input: { readonly startedAt: string | null; readonly keepLiveFold: boolean },
+): LiveRows {
+  const key = `${input.startedAt}|${input.keepLiveFold}`;
+  const cached = presented.get(rows);
+  if (cached?.key === key) return cached.rows;
+  const next: Array<PendingThreadFeedEntry | PendingFoldFeedEntry> = [];
+  for (const row of rows) {
+    if (row.type === "pending-fold") continue;
+    if (row.type === "run-fold" && row.workingSince !== undefined && !input.keepLiveFold) continue;
+    if (row.id !== NO3Y_LIVE_ROW_ID || input.startedAt === null) {
+      next.push(row);
+      continue;
+    }
+    const tool = liveToolRow(row);
+    if (tool === null) {
+      next.push(row);
+      continue;
+    }
+    const thinking: ThinkingRow = {
+      type: "thinking",
+      id: NO3Y_LIVE_ROW_ID,
+      createdAt: input.startedAt,
+      runId: tool.runId,
+    };
+    next.push(tool, thinking);
+  }
+  const result =
+    next.length === rows.length && next.every((row, i) => row === rows[i]) ? rows : next;
+  presented.set(rows, { key, rows: result });
+  return result;
+}
+
+/** The live row as an ordinary transcript row, or null when it stays the status line. */
+function liveToolRow(row: PendingThreadFeedEntry): WorkRow | null {
+  if (row.type === "work-toggle") {
+    if (row.summaryKind === "reasoning") return null;
+    // Upstream shimmers a finished tail too; below the split, only the status line animates.
+    return { ...row, id: `work-live:${row.groupId}`, shimmer: false };
+  }
+  if (row.type === "activity-group") {
+    const groupId = row.activities[0]?.groupStandIn?.groupId;
+    if (groupId === undefined) return null;
+    return {
+      ...row,
+      id: `work-live:${groupId}`,
+      activities: row.activities.map((activity) => ({
+        ...activity,
+        live: activity.live && activity.lifecycleStatus === "inProgress",
+      })),
+    };
+  }
+  return null;
 }
 
 /** The turn's timer: "42s", "3m 05s", "1h 02m". */
