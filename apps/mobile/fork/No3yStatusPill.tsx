@@ -558,7 +558,7 @@ function PullRequestPill(props: {
         <PillText color={colors.ink}>{`${look.more}+`}</PillText>
       ) : null}
       {look.checks === "pending" ? <ChecksRunningMark color={palette.statusAttention} /> : null}
-      {look.checks === "failing" ? <ChecksFailingMark color={palette.prClosed} /> : null}
+      {look.checks === "failing" ? <ChecksFailingMark color={palette.statusFailed} /> : null}
     </Pill>
   );
 }
