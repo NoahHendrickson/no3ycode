@@ -49,5 +49,5 @@ export const DEFERRED_LINT_RULES = [
   ["t3code/require-disposable-render", 13],
   ["t3code/no-frame-waits-in-browser-tests", 1],
   // Upstream translated the app in the 2026-11-22 sync; fork copy stays English (fork-i18n-catalog).
-  ["t3code/no-untranslated-copy", 890],
+  ["t3code/no-untranslated-copy", 888],
 ];

@@ -197,7 +197,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       /composerContextStrip = showComposerContextStrip \?[\s\S]{0,2500}?\{\.\.\.\(composerContextLeading \? \{ leading: composerContextLeading \} : \{\}\)\}/u,
     );
     expect(chatView).toMatch(
-      /renderComposerContextStripFallback\(\{\s*leading: composerContextLeading,\s*trailing: composerContextTrailing,\s*\}\)/u,
+      /renderComposerContextStripFallback\(\{\s*leading: composerContextLeading,\s*\}\)/u,
     );
     // The chip is the context row's leading value; a server thread's readout
     // is the other source (fork-composer-shell).

@@ -1085,6 +1085,19 @@
   --fork-codex-mark-size: 14px;
 }
 
+/* The model's name reads at full ink; its effort beside it keeps the row's muted ink. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-model-controls]
+  [data-chat-provider-model-picker-label] {
+  color: var(--foreground);
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-model-controls]
+  [data-chat-provider-model-picker-label] {
+  color: #ffffff;
+}
+
 /* Attach, send and stop are 28px, centred in the 32px slot so the prompt row's bottom line
    holds. */
 :root[data-fork="noahhendrickson-t3code"]
@@ -1394,13 +1407,6 @@
   [data-fork-branch-group] {
   flex: 1 1 auto;
   justify-content: space-between;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
-  [data-slot="composer-context-strip"]
-  [data-fork-pr-chip] {
-  order: 1;
 }
 
 /* A PR badge's number takes its glyph's state ink, in the composer and the

@@ -3027,14 +3027,10 @@
     calmer #38a169 green is scoped via --success to the composer trigger and
     drawer so the Usage settings page keeps each theme's --success token. Hidden
     when the provider reports no session window or when the footer collapses.
-    The same drawer also carries fork-composer-shell's background-work
-    section above the tray; a closed drawer keeps the sections it showed
-    through its close slide. The drawer floats above the vessel, over the
-    transcript, so opening it never pushes the chat up (or moves the draft
-    hero's launchpad). The background-work section opens by itself, so each
-    subagent approval arriving right above the composer collapses it once
-    (the toggle reopens it), and ChatView lifts Scroll to end by however far
-    the open drawer rises above the composer overlay.
+    The drawer floats above the vessel, over the transcript (and over the
+    status chips above the composer), so opening it never pushes the chat up
+    (or moves the draft hero's launchpad), and ChatView lifts Scroll to end by
+    however far the open drawer rises above the composer overlay.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3631,18 +3627,18 @@
     The chat composer is one outer 8px vessel (12px on Inlet) wrapping the
     prompt surface and a single control row beneath it. BranchToolbar's context
     strip (project pill on drafts, environment picker on multi-env projects,
-    combined workspace + branch trigger, PR chip, and a trailing
-    background-work icon toggle) sits in the control row's left slot inside
-    [data-fork-composer-vessel-context], while Model, runtime Mode (muted ghost
-    label, no colored fill or caret), and the circular Usage trigger sit in the
-    right slot. Background work (subagents, monitors) lists in a section of
-    the composer's top drawer, stacked above the usage tray in the same
-    data-fork-composer-usage-drawer surface, with Stop and a collapse button;
-    a subagent's row opens its thread. The drawer opens by itself whenever a
-    task it has not shown starts, and a collapse holds until new work
-    arrives (custom/ComposerBackgroundWork.tsx). Because the drawer takes
-    space (see fork-composer-usage-limits), auto-opening never covers what
-    sits above the composer. On narrow composers the
+    combined workspace + branch trigger) sits in the control row's left slot
+    inside [data-fork-composer-vessel-context], while Model, runtime Mode
+    (muted ghost label, no colored fill or caret), and the circular Usage
+    trigger sit in the right slot. A row of status chips sits above the
+    vessel, in flow so the transcript ends above it, and hides when empty: the
+    thread's PR (custom/ComposerPullRequestChip, resolved as the branch picker
+    resolves it; open, merged and closed PRs fill with their state's colour
+    under a bright top rim, a draft stays neutral) and background work (subagents,
+    monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
+    list (a subagent's row opens its thread; a command reads as its gist,
+    without its cd lead-in or output redirects) and whose square stops it all.
+    Neither shows on the draft hero. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
@@ -3683,6 +3679,7 @@
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/ComposerPullRequestChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
@@ -5274,7 +5271,7 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the composer's background-work toggle and drawer,
+    transcript working row, the background-work chip above the composer,
     subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches

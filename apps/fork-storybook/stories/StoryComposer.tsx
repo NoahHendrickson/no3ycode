@@ -9,6 +9,7 @@ export function StoryComposer(props: {
   modeControls?: ReactNode;
   usageControls?: ReactNode;
   topVessel?: ReactNode;
+  statusChips?: ReactNode;
 }) {
   return (
     <ComposerShell
@@ -21,6 +22,7 @@ export function StoryComposer(props: {
       modeControls={props.modeControls ?? null}
       usageControls={props.usageControls}
       topVessel={props.topVessel}
+      statusChips={props.statusChips}
     />
   );
 }

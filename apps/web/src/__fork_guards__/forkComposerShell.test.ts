@@ -542,14 +542,13 @@ describe("fork guard: fork-composer-shell", () => {
     );
   });
 
-  it("lets the PR chip keep its state colour and ride the strip's far end", () => {
+  it("lets the PR chip keep its state colour", () => {
     // Upstream inks the glyph emerald / violet / red by PR state and grays #N;
     // the fork's #N inherits the glyph's ink, which the white chip ink would
     // flatten.
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
-    expect(branchSelector).toContain("data-fork-pr-chip");
+    expect(readSibling("../custom/ComposerPullRequestChip.tsx")).toContain("data-fork-pr-chip");
     expect(branchSelector).toContain("data-fork-branch-group");
-    expect(branchSelector).toContain("status={prStatus}");
     const chipInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
@@ -603,13 +602,6 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(grow?.body).toMatch(/flex:\s*1 1 auto/u);
     expect(grow?.body).toMatch(/justify-content:\s*space-between/u);
-    const place = rules.find(
-      (rule) =>
-        rule.selector.includes('[data-slot="composer-context-strip"]') &&
-        rule.selector.trim().endsWith("[data-fork-pr-chip]"),
-    );
-    expect(place?.body).toMatch(/order:\s*1/u);
-    expect(place?.body).not.toMatch(/margin-inline-start:\s*auto/u);
   });
 
   it("hides only separators in the left mode slot", () => {
@@ -826,49 +818,39 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain("composerControlsHostRef");
   });
 
-  it("moves background work off the banner stack into a toggled section of the top drawer", () => {
+  it("puts the thread's PR and its background work in chips above the composer", () => {
     const work = readSibling("../custom/ComposerBackgroundWork.tsx");
+    const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
     const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     const composer = readSibling("../components/chat/ChatComposer.tsx");
+    const shell = readSibling("../custom/ComposerShell.tsx");
     const strip = readSibling("../custom/composerContextStrip.tsx");
     const branchToolbar = readSibling("../components/BranchToolbar.tsx");
-    // The context row carries only an icon toggle; the list and Stop live in the drawer.
-    expect(work).toContain("export function useComposerBackgroundWork");
-    expect(work).toContain("data-fork-background-work-toggle");
-    expect(work).toContain("aria-expanded={open}");
+    const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
+    // The row sits in flow above the vessel and hides when no chip renders.
+    expect(shell).toContain('data-fork-composer-status-chips="true"');
+    expect(shell).toContain("empty:hidden");
+    expect(composer).toContain("statusChips={props.statusChips}");
+    expect(chatView).toContain("statusChips={composerStatusChips}");
+    // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
+    expect(work).toContain("export function ComposerBackgroundWorkChip");
     expect(work).toContain("SidebarV2WorkingMark");
     expect(work).toContain("SidebarV2MonitoringMark");
     expect(work).toContain('role="status"');
-    expect(work).toContain("data-fork-background-work ");
     expect(work).toContain("Stop background work");
-    expect(work).toContain("StopSquareIcon");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
-    expect(work).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
-    // One drawer surface: the work section stacks above the usage tray, so every theme's
-    // drawer paint and the Liquid Glass card cover both.
-    expect(usage).toContain("readonly backgroundWork: ComposerDrawerSection | null;");
-    expect(usage).toContain("open={drawerOpen}");
-    expect(usage).toContain("work.content");
-    expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
-    expect(chatView).toContain("useComposerBackgroundWork(");
-    // The drawer floats over the transcript, so opening it never pushes the chat up; a subagent
-    // approval arriving right above the composer collapses its background-work section once.
-    const shell = readSibling("../custom/ComposerShell.tsx");
+    expect(chatView).toContain("onOpenThread={onOpenRelatedThreadStable}");
+    // The PR chip left the branch group for the row above.
+    expect(prChip).toContain("<ThreadPullRequestBadgeControl");
+    expect(branchSelector).not.toContain("<ThreadPullRequestBadgeControl");
+    // Nothing of the work rides the usage drawer or the context row any more.
+    expect(usage).not.toContain("backgroundWork");
+    expect(chatView).not.toContain("composerContextTrailing");
     expect(shell).toContain(
       'className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"',
     );
-    expect(chatView).toContain("useAtomValue(childThreadApprovalsAtom(activeThreadRef));");
-    expect(chatView).toContain("composerChildApprovalIds,");
-    expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
-    expect(chatView).toContain("backgroundWork={composerBackgroundWork.section}");
-    expect(chatView).toContain("trailing: composerContextTrailing");
-    expect(chatView).toContain("const composerContextTrailing = composerBackgroundWork.toggle;");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
-    expect(branchToolbar).toContain("trailing?: ReactNode");
-    expect(branchToolbar).toMatch(/\{trailing\}\s*<\/ComposerSurface\.ContextStrip>/u);
-    // The bare fallback strip has one owner: the no-thread branch reuses it
-    // instead of re-rendering the strip inline with a dead measure ref.
     expect(branchToolbar).toContain(
       "return renderComposerContextStripFallback({ leading, trailing });",
     );
@@ -876,10 +858,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain("backgroundLivenessBannerItem");
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
-    expect(shellCss).toMatch(
-      /button\[data-fork-background-work-toggle\]\s*\{[^}]*width:\s*26px[^}]*padding-inline:\s*0/u,
-    );
-    expect(shellCss).toContain("[data-fork-liveness-mark]");
+    expect(shellCss).toContain("[data-fork-composer-status-chip]");
     expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
   });
   it("ends the transcript above the composer instead of hiding it behind", () => {

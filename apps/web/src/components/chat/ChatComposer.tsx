@@ -199,7 +199,6 @@ import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import type { ComposerDrawerSection } from "../../custom/ComposerBackgroundWork";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker */
 // One menu carries model and reasoning; upstream renders ProviderModelPicker in ComposerControlsBar.
@@ -510,8 +509,8 @@ export interface ChatComposerProps {
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
   /** BranchToolbar's strip, rendered above the vessel by ComposerShell. */
   contextStrip?: ReactNode;
-  /** Background work (subagents, monitors), stacked into the top drawer above usage. */
-  backgroundWork?: ComposerDrawerSection | null;
+  /** Chips above the composer: the thread's PR and its background work. */
+  statusChips?: ReactNode;
   /* fork:end fork-composer-shell */
 
   promptRef: React.RefObject<string>;
@@ -1151,7 +1150,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const usageDrawer = useComposerUsageDrawer({
     usageLimits: selectedProviderStatus?.usageLimits,
     enabled: !isComposerFooterCompact,
-    backgroundWork: props.backgroundWork ?? null,
   });
   /* fork:end fork-composer-usage-limits */
   const [isComposerPrimaryActionsCompact, setIsComposerPrimaryActionsCompact] = useState(false);
@@ -4030,6 +4028,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         approvalPending={activePendingApproval !== null}
         collapsedMobile={isComposerCollapsedMobile}
         context={props.contextStrip}
+        statusChips={props.statusChips}
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}
         modelControls={composerModelControls}

@@ -9,27 +9,101 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Background-work toggle and drawer section — see
-   `.fork/customizations.yaml#fork-composer-shell`.
+   Status chips above the composer — see `.fork/customizations.yaml#fork-composer-shell`.
 
-   The toggle is a ghost icon in the context slot, squared to the row's 26px
-   like the usage ring; the control row's 12px glyph rule would squash the
-   14px liveness mark, so the mark box is pinned here. Rows in the drawer
-   hover as the 4% lift. */
+   The thread's PR and its background work, each a 26px chip in the composer's own fill and
+   hairline so they read as part of it. The PR chip keeps its state ink. The background-work
+   chip is two buttons in one pill: the label opens the task list, the square stops it all. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip] {
+  display: inline-flex;
+  height: 26px;
+  min-height: 26px;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding-block: 0;
+  padding-inline: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--fork-composer-vessel-bg, var(--card));
+  box-shadow: inset 0 0 0 1px var(--fork-composer-border, var(--border));
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--foreground);
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-composer-status-chip]:hover,
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-control-row]
-  button[data-fork-background-work-toggle] {
-  width: 26px;
+  [data-fork-composer-status-chip]
+  button:is(:hover, [data-popup-open]):not(:disabled) {
+  background-image: linear-gradient(
+    var(--fork-composer-control-hover),
+    var(--fork-composer-control-hover)
+  );
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="background-work"] {
+  gap: 0;
   padding-inline: 0;
-  justify-content: center;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
-  :is([data-fork-composer-control-row], [data-fork-background-work])
+  [data-fork-composer-status-chip="background-work"]
+  button {
+  display: inline-flex;
+  height: 100%;
+  min-width: 0;
+  align-items: center;
+  border: 0;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-status-chip-main] {
+  gap: 6px;
+  padding-inline: 8px 6px;
+  border-radius: 8px 0 0 8px;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-status-chip-stop] {
+  width: 26px;
+  justify-content: center;
+  border-radius: 0 8px 8px 0;
+  opacity: 0.7;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-status-chip-stop]:hover:not(:disabled) {
+  opacity: 1;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-status-chip-stop]:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="background-work"]
+  button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip]
   [data-fork-liveness-mark]
   svg {
   width: auto;
   height: 14px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip]
+  svg:not([data-fork-liveness-mark] *) {
+  width: 12px;
+  height: 12px;
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-monitoring-task] {
@@ -59,4 +133,76 @@
 :root[data-fork="noahhendrickson-t3code"] button[data-fork-monitoring-task]:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
+}
+
+/* The PR chip wears its state: a deep fill, a bright rim along its top that fades down, and the
+   state's ink on the glyph and number. A draft, or a PR whose state is unknown, stays neutral. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
+  gap: 6px;
+  padding-inline: 9px 10px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="pull-request"]
+  .text-secondary-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="pull-request"]:is(
+    [data-pr-state="open"],
+    [data-pr-state="merged"],
+    [data-pr-state="closed"]
+  ) {
+  background: var(--fork-pr-chip-fill);
+  box-shadow:
+    inset 0 1px 0 rgb(from var(--fork-pr-chip-ink) r g b / 45%),
+    inset 0 7px 7px -7px rgb(from var(--fork-pr-chip-ink) r g b / 30%),
+    inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 10%),
+    0 0 2px 1px rgb(0 0 0 / 25%);
+
+  &:hover {
+    background: var(--fork-pr-chip-fill-hover);
+  }
+
+  & .fork-pr-tone {
+    color: var(--fork-pr-chip-ink);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
+  &[data-pr-state="open"] {
+    --fork-pr-chip-fill: #dcf5e6;
+    --fork-pr-chip-fill-hover: #cdeedb;
+    --fork-pr-chip-ink: #15803d;
+  }
+  &[data-pr-state="merged"] {
+    --fork-pr-chip-fill: #ece6fb;
+    --fork-pr-chip-fill-hover: #e2d9f8;
+    --fork-pr-chip-ink: #6d28d9;
+  }
+  &[data-pr-state="closed"] {
+    --fork-pr-chip-fill: #fbe3e3;
+    --fork-pr-chip-fill-hover: #f8d6d6;
+    --fork-pr-chip-ink: #b91c1c;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-status-chip="pull-request"] {
+  &[data-pr-state="open"] {
+    --fork-pr-chip-fill: #185d42;
+    --fork-pr-chip-fill-hover: #1b6849;
+    --fork-pr-chip-ink: #74f1a1;
+  }
+  &[data-pr-state="merged"] {
+    --fork-pr-chip-fill: #3d2a6e;
+    --fork-pr-chip-fill-hover: #45307a;
+    --fork-pr-chip-ink: #c9b2ff;
+  }
+  &[data-pr-state="closed"] {
+    --fork-pr-chip-fill: #5e2226;
+    --fork-pr-chip-fill-hover: #6a272b;
+    --fork-pr-chip-ink: #ffa3a3;
+  }
 }
