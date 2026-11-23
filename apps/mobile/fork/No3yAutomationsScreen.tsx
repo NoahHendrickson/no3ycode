@@ -5,7 +5,6 @@
  */
 import ListFilterIcon from "@hugeicons/core-free-icons/ListFilterIcon";
 import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
-import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import { useAtomValue } from "@effect/atom-react";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import {
@@ -53,7 +52,7 @@ import {
   NO3Y_FONT,
   type FlatGlassPalette,
 } from "./flatGlassTheme";
-import { HugeIcon } from "./HugeIcon";
+import { No3yPullRequestMark } from "./No3yPullRequestMark";
 import {
   listNo3yAutomationRunThreads,
   resolveNo3yThreadCardStatusKind,
@@ -575,23 +574,12 @@ function RunRow(props: {
           </Text>
         ) : null}
         {pr ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-            <HugeIcon
-              icon={GitPullRequestIcon}
-              size={12}
-              color={pr.state === "open" || pr.state === null ? palette.prOpen : palette.metaInk}
-              strokeWidth={1.5}
-            />
-            <Text
-              style={{
-                fontSize: 12,
-                fontVariant: ["tabular-nums"],
-                color: pr.state === "open" || pr.state === null ? palette.prOpen : palette.metaInk,
-              }}
-            >
-              {pr.label}
-            </Text>
-          </View>
+          <No3yPullRequestMark
+            pr={pr}
+            palette={palette}
+            gap={2}
+            textStyle={{ fontSize: 12, fontVariant: ["tabular-nums"] }}
+          />
         ) : null}
         <Text
           style={{

@@ -7977,13 +7977,18 @@
     stays off the list. Thread titles are pure white on every surface whatever
     their status, read state or shelf (the shared recede rule stays
     parity-guarded but never colours a mobile title). Thread cards show the
-    title, then project icon and name, PR number, provider mark and model (a
+    title, then project icon and name, PR mark, provider mark and model (a
     failed or usage-limited card puts its error there instead, on one line in
     the meta line's own type and muted ink; the mark carries the colour), with
     the status mark trailing (20pt at card size everywhere, scaled whole from
     its 16pt drawing); working is the Mac's bead ring, looping on the UI
     thread and still while its screen is covered, the app is inactive or Reduce
-    Motion is on. Inside a thread there is no native bar and no blurred strip:
+    Motion is on. A PR mark (thread cards, the runs table;
+    fork/No3yPullRequestMark.tsx) is the Mac's by state, glyph and number in
+    one colour: open git-pull-request in emerald, merged git-merge in violet,
+    closed pull-request-closed in red, draft pull-request-draft in muted zinc
+    (the Mac's PULL_REQUEST_STATE_PRESENTATION tones, copied into
+    flatGlassTheme; fork/no3yPullRequestTone.ts). Inside a thread there is no native bar and no blurred strip:
     three 44pt glass bubbles float over the transcript under a fade from the
     page colour (fork/No3yScreenHeader.tsx's No3yThreadHeader): back, the
     title in its own pill (16pt Medium, one line), and a pill holding one usage
@@ -8114,7 +8119,7 @@
     white thumb; an off tile dims all but its switch); a tap edits and a long
     press offers Run now, Edit, Open thread and Delete. Runs is the Mac's
     compact runs table: 40pt one-line rows with full-width hairlines (status
-    mark, run title, automation and project, PR number in the open-PR green,
+    mark, run title, automation and project, PR mark,
     relative time), needs you first, then working, then the rest newest first,
     a page of 25 at a time with Show more, and a long-press menu (Open,
     Settle, Rename, Archive, Delete). A run, and an automation's editor, is
@@ -8148,6 +8153,9 @@
     - apps/mobile/fork/No3yHomeTabRedirect.tsx
     - apps/mobile/fork/no3yHomeTabs.ts
     - apps/mobile/fork/no3yHomeTabs.test.ts
+    - apps/mobile/fork/No3yPullRequestMark.tsx
+    - apps/mobile/fork/no3yPullRequestTone.ts
+    - apps/mobile/fork/no3yPullRequestTone.test.ts
     - apps/mobile/fork/No3yDraftSurface.tsx
     - apps/mobile/fork/No3yNewAgent.tsx
     - apps/mobile/fork/no3yProjectTiles.ts
@@ -8249,3 +8257,4 @@
     - apps/mobile/fork/forkBots.test.ts
     - apps/mobile/fork/no3yDockMove.test.ts
     - apps/mobile/fork/no3yHomeTabs.test.ts
+    - apps/mobile/fork/no3yPullRequestTone.test.ts

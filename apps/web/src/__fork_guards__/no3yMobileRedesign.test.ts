@@ -717,6 +717,12 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(automations).toContain("<AutomationTile");
     expect(automations).toContain('const SWITCH_ON = "#00bc7d";');
     expect(automations).toContain("<RunRow");
+    // PR marks by state, as the Mac: merged is violet git-merge, closed red, draft muted.
+    expect(automations).toContain("<No3yPullRequestMark");
+    expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).toContain("<No3yPullRequestMark");
+    expect(readRepoFile("apps/mobile/fork/No3yPullRequestMark.tsx")).toContain(
+      "merged: GitMergeIcon,",
+    );
     expect(readRepoFile("apps/mobile/fork/no3yPageColor.ts")).toContain(
       '"--color-grouped-card": NO3Y_CARD_COLOR,',
     );

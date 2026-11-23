@@ -65,8 +65,11 @@ export interface FlatGlassPalette {
   readonly sectionInk: string;
   /** Thread card meta (model, project). */
   readonly metaInk: string;
-  /** Open pull request number. */
+  /** Pull request marks by state, the Mac's PR tones (fork/no3yPullRequestTone.ts). */
   readonly prOpen: string;
+  readonly prMerged: string;
+  readonly prClosed: string;
+  readonly prDraft: string;
   /** The effort slider's track. */
   readonly circleFill: string;
   /** Primary (send) button and its glyph. */
@@ -107,7 +110,11 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   peekBackdrop: "rgba(0, 0, 0, 0.28)",
   sectionInk: "#737373",
   metaInk: "#8A8A8A",
+  // Tailwind emerald-300/90, violet-300/90, red-300/90, zinc-400/80 (the Mac's dark PR tones).
   prOpen: "rgba(94, 233, 181, 0.9)",
+  prMerged: "rgba(196, 180, 255, 0.9)",
+  prClosed: "rgba(255, 162, 162, 0.9)",
+  prDraft: "rgba(159, 159, 169, 0.8)",
   circleFill: "rgba(255, 255, 255, 0.1)",
   primaryFill: "#FFFFFF",
   primaryInk: "#191817",
@@ -144,7 +151,11 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   peekBackdrop: "rgba(0, 0, 0, 0.16)",
   sectionInk: "rgba(20, 22, 24, 0.50)",
   metaInk: "rgba(20, 22, 24, 0.55)",
+  // Emerald, violet and red 600 and zinc 500 (the Mac's light PR tones).
   prOpen: "#059669",
+  prMerged: "#7f22fe",
+  prClosed: "#e7000b",
+  prDraft: "#71717b",
   circleFill: "rgba(20, 22, 24, 0.07)",
   primaryFill: "#141618",
   primaryInk: "#FFFFFF",

@@ -61,10 +61,9 @@ import {
   canTurnThreadIntoProject,
   turnThreadIntoProject,
 } from "../src/features/threads/turnThreadIntoProject";
-import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import { formatModelSlugName } from "@t3tools/shared/model";
 import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
-import { HugeIcon } from "./HugeIcon";
+import { No3yPullRequestMark } from "./No3yPullRequestMark";
 import { hasNo3yProviderMark, No3yProviderMark } from "./No3yProviderMark";
 import { No3yStatusMark } from "./No3yStatusMark";
 
@@ -588,7 +587,6 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
   );
 
   const prBadgeLabel = pr ? resolveThreadPrBadgeAction(pr).accessibilityLabel : null;
-  const prColor = pr?.state === "open" || pr?.state === null ? palette.prOpen : palette.metaInk;
   const isSlim = variant === "slim";
 
   const renderPressable = (close: () => void) => (
@@ -733,24 +731,13 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         hitSlop={6}
                         onPress={handleOpenPullRequests}
                         onLongPress={() => undefined}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                       >
-                        <HugeIcon
-                          icon={GitPullRequestIcon}
-                          size={12}
-                          color={prColor}
-                          strokeWidth={1.5}
+                        <No3yPullRequestMark
+                          pr={pr}
+                          palette={palette}
+                          gap={4}
+                          textStyle={{ ...NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 }}
                         />
-                        <Text
-                          style={{
-                            ...NO3Y_FONT.regular,
-                            fontSize: 12,
-                            lineHeight: 16,
-                            color: prColor,
-                          }}
-                        >
-                          {pr.label}
-                        </Text>
                       </Pressable>
                     ) : null}
                     {props.providerInstance ? (
