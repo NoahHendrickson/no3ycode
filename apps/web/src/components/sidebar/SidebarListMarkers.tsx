@@ -1,6 +1,8 @@
 import { CollapsibleSectionHeader } from "../ui/collapsible-section-header";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+import { forkSidebarSortableTranslate } from "../../custom/forkTypographyScale";
+/* fork:end fork-typography-settings */
 import { type ReactNode, useLayoutEffect } from "react";
 import { cn } from "~/lib/utils";
 import {
@@ -35,7 +37,9 @@ function SortableSidebarMarker(props: {
       data-testid={props["data-testid"]}
       className={cn("list-none", props.className)}
       style={{
-        transform: CSS.Translate.toString(transform),
+        /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+        transform: forkSidebarSortableTranslate(transform),
+        /* fork:end fork-typography-settings */
         transition: props.marker.endsWith("-placeholder") ? "none" : transition,
         visibility: transform?.scaleY === 0 ? "hidden" : undefined,
       }}

@@ -47,15 +47,8 @@ import {
   useSearchableSetting,
 } from "./settingsSearch";
 /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import {
-  DEFAULT_FORK_TYPOGRAPHY_SCALE,
-  FORK_INTERFACE_FONT_PRESETS,
-  FORK_TYPOGRAPHY_SCALE_OPTIONS,
-  forkInterfaceFontPreset,
-  type ForkTypographyScale,
-  useForkChatTextScale,
-  useForkSidebarZoom,
-} from "../../custom/forkTypographyScale";
+import { ForkFontPresetPicker, ForkTypographyScaleRows } from "../../custom/ForkTypographyControls";
+import { FORK_DEFAULT_SANS_FAMILY } from "../../custom/forkTypographyScale";
 /* fork:end fork-typography-settings */
 
 let fontDefaultFamilies: { readonly sans: string | null; readonly code: string | null } | undefined;
@@ -76,7 +69,7 @@ function useFontDefaultFamilies() {
   const [defaults] = useState(resolveFontDefaultFamilies);
   /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings
      An empty preference renders the fork's Geist stack, not upstream's system default. */
-  const sans = "Geist Variable";
+  const sans = FORK_DEFAULT_SANS_FAMILY;
   /* fork:end fork-typography-settings */
   return {
     sans,
@@ -100,7 +93,14 @@ function InterfaceFontRow({ preview }: { preview?: ReactNode }) {
       defaultValue={DEFAULT_UNIFIED_SETTINGS.fontFamilySans}
       value={settings.fontFamilySans}
       /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-      presets={FORK_INTERFACE_FONT_PRESETS}
+      renderFamilyField={(familyField) => (
+        <ForkFontPresetPicker
+          title="Interface font"
+          value={settings.fontFamilySans}
+          familyField={familyField}
+          onPick={(fontFamilySans) => updateSettings({ fontFamilySans })}
+        />
+      )}
       /* fork:end fork-typography-settings */
       onValueChange={(fontFamilySans) => updateSettings({ fontFamilySans })}
       onReset={() =>
@@ -392,26 +392,11 @@ export function TypographySection() {
   }, [searchTargetId]);
   const showAdvanced =
     advanced || (searchTargetId !== null && isAdvancedTypographyTarget(searchTargetId));
-  /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-  const [sidebarZoom, setSidebarZoom] = useForkSidebarZoom();
-  const [chatTextScale, setChatTextScale] = useForkChatTextScale();
-  /* fork:end fork-typography-settings */
   return (
     <SettingsSection id="typography" title={gt("Typography")}>
       {showAdvanced ? <FontSettingsGroup /> : <SimpleFontRows />}
       {/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */}
-      <ForkScaleRow
-        title="Sidebar size"
-        description="Text, icons, and spacing in the sidebar. Saved on this device."
-        scale={sidebarZoom}
-        onScaleChange={setSidebarZoom}
-      />
-      <ForkScaleRow
-        title="Chat stream size"
-        description="Text in messages and tool rows. Code follows the code font size. Saved on this device."
-        scale={chatTextScale}
-        onScaleChange={setChatTextScale}
-      />
+      <ForkTypographyScaleRows />
       {/* fork:end fork-typography-settings */}
       <WordWrapRow />
       <AdvancedSettings
@@ -423,58 +408,6 @@ export function TypographySection() {
     </SettingsSection>
   );
 }
-
-/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-function ForkScaleRow({
-  title,
-  description,
-  scale,
-  onScaleChange: setScale,
-}: {
-  readonly title: string;
-  readonly description: string;
-  readonly scale: ForkTypographyScale;
-  readonly onScaleChange: (scale: ForkTypographyScale) => void;
-}) {
-  return (
-    <SettingsRow
-      title={title}
-      description={description}
-      devicePreference
-      resetAction={
-        scale === DEFAULT_FORK_TYPOGRAPHY_SCALE ? null : (
-          <SettingResetButton
-            ariaLabel={`Reset ${title.toLowerCase()} to default`}
-            onClick={() => setScale(DEFAULT_FORK_TYPOGRAPHY_SCALE)}
-          />
-        )
-      }
-      control={
-        <Select
-          value={String(scale)}
-          onValueChange={(next) => {
-            const picked = FORK_TYPOGRAPHY_SCALE_OPTIONS.find((option) => String(option) === next);
-            if (picked !== undefined) setScale(picked);
-          }}
-        >
-          <SelectTrigger size="sm" className="w-22 shrink-0" aria-label={title}>
-            <SelectValue>{scale}%</SelectValue>
-          </SelectTrigger>
-          <SelectPopup align="end" alignItemWithTrigger={false}>
-            {FORK_TYPOGRAPHY_SCALE_OPTIONS.map((option) => (
-              <SelectItem hideIndicator key={option} value={String(option)}>
-                {option}%
-              </SelectItem>
-            ))}
-          </SelectPopup>
-        </Select>
-      }
-    />
-  );
-}
-
-const FORK_CUSTOM_FONT_PRESET = "custom";
-/* fork:end fork-typography-settings */
 
 function FontFamilySettingsRow({
   id,
@@ -490,11 +423,12 @@ function FontFamilySettingsRow({
   requireMonospace = false,
   size,
   /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-  presets,
+  renderFamilyField,
   /* fork:end fork-typography-settings */
 }: {
   /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-  presets?: typeof FORK_INTERFACE_FONT_PRESETS;
+  /** Wraps the family field, so the interface font can put its preset picker around it. */
+  renderFamilyField?: (familyField: ReactNode) => ReactNode;
   /* fork:end fork-typography-settings */
   id?: string;
   title: string;
@@ -520,10 +454,6 @@ function FontFamilySettingsRow({
   const trimmed = value.trim();
   const [draft, setDraft] = useState(value);
   const [draftSettled, setDraftSettled] = useState(true);
-  /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-  // Custom… is a mode, not a value: the field it opens starts empty, which is also Geist's value.
-  const [customPicked, setCustomPicked] = useState(false);
-  /* fork:end fork-typography-settings */
   // Each pending commit remembers the value it was typed against, so one that outlives
   // an external change (hydration, reset, picker selection) drops its stale draft.
   const commitTimerRef = useRef<{ readonly id: number; readonly value: string } | null>(null);
@@ -563,9 +493,6 @@ function FontFamilySettingsRow({
   const draftTrimmed = draft.trim();
   const draftPending = draftSettled && draftTrimmed.length > 0 && draftTrimmed !== trimmed;
   const resetToDefault = () => {
-    /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-    setCustomPicked(false);
-    /* fork:end fork-typography-settings */
     cancelPendingCommit();
     setDraft(defaultValue);
     setDraftSettled(true);
@@ -636,52 +563,12 @@ function FontFamilySettingsRow({
         value={draft}
       />
     );
-  /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-  const activePreset = presets === undefined ? null : forkInterfaceFontPreset(value);
-  const showFamilyField = presets === undefined || customPicked || activePreset === null;
-  const presetControl =
-    presets === undefined ? null : (
-      <Select
-        value={
-          showFamilyField
-            ? FORK_CUSTOM_FONT_PRESET
-            : (activePreset?.label ?? FORK_CUSTOM_FONT_PRESET)
-        }
-        onValueChange={(next) => {
-          if (next === FORK_CUSTOM_FONT_PRESET) {
-            setCustomPicked(true);
-            return;
-          }
-          const picked = presets.find((preset) => preset.label === next);
-          if (picked === undefined) return;
-          setCustomPicked(false);
-          cancelPendingCommit();
-          onValueChange(picked.value);
-        }}
-      >
-        <SelectTrigger size="sm" className="w-28 shrink-0" aria-label={`${title} preset`}>
-          <SelectValue>{showFamilyField ? "Custom…" : activePreset?.label}</SelectValue>
-        </SelectTrigger>
-        <SelectPopup align="end" alignItemWithTrigger={false}>
-          {presets.map((preset) => (
-            <SelectItem hideIndicator key={preset.label} value={preset.label}>
-              {preset.label}
-            </SelectItem>
-          ))}
-          <SelectItem hideIndicator value={FORK_CUSTOM_FONT_PRESET}>
-            Custom…
-          </SelectItem>
-        </SelectPopup>
-      </Select>
-    );
-  /* fork:end fork-typography-settings */
   const control = (
     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto @min-[32rem]/settings-row:flex-nowrap">
       {/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */}
-      {presetControl}
-      {showFamilyField ? (
-        <div className="min-w-36 flex-1 sm:w-44 sm:flex-none">{familyControl}</div>
-      ) : null}
+      {(renderFamilyField ?? ((familyField: ReactNode) => familyField))(
+        <div className="min-w-36 flex-1 sm:w-44 sm:flex-none">{familyControl}</div>,
+      )}
       {/* fork:end fork-typography-settings */}
       <Select
         value={String(size.value)}
