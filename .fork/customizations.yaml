@@ -8741,6 +8741,8 @@
     - apps/mobile/src/native/useEnrichedLinkVariants.ts
     # Assistant markdown reads the chips and the trimmed text.
     - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Exposes the shell's per-thread removal sequence without importing the shell module.
+    - apps/mobile/src/state/threads.ts
     # Wraps the thread chip so a subagent link renders the capsule.
     - apps/web/src/components/chat/MarkdownThreadLink.tsx
     # Drops the period after a subagent chip before parsing.

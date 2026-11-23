@@ -19,8 +19,11 @@ import type { MarkdownLinkCustomization } from "../src/native/SelectableMarkdown
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { appAtomRegistry } from "../src/state/atom-registry";
 import { resolveThreadLink } from "../src/state/entities";
-import { environmentShell } from "../src/state/shell";
-import { environmentThreadShells, threadFamilies } from "../src/state/threads";
+import {
+  environmentThreadShells,
+  shellThreadRemovedSequenceAtom,
+  threadFamilies,
+} from "../src/state/threads";
 import { flatGlassPalette, flatGlassStatusColor } from "./flatGlassTheme";
 import {
   dropPeriodAfterSubagentChips,
@@ -63,14 +66,6 @@ function markIcon(kind: No3ySubagentChipKind | null): ImageSourcePropType {
   return kind === null ? MARK_ICONS.idle : MARK_ICONS.dot;
 }
 
-// Narrowed to one thread so shell deltas for other threads do not recompute the chips.
-const removedSequenceAtom = Atom.family((key: string) => {
-  const [environmentId, threadId] = JSON.parse(key) as [EnvironmentId, ThreadId];
-  return Atom.make(
-    (get) => get(environmentShell.stateValueAtom(environmentId)).removedAt.get(threadId) ?? -1,
-  ).pipe(Atom.withLabel(`no3y-subagent-link-removed:${key}`));
-});
-
 const subagentLinkChipsAtom = Atom.family((key: string) => {
   const [environmentId, familyThreadId, hrefs] = JSON.parse(key) as [
     EnvironmentId,
@@ -98,7 +93,9 @@ const subagentLinkChipsAtom = Atom.family((key: string) => {
         shell = row ? presentThreadShell(environmentId, row) : null;
         // The read predates the shell dropping the child (idle, archived), or the shell keeps every
         // live child, so a live row it lacks is older than the child idling.
-        const removed = get(removedSequenceAtom(JSON.stringify([environmentId, ref.threadId])));
+        const removed = get(
+          shellThreadRemovedSequenceAtom(JSON.stringify([environmentId, ref.threadId])),
+        );
         if (row && read && (removed > read.snapshotSequence || isLiveSubagentShell(row))) {
           staleRow = true;
           staleKey = `${environmentId}:${familyThreadId}:${row.id}:${read.snapshotSequence}`;
