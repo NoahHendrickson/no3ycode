@@ -6,12 +6,14 @@
  */
 import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import Cancel01Icon from "@hugeicons/core-free-icons/Cancel01Icon";
+import SlidersHorizontalIcon from "@hugeicons/core-free-icons/SlidersHorizontalIcon";
 import StarIcon from "@hugeicons/core-free-icons/StarIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import { isReasoningSelect } from "@t3tools/client-runtime/model-traits";
 import type { ProviderOptionDescriptor, RuntimeMode } from "@t3tools/contracts";
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
+import type { MenuAction } from "@react-native-menu/menu";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,6 +39,9 @@ type SelectDescriptor = Extract<ProviderOptionDescriptor, { type: "select" }>;
 /** The parts of the thread settings session the picker reads and drives. */
 export interface No3yModelPickerSession {
   readonly providerGroups: ReadonlyArray<ProviderGroup>;
+  /** Also picks the provider whose workspace models the session scans for this folder. */
+  readonly providerFilter: string | null;
+  readonly setProviderFilter: (providerKey: string | null) => void;
   readonly favoriteKeys: ReadonlySet<string>;
   readonly favoritesLoaded: boolean;
   readonly toggleFavorite: (option: ModelOption) => void;
@@ -273,7 +278,8 @@ export function No3yModelPicker(props: {
   const insets = useSafeAreaInsets();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const [choice, setChoice] = useState(FAVORITES);
+  const choice = session.providerFilter ?? FAVORITES;
+  const setChoice = session.setProviderFilter;
   const committed = useRef(false);
 
   // A swipe-down dismissal keeps the pick, as the close button does.
@@ -310,6 +316,44 @@ export function No3yModelPicker(props: {
       (descriptor): descriptor is SelectDescriptor =>
         isReasoningSelect(descriptor) && descriptor.options.length > 1,
     ) ?? null;
+  // The model's other options (fast mode, context size…), which the upstream sheet lists as rows.
+  const otherOptions = session.displayedDescriptors.filter(
+    (descriptor) => descriptor.id !== effort?.id,
+  );
+  const optionActions: MenuAction[] = otherOptions.map((descriptor) =>
+    descriptor.type === "select"
+      ? {
+          id: descriptor.id,
+          title: descriptor.label,
+          subactions: descriptor.options.map((option) => ({
+            id: `select:${descriptor.id}:${option.id}`,
+            title: option.label,
+            state:
+              option.id === getProviderOptionCurrentValue(descriptor)
+                ? ("on" as const)
+                : ("off" as const),
+          })),
+        }
+      : {
+          id: `toggle:${descriptor.id}`,
+          title: descriptor.label,
+          state: descriptor.currentValue ? ("on" as const) : ("off" as const),
+        },
+  );
+  const pressOption = (actionId: string) => {
+    for (const descriptor of otherOptions) {
+      if (descriptor.type === "select") {
+        const prefix = `select:${descriptor.id}:`;
+        if (actionId.startsWith(prefix)) {
+          session.applyOptionChange(descriptor.id, actionId.slice(prefix.length));
+          return;
+        }
+      } else if (actionId === `toggle:${descriptor.id}`) {
+        session.applyOptionChange(descriptor.id, !(descriptor.currentValue ?? false));
+        return;
+      }
+    }
+  };
   const effortIsPrimary =
     effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
 
@@ -355,6 +399,16 @@ export function No3yModelPicker(props: {
           }
         />
         <View style={{ flex: 1 }} />
+        {optionActions.length > 0 ? (
+          <No3yGlassMenuButton
+            palette={palette}
+            title="Options"
+            accessibilityLabel="Model options"
+            icon={SlidersHorizontalIcon}
+            actions={optionActions}
+            onPressAction={pressOption}
+          />
+        ) : null}
         <No3yAccessMenu
           runtimeMode={session.runtimeMode}
           choices={session.runtimeModeChoices}

@@ -63,6 +63,8 @@ import { No3yBottomFade } from "./No3yBottomFade";
 import { No3yGlassLayer } from "./No3yGlass";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yStatusMark } from "./No3yStatusMark";
+import { scheduledTaskEditorSessionAtom } from "../src/features/settings/scheduled-task-editor-state";
+import { appAtomRegistry } from "../src/state/atom-registry";
 
 const DOCK_ITEM_WIDTH = 48;
 const DOCK_ITEM_HEIGHT = 36;
@@ -408,7 +410,11 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
 
   const create: Partial<Record<No3yNavItemId, () => void>> = {
     threads: show("newAgent"),
-    automations: () => openSettings(navigation, "SettingsScheduledTaskNew"),
+    automations: () => {
+      // A fresh form: the last edited task's session would otherwise save over that task.
+      appAtomRegistry.set(scheduledTaskEditorSessionAtom, null);
+      openSettings(navigation, "SettingsScheduledTaskNew");
+    },
     chat: show("chat"),
   };
 

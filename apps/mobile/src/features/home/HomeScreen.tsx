@@ -103,6 +103,8 @@ import { deriveHomeEmptyState } from "./home-empty-state";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { No3yStatusFilter, No3yThreadSortOrder } from "../../../fork/mobileStatusGrouping";
 import { No3yThreadsListView } from "../../../fork/No3yThreadsListView";
+import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yThreadsHeader } from "../../../fork/No3yScreenHeader";
 /* fork:end no3y-mobile-redesign */
 
 interface HomeScreenProps {
@@ -630,10 +632,17 @@ export function HomeScreen(props: HomeScreenProps) {
       : (props.savedConnectionsById[props.selectedEnvironmentId]?.environmentLabel ??
         "this environment");
   const emptyState = deriveHomeEmptyState(props.catalogState, props.projects.length);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The dock layout hides the native header, so an empty list keeps Settings and Usage here.
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
 
   if (!hasAnyThreads) {
     return (
       <View className={containerClassName}>
+        {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+        {no3yBottomNav ? <No3yThreadsHeader /> : null}
+        {/* fork:end no3y-mobile-redesign */}
         <ScreenContent surface={sidebarSurface ? "drawer" : "screen"}>
           <View
             className={cn(

@@ -279,8 +279,12 @@ export function No3yChatTab() {
     if (environmentId === null || project !== null) return;
     if (openedEnvironmentRef.current === environmentId) return;
     openedEnvironmentRef.current = environmentId;
+    setOpenFailure(null);
     void openScratch({ environmentId, input: {} }).then((result) => {
-      if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+      if (result._tag !== "Failure") return;
+      // Lets the next connection of this environment try again.
+      openedEnvironmentRef.current = null;
+      if (!isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
         setOpenFailure(
           error instanceof Error ? error.message : "Could not open the No-project workspace.",

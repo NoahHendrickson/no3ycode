@@ -22,7 +22,7 @@ import type { EnvironmentId, RunId, ThreadId } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 import * as Haptics from "expo-haptics";
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -47,6 +47,9 @@ import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
 const RADIUS = 22;
 
 type RowAction = "steer" | "edit" | "remove" | "up" | "down" | "stash";
+
+// Four and a half 44pt rows, so a cut-off row shows there is more.
+const QUEUE_ROWS_MAX_HEIGHT = 44 * 4.5;
 
 export function No3yQueuedRunsBanner(props: {
   readonly environmentId: EnvironmentId;
@@ -207,50 +210,53 @@ export function No3yQueuedRunsBanner(props: {
       </View>
       {expanded ? (
         <Animated.View entering={NO3Y_FADE_IN} exiting={NO3Y_FADE_OUT}>
-          {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
-            const controls = resolveThreadQueueRowControls({
-              busy: busyRunId !== null,
-              // A fresh message starts its own turn: it may skip compaction, but not steer into one.
-              canPromoteToSteer:
-                (workflow?.canPromoteToSteer ?? false) &&
-                (run.freshContext !== true || workflow?.promoteSkipsCompaction === true),
-              canSendNow: workflow?.canSendNow ?? false,
-              editBlocked: editBlockedReason !== null,
-              isEditing: editing?.runId === run.id,
-              isGuestMessage: context?.guest !== undefined,
-              text,
-            });
-            const sender = no3yQueuedSender(message);
-            const title =
-              controls.displayText || (attachments.length > 0 ? "Attachments" : "Queued message");
-            return (
-              <QueuedRow
-                key={run.id}
-                palette={palette}
-                index={index}
-                count={queuedRuns.length}
-                title={title}
-                attachmentCount={controls.displayText ? attachments.length : 0}
-                sender={sender?.label ?? null}
-                isEditing={controls.isEditing}
-                canSend={canSend && controls.canSend}
-                showSend={canSend}
-                sendLabel={sendLabel}
-                canEdit={controls.canEdit}
-                editHint={editBlockedReason}
-                canRemove={controls.canDismiss}
-                // The stash keeps text only, and a guest's words are not the owner's to keep.
-                canStash={
-                  controls.canDismiss &&
-                  attachments.length === 0 &&
-                  context?.guest === undefined &&
-                  text.trim().length > 0
-                }
-                canReorder={busyRunId === null}
-                onAction={(action) => void act(run.id, action)}
-              />
-            );
-          })}
+          {/* A long queue scrolls under its header, which stays reachable above the keyboard. */}
+          <ScrollView style={{ maxHeight: QUEUE_ROWS_MAX_HEIGHT }} bounces={false}>
+            {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
+              const controls = resolveThreadQueueRowControls({
+                busy: busyRunId !== null,
+                // A fresh message starts its own turn: it may skip compaction, but not steer into one.
+                canPromoteToSteer:
+                  (workflow?.canPromoteToSteer ?? false) &&
+                  (run.freshContext !== true || workflow?.promoteSkipsCompaction === true),
+                canSendNow: workflow?.canSendNow ?? false,
+                editBlocked: editBlockedReason !== null,
+                isEditing: editing?.runId === run.id,
+                isGuestMessage: context?.guest !== undefined,
+                text,
+              });
+              const sender = no3yQueuedSender(message);
+              const title =
+                controls.displayText || (attachments.length > 0 ? "Attachments" : "Queued message");
+              return (
+                <QueuedRow
+                  key={run.id}
+                  palette={palette}
+                  index={index}
+                  count={queuedRuns.length}
+                  title={title}
+                  attachmentCount={controls.displayText ? attachments.length : 0}
+                  sender={sender?.label ?? null}
+                  isEditing={controls.isEditing}
+                  canSend={canSend && controls.canSend}
+                  showSend={canSend}
+                  sendLabel={sendLabel}
+                  canEdit={controls.canEdit}
+                  editHint={editBlockedReason}
+                  canRemove={controls.canDismiss}
+                  // The stash keeps text only, and a guest's words are not the owner's to keep.
+                  canStash={
+                    controls.canDismiss &&
+                    attachments.length === 0 &&
+                    context?.guest === undefined &&
+                    text.trim().length > 0
+                  }
+                  canReorder={busyRunId === null}
+                  onAction={(action) => void act(run.id, action)}
+                />
+              );
+            })}
+          </ScrollView>
         </Animated.View>
       ) : null}
     </Animated.View>
