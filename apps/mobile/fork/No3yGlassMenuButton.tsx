@@ -26,7 +26,7 @@ import { No3yMenuItems } from "./No3yMenuItems";
 
 const ICON_SIZE = 20;
 const LABEL_GAP = 6;
-/** The glass button style's own vertical padding at `controlSize("regular")`. */
+/** The glass button style's padding on each side at `controlSize("regular")`, at every text size. */
 const GLASS_PADDING = 7;
 
 type Trigger =
@@ -114,7 +114,7 @@ export function No3yGlassMenuButton(
       // A circle has the control's size; a capsule takes its width from its label.
       {...(circle ? {} : { matchContents: { horizontal: true } })}
       // The hosting view otherwise insets its content for the home indicator and keyboard,
-      // lifting the glass off its slot: 1pt at rest, up to ~20pt while the keyboard moves.
+      // lifting the glass off its slot: 1pt at rest, much more while the keyboard moves.
       ignoreSafeArea="all"
       alignment="center"
       style={{
