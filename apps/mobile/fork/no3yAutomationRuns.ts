@@ -1,18 +1,17 @@
 /**
- * The no3y Automations screen's run groups — see `.fork/customizations.yaml#no3y-mobile-redesign`:
- * runs that need you first, then working, then the rest by recency, a page at a time.
+ * The no3y Automations screen's rules — see `.fork/customizations.yaml#no3y-mobile-redesign`:
+ * runs that need you first, then working, then the rest by recency, a page at a time, and each
+ * automation tile's result line.
  */
+import type { ScheduledTask } from "@t3tools/contracts";
+
+import { formatNextScheduledTaskRun } from "../src/features/settings/scheduledTaskPresentation";
+import { relativeTime } from "../src/lib/time";
 import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
 
 export const NO3Y_RUNS_PAGE = 25;
 
 export type No3yRunGroup = "needs-you" | "working" | "recent";
-
-export const NO3Y_RUN_GROUP_LABELS: Readonly<Record<No3yRunGroup, string>> = {
-  "needs-you": "Needs you",
-  working: "Working",
-  recent: "Recent",
-};
 
 export function no3yRunGroup(kind: SidebarV2CardStatusKind | null): No3yRunGroup {
   switch (kind) {
@@ -47,4 +46,24 @@ export function groupNo3yRuns<Run>(
     left -= shown.length;
     return shown.length === 0 ? [] : [{ group, runs: shown }];
   });
+}
+
+/**
+ * An automation tile's result line and mark: Paused when off, then a running or failed last run,
+ * then the next run, then how long since the last one.
+ */
+export function no3yAutomationTileStatus(
+  task: Pick<ScheduledTask, "enabled" | "lastRunStatus" | "lastRunAt" | "nextRunAt">,
+  now: number,
+): { readonly line: string; readonly mark: SidebarV2CardStatusKind | null } {
+  if (task.lastRunStatus === "running") return { line: "Running now", mark: "working" };
+  if (!task.enabled) return { line: "Paused", mark: null };
+  if (task.lastRunStatus === "failed") return { line: "Last run failed", mark: "failed" };
+  if (task.nextRunAt !== null) {
+    return { line: formatNextScheduledTaskRun(task.nextRunAt, now), mark: null };
+  }
+  if (task.lastRunAt !== null) {
+    return { line: `Last run ${relativeTime(task.lastRunAt, now)} ago`, mark: null };
+  }
+  return { line: "Not run yet", mark: null };
 }

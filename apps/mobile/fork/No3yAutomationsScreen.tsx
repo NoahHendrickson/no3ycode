@@ -1,11 +1,11 @@
 /**
- * The no3y Automations screen (`.fork/customizations.yaml#no3y-mobile-redesign`), the Mac's
- * Automations page in the Threads screen's language: a header with filter and +, each automation
- * as a card (schedule, next run or last error, on/off), then its runs, needs-you first, as cards.
+ * The no3y Automations screen (`.fork/customizations.yaml#no3y-mobile-redesign`): an
+ * "Automations | Runs" switch in the header beside filter and +, automations as two-column tiles
+ * with an on/off switch, and runs as the Mac's compact runs table, needs-you first.
  */
 import ListFilterIcon from "@hugeicons/core-free-icons/ListFilterIcon";
-import MoreHorizontalIcon from "@hugeicons/core-free-icons/MoreHorizontalIcon";
 import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
+import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
 import { useAtomValue } from "@effect/atom-react";
 import { StackActions, useNavigation } from "@react-navigation/native";
 import {
@@ -21,12 +21,14 @@ import {
   type ProjectId,
   type ScheduledTask,
 } from "@t3tools/contracts";
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
+import type {
+  EnvironmentProject,
+  EnvironmentThreadShell,
+} from "@t3tools/client-runtime/state/shell";
 import { useState, type ReactNode } from "react";
-import { Pressable, ScrollView, Switch, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ProjectFavicon } from "../src/components/ProjectFavicon";
 import { AppText as Text } from "../src/components/ui/AppText";
 import type { AppBarMenu } from "../src/components/ui/AppBar.types";
 import * as Dialog from "../src/components/ui/Dialog";
@@ -35,7 +37,6 @@ import { useThreadListActions } from "../src/features/home/useThreadListActions"
 import { startOpeningDetail } from "../src/features/layout/workspace/useSelectWorkspaceDetail";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { SettingsTarget } from "../src/features/settings/settings-environment-filter";
-import { formatNextScheduledTaskRun } from "../src/features/settings/scheduledTaskPresentation";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { relativeTime } from "../src/lib/time";
 import { NativeStackScreenOptions } from "../src/native/StackHeader";
@@ -45,6 +46,7 @@ import { serverEnvironment } from "../src/state/server";
 import { readEnvironmentScope } from "../src/state/session";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
+import { useThreadPr } from "../src/state/use-thread-pr";
 import {
   flatGlassPalette,
   NO3Y_BOTTOM_NAV_CLEARANCE,
@@ -56,12 +58,19 @@ import {
   listNo3yAutomationRunThreads,
   resolveNo3yThreadCardStatusKind,
 } from "./mobileStatusGrouping";
-import { groupNo3yRuns, NO3Y_RUN_GROUP_LABELS, NO3Y_RUNS_PAGE } from "./no3yAutomationRuns";
+import { groupNo3yRuns, no3yAutomationTileStatus, NO3Y_RUNS_PAGE } from "./no3yAutomationRuns";
 import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassLayer } from "./No3yGlass";
 import { findMenuItem, menuActions } from "./No3yScreenHeader";
 import { No3yStatusMark } from "./No3yStatusMark";
 
-const CARD_RADIUS = 16;
+/** The fork's Switch: success green when on, a white thumb. */
+const SWITCH_ON = "#00bc7d";
+const SEGMENT_HEIGHT = 38;
+
+type AutomationsTab = "automations" | "runs";
+// The tab outlives the screen for this session, so returning from a run lands on Runs.
+let lastTab: AutomationsTab = "automations";
 
 export interface No3yAutomationsScreenProps {
   readonly environments: ReadonlyArray<SettingsTarget>;
@@ -76,10 +85,61 @@ export interface No3yAutomationsScreenProps {
   readonly emptyMessage: string;
 }
 
+function TabSwitch(props: {
+  readonly tab: AutomationsTab;
+  readonly palette: FlatGlassPalette;
+  readonly onChange: (tab: AutomationsTab) => void;
+}) {
+  const { palette } = props;
+  const segment = (tab: AutomationsTab, label: string) => {
+    const selected = props.tab === tab;
+    return (
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityLabel={label}
+        accessibilityState={{ selected }}
+        onPress={() => props.onChange(tab)}
+        style={{
+          height: SEGMENT_HEIGHT - 6,
+          paddingHorizontal: 14,
+          borderRadius: (SEGMENT_HEIGHT - 6) / 2,
+          justifyContent: "center",
+          backgroundColor: selected ? palette.activePillSurface : "transparent",
+        }}
+      >
+        <Text
+          style={{
+            ...NO3Y_FONT.medium,
+            fontSize: 15,
+            color: selected ? palette.titleInk : palette.quietInk,
+          }}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
+  return (
+    <View
+      accessibilityRole="tablist"
+      style={{ height: SEGMENT_HEIGHT, flexDirection: "row", alignItems: "center", padding: 3 }}
+    >
+      <No3yGlassLayer radius={SEGMENT_HEIGHT / 2} />
+      {segment("automations", "Automations")}
+      {segment("runs", "Runs")}
+    </View>
+  );
+}
+
 export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
   const insets = useSafeAreaInsets();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
+  const [tab, setTab] = useState(lastTab);
+  const changeTab = (next: AutomationsTab) => {
+    lastTab = next;
+    setTab(next);
+  };
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
       <NativeStackScreenOptions options={{ headerShown: false }} />
@@ -93,12 +153,8 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
           gap: 8,
         }}
       >
-        <Text
-          accessibilityRole="header"
-          style={{ flex: 1, ...NO3Y_FONT.medium, fontSize: 20, color: palette.foreground }}
-        >
-          Automations
-        </Text>
+        <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
+        <View style={{ flex: 1 }} />
         <Menu
           accessibilityLabel={props.environmentMenu.title}
           actions={menuActions(props.environmentMenu.items)}
@@ -139,6 +195,7 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
               environment={environment}
               showEnvironment={props.environments.length > 1}
               palette={palette}
+              tab={tab}
               {...props}
             />
           ))
@@ -169,6 +226,7 @@ function EnvironmentAutomations(
     readonly environment: SettingsTarget;
     readonly showEnvironment: boolean;
     readonly palette: FlatGlassPalette;
+    readonly tab: AutomationsTab;
   },
 ) {
   const { environment, palette } = props;
@@ -222,78 +280,90 @@ function EnvironmentAutomations(
     navigation.dispatch(StackActions.push("Thread", detail.params));
   };
   const taskTitles = new Map(visibleTasks.map((task) => [task.id, task.title] as const));
+  const label = props.tab === "runs" ? "Runs" : "Automations";
 
-  return (
-    <View style={{ gap: 24 }}>
+  if (props.tab === "runs") {
+    return (
       <View>
-        <SectionLabel palette={palette}>
-          {props.showEnvironment ? `Automations · ${environment.label}` : "Automations"}
-        </SectionLabel>
-        {tasks.error ? (
-          <Text style={{ fontSize: 14, color: palette.statusFailed }}>{tasks.error}</Text>
-        ) : !tasks.data ? (
-          <Text style={{ fontSize: 14, color: palette.metaInk }}>Loading automations…</Text>
-        ) : visibleTasks.length === 0 ? (
-          <Text style={{ fontSize: 14, color: palette.metaInk }}>
-            {projectIds === null
-              ? "No automations yet. Tap + to create one."
-              : "No automations in this project."}
-          </Text>
-        ) : (
-          <View style={{ gap: 8 }}>
-            {visibleTasks.map((task) => (
-              <AutomationCard
-                key={task.id}
-                task={task}
-                palette={palette}
-                schedule={props.describeSchedule(task, tasks.data?.timeZone)}
-                next={
-                  !task.enabled
-                    ? "Paused"
-                    : task.nextRunAt
-                      ? formatNextScheduledTaskRun(task.nextRunAt, props.now)
-                      : null
-                }
-                canOperate={canOperate}
-                onEdit={() => props.onEdit(environment, task)}
-                onToggle={() => void act(task, "toggle")}
-                onRunNow={() => void act(task, "run")}
-                onDelete={() =>
-                  Dialog.alert("Delete automation?", task.title, [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Delete",
-                      style: "destructive",
-                      onPress: () => void act(task, "delete"),
-                    },
-                  ])
-                }
-                onOpenThread={
-                  task.threadId !== null && scheduledTaskThreadMode(task) !== "new_thread"
-                    ? () => openThread(String(task.threadId))
-                    : null
-                }
-              />
-            ))}
-          </View>
-        )}
+        {props.showEnvironment ? (
+          <SectionLabel palette={palette}>{`${label} · ${environment.label}`}</SectionLabel>
+        ) : null}
+        <AutomationRuns
+          environmentId={environmentId}
+          projectKeys={props.projectKeys}
+          taskTitles={taskTitles}
+          palette={palette}
+          onOpen={(thread) => openThread(String(thread.id))}
+        />
       </View>
-      <AutomationRuns
-        environmentId={environmentId}
-        projectKeys={props.projectKeys}
-        taskTitles={taskTitles}
-        palette={palette}
-        onOpen={(thread) => openThread(String(thread.id))}
-      />
+    );
+  }
+
+  const rows: Array<ReadonlyArray<ScheduledTask>> = [];
+  for (let index = 0; index < visibleTasks.length; index += 2) {
+    rows.push(visibleTasks.slice(index, index + 2));
+  }
+  return (
+    <View>
+      {props.showEnvironment ? (
+        <SectionLabel palette={palette}>{`${label} · ${environment.label}`}</SectionLabel>
+      ) : null}
+      {tasks.error ? (
+        <Text style={{ fontSize: 14, color: palette.statusFailed }}>{tasks.error}</Text>
+      ) : !tasks.data ? (
+        <Text style={{ fontSize: 14, color: palette.metaInk }}>Loading automations…</Text>
+      ) : visibleTasks.length === 0 ? (
+        <Text style={{ fontSize: 14, color: palette.metaInk }}>
+          {projectIds === null
+            ? "No automations yet. Tap + to create one."
+            : "No automations in this project."}
+        </Text>
+      ) : (
+        <View style={{ gap: 10 }}>
+          {rows.map((row) => (
+            <View key={row[0]!.id} style={{ flexDirection: "row", gap: 10 }}>
+              {row.map((task) => (
+                <AutomationTile
+                  key={task.id}
+                  task={task}
+                  palette={palette}
+                  schedule={props.describeSchedule(task, tasks.data?.timeZone)}
+                  now={props.now}
+                  canOperate={canOperate}
+                  onEdit={() => props.onEdit(environment, task)}
+                  onToggle={() => void act(task, "toggle")}
+                  onRunNow={() => void act(task, "run")}
+                  onDelete={() =>
+                    Dialog.alert("Delete automation?", task.title, [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => void act(task, "delete"),
+                      },
+                    ])
+                  }
+                  onOpenThread={
+                    task.threadId !== null && scheduledTaskThreadMode(task) !== "new_thread"
+                      ? () => openThread(String(task.threadId))
+                      : null
+                  }
+                />
+              ))}
+              {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
 
-function AutomationCard(props: {
+function AutomationTile(props: {
   readonly task: ScheduledTask;
   readonly palette: FlatGlassPalette;
   readonly schedule: string;
-  readonly next: string | null;
+  readonly now: number;
   readonly canOperate: boolean;
   readonly onEdit: () => void;
   readonly onToggle: () => void;
@@ -302,91 +372,205 @@ function AutomationCard(props: {
   readonly onOpenThread: (() => void) | null;
 }) {
   const { task, palette } = props;
+  const status = no3yAutomationTileStatus(task, props.now);
+  // Off tiles read dimmer; the switch keeps full strength so turning one back on is obvious.
+  const dim = task.enabled ? 1 : 0.45;
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        padding: 12,
-        borderRadius: CARD_RADIUS,
-        backgroundColor: palette.cardWash,
+    <Menu
+      accessibilityLabel={`Actions for ${task.title}`}
+      shouldOpenOnLongPress
+      style={{ flex: 1, minWidth: 0 }}
+      actions={[
+        ...(task.schedule.type === "webhook"
+          ? []
+          : [
+              {
+                id: "run",
+                title: "Run now",
+                image: "play",
+                attributes: { disabled: !props.canOperate },
+              },
+            ]),
+        { id: "edit", title: "Edit", image: "pencil" },
+        ...(props.onOpenThread
+          ? [{ id: "thread", title: "Open thread", image: "bubble.left" }]
+          : []),
+        {
+          id: "delete",
+          title: "Delete",
+          image: "trash",
+          attributes: { destructive: true, disabled: !props.canOperate },
+        },
+      ]}
+      onPressAction={({ nativeEvent }) => {
+        const action = nativeEvent.event;
+        if (action === "edit") props.onEdit();
+        else if (action === "thread") props.onOpenThread?.();
+        else if (action === "run") props.onRunNow();
+        else if (action === "delete") props.onDelete();
       }}
     >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Edit ${task.title}`}
         onPress={props.onEdit}
-        style={({ pressed }) => ({ flex: 1, minWidth: 0, gap: 3, opacity: pressed ? 0.6 : 1 })}
+        style={({ pressed }) => ({
+          flexGrow: 1,
+          gap: 10,
+          padding: 14,
+          borderRadius: 16,
+          backgroundColor: pressed ? palette.rowSelected : palette.cardWash,
+        })}
       >
+        <View style={{ flexGrow: 1, gap: 4, opacity: dim }}>
+          <Text
+            numberOfLines={2}
+            style={{ ...NO3Y_FONT.medium, fontSize: 15, lineHeight: 20, color: palette.titleInk }}
+          >
+            {task.title}
+          </Text>
+          <Text numberOfLines={1} style={{ fontSize: 13, lineHeight: 17, color: palette.metaInk }}>
+            {props.schedule}
+          </Text>
+          {task.blockedByPolicy ? (
+            <Text numberOfLines={2} style={{ fontSize: 13, color: palette.metaInk }}>
+              {task.blockedByPolicy}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View
+            style={{
+              flex: 1,
+              minWidth: 0,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              opacity: dim,
+            }}
+          >
+            <No3yStatusMark kind={status.mark} palette={palette} idleMode="dot" />
+            <Text
+              numberOfLines={1}
+              style={{
+                flexShrink: 1,
+                fontSize: 13,
+                color: status.mark === "failed" ? palette.statusFailed : palette.metaInk,
+              }}
+            >
+              {status.line}
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel={task.enabled ? `Pause ${task.title}` : `Resume ${task.title}`}
+            value={task.enabled}
+            disabled={!props.canOperate}
+            onValueChange={props.onToggle}
+            trackColor={{ true: SWITCH_ON, false: palette.controlBorder }}
+            thumbColor="#FFFFFF"
+            ios_backgroundColor={palette.controlBorder}
+            style={{ transform: [{ scale: 0.8 }], marginRight: -6 }}
+          />
+        </View>
+      </Pressable>
+    </Menu>
+  );
+}
+
+function RunRow(props: {
+  readonly thread: EnvironmentThreadShell;
+  readonly kind: ReturnType<typeof resolveNo3yThreadCardStatusKind>;
+  readonly automation: string | undefined;
+  readonly project: EnvironmentProject | null;
+  readonly palette: FlatGlassPalette;
+  readonly onOpen: () => void;
+  readonly actions: ReturnType<typeof useThreadListActions>;
+}) {
+  const { thread, palette, actions } = props;
+  const pr = useThreadPr(thread);
+  const meta = [props.automation, props.project?.title].filter(Boolean).join(" · ");
+  return (
+    <Menu
+      accessibilityLabel={`Actions for ${thread.title}`}
+      shouldOpenOnLongPress
+      actions={[
+        { id: "open", title: "Open", image: "arrow.up.right" },
+        { id: "settle", title: "Settle", image: "checkmark.circle" },
+        { id: "rename", title: "Rename", image: "pencil" },
+        { id: "archive", title: "Archive", image: "archivebox" },
+        { id: "delete", title: "Delete", image: "trash", attributes: { destructive: true } },
+      ]}
+      onPressAction={({ nativeEvent }) => {
+        const action = nativeEvent.event;
+        if (action === "open") props.onOpen();
+        else if (action === "settle") void actions.settleThread(thread);
+        else if (action === "rename") actions.renameThread(thread);
+        else if (action === "archive") void actions.archiveThread(thread);
+        else if (action === "delete") actions.confirmDeleteThread(thread);
+      }}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={[thread.title, meta].filter(Boolean).join(", ")}
+        onPress={props.onOpen}
+        style={({ pressed }) => ({
+          height: 40,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: 16,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: palette.hairline,
+          backgroundColor: pressed ? palette.rowPressed : "transparent",
+        })}
+      >
+        <No3yStatusMark kind={props.kind} palette={palette} idleMode="dot" />
         <Text
           numberOfLines={1}
-          style={{ ...NO3Y_FONT.medium, fontSize: 16, color: palette.titleInk }}
+          style={{ flex: 1, fontSize: 14, ...NO3Y_FONT.regular, color: palette.titleInk }}
         >
-          {task.title}
+          {thread.title}
         </Text>
-        <Text numberOfLines={2} style={{ fontSize: 13, color: palette.metaInk }}>
-          {[props.schedule, props.next].filter(Boolean).join(" · ")}
-        </Text>
-        {task.blockedByPolicy ? (
-          <Text numberOfLines={2} style={{ fontSize: 13, color: palette.metaInk }}>
-            {task.blockedByPolicy}
+        {meta.length > 0 ? (
+          <Text
+            numberOfLines={1}
+            style={{ maxWidth: "38%", fontSize: 13, ...NO3Y_FONT.regular, color: palette.metaInk }}
+          >
+            {meta}
           </Text>
         ) : null}
-        {task.lastRunError ? (
-          <Text numberOfLines={2} style={{ fontSize: 13, color: palette.statusFailed }}>
-            Last run failed: {task.lastRunError}
-          </Text>
+        {pr ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+            <HugeIcon
+              icon={GitPullRequestIcon}
+              size={12}
+              color={pr.state === "open" || pr.state === null ? palette.prOpen : palette.metaInk}
+              strokeWidth={1.5}
+            />
+            <Text
+              style={{
+                fontSize: 12,
+                fontVariant: ["tabular-nums"],
+                color: pr.state === "open" || pr.state === null ? palette.prOpen : palette.metaInk,
+              }}
+            >
+              {pr.label}
+            </Text>
+          </View>
         ) : null}
+        <Text
+          style={{
+            minWidth: 28,
+            textAlign: "right",
+            fontSize: 12,
+            fontVariant: ["tabular-nums"],
+            color: palette.faintInk,
+          }}
+        >
+          {relativeTime(resolveThreadActivityTimestamp(thread) ?? thread.createdAt)}
+        </Text>
       </Pressable>
-      <Switch
-        accessibilityLabel={task.enabled ? `Pause ${task.title}` : `Resume ${task.title}`}
-        value={task.enabled}
-        disabled={!props.canOperate}
-        onValueChange={props.onToggle}
-        trackColor={{ true: palette.statusWorking, false: palette.controlBorder }}
-      />
-      <Menu
-        accessibilityLabel={`Actions for ${task.title}`}
-        actions={[
-          { id: "edit", title: "Edit", image: "pencil" },
-          ...(props.onOpenThread
-            ? [{ id: "thread", title: "Open thread", image: "bubble.left" }]
-            : []),
-          ...(task.schedule.type === "webhook"
-            ? []
-            : [
-                {
-                  id: "run",
-                  title: "Run now",
-                  image: "play",
-                  attributes: { disabled: !props.canOperate },
-                },
-              ]),
-          {
-            id: "delete",
-            title: "Delete",
-            image: "trash",
-            attributes: { destructive: true, disabled: !props.canOperate },
-          },
-        ]}
-        onPressAction={({ nativeEvent }) => {
-          const action = nativeEvent.event;
-          if (action === "edit") props.onEdit();
-          else if (action === "thread") props.onOpenThread?.();
-          else if (action === "run") props.onRunNow();
-          else if (action === "delete") props.onDelete();
-        }}
-      >
-        <View
-          accessibilityRole="button"
-          accessibilityLabel={`Actions for ${task.title}`}
-          style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
-        >
-          <HugeIcon icon={MoreHorizontalIcon} size={18} color={palette.quietInk} />
-        </View>
-      </Menu>
-    </View>
+    </Menu>
   );
 }
 
@@ -410,120 +594,60 @@ function AutomationRuns(props: {
   const nowIso = useThreadListNow(runs);
   const kindOf = (thread: EnvironmentThreadShell) =>
     resolveNo3yThreadCardStatusKind(thread, { now: nowIso });
-  const groups = groupNo3yRuns(runs, kindOf, limit);
-  const projectTitle = (thread: EnvironmentThreadShell) =>
+  const shown = groupNo3yRuns(runs, kindOf, limit).flatMap((group) => group.runs);
+  const projectOf = (thread: EnvironmentThreadShell) =>
     projects.find(
       (project) =>
         project.environmentId === thread.environmentId && project.id === thread.projectId,
     ) ?? null;
+  if (runs.length === 0) {
+    return (
+      <Text style={{ fontSize: 14, color: palette.metaInk }}>
+        No runs yet. Automation runs appear here instead of Threads.
+      </Text>
+    );
+  }
   return (
-    <View>
-      <SectionLabel palette={palette}>Runs</SectionLabel>
-      {runs.length === 0 ? (
-        <Text style={{ fontSize: 14, color: palette.metaInk }}>
-          No runs yet. Automation runs appear here instead of Threads.
-        </Text>
-      ) : (
-        <View style={{ gap: 16 }}>
-          {groups.map(({ group, runs: inGroup }) => (
-            <View key={group} style={{ gap: 8 }}>
-              <Text style={{ fontSize: 12, ...NO3Y_FONT.medium, color: palette.metaInk }}>
-                {NO3Y_RUN_GROUP_LABELS[group]}
-              </Text>
-              {inGroup.map((thread) => {
-                const project = projectTitle(thread);
-                const scheduledTaskId = thread.source.scheduledTaskId;
-                const meta = [
-                  scheduledTaskId === undefined ? undefined : props.taskTitles.get(scheduledTaskId),
-                  project?.title,
-                  relativeTime(resolveThreadActivityTimestamp(thread) ?? thread.createdAt),
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
-                return (
-                  <Menu
-                    key={thread.id}
-                    accessibilityLabel={`Actions for ${thread.title}`}
-                    shouldOpenOnLongPress
-                    actions={[
-                      { id: "open", title: "Open", image: "arrow.up.right" },
-                      { id: "settle", title: "Settle", image: "checkmark.circle" },
-                      { id: "rename", title: "Rename", image: "pencil" },
-                      { id: "archive", title: "Archive", image: "archivebox" },
-                      {
-                        id: "delete",
-                        title: "Delete",
-                        image: "trash",
-                        attributes: { destructive: true },
-                      },
-                    ]}
-                    onPressAction={({ nativeEvent }) => {
-                      const action = nativeEvent.event;
-                      if (action === "open") props.onOpen(thread);
-                      else if (action === "settle") void actions.settleThread(thread);
-                      else if (action === "rename") actions.renameThread(thread);
-                      else if (action === "archive") void actions.archiveThread(thread);
-                      else if (action === "delete") actions.confirmDeleteThread(thread);
-                    }}
-                  >
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={thread.title}
-                      onPress={() => props.onOpen(thread)}
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: 12,
-                        borderRadius: CARD_RADIUS,
-                        backgroundColor: pressed ? palette.rowSelected : palette.cardWash,
-                      })}
-                    >
-                      {project ? (
-                        <ProjectFavicon
-                          environmentId={thread.environmentId}
-                          faviconPath={project.faviconPath}
-                          projectIcon={project.projectIcon}
-                          size={18}
-                          projectTitle={project.title}
-                          workspaceRoot={project.workspaceRoot}
-                        />
-                      ) : null}
-                      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                        <Text
-                          numberOfLines={1}
-                          style={{ ...NO3Y_FONT.medium, fontSize: 15, color: palette.titleInk }}
-                        >
-                          {thread.title}
-                        </Text>
-                        <Text numberOfLines={1} style={{ fontSize: 13, color: palette.metaInk }}>
-                          {meta}
-                        </Text>
-                      </View>
-                      <No3yStatusMark kind={kindOf(thread)} palette={palette} idleMode="dot" />
-                    </Pressable>
-                  </Menu>
-                );
-              })}
-            </View>
-          ))}
-          {runs.length > limit ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setLimit((current) => current + NO3Y_RUNS_PAGE)}
-              style={({ pressed }) => ({
-                alignSelf: "center",
-                padding: 8,
-                opacity: pressed ? 0.6 : 1,
-              })}
-            >
-              <Text style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}>
-                Show more ({runs.length - limit})
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      )}
+    // The table's dividers run edge to edge, past the screen's side padding.
+    <View
+      style={{
+        marginHorizontal: -16,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: palette.hairline,
+      }}
+    >
+      {shown.map((thread) => {
+        const scheduledTaskId = thread.source.scheduledTaskId;
+        return (
+          <RunRow
+            key={thread.id}
+            thread={thread}
+            kind={kindOf(thread)}
+            automation={
+              scheduledTaskId === undefined ? undefined : props.taskTitles.get(scheduledTaskId)
+            }
+            project={projectOf(thread)}
+            palette={palette}
+            actions={actions}
+            onOpen={() => props.onOpen(thread)}
+          />
+        );
+      })}
+      {runs.length > limit ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setLimit((current) => current + NO3Y_RUNS_PAGE)}
+          style={({ pressed }) => ({
+            alignSelf: "center",
+            padding: 10,
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <Text style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}>
+            Show more ({runs.length - limit})
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

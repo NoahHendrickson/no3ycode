@@ -8038,13 +8038,19 @@
     glass pills for the workspace mode and the base branch (by name) and, with
     two or more machines, the machine, each opening its existing picker; they
     exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
-    early return in SettingsScheduledTasksRouteScreen) has its own header
-    (title, environment filter, +) and lists each automation as a card
-    (schedule, next run or Paused, last error, an on/off switch, a ⋯ menu with
-    Edit, Open thread, Run now and Delete; a tap edits), then its runs as
-    cards with 20pt status marks, grouped Needs you / Working / Recent with the
-    automation's name on the meta line, a page of 25 at a time with Show more,
-    and a long-press menu (Open, Settle, Rename, Archive, Delete). A run is
+    early return in SettingsScheduledTasksRouteScreen) has its own header: a
+    glass "Automations | Runs" switch (the last tab kept for the session),
+    then the environment filter and +. Automations shows each automation as a
+    two-column tile (name on up to two lines, schedule, a result line with a
+    20pt mark: Running now, Paused, Last run failed, the next run or how long
+    since the last, fork/no3yAutomationRuns.ts; the fork Switch, #00bc7d with a
+    white thumb; an off tile dims all but its switch); a tap edits and a long
+    press offers Run now, Edit, Open thread and Delete. Runs is the Mac's
+    compact runs table: 40pt one-line rows with full-width hairlines (status
+    mark, run title, automation and project, PR number in the open-PR green,
+    relative time), needs you first, then working, then the rest newest first,
+    a page of 25 at a time with Show more, and a long-press menu (Open,
+    Settle, Rename, Archive, Delete). A run is
     pushed over Automations, so back returns there with its scroll position:
     upstream's selectWorkspaceDetail rebuilt the stack as Home + the run,
     which dropped Automations and sent back to Threads. The dock reads

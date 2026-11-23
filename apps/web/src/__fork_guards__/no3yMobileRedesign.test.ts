@@ -632,6 +632,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(automations).toContain(
       'navigation.dispatch(StackActions.push("Thread", detail.params));',
     );
+    // Automations | Runs: automations as tiles with the fork Switch, runs as a compact table.
+    expect(automations).toContain("<TabSwitch tab={tab}");
+    expect(automations).toContain("<AutomationTile");
+    expect(automations).toContain('const SWITCH_ON = "#00bc7d";');
+    expect(automations).toContain("<RunRow");
     expect(readRepoFile("apps/mobile/fork/no3yPageColor.ts")).toContain(
       '"--color-grouped-card": NO3Y_CARD_COLOR,',
     );
