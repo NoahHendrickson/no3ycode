@@ -8041,10 +8041,11 @@
     upstream control had (stop background work, force stop, wake, un-settle,
     dismiss, reconnect, open subagents, open a child that needs the user, Pi
     status, previews). iPad and Android keep the upstream control.
-    The compact-before-send notice is one glass row stacked on the composer
-    as the queued banner is (fork/No3yCompactBanner.tsx, the Mac's composer
-    banner treatment, rising in): a shrink icon, "Next message compacts
-    history" with the token count muted, and an X that keeps the full history
+    The compact-before-send notice is one 44pt glass pill stacked on the
+    composer, above the queued banner, in the thread header bubbles' style
+    with its controls nested inside (fork/No3yCompactBanner.tsx, rising in): a
+    shrink icon, "Next message compacts history" with the token count muted
+    (it gives way first when short of room), and an X that keeps the full history
     (the Mac's dismiss); once kept it reads "keeps full history" with a glass
     Compact pill (fork/no3yCompactCopy.ts).
     The user's sent bubble is a translucent wash (white 9% on the dark page,
