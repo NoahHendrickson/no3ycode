@@ -1799,7 +1799,7 @@
     it may not carry a backdrop-filter. Composer popups are found by the
     data-chat-composer-floating-layer upstream already stamps on them; the
     fork's own popups that are not composer layers (the draft's project
-    menu, the liveness list, the thread sort and settings menus, the thread
+    menu, the thread sort and settings menus, the thread
     details card) carry data-fork-glass-rim. The selected segment of every
     segmented toggle group (tabs, and the pickers drawn as tabs) and of the
     fork's SegmentedTabs is one more chip of it, as is the design panel's
@@ -2998,6 +2998,12 @@
     calmer #38a169 green is scoped via --success to the composer trigger and
     drawer so the Usage settings page keeps each theme's --success token. Hidden
     when the provider reports no session window or when the footer collapses.
+    The same drawer also carries fork-composer-shell's background-work
+    section above the tray; a closed drawer keeps the sections it showed
+    through its close slide. The drawer sits in the composer's flow, so opening
+    it pushes the transcript up instead of covering the approval cards, Petal
+    asks or last transcript lines above the composer; only the draft hero,
+    whose composer is centred over its launchpad, floats it above the vessel.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3587,12 +3593,20 @@
     The chat composer is one outer 8px vessel (12px on Inlet) wrapping the
     prompt surface and a single control row beneath it. BranchToolbar's context
     strip (project pill on drafts, environment picker on multi-env projects,
-    combined workspace + branch trigger, PR chip, and trailing background
-    liveness pill) sits in the control row's left slot inside
+    combined workspace + branch trigger, PR chip, and a trailing
+    background-work icon toggle) sits in the control row's left slot inside
     [data-fork-composer-vessel-context], while Model, runtime Mode (muted ghost
     label, no colored fill or caret), and the circular Usage trigger sit in the
-    right slot. On narrow composers the control row wraps so the left context
-    slot and liveness stop pill never get squeezed off-screen; while collapsed
+    right slot. Background work (subagents, monitors) lists in a section of
+    the composer's top drawer, stacked above the usage tray in the same
+    data-fork-composer-usage-drawer surface, with Stop and a collapse button;
+    a subagent's row opens its thread. The drawer opens by itself whenever a
+    task it has not shown starts, and a collapse holds until new work
+    arrives (custom/ComposerBackgroundWork.tsx). Because the drawer takes
+    space (see fork-composer-usage-limits), auto-opening never covers what
+    sits above the composer. On narrow composers the
+    control row wraps so the left context slot never gets squeezed
+    off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
     omitted so nothing slabs onto the collapsed pill. ScheduledTaskEditor keeps
     the floating [data-fork-composer-context-row] chip row above its vessel.
@@ -3629,7 +3643,9 @@
   files:
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
-    - apps/web/src/custom/ComposerMonitoringPill.tsx
+    - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/composerBackgroundWork.logic.ts
+    - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
@@ -5201,7 +5217,8 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the composer liveness pill, subagent members):
+    transcript working row, the composer's background-work toggle and drawer,
+    subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
     into beads and merges back). Until one is picked, Inlet and Basic draw the
@@ -5256,10 +5273,8 @@
     In Flat, with no card to edge the column, the collapsed thread tab
     strip takes a divider along its foot in the sidebar seam's grey.
     Flat's composer control row reads its ink as a 57% white wash (what
-    the solid #a6a6a6 fallback was over the lift-2 vessel), and the Split
-    agent / Unsplit pill (stamped data-fork-split-agent-pill) reads brighter
-    than the project and branch chips: 85% white, full white on hover. The
-    new-agent draft hero keeps its own white ink.
+    the solid #a6a6a6 fallback was over the lift-2 vessel). The new-agent
+    draft hero keeps its own white ink.
   tier: 4
   files:
     - apps/web/src/custom/forkGlass3d.ts
@@ -6105,12 +6120,12 @@
 
 - id: fork-split-threads
   intent: >
-    Two threads can share the chat column side by side. A "Split agent" chip
-    beside the project and branch chips in the composer's context row (on a
-    started thread, wide windows only) opens a new draft on the same project,
+    Two threads can share the chat column side by side. A split icon toggle in
+    the thread header's control cluster, just before the details toggle (on a
+    started thread, wide windows only), opens a new draft on the same project,
     worktree and branch in a pane beside the current thread; in a split the
-    same chip reads "Unsplit" and dissolves the pair, leaving that thread on
-    screen alone. Both act on a mouse press rather than its release (the
+    same toggle shows pressed, reads "Unsplit", and dissolves the pair,
+    leaving that thread on screen alone. Both act on a mouse press rather than its release (the
     click that follows is swallowed, since it lands on the other action),
     so mounting the new pane overlaps the press. Until it is sent, a split
     draft carries an X in its header that hands the route to the other pane
@@ -6229,7 +6244,7 @@
     - apps/web/src/custom/splitThreads/splitPaneContext.ts
     - apps/web/src/custom/splitThreads/SplitThreadPanes.tsx
     - apps/web/src/custom/splitThreads/splitPaneSlots.ts
-    - apps/web/src/custom/splitThreads/SplitAgentPill.tsx
+    - apps/web/src/custom/splitThreads/SplitAgentToggle.tsx
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
     - apps/web/src/custom/splitThreads/splitPaneNavigation.ts

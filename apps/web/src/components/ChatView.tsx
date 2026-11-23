@@ -208,7 +208,7 @@ import { isModelPickerOpen } from "../modelPickerVisibility";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
 /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
 import { useOwnsGlobalInput, useSplitPane } from "~/custom/splitThreads/splitPaneContext";
-import { SplitAgentPill, splitAgentPillShown } from "~/custom/splitThreads/SplitAgentPill";
+import { SplitAgentToggle, splitAgentToggleShown } from "~/custom/splitThreads/SplitAgentToggle";
 import { SplitPaneHeaderControls } from "~/custom/splitThreads/SplitPaneHeaderControls";
 /* fork:end fork-split-threads */
 import { toastManager } from "./ui/toast";
@@ -331,11 +331,8 @@ import {
   shouldShowEnvironmentIndicator,
 } from "./BranchToolbar.logic";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-import {
-  renderComposerContextStripFallback,
-  renderComposerLivenessPill,
-  resolveComposerLivenessPillProps,
-} from "~/custom/composerContextStrip";
+import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
+import { useComposerBackgroundWork } from "~/custom/ComposerBackgroundWork";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2683,25 +2680,22 @@ export default function ChatView(props: ChatViewProps) {
     persistThreadSettingsForNextTurn,
   });
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-     Working fleets and monitoring leave the banner stack and ride the context strip as a pill
-     beside the branch chip. ChatView only wires props (assembly: custom/composerContextStrip);
-     stop handler and task list come from useThreadLifecycle, like upstream's row. */
-  const composerLivenessPill = (() => {
-    const presentation = presentPendingBackgroundWork(activeBackgroundTasks);
-    if (presentation === null || !activeThread) {
-      return null;
-    }
-    return renderComposerLivenessPill(
-      resolveComposerLivenessPillProps({
-        presentation,
-        seed: `${activeThread.environmentId}:${activeThread.id}`,
-        stopping: isStoppingBackgroundWork,
-        canStop: canOperateThread,
-        onStop: () => void handleStopBackgroundWorkStable(),
-        onOpenThread: onOpenRelatedThreadStable,
-      }),
-    );
-  })();
+     Working fleets and monitoring leave the banner stack: an icon in the context strip toggles
+     a section of the composer's top drawer (custom/ComposerBackgroundWork). Stop handler and
+     task list come from useThreadLifecycle, like upstream's row. */
+  const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
+  const composerBackgroundWork = useComposerBackgroundWork(
+    composerBackgroundWorkPresentation && activeThread
+      ? {
+          presentation: composerBackgroundWorkPresentation,
+          seed: `${activeThread.environmentId}:${activeThread.id}`,
+          stopping: isStoppingBackgroundWork,
+          canStop: canOperateThread,
+          onStop: () => void handleStopBackgroundWorkStable(),
+          onOpenThread: onOpenRelatedThreadStable,
+        }
+      : null,
+  );
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = serverVisibleTurnItems.some(
     ({ item }) =>
@@ -3425,8 +3419,8 @@ export default function ChatView(props: ChatViewProps) {
   // its lifecycle status, guest messages awaiting you, then your queued messages.
   /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards
      No status line after the last message: thread state is a composer card
-     (threadStatusLine stays unread). Background work rides the context-strip
-     liveness pill (fork-composer-shell), not ThreadNow's work row. */
+     (threadStatusLine stays unread). Background work rides the composer's top
+     drawer (fork-composer-shell), not ThreadNow's work row. */
   const timelineFooter =
     pendingHandoff === null &&
     !hasThreadNow &&
@@ -3604,11 +3598,32 @@ export default function ChatView(props: ChatViewProps) {
      window, and never split between the header and a panel. A maximized right panel hides the
      conversation, so the cluster moves into that panel's header. */
   const panelToggleControls = <PanelLayoutControls {...panelToggleControlProps} />;
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+     Split alone, pressed (Unsplit) in a split, just before the details toggle. The draft
+     hero has no split to offer. */
+  const splitAgentToggle =
+    !isDraftHeroState &&
+    // A side chat inherits its parent's pane but is not in the pair.
+    !embedded &&
+    activeThreadRef &&
+    activeProjectRef &&
+    // A provider-native subagent thread has no composer and never offers Split agent; inside a
+    // pair it keeps Unsplit.
+    splitAgentToggleShown(splitPane, isServerThread && composerMounted) ? (
+      <SplitAgentToggle
+        threadRef={activeThreadRef}
+        projectRef={activeProjectRef}
+        branch={activeThread?.branch ?? null}
+        worktreePath={activeWorktreePath}
+      />
+    ) : null;
+  /* fork:end fork-split-threads */
   const stageControlCluster = (
     <StageHeaderControls>
       {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
       <SplitPaneHeaderControls
         panelToggleControls={panelToggleControls}
+        splitAgentToggle={splitAgentToggle}
         draftId={isLocalDraftThread ? draftId : null}
         threadRef={activeThreadRef}
       />
@@ -3660,32 +3675,10 @@ export default function ChatView(props: ChatViewProps) {
   // readout. They never coexist (local draft vs server thread), and the
   // readout is null whenever upstream's strip is visible.
   const composerContextLeading = draftProjectPill ?? threadContextReadout;
-  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-  // "Split agent" alone, "Unsplit" in a split, right after the project and
-  // branch chips. The draft hero's centred composer has no split to offer.
-  const splitAgentPill =
-    !isDraftHeroState &&
-    // A side chat inherits its parent's pane but is not in the pair.
-    !embedded &&
-    activeThreadRef &&
-    activeProjectRef &&
-    splitAgentPillShown(splitPane, isServerThread) ? (
-      <SplitAgentPill
-        threadRef={activeThreadRef}
-        projectRef={activeProjectRef}
-        branch={activeThread?.branch ?? null}
-        worktreePath={activeWorktreePath}
-      />
-    ) : null;
-  // The liveness pill keeps the row's last slot: stop stays where the hand knows it.
-  const composerContextTrailing =
-    splitAgentPill || composerLivenessPill ? (
-      <>
-        {splitAgentPill}
-        {composerLivenessPill}
-      </>
-    ) : null;
-  /* fork:end fork-split-threads */
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  // The background-work toggle keeps the row's last slot.
+  const composerContextTrailing = composerBackgroundWork.toggle;
+  /* fork:end fork-composer-shell */
   /**
    * The worktree/branch strip, passed as ChatComposer's `contextStrip` instead of rendering
    * below the composer host. Its callbacks are stable, so the memoised element keeps identity.
@@ -4103,8 +4096,8 @@ export default function ChatView(props: ChatViewProps) {
                     <div className="relative">
                       <ComposerSurface.Shell
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-                         The chips the fork adds to the strip (project pill, split
-                         pill, liveness pill) need the row even when upstream's
+                         The chips the fork adds to the strip (project pill,
+                         background-work toggle) need the row even when upstream's
                          strip predicate says no. */
                         contextRow={
                           showComposerContextStrip ||
@@ -4176,6 +4169,7 @@ export default function ChatView(props: ChatViewProps) {
                                 {...(composerContextStrip
                                   ? { contextStrip: composerContextStrip }
                                   : {})}
+                                backgroundWork={composerBackgroundWork.section}
                                 /* fork:end fork-composer-shell */
                                 phase={phase}
                                 canSteer={!compactionBlocksSteer}

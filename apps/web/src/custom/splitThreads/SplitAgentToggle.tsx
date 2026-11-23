@@ -1,31 +1,27 @@
-/**
- * The pill in the composer's context row — see `.fork/customizations.yaml#fork-split-threads`.
- *
- * Alone, "Split agent" opens a new draft on this thread's project, worktree
- * and branch in a pane beside it. In a split the same spot reads "Unsplit",
- * which dissolves the pair and leaves this thread on screen alone.
- */
+/** The header's split toggle (fork-split-threads): alone, it opens a draft on this thread's
+ * project, worktree and branch in a pane beside it; pressed in a split, it dissolves the pair and
+ * leaves this thread on screen alone. */
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedProjectRef, ScopedThreadRef } from "@t3tools/contracts";
-import { ExternalLinkIcon } from "lucide-react";
 import { useRef, type MouseEvent, type PointerEvent } from "react";
 
-import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
-import { NavigationArrowIcon } from "../icons/lucide-hugeicons";
+import { Columns2Icon } from "../icons/lucide-hugeicons";
 import { useSplitPane, type SplitPaneState } from "./splitPaneContext";
 import { morphSplitPairs } from "./splitMorph";
 import { usePendingSplitStore, useSplitThreadStore } from "./splitThreadStore";
 
-/** Whether the pill shows: always in a split, and alone on a started thread
+/** Whether the toggle shows: always in a split, and alone on a started thread
     in a window wide enough (splitting a draft would only reopen the same
-    draft). Callers gate on it, so a null pill never holds an empty row open. */
-export function splitAgentPillShown(splitPane: SplitPaneState, startedThread: boolean): boolean {
+    draft). */
+export function splitAgentToggleShown(splitPane: SplitPaneState, startedThread: boolean): boolean {
   return splitPane.split || (splitPane.canSplit && startedThread);
 }
 
-export function SplitAgentPill(props: {
+export function SplitAgentToggle(props: {
   readonly threadRef: ScopedThreadRef;
   readonly projectRef: ScopedProjectRef;
   readonly branch: string | null;
@@ -54,20 +50,6 @@ export function SplitAgentPill(props: {
     },
   });
 
-  if (splitPane.split) {
-    return (
-      <Button
-        size="xs"
-        variant="ghost"
-        data-fork-split-agent-pill
-        {...pressHandlers(() => morphSplitPairs([threadRef], () => unpair(threadRef)))}
-      >
-        <ExternalLinkIcon className="size-3.5" />
-        Unsplit
-      </Button>
-    );
-  }
-
   const splitAgent = () => {
     usePendingSplitStore.setState({ pending: { source: threadRef, projectRef } });
     void handleNewThread(projectRef, {
@@ -84,10 +66,30 @@ export function SplitAgentPill(props: {
       })
       .finally(() => usePendingSplitStore.setState({ pending: null }));
   };
+  const label = splitPane.split ? "Unsplit" : "Split agent";
+
   return (
-    <Button size="xs" variant="ghost" data-fork-split-agent-pill {...pressHandlers(splitAgent)}>
-      <NavigationArrowIcon className="size-3.5" />
-      Split agent
-    </Button>
+    <div className="pointer-events-auto flex h-full items-center">
+      <Tooltip>
+        {/* No data-split-pane-action: the press focuses this pane first, so Unsplit leaves it on screen. */}
+        <TooltipTrigger render={<span className="flex shrink-0" data-fork-panel-toggle />}>
+          <Toggle
+            className="shrink-0 [-webkit-app-region:no-drag]"
+            pressed={splitPane.split}
+            aria-label={label}
+            variant="ghost"
+            size="sm"
+            {...pressHandlers(
+              splitPane.split
+                ? () => morphSplitPairs([threadRef], () => unpair(threadRef))
+                : splitAgent,
+            )}
+          >
+            <Columns2Icon className="size-4" />
+          </Toggle>
+        </TooltipTrigger>
+        <TooltipPopup side="bottom">{label}</TooltipPopup>
+      </Tooltip>
+    </div>
   );
 }

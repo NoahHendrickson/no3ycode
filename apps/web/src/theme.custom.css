@@ -1379,9 +1379,8 @@
    child to shrink-only, which left it stranded between checkout and branch.
    The wrapper that holds it is allowed to grow again and spreads its two
    children apart — so the branch stays packed against checkout while the PR
-   sits on the row's end. The liveness pill (trailing) is a later sibling of
-   that wrapper and keeps the very last slot while it shows; stop is the
-   control that has to stay where the hand knows it.
+   sits on the row's end. The background-work toggle (trailing) is a later
+   sibling of that wrapper and keeps the very last slot while it shows.
 
    The spread must come from justify-content, never from an auto margin on
    the chip. useLabelsOverflow sums every chip's width plus its inline
