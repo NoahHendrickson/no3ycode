@@ -27,14 +27,14 @@ import {
   setNo3yHomeDraft,
   type No3yHomeTab,
 } from "./no3yHomeTabs";
-import { NO3Y_NEW_AGENT_SURFACE } from "./No3yNewAgent";
+import { NO3Y_NEW_AGENT_TAB_SURFACE } from "./No3yNewAgent";
 
 function No3yNewAgentTab() {
   const navigation = useNavigation();
   const route = useRoute();
   const draft = useAtomValue(no3yHomeTabsAtom).newAgentDraft;
   const surface: No3yDraftSurface = {
-    ...NO3Y_NEW_AGENT_SURFACE,
+    ...NO3Y_NEW_AGENT_TAB_SURFACE,
     // The sent thread is pushed over Home, so back returns here, to a fresh draft.
     onSubmitted: (environmentId, threadId) => {
       const detail = { name: "Thread", params: { environmentId, threadId } } as const;

@@ -18,17 +18,14 @@ export interface No3yProjectTile {
 }
 
 /**
- * Up to `limit` projects with a thread the roster shows, newest activity first, else the first
- * pickable ones. A search lists every match, those with threads first. The selected project
- * always keeps a tile, taking the last place when it would not rank in.
+ * Every pickable project (a search: every match): those with a thread the roster shows first,
+ * newest activity first, then the rest in their given order (most recently updated first).
  */
 export function rankNo3yProjectTiles(input: {
   readonly scopes: ReadonlyArray<HomeProjectScope>;
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
   readonly sentChatKeys: ReadonlySet<string>;
   readonly searchQuery: string;
-  readonly selectedScopeKey: string | null;
-  readonly limit: number;
 }): ReadonlyArray<No3yProjectTile> {
   const lastActivity = new Map<string, number>();
   for (const thread of filterForkRosterVisibleThreads(input.threads)) {
@@ -53,10 +50,5 @@ export function rankNo3yProjectTiles(input: {
     .filter((tile) => tile.lastActivityMs > 0)
     .sort((left, right) => right.lastActivityMs - left.lastActivityMs);
   const rest = tiles.filter((tile) => tile.lastActivityMs === 0);
-  if (input.searchQuery.trim().length > 0) return [...live, ...rest];
-
-  const shown = (live.length > 0 ? live : rest).slice(0, input.limit);
-  const selected = tiles.find((tile) => tile.scope.key === input.selectedScopeKey);
-  if (selected === undefined || shown.includes(selected)) return shown;
-  return [...shown.slice(0, Math.max(0, input.limit - 1)), selected];
+  return [...live, ...rest];
 }

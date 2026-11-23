@@ -14,6 +14,8 @@ export interface No3yDraftSurface {
   readonly content: (headerInset: number, bottomInset: number) => ReactNode;
   /** Above the composer, in place of the context and workspace controls; a clone banner stays. */
   readonly controls: ReactNode;
+  /** A Home tab: the project is picked on its rows, never by pushing the picker. */
+  readonly picksProjectInPlace?: boolean;
   /** Where a sent draft goes instead of turning this route into its thread. */
   readonly onSubmitted?: (environmentId: string, threadId: string) => void;
 }

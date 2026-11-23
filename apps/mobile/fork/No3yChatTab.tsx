@@ -297,6 +297,7 @@ export function No3yChatTab() {
     header: <ChatHeader />,
     content: renderChatList,
     controls: null,
+    picksProjectInPlace: true,
     onSubmitted: (submittedEnvironmentId, threadId) => {
       const detail = {
         name: "Thread",

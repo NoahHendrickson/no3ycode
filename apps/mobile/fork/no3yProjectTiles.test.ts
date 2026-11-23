@@ -64,24 +64,16 @@ const rank = (overrides: Partial<Parameters<typeof rankNo3yProjectTiles>[0]> = {
     ],
     sentChatKeys: new Set(),
     searchQuery: "",
-    selectedScopeKey: null,
-    limit: 8,
     ...overrides,
   }).map((tile) => tile.scope.key);
 
 describe("no3y New agent project rows", () => {
-  it("lists projects with roster threads, newest activity first", () => {
-    expect(rank()).toEqual(["c", "b", "a"]);
-    expect(rank({ limit: 2 })).toEqual(["c", "b"]);
-  });
-
-  it("keeps the selected project in the last place when it would not rank in", () => {
-    expect(rank({ limit: 2, selectedScopeKey: "a" })).toEqual(["c", "a"]);
-    expect(rank({ limit: 2, selectedScopeKey: "d" })).toEqual(["c", "d"]);
-  });
-
-  it("falls back to the first projects when none has a thread, and searches them all", () => {
+  it("lists every project: roster-active ones newest first, then the rest in order", () => {
+    expect(rank()).toEqual(["c", "b", "a", "d"]);
     expect(rank({ threads: [] })).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("narrows to every match when searching", () => {
     expect(rank({ searchQuery: "d" })).toEqual(["d"]);
   });
 });

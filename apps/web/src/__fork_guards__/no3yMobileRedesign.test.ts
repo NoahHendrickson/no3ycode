@@ -760,11 +760,19 @@ describe("fork guard: no3y-mobile-redesign", () => {
       "return tab ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);",
     );
     expect(draftScreen).toContain("no3ySurface.controls");
+    // A Home tab never pushes the project picker on its own (it trapped the user under Home).
+    // New agent starts with no project; send waits for a pick, which is never a pushed picker.
+    expect(draftScreen).toContain(
+      "if (no3yPicksInPlace && no3yInPlaceSkipsPicker(selection.kind)) return;",
+    );
+    expect(draftScreen).toContain("no3yPickBlockReason ??");
+    expect(newAgent).toContain("picksProjectInPlace: true,");
+    expect(newAgent).not.toContain("NewTaskProject");
     expect(newAgent).toContain("rankNo3yProjectTiles({");
     // Projects as one column of glass rows: favicon and name only.
     expect(newAgent).toContain("<No3yGlassLayer radius={ROW_HEIGHT / 2} />");
     expect(newAgent).not.toContain("no3yProjectTileStatus");
-    expect(newAgent).toContain("controls: <DraftPills />,");
+    expect(newAgent).toContain("controls: <DraftPills requirePick />,");
     expect(newAgent).toContain("header: <NewAgentHeader />,");
     // iOS draws the system font everywhere; Android keeps DM Sans.
     expect(globalCss).toContain('--font-sans: "System";');

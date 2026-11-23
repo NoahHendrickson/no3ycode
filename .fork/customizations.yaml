@@ -8086,7 +8086,11 @@
     thread on the stack, the root new-task flow serves the shown tab's draft
     as it serves a draft thread (fenced in Stack.tsx's flow binding;
     new-task-flow-state keeps both tabs' flows live; the project picker over
-    New agent sets the tab's project), and a hidden tab holds the flow value it
+    New agent sets the tab's project; a tab never pushes the picker itself,
+    fork/no3yInPlaceProject.ts, since upstream's pick-then-leave flow
+    replaced Home and pushed the picker again, trapping the user; New agent
+    starts every draft with no project, its send blocked and its placeholder
+    saying "Pick a project above to start" until one is picked), and a hidden tab holds the flow value it
     last had (fork/No3yHomeDraftGate.tsx) so it never renders the other tab's
     draft. The model chip, model sheet, effort, access, +, the prompt stash and
     dictation are New agent's and what is picked starts the chat. A sent chat
@@ -8101,19 +8105,19 @@
     NewTaskDraftScreen takes a surface (fork/No3yDraftSurface.tsx) in place of
     its header, hero and context/workspace controls (a clone banner stays):
     a Home tab's, or New agent's on another iPhone draft (fork/No3yNewAgent.tsx): a "New agent"
-    header with Search and no native bar, then up to eight recent projects as
-    one column of 48pt pill glass rows, 8pt apart (No3yGlassLayer, as the
-    controls; only a 20pt favicon and the name, 16pt, one line; the selected
+    header with Search and no native bar, then one scrolling column of 48pt
+    pill glass rows, 8pt apart, above the pinned composer (No3yGlassLayer, as
+    the controls; only a 20pt icon and the name, 16pt, one line; the picked
     one brightened with a hairline and a small check; growing in, never
-    fading, as glass does) ranked as the Mac launchpad ranks, by
-    the roster-visible threads newest first and never by chats, else the first
-    pickable projects, the selected project always kept
-    (fork/no3yProjectTiles.ts); Search narrows them to every match. Under them
-    "No project" (the No-project workspace, opened as the picker opens it) and
-    "All projects (N)" (the project picker). Directly above the composer sit
-    glass pills for the workspace mode and the base branch (by name) and, with
-    two or more machines, the machine, each opening its existing picker; they
-    exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, the
+    fading, as glass does): "No project" (the No-project workspace, opened as
+    the picker opens it) first, then every project, those with roster-visible
+    threads newest activity first (as the Mac launchpad ranks, never by
+    chats), then the rest in the scopes' own most-recently-updated order
+    (fork/no3yProjectTiles.ts); Search narrows them to every match. There is
+    no All projects step. Directly above the composer sit glass pills for the
+    workspace mode and the base branch (by name) and, with two or more
+    machines, the machine, each opening its existing picker, once a project is
+    picked; they exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, the
     Home tab, drawn by a fenced early return in SettingsScheduledTasksRouteScreen,
     whose own route only redirects to the tab; the Settings scope its filter
     uses stays while the no3y layout is on) has its own header: a
@@ -8161,6 +8165,8 @@
     - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/No3yPullRequestMark.tsx
     - apps/mobile/fork/No3yCompactBanner.tsx
+    - apps/mobile/fork/no3yInPlaceProject.ts
+    - apps/mobile/fork/no3yInPlaceProject.test.ts
     - apps/mobile/fork/no3yCompactCopy.ts
     - apps/mobile/fork/no3yCompactCopy.test.ts
     - apps/mobile/fork/no3yPullRequestTone.ts
@@ -8268,3 +8274,4 @@
     - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/no3yPullRequestTone.test.ts
     - apps/mobile/fork/no3yCompactCopy.test.ts
+    - apps/mobile/fork/no3yInPlaceProject.test.ts

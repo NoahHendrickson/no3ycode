@@ -1,10 +1,9 @@
 /**
- * New agent on no3y iPhone: a "New agent" header with Search, recent projects as glass rows above the
- * composer (No project and All projects under them), and glass worktree, branch and machine pills
- * directly above the composer card — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * New agent on no3y iPhone: a "New agent" header with Search, No project and every project as
+ * glass rows scrolling above the composer, none picked until the user picks, and glass worktree,
+ * branch and machine pills directly above the composer card once one is — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { useAtomValue } from "@effect/atom-react";
-import ArrowRight01Icon from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import Folder01Icon from "@hugeicons/core-free-icons/Folder01Icon";
 import FolderTreeIcon from "@hugeicons/core-free-icons/FolderTreeIcon";
 import GitBranchIcon from "@hugeicons/core-free-icons/GitBranchIcon";
@@ -17,7 +16,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { interpolateColor, useAnimatedStyle } from "react-native-reanimated";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -49,9 +48,8 @@ import type { No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
-import { rankNo3yProjectTiles, type No3yProjectTile } from "./no3yProjectTiles";
+import { rankNo3yProjectTiles } from "./no3yProjectTiles";
 
-const TILE_LIMIT = 8;
 const PILL_HEIGHT = 34;
 const ROW_HEIGHT = 48;
 const ROW_GAP = 8;
@@ -88,14 +86,14 @@ function NewAgentHeader() {
 }
 
 function ProjectRow(props: {
-  readonly tile: No3yProjectTile;
+  readonly label: string;
+  readonly leading: ReactNode;
   readonly selected: boolean;
   readonly disabled: boolean;
   readonly palette: FlatGlassPalette;
   readonly onPress: () => void;
 }) {
-  const { palette, tile } = props;
-  const project = tile.scope.representative;
+  const { palette } = props;
   // The picked row brightens and shows its hairline over the glass, eased rather than cut.
   const lift = useNo3yToggleProgress(props.selected);
   const liftStyle = useAnimatedStyle(() => ({
@@ -111,7 +109,7 @@ function ProjectRow(props: {
     <Animated.View layout={NO3Y_LAYOUT} entering={NO3Y_GLASS_IN}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={tile.scope.title}
+        accessibilityLabel={props.label}
         accessibilityState={{ selected: props.selected, disabled: props.disabled }}
         disabled={props.disabled}
         onPress={props.onPress}
@@ -140,14 +138,7 @@ function ProjectRow(props: {
             liftStyle,
           ]}
         />
-        <ProjectFavicon
-          environmentId={project.environmentId}
-          faviconPath={project.faviconPath}
-          projectIcon={project.projectIcon}
-          projectTitle={tile.scope.title}
-          workspaceRoot={project.workspaceRoot}
-          size={20}
-        />
+        {props.leading}
         <Text
           numberOfLines={1}
           style={{
@@ -158,7 +149,7 @@ function ProjectRow(props: {
             color: palette.titleInk,
           }}
         >
-          {tile.scope.title}
+          {props.label}
         </Text>
         {props.selected ? (
           <HugeIcon icon={Tick02Icon} size={16} color={palette.metaInk} strokeWidth={2} />
@@ -168,9 +159,13 @@ function ProjectRow(props: {
   );
 }
 
-function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: number }) {
+function ProjectTiles(props: {
+  readonly topInset: number;
+  readonly bottomInset: number;
+  /** Only a project the user picked reads as selected (New agent's tab starts with none). */
+  readonly requirePick: boolean;
+}) {
   const flow = useNewTaskFlow();
-  const navigation = useNavigation();
   const { searchQuery } = useNewAgentSearch();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
@@ -185,7 +180,8 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
         isScratchProject(project, serverConfigs.get(project.environmentId)?.scratchWorkspaceRoot),
       ),
   );
-  const selected = flow.isScratchDraft ? null : flow.selectedProject;
+  const picked = !props.requirePick || flow.selectedProjectKey !== null;
+  const selected = !picked || flow.isScratchDraft ? null : flow.selectedProject;
   const selectedScopeKey =
     selected === null
       ? null
@@ -199,8 +195,6 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
     threads,
     sentChatKeys,
     searchQuery,
-    selectedScopeKey,
-    limit: TILE_LIMIT,
   });
   const connectedIds = new Set(
     connectedEnvironments
@@ -231,13 +225,12 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
       );
     }
   };
-  const openAllProjects = () => {
-    if (locked) return;
-    void KeyboardController.dismiss({ animated: true });
-    navigation.navigate("NewTaskProject");
-  };
-
-  const linkStyle = { ...NO3Y_FONT.regular, fontSize: 14, lineHeight: 20 };
+  const searching = searchQuery.trim().length > 0;
+  const noProjectRow =
+    scratchOption === null ||
+    (searching && !"no project".includes(searchQuery.trim().toLowerCase()))
+      ? null
+      : scratchOption;
 
   return (
     <ScrollView
@@ -268,60 +261,51 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
           paddingHorizontal: 4,
         }}
       >
-        {searchQuery.trim().length > 0 ? "Projects" : "Recent projects"}
+        {picked ? "Projects" : "Pick a project"}
       </Text>
+      {noProjectRow === null ? null : (
+        <ProjectRow
+          label="No project"
+          leading={<HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />}
+          selected={picked && flow.isScratchDraft}
+          disabled={locked || !noProjectRow.ready}
+          palette={palette}
+          onPress={() => void pickNoProject()}
+        />
+      )}
       {tiles.map((tile) => (
         <ProjectRow
           key={tile.scope.key}
-          tile={tile}
+          label={tile.scope.title}
+          leading={
+            <ProjectFavicon
+              environmentId={tile.scope.representative.environmentId}
+              faviconPath={tile.scope.representative.faviconPath}
+              projectIcon={tile.scope.representative.projectIcon}
+              projectTitle={tile.scope.title}
+              workspaceRoot={tile.scope.representative.workspaceRoot}
+              size={20}
+            />
+          }
           selected={tile.scope.key === selectedScopeKey}
           disabled={locked}
           palette={palette}
           onPress={() => pickScope(tile.scope)}
         />
       ))}
-      {tiles.length === 0 ? (
-        <Text style={{ ...linkStyle, color: palette.quietInk, paddingHorizontal: 4 }}>
-          {searchQuery.trim().length > 0 ? "No matching projects" : "No projects yet"}
+      {tiles.length === 0 && noProjectRow === null ? (
+        <Text
+          style={{
+            ...NO3Y_FONT.regular,
+            fontSize: 14,
+            lineHeight: 20,
+            color: palette.quietInk,
+            paddingHorizontal: 4,
+          }}
+        >
+          {searching ? "No matching projects" : "No projects yet"}
         </Text>
       ) : null}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 4 }}>
-        {scratchOption !== null ? (
-          <>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="No project"
-              accessibilityState={{ selected: flow.isScratchDraft }}
-              disabled={locked || !scratchOption.ready}
-              hitSlop={8}
-              onPress={() => void pickNoProject()}
-            >
-              <Text
-                style={{
-                  ...linkStyle,
-                  color: flow.isScratchDraft ? palette.titleInk : palette.metaInk,
-                }}
-              >
-                No project
-              </Text>
-            </Pressable>
-            <Text style={{ ...linkStyle, color: palette.faintInk }}>·</Text>
-          </>
-        ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`All projects, ${scopes.length}`}
-          disabled={locked}
-          hitSlop={8}
-          onPress={openAllProjects}
-          style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
-        >
-          <Text style={{ ...linkStyle, color: palette.metaInk }}>
-            All projects ({scopes.length})
-          </Text>
-          <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.metaInk} />
-        </Pressable>
-      </View>
     </ScrollView>
   );
 }
@@ -371,12 +355,15 @@ function DraftPill(props: {
 }
 
 /** The worktree, base branch and (with 2+ machines) machine pills; gone once the thread starts. */
-function DraftPills() {
+function DraftPills(props: { readonly requirePick: boolean }) {
   const flow = useNewTaskFlow();
   const navigation = useNavigation();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  if (flow.selectedProject === null) return null;
+  // Nothing to set up for until a project is picked.
+  if (flow.selectedProject === null || (props.requirePick && flow.selectedProjectKey === null)) {
+    return null;
+  }
   const showWorkspace = flow.canChooseWorkspace && flow.isGitRepo;
   const showMachine = flow.environments.length > 1;
   if (!showWorkspace && !showMachine) return null;
@@ -462,7 +449,17 @@ function DraftPills() {
 export const NO3Y_NEW_AGENT_SURFACE: No3yDraftSurface = {
   header: <NewAgentHeader />,
   content: (headerInset, bottomInset) => (
-    <ProjectTiles topInset={headerInset} bottomInset={bottomInset} />
+    <ProjectTiles topInset={headerInset} bottomInset={bottomInset} requirePick={false} />
   ),
-  controls: <DraftPills />,
+  controls: <DraftPills requirePick={false} />,
+};
+
+/** New agent's Home tab: it starts with no project and waits for one to be picked on its rows. */
+export const NO3Y_NEW_AGENT_TAB_SURFACE: No3yDraftSurface = {
+  header: <NewAgentHeader />,
+  content: (headerInset, bottomInset) => (
+    <ProjectTiles topInset={headerInset} bottomInset={bottomInset} requirePick />
+  ),
+  controls: <DraftPills requirePick />,
+  picksProjectInPlace: true,
 };

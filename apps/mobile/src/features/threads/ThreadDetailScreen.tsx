@@ -11,6 +11,7 @@ import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard
 /* fork:end fork-pending-user-input */
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3yCompactBanner } from "../../../fork/No3yCompactBanner";
+import { NO3Y_PICK_PROJECT_REASON } from "../../../fork/no3yInPlaceProject";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
 import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
@@ -1933,7 +1934,9 @@ function ThreadDetailBody(
                               : "Send a message to decline and redirect the agent"
                             : /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
                               no3yBottomNav
-                              ? "What do you want to do?"
+                              ? props.draftMode?.sendBlockedReason === NO3Y_PICK_PROJECT_REASON
+                                ? NO3Y_PICK_PROJECT_REASON
+                                : "What do you want to do?"
                               : /* fork:end no3y-mobile-redesign */
                                 "Ask anything"
                         }
