@@ -748,6 +748,14 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // PR marks by state, as the Mac: merged is violet git-merge, closed red, draft muted.
     expect(automations).toContain("<No3yPullRequestMark");
     expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).toContain("<No3yPullRequestMark");
+    // Menus that morph out of their glass buttons on iOS 26, the icon centred by its own size.
+    expect(readRepoFile("apps/mobile/fork/No3yGlassMenuButton.tsx")).toContain(
+      "<RNHostView matchContents>",
+    );
+    expect(screenHeader).toContain("icon={MoreHorizontalIcon}");
+    expect(screenHeader).toContain("<No3yGlassMenuButton");
+    expect(automations).toContain("<No3yGlassMenuButton");
+    expect(modelPicker).toContain("<No3yGlassMenuButton");
     expect(readRepoFile("apps/mobile/fork/No3yPullRequestMark.tsx")).toContain(
       "merged: GitMergeIcon,",
     );

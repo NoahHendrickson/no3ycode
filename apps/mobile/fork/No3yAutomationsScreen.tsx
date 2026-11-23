@@ -59,6 +59,7 @@ import {
 } from "./mobileStatusGrouping";
 import { groupNo3yRuns, no3yAutomationTileStatus, NO3Y_RUNS_PAGE } from "./no3yAutomationRuns";
 import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yGlassLayer } from "./No3yGlass";
 import { findMenuItem, menuActions } from "./No3yScreenHeader";
@@ -181,19 +182,13 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
       >
         <TabSwitch tab={tab} palette={palette} onChange={changeTab} />
         <View style={{ flex: 1 }} />
-        <Menu
+        <No3yGlassMenuButton
+          palette={palette}
           accessibilityLabel={props.environmentMenu.title}
+          icon={ListFilterIcon}
           actions={menuActions(props.environmentMenu.items)}
-          onPressAction={({ nativeEvent }) =>
-            findMenuItem(props.environmentMenu.items, nativeEvent.event)?.()
-          }
-        >
-          <No3yCircleButton
-            palette={palette}
-            accessibilityLabel={props.environmentMenu.title}
-            icon={ListFilterIcon}
-          />
-        </Menu>
+          onPressAction={(id) => findMenuItem(props.environmentMenu.items, id)?.()}
+        />
         <No3yCircleButton
           palette={palette}
           accessibilityLabel="New automation"

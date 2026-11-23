@@ -17,22 +17,16 @@ import { Platform, Pressable, ScrollView, View, type LayoutChangeEvent } from "r
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
-import { Menu } from "../src/components/ui/Menu";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { RuntimeModeChoice } from "../src/features/threads/thread-settings-options";
 import type { ModelOption, ProviderGroup } from "../src/lib/modelOptions";
-import {
-  flatGlassPalette,
-  NO3Y_CONTROL_SIZE,
-  NO3Y_FONT,
-  type FlatGlassPalette,
-} from "./flatGlassTheme";
+import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { effortLevelAt, effortStopX } from "./effortSlider";
 import { HugeIcon } from "./HugeIcon";
 import { No3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
-import { No3yGlassLayer } from "./No3yGlass";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { no3ySheetBackground } from "./no3ySheet";
 
 /** iPhone gets this picker in a half sheet; iPad and Android keep the full thread settings sheet. */
@@ -337,67 +331,48 @@ export function No3yModelPicker(props: {
           icon={Cancel01Icon}
           onPress={close}
         />
-        <Menu
+        <No3yGlassMenuButton
+          palette={palette}
           title="Show models from"
+          accessibilityLabel={`Showing ${choiceLabel}. Choose favorites or a provider`}
           actions={choices.map((candidate) => ({
             id: candidate.id,
             title: candidate.label,
             state: candidate.id === choice ? ("on" as const) : ("off" as const),
           }))}
-          onPressAction={({ nativeEvent }) => setChoice(nativeEvent.event)}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Showing ${choiceLabel}. Choose favorites or a provider`}
-            style={{
-              height: NO3Y_CONTROL_SIZE,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-              paddingLeft: 16,
-              paddingRight: 12,
-              borderRadius: NO3Y_CONTROL_SIZE / 2,
-            }}
-          >
-            <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
-            {choiceDriver ? <No3yProviderMark provider={choiceDriver} size={16} /> : null}
-            <Text
-              numberOfLines={1}
-              style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
-            >
-              {choiceLabel}
-            </Text>
-            <HugeIcon icon={ArrowDown01Icon} size={14} color={palette.quietInk} />
-          </Pressable>
-        </Menu>
+          onPressAction={setChoice}
+          label={
+            <>
+              {choiceDriver ? <No3yProviderMark provider={choiceDriver} size={16} /> : null}
+              <Text
+                numberOfLines={1}
+                style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+              >
+                {choiceLabel}
+              </Text>
+              <HugeIcon icon={ArrowDown01Icon} size={14} color={palette.quietInk} />
+            </>
+          }
+        />
         <View style={{ flex: 1 }} />
         <No3yAccessMenu
           runtimeMode={session.runtimeMode}
           choices={session.runtimeModeChoices}
           onSelect={session.onUpdateRuntimeMode}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Access: ${accessLabel}. Choose access`}
-            style={{
-              height: NO3Y_CONTROL_SIZE,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-              paddingHorizontal: 14,
-              borderRadius: NO3Y_CONTROL_SIZE / 2,
-            }}
-          >
-            <No3yGlassLayer radius={NO3Y_CONTROL_SIZE / 2} />
-            <No3yAccessIcon mode={session.runtimeMode} size={16} color={palette.foreground} />
-            <Text
-              numberOfLines={1}
-              style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
-            >
-              {accessLabel}
-            </Text>
-          </Pressable>
-        </No3yAccessMenu>
+          palette={palette}
+          accessibilityLabel={`Access: ${accessLabel}. Choose access`}
+          label={
+            <>
+              <No3yAccessIcon mode={session.runtimeMode} size={16} color={palette.foreground} />
+              <Text
+                numberOfLines={1}
+                style={{ ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground }}
+              >
+                {accessLabel}
+              </Text>
+            </>
+          }
+        />
       </View>
       <ScrollView
         style={{ flex: 1 }}

@@ -11,9 +11,10 @@ import type { RuntimeMode } from "@t3tools/contracts";
 import type { ReactNode } from "react";
 
 import * as Dialog from "../src/components/ui/Dialog";
-import { Menu } from "../src/components/ui/Menu";
 import type { RuntimeModeChoice } from "../src/features/threads/thread-settings-options";
+import type { FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 
 /**
  * The Mac's access icons (runtimeModeConfig.ts through lucide-hugeicons.tsx) with its weights:
@@ -40,15 +41,20 @@ export function No3yAccessIcon(props: {
   );
 }
 
-/** A native menu of the runtime modes around `children`, the trigger. */
+/** The runtime modes' menu on a glass capsule showing `label`, morphing out of it on iOS 26. */
 export function No3yAccessMenu(props: {
   readonly runtimeMode: RuntimeMode;
   readonly choices: ReadonlyArray<RuntimeModeChoice>;
   readonly onSelect: (mode: RuntimeMode) => void;
-  readonly children: ReactNode;
+  readonly palette: FlatGlassPalette;
+  readonly accessibilityLabel: string;
+  readonly label: ReactNode;
 }) {
   return (
-    <Menu
+    <No3yGlassMenuButton
+      palette={props.palette}
+      accessibilityLabel={props.accessibilityLabel}
+      label={props.label}
       title="Access"
       actions={props.choices.map((choice) => ({
         id: choice.mode,
@@ -57,8 +63,8 @@ export function No3yAccessMenu(props: {
         state: choice.mode === props.runtimeMode ? ("on" as const) : ("off" as const),
         attributes: { disabled: choice.disabledReason !== undefined },
       }))}
-      onPressAction={({ nativeEvent }) => {
-        const choice = props.choices.find((candidate) => candidate.mode === nativeEvent.event);
+      onPressAction={(id) => {
+        const choice = props.choices.find((candidate) => candidate.mode === id);
         if (!choice) return;
         if (choice.disabledReason) {
           Dialog.alert(choice.label, choice.disabledReason);
@@ -66,8 +72,6 @@ export function No3yAccessMenu(props: {
         }
         props.onSelect(choice.mode);
       }}
-    >
-      {props.children}
-    </Menu>
+    />
   );
 }

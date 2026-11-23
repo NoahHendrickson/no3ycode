@@ -32,7 +32,9 @@ import { NativeStackScreenOptions } from "../src/native/StackHeader";
 import { useServerConfigs } from "../src/state/entities";
 import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../src/native/native-glass";
 import { No3yGlassLayer } from "./No3yGlass";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { claimNo3yKeyboard } from "./no3yKeyboardOwner";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
@@ -504,25 +506,38 @@ export function No3yThreadHeader(props: {
                 <No3yUsageRing palette={palette} remainingPercent={remaining} />
               )}
             </Pressable>
-            <Menu
-              accessibilityLabel={menu.title}
-              actions={menuActions(menu.items)}
-              onPressAction={({ nativeEvent }) => findMenuItem(menu.items, nativeEvent.event)?.()}
-            >
-              <View
-                accessibilityRole="button"
+            {NATIVE_LIQUID_GLASS_SUPPORTED ? null : (
+              <Menu
                 accessibilityLabel={menu.title}
-                style={{
-                  width: BUBBLE,
-                  height: BUBBLE,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                actions={menuActions(menu.items)}
+                onPressAction={({ nativeEvent }) => findMenuItem(menu.items, nativeEvent.event)?.()}
               >
-                <HugeIcon icon={MoreHorizontalIcon} size={20} color={palette.foreground} />
-              </View>
-            </Menu>
+                <View
+                  accessibilityRole="button"
+                  accessibilityLabel={menu.title}
+                  style={{
+                    width: BUBBLE,
+                    height: BUBBLE,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <HugeIcon icon={MoreHorizontalIcon} size={20} color={palette.foreground} />
+                </View>
+              </Menu>
+            )}
           </View>
+          {/* On iOS 26 the ⋯ is its own glass bubble, so its menu morphs out of it. */}
+          {NATIVE_LIQUID_GLASS_SUPPORTED ? (
+            <No3yGlassMenuButton
+              palette={palette}
+              accessibilityLabel={menu.title}
+              icon={MoreHorizontalIcon}
+              filled={false}
+              actions={menuActions(menu.items)}
+              onPressAction={(id) => findMenuItem(menu.items, id)?.()}
+            />
+          ) : null}
         </View>
       </View>
     </>

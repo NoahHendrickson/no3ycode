@@ -7967,9 +7967,13 @@
     it, fork/no3yWorkspaceTabs.ts) and keeps a bottom tray above the dock: a glass search pill, a
     filter button and a sort button whose menus, on iOS 26, morph out of the
     glass button and collapse back into it (fork/No3yGlassMenuButton.tsx: a
-    SwiftUI Menu with the glass button style through @expo/ui, its items
-    mapped from the same menu actions by fork/No3yMenuItems.tsx; earlier iOS
-    keeps the RN glass button under the UIMenu) (fork/No3yThreadsFilterBar.tsx; upstream
+    SwiftUI Menu with the glass button style through @expo/ui, a circle or a
+    capsule, its RN label sized to its content so SwiftUI centres it, its
+    items mapped from the same menu actions by fork/No3yMenuItems.tsx; earlier
+    iOS keeps the RN glass button under the UIMenu; the thread header's ⋯
+    becomes its own glass bubble beside the usage one for it, and the
+    Automations filter and the model sheet's Favorites/provider and Access
+    menus use it too) (fork/No3yThreadsFilterBar.tsx; upstream
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
     listing rule, fork/forkBots.ts) sit above the status sections under
     "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
