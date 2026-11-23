@@ -146,7 +146,7 @@ import { workspaceDetailRouter } from "./features/layout/workspace/workspace-det
 import { No3yBottomNavHost } from "../fork/No3yBottomNav";
 import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";
 import { isNo3yChatDraftRoute } from "../fork/no3yChat";
-import { no3yDockScreenOptions } from "../fork/no3yDockMove";
+import { no3yDockScreenOptions, registerNo3ySheetRoutes } from "../fork/no3yDockMove";
 import { NO3Y_MODEL_SHEET } from "../fork/No3yModelPicker";
 import { No3yUsageSheet } from "../fork/No3yUsageSheet";
 import { No3yStatusSheet } from "../fork/No3yStatusSheet";
@@ -830,6 +830,16 @@ registerPresentedRoutes(
     return options && typeof options === "object" && isPresentedRoute(options) ? [name] : [];
   }),
 );
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+registerNo3ySheetRoutes(
+  Object.entries(RootStackConfig.config.screens ?? {}).flatMap(([name, screen]) => {
+    const options = (screen as { readonly options?: { readonly presentation?: unknown } }).options;
+    return options && typeof options === "object" && options.presentation === "formSheet"
+      ? [name]
+      : [];
+  }),
+);
+/* fork:end no3y-mobile-redesign */
 
 export const RootStack = RootStackConfig.with(function AdaptiveRootStack({ Navigator }) {
   const { width, height } = useWindowDimensions();

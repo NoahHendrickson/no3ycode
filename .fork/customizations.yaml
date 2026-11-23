@@ -7927,7 +7927,10 @@
     (fork/No3yGlass.tsx: liquid glass, or the app's blur backdrop where it is
     unavailable) at 44pt, and 40pt inside the composer card. A dock of four filled Hugeicons items (Threads, New
     agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
-    on the workspace screens and New agent and hides inside a thread. A dock
+    on the workspace screens and New agent and hides inside a thread; a sheet
+    over those screens never hides it (it reads the routes beneath formSheets,
+    which cover it natively; hiding it only brought it back late, once the
+    sheet's route left the stack after its dismissal). A dock
     switch is a plain swap: the press marks it and the root stack runs it
     without the native push or pop (fork/no3yDockMove.ts), and nothing fades
     in: a fade there once hid the composer's glass (expo-glass-effect installs
@@ -8150,6 +8153,7 @@
     - apps/mobile/fork/no3yWorkspaceTabs.ts
     - apps/mobile/fork/no3yMotion.ts
     - apps/mobile/fork/no3yDockMove.ts
+    - apps/mobile/fork/no3yDockMove.test.ts
     - apps/mobile/fork/no3yUsageCompact.test.ts
     - apps/mobile/fork/No3yProviderMark.tsx
     - apps/mobile/fork/assets/codex-mark.png
@@ -8215,3 +8219,4 @@
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/no3yProjectTiles.test.ts
     - apps/mobile/fork/forkBots.test.ts
+    - apps/mobile/fork/no3yDockMove.test.ts

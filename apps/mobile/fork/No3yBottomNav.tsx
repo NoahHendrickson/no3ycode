@@ -39,7 +39,7 @@ import {
 import { isNo3yChatThread } from "./no3yChatRule";
 import { useNo3ySentChats } from "./no3yChatTagging";
 import { selectNo3yWorkspaceTab } from "./no3yWorkspaceTabs";
-import { markNo3yDockSwitch } from "./no3yDockMove";
+import { markNo3yDockSwitch, no3yRoutesUnderSheets } from "./no3yDockMove";
 import { NO3Y_GLASS_RISE_IN } from "./no3yMotion";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
@@ -323,7 +323,8 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const serverConfigs = useServerConfigs();
   const [peekItem, setPeekItem] = useState<No3yNavItemId | null>(null);
 
-  const visibleRoutes = props.state.routes.slice(0, props.state.index + 1);
+  // Sheets never hide the dock: it reads the routes beneath them.
+  const visibleRoutes = no3yRoutesUnderSheets(props.state.routes.slice(0, props.state.index + 1));
   const topRoute = visibleRoutes.at(-1);
   const isOverlay = topRoute !== undefined && isWorkspaceOverlayRoute(topRoute.name);
   const visible =
