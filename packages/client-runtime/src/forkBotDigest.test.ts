@@ -11,7 +11,7 @@ import {
   parseBotDigestStatus,
   quoteBotDigestAsk,
   splitBotDigestAsk,
-} from "./botDigestSections";
+} from "./forkBotDigest.ts";
 
 describe("parseBotDigest", () => {
   it("keeps the sections with something in them, as plain lines", () => {

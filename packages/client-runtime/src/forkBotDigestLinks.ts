@@ -3,12 +3,12 @@
  * `.fork/customizations.yaml#fork-bot-digest`: each linked thread, and each pull request the line
  * names or a linked thread has, with the thread it belongs to and what is known of its state.
  */
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
+import type { EnvironmentThreadShell } from "./state/models.ts";
+import { sourceControlClients } from "./sourceControlClients.ts";
 import {
   resolveThreadCurrentPullRequestLink,
   visibleThreadPullRequests,
-} from "@t3tools/client-runtime/thread-pull-requests";
+} from "./threadPullRequests.ts";
 import type {
   EnvironmentId,
   ThreadLinkedPullRequest,
@@ -16,7 +16,7 @@ import type {
 } from "@t3tools/contracts";
 import { type ThreadLink, threadLinkCandidates } from "@t3tools/shared/threadLinks";
 
-import type { BotDigestItem } from "./botDigestSections";
+import type { BotDigestItem } from "./forkBotDigest.ts";
 
 export interface BotPullRequest {
   readonly url: string;

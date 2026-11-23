@@ -1,10 +1,10 @@
 /**
  * A bot's digest — see `.fork/customizations.yaml#fork-bot-digest`. The bot keeps DIGEST.md in its
- * folder (a Status line, then Needs you, New, In progress); the Threads panel shows the status and
- * its sections with something in them, one line per item, with the threads and pull requests the
+ * folder (a Status line, then Needs you, New, In progress). Shared by the Mac (custom/bots/BotDigest)
+ * and iOS (fork/No3yBotDigest): one plain line per item, with the threads and pull requests the
  * line links and the answers an ask offers.
  */
-import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
+import { sourceControlClients } from "./sourceControlClients.ts";
 import type {
   MessageId,
   OrchestrationV2ConversationMessage,

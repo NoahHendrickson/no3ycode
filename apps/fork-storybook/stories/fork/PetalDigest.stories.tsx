@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { EnvironmentId, type PullRequestState, ThreadId } from "@t3tools/contracts";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import {
@@ -10,9 +10,9 @@ import {
   BotDigestView,
 } from "~/custom/bots/BotDigest";
 import { BotDigestLinkRow } from "~/custom/bots/BotDigestItem";
-import type { BotDigestLinks } from "~/custom/bots/botDigestItemLinks";
-
 import { Stack } from "../Specimen.tsx";
+
+type BotDigestLinks = ComponentProps<typeof BotDigestLinkRow>["links"];
 
 type PullRequestKind = PullRequestState | "draft";
 

@@ -29,7 +29,7 @@ import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
-import { botThreadPullRequest } from "./botDigestItemLinks";
+import { botThreadPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
 import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";

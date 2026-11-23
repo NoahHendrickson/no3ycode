@@ -44,8 +44,8 @@ import {
   parseBotDigestStatus,
   quoteBotDigestAsk,
   splitBotDigestAsk,
-} from "./botDigestSections";
-import type { BotPullRequest } from "./botDigestItemLinks";
+} from "@t3tools/client-runtime/fork-bot-digest";
+import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
 import { useBotPullRequestState } from "./BotPullRequestMark";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";

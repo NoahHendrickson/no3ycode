@@ -1,9 +1,9 @@
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import type { EnvironmentThreadShell } from "./state/models.ts";
 import { EnvironmentId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveBotDigestLinks, waitingQuestionThread } from "./botDigestItemLinks";
-import { parseBotDigest } from "./botDigestSections";
+import { resolveBotDigestLinks, waitingQuestionThread } from "./forkBotDigestLinks.ts";
+import { parseBotDigest } from "./forkBotDigest.ts";
 
 const environmentId = EnvironmentId.make("env-1");
 const SNAPSHOT = { state: "open", title: "Fix billing", isDraft: true };
