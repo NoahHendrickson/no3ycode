@@ -976,7 +976,10 @@
     :is(
       :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
         :is(button, [data-slot="button"], [data-fork-context-chip]),
-      [data-fork-tab-trigger]:not([data-chat-provider-model-picker]),
+      [data-fork-tab-trigger]:not(
+        [data-chat-provider-model-picker],
+        [data-fork-composer-usage-limits]
+      ),
       [data-fork-panel-toggle] > button
     ) {
     transition-property: background-color, color, border-radius, box-shadow, scale;

@@ -1,148 +1,92 @@
 /**
- * Circular quota ring trigger + upward-opening inline usage tray above the
- * composer — see `.fork/customizations.yaml#fork-composer-usage-limits`.
+ * The selected provider's session quota as a ring in the composer's control row, opening every
+ * provider's limits as a menu, and the composer's top drawer for background work — see
+ * `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
-import {
-  collectLimitAccounts,
-  collectLimitPools,
-  displayLimitWindows,
-  type LimitPool,
-  type LimitPoolWindow,
-  remainingPercent,
-} from "@t3tools/shared/usageLimits";
-import {
-  collectExternalUsageLinks,
-  cursorUsageWindowDetails,
-  formatResetsIn,
-} from "@t3tools/shared/usageLimitsCopy";
-import { m } from "~/i18n/messages";
-import { AlertTriangleIcon, ExternalLinkIcon } from "lucide-react";
-import { Fragment, memo, type ReactNode, type RefObject, useRef, useState } from "react";
+import { remainingPercent } from "@t3tools/shared/usageLimits";
+import { memo, type ReactNode, useState } from "react";
 
-import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
-import { providerClients } from "~/components/settings/providerDriverMeta";
+import { UsageLimitsPooled } from "~/components/usage/UsageLimitsPooled";
 import { Collapsible, CollapsiblePanel } from "~/components/ui/collapsible";
-import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import { ensureLocalApi } from "~/localApi";
+import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { environmentPresentations } from "~/state/presentation";
 import type { ComposerDrawerSection } from "./ComposerBackgroundWork";
-import { XIcon } from "./icons/lucide-hugeicons";
-import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
-import { actionableLimitNotices } from "./usageLimitNotices";
 import { UsageCircleMeter } from "./UsageMeter";
 
-const FIVE_HOURS_MINS = 300;
-const SEVEN_DAYS_MINS = 7 * 24 * 60;
-
-/** Owns the composer's top drawer: the usage tray's open/clock state and focus restoration, with
-    the background-work section (owned by ChatView) stacked above it while that is open. */
-export function useComposerUsageDrawer(props: {
+/** The composer's usage ring, and its top drawer holding the background-work section (owned by ChatView). */
+export function composerUsageDrawer(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
   readonly enabled: boolean;
   readonly backgroundWork: ComposerDrawerSection | null;
 }) {
-  const [openedAt, setOpenedAt] = useState<number | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const open = props.enabled && openedAt !== null;
   const work = props.backgroundWork;
-  const workOpen = work?.open === true;
-  const drawerOpen = open || workOpen;
-  // The panel keeps its children through the close slide, so a closed drawer keeps the sections it
-  // last showed. Work that has ended has nothing left to show, so it leaves at once.
-  const [lastShown, setLastShown] = useState({ work: false, usage: false });
-  if (drawerOpen && (lastShown.work !== workOpen || lastShown.usage !== open)) {
-    setLastShown({ work: workOpen, usage: open });
-  }
-  const shown = drawerOpen ? { work: workOpen, usage: open } : lastShown;
-
-  const toggle = () => {
-    setOpenedAt((current) => (current === null ? Date.now() : null));
-  };
-
-  const close = (restoreFocus = false) => {
-    setOpenedAt(null);
-    if (restoreFocus) {
-      triggerRef.current?.focus();
-    }
-  };
-
   return {
-    readout: props.enabled ? (
-      <ComposerUsageLimitsReadout
-        triggerRef={triggerRef}
-        usageLimits={props.usageLimits}
-        open={open}
-        onToggle={toggle}
-        onClose={() => close(false)}
-      />
-    ) : null,
+    readout: props.enabled ? <ComposerUsageLimitsReadout usageLimits={props.usageLimits} /> : null,
     drawer:
-      props.enabled || work !== null ? (
-        <ComposerUsageLimitsDrawer
-          open={drawerOpen}
-          // Escape closes every section and returns focus to one trigger, the ring when usage was open.
-          onClose={() => {
-            if (work?.open) work.onCollapse(!open);
-            if (open) close(true);
-          }}
-        >
-          {shown.work && work !== null ? work.content : null}
-          {shown.work && work !== null && shown.usage ? (
-            <div aria-hidden className="h-px shrink-0 bg-border" />
-          ) : null}
-          {shown.usage && props.enabled ? (
-            <ComposerLimitsTray now={openedAt ?? 0} onClose={() => close(true)} />
-          ) : null}
+      work !== null ? (
+        <ComposerUsageLimitsDrawer open={work.open} onClose={() => work.onCollapse(true)}>
+          {work.content}
         </ComposerUsageLimitsDrawer>
       ) : null,
   };
 }
 
-/** @public — the ring trigger, from plain props; Storybook draws it beside an open drawer. */
-export const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout({
-  triggerRef,
-  usageLimits,
-  open,
-  onToggle,
-  onClose,
-}: {
-  readonly triggerRef?: RefObject<HTMLButtonElement | null>;
+const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
-  readonly open: boolean;
-  readonly onToggle: () => void;
-  readonly onClose?: () => void;
 }) {
-  const session = usageLimits?.windows.find((window) => window.kind === "session");
+  // The menu's clock advances on open rather than ticking while it shows.
+  const [openedAt, setOpenedAt] = useState(() => Date.now());
+  const session = props.usageLimits?.windows.find((window) => window.kind === "session");
   if (!session) return null;
   const remaining = remainingPercent(session);
   return (
-    <button
-      ref={triggerRef}
-      type="button"
-      data-fork-composer-usage-limits="true"
-      aria-expanded={open}
-      data-pressed={open ? "" : undefined}
-      aria-label={`${session.label} limit: ${remaining}% left. ${open ? "Hide" : "Show"} usage limits`}
-      className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-      onClick={onToggle}
-      onKeyDown={(event) => {
-        if (open && event.key === "Escape") {
-          event.stopPropagation();
-          onClose?.();
-        }
+    <Popover
+      onOpenChange={(open) => {
+        if (open) setOpenedAt(Date.now());
       }}
     >
-      <UsageCircleMeter remaining={remaining} />
-    </button>
+      <PopoverTrigger
+        data-fork-composer-usage-limits="true"
+        // Inlet hangs the menu from this button (theme.custom.inlet-menus.css).
+        data-fork-tab-trigger=""
+        aria-label={`${session.label} limit: ${remaining}% left. Show usage limits`}
+        className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      >
+        <UsageCircleMeter remaining={remaining} />
+      </PopoverTrigger>
+      <PopoverPopup
+        side="top"
+        align="end"
+        sideOffset={8}
+        width="sm"
+        padding="none"
+        data-fork-tab-menu="composer"
+      >
+        <ComposerLimitsMenu now={openedAt} />
+      </PopoverPopup>
+    </Popover>
   );
 });
 
-/** Single-line vessel strip anchored above the composer (zero shift). It slides up out of the
+/** Mounted only while the menu is open, so the composer never subscribes to every environment's providers. */
+function ComposerLimitsMenu(props: { readonly now: number }) {
+  const presentations = useAtomValue(environmentPresentations.presentationsWithProvidersAtom);
+  return (
+    <div
+      data-fork-usage-scroller=""
+      className="max-h-[min(28rem,calc(var(--available-height)-1rem))] overflow-y-auto py-1"
+    >
+      <UsageLimitsPooled presentations={presentations} now={props.now} compact />
+    </div>
+  );
+}
+
+/** The strip anchored above the composer (zero shift). It slides up out of the
     vessel's top edge, clipped there, on translate alone: a height tween relaid it out every frame.
-    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). Its tray is
-    `children`, mounted only while the panel is open. @public — Storybook fills it with the view. */
+    The Liquid Glass draft's native card follows the slide (forkDraftLiquidGlass). @public —
+    Storybook fills it with the background-work view. */
 export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer(props: {
   readonly open: boolean;
   readonly onClose: () => void;
@@ -166,237 +110,3 @@ export const ComposerUsageLimitsDrawer = memo(function ComposerUsageLimitsDrawer
     </Collapsible>
   );
 });
-
-/** Full descriptive label for tooltips and accessible text. */
-function fullWindowLabel(pool: LimitPool, window: LimitPoolWindow): string {
-  const details =
-    pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
-  return (details?.label ?? window.label).replaceAll(" · ", " ");
-}
-
-/** Reported duration in minutes when every member in the pool agrees on one duration. */
-function uniformWindowDurationMins(window: LimitPoolWindow): number | null {
-  let shared: number | null = null;
-  for (const member of window.members) {
-    // Weekly suppression clears member.window.windowDurationMins; recover the account's original duration.
-    const mins =
-      member.window.windowDurationMins ??
-      member.account.limits.windows.find(
-        (candidate) => candidate.id === member.window.id && candidate.kind === member.window.kind,
-      )?.windowDurationMins;
-    if (mins === undefined) return null;
-    if (shared === null) shared = mins;
-    else if (shared !== mins) return null;
-  }
-  return shared;
-}
-
-/** Compact inline label (`5hr`, `7d`) derived from typed window metadata, falling back to the provider label. */
-export function compactWindowLabel(pool: LimitPool, window: LimitPoolWindow): string {
-  if (pool.driver === "cursor") return fullWindowLabel(pool, window);
-  const durationMins = uniformWindowDurationMins(window);
-  if (
-    durationMins === FIVE_HOURS_MINS &&
-    (pool.driver !== "antigravity" || window.id === "five_hour")
-  ) {
-    return "5hr";
-  }
-  if (
-    window.id === "seven_day" ||
-    (durationMins === SEVEN_DAYS_MINS &&
-      window.kind === "weekly" &&
-      pool.driver !== "claudeAgent" &&
-      pool.driver !== "antigravity")
-  ) {
-    return "7d";
-  }
-  return fullWindowLabel(pool, window);
-}
-
-/** Windows shown in the compact composer strip (omits Claude's Fable weekly breakdown by id). */
-export function compactTrayWindows(pool: LimitPool): readonly LimitPoolWindow[] {
-  const windows = displayLimitWindows(pool);
-  if (pool.driver !== "claudeAgent") return windows;
-  return windows.filter((window) => window.id !== "seven_day_fable");
-}
-
-/** Mounted only while the strip is open, so the composer never subscribes to every environment's providers. */
-function ComposerLimitsTray(props: { readonly now: number; readonly onClose: () => void }) {
-  const presentations = useAtomValue(environmentPresentations.presentationsWithProvidersAtom);
-  return (
-    <ComposerLimitsTrayView
-      pools={collectLimitPools(collectLimitAccounts(presentations), props.now)}
-      notices={actionableLimitNotices(presentations)}
-      externalLinks={collectExternalUsageLinks(presentations, m)}
-      now={props.now}
-      onClose={props.onClose}
-    />
-  );
-}
-
-export interface ComposerLimitsTrayViewProps {
-  readonly pools: readonly LimitPool[];
-  readonly notices: readonly string[];
-  readonly externalLinks: ReadonlyArray<
-    Pick<ReturnType<typeof collectExternalUsageLinks>[number], "label" | "url">
-  >;
-  readonly now: number;
-  readonly onClose: () => void;
-}
-
-/** @public — the strip as drawn, from plain data; Storybook renders it on its own. */
-export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
-  const { pools, notices, externalLinks } = props;
-  const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
-
-  // 8px at the end, so the close X lines up with a composer banner's dismiss X below it.
-  return (
-    <div className="flex min-w-0 items-center gap-2 py-3 ps-3 pe-2">
-      {!hasContent ? (
-        <span className="text-xs text-muted-foreground">
-          No provider reports subscription limits.
-        </span>
-      ) : (
-        <TooltipProvider delay={120} closeDelay={0}>
-          <div
-            data-fork-usage-scroller=""
-            className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {pools.map((pool, index) => (
-              <Fragment key={pool.driver}>
-                {index > 0 ? (
-                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-                ) : null}
-                <CompactProviderStrip pool={pool} now={props.now} />
-              </Fragment>
-            ))}
-            {externalLinks.map((link, index) => (
-              <Fragment key={link.url}>
-                {pools.length > 0 || index > 0 ? (
-                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-                ) : null}
-                <button
-                  type="button"
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-xs text-xs text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                  onClick={() => void ensureLocalApi().shell.openExternal(link.url)}
-                >
-                  <span>{link.label}</span>
-                  <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />
-                </button>
-              </Fragment>
-            ))}
-            {notices.length > 0 ? (
-              <>
-                {pools.length > 0 || externalLinks.length > 0 ? (
-                  <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-                ) : null}
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        data-fork-usage-notices="true"
-                        aria-label={`Usage warnings: ${notices.join(" ")}`}
-                        className="inline-flex min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-xs text-xs text-amber-600 dark:text-amber-400 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                      >
-                        <AlertTriangleIcon className="size-3.5 shrink-0" aria-hidden="true" />
-                        <span className="max-w-56 truncate">
-                          {pools.length === 0
-                            ? notices[0]
-                            : notices.length === 1
-                              ? "1 issue"
-                              : `${notices.length} issues`}
-                        </span>
-                      </button>
-                    }
-                  />
-                  <TooltipPopup side="top" className="max-w-xs space-y-1 text-left">
-                    {notices.map((notice) => (
-                      <div key={notice} className="break-words">
-                        {notice}
-                      </div>
-                    ))}
-                  </TooltipPopup>
-                </Tooltip>
-              </>
-            ) : null}
-          </div>
-        </TooltipProvider>
-      )}
-      <button
-        type="button"
-        aria-label="Close usage limits"
-        className="ml-auto inline-flex size-6 shrink-0 self-start cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-        onClick={props.onClose}
-      >
-        <XIcon className="size-4" aria-hidden="true" />
-      </button>
-    </div>
-  );
-}
-
-function CompactProviderStrip(props: { readonly pool: LimitPool; readonly now: number }) {
-  const { pool, now } = props;
-  const providerLabel = providerClients.get(pool.driver)?.label ?? pool.driver;
-  const windows = compactTrayWindows(pool);
-
-  return (
-    <div className="flex shrink-0 flex-col gap-1.5">
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
-        <span
-          aria-hidden
-          className={
-            pool.driver === "claudeAgent"
-              ? "inline-flex size-4 shrink-0 translate-y-px items-center justify-center [--fork-mark-size:14px]"
-              : "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]"
-          }
-        >
-          {hasForkProviderMark(pool.driver) ? (
-            <ForkProviderMark driver={pool.driver} />
-          ) : (
-            <ProviderInstanceIcon
-              driverKind={pool.driver}
-              displayName={providerLabel}
-              indicatorBackground="var(--card)"
-              className="size-4"
-              iconClassName="size-3.5 text-foreground/80"
-            />
-          )}
-        </span>
-        <span className="whitespace-nowrap">{providerLabel}</span>
-      </span>
-      <div className="flex shrink-0 items-center gap-2.5">
-        {windows.map((window) => {
-          const nextRefill = window.resets.find((reset) => reset.restoresPercent > 0);
-          const nextReset = nextRefill ?? window.resets[0];
-          const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m) : null;
-          const fullLabel = fullWindowLabel(pool, window);
-          const shortLabel = compactWindowLabel(pool, window);
-          const accessibleLabel = `${providerLabel} ${fullLabel}: ${window.remainingPercent}% left${resetsIn ? `, ${resetsIn}` : ""}`;
-          return (
-            <Tooltip key={`${window.kind}:${window.id}`}>
-              <TooltipTrigger
-                render={
-                  <span
-                    tabIndex={0}
-                    role="group"
-                    aria-label={accessibleLabel}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                  >
-                    <UsageCircleMeter remaining={window.remainingPercent} />
-                    <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
-                      {shortLabel}
-                    </span>
-                  </span>
-                }
-              />
-              <TooltipPopup side="top" className="tabular-nums">
-                {`${fullLabel}: ${window.remainingPercent}% left${resetsIn ? ` · ${resetsIn}` : ""}`}
-              </TooltipPopup>
-            </Tooltip>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

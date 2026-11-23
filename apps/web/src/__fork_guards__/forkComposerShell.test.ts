@@ -844,10 +844,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(work).toContain("StopSquareIcon");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
     expect(work).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
-    // One drawer surface: the work section stacks above the usage tray, so every theme's
-    // drawer paint and the Liquid Glass card cover both.
+    // The top drawer holds the work section, so every theme's drawer paint and the Liquid Glass
+    // card cover it.
     expect(usage).toContain("readonly backgroundWork: ComposerDrawerSection | null;");
-    expect(usage).toContain("open={drawerOpen}");
+    expect(usage).toContain("open={work.open}");
     expect(usage).toContain("work.content");
     expect(composer).toContain("backgroundWork: props.backgroundWork ?? null,");
     expect(chatView).toContain("useComposerBackgroundWork(");

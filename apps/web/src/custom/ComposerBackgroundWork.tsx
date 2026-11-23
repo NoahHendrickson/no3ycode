@@ -13,7 +13,7 @@ import { ChevronDownIcon, ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
 
-/** The work section ChatComposer stacks into its top drawer, above the usage tray. */
+/** The work section ChatComposer shows in its top drawer. */
 export interface ComposerDrawerSection {
   readonly open: boolean;
   readonly content: ReactNode;

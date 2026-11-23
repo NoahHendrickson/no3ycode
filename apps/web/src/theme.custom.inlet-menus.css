@@ -414,7 +414,10 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
+  :is(
+    [data-chat-provider-model-picker],
+    [data-fork-composer-usage-limits]
+  )[data-fork-tab-trigger][aria-expanded="true"]:not(:disabled) {
   /* Outranks theme.custom.css's hover / open wash on the composer's controls.
      The model menu's shell is what hangs. */
   background: var(--fork-inlet-model-shell);
@@ -844,12 +847,15 @@
   }
 }
 
-/* The model button, which the menu hangs from, eases its fill from the
-   composer's control wash. */
+/* The usage ring and the model button, which the menus hang from, ease their
+   fills from the composer's control wash. */
 
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-    [data-chat-provider-model-picker][data-fork-tab-trigger] {
+    :is(
+      [data-chat-provider-model-picker],
+      [data-fork-composer-usage-limits]
+    )[data-fork-tab-trigger] {
     transition:
       background-color 160ms ease-out,
       box-shadow 160ms ease-out;

@@ -208,7 +208,7 @@ import { modelPickerHoldsFocus } from "../../custom/modelPickerFocus";
 import { resolveModelPickerSelectedModel } from "./ModelPickerContent";
 /* fork:end fork-model-picker */
 /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-import { useComposerUsageDrawer } from "../../custom/ComposerUsageLimitsReadout";
+import { composerUsageDrawer } from "../../custom/ComposerUsageLimitsReadout";
 /* fork:end fork-composer-usage-limits */
 import {
   type ComposerCitationCommentRequest,
@@ -1148,7 +1148,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const [isDragOverComposer, setIsDragOverComposer] = useState(false);
   const [isComposerFooterCompact, setIsComposerFooterCompact] = useState(false);
   /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-  const usageDrawer = useComposerUsageDrawer({
+  const usageDrawer = composerUsageDrawer({
     usageLimits: selectedProviderStatus?.usageLimits,
     enabled: !isComposerFooterCompact,
     backgroundWork: props.backgroundWork ?? null,
