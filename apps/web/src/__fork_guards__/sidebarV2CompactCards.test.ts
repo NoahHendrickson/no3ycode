@@ -35,7 +35,10 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(sidebar).toContain("compactCards={compactCards}");
     // Slim shelf rows are already one line; they only take the pill.
     // Bots have their own toggle (fork-bots); every other card takes this one.
-    expect(sidebar).toMatch(/compact=\{[^}]*?options\.compact \?\?[^}]*?compactCards\s*\}/u);
+    // The Petals section's own view wins for its rows; every other row reads Compact cards.
+    expect(sidebar).toMatch(
+      /compact=\{[\s\S]*?options\.petalView === "compact"\) \?\?[\s\S]*?compactCards\s*\}/u,
+    );
   });
 
   it("swaps the repo line for marks on the title line", () => {
@@ -46,18 +49,20 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     // One line has no room for a mark nearly every thread carries.
     expect(marks).not.toContain("<SidebarV2CheckoutMark");
     expect(sidebar).toContain("<SidebarV2CompactCardLead project={props.project} />");
+    expect(marks).toMatch(
+      /return props\.project \? \(\s*<ProjectFavicon project=\{props\.project\} className="size-4" \/>\s*\) : \(\s*<SidebarV2ProjectFolderMark className="size-4 shrink-0 text-muted-foreground" \/>/u,
+    );
   });
 
   it("hints the drawn compact height", () => {
     const px = SIDEBAR_V2_CARD_ALIGNMENT_PX;
-    expect(sidebarV2CompactCardHeight()).toBe(px.cardPadY * 2 + px.titleLine);
+    expect(sidebarV2CompactCardHeight()).toBe(px.compactCardPadY * 2 + px.titleLine);
+    expect(sidebarV2CompactCardHeight()).toBe(32);
     expect(sidebar).toContain(`[contain-intrinsic-size:auto_${sidebarV2CompactCardHeight()}px]`);
   });
 
   it("gives a compact card a pill, not the shelf row's corner", () => {
-    expect(sidebar).toContain(
-      "shape: threadRowShape({ variant, compact: props.compact === true })",
-    );
+    expect(sidebar).toMatch(/threadRowShape\(\{ variant, compact: props\.compact === true \}\)/u);
   });
 
   it("names a worktree checkout in the hover card", () => {

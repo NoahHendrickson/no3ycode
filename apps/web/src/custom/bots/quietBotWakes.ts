@@ -17,6 +17,7 @@ function entryOwningRunId(entry: TimelineEntry): RunId | null {
       return entry.proposedPlan.runId;
     case "html-render":
     case "mcp-app":
+    case "sent-message":
       return entry.runId;
     case "work":
       return entry.entry.runId ?? null;

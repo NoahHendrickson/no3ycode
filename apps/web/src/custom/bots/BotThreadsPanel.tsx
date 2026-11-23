@@ -256,7 +256,6 @@ function BotThreadsList(props: {
           <section key={group.key} className="pt-3">
             <div className="flex h-7 items-center px-1.5">
               <SidebarV2SectionLabel
-                count={group.rows.length}
                 collapsed={collapsed}
                 onToggle={() => props.onToggle(group.key)}
                 testId={`bot-threads-group-${group.key}`}

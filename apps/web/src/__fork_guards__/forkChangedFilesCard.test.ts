@@ -44,29 +44,30 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(MARKER);
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
-    expect(card?.body).toMatch(/border-radius:\s*var\(--fork-composer-radius\)/u);
+    expect(card?.body).toMatch(/border-radius:\s*var\(--fork-card-radius\)/u);
+    expect(card?.body).toMatch(/--fork-card-radius:\s*var\(--fork-composer-radius\)/u);
     expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
   });
 
-  it("draws the file tree as the composer's outlined well under a loose header", () => {
-    // The rules hang off the header's following sibling divs: the tree's
-    // root wrapper (a fragment or another tag would drop the well) and the
+  it("draws the file tree under a loose header, parted by a rounded hairline", () => {
+    // The rules hang off the header's following sibling divs: the p-2 wrapper around the tree
+    // or its repository groups (a fragment or another tag would drop the well) and the
     // "N more files" footer.
-    expect(changedFiles).toMatch(/<\/div>\s*<ChangedFilesTree\b/u);
-    expect(changedFiles).toMatch(
-      /function ChangedFilesRows[\s\S]*?return \(\s*<div className="p-2">/u,
-    );
+    expect(changedFiles).toMatch(/<\/div>\s*<div className="p-2">\s*\{groups \?/u);
     expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
     const rules = cssRules(theme).map((rule) => ({
       ...rule,
       selector: rule.selector.replace(/\s+/gu, " "),
     }));
-    const fill = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div"));
-    expect(fill?.selector).toContain(MARKER);
-    expect(fill?.body).toMatch(/background:\s*var\(--fork-composer-bg\)/u);
+    // The tree under the header keeps the card's fill: no shared well fill (Basic paints its own).
+    expect(
+      rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div")),
+    ).toBeUndefined();
     const top = rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] + div"));
     expect(top?.body).toMatch(/box-shadow:\s*inset 0 1px 0 var\(--fork-composer-border\)/u);
-    // The shared rule rounds only the bottom, so Basic's rounded top has nothing to compete with.
+    // The tree's top corners round too, so its hairline curves into the card's sides.
+    expect(top?.body).toMatch(/border-top-left-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u);
+    // The bottom rule rounds only the bottom, so it never competes with that top.
     const bottom = rules.find((rule) =>
       rule.selector.endsWith("[data-changed-files-header] ~ div:last-child"),
     );
@@ -80,16 +81,8 @@ describe("fork guard: fork-changed-files-card", () => {
         rule.selector.endsWith('[data-fork-theme="basic"] [data-changed-files-header] ~ div'),
       )?.body,
     ).toMatch(/background:\s*var\(--basic-raised\)/u);
-    const basic = cssRules(readSibling("../theme.custom.basic.css")).find((rule) =>
-      rule.selector
-        .replace(/\s+/gu, " ")
-        .endsWith('[data-fork-theme="basic"] [data-changed-files-header] + div'),
-    );
-    expect(basic?.body).toMatch(
-      /border-top-left-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
-    );
-    expect(basic?.body).toMatch(
-      /border-top-right-radius:\s*calc\(var\(--fork-composer-radius\) - 1px\)/u,
+    expect(top?.body).toMatch(
+      /border-top-right-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u,
     );
   });
 

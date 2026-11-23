@@ -159,7 +159,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       "const draftProjectAssignmentPending = useDraftProjectAssignmentPending(draftId) !== null;",
     );
     expect(chatView).toMatch(
-      /sendDisabledReason=\{[\s\S]{0,1200}?draftProjectAssignmentPending\s*\?\s*"Preparing project"/u,
+      /sendDisabledReason=\{[\s\S]{0,1400}?draftProjectAssignmentPending\s*\?\s*(?:\/\*[^*]*\*\/\s*)?"Preparing project"/u,
     );
     const choices = readSibling("../custom/useDraftProjectChoices.ts");
     const pill = readSibling("../custom/DraftProjectPill.tsx");
@@ -224,7 +224,7 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(pill).not.toContain("rounded-full");
     // A pick that fails to resolve tells the user, rather than surfacing as
     // an unhandled rejection with the draft silently left where it was.
-    expect(choices).toMatch(/void assignDraftProject\(draftId, entry\)\.catch\(/u);
+    expect(choices).toMatch(/void assignDraftProject\(draftId, entry, options\)\.catch\(/u);
     expect(choices).toContain("toastManager.add({");
     // Same project list and member rule as the palette and the grouped header.
     expect(choices).toContain("buildSidebarProjectPickerEntries({");
@@ -265,7 +265,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       /\[data-draft-hero\]\s*\[data-chat-composer-inline-actions\]\s*\{[^}]*grid-area:\s*actions/u,
     );
     expect(css).toMatch(
-      /\[data-draft-hero\]\s*\[data-chat-composer-body="true"\]\s*\{[^}]*padding-block:\s*8px/u,
+      /\[data-draft-hero\]\s*\[data-chat-composer-body="true"\]\s*\{[^}]*padding:\s*10px 12px 12px/u,
     );
   });
 
@@ -282,10 +282,10 @@ describe("fork guard: fork-new-agent-draft", () => {
       'export const DRAFT_HERO_TRANSITION_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";',
     );
     expect(css).toMatch(
-      /\[data-chat-composer-body="true"\]\s*\{\s*transition:\s*padding-block 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
+      /\[data-chat-composer-body="true"\]\s*\{\s*transition:\s*padding 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
     );
     expect(css).toMatch(
-      /\[data-fork-composer-prompt\]\s*\{\s*min-height:\s*0;\s*transition:\s*min-height 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
+      /\[data-fork-composer-prompt\]\s*\{\s*min-height:\s*0;\s*transition:\s*min-height 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\),\s*padding-block 400ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u,
     );
     // The draft composer is capped at the drawn 42rem and eases back out.
     expect(chatView).toContain('data-fork-composer-stack="true"');

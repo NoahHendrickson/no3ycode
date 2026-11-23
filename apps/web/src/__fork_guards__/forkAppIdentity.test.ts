@@ -97,17 +97,11 @@ describe("fork guard: fork-app-identity", () => {
     expect(branding).not.toContain('?? "T3 Code"');
   });
 
-  it("shows that name in the sidebar rather than upstream's wordmark", () => {
+  it("keeps upstream's name and wordmark out of the sidebar", () => {
     const chrome = read("apps/web/src/components/sidebar/SidebarChrome.tsx");
-    // Figma 364:11245 draws the name as the pixel wordmark, not live type —
-    // APP_BASE_NAME still names the packaged app and the bridge-less fallback.
-    expect(chrome).toContain("SidebarBrandWordmark");
+    // The sidebar draws no brand at all now; APP_BASE_NAME still names the packaged app.
     expect(chrome).not.toContain("{APP_BASE_NAME}");
-    // The borrowed T3 glyph, which read as a mismatch beside a different name.
     expect(chrome).not.toContain("T3Wordmark");
-    // The brand survives the sidebar's minimum width by shrinking the link
-    // (min-w-0) rather than hiding the way upstream's wordmark link did.
-    expect(chrome).toMatch(/className="[^"]*\bsidebar-brand\b[^"]*\bmin-w-0\b/u);
   });
 
   it("keeps the release workflow on the fork's install name", () => {
@@ -388,9 +382,9 @@ describe("fork guard: fork-app-identity", () => {
 
   it("points SSH remotes at the upstream release the fork is synced to", () => {
     // The fork's own app version names no upstream release archive.
-    const main = read("apps/desktop/src/main.ts");
-    expect(main).toContain("return { archiveVersion: serverPackageJson.version };");
-    expect(main).not.toContain("archiveVersion: environment.appVersion");
+    const ssh = read("apps/desktop/src/ssh/DesktopSshEnvironment.ts");
+    expect(ssh).toContain("archiveVersion: serverPackageJson.version,");
+    expect(ssh).not.toContain("archiveVersion: environment.appVersion");
   });
 
   it("keeps the packaged compile cache out of upstream's cache directory", () => {

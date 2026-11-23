@@ -90,6 +90,7 @@ const EMPTY_DRAFT: DraftState = {
   savedRunAt: "",
   projectId: "",
   threadId: "",
+  savedThreadId: "",
   threadMode: "new_thread",
   workspaceMode: "worktree",
   baseRef: "main",

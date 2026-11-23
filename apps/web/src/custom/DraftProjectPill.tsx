@@ -54,7 +54,7 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
         data-testid="draft-project-pill"
         data-composer-context-control
       >
-        <FolderPlusIcon className="size-3 shrink-0" />
+        <FolderPlusIcon className="size-3 shrink-0 text-current" />
         <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
       </Button>
     );
@@ -105,7 +105,7 @@ function DraftProjectChip(props: {
         }
       >
         {selection.kind === "no-project" ? (
-          <MessageSquareDashedIcon className="size-3 shrink-0" />
+          <MessageSquareDashedIcon className="size-3 shrink-0 text-current" />
         ) : selection.kind === "project" && selection.entry ? (
           <ProjectFavicon
             project={selection.entry.targetProject}
@@ -113,7 +113,7 @@ function DraftProjectChip(props: {
             fallbackIcon={FolderIcon}
           />
         ) : (
-          <FolderIcon className="size-3 shrink-0" />
+          <FolderIcon className="size-3 shrink-0 text-current" />
         )}
         <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
       </MenuTrigger>

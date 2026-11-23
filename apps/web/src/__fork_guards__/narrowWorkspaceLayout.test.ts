@@ -139,7 +139,7 @@ describe("fork guard: narrow-workspace-layout", () => {
     expect(THREAD_SIDEBAR_WIDTH_STORAGE_KEY).toBe("chat_thread_sidebar_width");
     // The default is module-private since upstream #8400; a null stored width on
     // a wide viewport is the one path that surfaces it.
-    expect(resolveInitialThreadSidebarWidth(null, 10_000)).toBe(16 * 16);
+    expect(resolveInitialThreadSidebarWidth(null)).toBe(16 * 16);
     expect(THREAD_SIDEBAR_MIN_WIDTH).toBe(13 * 16);
   });
 
@@ -156,7 +156,7 @@ describe("fork guard: narrow-workspace-layout", () => {
 
   it("still defends the column against a sidebar drag", () => {
     expect(resolveThreadSidebarMaximumWidth(1200)).toBe(1200 - THREAD_MAIN_CONTENT_MIN_WIDTH);
-    expect(resolveInitialThreadSidebarWidth(560, 1200)).toBe(560);
+    expect(resolveInitialThreadSidebarWidth(560)).toBe(560);
     // Until the window is narrow enough that the sidebar's own 208px minimum
     // takes over — upstream behaviour the smaller minimum only pushes further
     // down.

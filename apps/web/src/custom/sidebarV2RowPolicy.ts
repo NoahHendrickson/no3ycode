@@ -29,6 +29,7 @@
  */
 import { cn } from "~/lib/utils";
 
+import type { SidebarV2CardTopStatus } from "./sidebarV2CardStatus";
 import type { SidebarV2StatusBucket } from "./sidebarV2StatusGrouping";
 
 /** Does a card's *title* step back?
@@ -67,6 +68,12 @@ export function threadCardTitleRecedes(input: {
   return input.isDone || input.isIdle;
 }
 
+/** A card's Done and Idle for `threadCardTitleRecedes`, read off the mark it draws: the
+    unread-done dot, or no mark at all. */
+export function threadCardRecedeStatus(status: SidebarV2CardTopStatus) {
+  return { isDone: status?.mark === "dot" && status.tone === "done", isIdle: status === null };
+}
+
 /** The surface every Sidebar V2 row shares.
  *
  * Surface encodes exactly one thing: interaction. A row is filled when you are
@@ -87,6 +94,8 @@ const THREAD_ROW_RADIUS = {
   card: "rounded-[16px]",
   shelf: "rounded-md",
   pill: "rounded-full",
+  // A bot's tile in the Petals grid (fork-bots).
+  tile: "rounded-[12px]",
 } as const;
 
 export type ThreadRowShape = keyof typeof THREAD_ROW_RADIUS;

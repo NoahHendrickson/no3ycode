@@ -6,7 +6,7 @@ import * as Schema from "effect/Schema";
 import { PlusIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
-import { Menu, MenuPopup, MenuTrigger } from "~/components/ui/menu";
+import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
 import { SidebarGroup, SidebarMenuButton } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
@@ -19,6 +19,8 @@ import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
 import { BotMascot, BotMascotTile } from "./BotMascot";
 import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
+import { PetalLayout, PetalLayoutPicker } from "./PetalLayoutPicker";
+import type { SidebarV2CardView } from "./SidebarV2BotCardBody";
 
 export type SidebarV2ListSection = "bots" | "threads";
 
@@ -54,16 +56,26 @@ export function useSidebarV2CompactBots(): [boolean, (value: boolean) => void] {
   return useLocalStorage(COMPACT_BOTS_STORAGE_KEY, false, Schema.Boolean);
 }
 
+const BOTS_LAYOUT_STORAGE_KEY = "t3code:fork:sidebar-v2-bots-layout:v1";
+
+/** Petals as a list of cards, or as a grid of mascot tiles with their names under them. */
+export function useSidebarV2BotsLayout(): [PetalLayout, (value: PetalLayout) => void] {
+  return useLocalStorage(BOTS_LAYOUT_STORAGE_KEY, "list", PetalLayout);
+}
+
 /** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. Drawn
     as the card it becomes: the 44px avatar card (SidebarV2BotCardBody), or the compact card's
-    34px line with the mascot at one pixel per cell. */
+    32px line with the mascot at one pixel per cell. */
 export function SidebarV2NewBotRow(props: {
-  readonly compact: boolean;
+  /** The Petals' view: the compact line, or the full card (which the grid also draws, below
+      its tiles). */
+  readonly view: SidebarV2CardView;
   /** The mascot offered first; the button beside the name steps through the rest. */
   readonly initialMascot: BotMascotShape;
   readonly onCreate: (name: string, mascot: BotMascotShape) => Promise<unknown>;
   readonly onDone: () => void;
 }) {
+  const compact = props.view === "compact";
   const [name, setName] = useState("");
   const [mascot, setMascot] = useState(props.initialMascot);
   const [creating, setCreating] = useState(false);
@@ -94,7 +106,7 @@ export function SidebarV2NewBotRow(props: {
       data-thread-selection-safe
       className={cn(
         "flex list-none items-center gap-x-2",
-        props.compact ? "h-[34px]" : "h-11",
+        compact ? "h-8" : "h-11",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
@@ -117,10 +129,10 @@ export function SidebarV2NewBotRow(props: {
         }
         className={cn(
           "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          props.compact ? "-mx-[7px]" : "-mx-[2px]",
+          compact ? "-mx-[7px]" : "-mx-[2px]",
         )}
       >
-        {props.compact ? (
+        {compact ? (
           <BotMascot shape={mascot} mood="Idle" />
         ) : (
           <BotMascotTile shape={mascot} mood="Idle" />
@@ -142,31 +154,66 @@ export function SidebarV2NewBotRow(props: {
         // Where the card's title sits, and as tall as the row allows.
         className={cn(
           "min-w-0 flex-1 rounded-md border border-sidebar-border bg-transparent px-2 text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-muted-foreground/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          props.compact ? "h-7" : "h-8",
+          compact ? "h-7" : "h-8",
         )}
       />
     </li>
   );
 }
 
-/** The Bots section above the Threads row, in its shape: label, count, fold caret, view options
+/** @public — the Petals grid's columns: as many tiles at least 64px wide as the width holds,
+    sharing it equally, 8px apart. auto-fit, so a short row still spans the sidebar. Storybook
+    lays its tiles out on it too. */
+export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(64px,1fr))] gap-2";
+
+/** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
+    while the layout is List. Storybook opens it on its own. */
+export function PetalViewOptionsMenu(props: {
+  readonly layout: PetalLayout;
+  readonly onLayoutChange: (layout: PetalLayout) => void;
+  readonly compactCards: boolean;
+  readonly onCompactCardsChange: (compactCards: boolean) => void;
+}) {
+  return (
+    <MenuPopup align="end" data-fork-glass-rim data-fork-tab-menu="sidebar" className="min-w-48">
+      <PetalLayoutPicker layout={props.layout} onLayoutChange={props.onLayoutChange} />
+      {props.layout === "list" ? (
+        <>
+          <MenuSeparator className="-mx-1" />
+          <OptionCheckboxItem
+            checked={props.compactCards}
+            onCheckedChange={props.onCompactCardsChange}
+            testId="sidebar-v2-compact-bots-toggle"
+          >
+            Compact cards
+          </OptionCheckboxItem>
+        </>
+      ) : null}
+    </MenuPopup>
+  );
+}
+
+/** The Bots section above the Threads row, in its shape: label, fold chevron, view options
     and a plus that names a new bot. Its cards are its children. */
 export function SidebarV2BotsRow(props: {
-  readonly count: number;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
   readonly onNewBot: () => void;
-  /** The bots' own card density, independent of the threads' Compact cards. */
+  readonly layout: PetalLayout;
+  readonly onLayoutChange: (layout: PetalLayout) => void;
+  /** The bots' own card density, independent of the threads' Compact cards; the list's alone. */
   readonly compactCards: boolean;
   readonly onCompactCardsChange: (compactCards: boolean) => void;
   readonly children: ReactNode;
+  /** The row naming a new Petal. The grid draws it under its tiles: a spanning grid item would
+      fill auto-fit's empty columns and squeeze the tiles while the name is typed. */
+  readonly naming: ReactNode;
 }) {
   return (
     <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
       <div className="flex h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
-            count={props.count}
             collapsed={props.collapsed}
             onToggle={props.onToggleCollapsed}
             testId="sidebar-v2-bots-section-toggle"
@@ -197,20 +244,12 @@ export function SidebarV2BotsRow(props: {
               </TooltipTrigger>
               <TooltipPopup side="right">View options</TooltipPopup>
             </Tooltip>
-            <MenuPopup
-              align="end"
-              data-fork-glass-rim
-              data-fork-tab-menu="sidebar"
-              className="min-w-48"
-            >
-              <OptionCheckboxItem
-                checked={props.compactCards}
-                onCheckedChange={props.onCompactCardsChange}
-                testId="sidebar-v2-compact-bots-toggle"
-              >
-                Compact cards
-              </OptionCheckboxItem>
-            </MenuPopup>
+            <PetalViewOptionsMenu
+              layout={props.layout}
+              onLayoutChange={props.onLayoutChange}
+              compactCards={props.compactCards}
+              onCompactCardsChange={props.onCompactCardsChange}
+            />
           </Menu>
           <Tooltip>
             <TooltipTrigger
@@ -237,10 +276,22 @@ export function SidebarV2BotsRow(props: {
             folded away to nothing or empty. */}
         <ul
           role="presentation"
-          className={cn("mt-1 flex flex-col empty:mt-0", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}
+          data-fork-petals-grid={props.layout === "grid" ? "" : undefined}
+          className={cn(
+            "mt-1 empty:mt-0",
+            props.layout === "grid"
+              ? PETALS_GRID_CLASS_NAME
+              : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
+          )}
         >
           {props.children}
+          {props.layout === "grid" ? null : props.naming}
         </ul>
+        {props.layout === "grid" && props.naming ? (
+          <ul role="presentation" className="mt-2">
+            {props.naming}
+          </ul>
+        ) : null}
       </TooltipProvider>
     </SidebarGroup>
   );

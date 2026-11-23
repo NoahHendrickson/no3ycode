@@ -8,7 +8,7 @@ import { Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import ChatView from "./ChatView";
-import { BackgroundThreadContext } from "./chat/backgroundThread";
+import { BackgroundThreadContext, HiddenThreadContext } from "./chat/backgroundThread";
 import { SidebarInset } from "./ui/sidebar";
 import { useComposerDraftStore } from "../composerDraftStore";
 import { useSidebarPendingFileDropStore } from "../sidebarPendingFileDropStore";
@@ -255,12 +255,14 @@ export function ThreadRouteView({
     >
       {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
       <BackgroundThreadContext value={background}>
-        <SplitThreadPanes
-          layout={splitLayout}
-          focusedRef={routeThreadRef}
-          focusedDraftId={target.kind === "draft" ? target.draftId : null}
-          focusedView={view}
-        />
+        <HiddenThreadContext value={background}>
+          <SplitThreadPanes
+            layout={splitLayout}
+            focusedRef={routeThreadRef}
+            focusedDraftId={target.kind === "draft" ? target.draftId : null}
+            focusedView={view}
+          />
+        </HiddenThreadContext>
       </BackgroundThreadContext>
       {/* fork:end fork-split-threads */}
       {background ? null : redirect}

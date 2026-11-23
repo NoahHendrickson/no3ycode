@@ -18,7 +18,7 @@ const combobox = NodeFS.readFileSync(
 
 describe("fork guard: fork-full-width-search-divider", () => {
   it("pads the search field inside its underline", () => {
-    expect(combobox).toContain('<div className="min-w-0 shrink-0 pt-2.5">');
+    expect(combobox).toContain('<label className="block min-w-0 shrink-0 cursor-text pt-2.5">');
     expect(combobox).toMatch(/border-b border-border\/70 px-3 pb-1\.5/u);
     expect(combobox).toContain("absolute top-1.5 left-3 size-4");
   });

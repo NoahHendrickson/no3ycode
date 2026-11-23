@@ -53,12 +53,33 @@ describe("fork-storybook", () => {
     const themes = read(`${storybook}../stories/storyTheme.ts`);
     expect(themes).toContain("BASIC_TONES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
-    // Glass shows through only once the bridge reports the window material, as on the desktop,
-    // and the wallpaper standing in for the desktop paints only then.
-    expect(appearance).toContain("setSidebarVibrancy:");
-    expect(read(`${storybook}preview-head.html`)).toMatch(
-      /html\[data-fork-sidebar-vibrancy="true"\] \{[^}]*background: var\(--story-wallpaper\)/u,
+    // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, and the stand-in paints
+    // the app's backings, its glass token and its docked-sidebar selector, so neither side drifts.
+    expect(appearance).toContain('"liquid-glass"');
+    expect(appearance).toContain("sidebarLiquidGlass:");
+    expect(preview).toContain("dockedSidebar={");
+    const head = read(`${storybook}preview-head.html`).replace(/\s+/gu, " ");
+    expect(read("../theme.custom.palettes.css")).toMatch(
+      /\[data-fork-liquid-glass-popup="solid"\][^{]*\{\s*background: var\(--fork-liquid-glass-sidebar\);/u,
     );
+    expect(head).toContain("var(--fork-liquid-glass-sidebar)");
+    const vibrancy = read("../custom/forkSidebarVibrancy.ts");
+    const backing = (name: string) =>
+      new RegExp(`${name} = 0x([0-9a-f]{6});`, "u").exec(vibrancy)?.[1] ?? "missing";
+    const full = backing("FULL_GLASS_BACKING_RGB");
+    const flat = backing("FLAT_GLASS_BACKING_RGB");
+    expect(head).toContain(
+      `html[data-fork-sidebar-vibrancy="liquid-glass"] { background-image: linear-gradient(#${full}, #${full}); }`,
+    );
+    expect(head).toContain(
+      `html[data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"] { background-image: linear-gradient(#${flat}, #${flat}); }`,
+    );
+    const selector = /SIDEBAR_GLASS_SELECTOR =\s*'([^']+)'/u.exec(
+      read("../custom/forkGlassPopupCutout.ts"),
+    )?.[1];
+    expect(selector).toBeDefined();
+    expect(head).toContain(selector);
+    expect(head).toContain('[data-fork-liquid-glass-popup="glass"]');
   });
 
   it("resolves modules as the app's Vite config does", () => {

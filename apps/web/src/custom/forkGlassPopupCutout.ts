@@ -37,6 +37,7 @@
  */
 
 import { FORK_GLASS_PICTURE_OFF_ATTRIBUTE } from "./forkGlassNewAgentPicture";
+import { isForkSidebarLiquidGlassApplied } from "./forkSidebarVibrancy";
 
 /** The root while a new agent's picture is switched off. */
 const PICTURE_OFF = `[${FORK_GLASS_PICTURE_OFF_ATTRIBUTE}="off"]`;
@@ -56,6 +57,9 @@ export const FORK_GLASS_POPUP_SELECTOR = [
   `[data-thread-details-panel="popover"]:is([data-fork-popup], ${PICTURE_OFF} *) > [data-thread-details-card].dropdown-glass`,
 ].join(", ");
 
+/** Sidebar mode also takes plain tooltips, so one over the docked sidebar wears its glass too. */
+const SIDEBAR_MODE_POPUP_SELECTOR = `${FORK_GLASS_POPUP_SELECTOR}, [data-slot="tooltip-popup"]:not(.dropdown-glass):not([data-fork-row-hover-card])`;
+
 /**
  * ChatView's root while its composer is a new-agent draft: the picture card's
  * host. Not while a desktop tab floats over it, when the card drops its
@@ -70,6 +74,15 @@ const OPAQUE_PICTURE_SELECTOR = `:root${PICTURE_OFF} [data-fork-opaque-backdrop]
 /** Base UI's portal node, which nests a portal opened from inside it. */
 const PORTAL_SELECTOR = "[data-base-ui-portal]";
 
+/* Liquid Glass sits behind the docked sidebar and, on a new agent's draft, behind each popup the
+   draft glass took (forkDraftLiquidGlass.ts). A popup over either is cut through to it ("glass");
+   one reaching past the sidebar would open onto the desktop, so it paints the sidebar's colour. */
+const SIDEBAR_GLASS_SELECTOR =
+  '[data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]) [data-slot="sidebar-container"][data-sidebar-version="v2"]';
+const FORK_LIQUID_GLASS_POPUP_ATTRIBUTE = "data-fork-liquid-glass-popup";
+/** Stamped by forkDraftLiquidGlass.ts on a popup it puts a native glass card behind. */
+const DRAFT_GLASS_POPUP_ATTRIBUTE = "data-fork-draft-glass-popup";
+
 /** Stamped on a popup that frosts over the draft card instead of cutting it. */
 const FORK_GLASS_FROST_ATTRIBUTE = "data-fork-glass-frost";
 /** Stamped instead over a draft showing another picture. */
@@ -79,7 +92,14 @@ const FORK_GLASS_OVER_PICTURE_ATTRIBUTE = "data-fork-glass-over-picture";
 type DraftStage = { readonly rect: Rect; readonly attribute: string };
 
 /** The attributes Base UI moves on a popup's subtree when it closes or repositions. */
-const POPUP_ATTRIBUTES = ["style", "hidden", "data-ending-style", "data-side", "data-align"];
+const POPUP_ATTRIBUTES = [
+  "style",
+  "hidden",
+  "data-ending-style",
+  "data-side",
+  "data-align",
+  DRAFT_GLASS_POPUP_ATTRIBUTE,
+];
 
 /**
  * Frames a popup must hold still before frame tracking stops. Tooltip and
@@ -306,7 +326,36 @@ export function cutoutMaskStyle(
   };
 }
 
-function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
+function sidebarGlassRect(appRoot: HTMLElement): Rect | null {
+  const sidebar = appRoot.querySelector(SIDEBAR_GLASS_SELECTOR);
+  if (sidebar === null) return null;
+  const rect = sidebar.getBoundingClientRect();
+  return rect.width < 1
+    ? null
+    : { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+}
+
+function within(inner: Rect, outer: Rect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  );
+}
+
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+/** "window": the whole window is glass, and popups cut through to it. "sidebar": the Glass palette
+    without it, where popups over the docked sidebar are cut or stamped while its Liquid Glass is
+    on. */
+type CutoutMode = "window" | "sidebar";
+
+function startCutout(body: HTMLElement, appRoot: HTMLElement, mode: CutoutMode): () => void {
+  const popupSelector =
+    mode === "sidebar" ? SIDEBAR_MODE_POPUP_SELECTOR : FORK_GLASS_POPUP_SELECTOR;
   /** Element → the mask it carries, as written, so unchanged frames write nothing. */
   const masked = new Map<HTMLElement, string>();
   /** Popup → the frost placement it carries, as written. */
@@ -374,8 +423,30 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
     }
     const holes: Array<CutoutHole> = [];
     let stages: Array<DraftStage> | undefined;
+    const sidebar =
+      mode === "sidebar" && isForkSidebarLiquidGlassApplied() ? sidebarGlassRect(appRoot) : null;
     for (const { popup, layer } of placed) {
       const hole = measure(popup, layer, layers[layer]?.z ?? 0);
+      if (mode === "sidebar") {
+        // A closing popup keeps its stamp and gives its hole back, as in window mode.
+        if (hole === null) continue;
+        const stamp = popup.hasAttribute(DRAFT_GLASS_POPUP_ATTRIBUTE)
+          ? "glass"
+          : sidebar === null
+            ? null
+            : within(hole, sidebar)
+              ? "glass"
+              : overlaps(hole, sidebar)
+                ? "solid"
+                : null;
+        if (popup.getAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE) !== stamp) {
+          if (stamp === null) popup.removeAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE);
+          else popup.setAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE, stamp);
+          frostChanged = true;
+        }
+        if (stamp === "glass") holes.push(hole);
+        continue;
+      }
       if (hole === null) continue;
       stages ??= draftStages(appRoot);
       // The frost layer paints only on dropdown-glass (theme.custom.glass.css).
@@ -471,7 +542,7 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
     if (!sameElements(containers, nextContainers)) rewatchContainers(nextContainers);
     layers = containers.flatMap(paintLayers);
     placed = layers.flatMap(({ element }, layer) =>
-      Array.from(element.querySelectorAll<HTMLElement>(FORK_GLASS_POPUP_SELECTOR), (popup) => ({
+      Array.from(element.querySelectorAll<HTMLElement>(popupSelector), (popup) => ({
         popup,
         layer,
       })),
@@ -497,24 +568,28 @@ function startCutout(body: HTMLElement, appRoot: HTMLElement): () => void {
     masked.clear();
     for (const popup of frosted.keys()) clearFrost(popup);
     frosted.clear();
+    for (const popup of body.querySelectorAll(`[${FORK_LIQUID_GLASS_POPUP_ATTRIBUTE}]`)) {
+      popup.removeAttribute(FORK_LIQUID_GLASS_POPUP_ATTRIBUTE);
+    }
   };
 }
 
 let stop: (() => void) | null = null;
+let running: CutoutMode | null = null;
 
 /**
- * Called with whether glass is on. Idempotent: a palette sync that leaves glass
- * where it was keeps the running cutout instead of tearing it down.
+ * Called with where the glass is: the whole window, the docked sidebar alone, or nowhere.
+ * Idempotent: a palette sync that leaves it where it was keeps the running cutout instead of
+ * tearing it down.
  */
-export function syncForkGlassPopupCutout(glassOn: boolean): void {
-  if (glassOn === (stop !== null)) return;
-  if (!glassOn) {
-    stop?.();
-    stop = null;
-    return;
-  }
-  if (typeof document === "undefined") return;
+export function syncForkGlassPopupCutout(mode: CutoutMode | null): void {
+  if (mode === running) return;
+  stop?.();
+  stop = null;
+  running = null;
+  if (mode === null || typeof document === "undefined") return;
   const appRoot = document.getElementById("root");
   if (appRoot === null) return;
-  stop = startCutout(document.body, appRoot);
+  stop = startCutout(document.body, appRoot, mode);
+  running = mode;
 }

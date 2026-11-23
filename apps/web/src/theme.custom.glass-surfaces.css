@@ -7,12 +7,11 @@
    here that ties with a palettes rule wins on source order. Every selector
    is marker- and palette-scoped, so no other palette sees any of it.
 
-   The 3D glass setting (custom/forkGlass3d.ts) gates the sheet through
-   its parents, kept in source order: the tokens and the selected rows hold
-   unless 3D is off, so "Selected items only" keeps them; everything else
-   needs Full. & takes a parent's specificity and :where() adds none, so
-   every rule ranks as it would written out flat. */
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+   The 3D glass setting (custom/forkGlass3d.ts) gates the whole sheet on
+   Full 3D through its parents, kept in source order so rules tie-break as
+   before. & takes a parent's specificity and :where() adds none, so every
+   rule ranks as it would written out flat. */
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The glass, once, at the root: the popups portal out of the row and the
      sort menu out of the sidebar, so nothing finer would reach them all.
      An inset hairline offset half a pixel draws a crescent that thins away
@@ -88,19 +87,10 @@
      host do neither: they start inside the 1px border, so the glint read as
      a line a pixel in from the edge. So the chips carry it on ::after, laid
      over the border box. That is the touch hit-area's pseudo-element, so on a
-     coarse pointer the chips keep the light as their own inset shadows. The
-     monitoring pill has no border and its ::after sits flush; its own label
-     and stop buttons match the chip selector and are left out, or they would
-     draw a pill inside the pill. */
+     coarse pointer the chips keep the light as their own inset shadows. */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-composer-context-row]
-    :is(
-      button,
-      [data-slot="button"],
-      [data-fork-context-chip],
-      [data-fork-pr-chip],
-      [data-fork-monitoring-pill]
-    ):not([data-fork-monitoring-pill] *) {
+    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-rim);
@@ -109,13 +99,7 @@
   @media (pointer: fine) {
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(
-        button,
-        [data-slot="button"],
-        [data-fork-context-chip],
-        [data-fork-pr-chip],
-        [data-fork-monitoring-pill]
-      ):not([data-fork-monitoring-pill] *) {
+      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
       position: relative;
       box-shadow:
         var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
@@ -124,23 +108,10 @@
 
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
-        [data-fork-monitoring-pill] *
-      )::after {
+      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])::after {
       content: "";
       position: absolute;
       inset: -1px;
-      border-radius: inherit;
-      box-shadow: var(--fork-glass-light);
-      pointer-events: none;
-    }
-
-    &.dark[data-fork-theme="cool-darker"]
-      [data-fork-composer-context-row]
-      [data-fork-monitoring-pill]::after {
-      content: "";
-      position: absolute;
-      inset: 0;
       border-radius: inherit;
       box-shadow: var(--fork-glass-light);
       pointer-events: none;
@@ -525,7 +496,7 @@
   }
 }
 
-:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d="off"])) {
+:root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {
   /* The thread you are on, as a pane of glass (Figma t3-fork 532:6527, "thread
      card v3", State=Selected), and every row that wears the same selected
      state: the active rows above the list (Search, New agent, Usage,
@@ -801,45 +772,6 @@
       }
     }
   }
-
-  /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
-     The model picker's rail tab for the open scope is a selected item, so it
-     wears the selected rows' glass at Selected items only too, its dark edge
-     1px proud of the tab's 4px corners. */
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"] {
-    box-shadow:
-      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-      var(--fork-glass-selected-shadow);
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: var(--fork-glass-selected-glint);
-    pointer-events: none;
-  }
-
-  &.dark[data-fork-theme="cool-darker"]
-    [data-fork-model-picker="providers"]
-    [data-model-picker-provider][aria-current="true"]::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    padding: 1px;
-    border-radius: 5px;
-    background: var(--fork-glass-dark-edge);
-    mask:
-      linear-gradient(#000 0 0) content-box exclude,
-      linear-gradient(#000 0 0);
-    pointer-events: none;
-  }
-  /* fork:end fork-model-picker */
 }
 
 :root[data-fork="noahhendrickson-t3code"]:where(:not([data-fork-glass-3d])) {

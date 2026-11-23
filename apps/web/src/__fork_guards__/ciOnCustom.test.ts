@@ -46,8 +46,7 @@ describe("fork guard: ci-on-custom", () => {
       NodePath.join(repoRoot, ".github/workflows/agent-context-budget.yml"),
       "utf8",
     );
-    expect(gate).toContain("BASE_REF: ${{ github.base_ref }}");
-    expect(gate).toContain('git fetch --quiet --depth=1 origin "$BASE_REF"');
+    expect(gate).toContain('git show "HEAD^1:$BUDGET"');
     expect(gate).not.toContain("git fetch --quiet --depth=1 origin main");
   });
 
