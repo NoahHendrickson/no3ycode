@@ -97,6 +97,7 @@ import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSecti
 import { No3yAutomationsScreen } from "../../../fork/No3yAutomationsScreen";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yHomeTabRedirect } from "../../../fork/No3yHomeTabRedirect";
+import { NO3Y_IPHONE } from "../../../fork/no3yIphone";
 import { useRoute } from "@react-navigation/native";
 /* fork:end no3y-mobile-redesign */
 
@@ -494,7 +495,7 @@ export function SettingsScheduledTasksRouteScreen() {
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
         {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-        {Platform.OS === "ios" ? (
+        {NO3Y_IPHONE ? (
           <No3yAutomationRunsSection
             environmentIds={visibleEnvironments.map((environment) => environment.environmentId)}
             projectKeys={visibleProjectKeys}

@@ -34,6 +34,7 @@ import {
   no3yDarkPageVariables,
   withNo3yPageColor,
 } from "../../../../fork/no3yPageColor";
+import { NO3Y_IPHONE } from "../../../../fork/no3yIphone";
 /* fork:end no3y-mobile-redesign */
 import {
   createMobileThemePairPatch,
@@ -123,7 +124,7 @@ function resolveThemeVariablesByAppearance(
         ? materialYouPaletteToMobileThemeVariables(palettes[appearance], appearance, base)
         : base;
     /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-    return withNo3yPageColor(variables, appearance, Platform.OS);
+    return NO3Y_IPHONE ? withNo3yPageColor(variables, appearance, Platform.OS) : variables;
     /* fork:end no3y-mobile-redesign */
   };
   return { light: resolve("light"), dark: resolve("dark") };
@@ -191,7 +192,7 @@ export function installAppearanceRuntime(): () => void {
   });
   const releasePalettes = appAtomRegistry.mount(systemColorPalettesAtom);
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  if (Platform.OS === "ios") {
+  if (NO3Y_IPHONE) {
     for (const themeName of NO3Y_DARK_UNIWIND_THEMES) {
       Uniwind.updateCSSVariables(themeName, no3yDarkPageVariables());
     }

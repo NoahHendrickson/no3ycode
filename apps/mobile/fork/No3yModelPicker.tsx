@@ -15,7 +15,7 @@ import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
 import type { MenuAction } from "@react-native-menu/menu";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -29,10 +29,11 @@ import { No3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
 import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
+import { NO3Y_IPHONE } from "./no3yIphone";
 import { no3ySheetBackground } from "./no3ySheet";
 
 /** iPhone gets this picker in a half sheet; iPad and Android keep the full thread settings sheet. */
-export const NO3Y_MODEL_SHEET = Platform.OS === "ios" && !Platform.isPad;
+export const NO3Y_MODEL_SHEET = NO3Y_IPHONE;
 
 type SelectDescriptor = Extract<ProviderOptionDescriptor, { type: "select" }>;
 

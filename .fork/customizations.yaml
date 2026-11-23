@@ -8180,6 +8180,7 @@
     - apps/mobile/fork/No3yThreadRow.tsx
     - apps/mobile/fork/No3yBottomNav.tsx
     - apps/mobile/fork/no3yBottomNavEnabled.ts
+    - apps/mobile/fork/no3yIphone.ts
     - apps/mobile/fork/No3yBottomFade.tsx
     - apps/mobile/fork/No3yBottomTray.tsx
     - apps/mobile/fork/No3yChatTab.tsx
