@@ -1,9 +1,8 @@
 /**
- * Words the live status line rotates through instead of "Thinking" — see
- * `.fork/customizations.yaml#no3y-mobile-redesign`. Web keeps the same list in
- * `apps/web/src/custom/forkThinkingWords.ts`.
+ * The word the fork's live status line shows where upstream says "Thinking", on web and on the
+ * no3y iOS line — see `.fork/customizations.yaml#fork-working-row-last`.
  */
-const NO3Y_THINKING_WORDS = [
+const FORK_THINKING_WORDS = [
   "Yapping",
   "Mogging",
   "Yearning",
@@ -30,10 +29,9 @@ const NO3Y_THINKING_WORDS = [
   "Brainmaxxing",
 ] as const;
 
-/** One word per seed: the line keeps its word until what sits above it changes. */
-export function no3yThinkingWord(seed: string): string {
+/** One word per seed: callers seed from what last landed, so the word holds until something does. */
+export function forkThinkingWord(seed: string): string {
   let hash = 0;
   for (const char of seed) hash = (hash * 31 + char.charCodeAt(0)) | 0;
-  const index = Math.abs(hash) % NO3Y_THINKING_WORDS.length;
-  return NO3Y_THINKING_WORDS[index] ?? "Thinking";
+  return FORK_THINKING_WORDS[Math.abs(hash) % FORK_THINKING_WORDS.length] ?? "Thinking";
 }

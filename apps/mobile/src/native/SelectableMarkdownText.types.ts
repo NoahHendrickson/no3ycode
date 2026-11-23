@@ -6,6 +6,18 @@ export interface NativeMarkdownTextStyle {
   readonly mutedColor: string;
   readonly linkColor: string;
   readonly inlineCodeColor: string;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** Fills inline code's chip; upstream leaves it transparent. */
+  readonly inlineCodeBackgroundColor?: string;
+  /** Inline code's size against the body text; upstream sets it at 0.9. */
+  readonly inlineCodeFontScale?: number;
+  /** The chip's corner radius and side padding; iOS only, upstream draws 2pt corners and no padding. */
+  readonly inlineCodeChip?: { readonly radius: number; readonly paddingHorizontal: number };
+  /** iOS weight for bold text and headings; the fork otherwise draws them bold. */
+  readonly emphasisFontWeight?: "500";
+  /** Fills a table's header row; upstream uses the code block fill. */
+  readonly tableHeaderBackgroundColor?: string;
+  /* fork:end no3y-mobile-redesign */
   readonly codeColor: string;
   readonly codeBackgroundColor: string;
   readonly codeBlockBackgroundColor: string;
@@ -68,6 +80,10 @@ export interface MarkdownLinkCustomization {
   readonly label?: string;
   readonly icon?: import("react-native").ImageSourcePropType;
   readonly chip?: { readonly accent?: string; readonly tintsIcon: boolean };
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** A file reference, which the no3y reply draws as an inline code chip. */
+  readonly fileReference?: true;
+  /* fork:end no3y-mobile-redesign */
 }
 
 export interface SelectableMarkdownTextProps {

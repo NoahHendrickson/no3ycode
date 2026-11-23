@@ -4,48 +4,121 @@
  * live row (thinking, or the running tool) moves to the end so an open group sits above it.
  */
 
+import type {
+  PendingFoldFeedEntry,
+  PendingThreadFeedEntry,
+} from "../src/features/threads/pending-thread-feed";
+
 /** The id upstream's feed derivation gives its single live row (threadActivity's LIVE_ACTIVITY_ROW_ID). */
 export const NO3Y_LIVE_ROW_ID = "live-activity-row";
 
 // Keyed by the derived rows, which the feed cache returns unchanged until they change.
 const reordered = new WeakMap<object, unknown>();
-// The live row is copied once per seed, so only a new seed re-renders it.
-const stampedLive = new WeakMap<object, { readonly seed: string; readonly row: object }>();
-const wordSeeds = new WeakMap<object, string>();
 
-// A group's id holds while it grows, so its size marks each finished tool.
-function rowSeed(row: { readonly id: string }): string {
-  if ("activities" in row && Array.isArray(row.activities)) {
-    return `${row.id}:${row.activities.length}`;
-  }
-  return "hiddenCount" in row ? `${row.id}:${String(row.hiddenCount)}` : row.id;
-}
-
-/** Also stamps the live row with the seed of the row now above it (no3yLiveWordSeed). */
 export function no3yLiveRowLast<Row extends { readonly id: string }>(rows: Row[]): Row[] {
   const index = rows.findIndex((row) => row.id === NO3Y_LIVE_ROW_ID);
-  if (index < 0) return rows;
+  if (index < 0 || index === rows.length - 1) return rows;
   const cached = reordered.get(rows) as Row[] | undefined;
   if (cached) return cached;
-  const live = rows[index]!;
-  const above = [...rows.slice(0, index), ...rows.slice(index + 1)];
-  const last = above.at(-1);
-  const seed = last === undefined ? "" : rowSeed(last);
-  const prior = stampedLive.get(live);
-  let row = prior?.seed === seed ? (prior.row as Row) : undefined;
-  if (row === undefined) {
-    row = { ...live };
-    stampedLive.set(live, { seed, row });
-    wordSeeds.set(row, seed);
-  }
-  const next = [...above, row];
+  const next = [...rows.slice(0, index), ...rows.slice(index + 1), rows[index]!];
   reordered.set(rows, next);
   return next;
 }
 
-/** Picks the live row's thinking word; it changes only when a new row or step lands above it. */
+type LiveRows = ReadonlyArray<PendingThreadFeedEntry | PendingFoldFeedEntry>;
+type ThinkingRow = Extract<PendingThreadFeedEntry, { readonly type: "thinking" }>;
+type WorkRow = Extract<PendingThreadFeedEntry, { readonly type: "work-toggle" | "activity-group" }>;
+const presented = new WeakMap<object, { key: string; rows: LiveRows }>();
+// The live row is copied once per seed, so only a new seed re-renders it.
+const stampedLive = new WeakMap<object, { readonly seed: string; readonly row: LiveRow }>();
+const wordSeeds = new WeakMap<object, string>();
+type LiveRow = LiveRows[number];
+
+// A group's id holds while it grows, so its newest activity or count marks each new tool.
+function rowSeed(row: LiveRow | undefined): string {
+  if (row?.type === "activity-group") return row.activities.at(-1)?.id ?? row.id;
+  if (row?.type === "work-toggle") return `${row.id}:${row.hiddenCount}:${row.summary}`;
+  return row?.id ?? "";
+}
+
+function stamped(live: LiveRow, above: LiveRow | undefined): LiveRow {
+  const seed = live.type === "work-toggle" ? `${live.groupId}:${live.hiddenCount}` : rowSeed(above);
+  const prior = stampedLive.get(live);
+  if (prior?.seed === seed) return prior.row;
+  const row = { ...live };
+  stampedLive.set(live, { seed, row });
+  wordSeeds.set(row, seed);
+  return row;
+}
+
+/** Picks the live row's thinking word (forkThinkingWord); it changes only when something lands. */
 export function no3yLiveWordSeed(row: object): string {
   return wordSeeds.get(row) ?? "";
+}
+
+/**
+ * The no3y live turn: the status line owns the timer, so the live fold (kept only to host the setup
+ * chip) and the pending placeholder drop; a running tool stays a row with Thinking below it. Runs
+ * after the pending-turn appender, which reads the live fold to know a run is under way.
+ */
+export function no3yLivePresentation(
+  rows: LiveRows,
+  input: { readonly startedAt: string | null; readonly keepLiveFold: boolean },
+): LiveRows {
+  const key = `${input.startedAt}|${input.keepLiveFold}`;
+  const cached = presented.get(rows);
+  if (cached?.key === key) return cached.rows;
+  const next: Array<PendingThreadFeedEntry | PendingFoldFeedEntry> = [];
+  for (const row of rows) {
+    if (row.type === "pending-fold") continue;
+    if (row.type === "run-fold" && row.workingSince !== undefined && !input.keepLiveFold) continue;
+    if (row.id !== NO3Y_LIVE_ROW_ID || input.startedAt === null) {
+      next.push(row);
+      continue;
+    }
+    const tool = liveToolRow(row);
+    if (tool === null) {
+      next.push(row);
+      continue;
+    }
+    const thinking: ThinkingRow = {
+      type: "thinking",
+      id: NO3Y_LIVE_ROW_ID,
+      createdAt: input.startedAt,
+      runId: tool.runId,
+    };
+    next.push(tool, thinking);
+  }
+  const liveIndex = next.findIndex((row) => row.id === NO3Y_LIVE_ROW_ID);
+  if (liveIndex >= 0 && input.startedAt !== null) {
+    next[liveIndex] = stamped(next[liveIndex]!, next[liveIndex - 1]);
+  }
+  const result =
+    next.length === rows.length && next.every((row, i) => row === rows[i]) ? rows : next;
+  presented.set(rows, { key, rows: result });
+  return result;
+}
+
+/** The live row as an ordinary transcript row, or null when it stays the status line. */
+function liveToolRow(row: PendingThreadFeedEntry): WorkRow | null {
+  if (row.type === "work-toggle") {
+    if (row.summaryKind === "reasoning") return null;
+    // Upstream shimmers a finished tail too; below the split, only the status line animates.
+    return { ...row, id: `work-live:${row.groupId}`, shimmer: false };
+  }
+  if (row.type === "activity-group") {
+    const groupId = row.activities[0]?.groupStandIn?.groupId;
+    if (groupId === undefined) return null;
+    return {
+      ...row,
+      id: `work-live:${groupId}`,
+      activities: row.activities.map((activity) => ({
+        ...activity,
+        live: activity.live && activity.lifecycleStatus === "inProgress",
+      })),
+    };
+  }
+  return null;
 }
 
 /** The turn's timer: "42s", "3m 05s", "1h 02m". */

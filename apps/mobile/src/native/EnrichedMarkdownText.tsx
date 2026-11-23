@@ -76,7 +76,9 @@ function enrichedStyle(
       fontFamily: style.headingFontFamily,
       fontWeight: boldFontWeight,
       /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-      ...(Platform.OS === "ios" ? { fontWeight: "700" as const } : null),
+      ...(Platform.OS === "ios"
+        ? { fontWeight: style.emphasisFontWeight ?? ("700" as const) }
+        : null),
       /* fork:end no3y-mobile-redesign */
       fontSize,
       lineHeight: fontSize * 1.35,
@@ -105,16 +107,25 @@ function enrichedStyle(
       fontFamily: style.boldFontFamily,
       /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
       // The iOS family is the system font, so bold comes from the weight.
-      fontWeight: Platform.OS === "ios" ? "bold" : (boldFontWeight ?? "normal"),
+      fontWeight:
+        Platform.OS === "ios" ? (style.emphasisFontWeight ?? "bold") : (boldFontWeight ?? "normal"),
       /* fork:end no3y-mobile-redesign */
     },
     link: { color: style.linkColor, underline: false },
     code: {
       fontFamily: monospace,
       color: style.inlineCodeColor,
-      backgroundColor: "transparent",
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      backgroundColor: style.inlineCodeBackgroundColor ?? "transparent",
       borderColor: "transparent",
-      fontSize: style.fontSize * 0.9,
+      fontSize: style.fontSize * (style.inlineCodeFontScale ?? 0.9),
+      ...(style.inlineCodeChip
+        ? {
+            borderRadius: style.inlineCodeChip.radius,
+            paddingHorizontal: style.inlineCodeChip.paddingHorizontal,
+          }
+        : null),
+      /* fork:end no3y-mobile-redesign */
     },
     codeBlock: {
       ...body,
@@ -171,7 +182,9 @@ function enrichedStyle(
       ...block,
       headerFontFamily: style.boldFontFamily,
       headerTextColor: style.strongColor,
-      headerBackgroundColor: style.codeBlockBackgroundColor,
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      headerBackgroundColor: style.tableHeaderBackgroundColor ?? style.codeBlockBackgroundColor,
+      /* fork:end no3y-mobile-redesign */
       rowEvenBackgroundColor: "transparent",
       rowOddBackgroundColor: "transparent",
       cellPaddingHorizontal: 10,

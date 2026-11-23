@@ -411,6 +411,10 @@
       "types": "./src/forkDesignProps.ts",
       "import": "./src/forkDesignProps.ts"
     },
+    "./forkThinkingWords": {
+      "types": "./src/forkThinkingWords.ts",
+      "import": "./src/forkThinkingWords.ts"
+    },
     "./devProxy": {
       "types": "./src/devProxy.ts",
       "import": "./src/devProxy.ts"

@@ -80,15 +80,13 @@ describe("fork guard: fork-sidebar-type-size", () => {
   });
 
   it("scopes every text-size remap to the sidebar panel", () => {
-    // The invariant: any declaration of these props must sit under a selector
-    // that includes [data-sidebar-version=…]. A bare :root { --text-xs: … }
-    // would resize the whole app and must fail this test — unlike checking
-    // only for one arbitrary leak shape (MARKER.dark { … }).
+    // A bare :root { --text-xs: … } would resize the whole app. Every remap sits under the
+    // sidebar panel, or the chat stream for its own size setting (fork-typography-settings).
     const rules = textSizeRules();
     expect(rules.length).toBeGreaterThan(0);
     for (const rule of rules) {
       expect(rule.selector, `text-size remap leaked outside the panel: ${rule.selector}`).toMatch(
-        /\[data-sidebar-version=/u,
+        /\[data-sidebar-version=|\[data-timeline-root\]$/u,
       );
       expect(rule.selector).toContain(MARKER);
     }
