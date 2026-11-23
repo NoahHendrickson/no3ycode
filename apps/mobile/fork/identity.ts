@@ -1,7 +1,7 @@
 /** Fork-owned — see `.fork/customizations.yaml#no3y-mobile-identity`. */
 import type { ExpoConfig } from "expo/config";
 
-import { NO3Y_APPLE_TEAM_ID, NO3Y_BUNDLE_IDENTIFIER } from "./no3yConstants";
+import { NO3Y_APPLE_TEAM_ID, NO3Y_BUNDLE_IDENTIFIER } from "./no3yConstants.ts";
 
 type AppVariant = "development" | "preview" | "production";
 
