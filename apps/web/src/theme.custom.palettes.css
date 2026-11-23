@@ -203,6 +203,121 @@
     inset -1px 0 0 var(--fork-composer-border);
 }
 
+/* Flat Glass (kit 289:5475): the prompt is the composer's one surface, 12px corners and a 16%
+   ring, and the vessel paints nothing, so the control row sits on the stage below it. The
+   fill, ring and radius are scoped to its form, not :root: Petal digest cards, the scheduled
+   editor and cards beside the composer share those tokens. A new agent's draft keeps its own glass composer (Figma 19:6831). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form] {
+  --fork-composer-radius: 12px;
+  --fork-composer-bg: var(--fork-flat-glass-lift-2);
+  --fork-composer-border: rgb(255 255 255 / 8%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-vessel] {
+  background: none;
+  box-shadow: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-surface] {
+  --fork-composer-border: rgb(255 255 255 / 16%);
+  --fork-composer-border-focus: rgb(255 255 255 / 24%);
+}
+
+/* Open, the usage drawer and the prompt read as one tray: a 4% lift with an 8% hairline over
+   its top and sides. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-usage-drawer] {
+  background: var(--fork-flat-glass-lift-1);
+  box-shadow:
+    inset 1px 1px 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
+}
+
+/* Banners (notices, shoulder tabs) and the Questions card are the drawer's kind of tray: with
+   no vessel floor to sit on, each takes the drawer's lift and hairline. Under an open drawer a banner keeps its round top
+   corners: the vessel paints the tray's lift and side hairlines in the wedges beside them. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-vessel]
+  > [data-slot="composer-banner-attachment"]:has([data-composer-banner-surface="attached"]) {
+  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+  background: var(--fork-flat-glass-lift-1);
+  box-shadow:
+    inset 1px 1px 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+  + [data-fork-composer-vessel]:has(
+    > [data-slot="composer-banner-attachment"] [data-composer-banner-surface="attached"]
+  ) {
+  background:
+    linear-gradient(
+        to right,
+        var(--fork-composer-border) 1px,
+        rgb(0 0 0 / 0%) 1px,
+        rgb(0 0 0 / 0%) calc(100% - 1px),
+        var(--fork-composer-border) calc(100% - 1px)
+      )
+      top / 100% var(--fork-composer-radius) no-repeat,
+    linear-gradient(var(--fork-flat-glass-lift-1), var(--fork-flat-glass-lift-1)) top / 100%
+      var(--fork-composer-radius) no-repeat;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-vessel]
+  [data-chat-composer-top-drawer]
+  > [data-fork-pending-user-input] {
+  border-color: var(--fork-composer-border);
+  background: var(--fork-flat-glass-lift-1);
+}
+
+/* The prompt keeps all four corners under a tray. Its frame squares instead and takes the tray's
+   lift and side hairlines, which show only in the wedges beside the prompt's top corners, so
+   the tray reads as running on round the prompt. The surface inherits the frame's radius
+   unless it states its own. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  [data-fork-composer-surface] {
+  border-radius: var(--fork-composer-radius);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form]
+  :is(
+    [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+      + [data-fork-composer-vessel],
+    [data-fork-composer-vessel]:has(
+      > [data-slot="composer-banner-attachment"] [data-composer-banner-surface="attached"]
+    )
+  )
+  [data-fork-composer-box] {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  background: var(--fork-flat-glass-lift-1);
+  box-shadow:
+    inset 1px 0 0 var(--fork-composer-border),
+    inset -1px 0 0 var(--fork-composer-border);
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is(
     [data-fork-thread-started] [data-chat-header],

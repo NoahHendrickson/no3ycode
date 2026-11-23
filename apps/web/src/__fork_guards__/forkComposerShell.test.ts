@@ -391,9 +391,9 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-testid="composer-editor"]') &&
         rule.body.includes("font-size"),
     );
-    expect(promptType?.body).toMatch(/font-size:\s*14px/u);
+    expect(promptType?.body).toMatch(/font-size:\s*16px/u);
     expect(promptType?.body).toMatch(/line-height:\s*var\(--fork-composer-prompt-line\)/u);
-    expect(theme).toMatch(/--fork-composer-prompt-line:\s*23px/u);
+    expect(theme).toMatch(/--fork-composer-prompt-line:\s*24px/u);
     const placeholderColor = rules.find(
       (rule) =>
         /:has\(>\s*\[data-testid="composer-editor"\]\)\s*~\s*div/u.test(rule.selector) &&
@@ -411,7 +411,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
-    expect(geometry?.body).toMatch(/font-size:\s*12px/u);
+    expect(geometry?.body).toMatch(/font-size:\s*14px/u);
     expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
   });
 

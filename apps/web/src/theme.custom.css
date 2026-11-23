@@ -877,7 +877,7 @@
    supposed to be sitting in front of.
 
    Desktop also moves the max-height scrollport off the contenteditable. The
-   14/16 line box lets Geist ink inflate scrollHeight on the editor itself, so
+   16/24 line box lets Geist ink inflate scrollHeight on the editor itself, so
    upstream's max-h + overflow-y:auto paints a phantom thumb on a single line.
    The wrapper owns the cap; the editor stays unclamped and clips its ink so
    the parent does not inherit the same false overflow. Below 40rem the prompt
@@ -893,10 +893,10 @@
       :has(> [data-testid="composer-editor"]) ~ div,
       [data-fork-dictation-preview]
     ) {
-    /* The design's body/md: 14px Geist on a 23px line. The 32px action slot sets the 48px
-       compact row (8 + 32 + 8); the one-line prompt sits centred beside it, and each wrapped
-       line adds one more. Below sm the type stays 16px so iOS does not zoom on focus. */
-    font-size: 14px;
+    /* 16px Geist on a 24px line. The 32px action slot sets the 48px compact row (8 + 32 + 8);
+       the one-line prompt sits centred beside it, and each wrapped line adds one more. Below sm
+       the type stays 16px so iOS does not zoom on focus. */
+    font-size: 16px;
     line-height: var(--fork-composer-prompt-line);
   }
 
@@ -913,7 +913,7 @@
   }
 
   /* The placeholder sits beside the editor's wrapper, outside the editor's
-     clip. At 14/16 the placeholder's line box is a pixel taller than its
+     clip. At 16/24 the placeholder's line box is a pixel taller than its
      inset-0 box, and that pixel propagates through the absolutely-positioned
      box into the wrapper's scrollable overflow — a phantom thumb that shows
      only while the prompt is empty, because typing unmounts the placeholder.
@@ -948,9 +948,9 @@
   gap: 5px;
   padding-inline: 8px;
   border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1044,7 +1044,7 @@
 
 @media (width >= 40rem) {
   :root[data-fork="noahhendrickson-t3code"] {
-    --fork-composer-prompt-line: 23px;
+    --fork-composer-prompt-line: 24px;
   }
 }
 
@@ -1327,10 +1327,10 @@
   gap: 6px;
   padding-inline: 8px;
   border-radius: 6px;
-  /* 12px medium, matching the vessel's control row. */
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
+  /* 14px regular, matching the vessel's control row. */
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
   background: var(--fork-context-chip-bg);
 }
 

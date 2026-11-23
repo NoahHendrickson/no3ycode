@@ -218,8 +218,9 @@ export function ComposerLimitsTrayView(props: ComposerLimitsTrayViewProps) {
   const { pools, notices, externalLinks } = props;
   const hasContent = pools.length > 0 || notices.length > 0 || externalLinks.length > 0;
 
+  // 8px at the end, so the close X lines up with a composer banner's dismiss X below it.
   return (
-    <div className="flex min-w-0 items-center gap-2 px-3 py-3">
+    <div className="flex min-w-0 items-center gap-2 py-3 ps-3 pe-2">
       {!hasContent ? (
         <span className="text-xs text-muted-foreground">
           No provider reports subscription limits.

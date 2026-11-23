@@ -101,7 +101,10 @@ export function applyAppearanceFontVariables(
   root.style.fontSize = `${clampInterfaceFontSize(preferences.sizeInterface)}px`;
   root.style.setProperty(
     "--font-size-prompt",
-    preferences.separate ? `${clampPromptFontSize(preferences.sizePrompt)}px` : "var(--text-sm)",
+    preferences.separate
+      ? `${clampPromptFontSize(preferences.sizePrompt)}px`
+      : /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        "var(--text-base)" /* fork:end fork-composer-shell */,
   );
   const code = clampCodeFontSize(preferences.sizeCode);
   root.style.setProperty("--font-size-code", `${code}px`);

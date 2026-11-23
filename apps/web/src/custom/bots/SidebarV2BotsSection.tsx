@@ -162,10 +162,10 @@ export function SidebarV2NewBotRow(props: {
   );
 }
 
-/** @public — the Petals grid's columns: as many 64px cells as the width holds, spread edge to
-    edge. Storybook lays its tiles out on it too. */
-export const PETALS_GRID_CLASS_NAME =
-  "grid grid-cols-[repeat(auto-fill,64px)] justify-between gap-x-1 gap-y-1 px-0.5";
+/** @public — the Petals grid's columns: as many tiles at least 64px wide as the width holds,
+    sharing it equally, 8px apart. auto-fit, so a short row still spans the sidebar. Storybook
+    lays its tiles out on it too. */
+export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(64px,1fr))] gap-2";
 
 /** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
     while the layout is List. Storybook opens it on its own. */
@@ -272,15 +272,13 @@ export function SidebarV2BotsRow(props: {
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
         {/* 4px under the header row, so the first card never meets its buttons; none when
             folded away to nothing or empty. */}
-        {/* The grid's cells pad 8px under their names, so the grid gives that back to the gap
-            below it. */}
         <ul
           role="presentation"
           data-fork-petals-grid={props.layout === "grid" ? "" : undefined}
           className={cn(
             "mt-1 empty:mt-0",
             props.layout === "grid"
-              ? cn("-mb-2", PETALS_GRID_CLASS_NAME)
+              ? PETALS_GRID_CLASS_NAME
               : cn("flex flex-col", SIDEBAR_V2_CARD_ALIGNMENT.listGap),
           )}
         >

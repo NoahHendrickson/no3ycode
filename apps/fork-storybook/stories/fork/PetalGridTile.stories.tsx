@@ -124,7 +124,7 @@ function Grid({ children, oneCell = false }: { children: ReactNode; oneCell?: bo
   return (
     <ul
       data-fork-petals-grid=""
-      className={cn(PETALS_GRID_CLASS_NAME, oneCell ? "w-[68px]" : "w-64")}
+      className={cn(PETALS_GRID_CLASS_NAME, oneCell ? "w-[71px]" : "w-[308px]")}
     >
       {children}
     </ul>
@@ -158,7 +158,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Every status a tile's corner notch holds, at rest, hovered, multi-selected and open. The open
+/** Every status a tile's corner mark shows, at rest, hovered, multi-selected and open. The open
     column wears the face the app gives the Petal on screen, never Sleeping. */
 export const States: Story = {
   render: () => (

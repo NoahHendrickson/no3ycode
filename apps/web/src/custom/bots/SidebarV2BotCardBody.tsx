@@ -12,7 +12,7 @@ import { cn } from "~/lib/utils";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "../SidebarV2StatusIndicator";
 import { BotCardStatusLine } from "./BotCardStatusLine";
-import { BotMascotTile } from "./BotMascot";
+import { BotMascot, BotMascotTile } from "./BotMascot";
 import type { BotMascotMood } from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
 import { type BotShell, isBotThread } from "./botThreads";
@@ -48,9 +48,9 @@ export function petalTileHoverAnchor(threadKey: string) {
   };
 }
 
-/** A bot in the Petals grid: its 48px tile with the status mark in a notch cut from its corner,
-    and its name under it. The tile keeps 8px to the cell's sides and top, and the name 8px to
-    its bottom: 8 + 48 + 2 + 16 + 8 = 82px tall, in a 64px cell. */
+/** A bot in the Petals grid (Figma no3y-code 11:3126): a tile washed 4% in the sidebar's ink,
+    the mascot fitted to 28px in a 36px box over its 10px name, 4 + 36 + 10 + 6 = 56px tall, and
+    the status mark in its top-right corner. */
 export function SidebarV2BotGridBody(props: {
   readonly shell: Parameters<typeof botMascotShape>[0];
   readonly mood: BotMascotMood;
@@ -67,19 +67,19 @@ export function SidebarV2BotGridBody(props: {
   readonly sweepBadge: ReactNode | null;
 }) {
   return (
-    <div className="relative z-10 flex flex-col items-center px-1 py-2">
-      <span className="relative">
-        <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} size="grid" />
-        <span
-          data-fork-bot-grid-badge=""
-          className="pointer-events-none absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center"
-        >
-          <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
-        </span>
+    <div className="relative z-10 flex flex-col items-center bg-sidebar-foreground/4 px-2 pt-1 pb-1.5">
+      <span className="flex size-9 items-center justify-center">
+        <BotMascot shape={botMascotShape(props.shell)} mood={props.mood} fit={28} />
+      </span>
+      <span
+        data-fork-bot-grid-badge=""
+        className="pointer-events-none absolute top-1.5 right-[6.33px] flex size-[10.67px] items-center justify-center"
+      >
+        <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
       </span>
       <span
         className={cn(
-          "mt-0.5 flex h-4 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-4 font-medium",
+          "flex min-h-2.5 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-none font-medium",
           props.regenerating && "opacity-55",
         )}
       >
