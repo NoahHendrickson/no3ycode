@@ -8124,7 +8124,9 @@
     pill glass rows, 8pt apart, above the pinned composer (the list runs to
     the screen bottom behind the composer and keyboard and pads its end, never
     sized from the keyboard; rows fade out under the header and into the
-    composer scrim) (No3yGlassLayer, as
+    composer scrim; the composer rides the keyboard only for its own editor,
+    so a header search leaves it at rest under the keyboard and opening or
+    closing search never moves it, fork/no3yKeyboardOwner.ts) (No3yGlassLayer, as
     the controls; only a 20pt icon and the name, 16pt, one line; the picked
     one brightened with a hairline and a small check; growing in, never
     fading, as glass does): "No project" (the No-project workspace, opened as
@@ -8185,6 +8187,8 @@
     - apps/mobile/fork/No3yCompactBanner.tsx
     - apps/mobile/fork/no3yInPlaceProject.ts
     - apps/mobile/fork/no3ySheet.ts
+    - apps/mobile/fork/no3yKeyboardOwner.ts
+    - apps/mobile/fork/no3yKeyboardOwner.test.ts
     - apps/mobile/fork/No3yGlassMenuButton.tsx
     - apps/mobile/fork/No3yMenuItems.tsx
     - apps/mobile/fork/no3yInPlaceProject.test.ts
@@ -8297,3 +8301,4 @@
     - apps/mobile/fork/no3yPullRequestTone.test.ts
     - apps/mobile/fork/no3yResumeCompaction.test.ts
     - apps/mobile/fork/no3yInPlaceProject.test.ts
+    - apps/mobile/fork/no3yKeyboardOwner.test.ts

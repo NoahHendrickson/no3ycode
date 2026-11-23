@@ -11,6 +11,11 @@ import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard
 /* fork:end fork-pending-user-input */
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { No3yCompactBanner } from "../../../fork/No3yCompactBanner";
+import {
+  claimNo3yKeyboard,
+  no3yComposerFollowsKeyboard,
+  useNo3yKeyboardOwner,
+} from "../../../fork/no3yKeyboardOwner";
 import { NO3Y_PICK_PROJECT_REASON } from "../../../fork/no3yInPlaceProject";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
@@ -498,6 +503,9 @@ function ThreadDetailBody(
   }, [isKeyboardVisible, liveKeyboardHeight]);
   const handleOwnedInputFocusChange = (focused: boolean) => {
     ownedInputFocusedRef.current = focused;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    if (focused) claimNo3yKeyboard("composer");
+    /* fork:end no3y-mobile-redesign */
     if (focused) {
       if (deviceType === "duo-folded" || deviceType === "duo-unfolded")
         setComposerOwnsKeyboard(true);
@@ -1051,10 +1059,18 @@ function ThreadDetailBody(
   const reservedKeyboardHeight =
     lastKnownKeyboardHeight > 0 ? lastKnownKeyboardHeight : ESTIMATED_KEYBOARD_HEIGHT;
   // Waiting for a visibility render misses the first keyboard frames.
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yKeyboardOwner = useNo3yKeyboardOwner();
+  /* fork:end no3y-mobile-redesign */
   const keyboardStickyEnabled =
-    Platform.OS === "ios"
-      ? deviceType !== "duo-unfolded" || (composerOwnsKeyboard && !sidebarSearchActive)
-      : !keyboardStateSuspect;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // A header search owns this keyboard: the composer stays at rest under it.
+    !no3yComposerFollowsKeyboard({ no3yLayout: no3yBottomNav, owner: no3yKeyboardOwner })
+      ? false
+      : /* fork:end no3y-mobile-redesign */
+        Platform.OS === "ios"
+        ? deviceType !== "duo-unfolded" || (composerOwnsKeyboard && !sidebarSearchActive)
+        : !keyboardStateSuspect;
   const estimatedOverlayHeight = composerOverlapHeight;
   const contentInsetEndAdjustment = useSharedValue(estimatedOverlayHeight);
   const onComposerLayout = useCallback(

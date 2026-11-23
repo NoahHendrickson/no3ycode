@@ -33,6 +33,7 @@ import { useServerConfigs } from "../src/state/entities";
 import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { No3yGlassLayer } from "./No3yGlass";
+import { claimNo3yKeyboard } from "./no3yKeyboardOwner";
 import { useNo3yBottomNavEnabled } from "./No3yBottomNav";
 import { No3yCircleButton, No3yUsageRing } from "./No3yControls";
 import { no3yRingUsageWindow } from "./no3yUsageCompact";
@@ -157,6 +158,8 @@ function No3ySearchHeader(
         placeholder={`Search ${props.subject}`}
         placeholderTextColor={palette.faintInk}
         autoFocus
+        // The search owns this keyboard: the composer stays at rest under it.
+        onFocus={() => claimNo3yKeyboard("other")}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
@@ -190,7 +193,10 @@ function No3ySearchHeader(
               palette={palette}
               accessibilityLabel={`Search ${props.subject}`}
               icon={Search01Icon}
-              onPress={() => props.onSearchingChange(true)}
+              onPress={() => {
+                claimNo3yKeyboard("other");
+                props.onSearchingChange(true);
+              }}
             />
             {props.children}
           </>

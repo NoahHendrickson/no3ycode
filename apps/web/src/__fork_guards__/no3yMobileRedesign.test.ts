@@ -701,6 +701,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // The compact status pill replaces the floating control on the no3y layout and opens its sheet.
     const statusPill = readRepoFile("apps/mobile/fork/No3yStatusPill.tsx");
     expect(threadDetail).toContain("<No3yStatusPillSwap");
+    // The composer rides the keyboard only for its own editor; a header search leaves it at rest.
+    expect(threadDetail).toContain(
+      "!no3yComposerFollowsKeyboard({ no3yLayout: no3yBottomNav, owner: no3yKeyboardOwner })",
+    );
+    expect(screenHeader).toContain('onFocus={() => claimNo3yKeyboard("other")}');
     // The Mac's "Resume with less context": a header-style glass pill with Compact (sends
     // /compact now) and Keep full history; a send in the no3y layout never compacts first.
     expect(threadDetail).toContain("tokens={props.compactBeforeSend?.tokens ?? null}");
