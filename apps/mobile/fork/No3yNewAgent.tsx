@@ -16,7 +16,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
 
@@ -36,14 +36,14 @@ import {
 } from "../src/features/threads/new-task-project-selection";
 import { resolveProjectThreadCreationBranch } from "../src/features/threads/projectThreadCreationValidation";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
-import { useProjects, useServerConfigs } from "../src/state/entities";
+import { useServerConfigs } from "../src/state/entities";
 import { projectEnvironment } from "../src/state/projects";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
 import { useRemoteConnectionStatus } from "../src/state/use-remote-environment-registry";
+import { useNo3ySentChats } from "./no3yChatTagging";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
-import { buildScratchProjectKeySet } from "./mobileStatusGrouping";
 import type { No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yGlassLayer } from "./No3yGlass";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
@@ -153,22 +153,12 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
-  const projects = useProjects();
   const serverConfigs = useServerConfigs();
   const { connectedEnvironments } = useRemoteConnectionStatus();
   const openScratch = useAtomCommand(projectEnvironment.openScratch, { reportFailure: false });
   const nowIso = useThreadListNow(threads);
 
-  const scratchProjectKeys = useMemo(
-    () =>
-      buildScratchProjectKeySet(
-        projects,
-        new Map(
-          [...serverConfigs.entries()].map(([id, config]) => [id, config.scratchWorkspaceRoot]),
-        ),
-      ),
-    [projects, serverConfigs],
-  );
+  const sentChatKeys = useNo3ySentChats();
   const scopes = pickableProjectGroups(flow.projectScopes).filter(
     (scope) =>
       !scope.projects.every((project) =>
@@ -187,7 +177,7 @@ function ProjectTiles(props: { readonly topInset: number; readonly bottomInset: 
   const tiles = rankNo3yProjectTiles({
     scopes,
     threads,
-    scratchProjectKeys,
+    sentChatKeys,
     now: nowIso,
     searchQuery,
     selectedScopeKey,

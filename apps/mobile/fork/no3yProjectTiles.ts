@@ -11,7 +11,8 @@ import { filterProjectScopes } from "../src/features/threads/new-task-project-se
 import { relativeTime } from "../src/lib/time";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
-import { isNo3yChatThread, resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
+import { resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
+import { isNo3yChatThread } from "./no3yChatRule";
 
 export interface No3yProjectTile {
   readonly scope: HomeProjectScope;
@@ -29,7 +30,7 @@ export interface No3yProjectTile {
 export function rankNo3yProjectTiles(input: {
   readonly scopes: ReadonlyArray<HomeProjectScope>;
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
-  readonly scratchProjectKeys: ReadonlySet<string>;
+  readonly sentChatKeys: ReadonlySet<string>;
   readonly now: string;
   readonly searchQuery: string;
   readonly selectedScopeKey: string | null;
@@ -37,7 +38,7 @@ export function rankNo3yProjectTiles(input: {
 }): ReadonlyArray<No3yProjectTile> {
   const stats = new Map<string, { working: number; lastActivityMs: number }>();
   for (const thread of filterForkRosterVisibleThreads(input.threads)) {
-    if (isNo3yChatThread(thread, input.scratchProjectKeys)) continue;
+    if (isNo3yChatThread(thread, input.sentChatKeys)) continue;
     const key = `${thread.environmentId}:${thread.projectId}`;
     const entry = stats.get(key) ?? { working: 0, lastActivityMs: 0 };
     const bucket = sidebarV2StatusBucketForKind(

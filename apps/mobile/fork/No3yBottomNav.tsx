@@ -28,7 +28,7 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { isDuoDevice } from "../src/lib/device-type";
 import { useDeviceType } from "../src/native/native-layout-metrics";
-import { useProjects, useServerConfigs } from "../src/state/entities";
+import { useServerConfigs } from "../src/state/entities";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import {
   flatGlassPalette,
@@ -36,13 +36,13 @@ import {
   no3yDockBottom,
   type FlatGlassPalette,
 } from "./flatGlassTheme";
+import { isNo3yChatThread } from "./no3yChatRule";
+import { useNo3ySentChats } from "./no3yChatTagging";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
 import { sidebarV2StatusBucketForKind } from "./forkStatusGrouping";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import {
-  buildScratchProjectKeySet,
   hasNo3yNavPeek,
-  isNo3yChatThread,
   listNo3yAutomationRunThreads,
   resolveActiveNo3yNavItem,
   resolveNo3yThreadCardStatusKind,
@@ -317,7 +317,6 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const palette = flatGlassPalette(themeAppearance);
   const { openWorkspaceTab, selectDetail, startNewTask } = useAdaptiveWorkspaceLayout();
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
-  const projects = useProjects();
   const serverConfigs = useServerConfigs();
   const [peekItem, setPeekItem] = useState<No3yNavItemId | null>(null);
 
@@ -331,28 +330,21 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
 
   const activeItem = resolveActiveNo3yNavItem(visibleRoutes);
 
-  const scratchProjectKeys = useMemo(() => {
-    const roots = new Map(
-      [...serverConfigs.entries()].map(
-        ([envId, cfg]) => [envId, cfg.scratchWorkspaceRoot] as const,
-      ),
-    );
-    return buildScratchProjectKeySet(projects, roots);
-  }, [projects, serverConfigs]);
+  const sentChatKeys = useNo3ySentChats();
 
   const nowIso = useThreadListNow(threads);
   const threadsBadgeColor = useMemo(() => {
     let hasWorking = false;
     for (const thread of filterForkRosterVisibleThreads(threads)) {
       if (thread.settledOverride === "settled") continue;
-      if (isNo3yChatThread(thread, scratchProjectKeys)) continue;
+      if (isNo3yChatThread(thread, sentChatKeys)) continue;
       const kind = resolveNo3yThreadCardStatusKind(thread, { now: nowIso });
       const bucket = sidebarV2StatusBucketForKind(kind);
       if (bucket === "input") return palette.statusAttention;
       if (bucket === "working") hasWorking = true;
     }
     return hasWorking ? palette.statusWorking : null;
-  }, [threads, scratchProjectKeys, nowIso, palette.statusAttention, palette.statusWorking]);
+  }, [threads, sentChatKeys, nowIso, palette.statusAttention, palette.statusWorking]);
 
   const automationsBadgeColor = useMemo(() => {
     let hasWorking = false;
@@ -372,8 +364,8 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
     () =>
       peekItem === null
         ? []
-        : selectNo3yNavPeekItems({ item: peekItem, threads, scratchProjectKeys, now: nowIso }),
-    [peekItem, threads, scratchProjectKeys, nowIso],
+        : selectNo3yNavPeekItems({ item: peekItem, threads, sentChatKeys, now: nowIso }),
+    [peekItem, threads, sentChatKeys, nowIso],
   );
 
   if (!visible) return null;

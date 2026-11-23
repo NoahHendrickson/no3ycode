@@ -82,9 +82,10 @@ describe("no3y chat draft", () => {
     expect(resolveNo3yChatDraftParams(current, null, () => "r4")).toBeNull();
   });
 
-  it("lists chats newest first, narrowed by title", () => {
-    const chat = (id: string, title: string, at: string) =>
+  it("lists tagged chats and ones sent from here awaiting their tag, newest first, by title", () => {
+    const chat = (id: string, title: string, at: string, tags: string[] = []) =>
       makeThreadShellFixture({
+        source: { ...makeThreadShellFixture().source, tags },
         environmentId: ENV,
         id: ThreadId.make(id),
         projectId: ProjectId.make("scratch"),
@@ -94,17 +95,15 @@ describe("no3y chat draft", () => {
         latestUserMessageAt: at,
         latestUserAuthoredMessageAt: at,
       });
-    const older = chat("c1", "Regex for dates", "2026-11-22T10:00:00.000Z");
+    // Started on the Mac: tagged.
+    const older = chat("c1", "Regex for dates", "2026-11-22T10:00:00.000Z", ["chat"]);
+    // Sent from this phone, tag not shown yet.
     const newer = chat("c2", "Explain CRDTs", "2026-11-22T11:00:00.000Z");
-    const code = makeThreadShellFixture({
-      environmentId: ENV,
-      id: ThreadId.make("t1"),
-      projectId: ProjectId.make("app"),
-      title: "Regex refactor",
-    });
-    const scratchProjectKeys = new Set([`${ENV}:scratch`]);
+    // A No-project New agent thread is code, as on the Mac.
+    const code = chat("t1", "Regex refactor", "2026-11-22T11:30:00.000Z");
+    const sentChatKeys = new Set([`${ENV}:c2`]);
     const ids = (searchQuery: string) =>
-      listNo3yChatThreads({ threads: [older, code, newer], scratchProjectKeys, searchQuery }).map(
+      listNo3yChatThreads({ threads: [older, code, newer], sentChatKeys, searchQuery }).map(
         (thread) => String(thread.id),
       );
     expect(ids("")).toEqual(["c2", "c1"]);

@@ -50,6 +50,7 @@ import {
 } from "../custom/bots/botMascotArt";
 import { botMascotShape as webBotMascotShape } from "../custom/bots/botMascotTags";
 import { listSidebarBots as webListSidebarBots } from "../custom/bots/botThreads";
+import { isChatThread as webIsChatThread, shellThreadKey } from "../custom/chatMode";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Thread } from "../types";
 
@@ -498,6 +499,31 @@ describe("fork guard: no3y-mobile-redesign", () => {
         expect(art.botMascotSprite(shape, mood)).toEqual(webBotMascotSprite(shape, mood));
       }
     }
+  });
+
+  it("files a thread under Chat exactly as web does", async () => {
+    const chatRulePath = NodeURL.fileURLToPath(
+      new URL("../../../mobile/fork/no3yChatRule.ts", import.meta.url),
+    );
+    const mobile = (await import(/* @vite-ignore */ chatRulePath)) as {
+      readonly isNo3yChatThread: (thread: Thread, sentChatKeys?: ReadonlySet<string>) => boolean;
+    };
+    const tagged = withSource(threadFixture("tagged"), { tags: ["chat"] });
+    const otherTag = withSource(threadFixture("other"), { tags: ["bot"] });
+    const sent = threadFixture("sent");
+    const plain = threadFixture("plain");
+    const sentKeys = new Set([shellThreadKey(sent)]);
+    for (const thread of [tagged, otherTag, sent, plain]) {
+      expect(mobile.isNo3yChatThread(thread, sentKeys)).toBe(webIsChatThread(thread, sentKeys));
+      expect(mobile.isNo3yChatThread(thread)).toBe(webIsChatThread(thread, new Set()));
+    }
+    expect(mobile.isNo3yChatThread(sent, sentKeys)).toBe(true);
+    expect(mobile.isNo3yChatThread(plain, sentKeys)).toBe(false);
+    // A phone chat is tagged `chat` once the server lists it, as the Mac tags its own.
+    expect(readRepoFile("apps/mobile/fork/No3yChatRouteScreen.tsx")).toContain("tagNo3yChat(");
+    expect(readRepoFile("apps/mobile/fork/no3yChatTagging.ts")).toContain(
+      "input: { threadId, tag: NO3Y_CHAT_THREAD_TAG, tagged: true }",
+    );
   });
 
   it("mounts the dock, Threads header, thread composer card, and model sheet in mobile seams", () => {

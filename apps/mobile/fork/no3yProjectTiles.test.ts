@@ -63,7 +63,7 @@ const rank = (overrides: Partial<Parameters<typeof rankNo3yProjectTiles>[0]> = {
         source: { ...makeThreadShellFixture().source, tags: ["chat"] },
       }),
     ],
-    scratchProjectKeys: new Set(),
+    sentChatKeys: new Set(),
     now: NOW,
     searchQuery: "",
     selectedScopeKey: null,
@@ -99,7 +99,7 @@ describe("no3y New agent project tiles", () => {
     const [tile] = rankNo3yProjectTiles({
       scopes,
       threads: [thread("w", "a", "2026-11-22T11:00:00.000Z", { runtime: running })],
-      scratchProjectKeys: new Set(),
+      sentChatKeys: new Set(),
       now: NOW,
       searchQuery: "",
       selectedScopeKey: null,

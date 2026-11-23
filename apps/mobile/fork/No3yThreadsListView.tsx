@@ -12,7 +12,7 @@ import {
 } from "@t3tools/client-runtime/state/thread-search";
 import type { EnvironmentId } from "@t3tools/contracts";
 import type { SnoozePresetSetting } from "@t3tools/contracts/settings";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -60,7 +60,6 @@ import { scopedProjectKey, scopedThreadKey } from "../src/lib/scopedEntities";
 import { NativeScrollViewMarker } from "../src/native/NativeScrollViewMarker";
 import { nativeHeaderScrollEdgeEffects } from "../src/native/scrollEdgeEffects";
 import { useActiveNewTask } from "../src/state/active-new-task";
-import { useServerConfigs } from "../src/state/entities";
 import type { ThreadListProvider } from "../src/state/thread-list-environments";
 import type { ThreadPrPresentation } from "../src/state/thread-pr-presentation";
 import { usePendingThreadOrder } from "../src/state/thread-order";
@@ -192,7 +191,6 @@ export function No3yThreadsListView(props: {
   const contentTopInset = no3yBottomNav ? 0 : barTopInset;
   const trayContentInset = useNo3yTrayContentInset();
   const activeNewTask = useActiveNewTask();
-  const serverConfigs = useServerConfigs();
   const pendingOrder = usePendingThreadOrder();
   const resolveProviderInstance = useThreadRowProviderInstanceResolver(
     props.providersByEnvironmentId,
@@ -224,21 +222,9 @@ export function No3yThreadsListView(props: {
     toggleSnoozedShelf,
   } = useThreadListV2ShelfPreferences();
 
-  const scratchWorkspaceRootByEnvironmentId = useMemo(
-    () =>
-      new Map(
-        [...serverConfigs.entries()].map(
-          ([envId, config]) => [envId, config.scratchWorkspaceRoot] as const,
-        ),
-      ),
-    [serverConfigs],
-  );
-
   const { items, hiddenSettledCount, contentOnlyThreadKeys, olderSettledShelf, toggleSection } =
     useNo3yStatusGroupedList({
       threads: props.threads,
-      projects: props.projects,
-      scratchWorkspaceRootByEnvironmentId,
       pendingTasks: props.pendingTasks,
       environmentId: props.selectedEnvironmentId,
       projectRefs: props.scopedProjectGroup === null ? null : props.scopedProjectGroup.projectRefs,

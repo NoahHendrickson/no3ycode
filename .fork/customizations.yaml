@@ -8024,6 +8024,12 @@
     prompt stash and dictation are New agent's and what is picked starts the
     chat. A sent chat is pushed over Chat (back returns there) while the route
     takes a fresh draft; chats opened from the list are pushed over Chat too.
+    A chat is what the Mac calls one (fork/no3yChatRule.ts, parity-guarded
+    against chatMode.ts isChatThread): tagged `chat`, or sent from this phone
+    and still waiting for its tag; a No-project thread without the tag is code
+    on both. A phone chat is tagged with the existing thread.tag.set command
+    once the server lists it (fork/no3yChatTagging.ts, the Mac's chatTagging
+    shape), so it shows in the Mac's Chat list too.
     NewTaskDraftScreen takes a surface (fork/No3yDraftSurface.tsx) in place of
     its header, hero and context/workspace controls (a clone banner stays):
     Chat's, or on iPhone New agent's (fork/No3yNewAgent.tsx): a "New agent"
@@ -8083,6 +8089,8 @@
     - apps/mobile/fork/no3yProjectTiles.ts
     - apps/mobile/fork/no3yProjectTiles.test.ts
     - apps/mobile/fork/no3yChat.ts
+    - apps/mobile/fork/no3yChatRule.ts
+    - apps/mobile/fork/no3yChatTagging.ts
     - apps/mobile/fork/no3yChat.test.ts
     - apps/mobile/fork/No3yAutomationRunsSection.tsx
     - apps/mobile/fork/No3yThreadsFilterBar.tsx

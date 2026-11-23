@@ -1,9 +1,5 @@
 /** Mobile status-grouped thread list, search/filter/sort pipeline, nav state, and peek selectors. */
-import { isScratchProject } from "@t3tools/client-runtime/state/projects";
-import type {
-  EnvironmentProject,
-  EnvironmentThreadShell,
-} from "@t3tools/client-runtime/state/shell";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import {
   threadSearchMatchKey,
   threadSearchSubject,
@@ -24,6 +20,7 @@ import { isListedThreadLineage, type EnvironmentId, type ProjectId } from "@t3to
 import { foldSearchQuery, rankSearchItems, scoreThreadSearch } from "@t3tools/shared/paletteSearch";
 
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
+import { isNo3yChatThread } from "./no3yChatRule";
 import {
   groupSidebarV2StatusSections,
   partitionForkStatusShelves,
@@ -50,8 +47,6 @@ export type No3yStatusFilter = "all" | SidebarV2StatusBucket;
 export type No3yThreadSortOrder = "status" | "updated_at" | "created_at";
 export type No3yNavItemId = "threads" | "automations" | "newAgent" | "chat" | "settings";
 
-export const NO3Y_CHAT_THREAD_TAG = "chat";
-
 export const NO3Y_STATUS_FILTER_OPTIONS: ReadonlyArray<{
   readonly id: No3yStatusFilter;
   readonly label: string;
@@ -72,28 +67,6 @@ export const NO3Y_THREAD_SORT_OPTIONS: ReadonlyArray<{
   { id: "updated_at", label: "Recently updated" },
   { id: "created_at", label: "Newest created" },
 ];
-
-export function isNo3yChatThread(
-  thread: Pick<EnvironmentThreadShell, "environmentId" | "projectId" | "source">,
-  scratchProjectKeys?: ReadonlySet<string>,
-): boolean {
-  if (thread.source.tags?.includes(NO3Y_CHAT_THREAD_TAG) === true) return true;
-  return scratchProjectKeys?.has(`${thread.environmentId}:${thread.projectId}`) === true;
-}
-
-export function buildScratchProjectKeySet(
-  projects: ReadonlyArray<EnvironmentProject>,
-  scratchWorkspaceRootByEnvironmentId: ReadonlyMap<EnvironmentId, string | null | undefined>,
-): ReadonlySet<string> {
-  const keys = new Set<string>();
-  for (const project of projects) {
-    const scratchRoot = scratchWorkspaceRootByEnvironmentId.get(project.environmentId);
-    if (isScratchProject(project, scratchRoot)) {
-      keys.add(`${project.environmentId}:${project.id}`);
-    }
-  }
-  return keys;
-}
 
 export function resolveNo3yThreadCardStatusKind(
   thread: EnvironmentThreadShell,
@@ -255,7 +228,7 @@ export function buildNo3yStatusGroupedList(input: {
   readonly unloadedSettledCount?: number;
   /** Exclude chat-tagged threads from the Threads (code) list when true. */
   readonly excludeChatThreads?: boolean;
-  readonly scratchProjectKeys?: ReadonlySet<string>;
+  readonly sentChatKeys?: ReadonlySet<string>;
 }): No3yStatusGroupedListResult {
   const now = input.now;
   const nowMs = input.nowMs ?? Date.parse(now);
@@ -271,7 +244,7 @@ export function buildNo3yStatusGroupedList(input: {
     if (projectKeys !== null && !projectKeys.has(`${thread.environmentId}:${thread.projectId}`)) {
       return false;
     }
-    if (input.excludeChatThreads === true && isNo3yChatThread(thread, input.scratchProjectKeys)) {
+    if (input.excludeChatThreads === true && isNo3yChatThread(thread, input.sentChatKeys)) {
       return false;
     }
     return true;
@@ -650,7 +623,7 @@ const byNewestActivity = (left: EnvironmentThreadShell, right: EnvironmentThread
 export function selectNo3yNavPeekItems(input: {
   readonly item: No3yNavItemId;
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
-  readonly scratchProjectKeys: ReadonlySet<string>;
+  readonly sentChatKeys: ReadonlySet<string>;
   readonly now: string;
   readonly limit?: number;
 }): ReadonlyArray<No3yNavPeekEntry> {
@@ -660,7 +633,7 @@ export function selectNo3yNavPeekItems(input: {
     return filterForkRosterVisibleThreads(input.threads)
       .filter(
         (thread) =>
-          !isNo3yChatThread(thread, input.scratchProjectKeys) &&
+          !isNo3yChatThread(thread, input.sentChatKeys) &&
           thread.settledOverride !== "settled" &&
           !effectiveSnoozed(thread, { now: input.now }),
       )
@@ -691,14 +664,14 @@ export function selectNo3yNavPeekItems(input: {
 /** The Chat screen's list and its peek: the roster's chats, newest activity first, by title. */
 export function listNo3yChatThreads(input: {
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
-  readonly scratchProjectKeys: ReadonlySet<string>;
+  readonly sentChatKeys: ReadonlySet<string>;
   readonly searchQuery: string;
 }): ReadonlyArray<EnvironmentThreadShell> {
   const query = input.searchQuery.trim().toLocaleLowerCase();
   return filterForkRosterVisibleThreads(input.threads)
     .filter(
       (thread) =>
-        isNo3yChatThread(thread, input.scratchProjectKeys) &&
+        isNo3yChatThread(thread, input.sentChatKeys) &&
         (query.length === 0 || thread.title.toLocaleLowerCase().includes(query)),
     )
     .sort(byNewestActivity);

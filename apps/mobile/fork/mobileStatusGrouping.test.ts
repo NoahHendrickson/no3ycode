@@ -360,7 +360,7 @@ describe("buildNo3yStatusGroupedList", () => {
 
 describe("selectNo3yNavPeekItems", () => {
   it("lists up to five threads per dock item: Threads by needs-you, working, completed, then recent; automation runs; chats", () => {
-    const scratchKeys = new Set([`${ENV_ID}:${PROJECT_SCRATCH}`]);
+    const sentChatKeys = new Set([`${ENV_ID}:chat-2`]);
     // Peeks order by the latest message the user wrote, as the roster does.
     const running = (runId: string) => ({
       status: "running" as const,
@@ -402,10 +402,13 @@ describe("selectNo3yNavPeekItems", () => {
       }),
       { scheduledTaskId: ScheduledTaskId.make("sched-1") },
     );
-    const chatOlder = makeThread("chat-1", {
-      projectId: PROJECT_SCRATCH,
-      latestUserAuthoredMessageAt: "2026-11-22T11:00:00.000Z",
-    });
+    const chatOlder = withSourcePatch(
+      makeThread("chat-1", {
+        projectId: PROJECT_SCRATCH,
+        latestUserAuthoredMessageAt: "2026-11-22T11:00:00.000Z",
+      }),
+      { tags: ["chat"] },
+    );
     const chatNewer = makeThread("chat-2", {
       projectId: PROJECT_SCRATCH,
       latestUserAuthoredMessageAt: "2026-11-22T11:50:00.000Z",
@@ -424,8 +427,8 @@ describe("selectNo3yNavPeekItems", () => {
       chatNewer,
     ];
     const ids = (item: Parameters<typeof selectNo3yNavPeekItems>[0]["item"]) =>
-      selectNo3yNavPeekItems({ item, threads, scratchProjectKeys: scratchKeys, now: NOW }).map(
-        (entry) => String(entry.thread.id),
+      selectNo3yNavPeekItems({ item, threads, sentChatKeys, now: NOW }).map((entry) =>
+        String(entry.thread.id),
       );
 
     expect(ids("threads")).toEqual(["i1", "w1", "idle-new", "idle-mid", "idle-old"]);

@@ -18,7 +18,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
-import type { EnvironmentId } from "@t3tools/contracts";
+import { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { createContext, use, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -44,13 +44,10 @@ import { projectEnvironment } from "../src/state/projects";
 import { steadyNavigationThreadShellsAtom } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
 import { useWorkspaceState } from "../src/state/workspace";
+import { tagNo3yChat, useNo3ySentChats } from "./no3yChatTagging";
 import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
-import {
-  buildScratchProjectKeySet,
-  listNo3yChatThreads,
-  resolveNo3yThreadCardStatusKind,
-} from "./mobileStatusGrouping";
+import { listNo3yChatThreads, resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
 import { findNo3yChatProject, resolveNo3yChatDraftParams } from "./no3yChat";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { No3yChatDraftContext, type No3yDraftSurface } from "./No3yDraftSurface";
@@ -89,8 +86,6 @@ function ChatList(props: { readonly topInset: number; readonly bottomInset: numb
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
-  const projects = useProjects();
-  const serverConfigs = useServerConfigs();
   const { providersByEnvironmentId, pinningEnvironmentIds, titleRegenerationEnvironmentIds } =
     useAtomValue(threadListEnvironmentsAtom);
   const resolveProviderInstance = useThreadRowProviderInstanceResolver(providersByEnvironmentId);
@@ -98,18 +93,11 @@ function ChatList(props: { readonly topInset: number; readonly bottomInset: numb
   const actions = useThreadListActions();
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
 
-  const scratchProjectKeys = useMemo(() => {
-    const roots = new Map(
-      [...serverConfigs.entries()].map(
-        ([envId, cfg]) => [envId, cfg.scratchWorkspaceRoot] as const,
-      ),
-    );
-    return buildScratchProjectKeySet(projects, roots);
-  }, [projects, serverConfigs]);
+  const sentChatKeys = useNo3ySentChats();
   const nowIso = useThreadListNow(threads);
   const chats = useMemo(
-    () => listNo3yChatThreads({ threads, scratchProjectKeys, searchQuery }),
-    [threads, scratchProjectKeys, searchQuery],
+    () => listNo3yChatThreads({ threads, sentChatKeys, searchQuery }),
+    [threads, sentChatKeys, searchQuery],
   );
 
   // Pushed over Chat, as Automations pushes its runs, so back returns here.
@@ -319,6 +307,7 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
         name: "Thread",
         params: { environmentId: submittedEnvironmentId, threadId },
       } as const;
+      tagNo3yChat(EnvironmentId.make(submittedEnvironmentId), ThreadId.make(threadId));
       startOpeningDetail(detail);
       navigation.dispatch(StackActions.push("Thread", detail.params));
       navigation.dispatch(

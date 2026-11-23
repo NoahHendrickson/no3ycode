@@ -8,10 +8,7 @@ import {
   type SidebarV2StatusHeaderKey,
   type SidebarV2StatusSectionKey,
 } from "./forkStatusGrouping";
-import type {
-  EnvironmentProject,
-  EnvironmentThreadShell,
-} from "@t3tools/client-runtime/state/shell";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { OlderSettledScope } from "@t3tools/client-runtime/state/threads";
 import type { EnvironmentId, ProjectId } from "@t3tools/contracts";
 import { useMemo, useState, useSyncExternalStore } from "react";
@@ -27,10 +24,10 @@ import {
 } from "../src/features/threads/threadListV2";
 import {
   buildNo3yStatusGroupedList,
-  buildScratchProjectKeySet,
   type No3yStatusFilter,
   type No3yThreadSortOrder,
 } from "./mobileStatusGrouping";
+import { useNo3ySentChats } from "./no3yChatTagging";
 
 // Kept at module scope so navigating into a thread and back preserves 5-minute Completed holds.
 const mobileCompletedHolds = createSidebarV2CompletedHoldTracker();
@@ -70,11 +67,6 @@ function olderSettledScopes(input: {
 
 export function useNo3yStatusGroupedList(input: {
   readonly threads: ReadonlyArray<EnvironmentThreadShell>;
-  readonly projects: ReadonlyArray<EnvironmentProject>;
-  readonly scratchWorkspaceRootByEnvironmentId: ReadonlyMap<
-    EnvironmentId,
-    string | null | undefined
-  >;
   readonly pendingTasks: ReadonlyArray<PendingNewTask>;
   readonly environmentId: EnvironmentId | null;
   readonly projectRefs: ReadonlyArray<{
@@ -121,10 +113,7 @@ export function useNo3yStatusGroupedList(input: {
     });
   };
 
-  const scratchProjectKeys = useMemo(
-    () => buildScratchProjectKeySet(input.projects, input.scratchWorkspaceRootByEnvironmentId),
-    [input.projects, input.scratchWorkspaceRootByEnvironmentId],
-  );
+  const sentChatKeys = useNo3ySentChats();
 
   const layoutTime = useMemo(
     () =>
@@ -227,7 +216,7 @@ export function useNo3yStatusGroupedList(input: {
           ),
         ),
         excludeChatThreads: true,
-        scratchProjectKeys,
+        sentChatKeys,
       }),
     [
       input.threads,
@@ -254,7 +243,7 @@ export function useNo3yStatusGroupedList(input: {
       isListed,
       unloadedCount,
       scopes,
-      scratchProjectKeys,
+      sentChatKeys,
     ],
   );
 
