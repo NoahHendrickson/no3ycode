@@ -5515,6 +5515,32 @@
   verify:
     - apps/web/src/__fork_guards__/forkGlassPreviewParking.test.ts
 
+- id: fork-subagent-cards-after-reply
+  intent: >
+    A folded, finished turn reads answer first. Upstream keeps a settled
+    subagent card visible in a folded turn where the subagent ran (native
+    subagent work has no app run, so it does not fold with the turn), which
+    puts it under "Worked for …" and above the reply. The fork moves every
+    settled subagent card above a folded turn's last reply to just below that
+    reply: below its changed-files card, and below its separate copy/fork row
+    when upstream draws one after trailing tool rows. Expanded turns keep the
+    order work happened in, live turns are untouched, and a subagent still
+    running stays where it is until it settles. A pass after
+    fork-working-row-last's fold reorders useStableRows' rows without copying
+    them, so row identity and memoised content hold.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkSubagentCardsAfterReply.ts
+  shadows: []
+  watch:
+    # Fenced pass on the folded rows; reads turn-fold, message, assistant-meta
+    # and subagent event rows from MessagesTimeline.logic.ts.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkSubagentCardsAfterReply.test.ts
+    - apps/web/src/custom/forkSubagentCardsAfterReply.test.ts
+
 - id: fork-subagent-spawn-card
   intent: >
     Every subagent in the transcript, alone or in a batch, renders as the

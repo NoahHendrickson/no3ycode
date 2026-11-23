@@ -15,6 +15,9 @@ import { ForkTimelineRowFrame, useTimelineRowMotion } from "~/custom/forkTimelin
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { forkLiveStatusRows } from "~/custom/forkWorkingRowLast";
 /* fork:end fork-working-row-last */
+/* fork:begin fork-subagent-cards-after-reply — see .fork/customizations.yaml#fork-subagent-cards-after-reply */
+import { forkSubagentCardsAfterReply } from "~/custom/forkSubagentCardsAfterReply";
+/* fork:end fork-subagent-cards-after-reply */
 import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { deriveTimelineMinimapItems } from "./timelineMinimapItems";
@@ -791,8 +794,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:end fork-bots */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  const rows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
+  const foldedRows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
   /* fork:end fork-working-row-last */
+  /* fork:begin fork-subagent-cards-after-reply — see .fork/customizations.yaml#fork-subagent-cards-after-reply */
+  const rows = forkSubagentCardsAfterReply(foldedRows);
+  /* fork:end fork-subagent-cards-after-reply */
   /* fork:begin fork-transcript-row-motion — see .fork/customizations.yaml#fork-transcript-row-motion */
   const rowMotion = useTimelineRowMotion(rows, listIdentityKey, forkTimelineSynced);
   /* fork:end fork-transcript-row-motion */
