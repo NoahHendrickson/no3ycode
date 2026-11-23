@@ -6,7 +6,12 @@ import { SymbolView } from "../../components/ui/AppSymbol";
 import { Menu } from "../../components/ui/Menu";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
-import { No3yComposerRoundButton, useNo3yComposerStyle } from "../../../fork/No3yComposerStyle";
+import {
+  No3yComposerMenuButton,
+  No3yComposerRoundButton,
+  useNo3yComposerStyle,
+} from "../../../fork/No3yComposerStyle";
+import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../../native/native-glass";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin no3y-prompt-stash — see .fork/customizations.yaml#no3y-prompt-stash */
 import { useNo3yStashMenu } from "../../../fork/No3yPromptStashSheet";
@@ -61,6 +66,30 @@ export function ComposerAttachmentButton(props: {
     </Pressable>
   );
 
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (
+    no3yCard &&
+    NATIVE_LIQUID_GLASS_SUPPORTED &&
+    !props.disabled &&
+    (stashMenu || props.supportsFiles)
+  ) {
+    return (
+      <No3yComposerMenuButton
+        accessibilityLabel="Add attachment"
+        icon={PlusIcon}
+        actions={[
+          ...(props.supportsFiles ? ATTACHMENT_MENU_ACTIONS : ATTACHMENT_MENU_ACTIONS.slice(0, 1)),
+          ...(stashMenu?.actions ?? []),
+        ]}
+        onPressAction={(id) => {
+          if (stashMenu?.handle(id)) return;
+          if (id === "photos") void props.onPickMedia();
+          else if (id === "files") void props.onPickFiles();
+        }}
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   /* fork:begin no3y-prompt-stash — see .fork/customizations.yaml#no3y-prompt-stash */
   if (stashMenu && !props.disabled) {
     return (

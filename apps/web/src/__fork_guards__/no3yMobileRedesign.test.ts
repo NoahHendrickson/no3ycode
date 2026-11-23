@@ -756,6 +756,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(screenHeader).toContain("<No3yGlassMenuButton");
     expect(automations).toContain("<No3yGlassMenuButton");
     expect(modelPicker).toContain("<No3yGlassMenuButton");
+    expect(readRepoFile("apps/mobile/src/features/threads/ComposerAttachmentButton.tsx")).toContain(
+      "<No3yComposerMenuButton",
+    );
     expect(readRepoFile("apps/mobile/fork/No3yPullRequestMark.tsx")).toContain(
       "merged: GitMergeIcon,",
     );

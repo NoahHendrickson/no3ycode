@@ -39,11 +39,14 @@ export function No3yGlassMenuButton(
     readonly accessibilityLabel: string;
     readonly title?: string;
     readonly selected?: boolean;
+    /** Defaults to the 44pt header control; the composer's are 40pt. */
+    readonly size?: number;
     readonly actions: ReadonlyArray<MenuAction>;
     readonly onPressAction: (id: string) => void;
   },
 ) {
   const { palette } = props;
+  const size = props.size ?? NO3Y_CONTROL_SIZE;
   const items =
     props.title === undefined ? (
       <No3yMenuItems actions={props.actions} onPressAction={props.onPressAction} />
@@ -107,9 +110,9 @@ export function No3yGlassMenuButton(
       {...(circle ? {} : { matchContents: { horizontal: true } })}
       alignment="center"
       style={{
-        ...(circle ? { width: NO3Y_CONTROL_SIZE } : null),
-        height: NO3Y_CONTROL_SIZE,
-        borderRadius: NO3Y_CONTROL_SIZE / 2,
+        ...(circle ? { width: size } : null),
+        height: size,
+        borderRadius: size / 2,
         borderWidth: props.selected ? 1.5 : 0,
         borderColor: palette.peekRing,
       }}

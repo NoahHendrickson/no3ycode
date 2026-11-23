@@ -9,6 +9,7 @@ import CornerDownLeftIcon from "@hugeicons/core-free-icons/CornerDownLeftIcon";
 import PlayIcon from "@hugeicons/core-free-icons/PlayIcon";
 import StopIcon from "@hugeicons/core-free-icons/StopIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
+import type { MenuAction } from "@react-native-menu/menu";
 import type { RuntimeMode } from "@t3tools/contracts";
 import { createContext, use, type ReactNode } from "react";
 import { Pressable, View, type PressableProps } from "react-native";
@@ -19,6 +20,7 @@ import { flatGlassPalette, NO3Y_COMPOSER_CONTROL_SIZE, NO3Y_FONT } from "./flatG
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yAccessIcon } from "./No3yAccess";
 import { No3yGlassLayer } from "./No3yGlass";
+import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 
 /** What the card tells its controls: set while the no3y card style is on. */
 interface No3yComposerCard {
@@ -108,6 +110,23 @@ export function No3yComposerRoundButton(
         <HugeIcon icon={icon} size={20} color={ink} filled={variant !== "primary"} />
       </Pressable>
     </View>
+  );
+}
+
+/** A 40pt glass composer control whose menu morphs out of it on iOS 26. */
+export function No3yComposerMenuButton(props: {
+  readonly accessibilityLabel: string;
+  readonly icon: HugeIconData;
+  readonly actions: ReadonlyArray<MenuAction>;
+  readonly onPressAction: (id: string) => void;
+}) {
+  const { themeAppearance } = useAppearancePreferences();
+  return (
+    <No3yGlassMenuButton
+      {...props}
+      palette={flatGlassPalette(themeAppearance)}
+      size={NO3Y_COMPOSER_CONTROL_SIZE}
+    />
   );
 }
 
