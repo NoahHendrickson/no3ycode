@@ -12,7 +12,10 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../src/native/native-glass";
 import { flatGlassPalette } from "./flatGlassTheme";
 
-export function No3yGlassLayer(props: { readonly radius: number; readonly tint?: string }) {
+export function No3yGlassLayer(props: {
+  readonly radius: number;
+  readonly tint?: string | undefined;
+}) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   if (NATIVE_LIQUID_GLASS_SUPPORTED) {

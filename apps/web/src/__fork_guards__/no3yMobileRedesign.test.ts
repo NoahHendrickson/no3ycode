@@ -722,9 +722,13 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(threadDetail).toContain("enabled={no3yBottomNav}");
     expect(stack).toContain("No3yThreadStatus: createNativeStackScreen({");
     expect(statusPill).toContain('StackActions.push("No3yThreadStatus", { threadKey })');
-    expect(statusPill).toContain("subagents: { icon: BotMessageSquareIcon, filled: false }");
-    expect(statusPill).toContain("const pills = no3yGroupBackground(segments);");
-    expect(statusPill).toContain("<PullRequestPill thread={thread}");
+    expect(statusPill).toContain("{pills.map(renderPill)}");
+    expect(statusPill).toContain("const spec = pillSpec(segment, targets);");
+    // The screen resolves the pull request once; the pill draws it and the feed keeps clear of it.
+    expect(threadDetail).toContain(
+      "useThreadPr(no3yPullRequestThread(props.selectedThread, no3yBottomNav))",
+    );
+    expect(threadDetail).toContain("pullRequest={no3yPullRequest}");
     expect(statusPill).toContain("<No3yGlassLayer radius={PILL_HEIGHT / 2} />");
     // The user's bubble is a translucent wash on the no3y layout.
     expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(

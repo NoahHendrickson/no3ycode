@@ -5,7 +5,8 @@ import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceT
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
-import { No3yStatusPillSwap, no3yThreadHasPullRequest } from "../../../fork/No3yStatusPill";
+import { No3yStatusPillSwap, no3yPullRequestThread } from "../../../fork/No3yStatusPill";
+import { useThreadPr } from "../../state/use-thread-pr";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
@@ -979,17 +980,18 @@ function ThreadDetailBody(
             : null,
       })
     : null;
-  const showWorkingControl = (no3yBottomNav ? no3yStatus : floatingStatus) !== null;
+  // The pull request pill alone keeps the feed clear of the row, as a status does.
+  const no3yPullRequest = useThreadPr(no3yPullRequestThread(props.selectedThread, no3yBottomNav));
+  const showWorkingControl = no3yBottomNav
+    ? no3yStatus !== null || no3yPullRequest !== null
+    : floatingStatus !== null;
   /* fork:end no3y-mobile-redesign */
   const showFloatingStatus =
     showWorkingControl ||
     queuedCount > 0 ||
     agentsSegment !== null ||
     devicePreviews.length > 0 ||
-    browserTabs.tabs.length > 0 ||
-    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-    (no3yBottomNav && no3yThreadHasPullRequest(props.selectedThread));
-  /* fork:end no3y-mobile-redesign */
+    browserTabs.tabs.length > 0;
   const selectedThreadFeed = props.selectedThreadFeed;
   // A palette message result opens the thread at that message: earlier
   // history loads until the message is in the feed, which then scrolls to it.
@@ -1749,6 +1751,8 @@ function ThreadDetailBody(
                     backgroundWork={pendingBackgroundWork}
                     detailRef={props.selectedThreadDetailRef}
                     no3yStatus={no3yStatus}
+                    thread={props.selectedThread}
+                    pullRequest={no3yPullRequest}
                   >
                     {/* fork:end no3y-mobile-redesign */}
                     <FloatingWorkingControl

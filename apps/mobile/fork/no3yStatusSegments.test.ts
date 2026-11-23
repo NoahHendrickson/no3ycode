@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   no3yElapsedLabel,
-  no3yGroupBackground,
   no3ySubagentMarkKind,
   no3yStatusSegments,
   type No3yStatusPillInput,
@@ -10,6 +9,7 @@ import {
 
 const idle: No3yStatusPillInput = {
   status: null,
+  pullRequest: false,
   backgroundKinds: [],
   subagents: null,
   childInputCount: 0,
@@ -19,28 +19,24 @@ const idle: No3yStatusPillInput = {
   browserCount: 0,
 };
 
-const summary = (input: Partial<No3yStatusPillInput>, group = false) =>
-  (group
-    ? no3yGroupBackground(no3yStatusSegments({ ...idle, ...input }))
-    : no3yStatusSegments({ ...idle, ...input })
-  ).map(
-    (segment) =>
-      `${segment.kind}${segment.count === null ? "" : `:${segment.count}`}${segment.needsYou ? "!" : ""}${segment.quiet ? "~" : ""}`,
-  );
+const summary = (input: Partial<No3yStatusPillInput>) =>
+  no3yStatusSegments({ ...idle, ...input }).map((segment) => {
+    if (segment.kind === "status") return segment.needsYou ? "status!" : "status";
+    if (segment.kind === "pullRequest" || segment.kind === "extension") return segment.kind;
+    return `${segment.kind}:${segment.count}${segment.needsYou ? "!" : ""}${segment.quiet ? "~" : ""}`;
+  });
 
 describe("no3y status pill segments", () => {
   it("shows nothing when the thread is quiet", () => {
     expect(summary({})).toEqual([]);
   });
 
-  it("counts background processes and monitors apart, and leaves the working turn to the transcript", () => {
+  it("counts background processes and monitors, and leaves the working turn to the transcript", () => {
     const working = { kind: "working", startedAt: "2026-11-22T00:00:00.000Z" } as const;
-    expect(
-      summary({
-        status: working,
-        backgroundKinds: ["command", "monitor", "background_task", "monitor"],
-      }),
-    ).toEqual(["processes:2", "monitors:2"]);
+    expect(summary({ status: working, backgroundKinds: ["command", "background_task"] })).toEqual([
+      "processes:2",
+    ]);
+    expect(summary({ backgroundKinds: ["monitor", "monitor"] })).toEqual(["monitors:2"]);
     // A running turn with nothing else going on draws no pill at all.
     expect(summary({ status: working })).toEqual([]);
   });
@@ -104,22 +100,33 @@ describe("no3y status pill segments", () => {
       onPress: () => {},
     } as const;
     expect(
-      summary(
-        {
-          status: offline,
-          backgroundKinds: ["command", "monitor"],
-          subagents: { live: 2, total: 2 },
-          childInputCount: 1,
-          browserCount: 1,
-        },
-        true,
-      ),
-    ).toEqual(["status!", "background:4!", "browser:1"]);
-    expect(summary({ backgroundKinds: ["monitor", "monitor"] }, true)).toEqual(["monitors:2"]);
-    // Finished subagents are not running work: they keep their own quiet pill beside a monitor.
+      summary({
+        status: offline,
+        pullRequest: true,
+        backgroundKinds: ["command", "monitor"],
+        subagents: { live: 2, total: 2 },
+        childInputCount: 1,
+        browserCount: 1,
+      }),
+    ).toEqual(["status!", "pullRequest", "backgroundGroup:4!", "browser:1"]);
+    // Finished subagents are not running work: they keep their own quiet pill beside a monitor,
+    // and a child request marks that pill rather than inflating a group.
+    expect(summary({ backgroundKinds: ["monitor"], subagents: { live: 0, total: 3 } })).toEqual([
+      "monitors:1",
+      "subagents:3~",
+    ]);
     expect(
-      summary({ backgroundKinds: ["monitor"], subagents: { live: 0, total: 3 } }, true),
-    ).toEqual(["monitors:1", "subagents:3~"]);
+      summary({
+        backgroundKinds: ["monitor"],
+        subagents: { live: 0, total: 3 },
+        childInputCount: 1,
+      }),
+    ).toEqual(["monitors:1", "subagents:3!"]);
+    // Grouped processes and monitors leave a child request on its own subagents pill.
+    expect(summary({ backgroundKinds: ["command", "monitor"], childInputCount: 1 })).toEqual([
+      "backgroundGroup:2",
+      "subagents:1!",
+    ]);
   });
 
   it("keeps extension, queue and previews reachable as their own segments", () => {

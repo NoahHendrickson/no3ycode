@@ -72,6 +72,15 @@ export interface FlatGlassPalette {
   readonly prMerged: string;
   readonly prClosed: string;
   readonly prDraft: string;
+  /** The pull request pill above the composer: tinted glass and ink per state (Figma 60:2786). */
+  readonly prPill: Readonly<
+    Record<
+      "open" | "merged" | "closed" | "draft",
+      { readonly tint?: string | undefined; readonly ink: string }
+    >
+  >;
+  /** The stacked pull request pill's purple-to-green inner glow, as a box shadow. */
+  readonly prStackGlow: string;
   /** The effort slider's track. */
   readonly circleFill: string;
   /** Primary (send) button and its glyph. */
@@ -118,6 +127,14 @@ const DARK_FLAT_GLASS: FlatGlassPalette = {
   prMerged: "rgba(196, 180, 255, 0.9)",
   prClosed: "rgba(255, 162, 162, 0.9)",
   prDraft: "rgba(159, 159, 169, 0.8)",
+  prPill: {
+    open: { tint: "rgba(14, 127, 82, 0.6)", ink: "#75F1A1" },
+    merged: { tint: "rgba(51, 38, 116, 0.6)", ink: "#A38FFA" },
+    closed: { tint: "rgba(127, 29, 29, 0.6)", ink: "#FFA2A2" },
+    draft: { ink: "rgba(159, 159, 169, 0.8)" },
+  },
+  prStackGlow:
+    "inset -1px -1px 2px 0px rgba(18, 199, 69, 0.2), inset 1px 1px 2px 0px rgba(119, 56, 236, 0.7), inset -1px -1px 12px 0px rgba(9, 183, 61, 0.6), inset 1px 1px 12px 1px rgba(87, 35, 185, 0.8)",
   circleFill: "rgba(255, 255, 255, 0.1)",
   primaryFill: "#FFFFFF",
   primaryInk: "#191817",
@@ -160,6 +177,14 @@ const LIGHT_FLAT_GLASS: FlatGlassPalette = {
   prMerged: "#7f22fe",
   prClosed: "#e7000b",
   prDraft: "#71717b",
+  prPill: {
+    open: { tint: "rgba(5, 150, 105, 0.16)", ink: "#059669" },
+    merged: { tint: "rgba(127, 34, 254, 0.12)", ink: "#7f22fe" },
+    closed: { tint: "rgba(231, 0, 11, 0.10)", ink: "#e7000b" },
+    draft: { ink: "#71717b" },
+  },
+  prStackGlow:
+    "inset -1px -1px 2px 0px rgba(18, 199, 69, 0.2), inset 1px 1px 2px 0px rgba(119, 56, 236, 0.45), inset -1px -1px 10px 0px rgba(9, 183, 61, 0.25), inset 1px 1px 10px 0px rgba(87, 35, 185, 0.3)",
   circleFill: "rgba(20, 22, 24, 0.07)",
   primaryFill: "#141618",
   primaryInk: "#FFFFFF",
