@@ -3,7 +3,7 @@
  * `.fork/customizations.yaml#no3y-mobile-redesign`. Web keeps the same list in
  * `apps/web/src/custom/forkThinkingWords.ts`.
  */
-export const NO3Y_THINKING_WORDS = [
+const NO3Y_THINKING_WORDS = [
   "Yapping",
   "Mogging",
   "Yearning",
@@ -30,14 +30,10 @@ export const NO3Y_THINKING_WORDS = [
   "Brainmaxxing",
 ] as const;
 
-const ROTATE_MS = 4_000;
-
-/** The turn's start picks its first word, so turns don't all open on the same one. */
-export function no3yThinkingWord(startedAt: string, nowMs: number): string {
+/** One word per seed: the line keeps its word until what sits above it changes. */
+export function no3yThinkingWord(seed: string): string {
   let hash = 0;
-  for (const char of startedAt) hash = (hash * 31 + char.charCodeAt(0)) | 0;
-  const startedAtMs = Date.parse(startedAt);
-  const elapsedMs = Number.isFinite(startedAtMs) ? Math.max(0, nowMs - startedAtMs) : 0;
-  const index = (Math.abs(hash) + Math.floor(elapsedMs / ROTATE_MS)) % NO3Y_THINKING_WORDS.length;
+  for (const char of seed) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  const index = Math.abs(hash) % NO3Y_THINKING_WORDS.length;
   return NO3Y_THINKING_WORDS[index] ?? "Thinking";
 }

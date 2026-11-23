@@ -9,7 +9,6 @@ import {
   isForkStatusLine,
   type ForkLiveRow,
 } from "./forkWorkingRowLast";
-import { FORK_THINKING_WORDS, forkThinkingWord } from "./forkThinkingWords";
 
 type Entries = Parameters<typeof deriveMessagesTimelineRows>[0]["timelineEntries"];
 
@@ -62,10 +61,11 @@ function derive(timelineEntries: Entries, expandedWorkGroupIds?: ReadonlySet<str
 }
 
 const kinds = (rows: MessagesTimelineRow[]) => rows.map((row) => row.kind);
-function statusLine(rows: MessagesTimelineRow[]) {
+function statusLineRow(rows: MessagesTimelineRow[]) {
   const last = rows.at(-1);
-  return last?.kind === "working" && isForkStatusLine(last) ? last.forkLive : undefined;
+  return last?.kind === "working" && isForkStatusLine(last) ? last : undefined;
 }
+const statusLine = (rows: MessagesTimelineRow[]) => statusLineRow(rows)?.forkLive;
 
 describe("forkLiveStatusRows", () => {
   it("folds the thinking line into the bottom status line", () => {
@@ -151,15 +151,20 @@ describe("forkStatusLineLabel", () => {
   });
 });
 
-describe("forkThinkingWord", () => {
-  it("holds a word for four seconds of the turn, then moves to the next", () => {
-    const startedAt = "2026-01-01T00:00:03.750Z";
-    const startMs = Date.parse(startedAt);
-    const first = forkThinkingWord(startedAt, startMs);
-    expect(forkThinkingWord(startedAt, startMs + 3_999)).toBe(first);
-    const next = FORK_THINKING_WORDS.indexOf(first as never) + 1;
-    expect(forkThinkingWord(startedAt, startMs + 4_000)).toBe(
-      FORK_THINKING_WORDS[next % FORK_THINKING_WORDS.length],
-    );
+describe("forkWordSeed", () => {
+  const seed = (entries: Entries) =>
+    statusLineRow(forkLiveStatusRows(derive(entries)))?.forkWordSeed;
+
+  it("holds while the line's own content changes, and moves when a row or tool lands", () => {
+    const thinking = seed([commentary(6)]);
+    // The same commentary above, re-derived: the seed holds.
+    expect(seed([commentary(6)])).toBe(thinking);
+    const afterTool = seed([
+      command("first", 5, "failed"),
+      commentary(6),
+      command("second", 7, "inProgress"),
+    ]);
+    expect(afterTool).toBe("second");
+    expect(seed([command("first", 5, "inProgress")])).not.toBe(thinking);
   });
 });

@@ -232,7 +232,8 @@ import { useAppearancePreferences } from "../settings/appearance/AppearancePrefe
 import { flatGlassPalette } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
-import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast } from "../../../fork/no3yLiveStatus";
+import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast, no3yLiveWordSeed } from "../../../fork/no3yLiveStatus";
+import { no3yThinkingWord } from "../../../fork/no3yThinkingWords";
 /* fork:end no3y-mobile-redesign */
 import { PierreEntryIcon } from "../../components/PierreEntryIcon";
 import {
@@ -2048,12 +2049,13 @@ function renderFeedEntry(
   ) {
     return (
       <No3yLiveStatusLine
-        environmentId={props.environmentId}
         minHeight={props.workRowSizing.estimatedRowHeight}
         startedAt={entry.type === "thinking" ? entry.createdAt : props.no3y.liveStartedAt}
         label={
           entry.type === "thinking"
-            ? (entry.providerStartingLabel ?? entry.label ?? null)
+            ? (entry.providerStartingLabel ??
+              entry.label ??
+              no3yThinkingWord(no3yLiveWordSeed(entry)))
             : entry.type === "work-toggle"
               ? entry.summary
               : // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)

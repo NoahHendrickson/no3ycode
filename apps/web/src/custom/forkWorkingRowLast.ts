@@ -7,7 +7,11 @@ import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.log
 
 type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
 export type ForkLiveRow = Extract<MessagesTimelineRow, { kind: "thinking" | "work-live" }>;
-export type ForkStatusLineRow = WorkingRow & { readonly forkLive: ForkLiveRow };
+export type ForkStatusLineRow = WorkingRow & {
+  readonly forkLive: ForkLiveRow;
+  /** Picks the thinking word; it changes only when a new row or step lands. */
+  readonly forkWordSeed: string;
+};
 
 // Runs on useStableRows' output, whose array and rows keep their identity
 // while unchanged; these caches keep that identity through the fold.
@@ -25,10 +29,21 @@ function foldsIntoStatusLine(row: MessagesTimelineRow): row is ForkLiveRow {
   );
 }
 
-function mergedWorkingRow(working: WorkingRow, live: ForkLiveRow): ForkStatusLineRow {
+// A group's id holds while it grows, so its size marks each finished tool.
+function wordSeed(live: ForkLiveRow, above: MessagesTimelineRow | undefined): string {
+  if (live.kind === "work-live") return live.entry.id;
+  if (above === undefined) return "";
+  return "groupedEntries" in above ? `${above.id}:${above.groupedEntries.length}` : above.id;
+}
+
+function mergedWorkingRow(
+  working: WorkingRow,
+  live: ForkLiveRow,
+  forkWordSeed: string,
+): ForkStatusLineRow {
   const cached = mergedByWorking.get(working);
-  if (cached?.forkLive === live) return cached;
-  const merged = { ...working, forkLive: live };
+  if (cached?.forkLive === live && cached.forkWordSeed === forkWordSeed) return cached;
+  const merged = { ...working, forkLive: live, forkWordSeed };
   mergedByWorking.set(working, merged);
   return merged;
 }
@@ -41,7 +56,8 @@ function fold(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
   const liveIndex = rest.findLastIndex(foldsIntoStatusLine);
   const live = rest[liveIndex];
   if (live && foldsIntoStatusLine(live)) {
-    return [...rest.toSpliced(liveIndex, 1), mergedWorkingRow(working, live)];
+    const above = rest.toSpliced(liveIndex, 1);
+    return [...above, mergedWorkingRow(working, live, wordSeed(live, above.at(-1)))];
   }
   return workingIndex === rows.length - 1 ? rows : [...rest, working];
 }
@@ -60,7 +76,7 @@ export function isForkStatusLine(row: WorkingRow): row is ForkStatusLineRow {
 
 /**
  * One-line text for the folded live row; upstream's richer previews stay in the open group.
- * Null is the thinking slot, which rotates through forkThinkingWords.
+ * Null is the thinking slot, which takes a word from forkThinkingWords.
  */
 export function forkStatusLineLabel(
   live: ForkLiveRow,
