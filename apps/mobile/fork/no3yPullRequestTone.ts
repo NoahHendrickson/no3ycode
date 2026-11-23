@@ -3,8 +3,11 @@
  * (PULL_REQUEST_STATE_PRESENTATION): open, merged, closed or draft — see
  * `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
-import { resolveThreadPullRequestBadge } from "@t3tools/client-runtime/thread-pull-requests";
-import type { ThreadPullRequestLink } from "@t3tools/contracts";
+import {
+  resolveThreadCurrentPullRequestLink,
+  resolveThreadPullRequestBadge,
+} from "@t3tools/client-runtime/thread-pull-requests";
+import type { PullRequestChecksState, ThreadPullRequestLink } from "@t3tools/contracts";
 
 import {
   resolveThreadPrBadgeAction,
@@ -41,6 +44,8 @@ export interface No3yPullRequestPill {
   /** A stack or several linked: the layers glyph, the current number and how many more. */
   readonly several: boolean;
   readonly more: number;
+  /** Checks on a single open linked pull request, for the running or failing mark. */
+  readonly checks: PullRequestChecksState | null;
 }
 
 /** What the pull request pill above the composer draws (fork/No3yStatusPill.tsx). */
@@ -52,5 +57,9 @@ export function no3yPullRequestPill(
   const badge = several ? resolveThreadPullRequestBadge(links) : null;
   const more =
     badge === null ? pr.others : badge.kind === "stack" ? badge.layers - 1 : badge.others;
-  return { tone: no3yPullRequestTone(pr), several, more };
+  const checks =
+    !several && pr.state === "open"
+      ? (resolveThreadCurrentPullRequestLink(links)?.snapshot?.checksState ?? null)
+      : null;
+  return { tone: no3yPullRequestTone(pr), several, more, checks };
 }
