@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import { render } from "../../test/render";
+import { fakeTimers, render } from "../../test/render";
 import { useForkDraftLiquidGlass } from "./forkDraftLiquidGlass";
 
 // 1x1 transparent PNG; the hook fetches it to upload the backdrop.
@@ -98,7 +98,50 @@ describe("useForkDraftLiquidGlass", () => {
     await vi.waitFor(() => expect(answered).toBe(3));
 
     await screen.unmount();
+    await vi.waitFor(() => expect(setDraftGlass).toHaveBeenLastCalledWith(null));
+  });
+
+  it("hides the native layer only after the page has painted its own stage over it", async () => {
+    const root = document.documentElement;
+    const setDraftGlass = vi.fn((_state: unknown) => Promise.resolve(true));
+    using _window = stubLiquidGlassWindow(setDraftGlass);
+    await using screen = await render(<DraftStage />);
+    await vi.waitFor(() => expect(root.hasAttribute("data-fork-draft-liquid-glass")).toBe(true));
+    using _timers = fakeTimers();
+
+    await screen.unmount();
+    // Hiding first shows the window's black base through the still-transparent stage.
+    expect(root.hasAttribute("data-fork-draft-liquid-glass")).toBe(false);
+    expect(setDraftGlass).not.toHaveBeenCalledWith(null);
+    vi.advanceTimersToNextFrame();
+    expect(setDraftGlass).not.toHaveBeenCalledWith(null);
+    vi.advanceTimersToNextFrame();
     expect(setDraftGlass).toHaveBeenLastCalledWith(null);
+  });
+
+  it("keeps the native layer for a draft that opens before the last one's hide lands", async () => {
+    const calls: Array<"show" | "hide"> = [];
+    const setDraftGlass = vi.fn((state: unknown) => {
+      calls.push(state === null ? "hide" : "show");
+      return Promise.resolve(true);
+    });
+    using _window = stubLiquidGlassWindow(setDraftGlass);
+    await using first = await render(<DraftStage />);
+    await vi.waitFor(() => expect(calls).toEqual(["show"]));
+    using _timers = fakeTimers();
+
+    await first.unmount();
+    await using second = await render(<DraftStage />);
+    expect(calls).toEqual(["show", "show"]);
+    vi.advanceTimersToNextFrame();
+    vi.advanceTimersToNextFrame();
+    expect(calls).toEqual(["show", "show"]);
+
+    // Lands the second draft's hide under these fake timers, so no fake frame id outlives them.
+    await second.unmount();
+    vi.advanceTimersToNextFrame();
+    vi.advanceTimersToNextFrame();
+    expect(calls).toEqual(["show", "show", "hide"]);
   });
 
   it("hands the usage drawer's slide to AppKit as one animated move each way", async () => {
