@@ -1,33 +1,52 @@
-const LEADING_CD = /^cd\s+(?:"[^"]*"|'[^']*'|\S+)\s*(?:&&|;)\s*/u;
-const TRAILING_REDIRECT = /\s+(?:\d?>&\d|&>\s*\S+|\d?>>?\s*\S+|&)\s*$/u;
+import { forkShellCommandParsing as shell } from "@t3tools/client-runtime/work-log/command-label";
 
-/** Whether a shell string ends outside any quote: tracks the open quote, and a backslash escapes
- * the next character everywhere but inside single quotes. */
-function endsUnquoted(text: string): boolean {
-  let quote: string | null = null;
-  for (let index = 0; index < text.length; index++) {
-    const char = text[index];
-    if (char === "\\" && quote !== "'") index++;
-    else if (quote !== null) {
-      if (char === quote) quote = null;
-    } else if (char === '"' || char === "'") quote = char;
+/** The first index from which every token is a redirection, or null when the command has none. */
+function redirectionTailStart(tokens: ReadonlyArray<string>): number | null {
+  for (let start = 1; start < tokens.length; start++) {
+    let index = start;
+    while (index < tokens.length) {
+      const next = shell.indexAfterShellRedirection(tokens, index);
+      if (next === null || next > tokens.length) break;
+      index = next;
+    }
+    if (index === tokens.length) return start;
   }
-  return quote === null;
+  return null;
 }
 
-/** A background command as its gist for the work list: no `cd <dir> &&` lead-in, no trailing
- * output redirects. `vp run dev --no-seed 2>&1` reads `vp run dev --no-seed`. A cut that would
- * split a quoted string is not made. */
+/** A background command as its gist for the work list: no `cd <dir> &&` lead-in, and a single
+ * command loses its trailing redirects and `&`. `vp run dev --no-seed 2>&1` reads
+ * `vp run dev --no-seed`. Anything the shell reader cannot settle stays as written. */
 export function glanceCommandLabel(command: string): string {
   let label = command.trim();
-  // The quote scan cannot follow quotes nested in a command substitution.
-  if (label.includes("$(") || label.includes("`")) return label;
-  for (let previous = ""; previous !== label;) {
-    previous = label;
-    for (const pattern of [LEADING_CD, TRAILING_REDIRECT]) {
-      const next = label.replace(pattern, "").trim();
-      if (next.length > 0 && endsUnquoted(next)) label = next;
+  for (;;) {
+    const split = shell.splitFirstShellCommand(label);
+    if (split.remainingCommand === null) {
+      if (split.separator === "&") label = split.firstCommand.trim();
+      break;
     }
+    const tokens = shell.tokenizeShellCommand(split.firstCommand);
+    const leadingCd =
+      (split.separator === "&&" || split.separator === ";") &&
+      tokens?.length === 2 &&
+      tokens[0] === "cd";
+    if (!leadingCd) return label;
+    label = split.remainingCommand;
+  }
+
+  // The tokenizer reads a quote inside `$(...)` as closing the outer one, so a redirect-looking
+  // word there could be quoted text.
+  if (label.includes("$(") || label.includes("`")) return label;
+  const tokens = shell.tokenizeShellCommand(label);
+  const start = tokens === null ? null : redirectionTailStart(tokens);
+  if (tokens === null || start === null) return label;
+  const kept = JSON.stringify(tokens.slice(0, start));
+  // Drop whole words from the end until what is left reads as exactly the kept tokens.
+  for (let cut = label; /\s/u.test(cut);) {
+    cut = cut.replace(/\s+\S*$/u, "");
+    const cutTokens = shell.tokenizeShellCommand(cut);
+    if (cutTokens === null || cutTokens.length < start) break;
+    if (JSON.stringify(cutTokens) === kept) return cut;
   }
   return label;
 }

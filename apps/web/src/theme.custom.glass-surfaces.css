@@ -90,7 +90,7 @@
      coarse pointer the chips keep the light as their own inset shadows. */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-composer-context-row]
-    :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+    :is(button, [data-slot="button"], [data-fork-context-chip]) {
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-rim);
@@ -99,7 +99,7 @@
   @media (pointer: fine) {
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+      :is(button, [data-slot="button"], [data-fork-context-chip]) {
       position: relative;
       box-shadow:
         var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
@@ -108,7 +108,7 @@
 
     &.dark[data-fork-theme="cool-darker"]
       [data-fork-composer-context-row]
-      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])::after {
+      :is(button, [data-slot="button"], [data-fork-context-chip])::after {
       content: "";
       position: absolute;
       inset: -1px;

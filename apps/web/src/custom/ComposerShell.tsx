@@ -89,12 +89,14 @@ export const ComposerShell = memo(function ComposerShell({
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/* In flow, so the transcript's bottom inset makes room for it; the drawer floats over it. */}
+      {/* In flow, so the transcript's bottom inset makes room for it; the drawer floats over it.
+          Empty over the collapsed phone pill, like the context row and drawer: a tap there would
+          focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
         className="flex min-w-0 flex-wrap items-center gap-1.5 pb-1.5 empty:hidden"
       >
-        {statusChips}
+        {collapsedMobile ? null : statusChips}
       </div>
       <div className="relative flex min-w-0 flex-col">
         {/* Sibling of the vessel (not its child): the vessel's backdrop-filter makes it a

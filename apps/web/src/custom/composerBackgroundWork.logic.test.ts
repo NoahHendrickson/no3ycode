@@ -21,6 +21,9 @@ describe("glanceCommandLabel", () => {
       'echo "don\'t $(printf \'%s\' "literal >flag")"',
       'echo "don\'t $(printf \'%s\' "literal >flag")"',
     ],
+    ["cd /tmp&&make&&npm test", "make&&npm test"],
+    ["npm test >test.log&&pwd", "npm test >test.log&&pwd"],
+    ["vp run dev &", "vp run dev"],
   ])("%s → %s", (command, expected) => {
     expect(glanceCommandLabel(command)).toBe(expected);
   });

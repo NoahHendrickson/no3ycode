@@ -4,6 +4,7 @@ import type {
 } from "@t3tools/client-runtime/state/thread-execution";
 import type { ThreadId } from "@t3tools/contracts";
 
+import { ComposerControl } from "~/components/chat/ComposerControl";
 import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 
 import { glanceCommandLabel } from "./composerBackgroundWork.logic";
@@ -45,8 +46,8 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
       <Popover>
         <PopoverTrigger
           render={
-            <button
-              type="button"
+            <ComposerControl
+              size="xs"
               data-fork-status-chip-main
               aria-label={`${label}: show background work`}
             />
@@ -86,15 +87,15 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           </ul>
         </PopoverPopup>
       </Popover>
-      <button
-        type="button"
+      <ComposerControl
+        size="xs"
         data-fork-status-chip-stop
         aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
         disabled={props.stopping || !props.canStop}
         onClick={props.onStop}
       >
         <StopSquareIcon size={10} />
-      </button>
+      </ComposerControl>
     </span>
   );
 }
@@ -106,10 +107,7 @@ function BackgroundWorkTaskRow(props: {
   const { task } = props;
   const childThreadId = task.childThreadId;
   if (childThreadId === undefined) {
-    const label =
-      task.kind === "command" || task.kind === "monitor"
-        ? glanceCommandLabel(task.label)
-        : task.label;
+    const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
       <li className="flex">
         <span data-fork-monitoring-task aria-description={task.kind}>

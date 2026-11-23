@@ -3682,6 +3682,8 @@
     - apps/web/src/custom/ComposerPullRequestChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
+    - apps/web/src/custom/composerPullRequestChip.logic.ts
+    - apps/web/src/custom/composerPullRequestChip.logic.test.ts
     - apps/web/src/custom/ComposerWorkspaceFooter.tsx
     - apps/web/src/custom/composerContextStrip.tsx
     - apps/web/src/custom/ThreadContextReadout.tsx
@@ -3696,6 +3698,8 @@
   watch:
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
+    # Exports its shell reader for the background-work list's command gist.
+    - packages/client-runtime/src/work-log/commandLabel.ts
     # The prompt's default size when fonts are not set separately, and its test.
     - apps/web/src/appearanceFonts.ts
     - apps/web/src/appearanceFonts.browser.test.ts
@@ -5742,9 +5746,8 @@
     - apps/web/src/components/ChatView.tsx
     # Fenced user-facing note on starting an agent and choosing its project.
     - docs/user/thread-sidebar.md
-    # Fenced: an explicit fallbackIcon (the project chip's folder mark, also
-    # the thread context readout's) suppresses upstream's automatic title
-    # monogram (#11572).
+    # Fenced: an explicit fallbackIcon (the launchpad's and the draft project
+    # menu's folder marks) suppresses upstream's automatic title monogram.
     - apps/web/src/components/ProjectFavicon.tsx
     - apps/web/src/shortcuts/chatRouteCommands.ts
     # Fenced: upstream #29846 drives its picker; the fork drives the project chip menu.

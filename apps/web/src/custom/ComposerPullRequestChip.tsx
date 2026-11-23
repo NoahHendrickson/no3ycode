@@ -12,16 +12,19 @@ import { useEnvironmentQuery } from "~/state/query";
 import { useRightPanelStore } from "~/rightPanelStore";
 import { vcsEnvironment } from "~/state/vcs";
 
+import { resolvePullRequestChipState } from "./composerPullRequestChip.logic";
+
 /** The thread's PR as a chip above the composer (fork-composer-shell), resolved the way
  * BranchToolbarBranchSelector resolved it in the context row. Renders nothing without a PR. */
 export function ComposerPullRequestChip(props: {
   readonly threadRef: ScopedThreadRef;
   readonly branch: string | null;
+  /** ChatView's git-status cwd, so this reads its subscription. */
   readonly cwd: string | null;
 }) {
   const { threadRef } = props;
   const thread = useQuietThreadShell(threadRef);
-  // The same query the branch picker reads, so the two share one status.
+  // The full status, not ChatView's trimmed one: it names the host, which words "PR" or "MR".
   const status = useEnvironmentQuery(
     props.cwd === null
       ? null
@@ -42,17 +45,11 @@ export function ComposerPullRequestChip(props: {
   );
   const openPrLink = useOpenPrLink(threadRef);
   const prUrl = pr.url;
-  // The chip's fill follows the PR's state; a draft keeps the neutral chip.
-  // The glyph shows the aggregate only for a stack or several PRs; a single PR shows its own
-  // resolved state, unknown (neutral) while its status is pending.
-  const showsAggregate = pr.badge !== null && (pr.badge.kind === "stack" || pr.badge.others > 0);
-  const state = showsAggregate
-    ? pr.badge?.state
-    : pr.pr
-      ? pr.pr.state === "open" && pr.pr.isDraft === true
-        ? "draft"
-        : pr.pr.state
-      : undefined;
+  const state = resolvePullRequestChipState({
+    badge: pr.badge,
+    pr: pr.pr,
+    pullRequests: thread?.pullRequests ?? [],
+  });
   return (
     <ThreadPullRequestBadgeControl
       render={

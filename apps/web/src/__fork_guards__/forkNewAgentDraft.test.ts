@@ -345,8 +345,8 @@ describe("fork guard: fork-new-agent-draft", () => {
 
   it("keeps the folder mark over upstream's title monogram where the fork names one", () => {
     // Upstream #11572 draws a monogram for any titled project before it looks
-    // at fallbackIcon, which would hide the draft project chip's and the
-    // thread context readout's folder marks.
+    // at fallbackIcon, which would hide the launchpad's and the draft project
+    // menu's folder marks.
     const favicon = readSibling("../components/ProjectFavicon.tsx");
     expect(favicon).toContain(
       "const fallbackProjectName = input.fallbackIcon ? undefined : project.title;",

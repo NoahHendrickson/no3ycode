@@ -942,7 +942,7 @@
    and hover/ink tokens across left context controls and right model/mode/usage controls. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   height: 26px;
   min-height: 26px;
   gap: 5px;
@@ -962,9 +962,7 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]):not(
-    [data-fork-composer-usage-limits]
-  )
+  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-composer-usage-limits])
   svg {
   width: 12px;
   height: 12px;
@@ -974,7 +972,7 @@
 /* The permissions chip included: icon-only now, it reads in the model's and usage's ink. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-control-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   color: var(--fork-composer-control-ink, #a6a6a6);
 }
 
@@ -1027,11 +1025,7 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row]
-  :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
-    :hover,
-    [data-pressed],
-    [data-popup-open]
-  ):not(:disabled) {
+  :is(button, [data-slot="button"]):is(:hover, [data-pressed], [data-popup-open]):not(:disabled) {
   background: var(--fork-composer-control-hover);
 }
 
@@ -1329,12 +1323,10 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   /* 24px tall, 6px radius. Inline padding is refined per trigger below so
      workspace and branch match; [data-fork-context-chip] is the locked
-     workspace/env span — same pill when there is no interactive trigger.
-     [data-fork-pr-chip] is named because upstream's badge control renders
-     a single linked PR as an anchor, not a button, and stamps no data-slot. */
+     workspace/env span — same pill when there is no interactive trigger. */
   height: 24px;
   min-height: 24px;
   gap: 6px;
@@ -1357,17 +1349,13 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-pr-chip]):is(
-    :hover,
-    [data-pressed],
-    [data-popup-open]
-  ):not(:disabled) {
+  :is(button, [data-slot="button"]):is(:hover, [data-pressed], [data-popup-open]):not(:disabled) {
   background: var(--fork-context-chip-bg-hover);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   color: #ffffff;
 }
 
@@ -1375,7 +1363,7 @@
    readout is not disabled, it simply has no caret (fork-basic-theme). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   color: var(--foreground);
 }
 
@@ -1421,7 +1409,7 @@
    full ink so white chip labels don't wash back to gray. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])
+  :is(button, [data-slot="button"], [data-fork-context-chip])
   svg {
   opacity: 1;
 }
@@ -1460,7 +1448,7 @@
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])
+  :is(button, [data-slot="button"], [data-fork-context-chip])
   svg {
   width: 12px;
   height: 12px;
@@ -1496,7 +1484,7 @@
   }
 
   /* 4px from each chip's icon to its label; the project chip keeps 6px below. */
-  & :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  & :is(button, [data-slot="button"], [data-fork-context-chip]) {
     gap: 4px;
   }
 

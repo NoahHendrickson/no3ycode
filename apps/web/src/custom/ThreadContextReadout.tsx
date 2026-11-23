@@ -14,7 +14,6 @@ import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 import { resolveBranchToolbarValue, type EnvMode } from "~/components/BranchToolbar.logic";
-import type { ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { readLocalApi } from "~/localApi";
 
 import { projectBranchUrl } from "./branchLinks";
@@ -40,7 +39,7 @@ export function resolveThreadContextBranch(input: {
 }
 
 export function ThreadContextReadout(props: {
-  readonly project: ProjectFaviconProject & Pick<EnvironmentProject, "repositoryIdentity">;
+  readonly project: Pick<EnvironmentProject, "title" | "repositoryIdentity">;
   readonly isGitRepo: boolean;
   readonly envMode: EnvMode;
   readonly activeWorktreePath: string | null;

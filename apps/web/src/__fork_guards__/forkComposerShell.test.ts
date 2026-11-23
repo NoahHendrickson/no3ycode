@@ -543,47 +543,21 @@ describe("fork guard: fork-composer-shell", () => {
   });
 
   it("lets the PR chip keep its state colour", () => {
-    // Upstream inks the glyph emerald / violet / red by PR state and grays #N;
-    // the fork's #N inherits the glyph's ink, which the white chip ink would
-    // flatten.
+    // Upstream inks the glyph emerald / violet / red by PR state and grays #N; the chip above the
+    // composer fills by that same state and inks the glyph and #N to match.
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
-    expect(readSibling("../custom/ComposerPullRequestChip.tsx")).toContain("data-fork-pr-chip");
+    const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
+    expect(prChip).toContain("data-fork-pr-chip");
+    expect(prChip).toContain("data-pr-state={state}");
+    expect(prChip).toContain("resolvePullRequestChipState(");
     expect(branchSelector).toContain("data-fork-branch-group");
-    const chipInk = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.selector.includes("[data-fork-context-chip]") &&
-        rule.body.includes("color:"),
+    expect(shellCss).toMatch(
+      /\[data-pr-state="open"\],\s*\[data-pr-state="merged"\],\s*\[data-pr-state="closed"\]/u,
     );
-    expect(chipInk?.selector).toContain(":not([data-fork-pr-chip])");
-    // Any palette ink rule that touches context-row buttons must exempt the PR
-    // chip so it never flattens PR state colours.
-    const paletteChipInk = paletteRules.filter(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        !rule.selector.includes(":not([data-fork-pr-chip])") &&
-        /(^|[^-])color:/u.test(rule.body),
-    );
-    expect(paletteChipInk).toEqual([]);
-    const chipHover = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("var(--fork-context-chip-bg-hover)"),
-    );
-    expect(chipHover?.selector).toContain("[data-fork-pr-chip]");
-    const chipFill = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("background: var(--fork-context-chip-bg)"),
-    );
-    expect(chipFill?.selector).toContain("[data-fork-pr-chip]");
-    const prFill = [...rules, ...paletteRules].filter(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.selector.includes("[data-fork-pr-chip]") &&
-        rule.body.includes("color-mix(in oklab, currentColor"),
-    );
-    expect(prFill).toEqual([]);
+    expect(shellCss).toMatch(/\.fork-pr-tone\s*\{\s*color:\s*var\(--fork-pr-chip-ink\)/u);
+    for (const state of ["open", "merged", "closed"]) {
+      expect(shellCss.split(`&[data-pr-state="${state}"]`).length - 1).toBe(2);
+    }
     expect(
       ruleBodyFor(rules, [
         MARKER,
