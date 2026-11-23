@@ -8011,7 +8011,10 @@
     Above the card, the upstream full-width floating status control gives way
     to one 30pt glass pill right-aligned with the card's edge
     (fork/No3yStatusPill.tsx): a segment per active kind, icon plus count and an
-    amber dot when something there needs the user (transient status, background
+    amber dot when something there needs the user (transient status other than
+    a working turn, which the transcript's live status line already shows with
+    its time, so a running turn alone draws no pill and stop stays on the
+    composer; background
     processes, monitors, subagents as a robot, Pi status, previews; queued
     messages are in the queued-runs banner above the card), with
     the scroll-to-end button beside it. A tap opens a half-height sheet

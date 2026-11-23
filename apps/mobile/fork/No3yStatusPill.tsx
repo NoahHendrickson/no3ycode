@@ -32,7 +32,6 @@ import type { FloatingWorkingStatus } from "../src/features/threads/floating-wor
 import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
 import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
 import { useOpenLinkedThread } from "../src/features/threads/useOpenLinkedThread";
-import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { scopedThreadKey } from "../src/lib/scopedEntities";
 import { useChildThreadInputs } from "../src/state/entities";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
@@ -40,7 +39,6 @@ import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yBeadRing } from "./No3yBeadRing";
 import { No3yGlassLayer } from "./No3yGlass";
 import {
-  no3yElapsedLabel,
   no3yStatusSegments,
   no3ySubagentMarkKind,
   type No3yStatusSegment,
@@ -284,9 +282,7 @@ function PillSegment(props: {
       ) : (
         <HugeIcon icon={SEGMENT_ICONS[segment.kind]} size={ICON_SIZE} color={ink} />
       )}
-      {segment.kind === "status" && status?.kind === "working" ? (
-        <WorkingElapsed startedAt={status.startedAt} palette={palette} />
-      ) : segment.count !== null ? (
+      {segment.count !== null ? (
         <Text
           style={{
             ...NO3Y_FONT.medium,
@@ -304,22 +300,6 @@ function PillSegment(props: {
         />
       ) : null}
     </View>
-  );
-}
-
-function WorkingElapsed(props: { readonly startedAt: string; readonly palette: FlatGlassPalette }) {
-  const nowMs = useVisibleSecondClock(true);
-  return (
-    <Text
-      style={{
-        ...NO3Y_FONT.medium,
-        fontSize: 13,
-        fontVariant: ["tabular-nums"],
-        color: props.palette.foreground,
-      }}
-    >
-      {no3yElapsedLabel(props.startedAt, nowMs)}
-    </Text>
   );
 }
 
@@ -398,7 +378,6 @@ function segmentAccessibilityLabel(
   switch (segment.kind) {
     case "status":
       if (status === null) return "";
-      if (status.kind === "working") return "Working";
       if (status.kind === "compacting") return "Compacting";
       return `${"label" in status ? status.label : ""}${needs}`;
     case "processes":

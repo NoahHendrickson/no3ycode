@@ -29,13 +29,16 @@ describe("no3y status pill segments", () => {
     expect(summary({})).toEqual([]);
   });
 
-  it("counts background processes and monitors apart, beside the working status", () => {
+  it("counts background processes and monitors apart, and leaves the working turn to the transcript", () => {
+    const working = { kind: "working", startedAt: "2026-11-22T00:00:00.000Z" } as const;
     expect(
       summary({
-        status: { kind: "working", startedAt: "2026-11-22T00:00:00.000Z" },
+        status: working,
         backgroundKinds: ["command", "monitor", "background_task", "monitor"],
       }),
-    ).toEqual(["status", "processes:2", "monitors:2"]);
+    ).toEqual(["processes:2", "monitors:2"]);
+    // A running turn with nothing else going on draws no pill at all.
+    expect(summary({ status: working })).toEqual([]);
   });
 
   it("folds the background status into its item segments", () => {

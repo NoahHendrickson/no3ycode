@@ -35,11 +35,16 @@ export interface No3yStatusPillInput {
   readonly browserCount: number;
 }
 
-/** Statuses the item segments already carry, so they never get a status segment of their own. */
+/**
+ * Statuses the pill never shows as a status segment: the item segments carry background work,
+ * child input and extensions, and the transcript's live status line already says the turn is
+ * working and for how long (stop is the composer's button).
+ */
 const FOLDED_STATUS_KINDS: ReadonlySet<FloatingWorkingStatus["kind"]> = new Set([
   "background",
   "child-input",
   "extension",
+  "working",
 ]);
 
 export function statusNeedsYou(status: FloatingWorkingStatus): boolean {
