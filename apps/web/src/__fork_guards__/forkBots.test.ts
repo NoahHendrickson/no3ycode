@@ -255,7 +255,7 @@ describe("fork guard: fork-bots", () => {
       /const petalView: SidebarV2CardView =\s*botsLayout === "grid" \? "grid" : compactBots \? "compact" : "card";/u,
     );
     expect(sidebar).toContain("<SidebarV2BotGridBody");
-    expect(sidebar).toContain('"bot-grid": "[contain-intrinsic-size:64px_82px]"');
+    expect(sidebar).toContain('"bot-grid": "[contain-intrinsic-size:auto_56px]"');
     expect(sidebar).toContain('cardKind === "bot-grid"\n          ? "tile"');
     // The tile's hover card opens beyond the section, not over its neighbours.
     expect(sidebar).toContain("petalTileHoverAnchor(threadKey)");

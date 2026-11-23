@@ -4349,10 +4349,10 @@ export default function ChatView(props: ChatViewProps) {
                     </div>
                     {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
                     {/* The composer's floor: the fork lifts upstream's 1rem/1.25rem dock
-                        offset to one 1.5rem; the safe-area term stays to clear a phone's
+                        offset to one 2rem; the safe-area term stays to clear a phone's
                         home indicator. Height is on a spacer, not overlay padding: the overlay's
                         measured height drives the transcript inset and the cutoff mask. */}
-                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+1.5rem)]" />
+                    <div aria-hidden className="h-[calc(env(safe-area-inset-bottom)+2rem)]" />
                     {/* fork:end fork-composer-shell */}
                   </div>
                 </div>

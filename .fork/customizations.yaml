@@ -3626,7 +3626,18 @@
     Glass. The compact row is 8px on every side with 2px between the actions and
     the prompt (Figma no3y-code 34:8764). The permissions chip is icon-only (the
     mode's runtimeModeConfig icon, upstream's own; Full access draws the
-    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label. Upstream's stitched glass-shell paint and banner-frame glass are
+    hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
+    Typed text defaults to 16px (text-base, so it still follows the interface
+    size; a separate prompt size in Settings → Typography still wins:
+    appearanceFonts.ts), and the control and context rows are 14px regular.
+    On Flat Glass the thread composer (not a new agent's draft) paints no
+    vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
+    and the control row sits on the stage; an open usage drawer, attached
+    banners and the Questions card are lift-1 trays over it with an 8%
+    hairline; the prompt keeps its round corners and its frame fills the
+    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
+    scoped to the thread composer's form).
+    Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
   tier: 4
@@ -3643,12 +3654,16 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.flat-glass-composer.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
   watch:
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
+    # The prompt's default size when fonts are not set separately, and its test.
+    - apps/web/src/appearanceFonts.ts
+    - apps/web/src/appearanceFonts.browser.test.ts
     # Centers the draft composer with the launchpad below it and docks it once
     # the thread starts, passes BranchToolbar as contextStrip (with monitoring
     # trailing), and keeps that strip mounted when the thread's worktree
@@ -7091,9 +7106,11 @@
     (card, compact or grid; the Petals section derives its own from the two
     settings, so Compact cards never reaches the grid), and the kind alone sets
     the row's offscreen size hint and, for a tile, its shape. In Grid a bot
-    draws SidebarV2BotGridBody: an 82px tile in a 64px cell (8 + 48 + 2 + 16 +
-    8), the mascot tile notched at its corner for the status mark, the name in
-    medium 10px under it, the jump hint in its top-left corner and a sweep's
+    draws SidebarV2BotGridBody: a 56px tile (4 + 36 + 12 + 4) washed 4% in the
+    sidebar's ink, the columns sharing the width at least 64px each and 8px
+    apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 28px in a 36px box over its name in
+    medium 10px, the
+    status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the
     section, level with the tile. A bot card draws

@@ -109,7 +109,7 @@ export function ForkDictationPreview(props: {
       ref={ref}
       aria-label="Live transcription"
       data-fork-dictation-preview={props.promptEmpty ? "solo" : ""}
-      className="font-(family-name:--font-composer,var(--font-sans)) text-(length:--font-size-prompt,var(--text-sm)) leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground max-sm:pointer-coarse:text-(length:--font-size-prompt-touch)"
+      className="font-(family-name:--font-composer,var(--font-sans)) text-(length:--font-size-prompt,var(--text-base)) leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground max-sm:pointer-coarse:text-(length:--font-size-prompt-touch)"
     >
       <span>{committed}</span>
       <span className="text-muted-foreground">{tentative}</span>

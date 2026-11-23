@@ -700,8 +700,8 @@ const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // A bot's avatar card, 6 + 16 + 2 + 14 + 6 (fork-bots, custom/bots/SidebarV2BotCardBody).
   bot: "[contain-intrinsic-size:auto_44px]",
   "bot-compact": "[contain-intrinsic-size:auto_32px]",
-  // A Petals grid tile, 8 + 48 + 2 + 16 + 8 in a 64px cell (fork-bots).
-  "bot-grid": "[contain-intrinsic-size:64px_82px]",
+  // A Petals grid tile, 4 + 36 + 12 + 4 (fork-bots).
+  "bot-grid": "[contain-intrinsic-size:auto_56px]",
 };
 /* fork:end sidebar-v2-card-rows */
 
@@ -5381,6 +5381,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               onLayoutChange={setBotsLayout}
               compactCards={compactBots}
               onCompactCardsChange={setCompactBots}
+              naming={
+                namingBot ? (
+                  <SidebarV2NewBotRow
+                    view={petalView}
+                    initialMascot={nextBotMascotShape(
+                      botThreads.map((bot) => botMascotShape(bot.source)),
+                    )}
+                    onCreate={createBot}
+                    onDone={() => setNamingBot(false)}
+                  />
+                ) : null
+              }
             >
               {/* A folded Bots section keeps the open bot's card. */}
               {botThreads
@@ -5401,16 +5413,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                     /* fork:end fork-bot-work-threads */
                   }),
                 )}
-              {namingBot ? (
-                <SidebarV2NewBotRow
-                  view={petalView}
-                  initialMascot={nextBotMascotShape(
-                    botThreads.map((bot) => botMascotShape(bot.source)),
-                  )}
-                  onCreate={createBot}
-                  onDone={() => setNamingBot(false)}
-                />
-              ) : null}
             </SidebarV2BotsRow>
             {/* fork:end fork-bots */}
             {!hasGroupingHeaders ? (

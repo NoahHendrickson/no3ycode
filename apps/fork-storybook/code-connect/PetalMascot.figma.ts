@@ -27,19 +27,22 @@ const mood = mascot.getEnum("Mood", {
   Sleeping: "Sleeping",
   Error: "Error",
 });
-// Tile On is a card's 32px tile, Grid the Petals grid's 48px one.
-const tile = mascot.getEnum("Tile", { On: "", Grid: ' size="grid"' });
+// Tile On is a card's 32px tile. Grid is the Petals grid, which draws the bare mascot fitted
+// to 28px (SidebarV2BotGridBody); Off is the bare mascot at one pixel per cell.
+const tile = mascot.getEnum("Tile", { On: "tile", Grid: "grid" });
 const props = `shape="${shape ?? "Classic"}" mood="${mood ?? "Idle"}"`;
 
 export default {
   example:
-    tile === undefined
-      ? figma.tsx`<BotMascot ${props} />`
-      : figma.tsx`<BotMascotTile ${props}${tile} />`,
+    tile === "tile"
+      ? figma.tsx`<BotMascotTile ${props} />`
+      : tile === "grid"
+        ? figma.tsx`<BotMascot ${props} fit={28} />`
+        : figma.tsx`<BotMascot ${props} />`,
   imports: [
-    tile === undefined
-      ? 'import { BotMascot } from "~/custom/bots/BotMascot";'
-      : 'import { BotMascotTile } from "~/custom/bots/BotMascot";',
+    tile === "tile"
+      ? 'import { BotMascotTile } from "~/custom/bots/BotMascot";'
+      : 'import { BotMascot } from "~/custom/bots/BotMascot";',
   ],
   id: "petal-mascot",
   metadata: { nestable: true },

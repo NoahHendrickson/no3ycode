@@ -5,6 +5,7 @@
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-peek.css";
 @import "./theme.custom.inlet-black.css";
+@import "./theme.custom.flat-glass-composer.css";
 
 /* Fork palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and each palette's own id). Kept out of theme.custom.css so a new sibling is a
@@ -166,27 +167,13 @@
   --fork-glass-tabs-line: var(--border);
 }
 
-/* Flat Glass draws the composer vessel's 1px inner border like Basic (the drawn
-   composer has one); open, the usage drawer above carries it over its top. */
+/* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
+   digest cards and the scheduled editor. The thread composer paints no vessel and the draft
+   draws its own (theme.custom.flat-glass-composer.css, the draft-hero block below). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-bot-digest], [data-scheduled-composer])
   [data-fork-composer-vessel] {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
-  + [data-fork-composer-vessel] {
-  box-shadow:
-    inset 1px 0 0 var(--fork-composer-border),
-    inset -1px 0 0 var(--fork-composer-border),
-    inset 0 -1px 0 var(--fork-composer-border);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-fork-composer-usage-drawer] {
-  box-shadow:
-    inset 1px 1px 0 var(--fork-composer-border),
-    inset -1px 0 0 var(--fork-composer-border);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
