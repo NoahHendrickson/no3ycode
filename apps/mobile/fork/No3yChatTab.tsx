@@ -1,18 +1,14 @@
 /**
- * Chat: Threads-style header, recent chats as thread cards, and New agent's own draft composer for
- * a No-project chat, carried on this route and served by the new-task flow. A sent chat is pushed
- * over Chat and the route takes a fresh draft — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * Chat, a no3y Home tab: Threads-style header, recent chats as thread cards, and New agent's own
+ * draft composer for a No-project chat, kept with the tab (fork/no3yHomeTabs.ts) and served by the
+ * new-task flow. A sent chat is pushed over Home and the tab takes a fresh draft — see
+ * `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import MessageSquareTextIcon from "@hugeicons/core-free-icons/MessageSquareTextIcon";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { HeaderHeightContext } from "@react-navigation/elements";
-import {
-  CommonActions,
-  StackActions,
-  useNavigation,
-  type StaticScreenProps,
-} from "@react-navigation/native";
+import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
@@ -30,10 +26,7 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import { NewTaskDraftRouteScreen } from "../src/features/threads/NewTaskDraftRouteScreen";
 import { resolveNewTaskScratchOption } from "../src/features/threads/new-task-project-selection";
 import { ThreadScreenFallback, ThreadScreenHost } from "../src/features/threads/ThreadScreenHost";
-import {
-  draftRouteIdentity,
-  type NewTaskDraftRouteParams,
-} from "../src/features/threads/thread-route-state";
+import { draftRouteIdentity } from "../src/features/threads/thread-route-state";
 import { useThreadRowProviderInstanceResolver } from "../src/features/threads/thread-provider-instance";
 import { useOpenThreadPullRequests } from "../src/features/threads/use-open-thread-pull-requests";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
@@ -49,13 +42,13 @@ import { flatGlassPalette, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { listNo3yChatThreads, resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
 import { findNo3yChatProject, resolveNo3yChatDraftParams } from "./no3yChat";
+import { no3yHomeDraftFlowKey, no3yHomeTabsAtom, setNo3yHomeDraft } from "./no3yHomeTabs";
+import { No3yHomeDraftGate } from "./No3yHomeDraftGate";
 import { No3yBottomTray, useNo3yTrayContentInset } from "./No3yBottomTray";
 import { NO3Y_LAYOUT } from "./no3yMotion";
-import { No3yChatDraftContext, type No3yDraftSurface } from "./No3yDraftSurface";
+import { No3yDraftSurfaceContext, type No3yDraftSurface } from "./No3yDraftSurface";
 import { No3yChatHeader } from "./No3yScreenHeader";
 import { No3yThreadRow } from "./No3yThreadRow";
-
-type No3yChatRouteParams = { readonly draft?: NewTaskDraftRouteParams } | undefined;
 
 interface ChatSearch {
   readonly searching: boolean;
@@ -101,7 +94,7 @@ function ChatList(props: { readonly topInset: number; readonly bottomInset: numb
     [threads, sentChatKeys, searchQuery],
   );
 
-  // Pushed over Chat, as Automations pushes its runs, so back returns here.
+  // Pushed over Home, as Automations pushes its runs, so back returns to this tab.
   const openChat = (thread: EnvironmentThreadShell) => {
     const detail = {
       name: "Thread",
@@ -248,8 +241,9 @@ const renderChatList = (headerInset: number, bottomInset: number) => (
   <ChatList topInset={headerInset} bottomInset={bottomInset} />
 );
 
-export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams>) {
+export function No3yChatTab() {
   const navigation = useNavigation();
+  const route = useRoute();
   const trayContentInset = useNo3yTrayContentInset();
   const projects = useProjects();
   const serverConfigs = useServerConfigs();
@@ -277,8 +271,8 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
     scratchWorkspaceRoot:
       environmentId === null ? null : serverConfigs.get(environmentId)?.scratchWorkspaceRoot,
   });
-  const routeDraft = props.route.params?.draft;
-  const draft = resolveNo3yChatDraftParams(routeDraft, project, uuidv4);
+  const storedDraft = useAtomValue(no3yHomeTabsAtom).chatDraft;
+  const draft = resolveNo3yChatDraftParams(storedDraft ?? undefined, project, uuidv4);
 
   const openedEnvironmentRef = useRef<EnvironmentId | null>(null);
   useEffect(() => {
@@ -296,10 +290,8 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
   }, [environmentId, project, openScratch]);
 
   useEffect(() => {
-    if (draft !== null && draft !== routeDraft) {
-      navigation.dispatch(CommonActions.setParams({ draft }));
-    }
-  }, [draft, routeDraft, navigation]);
+    if (draft !== null && draft !== storedDraft) setNo3yHomeDraft("chat", draft);
+  }, [draft, storedDraft]);
 
   const surface: No3yDraftSurface = {
     header: <ChatHeader />,
@@ -313,9 +305,7 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
       tagNo3yChat(EnvironmentId.make(submittedEnvironmentId), ThreadId.make(threadId));
       startOpeningDetail(detail);
       navigation.dispatch(StackActions.push("Thread", detail.params));
-      navigation.dispatch(
-        CommonActions.setParams({ draft: resolveNo3yChatDraftParams(undefined, project, uuidv4) }),
-      );
+      setNo3yHomeDraft("chat", resolveNo3yChatDraftParams(undefined, project, uuidv4));
     },
   };
   const unavailable =
@@ -328,15 +318,17 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
 
   return (
     <ChatSearchContext value={{ searching, searchQuery, setSearching, setSearchQuery }}>
-      <No3yChatDraftContext value={surface}>
+      <No3yDraftSurfaceContext value={surface}>
         {/* The header lays out above the draft body, which starts at its top. */}
         <HeaderHeightContext value={0}>
           <ThreadScreenHost>
-            {draft !== null && draft === routeDraft ? (
-              <NewTaskDraftRouteScreen
-                key={draftRouteIdentity(draft)}
-                route={{ ...props.route, params: draft }}
-              />
+            {draft !== null && draft === storedDraft ? (
+              <No3yHomeDraftGate flowKey={no3yHomeDraftFlowKey("chat", draft)}>
+                <NewTaskDraftRouteScreen
+                  key={draftRouteIdentity(draft)}
+                  route={{ ...route, params: draft }}
+                />
+              </No3yHomeDraftGate>
             ) : (
               <ThreadScreenFallback header={<ChatHeader />}>
                 <View style={{ flex: 1 }}>
@@ -347,7 +339,7 @@ export function No3yChatRouteScreen(props: StaticScreenProps<No3yChatRouteParams
             )}
           </ThreadScreenHost>
         </HeaderHeightContext>
-      </No3yChatDraftContext>
+      </No3yDraftSurfaceContext>
     </ChatSearchContext>
   );
 }

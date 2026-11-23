@@ -97,6 +97,8 @@ import { NO3Y_BOTTOM_NAV_CLEARANCE } from "../../../fork/flatGlassTheme";
 import { No3yAutomationRunsSection } from "../../../fork/No3yAutomationRunsSection";
 import { No3yAutomationsScreen } from "../../../fork/No3yAutomationsScreen";
 import { useNo3yBottomNavEnabled } from "../../../fork/No3yBottomNav";
+import { No3yHomeTabRedirect } from "../../../fork/No3yHomeTabRedirect";
+import { useRoute } from "@react-navigation/native";
 /* fork:end no3y-mobile-redesign */
 
 type ScheduledTaskRoutes = {
@@ -416,6 +418,8 @@ export function SettingsScheduledTasksRouteScreen() {
   const insets = useSafeAreaInsets();
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yBottomNav = useNo3yBottomNavEnabled();
+  // Automations is a Home tab there; this page's own route (a link) opens that tab.
+  const no3yInHome = useRoute().name === "Home";
   const visibleProjectKeys =
     selectedProjectKey === null || !selectedGroup
       ? null
@@ -434,6 +438,7 @@ export function SettingsScheduledTasksRouteScreen() {
 
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   if (no3yBottomNav) {
+    if (!no3yInHome) return <No3yHomeTabRedirect tab="automations" />;
     return (
       <No3yAutomationsScreen
         environments={visibleEnvironments}

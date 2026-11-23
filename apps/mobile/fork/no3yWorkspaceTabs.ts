@@ -1,31 +1,21 @@
 /**
- * Switching Home's list (Threads, Pull requests) from no3y controls — see
- * `.fork/customizations.yaml#no3y-mobile-redesign`. Home shows the workspace tab state's selected
- * tab; only useSelectWorkspaceTab both resets the stack and selects it. The dock sits outside
- * Home's tab context, so Home's header lends it the selector it was given.
+ * Home's workspace tab selector (Threads, Pull requests), lent by Home's header to the no3y dock
+ * and Settings links, which sit outside its context — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { useEffect } from "react";
 
+import { useWorkspaceTabs } from "../src/features/layout/workspace/WorkspaceTabsContext";
 import { useSelectWorkspaceTab } from "../src/features/layout/workspace/useSelectWorkspaceTab";
+import { lendNo3yWorkspaceTabs } from "./no3yHomeTabs";
 
 type SelectWorkspaceTab = ReturnType<typeof useSelectWorkspaceTab>;
-
-let lent: SelectWorkspaceTab | null = null;
 
 /** Home's tab selector, lent to the dock while Home's header has mounted it. */
 export function useLendNo3yWorkspaceTabSelect(): SelectWorkspaceTab {
   const select = useSelectWorkspaceTab();
+  const isTabActive = useWorkspaceTabs()?.isTabActive;
   useEffect(() => {
-    lent = select;
-  }, [select]);
+    lendNo3yWorkspaceTabs({ select, isShown: (tab) => isTabActive?.(tab) ?? tab === "threads" });
+  }, [select, isTabActive]);
   return select;
-}
-
-/** Selects a Home tab with Home's selector when lent, else only resets the stack to Home. */
-export function selectNo3yWorkspaceTab(
-  tab: "threads" | "pullRequests",
-  fallback: (tab: "threads" | "pullRequests") => void,
-): void {
-  if (lent) lent(tab);
-  else fallback(tab);
 }

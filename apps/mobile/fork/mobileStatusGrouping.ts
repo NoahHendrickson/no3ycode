@@ -716,21 +716,21 @@ function isDraftThreadRoute(route: RouteLike): boolean {
   );
 }
 
-/** Which dock item should read as active for the current stack; Settings has none. */
-export function resolveActiveNo3yNavItem(routes: readonly RouteLike[]): No3yNavItemId | null {
+/**
+ * Which dock item should read as active for the current stack; Settings has none. Home reads
+ * its own tab (fork/no3yHomeTabs.ts), and so does a thread pushed over it.
+ */
+export function resolveActiveNo3yNavItem(
+  routes: readonly RouteLike[],
+  homeTab: Exclude<No3yNavItemId, "settings"> = "threads",
+): No3yNavItemId | null {
   const top = routes.at(-1);
-  if (!top) return "threads";
-  if (top.name === "No3yChat") return "chat";
+  if (!top || top.name === "Home") return homeTab;
   if (AUTOMATIONS_ROUTES.has(top.name)) return "automations";
-  // A run opened from Automations is pushed over it, and back returns there.
-  const below = routes.at(-2);
-  if (top.name === "Thread" && below !== undefined && AUTOMATIONS_ROUTES.has(below.name)) {
-    return "automations";
-  }
   if (top.name === "NewTaskProject" || top.name.startsWith("NewTask") || isDraftThreadRoute(top)) {
     return "newAgent";
   }
-  if (top.name === "Home" || top.name === "Thread") return "threads";
+  if (top.name === "Thread") return routes.at(-2)?.name === "Home" ? homeTab : "threads";
   if (top.name.startsWith("Settings") && !SETTINGS_MODAL_ROUTES.has(top.name)) return "settings";
   return null;
 }

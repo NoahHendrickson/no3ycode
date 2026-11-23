@@ -116,6 +116,9 @@ import { workspaceTabOf, type WorkspaceTab } from "./workspace/workspace-tabs-st
 import { workspaceRoutesOf } from "./workspace-overlay-routes";
 import { SettingsWorkspaceLayout } from "../settings/SettingsWorkspaceLayout";
 import { WorkspaceThreadSidebar } from "./workspace/WorkspaceThreadSidebar";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { showNo3yHomeTab } from "../../../fork/no3yHomeTabs";
+/* fork:end no3y-mobile-redesign */
 
 export { useAdaptiveWorkspaceLayout, useWorkspacePaneState };
 
@@ -583,6 +586,10 @@ function AdaptiveWorkspaceLayoutContent(
     Platform.OS === "android" && androidSettingsOpen && !layout.usesSplitView;
   // Reads the open page when pressed, so the layout context doesn't change on every navigation.
   const handleStartNewTask = () => {
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // New agent is a Home tab on the no3y iPhone layout.
+    if (showNo3yHomeTab(navigation, "newAgent")) return;
+    /* fork:end no3y-mobile-redesign */
     const state = rootStackState(navigation);
     const currentRoute = workspaceRoutesOf(
       state?.routes.slice(0, state.index + 1) ?? [],

@@ -9,10 +9,10 @@ import Navigation03Icon from "@hugeicons/core-free-icons/Navigation03Icon";
 import PlusIcon from "@hugeicons/core-free-icons/PlusIcon";
 import SourceCodeIcon from "@hugeicons/core-free-icons/SourceCodeIcon";
 import ZapIcon from "@hugeicons/core-free-icons/ZapIcon";
-import { CommonActions, useNavigation, type NavigationState } from "@react-navigation/native";
+import { useNavigation, type NavigationState } from "@react-navigation/native";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import * as Haptics from "expo-haptics";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useKeyboardState } from "react-native-keyboard-controller";
@@ -38,7 +38,12 @@ import {
 } from "./flatGlassTheme";
 import { isNo3yChatThread } from "./no3yChatRule";
 import { useNo3ySentChats } from "./no3yChatTagging";
-import { selectNo3yWorkspaceTab } from "./no3yWorkspaceTabs";
+import {
+  no3yHomeTabsAtom,
+  setNo3yHomeTabsEnabled,
+  showNo3yHomeTab,
+  type No3yHomeTab,
+} from "./no3yHomeTabs";
 import { no3yRoutesUnderSheets } from "./no3yDockMove";
 import { NO3Y_GLASS_RISE_IN } from "./no3yMotion";
 import { filterForkRosterVisibleThreads } from "./forkRosterVisibility";
@@ -318,10 +323,15 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
   const keyboardHeight = useKeyboardState((keyboard) => keyboard.height);
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const { openWorkspaceTab, selectDetail, startNewTask } = useAdaptiveWorkspaceLayout();
+  const { openWorkspaceTab, selectDetail } = useAdaptiveWorkspaceLayout();
+  const homeTab = useAtomValue(no3yHomeTabsAtom).tab;
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
   const serverConfigs = useServerConfigs();
   const [peekItem, setPeekItem] = useState<No3yNavItemId | null>(null);
+
+  useEffect(() => {
+    setNo3yHomeTabsEnabled(enabled);
+  }, [enabled]);
 
   // Sheets never hide the dock: it reads the routes beneath them.
   const visibleRoutes = no3yRoutesUnderSheets(props.state.routes.slice(0, props.state.index + 1));
@@ -332,7 +342,7 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
     keyboardHeight <= 0 &&
     shouldShowNo3yBottomNav({ topRoute, isOverlayRoute: isOverlay });
 
-  const activeItem = resolveActiveNo3yNavItem(visibleRoutes);
+  const activeItem = resolveActiveNo3yNavItem(visibleRoutes, homeTab);
 
   const sentChatKeys = useNo3ySentChats();
 
@@ -383,27 +393,23 @@ export function No3yBottomNavHost(props: { readonly state: NavigationState }) {
     setPeekItem(item);
   };
 
-  const openChat = () => {
-    navigation.dispatch((state) => {
-      const home = state.routes.find((route) => route.name === "Home") ?? { name: "Home" };
-      const existingChat = state.routes.find((route) => route.name === "No3yChat");
-      const routes = [home, existingChat ?? { name: "No3yChat" }];
-      return CommonActions.reset({ ...state, index: routes.length - 1, routes });
-    });
+  // A dock switch is Home's tab state: nothing is pushed or popped, so nothing slides.
+  const show = (tab: No3yHomeTab) => () => {
+    showNo3yHomeTab(navigation, tab);
   };
 
   const press: Record<No3yNavItemId, () => void> = {
-    threads: () => selectNo3yWorkspaceTab("threads", openWorkspaceTab),
-    automations: () => openSettings(navigation, "SettingsScheduledTasks"),
-    newAgent: startNewTask,
-    chat: openChat,
+    threads: show("threads"),
+    automations: show("automations"),
+    newAgent: show("newAgent"),
+    chat: show("chat"),
     settings: () => openWorkspaceTab("settings"),
   };
 
   const create: Partial<Record<No3yNavItemId, () => void>> = {
-    threads: startNewTask,
+    threads: show("newAgent"),
     automations: () => openSettings(navigation, "SettingsScheduledTaskNew"),
-    chat: openChat,
+    chat: show("chat"),
   };
 
   const handleOpenThread = (thread: EnvironmentThreadShell) => {

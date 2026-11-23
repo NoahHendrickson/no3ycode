@@ -12,7 +12,7 @@ import {
   type NewTaskDraftRouteParams,
 } from "./thread-route-state";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { isNo3yChatDraftRoute } from "../../../fork/no3yChat";
+import { liveNo3yHomeDraftFlowKeys, readNo3yHomeTabs } from "../../../fork/no3yHomeTabs";
 /* fork:end no3y-mobile-redesign */
 
 /** The flow a provider serves while no draft route is on the stack. */
@@ -152,18 +152,16 @@ interface NavigationRoutes {
 
 /** Flow keys of the draft routes on the stack. */
 export function liveNewTaskFlowKeys(state: NavigationRoutes): ReadonlySet<string> {
-  return new Set(
-    state.routes.flatMap((route) => {
-      const flowKey =
-        isDraftThreadRoute(route) ||
-        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-        isNo3yChatDraftRoute(route)
-          ? /* fork:end no3y-mobile-redesign */
-            newTaskFlowKey(route)
-          : undefined;
+  return new Set([
+    ...state.routes.flatMap((route) => {
+      const flowKey = isDraftThreadRoute(route) ? newTaskFlowKey(route) : undefined;
       return flowKey === undefined ? [] : [flowKey];
     }),
-  );
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    // New agent's and Chat's drafts live with their Home tabs, not with a route.
+    ...liveNo3yHomeDraftFlowKeys(readNo3yHomeTabs()),
+    /* fork:end no3y-mobile-redesign */
+  ]);
 }
 
 /**

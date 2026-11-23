@@ -16,7 +16,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { interpolateColor, useAnimatedStyle } from "react-native-reanimated";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -77,9 +77,8 @@ function useNewAgentSearch() {
 }
 
 function NewAgentHeader() {
+  // The search stays with New agent's Home tab, as it was left, across dock switches.
   const { searching, searchQuery } = useNewAgentSearch();
-  // A search ends with the screen, so New agent opens on the recent projects.
-  useEffect(() => () => setSearch({ searching: false, searchQuery: "" }), []);
   return (
     <No3yNewAgentHeader
       searching={searching}

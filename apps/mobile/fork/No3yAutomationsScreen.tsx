@@ -40,7 +40,6 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import type { SettingsTarget } from "../src/features/settings/settings-environment-filter";
 import { useThreadListNow } from "../src/features/threads/use-thread-list-now";
 import { relativeTime } from "../src/lib/time";
-import { NativeStackScreenOptions } from "../src/native/StackHeader";
 import { useProjects } from "../src/state/entities";
 import { useEnvironmentQuery } from "../src/state/query";
 import { serverEnvironment } from "../src/state/server";
@@ -171,7 +170,6 @@ export function No3yAutomationsScreen(props: No3yAutomationsScreenProps) {
   };
   return (
     <View style={{ flex: 1, backgroundColor: palette.stageBackground }}>
-      <NativeStackScreenOptions options={{ headerShown: false }} />
       <View
         style={{
           paddingTop: insets.top,

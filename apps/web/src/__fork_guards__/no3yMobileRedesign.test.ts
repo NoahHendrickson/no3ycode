@@ -562,7 +562,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(mobile.isNo3yChatThread(sent, sentKeys)).toBe(true);
     expect(mobile.isNo3yChatThread(plain, sentKeys)).toBe(false);
     // A phone chat is tagged `chat` once the server lists it, as the Mac tags its own.
-    expect(readRepoFile("apps/mobile/fork/No3yChatRouteScreen.tsx")).toContain("tagNo3yChat(");
+    expect(readRepoFile("apps/mobile/fork/No3yChatTab.tsx")).toContain("tagNo3yChat(");
     expect(readRepoFile("apps/mobile/fork/no3yChatTagging.ts")).toContain(
       "input: { threadId, tag: NO3Y_CHAT_THREAD_TAG, tagged: true }",
     );
@@ -601,9 +601,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const modelPicker = readRepoFile("apps/mobile/fork/No3yModelPicker.tsx");
 
     expect(stack).toContain('import { No3yBottomNavHost } from "../fork/No3yBottomNav";');
-    expect(stack).toContain('import { No3yChatRouteScreen } from "../fork/No3yChatRouteScreen";');
     expect(stack).toContain("<No3yBottomNavHost state={props.state} />");
-    expect(stack).toContain("No3yChat: createNativeStackScreen({");
+    // Chat's old link opens its Home tab.
+    expect(stack).toContain("screen: No3yChatLinkScreen,");
     expect(nativeTabs).toContain("!compactTabs &&");
     expect(toolbar).toContain(
       '!(no3yBottomNav && !workspace.settingsOpen && selectedTab === "threads")',
@@ -667,7 +667,30 @@ describe("fork guard: no3y-mobile-redesign", () => {
     );
     // Pull requests from the Threads header, bots above the sections, access on New agent.
     expect(screenHeader).toContain('selectTab("pullRequests")');
-    expect(dock).toContain('selectNo3yWorkspaceTab("threads", openWorkspaceTab)');
+    // The dock's destinations are Home tabs: a switch changes Home's tab state, never the stack,
+    // so it is instant, and each tab stays mounted with its scroll, search and draft.
+    const homeTabs = readRepoFile("apps/mobile/fork/no3yHomeTabs.ts");
+    const homePanes = readRepoFile("apps/mobile/fork/No3yHomePanes.tsx");
+    expect(dock).toContain('newAgent: show("newAgent"),');
+    expect(dock).toContain("showNo3yHomeTab(navigation, tab);");
+    expect(dock).not.toContain("CommonActions.reset");
+    expect(homeTabs).toContain("if (!needsHome) return true;");
+    expect(homePanes).toContain("<WorkspaceTabPanes tabs={NO3Y_HOME_TABS}");
+    expect(homePanes).toContain("<SettingsScheduledTasksRouteScreen />");
+    expect(homePanes).toContain("<No3yChatTab />");
+    expect(
+      readRepoFile("apps/mobile/src/features/layout/workspace/WorkspaceRootScreen.tsx"),
+    ).toContain("<No3yHomePanes threads={<HomeRouteScreen />} insets={insets} />");
+    // Settings' Automations link, every New agent entry and the picker over New agent use the tab.
+    expect(readRepoFile("apps/mobile/src/features/settings/settings-navigation.ts")).toContain(
+      'if (page === "SettingsScheduledTasks" && showNo3yHomeTab(navigation, "automations")) return;',
+    );
+    expect(readRepoFile("apps/mobile/src/features/layout/AdaptiveWorkspaceLayout.tsx")).toContain(
+      'if (showNo3yHomeTab(navigation, "newAgent")) return;',
+    );
+    expect(readRepoFile("apps/mobile/src/features/threads/NewTaskRouteScreen.tsx")).toContain(
+      "isNo3yHomeDraftPickerBase(threadRoute, readNo3yHomeTabs())",
+    );
     // A sheet never hides the dock: it reads the routes beneath formSheets.
     expect(dock).toContain(
       "no3yRoutesUnderSheets(props.state.routes.slice(0, props.state.index + 1))",
@@ -720,6 +743,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     );
     const automations = readRepoFile("apps/mobile/fork/No3yAutomationsScreen.tsx");
     expect(scheduled).toContain("<No3yAutomationsScreen");
+    expect(scheduled).toContain(
+      'if (!no3yInHome) return <No3yHomeTabRedirect tab="automations" />;',
+    );
     expect(automations).toContain(
       'navigation.dispatch(StackActions.push("Thread", detail.params));',
     );
@@ -742,15 +768,17 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(subagentCards).not.toContain("no3ySubagentActivity");
     expect(subagentCards).toContain("borderRadius: 20,");
     // Chat: Threads' header shape, thread cards, and New agent's draft composer for a No-project
-    // chat, served by the new-task flow and kept alive with its route.
-    const chat = readRepoFile("apps/mobile/fork/No3yChatRouteScreen.tsx");
+    // chat, kept with its Home tab and served by the new-task flow while the tab shows.
+    const chat = readRepoFile("apps/mobile/fork/No3yChatTab.tsx");
     const draftScreen = readRepoFile("apps/mobile/src/features/threads/NewTaskDraftScreen.tsx");
     expect(chat).toContain("<NewTaskDraftRouteScreen");
     expect(chat).toContain("<No3yChatHeader");
     expect(chat).toContain("<No3yThreadRow");
-    expect(stack).toContain("isDraftThreadRoute(route) || isNo3yChatDraftRoute(route)");
+    expect(chat).toContain("<No3yHomeDraftGate");
+    expect(stack).toContain("resolveNo3yHomeDraftFlow(props.state.routes, no3yHomeTabs)");
+    expect(stack).toContain("active={no3yHomeDraft?.active ?? draftRouteOnTop}");
     expect(readRepoFile("apps/mobile/src/features/threads/new-task-flow-state.ts")).toContain(
-      "isNo3yChatDraftRoute(route)",
+      "...liveNo3yHomeDraftFlowKeys(readNo3yHomeTabs()),",
     );
     expect(draftScreen).toContain("content: no3ySurface?.content ?? heroViewport,");
     expect(draftScreen).toContain("no3ySurface.onSubmitted(");
@@ -758,7 +786,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     // branch and machine pills above the composer in place of the context controls.
     const newAgent = readRepoFile("apps/mobile/fork/No3yNewAgent.tsx");
     expect(readRepoFile("apps/mobile/fork/No3yDraftSurface.tsx")).toContain(
-      "return chat ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);",
+      "return tab ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);",
     );
     expect(draftScreen).toContain("no3ySurface.controls");
     expect(newAgent).toContain("rankNo3yProjectTiles({");

@@ -1,7 +1,8 @@
 /**
  * What the no3y iPhone layout swaps into NewTaskDraftScreen: its header, the content in place of
- * the hero, and the controls above the composer — Chat's (No3yChatRouteScreen.tsx, through this
- * context) or New agent's project tiles — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * the hero, and the controls above the composer — Chat's or New agent's, given by their Home tabs
+ * (fork/No3yHomePanes.tsx) through this context; a draft thread route gets New agent's — see
+ * `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import { createContext, use, type ReactNode } from "react";
 
@@ -17,11 +18,11 @@ export interface No3yDraftSurface {
   readonly onSubmitted?: (environmentId: string, threadId: string) => void;
 }
 
-export const No3yChatDraftContext = createContext<No3yDraftSurface | null>(null);
+export const No3yDraftSurfaceContext = createContext<No3yDraftSurface | null>(null);
 
-/** Chat's surface on the Chat route, New agent's on the no3y iPhone layout, else null. */
+/** A Home tab's surface, New agent's on another no3y iPhone draft, else null. */
 export function useNo3yDraftSurface(): No3yDraftSurface | null {
-  const chat = use(No3yChatDraftContext);
+  const tab = use(No3yDraftSurfaceContext);
   const enabled = useNo3yBottomNavEnabled();
-  return chat ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);
+  return tab ?? (enabled ? NO3Y_NEW_AGENT_SURFACE : null);
 }

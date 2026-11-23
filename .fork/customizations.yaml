@@ -7927,14 +7927,24 @@
     (fork/No3yGlass.tsx: liquid glass, or the app's blur backdrop where it is
     unavailable) at 44pt, and 40pt inside the composer card. A dock of four filled Hugeicons items (Threads, New
     agent, Chat, Automations; glass pill on the selected one, 80pt band) shows
-    on the workspace screens and New agent and hides inside a thread; a sheet
+    on Home and Settings pages and hides inside a thread; a sheet
     over those screens never hides it (it reads the routes beneath formSheets,
     which cover it natively; hiding it only brought it back late, once the
     sheet's route left the stack after its dismissal; fork/no3yDockMove.ts).
-    A dock switch is the workspace stack's own push or pop: its react-native-
-    screens v5 host animates every push and pop and has no per-transition
-    animation option, so an instant switch needs a native change or a dock
-    that is not stack routes. Nothing fades in on a switch: a fade there once
+    The dock's four destinations are tabs of Home (fork/No3yHomePanes.tsx,
+    in place of HomeRouteScreen in WorkspaceRootScreen's Threads branch): a
+    dock tap only changes Home's tab state (fork/no3yHomeTabs.ts), so it is
+    instant (react-native-screens v5 animates every push and pop with no
+    per-transition option, which is why they are not stack routes). Over a
+    page pushed on Home (a Settings page, an automation's editor) or over Pull
+    requests, Home is brought back first. Each tab mounts on its first visit
+    and stays mounted while hidden (upstream's WorkspaceTabPanes, Activity),
+    keeping its scroll, search, filters and draft; pushes for threads, runs
+    and settings keep their native animation, and back returns to the tab.
+    Every New agent entry (startNewTask, the peeks) and Settings' Scheduled
+    tasks link (openSettings) open their tab; the `chat` and
+    settings/scheduled-tasks links open it from their old routes
+    (fork/No3yHomeTabRedirect.tsx). Nothing fades in on a switch: a fade there once
     hid the composer's glass (expo-glass-effect installs its UIGlassEffect
     once, and one installed under a fading ancestor never renders). Motion elsewhere uses fork/no3yMotion.ts's
     UI-thread presets, retargeted mid-flight and instant under Reduce Motion:
@@ -8054,19 +8064,23 @@
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
     the Mac fork's version, drawn by fork/HugeIcon.tsx with the Mac's derived
-    filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatRouteScreen.tsx)
+    filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatTab.tsx)
     has Threads' header (Chat; Search, Settings and Usage, Search turning the
     row into a search pill with a close button), its chats newest first as
     thread cards (fork/No3yThreadRow.tsx, swiping to archive and delete, the
     card long-press menu, no settle or snooze), and New agent's own draft
-    composer for a No-project chat: the Chat route carries a draft for the
+    composer for a No-project chat: the Chat tab keeps a draft for the
     environment's No-project workspace (opened on the server if it is not yet
-    listed; fork/no3yChat.ts) and the new-task flow serves it as it serves a
-    draft thread (fenced in Stack.tsx's flow binding and new-task-flow-state's
-    live flow keys), so the model chip, model sheet, effort, access, +, the
-    prompt stash and dictation are New agent's and what is picked starts the
-    chat. A sent chat is pushed over Chat (back returns there) while the route
-    takes a fresh draft; chats opened from the list are pushed over Chat too.
+    listed; fork/no3yChat.ts), as New agent's tab keeps its own. With no draft
+    thread on the stack, the root new-task flow serves the shown tab's draft
+    as it serves a draft thread (fenced in Stack.tsx's flow binding;
+    new-task-flow-state keeps both tabs' flows live; the project picker over
+    New agent sets the tab's project), and a hidden tab holds the flow value it
+    last had (fork/No3yHomeDraftGate.tsx) so it never renders the other tab's
+    draft. The model chip, model sheet, effort, access, +, the prompt stash and
+    dictation are New agent's and what is picked starts the chat. A sent chat
+    or New agent thread is pushed over Home (back returns to the tab) while the
+    tab takes a fresh draft; chats opened from the list are pushed too.
     A chat is what the Mac calls one (fork/no3yChatRule.ts, parity-guarded
     against chatMode.ts isChatThread): tagged `chat`, or sent from this phone
     and still waiting for its tag; a No-project thread without the tag is code
@@ -8075,7 +8089,7 @@
     shape), so it shows in the Mac's Chat list too.
     NewTaskDraftScreen takes a surface (fork/No3yDraftSurface.tsx) in place of
     its header, hero and context/workspace controls (a clone banner stays):
-    Chat's, or on iPhone New agent's (fork/No3yNewAgent.tsx): a "New agent"
+    a Home tab's, or New agent's on another iPhone draft (fork/No3yNewAgent.tsx): a "New agent"
     header with Search and no native bar, then up to eight recent projects as
     two-column tiles (favicon, name, "N working" or how long ago; 4% wash, the
     selected one lifted with a hairline) ranked as the Mac launchpad ranks, by
@@ -8086,8 +8100,10 @@
     "All projects (N)" (the project picker). Directly above the composer sit
     glass pills for the workspace mode and the base branch (by name) and, with
     two or more machines, the machine, each opening its existing picker; they
-    exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, swapped in by a fenced
-    early return in SettingsScheduledTasksRouteScreen) has its own header: a
+    exist only on the draft. Automations (fork/No3yAutomationsScreen.tsx, the
+    Home tab, drawn by a fenced early return in SettingsScheduledTasksRouteScreen,
+    whose own route only redirects to the tab; the Settings scope its filter
+    uses stays while the no3y layout is on) has its own header: a
     glass "Automations | Runs" switch (the last tab kept for the session),
     then the environment filter and +. Automations shows each automation as a
     two-column tile (name on up to two lines, schedule, a result line with a
@@ -8099,11 +8115,9 @@
     mark, run title, automation and project, PR number in the open-PR green,
     relative time), needs you first, then working, then the rest newest first,
     a page of 25 at a time with Show more, and a long-press menu (Open,
-    Settle, Rename, Archive, Delete). A run is
-    pushed over Automations, so back returns there with its scroll position:
-    upstream's selectWorkspaceDetail rebuilt the stack as Home + the run,
-    which dropped Automations and sent back to Threads. The dock reads
-    Automations while a run opened from it is on top. On iOS dark themes the
+    Settle, Rename, Archive, Delete). A run, and an automation's editor, is
+    pushed over Home, so back returns to Automations with its scroll position.
+    On iOS dark themes the
     grouped-card token (a cool grey #1a1b1b in the default theme) is the 4%
     white wash on the page, flattened to #222120 because rows nest in and
     lift out of those cards; the glass fallback and selected-row tokens follow
@@ -8126,7 +8140,12 @@
     - apps/mobile/fork/No3yBottomNav.tsx
     - apps/mobile/fork/No3yBottomFade.tsx
     - apps/mobile/fork/No3yBottomTray.tsx
-    - apps/mobile/fork/No3yChatRouteScreen.tsx
+    - apps/mobile/fork/No3yChatTab.tsx
+    - apps/mobile/fork/No3yHomePanes.tsx
+    - apps/mobile/fork/No3yHomeDraftGate.tsx
+    - apps/mobile/fork/No3yHomeTabRedirect.tsx
+    - apps/mobile/fork/no3yHomeTabs.ts
+    - apps/mobile/fork/no3yHomeTabs.test.ts
     - apps/mobile/fork/No3yDraftSurface.tsx
     - apps/mobile/fork/No3yNewAgent.tsx
     - apps/mobile/fork/no3yProjectTiles.ts
@@ -8205,6 +8224,11 @@
     - apps/mobile/src/features/threads/thread-work-log.tsx
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx
+    - apps/mobile/src/features/settings/settings-navigation.ts
+    - apps/mobile/src/features/layout/AdaptiveWorkspaceLayout.tsx
+    - apps/mobile/src/features/layout/workspace/WorkspaceRootScreen.tsx
+    - apps/mobile/src/features/threads/NewTaskRouteScreen.tsx
+    - apps/mobile/src/features/threads/new-task-flow-provider.tsx
     # Carries the @hugeicons/core-free-icons dep, which fences can't drift-watch.
     - apps/mobile/package.json
   verify:
@@ -8222,3 +8246,4 @@
     - apps/mobile/fork/no3yProjectTiles.test.ts
     - apps/mobile/fork/forkBots.test.ts
     - apps/mobile/fork/no3yDockMove.test.ts
+    - apps/mobile/fork/no3yHomeTabs.test.ts

@@ -42,6 +42,9 @@ import {
   resolveNewTaskScratchOption,
 } from "./new-task-project-selection";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { isNo3yHomeDraftPickerBase, readNo3yHomeTabs } from "../../../fork/no3yHomeTabs";
+/* fork:end no3y-mobile-redesign */
 
 type NewTaskRouteParams = {
   readonly incomingShareId?: string | string[];
@@ -234,7 +237,14 @@ export function NewTaskRouteScreen({ route }: StaticScreenProps<NewTaskRoutePara
       : navigation.getParent();
     const rootState = root?.getState();
     const threadRoute = rootState?.routes[rootState.index - 1];
-    if (routeDraftId === undefined && isDraftThreadRoute(threadRoute)) {
+    if (
+      routeDraftId === undefined &&
+      (isDraftThreadRoute(threadRoute) ||
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        // Opened from New agent's Home tab, which keeps its draft like a draft thread.
+        isNo3yHomeDraftPickerBase(threadRoute, readNo3yHomeTabs()))
+      /* fork:end no3y-mobile-redesign */
+    ) {
       setProject(project);
       root?.goBack();
       return;

@@ -467,14 +467,20 @@ describe("bottom nav route resolution", () => {
       ]),
     ).toBe("settings");
     expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "SettingsAuth" }])).toBeNull();
-    expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "No3yChat" }])).toBe("chat");
+    // Home reads its own tab, and so does a thread pushed over it (a sent chat, an opened run).
+    expect(resolveActiveNo3yNavItem([{ name: "Home" }], "chat")).toBe("chat");
+    expect(resolveActiveNo3yNavItem([{ name: "Home" }, { name: "Thread" }], "automations")).toBe(
+      "automations",
+    );
     expect(
-      resolveActiveNo3yNavItem([
-        { name: "Home" },
-        { name: "SettingsScheduledTasks" },
-        { name: "Thread" },
-      ]),
+      resolveActiveNo3yNavItem(
+        [{ name: "Home" }, { name: "SettingsScheduledTaskEdit" }],
+        "threads",
+      ),
     ).toBe("automations");
+    expect(
+      resolveActiveNo3yNavItem([{ name: "Home" }, { name: "NewTaskProject" }], "newAgent"),
+    ).toBe("newAgent");
 
     const show = (topRoute: { name: string; params?: object }, isOverlayRoute = false) =>
       shouldShowNo3yBottomNav({ topRoute, isOverlayRoute });
