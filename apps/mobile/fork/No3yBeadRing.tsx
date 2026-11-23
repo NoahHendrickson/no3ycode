@@ -25,7 +25,7 @@ import {
 } from "./beadRing";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const STILL_PATH = beadRingPath(BEAD_RING_STILL_PROGRESS);
+const STILL_PATH = beadRingPath(BEAD_RING_STILL_PROGRESS, 0);
 const noSubscription = () => () => {};
 
 /** Whether the screen hosting the mark is focused; marks outside a screen (overlays) count as on. */

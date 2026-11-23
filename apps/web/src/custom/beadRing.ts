@@ -22,8 +22,8 @@ const SPIN = (2 * Math.PI - (PIECES * GAP) / RING_RADIUS) / BEAD_RING_PERIOD;
     runs backwards. */
 const EASE_DEPTH = 0.6;
 
-/** How far into its loop the ring is drawn at `progress` 0..1 of a loop: fast through the joined
-    frames (the snap apart and the merge back), slowing to 0.4x while the pieces hang apart. */
+/** How far into its loop the ring is drawn at `progress` 0..1 of a loop: fastest while joined, easing
+    down as the pieces string out to 0.4x when they hang furthest apart, then back up as they merge. */
 function beadRingEase(progress: number): number {
   return progress + (EASE_DEPTH / (2 * Math.PI)) * Math.sin(2 * Math.PI * progress);
 }
