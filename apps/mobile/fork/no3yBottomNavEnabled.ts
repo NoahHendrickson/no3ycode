@@ -19,3 +19,8 @@ export function useNo3yBottomNavEnabled(): boolean {
     !isDuoDevice(deviceType)
   );
 }
+
+/** Tool row labels match the reply's paragraph size on the no3y layout (fork/no3yTranscriptSpacing.ts). */
+export function useNo3yWorkTextClass(): string | undefined {
+  return useNo3yBottomNavEnabled() ? "text-base" : undefined;
+}

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { NO3Y_LIVE_ROW_ID, no3yLiveRowLast, no3yTurnTimerLabel } from "./no3yLiveStatus";
+import {
+  NO3Y_LIVE_ROW_ID,
+  no3yDropLiveFold,
+  no3yLiveRowLast,
+  no3ySplitLiveTool,
+  no3yTurnTimerLabel,
+} from "./no3yLiveStatus";
 
 describe("no3y live status line", () => {
   it("moves the live row to the end, leaving everything else in order", () => {
@@ -15,6 +21,52 @@ describe("no3y live status line", () => {
     const none = [{ id: "a" }];
     expect(no3yLiveRowLast(last)).toBe(last);
     expect(no3yLiveRowLast(none)).toBe(none);
+  });
+
+  it("drops only the live fold row, keeping a settled one", () => {
+    const rows = [
+      { id: "settled", type: "run-fold" },
+      { id: "live", type: "run-fold", workingSince: "2026-11-22T00:00:00.000Z" },
+      { id: NO3Y_LIVE_ROW_ID, type: "thinking" },
+    ];
+    expect(no3yDropLiveFold(rows).map((row) => row.id)).toEqual(["settled", NO3Y_LIVE_ROW_ID]);
+    expect(no3yDropLiveFold(rows)).toBe(no3yDropLiveFold(rows));
+    const settled = rows.slice(0, 1);
+    expect(no3yDropLiveFold(settled)).toBe(settled);
+  });
+
+  it("splits a running tool out of the live row and puts Thinking below it", () => {
+    const start = "2026-11-22T00:00:00.000Z";
+    type Row = {
+      id: string;
+      type: string;
+      groupId?: string;
+      activities?: Array<{ groupStandIn: { groupId: string } }>;
+    };
+    const thinking = (): Row => ({ id: NO3Y_LIVE_ROW_ID, type: "thinking" });
+    const lone: Row[] = [
+      { id: "reply", type: "message" },
+      {
+        id: NO3Y_LIVE_ROW_ID,
+        type: "activity-group",
+        activities: [{ groupStandIn: { groupId: "g1" } }],
+      },
+    ];
+    const split = no3ySplitLiveTool(lone, start, thinking);
+    expect(split.map((row) => [row.id, row.type])).toEqual([
+      ["reply", "message"],
+      ["work-live:g1", "activity-group"],
+      [NO3Y_LIVE_ROW_ID, "thinking"],
+    ]);
+    expect(no3ySplitLiveTool(lone, start, thinking)).toBe(split);
+    const group: Row[] = [{ id: NO3Y_LIVE_ROW_ID, type: "work-toggle", groupId: "g2" }];
+    expect(no3ySplitLiveTool(group, start, thinking).map((row) => row.id)).toEqual([
+      "work-live:g2",
+      NO3Y_LIVE_ROW_ID,
+    ]);
+    const alreadyThinking: Row[] = [{ id: NO3Y_LIVE_ROW_ID, type: "thinking" }];
+    expect(no3ySplitLiveTool(alreadyThinking, start, thinking)).toBe(alreadyThinking);
+    expect(no3ySplitLiveTool(lone, null, thinking)).toBe(lone);
   });
 
   it("formats the turn timer", () => {

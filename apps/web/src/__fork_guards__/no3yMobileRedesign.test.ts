@@ -727,9 +727,12 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx")).toContain(
       "flatGlassPalette(themeAppearance).userBubble",
     );
-    // A live turn ends in one status line; the live row moves last and draws as it.
+    // A live turn ends in one status line: the live fold drops, a running tool stays a row with
+    // Thinking below it, and the live row moves last and draws as the status line.
     const feed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
-    expect(feed).toContain("no3yLiveLast ? no3yLiveRowLast(presentation) : presentation");
+    for (const helper of ["no3yDropLiveFold(", "no3ySplitLiveTool(", "no3yLiveRowLast("]) {
+      expect(feed).toContain(helper);
+    }
     expect(feed).toContain("<No3yLiveStatusLine");
     // Automations: the fork screen, runs pushed over it so back returns there, grouped-card washed.
     const scheduled = readRepoFile(
