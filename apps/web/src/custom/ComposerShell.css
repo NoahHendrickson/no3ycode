@@ -129,7 +129,7 @@
 
   /* A one-line monitor row matches a subagent row's title-over-model height. */
   & [data-fork-monitoring-task] {
-    min-height: 46px;
+    min-height: 50px;
     padding: 6px 8px;
     border-radius: calc(var(--fork-composer-radius) - 6px);
   }

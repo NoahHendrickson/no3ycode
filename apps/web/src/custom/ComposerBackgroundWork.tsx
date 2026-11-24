@@ -138,7 +138,7 @@ function BackgroundWorkTaskRow(props: {
               <ComputerActivityIcon className="size-4" />
             )}
           </span>
-          <span className="min-w-0 flex-1 truncate text-sm leading-4 font-medium">{label}</span>
+          <span className="min-w-0 flex-1 truncate text-sm leading-5">{label}</span>
         </span>
       </li>
     );
