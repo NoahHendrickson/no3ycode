@@ -859,6 +859,32 @@ describe("fork guard: fork-composer-shell", () => {
     expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
     expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
+  it("paints a started thread's composer menus solid on Flat Glass, glass on a new agent", () => {
+    // Scoped off while a new agent's draft shows; its menus open over a picture.
+    const solid = paletteRules.find(
+      (rule) =>
+        rule.selector.includes("[data-fork-draft-hero-shown]") &&
+        rule.selector.includes("[data-fork-background-work-popup]"),
+    );
+    expect(solid, "the solid composer-menu rule must exist").toBeDefined();
+    for (const marker of [
+      '[data-chat-composer-floating-layer="true"]',
+      '[data-fork-tab-menu="composer"]',
+      '.dropdown-glass:has(> [data-chat-composer-floating-layer="true"])',
+    ]) {
+      expect(solid?.selector).toContain(marker);
+    }
+    expect(solid?.selector.replace(/\s+/gu, "")).toContain(":not([data-fork-draft-hero-shown])");
+    // Tokens only, so the popup-surface rule paints and Liquid Glass cutouts keep their own fill.
+    // The material is the popup frost laid over the stage, which is opaque, with no blur.
+    const body = solid?.body.replace(/\s+/gu, " ") ?? "";
+    expect(body).toContain("--fork-popup-filter: none;");
+    expect(body).toContain(
+      "--fork-popup-fill: color-mix( in srgb, var(--contrast-foreground) 8%, color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base)) );",
+    );
+    expect(body).not.toMatch(/(^|;)\s*(background|backdrop-filter)\s*:/u);
+  });
+
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the
     // composer to cover it. That fails wherever the composer is translucent —

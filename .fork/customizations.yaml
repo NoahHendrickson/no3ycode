@@ -3705,6 +3705,12 @@
     (--fork-thread-composer-*); light Basic tones use their raised prompt
     (kit 289:5475; theme.custom.thread-composer.css, scoped to the thread
     composer's form).
+    On Flat Glass a started thread's composer menus (model, permissions, mode
+    chips, branch and environment pickers, usage, background work) are solid:
+    they override fork-popup-surface's tokens (--fork-popup-fill laid over the
+    stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
+    a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
+    keep the glass.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -4562,7 +4568,8 @@
   intent: >
     Popup menus (menu and submenu, select, combobox and popover popups — the
     model picker among them), glass tooltips and the Usage dialog open on one
-    frosted material in dark: an 8% contrast-foreground wash over a 45%
+    frosted material in dark (except a Flat Glass started thread's composer
+    menus, which set the tokens below to an opaque fill; fork-composer-shell): an 8% contrast-foreground wash over a 45%
     --popover tint, blurred at 28px and saturated at 1.4 (upstream's
     dropdown-glass is 12px at 80%), under a 12% contrast hairline. The
     fork's dark palettes put --popover a step off the stage, so upstream's
