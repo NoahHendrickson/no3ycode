@@ -10,6 +10,7 @@ import {
   DEFAULT_PR_LIST_CONTROLS,
   filterPullRequestList,
   pullRequestListInput,
+  pullRequestProjectChoices,
   withoutScratchProjectScope,
 } from "../src/features/pull-requests/pullRequestList";
 import { pullRequestViewMatches } from "../src/features/pull-requests/pullRequestSavedViews";
@@ -99,6 +100,31 @@ describe("pull request project selection", () => {
     ];
     expect(withoutScratchProjectScope(controls, projects).projects).toEqual([docs]);
     expect(withoutScratchProjectScope(controls, [])).toBe(controls);
+  });
+
+  it("keeps every selected project in the menu, even a second checkout of one repository", () => {
+    const project = (id: string) => ({
+      id: ProjectId.make(id),
+      environmentId: laptop,
+      title: id,
+      workspaceRoot: `/work/${id}`,
+      repositoryIdentity: {
+        canonicalKey: id === "docs" ? "github.com/org/docs" : "github.com/org/web",
+      },
+    });
+    const choices = pullRequestProjectChoices(
+      [project("docs"), project("web"), project("web-wt")],
+      {
+        environmentId: null,
+        controls: withPullRequestProjectSelection(DEFAULT_PR_LIST_CONTROLS, [
+          { projectId: "docs", environmentId: laptop },
+          { projectId: "web-wt", environmentId: laptop },
+        ]),
+        environmentLabels: new Map(),
+        servesPullRequests: () => true,
+      },
+    );
+    expect(choices.map((choice) => choice.id).sort()).toEqual(["docs", "web-wt"]);
   });
 
   it("matches a saved view whatever order its projects were ticked in", () => {

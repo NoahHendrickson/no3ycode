@@ -73,17 +73,19 @@ export function pullRequestProjectChoices<
       projectId: project.id,
       environmentId: project.environmentId,
     });
-  /* fork:end no3y-pr-project-multiselect */
-  return pullRequestFilterProjects(
-    projects.filter(
-      (project) =>
-        !project.isScratch &&
-        (input.environmentId === null || project.environmentId === input.environmentId) &&
-        (input.servesPullRequests(project.environmentId) || isSelected(project)),
-    ),
-    input.environmentLabels,
-    projects.find(isSelected),
+  const candidates = projects.filter(
+    (project) =>
+      !project.isScratch &&
+      (input.environmentId === null || project.environmentId === input.environmentId) &&
+      (input.servesPullRequests(project.environmentId) || isSelected(project)),
   );
+  // Each repository keeps the first project it meets, so selected ones go first: every selected
+  // project stays in the menu, not only the first.
+  return pullRequestFilterProjects(
+    [...candidates.filter(isSelected), ...candidates.filter((project) => !isSelected(project))],
+    input.environmentLabels,
+  );
+  /* fork:end no3y-pr-project-multiselect */
 }
 
 export function pullRequestListKey(
