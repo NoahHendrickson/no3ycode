@@ -38,7 +38,7 @@ export function SidebarSplitPairRow(props: {
       <span
         aria-hidden
         data-fork-split-pair-divider=""
-        className="pointer-events-none absolute inset-y-[28%] left-1/2 w-px -translate-x-1/2 bg-current opacity-15"
+        className="pointer-events-none absolute inset-y-7/25 left-1/2 w-px -translate-x-1/2 bg-current opacity-15"
       />
     </li>
   );

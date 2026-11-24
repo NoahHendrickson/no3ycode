@@ -1129,7 +1129,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       >
         {renderProviderTabs()}
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
-          <label className="flex h-8 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
+          <label className="flex h-8 shrink-0 items-center gap-2 rounded-sm border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
               ref={searchInputRef}

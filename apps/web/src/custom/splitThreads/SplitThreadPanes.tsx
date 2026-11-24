@@ -126,7 +126,7 @@ function SplitResizeHandle(props: {
       // Themes that frame each pane on its own card hide the line and keep the handle.
       data-fork-split-divider=""
       data-fork-float-behind={props.floatBehind || undefined}
-      className="relative z-20 order-1 w-px shrink-0 cursor-col-resize touch-none bg-border select-none before:absolute before:inset-y-0 before:-inset-x-1 before:content-[''] hover:bg-ring/60 data-dragging:bg-ring"
+      className="relative z-20 order-1 w-px shrink-0 cursor-col-resize touch-none bg-border select-none before:absolute before:inset-y-0 before:-inset-x-1 hover:bg-ring/60 data-dragging:bg-ring"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -335,7 +335,7 @@ function SplitPane(props: {
         state.floating
           ? FLOAT_WINDOW_CLASS
           : state.split || props.behindFloat
-            ? "relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col [contain:layout]"
+            ? "relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col contain-layout"
             : "contents"
       }
       style={

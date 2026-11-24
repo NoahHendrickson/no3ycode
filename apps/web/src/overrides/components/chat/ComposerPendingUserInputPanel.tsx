@@ -77,7 +77,7 @@ function OptionControl({ multiSelect, selected }: { multiSelect: boolean; select
       data-fork-question-control
       className={cn(
         "flex size-4 shrink-0 items-center justify-center border border-foreground/50",
-        multiSelect ? "rounded-[4px]" : "rounded-full",
+        multiSelect ? "rounded-sm" : "rounded-full",
         selected && "border-transparent",
       )}
     >

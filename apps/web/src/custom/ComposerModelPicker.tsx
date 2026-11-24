@@ -107,8 +107,7 @@ export function EffortSlider(props: {
   const index = dragIndex ?? committedIndex;
   const option = descriptor.options[index];
   const lastIndex = descriptor.options.length - 1;
-  const glideClass =
-    glide && "duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none";
+  const glideClass = glide && "duration-200 ease-drawer motion-reduce:transition-none";
 
   return (
     <div className="flex flex-col gap-1.5 px-2 pt-1.5 pb-2">
@@ -145,7 +144,7 @@ export function EffortSlider(props: {
               model's default level is a short bar. */}
           <Slider.Track
             data-fork-effort-track
-            className="relative h-6 w-full rounded-[6px] bg-foreground/8 [--fork-effort-thumb-width:20px]"
+            className="relative h-6 w-full rounded-md bg-foreground/8 [--fork-effort-thumb-width:20px]"
           >
             {/* Under the fill, which covers the stops the thumb has passed as it moves. */}
             <div
@@ -172,7 +171,7 @@ export function EffortSlider(props: {
             <div
               data-fork-effort-fill
               className={cn(
-                "pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[6px] bg-(--fork-effort-fill-end)",
+                "pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-md bg-(--fork-effort-fill-end)",
                 glideClass && ["transition-[width]", glideClass],
               )}
               style={
@@ -189,7 +188,7 @@ export function EffortSlider(props: {
               getAriaValueText={() => option?.label ?? ""}
               data-fork-effort-thumb
               className={cn(
-                "h-6 w-(--fork-effort-thumb-width) rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "h-6 w-(--fork-effort-thumb-width) rounded-md bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 glideClass && ["transition-[inset-inline-start]", glideClass],
               )}
             />

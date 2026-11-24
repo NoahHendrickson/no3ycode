@@ -54,6 +54,7 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
   "[scrollbar-width:thin]",
   "[content-visibility:auto]",
   "[image-rendering:pixelated]",
+  "[text-box:trim-both_cap_alphabetic]",
 ];
 
 /** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */

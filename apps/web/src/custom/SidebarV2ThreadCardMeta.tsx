@@ -158,7 +158,7 @@ export function SidebarV2ThreadCardMeta(props: SidebarV2ThreadCardMetaProps) {
               <span
                 className={
                   props.branch
-                    ? "flex max-w-[40%] shrink-0 items-center gap-1"
+                    ? "flex max-w-2/5 shrink-0 items-center gap-1"
                     : "flex min-w-0 items-center gap-1"
                 }
               >
@@ -221,9 +221,7 @@ export function SidebarV2ThreadCardMeta(props: SidebarV2ThreadCardMetaProps) {
           The caption style (11/15) even though the cluster sits on the 12px
           repo line, so it carries its own size rather than inheriting. */}
       {props.modelLabel ? (
-        <span className="min-w-0 max-w-[45%] truncate text-sidebar-caption">
-          {props.modelLabel}
-        </span>
+        <span className="min-w-0 max-w-9/20 truncate text-sidebar-caption">{props.modelLabel}</span>
       ) : null}
     </div>
   );

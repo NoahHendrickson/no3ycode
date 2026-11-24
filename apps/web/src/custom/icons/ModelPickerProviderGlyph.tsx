@@ -91,9 +91,7 @@ export function ModelPickerProviderGlyph(props: {
       className={className}
       iconClassName={iconClassName}
       indicatorBackground={props.indicatorBackground ?? "var(--popover)"}
-      badgeClassName={
-        props.badgeClassName ?? "right-[-0.25rem] bottom-[-0.25rem] h-3 min-w-3 px-0.5 text-[7px]"
-      }
+      badgeClassName={props.badgeClassName ?? "-right-1 -bottom-1 h-3 min-w-3 px-0.5 text-[7px]"}
     />
   );
   if (!Mark) return icon(cn("size-4", props.className), cn("size-4", props.iconClassName));

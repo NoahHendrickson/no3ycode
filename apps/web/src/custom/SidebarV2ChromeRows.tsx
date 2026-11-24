@@ -480,8 +480,7 @@ const SCOPE_ITEM =
     moment the pointer reached its row. An alpha reads as a lift of whatever
     the row paints, hovered or not — the same reasoning as the wash itself.
     Light keeps ui/checkbox's border-input, which clears the zinc hover. */
-const SCOPE_CHECKBOX =
-  "inline-flex size-4 shrink-0 items-center justify-center rounded-[.25rem] border";
+const SCOPE_CHECKBOX = "inline-flex size-4 shrink-0 items-center justify-center rounded-sm border";
 const SCOPE_CHECKBOX_OFF = "border-input bg-transparent dark:border-foreground/24";
 const SCOPE_CHECKBOX_ON = "border-primary bg-primary text-primary-foreground";
 

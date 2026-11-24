@@ -532,7 +532,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       ref={forkThreadTabsRef}
       data-fork-thread-tabs=""
       className={cn(
-        "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-3",
+        "drag-region flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center gap-3",
         // Clears the window controls and the floating sidebar toggle.
         "pl-[calc(var(--workspace-controls-left)+var(--workspace-titlebar-control-size)+var(--workspace-titlebar-control-gap))]",
         "pr-(--workspace-gutter-end) wco:pr-(--workspace-native-controls-inset)",
@@ -651,7 +651,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         ref={measureNav}
         aria-label="Active threads"
         // The min width keeps More (72px) and the halo padding on screen.
-        className="-mx-1 -my-1 flex min-w-[80px] flex-1 items-center gap-1.5 overflow-hidden px-1 py-1"
+        className="-mx-1 -my-1 flex min-w-20 flex-1 items-center gap-1.5 overflow-hidden px-1 py-1"
         {...splitDropHandlers}
       >
         {row.slots.length === 0 && row.overflow.length === 0 ? (
@@ -699,7 +699,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                   aria-label={`${row.overflow.length} more active threads`}
                   data-fork-tab-trigger=""
                   data-fork-tab-strip-control=""
-                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                  className="flex h-7 w-18 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                 />
               }
             >
