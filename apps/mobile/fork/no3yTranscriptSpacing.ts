@@ -15,13 +15,15 @@ export const NO3Y_TRANSCRIPT_GAP = 16;
 export const NO3Y_MESSAGE_ACTION_SIZE = { button: 32, icon: 16 } as const;
 
 /**
- * Inline code's chip in a reply: rounder than the native 2pt default, with room either side, and
- * only as tall as the code, so chips on consecutive lines keep a gap.
+ * Inline code's chip in a reply: rounder than the native 2pt default, with room either side, at
+ * 0.95 of the body (upstream 0.9), and only as tall as the code, so chips on consecutive lines
+ * keep a gap. File chips and the subagent capsule take their size from it (~17pt in a 23pt line).
  */
 export const NO3Y_INLINE_CODE_CHIP = {
   radius: 5,
   paddingHorizontal: 6,
   paddingVertical: 0,
+  fontScale: 0.95,
 } as const;
 
 /** How far a footer row shifts so its outer glyph, not the button around it, meets the text edge. */

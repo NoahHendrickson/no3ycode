@@ -1677,7 +1677,6 @@ function useMarkdownStyles(): MarkdownStyleSets {
         ...(no3yCode
           ? {
               inlineCodeBackgroundColor: no3yCode.inlineCodeWash,
-              inlineCodeFontScale: 0.95,
               inlineCodeChip: NO3Y_INLINE_CODE_CHIP,
               emphasisFontWeight: "500" as const,
               tableHeaderBackgroundColor: no3yCode.cardWash,
