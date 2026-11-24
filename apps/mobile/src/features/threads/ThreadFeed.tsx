@@ -3361,6 +3361,12 @@ function DisclosureRow(props: {
 // instead of at width 0 and again when the new feed's own layout reports the same width.
 let lastSplitViewport: { windowWidth: number; width: number; height: number } | null = null;
 
+/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+// On iOS a landed feed glides to its new end as rows arrive instead of jumping by each row's
+// height. Landing on open stays instant: the feed is hidden until it reaches the end.
+const FEED_END_FOLLOW_GLIDE = { ...THREAD_FEED_MAINTAIN_SCROLL_AT_END, animated: true } as const;
+/* fork:end mobile-feed-stable-end */
+
 export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   const gt = useGT();
   const m = useMessages();
@@ -4071,6 +4077,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   // still leave it hundreds of points short of the end; isAtEnd stays true through that.
   const settling = props.feed.length > 0 && landedListKey !== feedThreadKey;
   const landingFallback = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+  const [followingEnd, setFollowingEnd] = useState(true);
+  /* fork:end mobile-feed-stable-end */
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yNudgedListKey = useRef<string | null>(null);
   /* fork:end no3y-mobile-redesign */
@@ -4106,6 +4115,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     // Offset 0 before the first positioning, and the gaps while rows measure in, are not the
     // user leaving the end; only a scroll away stops end following.
     onIsAtEndChange?.(settling || state.isAtEnd || state.isFollowingEnd);
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    if (Platform.OS === "ios") setFollowingEnd(state.isFollowingEnd);
+    /* fork:end mobile-feed-stable-end */
   };
   const handleMetricsChange = () => reportMetrics(loadedListKey === feedThreadKey);
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -4678,9 +4690,22 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             keyboardOffset={props.keyboardOffset}
             {...(usesNativeAutomaticInsets ? { contentInset: { top: anchorTopInset } } : {})}
             freeze={props.freeze}
-            maintainScrollAtEnd={jumpReady ? false : THREAD_FEED_MAINTAIN_SCROLL_AT_END}
+            /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+            maintainScrollAtEnd={
+              jumpReady
+                ? false
+                : Platform.OS === "ios" && !reduceMotion && !settling
+                  ? FEED_END_FOLLOW_GLIDE
+                  : THREAD_FEED_MAINTAIN_SCROLL_AT_END
+            }
+            /* fork:end mobile-feed-stable-end */
             maintainScrollAtEndThreshold={THREAD_FEED_MAINTAIN_SCROLL_AT_END_THRESHOLD}
-            maintainVisibleContentPosition
+            /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+            // Following the end owns the scroll position. Anchoring visible content as well
+            // fights it whenever a row lands at the end with a guessed size: the correction
+            // moved the offset by hundreds of points and end following then dragged it back.
+            maintainVisibleContentPosition={Platform.OS !== "ios" || !followingEnd || jumpReady}
+            /* fork:end mobile-feed-stable-end */
             data={listFeed}
             /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
             // A rising bubble starts once the list shows its rows, so readiness re-renders them.
@@ -4694,10 +4719,29 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             viewabilityConfig={THREAD_MEDIA_VIEWABILITY_CONFIG}
             keyExtractor={(entry) => entry.id}
             getItemType={(entry) => {
+              /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+              // A new row starts at its type's average height. The live line shares a type with
+              // fixed-height rows, so it had no average and started at 180pt instead of ~40.
+              if (Platform.OS === "ios" && no3yBubble && entry.id === NO3Y_LIVE_ROW_ID) {
+                return "no3y-live";
+              }
+              /* fork:end mobile-feed-stable-end */
               // Same container as the live fold that replaces it.
               if (entry.type === "pending-fold") return "run-fold";
               if (entry.type !== "message") return entry.type;
               if (isCompactionCommandFeedEntry(entry)) return "message:compaction";
+              /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+              // A reply arriving at the end starts at its type's average, the size of finished
+              // replies, so its first line was laid out hundreds of points tall and the feed
+              // overshot its end. A streaming reply has no average to inherit.
+              if (
+                Platform.OS === "ios" &&
+                entry.message.role === "assistant" &&
+                entry.message.streaming
+              ) {
+                return `message:assistant-streaming:${entry.message.id}`;
+              }
+              /* fork:end mobile-feed-stable-end */
               if (
                 entry.message.role === "assistant" &&
                 !terminalAssistantMessageIds.has(entry.message.id)

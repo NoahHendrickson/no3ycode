@@ -8910,3 +8910,30 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: mobile-feed-stable-end
+  intent: >
+    The iOS thread feed stays put while a turn streams and glides when rows
+    land. While the feed follows its end, end following alone owns the scroll
+    position: LegendList's visible-content anchoring (maintainVisibleContentPosition)
+    is on only once the reader scrolls away, or while landing a jump to a
+    message. With both on, a row appended at the end with a guessed height
+    made the anchoring move the offset by hundreds of points (once to the top
+    of the thread) and end following drag it back, the "chaotic" jumping on
+    send. New rows start at their item type's average height, so the no3y live
+    status line gets its own type (it shared one with fixed-height rows and
+    started at 180pt) and a streaming reply gets a per-message type (the shared
+    one averaged finished replies, ~500pt). A landed feed follows its end
+    animated (iOS, not under Reduce Motion), so a sent message, a dispatched
+    queued message, tool rows and streamed text slide the feed up instead of
+    jumping by each row's height; landing on open stays instant, since the
+    feed is hidden until it reaches the end. Android keeps upstream's anchoring
+    and instant end following, and its rows keep upstream item types.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    # End following, anchoring and the item types the estimates hang on.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+  verify:
+    - apps/web/src/__fork_guards__/mobileFeedStableEnd.test.ts
