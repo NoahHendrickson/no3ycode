@@ -602,8 +602,8 @@
     The whole keep-as-written policy is two lists in the core:
     PRESERVED_PHRASES (the fork's credit, prose about upstream, the Linux
     capture extension's own name, upstream's registered "T3 Code for GitHub"
-    app, the server-issued "T3 Code · <label>" peer session a revoke prompt
-    quotes, Ping's services and accounts — T3 Connect, T3 Chat, T3 Account —
+    app, the server-issued peer session a revoke prompt quotes as "T3 Code ·
+    …", Ping's services and accounts — T3 Connect, T3 Chat, T3 Account —
     and the T3 server and T3 home, whose names the client also matches in
     server text such as "Unable to connect to the T3 server WebSocket") and
     EXCLUDED_MODULES (DesktopUserData's legacy profile names). A string that
@@ -626,7 +626,12 @@
     derives it from the favicon). The auth header spells "no3y Code" beside
     it. Mobile also shows "no3y Code" in its header title, the no3y tile on
     its loading screen (preview builds share the production tile), and
-    "no3y" as the widget's app name ("Open no3y"). The iOS widgets bundle
+    "no3y" as the widget's app name ("Open no3y"). Native copy that Expo
+    reads from the app config before Metro runs (permission prompts, widget
+    gallery descriptions) takes the same rename in fork/identity.ts's
+    no3yNativeConfig, limited by key to display fields so build inputs such
+    as file paths stay untouched, and the Android agent-notification status-bar icon is
+    the same flower path. The iOS widgets bundle
     through expo-widgets' own Metro config, outside the rewrite, so their
     fallback copy and their T3Mark.svg logo (the flower, centred in the 1.5:1
     frame they draw it in) are edited in place.
@@ -659,6 +664,8 @@
     - apps/mobile/src/widgets/SubscriptionUsage.android.tsx
     - apps/mobile/src/widgets/AgentActivityWidget.tsx
     - apps/mobile/assets/widget/T3Mark.svg
+    - apps/mobile/modules/t3-agent-notifications/android/src/main/res/drawable/agent_activity_mark.xml
+    - apps/mobile/fork/identity.ts
     - apps/desktop/vite.config.ts
     - apps/web/public/manifest.webmanifest
     - apps/web/src/components/settings/SettingsPanels.tsx

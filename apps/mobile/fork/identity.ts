@@ -1,6 +1,7 @@
 /** Fork-owned — see `.fork/customizations.yaml#no3y-mobile-identity`. */
 import type { ExpoConfig } from "expo/config";
 
+import { rewriteUpstreamDisplayName } from "../../../scripts/lib/fork-brand-name-core.ts";
 import { NO3Y_APPLE_TEAM_ID, NO3Y_BUNDLE_IDENTIFIER } from "./no3yConstants.ts";
 
 type AppVariant = "development" | "preview" | "production";
@@ -108,5 +109,30 @@ export function no3yNativeConfig(config: ExpoConfig, env: RepoEnv): ExpoConfig {
     extra: { ...config.extra, eas: { observe: config.extra?.eas?.observe } },
   };
   delete next.owner;
-  return next;
+  return withForkBrandName(next);
+}
+
+// Native copy (permission prompts, widget gallery descriptions) is read from this config before
+// Metro runs, so it takes the same rename here — see .fork/customizations.yaml#fork-brand-name.
+// Only display fields, picked by key: other strings are build inputs such as file paths.
+const DISPLAY_COPY_KEY = /(?:UsageDescription|Permission|^description)$/u;
+
+function withForkBrandName<T>(value: T, key = ""): T {
+  if (typeof value === "string") {
+    return DISPLAY_COPY_KEY.test(key) ? ((rewriteUpstreamDisplayName(value) ?? value) as T) : value;
+  }
+  if (Array.isArray(value)) return value.map((entry) => withForkBrandName(entry)) as T;
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Object.getPrototypeOf(value) !== Object.prototype
+  ) {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entry]) => [
+      entryKey,
+      withForkBrandName(entry, entryKey),
+    ]),
+  ) as T;
 }

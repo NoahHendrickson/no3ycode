@@ -4,6 +4,7 @@ vi.mock("../../../scripts/lib/public-config.ts", () => ({
   loadRepoEnv: () => ({
     APP_VARIANT: process.env.APP_VARIANT,
     NO3Y_MOBILE_IDENTITY: process.env.NO3Y_MOBILE_IDENTITY,
+    T3CODE_ANDROID_GOOGLE_SERVICES_FILE: process.env.T3CODE_ANDROID_GOOGLE_SERVICES_FILE,
   }),
 }));
 
@@ -53,6 +54,18 @@ it.each([
     dark: { image: "./fork/assets/no3y-splash-sparkle.png", backgroundColor: "#191817" },
   });
   expect(config.extra?.eas?.projectId).toBeUndefined();
+  // Native permission copy is read before Metro's rename runs.
+  expect(config.ios?.infoPlist?.NSLocalNetworkUsageDescription).toBe(
+    "Allow no3y Code to connect to no3y Code servers on your local network or tailnet.",
+  );
+  expect(pluginOptions(config, "expo-camera")?.cameraPermission).toMatch(/^Allow no3y Code /u);
+  expect(JSON.stringify(config)).not.toMatch(/\bT3 Code\b/u);
+});
+
+it("renames only display copy, never build inputs such as file paths", async () => {
+  vi.stubEnv("T3CODE_ANDROID_GOOGLE_SERVICES_FILE", "/tmp/T3 Code/google-services.json");
+  const config = await loadConfig("production", undefined);
+  expect(config.android?.googleServicesFile).toBe("/tmp/T3 Code/google-services.json");
 });
 
 it("builds upstream's identity with NO3Y_MOBILE_IDENTITY=0", async () => {

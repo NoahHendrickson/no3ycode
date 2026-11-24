@@ -23,7 +23,7 @@ export const PRESERVED_PHRASES = [
   // Upstream's registered GitHub App, whose install URL still names it.
   "T3 Code for GitHub",
   // The server issues peer-link sessions as "T3 Code · <label>"; a revoke prompt quotes it.
-  "T3 Code · ",
+  "T3 Code · …",
   // Ping's hosted services and accounts.
   "T3 Connect",
   "T3 Chat",

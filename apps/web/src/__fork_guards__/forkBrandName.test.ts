@@ -64,6 +64,7 @@ describe("fork guard: fork-brand-name", () => {
       ["Sign in to T3 Connect on the T3 server", null],
       ["Link T3 Chat for more tunnels", null],
       ["Unable to connect to the T3 server WebSocket.", null],
+      ["Managed by T3 Code · v{version}.", "Managed by no3y Code · v{version}."],
       ["This T3 home is unavailable. Open T3 Account.", null],
       ["const T3 = 1; type T3Mark = T3;", null],
       [
@@ -134,6 +135,11 @@ describe("fork guard: fork-brand-name", () => {
     ]) {
       expect(read(file)).toContain(`d="${flowerOutlinePath()}"`);
     }
+    expect(
+      read(
+        "apps/mobile/modules/t3-agent-notifications/android/src/main/res/drawable/agent_activity_mark.xml",
+      ),
+    ).toContain(`android:pathData="${flowerOutlinePath()}"`);
     const standalone = read("apps/web/src/components/ui/standalone-page.tsx");
     expect(standalone).toContain(">no3y Code</span>");
   });
@@ -146,6 +152,8 @@ describe("fork guard: fork-brand-name", () => {
     expect(read("apps/mobile/src/components/CompactBrandTitle.tsx")).toContain(
       'const WORDMARK_SUFFIX = "no3y Code";',
     );
+    // Native copy is read from the Expo config before Metro runs.
+    expect(read("apps/mobile/fork/identity.ts")).toContain("return withForkBrandName(next);");
     expect(read("apps/mobile/src/components/brandAssets.ts")).not.toMatch(
       /assets\/(dev|nightly|prod)\//u,
     );
