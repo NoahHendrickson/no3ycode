@@ -22,7 +22,15 @@ import {
   Clock3Icon,
   GripVerticalIcon,
 } from "lucide-react";
-import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
+import {
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from "react";
 
 import { forkUnacknowledgedQueuedMessages } from "./forkQueuedItems";
 import {
@@ -129,27 +137,8 @@ export function ForkQueuedRunsBanner({
   });
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
-  // Expanded rows, and the hovered row with whether its text is cut off.
-  const [readKeys, setReadKeys] = useState<ReadonlySet<string>>(() => new Set());
-  const [hovered, setHovered] = useState<{
-    readonly key: string;
-    readonly overflowing: boolean;
-  } | null>(null);
-  // Expanding is offered only while the row's text is cut off. An expanded row wraps, so it
-  // measures as fitting; it stays offered so it can fold back.
-  const canExpand = (row: HTMLElement, key: string) => {
-    const text = row.querySelector<HTMLElement>("[data-fork-queued-text]");
-    return readKeys.has(key) || (text !== null && text.scrollWidth > text.clientWidth);
-  };
-  const showReadMore = (row: HTMLElement, key: string) =>
-    setHovered({ key, overflowing: canExpand(row, key) });
-  const toggleRead = (key: string) =>
-    setReadKeys((keys) => {
-      const next = new Set(keys);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  // The hovered or focused row, which offers its expand chevron.
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{
     readonly runId: RunId;
     readonly insertIndex: number | null;
@@ -425,9 +414,6 @@ export function ForkQueuedRunsBanner({
               const rowRunId = item.runId;
               const rowServerIndex = item.serverIndex;
               const isEditing = rowRunId !== null && rowRunId === props.editingRunId;
-              const isRead = readKeys.has(item.key);
-              // An expanded row keeps its chevron; a collapsed one shows it on hover when cut off.
-              const isExpandable = isRead || (hovered?.key === item.key && hovered.overflowing);
               const rowDraggable =
                 rowRunId !== null && rowServerIndex !== null && canReorder && busyRunId === null;
               return (
@@ -435,31 +421,15 @@ export function ForkQueuedRunsBanner({
                   render={<li />}
                   key={item.key}
                   aria-current={isEditing ? "true" : undefined}
-                  onPointerEnter={(event) => showReadMore(event.currentTarget, item.key)}
-                  onPointerLeave={() => setHovered(null)}
-                  onFocus={(event) => showReadMore(event.currentTarget, item.key)}
+                  onPointerEnter={() => setActiveKey(item.key)}
+                  onPointerLeave={() => setActiveKey(null)}
+                  onFocus={() => setActiveKey(item.key)}
                   onBlur={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) setHovered(null);
-                  }}
-                  onClick={(event) => {
-                    // The chevron, grip and actions handle their own clicks; a text selection is not a click.
-                    // Measured here, not from hover: a touch tap clears the hover before its click.
-                    const target = event.target as HTMLElement;
-                    if (
-                      !canExpand(event.currentTarget, item.key) ||
-                      target.closest(
-                        "button, [data-slot=composer-banner-actions], [data-slot=composer-banner-icon]",
-                      ) ||
-                      !(window.getSelection()?.isCollapsed ?? true)
-                    ) {
-                      return;
-                    }
-                    toggleRead(item.key);
+                    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
                   }}
                   className={cn(
                     "relative rounded-sm",
                     isEditing ? "bg-accent text-accent-foreground" : "hover:bg-foreground/5",
-                    isExpandable && "cursor-pointer",
                     dragState !== null && dragState.runId === item.runId && "opacity-50",
                   )}
                   draggable={rowDraggable}
@@ -535,7 +505,7 @@ export function ForkQueuedRunsBanner({
                       </Button>
                     ) : null}
                   </ComposerBanner.Icon>
-                  <ComposerBanner.Content className="text-sm text-foreground">
+                  <QueuedRowText rowActive={activeKey === item.key} text={previewText}>
                     {isEditing ? <span className="sr-only">Editing queued message: </span> : null}
                     {item.pending ? (
                       <Clock3Icon
@@ -580,27 +550,7 @@ export function ForkQueuedRunsBanner({
                     {designChangeLabel !== null ? (
                       <span className="shrink-0 text-muted-foreground">{designChangeLabel}</span>
                     ) : null}
-                    <span
-                      data-fork-queued-text
-                      className={cn(
-                        "min-w-0 flex-1",
-                        isRead ? "py-2 break-words whitespace-pre-wrap" : "truncate",
-                      )}
-                    >
-                      {previewText}
-                    </span>
-                    {isExpandable ? (
-                      <button
-                        type="button"
-                        aria-expanded={isRead}
-                        aria-label={isRead ? "Collapse queued message" : "Expand queued message"}
-                        className="flex size-4 shrink-0 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
-                        onClick={() => toggleRead(item.key)}
-                      >
-                        <ChevronDownIcon className={cn("size-3.5", isRead && "rotate-180")} />
-                      </button>
-                    ) : null}
-                  </ComposerBanner.Content>
+                  </QueuedRowText>
                   <ComposerBanner.Actions>
                     {isEditing ? (
                       <Button
@@ -708,5 +658,56 @@ export function ForkQueuedRunsBanner({
         </ComposerBanner.Scroll>
       </ComposerBanner.Root>
     </ComposerBanner.Attachment>
+  );
+}
+
+const isCutOff = (text: HTMLElement | null) => text !== null && text.scrollWidth > text.clientWidth;
+
+/** A queued row's text cell: cut-off text offers a chevron while its row is hovered or focused,
+    and a click anywhere in the cell (the chevron's included) toggles the full text. */
+function QueuedRowText(props: {
+  readonly rowActive: boolean;
+  readonly text: string;
+  readonly children: ReactNode;
+}) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [cutOff, setCutOff] = useState(false);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads whether the text is cut off at the row's current width
+  useLayoutEffect(() => {
+    if (props.rowActive && !expanded) setCutOff(isCutOff(textRef.current));
+  }, [props.rowActive, expanded]);
+  const showChevron = expanded || (props.rowActive && cutOff);
+  return (
+    <ComposerBanner.Content
+      className={cn("text-sm text-foreground", showChevron && "cursor-pointer")}
+      onClick={() => {
+        // A text selection is not a click. Measured now: a touch tap ends the hover before its click.
+        if (!(window.getSelection()?.isCollapsed ?? true)) return;
+        if (!expanded && !isCutOff(textRef.current)) return;
+        setExpanded(!expanded);
+      }}
+    >
+      {props.children}
+      <span
+        ref={textRef}
+        className={cn(
+          "min-w-0 flex-1",
+          expanded ? "py-2 break-words whitespace-pre-wrap" : "truncate",
+        )}
+      >
+        {props.text}
+      </span>
+      {showChevron ? (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse queued message" : "Expand queued message"}
+          className="flex size-4 shrink-0 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDownIcon className={cn("size-3.5", expanded && "rotate-180")} />
+        </button>
+      ) : null}
+    </ComposerBanner.Content>
   );
 }

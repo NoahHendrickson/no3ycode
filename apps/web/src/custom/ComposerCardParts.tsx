@@ -5,6 +5,8 @@ import { ComposerBanner } from "~/components/chat/ComposerBanner";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
+import { GHOST_ICON_TINT_CLASS } from "./ghostIconTint";
+
 /** A composer card's header label (the queue card, the stash): the name, its count beside it. */
 export function ComposerCardTitle(props: { readonly children: ReactNode; readonly count: number }) {
   return (
@@ -15,7 +17,7 @@ export function ComposerCardTitle(props: { readonly children: ReactNode; readonl
   );
 }
 
-/** A composer card row's icon action: a 28px muted ghost with the sidebar's hover tint. */
+/** A composer card row's icon action: a muted ghost at `icon-sm` with the fork's hover tint. */
 export function ComposerCardIconButton({
   className,
   ...props
@@ -24,8 +26,7 @@ export function ComposerCardIconButton({
     <Button
       variant="ghost-muted"
       size="icon-sm"
-      // The card's --accent is the composer's faint control hover, which barely reads on Flat Glass.
-      className={cn("[:hover,[data-pressed]]:bg-foreground/10", className)}
+      className={cn(GHOST_ICON_TINT_CLASS, className)}
       {...props}
     />
   );
