@@ -30,9 +30,10 @@ describe("fork guard: settings nav", () => {
     );
   });
 
-  it("keeps headings and the search icon at 65% and rules off each group", () => {
+  it("keeps headings at 65%, the search an outlined field, and rules off each group", () => {
     expect(nav).toContain('"px-2 text-xs font-medium text-sidebar-foreground/65"');
-    expect(nav).toContain('<SearchIcon className="size-4 shrink-0 text-sidebar-foreground/65" />');
+    expect(nav).toContain('<InputGroup className={cn(!compactSearchOpen && "max-md:hidden")}>');
+    expect(nav).toContain('<SearchIcon aria-hidden className="opacity-65" />');
     expect(nav).toContain("border-t border-sidebar-border");
     expect(nav).toContain("first:border-t-0 first:pt-0");
   });

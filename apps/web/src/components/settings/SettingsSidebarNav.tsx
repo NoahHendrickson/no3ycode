@@ -40,6 +40,9 @@ import { T, useGT, useMessages } from "gt-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Kbd } from "../ui/kbd";
+// fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
+// fork:end fork-settings-nav
 import {
   SidebarContent,
   SidebarFooter,
@@ -47,7 +50,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarInput,
 } from "../ui/sidebar";
 import { scrollToSettingsTarget } from "./settingsLayout";
 import {
@@ -271,19 +273,14 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
       <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
           <div className="flex flex-col gap-2">
-            <div
-              className={cn(
-                // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
-                "flex h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
-                // fork:end fork-settings-nav
-                !compactSearchOpen && "max-md:hidden",
-              )}
-            >
-              {/* fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav */}
-              <SearchIcon className="size-4 shrink-0 text-sidebar-foreground/65" />
-              {/* fork:end fork-settings-nav */}
+            {/* fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                The search is the app's outlined search field, not a nav row. */}
+            <InputGroup className={cn(!compactSearchOpen && "max-md:hidden")}>
+              <InputGroupAddon>
+                <SearchIcon aria-hidden className="opacity-65" />
+              </InputGroupAddon>
               {/* Native search inputs clear on Escape even during IME composition. */}
-              <SidebarInput
+              <InputGroupInput
                 ref={searchInputRef}
                 nativeInput
                 type="text"
@@ -308,26 +305,27 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
                     ? `settings-search-result-${results[activeResultIndex].id}`
                     : undefined
                 }
-                className="min-w-0 flex-1"
               />
-              {isSearching ? (
-                <Button
-                  type="button"
-                  size="icon-micro"
-                  variant="ghost-muted"
-                  className="shrink-0"
-                  aria-label={gt("Clear settings search")}
-                  onClick={() => {
-                    clearSearch();
-                    searchInputRef.current?.focus();
-                  }}
-                >
-                  <XIcon className="size-3" />
-                </Button>
-              ) : (
-                <Kbd>/</Kbd>
-              )}
-            </div>
+              <InputGroupAddon align="inline-end">
+                {isSearching ? (
+                  <Button
+                    type="button"
+                    size="icon-micro"
+                    variant="ghost-muted"
+                    aria-label={gt("Clear settings search")}
+                    onClick={() => {
+                      clearSearch();
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <XIcon className="size-3" />
+                  </Button>
+                ) : (
+                  <Kbd>/</Kbd>
+                )}
+              </InputGroupAddon>
+            </InputGroup>
+            {/* fork:end fork-settings-nav */}
             {isSearching && results.length === 0 ? (
               <p
                 role="status"
