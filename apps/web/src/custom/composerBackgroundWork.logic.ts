@@ -19,6 +19,12 @@ export interface ComposerBackgroundWorkPresentation extends Omit<
   readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
 }
 
+const LIVE_SUBAGENT_STATUSES: ReadonlySet<OrchestrationV2Subagent["status"]> = new Set([
+  "pending",
+  "running",
+  "waiting",
+]);
+
 /** Pairs each subagent task with its live record's card row, once, so a task row reads one item. */
 export function resolveComposerBackgroundWork(
   presentation: PendingBackgroundWorkPresentation | null,
@@ -28,10 +34,13 @@ export function resolveComposerBackgroundWork(
   return {
     ...presentation,
     items: presentation.items.map((task) => {
-      const agent =
+      // A follow-up delegation reuses its child thread, so prefer the live record over a finished one.
+      const matches =
         task.childThreadId === undefined
-          ? undefined
-          : subagents?.find((candidate) => candidate.childThreadId === task.childThreadId);
+          ? []
+          : (subagents ?? []).filter((candidate) => candidate.childThreadId === task.childThreadId);
+      const agent =
+        matches.find((candidate) => LIVE_SUBAGENT_STATUSES.has(candidate.status)) ?? matches.at(-1);
       return agent === undefined ? task : { ...task, subagent: forkSubagentRowFromAgent(agent) };
     }),
   };

@@ -16,11 +16,11 @@ export function forkUnacknowledgedQueuedMessages<
   projection: QueueProjection | null | undefined,
   optimisticMessages: ReadonlyArray<Message>,
 ): ReadonlyArray<Message> {
+  const queued = optimisticMessages.filter((message) => message.inputIntent === "queued_turn");
+  if (queued.length === 0) return queued;
   // Run-only acknowledgements can resurrect pending rows after cancellation or startup.
   const acknowledgedMessageIds = new Set((projection?.messages ?? []).map((message) => message.id));
-  return optimisticMessages.filter(
-    (message) => message.inputIntent === "queued_turn" && !acknowledgedMessageIds.has(message.id),
-  );
+  return queued.filter((message) => !acknowledgedMessageIds.has(message.id));
 }
 
 /** How many rows the queue card shows: the server's queued runs plus unacknowledged sends. */

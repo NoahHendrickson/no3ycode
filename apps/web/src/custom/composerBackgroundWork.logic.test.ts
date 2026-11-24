@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { glanceCommandLabel } from "./composerBackgroundWork.logic";
+import { glanceCommandLabel, resolveComposerBackgroundWork } from "./composerBackgroundWork.logic";
 
 describe("glanceCommandLabel", () => {
   it.each([
@@ -26,5 +26,28 @@ describe("glanceCommandLabel", () => {
     ["vp run dev &", "vp run dev"],
   ])("%s → %s", (command, expected) => {
     expect(glanceCommandLabel(command)).toBe(expected);
+  });
+});
+
+describe("resolveComposerBackgroundWork", () => {
+  it("pairs a task with the live record when a follow-up reused its child thread", () => {
+    const record = (id: string, status: string) =>
+      ({ id, status, childThreadId: "child-1", title: id, prompt: id }) as never;
+    const resolved = resolveComposerBackgroundWork(
+      {
+        title: "1 subagent",
+        waiting: false,
+        items: [
+          {
+            taskId: "task-2",
+            kind: "subagent",
+            label: "Follow-up",
+            childThreadId: "child-1" as never,
+          },
+        ],
+      },
+      [record("first", "completed"), record("follow-up", "running")],
+    );
+    expect(resolved?.items[0]?.subagent?.id).toBe("follow-up");
   });
 });

@@ -21,6 +21,8 @@ interface PendingUserInputPanelProps {
   cwd: string | undefined;
   threadRef: ScopedThreadRef;
   disabled?: boolean;
+  /** Why the composer's own send is blocked (e.g. an attachment the server can't take). */
+  submitDisabledReason?: string | null;
   respondingRequestIds: RuntimeRequestId[];
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
@@ -36,6 +38,7 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
   cwd,
   threadRef,
   disabled = false,
+  submitDisabledReason = null,
   respondingRequestIds,
   answers,
   questionIndex,
@@ -55,6 +58,7 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
       cwd={cwd}
       threadRef={threadRef}
       disabled={disabled}
+      submitDisabledReason={submitDisabledReason}
       isResponding={respondingRequestIds.includes(activePrompt.requestId)}
       answers={answers}
       questionIndex={questionIndex}
@@ -93,6 +97,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   cwd,
   threadRef,
   disabled,
+  submitDisabledReason,
   isResponding,
   answers,
   questionIndex,
@@ -105,6 +110,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   cwd: string | undefined;
   threadRef: ScopedThreadRef;
   disabled: boolean;
+  submitDisabledReason: string | null;
   isResponding: boolean;
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
@@ -272,8 +278,10 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
           data-fork-composer-notice-action="primary"
           disabled={
             interactionDisabled ||
+            submitDisabledReason !== null ||
             (progress.isLastQuestion ? !progress.isComplete : !progress.canAdvance)
           }
+          title={submitDisabledReason ?? undefined}
           onClick={onAdvance}
         >
           {isResponding

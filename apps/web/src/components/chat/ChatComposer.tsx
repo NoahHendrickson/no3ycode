@@ -656,7 +656,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     onResume,
     onInterrupt,
     onSelectActivePendingUserInputOption,
-    onAdvanceActivePendingUserInput,
+    /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+       The question card advances through submitComposer, which reaches the send hook's advance. */
+    /* fork:end fork-pending-user-input */
     onDismissActivePendingUserInput,
     onPreviousActivePendingUserInputQuestion,
     onChangeActivePendingUserInputCustomAnswer,
@@ -4068,8 +4070,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                         answers={activePendingDraftAnswers}
                         questionIndex={activePendingQuestionIndex}
                         onToggleOption={onSelectActivePendingUserInputOption}
-                        onAdvance={onAdvanceActivePendingUserInput}
-                        /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+                        /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+                           The card's Next/Submit replace upstream's form submit, so they keep its guards. */
+                        onAdvance={() => submitComposerStable()}
+                        submitDisabledReason={primaryActionSendDisabledReason}
                         onPrevious={onPreviousActivePendingUserInputQuestion}
                         /* fork:end fork-pending-user-input */
                         onDismiss={onDismissActivePendingUserInput}
