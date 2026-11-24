@@ -3,11 +3,10 @@
 // component=ComposerBackgroundWorkChip
 import figma from "figma";
 
-// The menu is the chip's own popup (the shared Menu); the chip renders it from the presentation.
+// The menu is the chip's own popup (the shared Menu); the chip renders it from its items.
 export default {
   example: figma.tsx`<ComposerBackgroundWorkChip
-  seed={seed}
-  presentation={presentation}
+  items={items}
   stopping={stopping}
   canStop={canStop}
   onStop={onStop}

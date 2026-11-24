@@ -48,8 +48,9 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
         {label}
       </span>
       <Menu>
+        {/* Click, not hover: a hover-opened Menu takes focus, which would pull the caret out of
+            the prompt beside it. */}
         <MenuTrigger
-          openOnHover
           render={
             <ComposerControl
               size="xs"
