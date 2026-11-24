@@ -31,25 +31,39 @@ describe("fork guard: fork-typography-settings", () => {
   it("sizes the sidebar's type and line boxes from Sidebar font size", () => {
     // One px variable, so the rows grow with the text instead of clipping it.
     expect(readSibling("../custom/forkTypographyScale.ts")).toContain(
-      'root.style.setProperty("--fork-sidebar-font-size", `${size}px`)',
+      'cssVariable: "--fork-sidebar-font-size",',
     );
     const index = readSibling("../index.css");
-    for (const token of ["title", "row", "chrome", "meta", "caption"]) {
+    for (const token of ["title", "row", "chrome", "meta", "caption", "status", "tile"]) {
       expect(index).toMatch(
-        new RegExp(`--text-sidebar-${token}: [^;]*var\\(--fork-sidebar-font-size, 14px\\)`),
+        new RegExp(`--text-sidebar-${token}: calc\\(var\\(--fork-sidebar-px, 1px\\) \\* \\d+\\);`),
       );
       expect(index).toMatch(
         new RegExp(`--text-sidebar-${token}--line-height: calc\\(\\d+ / \\d+\\);`),
       );
     }
     const panel = rule(`${MARKER} [data-sidebar-version="v2"]`);
-    expect(panel?.body).toContain("--text-sm: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14)");
-    expect(panel?.body).toContain("--text-xs: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14)");
+    const unit = theme.find(
+      (entry) => normalize(entry.selector) === MARKER && entry.body.includes("--fork-sidebar-px:"),
+    );
+    expect(unit?.body).toContain(
+      "--fork-sidebar-px: calc(var(--fork-sidebar-font-size, 14px) / 14)",
+    );
+    expect(panel?.body).toContain("--text-sm: calc(var(--fork-sidebar-px) * 13)");
+    expect(panel?.body).toContain("--text-xs: calc(var(--fork-sidebar-px) * 13)");
     // Spacing is px as well, so rows keep their drawn heights at any Interface font size.
     const rows = rule(
       `${MARKER} [data-sidebar-version="v2"] :is([data-slot="sidebar-content"], [data-slot="sidebar-footer"])`,
     );
     expect(rows?.body).toContain("--spacing: 4px");
+    // Every rem inset upstream gives the sidebar is pinned at its 16px-root size, so a new or
+    // retuned one fails here instead of leaving the panel half px and half rem.
+    for (const [, name, rem] of index.matchAll(/(--sidebar-[a-z-]+): ([\d.]+)rem;/gu)) {
+      expect(rows?.body, name).toContain(`${name}: ${Number(rem) * 16}px`);
+    }
+    const primitives = readSibling("../components/ui/sidebar.tsx");
+    expect(primitives).toContain('data-slot="sidebar-content"');
+    expect(primitives).toContain('data-slot="sidebar-footer"');
     const sidebarZoom = theme.filter(
       (entry) => entry.selector.includes("data-sidebar-version") && entry.body.includes("zoom:"),
     );

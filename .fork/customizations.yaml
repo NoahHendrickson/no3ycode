@@ -2720,8 +2720,9 @@
     Sidebar V2 type follows one device-local px setting, Sidebar font size
     (Settings → Appearance → Typography, right under the interface font; see
     fork-typography-settings), which writes --fork-sidebar-font-size on the
-    root and is the thread title's size, 14px by default. index.css registers
-    the panel's named sizes as ratios of it: text-sidebar-title (14 on an 18px
+    root and is the thread title's size, 14px by default. theme.custom.css turns
+    it into one unit, --fork-sidebar-px (a drawn px at the current size), and
+    index.css registers the panel's named sizes as multiples of it: text-sidebar-title (14 on an 18px
     line, card titles), -row (14/16, slim titles and the rename field),
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
@@ -2758,6 +2759,8 @@
     - apps/web/src/index.css
     - apps/web/src/lib/utils.ts
     - apps/web/src/components/AppSidebarLayout.tsx
+    # The px spacing pin keys on its sidebar-content / sidebar-footer slots.
+    - apps/web/src/components/ui/sidebar.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts

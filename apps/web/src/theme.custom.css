@@ -158,10 +158,15 @@
    opt out with the named --text-sidebar-* tokens in index.css. All of them
    follow Sidebar font size: this one is 13px on a 16px line at its default
    14px, in px so the Interface font size does not also move it. */
+:root[data-fork="noahhendrickson-t3code"] {
+  /* One drawn px at the current Sidebar font size (the thread title, 14px by default). */
+  --fork-sidebar-px: calc(var(--fork-sidebar-font-size, 14px) / 14);
+}
+
 :root[data-fork="noahhendrickson-t3code"] [data-sidebar-version="v2"] {
-  --text-xs: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14);
+  --text-xs: calc(var(--fork-sidebar-px) * 13);
   --text-xs--line-height: calc(16 / 13);
-  --text-sm: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14);
+  --text-sm: calc(var(--fork-sidebar-px) * 13);
   --text-sm--line-height: calc(16 / 13);
 }
 

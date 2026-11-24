@@ -2,8 +2,8 @@
  * A device-local setting the stylesheets read from the root — see
  * `.fork/customizations.yaml#fork-glass-3d`.
  *
- * Every value but the default stamps an attribute on <html>, which the rules
- * it governs key on, so no component subscribes to it. Device-local, like
+ * Every value but the default stamps an attribute or a CSS variable on <html>,
+ * which the rules it governs read, so no component subscribes to it. Device-local, like
  * the palette the Glass settings belong to: a contracts field would put a
  * fork key in a schema upstream owns.
  */
@@ -19,19 +19,23 @@ export interface ForkRootSetting<T> {
   readonly useValue: () => [T, (value: T) => void];
 }
 
+/** What the setting writes on <html>; a null value removes it. */
+type ForkRootStamp<T> =
+  | { readonly attribute: string; readonly attributeValue: (value: T) => string | null }
+  | { readonly cssVariable: string; readonly cssValue: (value: T) => string | null };
+
 // Primitives only: every read decodes storage afresh, and useSyncExternalStore
 // needs a snapshot that compares equal while nothing changed.
-export function createForkRootSetting<T extends string | number | boolean, E>(options: {
-  readonly storageKey: string;
-  readonly attribute: string;
-  readonly schema: Schema.Codec<T, E>;
-  readonly defaultValue: T;
-  /** The attribute's value for a setting value; null removes it. */
-  readonly attributeValue: (value: T) => string | null;
-  /** Optional side-effect invoked whenever the attribute is applied. */
-  readonly onApply?: (value: T) => void;
-}): ForkRootSetting<T> {
-  const { storageKey, attribute, schema, defaultValue, attributeValue, onApply } = options;
+export function createForkRootSetting<T extends string | number | boolean, E>(
+  options: {
+    readonly storageKey: string;
+    readonly schema: Schema.Codec<T, E>;
+    readonly defaultValue: T;
+    /** Optional side-effect invoked whenever the stamp is applied. */
+    readonly onApply?: (value: T) => void;
+  } & ForkRootStamp<T>,
+): ForkRootSetting<T> {
+  const { storageKey, schema, defaultValue, onApply } = options;
   // One module-level store per setting, so the setter is stable without a
   // memo and every mounted hook hears a change made by any of them.
   const listeners = new Set<() => void>();
@@ -47,9 +51,16 @@ export function createForkRootSetting<T extends string | number | boolean, E>(op
 
   const apply = (value: T) => {
     if (typeof document === "undefined") return;
-    const stamp = attributeValue(value);
-    if (stamp === null) document.documentElement.removeAttribute(attribute);
-    else document.documentElement.setAttribute(attribute, stamp);
+    const root = document.documentElement;
+    if ("attribute" in options) {
+      const stamp = options.attributeValue(value);
+      if (stamp === null) root.removeAttribute(options.attribute);
+      else root.setAttribute(options.attribute, stamp);
+    } else {
+      const stamp = options.cssValue(value);
+      if (stamp === null) root.style.removeProperty(options.cssVariable);
+      else root.style.setProperty(options.cssVariable, stamp);
+    }
     onApply?.(value);
   };
 

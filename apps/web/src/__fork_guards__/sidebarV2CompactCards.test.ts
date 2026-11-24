@@ -59,7 +59,7 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     expect(sidebarV2CompactCardHeight()).toBe(px.compactCardPadY * 2 + px.titleLine);
     expect(sidebarV2CompactCardHeight()).toBe(32);
     expect(sidebar).toContain(
-      `[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_${sidebarV2CompactCardHeight() - px.titleLine}px)]`,
+      `[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_${sidebarV2CompactCardHeight() - px.titleLine}px)]`,
     );
   });
 

@@ -115,7 +115,7 @@ export function SidebarV2BotCardBody(props: {
   return (
     <div
       className={cn(
-        "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[var(--spacing-sidebar-16)_var(--spacing-sidebar-14)] items-center gap-x-2 gap-y-0.5 py-1.5",
+        "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[max(16px,var(--spacing-sidebar-16))_max(14px,var(--spacing-sidebar-14))] items-center gap-x-2 gap-y-0.5 py-1.5",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >

@@ -25,8 +25,10 @@
  * ## The card's height
  *
  * 54px, drawn: `cardPadY` 8 + `titleLine` 18 + `rowGap` 4 + `metaLine` 16 +
- * 8. `sidebarV2CardHeight()` is that sum, and the row's contain-intrinsic-size
- * hint reads it, so a retune of any term moves the hint with it.
+ * 8. `sidebarV2CardHeight()` is that sum at the default Sidebar font size. The
+ * two line boxes scale with it (`--spacing-sidebar-18` / `-16`), so the row's
+ * contain-intrinsic-size hint sums those tokens with the fixed px terms, and the
+ * guard derives the fixed part from this table.
  *
  * ## The vertical rhythm
  *

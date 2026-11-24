@@ -42,8 +42,8 @@ export function SidebarV2StatusSectionHeader(props: {
       className={cn(
         "flex min-h-8 w-full list-none items-center gap-1.5",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
-        // The row is h-8 (8px above the 16px label), so mt-2 on top of the 2px
-        // list gap puts 18px from the previous card's bottom edge to the label.
+        // At the default size the row is 32px (8px above the 16px label), so mt-2 on top
+        // of the 2px list gap puts 18px from the previous card's bottom edge to the label.
         props.isFirst ? "mt-0" : "mt-2",
         SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
       )}

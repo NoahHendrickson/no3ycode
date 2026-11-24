@@ -8,9 +8,6 @@ import * as Schema from "effect/Schema";
 
 import { createForkRootSetting } from "./forkRootSetting";
 
-const FORK_SIDEBAR_FONT_SIZE_ATTRIBUTE = "data-fork-sidebar-font-size";
-const FORK_CHAT_TEXT_SCALE_ATTRIBUTE = "data-fork-chat-text-scale";
-
 /** Thread titles' size, in px. The sidebar's other type sizes and line boxes keep their ratio
     to it (index.css `--text-sidebar-*`), so rows grow with the text. */
 export const MIN_FORK_SIDEBAR_FONT_SIZE = 11;
@@ -24,16 +21,10 @@ const ForkSidebarFontSizeSchema = Schema.Int.check(
 export const { initialize: initializeForkSidebarFontSize, useValue: useForkSidebarFontSize } =
   createForkRootSetting({
     storageKey: "t3code:fork:sidebar-font-size:v1",
-    attribute: FORK_SIDEBAR_FONT_SIZE_ATTRIBUTE,
     schema: ForkSidebarFontSizeSchema,
     defaultValue: DEFAULT_FORK_SIDEBAR_FONT_SIZE,
-    attributeValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : String(size)),
-    onApply: (size) => {
-      const root = document.documentElement;
-      if (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE)
-        root.style.removeProperty("--fork-sidebar-font-size");
-      else root.style.setProperty("--fork-sidebar-font-size", `${size}px`);
-    },
+    cssVariable: "--fork-sidebar-font-size",
+    cssValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : `${size}px`),
   });
 
 export const FORK_TYPOGRAPHY_SCALE_OPTIONS = [
@@ -45,16 +36,10 @@ export const DEFAULT_FORK_TYPOGRAPHY_SCALE: ForkTypographyScale = 100;
 export const { initialize: initializeForkChatTextScale, useValue: useForkChatTextScale } =
   createForkRootSetting({
     storageKey: "t3code:fork:chat-text-scale:v1",
-    attribute: FORK_CHAT_TEXT_SCALE_ATTRIBUTE,
     schema: Schema.Literals(FORK_TYPOGRAPHY_SCALE_OPTIONS),
     defaultValue: DEFAULT_FORK_TYPOGRAPHY_SCALE,
-    attributeValue: (scale) => (scale === DEFAULT_FORK_TYPOGRAPHY_SCALE ? null : String(scale)),
-    onApply: (scale) => {
-      const root = document.documentElement;
-      if (scale === DEFAULT_FORK_TYPOGRAPHY_SCALE)
-        root.style.removeProperty("--fork-chat-text-scale");
-      else root.style.setProperty("--fork-chat-text-scale", String(scale / 100));
-    },
+    cssVariable: "--fork-chat-text-scale",
+    cssValue: (scale) => (scale === DEFAULT_FORK_TYPOGRAPHY_SCALE ? null : String(scale / 100)),
   });
 
 /** The family theme.custom.css puts first in --fork-font-sans, which an empty preference renders. */

@@ -280,12 +280,8 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(threadCardTitleClassName({ recedes: false })).toContain("text-sidebar-title");
     const index = readSibling("../index.css");
     expect(index).toContain("--text-sidebar-title--line-height: calc(18 / 14);");
-    expect(index).toContain(
-      "--spacing-sidebar-18: calc(var(--fork-sidebar-font-size, 14px) * 18 / 14);",
-    );
-    expect(index).toContain(
-      "--text-sidebar-meta: calc(var(--fork-sidebar-font-size, 14px) * 12 / 14);",
-    );
+    expect(index).toContain("--spacing-sidebar-18: calc(var(--fork-sidebar-px, 1px) * 18);");
+    expect(index).toContain("--text-sidebar-meta: calc(var(--fork-sidebar-px, 1px) * 12);");
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.titleLine).toBe(18);
     const meta = readSibling("../custom/SidebarV2ThreadCardMeta.tsx");
     expect(meta).toContain(
@@ -531,7 +527,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
       SIDEBAR_V2_CARD_ALIGNMENT_PX.titleLine -
       SIDEBAR_V2_CARD_ALIGNMENT_PX.metaLine;
     expect(sidebarV2).toContain(
-      `[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_${fixed}px)]`,
+      `[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_${fixed}px)]`,
     );
     expect(sidebarV2).not.toMatch(/contain-intrinsic-size:auto_(?:52|77)px/u);
   });

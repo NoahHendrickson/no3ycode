@@ -70,7 +70,7 @@ describe("fork guard: fork-sidebar-type-size", () => {
       rule.selector.includes('[data-sidebar-version="v2"]'),
     );
     expect(panel, "expected a panel-scoped text-size rule").toBeDefined();
-    const size = "calc(var(--fork-sidebar-font-size, 14px) * 13 / 14)";
+    const size = "calc(var(--fork-sidebar-px) * 13)";
     expect(declarationValue(panel?.body ?? "", "--text-xs")).toBe(size);
     expect(declarationValue(panel?.body ?? "", "--text-xs--line-height")).toBe("calc(16 / 13)");
     expect(declarationValue(panel?.body ?? "", "--text-sm")).toBe(size);

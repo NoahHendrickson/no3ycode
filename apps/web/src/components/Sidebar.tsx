@@ -699,18 +699,17 @@ function threadTimeTimestamp(thread: SidebarThreadSummary): string {
 
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
    content-visibility skips offscreen rows; each kind's drawn height keeps the scrollbar honest
-   while they are skipped. The li carries no padding of its own, so it equals the drawn card.
-   No `auto`: every kind is a fixed height, and a remembered one goes stale when Sidebar font size changes. */
+   while they are skipped. The li carries no padding of its own, so it equals the drawn card. */
 const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // 8 + 18 + 4 + 16 + 8, sidebarV2CardHeight() in custom/sidebarV2CardAlignment.
-  card: "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_20px)]",
+  card: "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_20px)]",
   // The title line alone, 7 + 18 + 7, sidebarV2CompactCardHeight() (sidebar-v2-compact-cards).
-  compact: "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_14px)]",
-  // A bot's avatar card, 6 + 16 + 2 + 14 + 6 (fork-bots, custom/bots/SidebarV2BotCardBody).
-  bot: "[contain-intrinsic-size:calc(var(--spacing-sidebar-16)_+_var(--spacing-sidebar-14)_+_14px)]",
-  "bot-compact": "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_14px)]",
+  compact: "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_14px)]",
+  // A bot's avatar card, 6 + 16 + 2 + 14 + 6; the rows never drop below the 32px mascot (fork-bots).
+  bot: "[contain-intrinsic-size:auto_calc(max(16px,var(--spacing-sidebar-16))_+_max(14px,var(--spacing-sidebar-14))_+_14px)]",
+  "bot-compact": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_14px)]",
   // A Petals grid tile, 8 + 28 + 12 + 10 (fork-bots).
-  "bot-grid": "[contain-intrinsic-size:calc(var(--spacing-sidebar-12)_+_46px)]",
+  "bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-12)_+_46px)]",
 };
 /* fork:end sidebar-v2-card-rows */
 
@@ -1696,7 +1695,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         className={cn(
           "min-w-0 flex-1 transition-opacity motion-reduce:transition-none",
           // Card titles own size+leading in threadCardTitleClassName
-          // (0.875rem / 14px). text-xs here used to win the cascade and inject
+          // (text-sidebar-title). text-xs here used to win the cascade and inject
           // --text-xs--line-height: 1rem (16px), which grew the title row past
           // its h-[14px] via flex min-height:auto — the rain then read as 16px.
           variant === "card"
@@ -6099,7 +6098,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           olderSettledShelf.retry();
                           showMoreSettled();
                         }}
-                        className="flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground aria-disabled:cursor-default"
+                        className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground aria-disabled:cursor-default"
                       >
                         <PlusIcon aria-hidden className="size-4 shrink-0" />
                         {olderSettledShelf.loading
