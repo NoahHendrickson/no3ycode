@@ -1,17 +1,18 @@
 /**
- * When the no3y launch sparkle plays and ends — see `.fork/customizations.yaml#no3y-launch-sparkle`.
- * It plays once per process (a cold launch), and never holds the app: it ends as soon as the
- * first screen is ready, after a short floor so a fast launch does not flash it.
+ * When the no3y launch leaf spins and ends — see `.fork/customizations.yaml#no3y-launch-leaf`.
+ * It plays once per process (a cold launch) and never holds the app: it fades out as soon as the
+ * first screen is ready, and only starts spinning if that takes longer than a moment.
  */
-/** Shortest time the sparkle shows, so an instant launch still reads as a twinkle, not a flicker. */
-export const NO3Y_LAUNCH_MIN_VISIBLE_MS = 320;
+/** A launch ready within this shows the still mark and fades; only a longer wait spins. */
+export const NO3Y_LAUNCH_SPIN_DELAY_MS = 180;
+/** The leaves sweep clockwise into one stack at the top. */
+export const NO3Y_LAUNCH_GATHER_MS = 320;
+/** …then fan back out clockwise into the mark. */
+export const NO3Y_LAUNCH_FAN_MS = 560;
+/** The mark rests whole between spins. */
+export const NO3Y_LAUNCH_HOLD_MS = 420;
 /** The closing scale-up and fade. */
 export const NO3Y_LAUNCH_OUTRO_MS = 260;
-
-/** Milliseconds after the sparkle mounted at which its outro starts, given when the app was ready. */
-export function no3yLaunchOutroAt(readyAtMs: number): number {
-  return Math.max(readyAtMs, NO3Y_LAUNCH_MIN_VISIBLE_MS);
-}
 
 /** A store for "the first screen is ready", and a once-per-process claim on playing. */
 export function createNo3yLaunchGate() {

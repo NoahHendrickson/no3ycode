@@ -68,13 +68,13 @@ export function no3yVariant<V extends UpstreamVariant>(
   };
 }
 
-/** The page colour the launch sparkle animation (fork/No3yLaunchSparkle.tsx) starts on. */
+/** The page colour the launch leaf animation (fork/No3yLaunchLeaf.tsx) starts on. */
 export const NO3Y_SPLASH_BACKGROUND = "#191817";
-/** Drawn at this width, centred, the frame the JS animation's first frame matches. */
-export const NO3Y_SPLASH_IMAGE_WIDTH = 220;
-const NO3Y_SPLASH_IMAGE = "./fork/assets/no3y-splash-sparkle.png";
+/** Drawn at this width (7pt a leaf cell), centred, the frame the JS animation's first frame matches. */
+export const NO3Y_SPLASH_IMAGE_WIDTH = 147;
+const NO3Y_SPLASH_IMAGE = "./fork/assets/no3y-splash-leaf.png";
 
-// The iOS launch screen shows the green sparkle on the dark page; Android keeps upstream's.
+// The iOS launch screen shows the pixel leaf mark on the dark page; Android keeps upstream's.
 function withNo3ySplash(plugins: ExpoConfig["plugins"]): ExpoConfig["plugins"] {
   return plugins?.map((plugin) => {
     if (!Array.isArray(plugin) || plugin[0] !== "expo-splash-screen") return plugin;
