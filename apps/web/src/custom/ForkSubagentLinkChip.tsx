@@ -31,7 +31,6 @@ import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
 import { ThreadChipHoverCard } from "~/components/ThreadChipHoverCard";
 import { ThreadHoverCardPopup } from "~/components/ThreadHoverCard";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
-import { cn } from "~/lib/utils";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useProject } from "~/state/entities";
 import { environmentShell } from "~/state/shell";
@@ -44,8 +43,8 @@ import {
   isForkSubagentLinkThread,
   type ForkSubagentLinkKind,
 } from "./forkSubagentLinkLogic";
-import { CircleHalfIcon } from "./icons/lucide-hugeicons";
-import { SidebarV2IdleMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
+import { sidebarV2CardTopStatus } from "./sidebarV2CardStatus";
+import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
 
 /** Provided around assistant messages only; everything else keeps upstream's thread chip. */
 interface ForkSubagentLinkScopeValue {
@@ -168,48 +167,24 @@ export function useForkSubagentLinkText(
   return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents, streaming);
 }
 
-const MARK_SLOT = "flex h-[14px] w-[12px] shrink-0 items-center justify-center";
-
-/** The sidebar's marks, drawn still and hidden: the link's name carries the status. */
+/** The sidebar's own mark, live: working animates as it does there. The link's accessible name
+    carries the status, so the mark stays hidden. */
 function SubagentLinkMark(props: {
   readonly kind: ForkSubagentLinkKind | null;
   readonly seed: string;
 }) {
-  switch (props.kind) {
-    case "working":
-      return (
-        <span aria-hidden className="text-sidebar-v2-status-working">
-          <SidebarV2WorkingMark seed={props.seed} still />
-        </span>
-      );
-    case "approval":
-    case "input":
-      return (
-        <span aria-hidden className={cn(MARK_SLOT, "text-sidebar-v2-status-input")}>
-          <CircleHalfIcon />
-        </span>
-      );
-    case "done":
-    case "failed":
-    case "waiting":
-      return (
-        <span
-          aria-hidden
-          className={cn(
-            MARK_SLOT,
-            props.kind === "done"
-              ? "text-sidebar-v2-status-done"
-              : props.kind === "failed"
-                ? "text-sidebar-v2-status-failed"
-                : "text-muted-foreground",
-          )}
-        >
-          <span className="size-2.5 rounded-full bg-current" />
-        </span>
-      );
-    case null:
-      return <SidebarV2IdleMark />;
-  }
+  const status =
+    props.kind === null ? null : sidebarV2CardTopStatus(props.kind, { goalActive: false });
+  return (
+    <span aria-hidden className="inline-flex shrink-0">
+      <SidebarV2StatusMark status={status} seed={props.seed} idle="dot" />
+    </span>
+  );
+}
+
+/** True inside an assistant message, where every thread link reads as the capsule. */
+export function useForkThreadLinkCapsule(): boolean {
+  return use(ForkSubagentLinkScopeContext) !== null;
 }
 
 /** Renders `children`, the upstream chip, unless the link names a subagent in an assistant message. */
@@ -253,7 +228,7 @@ export function ForkSubagentLinkChip(props: {
             aria-label={gt("Thread, {title}", { title: `${title}, ${status}` })}
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
-            className="gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] text-foreground no-underline [--context-chip-ink:currentColor]"
+            shape="capsule"
           >
             <SubagentLinkMark kind={link.kind} seed={key} />
             <ContextChipLabel>{link.label || props.title}</ContextChipLabel>

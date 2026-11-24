@@ -41,6 +41,11 @@ const contextChipVariants = cva(
       shape: {
         inline: "",
         bubble: "w-64 gap-2 rounded-2xl bg-message px-3 py-2 text-sm text-message-foreground",
+        /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+        capsule:
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- em insets scale the capsule with the prose it sits in
+          "gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] text-foreground no-underline [--context-chip-ink:currentColor]",
+        /* fork:end no3y-subagent-link-chip */
       },
       state: {
         unresolved: "data-[state=unresolved]:[--context-chip-accent:currentColor]",
@@ -56,7 +61,9 @@ type ContextChipKind = NonNullable<VariantProps<typeof contextChipVariants>["kin
 interface ContextChipProps extends useRender.ComponentProps<"span"> {
   kind?: ContextChipKind;
   state?: "unresolved" | "invalid";
-  shape?: "inline" | "bubble";
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  shape?: "inline" | "bubble" | "capsule" | undefined;
+  /* fork:end no3y-subagent-link-chip */
 }
 
 function ContextChip({ className, kind, state, shape, render, ...props }: ContextChipProps) {

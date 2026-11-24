@@ -8788,10 +8788,11 @@
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
-    sidebar's mark in its colour (working mark, dot for done or failed, half circle for
-    needs-you, muted dot for waiting, idle ring for stopped or unknown). Status follows the
+    sidebar's mark in its colour, drawn by the sidebar's own SidebarV2StatusMark (working mark,
+    animating as in the sidebar; dot for done or failed; half circle for needs-you; the
+    monitoring pulse for waiting; idle ring for stopped or unknown). Status follows the
     sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
-    another thread or parked on background work reads as waiting. No mark animates in a message. On mobile the marks are white PNGs drawn from
+    another thread or parked on background work reads as waiting. On mobile the marks are still white PNGs drawn from
     No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
     aria-hidden, with the status in the link's accessible name, and keeps the thread hover
     card. A period that closes the line right after the chip is dropped from the rendered
@@ -8800,7 +8801,9 @@
     read from the family of the thread the message is in (one cached read per thread, so
     links to ordinary or archived threads never trigger one). A cached family row is stale
     when the shell removed the child after the read, or when it is still live while the shell
-    has dropped the child: the chip shows the idle mark and that family is re-read once. Links to ordinary threads keep upstream's chip. User
+    has dropped the child: the chip shows the idle mark and that family is re-read once. On web, links
+    to ordinary threads in an assistant message take the same capsule (ContextChip shape="capsule")
+    around upstream's project icon and title. User
     messages, tool output, PR bodies, file previews and the composer are unchanged: on web only
     TimelineAssistantRows opts in; on mobile the reply, sent-message and reasoning rows pass
     their thread. Mobile's native pill reads only the label and link text, so screen readers
@@ -8826,8 +8829,12 @@
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     # Exposes the shell's per-thread removal sequence without importing the shell module.
     - apps/mobile/src/state/threads.ts
-    # Wraps the thread chip so a subagent link renders the capsule.
+    # Wraps the thread chip so a subagent link renders the capsule; passes the capsule shape.
     - apps/web/src/components/chat/MarkdownThreadLink.tsx
+    # The capsule shape variant.
+    - apps/web/src/components/ContextChip.tsx
+    # Passes the capsule shape through to ContextChip.
+    - apps/web/src/components/ThreadContextChip.tsx
     # Drops the period after a subagent chip before parsing.
     - apps/web/src/components/ChatMarkdown.tsx
     # Opts assistant messages into the capsule.

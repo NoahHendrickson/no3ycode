@@ -20,6 +20,9 @@ export function ThreadContextChip(props: {
   projectId?: ProjectId | null;
   copyMarkdown?: string;
   unreadable?: boolean;
+  /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+  shape?: "capsule" | undefined;
+  /* fork:end no3y-subagent-link-chip */
 }) {
   const gt = useGT();
   const { environmentId, threadId } = props.record;
@@ -43,6 +46,9 @@ export function ThreadContextChip(props: {
         render={
           <ContextChip
             kind="thread"
+            /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+            shape={props.shape}
+            /* fork:end no3y-subagent-link-chip */
             {...(props.unreadable ? { state: "invalid" as const } : {})}
             render={
               <Link
