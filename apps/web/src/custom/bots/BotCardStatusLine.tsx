@@ -44,7 +44,7 @@ export function BotCardStatusLine(props: {
       data-testid="sidebar-v2-bot-status-line"
       // The palette's hook for the card's second line, so Glass inks it like the meta it replaces.
       data-fork-thread-card-meta=""
-      className="h-3.5 min-w-0 truncate text-[0.75rem] leading-3.5 text-muted-foreground"
+      className="h-sidebar-14 min-w-0 truncate text-sidebar-status text-muted-foreground"
     >
       {"text" in line ? (
         line.text

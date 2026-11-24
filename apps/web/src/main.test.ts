@@ -15,7 +15,7 @@ vi.mock("./custom/forkGlassNewAgentPicture", () => ({
 vi.mock("./custom/chatMode", () => ({ initializeForkSidebarMode: () => {} }));
 vi.mock("./custom/forkGlass3d", () => ({ initializeForkGlass3d: () => {} }));
 vi.mock("./custom/forkTypographyScale", () => ({
-  initializeForkSidebarZoom: () => {},
+  initializeForkSidebarFontSize: () => {},
   initializeForkChatTextScale: () => {},
 }));
 vi.mock("./custom/inletMenuMorph", () => ({ installInletMenuMorph: () => {} }));

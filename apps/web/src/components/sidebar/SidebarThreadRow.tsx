@@ -11,9 +11,7 @@ import { useDeadlinePassed } from "~/hooks/useDeadline";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import { useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
-/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import { forkSidebarSortableTranslate } from "../../custom/forkTypographyScale";
-/* fork:end fork-typography-settings */
+import { CSS } from "@dnd-kit/utilities";
 import {
   canSnooze,
   hasQueuedTurnStart,
@@ -1046,9 +1044,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     ? {
         ref: sortable.setNodeRef,
         style: {
-          /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-          transform: forkSidebarSortableTranslate(sortable.transform),
-          /* fork:end fork-typography-settings */
+          transform: CSS.Translate.toString(sortable.transform),
           transition: sortable.transition,
           // A zero-height boundary also makes dnd-kit scale the source to
           // zero. Only projected peers use scaleY as a visibility sentinel.

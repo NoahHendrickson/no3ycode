@@ -65,18 +65,16 @@ describe("fork guard: fork-sidebar-type-size", () => {
     );
   });
 
-  it("remaps sidebar body type to 0.8125rem / 1rem on the v2 panel", () => {
+  it("remaps sidebar body type to 13px on a 16px line, scaled by Sidebar font size", () => {
     const panel = textSizeRules().find((rule) =>
       rule.selector.includes('[data-sidebar-version="v2"]'),
     );
     expect(panel, "expected a panel-scoped text-size rule").toBeDefined();
-    expect(declarationValue(panel?.body ?? "", "--text-xs")).toBe("0.8125rem");
-    expect(declarationValue(panel?.body ?? "", "--text-xs--line-height")).toBe("1rem");
-    expect(declarationValue(panel?.body ?? "", "--text-sm")).toBe("0.8125rem");
-    expect(declarationValue(panel?.body ?? "", "--text-sm--line-height")).toBe("1rem");
-    // Rem, not px — a px pin freezes the sidebar while h-4 and the rest of
-    // the app still honour the browser font-size setting.
-    expect(panel?.body ?? "").not.toMatch(/--text-(?:xs|sm):\s*\d+px/u);
+    const size = "calc(var(--fork-sidebar-px) * 13)";
+    expect(declarationValue(panel?.body ?? "", "--text-xs")).toBe(size);
+    expect(declarationValue(panel?.body ?? "", "--text-xs--line-height")).toBe("calc(16 / 13)");
+    expect(declarationValue(panel?.body ?? "", "--text-sm")).toBe(size);
+    expect(declarationValue(panel?.body ?? "", "--text-sm--line-height")).toBe("calc(16 / 13)");
   });
 
   it("scopes every text-size remap to the sidebar panel", () => {

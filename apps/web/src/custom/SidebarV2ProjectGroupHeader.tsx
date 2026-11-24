@@ -66,7 +66,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { type SortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { forkSidebarSortableTranslate } from "./forkTypographyScale";
+import { CSS } from "@dnd-kit/utilities";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { cn } from "~/lib/utils";
@@ -144,7 +144,7 @@ export function SidebarV2ProjectGroupHeader(props: {
       style={
         props.reorderable
           ? {
-              transform: forkSidebarSortableTranslate(sortable.transform),
+              transform: CSS.Translate.toString(sortable.transform),
               transition: sortable.transition,
             }
           : undefined
@@ -156,7 +156,7 @@ export function SidebarV2ProjectGroupHeader(props: {
           // Gap, padding and margins are all derived — see
           // custom/sidebarV2CardAlignment for the arithmetic this row shares
           // with the cards under it.
-          "relative flex h-8 w-full items-center text-left",
+          "relative flex min-h-8 w-full items-center text-left",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
           SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
@@ -171,7 +171,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             trailing controls, never underneath them. */}
         <div
           className={cn(
-            "group/collapse relative -ms-3 flex h-8 min-w-0 flex-1 items-center px-3",
+            "group/collapse relative -ms-3 flex min-h-8 min-w-0 flex-1 items-center px-3",
             SIDEBAR_V2_CARD_ALIGNMENT.headerGap,
           )}
         >
@@ -228,7 +228,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             aria-level={3}
             // Label/12 Medium at --muted-foreground (368:21364), lifting to
             // foreground with the mark while the row is hovered.
-            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-[0.75rem] font-medium leading-4 text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-meta font-medium text-muted-foreground group-hover/collapse:text-sidebar-foreground"
           >
             {label}
           </span>

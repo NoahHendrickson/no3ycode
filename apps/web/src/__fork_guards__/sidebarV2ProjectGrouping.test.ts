@@ -121,7 +121,9 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     // Hover group is on the flex-1 label wrapper; collapse is a behind-layer
     // inside it so the ghost hover fill stops strictly to the left of the
     // trailing actions regardless of how many controls are shown.
-    expect(header).toContain("group/collapse relative -ms-3 flex h-8 min-w-0 flex-1 items-center");
+    expect(header).toContain(
+      "group/collapse relative -ms-3 flex min-h-8 min-w-0 flex-1 items-center",
+    );
     expect(header).toContain("absolute inset-0 z-0");
     expect(header).toContain('"-me-3 relative z-10 flex shrink-0 items-center"');
     // The design's 32px buttons are SidebarV2IconButton's header box, and -me-3 pulls the group

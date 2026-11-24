@@ -11,7 +11,23 @@ import { m, type MessageResolver } from "../i18n/messages";
 // treat text-2xs or bg-composer-seam-below as colors.
 const twMerge = extendTailwindMerge({
   extend: {
-    theme: { text: ["2xs", "3xs", "4xs", "5xs"] },
+    theme: {
+      text: [
+        "2xs",
+        "3xs",
+        "4xs",
+        "5xs",
+        /* fork:begin fork-sidebar-type-size — see .fork/customizations.yaml#fork-sidebar-type-size */
+        "sidebar-title",
+        "sidebar-row",
+        "sidebar-chrome",
+        "sidebar-meta",
+        "sidebar-caption",
+        "sidebar-status",
+        "sidebar-tile",
+        /* fork:end fork-sidebar-type-size */
+      ],
+    },
     classGroups: { "bg-image": [{ bg: ["composer-seam-below", "composer-seam-above"] }] },
   },
 });

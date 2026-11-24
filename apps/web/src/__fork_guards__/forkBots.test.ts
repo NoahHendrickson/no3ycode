@@ -245,8 +245,11 @@ describe("fork guard: fork-bots", () => {
     const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
     expect(botsSection).toContain('compact ? "-mx-[7px]" : "-mx-[2px]"');
     expect(botsSection).toContain('<BotMascotTile shape={mascot} mood="Idle" />');
-    // The avatar card is 44px, 6 + 16 + 2 + 14 + 6, so its offscreen size hint says so too.
-    expect(sidebar).toContain("[contain-intrinsic-size:auto_44px]");
+    // The avatar card is 6 + 16 + 2 + 14 + 6 (44px at the default size), so its offscreen size hint
+    // says so too, with both lines on Sidebar font size.
+    expect(sidebar).toContain(
+      "[contain-intrinsic-size:auto_calc(max(16px,var(--spacing-sidebar-16))_+_max(14px,var(--spacing-sidebar-14))_+_14px)]",
+    );
     // A working bot card draws the working mark like any other card, not the monitoring breath.
     expect(indicator).not.toContain("quietWorking");
     expect(sidebar).toContain("<BotMascotLead");
@@ -259,7 +262,9 @@ describe("fork guard: fork-bots", () => {
       /const petalView: SidebarV2CardView =\s*botsLayout === "grid" \? "grid" : compactBots \? "compact" : "card";/u,
     );
     expect(sidebar).toContain("<SidebarV2BotGridBody");
-    expect(sidebar).toContain('"bot-grid": "[contain-intrinsic-size:auto_58px]"');
+    expect(sidebar).toContain(
+      '"bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-12)_+_46px)]"',
+    );
     expect(sidebar).toContain('cardKind === "bot-grid"\n          ? "tile"');
     // The tile's hover card opens beyond the section, not over its neighbours.
     expect(sidebar).toContain("petalTileHoverAnchor(threadKey)");
