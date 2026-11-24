@@ -9114,8 +9114,7 @@
     card) round from --fork-menu-radius (their 1px rims keep upstream's radius); menu,
     select, combobox and autocomplete rows from --fork-menu-row-radius;
     tooltips take --fork-tooltip-radius, -font-size, -line-height and
-    -padding-inline / -block; a sidebar group's top and end padding are
-    --fork-sidebar-group-padding-top / -end. Every read falls back to upstream's own
+    -padding-inline / -block. Every read falls back to upstream's own
     class value, so a theme that sets none draws what upstream draws.
   tier: 4
   files:
@@ -9128,7 +9127,6 @@
     - apps/web/src/components/ui/popover.tsx
     - apps/web/src/components/ui/preview-card.tsx
     - apps/web/src/components/ui/select.tsx
-    - apps/web/src/components/ui/sidebar.tsx
     - apps/web/src/components/ui/tooltip.tsx
   verify:
     - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts

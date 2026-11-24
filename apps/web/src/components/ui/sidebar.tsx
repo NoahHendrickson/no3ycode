@@ -744,9 +744,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
-        "relative flex w-full min-w-0 flex-col p-[var(--sidebar-content-inset)] pt-(--fork-sidebar-group-padding-top,var(--sidebar-content-inset)) pe-(--fork-sidebar-group-padding-end,var(--sidebar-content-inset))",
-        /* fork:end fork-primitive-tokens */
+        "relative flex w-full min-w-0 flex-col p-[var(--sidebar-content-inset)]",
         className,
       )}
       data-sidebar="group"

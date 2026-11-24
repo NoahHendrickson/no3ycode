@@ -3,7 +3,7 @@
  * Fork guard — see `.fork/README.md` §4b and
  * `.fork/customizations.yaml#fork-primitive-tokens`.
  *
- * Theme CSS sets the popups', rows', tooltips' and sidebar groups' geometry through tokens these
+ * Theme CSS sets the popups', rows', and tooltips' geometry through tokens these
  * primitives read (DESIGN-RULES C1). A sync that resolves one to upstream's side puts the literal
  * class back, and every theme's token for it silently stops applying.
  */
@@ -36,16 +36,13 @@ describe("fork guard: fork-primitive-tokens", () => {
     expect(count(read("preview-card.tsx"), POPUP)).toBe(1);
   });
 
-  it("sizes tooltips and sidebar groups from their tokens", () => {
+  it("sizes tooltips from their tokens", () => {
     const tooltip = read("tooltip.tsx");
     expect(tooltip).toContain("rounded-(--fork-tooltip-radius,var(--radius-md))");
     expect(tooltip).toContain("text-(length:--fork-tooltip-font-size,var(--text-xs))");
     expect(tooltip).toContain("leading-(--fork-tooltip-line-height,var(--leading-snug))");
     expect(tooltip).toContain(
       "px-(--fork-tooltip-padding-inline,calc(var(--spacing)*2)) py-(--fork-tooltip-padding-block,var(--spacing))",
-    );
-    expect(read("sidebar.tsx")).toContain(
-      "pt-(--fork-sidebar-group-padding-top,var(--sidebar-content-inset)) pe-(--fork-sidebar-group-padding-end,var(--sidebar-content-inset))",
     );
   });
 });
