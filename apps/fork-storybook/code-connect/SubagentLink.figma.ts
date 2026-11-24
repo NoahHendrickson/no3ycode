@@ -3,7 +3,8 @@
 // component=ForkSubagentLinkChip
 import figma from "figma";
 
-// A link in an assistant reply to a subagent's thread; the chip reads the child's live status.
+// A link in an assistant reply to a subagent's thread; the chip reads the child's live status, and
+// only inside an assistant message's scope (the thread the message is in).
 // Thread is an ordinary thread link, which the same capsule draws (ThreadContextChip).
 const thread = figma.selectedInstance.getEnum("Status", { Thread: true }) === true;
 const title = thread
@@ -13,12 +14,16 @@ const title = thread
 export default {
   example: thread
     ? figma.tsx`<ThreadContextChip record={{ environmentId, threadId, title: ${JSON.stringify(title)} }} shape="capsule" />`
-    : figma.tsx`<ForkSubagentLinkChip threadRef={threadRef} title={${JSON.stringify(title)}}>
-  {children}
-</ForkSubagentLinkChip>`,
+    : figma.tsx`<ForkSubagentLinkScope value={{ familyRef: messageThreadRef }}>
+  <ForkSubagentLinkChip threadRef={threadRef} title={${JSON.stringify(title)}}>
+    {children}
+  </ForkSubagentLinkChip>
+</ForkSubagentLinkScope>`,
   imports: thread
     ? ['import { ThreadContextChip } from "~/components/ThreadContextChip";']
-    : ['import { ForkSubagentLinkChip } from "~/custom/ForkSubagentLinkChip";'],
+    : [
+        'import { ForkSubagentLinkChip, ForkSubagentLinkScope } from "~/custom/ForkSubagentLinkChip";',
+      ],
   id: "subagent-link",
   metadata: { nestable: true },
 };
