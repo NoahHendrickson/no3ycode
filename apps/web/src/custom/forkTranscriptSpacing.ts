@@ -1,12 +1,12 @@
 /**
  * Even transcript spacing — see `.fork/customizations.yaml#fork-transcript-spacing`.
- * Reply text, tool rows and the live status line sit 16px apart. Each row tops up
+ * Reply text, tool rows and the live status line sit 24px apart. Each row tops up
  * the space its upper neighbour already draws, so only the short gaps grow.
  */
 import type { CSSProperties } from "react";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
 
-const FORK_TRANSCRIPT_GAP = 16;
+const FORK_TRANSCRIPT_GAP = 24;
 
 type Spacing = "reply" | "work" | "live" | "other";
 
