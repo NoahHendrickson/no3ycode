@@ -233,7 +233,8 @@ import { flatGlassPalette } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
 import { No3yLiveStatusLine } from "../../../fork/No3yLiveStatusLine";
 import {
-  NO3Y_LIVE_ROW_ID,
+  isNo3yLiveRow,
+  NO3Y_LIVE_ROW_TYPE,
   no3yLivePresentation,
   no3yLiveRowLast,
   no3yLiveWordSeed,
@@ -251,6 +252,14 @@ import GitForkIcon from "@hugeicons/core-free-icons/GitForkIcon";
 import { HugeIcon } from "../../../fork/HugeIcon";
 import { No3ySentBubbleRise } from "../../../fork/No3ySentBubbleRise";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+import { REPLY_ACTIONS_TOP_GAP, ReplyActionsReveal } from "../../../fork/ReplyActionsReveal";
+import {
+  resolveFeedEndBehavior,
+  streamingReplyItemType,
+  useFeedFollowingEnd,
+} from "../../../fork/threadFeedStableEnd";
+/* fork:end mobile-feed-stable-end */
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
 import { useNo3ySubagentLinkChips } from "../../../fork/useNo3ySubagentLinkChips";
 /* fork:end no3y-subagent-link-chip */
@@ -359,10 +368,7 @@ import { openSettings } from "../settings/settings-navigation";
 import { loopbackUrlForDevice } from "../browser/browserTabs";
 import { useOpenLocalPreview } from "../browser/useOpenLocalPreview";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
-import {
-  THREAD_FEED_MAINTAIN_SCROLL_AT_END,
-  THREAD_FEED_MAINTAIN_SCROLL_AT_END_THRESHOLD,
-} from "./threadFeedEndFollow";
+import { THREAD_FEED_MAINTAIN_SCROLL_AT_END_THRESHOLD } from "./threadFeedEndFollow";
 import { useMessageTimeFormatter } from "./useMessageTimeFormatter";
 
 const WIDE_MARKDOWN_BLOCK_OPTIONS = {
@@ -2127,7 +2133,7 @@ function renderFeedEntry(
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   if (
     props.no3y &&
-    entry.id === NO3Y_LIVE_ROW_ID &&
+    isNo3yLiveRow(props.no3y !== null, entry) &&
     (entry.type === "thinking" || entry.type === "work-toggle" || entry.type === "activity-group")
   ) {
     return (
@@ -3374,39 +3380,7 @@ function DisclosureRow(props: {
 let lastSplitViewport: { windowWidth: number; width: number; height: number } | null = null;
 
 /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-// On iOS a landed feed glides to its new end as rows arrive instead of jumping by each row's
-// height. Landing on open stays instant: the feed is hidden until it reaches the end.
-const FEED_END_FOLLOW_GLIDE = { ...THREAD_FEED_MAINTAIN_SCROLL_AT_END, animated: true } as const;
-const REPLY_ACTIONS_TOP_GAP = 4;
-const REPLY_ACTIONS_REVEAL_MS = 180;
-
-// A reply's actions appear as its turn ends. At full height in one frame they jumped the
-// end-pinned feed; growing in, they ride with the status space that eases away at the same time.
-function ReplyActionsReveal(props: { reveal: boolean; height: number; children: ReactNode }) {
-  const [reveal] = useState(props.reveal);
-  const [grown, setGrown] = useState(!reveal);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- starts the native height transition once the collapsed frame has committed
-  useEffect(() => {
-    if (grown) return;
-    const frame = requestAnimationFrame(() => setGrown(true));
-    return () => cancelAnimationFrame(frame);
-  }, [grown]);
-  if (!reveal) return props.children;
-  return (
-    <Animated.View
-      style={{
-        height: grown ? props.height : 0,
-        opacity: grown ? 1 : 0,
-        overflow: "hidden",
-        transitionProperty: ["height", "opacity"],
-        transitionDuration: REPLY_ACTIONS_REVEAL_MS,
-        transitionTimingFunction: "ease-out",
-      }}
-    >
-      {props.children}
-    </Animated.View>
-  );
-}
+const FEED_STABLE_END = Platform.OS === "ios";
 /* fork:end mobile-feed-stable-end */
 
 export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
@@ -4120,7 +4094,10 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   const settling = props.feed.length > 0 && landedListKey !== feedThreadKey;
   const landingFallback = useRef<ReturnType<typeof setTimeout> | null>(null);
   /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-  const [followingEnd, setFollowingEnd] = useState(true);
+  const followingEnd = useFeedFollowingEnd(
+    listRef,
+    props.contentPresentation.kind !== "unavailable" || props.queuedMessages.length > 0,
+  );
   /* fork:end mobile-feed-stable-end */
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   const no3yNudgedListKey = useRef<string | null>(null);
@@ -4157,9 +4134,6 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     // Offset 0 before the first positioning, and the gaps while rows measure in, are not the
     // user leaving the end; only a scroll away stops end following.
     onIsAtEndChange?.(settling || state.isAtEnd || state.isFollowingEnd);
-    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-    if (Platform.OS === "ios") setFollowingEnd(state.isFollowingEnd);
-    /* fork:end mobile-feed-stable-end */
   };
   const handleMetricsChange = () => reportMetrics(loadedListKey === feedThreadKey);
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -4200,6 +4174,15 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   // the committed list holds the target row with end maintenance off.
   const { jumpToMessageId } = props;
   const jumpReady = !!jumpToMessageId && loadedListKey === feedThreadKey;
+  /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+  const endBehavior = resolveFeedEndBehavior({
+    stableEnd: FEED_STABLE_END,
+    followingEnd,
+    jumpReady,
+    settling,
+    reduceMotion,
+  });
+  /* fork:end mobile-feed-stable-end */
   if (jumpReady && revealedMessageId !== jumpToMessageId) {
     setInteractionState((current) => ({ ...current, revealedMessageId: jumpToMessageId }));
   }
@@ -4515,7 +4498,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     if (entry.type === "guest-pending") return undefined;
     /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
     // The live line carries its own gap above it, so the list measures it.
-    if (no3yBubble && entry.id === NO3Y_LIVE_ROW_ID) return undefined;
+    if (isNo3yLiveRow(no3yBubble, entry)) return undefined;
     /* fork:end no3y-mobile-redesign */
     if (entry.type === "pending-fold") {
       return workRowSizing.fixedRowHeight === undefined
@@ -4644,10 +4627,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             terminalAssistantMessageIds,
             unsettledTurnId,
             /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-            revealReplyActionsRunId:
-              Platform.OS === "ios" && !reduceMotion && !settling
-                ? (props.latestRun?.runId ?? null)
-                : null,
+            revealReplyActionsRunId: endBehavior.revealReplyActions
+              ? (props.latestRun?.runId ?? null)
+              : null,
             /* fork:end mobile-feed-stable-end */
             compactionLabelsByEntryId,
             failedRunIds,
@@ -4739,21 +4721,10 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             {...(usesNativeAutomaticInsets ? { contentInset: { top: anchorTopInset } } : {})}
             freeze={props.freeze}
             /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-            maintainScrollAtEnd={
-              jumpReady
-                ? false
-                : Platform.OS === "ios" && !reduceMotion && !settling
-                  ? FEED_END_FOLLOW_GLIDE
-                  : THREAD_FEED_MAINTAIN_SCROLL_AT_END
-            }
+            maintainScrollAtEnd={endBehavior.maintainScrollAtEnd}
+            maintainVisibleContentPosition={endBehavior.maintainVisibleContentPosition}
             /* fork:end mobile-feed-stable-end */
             maintainScrollAtEndThreshold={THREAD_FEED_MAINTAIN_SCROLL_AT_END_THRESHOLD}
-            /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-            // Following the end owns the scroll position. Anchoring visible content as well
-            // fights it whenever a row lands at the end with a guessed size: the correction
-            // moved the offset by hundreds of points and end following then dragged it back.
-            maintainVisibleContentPosition={Platform.OS !== "ios" || !followingEnd || jumpReady}
-            /* fork:end mobile-feed-stable-end */
             data={listFeed}
             /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
             // A rising bubble starts once the list shows its rows, so readiness re-renders them.
@@ -4768,27 +4739,15 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             keyExtractor={(entry) => entry.id}
             getItemType={(entry) => {
               /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-              // A new row starts at its type's average height. The live line shares a type with
-              // fixed-height rows, so it had no average and started at 180pt instead of ~40.
-              if (Platform.OS === "ios" && no3yBubble && entry.id === NO3Y_LIVE_ROW_ID) {
-                return "no3y-live";
-              }
+              if (isNo3yLiveRow(no3yBubble, entry)) return NO3Y_LIVE_ROW_TYPE;
               /* fork:end mobile-feed-stable-end */
               // Same container as the live fold that replaces it.
               if (entry.type === "pending-fold") return "run-fold";
               if (entry.type !== "message") return entry.type;
               if (isCompactionCommandFeedEntry(entry)) return "message:compaction";
               /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-              // A reply arriving at the end starts at its type's average, the size of finished
-              // replies, so its first line was laid out hundreds of points tall and the feed
-              // overshot its end. A streaming reply has no average to inherit.
-              if (
-                Platform.OS === "ios" &&
-                entry.message.role === "assistant" &&
-                entry.message.streaming
-              ) {
-                return `message:assistant-streaming:${entry.message.id}`;
-              }
+              const streamingType = streamingReplyItemType(FEED_STABLE_END, entry.message);
+              if (streamingType) return streamingType;
               /* fork:end mobile-feed-stable-end */
               if (
                 entry.message.role === "assistant" &&
