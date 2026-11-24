@@ -41,30 +41,3 @@
     background: var(--fork-thread-composer-card);
   }
 }
-
-/* A started thread's composer menus (model, permissions, mode chips, the branch and environment
-   pickers, usage, background work) are solid on Flat Glass: only text sits behind them, so the
-   frost added noise, not depth. The fill is that frost flattened over the stage, so the menus look
-   as before minus the see-through. A new agent's draft (the root stamp below) keeps the glass:
-   its menus open over a picture. A popup the sidebar's Liquid Glass cutout has stamped
-   (forkGlassPopupCutout.ts) keeps that system's paint. Basic's popups are already opaque. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]:not(
-    [data-fork-draft-hero-shown]
-  )
-  :is(
-    :is(
-      [data-chat-composer-floating-layer="true"],
-      [data-fork-tab-menu="composer"],
-      [data-fork-background-work-popup]
-    ).dropdown-glass,
-    [data-chat-composer-floating-layer="true"] > .dropdown-glass,
-    .dropdown-glass:has(> [data-chat-composer-floating-layer="true"])
-  ):not([data-fork-liquid-glass-popup]) {
-  background: color-mix(
-    in srgb,
-    #e8e8e8 8%,
-    color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base))
-  );
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}

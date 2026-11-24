@@ -860,9 +860,8 @@ describe("fork guard: fork-composer-shell", () => {
     expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
   it("paints a started thread's composer menus solid on Flat Glass, glass on a new agent", () => {
-    const threadComposer = readSibling("../theme.custom.thread-composer.css");
     // Scoped off while a new agent's draft shows; its menus open over a picture.
-    const solid = cssRules(threadComposer).find(
+    const solid = paletteRules.find(
       (rule) =>
         rule.selector.includes("[data-fork-draft-hero-shown]") &&
         rule.selector.includes("[data-fork-background-work-popup]"),
@@ -871,18 +870,19 @@ describe("fork guard: fork-composer-shell", () => {
     for (const marker of [
       '[data-chat-composer-floating-layer="true"]',
       '[data-fork-tab-menu="composer"]',
-      "[data-fork-background-work-popup]",
+      '.dropdown-glass:has(> [data-chat-composer-floating-layer="true"])',
     ]) {
       expect(solid?.selector).toContain(marker);
     }
-    expect(solid?.body).toContain("backdrop-filter: none");
-    // The fill is the popup frost flattened over the stage: opaque, since the stage is.
-    expect(solid?.body.replace(/\s+/gu, " ")).toContain(
-      "background: color-mix( in srgb, #e8e8e8 8%, color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base)) );",
-    );
-    // Off while a draft shows, and never over a Liquid Glass cutout.
     expect(solid?.selector.replace(/\s+/gu, "")).toContain(":not([data-fork-draft-hero-shown])");
-    expect(solid?.selector).toContain(":not([data-fork-liquid-glass-popup])");
+    // Tokens only, so the popup-surface rule paints and Liquid Glass cutouts keep their own fill.
+    // The material is the popup frost laid over the stage, which is opaque, with no blur.
+    const body = solid?.body.replace(/\s+/gu, " ") ?? "";
+    expect(body).toContain("--fork-popup-filter: none;");
+    expect(body).toContain(
+      "--fork-popup-fill: color-mix( in srgb, var(--contrast-foreground) 8%, color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base)) );",
+    );
+    expect(body).not.toMatch(/(^|;)\s*(background|backdrop-filter)\s*:/u);
   });
 
   it("ends the transcript above the composer instead of hiding it behind", () => {
