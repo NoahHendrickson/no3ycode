@@ -5,7 +5,7 @@
  * `.fork/customizations.yaml#fork-composer-next-step`.
  */
 import type { ThreadPullRequestLink } from "@t3tools/contracts";
-import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
+import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 
 export type ComposerNextStepKind = "open-pr" | "babysit" | "merge" | "release";
 
@@ -31,7 +31,16 @@ const STEPS: Record<ComposerNextStepKind, ComposerNextStep> = {
 };
 
 /** Only this fork ships releases from merged PRs (fork-release.yml). */
-const RELEASE_REPOSITORY = "noahhendrickson/no3ycode";
+function isReleaseRepository(url: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url);
+    return (
+      hostname === "github.com" && pathname.toLowerCase().startsWith("/noahhendrickson/no3ycode/")
+    );
+  } catch {
+    return false;
+  }
+}
 
 /** The thread's PR as far as the next step cares. */
 export interface NextStepPullRequest {
@@ -59,7 +68,9 @@ export interface ComposerNextStepInput {
 }
 
 const SOL_LOOP = /\bsol[\s-]?loop\b/u;
-const MERGE = /\bmerge\b/u;
+/** An ask to merge this PR, as the Merge pill and the owner word it; not "don't merge yet". */
+const MERGE = /\b(merge (it|this|the pr)|lets merge|let's merge)\b/u;
+const NEGATED = /\b(don'?t|do not|not yet)\b/u;
 
 /**
  * The next step, "hold" when the PR is the owner's call (watched, or a watch ended short of
@@ -72,7 +83,7 @@ export function resolveComposerNextStep(
   const pr = input.pullRequest;
   if (pr !== null) {
     if (pr.state === "merged") {
-      return pr.releasable && MERGE.test(said) ? STEPS.release : null;
+      return pr.releasable && MERGE.test(said) && !NEGATED.test(said) ? STEPS.release : null;
     }
     if (pr.state !== "open") return null;
     if (pr.watching) return "hold";
@@ -89,15 +100,11 @@ export function resolveComposerNextStep(
     : null;
 }
 
-/** The most recently linked PR, read for the next step; a dismissed stack member is not one. */
+/** The thread's current PR, as the PR chip resolves it (a stack's top layer), for the next step. */
 export function nextStepPullRequestFromLinks(
   links: ReadonlyArray<ThreadPullRequestLink>,
 ): NextStepPullRequest | null {
-  const link = visibleThreadPullRequests(links).reduce<ThreadPullRequestLink | null>(
-    (latest, candidate) =>
-      latest === null || candidate.linkedAt > latest.linkedAt ? candidate : latest,
-    null,
-  );
+  const link = resolveThreadCurrentPullRequestLink(links);
   const snapshot = link?.snapshot;
   if (!link || !snapshot) return null;
   return {
@@ -109,7 +116,7 @@ export function nextStepPullRequestFromLinks(
       snapshot.checksState === "passing" &&
       snapshot.mergeability === "mergeable" &&
       snapshot.reviewDecision !== "changes-requested",
-    releasable: link.repository.toLowerCase() === RELEASE_REPOSITORY,
+    releasable: isReleaseRepository(link.url),
   };
 }
 
@@ -124,7 +131,7 @@ export function nextStepPullRequestFromBranch(
     watching: false,
     watchedBefore: false,
     ready: false,
-    releasable: pr.url.toLowerCase().includes(`github.com/${RELEASE_REPOSITORY}/`),
+    releasable: isReleaseRepository(pr.url),
   };
 }
 

@@ -1,6 +1,6 @@
 /**
  * The learned habit table, device-local: what one device's composer has seen the owner send.
- * Read from storage once and cached, so the pill never re-parses it while a turn streams. See
+ * Cached between changes, so the pill never re-parses it while a turn streams. See
  * `.fork/customizations.yaml#fork-composer-next-step`.
  */
 import * as Schema from "effect/Schema";
@@ -43,30 +43,50 @@ function readTable(): HabitTable {
   return table;
 }
 
-function writeTable(next: HabitTable) {
-  if (next === table) return;
+/** Applies a change on top of what storage holds now, so another window's counts and dismissals
+    are kept rather than overwritten. */
+function updateTable(change: (current: HabitTable) => HabitTable) {
+  table = null;
+  const current = readTable();
+  const next = change(current);
+  if (next === current) return;
   table = next;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // Private windows and full storage keep the in-memory table for this session.
   }
+  notify();
+}
+
+function notify() {
   for (const listener of listeners) listener();
 }
 
+/** Another window wrote the table: drop the cache so the next read picks it up. */
+function onStorage(event: StorageEvent) {
+  if (event.key !== STORAGE_KEY && event.key !== null) return;
+  table = null;
+  notify();
+}
+
 const subscribe = (listener: () => void) => {
+  if (listeners.size === 0) window.addEventListener("storage", onStorage);
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) window.removeEventListener("storage", onStorage);
+  };
 };
 
 /** Counts an owner send as the follow-up to their previous message in the thread. */
 export function recordComposerHabit(previous: string | null, next: string) {
   if (previous === null) return;
-  writeTable(recordHabit(readTable(), previous, next, Date.now()));
+  updateTable((current) => recordHabit(current, previous, next, Date.now()));
 }
 
 export function forgetComposerHabit(suggestion: HabitSuggestion) {
-  writeTable(forgetHabit(readTable(), suggestion.previousKey, suggestion.nextKey));
+  updateTable((current) => forgetHabit(current, suggestion.previousKey, suggestion.nextKey));
 }
 
 export function useComposerHabitSuggestion(previous: string | null): HabitSuggestion | null {

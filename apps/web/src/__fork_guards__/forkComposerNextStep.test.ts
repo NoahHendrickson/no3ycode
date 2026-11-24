@@ -11,10 +11,9 @@ const read = (path: string) =>
 describe("fork guard: fork-composer-next-step", () => {
   it("mounts the next-step pill in the composer's chip row, outside side chats", () => {
     const chatView = read("../components/ChatView.tsx");
-    expect(chatView).toMatch(
-      /activeThread && !isDraftHeroState && !embedded \? \(\s*<ComposerNextStepPill/u,
-    );
-    expect(chatView).toMatch(/\{composerStatusChips\}\s*\{composerNextStepPill\}/u);
+    const chips = chatView.slice(chatView.indexOf("const composerStatusChips ="));
+    expect(chips).toMatch(/\{embedded \? null : \(\s*<ComposerNextStepPill/u);
+    expect(chatView).toContain("statusChips={composerStatusChips}");
     expect(chatView).toMatch(
       /const sendNextStepStable = useStableCallback\(\(prompt: string\) => \{[\s\S]{0,300}onSend\(undefined, "auto", "foreground", undefined, \{/u,
     );
@@ -26,12 +25,14 @@ describe("fork guard: fork-composer-next-step", () => {
     );
   });
 
-  it("learns from every owner send in the composer, pill clicks included", () => {
-    const chatView = read("../components/ChatView.tsx");
-    expect(chatView).toMatch(
-      /const onComposerSendStable = useStableCallback\(\(\.\.\.args: Parameters<typeof onSend>\) => \{\s*recordComposerHabitFor\(/u,
+  it("learns only from owner turns the send path committed, outside side chats", () => {
+    const send = read("../components/chat/useComposerSend.ts");
+    expect(send).toMatch(
+      /setOptimisticUserMessages\(\(existing\) => \[\.\.\.existing, optimisticMessage\]\);\s*\/\* fork:begin fork-composer-next-step[^\n]*\*\/\s*onOwnerTurnDispatched\?\.\(promptAtSend\);/u,
     );
-    expect(chatView).toMatch(/if \(!sendContext\) return;\s*recordComposerHabitFor\(prompt\);/u);
+    expect(read("../components/ChatView.tsx")).toMatch(
+      /onOwnerTurnDispatched: embedded\s*\? undefined\s*: \(prompt: string\) =>\s*recordComposerHabit\(/u,
+    );
     // Learned pills give way to the rules, and to a PR that is the owner's call.
     expect(read("../custom/ComposerNextStepPill.tsx")).toMatch(
       /if \(step === "hold"\) return null;\s*if \(step === null\) \{\s*if \(habit === null\) return null;/u,

@@ -1,24 +1,21 @@
 /** The thread's next step, ruled or learned, as a pill above the composer; a click sends it. See
     `.fork/customizations.yaml#fork-composer-next-step`. */
-import { useAtomValue } from "@effect/atom-react";
 import type { ThreadStructure } from "@t3tools/client-runtime/state/shell";
 import type { EnvironmentId, ThreadPullRequestLink } from "@t3tools/contracts";
-import * as Equal from "effect/Equal";
-import { AsyncResult, Atom } from "effect/reactivity";
 import { memo } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
+import { resolveDisplayedThreadPr } from "~/components/ThreadStatusIndicators";
 import {
   type ComposerThreadTarget,
   composerDraftHasUserContent,
   useComposerDraftStore,
 } from "~/composerDraftStore";
+import { useEnvironmentQuery } from "~/state/query";
 import { vcsEnvironment } from "~/state/vcs";
 
 import {
   type ComposerNextStepKind,
-  type NextStepGitStatus,
-  type NextStepPullRequest,
   nextStepPullRequestFromBranch,
   nextStepPullRequestFromLinks,
   lastOwnerPrompt,
@@ -41,32 +38,11 @@ const KIND_ICON: Record<ComposerNextStepKind, typeof EyeIcon> = {
   release: RocketIcon,
 };
 
-interface NextStepCheckout {
-  readonly git: NextStepGitStatus;
-  readonly branchPullRequest: NextStepPullRequest | null;
-}
-
-/** Only what the next step reads, so a file edit that keeps the counts doesn't re-render. */
-const nextStepCheckoutAtom = Atom.family((status: ReturnType<typeof vcsEnvironment.status>) =>
-  Atom.map(status, (result): NextStepCheckout | null => {
-    const data = AsyncResult.getOrElse(result, () => null);
-    if (data === null || !data.isRepo) return null;
-    return {
-      git: {
-        isDefaultRef: data.isDefaultRef,
-        hasPrimaryRemote: data.hasPrimaryRemote,
-        hasWork: data.hasWorkingTreeChanges || (data.aheadOfDefaultCount ?? 0) > 0,
-      },
-      branchPullRequest: nextStepPullRequestFromBranch(data.pr),
-    };
-  }).pipe(Atom.withEquality(Equal.equals)),
-);
-const NO_CHECKOUT_ATOM = Atom.make<NextStepCheckout | null>(null);
-
 export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   readonly environmentId: EnvironmentId;
-  /** ChatView's git-status cwd. */
+  /** ChatView's git-status cwd, null when the checkout is on another branch than the thread. */
   readonly cwd: string | null;
+  readonly branch: string | null;
   /** The latest run completed and nothing waits on the owner. */
   readonly settled: boolean;
   readonly pullRequests: ReadonlyArray<ThreadPullRequestLink>;
@@ -74,13 +50,12 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   readonly draftTarget: ComposerThreadTarget;
   readonly onSend: (prompt: string) => void;
 }) {
-  const checkout = useAtomValue(
+  // The PR chip beside it reads this same status, so the two resolve the thread's PR alike.
+  const status = useEnvironmentQuery(
     props.cwd === null
-      ? NO_CHECKOUT_ATOM
-      : nextStepCheckoutAtom(
-          vcsEnvironment.status({ environmentId: props.environmentId, input: { cwd: props.cwd } }),
-        ),
-  );
+      ? null
+      : vcsEnvironment.status({ environmentId: props.environmentId, input: { cwd: props.cwd } }),
+  ).data;
   // A click sends at once, so it waits for an empty composer rather than racing what's written.
   const draftHasContent = useComposerDraftStore((store) =>
     composerDraftHasUserContent(store.getComposerDraft(props.draftTarget)),
@@ -91,8 +66,18 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   const step = resolveComposerNextStep({
     lastOwnerPrompt: previous,
     pullRequest:
-      nextStepPullRequestFromLinks(props.pullRequests) ?? checkout?.branchPullRequest ?? null,
-    git: checkout?.git ?? null,
+      nextStepPullRequestFromLinks(props.pullRequests) ??
+      nextStepPullRequestFromBranch(
+        resolveDisplayedThreadPr({ threadBranch: props.branch, gitStatus: status ?? null }),
+      ),
+    git:
+      status == null || !status.isRepo
+        ? null
+        : {
+            isDefaultRef: status.isDefaultRef,
+            hasPrimaryRemote: status.hasPrimaryRemote,
+            hasWork: status.hasWorkingTreeChanges || (status.aheadOfDefaultCount ?? 0) > 0,
+          },
   });
   if (step === "hold") return null;
   if (step === null) {

@@ -46,7 +46,7 @@
 /* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
    next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it. */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-status-chip]:is(
+  :is(
     [data-fork-composer-status-chip="background-work"],
     [data-fork-composer-status-chip="learned-step"]
   ) {

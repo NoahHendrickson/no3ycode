@@ -126,6 +126,11 @@ describe("resolveComposerNextStep", () => {
     expect(
       step({ lastOwnerPrompt: "thanks", pullRequest: merged("NoahHendrickson/no3ycode") }),
     ).toBe(null);
+    for (const said of ["don't merge it yet", "merge upstream/main into this branch"]) {
+      expect(step({ lastOwnerPrompt: said, pullRequest: merged("NoahHendrickson/no3ycode") })).toBe(
+        null,
+      );
+    }
     expect(
       step({
         lastOwnerPrompt: "merge it",

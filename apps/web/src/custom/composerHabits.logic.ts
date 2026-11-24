@@ -73,12 +73,17 @@ export function recordHabit(
     return table;
   }
   const entry = own(table, previousKey);
-  const counts = { ...entry?.next };
-  counts[nextKey] = { count: (own(counts, nextKey)?.count ?? 0) + 1, text: next.trim() };
-  const kept = Object.entries(counts)
+  const current = { count: (own(entry?.next ?? {}, nextKey)?.count ?? 0) + 1, text: next.trim() };
+  // The follow-up just sent always keeps its place, so a full list can still learn a new habit;
+  // the least-sent other follow-up makes room.
+  const others = Object.entries(entry?.next ?? {})
+    .filter(([key]) => key !== nextKey)
     .toSorted(([, a], [, b]) => b.count - a.count)
-    .slice(0, MAX_NEXT);
-  const updated = { ...table, [previousKey]: { at: now, next: Object.fromEntries(kept) } };
+    .slice(0, MAX_NEXT - 1);
+  const updated = {
+    ...table,
+    [previousKey]: { at: now, next: Object.fromEntries([...others, [nextKey, current]]) },
+  };
   const entries = Object.entries(updated);
   if (entries.length <= MAX_PREVIOUS) return updated;
   const [oldest] = entries.reduce((a, b) => (a[1].at <= b[1].at ? a : b));

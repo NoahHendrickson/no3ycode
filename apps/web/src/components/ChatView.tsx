@@ -2827,32 +2827,6 @@ export default function ChatView(props: ChatViewProps) {
   const forkQueuedCount = forkQueuedItemCount(serverProjection, optimisticUserMessages);
   // A queue that empties forgets its collapse, so the next queued message opens as a card again.
   if (forkQueuedCount === 0 && !forkQueueExpanded) setForkQueueExpanded(true);
-  const composerStatusChips =
-    activeThread && activeThreadRef && !isDraftHeroState ? (
-      <>
-        {/* A side chat mounts no right panel for the PR list to open in. */}
-        {embedded ? null : (
-          <ComposerPullRequestChip
-            threadRef={activeThreadRef}
-            branch={activeThreadBranch}
-            cwd={gitStatusCwd}
-          />
-        )}
-        {composerBackgroundWork.length > 0 ? (
-          <ComposerBackgroundWorkChip
-            items={composerBackgroundWork}
-            stopping={isStoppingBackgroundWork}
-            canStop={canStopBackgroundWork}
-            onStop={() => void handleStopBackgroundWorkStable()}
-            onOpenThread={onOpenRelatedThreadStable}
-            environmentId={activeThread.environmentId}
-          />
-        ) : null}
-        {!forkQueueExpanded && forkQueuedCount > 0 ? (
-          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
-        ) : null}
-      </>
-    ) : null;
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = hasCompactableConversation({
     visibleTurnItems: serverVisibleTurnItems,
@@ -3489,6 +3463,14 @@ export default function ChatView(props: ChatViewProps) {
     handleNewThreadInActiveProject,
     persistThreadSettingsForNextTurn,
     linkCheckoutPullRequest,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+       A committed owner turn teaches the learned next step what follows the thread's previous
+       owner message; not in side chats, where the pill never shows. */
+    onOwnerTurnDispatched: embedded
+      ? undefined
+      : (prompt: string) =>
+          recordComposerHabit(lastOwnerPrompt(serverProjection?.messages ?? []), prompt),
+    /* fork:end fork-composer-next-step */
   });
 
   const onWorktreeSetupWorkLocally = () => {
@@ -3500,59 +3482,68 @@ export default function ChatView(props: ChatViewProps) {
     });
   };
   const onWorktreeSetupWorkLocallyStable = useStableCallback(onWorktreeSetupWorkLocally);
+  const onComposerSendStable = useStableCallback(onSend);
   /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
-     Every owner send from this composer (pill clicks too) teaches the learned next step what
-     follows the thread's previous owner message. Answers, approval feedback, a queued message's
-     edit and a repeat click while a send is in flight are not follow-ups. */
-  const recordComposerHabitFor = (prompt: string) => {
-    if (
-      activePendingUserInput ||
-      activePendingApproval !== null ||
-      queuedRunEdit.isEditing ||
-      sendInFlightRef.current ||
-      !serverProjection
-    ) {
-      return;
-    }
-    recordComposerHabit(lastOwnerPrompt(serverProjection.messages), prompt);
-  };
-  const onComposerSendStable = useStableCallback((...args: Parameters<typeof onSend>) => {
-    recordComposerHabitFor(args[4]?.prompt ?? promptRef.current);
-    return onSend(...args);
-  });
-  /* fork:end fork-composer-next-step */
-  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
-     Built after onSend, which the click calls; it rides the chip row beside composerStatusChips. */
+     The pill sends like the composer, so it is built after onSend, with the chip row it rides. */
   const sendNextStepStable = useStableCallback((prompt: string) => {
     const sendContext = composerRef.current?.getSendContext();
     if (!sendContext) return;
-    recordComposerHabitFor(prompt);
     void onSend(undefined, "auto", "foreground", undefined, {
       prompt,
       sendContext: { ...sendContext, prompt },
     });
   });
-  const composerNextStepPill =
-    activeThread && !isDraftHeroState && !embedded ? (
-      <ComposerNextStepPill
-        environmentId={activeThread.environmentId}
-        // A shared checkout on another branch is not this thread's work or PR.
-        cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
-        settled={
-          canOperateThread &&
-          !isWorking &&
-          activePendingApproval === null &&
-          !activePendingUserInput &&
-          announcedRun(activeThread.latestRun, serverProjection?.runs ?? EMPTY_RUNS)?.status ===
-            "completed"
-        }
-        pullRequests={activeThread.pullRequests}
-        messages={serverProjection?.messages ?? null}
-        draftTarget={composerDraftTarget}
-        onSend={sendNextStepStable}
-      />
-    ) : null;
   /* fork:end fork-composer-next-step */
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  const composerStatusChips =
+    activeThread && activeThreadRef && !isDraftHeroState ? (
+      <>
+        {/* A side chat mounts no right panel for the PR list to open in. */}
+        {embedded ? null : (
+          <ComposerPullRequestChip
+            threadRef={activeThreadRef}
+            branch={activeThreadBranch}
+            cwd={gitStatusCwd}
+          />
+        )}
+        {composerBackgroundWork.length > 0 ? (
+          <ComposerBackgroundWorkChip
+            items={composerBackgroundWork}
+            stopping={isStoppingBackgroundWork}
+            canStop={canStopBackgroundWork}
+            onStop={() => void handleStopBackgroundWorkStable()}
+            onOpenThread={onOpenRelatedThreadStable}
+            environmentId={activeThread.environmentId}
+          />
+        ) : null}
+        {!forkQueueExpanded && forkQueuedCount > 0 ? (
+          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
+        ) : null}
+        {/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */}
+        {embedded ? null : (
+          <ComposerNextStepPill
+            environmentId={activeThread.environmentId}
+            // A shared checkout on another branch is not this thread's work or PR.
+            cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
+            branch={activeThreadBranch}
+            settled={
+              canOperateThread &&
+              !isWorking &&
+              activePendingApproval === null &&
+              !activePendingUserInput &&
+              announcedRun(activeThread.latestRun, serverProjection?.runs ?? EMPTY_RUNS)?.status ===
+                "completed"
+            }
+            pullRequests={activeThread.pullRequests}
+            messages={serverProjection?.messages ?? null}
+            draftTarget={composerDraftTarget}
+            onSend={sendNextStepStable}
+          />
+        )}
+        {/* fork:end fork-composer-next-step */}
+      </>
+    ) : null;
+  /* fork:end fork-composer-shell */
   const sendPreviewAnnotation = (
     annotation: PreviewAnnotationPayload,
     image: ComposerImageAttachment | null,
@@ -4446,16 +4437,7 @@ export default function ChatView(props: ChatViewProps) {
                                 {...(composerContextStrip
                                   ? { contextStrip: composerContextStrip }
                                   : {})}
-                                statusChips={
-                                  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
-                                  composerStatusChips || composerNextStepPill ? (
-                                    <>
-                                      {composerStatusChips}
-                                      {composerNextStepPill}
-                                    </>
-                                  ) : null
-                                  /* fork:end fork-composer-next-step */
-                                }
+                                statusChips={composerStatusChips}
                                 /* fork:end fork-composer-shell */
                                 phase={phase}
                                 canSteer={canSteer}

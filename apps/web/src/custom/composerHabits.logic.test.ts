@@ -57,6 +57,15 @@ describe("suggestHabit", () => {
     expect(suggestHabit(table, "open a pr")).toBe(null);
   });
 
+  it("still learns a new follow-up once a message has a full list of them", () => {
+    let table: HabitTable = {};
+    for (const other of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+      table = recordHabit(table, "run a sol loop", `try ${other}`, 0);
+    }
+    table = repeat(table, "run a sol loop", "open a pr", 5);
+    expect(suggestHabit(table, "run a sol loop")?.text).toBe("open a pr");
+  });
+
   it("forgets a dismissed habit", () => {
     const table = repeat({}, "run a neon review", "open a pr", 5);
     const suggestion = suggestHabit(table, "run a neon review");
