@@ -1636,6 +1636,9 @@
     # is title-recede and row surface.
     - apps/web/src/custom/sidebarV2TrailingColumn.ts
     - apps/web/src/custom/SidebarV2IconButton.tsx
+    # The icon buttons' foreground hover tint, shared with the composer cards' row actions
+    # (custom/ComposerCardParts.tsx).
+    - apps/web/src/custom/ghostIconTint.ts
     # Owned by sidebar-v2-project-grouping; this entry owns only its plus
     # button's box and the 2px that puts it on the trailing column's axis.
     - apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx
