@@ -91,7 +91,6 @@ import {
   ClockIcon,
   GitBranchIcon,
   PinIcon,
-  PinOffIcon,
   PlusIcon,
   SquarePenIcon,
   TerminalIcon,
@@ -115,10 +114,8 @@ import { ChevronDownIcon } from "lucide-react";
 import { Globe2Icon } from "lucide-react";
 /* fork:end sidebar-v2-dev-server-pulse */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-// PinOffIcon used to need a statement of its own here, for the phosphor-guard
-// reason XIcon and Globe2Icon still do. Upstream's v0.0.33 unpin-from-
-// multi-select imports it in its own list, so the fork's hover unpin action
-// reads it from there; keep the name in that list.
+// Upstream imports PinOffIcon in its list for its pin marker's hover swap; the
+// fork's marker unpins on its own filled pin, so the name is dropped from it.
 /* fork:end sidebar-v2-row-action-hit-area */
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
 // The card's PR badge leads with the glyph (Figma 364:14308). GitPullRequestIcon
@@ -1608,12 +1605,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   }
   const showSnoozeButton =
     canOperateThread && props.snoozeSupported && canSnooze(thread, { now: snoozeGateNow });
+  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+  const canPin = canOperateThread && props.pinningSupported;
+  const showPinAction = canPin && !props.isPinned;
+  /* fork:end sidebar-v2-row-action-hit-area */
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
   // After showSnoozeButton — using it above its declaration fails typecheck.
   // Settle and pin write to the thread, so a read-only connection loses them
   // (upstream #9787); discarding a client-only draft never reaches the server.
   const hasHoverActions =
-    (canOperateThread && (props.settlementSupported || props.pinningSupported)) ||
+    (canOperateThread && props.settlementSupported) ||
+    showPinAction ||
     showSnoozeButton ||
     showDiscardDraft;
   /* fork:end sidebar-v2-draft-rows */
@@ -1814,13 +1816,27 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     </Tooltip>
   ) : null;
   /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-     Upstream hoists one pin marker that doubles as an unpin button in every
-     row variant. Unpin stays a card hover action (below) and a context-menu
-     item here, so both the card's title line and the slim shelves draw this
-     passive marker: a pinned thread shows it wherever it sits, without a
-     second 12px target. */
+     A pinned thread's marker is its unpin button, on the card's title line and
+     the slim shelves alike; the hover cell only offers Pin. -m-1.5 keeps the
+     24px target at the glyph's 12px footprint. Without pinning rights it stays
+     a passive mark. With no hovering pointer it takes no taps: its 44px coarse
+     hit area would cover the title and repo line, so a tap meant to open the
+     thread unpinned it. Touch unpins from the row menu. */
+  const pinGlyph = <PinIcon weight="fill" className="size-3 text-foreground dark:text-white" />;
   const pinIndicator = props.isPinned ? (
-    <PinIcon aria-label="Pinned" role="img" className="size-3 shrink-0 text-muted-foreground/65" />
+    canPin ? (
+      <SidebarV2IconButton
+        aria-label="Unpin thread"
+        onClick={handleUnpinClick}
+        className="-m-1.5 [@media(any-hover:none)]:pointer-events-none"
+      >
+        {pinGlyph}
+      </SidebarV2IconButton>
+    ) : (
+      <span role="img" aria-label="Pinned" className="inline-flex shrink-0">
+        {pinGlyph}
+      </span>
+    )
   ) : null;
   /* fork:end sidebar-v2-row-action-hit-area */
   // A sweep shows the action it will apply on release where the status and
@@ -2098,19 +2114,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 )}
               >
                 {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                          Pin leads the cell, ahead of snooze: the two literal
-                          labels are separate branches on purpose — the hit-area
-                          guard counts each label's call sites. */}
-                {props.pinningSupported && canOperateThread ? (
-                  props.isPinned ? (
-                    <SidebarV2IconButton aria-label="Unpin thread" onClick={handleUnpinClick}>
-                      <PinOffIcon className="size-3" />
-                    </SidebarV2IconButton>
-                  ) : (
-                    <SidebarV2IconButton aria-label="Pin thread" onClick={handlePinClick}>
-                      <PinIcon className="size-3" />
-                    </SidebarV2IconButton>
-                  )
+                          Pin leads the cell, ahead of snooze. A pinned card
+                          unpins from its marker (pinIndicator), not from here. */}
+                {showPinAction ? (
+                  <SidebarV2IconButton aria-label="Pin thread" onClick={handlePinClick}>
+                    <PinIcon weight="stroke" className="size-3" />
+                  </SidebarV2IconButton>
                 ) : null}
                 {/* fork:end sidebar-v2-row-action-hit-area */}
                 {showSnoozeButton ? (
@@ -5268,7 +5277,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
           draftCaps.canPin &&
           /* fork:end sidebar-v2-draft-rows */
-          isCard &&
           serverConfigs.get(thread.environmentId)?.environment.capabilities.threadPinning === true
         }
         onPin={attemptPin}
