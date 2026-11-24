@@ -4,26 +4,36 @@ import { useArgs } from "storybook/preview-api";
 
 import { ForkInletColorPicker } from "~/custom/ForkInletColorPicker";
 import { ForkSwatchPicker } from "~/custom/ForkSwatchPicker";
-import { BASIC_TONE_SWATCHES, ForkBasicTonePicker } from "~/custom/ForkThemePicker";
-import { BASIC_TONES, type BasicTone, DEFAULT_INLET_COLOR } from "~/custom/forkTheme";
+import {
+  DEFAULT_INLET_COLOR,
+  INLET_COLOR_OPTIONS,
+  INLET_COLORS,
+  type InletColor,
+} from "~/custom/forkTheme";
 
 import { Row, Stack } from "../Specimen.tsx";
 
-type PickerProps = ComponentProps<typeof ForkSwatchPicker<BasicTone>>;
+type PickerProps = ComponentProps<typeof ForkSwatchPicker<InletColor>>;
+
+const INLET_SWATCHES = INLET_COLORS.map((color) => ({
+  value: color,
+  label: INLET_COLOR_OPTIONS[color].label,
+  swatch: INLET_COLOR_OPTIONS[color].swatch,
+}));
 
 const meta = {
   title: "Fork/Swatch picker",
-  component: ForkSwatchPicker<BasicTone>,
+  component: ForkSwatchPicker<InletColor>,
   tags: ["autodocs"],
   parameters: { surface: "page" },
   args: {
-    label: "Basic tone",
-    options: BASIC_TONE_SWATCHES,
-    value: BASIC_TONES[0],
+    label: "Inlet colour",
+    options: INLET_SWATCHES,
+    value: DEFAULT_INLET_COLOR,
     onChange: () => {},
   },
-  argTypes: { value: { control: "select", options: BASIC_TONES } },
-} satisfies Meta<typeof ForkSwatchPicker<BasicTone>>;
+  argTypes: { value: { control: "select", options: INLET_COLORS } },
+} satisfies Meta<typeof ForkSwatchPicker<InletColor>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -36,17 +46,13 @@ export const Playground: Story = {
   },
 };
 
-/** Where the app uses it: Settings › Appearance, under Basic and under Inlet. */
+/** Where the app uses it: Settings › Appearance, under Inlet. */
 export const InSettings: Story = {
   parameters: { controls: { disable: true } },
   render: function Render() {
-    const [tone, setTone] = useState<BasicTone>(BASIC_TONES[0]);
     const [color, setColor] = useState(DEFAULT_INLET_COLOR);
     return (
       <Stack gap={3}>
-        <Row label="Basic tone">
-          <ForkBasicTonePicker value={tone} onChange={setTone} />
-        </Row>
         <Row label="Inlet colour">
           <ForkInletColorPicker value={color} onChange={setColor} />
         </Row>

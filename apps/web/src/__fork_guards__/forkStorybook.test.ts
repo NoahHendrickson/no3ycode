@@ -45,13 +45,15 @@ describe("fork-storybook", () => {
     const appearance = read(`${storybook}appearance.ts`);
     expect(preview.indexOf('import "./appearance.ts"')).toBe(preview.indexOf("import "));
     expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${BASIC_THEME}"`);
-    expect(preview).toContain("setForkBasicTone(");
+    expect(preview).toMatch(
+      /setForkAppearance\(BASIC_THEME, setTheme\);\s*setAppearanceMode\(theme\.appearance\);/u,
+    );
     expect(preview).toContain("setForkAppearance(COOL_DARKER_THEME, setTheme)");
     expect(preview).toMatch(
       /setForkInletColor\(theme\.color, setTheme\);\s*setForkAppearance\(INLET_THEME, setTheme\);/u,
     );
     const themes = read(`${storybook}../stories/storyTheme.ts`);
-    expect(themes).toContain("BASIC_TONES.map(");
+    expect(themes).toContain("BASIC_APPEARANCES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
     // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, and the stand-in paints
     // the app's backings, its glass token and its docked-sidebar selector, so neither side drifts.

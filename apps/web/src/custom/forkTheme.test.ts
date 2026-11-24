@@ -87,7 +87,7 @@ afterEach(() => {
 });
 
 describe("fork theme synchronization", () => {
-  it("reads Basic by default and migrates the retired palettes to its tones", async () => {
+  it("reads Basic by default and for a retired palette id, and bridges Westworld to dark", async () => {
     const setItem = vi.fn<(key: string, value: string) => void>();
     const { storage, values } = createStorage(
       { "t3code:theme": "cool-dark" },
@@ -101,8 +101,7 @@ describe("fork theme synchronization", () => {
     vi.stubGlobal("window", { localStorage: storage });
     mockUseTheme(storage, new Set());
 
-    const { migrateLegacyForkPalettes, readBasicTone, readForkPalette } =
-      await import("./forkTheme");
+    const { migrateLegacyForkPalettes, readForkPalette } = await import("./forkTheme");
     expect(readForkPalette()).toBe("basic");
     expect(setItem).not.toHaveBeenCalled();
 
@@ -110,35 +109,11 @@ describe("fork theme synchronization", () => {
     migrateLegacyForkPalettes();
     expect(values.get("t3code:theme")).toBe("dark");
     expect(values.get("t3code:fork-theme")).toBe("basic");
-    expect(readBasicTone("dark")).toBe("darker-neutral");
 
-    values.set("t3code:fork-theme", "neutral-darker");
-    migrateLegacyForkPalettes();
-    expect(readForkPalette()).toBe("basic");
-    expect(readBasicTone("dark")).toBe("darker-neutral");
-    expect(readBasicTone("light")).toBe("light");
-
-    // Every retired dark tone and look becomes Darker Neutral, and stays written that way.
-    for (const retired of [
-      "cool",
-      "dark-cool",
-      "darkest-warm",
-      "dark-neutral",
-      "darkest-neutral",
-    ]) {
-      values.set("t3code:fork-basic-tone-dark", retired);
-      migrateLegacyForkPalettes();
-      expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
+    for (const retired of ["cool-dark", "neutral-darker", "darkest-warm", "__proto__"]) {
+      values.set("t3code:fork-theme", retired);
+      expect(readForkPalette(), retired).toBe("basic");
     }
-
-    // Cream, the retired light tone, becomes Light.
-    values.set("t3code:fork-basic-tone-light", "cream");
-    migrateLegacyForkPalettes();
-    expect(values.get("t3code:fork-basic-tone-light")).toBe("light");
-
-    // A tone stored for the wrong appearance is not that appearance's tone.
-    values.set("t3code:fork-basic-tone-light", "darker-neutral");
-    expect(readBasicTone("light")).toBe("light");
   });
 
   it("migrates a retired Inlet colour to the remaining one on its appearance", async () => {
@@ -347,24 +322,20 @@ describe("fork theme synchronization", () => {
       setForkDesktopThemeOverride: vi.fn(),
     }));
 
-    const { BASIC_TONE_ATTRIBUTE, FORK_THEME_ATTRIBUTE, initializeForkTheme } =
-      await import("./forkTheme");
+    const { FORK_THEME_ATTRIBUTE, initializeForkTheme } = await import("./forkTheme");
     initializeForkTheme();
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("darker-neutral");
 
-    // System turns light: Basic follows, onto the light tone (a retired one reads as Light).
-    values.set("t3code:fork-basic-tone-light", "cream");
+    // System turns light: Basic follows.
     classes.delete("dark");
     themeChangeHandler?.();
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("light");
+    expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
 
     // ThemeEditorHost writes through upstream's same-tab store, where the browser does not
     // emit a storage event; an imported theme turns every fork palette off.
     values.set("t3code:theme", "custom-theme");
     themeChangeHandler?.();
     expect(attributes.has(FORK_THEME_ATTRIBUTE)).toBe(false);
-    expect(attributes.has(BASIC_TONE_ATTRIBUTE)).toBe(false);
   });
 
   it("reconciles Glass and Inlet for palette and upstream-theme storage events", async () => {
@@ -489,45 +460,25 @@ describe("fork theme synchronization", () => {
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("cool-darker");
   });
 
-  it("keeps a Basic tone per appearance, moving the mode only for the other appearance", async () => {
+  it("picks Basic over an imported theme or a mix, keeping the mode", async () => {
     const { storage, values } = createStorage({ "t3code:theme": "custom-theme" });
     const { attributes, classes, root } = createDocumentRoot();
     classes.add("dark");
     stubWindow(storage);
     vi.stubGlobal("document", { documentElement: root });
-    const { state, setAppearanceMode } = mockUseTheme(storage, classes);
+    const { setAppearanceMode } = mockUseTheme(storage, classes);
     const setTheme = (theme: string) => {
       storage.setItem("t3code:theme", theme);
       return true;
     };
 
-    const {
-      BASIC_TONE_ATTRIBUTE,
-      FORK_THEME_ATTRIBUTE,
-      resetForkBasicTones,
-      setForkAppearance,
-      setForkBasicTone,
-    } = await import("./forkTheme");
+    const { FORK_THEME_ATTRIBUTE, setForkAppearance } = await import("./forkTheme");
     // From an imported theme: Basic takes over upstream's standard theme, keeping the mode.
-    setForkBasicTone("darker-neutral", setTheme);
+    setForkAppearance("basic", setTheme);
     expect(values.get("t3code:theme")).toBe("system");
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("darker-neutral");
+    expect(classes.has("dark")).toBe(true);
     expect(setAppearanceMode).not.toHaveBeenCalled();
-
-    setForkBasicTone("light", setTheme);
-    expect(state.mode).toBe("light");
-    expect(classes.has("dark")).toBe(false);
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("light");
-    // The dark tone is kept for when the user comes back to dark.
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
-
-    // Restore defaults puts both tones back, the one not showing too, and leaves the mode.
-    resetForkBasicTones();
-    expect(values.has("t3code:fork-basic-tone-dark")).toBe(false);
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("light");
-    expect(state.mode).toBe("light");
 
     // A mix on the standard theme hides Basic; picking Basic clears it.
     values.set("t3code:theme-halves:v1", JSON.stringify({ light: "t3-grove" }));
