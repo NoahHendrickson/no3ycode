@@ -495,7 +495,7 @@ export function SidebarV2StatusMark(props: {
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
-  useDoneCelebration(props.seed, props.still ? null : status, dot);
+  useDoneCelebration(props.still ? null : props.seed, status, dot);
   if (status === null) {
     if (props.idle === "draft") {
       return (

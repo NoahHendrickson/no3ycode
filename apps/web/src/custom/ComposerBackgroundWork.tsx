@@ -48,8 +48,9 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
         {label}
       </span>
       <Menu>
+        {/* Click, not hover: a hover-opened Menu takes focus, which would pull the caret out of
+            the prompt beside it. */}
         <MenuTrigger
-          openOnHover
           render={
             <ComposerControl
               size="xs"
@@ -146,6 +147,7 @@ function BackgroundWorkTaskRow(props: {
   return (
     // Choosing it closes the menu: the thread may open beside this composer, which stays mounted.
     <MenuItem
+      className="min-h-11.5"
       data-fork-monitoring-task
       aria-label={`Open ${task.label}`}
       onClick={() => props.onOpenThread(childThreadId)}
