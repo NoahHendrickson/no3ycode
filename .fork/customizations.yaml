@@ -8913,8 +8913,8 @@
 
 - id: no3y-mobile-queue-default
   intent: >
-    On the iPhone, a message sent while a turn is running queues behind it by
-    default instead of steering the turn (upstream switched its default to steer
+    In the mobile app (iOS and Android), a message sent while a turn is running
+    queues behind it by default instead of steering the turn (upstream switched its default to steer
     in #24718). A phone that picked Steer in Settings > Chat keeps it, and
     long-pressing send still offers the other option for one message. Web and
     desktop keep upstream's server-side default.
