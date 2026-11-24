@@ -21,6 +21,9 @@ import {
   collectLimitPools,
   elapsedShare,
   exhaustedUsageWindow,
+  // fork:begin fork-composer-usage-limits
+  isModelScopedWindow,
+  // fork:end fork-composer-usage-limits
   paceOf,
   paceRemainingPercent,
   usesChatGptSharing,
@@ -210,6 +213,16 @@ describe("new thread model fallback", () => {
     },
   );
 });
+
+/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+describe("isModelScopedWindow", () => {
+  it("treats Claude's seven_day_<model> windows as scoped and seven_day as account-wide", () => {
+    expect(isModelScopedWindow({ id: "seven_day" })).toBe(false);
+    expect(isModelScopedWindow({ id: "seven_day_fable" })).toBe(true);
+    expect(isModelScopedWindow({ id: "weekly", modelIds: ["gpt-6.2-sol"] })).toBe(true);
+  });
+});
+/* fork:end fork-composer-usage-limits */
 
 describe("pace", () => {
   it("places the clock three fifths through a five-hour window with two hours left", () => {

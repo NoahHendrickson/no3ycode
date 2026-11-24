@@ -15,6 +15,9 @@ import {
   makeUnavailableUsageLimits,
   makeUsageLimits,
 } from "@t3tools/provider-core/server/usageLimits";
+/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+import { CLAUDE_SCOPED_WINDOW_PREFIX } from "@t3tools/shared/usageLimits";
+/* fork:end fork-composer-usage-limits */
 
 const SESSION_MINS = 5 * 60;
 const WEEK_MINS = 7 * 24 * 60;
@@ -47,7 +50,9 @@ export const makeClaudeScopedLimitNames = Ref.make<ClaudeScopedLimitNames>({
   overageIncluded: undefined,
 });
 
-const SCOPED_WINDOW_PREFIX = "seven_day_";
+/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+const SCOPED_WINDOW_PREFIX = CLAUDE_SCOPED_WINDOW_PREFIX;
+/* fork:end fork-composer-usage-limits */
 const scopeToken = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
 function scopedWindowId(displayName: string): string {

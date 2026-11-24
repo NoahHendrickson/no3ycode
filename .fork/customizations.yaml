@@ -3028,8 +3028,10 @@
     advances on open. The calmer #38a169 green is scoped via --success to the
     ring and its menu so the Usage settings page keeps each theme's --success
     token. Without a session window it shows the unscoped weekly window
-    instead (Claude plans with no 5-hour limit); hidden when neither exists or
-    when the footer collapses. Nothing fills the composer's top vessel any more.
+    instead (Claude plans with no 5-hour limit), skipping model-scoped windows
+    via isModelScopedWindow() in packages/shared/src/usageLimits.ts, which owns
+    Claude's seven_day_<model> prefix for the server too; hidden when neither
+    exists or when the footer collapses. Nothing fills the composer's top vessel any more.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3039,8 +3041,12 @@
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
+    - packages/shared/src/usageLimits.ts
+    - packages/shared/src/usageLimits.test.ts
+    - apps/server/src/provider/claudeUsageLimits.ts
   verify:
     - apps/web/src/__fork_guards__/forkUsageLimits.test.ts
+    - packages/shared/src/usageLimits.test.ts
 
 - id: fork-usage-tabs
   intent: >

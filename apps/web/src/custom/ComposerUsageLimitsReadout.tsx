@@ -4,8 +4,8 @@
  * `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
-import type { ServerProviderUsageLimits, ServerProviderUsageWindow } from "@t3tools/contracts";
-import { remainingPercent } from "@t3tools/shared/usageLimits";
+import type { ServerProviderUsageLimits } from "@t3tools/contracts";
+import { isModelScopedWindow, remainingPercent } from "@t3tools/shared/usageLimits";
 import { useGT } from "gt-react";
 import { memo, useState } from "react";
 
@@ -22,27 +22,17 @@ export function composerUsageReadout(props: {
   return props.enabled ? <ComposerUsageLimitsReadout usageLimits={props.usageLimits} /> : null;
 }
 
-/** The session window, else the account-wide weekly one for plans without a 5-hour limit. */
-export function composerRingWindow(windows: readonly ServerProviderUsageWindow[]) {
-  return (
-    windows.find((window) => window.kind === "session") ??
-    // Claude's model-scoped weekly windows (`seven_day_<model>`) carry no modelIds.
-    windows.find(
-      (window) =>
-        window.kind === "weekly" &&
-        window.modelIds === undefined &&
-        !window.id.startsWith("seven_day_"),
-    )
-  );
-}
-
 const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
 }) {
   const gt = useGT();
   // The menu's clock advances on open rather than ticking while it shows.
   const [openedAt, setOpenedAt] = useState(() => Date.now());
-  const ring = composerRingWindow(props.usageLimits?.windows ?? []);
+  const windows = props.usageLimits?.windows ?? [];
+  // Plans without a 5-hour limit fall back to the account-wide weekly window.
+  const ring =
+    windows.find((window) => window.kind === "session") ??
+    windows.find((window) => window.kind === "weekly" && !isModelScopedWindow(window));
   if (!ring) return null;
   const remaining = remainingPercent(ring);
   return (

@@ -900,6 +900,18 @@ export function instanceHubs(
   return endpoint === undefined ? [] : sources.filter((source) => source.origin === endpoint);
 }
 
+/* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
+/** Claude names a model-scoped weekly window `seven_day_<model>` and leaves its modelIds unset. */
+export const CLAUDE_SCOPED_WINDOW_PREFIX = "seven_day_";
+
+/** Whether a window limits only some models rather than the whole account. */
+export function isModelScopedWindow(
+  window: Pick<ServerProviderUsageWindow, "id" | "modelIds">,
+): boolean {
+  return window.modelIds !== undefined || window.id.startsWith(CLAUDE_SCOPED_WINDOW_PREFIX);
+}
+/* fork:end fork-composer-usage-limits */
+
 // Antigravity meters Gemini Argon, Gemini Carbon, other Gemini, and Claude/GPT models apart.
 function antigravityQuotaFamily(id: string) {
   if (!id.startsWith("gemini")) return "shared";
