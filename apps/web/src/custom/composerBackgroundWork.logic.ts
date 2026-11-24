@@ -120,6 +120,18 @@ function redirectionTailStart(tokens: ReadonlyArray<string>): number | null {
   return null;
 }
 
+/** One kind names itself: subagents alone count, anything else alone is monitoring. A mix is
+ * background tasks. */
+export function composerBackgroundWorkLabel(
+  items: ReadonlyArray<Pick<PendingBackgroundWorkItem, "kind">>,
+): string {
+  const subagents = items.filter((item) => item.kind === "subagent").length;
+  if (subagents === 0) return "Monitoring";
+  if (subagents === items.length)
+    return `${subagents} ${subagents === 1 ? "subagent" : "subagents"}`;
+  return "Background tasks";
+}
+
 /** A background command as its gist for the work list: no `cd <dir> &&` lead-in, and a single
  * command loses its trailing redirects and `&`. `vp run dev --no-seed 2>&1` reads
  * `vp run dev --no-seed`. Anything the shell reader cannot settle stays as written. */
