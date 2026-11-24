@@ -3667,8 +3667,11 @@
     monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
-    The chip reads "Background task(s)" beside a static ElectricityStack glyph
-    for any mix of work. A live run's own subagents join it while that run is
+    The chip names one kind of work ("4 subagents", or "Monitoring" for
+    monitors and commands) and reads "Background tasks" for a mix, beside a
+    Layers02 mark (custom/BackgroundWorkLayersMark.tsx): a fill travels front →
+    middle → back on a 6s loop, each layer its own svg so only element
+    opacity animates; reduced motion keeps the outline. A live run's own subagents join it while that run is
     live (custom/composerBackgroundWork.logic.ts matches each to its record
     once); after it settles only the pending list counts. The Stop square is
     drawn only when upstream's row would enable Stop (useThreadLifecycle's
@@ -3714,6 +3717,7 @@
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts

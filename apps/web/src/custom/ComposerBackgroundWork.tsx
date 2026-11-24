@@ -1,20 +1,18 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
 
-import {
-  ComputerActivityIcon,
-  ComputerTerminalIcon,
-  ElectricityStackIcon,
-} from "./icons/lucide-hugeicons";
+import { ComputerActivityIcon, ComputerTerminalIcon } from "./icons/lucide-hugeicons";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
 import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 
 import {
+  composerBackgroundWorkLabel,
   glanceCommandLabel,
   type ComposerBackgroundWorkItem,
 } from "./composerBackgroundWork.logic";
+import { BackgroundWorkLayersMark } from "./BackgroundWorkLayersMark";
 import { ForkSubagentIdentity, useForkSubagentEffort } from "./ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "./forkSubagentTree";
 import { StopSquareIcon } from "./StopSquareIcon";
@@ -30,10 +28,8 @@ export interface ComposerBackgroundWorkViewProps {
   readonly environmentId: EnvironmentId;
 }
 
-/** One label for any mix of work: subagents, commands, monitors and PR watches alike. */
 function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): string {
-  if (props.stopping) return "Stopping...";
-  return props.items.length === 1 ? "Background task" : "Background tasks";
+  return props.stopping ? "Stopping..." : composerBackgroundWorkLabel(props.items);
 }
 
 /** Background work as a chip above the composer (fork-composer-shell): the label opens the task
@@ -63,7 +59,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
             aria-hidden
             className="flex size-[14px] shrink-0 items-center justify-center"
           >
-            <ElectricityStackIcon />
+            <BackgroundWorkLayersMark />
           </span>
           <span aria-hidden className="min-w-0 truncate">
             {label}
