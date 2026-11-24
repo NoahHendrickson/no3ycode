@@ -4,7 +4,10 @@ import {
   assistantCitationLabel,
   parseAssistantCitationHref,
 } from "@t3tools/shared/assistantCitations";
-import { Image, StyleSheet } from "react-native";
+import { Image } from "react-native";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { StyleSheet } from "react-native";
+/* fork:end no3y-subagent-link-chip */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
 import { contextChipAccent, contextChipPresentation } from "../lib/composerChipPresentation";

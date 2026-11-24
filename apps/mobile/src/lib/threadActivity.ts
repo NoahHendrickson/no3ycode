@@ -1500,7 +1500,9 @@ function staysOutOfFold(entry: ThreadFeedEntry): boolean {
           activity.prominent ||
           activity.workEntry.questionAnswer !== undefined ||
           /* fork:begin no3y-notification-in-fold — see .fork/customizations.yaml#no3y-notification-in-fold */
-          // A notification that opened the turn folds into its "Worked for" row.
+          // Notifications fold with the run's work; a failed one stays in view.
+          (activity.projectedItem.item.type === "notification" &&
+            activity.projectedItem.item.outcome === "failed") ||
           /* fork:end no3y-notification-in-fold */
           activity.projectedItem.item.type === "handoff" ||
           // A child still working outlives its settled launching run;

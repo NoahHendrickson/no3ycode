@@ -46,8 +46,8 @@ export function deriveNo3yWorkRowSizing(input: {
 
 /**
  * `work-block` is a tool row that keeps its own `mb-1`; `work` has none. `user-grouped` is a
- * prompt sitting close to its own response (`mb-1` instead of `mb-2`). `fold` is a settled turn's
- * "Worked for" row.
+ * prompt sitting close to its own response (`mb-1` instead of `mb-2`). `fold` is a turn's
+ * "Worked for" row, live or settled, so its spacing holds when the turn settles.
  */
 export type No3yRowKind =
   | "reply"
@@ -62,7 +62,8 @@ export type No3yRowKind =
 export interface No3yRowGap {
   readonly top: number;
   readonly bottom: number;
-  /** The margin under a reply's copy and fork footer, in place of its `mb-5`, before a fold. */
+  /** Before a fold, the margin under a reply's copy and fork footer in place of its `mb-5`; it
+   * applies only when the reply draws that footer. */
   readonly footer?: number;
 }
 
@@ -83,7 +84,7 @@ export function no3yRowKind(row: SpacedRow): No3yRowKind {
         ? "reply"
         : "other";
     case "run-fold":
-      return row.workingSince === undefined ? "fold" : "other";
+      return "fold";
     case "work-toggle":
     case "thinking":
       return "work";

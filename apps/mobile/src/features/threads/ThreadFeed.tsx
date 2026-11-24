@@ -2857,26 +2857,21 @@ function renderFeedEntry(
     }
 
     const enterAnimated = isFreshTimestamp(message.createdAt);
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    const drawsFooter =
+      showAssistantMeta && !(message.runId && props.failedRunIds.has(message.runId));
+    const no3yFooterMargin = drawsFooter ? props.no3y?.footerMargin : undefined;
+    /* fork:end no3y-mobile-redesign */
     return (
       <Animated.View
         className={cn(
-          showAssistantMeta && !(message.runId && props.failedRunIds.has(message.runId))
-            ? /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-              props.no3y?.footerMargin !== undefined
-              ? "px-1"
-              : /* fork:end no3y-mobile-redesign */
-                "mb-5 px-1"
-            : "mb-1 px-1",
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          drawsFooter ? (no3yFooterMargin === undefined ? "mb-5 px-1" : "px-1") : "mb-1 px-1",
+          /* fork:end no3y-mobile-redesign */
           hasWideBlock && "w-full",
         )}
         /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-        style={
-          props.no3y?.footerMargin !== undefined &&
-          showAssistantMeta &&
-          !(message.runId && props.failedRunIds.has(message.runId))
-            ? { marginBottom: props.no3y.footerMargin }
-            : undefined
-        }
+        style={no3yFooterMargin === undefined ? undefined : { marginBottom: no3yFooterMargin }}
         /* fork:end no3y-mobile-redesign */
         {...(enterAnimated ? { entering: FadeIn.duration(220) } : {})}
       >
