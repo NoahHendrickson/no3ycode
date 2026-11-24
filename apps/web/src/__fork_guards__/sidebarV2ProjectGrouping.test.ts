@@ -125,7 +125,7 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     );
     expect(header).toContain("absolute inset-0 z-0");
     expect(header).toContain(
-      '"relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px]"',
+      '"relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px] [&_button:hover]:bg-foreground/10"',
     );
     // The header slot sizes its buttons to 28px squares, and headerPlus pulls the group out of
     // the row's padding to 2px inside the list edge the trailing derivation measures from.
