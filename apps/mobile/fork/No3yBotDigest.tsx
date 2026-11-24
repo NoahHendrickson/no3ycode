@@ -68,7 +68,7 @@ import {
   useNo3yBotDigestDismissed,
 } from "./no3yBotDigestAnswers";
 import { No3yBottomScrim } from "./No3yBottomFade";
-import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_PANEL_MARGIN, No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { NO3Y_PULL_REQUEST_GLYPHS } from "./No3yPullRequestMark";
 import { no3yPullRequestColor, no3yPullRequestTone } from "./no3yPullRequestTone";
@@ -237,11 +237,11 @@ function BotDigestFor(props: {
       entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
       // Under the banners above it, so its backdrop's fade never paints over their bottoms.
-      style={{ paddingBottom: 6, zIndex: -1 }}
+      style={{ zIndex: -1 }}
     >
       {/* The composer's own backdrop, so the transcript never reads through the card. */}
       <No3yBottomScrim color={screenColor} />
-      <View style={{ marginHorizontal: 16, borderRadius: CARD_RADIUS }}>
+      <View style={{ ...NO3Y_PANEL_MARGIN, borderRadius: CARD_RADIUS }}>
         <No3yGlassLayer radius={CARD_RADIUS} />
         <DigestStrip
           palette={palette}

@@ -39,7 +39,7 @@ import { environmentThreadDetails, threadEnvironment } from "../src/state/thread
 import { useAtomCommand } from "../src/state/use-atom-command";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
-import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_PANEL_MARGIN, No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
 import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
@@ -157,8 +157,7 @@ export function No3yQueuedRunsBanner(props: {
     <Animated.View
       entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
-      // The pills float 6pt above the panels; as the first panel, marginTop makes that gap 12pt.
-      style={{ marginHorizontal: 16, marginTop: 6, marginBottom: 6, borderRadius: RADIUS }}
+      style={{ ...NO3Y_PANEL_MARGIN, borderRadius: RADIUS }}
     >
       <No3yGlassLayer radius={RADIUS} />
       <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
