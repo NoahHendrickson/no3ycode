@@ -5990,6 +5990,41 @@
   verify:
     - apps/web/src/__fork_guards__/forkImageAttachmentNoChip.test.ts
 
+- id: no3y-media-attachment-no-chip
+  intent: >
+    The mobile counterpart of fork-image-attachment-no-chip. A photo or video
+    added to an iOS/Android composer draft (media picker, file picker, pasted
+    image, review comment, returned question attachment, zip entry) shows
+    once: as its thumbnail in the strip above the prompt. Upstream's draft
+    store inserts an inline file-name chip for every attachment appended with
+    a reference; the fork skips the chip for images and videos (the same test
+    upstream's restoreMissingComposerFileReferences uses), so documents, HEIC
+    picked through Files and pasted text keep their chips, since they have no
+    thumbnail. Media still replaces the selection a chip would have replaced,
+    so that selection counts as freed toward the attachment limit.
+    Unreferenced media still sends and survives text edits; only the chip's
+    position in the prose is lost, the same trade-off as on web. Upstream
+    relied on the chip to turn a media-only send into the attachment-only
+    bootstrap prompt, so outbox delivery restores that prompt from the
+    attachment count instead (as the side-chat send already does), and a
+    media-only new thread's pending row is titled from its attachments, as
+    the server titles it, rather than "New thread". The thread composer's
+    strip thumbnails are 88pt instead of upstream's 72pt default; the review
+    comment sheet keeps 60pt.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/mobile/src/state/use-composer-drafts.ts
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/state/threadOutboxDelivery.ts
+    - apps/mobile/src/state/pending-thread-creation.ts
+    - apps/mobile/src/state/pending-new-tasks-model.ts
+  verify:
+    - apps/mobile/src/state/use-composer-drafts.test.ts
+    - apps/mobile/src/state/threadOutboxDelivery.test.ts
+    - apps/web/src/__fork_guards__/no3yMediaAttachmentNoChip.test.ts
+
 - id: fork-touch-affordances
   intent: >
     Phone usability for controls that only a mouse could reach. On iOS
