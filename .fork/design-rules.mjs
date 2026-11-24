@@ -55,6 +55,13 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
   "[content-visibility:auto]",
   "[image-rendering:pixelated]",
   "[text-box:trim-both_cap_alphabetic]",
+  // Grid tracks made only of fr, auto and minmax(0, …): proportions, not sizes, so no token.
+  "grid-cols-[auto_minmax(0,1fr)]",
+  "grid-cols-[minmax(0,2fr)_minmax(0,3fr)]",
+  // The status mark's 1.5px stroke and its sub-pixel optical nudges: hairlines stay px.
+  "border-[1.5px]",
+  "-mx-[1.5px]",
+  "-my-[0.5px]",
 ];
 
 /** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */
