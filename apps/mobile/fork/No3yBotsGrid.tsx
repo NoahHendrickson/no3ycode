@@ -1,7 +1,7 @@
 /**
- * Petals (the fork's bots) at the top of the no3y iOS Threads screen, as the Mac's Petal tiles,
- * four to a row: the bare mascot, the name under it, and a corner mark that takes the petal's
- * launched work's need of you — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * Petals (the fork's bots) at the top of the no3y iOS Threads screen, as the Mac's Petal tiles, up
+ * to five to a row (fewer span it), wrapping: the bare mascot, the name under it, and a corner
+ * mark that takes the petal's launched work's need of you — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import ChevronDownIcon from "@hugeicons/core-free-icons/ChevronDownIcon";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
@@ -70,6 +70,29 @@ function PetalCard(props: {
   const ownKind = resolveNo3yThreadCardStatusKind(bot, { now: props.now });
   const mark = no3yPetalMark(ownKind, resolveThreadListV2Status(bot), props.work);
   const shape = no3yBotMascotShape({ id: bot.id, tags: bot.source?.tags });
+  const content = (
+    <>
+      <View style={{ position: "absolute", top: 6, right: 6 }}>
+        <No3yStatusMark kind={mark.kind} palette={palette} idleMode="dot" />
+      </View>
+      <View style={{ height: MASCOT_SIZE, justifyContent: "center" }}>
+        <BotMascot shape={shape} mood={no3yBotMascotMood(mark.kind)} fit={MASCOT_SIZE} />
+      </View>
+      <Text
+        numberOfLines={1}
+        style={{
+          ...NO3Y_FONT.regular,
+          fontSize: 12,
+          lineHeight: 16,
+          color: palette.titleInk,
+          textAlign: "center",
+          alignSelf: "stretch",
+        }}
+      >
+        {bot.title}
+      </Text>
+    </>
+  );
   return (
     <Menu
       shouldOpenOnLongPress
@@ -101,25 +124,7 @@ function PetalCard(props: {
         {({ pressed }) => (
           <>
             <No3yGlassLayer radius={TILE_RADIUS} tint={pressed ? palette.rowSelected : undefined} />
-            <View style={{ position: "absolute", top: 6, right: 6 }}>
-              <No3yStatusMark kind={mark.kind} palette={palette} idleMode="dot" />
-            </View>
-            <View style={{ height: MASCOT_SIZE, justifyContent: "center" }}>
-              <BotMascot shape={shape} mood={no3yBotMascotMood(mark.kind)} fit={MASCOT_SIZE} />
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                ...NO3Y_FONT.regular,
-                fontSize: 12,
-                lineHeight: 16,
-                color: palette.titleInk,
-                textAlign: "center",
-                alignSelf: "stretch",
-              }}
-            >
-              {bot.title}
-            </Text>
+            {content}
           </>
         )}
       </Pressable>
