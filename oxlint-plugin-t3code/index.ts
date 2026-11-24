@@ -35,6 +35,9 @@ import preferEffectFn from "./rules/prefer-effect-fn.ts";
 import requireCenteredScrollGutter from "./rules/require-centered-scroll-gutter.ts";
 import requireDisposableRender from "./rules/require-disposable-render.ts";
 import requireSuppressionReason from "./rules/require-suppression-reason.ts";
+/* fork:begin no3y-worklet-default-params — see .fork/customizations.yaml#no3y-worklet-default-params */
+import noWorkletDefaultParams from "./rules/no-worklet-default-params.ts";
+/* fork:end no3y-worklet-default-params */
 
 export default definePlugin({
   meta: {
@@ -76,5 +79,8 @@ export default definePlugin({
     "require-centered-scroll-gutter": requireCenteredScrollGutter,
     "require-disposable-render": requireDisposableRender,
     "require-suppression-reason": requireSuppressionReason,
+    /* fork:begin no3y-worklet-default-params — see .fork/customizations.yaml#no3y-worklet-default-params */
+    "no-worklet-default-params": noWorkletDefaultParams,
+    /* fork:end no3y-worklet-default-params */
   },
 });

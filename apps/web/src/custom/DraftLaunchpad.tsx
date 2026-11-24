@@ -35,6 +35,7 @@ import {
   GitPullRequestArrowIcon,
   MessageSquareDashedIcon,
   PenLineIcon,
+  PlayIcon,
   SearchIcon,
 } from "./icons/lucide-hugeicons";
 import {
@@ -56,6 +57,8 @@ const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
   pull: CloudDownloadIcon,
   "open-pr": GitPullRequestArrowIcon,
   merge: GitMergeIcon,
+  "review-open": EyeIcon,
+  "dev-server": PlayIcon,
 };
 
 const ROW_CLASS_NAME =
@@ -216,6 +219,9 @@ export function DraftLaunchpad(
       const git = statuses[index] ?? null;
       return git === null ? [] : [{ project, name, git }];
     }),
+    // Its own checkout, like the git work: a fresh worktree has nothing installed to serve.
+    offerDevServer:
+      !needsProject && !choices.pending && props.checkout !== null && !props.multiModel,
   });
   const entryFor = (project: LaunchpadSuggestion["project"]) =>
     project === null
@@ -275,7 +281,6 @@ export function DraftLaunchpad(
                 <Icon className="size-4 shrink-0 text-muted-foreground" />
               )}
               <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
-              <span className="shrink-0 text-muted-foreground/60 text-xs">{suggestion.meta}</span>
             </button>
           );
         })}
