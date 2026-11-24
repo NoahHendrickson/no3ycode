@@ -8355,8 +8355,9 @@
     instead of SF Symbols (fork/no3yWorkIcons.tsx, keyed by upstream's symbol,
     with the web fork's themed glyphs filled); the pull-request glyph, the T3
     wordmark and the browser app icon stay upstream's.
-    Subagents in the transcript draw as the Mac fork's subagent card
-    (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
+    Subagents in the transcript draw as rows modelled on the Mac fork's
+    subagent card (fork/No3ySubagentCards.tsx; unlike ForkSubagentGroup's
+    one card per member, mobile groups a batch into a single card): the
     provider's mark in a tile with the Threads list's status mark at its corner
     (bead ring while working, never upstream's blue dot or blue "Working"), a
     pure-white title over model and effort, and muted elapsed time, with no

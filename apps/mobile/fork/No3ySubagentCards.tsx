@@ -108,14 +108,13 @@ function No3ySubagentCards(props: CardsProps) {
           }}
         >
           {agents.map((agent, index) => (
-            <View key={agent.item.id}>
-              {index > 0 ? (
-                <View
-                  style={{ height: StyleSheet.hairlineWidth, backgroundColor: palette.hairline }}
-                />
-              ) : null}
-              <SubagentRow agent={agent} environmentId={props.environmentId} palette={palette} />
-            </View>
+            <SubagentRow
+              key={agent.item.id}
+              agent={agent}
+              divided={index > 0}
+              environmentId={props.environmentId}
+              palette={palette}
+            />
           ))}
         </View>
       </View>
@@ -148,6 +147,7 @@ const TILE = 28;
 function SubagentRow(props: {
   readonly agent: SubagentItem &
     Pick<OrchestrationV2Subagent, "model" | "modelSelection"> & { readonly item: SubagentItem };
+  readonly divided: boolean;
   readonly environmentId: EnvironmentId;
   readonly palette: FlatGlassPalette;
 }) {
@@ -216,6 +216,8 @@ function SubagentRow(props: {
       style={({ pressed }) => ({
         paddingHorizontal: 14,
         paddingVertical: 11,
+        borderTopWidth: props.divided ? StyleSheet.hairlineWidth : 0,
+        borderTopColor: palette.hairline,
         backgroundColor: pressed ? palette.rowPressed : "transparent",
       })}
     >
