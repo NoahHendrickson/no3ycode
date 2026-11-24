@@ -1,6 +1,5 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
-import { Fragment } from "react";
 
 import {
   ComputerActivityIcon,
@@ -10,7 +9,7 @@ import {
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
-import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
+import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 
 import {
   glanceCommandLabel,
@@ -47,10 +46,9 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
       <span role="status" className="sr-only">
         {label}
       </span>
-      <Menu>
-        {/* Click, not hover: a hover-opened Menu takes focus, which would pull the caret out of
-            the prompt beside it. */}
-        <MenuTrigger
+      <Popover>
+        <PopoverTrigger
+          openOnHover
           render={
             <ComposerControl
               size="xs"
@@ -63,34 +61,35 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           <span
             data-fork-liveness-mark
             aria-hidden
-            className="flex size-3.5 shrink-0 items-center justify-center"
+            className="flex size-[14px] shrink-0 items-center justify-center"
           >
             <ElectricityStackIcon />
           </span>
           <span aria-hidden className="min-w-0 truncate">
             {label}
           </span>
-        </MenuTrigger>
-        <MenuPopup
+        </PopoverTrigger>
+        <PopoverPopup
           side="top"
           align="start"
           sideOffset={6}
-          className={props.items.some((item) => item.kind === "subagent") ? "w-80" : "w-64"}
+          width={props.items.some((item) => item.kind === "subagent") ? "md" : "sm"}
+          padding="compact"
           data-fork-glass-rim
           data-fork-background-work-popup
         >
-          {props.items.map((task, index) => (
-            <Fragment key={task.taskId}>
-              {index > 0 ? <MenuSeparator className="-mx-1" /> : null}
+          <ul data-fork-monitoring-tasks className="flex max-h-60 flex-col overflow-y-auto">
+            {props.items.map((task) => (
               <BackgroundWorkTaskRow
+                key={task.taskId}
                 task={task}
                 environmentId={props.environmentId}
                 onOpenThread={props.onOpenThread}
               />
-            </Fragment>
-          ))}
-        </MenuPopup>
-      </Menu>
+            ))}
+          </ul>
+        </PopoverPopup>
+      </Popover>
       {props.canStop ? (
         <ComposerControl
           size="xs"
@@ -106,10 +105,6 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
   );
 }
 
-/** A row the menu cannot open: MenuItem's padding without its highlight, as tall as a subagent's
-    two-line row so the list reads even. */
-const TASK_ROW_CLASS_NAME = "flex min-h-11.5 items-center gap-2 px-2 py-1 text-sm";
-
 function BackgroundWorkTaskRow(props: {
   readonly task: ComposerBackgroundWorkItem;
   readonly environmentId: EnvironmentId;
@@ -120,45 +115,51 @@ function BackgroundWorkTaskRow(props: {
   if (childThreadId === undefined && task.subagent !== undefined) {
     // A subagent without a local child thread (a linked environment's) has nothing to open.
     return (
-      <div data-fork-monitoring-task className={TASK_ROW_CLASS_NAME}>
-        <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
-      </div>
+      <li className="flex">
+        <span data-fork-monitoring-task>
+          <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
+        </span>
+      </li>
     );
   }
   if (childThreadId === undefined) {
     const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
-      <div data-fork-monitoring-task aria-description={task.kind} className={TASK_ROW_CLASS_NAME}>
-        <span
-          aria-hidden
-          data-fork-task-tile
-          className="flex size-8 shrink-0 items-center justify-center"
-        >
-          {task.kind === "command" ? (
-            <ComputerTerminalIcon className="size-4" />
-          ) : (
-            <ComputerActivityIcon className="size-4" />
-          )}
+      <li className="flex">
+        <span data-fork-monitoring-task aria-description={task.kind}>
+          <span
+            aria-hidden
+            data-fork-task-tile
+            className="flex size-8 shrink-0 items-center justify-center"
+          >
+            {task.kind === "command" ? (
+              <ComputerTerminalIcon className="size-4" />
+            ) : (
+              <ComputerActivityIcon className="size-4" />
+            )}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm leading-5">{label}</span>
         </span>
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-      </div>
+      </li>
     );
   }
   return (
-    // Choosing it closes the menu: the thread may open beside this composer, which stays mounted.
-    <MenuItem
-      className="min-h-11.5 sm:min-h-11.5"
-      data-fork-monitoring-task
-      aria-label={`Open ${task.label}`}
-      onClick={() => props.onOpenThread(childThreadId)}
-    >
-      {task.subagent === undefined ? (
-        <span className="min-w-0 flex-1 truncate">{task.label}</span>
-      ) : (
-        <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
-      )}
-      <ArrowUpRightIcon aria-hidden className="size-3.5 shrink-0 text-foreground" />
-    </MenuItem>
+    <li className="flex">
+      {/* Closes the list: the thread may open beside this composer, which stays mounted. */}
+      <PopoverClose
+        render={<button type="button" />}
+        data-fork-monitoring-task
+        aria-label={`Open ${task.label}`}
+        onClick={() => props.onOpenThread(childThreadId)}
+      >
+        {task.subagent === undefined ? (
+          <span className="min-w-0 flex-1 truncate">{task.label}</span>
+        ) : (
+          <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
+        )}
+        <ArrowUpRightIcon aria-hidden className="size-3.5 shrink-0 text-foreground" />
+      </PopoverClose>
+    </li>
   );
 }
 

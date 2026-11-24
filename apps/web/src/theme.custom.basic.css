@@ -2,16 +2,17 @@
    Basic — see `.fork/customizations.yaml#fork-basic-theme`.
 
    Figma t3-fork 720:21870 ("Basic Dark", "Basic Darker"). One colour per tone,
-   and every other surface is that colour with white (dark tones) or black
-   (light tones) laid over it: 4% hover, 8% selection, lines and raised fills,
-   12% chips, 16% the strongest lift. The sidebar, the header and the stage are
-   one surface, separated by 8% hairlines instead of a darker panel.
+   and every other surface is that colour with white (dark) or black (light)
+   laid over it: 4% hover, 8% selection, lines and raised fills, 12% chips,
+   16% the strongest lift. The sidebar, the header and the stage are one
+   surface, separated by 8% hairlines instead of a darker panel.
 
-   A tone sets only --basic-base, --basic-ink and its text; everything below
-   derives from those, so a new temperature is three lines. Surfaces that
-   float over content (menus, the composer, chips) are the ink flattened over
-   the base, so nothing shows through them; hovers, selections and lines stay
-   translucent, as drawn, so they read the same on any of those surfaces. */
+   Each appearance has one tone, and a tone sets only --basic-base; the ink
+   and text come with the appearance, and everything below derives from
+   those. Surfaces that float over content (menus, the composer, chips) are
+   the ink flattened over the base, so nothing shows through them; hovers,
+   selections and lines stay translucent, as drawn, so they read the same on
+   any of those surfaces. */
 
 /* Header rows (workspace, panels, tab strip, sidebar) are 44px, not 52: the desktop moves
    the macOS window buttons to match (custom/forkTopbarHeight.ts). Windows' caption overlay
@@ -113,15 +114,11 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Tones. Dark tones lay white over the base, light tones black; the raised
-   fills differ because a menu lifts toward white on either. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
-  --fork-thread-composer-line: var(--basic-wash-2);
-  --fork-thread-composer-line-focus: var(--basic-wash-4);
-}
+   Tones, one per appearance. Dark lays white over the base, light black; the
+   raised fills differ because a menu lifts toward white on either. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"].dark {
+  --basic-base: #232323;
   --basic-popup-shadow: 0 1px 2px rgb(0 0 0 / 16%), 0 8px 24px rgb(0 0 0 / 24%);
   --basic-ink: #ffffff;
   --basic-text: #e8e8e8;
@@ -132,14 +129,14 @@
   --basic-raised-quiet: var(--basic-lift-1);
   --basic-composer-vessel: var(--basic-lift-2);
   --basic-composer-prompt: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-lift-2));
-  /* The thread composer (theme.custom.thread-composer.css) on Flat Glass's ladder. */
-  --fork-thread-composer-prompt: var(--basic-lift-3);
+  /* The thread composer's cards (theme.custom.thread-composer.css), on Flat Glass's ladder. */
   --fork-thread-composer-card: var(--basic-lift-2);
   --basic-tab-pick: var(--basic-wash-3);
   --basic-tab-line: var(--basic-wash-2);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark) {
+  --basic-base: #f7f7f7;
   --basic-popup-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 6px 20px rgb(0 0 0 / 7%);
   --basic-ink: #000000;
   --basic-text: #1a1a1a;
@@ -151,7 +148,6 @@
   --basic-composer-vessel: var(--basic-lift-1);
   --basic-composer-prompt: var(--basic-raised);
   /* A light stage lifts toward white, so the card sits two thirds of the way to the prompt. */
-  --fork-thread-composer-prompt: var(--basic-composer-prompt);
   --fork-thread-composer-card: color-mix(
     in srgb,
     var(--basic-composer-prompt) 67%,
@@ -160,14 +156,6 @@
   /* A black wash reads as a grey slab, so a picked tab lifts toward white behind a 16% line. */
   --basic-tab-pick: var(--basic-raised);
   --basic-tab-line: var(--basic-wash-4);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="darker-neutral"] {
-  --basic-base: #232323;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"][data-fork-basic-tone="light"] {
-  --basic-base: #f7f7f7;
 }
 
 /* ---------------------------------------------------------------------------

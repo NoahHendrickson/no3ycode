@@ -12,10 +12,7 @@ import {
 import { type ComponentProps, type ReactNode, useState } from "react";
 
 import { ComposerBanner } from "~/components/chat/ComposerBanner";
-import {
-  ComposerBannerStack,
-  type ComposerBannerStackItem,
-} from "~/components/chat/ComposerBannerStack";
+import { ComposerBannerStack } from "~/components/chat/ComposerBannerStack";
 import { ComposerPendingUserInputPanel } from "~/components/chat/ComposerPendingUserInputPanel";
 import { branchMismatchBannerItem } from "~/components/chat/ThreadActivityBanners";
 import { usageLimitRecoveryBannerItem } from "~/components/chat/UsageLimitRecoveryBanner";
@@ -56,10 +53,6 @@ function Composer(props: { banners?: ReactNode; statusChips?: ReactNode }) {
 }
 
 /** ChatComposer's notice stack: each item its own attached card, joined to the next. */
-function Notices({ items }: { items: ReadonlyArray<ComposerBannerStackItem> }) {
-  return <ComposerBannerStack items={items} />;
-}
-
 const RUN = RunId.make("run-story");
 
 function usageLimit(errorCode: string | null, scheduled: boolean) {
@@ -102,7 +95,7 @@ function ThreadStateNotice({ state }: { state: "settled" | "snoozed" | "woke" })
     onAcknowledgeWoke: noop,
   });
   const item = woke ?? parked;
-  return <Composer banners={item ? <Notices items={[item]} /> : null} />;
+  return <Composer banners={item ? <ComposerBannerStack items={[item]} /> : null} />;
 }
 
 const compactRef = { current: { compactContext: noop } };
@@ -127,7 +120,7 @@ function ResumeCompactionNotice({
     compactDisabledReason,
     composerRef: compactRef,
   });
-  return <Composer banners={item ? <Notices items={[item]} /> : null} />;
+  return <Composer banners={item ? <ComposerBannerStack items={[item]} /> : null} />;
 }
 
 const APPROVALS = {
@@ -381,14 +374,16 @@ export const NoticeCards: Story = {
   name: "Notices",
   render: () => (
     <Stack gap={4}>
-      <Composer banners={<Notices items={[usageLimit(null, false)]} />} />
-      <Composer banners={<Notices items={[usageLimit(null, true)]} />} />
+      <Composer banners={<ComposerBannerStack items={[usageLimit(null, false)]} />} />
+      <Composer banners={<ComposerBannerStack items={[usageLimit(null, true)]} />} />
       <Composer
         banners={
-          <Notices items={[usageLimit("subscription_sharing_usage_limit_exceeded", false)]} />
+          <ComposerBannerStack
+            items={[usageLimit("subscription_sharing_usage_limit_exceeded", false)]}
+          />
         }
       />
-      <Composer banners={<Notices items={[BRANCH_MISMATCH]} />} />
+      <Composer banners={<ComposerBannerStack items={[BRANCH_MISMATCH]} />} />
       <ResumeCompactionNotice compactDisabledReason={null} />
       <ResumeCompactionNotice compactDisabledReason="The thread is running" />
     </Stack>
@@ -414,11 +409,11 @@ export const ThreadState: Story = {
 export const Approval: Story = {
   render: () => (
     <Stack gap={4}>
-      <Composer banners={<Notices items={[approval(APPROVALS.command)]} />} />
-      <Composer banners={<Notices items={[approval(APPROVALS.fileChange, 3)]} />} />
-      <Composer banners={<Notices items={[approval(APPROVALS.app)]} />} />
-      <Composer banners={<Notices items={[approval(APPROVALS.gone)]} />} />
-      <Composer banners={<Notices items={[approval(APPROVALS.command, 1, true)]} />} />
+      <Composer banners={<ComposerBannerStack items={[approval(APPROVALS.command)]} />} />
+      <Composer banners={<ComposerBannerStack items={[approval(APPROVALS.fileChange, 3)]} />} />
+      <Composer banners={<ComposerBannerStack items={[approval(APPROVALS.app)]} />} />
+      <Composer banners={<ComposerBannerStack items={[approval(APPROVALS.gone)]} />} />
+      <Composer banners={<ComposerBannerStack items={[approval(APPROVALS.command, 1, true)]} />} />
     </Stack>
   ),
 };
@@ -477,7 +472,9 @@ export const Stacked: Story = {
       <Composer
         banners={
           <>
-            <Notices items={[usageLimit(null, false), approval(APPROVALS.command, 2)]} />
+            <ComposerBannerStack
+              items={[usageLimit(null, false), approval(APPROVALS.command, 2)]}
+            />
             <AppAtomRegistryProvider>
               <ForkQueuedRunsBanner
                 environmentId={environmentId}

@@ -126,10 +126,7 @@
   --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
   /* The control row's ink as a wash: 57% white over the lift-2 vessel (#2e2e2e). */
   --fork-composer-control-ink: rgb(255 255 255 / 57%);
-  --fork-thread-composer-prompt: var(--fork-flat-glass-lift-3);
   --fork-thread-composer-card: var(--fork-flat-glass-lift-2);
-  --fork-thread-composer-line: rgb(255 255 255 / 8%);
-  --fork-thread-composer-line-focus: rgb(255 255 255 / 16%);
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the

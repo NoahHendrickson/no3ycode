@@ -44,7 +44,11 @@ import {
   type ForkSubagentLinkKind,
 } from "./forkSubagentLinkLogic";
 import { sidebarV2CardTopStatus } from "./sidebarV2CardStatus";
-import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
+import {
+  SidebarV2StatusMark,
+  SidebarV2StillMonitoringMark,
+  SidebarV2StillWorkingMark,
+} from "./SidebarV2StatusIndicator";
 
 /** Provided around assistant messages only; everything else keeps upstream's thread chip. */
 interface ForkSubagentLinkScopeValue {
@@ -167,24 +171,34 @@ export function useForkSubagentLinkText(
   return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents, streaming);
 }
 
-/** The sidebar's own mark, drawn still: nothing moves inside a message. The link's accessible
-    name carries the status, so the mark stays hidden. */
-function SubagentLinkMark(props: {
+/** The sidebar's marks, with its still glyphs for working and waiting: nothing moves inside a
+    message. The link's accessible name carries the status, so the mark stays hidden.
+    @public — Storybook draws it. */
+export function SubagentLinkMark(props: {
   readonly kind: ForkSubagentLinkKind | null;
   readonly seed: string;
 }) {
-  const status =
-    props.kind === null ? null : sidebarV2CardTopStatus(props.kind, { goalActive: false });
   return (
     <span aria-hidden className="inline-flex shrink-0">
-      <SidebarV2StatusMark status={status} seed={props.seed} idle="dot" still />
+      {props.kind === "working" ? (
+        <SidebarV2StillWorkingMark />
+      ) : props.kind === "waiting" ? (
+        <SidebarV2StillMonitoringMark />
+      ) : (
+        <SidebarV2StatusMark
+          status={sidebarV2CardTopStatus(props.kind, { goalActive: false })}
+          seed={props.seed}
+          idle="dot"
+          celebrate={false}
+        />
+      )}
     </span>
   );
 }
 
-/** True inside an assistant message, where every thread link reads as the capsule. */
-export function useForkThreadLinkCapsule(): boolean {
-  return use(ForkSubagentLinkScopeContext) !== null;
+/** The capsule inside an assistant message, where every thread link takes it; else upstream's chip. */
+export function useForkThreadLinkShape(): "capsule" | undefined {
+  return use(ForkSubagentLinkScopeContext) === null ? undefined : "capsule";
 }
 
 /** Renders `children`, the upstream chip, unless the link names a subagent in an assistant message. */

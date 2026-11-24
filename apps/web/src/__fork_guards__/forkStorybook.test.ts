@@ -22,7 +22,33 @@ function styleImports(source: string): string[] {
     .filter((path) => path.endsWith(".css") || path.startsWith("@fontsource"));
 }
 
+/** Markup StoryComposer and the composer-card stories copy from the app, so the theme sheets that
+    select on it keep reaching the stories. Each must still appear in its app source. */
+const COPIED_COMPOSER_MARKUP: ReadonlyArray<readonly [string, string]> = [
+  ['data-chat-composer-overlay="true"', "../components/ChatView.tsx"],
+  ["chat-composer-lane", "../components/ChatView.tsx"],
+  ['data-chat-composer-stack="true"', "../components/ChatView.tsx"],
+  ['data-fork-composer-stack="true"', "../components/ChatView.tsx"],
+  ['data-chat-composer-form="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-inline-resting-controls="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-fork-composer-box="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-fork-composer-surface="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-surface="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-body="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-top-drawer="true"', "../components/chat/ChatComposer.tsx"],
+];
+
 describe("fork-storybook", () => {
+  it("copies composer markup the app still renders", () => {
+    const stories =
+      read("../../../fork-storybook/stories/StoryComposer.tsx") +
+      read("../../../fork-storybook/stories/fork/ComposerCards.stories.tsx");
+    for (const [markup, source] of COPIED_COMPOSER_MARKUP) {
+      expect(stories, markup).toContain(markup);
+      expect(read(source), `${markup} in ${source}`).toContain(markup);
+    }
+  });
+
   it("loads exactly the app's stylesheets, in main.tsx's order", () => {
     const appStyles = styleImports(mainTsx).map((path) => path.replace(/^\.\//, "~/"));
     expect(appStyles.length).toBeGreaterThan(0);
@@ -45,13 +71,15 @@ describe("fork-storybook", () => {
     const appearance = read(`${storybook}appearance.ts`);
     expect(preview.indexOf('import "./appearance.ts"')).toBe(preview.indexOf("import "));
     expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${BASIC_THEME}"`);
-    expect(preview).toContain("setForkBasicTone(");
+    expect(preview).toMatch(
+      /setForkAppearance\(BASIC_THEME, setTheme\);\s*setAppearanceMode\(theme\.appearance\);/u,
+    );
     expect(preview).toContain("setForkAppearance(COOL_DARKER_THEME, setTheme)");
     expect(preview).toMatch(
       /setForkInletColor\(theme\.color, setTheme\);\s*setForkAppearance\(INLET_THEME, setTheme\);/u,
     );
     const themes = read(`${storybook}../stories/storyTheme.ts`);
-    expect(themes).toContain("BASIC_TONES.map(");
+    expect(themes).toContain("BASIC_APPEARANCES.map(");
     expect(themes).toContain("INLET_COLORS.map(");
     // Glass is a macOS 26+ window: the bridge reports sidebar Liquid Glass, and the stand-in paints
     // the app's backings, its glass token and its docked-sidebar selector, so neither side drifts.
