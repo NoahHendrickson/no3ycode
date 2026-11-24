@@ -1661,7 +1661,7 @@
     every fence in index.html, main.tsx, SettingsPanels and the Appearance
     panel that carries the palette plumbing is named after it, so the id
     stays. Westworld, Neutral Dark and Neutral Darker were retired into
-    Basic's tones (fork-basic-theme); their stored ids migrate there.
+    Basic (fork-basic-theme); their stored ids read as Basic.
 
     Basic is the default: an absent, unknown or retired id reads as Basic,
     which paints whenever upstream is on its standard theme (Light / Dark /
@@ -1702,16 +1702,11 @@
     hairlines and raised fills, 12% chips, 16% the strongest lift. The
     sidebar, header and stage are one surface separated by 8% hairlines.
 
-    Eleven tones (Figma t3-fork 729:28816 for the dark ones): Light #f7f7f7,
-    Cream #f8f3d8, and three dark depths in three temperatures. Darkest, Darker,
-    Dark: warm #1b1714, #2c2a28, #3e3c3a; cool #16181b, #202226, #2e3138;
-    neutral #171717, #232323, #2b2b2b. Darkest Warm sits a step warmer than
-    its Figma frame; Darker and Dark Warm are hand-picked values, not from
-    Figma, and run close to neutral. Dark Neutral keeps the retired Neutral
-    Dark's #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
-    changes only --basic-base (and Cream's warm text); theme.custom.basic.css
-    derives the lifts with color-mix. Surfaces that float over content
-    (menus, composer, chips) are the ink flattened over the base, so nothing
+    One tone per appearance: Light #f7f7f7 and Darker Neutral #232323. A
+    tone sets only --basic-base, on the sheet's .dark and :not(.dark) Basic
+    blocks; theme.custom.basic.css derives the lifts with color-mix.
+    Surfaces that float over content (menus, composer, chips) are the ink
+    flattened over the base, so nothing
     shows through them; hovers, selections and lines stay translucent, as
     drawn. Menus open flat on the raised fill (no frost, which belongs to
     Glass), and so do dialogs, the command palette, toasts, the web context
@@ -1720,16 +1715,14 @@
     (Settings groups, Usage, Automations) take the same 8px corners and 8% line,
     and every tab strip draws the Figma tabs (fork-tabs).
 
-    Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
-    -light, stamped as data-fork-basic-tone), so under System it follows the
-    OS between them. Picking a tone on the other appearance moves the mode;
-    picking one on the current appearance does not. Westworld migrates to
-    Dark Cool, Neutral Dark to Dark Neutral, Neutral Darker to Darkest Neutral;
-    the retired dark tones Neutral Dark, Cool Dark and Darker move the same way.
+    Upstream's light/dark mode picks the tone, so under System Basic follows
+    the OS; Basic stores no tone of its own. Retired values fall back to the
+    appearance's tone: a retired palette id reads as Basic, and a stored tone
+    from before the cut is never read.
     Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
     (custom/ForkThemePicker.tsx) with the picked theme's own rows below:
-    Basic's tone swatches, Inlet's colour, Glass's picture and depth.
-    index.html pre-paints the tone's base.
+    Basic's new agent background, Inlet's colour, Glass's picture and depth.
+    index.html pre-paints the appearance's base.
     Header rows (workspace, panels, tab strip, sidebar) are 44px rather than 52,
     and the desktop moves the macOS window buttons onto that axis over the fork's
     own bridge (forkDesktopBridge.setTopbarHeight, desktop fork/ForkTopbarHeight);
@@ -1755,7 +1748,7 @@
     Jolly Petal (assets/basic-new-agent-jolly-petal.png), both opaque and
     still, cover the column centred, at the smallest whole-device-pixel cell
     that covers it. Restore defaults resets the pick.
-    Light and Cream keep the fork's composer geometry, which other light builds
+    Light keeps the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
@@ -1794,9 +1787,11 @@
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/ChatView.tsx
+    - apps/web/src/themeBoot.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
+    - apps/web/src/themeBoot.test.ts
     - apps/web/src/custom/basicNewAgentDither.test.ts
     - apps/web/src/custom/ditherLight.test.ts
 
@@ -8134,14 +8129,15 @@
 
 - id: fork-storybook
   intent: >
-    apps/fork-storybook is the fork's component library for the Basic theme: a
-    Storybook that renders the app's real components (apps/web/src through the
-    override tree, never copies). Its preview stores Basic before any app module
-    loads, loads exactly main.tsx's stylesheets in main.tsx's order, runs
-    main.tsx's theme startup (applyForkMarker, initializeForkTheme,
-    initializeForkGlass3d, installInletMenuMorph), and offers every theme in the
-    toolbar (Basic's tones, Glass, Inlet's colours), moved through
-    setForkBasicTone / setForkAppearance / setForkInletColor as Settings ›
+    apps/fork-storybook is the fork's component library: a Storybook that renders
+    the app's real components (apps/web/src through the override tree, never
+    copies). Its preview stores Basic before any app module loads, loads exactly
+    main.tsx's stylesheets in main.tsx's order, runs main.tsx's theme startup
+    (applyForkMarker, initializeForkTheme, initializeForkGlass3d,
+    installInletMenuMorph), and offers every theme in the toolbar, opening on
+    Flat Glass (glass_off), the primary theme, with Basic's two tones, Glass 3D
+    and Inlet's colours a pick away, moved through
+    setForkAppearance / setAppearanceMode / setForkInletColor as Settings ›
     Appearance moves them. Glass stands in a desktop bridge that reports the
     window material (appearance.ts) as macOS 26+ sidebar Liquid Glass, and paints
     the window backing and the app's --fork-liquid-glass-sidebar where the docked

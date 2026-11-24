@@ -3,7 +3,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useArgs } from "storybook/preview-api";
 
 import { ForkThemePicker } from "~/custom/ForkThemePicker";
-import { BASIC_TONES, DEFAULT_INLET_COLOR, FORK_PALETTES, INLET_COLORS } from "~/custom/forkTheme";
+import {
+  BASIC_APPEARANCES,
+  DEFAULT_INLET_COLOR,
+  FORK_PALETTES,
+  INLET_COLORS,
+} from "~/custom/forkTheme";
 
 type PickerProps = ComponentProps<typeof ForkThemePicker>;
 
@@ -14,13 +19,13 @@ const meta = {
   parameters: { surface: "page" },
   args: {
     value: FORK_PALETTES[0],
-    basicTone: BASIC_TONES[0],
+    basicAppearance: "light",
     inletColor: DEFAULT_INLET_COLOR,
     onChange: () => {},
   },
   argTypes: {
     value: { control: "select", options: FORK_PALETTES },
-    basicTone: { control: "select", options: BASIC_TONES },
+    basicAppearance: { control: "select", options: BASIC_APPEARANCES },
     inletColor: { control: "select", options: INLET_COLORS },
   },
   decorators: [(Story) => <div className="w-[640px]">{Story()}</div>],
@@ -29,8 +34,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Settings › Appearance's theme cards: a wireframe of each palette, in the tone or colour picked
-    for it. Picking a card moves the `value` control. */
+/** Settings › Appearance's theme cards: a wireframe of each palette, Basic at the appearance
+    shown and Inlet in its colour. Picking a card moves the `value` control. */
 export const Playground: Story = {
   render: function Render(args) {
     const [, updateArgs] = useArgs<PickerProps>();

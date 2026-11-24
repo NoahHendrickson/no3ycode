@@ -90,6 +90,11 @@ function runBootScript(options: {
         if (options.storageThrows) throw new Error("storage blocked");
         return options.storage?.[key] ?? null;
       },
+      /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
+      setItem: (key: string, value: string) => {
+        if (options.storage) options.storage[key] = value;
+      },
+      /* fork:end fork-cool-dark-theme */
     },
     matchMedia: () => ({ matches: options.prefersDark }),
   };
@@ -440,6 +445,43 @@ describe("index.html boot script", () => {
     }
   });
   /* fork:end fork-inlet-theme */
+
+  /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
+  it("paints Basic at the appearance's tone, whatever retired value is stored", () => {
+    const stale = [
+      {},
+      { "t3code:fork-basic-tone-dark": "dark-neutral", "t3code:fork-basic-tone-light": "cream" },
+      { "t3code:fork-basic-tone-dark": "light", "t3code:fork-basic-tone-light": "darker-neutral" },
+      { "t3code:fork-theme": "neutral-darker" },
+      { "t3code:fork-theme": "darkest-warm", "t3code:fork-basic-tone-dark": "darkest-warm" },
+      { "t3code:fork-theme": "__proto__" },
+    ];
+    for (const [prefersDark, base] of [
+      [true, "#232323"],
+      [false, "#f7f7f7"],
+    ] as const) {
+      for (const stored of stale) {
+        const boot = runBootScript({
+          storage: { [THEME_STORAGE_KEY]: "system", ...stored },
+          prefersDark,
+        });
+        const label = `${JSON.stringify(stored)} prefersDark=${prefersDark}`;
+        expect(boot.isDark, label).toBe(prefersDark);
+        expect(boot.forkAttributes.get("data-fork-theme"), label).toBe("basic");
+        expect(boot.backgroundColor, label).toBe(base);
+        expect(boot.metaContent, label).toBe(base);
+      }
+    }
+
+    // Westworld, from when it lived in the upstream key, paints as dark Basic.
+    const storage: Record<string, string> = { [THEME_STORAGE_KEY]: "cool-dark" };
+    const westworld = runBootScript({ storage, prefersDark: false });
+    expect(westworld.isDark).toBe(true);
+    expect(westworld.forkAttributes.get("data-fork-theme")).toBe("basic");
+    expect(westworld.backgroundColor).toBe("#232323");
+    expect(storage).toEqual({ [THEME_STORAGE_KEY]: "dark", "t3code:fork-theme": "basic" });
+  });
+  /* fork:end fork-basic-theme */
 
   it("follows the OS appearance when storage is unavailable", () => {
     const light = runBootScript({ storageThrows: true, prefersDark: false });
