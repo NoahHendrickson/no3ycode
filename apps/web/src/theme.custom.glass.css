@@ -208,8 +208,8 @@
     ol:has([data-slot="workspace-breadcrumb-text"]),
     ol:has([data-slot="workspace-breadcrumb-text"]) *
   ) {
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  color: var(--fork-white);
+  text-shadow: 0 1px 2px var(--fork-black-45);
 }
 
 /* Around the card, the stage is the sidebar's own colour, so the panel and
@@ -282,7 +282,7 @@
   ).dark[data-fork-theme="cool-darker"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-chat-provider-model-picker-traits] {
-  color: rgb(255 255 255 / 65%);
+  color: var(--fork-white-65);
 }
 
 /* The frost. The blur is baked, not filtered: a backdrop-filter cannot do
@@ -577,16 +577,23 @@
   )[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   body
   .dropdown-glass[data-fork-glass-frost] {
-  isolation: isolate;
-  overflow: clip;
-  overflow-clip-margin: border-box;
-  outline: 1px solid rgb(255 255 255 / 12%);
-  outline-offset: -1px;
-  background: var(--fork-glass-frost-floor);
   --fork-glass-frost-wash: rgb(255 255 255 / 5%);
   --fork-glass-frost-veil: 50%;
   --fork-glass-frost-veil-color: rgb(12 12 14);
   --fork-glass-frost-image: url("./custom/assets/glass-hero-popup-frost.png");
+}
+
+:root[data-fork="noahhendrickson-t3code"]:where(
+    :not([data-fork-glass-picture="off"])
+  )[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
+  body
+  .dropdown-glass[data-fork-glass-frost] {
+  isolation: isolate;
+  overflow: clip;
+  overflow-clip-margin: border-box;
+  outline: 1px solid var(--fork-white-12);
+  outline-offset: -1px;
+  background: var(--fork-glass-frost-floor);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:where(

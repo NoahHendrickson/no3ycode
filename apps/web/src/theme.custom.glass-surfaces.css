@@ -180,8 +180,8 @@
     border-radius: inherit;
     box-shadow:
       var(--fork-glass-light),
-      inset 0 14px 16px -8px rgb(255 255 255 / 3%),
-      inset 0 -14px 16px -8px rgb(255 255 255 / 3%);
+      inset 0 14px 16px -8px var(--fork-white-3),
+      inset 0 -14px 16px -8px var(--fork-white-3);
     pointer-events: none;
   }
 
@@ -203,9 +203,13 @@
     --fork-composer-send-pool: oklch(
       from var(--fork-popup-glass-floor, rgb(22 22 22)) 0.72 calc(c * 3) calc(h + 50)
     );
+  }
+
+  &.dark[data-fork-theme="cool-darker"]
+    [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
     background-color: rgb(from var(--fork-composer-action-light) r g b / 18%);
     background-image:
-      linear-gradient(150deg, rgb(255 255 255 / 20%), rgb(255 255 255 / 0%) 4%),
+      linear-gradient(150deg, var(--fork-white-20), var(--fork-white-0) 4%),
       linear-gradient(
         150deg,
         rgb(from var(--fork-composer-send-streak) r g b / 90%),
@@ -216,15 +220,18 @@
         rgb(from var(--fork-composer-send-pool) r g b / 90%),
         rgb(from var(--fork-composer-send-pool) r g b / 0%)
       );
-    color: #ffffff;
+    color: var(--fork-white);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-composer-action="stop"] {
     --fork-composer-action-glint: rgb(255 72 72);
     --fork-composer-action-light: rgb(255 72 72);
     --fork-composer-action-shade: rgb(234 49 49);
-    background: rgb(234 49 80 / 48%);
-    color: #ffffff;
+  }
+
+  &.dark[data-fork-theme="cool-darker"] [data-fork-composer-action="stop"] {
+    background: var(--fork-glass-stop-fill);
+    color: var(--fork-white);
   }
 
   &.dark[data-fork-theme="cool-darker"]
@@ -252,11 +259,11 @@
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-composer-action="stop"]:hover:not(:disabled) {
-    background: rgb(234 49 80 / 56%);
+    background: var(--fork-glass-stop-fill-hover);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-composer-action="stop"]:active:not(:disabled) {
-    background: rgb(234 49 80 / 40%);
+    background: var(--fork-glass-stop-fill-pressed);
   }
 
   /* The strip clips on x (upstream's label-collapse overflow) and the fork
@@ -280,7 +287,7 @@
   &.dark[data-fork-theme="cool-darker"] [data-slot="sidebar-footer"] {
     & [data-fork-music-strip] {
       box-shadow:
-        0 12px 32px -18px rgb(0 0 0 / 45%),
+        0 12px 32px -18px var(--fork-black-45),
         var(--fork-glass-rim);
     }
 
@@ -354,7 +361,7 @@
        drop shadow beside the halo and sheens. */
     &:is([data-fork-sidebar-vibrancy="true"] *) {
       box-shadow:
-        0 2px 16px rgb(0 0 0 / 25%),
+        0 2px 16px var(--fork-black-25),
         var(--fork-glass-halo),
         var(--fork-glass-sheen);
     }
@@ -391,9 +398,9 @@
       border-radius: inherit;
       background: linear-gradient(
         to bottom,
-        rgb(255 255 255 / 22%),
-        rgb(255 255 255 / 0%) 8px calc(100% - 8px),
-        rgb(255 255 255 / 10%)
+        var(--fork-white-22),
+        var(--fork-white-0) 8px calc(100% - 8px),
+        var(--fork-white-10)
       );
       box-shadow: none;
       mask:
@@ -447,9 +454,9 @@
     [data-thread-details-card][data-fork-glass-rim].dropdown-glass::before {
     background: linear-gradient(
       to bottom,
-      rgb(255 255 255 / 32%),
-      rgb(255 255 255 / 0%) 8px calc(100% - 8px),
-      rgb(255 255 255 / 16%)
+      var(--fork-white-32),
+      var(--fork-white-0) 8px calc(100% - 8px),
+      var(--fork-white-16)
     );
   }
 
@@ -657,7 +664,7 @@
     )
     [data-sidebar-version="v2"]
     :is([data-thread-item] > [aria-current="page"], [data-fork-chrome-row][data-active="true"]) {
-    background-color: rgb(255 255 255 / 6%);
+    background-color: var(--fork-white-6);
   }
 
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
@@ -712,7 +719,7 @@
   &[data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
     :is([data-fork-thread-tabs], [data-fork-sidebar-mode-tabs])
     :is([data-fork-thread-tab][data-active="true"], [data-fork-segmented-tab][data-pressed]) {
-    background-color: rgb(255 255 255 / 6%);
+    background-color: var(--fork-white-6);
   }
 
   /* Every tab's provider mark sits on a glass disc, concentric with the tab's
@@ -729,25 +736,28 @@
       width: calc(var(--spacing) * 5);
       height: calc(var(--spacing) * 5);
       border-radius: var(--fork-pill-radius);
-      background-color: rgb(255 255 255 / 12%);
+      background-color: var(--fork-white-12);
       background-image: linear-gradient(
         to bottom,
-        rgb(255 255 255 / 14%),
-        rgb(255 255 255 / 0%) 55%,
-        rgb(0 0 0 / 8%)
+        var(--fork-white-14),
+        var(--fork-white-0) 55%,
+        var(--fork-black-8)
       );
       box-shadow:
-        0 1px 3px rgb(0 0 0 / 35%),
-        0 0 0 0.5px rgb(0 0 0 / 30%),
-        inset 0 0.5px 0 rgb(255 255 255 / 40%),
-        inset 0 -0.5px 0 rgb(255 255 255 / 14%),
-        inset 0 0 3px rgb(255 255 255 / 10%);
+        0 1px 3px var(--fork-black-35),
+        0 0 0 0.5px var(--fork-black-30),
+        inset 0 0.5px 0 var(--fork-white-40),
+        inset 0 -0.5px 0 var(--fork-white-14),
+        inset 0 0 3px var(--fork-white-10);
     }
 
     & [data-fork-tab-provider-mark="branded"] {
       --fork-mark-ink: #fff;
       --fork-mark-cutout: rgb(0 0 0 / 0%);
       --fork-mark-size: calc(var(--spacing) * 3);
+    }
+
+    & [data-fork-tab-provider-mark="branded"] {
       background-color: rgb(from var(--fork-tab-mark-brand) r g b / 72%);
     }
   }
@@ -836,7 +846,7 @@
      a white wash under the soft halo and the glass light, in place of the
      segment's flat raise. */
   &.dark[data-fork-theme="cool-darker"] [data-fork-model-traits] button[aria-pressed="true"] {
-    background-color: rgb(255 255 255 / 16%);
+    background-color: var(--fork-white-16);
     box-shadow:
       var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
       var(--fork-glass-halo-soft), var(--fork-glass-light);
@@ -851,9 +861,12 @@
     --fork-effort-thumb-pool: oklch(
       from var(--fork-popup-glass-floor, rgb(22 22 22)) 0.72 calc(c * 3) calc(h + 50)
     );
+  }
+
+  &.dark[data-fork-theme="cool-darker"] [data-fork-model-traits] [data-fork-effort-thumb] {
     background-color: rgb(from var(--fork-composer-action-light) r g b / 18%);
     background-image:
-      linear-gradient(150deg, rgb(255 255 255 / 20%), rgb(255 255 255 / 0%) 4%),
+      linear-gradient(150deg, var(--fork-white-20), var(--fork-white-0) 4%),
       linear-gradient(
         150deg,
         rgb(from var(--fork-effort-thumb-streak) r g b / 90%),

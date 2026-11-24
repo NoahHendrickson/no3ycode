@@ -71,6 +71,13 @@
   --fork-glass-card-inset: 8px;
   --fork-glass-card-inset-left: var(--fork-glass-card-inset);
   --fork-glass-card-radius: 12px;
+  /* The red stop button's fill at rest, hovered and pressed. */
+  --fork-glass-stop-fill: rgb(234 49 80 / 48%);
+  --fork-glass-stop-fill-hover: rgb(234 49 80 / 56%);
+  --fork-glass-stop-fill-pressed: rgb(234 49 80 / 40%);
+  /* The docked sidebar's edge on desktop glass, and over a light picture. */
+  --fork-glass-sidebar-edge: rgb(64 64 64 / 60%);
+  --fork-glass-sidebar-edge-light: rgb(210 210 210 / 42%);
 }
 
 /* Short of Full 3D (custom/forkGlass3d.ts) there is no card for the
@@ -912,7 +919,7 @@
    keeps them the same colour for exactly that reason. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-changed-files-state] {
-  background: rgb(255 255 255 / 5%);
+  background: var(--fork-white-5);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
@@ -926,7 +933,7 @@
    wallpaper. Same 5% wash as the changed-files card; nothing nests in them. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scheduled-card] {
-  background-color: rgb(255 255 255 / 5%);
+  background-color: var(--fork-white-5);
 }
 
 /* The user's sent bubble shares the card's fill (theme.custom.css paints
@@ -937,7 +944,7 @@
    so the :where() note below does not apply. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   .bg-message {
-  background-color: rgb(255 255 255 / 5%);
+  background-color: var(--fork-white-5);
 }
 
 /* Every other card in the stage, by class for the reason the `.bg-background`
@@ -985,7 +992,7 @@
         :is([data-slot="sidebar-inset"], [data-app-modal])
     )
     :is(.bg-card, .bg-card\/40) {
-    background-color: rgb(255 255 255 / 5%);
+    background-color: var(--fork-white-5);
   }
 }
 
@@ -1013,7 +1020,7 @@
       [data-slot$="popup"]
       :is(button, a):not([data-slot="toggle"], .text-destructive-foreground)
   ).dark\:bg-input\/32 {
-    border-color: rgb(255 255 255 / 0%);
+    border-color: var(--fork-white-0);
   }
 
   :where(
@@ -1161,8 +1168,8 @@
   background:
     linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg)),
     var(--fork-glass-stage);
-  border-color: rgb(255 255 255 / 8%);
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  border-color: var(--fork-white-8);
+  box-shadow: 0 2px 16px var(--fork-black-25);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -1181,7 +1188,7 @@
   [data-thread-details-panel="inline"]
   > [data-thread-details-card].dropdown-glass {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -1196,11 +1203,11 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-fork-split-pane="floating"] {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
   /* The hole below is drawn with this radius; keep the two together. */
   /* design-lint-disable-next-line A2 -- the hole is an SVG rx="14" in a mask url, which cannot read a token */
   border-radius: 14px;
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  box-shadow: 0 2px 16px var(--fork-black-25);
 }
 
 /* floatWindow writes these on every pane behind the window per drag frame, in
@@ -1290,7 +1297,7 @@
   background:
     linear-gradient(var(--fork-context-chip-bg), var(--fork-context-chip-bg)),
     var(--fork-popup-glass-floor);
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
 }
 
 /* The composer's context strip is surface-glass too (upstream #34846), but the
@@ -1307,7 +1314,7 @@
   background:
     linear-gradient(var(--fork-context-chip-bg-hover), var(--fork-context-chip-bg-hover)),
     var(--fork-popup-glass-floor);
-  border-color: rgb(255 255 255 / 12%);
+  border-color: var(--fork-white-12);
 }
 
 /* Once its hole is cut (fork-glass-scroll-pill), the scroll-to-end pill wears
@@ -1316,13 +1323,13 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scroll-to-end][data-fork-hole-cut].surface-glass {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
 }
 
 /* The button's focus ring is a box-shadow too. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scroll-to-end][data-fork-hole-cut].surface-glass:not(:focus-visible) {
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  box-shadow: 0 2px 16px var(--fork-black-25);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
@@ -1330,7 +1337,7 @@
   background:
     linear-gradient(var(--fork-pill-hover), var(--fork-pill-hover)),
     linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 12%);
+  border-color: var(--fork-white-12);
 }
 
 /* Glass turns on the cutoff mask's third layer (theme.custom.css). */
@@ -1426,6 +1433,9 @@
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
     --accent: var(--fork-composer-control-hover);
     --contrast-accent-foreground: #fff;
+  }
+
+  & [data-fork-draft-launchpad-card] {
     background: var(--fork-glass-picture-tint);
     border-color: var(--fork-composer-border);
   }
@@ -1436,11 +1446,11 @@
       [data-fork-composer-action="dictate"],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
-    color: #fff;
+    color: var(--fork-white);
   }
 
   & [data-chat-provider-model-picker-traits] {
-    color: rgb(255 255 255 / 70%);
+    color: var(--fork-white-70);
   }
 }
 
@@ -1449,7 +1459,7 @@
   body
   .dropdown-glass[data-fork-glass-over-picture] {
   background: var(--fork-glass-picture-menu-tint);
-  border-color: rgb(255 255 255 / 18%);
+  border-color: var(--fork-white-18);
   -webkit-backdrop-filter: var(--fork-glass-picture-blur);
   backdrop-filter: var(--fork-glass-picture-blur);
 }
@@ -1682,7 +1692,7 @@
    neighbouring column, and it is the panel's only edge. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(64 64 64 / 60%);
+  border-color: var(--fork-glass-sidebar-edge);
 }
 
 /* Over a bright new-agent picture on flat/selection Glass, 60% #404040 lands
@@ -1690,7 +1700,7 @@
    vanishes. Lift the seam so the sidebar/stage divider reads clearly. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-glass-picture="off"][data-fork-draft-hero-shown].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(210 210 210 / 42%);
+  border-color: var(--fork-glass-sidebar-edge-light);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1782,7 +1792,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(255 255 255 / 16%);
+  border-color: var(--fork-white-16);
 }
 
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
@@ -1805,7 +1815,7 @@
   gap: calc(var(--spacing) * 0.5);
   padding: calc(var(--spacing) * 0.5);
   border-radius: var(--radius-lg);
-  background-color: rgb(255 255 255 / 8%);
+  background-color: var(--fork-white-8);
 
   & > * {
     border-radius: var(--radius-md);
@@ -1816,16 +1826,16 @@
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
-      background-color: rgb(255 255 255 / 4%);
+      background-color: var(--fork-white-4);
     }
 
     &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
-      background-color: rgb(255 255 255 / 0%);
+      background-color: var(--fork-white-0);
     }
 
     &[data-pressed] {
-      border-color: rgb(255 255 255 / 8%);
-      background-color: rgb(255 255 255 / 12%);
+      border-color: var(--fork-white-8);
+      background-color: var(--fork-white-12);
     }
 
     &:focus-visible {
@@ -1838,7 +1848,7 @@
   }
 
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+    box-shadow: inset 0 0 0 1px var(--fork-white-8);
   }
 }
 
@@ -1868,9 +1878,9 @@
   z-index: 1;
   pointer-events: none;
   box-shadow:
-    inset 0 -4px 16px rgb(255 255 255 / 25%),
-    inset 0 8px 8px rgb(255 255 255 / 12%),
-    inset 0 1px 2px rgb(255 255 255 / 50%);
+    inset 0 -4px 16px var(--fork-white-25),
+    inset 0 8px 8px var(--fork-white-12),
+    inset 0 1px 2px var(--fork-white-50);
   opacity: 0;
   transition: opacity 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -1914,13 +1924,13 @@
       inset: 0;
       z-index: 2;
       border-radius: inherit;
-      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+      box-shadow: inset 0 0 0 1px var(--fork-white-16);
       pointer-events: none;
     }
   }
 
   & [data-fork-composer-box] .text-placeholder {
-    color: rgb(255 255 255 / 50%);
+    color: var(--fork-white-50);
   }
 
   &
@@ -1930,7 +1940,7 @@
       [data-chat-provider-model-picker-traits],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
-    color: #ffffff;
+    color: var(--fork-white);
   }
 
   & [data-fork-draft-launchpad-card] {
@@ -1942,8 +1952,11 @@
     --contrast-icon-muted: rgb(255 255 255 / 65%);
     --accent: rgb(255 255 255 / 10%);
     --contrast-accent-foreground: #ffffff;
-    background: rgb(0 0 0 / 16%);
-    border-color: rgb(255 255 255 / 16%);
+  }
+
+  & [data-fork-draft-launchpad-card] {
+    background: var(--fork-black-16);
+    border-color: var(--fork-white-16);
   }
 }
 
@@ -2010,6 +2023,11 @@
   .dropdown-glass[data-fork-draft-glass-popup="true"] {
   --contrast-muted-foreground: rgb(255 255 255 / 72%);
   --contrast-border: rgb(255 255 255 / 14%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  body
+  .dropdown-glass[data-fork-draft-glass-popup="true"] {
   /* The page is cut away beneath it (forkGlassPopupCutout.ts), so the native card is the menu. */
   background: transparent;
   border-color: transparent;

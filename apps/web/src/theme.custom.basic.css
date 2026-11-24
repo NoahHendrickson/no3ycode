@@ -22,6 +22,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
+  --fork-basic-switch-on: oklch(59.6% 0.145 163.225);
   --basic-lift-1: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-base));
   --basic-lift-2: color-mix(in srgb, var(--basic-ink) 8%, var(--basic-base));
   --basic-lift-3: color-mix(in srgb, var(--basic-ink) 12%, var(--basic-base));
@@ -276,11 +277,11 @@
    rather than half-way; aria-checked="mixed" still tells a screen reader. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="switch"] {
   &[data-checked] {
-    background-color: oklch(59.6% 0.145 163.225);
+    background-color: var(--fork-basic-switch-on);
   }
 
   & > [data-slot="switch-thumb"] {
-    background-color: #fff;
+    background-color: var(--fork-white);
   }
 
   &[data-mixed] > [data-slot="switch-thumb"] {
@@ -344,7 +345,7 @@
 /* The effort knob is edged in 16% black on every tone. The light tones keep upstream's
    page-coloured fill and drop its shadow, so the edge alone holds it against a light menu. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-effort-thumb] {
-  border: 1px solid rgb(0 0 0 / 16%);
+  border: 1px solid var(--fork-black-16);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)

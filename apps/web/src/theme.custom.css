@@ -779,7 +779,46 @@
   --fork-composer-border-focus: var(--ring);
 }
 
+/* White and black at fixed opacities: the washes, rims and shadows the palettes lay over
+   whatever is beneath, named by their alpha as the Figma kit names them. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-white: #ffffff;
+  --fork-white-0: rgb(255 255 255 / 0%);
+  --fork-white-3: rgb(255 255 255 / 3%);
+  --fork-white-4: rgb(255 255 255 / 4%);
+  --fork-white-5: rgb(255 255 255 / 5%);
+  --fork-white-6: rgb(255 255 255 / 6%);
+  --fork-white-8: rgb(255 255 255 / 8%);
+  --fork-white-10: rgb(255 255 255 / 10%);
+  --fork-white-12: rgb(255 255 255 / 12%);
+  --fork-white-14: rgb(255 255 255 / 14%);
+  --fork-white-16: rgb(255 255 255 / 16%);
+  --fork-white-18: rgb(255 255 255 / 18%);
+  --fork-white-20: rgb(255 255 255 / 20%);
+  --fork-white-22: rgb(255 255 255 / 22%);
+  --fork-white-25: rgb(255 255 255 / 25%);
+  --fork-white-28: rgb(255 255 255 / 28%);
+  --fork-white-32: rgb(255 255 255 / 32%);
+  --fork-white-40: rgb(255 255 255 / 40%);
+  --fork-white-50: rgb(255 255 255 / 50%);
+  --fork-white-65: rgb(255 255 255 / 65%);
+  --fork-white-70: rgb(255 255 255 / 70%);
+  --fork-black: #000000;
+  --fork-black-8: rgb(0 0 0 / 8%);
+  --fork-black-16: rgb(0 0 0 / 16%);
+  --fork-black-18: rgb(0 0 0 / 18%);
+  --fork-black-20: rgb(0 0 0 / 20%);
+  --fork-black-25: rgb(0 0 0 / 25%);
+  --fork-black-28: rgb(0 0 0 / 28%);
+  --fork-black-30: rgb(0 0 0 / 30%);
+  --fork-black-32: rgb(0 0 0 / 32%);
+  --fork-black-35: rgb(0 0 0 / 35%);
+  --fork-black-45: rgb(0 0 0 / 45%);
+}
+
 :root[data-fork="noahhendrickson-t3code"].dark {
+  /* The control ink's 65% white flattened onto black, where a palette sets none. */
+  --fork-composer-control-ink-flat: #a6a6a6;
   /* Vessel is the outer floor under the control row; the prompt surface sits
      a step lighter on top with its own hairline. Both resolve through the
      fork palette — not the Figma hexes. */
@@ -1018,7 +1057,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: var(--fork-composer-control-ink, #a6a6a6);
+  color: var(--fork-composer-control-ink, var(--fork-composer-control-ink-flat));
 }
 
 /* Icon-only: upstream's label stays for screen readers, and the icon reads in the chip's ink
@@ -1134,7 +1173,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-model-controls]
   [data-chat-provider-model-picker-label] {
-  color: #ffffff;
+  color: var(--fork-white);
 }
 
 /* Attach, send and stop are 28px, centred in the 32px slot so the prompt row's bottom line
@@ -1161,7 +1200,7 @@
 
 :root[data-fork="noahhendrickson-t3code"].dark
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]) {
-  color: var(--fork-composer-control-ink, #a6a6a6);
+  color: var(--fork-composer-control-ink, var(--fork-composer-control-ink-flat));
 }
 
 /* Beside send, the mic is attach's mirror: 28px in its slot, pulled in from the cluster's 8px.
@@ -1212,7 +1251,10 @@
    opacity. */
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-action="dictate-cancel"] {
   --control-icon-color: #ffffff;
-  color: #ffffff;
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-action="dictate-cancel"] {
+  color: var(--fork-white);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1230,8 +1272,8 @@
    and fall through to upstream's primary fill. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
-  background: #ffffff;
-  color: #000000;
+  background: var(--fork-white);
+  color: var(--fork-black);
   box-shadow: none;
 }
 
@@ -1256,7 +1298,7 @@
 /* In dark the stop square is pure white; light keeps the foreground ink. */
 :root[data-fork="noahhendrickson-t3code"].dark
   :is([data-fork-composer-action="stop"], [data-fork-composer-action="stop"]:hover:not(:disabled)) {
-  color: white;
+  color: var(--fork-white);
 }
 
 /* The mode controls carry leading and interleaved vertical rules, which earned
@@ -1414,7 +1456,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: #ffffff;
+  color: var(--fork-white);
 }
 
 /* Basic's light tones ink them in the foreground, as dark does in white: a locked
@@ -1650,7 +1692,7 @@
   [data-fork-sidebar-overlay="true"]
   [data-slot="sidebar"][data-state="expanded"]
   [data-slot="sidebar-container"] {
-  box-shadow: 0 0 24px rgb(0 0 0 / 0.28);
+  box-shadow: 0 0 24px var(--fork-black-28);
 }
 
 /* ── Composited sidebar slide (sidebar-offcanvas-compositing) ─────────────────
@@ -1767,8 +1809,8 @@
   border: 1px solid var(--fork-peek-edge);
   border-radius: inherit;
   box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.32),
-    0 2px 8px rgb(0 0 0 / 0.2);
+    0 12px 32px var(--fork-black-32),
+    0 2px 8px var(--fork-black-20);
   pointer-events: none;
   /* Everything but the edge under the tail's base and the shadow under the
      tail itself, which would darken a translucent tail. */
@@ -2096,14 +2138,14 @@
    No `will-change` (would pin a layer for every monitoring row). Offscreen
    rows pay nothing via `content-visibility: auto` on the li. */
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-monitoring-pulse] {
-  background-color: #ffffff;
+  background-color: var(--fork-white);
   opacity: 0.5;
   contain: paint;
   animation: sidebar-v2-monitoring-pulse 4s infinite;
 }
 
 :root[data-fork="noahhendrickson-t3code"]:not(.dark) [data-fork-monitoring-pulse] {
-  background-color: #000000;
+  background-color: var(--fork-black);
   opacity: 0.5;
   contain: paint;
   animation: sidebar-v2-monitoring-pulse 4s infinite;
@@ -2639,7 +2681,7 @@
   & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
     border-color: transparent;
     background: var(--fork-question-accent);
-    color: white;
+    color: var(--fork-white);
   }
 
   /* The queue card follows the iOS one: a 40px header and 40px rows that run edge to edge,
@@ -3017,7 +3059,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-dictation-live] {
-  color: #ffffff;
+  color: var(--fork-white);
 }
 
 /* Live words share the prompt's scrollport, at every width. */
@@ -3183,7 +3225,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-changed-files-state]
   > :not([data-changed-files-header]) {
-  background: rgb(255 255 255 / 4%);
+  background: var(--fork-white-4);
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream
@@ -3312,8 +3354,8 @@
   background-color: var(--sidebar-row-active);
   color: var(--sidebar-foreground);
   box-shadow:
-    0 10px 24px -6px rgb(0 0 0 / 0.35),
-    0 2px 6px rgb(0 0 0 / 0.18);
+    0 10px 24px -6px var(--fork-black-35),
+    0 2px 6px var(--fork-black-18);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-split-dragging] {
