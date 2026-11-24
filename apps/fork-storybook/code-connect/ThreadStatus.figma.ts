@@ -14,6 +14,7 @@ const status = figma.selectedInstance.getEnum("Status", {
   "Working · Bead 1": "working",
   "Working · Bead 2": "working",
   "Working · Bead 3": "working",
+  "Working · Still": "still",
   Failed: "failed",
   Monitoring: "monitoring",
   "Needs approval": "approval",
@@ -22,11 +23,12 @@ const status = figma.selectedInstance.getEnum("Status", {
   "Idle · dot": "dot",
   Draft: "draft",
 });
-const kinded = status !== undefined && !["idle", "dot", "draft"].includes(status);
-const statusProp = kinded
-  ? `{sidebarV2CardTopStatus("${status}", { goalActive: false })}`
-  : "{null}";
-const idle = status === "dot" || status === "draft" ? ` idle="${status}"` : "";
+// Working · Still is the working mark drawn without motion, as status chips inside a message use it.
+const still = status === "still";
+const kind = still ? "working" : status;
+const kinded = kind !== undefined && !["idle", "dot", "draft"].includes(kind);
+const statusProp = kinded ? `{sidebarV2CardTopStatus("${kind}", { goalActive: false })}` : "{null}";
+const idle = status === "dot" || status === "draft" ? ` idle="${status}"` : still ? " still" : "";
 
 export default {
   example: figma.tsx`<SidebarV2StatusMark status=${statusProp} seed={threadKey}${idle} />`,
