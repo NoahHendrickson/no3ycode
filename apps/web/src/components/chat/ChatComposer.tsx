@@ -4384,10 +4384,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                                 ? gt("Choose an option above")
                                 : activePendingProgress.activeQuestion?.options.length === 0
                                   ? gt("Type your answer")
-                                  : gt(
-                                      "Type your own answer, or leave this blank to use the selected option",
-                                    )
-                              : projectSelectionRequired
+                                  : /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+                                    // One line, so it never wraps beside the composer's controls.
+                                    /* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */
+                                    "Or type your own answer"
+                              : /* fork:end fork-pending-user-input */
+                                projectSelectionRequired
                                 ? /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
                                   // The fork's project list sits under the composer, not above it.
                                   /* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */
