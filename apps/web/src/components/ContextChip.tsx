@@ -44,7 +44,7 @@ const contextChipVariants = cva(
         /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
         capsule:
           // oxlint-disable-next-line shadcn/no-arbitrary-values -- em insets scale the capsule with the prose it sits in
-          "gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] text-foreground no-underline [--context-chip-ink:currentColor]",
+          "gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] font-normal text-foreground no-underline [--context-chip-ink:currentColor]",
         /* fork:end no3y-subagent-link-chip */
       },
       state: {

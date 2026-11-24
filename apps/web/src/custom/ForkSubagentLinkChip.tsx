@@ -167,8 +167,8 @@ export function useForkSubagentLinkText(
   return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents, streaming);
 }
 
-/** The sidebar's own mark, live: working animates as it does there. The link's accessible name
-    carries the status, so the mark stays hidden. */
+/** The sidebar's own mark, drawn still: nothing moves inside a message. The link's accessible
+    name carries the status, so the mark stays hidden. */
 function SubagentLinkMark(props: {
   readonly kind: ForkSubagentLinkKind | null;
   readonly seed: string;
@@ -177,7 +177,7 @@ function SubagentLinkMark(props: {
     props.kind === null ? null : sidebarV2CardTopStatus(props.kind, { goalActive: false });
   return (
     <span aria-hidden className="inline-flex shrink-0">
-      <SidebarV2StatusMark status={status} seed={props.seed} idle="dot" />
+      <SidebarV2StatusMark status={status} seed={props.seed} idle="dot" still />
     </span>
   );
 }

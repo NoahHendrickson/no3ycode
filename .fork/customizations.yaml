@@ -8788,9 +8788,10 @@
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
-    sidebar's mark in its colour, drawn by the sidebar's own SidebarV2StatusMark (working mark,
-    animating as in the sidebar; dot for done or failed; half circle for needs-you; the
-    monitoring pulse for waiting; idle ring for stopped or unknown). Status follows the
+    sidebar's mark in its colour, drawn by the sidebar's own SidebarV2StatusMark in its still
+    mode, since nothing moves inside a message (a full green ring for working; dot for done or
+    failed; half circle for needs-you; a still muted dot for waiting; idle ring for stopped or
+    unknown). The label keeps the prose's weight, not the chip's medium. Status follows the
     sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
     another thread or parked on background work reads as waiting. On mobile the marks are still white PNGs drawn from
     No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
