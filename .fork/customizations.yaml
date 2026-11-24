@@ -8360,7 +8360,13 @@
     plus the git, terminal and files items, their one home, reachable in every
     thread state. The transcript's top inset is that row's (No3yThreadBarInset
     gives the body it as its header height) and it scrolls under the bubbles;
-    the back swipe stays native. Because the bubbles are not in a UIKit
+    the back swipe stays native. Hiding the bar disables UIKit's back swipe,
+    so apps/mobile/deps carries a react-native-screens build whose pop
+    gesture delegate stops forwarding the UIKit hook that drops it: branch
+    no3y/hidden-bar-back-swipe of NoahHendrickson/react-native-screens
+    (commit ca56dc59), on Julius's t3.61. When upstream bumps the tarball,
+    rebuild this change on top of theirs rather than taking theirs, or the
+    thread loses its back swipe. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
     On iOS 26 the no3y half sheets (usage, model, status, prompt stash) have
     a clear body and route content, so the native sheet owns the surface and
