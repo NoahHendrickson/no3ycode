@@ -30,7 +30,7 @@
   box-shadow: inset 0 0 0 1px var(--fork-composer-border, var(--border));
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: var(--text-base);
+  line-height: calc(var(--fork-composer-chip-text) + 1px);
   color: var(--foreground);
 }
 
