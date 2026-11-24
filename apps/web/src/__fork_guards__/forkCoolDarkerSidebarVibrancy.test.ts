@@ -969,6 +969,37 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
 
+  it("darkens a still picture's draft composer wherever the native glass is not behind it", () => {
+    const liquidGlassRules = glassRules.filter((rule) =>
+      rule.selector.includes(
+        `[${FORK_SIDEBAR_VIBRANCY_ATTRIBUTE}="${FORK_SIDEBAR_LIQUID_GLASS_VALUE}"]`,
+      ),
+    );
+    // The hook stamps the picture it drew natively; inferring that from layout drifts from it.
+    for (const rule of liquidGlassRules) {
+      expect(rule.selector).not.toContain("data-fork-split-pane");
+    }
+
+    const fallback = liquidGlassRules.find((rule) =>
+      rule.selector.includes("[data-fork-opaque-backdrop]:not([data-fork-draft-liquid-glass])"),
+    );
+    expect(fallback, "the CSS fallback must state its own vessel wash").toBeDefined();
+    const alpha = Number(
+      /--fork-composer-vessel-bg:\s*rgb\(0 0 0 \/ (\d+)%\)/u.exec(fallback?.body ?? "")?.[1],
+    );
+    // Figma's 16% black reads as a white wash over the bright pictures.
+    expect(alpha).toBeGreaterThan(16);
+
+    // One prompt well for native and fallback alike, so a tweak cannot leave one behind.
+    const wells = liquidGlassRules.filter(
+      (rule) =>
+        rule.selector.includes("[data-fork-opaque-backdrop]") &&
+        rule.body.includes("--fork-composer-bg:"),
+    );
+    expect(wells).toHaveLength(1);
+    expect(wells[0]?.selector).not.toContain("data-fork-draft-liquid-glass");
+  });
+
   it("waits for the next sidebar change after the native glass refuses a width", async () => {
     using dom = stubDockedSidebar(256);
     const glass = stubLiquidGlassBridge(() => false);

@@ -2172,6 +2172,15 @@
     rgb(255 255 255 / 8%), which lands on the stage where the opaque token
     used to, so upstream's bg-accent/N variants keep their relative weight.
 
+    Under Liquid Glass, a Flat Glass new-agent draft on a still picture (Mountain
+    Dither, Jolly Petal) sits on native NSGlassEffectView cards drawn by
+    custom/forkDraftLiquidGlass.ts. The window holds one such layer, so the hook
+    stamps data-fork-draft-liquid-glass on the picture it drew natively. A
+    picture without that stamp (a split pane, or an apply that was refused or is
+    still pending) keeps the CSS blur fallback, with a darker vessel wash than
+    Figma's 16% black so it reads like the native cards rather than a white wash.
+    Native and fallback share one prompt well.
+
     Must not alter Westworld, Neutral Dark, Neutral Darker, or default Dark,
     and must not make the window transparent for any other palette.
   tier: 2
