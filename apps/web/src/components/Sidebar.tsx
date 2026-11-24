@@ -1603,13 +1603,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   }
   const showSnoozeButton =
     canOperateThread && props.snoozeSupported && canSnooze(thread, { now: snoozeGateNow });
+  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+  const canPin = canOperateThread && props.pinningSupported;
+  const showPinAction = canPin && !props.isPinned;
+  /* fork:end sidebar-v2-row-action-hit-area */
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
   // After showSnoozeButton — using it above its declaration fails typecheck.
   // Settle and pin write to the thread, so a read-only connection loses them
   // (upstream #9787); discarding a client-only draft never reaches the server.
   const hasHoverActions =
-    (canOperateThread &&
-      (props.settlementSupported || (props.pinningSupported && !props.isPinned))) ||
+    (canOperateThread && props.settlementSupported) ||
+    showPinAction ||
     showSnoozeButton ||
     showDiscardDraft;
   /* fork:end sidebar-v2-draft-rows */
@@ -1815,15 +1819,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
      24px target at the glyph's 12px footprint. Without pinning rights it stays
      a passive mark. */
   const pinGlyph = <PinIcon weight="fill" className="size-3 text-foreground dark:text-white" />;
-  const pinIndicator = !props.isPinned ? null : props.pinningSupported && canOperateThread ? (
-    <SidebarV2IconButton aria-label="Unpin thread" onClick={handleUnpinClick} className="-m-1.5">
-      {pinGlyph}
-    </SidebarV2IconButton>
-  ) : (
-    <span role="img" aria-label="Pinned" className="inline-flex shrink-0">
-      {pinGlyph}
-    </span>
-  );
+  const pinIndicator = props.isPinned ? (
+    canPin ? (
+      <SidebarV2IconButton aria-label="Unpin thread" onClick={handleUnpinClick} className="-m-1.5">
+        {pinGlyph}
+      </SidebarV2IconButton>
+    ) : (
+      <span role="img" aria-label="Pinned" className="inline-flex shrink-0">
+        {pinGlyph}
+      </span>
+    )
+  ) : null;
   /* fork:end sidebar-v2-row-action-hit-area */
   // A sweep shows the action it will apply on release where the status and
   // hover actions otherwise sit; those cells hide rather than unmount so the
@@ -2106,7 +2112,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
                           Pin leads the cell, ahead of snooze. A pinned card
                           unpins from its marker (pinIndicator), not from here. */}
-                {props.pinningSupported && canOperateThread && !props.isPinned ? (
+                {showPinAction ? (
                   <SidebarV2IconButton aria-label="Pin thread" onClick={handlePinClick}>
                     <PinIcon weight="stroke" className="size-3" />
                   </SidebarV2IconButton>

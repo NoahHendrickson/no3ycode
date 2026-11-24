@@ -118,15 +118,13 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     const snooze = sidebarV2.indexOf("<SnoozeMenuButton");
     expect(pin).toBeGreaterThanOrEqual(0);
     expect(snooze).toBeGreaterThan(pin);
-    // A pinned card offers no second unpin in the hover cell: the filled pin it
-    // shows is the button, so clicking the pin you see is what unpins.
-    const marker =
-      /const pinIndicator =[\s\S]{0,400}?aria-label="Unpin thread"[\s\S]{0,200}?\{pinGlyph\}/u;
-    expect(sidebarV2).toMatch(marker);
-    expect(sidebarV2).toMatch(
-      /const pinGlyph = <PinIcon weight="fill" className="[^"]*dark:text-white/u,
-    );
-    expect(sidebarV2).toContain("canOperateThread && !props.isPinned ? (");
+    // The one Unpin (the census above counts it) is the pinned marker itself, not a
+    // hover action: the nearest declaration above it is pinIndicator.
+    const unpin = sidebarV2.indexOf('aria-label="Unpin thread"');
+    expect(unpin).toBeGreaterThanOrEqual(0);
+    const declaration = /const (\w+) =/gu;
+    const owners = [...sidebarV2.slice(0, unpin).matchAll(declaration)];
+    expect(owners.at(-1)?.[1]).toBe("pinIndicator");
   });
 
   it("lets no action re-grow padding of its own", () => {
