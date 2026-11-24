@@ -12,7 +12,7 @@ import {
   type HabitTable,
   recordHabit,
   suggestHabit,
-} from "./composerHabits.logic";
+} from "@t3tools/client-runtime/fork-composer-habits";
 
 const STORAGE_KEY = "t3code:fork:composer-habits:v1";
 

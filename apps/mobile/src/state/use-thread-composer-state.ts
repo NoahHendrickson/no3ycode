@@ -142,6 +142,10 @@ import { useAtomCommand } from "./use-atom-command";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { readNo3yHomeTabs } from "../../fork/no3yHomeTabs";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { lastOwnerPrompt } from "@t3tools/client-runtime/fork-composer-next-step";
+import { recordNo3yComposerHabit } from "../../fork/no3yComposerHabits";
+/* fork:end fork-composer-next-step */
 
 const EMPTY_QUEUE_WORKFLOW_ATOM = Atom.make<null>(null).pipe(
   Atom.withLabel("mobile-thread-queue-workflow:empty"),
@@ -906,6 +910,13 @@ export function useThreadComposerState(input: {
       resumeCompactionTokens(modelSelection, text, metadata.createdAt) !== null;
     const messageId = MessageId.make(metadata.messageId);
     onWillEnqueue?.();
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    // A new owner turn is committed here. An approval's redirect answers it, and side chats keep
+    // their own habits out of the thread's.
+    if (beforeDispatch === undefined && thread.lineage.sideChat !== true) {
+      recordNo3yComposerHabit(lastOwnerPrompt(selectedThreadMessages ?? []), text);
+    }
+    /* fork:end fork-composer-next-step */
     clearThreadComposerError(threadKey);
     const enqueuePromise = enqueueThreadOutboxMessage({
       environmentId: selectedThreadShell.environmentId,

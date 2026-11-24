@@ -56,7 +56,7 @@ export function habitKey(text: string): string | null {
     .split(/\s+/u)
     .filter((word) => word.length > 0 && !STOPWORDS.has(word));
   if (words.every((word) => ACKNOWLEDGEMENTS.has(word))) return null;
-  return [...new Set(words)].toSorted().join(" ");
+  return [...new Set(words)].sort().join(" ");
 }
 
 /** Counts `next` as a follow-up to `previous`. A follow-up naming a number (a PR, an issue) is
@@ -78,7 +78,7 @@ export function recordHabit(
   // the least-sent other follow-up makes room.
   const others = Object.entries(entry?.next ?? {})
     .filter(([key]) => key !== nextKey)
-    .toSorted(([, a], [, b]) => b.count - a.count)
+    .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, MAX_NEXT - 1);
   const updated = {
     ...table,

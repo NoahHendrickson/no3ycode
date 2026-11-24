@@ -6629,7 +6629,8 @@
   intent: >
     A settled thread offers its owner's next message as one pill in the
     composer's chip row (custom/ComposerNextStepPill), and a click sends it at
-    once. Rules come first (custom/composerNextStep.logic), from the thread's
+    once. Rules come first (client-runtime forkComposerNextStep, shared with
+    iOS), from the thread's
     PR as the PR chip beside it resolves it (resolveThreadCurrentPullRequestLink,
     else resolveDisplayedThreadPr on the same git status), its watch, the checkout's git status and the owner's latest typed message
     (scheduled tasks, watch wakes and agent-sent turns don't count): after a
@@ -6642,7 +6643,9 @@
     sol loop" rule: in the owner's history no state predicted it (4–8% at
     every threshold tried).
 
-    Where no rule speaks, a learned habit may (custom/composerHabits*): every
+    Where no rule speaks, a learned habit may (client-runtime
+    forkComposerHabits for the table's rules, custom/composerHabits for the
+    web store): every
     owner turn the send path commits (useComposerSend's onOwnerTurnDispatched,
     fenced beside the optimistic message, so refused sends, answers and queued
     edits never count; not in side chats), pill clicks included, counts as the
@@ -6662,16 +6665,36 @@
 
     The pill shows only once the latest run completed, nothing waits on an
     approval or question, the viewer can operate the thread and the composer
-    is empty, so a click never races what is written. Not in side chats. Web
-    and desktop; mobile is separate.
+    is empty, so a click never races what is written. Not in side chats.
+
+    iOS, on the no3y layout: the same step is the last glass pill in the row
+    above the composer (No3yStatusPill's NextStepPill, from
+    fork/useNo3yNextStep), and counts toward the row's feed clearance. Its
+    settled gate adds a ready, created thread with no runless work or
+    compaction, no link request awaiting the owner (the shell's
+    hasPendingUserInput), nothing queued on the server or in the phone's outbox, no sent
+    message the thread has not caught up to, no armed fresh session, and no
+    side chat. A tap
+    sends it as its own message (onSendCommand, so the empty draft is
+    untouched), hides the pill until it lands in the outbox, and scrolls to the
+    end. Unlinked, only an open pull request counts (the pill row's branch PR,
+    else git status on the thread's branch), as on web. Typed sends are learned where
+    onSendMessage enqueues to the outbox, skipping approval redirects and side
+    chats; the shared logic avoids array methods Hermes lacks. The phone keeps
+    its own table (fork/no3yComposerHabits, expo-sqlite's key-value store,
+    imported on first use, then held in memory and written through), so each
+    device learns apart. The iOS New agent screen has no suggestion list, so
+    the launchpad's review row is web-only.
   tier: 4
   files:
     - apps/web/src/custom/ComposerNextStepPill.tsx
-    - apps/web/src/custom/composerNextStep.logic.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
     - apps/web/src/custom/composerHabits.ts
-    - apps/web/src/custom/composerHabits.logic.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
+    - apps/mobile/fork/useNo3yNextStep.ts
+    - apps/mobile/fork/no3yComposerHabits.ts
   shadows: []
   watch:
     # Fenced pill in the composer's status chips (the chip row is built after
@@ -6679,10 +6702,18 @@
     - apps/web/src/components/ChatView.tsx
     # Fenced onOwnerTurnDispatched option, called where a new owner turn commits.
     - apps/web/src/components/chat/useComposerSend.ts
+    # The two modules' subpath exports.
+    - packages/client-runtime/package.json
+    # iOS: the pill's step, settled gate, send and the row's feed clearance.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    # iOS: the NextStepPill in the no3y pill row.
+    - apps/mobile/fork/No3yStatusPill.tsx
+    # iOS: typed sends learned where onSendMessage enqueues.
+    - apps/mobile/src/state/use-thread-composer-state.ts
   verify:
     - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
 
 - id: fork-draft-project-quick-picks
   intent: >

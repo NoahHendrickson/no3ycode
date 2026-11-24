@@ -38,4 +38,31 @@ describe("fork guard: fork-composer-next-step", () => {
       /if \(step === "hold"\) return null;\s*if \(step === null\) \{\s*if \(habit === null\) return null;/u,
     );
   });
+
+  it("offers the same step on iOS, last in the no3y pill row, clearing the feed", () => {
+    const screen = read("../../../mobile/src/features/threads/ThreadDetailScreen.tsx");
+    expect(screen).toMatch(
+      /const nextStep = useNo3yNextStep\(\{\s*enabled: no3yBottomNav && props\.selectedThread\.lineage\.sideChat !== true,/u,
+    );
+    expect(screen).toMatch(/no3yPullRequest !== null \|\| nextStep !== null/u);
+    expect(screen).toMatch(
+      /nextStep=\{nextStep\}\s*onSendNextStep=\{\(step\) => void sendNextStep\(step\)\}/u,
+    );
+    expect(screen).toMatch(
+      /await props\.onSendCommand\(step\.prompt\)[\s\S]{0,400}recordNo3yComposerHabit\(step\.previous, step\.prompt\);/u,
+    );
+    const row = read("../../../mobile/fork/No3yStatusPill.tsx");
+    expect(row).toMatch(
+      /\{pills\.map\(renderPill\)\}\s*\{nextStep === null \? null : \(\s*<NextStepPill/u,
+    );
+    expect(read("../../../mobile/fork/useNo3yNextStep.ts")).toContain(
+      "if (!active || draftHasContent || messages === undefined) return null;",
+    );
+  });
+
+  it("learns iOS typed sends where they enter the outbox, not redirects or side chats", () => {
+    expect(read("../../../mobile/src/state/use-thread-composer-state.ts")).toMatch(
+      /onWillEnqueue\?\.\(\);\s*\/\* fork:begin fork-composer-next-step[^\n]*\*\/[\s\S]{0,250}if \(beforeDispatch === undefined && thread\.lineage\.sideChat !== true\) \{\s*recordNo3yComposerHabit\(lastOwnerPrompt\(selectedThreadMessages \?\? \[\]\), text\);/u,
+    );
+  });
 });

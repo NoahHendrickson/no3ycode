@@ -8,7 +8,7 @@ import {
   nextStepPullRequestFromLinks,
   lastOwnerPrompt,
   resolveComposerNextStep,
-} from "./composerNextStep.logic";
+} from "./forkComposerNextStep.ts";
 
 const decodeLink = Schema.decodeSync(ThreadPullRequestLink);
 

@@ -1,11 +1,11 @@
 /**
  * The one next step a settled thread offers as a pill above the composer, following the
  * owner's usual chain: sol loop → open PR → babysit → merge → cut release. Learned habits
- * (composerHabits) fill in where no rule speaks. See
+ * (forkComposerHabits) fill in where no rule speaks. See
  * `.fork/customizations.yaml#fork-composer-next-step`.
  */
 import type { ThreadPullRequestLink } from "@t3tools/contracts";
-import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
+import { resolveThreadCurrentPullRequestLink } from "./threadPullRequests.ts";
 
 export type ComposerNextStepKind = "open-pr" | "babysit" | "merge" | "release";
 
@@ -16,17 +16,21 @@ export interface ComposerNextStep {
 }
 
 const STEPS: Record<ComposerNextStepKind, ComposerNextStep> = {
+  // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
   "open-pr": { kind: "open-pr", label: "Open PR", prompt: "Open a PR" },
   babysit: {
     kind: "babysit",
+    // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
     label: "Babysit PR",
     prompt: "Babysit the PR and address any feedback",
   },
   merge: {
     kind: "merge",
+    // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
     label: "Merge PR",
     prompt: "Check the reviews and comments on the PR, then merge it if it's ready",
   },
+  // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
   release: { kind: "release", label: "Cut release", prompt: "Cut a new release" },
 };
 

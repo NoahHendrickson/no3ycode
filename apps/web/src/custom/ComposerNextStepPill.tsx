@@ -20,7 +20,7 @@ import {
   nextStepPullRequestFromLinks,
   lastOwnerPrompt,
   resolveComposerNextStep,
-} from "./composerNextStep.logic";
+} from "@t3tools/client-runtime/fork-composer-next-step";
 import { forgetComposerHabit, useComposerHabitSuggestion } from "./composerHabits";
 import {
   GitMergeIcon,

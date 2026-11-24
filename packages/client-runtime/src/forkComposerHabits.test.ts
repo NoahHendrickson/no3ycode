@@ -6,7 +6,7 @@ import {
   type HabitTable,
   recordHabit,
   suggestHabit,
-} from "./composerHabits.logic";
+} from "./forkComposerHabits.ts";
 
 const repeat = (table: HabitTable, previous: string, next: string, times: number) => {
   let result = table;
