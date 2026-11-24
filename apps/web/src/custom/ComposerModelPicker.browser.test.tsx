@@ -78,8 +78,8 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
         modelOptionsByInstance={new Map([[instanceId, models]])}
         onInstanceModelChange={(_instanceId, next) => {
           setModel(next);
-          // A pick restores the options last used with that model, as the composer does.
-          setOptions(next === "sol" ? [{ id: "reasoningEffort", value: "low" }] : undefined);
+          // A controlled editor (scheduled tasks) gives a picked model its defaults.
+          setOptions(undefined);
         }}
         traitsInput={{
           provider,
@@ -104,7 +104,8 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
     );
   }
 
-  // Sol was last used at Low, which a pick restores.
+  // The composer last used Sol at Low. This picker is a controlled editor, whose picks get the
+  // model's defaults, so its preview must not show that.
   const remembered = useComposerDraftStore.getState().stickyOptionsByModelByProvider;
   useComposerDraftStore.setState({
     stickyOptionsByModelByProvider: {
@@ -126,7 +127,8 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   expect(document.querySelectorAll('[aria-label^="Effort:"]')).toHaveLength(1);
   // Another row previews the effort picking it would set.
   const sol = page.getByRole("menuitem", { name: /Sol/ });
-  await vi.waitFor(() => expect(sol.element().textContent).toContain("Low"));
+  await vi.waitFor(() => expect(sol.element().textContent).toContain("High"));
+  expect(sol.element().textContent).not.toContain("Low");
   // With nothing remembered, the thread's own model previews the thread's options, as a pick
   // restores them.
   const luna = page.getByRole("menuitem", { name: /Luna/ });
@@ -169,6 +171,10 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   // The model menu stays open, now showing the new level.
   const picked = page.getByRole("button", { name: "Effort: Extra High" });
   await expect.element(picked).toBeVisible();
+  // Clicking the level already checked closes the menu too.
+  await picked.click();
+  await page.getByRole("menuitemradio", { name: /Extra High/ }).click();
+  await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
   // Every click on the value toggles its levels, and moving across it, or away, leaves them as
   // they are.
   for (let pass = 0; pass < 3; pass += 1) {
@@ -198,8 +204,8 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   // A click on another row's effort picks that model and opens its effort menu.
   await page.getByRole("button", { name: "Effort: Extra High, Fast mode on" }).click();
   await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
-  await page.getByRole("menuitem", { name: /Sol/ }).getByText("Low").click();
-  await expect.element(page.getByRole("button", { name: "Effort: Low" })).toBeInTheDocument();
+  await page.getByRole("menuitem", { name: /Sol/ }).getByText("High").click();
+  await expect.element(page.getByRole("button", { name: "Effort: High" })).toBeInTheDocument();
   await expect.element(page.getByRole("group", { name: "Effort" })).toBeVisible();
 
   // The selected row stays lit while its effort menu is open and the pointer is inside it.
@@ -213,9 +219,18 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   expect(background(solRow.element())).not.toBe(background(astraRow));
 
   // ArrowRight on the focused selected row opens its effort menu, as a submenu trigger would.
-  await page.getByRole("button", { name: "Effort: Low" }).click();
+  await page.getByRole("button", { name: "Effort: High" }).click();
   await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
   (solRow.element() as HTMLElement).focus();
   await userEvent.keyboard("{ArrowRight}");
   await expect.element(page.getByRole("group", { name: "Effort" })).toBeVisible();
+
+  // Closed with its effort menu open (the effort menu closes with its parent, which clears its
+  // state), the picker reopens with that menu shut.
+  await userEvent.click(document.body, { position: { x: 1, y: 1 } });
+  await expect.element(page.getByRole("button", { name: "Effort: High" })).not.toBeInTheDocument();
+  await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
+  await screen.getByRole("button", { name: /Sol/ }).click();
+  await expect.element(page.getByRole("button", { name: "Effort: High" })).toBeVisible();
+  await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
 });

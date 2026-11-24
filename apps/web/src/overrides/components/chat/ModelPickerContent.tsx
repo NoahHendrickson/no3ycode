@@ -765,10 +765,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     const isFavorite = favoritesSet.has(modelKey);
     const isSelected = selectedModelKeySet.has(modelKey);
     const isActive = modelKey === activeModelKey;
-    // Not on other rows in search results (a pick there refocuses the search field) or on rows
-    // that cannot be picked.
+    // Not on other rows in search results (a pick there refocuses the search field), on rows
+    // that cannot be picked, or on touch, where a control shown only on hover is a hidden target.
     const showsRowControl =
-      props.renderRowControl !== undefined && (isActive || (!isSearching && !disabledReason));
+      props.renderRowControl !== undefined &&
+      (isActive || (!isSearching && !disabledReason && !coarsePointer));
     // Upstream retired its driver-keyed glyph table; the instance icon carries
     // the ACP registry art and accent the row's provider actually has.
     const providerEntry = showProvider ? entryByInstanceId.get(model.instanceId) : undefined;

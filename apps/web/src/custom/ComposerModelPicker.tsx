@@ -164,7 +164,8 @@ function SelectSection(props: {
   value: string | undefined;
   disabled?: boolean;
   note?: ReactNode;
-  onSelect: (optionId: string) => void;
+  /** Every click, the checked value's too: a click on a value always closes the menu. */
+  onChoose: (optionId: string) => void;
 }) {
   return (
     <>
@@ -173,20 +174,14 @@ function SelectSection(props: {
       </div>
       {props.note}
       {/* A 1px gap, so a hovered value never touches the checked one. */}
-      <MenuRadioGroup
-        className="grid gap-px"
-        aria-label={props.title}
-        value={props.value ?? null}
-        onValueChange={(value: string) => {
-          if (value !== props.value) props.onSelect(value);
-        }}
-      >
+      <MenuRadioGroup className="grid gap-px" aria-label={props.title} value={props.value ?? null}>
         {props.descriptor.options.map((option) => (
           <MenuRadioItem
             key={option.id}
             value={option.id}
             disabled={props.disabled}
             closeOnClick={false}
+            onClick={() => props.onChoose(option.id)}
           >
             <span className="flex w-full items-center gap-3 text-base">
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
@@ -282,10 +277,11 @@ function EffortMenu(props: {
   const { traits, anchor } = props;
   const { effort, selects, toggles } = traits;
   const { selectOption, setToggle } = useTraitWrites(props.input, traits);
-  // A pick closes the menu; a checkbox keeps it open, so the check is seen to change.
-  const pick = (descriptor: SelectDescriptor, optionId: string) => {
+  // A value click closes the menu (and writes when it changes the value); a checkbox keeps it
+  // open, so the check is seen to change.
+  const choose = (descriptor: SelectDescriptor, current: string | undefined, optionId: string) => {
     props.onClose();
-    selectOption(descriptor, optionId);
+    if (optionId !== current) selectOption(descriptor, optionId);
   };
 
   return (
@@ -323,19 +319,20 @@ function EffortMenu(props: {
                   </p>
                 ) : null
               }
-              onSelect={(optionId) => pick(effort.descriptor, optionId)}
+              onChoose={(optionId) => choose(effort.descriptor, effort.level?.id, optionId)}
             />
           ) : null}
           {selects.map((descriptor, index) => {
-            const value = getProviderOptionCurrentValue(descriptor);
+            const current = getProviderOptionCurrentValue(descriptor);
+            const value = typeof current === "string" ? current : undefined;
             return (
               <Fragment key={descriptor.id}>
                 {effort || index > 0 ? <MenuSeparator className={SECTION_RULE_CLASS} /> : null}
                 <SelectSection
                   title={descriptor.label}
                   descriptor={descriptor}
-                  value={typeof value === "string" ? value : undefined}
-                  onSelect={(optionId) => pick(descriptor, optionId)}
+                  value={value}
+                  onChoose={(optionId) => choose(descriptor, value, optionId)}
                 />
               </Fragment>
             );
@@ -400,19 +397,31 @@ function useEffortPreview(
   instanceEntries: ComponentProps<typeof ProviderModelPicker>["instanceEntries"],
   input: ComposerModelTraitsInput,
 ) {
-  const remembered = useComposerDraftStore((store) => store.stickyOptionsByModelByProvider);
+  const sticky = useComposerDraftStore((store) => store.stickyOptionsByModelByProvider);
+  // A controlled editor (scheduled tasks) gives a picked model its defaults, not the composer's
+  // remembered options.
+  const remembered = input.onModelOptionsChange ? undefined : sticky;
+  // Every row asks; one pass builds a slug lookup per provider instead of a scan per row.
+  const byInstance = new Map(
+    instanceEntries.map((entry) => [
+      entry.instanceId,
+      { entry, models: new Map(entry.models.map((model) => [model.slug, model])) },
+    ]),
+  );
   return (instanceId: ProviderInstanceId, model: string): string | null => {
-    const entry = instanceEntries.find((candidate) => candidate.instanceId === instanceId);
-    if (!entry) return null;
+    const known = byInstance.get(instanceId);
+    const found = known?.models.get(model);
+    if (!known || !found) return null;
+    const entry = known.entry;
     const caps = getProviderModelCapabilities(
-      entry.models,
+      [found],
       model,
       entry.driverKind,
       input.includePlanAgent,
     );
     const thread = input.threadModelSelection;
     const selections = resolvePickOptions({
-      remembered: remembered[instanceId]?.[model],
+      remembered: remembered?.[instanceId]?.[model],
       threadOptions:
         thread?.instanceId === instanceId && thread.model === model ? thread.options : undefined,
     });
