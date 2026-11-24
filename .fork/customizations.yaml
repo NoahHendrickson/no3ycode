@@ -3660,13 +3660,14 @@
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
     appearanceFonts.ts), and the control and context rows are 14px regular.
-    On Flat Glass the thread composer (not a new agent's draft) paints no
-    vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
-    and the control row sits on the stage; attached
-    banners and the Questions card are lift-1 trays over it with an 8%
-    hairline; the prompt keeps its round corners and its frame fills the
-    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
-    scoped to the thread composer's form).
+    On Flat Glass and every Basic tone the thread composer (not a new agent's
+    draft) is one recipe: it paints no vessel, the prompt is its one surface
+    (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
+    attached banners and the Questions card sit a step back toward the stage
+    (lift-2) behind the same hairline. Each theme names the fills
+    (--fork-thread-composer-*); light Basic tones use their raised prompt
+    (kit 289:5475; theme.custom.thread-composer.css, scoped to the thread
+    composer's form).
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3687,7 +3688,8 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.flat-glass-composer.css
+    - apps/web/src/theme.custom.thread-composer.css
+    - apps/web/src/theme.custom.basic.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts

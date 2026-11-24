@@ -5,7 +5,7 @@
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-peek.css";
 @import "./theme.custom.inlet-black.css";
-@import "./theme.custom.flat-glass-composer.css";
+@import "./theme.custom.thread-composer.css";
 
 /* Fork palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and each palette's own id). Kept out of theme.custom.css so a new sibling is a
@@ -126,6 +126,10 @@
   --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
   /* The control row's ink as a wash: 57% white over the lift-2 vessel (#2e2f31). */
   --fork-composer-control-ink: rgb(255 255 255 / 57%);
+  --fork-thread-composer-prompt: var(--fork-flat-glass-lift-3);
+  --fork-thread-composer-card: var(--fork-flat-glass-lift-2);
+  --fork-thread-composer-line: rgb(255 255 255 / 8%);
+  --fork-thread-composer-line-focus: rgb(255 255 255 / 16%);
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
@@ -168,7 +172,7 @@
 
 /* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
    digest cards and the scheduled editor. The thread composer paints no vessel and the draft
-   draws its own (theme.custom.flat-glass-composer.css, the draft-hero block below). */
+   draws its own (theme.custom.thread-composer.css, the draft-hero block below). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is([data-fork-bot-digest], [data-scheduled-composer])
   [data-fork-composer-vessel] {

@@ -142,7 +142,7 @@ const APPROVALS = {
     requestId: RuntimeRequestId.make("approval-file-change"),
     requestKind: "file-change",
     createdAt: new Date().toISOString(),
-    detail: "apps/web/src/theme.custom.flat-glass-composer.css",
+    detail: "apps/web/src/theme.custom.thread-composer.css",
     reason: "Rounds the banner cards to the composer's 12px corners.",
     responseCapability: "live",
   },
