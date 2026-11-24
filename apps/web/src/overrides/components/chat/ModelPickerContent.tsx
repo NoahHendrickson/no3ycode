@@ -606,7 +606,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     });
     selectScope(next);
     announce(
-      next === "favorites" ? "Pinned" : (entryByInstanceId.get(next)?.displayName ?? next),
+      next === "favorites" ? gt("Pinned") : (entryByInstanceId.get(next)?.displayName ?? next),
       "model-picker",
     );
   };
@@ -864,7 +864,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           <button
             type="button"
             tabIndex={-1}
-            aria-label={isFavorite ? "Unpin" : "Pin"}
+            aria-label={isFavorite ? gt("Unpin") : gt("Pin")}
             className={cn(
               "flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-muted-foreground outline-none hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed",
               // A pinned model shows its filled pin at rest, so the pin reads at a glance and
@@ -1000,7 +1000,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       >
         {renderScopeTab({
           target: "favorites",
-          title: "Pinned",
+          title: gt("Pinned"),
           icon: <PinIcon className="size-4 shrink-0" aria-hidden />,
         })}
         {providerEntries.map(renderProviderTab)}
@@ -1150,7 +1150,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         favoriteModels.map((model) => renderModelItem(model, true))
       ) : (
         <p className="px-2 py-2 text-base text-muted-foreground">
-          No pinned models yet. Pin a model to keep it here.
+          <T>No pinned models yet. Pin a model to keep it here.</T>
         </p>
       );
     }

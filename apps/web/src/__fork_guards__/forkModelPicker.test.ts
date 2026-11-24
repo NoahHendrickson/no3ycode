@@ -174,7 +174,7 @@ describe("fork guard: fork-model-picker", () => {
     // Favorites always has a tab and stays chosen when empty; a removed
     // instance resolves to Favorites, else the current provider.
     expect(content).toContain('if (storedScope === "favorites") return "favorites";');
-    expect(content).toContain("No pinned models yet. Pin a model to keep it here.");
+    expect(content).toContain("<T>No pinned models yet. Pin a model to keep it here.</T>");
     expect(content).toMatch(
       /useState<ModelPickerScope>\(\(\) =>[^;]*\? "favorites"\s*: props\.activeInstanceId/u,
     );
@@ -240,7 +240,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).not.toContain("groupFavorites: true");
     expect(content).toContain("const placementSet = placementPins ?? favoritesSet;");
     // Pins are the favorites, drawn as a pin; ⌘1–9 still jump, with no badge on the rows.
-    expect(content).toContain('aria-label={isFavorite ? "Unpin" : "Pin"}');
+    expect(content).toContain('aria-label={isFavorite ? gt("Unpin") : gt("Pin")}');
     expect(content).not.toMatch(/<(Star|Heart)Icon\b/u);
     expect(content).not.toContain("<Kbd");
     expect(content).not.toMatch(/bg-white\//u);
