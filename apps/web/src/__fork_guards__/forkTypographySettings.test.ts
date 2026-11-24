@@ -87,8 +87,12 @@ describe("fork guard: fork-typography-settings", () => {
     for (const token of ["2xs", "3xs"]) {
       const size = new RegExp(`--text-${token}: ([\\d.]+rem);`).exec(index)?.[1];
       expect(size, `index.css --text-${token}`).toBeDefined();
-      expect(rule(`${TIMELINE} .text-${token}`)?.body).toContain(
-        `calc(${size} * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1))`,
+      // The formatter may wrap the calc's operands onto their own lines.
+      expect(rule(`${TIMELINE} .text-${token}`)?.body).toMatch(
+        new RegExp(
+          `calc\\(\\s*${size?.replace(".", "\\.")} \\* var\\(--fork-chat-text-scale, 1\\) \\* var\\(--fork-interface-text-scale, 1\\)\\s*\\)`,
+          "u",
+        ),
       );
     }
     for (const [heading, token] of [
