@@ -5,7 +5,11 @@ import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceT
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
-import { No3yStatusPillSwap, no3yPullRequestThread } from "../../../fork/No3yStatusPill";
+import {
+  No3yStatusPillSwap,
+  no3yPullRequestThread,
+  NO3Y_STATUS_PILL_COVERAGE,
+} from "../../../fork/No3yStatusPill";
 import { useThreadPr } from "../../state/use-thread-pr";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
@@ -215,7 +219,9 @@ import { PendingUserInputCard } from "./PendingUserInputCard";
 import { ProviderSubagentBar } from "./ProviderSubagentBar";
 import { ThreadCreationFailedCard } from "./ThreadCreationFailedCard";
 import {
-  FLOATING_WORKING_CONTROL_COVERAGE,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  FLOATING_WORKING_CONTROL_COVERAGE as UPSTREAM_FLOATING_WORKING_CONTROL_COVERAGE,
+  /* fork:end no3y-mobile-redesign */
   FloatingWorkingControl,
 } from "./floating-working-control";
 import {
@@ -587,6 +593,9 @@ function ThreadDetailBody(
   const composerBottomInset = no3yBottomNav
     ? no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))
     : upstreamComposerBottomInset;
+  const FLOATING_WORKING_CONTROL_COVERAGE = no3yBottomNav
+    ? NO3Y_STATUS_PILL_COVERAGE
+    : UPSTREAM_FLOATING_WORKING_CONTROL_COVERAGE;
   /* fork:end no3y-mobile-redesign */
   const composerKeyboardOffset = composerBottomInset;
   const contentPresentationKind = props.contentPresentation.kind;

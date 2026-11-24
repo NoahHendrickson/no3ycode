@@ -77,6 +77,10 @@ const ROW_INSET = 24;
 /** Room above and below the pills inside the scrolling row, so their shadow is not clipped. */
 const SHADOW_ROOM = 4;
 const ICON_SIZE = 16;
+/** Room between the transcript's last row and the pills, so the working row does not crowd them. */
+const TRANSCRIPT_GAP = 24;
+export const NO3Y_STATUS_PILL_COVERAGE =
+  PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET + TRANSCRIPT_GAP;
 
 type UpstreamProps = ComponentProps<typeof FloatingWorkingControl>;
 
