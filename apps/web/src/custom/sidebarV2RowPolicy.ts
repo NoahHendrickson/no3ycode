@@ -141,8 +141,9 @@ export function threadRowSurfaceClassName(input: {
   );
 }
 
-/** A slim row's title and the rename field: a card title's size on the panel's 16px line
-    (at the default 14px), named so the panel's 13px --text-sm remap cannot shrink them. */
+/** A slim row's title, the rename field and a Petals grid name: a card title's size on the
+    panel's 16px line (at the default 14px), named so the panel's 13px --text-sm remap cannot
+    shrink them. */
 export const THREAD_TITLE_TYPE = "text-sidebar-row";
 
 /** A card title's colour and size. Hover restores a receded title, which is

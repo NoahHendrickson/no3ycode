@@ -10,6 +10,7 @@ import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import { cn } from "~/lib/utils";
 
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
+import { THREAD_TITLE_TYPE } from "../sidebarV2RowPolicy";
 import { SidebarV2StatusMark, type SidebarV2TopStatusMark } from "../SidebarV2StatusIndicator";
 import { BotCardStatusLine } from "./BotCardStatusLine";
 import { BotMascot, BotMascotTile } from "./BotMascot";
@@ -82,7 +83,8 @@ export function SidebarV2BotGridBody(props: {
         className={cn(
           // A slim row's 16px line at the default size: room for descenders, and the taller rename
           // field overhangs the padding instead of growing the tile.
-          "flex h-sidebar-16 w-full min-w-0 items-center justify-center text-center text-sidebar-row font-medium",
+          "flex h-sidebar-16 w-full min-w-0 items-center justify-center text-center font-medium",
+          THREAD_TITLE_TYPE,
           props.regenerating && "opacity-55",
         )}
       >
