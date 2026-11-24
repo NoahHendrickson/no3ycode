@@ -3711,6 +3711,11 @@
     stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
     a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
     keep the glass.
+    The stash drawer is drawn as the queue card's twin: the form stamps
+    data-fork-composer-stash-open so the portaled drawer spans the prompt and
+    sits 8px above it, with the queue card's header (count beside the label),
+    40px edge-to-edge rows, chat-stream type and a muted trash remove
+    (fenced in ComposerStashMenu.tsx).
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3783,6 +3788,8 @@
     - apps/web/src/components/chat/ComposerSurface.tsx
     # The dock the drawers, banners and stash badge now ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
+    # The stash drawer's header, row type and trash remove, fenced.
+    - apps/web/src/components/chat/ComposerStashMenu.tsx
     # Carries .fork-timeline-cutoff on the scroller, unconditionally, so the
     # transcript mask survives the banner states that drop upstream's top fade.
     # Upstream reworking that className is what would silently un-mask it.

@@ -4028,6 +4028,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       }}
       className="mx-auto w-full min-w-0 max-w-(--chat-content-max-width)"
       data-chat-composer-form="true"
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      data-fork-composer-stash-open={isStashMenuOpen && !composerMenuOpen ? "true" : undefined}
+      /* fork:end fork-composer-shell */
       {...threadContextDropTargetProps()}
     >
       {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
