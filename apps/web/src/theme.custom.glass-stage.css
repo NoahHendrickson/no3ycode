@@ -335,7 +335,7 @@
       )
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"][data-fork-thread-list] {
-      padding-inline-end: 0;
+      --fork-sidebar-group-padding-end: 0px;
     }
 
     &.dark[data-fork-theme="cool-darker"]:is(
@@ -347,7 +347,7 @@
       )
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
-      padding-inline-end: calc(var(--spacing) * 1.5);
+      --fork-sidebar-group-padding-end: calc(var(--spacing) * 1.5);
     }
   }
 

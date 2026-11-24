@@ -166,6 +166,7 @@
     border-radius: calc(var(--fork-composer-radius) - 1px);
   }
 
+  /* design-lint-disable-next-line C1 -- Popover has no variant for a 6px inline inset with no block padding */
   & > [data-slot="popover-viewport"] {
     --viewport-inline-padding: calc(var(--spacing) * 1.5);
     padding-block: 0;

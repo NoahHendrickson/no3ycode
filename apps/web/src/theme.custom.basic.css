@@ -22,6 +22,9 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
+  /* Basic keeps upstream's popup and menu-row corners. */
+  --fork-menu-radius: var(--radius-lg);
+  --fork-menu-row-radius: var(--radius-sm);
   /* Tab strips (theme.custom.palettes.css): track, ink, hover, disabled hover, pick, line. */
   --fork-segmented-track: var(--basic-wash-2);
   --fork-segmented-ink: var(--basic-text);
@@ -272,12 +275,14 @@
 
 /* An unchecked box or radio is the surface it sits on, behind its line: upstream
    fills it with the page and bevels it, which reads as a pale disc on a menu. */
+/* design-lint-disable-next-line C2 -- Basic's flat unchecked box drops upstream's bevel; Checkbox and Radio have no flat variant yet */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not([aria-invalid="true"]) {
   background: transparent;
   box-shadow: none;
 }
 
+/* design-lint-disable-next-line C2 -- Basic's flat unchecked box drops upstream's bevel; Checkbox and Radio have no flat variant yet */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not(
     [aria-invalid="true"]

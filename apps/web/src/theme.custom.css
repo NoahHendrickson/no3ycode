@@ -249,6 +249,7 @@
    standing 8px off the side. The bottom takes the side's inset so the icons
    hold the same gap on both edges. Covers the main and settings sidebars,
    which share the primitive. */
+/* design-lint-disable-next-line C1 -- SidebarFooter has no bottom-inset token; the fork evens its bottom gap with its side inset */
 :root[data-fork="noahhendrickson-t3code"] [data-slot="sidebar-footer"] {
   padding-bottom: var(--sidebar-content-inset);
 }
@@ -1521,6 +1522,7 @@
 /* Same inline padding on every chip. The folder glyph sits flush in its
    12px frame, so the workspace select needs real start padding — not the
    old optical 0 that left Current checkout tight on the pill edge. */
+/* design-lint-disable-next-line C1 -- the context row's triggers share one chip inset; SelectTrigger and ComboboxTrigger have no chip size */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   :is([data-slot="select-trigger"], [data-slot="combobox-trigger"], [data-fork-context-chip]) {
@@ -1535,6 +1537,7 @@
    folder glyph. Only the workspace select is built this way — the locked span
    and the branch chip have no before utility — which made Current checkout the
    one chip with a fat leading edge. */
+/* design-lint-disable-next-line C2 -- the xs ghost trigger's ::before sits in flow as a phantom flex item (see above); no variant drops it */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   [data-slot="select-trigger"]::before {
@@ -1608,6 +1611,7 @@
     opacity: 1;
   }
 
+  /* design-lint-disable-next-line C2 -- the xs ghost trigger's ::before sits in flow as a phantom flex item; no variant drops it */
   & [data-slot="select-trigger"]::before,
   & [data-slot="select-icon"] {
     display: none;
@@ -1630,6 +1634,7 @@
    whole overlay. The panel keeps its own slide transition and the chat
    column stops moving when the sidebar is toggled.
    ------------------------------------------------------------------------ */
+/* design-lint-disable-next-line C1 -- overlay mode is the gap spacer at zero width; Sidebar has no overlay variant */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-sidebar-overlay="true"]
   [data-slot="sidebar-gap"] {
@@ -1777,6 +1782,7 @@
    leave a gap where the tail joins and the tail reads as one shape with the
    card. The inner panel clips the rows to the corners instead of the
    container, which has to let the tail out. */
+/* design-lint-disable-next-line C1, C2 -- the peek card is a fork-only presentation of the collapsed sidebar; its geometry is the peek's own */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
@@ -1793,6 +1799,7 @@
   transition: none;
 }
 
+/* design-lint-disable-next-line C1 -- the peek card is a fork-only presentation of the collapsed sidebar; its geometry is the peek's own */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]
@@ -1803,6 +1810,7 @@
   padding-top: calc(var(--spacing) * 2);
 }
 
+/* design-lint-disable-next-line C1 -- the peek card's edge layer takes the card's corner; it adds no geometry */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]::after {
@@ -1836,6 +1844,7 @@
    slant with the outline's 1px edge laid over it, so it composites like the
    card's own edge does over the inner fill, translucent under Glass included.
    It takes hits, so the pointer crossing from the toggle stays on the card. */
+/* design-lint-disable-next-line C1 -- the peek card's tail is a fork-only shape on the sidebar container */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]::before {
@@ -2859,6 +2868,7 @@
    whose phone sheet stays square. A footer is set off by its line, not a band,
    and the scrim dims without blurring the app. */
 :root[data-fork="noahhendrickson-t3code"]:is([data-fork-theme="basic"], [data-fork-theme="inlet"]) {
+  /* design-lint-disable-next-line C1 -- dialog-styles.ts inlines rounded-2xl, so there is no radius token for the command dialog to read */
   & [data-slot="command-dialog-popup"].dialog-glass {
     border-radius: var(--fork-dialog-radius);
   }
@@ -3027,16 +3037,15 @@
    sidebar's row hover cards keep their own type. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not(.font-mono) {
-  border-radius: 8px;
-  font-size: var(--text-sm);
-  line-height: calc(var(--spacing) * 5);
+  --fork-tooltip-radius: var(--radius-lg);
+  --fork-tooltip-font-size: var(--text-sm);
+  --fork-tooltip-line-height: calc(var(--spacing) * 5);
+  --fork-tooltip-padding-block: var(--spacing);
+  --fork-tooltip-padding-inline: calc(var(--spacing) * 2.5);
 
+  /* design-lint-disable-next-line C1 -- the primitive's rim keeps upstream's radius (fork-primitive-tokens), so it is drawn to the corner here */
   &::before {
-    border-radius: 7px;
-  }
-
-  & [data-slot="tooltip-viewport"] {
-    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
+    border-radius: calc(var(--fork-tooltip-radius) - 1px);
   }
 }
 
@@ -3045,16 +3054,11 @@
    glass tooltip shares. A step larger than the default tooltip (12px / 8×4)
    so "Dictate" does not read as a status crumb. */
 :root[data-fork="noahhendrickson-t3code"] [data-slot="tooltip-popup"][data-fork-glass-tooltip] {
-  font-size: var(--fork-text-chip);
-  line-height: calc(var(--spacing) * 4.5);
-  border-radius: 8px;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-slot="tooltip-popup"][data-fork-glass-tooltip]
-  [data-slot="tooltip-viewport"] {
-  padding-block: calc(var(--spacing) * 1.5);
-  padding-inline: calc(var(--spacing) * 2.5);
+  --fork-tooltip-radius: var(--radius-lg);
+  --fork-tooltip-font-size: var(--fork-text-chip);
+  --fork-tooltip-line-height: calc(var(--spacing) * 4.5);
+  --fork-tooltip-padding-block: calc(var(--spacing) * 1.5);
+  --fork-tooltip-padding-inline: calc(var(--spacing) * 2.5);
 }
 
 /* ── Dictation session (fork-local-dictation) ──────────────────────────────
@@ -3181,7 +3185,7 @@
    menu keeps upstream's radius. */
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-  border-radius: 8px;
+  --fork-menu-radius: var(--radius-lg);
 }
 
 /* ── Changed-files card in the chat column ───────────────────────────────────
@@ -3455,6 +3459,7 @@
 }
 
 /* More is the row's menu trigger: a 32px square. Matched by its slot, not its (translated) label. */
+/* design-lint-disable-next-line C1 -- the approval row's More trigger is a square at the notice action size; Button has no size for it */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="menu-trigger"] {
   width: var(--fork-notice-action-height);
   height: var(--fork-notice-action-height);
@@ -3671,8 +3676,9 @@
    inside an even 8px inset (the popup's 4px plus the section's 4px). */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="menu-popup"]:has([data-composer-permissions]) {
-  border-radius: 18px;
+  --fork-menu-radius: 1.125rem;
 
+  /* design-lint-disable-next-line C1 -- the menu's own layers take its corner; they add no geometry */
   &::before,
   &::after {
     border-radius: inherit;
@@ -3685,7 +3691,7 @@
   }
 
   & [data-composer-permissions] [data-slot="menu-radio-item"] {
-    border-radius: 10px;
+    --fork-menu-row-radius: 0.625rem;
   }
 
   /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its

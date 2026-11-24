@@ -308,6 +308,9 @@
   --fork-flat-model-picker-radius: 14px;
   --fork-flat-popup-radius: 12px;
   --fork-petals-tile-radius: calc(var(--fork-flat-radius) + var(--spacing));
+  /* Popups and rows the rules below leave alone keep upstream's corners. */
+  --fork-menu-radius: var(--radius-lg);
+  --fork-menu-row-radius: var(--radius-sm);
 }
 
 @supports (corner-shape: superellipse(1.6)) {
@@ -340,8 +343,35 @@
     ),
   & [data-fork-model-picker="list"] > label,
   & [data-fork-draft-launchpad-card] button {
-    border-radius: var(--fork-flat-radius);
     corner-shape: superellipse(1.6);
+  }
+
+  &
+    :is(
+      [data-slot="menu-item"],
+      [data-slot="menu-checkbox-item"],
+      [data-slot="menu-radio-item"],
+      [data-slot="menu-sub-trigger"],
+      [data-slot="select-item"],
+      [data-slot="combobox-item"]
+    ) {
+    --fork-menu-row-radius: var(--fork-flat-radius);
+  }
+
+  /* design-lint-disable-next-line C1 -- command-item reads no row-radius token yet (fork-primitive-tokens covers menu, select, combobox and autocomplete rows) */
+  &
+    :is([data-sidebar-version="v2"], [data-app-modal])
+    :is(
+      [data-fork-thread-row],
+      [data-fork-chrome-row],
+      li[data-fork-split-pair] > ul,
+      [data-testid="sidebar-v2-project-group-collapse"]
+    ),
+  & [data-fork-thread-tabs] [data-fork-thread-tab],
+  & :is([data-slot="command-item"], [data-testid="bot-threads-row"]),
+  & [data-fork-model-picker="list"] > label,
+  & [data-fork-draft-launchpad-card] button {
+    border-radius: var(--fork-flat-radius);
   }
 
   /* Menus, selects, comboboxes and popovers round to 12px, rounder than the 8px rows they hold
@@ -359,11 +389,12 @@
       .dropdown-glass:has(> [data-slot="combobox-popup"]),
       [data-slot="autocomplete-positioner"] > *
     ) {
-    border-radius: var(--fork-flat-popup-radius);
+    --fork-menu-radius: var(--fork-flat-popup-radius);
   }
 
   /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
      the popup's 1px edge. */
+  /* design-lint-disable-next-line C1 -- the primitives draw these rims at upstream's radius (fork-primitive-tokens keeps them), so they are drawn to the popup's corner here */
   & [data-slot="popover-popup"].dropdown-glass::before,
   & [data-slot="autocomplete-positioner"] > ::before,
   & [data-slot="popover-popup"].dropdown-glass > [data-slot="popover-viewport"] {
@@ -371,7 +402,10 @@
   }
 
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-    border-radius: var(--fork-flat-model-picker-radius);
+    --fork-menu-radius: var(--fork-flat-model-picker-radius);
+  }
+
+  & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
     corner-shape: superellipse(1.6);
   }
 }
@@ -1173,6 +1207,7 @@
    argument whichever one matched, so unwrapped its four selectors weighed
    every menu as much as the details card, and the stage sheet's frosted
    popups could not outrank this rule without !important. */
+/* design-lint-disable-next-line C2 -- over the native material a backdrop-filter never blurs the rows (see above); the popup is a wash over a cut-out hole */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   :is(
     :is(
@@ -1828,6 +1863,9 @@
     [data-fork-glass-3d="off"]
   ).dark[data-fork-theme="cool-darker"] {
   --fork-page-tabs-radius: var(--radius-xl);
+  /* Full 3D keeps upstream's popup and menu-row corners where its rim rules leave them. */
+  --fork-menu-radius: var(--radius-lg);
+  --fork-menu-row-radius: var(--radius-sm);
 }
 
 /* Each theme sets the page tabs' radius; the fallback is Inlet's. The chip's corner is
@@ -1853,6 +1891,7 @@
    Petal strips beside them take this one.
    Flat Glass draws the same geometry in translucent white washes so Liquid Glass shines through;
    each theme sets the --fork-segmented-* colours. */
+/* design-lint-disable-next-line C1 -- ToggleGroup's segmented variant shares the tab strip with the fork's SegmentedTabs, which owns the strip's geometry */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]),
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]

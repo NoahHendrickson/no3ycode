@@ -106,6 +106,7 @@
 
 /* A checked box's fill sits over the root; its inner gap and outline existed
    only to keep the inward ring visible against that fill. */
+/* design-lint-disable-next-line C2 -- the outset ring replaces the indicator's inward ring gap; Checkbox has no outset-ring variant */
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-slot="checkbox"], [data-slot="radio"]):focus-visible
   :is([data-slot="checkbox-indicator"], [data-slot="radio-indicator"]) {

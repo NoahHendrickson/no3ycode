@@ -136,6 +136,7 @@
      the border box on the ::before upstream positions on every toggle and the
      segmented variant leaves empty. Unlike ::after, it is no pointer's hit
      area, so touch draws the same edge. */
+  /* design-lint-disable-next-line C1 -- the segmented toggle's light layer takes the toggle's corner; it adds no geometry */
   &.dark[data-fork-theme="cool-darker"]
     [data-slot="toggle"][data-variant="segmented"][data-pressed]::before {
     inset: -1px;
@@ -349,9 +350,10 @@
           )
       )
     ) {
+    /* design-lint-disable-next-line C1, C2 -- the rim rule covers fork glass surfaces as well as primitives, which read no token for it; the halo replaces the border */
     & {
       border-width: 0;
-      border-radius: 12px;
+      border-radius: var(--radius-xl);
       box-shadow: var(--tw-shadow, 0 0 #0000), var(--fork-glass-halo), var(--fork-glass-sheen);
     }
 
@@ -386,9 +388,10 @@
         [data-slot="select-item"],
         [data-slot="combobox-item"]
       ):not([data-fork-model-picker] *) {
-      border-radius: 8px;
+      --fork-menu-row-radius: var(--radius-lg);
     }
 
+    /* design-lint-disable-next-line C1, C2 -- the rim's glint layer takes the popup's corner and replaces upstream's top highlight */
     &::before {
       content: "";
       position: absolute;
@@ -411,6 +414,7 @@
 
     /* A frosted popup's ::after is its frost copy (theme.custom.glass.css),
        which already shows a blurred picture through the glass. */
+    /* design-lint-disable-next-line C1 -- the rim's reflection layer takes the popup's corner; it adds no geometry */
     &:not([data-fork-glass-frost])::after {
       content: "";
       position: absolute;
@@ -428,12 +432,13 @@
 
   /* The model picker keeps its own squarer geometry (fork-model-picker: 8px
      corners, 4px rows on an 8px inset). */
+  /* design-lint-disable-next-line C1 -- must outrank the rim rule's own corner above, which is set directly */
   &.dark[data-fork-theme="cool-darker"]
     [data-chat-composer-floating-layer="true"]:is(
       [data-slot="menu-popup"],
       [data-slot="menu-sub-content"]
     ):has([data-fork-model-picker]) {
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
   }
 
   /* Docked inline under the desktop glass, the details card keeps no blur at
@@ -472,13 +477,18 @@
     box-shadow: var(--fork-glass-halo-soft), var(--fork-glass-light);
   }
 
+  /* design-lint-disable-next-line C1 -- SelectPopup's list has no inset token; the glass selection rounds its rows further inside a wider inset */
   &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-list"] {
     padding: calc(var(--spacing) * 1.5);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-item"] {
+    --fork-menu-row-radius: 0.625rem;
+  }
+
+  /* design-lint-disable-next-line C1 -- select-item reads no padding token (fork-primitive-tokens covers corners only) */
+  &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-item"] {
     padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
-    border-radius: 10px;
   }
 
   /* Settings' outline buttons and select triggers as the composer's chips
@@ -796,6 +806,7 @@
       var(--fork-glass-selected-shadow);
   }
 
+  /* design-lint-disable-next-line C1 -- the checked row's glint layer takes the row's corner; it adds no geometry */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-thread-sort]
     [data-slot="menu-radio-item"][data-checked]::before {
@@ -808,6 +819,7 @@
     pointer-events: none;
   }
 
+  /* design-lint-disable-next-line C1 -- the checked row's dark edge sits 1px outside the row, at its corner plus the hairline */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-thread-sort]
     [data-slot="menu-radio-item"][data-checked]::after {
@@ -815,7 +827,7 @@
     position: absolute;
     inset: -1px;
     padding: 1px;
-    border-radius: 13px;
+    border-radius: calc(var(--fork-menu-row-radius) + 1px);
     background: var(--fork-glass-dark-edge);
     mask:
       linear-gradient(#000 0 0) content-box exclude,
@@ -830,7 +842,7 @@
      rows and win on source order. MenuPopup's list is its one child div. */
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-glass-rim][data-fork-thread-sort].dropdown-glass {
-    border-radius: 18px;
+    border-radius: calc(var(--radius-xl) + var(--spacing) * 1.5);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-sort] > div {
@@ -838,7 +850,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-sort] [data-slot="menu-radio-item"] {
-    border-radius: 12px;
+    --fork-menu-row-radius: var(--radius-xl);
   }
 
   /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
