@@ -40,6 +40,13 @@ describe("fork guard: fork-brand-name", () => {
       ["<title>T3 Code (Beta)</title>", "<title>no3y Code (Beta)</title>"],
       ["`${reason}\\n\\nT3 Code will restart`", "`${reason}\\n\\nno3y Code will restart`"],
       ["Sign in to T3 Connect on the T3 server", null],
+      ["Link T3 Chat for more tunnels", null],
+      [
+        '"Start\\nStarting\\nStarted\\na T3 thread"',
+        '"Start\\nStarting\\nStarted\\na no3y thread"',
+      ],
+      ["{completed {Created T3 threads}}", "{completed {Created no3y threads}}"],
+      ["Use T3 desktop. T3 could not ask.", "Use no3y Code desktop. no3y Code could not ask."],
     ] as const) {
       expect(rewriteUpstreamDisplayName(input)).toBe(expected);
     }
@@ -57,6 +64,7 @@ describe("fork guard: fork-brand-name", () => {
       map: null,
     });
     expect(transform(source, "/repo/node_modules/pkg/index.js")).toBeNull();
+    expect(transform(source, "node_modules/pkg/index.js")).toBeNull();
     expect(transform(source, "/repo/apps/web/src/index.css")).toBeNull();
     for (const path of ["/repo/apps/desktop/src/app/DesktopUserData.ts"]) {
       expect(EXCLUDED_MODULES.some((pattern) => pattern.test(path))).toBe(true);
@@ -86,6 +94,39 @@ describe("fork guard: fork-brand-name", () => {
     ]) {
       expect(packaging).toMatch(new RegExp(`${key}:\\s*"no3y Code `, "u"));
     }
+  });
+
+  it("draws the no3y flower where upstream draws its T3 letters", () => {
+    const glyph = read("apps/web/src/overrides/components/T3Wordmark.tsx");
+    expect(glyph).toContain("export function T3Wordmark(");
+    expect(glyph).toContain('viewBox="-0.5 -0.5 16 16"');
+    expect(glyph).not.toContain("M33.4509 93V47.56");
+    const standalone = read("apps/web/src/components/ui/standalone-page.tsx");
+    expect(standalone).toContain('aria-label="no3y Code"');
+    expect(standalone).toContain(">no3y Code</span>");
+  });
+
+  it("rebrands the mobile app through Metro and its own marks", () => {
+    expect(read("apps/mobile/metro.config.js")).toContain("withForkBrandName(");
+    expect(read("apps/mobile/fork/forkBrandNameTransformer.cjs")).toContain(
+      "rewriteUpstreamDisplayName(props.src)",
+    );
+    expect(read("apps/mobile/src/components/T3Wordmark.tsx")).not.toContain("M33.4509 93V47.56");
+    expect(read("apps/mobile/src/components/CompactBrandTitle.tsx")).toContain(
+      'const WORDMARK_SUFFIX = "no3y Code";',
+    );
+    expect(read("apps/mobile/src/components/brandAssets.ts")).not.toMatch(
+      /assets\/(dev|nightly|prod)\//u,
+    );
+    expect(read("apps/mobile/src/widgets/subscriptionUsageSnapshot.ts")).not.toContain('app: "T3"');
+    for (const widget of [
+      "apps/mobile/src/widgets/SubscriptionUsage.tsx",
+      "apps/mobile/src/widgets/SubscriptionUsage.android.tsx",
+      "apps/mobile/src/widgets/AgentActivityWidget.tsx",
+    ]) {
+      expect(read(widget)).not.toMatch(/\bT3( Code)?\b[^_]/u);
+    }
+    expect(read("apps/mobile/assets/widget/T3Mark.svg")).not.toContain("M33.4509 93V47.56");
   });
 
   it("credits upstream in Settings and the desktop About panel", () => {

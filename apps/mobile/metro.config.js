@@ -112,9 +112,25 @@ async function prepareStreamScripts() {
 
 module.exports = Promise.all([generateMobileThirdPartyLicenses(), prepareStreamScripts()]).then(
   () =>
-    withUniwindConfig(config, {
-      cssEntryFile: "./global.css",
-      extraThemes,
-      polyfills: { rem: 14 },
-    }),
+    /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+    withForkBrandName(
+      /* fork:end fork-brand-name */
+      withUniwindConfig(config, {
+        cssEntryFile: "./global.css",
+        extraThemes,
+        polyfills: { rem: 14 },
+      }),
+    ),
 );
+
+/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+// Workers inherit the environment, so the wrapper finds the transformer it replaces there.
+function withForkBrandName(finalConfig) {
+  const wrapper = require.resolve("./fork/forkBrandNameTransformer.cjs");
+  if (finalConfig.transformer.babelTransformerPath !== wrapper) {
+    process.env.NO3Y_UPSTREAM_BABEL_TRANSFORMER = finalConfig.transformer.babelTransformerPath;
+    finalConfig.transformer.babelTransformerPath = wrapper;
+  }
+  return finalConfig;
+}
+/* fork:end fork-brand-name */

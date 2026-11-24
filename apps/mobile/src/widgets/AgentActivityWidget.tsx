@@ -95,7 +95,9 @@ export function AgentActivityWidget(
   const summaryTint = rows[0] ? phaseTint(rows[0].phase) : secondaryForeground;
   const emptyMessage = loaded
     ? (props.subtitle ?? text?.noActiveAgents ?? "No active agents")
-    : "Open T3 Code to load agent activity";
+    : /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+      "Open no3y Code to load agent activity";
+  /* fork:end fork-brand-name */
 
   // Widget taps open the containing app, and every build accepts the prod
   // scheme as a link prefix, so dev and preview builds route this too.
@@ -181,7 +183,10 @@ export function AgentActivityWidget(
             lineLimit(1),
           ]}
         >
-          {summary || (accessory ? "T3 Code" : "")}
+          {/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */}
+          {/* oxlint-disable-next-line t3code/no-untranslated-copy -- product name */}
+          {summary || (accessory ? "no3y Code" : "")}
+          {/* fork:end fork-brand-name */}
         </Text>
         <Spacer minLength={0} />
       </HStack>

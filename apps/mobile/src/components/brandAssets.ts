@@ -2,9 +2,10 @@ import Constants from "expo-constants";
 
 const appVariant = Constants.expoConfig?.extra?.appVariant;
 
+/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+// The no3y flower tile, orange for development like the installed dev app.
 export const T3_CODE_BRAND_MARK_SOURCE =
   appVariant === "development"
-    ? require("../../../../assets/dev/blueprint-ios-1024.png")
-    : appVariant === "preview"
-      ? require("../../../../assets/nightly/nightly-ios-1024.png")
-      : require("../../../../assets/prod/black-ios-1024.png");
+    ? require("../../../../assets/fork/n3-dev-web-apple-touch-180.png")
+    : require("../../../../assets/fork/n3-web-apple-touch-180.png");
+/* fork:end fork-brand-name */

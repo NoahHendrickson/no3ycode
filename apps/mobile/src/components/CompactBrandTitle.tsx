@@ -11,7 +11,10 @@ import { resolveMobileStageLabel } from "../lib/mobileBranding";
 import { useAndroidControlSizing } from "./ui/useAndroidControlSizing";
 
 const BRAND_MAX_FONT_SCALE = 1.4;
-const WORDMARK_SUFFIX = "Code";
+/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+// The glyph is the no3y flower, not letters, so the name is spelled out beside it.
+const WORDMARK_SUFFIX = "no3y Code";
+/* fork:end fork-brand-name */
 
 export function brandTitleOffset(): number {
   if (Platform.OS !== "ios") return 0;

@@ -583,7 +583,7 @@
 
 - id: fork-brand-name
   intent: >
-    Every web and desktop string a user reads names the app "no3y Code", the
+    Every web, desktop and mobile string a user reads names the app "no3y Code", the
     same name fork-app-identity gives the installed app, and the fork still
     says where it comes from. Upstream writes "T3 Code" inline in hundreds of
     strings and adds more each sync, so the name is rewritten at build time
@@ -605,21 +605,49 @@
     "no3y Code link"), so a host's Connections list names the fork's
     clients; nothing compares those labels. Connection copy about software on
     another host is renamed too, though a linked VPS may run upstream.
-    T3 Connect, the T3 server, and the t3 CLI keep their names.
+    Bare "T3" is renamed only inside the phrases RENAMED_PHRASES lists (the
+    t3_thread_* tool rows read "Started a no3y thread"); alone it also names
+    T3 Connect, T3 Chat, the T3 server, the t3 CLI and identifiers, which
+    keep their names. The tool-row lookups key on the same rewritten labels,
+    so they keep matching.
+    Upstream's "T3" letter glyph (T3Wordmark), which marks the app's own tool
+    rows in the transcript and heads the standalone auth pages, is shadowed
+    with the no3y flower as currentColor line art (the outline cells of
+    assets/fork/n3-favicon.svg); the auth header spells "no3y Code" beside it.
+    Mobile runs the same table through a Metro Babel-transformer wrapper
+    (apps/mobile/fork/forkBrandNameTransformer.cjs), and draws the flower in
+    its T3Wordmark, its header title, its loading-screen tile, and the
+    widget's app name ("Open no3y"). The iOS widgets bundle through
+    expo-widgets' own Metro config, so their fallback copy and their
+    T3Mark.svg logo (the flower, centred in the 1.5:1 frame they draw it in)
+    are edited in place.
     Not bundled, so edited in place: public/manifest.webmanifest and the
     macOS permission prompts (local network, screen capture, camera) in
     build-desktop-artifact.ts, beside fork-local-dictation's microphone
     prompt. Settings, About carries a row crediting T3 Code with a link to
     the upstream repository, and the macOS About panel credits it.
-    Server-sent text and the mobile app are out of scope and still say
-    T3 Code.
+    Server-sent text (including agent-facing prompts) is out of scope and
+    still says T3 Code.
   tier: 4
   files:
     - scripts/lib/fork-brand-name.ts
     - apps/web/src/custom/ForkUpstreamCreditRow.tsx
-  shadows: []
+    - apps/mobile/fork/forkBrandNameTransformer.cjs
+  shadows:
+    - apps/web/src/components/T3Wordmark.tsx
   watch:
     - apps/web/vite.config.ts
+    - apps/web/src/components/ui/standalone-page.tsx
+    - apps/mobile/metro.config.js
+    - apps/mobile/src/components/T3Wordmark.tsx
+    - apps/mobile/src/components/CompactBrandTitle.tsx
+    - apps/mobile/src/components/brandAssets.ts
+    - apps/mobile/src/widgets/subscriptionUsageSnapshot.ts
+    # Widget layouts bundle through expo-widgets' own Metro config, outside the rename.
+    - apps/mobile/src/widgets/SubscriptionUsage.tsx
+    - apps/mobile/src/widgets/SubscriptionUsage.android.tsx
+    - apps/mobile/src/widgets/AgentActivityWidget.tsx
+    - apps/mobile/assets/widget/T3Mark.svg
     - apps/desktop/vite.config.ts
     - apps/web/public/manifest.webmanifest
     - apps/web/src/components/settings/SettingsPanels.tsx
