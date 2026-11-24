@@ -13,16 +13,22 @@ import Clock01Icon from "@hugeicons/core-free-icons/Clock01Icon";
 import ComputerActivityIcon from "@hugeicons/core-free-icons/ComputerActivityIcon";
 import ComputerTerminal01Icon from "@hugeicons/core-free-icons/ComputerTerminal01Icon";
 import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
+import Cancel01Icon from "@hugeicons/core-free-icons/Cancel01Icon";
+import GitMergeIcon from "@hugeicons/core-free-icons/GitMergeIcon";
 import Globe02Icon from "@hugeicons/core-free-icons/Globe02Icon";
 import Layers01Icon from "@hugeicons/core-free-icons/Layers01Icon";
 import LeftToRightListNumberIcon from "@hugeicons/core-free-icons/LeftToRightListNumberIcon";
 import PuzzleIcon from "@hugeicons/core-free-icons/PuzzleIcon";
 import Robot01Icon from "@hugeicons/core-free-icons/Robot01Icon";
+import Rocket01Icon from "@hugeicons/core-free-icons/Rocket01Icon";
 import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon";
+import SparklesIcon from "@hugeicons/core-free-icons/SparklesIcon";
 import SquareStackIcon from "@hugeicons/core-free-icons/SquareStackIcon";
 import Target02Icon from "@hugeicons/core-free-icons/Target02Icon";
+import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WifiDisconnected02Icon from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
 import { StackActions, useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { PickedComposerNextStep } from "@t3tools/client-runtime/fork-composer-next-step";
 import { pullRequestChecksRefreshIntervalMs } from "@t3tools/client-runtime/pull-request-checks";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { PendingBackgroundWorkPresentation } from "@t3tools/client-runtime/state/thread-execution";
@@ -63,6 +69,7 @@ import {
 } from "./no3yStatusSegments";
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
+import { forgetNo3yComposerHabit } from "./no3yComposerHabits";
 
 const PILL_HEIGHT = 32;
 const PILL_RADIUS = 14;
@@ -100,6 +107,9 @@ interface No3yPillExtras {
   readonly thread: EnvironmentThreadShell;
   /** The thread's pull request as useThreadPr resolves it; the screen keeps the feed clear of it. */
   readonly pullRequest: ThreadPrPresentation | null;
+  /** The thread's next step (useNo3yNextStep.ts), sent on tap; last in the row. */
+  readonly nextStep: PickedComposerNextStep | null;
+  readonly onSendNextStep: () => void;
 }
 
 /**
@@ -123,6 +133,8 @@ export function No3yStatusPillSwap(
       no3yStatus={props.no3yStatus}
       thread={props.thread}
       pullRequest={props.pullRequest}
+      nextStep={props.nextStep}
+      onSendNextStep={props.onSendNextStep}
     />
   );
 }
@@ -209,7 +221,8 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
     transform: [{ translateY: -(lift?.value ?? 0) }],
   }));
 
-  if (pills.length === 0 && !props.showScrollToEnd) return null;
+  const { nextStep } = props;
+  if (pills.length === 0 && nextStep === null && !props.showScrollToEnd) return null;
 
   const openSheet = () => {
     Keyboard.dismiss();
@@ -284,7 +297,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       ]}
     >
       {/* Only as wide as its pills, and only there with pills, so the transcript takes touches. */}
-      {pills.length > 0 ? (
+      {pills.length > 0 || nextStep !== null ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -299,6 +312,14 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           }}
         >
           {pills.map(renderPill)}
+          {nextStep === null ? null : (
+            <NextStepPill
+              key={`next-step:${nextStep.prompt}`}
+              step={nextStep}
+              palette={palette}
+              onSend={props.onSendNextStep}
+            />
+          )}
         </ScrollView>
       ) : null}
       {props.showScrollToEnd ? (
@@ -360,8 +381,13 @@ function Pill(props: {
   readonly tint?: string | undefined;
   /** An inner glow, as a box shadow: the stacked pull request's purple-to-green. */
   readonly glow?: string | undefined;
+  /** A second button in the same glass, after the first: the learned next step's ×. */
+  readonly trailing?: ReactNode;
+  /** Caps the first button's width, so a long label truncates. */
+  readonly maxWidth?: number;
   readonly children: ReactNode;
 }) {
+  const split = props.trailing !== undefined;
   return (
     <Animated.View
       entering={NO3Y_GLASS_IN}
@@ -370,6 +396,7 @@ function Pill(props: {
         height: PILL_HEIGHT,
         borderRadius: PILL_RADIUS,
         boxShadow: props.palette.pillShadow,
+        ...(split ? { flexDirection: "row" as const } : {}),
       }}
     >
       <No3yGlassLayer radius={PILL_RADIUS} tint={props.tint} />
@@ -386,17 +413,70 @@ function Pill(props: {
         hitSlop={6}
         onPress={props.onPress}
         style={({ pressed }) => ({
-          flex: 1,
+          ...(split ? { paddingLeft: 8, paddingRight: 4 } : { flex: 1, paddingHorizontal: 8 }),
+          ...(props.maxWidth === undefined ? {} : { maxWidth: props.maxWidth }),
           flexDirection: "row",
           alignItems: "center",
           gap: 4,
-          paddingHorizontal: 8,
           opacity: pressed ? 0.6 : 1,
         })}
       >
         {props.children}
       </Pressable>
+      {props.trailing}
     </Animated.View>
+  );
+}
+
+const NEXT_STEP_ICON: Record<PickedComposerNextStep["kind"], HugeIconData> = {
+  "open-pr": GitPullRequestIcon,
+  babysit: ViewIcon,
+  merge: GitMergeIcon,
+  release: Rocket01Icon,
+  learned: SparklesIcon,
+};
+
+/** The next step, sent on tap; a learned one carries an × that stops suggesting it. */
+function NextStepPill(props: {
+  readonly step: PickedComposerNextStep;
+  readonly palette: FlatGlassPalette;
+  readonly onSend: () => void;
+}) {
+  const { step, palette } = props;
+  const { habit } = step;
+  return (
+    <Pill
+      accessibilityLabel={`Send ${step.prompt}`}
+      accessibilityHint={habit === null ? undefined : "You usually send this next"}
+      onPress={props.onSend}
+      palette={palette}
+      maxWidth={220}
+      trailing={
+        habit === null ? undefined : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Stop suggesting this"
+            hitSlop={6}
+            onPress={() => forgetNo3yComposerHabit(habit)}
+            style={({ pressed }) => ({
+              alignItems: "center",
+              justifyContent: "center",
+              paddingLeft: 2,
+              paddingRight: 8,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <HugeIcon icon={Cancel01Icon} size={14} color={palette.quietInk} />
+          </Pressable>
+        )
+      }
+    >
+      <HugeIcon icon={NEXT_STEP_ICON[step.kind]} size={ICON_SIZE} color={palette.foreground} />
+      {/* Shrinks so a long learned message truncates inside the max width. */}
+      <View style={{ flexShrink: 1 }}>
+        <PillText color={palette.foreground}>{step.label}</PillText>
+      </View>
+    </Pill>
   );
 }
 
