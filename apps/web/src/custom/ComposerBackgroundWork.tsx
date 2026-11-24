@@ -147,6 +147,7 @@ function BackgroundWorkTaskRow(props: {
   return (
     // Choosing it closes the menu: the thread may open beside this composer, which stays mounted.
     <MenuItem
+      className="min-h-11.5"
       data-fork-monitoring-task
       aria-label={`Open ${task.label}`}
       onClick={() => props.onOpenThread(childThreadId)}

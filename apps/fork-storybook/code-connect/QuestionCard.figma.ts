@@ -1,5 +1,5 @@
 // url=https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=321-626
-// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/components/chat/ComposerPendingUserInputPanel.tsx
+// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/overrides/components/chat/ComposerPendingUserInputPanel.tsx
 // component=ComposerPendingUserInputPanel
 import figma from "figma";
 
