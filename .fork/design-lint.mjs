@@ -60,13 +60,13 @@ export const THEMES = [
   {
     id: "inlet-black",
     enforced: true,
-    classes: ["dark"],
+    classes: [],
     attrs: { "data-fork-theme": "inlet", "data-fork-inlet-color": "black" },
   },
   {
     id: "inlet-cream",
     enforced: true,
-    classes: [],
+    classes: ["dark"],
     attrs: { "data-fork-theme": "inlet", "data-fork-inlet-color": "cream" },
   },
   // Best effort: reported, never blocking.

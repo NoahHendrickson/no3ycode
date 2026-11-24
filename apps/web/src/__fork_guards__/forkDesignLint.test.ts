@@ -157,7 +157,7 @@ describe("fork guard: fork-design-lint", () => {
     });
 
     it("reports the theme a token is missing from", () => {
-      const findings = run(`${BASIC} { --fork-x: red; } ${INLET}.dark { --fork-x: blue; }`);
+      const findings = run(`${BASIC} { --fork-x: red; } ${INLET}:not(.dark) { --fork-x: blue; }`);
       expect(findings.map((finding) => finding.message)).toEqual([
         "--fork-x is not defined in inlet-cream",
       ]);
@@ -176,6 +176,10 @@ describe("fork guard: fork-design-lint", () => {
       ).toEqual(["flat-glass"]);
       expect(DesignLint.themesFor(`${ROOT}.wco[data-fork-theme="inlet"] .x`)).toEqual([
         "inlet-black",
+        "inlet-cream",
+      ]);
+      // Cream sits on dark and Black on light (forkTheme.ts INLET_COLOR_OPTIONS).
+      expect(DesignLint.themesFor(`${ROOT}.dark[data-fork-theme="inlet"] .x`)).toEqual([
         "inlet-cream",
       ]);
       expect(DesignLint.themesFor(`[data-slot="button"]`)).toHaveLength(6);
