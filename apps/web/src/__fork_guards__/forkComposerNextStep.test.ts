@@ -33,9 +33,29 @@ describe("fork guard: fork-composer-next-step", () => {
     expect(read("../components/ChatView.tsx")).toMatch(
       /onOwnerTurnDispatched: embedded\s*\? undefined\s*: \(prompt: string\) =>\s*recordComposerHabit\(/u,
     );
-    // Learned pills give way to the rules, and to a PR that is the owner's call.
-    expect(read("../custom/ComposerNextStepPill.tsx")).toMatch(
-      /if \(step === "hold"\) return null;\s*if \(step === null\) \{\s*if \(habit === null\) return null;/u,
+  });
+
+  it("offers the same step on iOS, last in the no3y pill row, through the owner send", () => {
+    const screen = read("../../../mobile/src/features/threads/ThreadDetailScreen.tsx");
+    expect(screen).toContain("const nextStep = useNo3yNextStep({");
+    expect(screen).toContain("no3yNextStepSettled(props, {");
+    expect(screen).toContain("nextStep.step !== null");
+    expect(screen).toMatch(
+      /nextStep\.send\(async \(prompt\) => \{[\s\S]{0,200}flushPendingInput\(\);\s*return handleSendMessage\(undefined, undefined, prompt\);/u,
+    );
+    expect(screen).toMatch(/\},\s*prompt,\s*\);/u);
+    expect(read("../../../mobile/fork/No3yStatusPill.tsx")).toMatch(
+      /\{pills\.map\(renderPill\)\}\s*\{nextStep === null \? null : \(\s*<NextStepPill/u,
+    );
+  });
+
+  it("learns iOS sends, typed or the pill's, where they enter the outbox", () => {
+    const state = read("../../../mobile/src/state/use-thread-composer-state.ts");
+    expect(state).toContain(
+      "const draft = prompt === undefined ? storedDraft : { ...storedDraft, text: prompt };",
+    );
+    expect(state).toMatch(
+      /onWillEnqueue\?\.\(\);\s*\/\* fork:begin fork-composer-next-step[\s\S]*?recordNo3yComposerHabit\(lastOwnerPrompt\(/u,
     );
   });
 });

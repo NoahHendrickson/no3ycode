@@ -145,7 +145,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // the PR's state colour — and the card stays a fixed 54px because it is
     // one of the line's fixed-height members. The badge is a link to the PR,
     // so it must NOT sit inside the title line's hover-actions stack that
-    // fades the elapsed time out — a control you can reach only by not
+    // fades the subagent count out — a control you can reach only by not
     // pointing at its row is not a control. Handed in as a required slot for
     // the same reason as the terminal glyph: a dropped call-site line fails
     // the typecheck instead of silently un-porting the badge.

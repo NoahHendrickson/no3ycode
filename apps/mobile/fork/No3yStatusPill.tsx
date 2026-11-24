@@ -13,16 +13,22 @@ import Clock01Icon from "@hugeicons/core-free-icons/Clock01Icon";
 import ComputerActivityIcon from "@hugeicons/core-free-icons/ComputerActivityIcon";
 import ComputerTerminal01Icon from "@hugeicons/core-free-icons/ComputerTerminal01Icon";
 import GitPullRequestIcon from "@hugeicons/core-free-icons/GitPullRequestIcon";
+import Cancel01Icon from "@hugeicons/core-free-icons/Cancel01Icon";
+import GitMergeIcon from "@hugeicons/core-free-icons/GitMergeIcon";
 import Globe02Icon from "@hugeicons/core-free-icons/Globe02Icon";
 import Layers01Icon from "@hugeicons/core-free-icons/Layers01Icon";
 import LeftToRightListNumberIcon from "@hugeicons/core-free-icons/LeftToRightListNumberIcon";
 import PuzzleIcon from "@hugeicons/core-free-icons/PuzzleIcon";
 import Robot01Icon from "@hugeicons/core-free-icons/Robot01Icon";
+import Rocket01Icon from "@hugeicons/core-free-icons/Rocket01Icon";
 import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon";
+import SparklesIcon from "@hugeicons/core-free-icons/SparklesIcon";
 import SquareStackIcon from "@hugeicons/core-free-icons/SquareStackIcon";
 import Target02Icon from "@hugeicons/core-free-icons/Target02Icon";
+import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WifiDisconnected02Icon from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
 import { StackActions, useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { PickedComposerNextStep } from "@t3tools/client-runtime/fork-composer-next-step";
 import { pullRequestChecksRefreshIntervalMs } from "@t3tools/client-runtime/pull-request-checks";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { PendingBackgroundWorkPresentation } from "@t3tools/client-runtime/state/thread-execution";
@@ -30,8 +36,8 @@ import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contract
 import { useEffect, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
-import Svg, { Circle, Path } from "react-native-svg";
 
+import { ChecksFailingMark, ChecksRunningMark } from "./No3yChecksMarks";
 import { AppActivityIndicator } from "../src/components/ui/AppActivityIndicator";
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
@@ -63,6 +69,7 @@ import {
 } from "./no3yStatusSegments";
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
+import { forgetNo3yComposerHabit } from "./no3yComposerHabits";
 
 const PILL_HEIGHT = 32;
 const PILL_RADIUS = 14;
@@ -77,6 +84,15 @@ const ROW_INSET = 24;
 /** Room above and below the pills inside the scrolling row, so their shadow is not clipped. */
 const SHADOW_ROOM = 4;
 const ICON_SIZE = 16;
+/** How far the pills' top sits above the composer overlay's anchor. */
+const PILL_OVERLAY_OFFSET = PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET;
+/** Room between the transcript's last row and the pills, so the working row does not crowd them. */
+const TRANSCRIPT_GAP = 24;
+
+/** The transcript's clearance above the status row; in-flow question layout keeps upstream's. */
+export function no3yFeedStatusCoverage(upstreamCoverage: number, no3yLayout: boolean) {
+  return no3yLayout ? PILL_OVERLAY_OFFSET + TRANSCRIPT_GAP : upstreamCoverage;
+}
 
 type UpstreamProps = ComponentProps<typeof FloatingWorkingControl>;
 
@@ -91,6 +107,9 @@ interface No3yPillExtras {
   readonly thread: EnvironmentThreadShell;
   /** The thread's pull request as useThreadPr resolves it; the screen keeps the feed clear of it. */
   readonly pullRequest: ThreadPrPresentation | null;
+  /** The thread's next step (useNo3yNextStep.ts), sent on tap; last in the row. */
+  readonly nextStep: PickedComposerNextStep | null;
+  readonly onSendNextStep: () => void;
 }
 
 /**
@@ -114,6 +133,8 @@ export function No3yStatusPillSwap(
       no3yStatus={props.no3yStatus}
       thread={props.thread}
       pullRequest={props.pullRequest}
+      nextStep={props.nextStep}
+      onSendNextStep={props.onSendNextStep}
     />
   );
 }
@@ -200,7 +221,8 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
     transform: [{ translateY: -(lift?.value ?? 0) }],
   }));
 
-  if (pills.length === 0 && !props.showScrollToEnd) return null;
+  const { nextStep } = props;
+  if (pills.length === 0 && nextStep === null && !props.showScrollToEnd) return null;
 
   const openSheet = () => {
     Keyboard.dismiss();
@@ -266,7 +288,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           position: "absolute",
           left: 0,
           right: 0,
-          top: -(PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET) - SHADOW_ROOM,
+          top: -PILL_OVERLAY_OFFSET - SHADOW_ROOM,
           zIndex: 20,
           flexDirection: "row",
           alignItems: "center",
@@ -275,7 +297,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
       ]}
     >
       {/* Only as wide as its pills, and only there with pills, so the transcript takes touches. */}
-      {pills.length > 0 ? (
+      {pills.length > 0 || nextStep !== null ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -290,6 +312,14 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           }}
         >
           {pills.map(renderPill)}
+          {nextStep === null ? null : (
+            <NextStepPill
+              key={`next-step:${nextStep.prompt}`}
+              step={nextStep}
+              palette={palette}
+              onSend={props.onSendNextStep}
+            />
+          )}
         </ScrollView>
       ) : null}
       {props.showScrollToEnd ? (
@@ -351,8 +381,13 @@ function Pill(props: {
   readonly tint?: string | undefined;
   /** An inner glow, as a box shadow: the stacked pull request's purple-to-green. */
   readonly glow?: string | undefined;
+  /** A second button in the same glass, after the first: the learned next step's ×. */
+  readonly trailing?: ReactNode;
+  /** Caps the first button's width, so a long label truncates. */
+  readonly maxWidth?: number;
   readonly children: ReactNode;
 }) {
+  const split = props.trailing !== undefined;
   return (
     <Animated.View
       entering={NO3Y_GLASS_IN}
@@ -361,6 +396,7 @@ function Pill(props: {
         height: PILL_HEIGHT,
         borderRadius: PILL_RADIUS,
         boxShadow: props.palette.pillShadow,
+        ...(split ? { flexDirection: "row" as const } : {}),
       }}
     >
       <No3yGlassLayer radius={PILL_RADIUS} tint={props.tint} />
@@ -377,17 +413,70 @@ function Pill(props: {
         hitSlop={6}
         onPress={props.onPress}
         style={({ pressed }) => ({
-          flex: 1,
+          ...(split ? { paddingLeft: 8, paddingRight: 4 } : { flex: 1, paddingHorizontal: 8 }),
+          ...(props.maxWidth === undefined ? {} : { maxWidth: props.maxWidth }),
           flexDirection: "row",
           alignItems: "center",
           gap: 4,
-          paddingHorizontal: 8,
           opacity: pressed ? 0.6 : 1,
         })}
       >
         {props.children}
       </Pressable>
+      {props.trailing}
     </Animated.View>
+  );
+}
+
+const NEXT_STEP_ICON: Record<PickedComposerNextStep["kind"], HugeIconData> = {
+  "open-pr": GitPullRequestIcon,
+  babysit: ViewIcon,
+  merge: GitMergeIcon,
+  release: Rocket01Icon,
+  learned: SparklesIcon,
+};
+
+/** The next step, sent on tap; a learned one carries an × that stops suggesting it. */
+function NextStepPill(props: {
+  readonly step: PickedComposerNextStep;
+  readonly palette: FlatGlassPalette;
+  readonly onSend: () => void;
+}) {
+  const { step, palette } = props;
+  const { habit } = step;
+  return (
+    <Pill
+      accessibilityLabel={`Send ${step.prompt}`}
+      accessibilityHint={habit === null ? undefined : "You usually send this next"}
+      onPress={props.onSend}
+      palette={palette}
+      maxWidth={220}
+      trailing={
+        habit === null ? undefined : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Stop suggesting this"
+            hitSlop={6}
+            onPress={() => forgetNo3yComposerHabit(habit)}
+            style={({ pressed }) => ({
+              alignItems: "center",
+              justifyContent: "center",
+              paddingLeft: 2,
+              paddingRight: 8,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <HugeIcon icon={Cancel01Icon} size={14} color={palette.quietInk} />
+          </Pressable>
+        )
+      }
+    >
+      <HugeIcon icon={NEXT_STEP_ICON[step.kind]} size={ICON_SIZE} color={palette.foreground} />
+      {/* Shrinks so a long learned message truncates inside the max width. */}
+      <View style={{ flexShrink: 1 }}>
+        <PillText color={palette.foreground}>{step.label}</PillText>
+      </View>
+    </Pill>
   );
 }
 
@@ -609,46 +698,6 @@ function useWatcherChecksState(thread: EnvironmentThreadShell, look: No3yPullReq
     return () => clearInterval(timer);
   });
   return no3yWatcherChecksState(look.checks, gated ? live.data : null, link);
-}
-
-/** Figma's checks-running mark: a ring with a three-quarter pie. */
-export function ChecksRunningMark(props: { readonly color: string }) {
-  return (
-    <View
-      style={{
-        width: ICON_SIZE,
-        height: ICON_SIZE,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-        <Path
-          d="M11 7C11 7.79113 10.7654 8.56448 10.3259 9.22228C9.88635 9.88008 9.26164 10.3928 8.53073 10.6955C7.79983 10.9983 6.99556 11.0775 6.21964 10.9231C5.44371 10.7688 4.73098 10.3878 4.17157 9.82843C3.61216 9.26902 3.2312 8.55629 3.07686 7.78036C2.92252 7.00444 3.00173 6.20017 3.30448 5.46927C3.60723 4.73836 4.11992 4.11365 4.77772 3.67412C5.43552 3.2346 6.20887 3 7 3V7H11Z"
-          fill={props.color}
-        />
-        <Circle cx={7} cy={7} r={6.5} stroke={props.color} />
-      </Svg>
-    </View>
-  );
-}
-
-/** The checks-failing mark: a solid dot the size of the running mark's inner pie. */
-export function ChecksFailingMark(props: { readonly color: string }) {
-  return (
-    <View
-      style={{
-        width: ICON_SIZE,
-        height: ICON_SIZE,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Svg width={14} height={14} viewBox="0 0 14 14">
-        <Circle cx={7} cy={7} r={4} fill={props.color} />
-      </Svg>
-    </View>
-  );
 }
 
 function StatusIcon(props: { readonly icon: HugeIconData; readonly color: string }) {

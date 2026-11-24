@@ -5,6 +5,9 @@ import {
   parseAssistantCitationHref,
 } from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { StyleSheet } from "react-native";
+/* fork:end no3y-subagent-link-chip */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
 import { contextChipAccent, contextChipPresentation } from "../lib/composerChipPresentation";
@@ -164,12 +167,13 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
+                // No vertical padding: the capsule stands as tall as an inline code chip.
                 pill: {
                   borderColor: link.capsule.border,
-                  borderWidth: 1,
+                  borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
-                  paddingHorizontal: 7,
-                  paddingVertical: 2,
+                  paddingHorizontal: 6,
+                  paddingVertical: 0,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,

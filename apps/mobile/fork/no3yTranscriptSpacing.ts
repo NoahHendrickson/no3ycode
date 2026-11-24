@@ -46,7 +46,8 @@ export function deriveNo3yWorkRowSizing(input: {
 
 /**
  * `work-block` is a tool row that keeps its own `mb-1`; `work` has none. `user-grouped` is a
- * prompt sitting close to its own response (`mb-1` instead of `mb-2`).
+ * prompt sitting close to its own response (`mb-1` instead of `mb-2`). `fold` is a turn's
+ * "Worked for" row, live or settled, so its spacing holds when the turn settles.
  */
 export type No3yRowKind =
   | "reply"
@@ -54,12 +55,16 @@ export type No3yRowKind =
   | "user-grouped"
   | "work"
   | "work-block"
+  | "fold"
   | "live"
   | "other";
 
 export interface No3yRowGap {
   readonly top: number;
   readonly bottom: number;
+  /** Before a fold, the margin under a reply's copy and fork footer in place of its `mb-5`; it
+   * applies only when the reply draws that footer. */
+  readonly footer?: number;
 }
 
 type SpacedRow = ThreadFeedRow & {
@@ -78,6 +83,8 @@ export function no3yRowKind(row: SpacedRow): No3yRowKind {
         (row.message.text.trim() !== "" || (row.message.attachments?.length ?? 0) > 0)
         ? "reply"
         : "other";
+    case "run-fold":
+      return "fold";
     case "work-toggle":
     case "thinking":
       return "work";
@@ -97,11 +104,17 @@ const TRAILING_SPACE: Record<No3yRowKind, number> = {
   "user-grouped": 4,
   work: 0,
   "work-block": 4,
+  fold: 0,
   live: 0,
   other: 0,
 };
 
 const isWork = (kind: No3yRowKind | undefined) => kind === "work" || kind === "work-block";
+
+// "Worked for" sits midway between the turn above and its reply: 27pt of space to the footer's glyphs
+// above and to the reply's text below, as measured on an iPhone at the default text size.
+const FOOTER_BEFORE_FOLD = 6;
+const REPLY_AFTER_FOLD = 3;
 
 /** The extra space above and below each row, topping up what its neighbour already draws. */
 export function no3yTranscriptGaps(kinds: ReadonlyArray<No3yRowKind>): Array<No3yRowGap | null> {
@@ -114,6 +127,8 @@ export function no3yTranscriptGaps(kinds: ReadonlyArray<No3yRowKind>): Array<No3
     if (kind === "live" && previous !== undefined) top = topUp(previous);
     if (kind === "reply" && previous !== undefined && isWork(previous)) top = topUp(previous);
     if (kind === "reply" && isWork(next)) bottom = topUp("reply");
+    if (kind === "reply" && previous === "fold") top = REPLY_AFTER_FOLD;
+    if (kind === "reply" && next === "fold") return { top, bottom, footer: FOOTER_BEFORE_FOLD };
     return top > 0 || bottom > 0 ? { top, bottom } : null;
   });
 }
@@ -132,7 +147,13 @@ export function createNo3yTranscriptSpacing() {
       const gap = rowGaps[index];
       if (!gap) return row;
       const copy = copies.get(row) as (Row & { readonly no3yGap: No3yRowGap }) | undefined;
-      if (copy?.no3yGap.top === gap.top && copy.no3yGap.bottom === gap.bottom) return copy;
+      if (
+        copy?.no3yGap.top === gap.top &&
+        copy.no3yGap.bottom === gap.bottom &&
+        copy.no3yGap.footer === gap.footer
+      ) {
+        return copy;
+      }
       const next = { ...row, no3yGap: gap };
       copies.set(row, next);
       return next;

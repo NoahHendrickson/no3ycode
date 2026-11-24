@@ -1,32 +1,38 @@
 /**
  * The one next step a settled thread offers as a pill above the composer, following the
  * owner's usual chain: sol loop → open PR → babysit → merge → cut release. Learned habits
- * (composerHabits) fill in where no rule speaks. See
+ * (forkComposerHabits) fill in where no rule speaks. See
  * `.fork/customizations.yaml#fork-composer-next-step`.
  */
 import type { ThreadPullRequestLink } from "@t3tools/contracts";
-import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
+
+import type { HabitSuggestion } from "./forkComposerHabits.ts";
+import { resolveThreadCurrentPullRequestLink } from "./threadPullRequests.ts";
 
 export type ComposerNextStepKind = "open-pr" | "babysit" | "merge" | "release";
 
-export interface ComposerNextStep {
+interface ComposerNextStep {
   readonly kind: ComposerNextStepKind;
   readonly label: string;
   readonly prompt: string;
 }
 
 const STEPS: Record<ComposerNextStepKind, ComposerNextStep> = {
+  // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
   "open-pr": { kind: "open-pr", label: "Open PR", prompt: "Open a PR" },
   babysit: {
     kind: "babysit",
+    // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
     label: "Babysit PR",
     prompt: "Babysit the PR and address any feedback",
   },
   merge: {
     kind: "merge",
+    // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
     label: "Merge PR",
     prompt: "Check the reviews and comments on the PR, then merge it if it's ready",
   },
+  // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
   release: { kind: "release", label: "Cut release", prompt: "Cut a new release" },
 };
 
@@ -43,7 +49,7 @@ function isReleaseRepository(url: string): boolean {
 }
 
 /** The thread's PR as far as the next step cares. */
-export interface NextStepPullRequest {
+interface NextStepPullRequest {
   readonly state: "open" | "closed" | "merged";
   readonly watching: boolean;
   /** A watch ran on it and ended. */
@@ -53,18 +59,17 @@ export interface NextStepPullRequest {
   readonly releasable: boolean;
 }
 
-export interface NextStepGitStatus {
+interface NextStepGit {
   readonly isDefaultRef: boolean;
   readonly hasPrimaryRemote: boolean;
   /** Uncommitted files or commits ahead of the default branch. */
   readonly hasWork: boolean;
 }
 
-export interface ComposerNextStepInput {
-  /** The owner's latest typed message, or null when none is loaded. */
+interface ComposerNextStepInput {
   readonly lastOwnerPrompt: string | null;
   readonly pullRequest: NextStepPullRequest | null;
-  readonly git: NextStepGitStatus | null;
+  readonly git: NextStepGit | null;
 }
 
 const SOL_LOOP = /\bsol[\s-]?loop\b/u;
@@ -76,9 +81,7 @@ const NEGATED = /\b(don'?t|do not|not yet)\b/u;
  * The next step, "hold" when the PR is the owner's call (watched, or a watch ended short of
  * mergeable) so nothing, learned or not, is offered, or null when no rule speaks.
  */
-export function resolveComposerNextStep(
-  input: ComposerNextStepInput,
-): ComposerNextStep | "hold" | null {
+function resolveComposerNextStep(input: ComposerNextStepInput): ComposerNextStep | "hold" | null {
   const said = input.lastOwnerPrompt?.toLowerCase() ?? "";
   const pr = input.pullRequest;
   if (pr !== null) {
@@ -101,12 +104,17 @@ export function resolveComposerNextStep(
 }
 
 /** The thread's current PR, as the PR chip resolves it (a stack's top layer), for the next step. */
-export function nextStepPullRequestFromLinks(
+function nextStepPullRequestFromLinks(
   links: ReadonlyArray<ThreadPullRequestLink>,
 ): NextStepPullRequest | null {
   const link = resolveThreadCurrentPullRequestLink(links);
-  const snapshot = link?.snapshot;
-  if (!link || !snapshot) return null;
+  if (!link) return null;
+  // A watch can start before the link's first snapshot syncs; it is the owner's call either way.
+  if (link.watch !== undefined && !link.snapshot) {
+    return { state: "open", watching: true, watchedBefore: false, ready: false, releasable: false };
+  }
+  const { snapshot } = link;
+  if (!snapshot) return null;
   return {
     state: snapshot.state,
     watching: link.watch !== undefined,
@@ -120,18 +128,89 @@ export function nextStepPullRequestFromLinks(
   };
 }
 
-/** The branch's PR from git status, for a PR the agent opened without linking it to the thread.
-    Nothing watches an unlinked PR, and its checks are unknown. */
-export function nextStepPullRequestFromBranch(
-  pr: { readonly state: "open" | "closed" | "merged"; readonly url: string } | null,
-): NextStepPullRequest | null {
-  if (pr === null) return null;
+/** A PR the agent opened without linking it to the thread. Nothing watches it, and its checks
+    are unknown. */
+function unlinkedPullRequest(url: string): NextStepPullRequest {
   return {
-    state: pr.state,
+    state: "open",
     watching: false,
     watchedBefore: false,
     ready: false,
-    releasable: isReleaseRepository(pr.url),
+    releasable: isReleaseRepository(url),
+  };
+}
+
+interface BranchPullRequest {
+  readonly state: "open" | "closed" | "merged" | null;
+  readonly url: string;
+}
+
+/** The slice of a checkout's git status (VcsStatusResult) the next step reads. */
+export interface NextStepGitStatus {
+  readonly isRepo: boolean;
+  readonly refName: string | null;
+  readonly isDefaultRef: boolean;
+  readonly hasPrimaryRemote: boolean;
+  readonly hasWorkingTreeChanges: boolean;
+  readonly aheadOfDefaultCount?: number | undefined;
+  readonly pr: BranchPullRequest | null;
+}
+
+export interface PickedComposerNextStep {
+  /** A rule's step, or "learned" for a habit. */
+  readonly kind: ComposerNextStepKind | "learned";
+  readonly label: string;
+  readonly prompt: string;
+  /** The learned habit, which the owner can dismiss. */
+  readonly habit: HabitSuggestion | null;
+}
+
+/**
+ * The thread's next step, ruled or learned, or null for none. The PR is the thread's linked one,
+ * else an open one on its branch that the client already knows or git status finds; an old one
+ * on a reused branch is not this work.
+ */
+export function pickComposerNextStep(input: {
+  /** The owner's latest typed message, or null when none is loaded. */
+  readonly lastOwnerPrompt: string | null;
+  readonly links: ReadonlyArray<ThreadPullRequestLink>;
+  readonly branch: string | null;
+  readonly branchPullRequest: BranchPullRequest | null;
+  readonly gitStatus: NextStepGitStatus | null;
+  readonly habit: HabitSuggestion | null;
+}): PickedComposerNextStep | null {
+  const status = input.gitStatus;
+  // A checkout on another branch is not this thread's work.
+  const git =
+    status === null || !status.isRepo || (input.branch !== null && status.refName !== input.branch)
+      ? null
+      : status;
+  const unlinked = [input.branchPullRequest, input.branch === null ? null : git?.pr].find(
+    (pr) => pr?.state === "open",
+  );
+  const step = resolveComposerNextStep({
+    lastOwnerPrompt: input.lastOwnerPrompt,
+    pullRequest:
+      nextStepPullRequestFromLinks(input.links) ??
+      (unlinked == null ? null : unlinkedPullRequest(unlinked.url)),
+    git:
+      git === null
+        ? null
+        : {
+            isDefaultRef: git.isDefaultRef,
+            hasPrimaryRemote: git.hasPrimaryRemote,
+            hasWork: git.hasWorkingTreeChanges || (git.aheadOfDefaultCount ?? 0) > 0,
+          },
+  });
+  if (step === "hold") return null;
+  if (step !== null) return { ...step, habit: null };
+  const { habit } = input;
+  if (habit === null) return null;
+  return {
+    kind: "learned",
+    label: habit.text.charAt(0).toUpperCase() + habit.text.slice(1),
+    prompt: habit.text,
+    habit,
   };
 }
 
