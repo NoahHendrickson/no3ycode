@@ -30,7 +30,9 @@ function PreviewCardPopup({
       >
         <PreviewCardPrimitive.Popup
           className={cn(
-            "origin-(--transform-origin) rounded-lg border bg-popover text-popover-foreground shadow-lg outline-none transition-[scale,opacity] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0",
+            /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
+            "origin-(--transform-origin) rounded-(--fork-menu-radius,var(--radius-lg)) border bg-popover text-popover-foreground shadow-lg outline-none transition-[scale,opacity] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0",
+            /* fork:end fork-primitive-tokens */
             className,
           )}
           data-slot="preview-card-popup"
