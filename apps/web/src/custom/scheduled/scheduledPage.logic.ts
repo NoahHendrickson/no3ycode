@@ -330,3 +330,32 @@ export function draftSignature(draft: {
 }): string {
   return JSON.stringify({ ...draft, weekdays: [...draft.weekdays].toSorted((a, b) => a - b) });
 }
+
+export type AutomationGrouping = "none" | "petal";
+
+export interface AutomationGroup<T> {
+  /** "yours", or the Petal's thread id. */
+  readonly key: string;
+  readonly label: string;
+  readonly tasks: ReadonlyArray<T>;
+}
+
+/** Your automations first, then one group per Petal by name. A Petal's automation is one that
+    runs in the Petal's own thread; one whose Petal is gone counts as yours. */
+export function groupAutomationsByPetal<T extends { readonly threadId: string | null }>(
+  tasks: ReadonlyArray<T>,
+  petalTitles: ReadonlyMap<string, string>,
+): ReadonlyArray<AutomationGroup<T>> {
+  const yours: T[] = [];
+  const byPetal = new Map<string, T[]>();
+  for (const task of tasks) {
+    const petalId = task.threadId !== null && petalTitles.has(task.threadId) ? task.threadId : null;
+    if (petalId === null) yours.push(task);
+    else if (byPetal.has(petalId)) byPetal.get(petalId)!.push(task);
+    else byPetal.set(petalId, [task]);
+  }
+  const petals = [...byPetal]
+    .map(([key, grouped]) => ({ key, label: petalTitles.get(key)!, tasks: grouped }))
+    .toSorted((left, right) => left.label.localeCompare(right.label));
+  return [...(yours.length > 0 ? [{ key: "yours", label: "Yours", tasks: yours }] : []), ...petals];
+}
