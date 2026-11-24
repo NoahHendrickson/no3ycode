@@ -19,7 +19,6 @@ const read = (name: string) =>
   );
 
 const POPUP = "rounded-(--fork-menu-radius,var(--radius-lg))";
-const RIM = "before:rounded-[calc(var(--fork-menu-radius,var(--radius-lg))-1px)]";
 const ROW = "rounded-(--fork-menu-row-radius,var(--radius-sm))";
 const count = (text: string, needle: string) => text.split(needle).length - 1;
 
@@ -32,19 +31,14 @@ describe("fork guard: fork-primitive-tokens", () => {
     expect(count(read("combobox.tsx"), POPUP)).toBe(1);
     expect(count(read("combobox.tsx"), ROW)).toBe(1);
     expect(count(read("autocomplete.tsx"), POPUP)).toBe(1);
-    expect(count(read("autocomplete.tsx"), RIM)).toBe(1);
     expect(count(read("autocomplete.tsx"), ROW)).toBe(1);
     expect(count(read("popover.tsx"), POPUP)).toBe(1);
-    expect(count(read("popover.tsx"), RIM)).toBe(1);
     expect(count(read("preview-card.tsx"), POPUP)).toBe(1);
   });
 
   it("sizes tooltips and sidebar groups from their tokens", () => {
     const tooltip = read("tooltip.tsx");
     expect(tooltip).toContain("rounded-(--fork-tooltip-radius,var(--radius-md))");
-    expect(tooltip).toContain(
-      "before:rounded-[calc(var(--fork-tooltip-radius,var(--radius-md))-1px)]",
-    );
     expect(tooltip).toContain("text-(length:--fork-tooltip-font-size,var(--text-xs))");
     expect(tooltip).toContain("leading-(--fork-tooltip-line-height,var(--leading-snug))");
     expect(tooltip).toContain(

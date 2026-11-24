@@ -9111,7 +9111,7 @@
     Theme CSS sets the geometry of components/ui primitives through tokens the
     primitives read, not by restyling their [data-slot] (DESIGN-RULES C1).
     Popups (menu, submenu, popover, select, combobox, autocomplete, preview
-    card) round from --fork-menu-radius and their rims one px inside it; menu,
+    card) round from --fork-menu-radius (their 1px rims keep upstream's radius); menu,
     select, combobox and autocomplete rows from --fork-menu-row-radius;
     tooltips take --fork-tooltip-radius, -font-size, -line-height and
     -padding-inline / -block; a sidebar group's end padding is
