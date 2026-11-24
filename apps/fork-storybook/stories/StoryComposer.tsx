@@ -11,7 +11,6 @@ export function StoryComposer(props: {
   context?: ReactNode;
   modeControls?: ReactNode;
   usageControls?: ReactNode;
-  topVessel?: ReactNode;
   statusChips?: ReactNode;
   /** Cards above the composer, in ChatComposer's banner dock: notices, the queue, a question. */
   banners?: ReactNode;
@@ -40,7 +39,6 @@ export function StoryComposer(props: {
               readoutControls={null}
               modeControls={props.modeControls ?? null}
               usageControls={props.usageControls}
-              topVessel={props.topVessel}
               statusChips={props.statusChips}
               banners={
                 <ComposerBanner.Dock>

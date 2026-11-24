@@ -829,9 +829,8 @@ describe("fork guard: fork-composer-shell", () => {
     // Nothing of the work rides the usage drawer or the context row any more.
     expect(usage).not.toContain("backgroundWork");
     expect(chatView).not.toContain("composerContextTrailing");
-    expect(shell).toContain(
-      'className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"',
-    );
+    // The usage drawer's floating slot went with the drawer (#421).
+    expect(shell).not.toContain("topVessel");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
     expect(branchToolbar).toContain(

@@ -3028,13 +3028,12 @@
     advances on open. The calmer #38a169 green is scoped via --success to the
     ring and its menu so the Usage settings page keeps each theme's --success
     token. Hidden when the provider reports no session window or when the
-    footer collapses. Nothing fills the composer's top vessel any more.
+    footer collapses. The composer has no top vessel; the drawer it held is gone.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
-    - apps/web/src/components/ChatView.tsx
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
