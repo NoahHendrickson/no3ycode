@@ -27,6 +27,9 @@ import { MOBILE_THEME_IDS, type MobileThemeId, type MobileThemeMode } from "../l
 import * as MobileDatabase from "./mobile-database";
 import * as MobileSecureStorage from "./mobile-secure-storage";
 import { MobileStorageDecodeError, MobileStorageEncodeError } from "./mobile-storage";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import { withPullRequestProjectSet } from "../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
 
 const PREFERENCES_KEY = "t3code.preferences";
 const PREFERENCES_FALLBACK_KEY = "t3code.preferences.fallback";
@@ -38,6 +41,12 @@ export const PullRequestListControls = Schema.Struct({
   filters: PullRequestListFilters,
   projectId: Schema.optional(Schema.String),
   projectEnvironmentId: Schema.optional(Schema.String),
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  // Read only by sanitizePreferences, which turns the pair above into this set.
+  projects: Schema.optional(
+    Schema.Array(Schema.Struct({ projectId: Schema.String, environmentId: Schema.String })),
+  ),
+  /* fork:end no3y-pr-project-multiselect */
   sort: Schema.Literals(["updated", "created", "oldest"]),
 });
 export type PullRequestListControls = typeof PullRequestListControls.Type;
@@ -425,12 +434,29 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (isPullRequestListPreferences(parsed.pullRequestListFilters)) {
     preferences.pullRequestListFilters = parsed.pullRequestListFilters;
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    preferences.pullRequestListFilters = {
+      ...parsed.pullRequestListFilters,
+      controls: Object.fromEntries(
+        Object.entries(parsed.pullRequestListFilters.controls).map(([environment, controls]) => [
+          environment,
+          withPullRequestProjectSet(controls),
+        ]),
+      ),
+    };
+    /* fork:end no3y-pr-project-multiselect */
   }
   if (isWorkspaceSelections(parsed.workspaceSelections)) {
     preferences.workspaceSelections = parsed.workspaceSelections;
   }
   if (Array.isArray(parsed.pullRequestSavedViews)) {
     preferences.pullRequestSavedViews = parsed.pullRequestSavedViews.filter(isPullRequestSavedView);
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    preferences.pullRequestSavedViews = preferences.pullRequestSavedViews.map((view) => ({
+      ...view,
+      controls: withPullRequestProjectSet(view.controls),
+    }));
+    /* fork:end no3y-pr-project-multiselect */
   }
   if (Array.isArray(parsed.issueSavedViews)) {
     preferences.issueSavedViews = parsed.issueSavedViews.filter(isIssueSavedView);

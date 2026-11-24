@@ -818,8 +818,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).toContain("statusChips={composerStatusChips}");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
-    expect(work).toContain("<ElectricityStackIcon />");
-    expect(work).toContain('"Background task" : "Background tasks"');
+    // A fill travels the Layers02 mark front → middle → back; reduced motion hides it.
+    expect(work).toContain("<BackgroundWorkLayersMark />");
+    expect(shellCss).toMatch(
+      /prefers-reduced-motion: reduce\)\s*\{[^{}]*svg\[data-fork-layer-fill\] \{\s*display: none;/u,
+    );
+    expect(work).toContain("composerBackgroundWorkLabel(props.items)");
     // An unpressable Stop is not drawn, and a live run leaves Stop to the composer.
     expect(work).toContain("{props.canStop ? (");
     expect(chatView).toContain("canStop={canStopBackgroundWork}");
