@@ -148,6 +148,27 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Interface font size scales text only — see
+   `.fork/customizations.yaml#fork-interface-size-text-only`.
+
+   The setting sets the root font size, so every rem moves with it. Spacing, radii and the
+   compact control geometry are pinned to their 16px values here, so inputs, buttons, switches,
+   padding and gaps hold their size while text (the rem `--text-*` scale) still follows. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --spacing: 4px;
+  --radius: 8px;
+  --radius-xs: 2px;
+  --radius-4xl: 32px;
+  --control-radius: 8px;
+  --sidebar-content-inset: 8px;
+  --sidebar-control-gap: 8px;
+  --sidebar-row-content-inset: 10px;
+  --command-shell-inset: 8px;
+  --command-content-inset: 16px;
+  --floating-content-inset: 12px;
+}
+
+/* ---------------------------------------------------------------------------
    Sidebar type size — see `.fork/customizations.yaml#fork-sidebar-type-size`.
 
    Tailwind's text-xs / text-sm utilities read --text-xs / --text-sm (they are

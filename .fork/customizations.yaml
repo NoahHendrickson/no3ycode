@@ -2774,6 +2774,27 @@
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
 
+- id: fork-interface-size-text-only
+  intent: >
+    Interface font size scales text only (Noey, 2026-11-24). Upstream applies it
+    as the root font size, so every rem in the app moved with it and inputs,
+    buttons, switches and padding shrank at 15px. The fork pins Tailwind's
+    --spacing, the radius scale and the compact control geometry tokens to their
+    16px values in px, so control geometry holds while the rem --text-* scale
+    (and anything sized in em) still follows the setting. Arbitrary rem values
+    written in classes still scale; geometry tokens the fork adds should be px or
+    built on --spacing, and text tokens rem.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Root font size from Interface font size, and the rem tokens pinned here.
+    - apps/web/src/appearanceFonts.ts
+    - apps/web/src/index.css
+  verify:
+    - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
+
 - id: fork-sidebar-chrome
   intent: >
     The sidebar's collapse toggle lives inside the sidebar header, beside the
