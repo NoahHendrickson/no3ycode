@@ -5993,6 +5993,31 @@
   verify:
     - apps/web/src/__fork_guards__/forkImageAttachmentNoChip.test.ts
 
+- id: no3y-media-attachment-no-chip
+  intent: >
+    The mobile counterpart of fork-image-attachment-no-chip. A photo or video
+    attached from the iOS/Android composer (media picker, file picker, or
+    pasted image) shows once: as its thumbnail in the strip above the prompt.
+    Upstream also inserts an inline file-name chip into the prompt text for
+    every attachment; the fork skips it for anything the strip already shows
+    (composerStripAttachments), so documents and pasted text keep their chips,
+    since they have no thumbnail. Unreferenced media still sends and survives
+    text edits; only the chip's position in the prose is lost, the same
+    trade-off as on web. Upstream relied on the chip to turn a media-only send
+    into the attachment-only bootstrap prompt, so outbox delivery restores that
+    prompt from the attachment count instead (as the side-chat send already
+    does), or the agent would receive empty text. The thread composer's strip thumbnails are 88pt
+    instead of upstream's 72pt default; the review comment sheet keeps 60pt.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/mobile/src/state/use-composer-attachment-actions.ts
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/state/threadOutboxDelivery.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMediaAttachmentNoChip.test.ts
+
 - id: fork-touch-affordances
   intent: >
     Phone usability for controls that only a mouse could reach. On iOS
