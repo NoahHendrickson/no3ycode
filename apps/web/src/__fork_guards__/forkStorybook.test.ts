@@ -5,7 +5,11 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { COOL_DARKER_THEME, FORK_PALETTE_STORAGE_KEY } from "../custom/forkTheme";
+import {
+  COOL_DARKER_THEME,
+  FORK_PALETTE_STORAGE_KEY,
+  forkPaletteAppearance,
+} from "../custom/forkTheme";
 
 function read(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -74,6 +78,8 @@ describe("fork-storybook", () => {
       'export const DEFAULT_STORY_THEME = "glass_off";',
     );
     expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${COOL_DARKER_THEME}"`);
+    // forkTheme keeps a Glass palette only while upstream's theme is the appearance it names.
+    expect(appearance).toContain(`"t3code:theme": "${forkPaletteAppearance(COOL_DARKER_THEME)}"`);
     expect(appearance).toContain(`"t3code:fork:glass-3d:v1": '"off"'`);
     expect(preview).toMatch(
       /setForkAppearance\(BASIC_THEME, setTheme\);\s*setAppearanceMode\(theme\.appearance\);/u,
