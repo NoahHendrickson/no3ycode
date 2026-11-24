@@ -6502,8 +6502,8 @@
     While a thread is docked, card drops in the sidebar and the tab strip do not
     pair (the pair would stay hidden), and a landing draft in the left pane is
     never swept as untouched.
-    Its sidebar card wears a docked glyph last on the title line, after the
-    status mark and the working timer (custom/splitThreads/SidebarDockedMark).
+    Its sidebar card wears a docked glyph on the title line, styled like the
+    pin glyph and beside it, before the status mark (custom/splitThreads/SidebarDockedMark).
 
     The route's thread is the focused pane. Pressing into the other pane
     navigates to its thread (replace), so the right panel, the sidebar

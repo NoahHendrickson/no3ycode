@@ -2162,6 +2162,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     carries the grouping, the glyph names the state per card. */}
         {pinIndicator}
         {/* fork:end sidebar-v2-row-action-hit-area */}
+        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+            Beside the pin glyph, ahead of the status mark. */}
+        {docked && !isSwept ? <SidebarDockedMark /> : null}
+        {/* fork:end fork-split-threads */}
         {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                     The status box (Figma 364:17299 `Vector`, 9.75px): the
                     design's 10px wide by the rain's 14 tall, pulled 2px past
@@ -2184,13 +2188,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           />
         </span>
         {/* fork:end sidebar-v2-card-rows */}
-        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-            Last on the line, at the content edge: ms-0.5 gives back the 2px the status box's
-            own edge pull takes from the gap. */}
-        {docked && !isSwept ? (
-          <SidebarDockedMark className={cn("ms-0.5", SIDEBAR_V2_TRAILING_OFFSET.cardStatus)} />
-        ) : null}
-        {/* fork:end fork-split-threads */}
         {isSwept ? sweepBadge : null}
       </span>
     </>
