@@ -342,7 +342,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(picker).toContain("{props.traits?.layer}");
     expect(composerPicker).not.toContain("SubmenuTrigger");
     expect(composerPicker).toMatch(
-      /<MenuPopup\s+anchor=\{anchor\}\s+side="top"\s+align="center"\s+sideOffset=\{0\}/u,
+      /<MenuPopup\s+anchor=\{anchor\}\s+side="top"\s+align="center"\s+sideOffset=\{4\}/u,
     );
     // Other rows preview the effort by the pick's own rule (thread options included).
     expect(composerPicker).toContain("resolvePickOptions({");

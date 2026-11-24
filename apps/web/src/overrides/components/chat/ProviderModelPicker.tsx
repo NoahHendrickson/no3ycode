@@ -407,6 +407,9 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
         className={props.combined ? "w-72" : "w-64"}
         data-fork-tab-menu={props.isComposerOwned ? "composer" : undefined}
       >
+        {/* Before the list: its portal leaves focus guards here, and the list must stay the last child
+            for its `last:-mb-1`, or opening the layer grows the menu. */}
+        {props.traits?.layer}
         <ModelPickerContent
           searchInputRef={searchInputRef}
           environmentId={props.environmentId}
@@ -437,7 +440,6 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
           onInstanceModelChange={handleInstanceModelChange}
           {...(props.renderRowControl ? { renderRowControl: props.renderRowControl } : {})}
         />
-        {props.traits?.layer}
         {props.traits?.panel ? (
           <>
             {/* Edge to edge: the popup's scroll wrapper pads its children by

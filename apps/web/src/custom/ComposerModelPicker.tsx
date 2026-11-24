@@ -300,7 +300,7 @@ function EffortMenu(props: {
         anchor={anchor}
         side="top"
         align="center"
-        sideOffset={0}
+        sideOffset={4}
         width="content"
         data-model-picker-content="true"
         {...(props.composerOwned ? composerFloatingLayerProps : {})}

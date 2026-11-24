@@ -161,9 +161,14 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   await vi.waitFor(() => expect(isOpen()).toBe(true));
   await press(true);
   await vi.waitFor(() => expect(isOpen()).toBe(false));
+  const modelMenuHeight = () =>
+    effort.element().closest('[data-slot="menu-popup"]')!.getBoundingClientRect().height;
+  const closedHeight = modelMenuHeight();
   await effort.click();
   // A header names the menu above its levels, as in the permissions menu.
   await expect.element(page.getByRole("group", { name: "Effort" })).toBeVisible();
+  // Opening it leaves the model menu's height alone.
+  expect(modelMenuHeight()).toBe(closedHeight);
   await page.getByRole("menuitemradio", { name: /Extra High/ }).click();
   await vi.waitFor(() =>
     expect(writes.at(-1)).toContainEqual({ id: "reasoningEffort", value: "xhigh" }),
