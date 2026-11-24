@@ -14,7 +14,6 @@ import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import { cn } from "../lib/utils";
-import { CHROME_ROW_ICON_TINT } from "../custom/SidebarV2ChromeRows";
 import { cssRules } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -25,6 +24,14 @@ const layout = readSibling("../components/AppSidebarLayout.tsx");
 const chrome = readSibling("../components/sidebar/SidebarChrome.tsx");
 const desktopWindow = readSibling("../../../desktop/src/window/DesktopWindow.ts");
 const sidebarPrimitive = readSibling("../components/ui/sidebar.tsx");
+/** A class const from the primitive's fork-sidebar-chrome hunk, its `${…}` parts inlined. */
+function chromeConst(name: string): string {
+  const raw = new RegExp("const " + name + '\\s*=\\s*["`]([^"`]+)["`]', "u").exec(
+    sidebarPrimitive,
+  )?.[1];
+  expect(raw, `${name} not found in ui/sidebar.tsx`).toBeTruthy();
+  return (raw ?? "").replace(/\$\{(\w+)\}/gu, (_, inner: string) => chromeConst(inner));
+}
 const themeRules = cssRules(readSibling("../theme.custom.css"));
 
 describe("fork guard: fork-sidebar-chrome", () => {
@@ -199,14 +206,15 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // panel's foreground, stacked 2px apart inside the 8px inset and flush
     // under the header.
     const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
-    const action = /const CHROME_ACTION = cn\(\s*"([^"]+)"/u.exec(rows)?.[1];
-    expect(action).toBeDefined();
+    // The box is the row's; the look is SidebarMenuButton's chrome variant.
+    expect(rows).toContain('const CHROME_ACTION = "h-auto w-full";');
+    expect(rows).toContain('variant="chrome"');
+    const action = chromeConst("FORK_CHROME_ROW");
     for (const cls of [
-      "h-auto",
       "py-1.5",
-      "w-full",
       "gap-1.5",
-      "rounded-[10px]",
+      // 10px: the sidebar pins --spacing to 4px.
+      "rounded-[--spacing(2.5)]",
       "px-3",
       "hover:bg-sidebar-row-hover",
     ]) {
@@ -292,23 +300,24 @@ describe("fork guard: fork-sidebar-chrome", () => {
     const sidebar = readSibling("../components/ui/sidebar.tsx");
     const base = /const sidebarMenuButtonVariants = cva\(\s*"([^"]+)"/u.exec(sidebar)?.[1];
     expect(base, "sidebarMenuButtonVariants base class not found").toBeTruthy();
-    const merged = cn(base, CHROME_ROW_ICON_TINT);
+    const merged = cn(base, chromeConst("FORK_CHROME_ICON_TINT"));
     expect(merged).not.toMatch(/svg\]:opacity-60/u);
     expect(merged).not.toMatch(/svg\]:text-muted-foreground/u);
     expect(merged).toMatch(/svg\]:text-sidebar-foreground/u);
     expect(merged).toMatch(/svg\]:opacity-100/u);
-    // One spelling: both chrome-row buttons reference the shared const, and
+    // One spelling: both chrome-row looks reference the shared const, and
     // the literal exists only in its definition — a second paste is how the
     // two drifted apart before it was hoisted.
-    const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
-    expect(rows.split("[&>svg]:opacity-100").length - 1).toBe(1);
-    expect(rows.split("CHROME_ROW_ICON_TINT").length - 1).toBeGreaterThanOrEqual(3);
+    expect(sidebar.split("[&>svg]:opacity-100").length - 1).toBe(1);
+    expect(sidebar.split("${FORK_CHROME_ICON_TINT}").length - 1).toBeGreaterThanOrEqual(2);
+    for (const look of ["FORK_CHROME_ROW", "FORK_CHROME_ICON"]) {
+      expect(cn(base, chromeConst(look))).toMatch(/svg\]:opacity-100/u);
+    }
   });
 
   it("keeps chrome type at Sidebar font size for actions and the Threads label", () => {
     const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
-    const type = /const CHROME_TYPE\s*=\s*"([^"]+)"/u.exec(rows)?.[1];
-    expect(type).toBeDefined();
+    const type = chromeConst("FORK_CHROME_ROW").replace(/\[&>svg\]:\S+/gu, "");
     expect(type).toContain("text-sidebar-chrome");
     // Label/14 Regular at the panel's foreground. The active twin displaces
     // sidebarMenuButtonVariants' data-[active=true]:font-medium so a held
@@ -319,24 +328,25 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(type).toContain("text-sidebar-foreground");
     expect(type).not.toMatch(/\btext-xs\b/u);
     expect(type).not.toMatch(/\btext-sm\b/u);
-    // Merged outcome, same reason as CHROME_ROW_ICON_TINT: the button's
-    // default variant and active state both spell font-medium, and a
-    // source-string check on CHROME_TYPE alone stays green if twMerge
-    // stops treating those as the same slot.
+    // Merged outcome, same reason as the icon tint: the base's active state
+    // spells font-medium, and a source-string check on the variant alone
+    // stays green if twMerge stops treating those as the same slot.
     const sidebar = readSibling("../components/ui/sidebar.tsx");
     const base = /const sidebarMenuButtonVariants = cva\(\s*"([^"]+)"/u.exec(sidebar)?.[1];
     expect(base, "sidebarMenuButtonVariants base class not found").toBeTruthy();
-    const variant = /variant:\s*\{\s*default:\s*"([^"]+)"/u.exec(sidebar)?.[1];
-    expect(variant).toContain("font-medium");
-    const merged = cn(base, variant, type);
+    const merged = cn(base, type);
     expect(merged).toContain("font-normal");
     expect(merged).toContain("data-[active=true]:font-normal");
     expect(merged).not.toContain("font-medium");
-    // The action rows read it; the Threads label spells its own, matching
-    // the status-section labels under it (12px medium) so the list's
-    // headings read as one family.
-    expect(rows).toContain("CHROME_TYPE");
-    expect(rows.split("CHROME_TYPE").length - 1).toBeGreaterThanOrEqual(2);
+    // The action rows read it (Search, and the labeled rows held or not); the
+    // Threads label spells its own, matching the status-section labels under
+    // it (12px medium) so the list's headings read as one family.
+    expect(rows).toContain('variant="chrome"');
+    expect(rows).toContain('variant={active ? "chrome-held" : "chrome"}');
+    // Held: the row keeps its hover fill while its target is open.
+    expect(sidebar).toContain(
+      '"chrome-held": `${FORK_CHROME_ROW} bg-sidebar-row-hover text-sidebar-foreground`',
+    );
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
@@ -359,9 +369,9 @@ describe("fork guard: fork-sidebar-chrome", () => {
     for (const order of ["updated_at", "created_at", "manual"]) {
       expect(rows).toContain(`${order}:`);
     }
-    const button = /const PROJECTS_ROW_BUTTON = cn\(\s*"([^"]+)"/u.exec(rows)?.[1];
+    const button = /export const PROJECTS_ROW_BUTTON = "([^"]+)"/u.exec(rows)?.[1];
     expect(button).toContain("size-8");
-    expect(button).toContain("rounded-[10px]");
+    expect(chromeConst("FORK_CHROME_ICON")).toContain("rounded-[--spacing(2.5)]");
     const sidebarV2 = readSibling("../components/Sidebar.tsx");
     expect(sidebarV2).toContain("snapshotVisibleProjectOrderAsManual(projectGroups)");
     expect(sidebarV2).toContain("updateClientSettings({ sidebarProjectSortOrder: sortOrder })");
@@ -369,7 +379,10 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // Scope on-state: glyph lifts and aria/tooltip name the active project.
     // Glyph only: data-active paints SidebarMenuButton's selected fill, which
     // reads as a hover stuck on.
-    expect(rows).toContain('isScoped && "text-sidebar-foreground"');
+    expect(rows).toContain('variant={isScoped ? "chrome-icon-lit" : "chrome-icon"}');
+    expect(sidebarPrimitive).toContain(
+      '"chrome-icon-lit": `${FORK_CHROME_ICON} text-sidebar-foreground`',
+    );
     expect(rows).not.toContain("data-active={isScoped");
     expect(rows).toContain("scopedProjectDisplayName");
     expect(rows).toContain("Filter threads by project — showing");
@@ -416,7 +429,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(item).toContain('data-slot="menu-checkbox-item"');
     const box = /const SCOPE_CHECKBOX =\s*"([^"]+)"/u.exec(rows)?.[1];
     expect(box).toBeDefined();
-    for (const cls of ["size-4", "rounded-[.25rem]", "border"]) {
+    for (const cls of ["size-4", "rounded-sm", "border"]) {
       expect(box).toContain(cls);
     }
     // The two fills are chosen off the checked prop, not data-checked:

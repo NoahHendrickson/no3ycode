@@ -776,6 +776,17 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
+/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
+// The sidebar's chrome rows (custom/SidebarV2ChromeRows, Figma 364:11246 / 368:21211). The icon
+// pair displaces the base's dimmed [&>svg] tint; the radius rides --spacing, which the sidebar
+// pins to px, so it stays 10px at any Interface font size like the rows' other metrics.
+const FORK_CHROME_ICON_TINT = "[&>svg]:text-sidebar-foreground [&>svg]:opacity-100";
+const FORK_CHROME_FOCUS =
+  "hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar";
+const FORK_CHROME_ROW = `gap-1.5 rounded-[--spacing(2.5)] py-1.5 border-0 bg-transparent px-3 ${FORK_CHROME_FOCUS} text-sidebar-chrome font-normal text-sidebar-foreground data-[active=true]:font-normal ${FORK_CHROME_ICON_TINT}`;
+const FORK_CHROME_ICON = `font-medium rounded-[--spacing(2.5)] border-0 bg-transparent p-0 text-muted-foreground ${FORK_CHROME_FOCUS} ${FORK_CHROME_ICON_TINT} [&>svg]:text-current`;
+/* fork:end fork-sidebar-chrome */
+
 const sidebarMenuButtonVariants = cva(
   "peer/menu-button flex w-full cursor-pointer items-center gap-[var(--sidebar-control-gap)] overflow-hidden text-left outline-hidden ring-ring transition-[width,height,padding] hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset active:bg-sidebar-row-active active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-64 aria-disabled:pointer-events-none aria-disabled:opacity-64 data-[active=true]:bg-sidebar-row-selected data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground data-[state=open]:hover:bg-sidebar-row-hover data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-[var(--sidebar-content-inset)]! [&>span:last-child]:truncate [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0 [&>svg]:text-[var(--sidebar-icon-color)] hover:[&>svg]:text-sidebar-foreground active:[&>svg]:text-sidebar-foreground data-[active=true]:[&>svg]:text-sidebar-foreground",
   {
@@ -794,6 +805,12 @@ const sidebarMenuButtonVariants = cva(
       variant: {
         default: "font-medium text-sidebar-muted-foreground/80",
         outline: "bg-sidebar-control-surface ring-1 ring-sidebar-border",
+        /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
+        chrome: FORK_CHROME_ROW,
+        "chrome-held": `${FORK_CHROME_ROW} bg-sidebar-row-hover text-sidebar-foreground`,
+        "chrome-icon": FORK_CHROME_ICON,
+        "chrome-icon-lit": `${FORK_CHROME_ICON} text-sidebar-foreground`,
+        /* fork:end fork-sidebar-chrome */
       },
     },
   },

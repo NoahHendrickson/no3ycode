@@ -103,34 +103,12 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
  *  carries no scrollbar term: the list gives its reserved gutter back out of
  *  its own end padding, so a gutter term here would double-count it. */
 export const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
-/** Displaces sidebarMenuButtonVariants' base icon pair (muted-foreground at
-    opacity-60, upstream v0.0.30): parent-level [&>svg] selectors outweigh the
-    icon's own class, so without this the fork's tint on the glyph is dead and
-    the icon dims to 60% on top of the duotone layer's own alpha. twMerge
-    keeps this later same-slot pair. One spelling, shared by every chrome-row
-    button that renders an icon as a direct child; the guard asserts the
-    merged outcome, so a base-selector change that stops displacing shows up
-    red. The design (364:11246) tints the icon and the label alike, at the
-    panel's foreground. */
-export const CHROME_ROW_ICON_TINT = "[&>svg]:text-sidebar-foreground [&>svg]:opacity-100";
-/** Label/14 Regular for Search / New agent / Usage / Automations / Pull requests — literal
-    so the panel's 13px text-xs remap cannot shrink them. font-normal and the
-    active twin displace sidebarMenuButtonVariants' font-medium (default
-    variant and data-[active=true]), so the New agent row stays Regular while
-    a draft is held. The Threads label matches the status-section labels and
-    spells its own. */
-const CHROME_TYPE =
-  "text-sidebar-chrome font-normal text-sidebar-foreground data-[active=true]:font-normal";
 /** The Projects row's two icon buttons (Figma 368:21214 / 368:21215): the
     design system's 32px icon-only ghost button at muted foreground, the same
-    box the project headers' plus and settings buttons draw. Icon tint is
-    overridden to muted here (CHROME_ROW_ICON_TINT lifts it to foreground for
-    the action rows), lifting back to foreground on hover. */
-export const PROJECTS_ROW_BUTTON = cn(
-  "relative size-8 shrink-0 justify-center rounded-[10px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-  CHROME_ROW_ICON_TINT,
-  "[&>svg]:text-current",
-);
+    box the project headers' plus and settings buttons draw. The look is
+    SidebarMenuButton's `chrome-icon` variant (`chrome-icon-lit` lifts the
+    glyph to foreground); this is the box it sits in. */
+export const PROJECTS_ROW_BUTTON = "relative size-8 shrink-0 justify-center";
 
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
@@ -140,14 +118,10 @@ const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
 const SORT_ORDERS: ReadonlyArray<SidebarProjectSortOrder> = ["updated_at", "created_at", "manual"];
 
 /** The design system's ghost Button at its default size (Figma 364:10544):
-    h-32, 10px corners, px-12, gap-6, hover on the panel's row fill. Spelled on
-    SidebarMenuButton rather than ui/button so the row keeps the sidebar's own
-    hover token and the base-icon displacement above. */
-const CHROME_ACTION = cn(
-  "h-auto w-full gap-1.5 rounded-[10px] py-1.5 border-0 bg-transparent px-3 hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-  CHROME_TYPE,
-  CHROME_ROW_ICON_TINT,
-);
+    h-32, 10px corners, px-12, gap-6, hover on the panel's row fill, Label/14
+    Regular. Spelled as SidebarMenuButton's `chrome` variant rather than
+    ui/button so the row keeps the sidebar's own hover token; this is the box. */
+const CHROME_ACTION = "h-auto w-full";
 
 type ChromeIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -198,12 +172,9 @@ function ChromeLabeledAction({
   return (
     <SidebarMenuButton
       size="sm"
+      variant={active ? "chrome-held" : "chrome"}
       type="button"
-      className={cn(
-        CHROME_ACTION,
-        active && "bg-sidebar-row-hover text-sidebar-foreground",
-        className,
-      )}
+      className={cn(CHROME_ACTION, className)}
       isActive={active === true}
       onClick={onClick}
       disabled={disabled}
@@ -232,6 +203,7 @@ function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string |
   return (
     <SidebarMenuButton
       size="sm"
+      variant="chrome"
       type="button"
       aria-label={
         props.commandPaletteShortcutLabel
@@ -707,6 +679,7 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
           render={
             <SidebarMenuButton
               size="sm"
+              variant="chrome-icon"
               type="button"
               className={PROJECTS_ROW_BUTTON}
               aria-label="Add a project"
@@ -734,6 +707,7 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                     render={
                       <SidebarMenuButton
                         size="sm"
+                        variant="chrome-icon"
                         type="button"
                         className={PROJECTS_ROW_BUTTON}
                         aria-label={sortTooltip}
@@ -787,12 +761,10 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                     render={
                       <SidebarMenuButton
                         size="sm"
+                        // The active scope lifts the glyph to foreground.
+                        variant={isScoped ? "chrome-icon-lit" : "chrome-icon"}
                         type="button"
-                        className={cn(
-                          PROJECTS_ROW_BUTTON,
-                          // The active scope lifts the glyph to foreground.
-                          isScoped && "text-sidebar-foreground",
-                        )}
+                        className={PROJECTS_ROW_BUTTON}
                         aria-label={filterAriaLabel}
                         data-testid="sidebar-v2-project-filter"
                         data-fork-tab-trigger=""
