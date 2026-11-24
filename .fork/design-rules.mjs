@@ -54,6 +54,22 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
   "[scrollbar-width:thin]",
   "[content-visibility:auto]",
   "[image-rendering:pixelated]",
+  // Grid tracks made only of fr/auto, and the container width where the music strip's three
+  // columns stop fitting: structure, with no size a token would name.
+  "grid-cols-[1fr_1fr_auto]",
+  "grid-cols-[1fr_auto_1fr]",
+  "@max-[14.5rem]/strip:grid-cols-[auto_1fr]",
+  "grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]",
+  // content-visibility:auto's placeholder height for an off-screen music row (rem already).
+  "[contain-intrinsic-size:auto_2.75rem]",
+  "[contain-intrinsic-size:auto_2rem]",
+  // Viewport clamps on one-off popovers and scrollers: the vh/vw term is the point.
+  "max-h-[60vh]",
+  "h-[min(20rem,30vh)]",
+  "w-[min(32rem,calc(100vw-2rem))]",
+  "w-[min(24rem,calc(100vw-2rem))]",
+  // The music seek bar's fill: a gradient sized by the --fill the component sets, on tokens.
+  "[background:linear-gradient(var(--muted-foreground),var(--muted-foreground))_0_0/var(--fill)_100%_no-repeat,var(--border)]",
 ];
 
 /** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */
