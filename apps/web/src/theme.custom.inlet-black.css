@@ -54,7 +54,7 @@
     }
 
     & [data-fork-monitoring-pulse] {
-      background-color: #ffffff;
+      background-color: var(--color-white);
     }
   }
 
@@ -75,7 +75,7 @@
     }
 
     & [data-fork-monitoring-pulse] {
-      background-color: #000000;
+      background-color: var(--color-black);
     }
   }
 
@@ -95,10 +95,10 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-chat-composer-overlay][data-draft-hero]
     [data-fork-composer-stack] {
-    --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
+    --fork-composer-vessel-bg: var(--fork-inlet-black-frost);
     --fork-composer-bg: rgb(236 235 225 / 70%);
     --fork-composer-border: transparent;
-    --fork-context-chip-bg: rgb(208 204 181 / 55%);
+    --fork-context-chip-bg: var(--fork-inlet-black-frost);
     --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
 
     & [data-fork-composer-vessel] {
@@ -111,7 +111,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-chat-composer-overlay][data-draft-hero]
     [data-fork-draft-launchpad-card] {
-    --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
+    --fork-composer-vessel-bg: var(--fork-inlet-black-frost);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
@@ -145,10 +145,10 @@
     :is([data-fork-composer-vessel], [data-fork-composer-banners])
     [data-fork-composer-notice="true"]
     [data-slot="composer-banner-content"] {
-    color: #1c1c1a;
+    color: var(--fork-inlet-black-vessel-ink);
 
     & > :not(:first-child) {
-      color: #55544c;
+      color: var(--fork-inlet-black-vessel-muted);
     }
   }
 
@@ -165,7 +165,7 @@
       [data-slot="menu-popup"]:has([data-composer-permissions]),
       [data-slot="popover-popup"][data-fork-tab-menu]
     ) {
-    --fork-inlet-black-surface: #262626;
+    --fork-inlet-black-surface: var(--fork-inlet-black-raised);
     --fork-inlet-black-step: #333333;
     --fork-inlet-black-line: #333333;
     --contrast-input: var(--fork-inlet-black-line);
@@ -176,7 +176,7 @@
 
   & [data-slot="popover-popup"][data-fork-tab-menu] {
     --fork-inlet-black-surface: var(--fork-inlet-model-shell);
-    --fork-composer-bg: #262626;
+    --fork-composer-bg: var(--fork-inlet-black-raised);
     --muted: var(--fork-inlet-black-step);
     --background: var(--fork-inlet-model-shell);
     background: var(--fork-inlet-model-shell);
@@ -192,10 +192,10 @@
   }
 
   & [data-slot="menu-popup"][data-fork-tab-menu="sidebar"] {
-    --accent: #e4e0c7;
+    --accent: var(--fork-inlet-black-cream-step);
 
     & [data-slot="menu-radio-item"][data-checked] {
-      background-color: #e4e0c7;
+      background-color: var(--fork-inlet-black-cream-step);
     }
   }
 
@@ -214,8 +214,7 @@
     --primary-foreground: var(--fork-inlet-black-surface);
 
     & [data-slot="menu-checkbox-item"] > [data-unchecked] {
-      /* The light ink at 24% over #141414, flattened. */
-      border-color: #474747;
+      border-color: var(--fork-inlet-black-outline);
       background: transparent;
       box-shadow: none;
     }
@@ -230,34 +229,34 @@
     /* An inset geometry: a 30px well, the fill and a 22px pill thumb set 3px
        into it. */
     & [data-fork-effort-control] {
-      height: 30px;
+      height: calc(var(--spacing) * 7.5);
     }
 
     & [data-fork-effort-track] {
-      --fork-effort-thumb-width: 28px;
-      height: 30px;
-      border-radius: 9px;
-      background: #303030;
+      --fork-effort-thumb-width: calc(var(--spacing) * 7);
+      height: calc(var(--spacing) * 7.5);
+      border-radius: var(--fork-inlet-well-radius);
+      background: var(--fork-inlet-black-well);
     }
 
     & [data-fork-effort-fill] {
-      inset-block: 3px;
-      left: 3px;
-      border-radius: 6px;
-      background: #4a4a4a;
+      inset-block: var(--fork-inlet-well-inset);
+      left: var(--fork-inlet-well-inset);
+      border-radius: calc(var(--fork-inlet-well-radius) - var(--fork-inlet-well-inset));
+      background: var(--fork-inlet-black-well-fill);
       clip-path: inset(0 9px 0 0);
     }
 
     & [data-fork-effort-thumb] {
-      height: 30px;
-      padding: 3px;
-      border-radius: 9px;
+      height: calc(var(--spacing) * 7.5);
+      padding: var(--fork-inlet-well-inset);
+      border-radius: var(--fork-inlet-well-radius);
       background: var(--fork-inlet-black-ink);
       background-clip: content-box;
       box-shadow: none;
 
       &:focus-visible {
-        box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+        box-shadow: inset 0 0 0 2px var(--fork-inlet-black-focus);
       }
     }
 
@@ -274,8 +273,8 @@
     }
 
     & [data-fork-segmented-trait] > button[aria-pressed="true"] {
-      background: #3a3a3a;
-      color: #ffffff;
+      background: var(--fork-inlet-black-pressed);
+      color: var(--color-white);
       box-shadow: none;
     }
   }
@@ -290,14 +289,14 @@
     }
 
     & [data-composer-permissions] [role="group"] {
-      gap: 3px;
-      padding: 3px;
-      border-radius: 9px;
-      background: #1f1f1f;
+      gap: var(--fork-inlet-well-inset);
+      padding: var(--fork-inlet-well-inset);
+      border-radius: var(--fork-inlet-well-radius);
+      background: var(--fork-inlet-black-mode-well);
     }
 
     & [data-composer-permissions] [role="menuitemradio"] {
-      border-radius: 6px;
+      border-radius: calc(var(--fork-inlet-well-radius) - var(--fork-inlet-well-inset));
       background: transparent;
       color: var(--fork-inlet-black-ink-muted);
     }
@@ -308,8 +307,8 @@
     }
 
     & [data-composer-permissions] [role="menuitemradio"]:is([aria-checked="true"], [data-checked]) {
-      background: #3a3a3a;
-      color: #ffffff;
+      background: var(--fork-inlet-black-pressed);
+      color: var(--color-white);
     }
   }
 
@@ -344,11 +343,11 @@
     --fork-outline-hover-bg: var(--fork-inlet-black-step-hover);
 
     & svg[class~="fill-[#26251E]"] {
-      fill: #edecec;
+      fill: var(--fork-inlet-black-mark);
     }
 
     & svg[class~="fill-black"] {
-      fill: #ffffff;
+      fill: var(--color-white);
     }
   }
 

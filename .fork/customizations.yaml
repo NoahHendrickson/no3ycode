@@ -9105,3 +9105,28 @@
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
+
+- id: fork-primitive-tokens
+  intent: >
+    Theme CSS sets the geometry of components/ui primitives through tokens the
+    primitives read, not by restyling their [data-slot] (DESIGN-RULES C1).
+    Popups (menu, submenu, popover, select, combobox, autocomplete, preview
+    card) round from --fork-menu-radius (their 1px rims keep upstream's radius); menu,
+    select, combobox and autocomplete rows from --fork-menu-row-radius;
+    tooltips take --fork-tooltip-radius, -font-size, -line-height and
+    -padding-inline / -block. Every read falls back to upstream's own
+    class value, so a theme that sets none draws what upstream draws.
+  tier: 4
+  files:
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/autocomplete.tsx
+    - apps/web/src/components/ui/combobox.tsx
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/popover.tsx
+    - apps/web/src/components/ui/preview-card.tsx
+    - apps/web/src/components/ui/select.tsx
+    - apps/web/src/components/ui/tooltip.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts

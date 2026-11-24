@@ -316,17 +316,12 @@
 
 /* The new-agent screen draws the pixel texture (custom/BasicNewAgentBackdrop) behind the
    column's content, so the workspace and the draft composer's backing stop painting the
-   stage over it, as on Inlet Black; a draft's header is already empty (above). */
+   stage over it, as on Inlet Black; a draft's header is already empty (above). The
+   column's position and the overlay's backing are Inlet's rule (theme.custom.inlet.css). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-chat-column-maximized-away][data-fork-draft-hero] {
-  position: relative;
-
   & :is([data-workspace-area], [data-timeline-loading]) {
     background-color: transparent;
-  }
-
-  & [data-chat-composer-overlay][data-draft-hero] {
-    background-image: none;
   }
 
   /* Upstream frosts the pills' row (surface-glass), which over the texture reads as a band. */

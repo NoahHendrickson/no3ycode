@@ -489,6 +489,11 @@
   --fork-inlet-question-fill: var(--fork-popup-fill);
   /* The peek card's ink and fill on the cream frame. */
   --fork-inlet-frame-ink: #1c1c1a;
+  /* Black 65% over the cream frame, flattened (H6), and the frame's hover wash. */
+  --fork-inlet-frame-muted: #55544c;
+  --fork-inlet-frame-accent: #dfddc5;
+  /* The frame's chrome icons: black at 65%, unflattened. */
+  --fork-inlet-frame-icon: rgb(0 0 0 / 65%);
   --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
   --background: #141414;
   --foreground: #e8e8e8;
@@ -605,6 +610,28 @@
   /* White 8% over the #141414 sidebar, flattened. */
   --fork-inlet-black-step-hover: #272727;
   --fork-inlet-black-line: #2a2a2a;
+  /* The dark palettes' flat red stop button. */
+  --fork-inlet-stop: #ea3150;
+  /* The new-agent draft's frosted cream vessel and chips. */
+  --fork-inlet-black-frost: rgb(208 204 181 / 55%);
+  /* A notice card's copy, inked for the light vessel: ink, and black 65% over it. */
+  --fork-inlet-black-vessel-ink: #1c1c1a;
+  --fork-inlet-black-vessel-muted: #55544c;
+  /* The composer menus' surface, a step up from the sidebar. */
+  --fork-inlet-black-raised: #262626;
+  /* The cream header menus' hovered and chosen row: black 8% on the cream, flattened. */
+  --fork-inlet-black-cream-step: #e4e0c7;
+  /* An unchecked box: the light ink at 24% over #141414, flattened. */
+  --fork-inlet-black-outline: #474747;
+  /* The model menu's recessed wells (the effort track, the mode segments), the effort
+     fill, a pressed segment, and the focus ring in the well. */
+  --fork-inlet-black-well: #303030;
+  --fork-inlet-black-mode-well: #1f1f1f;
+  --fork-inlet-black-well-fill: #4a4a4a;
+  --fork-inlet-black-pressed: #3a3a3a;
+  --fork-inlet-black-focus: rgb(255 255 255 / 70%);
+  /* The details card's editor marks drawn black-on-light, in their dark-mode fill. */
+  --fork-inlet-black-mark: #edecec;
   /* A row's hover card, and the row while it is open, are the sidebar's own
      hover fill in its light ink rather than the popover's cream. */
   --fork-inlet-row-card: var(--fork-inlet-black-step-hover);

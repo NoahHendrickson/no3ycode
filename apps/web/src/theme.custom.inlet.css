@@ -24,6 +24,24 @@
      light; dark colours take the popup material (theme.custom.palettes.css). */
   --fork-inlet-question-fill: var(--card);
   --fork-inlet-fillet: 9px;
+  /* Inlet's 4px ring: a panel set into another, a hung button's padded fill. */
+  --fork-inlet-inset: 0.25rem;
+  /* Menu rows sit 5px in (the popup's 1px edge and 4px padding), so their
+     highlight runs parallel to the corner. */
+  --fork-inlet-menu-row-radius: calc(var(--fork-inlet-menu-radius) - var(--fork-inlet-inset) - 1px);
+  --fork-menu-radius: var(--fork-inlet-menu-radius);
+  --fork-menu-row-radius: var(--fork-inlet-menu-row-radius);
+  /* Thread rows, tabs and the tab strip's switcher: the nav rows' 10px. */
+  --fork-inlet-row-radius: 0.625rem;
+  /* A Petals grid tile is 4px rounder than a row; page tabs in the inset round to 8px. */
+  --fork-petals-tile-radius: calc(var(--fork-inlet-row-radius) + 0.25rem);
+  --fork-page-tabs-radius: var(--radius-lg);
+  /* A hung menu's faint lift, cast away from what it hangs from. */
+  --fork-inlet-lift-down: 0 8px 12px rgb(0 0 0 / 14%);
+  --fork-inlet-lift-up: 0 -8px 12px rgb(0 0 0 / 14%);
+  /* A recessed well (the effort track, the mode segments) and the 3px its contents sit in. */
+  --fork-inlet-well-radius: 0.5625rem;
+  --fork-inlet-well-inset: 0.1875rem;
   /* The collapsed sidebar's tab strip already sits the panel below its tabs;
      the panel's top margin tucks under the strip's empty foot (theme.custom.css),
      and 6px more, so the open tab's neck to the panel is short. */
@@ -78,19 +96,22 @@
 /* The new-agent screen draws the picture picked in Settings
    (custom/BasicNewAgentBackdrop) behind the panel's content, so the header,
    the workspace and the draft composer stop painting the panel over it. The
-   column already paints the panel under the picture's faded edges. */
+   column already paints the panel under the picture's faded edges. Basic's
+   new-agent texture (theme.custom.basic.css) shares the first rule. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+:root[data-fork="noahhendrickson-t3code"]:is([data-fork-theme="basic"], [data-fork-theme="inlet"])
   [data-chat-column-maximized-away][data-fork-draft-hero] {
   position: relative;
-
-  & :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
-    background-color: transparent;
-  }
 
   & [data-chat-composer-overlay][data-draft-hero] {
     background-image: none;
   }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]
+  :is([data-chat-header], [data-workspace-area], [data-timeline-loading]) {
+  background-color: transparent;
 }
 
 /* Every column's header row carries the same bottom line, so it runs across
@@ -124,6 +145,8 @@
     background: var(--background);
   }
 
+  /* design-lint-disable-next-line C1, C2 -- the narrow window's preview sheet is set into the
+     frame as a second panel; Sheet has no inset variant, and one is a TSX change */
   & [data-slot="sheet-popup"]:has(> [data-preview-panel-mode="sheet"]) {
     overflow: clip;
     border-radius: var(--fork-inlet-radius);
@@ -134,6 +157,7 @@
        column it covers rather than melting into it. */
     box-shadow: 0 0 0 var(--fork-inlet-margin) var(--app-chrome-background);
 
+    /* design-lint-disable-next-line C2 -- the panel sheet has no inner rim (see above) */
     &::before {
       display: none;
     }
@@ -168,35 +192,18 @@
    this. A select draws its surface on a child, so that child takes it too. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  :is(
-    [data-slot="menu-popup"],
-    [data-slot="menu-sub-content"],
-    [data-slot="popover-popup"],
-    [data-slot="select-popup"],
-    [data-slot="select-popup"] > .dropdown-glass,
-    [data-slot="combobox-popup"],
-    [data-slot="autocomplete-popup"],
-    [data-slot="preview-card-popup"],
-    [role="menu"],
-    [data-fork-row-hover-card]
-  ) {
+  :is([role="menu"], [data-fork-row-hover-card]) {
   border-radius: var(--fork-inlet-menu-radius);
 }
 
-/* Their rows sit 5px in (the popup's 1px edge and 4px padding), so a row's
-   highlight runs parallel to the corner. */
+/* The combobox and autocomplete paint their wrappers, which keep 8px. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   :is(
-    [data-slot="menu-item"],
-    [data-slot="menu-radio-item"],
-    [data-slot="menu-checkbox-item"],
-    [data-slot="menu-sub-trigger"],
-    [data-slot="select-item"],
-    [data-slot="combobox-item"],
-    [data-slot="autocomplete-item"]
+    [data-slot="combobox-positioner"] > .dropdown-glass,
+    [data-slot="autocomplete-positioner"] > span
   ) {
-  border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
+  --fork-menu-radius: var(--radius-lg);
 }
 
 /* The web build's DOM context menu (contextMenuFallback.ts) writes its radii
@@ -207,7 +214,7 @@
   border-radius: var(--fork-inlet-menu-radius) !important;
 
   & [role^="menuitem"] {
-    border-radius: calc(var(--fork-inlet-menu-radius) - 5px) !important;
+    border-radius: var(--fork-inlet-menu-row-radius) !important;
   }
 }
 
@@ -264,6 +271,8 @@
 
   /* Pseudo-element rects come first in the inset, so every later control's
      no-drag rect still wins; a floating sidebar owns the strip (theme.custom.css). */
+  /* design-lint-disable-next-line C1 -- Inlet's own drag strip over the panel's top margin,
+     not the inset's box */
   &
     [data-slot="sidebar-wrapper"]:not(
       :is(
@@ -301,7 +310,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-workspace-titlebar-controls]
   > div {
-  gap: 4px;
+  gap: calc(var(--spacing) * 1);
 }
 
 /* Under the collapsed sidebar's tab strip a lone pane starts below the strip
@@ -323,16 +332,16 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"][data-fork-has-thread-tabs]
   [data-sidebar-control] {
-  --foreground: #1c1c1a;
-  --muted-foreground: #55544c;
-  --accent: #dfddc5;
-  --accent-foreground: #1c1c1a;
-  --contrast-foreground: #1c1c1a;
-  --contrast-muted-foreground: #55544c;
-  --contrast-icon-muted: #55544c;
-  --contrast-accent-foreground: #1c1c1a;
-  --control-icon-color: #55544c;
-  color: #55544c;
+  --foreground: var(--fork-inlet-frame-ink);
+  --muted-foreground: var(--fork-inlet-frame-muted);
+  --accent: var(--fork-inlet-frame-accent);
+  --accent-foreground: var(--fork-inlet-frame-ink);
+  --contrast-foreground: var(--fork-inlet-frame-ink);
+  --contrast-muted-foreground: var(--fork-inlet-frame-muted);
+  --contrast-icon-muted: var(--fork-inlet-frame-muted);
+  --contrast-accent-foreground: var(--fork-inlet-frame-ink);
+  --control-icon-color: var(--fork-inlet-frame-muted);
+  color: var(--fork-inlet-frame-muted);
 }
 
 /* The tab strip sits on the frame and takes its inks (theme.custom.palettes.css).
@@ -370,24 +379,24 @@
     color: var(--fork-inlet-panel-foreground);
     /* A light frame remaps the status tones to deep shades for the cream; the
        open tab is the dark panel, so its PR and status marks take pale ones. */
-    --color-emerald-300: oklch(90.5% 0.093 164.15);
-    --color-teal-300: oklch(91% 0.096 180.426);
-    --color-violet-300: oklch(89.4% 0.057 293.283);
-    --color-red-300: oklch(88.5% 0.062 18.334);
-    --color-amber-400: oklch(87.9% 0.169 91.605);
+    --color-emerald-300: var(--color-emerald-200);
+    --color-teal-300: var(--color-teal-200);
+    --color-violet-300: var(--color-violet-200);
+    --color-red-300: var(--color-red-200);
+    --color-amber-400: var(--color-amber-300);
   }
 
   /* The provider mark sits in a cutout: a disc of the frame's own colour,
      concentric with the tab's start (20px in the 28px tab leaves 4px round),
      so on a filled tab it reads as a hole through to the frame. */
   & [data-fork-thread-tab][data-fork-tab-has-mark] > [data-fork-tab-content] {
-    padding-inline-start: 4px;
+    padding-inline-start: var(--fork-inlet-inset);
   }
 
   & [data-fork-tab-provider-mark] {
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
+    width: calc(var(--spacing) * 5);
+    height: calc(var(--spacing) * 5);
+    border-radius: calc(infinity * 1px);
     background-color: var(--sidebar);
   }
 }
@@ -444,13 +453,13 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [data-fork-thread-row] {
-  border-radius: 10px;
+  border-radius: var(--fork-inlet-row-radius);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [data-fork-thread-row][aria-current="page"] {
-  border-radius: 10px 0 0 10px;
+  border-radius: var(--fork-inlet-row-radius) 0 0 var(--fork-inlet-row-radius);
 }
 
 /* A Petals grid tile is 4px rounder than a row, and stays round open: it sits mid-grid, not
@@ -459,7 +468,7 @@
   [data-sidebar-version="v2"]
   [data-fork-petals-grid]
   [data-fork-thread-row] {
-  border-radius: 14px;
+  border-radius: var(--fork-petals-tile-radius);
 }
 
 /* An open split pair (fork-split-threads) is one item: its row is the shape
@@ -469,7 +478,7 @@
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active]
   > ul {
-  border-radius: 10px 0 0 10px;
+  border-radius: var(--fork-inlet-row-radius) 0 0 var(--fork-inlet-row-radius);
 }
 
 /* Beside a docked sidebar the panel sits flush against it, with no seam, and
@@ -493,12 +502,16 @@
       border-right-width: 0;
     }
 
+    /* design-lint-disable-next-line C1 -- callers class this group's padding themselves, and
+       tailwind-merge drops any token class SidebarGroup could read for it */
     & [data-sidebar-version="v2"] [data-slot="sidebar-group"][data-fork-thread-list] {
       padding-inline-end: var(--fork-inlet-margin);
       scrollbar-gutter: auto;
       scrollbar-width: none;
     }
 
+    /* design-lint-disable-next-line C1 -- callers class this group's padding themselves, and
+       tailwind-merge drops any token class SidebarGroup could read for it */
     &
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
@@ -574,7 +587,7 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
   --control-icon-color: currentColor;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 /* A chip's menu (project, workspace, host, branch; stamped
@@ -603,7 +616,7 @@
   )
   :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
   :is(button, [data-slot="button"], [data-fork-context-chip])[aria-expanded="true"] {
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
@@ -641,7 +654,7 @@
   /* As the model menu: upstream's shadow falls onto the chip below and
      shades it off the menu's colour, so this one lifts up and away. */
   box-shadow: none;
-  filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+  filter: drop-shadow(var(--fork-inlet-lift-up));
   /* The tab runs a fillet down over the chip's top in the chip's own colour,
      and the shadow stops at its foot, so none of it reaches the chip. */
   translate: 0 calc(-1 * var(--fork-inlet-chip-lift));
@@ -672,7 +685,7 @@
   /* As the model menu: upstream's shadow falls onto the chip below and
      shades it off the menu's colour, so this one lifts up and away. */
   box-shadow: none;
-  filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+  filter: drop-shadow(var(--fork-inlet-lift-up));
   /* The tab runs a fillet down over the chip's top in the chip's own colour,
      and the shadow stops at its foot, so none of it reaches the chip. */
   translate: 0 calc(-1 * var(--fork-inlet-chip-lift));
@@ -701,7 +714,7 @@
   border-top-left-radius: 0;
   border-color: transparent;
   box-shadow: none;
-  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
+  filter: drop-shadow(var(--fork-inlet-lift-down));
   translate: 0 var(--fork-inlet-chip-lift);
   clip-path: inset(calc(-1 * var(--fork-inlet-chip-fillet)) -32px -32px -32px);
 
@@ -729,7 +742,7 @@
   border-top-right-radius: 0;
   border-color: transparent;
   box-shadow: none;
-  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
+  filter: drop-shadow(var(--fork-inlet-lift-down));
   translate: 0 var(--fork-inlet-chip-lift);
   clip-path: inset(calc(-1 * var(--fork-inlet-chip-fillet)) -32px -32px -32px);
 
@@ -752,7 +765,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="black"]
   [data-fork-composer-action="stop"] {
-  background: #ea3150;
+  background: var(--fork-inlet-stop);
   box-shadow: none;
 }
 
@@ -797,10 +810,6 @@
   [data-sidebar-version="v2"]
   [data-fork-chrome-row][data-active="true"] {
   color: var(--fork-inlet-panel-foreground);
-
-  & svg {
-    color: var(--fork-inlet-panel-foreground);
-  }
 }
 
 /* Beside a docked sidebar the page's panel sits flush against it and the lit
@@ -822,12 +831,16 @@
       border-right-width: 0;
     }
 
+    /* design-lint-disable-next-line C1 -- callers class this group's padding themselves, and
+       tailwind-merge drops any token class SidebarGroup could read for it */
     & [data-sidebar-version="v2"] [data-slot="sidebar-group"][data-fork-thread-list] {
       padding-inline-end: var(--fork-inlet-margin);
       scrollbar-gutter: auto;
       scrollbar-width: none;
     }
 
+    /* design-lint-disable-next-line C1 -- callers class this group's padding themselves, and
+       tailwind-merge drops any token class SidebarGroup could read for it */
     &
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
@@ -898,10 +911,10 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-composer-control-row-slot="left"]
   [data-fork-dictation-mic] {
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   &[data-fork-dictation-live] {
-    padding: 0 8px 0 0;
+    padding: 0 calc(var(--spacing) * 2) 0 0;
     background: var(--fork-inlet-model-shell);
   }
 
@@ -911,7 +924,7 @@
   }
 
   & [data-fork-dictation-timeline] {
-    margin-left: 4px;
+    margin-left: calc(var(--spacing) * 1);
   }
 }
 
@@ -1007,7 +1020,7 @@
   [data-sidebar-version="v2"]
   [data-fork-chrome-row]
   svg {
-  color: rgb(0 0 0 / 65%);
+  color: var(--fork-inlet-frame-icon);
 }
 
 /* The footer's icons (Settings, Pull Requests) ink from
@@ -1015,7 +1028,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"]
   [data-slot="sidebar-footer"] {
-  --sidebar-icon-color: rgb(0 0 0 / 65%);
+  --sidebar-icon-color: var(--fork-inlet-frame-icon);
 }
 
 /* Inlet's chat header names the thread by its title alone, with the title's
@@ -1062,6 +1075,7 @@
 /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
    Chat's lone New chat row sits first in the scrolling list, so the fillet its
    bridge hangs above it needs that much room inside the list, or it is clipped. */
+/* design-lint-disable-next-line C1 -- callers class this group's padding themselves (see above) */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-sidebar-mode="chat"]
   [data-sidebar-version="v2"]
   [data-slot="sidebar-group"][data-fork-chrome-rows] {
@@ -1070,6 +1084,7 @@
 
 /* The open chat often sits first in the scrolling list too; its top fillet
    needs the same room. */
+/* design-lint-disable-next-line C1 -- callers class this group's padding themselves (see above) */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-sidebar-mode="chat"]
   [data-sidebar-version="v2"]
   [data-slot="sidebar-group"][data-fork-thread-list] {
@@ -1093,9 +1108,9 @@
   background-color: var(--sidebar-row-hover);
 }
 
-/* The lit chrome row's icon takes the panel's ink (above), but on Cream the
-   chrome rows' 65% black icon rule ties it and comes later, leaving a black
-   glyph on the black lit row. The colour attribute outweighs it. */
+/* The lit chrome row's icon takes the panel's ink. On Cream the chrome rows'
+   65% black icon rule would tie a plainer rule and comes later, leaving a
+   black glyph on the black lit row; the colour attribute outweighs it. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]

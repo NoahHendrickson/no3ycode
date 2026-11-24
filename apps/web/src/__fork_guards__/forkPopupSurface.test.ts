@@ -394,7 +394,7 @@ describe("fork guard: fork-popup-surface", () => {
     const selectPopupEnd = select.indexOf("</SelectPrimitive.Popup>", selectPopupStart);
     expect(selectPopupEnd).toBeGreaterThan(selectPopupStart);
     expect(select.slice(selectPopupStart, selectPopupEnd)).toMatch(
-      /<div\s+className=\{cn\(\s*"dropdown-glass/u,
+      /<div\s+className=\{cn\(\s*(?:\/\*[^*]*\*\/\s*)?"dropdown-glass/u,
     );
 
     // Combobox: the glass is the wrapper <span> whose child is the popup —
@@ -403,7 +403,7 @@ describe("fork guard: fork-popup-surface", () => {
       "dropdown-glass",
     );
     expect(combobox).toMatch(
-      /<span\s+className=\{cn\(\s*"dropdown-glass[\s\S]*?>\s*<ComboboxPrimitive\.Popup\b[\s\S]*?data-slot="combobox-popup"/u,
+      /<span\s+className=\{cn\(\s*(?:\/\*[^*]*\*\/\s*)?"dropdown-glass[\s\S]*?>\s*<ComboboxPrimitive\.Popup\b[\s\S]*?data-slot="combobox-popup"/u,
     );
   });
 });

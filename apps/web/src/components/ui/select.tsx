@@ -129,7 +129,11 @@ function SelectPopup({
       >
         <SelectPrimitive.Popup
           // Electron drag hit-testing ignores z-index; items over a drag region would swallow clicks.
-          className="origin-(--transform-origin) rounded-lg text-foreground outline-none [-webkit-app-region:no-drag]"
+          className={
+            /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
+            "origin-(--transform-origin) rounded-(--fork-menu-radius,var(--radius-lg)) text-foreground outline-none [-webkit-app-region:no-drag]"
+            /* fork:end fork-primitive-tokens */
+          }
           data-slot="select-popup"
           {...props}
         >
@@ -141,7 +145,9 @@ function SelectPopup({
           </SelectPrimitive.ScrollUpArrow>
           <div
             className={cn(
-              "dropdown-glass relative h-full rounded-lg shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
+              /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
+              "dropdown-glass relative h-full rounded-(--fork-menu-radius,var(--radius-lg)) shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
+              /* fork:end fork-primitive-tokens */
               matchTriggerWidth && "min-w-(--anchor-width)",
             )}
           >
@@ -175,7 +181,9 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        "flex min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-pointer items-center rounded-sm px-2 py-1 text-base outline-none data-selected:bg-foreground/[0.08] data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
+        "flex min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-pointer items-center rounded-(--fork-menu-row-radius,var(--radius-sm)) px-2 py-1 text-base outline-none data-selected:bg-foreground/[0.08] data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        /* fork:end fork-primitive-tokens */
         className,
       )}
       data-slot="select-item"

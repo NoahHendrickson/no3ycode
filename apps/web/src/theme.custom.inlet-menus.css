@@ -28,10 +28,28 @@
   /* --background is the frame here; a control inside that paints it (a
      radio's well) would punch a hole of frame through the popup. */
   --background: var(--popover);
-  background: var(--popover);
-  border-color: var(--border);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  --fork-popup-fill: var(--popover);
+  --fork-popup-border: var(--border);
+  --fork-popup-filter: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  :is(
+    :is(
+      [data-slot="menu-popup"],
+      [data-slot="menu-sub-content"],
+      [data-slot="popover-popup"],
+      [data-slot="tooltip-popup"],
+      [data-slot="dialog-popup"]
+    ).dropdown-glass,
+    [data-slot="select-popup"] > .dropdown-glass,
+    .dropdown-glass:has(> [data-slot="combobox-popup"]),
+    [data-thread-details-card].dropdown-glass
+  ) {
+  background: var(--fork-popup-fill);
+  border-color: var(--fork-popup-border);
+  -webkit-backdrop-filter: var(--fork-popup-filter);
+  backdrop-filter: var(--fork-popup-filter);
 }
 
 /* The command palette and the confirm dialogs (dialog-glass) and the web build's
@@ -51,12 +69,14 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   .dialog-glass {
-  box-shadow: 0 16px 40px -18px rgb(0 0 0 / 55%);
+  box-shadow: var(--fork-inlet-popup-shadow);
 }
 
 /* Dialogs take the menus' 10px (theme.custom.css, --fork-dialog-radius). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   --fork-dialog-radius: var(--fork-inlet-menu-radius);
+  /* Upstream's popup shadow, for the dialogs that otherwise go without one. */
+  --fork-inlet-popup-shadow: 0 16px 40px -18px rgb(0 0 0 / 55%);
 }
 
 /* A sidebar row's hover card opens as a tab pulled out of the row: while it
@@ -359,7 +379,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-tab-menu="composer"][data-side="top"][data-align="end"] {
-  --fork-inlet-tab-pad: 4px;
+  --fork-inlet-tab-pad: var(--fork-inlet-inset);
 }
 
 /* A header menu flipped above its button casts its shadow upward, away from the button, so it
@@ -367,7 +387,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-tab-menu]:not([data-fork-tab-menu="composer"])[data-side="top"] {
-  --fork-inlet-morph-shadow: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+  --fork-inlet-morph-shadow: drop-shadow(var(--fork-inlet-lift-up));
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
@@ -380,7 +400,7 @@
      instead, and as a filter it follows the outline the tab and its concave
      corner draw rather than the box. */
   box-shadow: none;
-  filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+  filter: drop-shadow(var(--fork-inlet-lift-up));
   /* Wide enough for the shadow on three sides; below, it stops at the tab's
      foot (one fillet down; the tab runs that far over the button's top in
      the button's own colour), so none of it reaches the button.
@@ -425,7 +445,8 @@
      the row: a spread shadow, which also closes the 4px gap above. Its
      corners grow by the spread, so 6px reads as the header buttons' 10px. */
   box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 calc(var(--fork-inlet-menu-radius) - var(--fork-inlet-inset))
+    calc(var(--fork-inlet-menu-radius) - var(--fork-inlet-inset));
 }
 
 /* The usage readout hangs from the usage bar the same way, in the model
@@ -437,22 +458,22 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="popover-popup"][data-fork-tab-menu] {
   --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
+  --fork-menu-radius: var(--fork-inlet-menu-radius);
   background: var(--fork-inlet-model-shell);
-  border-radius: var(--fork-inlet-menu-radius);
 
   /* Each provider's section is its own panel, 4px in from the shell on every
      side (the scroller's 4px block padding gives the top and bottom), with
      corners concentric to the shell's. */
   & .divide-y > * {
-    margin-inline: 4px;
-    border-radius: calc(var(--fork-inlet-menu-radius) - 5px);
+    margin-inline: var(--fork-inlet-inset);
+    border-radius: var(--fork-inlet-menu-row-radius);
     background: var(--fork-composer-bg);
   }
 
   & .divide-y > :not(:last-child) {
     /* The shell shows 5px round the panels (its 1px border, then the 4px
        inset), so they part by as much. */
-    margin-bottom: 5px;
+    margin-bottom: calc(var(--fork-inlet-inset) + 1px);
     border-bottom-width: 0;
   }
 }
@@ -475,14 +496,14 @@
   --fork-inlet-menu-rail: var(--fork-inlet-model-shell);
   --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
   --accent: color-mix(in srgb, var(--popover-foreground) 6%, var(--fork-composer-bg));
-  background: var(--fork-inlet-model-shell);
   /* The open button's padded fill rounds to 10px (its 6px corner plus the
      4px pad), so the shell matches it, and the list sits concentric inside. */
-  border-radius: var(--fork-inlet-menu-radius);
+  --fork-menu-radius: var(--fork-inlet-menu-radius);
+  background: var(--fork-inlet-model-shell);
 
   & [data-fork-model-picker="list"] {
-    margin: 4px;
-    border-radius: calc(var(--fork-inlet-menu-radius) - 4px);
+    margin: var(--fork-inlet-inset);
+    border-radius: calc(var(--fork-inlet-menu-radius) - var(--fork-inlet-inset));
     background: var(--popover);
   }
 
@@ -493,7 +514,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-fork-model-picker="providers"] {
-  padding: 4px 4px 0;
+  padding: var(--fork-inlet-inset) var(--fork-inlet-inset) 0;
 }
 
 /* ── The mode menu, hung from the mode chip ──────────────────────────────────
@@ -506,16 +527,19 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="menu-popup"]:has([data-composer-permissions]) {
-  --fork-inlet-tab-pad: 4px;
+  --fork-inlet-tab-pad: var(--fork-inlet-inset);
   --fork-inlet-tab-fill: var(--fork-inlet-model-shell);
   --fork-inlet-tab-width: calc(var(--anchor-width) + 2 * var(--fork-inlet-tab-pad));
+  --fork-menu-radius: var(--fork-inlet-menu-radius);
   border-color: transparent;
-  border-radius: var(--fork-inlet-menu-radius);
   background: var(--fork-inlet-model-shell);
+  /* design-lint-disable-next-line C2 -- it hangs from its chip (H3): a downward shadow lands
+     on the trigger, so it casts the drop-shadow filter below instead */
   box-shadow: none;
   /* Its start edge on the chip's padded fill, not the chip. */
   translate: calc(-1 * var(--fork-inlet-tab-pad)) 0;
 
+  /* design-lint-disable-next-line C1 -- Inlet's own tab and concave corner, not the menu's box */
   &::after {
     content: "";
     position: absolute;
@@ -526,8 +550,9 @@
   }
 
   &[data-side="bottom"] {
-    border-top-left-radius: 0;
-    filter: drop-shadow(0 8px 12px rgb(0 0 0 / 14%));
+    /* Square over the chip it hangs from. */
+    --fork-menu-radius: 0 var(--fork-inlet-menu-radius) var(--fork-inlet-menu-radius);
+    filter: drop-shadow(var(--fork-inlet-lift-down));
     clip-path: inset(calc(-1 * var(--fork-inlet-fillet)) -40px -40px -40px round 12px);
 
     &::after {
@@ -545,8 +570,9 @@
   }
 
   &[data-side="top"] {
-    border-bottom-left-radius: 0;
-    filter: drop-shadow(0 -8px 12px rgb(0 0 0 / 14%));
+    --fork-menu-radius: var(--fork-inlet-menu-radius) var(--fork-inlet-menu-radius)
+      var(--fork-inlet-menu-radius) 0;
+    filter: drop-shadow(var(--fork-inlet-lift-up));
     clip-path: inset(-40px -40px calc(-1 * var(--fork-inlet-fillet)) -40px round 12px);
 
     &::after {
@@ -572,7 +598,7 @@
   [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled) {
   background: var(--fork-inlet-model-shell);
   box-shadow: 0 0 0 4px var(--fork-inlet-model-shell);
-  border-radius: 5px;
+  border-radius: calc(var(--fork-inlet-fillet) - var(--fork-inlet-inset));
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -765,16 +791,14 @@
   --foreground: var(--fork-inlet-tooltip-foreground);
   --contrast-foreground: var(--fork-inlet-tooltip-foreground);
   --contrast-popover-foreground: var(--fork-inlet-tooltip-foreground);
+  /* Pill-round like the composer's chips (half its one-line height), and a
+     step roomier than upstream's 4 / 8px. */
+  --fork-tooltip-radius: 0.875rem;
+  --fork-tooltip-padding-block: calc(var(--spacing) * 1.5);
+  --fork-tooltip-padding-inline: calc(var(--spacing) * 3);
   border-color: transparent;
   background: var(--fork-inlet-tooltip);
   color: var(--fork-inlet-tooltip-foreground);
-  /* Pill-round like the composer's chips (half its one-line height), and a
-     step roomier than upstream's 4 / 8px. */
-  border-radius: 14px;
-
-  & [data-slot="tooltip-viewport"] {
-    padding: 6px 12px;
-  }
 
   & [data-fork-tooltip-nub] {
     display: block;
@@ -808,6 +832,8 @@
 /* The model menu's on/off traits: unchecked, the box is only an outline in the
    menu's ink at 24%, not a well of --background sunk into the shell. */
 
+/* design-lint-disable-next-line C2 -- an unchecked box in a menu is an outline only (H6);
+   Checkbox has no outline variant */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="menu-popup"]:has([data-fork-model-picker])
   [data-slot="checkbox"]:not([data-checked]) {
@@ -815,6 +841,7 @@
   background: transparent;
   box-shadow: none;
 
+  /* design-lint-disable-next-line C2 -- as above, its inner rim too */
   &::before {
     box-shadow: none;
   }
@@ -903,20 +930,20 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-thread-tabs]
   [data-fork-tab-strip-projects] {
-  border-radius: 10px;
+  border-radius: var(--fork-inlet-row-radius);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-thread-tabs]
   [data-fork-tab-strip-control] {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-thread-tabs]
   [data-fork-tab-strip-icon] {
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* The open thread's tab is the stage it opens, as a browser's tab is its
@@ -964,7 +991,7 @@
   }
 
   & [data-fork-thread-tab][data-active="true"] {
-    border-radius: 10px 10px 0 0;
+    border-radius: var(--fork-inlet-row-radius) var(--fork-inlet-row-radius) 0 0;
     /* The face is its own layer under the label, so it can rise into the tab
        (below) without clipping the label; isolate keeps it above the strip. */
     background: transparent;
@@ -1028,6 +1055,6 @@
   [data-slot="sidebar-inset"]
   [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
   /* The chip's corner is calc(var(--radius-sm) - 2px). */
-  --radius-sm: 8px;
-  border-radius: 8px;
+  --radius-sm: var(--fork-page-tabs-radius);
+  border-radius: var(--fork-page-tabs-radius);
 }
