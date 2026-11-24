@@ -53,7 +53,7 @@ export type ComposerModelTraitsInput = {
 
 export type SelectDescriptor = Extract<ProviderOptionDescriptor, { type: "select" }>;
 
-/** The option the slider drives: a reasoning select with at least two levels to slide between. */
+/** The option the selected row's effort menu drives: a reasoning select with at least two levels. */
 export function findEffortDescriptor(
   descriptors: ReadonlyArray<ProviderOptionDescriptor>,
 ): SelectDescriptor | null {
@@ -76,7 +76,26 @@ function offersChoice(descriptor: ProviderOptionDescriptor): boolean {
 }
 
 /**
- * Rows under the slider keep one order whatever the provider lists: the rest
+ * A two-value select with a standard value reads as an on/off checkbox: unchecked is the standard
+ * value, checked the other (Codex's Fast service tier, its Cyber access program).
+ */
+export function selectToggle(descriptor: SelectDescriptor) {
+  if (descriptor.options.length !== 2) return null;
+  const off = descriptor.options.find((option) => STANDARD_OPTION_IDS.has(option.id));
+  const on = descriptor.options.find((option) => option !== off);
+  if (!off || !on) return null;
+  return {
+    off: off.id,
+    on: on.id,
+    checked: getProviderOptionCurrentValue(descriptor) === on.id,
+    label: descriptor.id === "cyberAccessProgram" ? "Cyber mode" : `${on.label} mode`,
+  };
+}
+
+const STANDARD_OPTION_IDS = new Set(["default", "standard"]);
+
+/**
+ * Rows under the list keep one order whatever the provider lists: the rest
  * in the provider's order, then Fast Mode, then Context Window last.
  */
 const TRAIT_ROW_RANK: Readonly<Record<string, number>> = { fastMode: 1, contextWindow: 2 };
@@ -90,7 +109,7 @@ export function orderTraitRows(
     .toSorted((a, b) => (TRAIT_ROW_RANK[a.id] ?? 0) - (TRAIT_ROW_RANK[b.id] ?? 0));
 }
 
-/** The slider stop for the effort in force; a prompt-injected Ultrathink outranks the stored value. */
+/** The effort level in force; a prompt-injected Ultrathink outranks the stored value. */
 export function effortStopIndex(descriptor: SelectDescriptor, ultrathinkActive: boolean): number {
   const value = ultrathinkActive ? "ultrathink" : getProviderOptionCurrentValue(descriptor);
   const index = descriptor.options.findIndex((option) => option.id === value);

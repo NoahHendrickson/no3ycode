@@ -153,25 +153,17 @@ it("lists a model reported twice by one provider once, with contiguous jump shor
   );
   await screen.getByRole("button", { name: "Choose model" }).click();
   // fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
-  // The fork's model rows are menu items.
+  // The fork's model rows are menu items, and they show no ⌘1–9 badge (the jumps still work).
   await expect.element(page.getByRole("menuitem", { name: /Model A/ })).toBeVisible();
   await vi.waitFor(() =>
     expect(
       page
         .getByRole("menuitem")
         .elements()
-        // fork:end fork-model-picker
-        .map((row) => [
-          row.textContent?.match(/Model [A-Z]/)?.[0],
-          row.querySelector("kbd")?.textContent?.slice(-1),
-        ]),
-    ).toEqual([
-      ["Model A", "1"],
-      ["Model B", "2"],
-      ["Model C", "3"],
-      ["Model D", "4"],
-    ]),
+        .map((row) => row.textContent?.match(/Model [A-Z]/)?.[0]),
+    ).toEqual(["Model A", "Model B", "Model C", "Model D"]),
   );
+  // fork:end fork-model-picker
 });
 
 it("opens on the active provider when every favorite belongs to a disabled provider", async () => {

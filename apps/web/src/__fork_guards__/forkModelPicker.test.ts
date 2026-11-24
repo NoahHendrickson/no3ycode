@@ -5,8 +5,8 @@
  * Two shadows reshape the model picker: ProviderModelPicker swaps upstream's
  * Popover for a Menu, and ModelPickerContent renders a rail of provider icon
  * tabs beside the search field and the chosen provider's models. In the composer,
- * ComposerModelPicker adds the reasoning panel under the list, replacing the
- * separate traits picker. A sync that deletes either shadow
+ * ComposerModelPicker puts effort on the selected row and the other traits in a
+ * panel under the list, replacing the separate traits picker. A sync that deletes either shadow
  * falls back to upstream's rail-and-list popover with no error, and a sync
  * that changes the props or helpers upstream wires between them breaks only at
  * runtime (relative imports type-check against upstream — see
@@ -134,7 +134,7 @@ describe("fork guard: fork-model-picker", () => {
     expect(displayName).toContain('"Gemini "');
     expect(displayName).toContain('"GPT-"');
     expect(displayName).toContain('"GPT "');
-    // Antigravity's thinking_level / role: "reasoning" drives the effort slider.
+    // Antigravity's thinking_level / role: "reasoning" drives the effort menu.
     const traits = readSibling("../custom/composerModelTraits.ts");
     expect(traits).toContain("isReasoningSelect(descriptor)");
   });
@@ -174,7 +174,7 @@ describe("fork guard: fork-model-picker", () => {
     // Favorites always has a tab and stays chosen when empty; a removed
     // instance resolves to Favorites, else the current provider.
     expect(content).toContain('if (storedScope === "favorites") return "favorites";');
-    expect(content).toContain("No favorites yet. Star a model to add it here.");
+    expect(content).toContain("No pinned models yet. Pin a model to keep it here.");
     expect(content).toMatch(
       /useState<ModelPickerScope>\(\(\) =>[^;]*\? "favorites"\s*: props\.activeInstanceId/u,
     );
@@ -221,22 +221,28 @@ describe("fork guard: fork-model-picker", () => {
     expect(content).toMatch(/if \(event\.key === "Escape" && searchQuery\) \{/u);
   });
 
-  it("renders models as 32px rows, star on hover, check on the selected one", () => {
+  it("renders models as 32px rows, pin on hover beside the effort, check at the far right", () => {
     expect(content).toMatch(
-      /const ROW_CLASS =\s*"h-8 min-h-8 rounded-\[4px\] [^"]*text-xs font-medium/u,
+      /const ROW_CLASS =\s*"h-8 min-h-8 rounded-\[4px\] [^"]*text-base font-normal/u,
     );
     expect(content).toContain('<CheckIcon className="size-4 shrink-0 text-foreground"');
-    // The star is hidden at rest even on favorited rows, and its click must
+    // An unpinned row's pin is hidden at rest; a pinned row shows a filled pin. Its click must
     // not also choose the row.
+    expect(content).toContain('weight={isFavorite ? "fill" : "stroke"}');
+    expect(content).toContain("!isFavorite && HOVER_REVEAL_CLASS");
     expect(content).toContain(
       '"opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100"',
     );
     expect(content).toMatch(
-      /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*void toggleFavorite\(model\.instanceId, model\.slug\);/u,
+      /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*setPlacementPins\(\(current\) => current \?\? favoritesSet\);\s*void toggleFavorite\(model\.instanceId, model\.slug\);/u,
     );
-    // The jump badge's fill is foreground-relative; a white wash vanishes on a
-    // light popup.
-    expect(content).toContain("bg-foreground/4");
+    // Rows keep the provider's order, and a pin never moves a row while the menu is open.
+    expect(content).not.toContain("groupFavorites: true");
+    expect(content).toContain("const placementSet = placementPins ?? favoritesSet;");
+    // Pins are the favorites, drawn as a pin; ⌘1–9 still jump, with no badge on the rows.
+    expect(content).toContain('aria-label={isFavorite ? "Unpin" : "Pin"}');
+    expect(content).not.toMatch(/<(Star|Heart)Icon\b/u);
+    expect(content).not.toContain("<Kbd");
     expect(content).not.toMatch(/bg-white\//u);
   });
 
@@ -289,7 +295,9 @@ describe("fork guard: fork-model-picker", () => {
     // Every pick in the composer keeps it open, even from a model without
     // traits; only Settings closes on a pick.
     expect(picker).toContain("if (!props.combined) setIsMenuOpen(false);");
-    expect(composerPicker).toMatch(/<ProviderModelPicker\s+\{\.\.\.pickerProps\}\s+combined\b/u);
+    expect(composerPicker).toMatch(
+      /<ProviderModelPicker\s+\{\.\.\.pickerProps\}[\s\S]*?\n\s+combined\n/u,
+    );
     expect(content).toContain("closeOnClick={false}");
     // Nothing pulls focus into the editor while the picker stays open across
     // a pick: ChatView's post-pick focusAtEnd stands down, and the editor's
@@ -323,12 +331,43 @@ describe("fork guard: fork-model-picker", () => {
       /^\}, \[\s*clampEditorCursor,\s*cursor,\s*editor,[\s\S]*?skillLabelFor,[\s\S]*?value,\s*\]\);/u,
     );
     expect(tiptap.slice(effectStart, effectEnd)).not.toMatch(/\.focus\(/u);
-    // Effort is a slider over the model's own levels; its keys stay out of
-    // the menu's navigation.
-    expect(composerPicker).toContain("<Slider.Root");
-    expect(composerPicker).toContain("onValueCommitted");
-    expect(composerPicker).toContain(
-      'if (event.key !== "Escape" && event.key !== "Tab") event.stopPropagation();',
+    // Effort sits on the selected model's row and opens, on click, a submenu above it holding
+    // the levels and the toggles; there is no slider and no tab strip.
+    expect(content).toMatch(
+      /\{modelKey === activeModelKey && props\.selectedRowControl \? \(\s*<span className="flex" data-model-row-control="">/u,
+    );
+    // Moves over that control (a menu item of its own) never hand the highlight back to the row.
+    expect(content).toContain("if (isInRowControl(event.target)) event.preventBaseUIHandler();");
+    // Nor does the control's focus, which React bubbles to the row.
+    expect(content).toMatch(
+      /onFocus=\{\(event\) => \{\s*if \(isInRowControl\(event\.target\)\) event\.preventBaseUIHandler\(\);/u,
+    );
+    // The row stays lit while its effort control (an item of its own) is hovered or open,
+    // and other rows preview the effort a pick would set.
+    expect(content).toContain("has-data-highlighted:bg-accent has-data-popup-open:bg-accent");
+    expect(content).toContain("props.rowPreview(model.instanceId, model.slug)");
+    expect(composerPicker).toContain("store.stickyOptionsByModelByProvider");
+    expect(picker).toContain("selectedRowControl={props.traits?.selectedRowControl}");
+    // The effort menu opens on click only; another click closes it.
+    expect(composerPicker).toMatch(
+      /<MenuPrimitive\.SubmenuTrigger\s+ref=\{triggerRef\}\s+openOnHover=\{false\}/u,
+    );
+    expect(composerPicker).toContain("setOpen(!wasOpen);");
+    expect(composerPicker).toMatch(/<MenuPopup\s+side="top"\s+align="center"\s+sideOffset=\{0\}/u);
+    // React bubbles the portaled menu's events through the row; they must stop at the popup.
+    expect(composerPicker).toMatch(/\{\.\.\.stopRowEvents\}\s*>/u);
+    expect(composerPicker).toContain("selectToggle(descriptor)");
+    expect(composerPicker).not.toContain("Slider");
+    expect(composerPicker).not.toMatch(/<Tabs\b/u);
+    // Toggles are checkbox rows in the effort menu, not a panel under the list, so the model
+    // menu's height never depends on the model; only an unlisted model's saved options show there.
+    expect(composerPicker).toContain("<MenuPrimitive.CheckboxItem");
+    // Its popup is stamped like the model menu's (wheel lock, focus checks, composer layer).
+    expect(composerPicker).toContain('data-model-picker-content="true"');
+    expect(composerPicker).toContain("composerFloatingLayerProps");
+    expect(composerPicker).not.toContain('variant="switch"');
+    expect(composerPicker).toMatch(
+      /traits\.modelIsUnavailable\s*\?\s*\{ panel: <UnavailableModelTraits/u,
     );
   });
 

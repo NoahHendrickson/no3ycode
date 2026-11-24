@@ -7,6 +7,7 @@ import {
   findEffortDescriptor,
   orderTraitRows,
   resolveComposerModelTraits,
+  selectToggle,
   type ComposerModelTraitsInput,
   type SelectDescriptor,
 } from "./composerModelTraits";
@@ -135,6 +136,58 @@ describe("effortStopIndex", () => {
 
   it("lands on Ultrathink while the prompt carries it, whatever is stored", () => {
     expect(effortStopIndex({ ...claudeEffort, currentValue: "low" }, true)).toBe(4);
+  });
+});
+
+describe("selectToggle", () => {
+  const tier: SelectDescriptor = {
+    id: "serviceTier",
+    label: "Service Tier",
+    type: "select",
+    options: [
+      { id: "default", label: "Standard", isDefault: true },
+      { id: "fast", label: "Fast" },
+    ],
+    currentValue: "default",
+  };
+
+  it("reads a standard-or-other select as an on/off checkbox", () => {
+    expect(selectToggle(tier)).toEqual({
+      off: "default",
+      on: "fast",
+      checked: false,
+      label: "Fast mode",
+    });
+    expect(selectToggle({ ...tier, currentValue: "fast" })?.checked).toBe(true);
+    expect(
+      selectToggle({
+        id: "cyberAccessProgram",
+        label: "Cyber Access",
+        type: "select",
+        options: [
+          { id: "standard", label: "Standard", isDefault: true },
+          { id: "daybreakBlue", label: "Daybreak Blue" },
+        ],
+        currentValue: "daybreakBlue",
+      }),
+    ).toMatchObject({ off: "standard", on: "daybreakBlue", checked: true, label: "Cyber mode" });
+  });
+
+  it("leaves selects without a standard value, or with more than two, as menus", () => {
+    expect(
+      selectToggle({ ...tier, options: [...tier.options, { id: "flex", label: "Flex" }] }),
+    ).toBeNull();
+    expect(
+      selectToggle({
+        id: "agent",
+        label: "Agent",
+        type: "select",
+        options: [
+          { id: "build", label: "Build", isDefault: true },
+          { id: "plan", label: "Plan" },
+        ],
+      }),
+    ).toBeNull();
   });
 });
 

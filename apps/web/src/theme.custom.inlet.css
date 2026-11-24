@@ -1103,16 +1103,3 @@
   svg {
   color: var(--fork-inlet-panel-foreground);
 }
-
-/* The effort slider keeps its flat fill and dots on every Inlet colour (INLET-STYLE-RULES:
-   "the original dots and fill"), not the provider dither the other themes draw. Black
-   repaints the fill in its own colour over this. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
-  & [data-fork-effort-dither] {
-    display: none;
-  }
-
-  & [data-fork-effort-fill] {
-    background: color-mix(in srgb, var(--foreground) 16%, transparent);
-  }
-}

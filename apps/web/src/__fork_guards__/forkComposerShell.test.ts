@@ -413,7 +413,8 @@ describe("fork guard: fork-composer-shell", () => {
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
-    expect(geometry?.body).toMatch(/font-size:\s*14px/u);
+    // Text follows the interface size (the root size), not a fixed pixel size.
+    expect(geometry?.body).toMatch(/font-size:\s*1rem/u);
     expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
   });
 

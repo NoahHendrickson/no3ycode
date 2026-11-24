@@ -2,53 +2,54 @@
  * The composer's single model-and-reasoning menu — see
  * `.fork/customizations.yaml#fork-model-picker`.
  *
- * Wraps ProviderModelPicker and hands it the reasoning half: a panel under
- * the model list where effort is a slider over the model's own levels, and
- * every other trait keeps a compact control (a checkbox for on/off traits,
- * segments for the rest). The trigger reads "Opus 5.5 High". Writes go to the
- * same draft-store options, with the same Ultrathink prompt prefix, as
- * upstream's traits picker. Controlled editors supply their own options
- * callback so scheduled tasks can reuse the menu without a conversation draft.
+ * Wraps ProviderModelPicker and hands it the reasoning half as one control on the selected
+ * model's row: its effort ("⇕ High", led by an icon per toggle that is on), which opens a menu
+ * above it on click with the model's levels, any other select, and its toggles (Fast, Ultracode,
+ * Cyber) as checkboxes. The model menu itself has no traits panel, so its height never depends on
+ * the model. Writes go to the same draft-store options, with the same Ultrathink prompt prefix,
+ * as upstream's traits picker. Controlled editors supply their own options callback so scheduled
+ * tasks can reuse the menu without a conversation draft.
  */
-import type { ProviderOptionDescriptor } from "@t3tools/contracts";
+import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import type { ProviderInstanceId, ProviderOptionDescriptor } from "@t3tools/contracts";
 import {
   applyClaudePromptEffortPrefix,
   buildProviderOptionSelectionsFromDescriptors,
   getProviderOptionCurrentLabel,
   getProviderOptionCurrentValue,
+  getProviderOptionDescriptors,
 } from "@t3tools/shared/model";
-import { Slider } from "@base-ui/react/slider";
-import {
-  type ComponentProps,
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  useState,
-} from "react";
+import { BrainIcon, ChevronsUpDownIcon, CodeIcon, ShieldIcon, ZapIcon } from "lucide-react";
+import { type ComponentProps, Fragment, type ReactNode, useRef, useState } from "react";
 
 // Through the alias: a relative import type-checks against upstream's module,
 // not the shadow that adds `traits` and `combined`.
 import { ProviderModelPicker } from "~/components/chat/ProviderModelPicker";
 import { useApplyThreadModelPick } from "~/components/chat/useApplyThreadModelPick";
-import { Checkbox } from "../components/ui/checkbox";
+import { CheckboxMark } from "../components/ui/checkbox";
+import { composerFloatingLayerProps } from "../components/chat/composerEventScope";
+import {
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuRadioItemIndicator,
+  MenuSeparator,
+  MenuSub,
+} from "../components/ui/menu";
 import { useComposerDraftStore } from "../composerDraftStore";
+import { getProviderModelCapabilities } from "../providerModels";
 import { cn } from "~/lib/utils";
 import {
   type ComposerModelTraits,
   type ComposerModelTraitsInput,
   type SelectDescriptor,
   effortStopIndex,
+  findEffortDescriptor,
   resolveComposerModelTraits,
+  selectToggle,
 } from "./composerModelTraits";
-import { EffortDither, type EffortDitherStops, effortDitherStops } from "./EffortDither";
-import { Tab, Tabs } from "./Tabs";
 
 const ULTRATHINK_PROMPT_PREFIX = "Ultrathink:\n";
-/**
- * The thumb's width, a variable on the track so a palette can widen the thumb (Inlet does). Edge
- * alignment keeps half of it inside the track, so the stops inset by as much to sit under it.
- */
-const THUMB_WIDTH = "var(--fork-effort-thumb-width)";
 
 function replaceDescriptorCurrentValue(
   descriptors: ReadonlyArray<ProviderOptionDescriptor>,
@@ -64,170 +65,40 @@ function replaceDescriptorCurrentValue(
   );
 }
 
+/** A trait's mark: on the selected row while it is on, and beside its checkbox. */
+const TRAIT_ICONS: Readonly<Record<string, typeof ZapIcon>> = {
+  fastMode: ZapIcon,
+  serviceTier: ZapIcon,
+  ultracode: CodeIcon,
+  cyberAccessProgram: ShieldIcon,
+  thinking: BrainIcon,
+};
+
+function TraitIcon(props: { id: string; className: string }) {
+  const Icon = TRAIT_ICONS[props.id];
+  return Icon ? <Icon aria-hidden className={props.className} /> : null;
+}
+
+const stop = (event: { stopPropagation: () => void }) => event.stopPropagation();
+/** Keeps a press on the value from also picking the model row it sits in. */
+const stopRowPick = { onPointerDown: stop, onPointerUp: stop, onMouseUp: stop, onClick: stop };
 /**
- * The slider, checkboxes and segments read their own keys. Escape and Tab
- * still reach the menu, so it can close and move focus.
+ * The menu is portaled, but React still bubbles its events through the row that renders it: a
+ * move would highlight that row, which closes the menu, and a click would pick the row. (The
+ * value's own moves must bubble, for the menus' hover logic; the row ignores those itself.)
  */
-function keepKeysInPanel(event: KeyboardEvent<HTMLDivElement>) {
-  if (event.key !== "Escape" && event.key !== "Tab") event.stopPropagation();
-}
+const stopRowEvents = { ...stopRowPick, onMouseMove: stop, onPointerMove: stop, onMouseDown: stop };
 
-/** A labelled row; as a `<label>`, a click anywhere on it toggles its checkbox. */
-function TraitRow(props: { label: string; children: ReactNode; asLabel?: boolean }) {
-  const Row = props.asLabel ? "label" : "div";
-  return (
-    <Row
-      className={cn(
-        "flex min-h-8 items-center justify-between gap-3 px-2",
-        props.asLabel && "cursor-pointer",
-      )}
-    >
-      <span className="shrink-0 text-xs font-medium text-muted-foreground">{props.label}</span>
-      {props.children}
-    </Row>
-  );
-}
+/** A value on a model row, laid out like the selected row's control so previews line up. */
+const EFFORT_VALUE_CLASS = "flex h-6 shrink-0 items-center gap-0.5 px-1 text-base";
+/** Rules a section off edge to edge, through the popup's and the menu's 4px insets. */
+const SECTION_RULE_CLASS = "-mx-2 my-1";
 
-/** @public — Storybook's Fork/Effort slider story renders it on its own. */
-export function EffortSlider(props: {
-  descriptor: SelectDescriptor;
-  /** The fill's colours, from the track's start to the thumb. */
-  fillStops: EffortDitherStops;
-  committedIndex: number;
-  disabled: boolean;
-  onCommit: (optionId: string) => void;
-}) {
-  const { descriptor, committedIndex } = props;
-  // Dragging previews locally and writes once on release, so sweeping past
-  // Ultrathink doesn't rewrite the prompt at every stop.
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  // Base UI marks a plain click as dragging too, so only the change reason
-  // tells a press or arrow key (glide to the stop) from a drag (follow the finger).
-  const [glide, setGlide] = useState(false);
-  const index = dragIndex ?? committedIndex;
-  const option = descriptor.options[index];
-  const lastIndex = descriptor.options.length - 1;
-  const glideClass =
-    glide && "duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none";
+type Traits = NonNullable<ComposerModelTraits>;
 
-  return (
-    <div className="flex flex-col gap-1.5 px-2 pt-1.5 pb-2">
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="font-medium text-muted-foreground">{descriptor.label}</span>
-        <span className="flex min-w-0 items-center gap-1.5">
-          {option?.isDefault ? <span className="text-muted-foreground">Default</span> : null}
-          <span className="truncate font-medium text-foreground">{option?.label}</span>
-        </span>
-      </div>
-      <Slider.Root
-        value={index}
-        min={0}
-        max={lastIndex}
-        step={1}
-        thumbAlignment="edge"
-        disabled={props.disabled}
-        onValueChange={(value, details) => {
-          setGlide(details.reason !== "drag");
-          setDragIndex(value);
-        }}
-        onValueCommitted={(value) => {
-          setDragIndex(null);
-          const next = descriptor.options[value];
-          if (next && value !== committedIndex) props.onCommit(next.id);
-        }}
-      >
-        <Slider.Control
-          data-fork-effort-control
-          className="flex h-6 w-full touch-none items-center select-none data-disabled:opacity-64"
-        >
-          {/* A 24px bar with a block thumb of the same height. The fill runs
-              from the start under the whole thumb; the stops are dots, and the
-              model's default level is a short bar. */}
-          <Slider.Track
-            data-fork-effort-track
-            className="relative h-6 w-full rounded-[6px] bg-foreground/8 [--fork-effort-thumb-width:20px]"
-          >
-            {/* Under the fill, which covers the stops the thumb has passed as it moves. */}
-            <div
-              className="pointer-events-none absolute inset-y-0"
-              style={{ insetInline: `calc(${THUMB_WIDTH} / 2)` }}
-            >
-              {descriptor.options.map((stop, stopIndex) => (
-                <span
-                  key={stop.id}
-                  className={cn(
-                    "absolute top-1/2 -translate-1/2 rounded-full",
-                    stop.isDefault ? "h-2.5 w-0.5" : "size-1",
-                    stopIndex <= index ? "bg-foreground/50" : "bg-foreground/35",
-                    // Glass's thumb is see-through; the stop under it would show.
-                    stopIndex === index && "invisible",
-                  )}
-                  style={{ left: `${(stopIndex / lastIndex) * 100}%` }}
-                />
-              ))}
-            </div>
-            {/* The dither ends at the thumb's middle; past it, under the rest of the thumb, the
-                fill is the last colour, so a see-through thumb shows one fill. Inlet repaints
-                the fill and hides the dither. */}
-            <div
-              data-fork-effort-fill
-              className={cn(
-                "pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[6px] bg-(--fork-effort-fill-end)",
-                glideClass && ["transition-[width]", glideClass],
-              )}
-              style={
-                {
-                  width: `calc(${THUMB_WIDTH} + ${index / lastIndex} * (100% - ${THUMB_WIDTH}))`,
-                  "--fork-effort-fill-end": props.fillStops.at(-1),
-                } as CSSProperties
-              }
-            >
-              <EffortDither stops={props.fillStops} />
-            </div>
-            <Slider.Thumb
-              aria-label={descriptor.label}
-              getAriaValueText={() => option?.label ?? ""}
-              data-fork-effort-thumb
-              className={cn(
-                "h-6 w-(--fork-effort-thumb-width) rounded-[6px] bg-background shadow-sm dark:bg-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                glideClass && ["transition-[inset-inline-start]", glideClass],
-              )}
-            />
-          </Slider.Track>
-        </Slider.Control>
-      </Slider.Root>
-    </div>
-  );
-}
-
-/** A select trait as the fork's tab strip; Inlet Black dresses it by its marker. */
-function TraitTabs(props: { descriptor: SelectDescriptor; onSelect: (optionId: string) => void }) {
-  const current = getProviderOptionCurrentValue(props.descriptor);
-  return (
-    <Tabs
-      data-fork-segmented-trait=""
-      aria-label={props.descriptor.label}
-      value={typeof current === "string" ? [current] : []}
-      onValueChange={([optionId]) => {
-        // Pressing the picked tab again unpicks it in a toggle group; a trait always has one.
-        if (optionId !== undefined) props.onSelect(optionId);
-      }}
-    >
-      {props.descriptor.options.map((option) => (
-        <Tab key={option.id} value={option.id}>
-          {option.label}
-        </Tab>
-      ))}
-    </Tabs>
-  );
-}
-
-function ComposerModelTraitsPanel(props: {
-  input: ComposerModelTraitsInput;
-  traits: NonNullable<ComposerModelTraits>;
-}) {
-  const { input, traits } = props;
-  const { descriptors, effortDescriptor, primarySelectId } = traits;
+/** Writes match upstream's traits menu: same draft-store options, same Ultrathink prefix. */
+function useTraitWrites(input: ComposerModelTraitsInput, traits: Traits) {
+  const { descriptors, primarySelectId } = traits;
   const setProviderModelOptions = useComposerDraftStore((store) => store.setProviderModelOptions);
   const applyThreadModelPick = useApplyThreadModelPick();
 
@@ -267,71 +138,316 @@ function ComposerModelTraitsPanel(props: {
     updateDescriptors(replaceDescriptorCurrentValue(descriptors, descriptor.id, value));
   };
 
-  if (traits.modelIsUnavailable) {
-    return (
-      <div className="flex flex-col p-1" onKeyDown={keepKeysInPanel}>
-        {traits.rows.map((descriptor) => {
-          const value = getProviderOptionCurrentLabel(descriptor);
-          return value ? (
-            <TraitRow key={descriptor.id} label={descriptor.label}>
-              <span className="truncate text-xs text-muted-foreground">{value}</span>
-            </TraitRow>
-          ) : null;
-        })}
-      </div>
-    );
-  }
+  return { updateDescriptors, selectOption };
+}
 
-  const effortLocked = traits.ultrathinkInBodyText && effortDescriptor?.id === primarySelectId;
+/** The prompt says "ultrathink" in its body, so effort stays put until it is removed. */
+function effortLocked(traits: Traits): boolean {
+  return traits.ultrathinkInBodyText && traits.effortDescriptor?.id === traits.primarySelectId;
+}
+
+/** A section of the menu: a header ruled off above a select's values. */
+function SelectSection(props: {
+  title: string;
+  descriptor: SelectDescriptor;
+  value: string | undefined;
+  disabled?: boolean;
+  note?: ReactNode;
+  onSelect: (optionId: string) => void;
+}) {
+  return (
+    <>
+      <div data-fork-option-menu-label="" className="px-2 pb-1 text-base text-muted-foreground">
+        {props.title}
+      </div>
+      {props.note}
+      {/* A 1px gap, so a hovered value never touches the checked one. */}
+      <MenuRadioGroup
+        className="grid gap-px"
+        aria-label={props.title}
+        value={props.value ?? null}
+        onValueChange={(value: string) => {
+          if (value !== props.value) props.onSelect(value);
+        }}
+      >
+        {props.descriptor.options.map((option) => (
+          <MenuRadioItem
+            key={option.id}
+            value={option.id}
+            disabled={props.disabled}
+            closeOnClick={false}
+          >
+            <span className="flex w-full items-center gap-3 text-base">
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
+              {option.isDefault ? <span className="text-muted-foreground">Default</span> : null}
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <MenuRadioItemIndicator />
+              </span>
+            </span>
+          </MenuRadioItem>
+        ))}
+      </MenuRadioGroup>
+    </>
+  );
+}
+
+/**
+ * The selected model row's traits. Its value names the effort, led by an icon for each toggle
+ * that is on; clicking it (or ArrowRight) opens the effort levels, any other select, and the
+ * toggles as checkboxes in a menu above it, laid out like the permissions menu.
+ */
+function ComposerTraitsMenu(props: {
+  input: ComposerModelTraitsInput;
+  traits: Traits;
+  /** The composer's menu: the popup joins its floating layer, like the model menu. */
+  composerOwned: boolean;
+  /** Opens as it mounts: the model was picked by a click on its row's effort. */
+  defaultOpen?: boolean;
+}) {
+  const { traits } = props;
+  const { descriptors, effortDescriptor: effort } = traits;
+  const { updateDescriptors, selectOption } = useTraitWrites(props.input, traits);
+  // Click only: a click on the value opens the menu and another closes it (hover never opens
+  // it). A level pick closes it; checkboxes keep it open, so the check is seen to change.
+  const [open, setOpen] = useState(props.defaultOpen === true);
+  // Whether the menu was open when the press began: the menu's outside-press check can shut it on
+  // pointerdown, before the click that decides. Null for a keyboard click.
+  const openAtPressRef = useRef<boolean | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const locked = effortLocked(traits);
+  const level = effort
+    ? effort.options[
+        effortStopIndex(
+          effort,
+          traits.ultrathinkPromptControlled && effort.id === traits.primarySelectId,
+        )
+      ]
+    : undefined;
+  const toggles = traits.rows.flatMap((descriptor) => {
+    if (descriptor.type === "boolean") {
+      return [
+        {
+          id: descriptor.id,
+          label: descriptor.label,
+          checked: descriptor.currentValue === true,
+          set: (checked: boolean) =>
+            updateDescriptors(replaceDescriptorCurrentValue(descriptors, descriptor.id, checked)),
+        },
+      ];
+    }
+    const toggle = selectToggle(descriptor);
+    return toggle
+      ? [
+          {
+            id: descriptor.id,
+            label: toggle.label,
+            checked: toggle.checked,
+            set: (checked: boolean) => selectOption(descriptor, checked ? toggle.on : toggle.off),
+          },
+        ]
+      : [];
+  });
+  const selects = traits.rows.filter(
+    (descriptor): descriptor is SelectDescriptor =>
+      descriptor.type === "select" && selectToggle(descriptor) === null,
+  );
+  const togglesOn = toggles.filter((toggle) => toggle.checked);
+  const valueLabel = level?.label ?? "Options";
+  const pick = (descriptor: SelectDescriptor, optionId: string) => {
+    setOpen(false);
+    selectOption(descriptor, optionId);
+  };
 
   return (
-    <div className="flex flex-col p-1" data-fork-model-traits="true" onKeyDown={keepKeysInPanel}>
-      {effortDescriptor ? (
-        <>
-          <EffortSlider
-            descriptor={effortDescriptor}
-            fillStops={effortDitherStops(input.provider)}
-            committedIndex={effortStopIndex(
-              effortDescriptor,
-              traits.ultrathinkPromptControlled && effortDescriptor.id === primarySelectId,
-            )}
-            disabled={effortLocked}
-            onCommit={(optionId) => selectOption(effortDescriptor, optionId)}
-          />
-          {effortLocked ? (
-            <p className="px-2 pb-1.5 text-xs text-muted-foreground">
-              Your prompt contains &quot;ultrathink&quot; in the text. Remove it to change this
-              option.
-            </p>
-          ) : null}
-        </>
-      ) : null}
-      {traits.rows.map((descriptor) => {
-        if (descriptor.type === "boolean") {
-          return (
-            <TraitRow key={descriptor.id} label={descriptor.label} asLabel>
-              <Checkbox
-                checked={descriptor.currentValue === true}
-                onCheckedChange={(checked) =>
-                  updateDescriptors(
-                    replaceDescriptorCurrentValue(descriptors, descriptor.id, checked),
-                  )
-                }
-              />
-            </TraitRow>
-          );
+    <MenuSub
+      open={open}
+      onOpenChange={(next, details) => {
+        // Focus leaving the menu for its own value is that value's click, which decides itself;
+        // closing here would let the click reopen it.
+        const towards = details.event instanceof FocusEvent ? details.event.relatedTarget : null;
+        if (
+          !next &&
+          details.reason === "focus-out" &&
+          towards instanceof Node &&
+          triggerRef.current?.contains(towards)
+        ) {
+          return;
         }
-        return (
-          <TraitRow key={descriptor.id} label={descriptor.label}>
-            <TraitTabs
-              descriptor={descriptor}
-              onSelect={(optionId) => selectOption(descriptor, optionId)}
+        setOpen(next);
+      }}
+    >
+      <MenuPrimitive.SubmenuTrigger
+        ref={triggerRef}
+        openOnHover={false}
+        aria-label={[
+          `${effort ? "Effort" : "Options"}: ${valueLabel}`,
+          ...togglesOn.map((toggle) => `${toggle.label} on`),
+        ].join(", ")}
+        // A white wash a step past the lit row's, like the pin's, while hovered or open.
+        className={cn(
+          EFFORT_VALUE_CLASS,
+          "cursor-pointer rounded-[4px] text-foreground outline-none hover:bg-foreground/10 data-highlighted:bg-foreground/10 data-popup-open:bg-foreground/10",
+        )}
+        {...stopRowPick}
+        // The press is ours, and the click alone toggles: Base UI opens on mousedown, so its open
+        // and a click toggle landed together and shut the menu as it opened. None of it may reach
+        // the row. ArrowRight still opens it through Base UI.
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          event.preventBaseUIHandler();
+          openAtPressRef.current = open;
+        }}
+        onMouseDown={(event) => {
+          event.stopPropagation();
+          event.preventBaseUIHandler();
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          event.preventBaseUIHandler();
+          // A keyboard click (detail 0) reads the live state; a press abandoned by dragging off
+          // leaves a stale one behind.
+          const wasOpen = event.detail === 0 ? open : (openAtPressRef.current ?? open);
+          openAtPressRef.current = null;
+          setOpen(!wasOpen);
+        }}
+      >
+        {togglesOn.map((toggle) => (
+          <TraitIcon key={toggle.id} id={toggle.id} className="mr-1 size-4 text-muted-foreground" />
+        ))}
+        <ChevronsUpDownIcon aria-hidden className="size-4 text-muted-foreground" />
+        <span className="max-w-28 truncate">{valueLabel}</span>
+      </MenuPrimitive.SubmenuTrigger>
+      {/* Stamped like the model menu: its wheel lock and focus checks count this popup in, and in
+          the composer it joins the floating layer (Glass surfaces, resting-composer focus). */}
+      <MenuPopup
+        side="top"
+        align="center"
+        sideOffset={0}
+        width="content"
+        data-model-picker-content="true"
+        {...(props.composerOwned ? composerFloatingLayerProps : {})}
+        {...stopRowEvents}
+      >
+        <div data-fork-option-menu="" className="grid min-w-52 gap-0.5 p-1">
+          {effort ? (
+            <SelectSection
+              title="Effort"
+              descriptor={effort}
+              value={level?.id}
+              disabled={locked}
+              note={
+                locked ? (
+                  <p className="max-w-52 px-2 pb-1 text-base text-muted-foreground">
+                    Remove &quot;ultrathink&quot; from your prompt to change the effort.
+                  </p>
+                ) : null
+              }
+              onSelect={(optionId) => pick(effort, optionId)}
             />
-          </TraitRow>
-        );
+          ) : null}
+          {selects.map((descriptor, index) => {
+            const value = getProviderOptionCurrentValue(descriptor);
+            return (
+              <Fragment key={descriptor.id}>
+                {effort || index > 0 ? <MenuSeparator className={SECTION_RULE_CLASS} /> : null}
+                <SelectSection
+                  title={descriptor.label}
+                  descriptor={descriptor}
+                  value={typeof value === "string" ? value : undefined}
+                  onSelect={(optionId) => pick(descriptor, optionId)}
+                />
+              </Fragment>
+            );
+          })}
+          {toggles.length > 0 ? (
+            <>
+              {effort || selects.length > 0 ? (
+                <MenuSeparator className={SECTION_RULE_CLASS} />
+              ) : null}
+              <div className="grid gap-px">
+                {toggles.map((toggle) => (
+                  // The menu's own checkbox row draws its check on the left; this one keeps
+                  // the row's slot (so it lights like every row) with a checkbox on the right.
+                  <MenuPrimitive.CheckboxItem
+                    key={toggle.id}
+                    data-slot="menu-checkbox-item"
+                    checked={toggle.checked}
+                    closeOnClick={false}
+                    onCheckedChange={(checked) => toggle.set(checked)}
+                    className="flex min-h-8 cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-base text-foreground outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                  >
+                    <TraitIcon id={toggle.id} className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{toggle.label}</span>
+                    <CheckboxMark checked={toggle.checked} />
+                  </MenuPrimitive.CheckboxItem>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+      </MenuPopup>
+    </MenuSub>
+  );
+}
+
+/** A saved model that is no longer listed: its options, read-only as they were saved. */
+function UnavailableModelTraits(props: { traits: Traits }) {
+  return (
+    <div className="flex flex-col p-1">
+      {props.traits.rows.map((descriptor) => {
+        const value = getProviderOptionCurrentLabel(descriptor);
+        return value ? (
+          <div key={descriptor.id} className="flex min-h-8 items-center justify-between gap-3 px-2">
+            <span className="shrink-0 text-base text-muted-foreground">{descriptor.label}</span>
+            <span className="truncate text-base text-muted-foreground">{value}</span>
+          </div>
+        ) : null;
       })}
     </div>
   );
+}
+
+/**
+ * Another model row's effort as picking it would set it: the options last used with that model
+ * (what a pick restores), else the model's default.
+ */
+function useEffortPreview(
+  instanceEntries: ComponentProps<typeof ProviderModelPicker>["instanceEntries"],
+  includePlanAgent: boolean | undefined,
+  onPick: (instanceId: ProviderInstanceId, model: string) => void,
+) {
+  const remembered = useComposerDraftStore((store) => store.stickyOptionsByModelByProvider);
+  return (instanceId: ProviderInstanceId, model: string): ReactNode => {
+    const entry = instanceEntries.find((candidate) => candidate.instanceId === instanceId);
+    if (!entry) return null;
+    const caps = getProviderModelCapabilities(
+      entry.models,
+      model,
+      entry.driverKind,
+      includePlanAgent,
+    );
+    const effort = findEffortDescriptor(
+      getProviderOptionDescriptors({ caps, selections: remembered[instanceId]?.[model] }),
+    );
+    const label = effort ? getProviderOptionCurrentLabel(effort) : undefined;
+    if (!label) return null;
+    // The click also reaches the row, which picks the model; onPick opens its effort menu.
+    return (
+      <span
+        className={cn(
+          EFFORT_VALUE_CLASS,
+          "cursor-pointer rounded-[4px] text-muted-foreground hover:bg-foreground/10",
+        )}
+        // A shift-click adds the model to a multi-model draft rather than picking it.
+        onClick={(event) => {
+          if (!event.shiftKey) onPick(instanceId, model);
+        }}
+      >
+        <ChevronsUpDownIcon aria-hidden className="size-4" />
+        <span className="max-w-28 truncate">{label}</span>
+      </span>
+    );
+  };
 }
 
 /** The composer's model picker, carrying the reasoning controls the traits picker used to. */
@@ -342,15 +458,53 @@ export function ComposerModelPicker({
   traitsInput: ComposerModelTraitsInput;
 }) {
   const traits = resolveComposerModelTraits(traitsInput);
+  // A click on another row's effort picks that model and opens its effort menu; it lasts until
+  // the picker closes, so a later open starts with the menu shut.
+  const [openTraitsFor, setOpenTraitsFor] = useState<{
+    instanceId: ProviderInstanceId;
+    model: string;
+  } | null>(null);
+  const rowPreview = useEffortPreview(
+    pickerProps.instanceEntries,
+    traitsInput.includePlanAgent,
+    (instanceId, model) => setOpenTraitsFor({ instanceId, model }),
+  );
+  const openTraitsNow =
+    openTraitsFor !== null &&
+    openTraitsFor.model === traitsInput.model &&
+    (traitsInput.instanceId === undefined || openTraitsFor.instanceId === traitsInput.instanceId);
   return (
     <ProviderModelPicker
       {...pickerProps}
+      rowPreview={rowPreview}
+      onInstanceModelChange={(instanceId, model) => {
+        // Only the pick a preview's click asked for opens its menu; any other pick clears it.
+        setOpenTraitsFor((current) =>
+          current?.instanceId === instanceId && current.model === model ? current : null,
+        );
+        pickerProps.onInstanceModelChange(instanceId, model);
+      }}
+      onOpenChange={(open) => {
+        if (!open) setOpenTraitsFor(null);
+        pickerProps.onOpenChange?.(open);
+      }}
       combined
       {...(traits
         ? {
             traits: {
               label: traits.trigger.label,
-              panel: <ComposerModelTraitsPanel input={traitsInput} traits={traits} />,
+              ...(traits.modelIsUnavailable
+                ? { panel: <UnavailableModelTraits traits={traits} /> }
+                : {
+                    selectedRowControl: (
+                      <ComposerTraitsMenu
+                        input={traitsInput}
+                        traits={traits}
+                        composerOwned={pickerProps.isComposerOwned === true}
+                        defaultOpen={openTraitsNow}
+                      />
+                    ),
+                  }),
             },
           }
         : {})}

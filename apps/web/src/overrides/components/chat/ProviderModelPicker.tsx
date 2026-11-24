@@ -134,8 +134,17 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   onOpenProviderSetup?: (instanceId: ProviderInstanceId) => void;
   getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   onInstanceModelChange: (instanceId: ProviderInstanceId, model: string) => void;
-  /** The selected model's reasoning: a trigger label plus a panel under the model list. */
-  traits?: { label: string; panel: ReactNode };
+  /**
+   * The selected model's reasoning: a trigger label, a control on the selected row (effort)
+   * and a panel of toggles under the model list.
+   */
+  traits?: {
+    label: string;
+    selectedRowControl?: ReactNode;
+    panel?: ReactNode;
+  };
+  /** Shown on another model's row while hovered: what picking it would set (its effort). */
+  rowPreview?: (instanceId: ProviderInstanceId, model: string) => ReactNode;
   /**
    * The composer's combined menu: a pick keeps it open (effort usually
    * follows a new model) at one width, whether or not the model has traits.
@@ -428,8 +437,10 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               : (props.getModelDisabledReason?.(instanceId, model) ?? null)
           }
           onInstanceModelChange={handleInstanceModelChange}
+          selectedRowControl={props.traits?.selectedRowControl}
+          {...(props.rowPreview ? { rowPreview: props.rowPreview } : {})}
         />
-        {props.traits ? (
+        {props.traits?.panel ? (
           <>
             {/* Edge to edge: the popup's scroll wrapper pads its children by
                 4px, so the rule pulls back out by the same amount. It ends at
