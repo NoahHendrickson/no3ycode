@@ -55,7 +55,7 @@ describe("fork-tabs", () => {
     const at = basic.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
     expect(at).toBeGreaterThan(-1);
     expect(basic.slice(at)).toMatch(
-      /\{\s*gap: 2px;\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*0\.75rem;/u,
+      /\{\s*gap: 2px;\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*calc\(0\.75rem \* var\(--fork-interface-text-scale, 1\)\);/u,
     );
     // The model menu's option strips are Tabs, so this rule draws them too.
     expect(read("../custom/ComposerModelPicker.tsx")).toMatch(

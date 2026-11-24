@@ -211,7 +211,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--foreground);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
   line-height: 1rem;
   text-align: left;
 }

@@ -235,7 +235,7 @@
     background-clip: border-box;
     box-shadow: none;
     color: var(--basic-text);
-    font-size: 0.75rem;
+    font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {

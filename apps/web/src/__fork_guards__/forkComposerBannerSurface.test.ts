@@ -191,7 +191,9 @@ describe("fork guard: fork-composer-banner-surface", () => {
     expect(rule?.selector).not.toContain('[data-composer-banner-drawer="true"]');
     expect(rule?.body).toMatch(/--composer-banner-icon-column:\s*16px/u);
     // Notices read at Chat stream size, like the transcript and the other banner cards.
-    expect(rule?.body).toMatch(/font-size:\s*calc\(1rem \* var\(--fork-chat-text-scale, 1\)\)/u);
+    expect(rule?.body).toMatch(
+      /font-size:\s*calc\(1rem \* var\(--fork-chat-text-scale, 1\) \* var\(--fork-interface-text-scale, 1\)\)/u,
+    );
     const noticePadding = rules.find(
       (candidate) =>
         flat(candidate.selector).includes('[data-fork-composer-notice="true"]') &&

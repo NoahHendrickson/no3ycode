@@ -2785,6 +2785,42 @@
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
 
+- id: fork-interface-size-text-only
+  intent: >
+    Interface font size scales text only (Noey, 2026-11-24). Upstream applies it
+    as the root font size, so every rem in the app moved with it and inputs,
+    buttons, switches and padding shrank at 15px. The fork writes it as
+    --fork-interface-text-scale (size / 16) instead, so rem stays 16px and every
+    rem geometry token and class holds by default. Text is the closed set that
+    follows: the root --text-* tokens, the body size, the @theme-inline dense
+    steps (text-2xs..5xs), the Chat stream sizes (composed with Chat stream
+    size), index.css's rem font sizes and the few arbitrary rem text classes all
+    multiply the scale. A new rem font size must multiply it too; the guard
+    finds any that don't.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.interface-size.css
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/custom/CollapsedThreadTabs.tsx
+  shadows: []
+  watch:
+    # Fenced: writes the text scale instead of the root font size.
+    - apps/web/src/appearanceFonts.ts
+    # Fenced: the composer-size case loads the sheet and the fork root marker.
+    - apps/web/src/appearanceFonts.browser.test.ts
+    # Fenced: rem font sizes multiply the scale.
+    - apps/web/src/index.css
+    # Fenced: the arbitrary rem text classes multiply the scale.
+    - apps/web/src/components/ui/badge.tsx
+    - apps/web/src/components/ui/empty.tsx
+    # Fenced: imports the interface-size sheet.
+    - apps/web/src/main.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
+
 - id: fork-sidebar-chrome
   intent: >
     The sidebar's collapse toggle lives inside the sidebar header, beside the
