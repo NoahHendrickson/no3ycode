@@ -172,8 +172,14 @@ function WorkflowRow(props: {
       leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
       title={subagent.workflow?.name ?? presentation.title}
       meta={presentation.statusLabel}
-      // A stopped workflow has no mark; its status line says how it ended.
-      trailing={mark === null ? null : <No3yStatusMark kind={mark} palette={palette} />}
+      // A stopped workflow has no mark; the status line speaks for the mark either way.
+      trailing={
+        mark === null ? null : (
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <No3yStatusMark kind={mark} palette={palette} />
+          </View>
+        )
+      }
       onPress={props.onPress}
       chevron
     />
