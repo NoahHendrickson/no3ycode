@@ -84,7 +84,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
 
   it("pulses the monitoring mark between white 50% and 20% opacity", () => {
     const indicator = readSibling("../custom/SidebarV2StatusIndicator.tsx");
-    expect(indicator).toContain("export function SidebarV2MonitoringMark");
+    expect(indicator).toContain("function SidebarV2MonitoringMark");
     expect(indicator).toContain("export function SidebarV2StatusMark");
     expect(indicator).toContain("data-fork-monitoring-pulse");
     expect(theme).toContain("@keyframes sidebar-v2-monitoring-pulse");

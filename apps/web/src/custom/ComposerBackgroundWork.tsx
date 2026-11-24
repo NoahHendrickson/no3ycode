@@ -1,7 +1,11 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
 
-import { ComputerActivityIcon, ComputerTerminalIcon } from "./icons/lucide-hugeicons";
+import {
+  ComputerActivityIcon,
+  ComputerTerminalIcon,
+  ElectricityStackIcon,
+} from "./icons/lucide-hugeicons";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -14,30 +18,23 @@ import {
 } from "./composerBackgroundWork.logic";
 import { ForkSubagentIdentity, useForkSubagentEffort } from "./ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "./forkSubagentTree";
-import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
 
 export interface ComposerBackgroundWorkViewProps {
   /** A subagent's task row draws its transcript card's header (resolveComposerBackgroundWork). */
   readonly presentation: ComposerBackgroundWorkPresentation;
-  /** Stable seed for the working mark so remounts keep the same phase. */
-  readonly seed: string;
   readonly stopping: boolean;
-  /** False when the client lacks the operate scope: Stop stays visible but inert. */
+  /** False when Stop has nothing to act on (mid-turn, or no operate scope): the square is not drawn. */
   readonly canStop: boolean;
   readonly onStop: () => void;
   readonly onOpenThread: (threadId: ThreadId) => void;
   readonly environmentId: EnvironmentId;
 }
 
-/** `waiting` is upstream's "this work will wake the agent" (subagents, monitors); a dev server
- * that merely outlives the turn is monitoring-only, so it does not rain. */
+/** One label for any mix of work: subagents, commands, monitors and PR watches alike. */
 function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): string {
   if (props.stopping) return "Stopping...";
-  if (!props.presentation.waiting) return "Monitoring";
-  const liveCount = props.presentation.items.filter((item) => item.kind === "subagent").length;
-  if (liveCount > 0) return `${liveCount} ${liveCount === 1 ? "agent" : "agents"}`;
-  return "Working";
+  return props.presentation.items.length === 1 ? "Background task" : "Background tasks";
 }
 
 /** Background work as a chip above the composer (fork-composer-shell): the label opens the task
@@ -57,6 +54,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
             <ComposerControl
               size="xs"
               data-fork-status-chip-main
+              data-fork-status-chip-solo={props.canStop ? undefined : ""}
               aria-label={`${label}: show background work`}
             />
           }
@@ -66,11 +64,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
             aria-hidden
             className="flex size-[14px] shrink-0 items-center justify-center"
           >
-            {props.presentation.waiting ? (
-              <SidebarV2WorkingMark seed={props.seed} />
-            ) : (
-              <SidebarV2MonitoringMark />
-            )}
+            <ElectricityStackIcon />
           </span>
           <span aria-hidden className="min-w-0 truncate">
             {label}
@@ -97,15 +91,17 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           </ul>
         </PopoverPopup>
       </Popover>
-      <ComposerControl
-        size="xs"
-        data-fork-status-chip-stop
-        aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
-        disabled={props.stopping || !props.canStop}
-        onClick={props.onStop}
-      >
-        <StopSquareIcon size={10} />
-      </ComposerControl>
+      {props.canStop ? (
+        <ComposerControl
+          size="xs"
+          data-fork-status-chip-stop
+          aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
+          disabled={props.stopping}
+          onClick={props.onStop}
+        >
+          <StopSquareIcon size={10} />
+        </ComposerControl>
+      ) : null}
     </span>
   );
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { glanceCommandLabel, resolveComposerBackgroundWork } from "./composerBackgroundWork.logic";
+import {
+  composerBackgroundTasks,
+  glanceCommandLabel,
+  resolveComposerBackgroundWork,
+} from "./composerBackgroundWork.logic";
 
 describe("glanceCommandLabel", () => {
   it.each([
@@ -49,5 +53,30 @@ describe("resolveComposerBackgroundWork", () => {
       [record("first", "completed"), record("follow-up", "running")],
     );
     expect(resolved?.items[0]?.subagent?.id).toBe("follow-up");
+  });
+});
+
+describe("composerBackgroundTasks", () => {
+  const record = (id: string, status: string, childThreadId: string | null = `child-${id}`) =>
+    ({ id, status, childThreadId, title: `Audit ${id}`, prompt: id }) as never;
+
+  it("adds a live run's own subagents to the pending list, each once", () => {
+    const command = { taskId: "dev", kind: "command", description: "vp run dev" } as never;
+    const pending = { taskId: "t-a", kind: "subagent", childThreadId: "child-a" } as never;
+    const native = { taskId: "native-n", kind: "subagent" } as never;
+    const agents = [
+      record("a", "running"),
+      record("b", "running"),
+      record("c", "completed"),
+      { ...(record("n", "running", null) as object), nativeTaskRef: { nativeId: "native-n" } },
+    ] as never;
+    const listed = composerBackgroundTasks([command, pending, native], agents);
+    expect(listed.map((task) => task.taskId)).toEqual(["dev", "t-a", "native-n", "b"]);
+    expect(listed.at(-1)).toEqual({
+      taskId: "b",
+      kind: "subagent",
+      description: "Audit b",
+      childThreadId: "child-b",
+    });
   });
 });

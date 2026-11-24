@@ -364,7 +364,10 @@ import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
 import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
 import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
-import { resolveComposerBackgroundWork } from "~/custom/composerBackgroundWork.logic";
+import {
+  composerBackgroundTasks,
+  resolveComposerBackgroundWork,
+} from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2813,7 +2816,9 @@ export default function ChatView(props: ChatViewProps) {
      the thread's PR (custom/ComposerBackgroundWork). Stop handler and task list come from
      useThreadLifecycle, like upstream's row. */
   const composerBackgroundWorkPresentation = resolveComposerBackgroundWork(
-    presentPendingBackgroundWork(activeBackgroundTasks),
+    presentPendingBackgroundWork(
+      composerBackgroundTasks(activeBackgroundTasks, serverProjection?.subagents),
+    ),
     serverProjection?.subagents,
   );
   // The queue card collapses into a pill in this row.
@@ -2835,9 +2840,14 @@ export default function ChatView(props: ChatViewProps) {
         {composerBackgroundWorkPresentation ? (
           <ComposerBackgroundWorkChip
             presentation={composerBackgroundWorkPresentation}
-            seed={`${activeThread.environmentId}:${activeThread.id}`}
             stopping={isStoppingBackgroundWork}
-            canStop={canOperateThread}
+            // While a run is live the composer owns Stop (the same interrupt); the square shows
+            // only for work a settled run left pending.
+            canStop={
+              canOperateThread &&
+              activeBackgroundTasks.length > 0 &&
+              !((isWorking && activeRuntime?.status !== "waiting") || phase === "connecting")
+            }
             onStop={() => void handleStopBackgroundWorkStable()}
             onOpenThread={onOpenRelatedThreadStable}
             environmentId={activeThread.environmentId}

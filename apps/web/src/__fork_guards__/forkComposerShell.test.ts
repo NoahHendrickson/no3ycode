@@ -817,8 +817,17 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).toContain("statusChips={composerStatusChips}");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
-    expect(work).toContain("SidebarV2WorkingMark");
-    expect(work).toContain("SidebarV2MonitoringMark");
+    expect(work).toContain("<ElectricityStackIcon />");
+    expect(work).toContain('"Background task" : "Background tasks"');
+    // An unpressable Stop is not drawn, and a live run leaves Stop to the composer.
+    expect(work).toContain("{props.canStop ? (");
+    expect(chatView).toMatch(
+      /canStop=\{\s*canOperateThread &&\s*activeBackgroundTasks\.length > 0 &&\s*!\(\(isWorking && activeRuntime\?\.status !== "waiting"\) \|\| phase === "connecting"\)\s*\}/u,
+    );
+    // A live run's own subagents join the chip, not only work the run left pending.
+    expect(chatView).toContain(
+      "composerBackgroundTasks(activeBackgroundTasks, serverProjection?.subagents)",
+    );
     expect(work).toContain('role="status"');
     expect(work).toContain("Stop background work");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");

@@ -2,7 +2,11 @@ import type {
   PendingBackgroundWorkItem,
   PendingBackgroundWorkPresentation,
 } from "@t3tools/client-runtime/state/thread-execution";
-import type { OrchestrationV2Subagent } from "@t3tools/contracts";
+import type {
+  OrchestrationV2PendingBackgroundTask,
+  OrchestrationV2Subagent,
+  ThreadId,
+} from "@t3tools/contracts";
 import { forkShellCommandParsing as shell } from "@t3tools/client-runtime/work-log/command-label";
 
 import { forkSubagentRowFromAgent, type ForkSubagentTreeRow } from "./forkSubagentTree";
@@ -25,6 +29,52 @@ const LIVE_SUBAGENT_STATUSES: ReadonlySet<OrchestrationV2Subagent["status"]> = n
   "waiting",
 ]);
 
+/** A follow-up delegation reuses its child thread, so the live record wins over a finished one. */
+function subagentForChildThread(
+  childThreadId: ThreadId | undefined,
+  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
+): OrchestrationV2Subagent | undefined {
+  if (childThreadId === undefined) return undefined;
+  const matches = (subagents ?? []).filter(
+    (candidate) => candidate.childThreadId === childThreadId,
+  );
+  return (
+    matches.find((candidate) => LIVE_SUBAGENT_STATUSES.has(candidate.status)) ?? matches.at(-1)
+  );
+}
+
+/** The work the chip lists: the pending list, plus a live run's own subagents, which the pending
+ * list leaves out as foreground work. */
+export function composerBackgroundTasks(
+  tasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>,
+  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
+): ReadonlyArray<OrchestrationV2PendingBackgroundTask> {
+  const pendingAgentIds = new Set<string>();
+  for (const task of tasks) {
+    if (task.kind !== "subagent") continue;
+    const agent =
+      subagentForChildThread(task.childThreadId, subagents) ??
+      subagents?.find(
+        (candidate) =>
+          candidate.id === task.taskId || candidate.nativeTaskRef?.nativeId === task.taskId,
+      );
+    if (agent !== undefined) pendingAgentIds.add(agent.id);
+  }
+  const live = (subagents ?? []).flatMap((agent): OrchestrationV2PendingBackgroundTask[] => {
+    if (pendingAgentIds.has(agent.id) || !LIVE_SUBAGENT_STATUSES.has(agent.status)) return [];
+    const description = (agent.title ?? agent.prompt).trim();
+    return [
+      {
+        taskId: agent.id,
+        kind: "subagent",
+        ...(description.length === 0 ? {} : { description }),
+        ...(agent.childThreadId === null ? {} : { childThreadId: agent.childThreadId }),
+      },
+    ];
+  });
+  return live.length === 0 ? tasks : [...tasks, ...live];
+}
+
 /** Pairs each subagent task with its live record's card row, once, so a task row reads one item. */
 export function resolveComposerBackgroundWork(
   presentation: PendingBackgroundWorkPresentation | null,
@@ -34,13 +84,7 @@ export function resolveComposerBackgroundWork(
   return {
     ...presentation,
     items: presentation.items.map((task) => {
-      // A follow-up delegation reuses its child thread, so prefer the live record over a finished one.
-      const matches =
-        task.childThreadId === undefined
-          ? []
-          : (subagents ?? []).filter((candidate) => candidate.childThreadId === task.childThreadId);
-      const agent =
-        matches.find((candidate) => LIVE_SUBAGENT_STATUSES.has(candidate.status)) ?? matches.at(-1);
+      const agent = subagentForChildThread(task.childThreadId, subagents);
       return agent === undefined ? task : { ...task, subagent: forkSubagentRowFromAgent(agent) };
     }),
   };

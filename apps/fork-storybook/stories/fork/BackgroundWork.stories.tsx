@@ -46,7 +46,6 @@ const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
 ];
 
 const base = {
-  seed: "story",
   stopping: false,
   canStop: true,
   onStop: () => {},
@@ -87,7 +86,7 @@ type Story = StoryObj<typeof Composer>;
     opening its thread, and the square stops them. */
 export const Playground: Story = {};
 
-/** Working and monitoring, stopping, and a client without the operate scope (Stop inert). */
+/** Several tasks, one task, stopping, and a client with nothing to stop (no square). */
 export const States: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
