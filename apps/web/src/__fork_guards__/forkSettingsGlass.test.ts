@@ -36,7 +36,11 @@ describe("fork guard: settings glass", () => {
     // The rim's popup list is written once and its rules nest under it, so
     // the Settings arm reaches every part of the rim or none of it.
     expect(surfacesSheet.split(SETTINGS)).toHaveLength(2);
-    const parts = ["border-radius: 12px", "padding: 0.5px", "backdrop-filter: blur(12px)"];
+    const parts = [
+      "border-radius: var(--radius-xl)",
+      "padding: 0.5px",
+      "backdrop-filter: blur(12px)",
+    ];
     for (const part of parts) {
       const rule = surfaces.find(
         (candidate) =>
@@ -92,7 +96,7 @@ describe("fork guard: settings glass", () => {
         rule.selector.includes('[data-slot="sidebar-inset"]') &&
         rule.selector.includes(".bg-card\\/40"),
     );
-    expect(wash?.body).toMatch(/background-color:\s*rgb\(255 255 255 \/ 5%\)/u);
+    expect(wash?.body).toMatch(/background-color:\s*var\(--fork-white-5\)/u);
     expect(readSibling("../components/settings/SettingsGroup.tsx")).toContain("bg-card/40");
     // The route modal portals out of the inset, so the wash carries a modal arm,
     // and the docked nav clears its opaque fill; below md it is an overlay.

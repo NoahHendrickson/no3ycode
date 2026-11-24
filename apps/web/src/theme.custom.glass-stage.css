@@ -326,6 +326,7 @@
     }
 
     /* The thread list: its end padding is 8px less the measured gutter. */
+    /* design-lint-disable-next-line C1 -- every caller passes its own padding classes, which tailwind-merge keeps over any primitive token */
     &.dark[data-fork-theme="cool-darker"]:is(
         [data-fork-has-chat-column],
         [data-fork-has-stage-card]
@@ -335,9 +336,10 @@
       )
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"][data-fork-thread-list] {
-      --fork-sidebar-group-padding-end: 0px;
+      padding-inline-end: 0;
     }
 
+    /* design-lint-disable-next-line C1 -- every caller passes its own padding classes, which tailwind-merge keeps over any primitive token */
     &.dark[data-fork-theme="cool-darker"]:is(
         [data-fork-has-chat-column],
         [data-fork-has-stage-card]
@@ -347,7 +349,7 @@
       )
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
-      --fork-sidebar-group-padding-end: calc(var(--spacing) * 1.5);
+      padding-inline-end: calc(var(--spacing) * 1.5);
     }
   }
 

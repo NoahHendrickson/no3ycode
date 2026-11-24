@@ -101,7 +101,9 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
-    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
+    expect(theme).toMatch(
+      /\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*calc\(var\(--spacing\) \* 7\)/u,
+    );
     expect(theme).not.toContain('[data-fork-pending-user-input-action="previous"]');
   });
 

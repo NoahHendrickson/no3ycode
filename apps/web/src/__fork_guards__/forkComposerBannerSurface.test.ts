@@ -191,7 +191,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
     expect(rule?.selector).not.toContain('[data-composer-banner-drawer="true"]');
     expect(rule?.body).toMatch(/--composer-banner-icon-column:\s*16px/u);
     // Notices read at Chat stream size, like the transcript and the other banner cards.
-    expect(rule?.body).toMatch(/font-size:\s*calc\(1rem \* var\(--fork-chat-text-scale, 1\)\)/u);
+    expect(rule?.body).toMatch(/font-size:\s*var\(--fork-chat-text-base\)/u);
     const noticePadding = rules.find(
       (candidate) =>
         flat(candidate.selector).includes('[data-fork-composer-notice="true"]') &&
@@ -199,12 +199,14 @@ describe("fork guard: fork-composer-banner-surface", () => {
         !flat(candidate.selector).includes("composer-banner-") &&
         candidate.body.includes("padding:"),
     );
-    expect(noticePadding?.body).toMatch(/padding:\s*12px 8px 12px 16px/u);
+    expect(noticePadding?.body).toMatch(
+      /padding:\s*calc\(var\(--spacing\) \* 3\)\s+calc\(var\(--spacing\) \* 2\)\s+calc\(var\(--spacing\) \* 3\)\s+calc\(var\(--spacing\) \* 4\)/u,
+    );
     const iconSvg = rules.find((candidate) =>
       /composer-banner-icon"\]\s*>\s*svg/u.test(flat(candidate.selector)),
     );
     expect(iconSvg?.body).toMatch(/display:\s*block/u);
-    expect(iconSvg?.body).toMatch(/width:\s*16px/u);
+    expect(iconSvg?.body).toMatch(/width:\s*calc\(var\(--spacing\) \* 4\)/u);
     const noticeStack = rules.find(
       (candidate) =>
         flat(candidate.selector).includes('[data-fork-composer-notice="true"]') &&
@@ -221,7 +223,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
     );
     expect(rowGap?.selector).toContain('[data-fork-composer-notice="true"]');
     expect(rowGap?.selector).not.toContain('[data-composer-banner-drawer="true"]');
-    expect(rowGap?.body).toMatch(/column-gap:\s*6px/u);
+    expect(rowGap?.body).toMatch(/column-gap:\s*calc\(var\(--spacing\) \* 1\.5\)/u);
     expect(
       rules.some(
         (candidate) =>

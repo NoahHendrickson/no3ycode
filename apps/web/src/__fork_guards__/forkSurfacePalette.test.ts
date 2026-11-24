@@ -215,8 +215,18 @@ describe("fork guard: fork-surface-palette", () => {
     // silently backing up a palette it no longer matched.
     const surfaceHexes = hexesIn(blockFor(theme, STAGE), blockFor(theme, PANEL));
     expect(surfaceHexes.length).toBeGreaterThan(0);
+    // The white/black opacity scale is a set of constants every theme reads, not a surface.
+    const isOpacityScale = (body: string) =>
+      body
+        .split(";")
+        .map((declaration) => declaration.trim())
+        .filter(Boolean)
+        .every((declaration) => /^--fork-(?:white|black)(?:-[\d-]+)?:/u.test(declaration));
     const lightRules = cssRules(theme).filter(
-      (rule) => rule.selector.includes(MARKER) && !rule.selector.includes(".dark"),
+      (rule) =>
+        rule.selector.includes(MARKER) &&
+        !rule.selector.includes(".dark") &&
+        !isOpacityScale(rule.body),
     );
     expect(lightRules.length).toBeGreaterThan(0);
     for (const rule of lightRules) {

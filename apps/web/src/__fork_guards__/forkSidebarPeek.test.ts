@@ -92,7 +92,7 @@ describe("fork-sidebar-peek", () => {
     expect(flat(floating?.selector)).toContain(`:not(${glassPeekState})`);
 
     const rows = cssRules(readSibling("../theme.custom.glass-surfaces.css")).find((rule) =>
-      rule.body.includes("background-color: rgb(255 255 255 / 6%)"),
+      rule.body.includes("background-color: var(--fork-white-6)"),
     );
     expect(flat(rows?.selector)).toContain(glassPeek);
 

@@ -340,6 +340,6 @@ describe("fork guard: fork-model-picker", () => {
       ),
     );
     expect(popup?.selector).toContain(MARKER);
-    expect(popup?.body).toMatch(/border-radius:\s*8px/u);
+    expect(popup?.body).toMatch(/--fork-menu-radius:\s*var\(--radius-lg\)/u);
   });
 });

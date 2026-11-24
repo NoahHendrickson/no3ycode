@@ -72,7 +72,8 @@ describe("fork guard: fork-glass-stage-card", () => {
       (rule) =>
         compact(rule.selector).endsWith(`${ROOT}::before`) &&
         !rule.selector.includes(VIBRANCY) &&
-        !rule.selector.includes("data-fork-side-chat"),
+        !rule.selector.includes("data-fork-side-chat") &&
+        rule.body.includes("z-index"),
     );
     expect(flat(card?.body)).toContain(
       "inset: var(--fork-glass-card-inset) var(--fork-glass-card-inset) var(--fork-glass-card-inset) var(--fork-glass-card-inset-left);",
@@ -158,7 +159,9 @@ describe("fork guard: fork-glass-stage-card", () => {
     }
     const title = rules.find((rule) => rule.selector.includes("[data-fork-stage-card-title]"));
     expect(compact(title?.selector ?? "")).toContain("[data-chat-header]");
-    expect(title?.body).toContain("padding-left: calc(var(--fork-glass-card-inset-left) + 16px)");
+    expect(title?.body).toContain(
+      "padding-left: calc(var(--fork-glass-card-inset-left) + var(--spacing) * 4)",
+    );
     const body = rules.find((rule) => rule.selector.includes("[data-fork-stage-card-body]"));
     expect(body?.body).toContain("width: auto");
     expect(flat(body?.body)).toContain(

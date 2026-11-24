@@ -80,11 +80,11 @@ describe("fork guard: fork-workspace-header", () => {
     const pill = cssRules(theme).find(
       (rule) =>
         rule.selector.includes("[data-fork-pill]") &&
-        /(?:^|;)\s*height:\s*28px\s*(?:;|$)/u.test(rule.body),
+        /(?:^|;)\s*height:\s*calc\(var\(--spacing\) \* 7\)\s*(?:;|$)/u.test(rule.body),
     );
     expect(pill).toBeDefined();
-    expect(pill?.body).toMatch(/(?:^|;)\s*height:\s*28px\s*(?:;|$)/u);
-    expect(pill?.body).toMatch(/(?:^|;)\s*min-height:\s*28px\s*(?:;|$)/u);
+    expect(pill?.body).toMatch(/(?:^|;)\s*height:\s*calc\(var\(--spacing\) \* 7\)\s*(?:;|$)/u);
+    expect(pill?.body).toMatch(/(?:^|;)\s*min-height:\s*calc\(var\(--spacing\) \* 7\)\s*(?:;|$)/u);
   });
 
   it("keeps git actions out of the toolbar, so no pill pins its progress readout", () => {

@@ -102,16 +102,19 @@ describe("fork guard: fork-basic-theme", () => {
     expect(scrim?.body).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
     expect(sheet).toMatch(/--fork-dialog-radius:\s*8px/u);
     expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).toMatch(
-      /border-radius:\s*8px/u,
+      /border-radius:\s*var\(--radius-lg\)/u,
     );
   });
 
   it("draws switches green with a white thumb", () => {
     const switches = sheet.slice(sheet.indexOf(`${BASIC} [data-slot="switch"] {`));
     expect(switches).toMatch(
-      /^[^{]+\{\s*&\[data-checked\] \{\s*background-color: oklch\(59\.6% 0\.145 163\.225\);/u,
+      /^[^{]+\{\s*&\[data-checked\] \{\s*background-color: var\(--fork-basic-switch-on\);/u,
     );
-    expect(switches).toMatch(/& > \[data-slot="switch-thumb"\] \{\s*background-color: #fff;/u);
+    expect(sheet).toMatch(/--fork-basic-switch-on: oklch\(59\.6% 0\.145 163\.225\);/u);
+    expect(switches).toMatch(
+      /& > \[data-slot="switch-thumb"\] \{\s*background-color: var\(--fork-white\);/u,
+    );
     expect(switches).toMatch(
       /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
     );
