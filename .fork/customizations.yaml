@@ -8370,7 +8370,10 @@
     reasoning level as a chip; tapping it grows the chip into a pill slider that takes over the row
     (a dot per level, a white fill up to a glass knob like the header buttons, the chosen level's name under the knob as the rows below step down one by one, tap-to-jump, snapping drags with a haptic tick) and
     turns the tick into a save button, which writes the level and shrinks it
-    back. All of it drives the same thread settings session so picks, favorites and
+    back; opening it first scrolls the row and its label into view, as the list
+    stays still while the meter is open. When the selected model is not in the
+    list shown (Favorites without it), reasoning moves to the Options menu.
+    All of it drives the same thread settings session so picks, favorites and
     options save exactly as before. Claude and Codex draw the Mac fork's own
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at

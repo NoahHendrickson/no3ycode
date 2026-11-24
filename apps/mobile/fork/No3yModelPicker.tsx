@@ -15,15 +15,17 @@ import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
 import type { MenuAction } from "@react-native-menu/menu";
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, View, type LayoutChangeEvent } from "react-native";
 import Animated, {
   Easing,
   Extrapolation,
   interpolate,
   ReduceMotion,
   type SharedValue,
+  useAnimatedRef,
   useAnimatedStyle,
   useDerivedValue,
+  useScrollOffset,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
@@ -578,6 +580,9 @@ export function No3yModelPicker(props: {
   const choice = session.providerFilter ?? FAVORITES;
   const committed = useRef(false);
   const meter = useSharedValue(0);
+  const listRef = useAnimatedRef<Animated.ScrollView>();
+  const listOffset = useScrollOffset(listRef);
+  const listHeight = useRef(0);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   // Leaving an open meter without saving drops its pick.
   const closeMeterNow = () => {
@@ -623,9 +628,17 @@ export function No3yModelPicker(props: {
       (descriptor): descriptor is SelectDescriptor =>
         isReasoningSelect(descriptor) && descriptor.options.length > 1,
     ) ?? null;
+  // With no visible selected row (a Favorites list without it), reasoning joins the Options menu.
+  const selectedListed = models.some(({ option }) => session.isDisplayed(option));
+  const effortIsPrimary =
+    effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
+  const effortIndex = effort
+    ? effortStopIndex(effort, effortIsPrimary && session.promptTraits.ultrathinkPromptControlled)
+    : -1;
+  const effortDisabled = effortIsPrimary && session.promptTraits.ultrathinkInBodyText;
   // The model's other options (fast mode, context size…), which the upstream sheet lists as rows.
   const otherOptions = session.displayedDescriptors.filter(
-    (descriptor) => descriptor.id !== effort?.id,
+    (descriptor) => descriptor.id !== effort?.id || !selectedListed,
   );
   // What the provider reports wins, as in the full settings sheet's rows.
   const currentValue = (descriptor: ProviderOptionDescriptor) =>
@@ -639,10 +652,17 @@ export function No3yModelPicker(props: {
       ? {
           id: descriptor.id,
           title: descriptor.label,
-          subactions: descriptor.options.map((option) => ({
+          attributes: { disabled: descriptor.id === effort?.id && effortDisabled },
+          subactions: descriptor.options.map((option, stop) => ({
             id: `select:${descriptor.id}:${option.id}`,
             title: option.label,
-            state: option.id === currentValue(descriptor) ? ("on" as const) : ("off" as const),
+            state: (
+              descriptor.id === effort?.id
+                ? stop === effortIndex
+                : option.id === currentValue(descriptor)
+            )
+              ? ("on" as const)
+              : ("off" as const),
           })),
         }
       : {
@@ -665,14 +685,20 @@ export function No3yModelPicker(props: {
       }
     }
   };
-  const effortIsPrimary =
-    effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
   const editingIndex =
     editingKey === null || effort === null
       ? -1
       : models.findIndex(({ option }) => option.key === editingKey && session.isDisplayed(option));
   const editing = editingIndex >= 0;
-  const openMeter = (key: string) => {
+  const openMeter = (key: string, position: number) => {
+    // Scrolling locks while the meter is open, so first bring the row and its level label into view.
+    const top = position * ROW_HEIGHT;
+    const scrollY = listOffset.get();
+    const target = Math.min(
+      top,
+      Math.max(scrollY, top + ROW_HEIGHT + LABEL_SPACE - listHeight.current),
+    );
+    if (target !== scrollY) listRef.current?.scrollTo({ y: target, animated: true });
     setEditingKey(key);
     meter.set(withTiming(1, METER_TIMING));
   };
@@ -756,8 +782,12 @@ export function No3yModelPicker(props: {
           }
         />
       </View>
-      <ScrollView
+      <Animated.ScrollView
+        ref={listRef}
         style={{ flex: 1 }}
+        onLayout={(event: LayoutChangeEvent) => {
+          listHeight.current = event.nativeEvent.layout.height;
+        }}
         // 24pt clear of the sheet's rounded bottom, as the usage sheet keeps its rows.
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: insets.bottom + 24 }}
         scrollEnabled={!editing}
@@ -800,14 +830,11 @@ export function No3yModelPicker(props: {
                 <ReasoningModelRow
                   {...rowProps}
                   descriptor={effort}
-                  committedIndex={effortStopIndex(
-                    effort,
-                    effortIsPrimary && session.promptTraits.ultrathinkPromptControlled,
-                  )}
-                  disabled={effortIsPrimary && session.promptTraits.ultrathinkInBodyText}
+                  committedIndex={effortIndex}
+                  disabled={effortDisabled}
                   meter={meter}
                   editing={editing}
-                  onOpen={() => openMeter(option.key)}
+                  onOpen={() => openMeter(option.key, position)}
                   onSave={saveMeter}
                 />
               ) : (
@@ -824,7 +851,7 @@ export function No3yModelPicker(props: {
             );
           })
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
