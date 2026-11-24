@@ -1708,7 +1708,7 @@
     -light, stamped as data-fork-basic-tone), so under System it follows the
     OS between them. Picking a tone on the other appearance moves the mode;
     picking one on the current appearance does not. Every retired dark look
-    (Westworld, Neutral Dark, Neutral Darker, and the nine retired dark tones)
+    (Westworld, Neutral Dark, Neutral Darker, and the eight retired dark tones)
     migrates to Darker Neutral, and the retired Cream tone to Light, in
     forkTheme.ts and index.html's pre-paint alike.
     Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
@@ -1740,7 +1740,7 @@
     Jolly Petal (assets/basic-new-agent-jolly-petal.png), both opaque and
     still, cover the column centred, at the smallest whole-device-pixel cell
     that covers it. Restore defaults resets the pick.
-    Light and Cream keep the fork's composer geometry, which other light builds
+    Light keeps the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.

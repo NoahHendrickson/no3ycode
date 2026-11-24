@@ -1,16 +1,16 @@
 import { addons } from "storybook/manager-api";
 import { create } from "storybook/theming";
 
-// The library's chrome in Basic · Dark Neutral: the base, its 8% line and white ink.
+// The library's chrome in Basic · Darker Neutral: the base, its 8% line and white ink.
 addons.setConfig({
   theme: create({
     base: "dark",
     brandTitle: "no3y code — Basic",
-    appBg: "#232323",
-    appContentBg: "#2b2b2b",
-    appPreviewBg: "#2b2b2b",
-    appBorderColor: "#404040",
-    barBg: "#2b2b2b",
+    appBg: "#171717",
+    appContentBg: "#232323",
+    appPreviewBg: "#232323",
+    appBorderColor: "#383838",
+    barBg: "#232323",
     colorPrimary: "#ffffff",
     colorSecondary: "#e8e8e8",
     textColor: "#e8e8e8",
