@@ -46,6 +46,7 @@ function readSibling(relativePath: string): string {
 const chatView = readSibling("../components/ChatView.tsx");
 const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
 const composerShell = readSibling("../custom/ComposerShell.tsx");
+const threadComposerTheme = readSibling("../theme.custom.thread-composer.css");
 const sidebar = readSibling("../components/Sidebar.tsx");
 const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
@@ -386,15 +387,22 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
     // A Petal's asks sit above its composer, under the status chips and above the banners; the
     // Threads panel lists threads only.
-    expect(chatView).toContain("forkBotDigestThreadRef={activeThreadRef}");
-    expect(chatComposer).toContain(
-      "digest={<BotDigestAsks threadRef={props.forkBotDigestThreadRef ?? null} />}",
-    );
+    expect(chatView).not.toContain("BotDigestAsks");
+    expect(chatComposer).toContain("digest={<BotDigestAsks threadRef={routeThreadRef} />}");
     const chipsAt = composerShell.indexOf('data-fork-composer-status-chips="true"');
-    const digestAt = composerShell.indexOf("{digest}");
+    const asideAt = composerShell.indexOf('data-fork-composer-aside="true"');
+    const bodyAt = composerShell.indexOf('data-fork-composer-body="true"');
     expect(chipsAt).toBeGreaterThan(-1);
-    expect(digestAt).toBeGreaterThan(chipsAt);
-    expect(composerShell.indexOf('data-fork-composer-banners="true"')).toBeGreaterThan(digestAt);
+    expect(asideAt).toBeGreaterThan(chipsAt);
+    expect(bodyAt).toBeGreaterThan(asideAt);
+    expect(composerShell.indexOf('data-fork-composer-banners="true"')).toBeGreaterThan(bodyAt);
+    // The aside is in the form but not the composer: Flat Glass / Basic theme only the body, and
+    // focus there neither expands the collapsed phone composer nor holds it open.
+    expect(threadComposerTheme).toMatch(
+      /\[data-chat-composer-form\]\s*:where\(\[data-fork-composer-body\]\) \{/u,
+    );
+    expect(chatComposer).toContain("!isInsideComposerAside(activeElement) &&");
+    expect(chatComposer).toContain("if (isInsideComposerAside(activeElement)) return;");
     expect(threadsPanel).not.toContain("BotDigest");
     // iOS draws the same digest above its composer, from the parsing both clients share.
     expect(iosThread).toMatch(

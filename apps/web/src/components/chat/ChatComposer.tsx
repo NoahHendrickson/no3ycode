@@ -197,7 +197,11 @@ import {
 } from "../composerFooterLayout";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { shouldUseCompactComposerModelSlot } from "../../custom/composerModelSlotCompact";
-import { ComposerPromptRow, ComposerShell } from "../../custom/ComposerShell";
+import {
+  ComposerPromptRow,
+  ComposerShell,
+  isInsideComposerAside,
+} from "../../custom/ComposerShell";
 import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
@@ -362,13 +366,6 @@ import { composerCommandKeyHandler } from "./composerCommandKey";
 import { promptSuggestionToAccept, usePromptSuggestion } from "./usePromptSuggestion";
 import { useFreshSessionArmed } from "./freshSessionArms";
 
-/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-// The digest rides in the form, but its buttons are not the composer: they never expand it.
-function isInsideBotDigest(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest("[data-fork-bot-digest]") !== null;
-}
-/* fork:end fork-bot-digest */
-
 function consumePasteAsTextShortcut(deadline: { current: number }): boolean {
   const armed = Date.now() <= deadline.current;
   deadline.current = 0;
@@ -469,9 +466,6 @@ export interface ChatComposerProps {
   /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
   forkQueuedRunsBanner?: ReactNode;
   /* fork:end fork-queued-runs-banner */
-  /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-  forkBotDigestThreadRef?: ScopedThreadRef | null;
-  /* fork:end fork-bot-digest */
   resumeCompactionTokens: number | null;
   keepFullHistory: boolean;
   onToggleKeepFullHistory: () => void;
@@ -3309,7 +3303,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       if (
         activeElement instanceof Node &&
         /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-        !isInsideBotDigest(activeElement) &&
+        !isInsideComposerAside(activeElement) &&
         /* fork:end fork-bot-digest */
         ((composerSurface && composerSurface.contains(activeElement)) ||
           (composerForm && composerForm.contains(activeElement)))
@@ -4012,7 +4006,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           return;
         }
         /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-        if (isInsideBotDigest(activeElement)) return;
+        if (isInsideComposerAside(activeElement)) return;
         /* fork:end fork-bot-digest */
         if (composerBlurFrameRef.current !== null) {
           window.cancelAnimationFrame(composerBlurFrameRef.current);
@@ -4056,7 +4050,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         context={props.contextStrip}
         statusChips={props.statusChips}
         /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-        digest={<BotDigestAsks threadRef={props.forkBotDigestThreadRef ?? null} />}
+        digest={<BotDigestAsks threadRef={routeThreadRef} />}
         /* fork:end fork-bot-digest */
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}

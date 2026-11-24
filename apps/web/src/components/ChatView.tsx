@@ -4451,9 +4451,6 @@ export default function ChatView(props: ChatViewProps) {
                                 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
                                 forkQueuedRunsBanner={hasQueuedTurns ? queuedRunsControl : null}
                                 /* fork:end fork-queued-runs-banner */
-                                /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-                                forkBotDigestThreadRef={activeThreadRef}
-                                /* fork:end fork-bot-digest */
                                 resumeCompactionTokens={resumeCompactionTokens}
                                 keepFullHistory={keepFullHistory}
                                 onToggleKeepFullHistory={toggleKeepFullHistoryStable}
