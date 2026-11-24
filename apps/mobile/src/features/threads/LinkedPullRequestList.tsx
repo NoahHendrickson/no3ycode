@@ -9,7 +9,7 @@ import {
 } from "@t3tools/client-runtime/thread-pull-requests";
 import { useGT, useMessages } from "gt-react-native";
 import { memo, useMemo } from "react";
-import { Pressable, useWindowDimensions, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { SymbolView } from "../../components/ui/AppSymbol";
 import { AppText as Text } from "../../components/ui/AppText";
@@ -18,7 +18,6 @@ import { Menu } from "../../components/ui/Menu";
 import { cn } from "../../lib/cn";
 import { RelativeTime } from "../../components/RelativeTime";
 import type { EnvironmentRuntimeState } from "../../state/remote-runtime-types";
-import { useScaledTextRole } from "../settings/appearance/useScaledTextRole";
 import { PullRequestGlyph } from "../pull-requests/pullRequestGlyphs";
 import type { LinkedPullRequestActions } from "./useLinkedPullRequestActions";
 import { pullRequestListReviewStatus } from "../pull-requests/pullRequestList";
@@ -88,7 +87,6 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
     (sourceControlClients.findByChangeRequestUrl(link.url) ?? sourceControlClients.get(undefined))
       .changeRequest,
   );
-  const metaLineHeight = useScaledTextRole("label").lineHeight * useWindowDimensions().fontScale;
   const row = (
     <Pressable
       accessibilityRole="button"
@@ -159,13 +157,22 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
           props.separator && "border-b border-border-subtle",
         )}
       >
-        <View className="flex-row items-center gap-1.5">
-          {snapshot?.author ? <PullRequestAvatar actor={snapshot.author} size={16} /> : null}
-          <Text className="min-w-0 shrink text-xs text-foreground-muted" numberOfLines={1}>
-            {link.repository}
-          </Text>
-          <Text className="shrink-0 text-xs text-foreground-tertiary">#{link.number}</Text>
-          <View className="flex-1" />
+        {/* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */}
+        <Text
+          className="text-base leading-5 font-t3-medium text-foreground"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {snapshot?.title ?? gt("Waiting for host state")}
+        </Text>
+        <View className="flex-row flex-wrap items-center gap-x-2.5 gap-y-0.5">
+          <View className="min-w-0 max-w-full shrink flex-row items-center gap-1.5">
+            {snapshot?.author ? <PullRequestAvatar actor={snapshot.author} size={16} /> : null}
+            <Text className="min-w-0 shrink text-xs text-foreground-muted" numberOfLines={1}>
+              {link.repository.split("/").at(-1)}
+            </Text>
+            <Text className="shrink-0 text-xs text-foreground-tertiary">#{link.number}</Text>
+          </View>
           {stack ? (
             <View className="flex-row items-center gap-1">
               <SymbolView
@@ -185,30 +192,16 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
           {review ? (
             <SymbolView name={review.icon} size={13} tintColorClassName={review.tint} />
           ) : null}
-          {additions + deletions > 0 || snapshot?.updatedAt ? (
-            <View
-              className="-ml-1.5 flex-row flex-wrap items-center gap-x-1.5 overflow-hidden"
-              style={{ height: metaLineHeight, flexShrink: 100 }}
-            >
-              <View className="w-0" />
-              {additions + deletions > 0 ? (
-                <PullRequestDiffStats additions={additions} deletions={deletions} compact />
-              ) : null}
-              {snapshot?.updatedAt ? (
-                <Text className="text-2xs tabular-nums text-foreground-tertiary">
-                  <RelativeTime timestamp={snapshot.updatedAt} />
-                </Text>
-              ) : null}
-            </View>
+          {additions + deletions > 0 ? (
+            <PullRequestDiffStats additions={additions} deletions={deletions} compact />
+          ) : null}
+          {snapshot?.updatedAt ? (
+            <Text className="text-2xs tabular-nums text-foreground-tertiary">
+              <RelativeTime timestamp={snapshot.updatedAt} />
+            </Text>
           ) : null}
         </View>
-        <Text
-          className="text-base leading-5 font-t3-medium text-foreground"
-          numberOfLines={2}
-          ellipsizeMode="tail"
-        >
-          {snapshot?.title ?? gt("Waiting for host state")}
-        </Text>
+        {/* fork:end no3y-linked-pr-row */}
       </View>
     </Pressable>
   );

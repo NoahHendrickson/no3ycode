@@ -8910,3 +8910,21 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: no3y-linked-pr-row
+  intent: >
+    Linked pull request rows on mobile (the thread's Linked pull requests sheet
+    and the Git overview) lead with the title, then one meta line that wraps
+    instead of clipping: the repository's short name and number, stack, watch,
+    checks and review icons, diff stats and the updated time. Upstream put the
+    full owner/repo, number and every status on one fixed-height line above the
+    title, so at larger text sizes the repository truncated and the diff stats
+    were cut off mid-number. The full owner/repo stays in the accessibility
+    label and the long-press menu title.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/mobile/src/features/threads/LinkedPullRequestList.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
