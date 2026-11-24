@@ -8265,7 +8265,8 @@
     line already shows that, so a running turn alone draws no pill and stop
     stays on the composer), the thread's pull request on its state's tinted
     glass (open green, merged purple, closed red, draft plain; a stack or
-    several as layers plus how many more; a running or failing checks mark),
+    several as layers plus how many more; a running or failing checks mark
+    gated on required checks as the PR watcher gates them),
     then background processes, monitors and subagents, which fold into one
     "N background tasks" pill once two kinds of live work run (finished
     subagents and child requests keep their own pill), then Pi status and

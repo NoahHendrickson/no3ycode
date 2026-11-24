@@ -22,7 +22,8 @@ import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon";
 import SquareStackIcon from "@hugeicons/core-free-icons/SquareStackIcon";
 import Target02Icon from "@hugeicons/core-free-icons/Target02Icon";
 import WifiDisconnected02Icon from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
-import { StackActions, useNavigation } from "@react-navigation/native";
+import { StackActions, useFocusEffect, useNavigation } from "@react-navigation/native";
+import { pullRequestChecksRefreshIntervalMs } from "@t3tools/client-runtime/pull-request-checks";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { PendingBackgroundWorkPresentation } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
@@ -37,17 +38,24 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import type { FloatingWorkingControl } from "../src/features/threads/floating-working-control";
 import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
 import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
+import { usePullRequestConnected } from "../src/features/pull-requests/usePullRequestConnected";
 import { useOpenThreadPullRequests } from "../src/features/threads/use-open-thread-pull-requests";
 import { useOpenLinkedThread } from "../src/features/threads/useOpenLinkedThread";
 import { scopedThreadKey } from "../src/lib/scopedEntities";
-import { useChildThreadInputs } from "../src/state/entities";
+import { useChildThreadInputs, useEnvironmentServerConfig } from "../src/state/entities";
+import { composerPullRequests } from "../src/state/pull-requests";
+import { useEnvironmentQuery } from "../src/state/query";
 import type { ThreadPrPresentation } from "../src/state/use-thread-pr";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { No3yBeadRing } from "./No3yBeadRing";
 import { No3yGlassLayer } from "./No3yGlass";
 import type { No3yPillStatus } from "./no3yPillStatus";
-import { no3yPullRequestPill, type No3yPullRequestPill } from "./no3yPullRequestTone";
+import {
+  no3yPullRequestPill,
+  no3yWatcherChecksState,
+  type No3yPullRequestPill,
+} from "./no3yPullRequestTone";
 import {
   no3yStatusSegments,
   no3ySubagentMarkKind,
@@ -219,6 +227,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
         <PullRequestPill
           key={segment.kind}
           pr={pullRequest}
+          thread={props.thread}
           look={no3yPullRequestPill(pullRequest, props.thread.pullRequests ?? [])}
           palette={palette}
           onPress={() => openPullRequests(props.thread, pullRequest)}
@@ -527,16 +536,18 @@ function pillSpec(
  */
 function PullRequestPill(props: {
   readonly pr: ThreadPrPresentation;
+  readonly thread: EnvironmentThreadShell;
   readonly look: No3yPullRequestPill;
   readonly palette: FlatGlassPalette;
   readonly onPress: () => void;
 }) {
   const { pr, look, palette } = props;
   const colors = look.several ? { ink: palette.foreground } : palette.prPill[look.tone];
+  const checksState = useWatcherChecksState(props.thread, look);
   const checks =
-    look.checks === "pending"
+    checksState === "pending"
       ? ", checks running"
-      : look.checks === "failing"
+      : checksState === "failing"
         ? ", checks failing"
         : "";
   return (
@@ -557,10 +568,47 @@ function PullRequestPill(props: {
       {look.several && look.more > 0 ? (
         <PillText color={colors.ink}>{`${look.more}+`}</PillText>
       ) : null}
-      {look.checks === "pending" ? <ChecksRunningMark color={palette.statusAttention} /> : null}
-      {look.checks === "failing" ? <ChecksFailingMark color={palette.statusFailed} /> : null}
+      {checksState === "pending" ? <ChecksRunningMark color={palette.statusAttention} /> : null}
+      {checksState === "failing" ? <ChecksFailingMark color={palette.statusFailed} /> : null}
     </Pill>
   );
+}
+
+/**
+ * The snapshot's checks state is GitHub's rollup of every check; while it is not passing, the
+ * pill rereads the checks one by one so it gates on required ones, as the PR watcher does.
+ */
+function useWatcherChecksState(thread: EnvironmentThreadShell, look: No3yPullRequestPill) {
+  const link = look.checksLink;
+  const connected = usePullRequestConnected(thread.environmentId);
+  const supported =
+    useEnvironmentServerConfig(thread.environmentId)?.environment.capabilities.pullRequestChecks ===
+    true;
+  // A passing rollup, or none, reads the same with or without the required gate.
+  const gated =
+    supported && link !== null && (look.checks === "pending" || look.checks === "failing");
+  const live = useEnvironmentQuery(
+    gated
+      ? composerPullRequests.checks({
+          environmentId: thread.environmentId,
+          input: {
+            projectId: thread.projectId,
+            host: link.host,
+            repository: link.repository,
+            number: link.number,
+          },
+        })
+      : null,
+  );
+  const intervalMs = pullRequestChecksRefreshIntervalMs(live.data?.checks ?? []);
+  const { refresh } = live;
+  useFocusEffect(() => {
+    // A host that answers "no checks" (null) is not asked again.
+    if (!gated || !connected || (live.isSuccess && live.data === null)) return;
+    const timer = setInterval(refresh, intervalMs);
+    return () => clearInterval(timer);
+  });
+  return no3yWatcherChecksState(look.checks, gated ? live.data : null, link?.snapshot?.syncedAt);
 }
 
 /** Figma's checks-running mark: a ring with a three-quarter pie. */

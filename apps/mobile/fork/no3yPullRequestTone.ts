@@ -7,7 +7,11 @@ import {
   resolveThreadCurrentPullRequestLink,
   resolveThreadPullRequestBadge,
 } from "@t3tools/client-runtime/thread-pull-requests";
-import type { PullRequestChecksState, ThreadPullRequestLink } from "@t3tools/contracts";
+import type {
+  PullRequestChecks,
+  PullRequestChecksState,
+  ThreadPullRequestLink,
+} from "@t3tools/contracts";
 
 import {
   resolveThreadPrBadgeAction,
@@ -46,6 +50,8 @@ export interface No3yPullRequestPill {
   readonly more: number;
   /** Checks on a single open linked pull request, for the running or failing mark. */
   readonly checks: PullRequestChecksState | null;
+  /** The pull request those checks belong to, so the pill can reread them per check. */
+  readonly checksLink: ThreadPullRequestLink | null;
 }
 
 /** What the pull request pill above the composer draws (fork/No3yStatusPill.tsx). */
@@ -57,9 +63,49 @@ export function no3yPullRequestPill(
   const badge = several ? resolveThreadPullRequestBadge(links) : null;
   const more =
     badge === null ? pr.others : badge.kind === "stack" ? badge.layers - 1 : badge.others;
-  const checks =
-    !several && pr.state === "open"
-      ? (resolveThreadCurrentPullRequestLink(links)?.snapshot?.checksState ?? null)
-      : null;
-  return { tone: no3yPullRequestTone(pr), several, more, checks };
+  const checksLink =
+    !several && pr.state === "open" ? resolveThreadCurrentPullRequestLink(links) : null;
+  const checks = checksLink?.snapshot?.checksState ?? null;
+  return { tone: no3yPullRequestTone(pr), several, more, checks, checksLink };
+}
+
+/**
+ * The checks mark as the PR watcher reads it (pullRequestWatch.ts): only required checks count
+ * when the host names any, so an optional job still running does not hold the pill at pending.
+ * A read older than the snapshot's last change keeps the snapshot's whole-rollup state.
+ */
+export function no3yWatcherChecksState(
+  rollup: PullRequestChecksState | null,
+  live: PullRequestChecks | null,
+  syncedAt: string | undefined,
+): PullRequestChecksState | null {
+  if (rollup !== "pending" && rollup !== "failing") return rollup;
+  // A placeholder stands for checks the host could not list; the watcher waits on it too.
+  if (
+    live === null ||
+    live.checks.length === 0 ||
+    live.checks.some((check) => check.placeholder === true)
+  ) {
+    return rollup;
+  }
+  if (
+    syncedAt !== undefined &&
+    live.observedAt !== undefined &&
+    live.observedAt < Date.parse(syncedAt)
+  ) {
+    return rollup;
+  }
+  const required = live.checks.filter((check) => check.required === true);
+  const gate = required.length > 0 ? required : live.checks;
+  if (gate.some((check) => check.status === "failure" || check.status === "cancelled")) {
+    return "failing";
+  }
+  // A run awaiting approval holds the watcher whether or not it is required.
+  if (
+    gate.some((check) => check.status === "pending") ||
+    live.checks.some((check) => check.status === "action-required")
+  ) {
+    return "pending";
+  }
+  return "passing";
 }
