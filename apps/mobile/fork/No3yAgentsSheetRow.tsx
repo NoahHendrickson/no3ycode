@@ -11,7 +11,7 @@ import {
 } from "@t3tools/client-runtime/state/subagent-display";
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, OrchestrationV2Subagent } from "@t3tools/contracts";
-import { useGT } from "gt-react-native";
+import { T, useGT, Var } from "gt-react-native";
 import { useState, type ReactElement } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -24,6 +24,8 @@ import {
   subagentThreadTarget,
   type SubagentThreadTarget,
 } from "../src/features/threads/threadAgentsPresentation";
+import { subagentCardElapsed } from "../src/features/threads/subagent-card-presentation";
+import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { useLinkedThreadReach } from "../src/state/linkedThread";
 import { useEnvironmentServerConfig } from "../src/state/entities";
 import { orchestrationEnvironment } from "../src/state/orchestration";
@@ -57,6 +59,7 @@ export function No3yAgentsSheetRowSwap(props: RowProps & { readonly children: Re
 
 function No3yAgentsSheetRow(props: RowProps) {
   const { subagent } = props;
+  const gt = useGT();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const reach = useLinkedThreadReach(props.environmentId, [subagent]);
@@ -87,8 +90,15 @@ function No3yAgentsSheetRow(props: RowProps) {
   const spec = no3ySubagentSpec({ modelLabel, effort, statusLabel: presentation.statusLabel });
   const mark = no3ySubagentMarkKind(subagent.status);
   const failed = mark === "failed";
-  // Only live progress and failures; a finished agent's reply belongs in its thread.
-  const detail = presentation.live || failed ? subagentCardDetail(presentation.detail) : null;
+  // A stopped or failed agent keeps its outcome word; the model line would otherwise hide it.
+  const outcome =
+    (presentation.tone === "stopped" || failed) && spec !== presentation.statusLabel
+      ? presentation.statusLabel
+      : null;
+  // Live progress and failures; a finished agent's reply belongs in its thread, unless it has none.
+  const detail =
+    presentation.live || failed || target === null ? subagentCardDetail(presentation.detail) : null;
+  const elapsed = subagentCardElapsed([subagent], useVisibleSecondClock(presentation.live));
   const driver =
     provider?.driver ?? (subagent.remoteChild === undefined ? subagent.driver : undefined);
   const stop = useNo3yAgentStop(props.environmentId, subagent, presentation.title);
@@ -112,17 +122,20 @@ function No3yAgentsSheetRow(props: RowProps) {
           presentation.title,
           presentation.statusLabel,
           spec === presentation.statusLabel ? null : spec,
-          presentation.runsOn === null ? null : `on ${presentation.runsOn}`,
+          presentation.runsOn === null ? null : `${gt("Runs on")} ${presentation.runsOn}`,
+          elapsed,
           detail,
         ]
           .filter(Boolean)
           .join(", ")}
         accessibilityHint={
           target === null
-            ? "Provider-managed agent. Its work appears in the transcript."
+            ? gt("Provider-managed agent. Its work appears in the transcript.")
             : target.linked === undefined
-              ? "Opens this agent's thread"
-              : `Opens a read-only view of this agent's thread on ${target.linked.label}`
+              ? gt("Opens this agent's thread")
+              : gt("Opens a read-only view of this agent's thread on {label}", {
+                  label: target.linked.label,
+                })
         }
         disabled={target === null}
         onPress={() => {
@@ -163,7 +176,19 @@ function No3yAgentsSheetRow(props: RowProps) {
               }}
             >
               {spec}
-              {presentation.runsOn !== null ? ` · on ${presentation.runsOn}` : ""}
+              {outcome !== null ? (
+                <Text style={{ color: failed ? palette.statusFailed : palette.metaInk }}>
+                  {` · ${outcome}`}
+                </Text>
+              ) : null}
+              {presentation.runsOn !== null ? (
+                <>
+                  {" · "}
+                  <T>
+                    on <Var>{presentation.runsOn}</Var>
+                  </T>
+                </>
+              ) : null}
             </Text>
           </View>
           {subagent.startedAt ? <Elapsed agents={[subagent]} palette={palette} /> : null}
