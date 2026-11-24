@@ -86,7 +86,7 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain('role={multiSelect ? "group" : "radiogroup"}');
     expect(override).toContain('multiSelect ? "Select one or more" : "Select one"');
     expect(override).toContain("border-foreground/50");
-    expect(override).toContain('multiSelect ? "rounded-[4px]" : "rounded-full"');
+    expect(override).toContain('multiSelect ? "rounded-sm" : "rounded-full"');
   });
 
   it("keeps Previous in the card and only the advance arrow in the composer", () => {

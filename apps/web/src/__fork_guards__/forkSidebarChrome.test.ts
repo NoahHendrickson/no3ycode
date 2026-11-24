@@ -220,7 +220,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     ]) {
       expect(action).toContain(cls);
     }
-    expect(rows).toContain('cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)');
+    expect(rows).toContain('inset="chrome-stack"');
     const labeledIcon = /<Icon className="([^"]*)"/u.exec(rows)?.[1];
     expect(labeledIcon).toMatch(/\bsize-4\b/u);
     // No shortcut chips: the design draws none, and the shortcut rides the

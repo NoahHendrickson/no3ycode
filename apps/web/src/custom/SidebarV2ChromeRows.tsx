@@ -242,10 +242,7 @@ export function SidebarV2ChromeActionRows(props: {
     ? "Add a project to start an agent"
     : undefined;
   return (
-    <SidebarGroup
-      data-fork-chrome-rows=""
-      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
-    >
+    <SidebarGroup data-fork-chrome-rows="" inset="chrome-stack" className={CHROME_ROW_INSET}>
       <ChromeSearchRow commandPaletteShortcutLabel={props.commandPaletteShortcutLabel} />
       <ChromeLabeledAction
         icon={NavigationArrowIcon}
@@ -281,10 +278,7 @@ export function SidebarV2ChatActionRows() {
     return draft?.promotedTo == null && isChatDraft(draft);
   });
   return (
-    <SidebarGroup
-      data-fork-chrome-rows=""
-      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
-    >
+    <SidebarGroup data-fork-chrome-rows="" inset="chrome-stack" className={CHROME_ROW_INSET}>
       <ChromeLabeledAction
         icon={NavigationArrowIcon}
         label="New chat"
@@ -613,7 +607,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     // never reaches the screen.
     // data-fork-projects-row is the palette's hook: Glass re-inks this row, the
     // project headers and the card meta lines together (theme.custom.palettes.css).
-    <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+    <SidebarGroup data-fork-projects-row="" inset="chrome" className={cn("mt-6", CHROME_ROW_INSET)}>
       <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
@@ -745,7 +739,8 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                     key={sortOrder}
                     value={sortOrder}
                     closeOnClick
-                    className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                    size="chrome"
+                    className="h-8 min-h-8"
                   >
                     {SORT_ORDER_LABELS[sortOrder]}
                   </MenuRadioItem>
