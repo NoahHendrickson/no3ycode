@@ -1453,18 +1453,22 @@
   background: var(--fork-context-chip-bg-hover);
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: var(--fork-white);
+/* Dark inks them white; Basic's and Inlet's light colours ink them in the foreground: a locked
+   readout is not disabled, it simply has no caret (fork-basic-theme). */
+:root[data-fork="noahhendrickson-t3code"].dark {
+  --fork-context-chip-ink: var(--fork-white);
 }
 
-/* Basic's light tones ink them in the foreground, as dark does in white: a locked
-   readout is not disabled, it simply has no caret (fork-basic-theme). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]),
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  ):not(.dark)
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: var(--foreground);
+  color: var(--fork-context-chip-ink, var(--foreground));
 }
 
 /* The PR chip is the one context chip that carries a state: upstream inks
@@ -2137,15 +2141,17 @@
    which on a 120Hz display is the difference between ~10 and ~480 updates.
    No `will-change` (would pin a layer for every monitoring row). Offscreen
    rows pay nothing via `content-visibility: auto` on the li. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-monitoring-pulse] {
-  background-color: var(--fork-white);
-  opacity: 0.5;
-  contain: paint;
-  animation: sidebar-v2-monitoring-pulse 4s infinite;
+:root[data-fork="noahhendrickson-t3code"].dark {
+  --fork-monitoring-pulse-fill: var(--fork-white);
 }
 
+:root[data-fork="noahhendrickson-t3code"]:not(.dark) {
+  --fork-monitoring-pulse-fill: var(--fork-black);
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark [data-fork-monitoring-pulse],
 :root[data-fork="noahhendrickson-t3code"]:not(.dark) [data-fork-monitoring-pulse] {
-  background-color: var(--fork-black);
+  background-color: var(--fork-monitoring-pulse-fill);
   opacity: 0.5;
   contain: paint;
   animation: sidebar-v2-monitoring-pulse 4s infinite;

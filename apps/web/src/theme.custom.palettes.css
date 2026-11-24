@@ -159,8 +159,16 @@
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
-   panel's selected fill while its menu is open, so the menu names the button it came from. */
+   panel's selected fill while its menu is open, so the menu names the button it came from. Basic too. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  :is(
+    [data-fork-projects-row],
+    [data-fork-bots-row],
+    [data-fork-status-section-header],
+    [data-fork-project-section-header]
+  )
+  button[data-popup-open],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is(
     [data-fork-projects-row],
     [data-fork-bots-row],
@@ -188,12 +196,21 @@
   [data-fork-thread-tabs],
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"]
   [data-fork-thread-started]
+  [data-chat-header],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-thread-started]
   [data-chat-header] {
-  box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line);
+  box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
   --fork-glass-tabs-line: var(--border);
+  --fork-segmented-track: var(--fork-white-8);
+  --fork-segmented-hover: var(--fork-white-4);
+  --fork-segmented-hover-disabled: var(--fork-white-0);
+  --fork-segmented-pick: var(--fork-white-12);
+  --fork-segmented-line: var(--fork-white-8);
 }
 
 /* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
@@ -290,6 +307,7 @@
   --fork-flat-radius: 8px;
   --fork-flat-model-picker-radius: 14px;
   --fork-flat-popup-radius: 12px;
+  --fork-petals-tile-radius: calc(var(--fork-flat-radius) + var(--spacing));
 }
 
 @supports (corner-shape: superellipse(1.6)) {
@@ -352,15 +370,23 @@
     border-radius: calc(var(--fork-flat-popup-radius) - 1px);
   }
 
-  /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
-  & [data-sidebar-version="v2"] [data-fork-petals-grid] [data-fork-thread-row] {
-    border-radius: calc(var(--fork-flat-radius) + var(--spacing));
-  }
-
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
     border-radius: var(--fork-flat-model-picker-radius);
     corner-shape: superellipse(1.6);
   }
+}
+
+/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. Each
+   theme sets the radius; the fallback is Inlet's. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row] {
+  border-radius: var(--fork-petals-tile-radius, 0.875rem);
 }
 
 /* Project chrome — the Projects row, the recent-projects strip, every project
@@ -1800,55 +1826,79 @@
    translucent glass strip below. */
 :root[data-fork="noahhendrickson-t3code"]:not(
     [data-fork-glass-3d="off"]
-  ).dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
-  --radius-sm: var(--radius-xl);
-  border-radius: var(--radius-xl);
+  ).dark[data-fork-theme="cool-darker"] {
+  --fork-page-tabs-radius: var(--radius-xl);
 }
 
-/* On Flat Glass, segmented tab strips (Code / Chat, menu tabs, page tabs,
-   segmented ToggleGroup) match Basic's geometry (2px inset, 8px track, 6px
-   tabs) using translucent white washes so Liquid Glass shines through. */
+/* Each theme sets the page tabs' radius; the fallback is Inlet's. The chip's corner is
+   calc(var(--radius-sm) - 2px), so the strip carries it as --radius-sm too. */
+:root[data-fork="noahhendrickson-t3code"]:not(
+    [data-fork-glass-3d="off"]
+  ).dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  --radius-sm: var(--fork-page-tabs-radius, var(--radius-lg));
+  border-radius: var(--fork-page-tabs-radius, var(--radius-lg));
+}
+
+/* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
+   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
+   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
+   regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
+   height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
+   The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+   Petal strips beside them take this one.
+   Flat Glass draws the same geometry in translucent white washes so Liquid Glass shines through;
+   each theme sets the --fork-segmented-* colours. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
   gap: calc(var(--spacing) * 0.5);
   padding: calc(var(--spacing) * 0.5);
   border-radius: var(--radius-lg);
-  background-color: var(--fork-white-8);
+  background-color: var(--fork-segmented-track);
 
   & > * {
     border-radius: var(--radius-md);
     background-clip: border-box;
     box-shadow: none;
-    color: var(--foreground);
+    color: var(--fork-segmented-ink, var(--foreground));
     font-size: var(--fork-segmented-tab-font-size);
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
-      background-color: var(--fork-white-4);
+      background-color: var(--fork-segmented-hover);
     }
 
+    /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
     &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
-      background-color: var(--fork-white-0);
+      background-color: var(--fork-segmented-hover-disabled);
     }
 
     &[data-pressed] {
-      border-color: var(--fork-white-8);
-      background-color: var(--fork-white-12);
+      border-color: var(--fork-segmented-line);
+      background-color: var(--fork-segmented-pick);
     }
 
+    /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
     &:focus-visible {
       outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
     }
   }
 
+  /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
+     that keep their own width; the music strip's equal-width tabs keep their tight sides. */
   & > :not([aria-label], [data-fork-music-strip] *) {
     padding-inline: calc(var(--spacing) * 1.5);
   }
 
+  /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
-    box-shadow: inset 0 0 0 1px var(--fork-white-8);
+    box-shadow: inset 0 0 0 1px var(--fork-segmented-line);
   }
 }
 
@@ -1859,10 +1909,17 @@
   [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
   [data-chat-header] {
   background: none;
+}
 
-  & > * {
-    visibility: hidden;
-  }
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header]
+  > *,
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header]
+  > * {
+  visibility: hidden;
 }
 
 /* The Flat Glass new-agent stage's glass inner glow (Figma no3y-code 13:3284, "Rays"): a broad
