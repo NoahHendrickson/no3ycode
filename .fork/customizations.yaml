@@ -9323,3 +9323,29 @@
     - apps/mobile/src/features/threads/ThreadPullRequestsSheet.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
+
+- id: pr-header-hierarchy
+  intent: >
+    The pull request header reads top down by importance. Under the title, one
+    meta line says who, when and how big (author, updated time, file count and
+    diff stats); the author and updated time truncate before the stats do.
+    Below it the branch flow reads left to right, head into base, with the head
+    brighter than the base, and the copyable checkout command sits at the end
+    of that row, gives up width first and hides below a 28rem header. An out-of-date base colours only its
+    warning icon, not the branch name. One PullRequestBranchFlow (layout
+    override) draws the flow for both the full header and the condensed
+    header (fenced in PullRequestDetailPanel), and the thread details PR row
+    reads head into base too, so no surface disagrees. The layout override
+    re-exports upstream and replaces only the header body.
+  tier: 4
+  files: []
+  shadows:
+    - apps/web/src/components/pullRequest/PullRequestDetailLayout.tsx
+    - apps/web/src/components/pullRequest/PullRequestBaseBranch.tsx
+  watch:
+    # Fenced: the condensed header renders PullRequestBranchFlow; ArrowLeftIcon import removed.
+    - apps/web/src/components/pullRequest/PullRequestDetailPanel.tsx
+    # Fenced: the hover card branch line reads head into base.
+    - apps/web/src/components/chat/ThreadDetailsPrRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/prHeaderHierarchy.test.ts
