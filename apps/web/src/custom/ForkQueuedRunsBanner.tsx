@@ -15,10 +15,11 @@ import type {
   RunId,
   ThreadId,
 } from "@t3tools/contracts";
-import { ArrowUpIcon, BookmarkIcon, Clock3Icon, GripVerticalIcon, Trash2Icon } from "lucide-react";
+import { ArrowUpIcon, BookmarkIcon, Clock3Icon, GripVerticalIcon } from "lucide-react";
 import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
 
 import { forkUnacknowledgedQueuedMessages } from "./forkQueuedItems";
+import { ComposerCardRemoveButton, ComposerCardTitle } from "./ComposerCardParts";
 import { ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
 
 import { useAssetUrls } from "~/assets/assetUrls";
@@ -385,12 +386,7 @@ export function ForkQueuedRunsBanner({
           <ComposerBanner.Icon>
             <ListNumberIcon />
           </ComposerBanner.Icon>
-          <ComposerBanner.Content className="font-medium text-muted-foreground">
-            Queued
-            <span className="font-normal text-muted-foreground/70 tabular-nums">
-              {` ${items.length}`}
-            </span>
-          </ComposerBanner.Content>
+          <ComposerCardTitle count={items.length}>Queued</ComposerCardTitle>
           <ComposerBanner.Actions>
             <ComposerBanner.ToggleIcon expanded />
           </ComposerBanner.Actions>
@@ -668,9 +664,7 @@ export function ForkQueuedRunsBanner({
                         <Tooltip>
                           <TooltipTrigger
                             render={
-                              <Button
-                                size="icon-xs"
-                                variant="ghost-muted"
+                              <ComposerCardRemoveButton
                                 aria-label="Remove queued message"
                                 disabled={item.runId === null || busyRunId !== null}
                                 onClick={() => {
@@ -678,9 +672,7 @@ export function ForkQueuedRunsBanner({
                                 }}
                               />
                             }
-                          >
-                            <Trash2Icon weight="stroke" />
-                          </TooltipTrigger>
+                          />
                           <TooltipPopup>Remove from queue</TooltipPopup>
                         </Tooltip>
                       </>

@@ -198,10 +198,8 @@
   --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
 }
 
-/* The banner cards above the composer, and the stash card portaled over them, read at the
-   chat stream's sizes too. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners],
-:root[data-fork="noahhendrickson-t3code"] [data-composer-stash-drawer] {
+/* The banner cards above the composer read at the chat stream's sizes too. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {
   --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
   --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
   --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
@@ -2627,9 +2625,12 @@
     color: white;
   }
 
-  /* The queue card follows the iOS one: a 40px header and 40px rows that run edge to edge,
-     split by full-width hairlines. */
-  & [data-fork-queued-runs-banner] {
+  /* The queue card follows the iOS one, and the stash is its twin: a 40px header and 40px rows
+     that run edge to edge, split by full-width hairlines. */
+  & :is([data-fork-queued-runs-banner], [data-composer-stash-drawer]) {
+    /* Row highlights and ghost buttons fill with --accent, which on Flat Glass is the card's
+       own lift; the composer's control hover reads on it. */
+    --accent: var(--fork-composer-control-hover);
     padding: 0;
     overflow: clip;
     border-radius: var(--fork-composer-radius);
@@ -2641,87 +2642,29 @@
       border-radius: 0;
     }
 
-    & ol {
+    & :is(ol, ul) {
       gap: 0;
     }
 
     & li[data-composer-banner-row] {
       border-top: 1px solid var(--fork-composer-border);
     }
-  }
-}
 
-/* The stash is the queue card's twin. It is portaled over the cards, out of reach of the rules
-   above, so it is restated here: told the drawer inset is 0 it spans the prompt, and it lifts
-   the layer's 1rem + 1px tuck plus the cards' 8px off the prompt's top. */
-:root[data-fork="noahhendrickson-t3code"] [data-chat-composer-form][data-fork-composer-stash-open] {
-  --chat-composer-drawer-inset: 0rem;
-}
+    /* A scrolling list clears the scrollbar inside each row, so the rules and highlights still
+       reach the card's edge. */
+    & [data-slot="scroll-area-viewport"][data-has-overflow-y] > div {
+      padding-inline-end: 0;
+    }
 
-/* The lift is margin inside the layer, so the layer lets the pointer through and only the card
-   takes it: otherwise the empty band over the prompt's top eats clicks and closes the stash. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-composer-drawer-layer]:has(> [data-composer-stash-drawer]) {
-  pointer-events: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"] [data-composer-stash-drawer] {
-  pointer-events: auto;
-  --chat-composer-attachment-overlap: 0px;
-  --chat-composer-attached-seam: transparent;
-  margin-bottom: calc(1rem + 9px);
-  padding: 0;
-  overflow: clip;
-  border-radius: var(--fork-composer-radius);
-
-  &::before {
-    border-radius: var(--fork-composer-radius);
-    mask-image: none;
+    & [data-has-overflow-y] li[data-composer-banner-row] {
+      padding-inline-end: 16px;
+    }
   }
 
-  & [data-composer-banner-row] {
-    min-height: 40px;
-    padding-inline: 12px 8px;
-    column-gap: 8px;
-    border-radius: 0;
-  }
-
-  & ul {
-    gap: 0;
-  }
-
-  /* The label reads at the interface size (Settings → Typography sets the root), not the chat
-     stream's. */
-  & > [data-composer-banner-row] {
+  /* The stash label reads at the interface size (Settings sets the root), not the chat stream's. */
+  & [data-composer-stash-drawer] > [data-composer-banner-row] {
     font-size: 1rem;
     line-height: 1.25rem;
-  }
-
-  & li[data-composer-banner-row] {
-    border-top: 1px solid var(--fork-composer-border);
-  }
-
-  /* A scrolling list clears the scrollbar inside each row, so rules and washes still reach
-     the card's edge. */
-  & [data-slot="scroll-area-viewport"][data-has-overflow-y] > div {
-    padding-inline-end: 0;
-  }
-
-  & [data-has-overflow-y] li[data-composer-banner-row] {
-    padding-inline-end: 16px;
-  }
-
-  /* Washes, not --accent: on Flat Glass that is the card's own lift. */
-  & li[data-highlighted] {
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  }
-
-  & [data-slot="button"]:is(:hover, [data-pressed]) {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  }
-
-  & [data-stash-restore]::before {
-    border-radius: 0;
   }
 }
 

@@ -9,8 +9,7 @@ import { m, type MessageResolver } from "~/i18n/messages";
 import { cn } from "~/lib/utils";
 import { type PromptStashEntry } from "../../promptStashStore";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-import { Trash2Icon } from "lucide-react";
-import { Button } from "../ui/button";
+import { ComposerCardRemoveButton, ComposerCardTitle } from "~/custom/ComposerCardParts";
 /* fork:end fork-composer-shell */
 import { ComposerBanner } from "./ComposerBanner";
 
@@ -161,6 +160,10 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
       ref={drawerRef}
       className="flex min-h-0 flex-col after:shrink-0"
       data-composer-stash-drawer="true"
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+         A card in the composer's dock, like the queue card: focus in it stays in the composer. */
+      data-chat-composer-collapsed-controls="true"
+      /* fork:end fork-composer-shell */
     >
       <ComposerBanner.Row
         render={<button type="button" />}
@@ -174,12 +177,9 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
         </ComposerBanner.Icon>
         {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
             The queue card's header: the count rides the label. */}
-        <ComposerBanner.Content className="font-medium text-muted-foreground">
+        <ComposerCardTitle count={entries.length}>
           {gt("Stash", { $context: "noun, saved prompts set aside for later" })}
-          <span className="font-normal text-muted-foreground/70 tabular-nums">
-            {` ${entries.length}`}
-          </span>
-        </ComposerBanner.Content>
+        </ComposerCardTitle>
         <ComposerBanner.Actions>
           <ComposerBanner.ToggleIcon expanded />
         </ComposerBanner.Actions>
@@ -281,16 +281,12 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
                   </time>
                   {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
                       The queue card's remove: a muted trash icon. */}
-                  <Button
-                    size="icon-xs"
-                    variant="ghost-muted"
+                  <ComposerCardRemoveButton
                     className="z-10"
                     aria-label={gt("Delete stashed prompt")}
                     onPointerDown={(event) => event.preventDefault()}
                     onClick={() => onDelete(entry)}
-                  >
-                    <Trash2Icon weight="stroke" />
-                  </Button>
+                  />
                   {/* fork:end fork-composer-shell */}
                 </ComposerBanner.Actions>
               </ComposerBanner.Row>
