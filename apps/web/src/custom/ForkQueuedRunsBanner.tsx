@@ -385,7 +385,7 @@ export function ForkQueuedRunsBanner({
           <ComposerBanner.Icon>
             <ListNumberIcon />
           </ComposerBanner.Icon>
-          <ComposerBanner.Content className="font-medium text-muted-foreground">
+          <ComposerBanner.Content className="text-[1rem]/5 font-medium text-muted-foreground">
             Queued
             <span className="font-normal text-muted-foreground/70 tabular-nums">
               {` ${items.length}`}
