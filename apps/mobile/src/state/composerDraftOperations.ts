@@ -37,3 +37,10 @@ export function abortComposerDraftOperationsWhere(matches: (draftKey: string) =>
     if (matches(draftKey)) abortComposerDraftOperations(draftKey);
   }
 }
+
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+/** A paste, picker or import is still writing into this draft. */
+export function hasComposerDraftOperations(draftKey: string): boolean {
+  return (operationsByDraftKey.get(draftKey)?.size ?? 0) > 0;
+}
+/* fork:end fork-composer-next-step */

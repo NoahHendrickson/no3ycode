@@ -366,7 +366,7 @@ import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
 /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
 import { ComposerNextStepPill } from "~/custom/ComposerNextStepPill";
 import { recordComposerHabit } from "~/custom/composerHabits";
-import { lastOwnerPrompt } from "~/custom/composerNextStep.logic";
+import { lastOwnerPrompt } from "@t3tools/client-runtime/fork-composer-next-step";
 /* fork:end fork-composer-next-step */
 import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
 import { composerBackgroundWorkItems } from "~/custom/composerBackgroundWork.logic";

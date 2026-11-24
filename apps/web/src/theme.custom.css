@@ -2660,12 +2660,6 @@
       padding-inline-end: 16px;
     }
   }
-
-  /* The stash label reads at the interface size (Settings sets the root), not the chat stream's. */
-  & [data-composer-stash-drawer] > [data-composer-banner-row] {
-    font-size: 1rem;
-    line-height: 1.25rem;
-  }
 }
 
 /* One action size for every card above the composer: notices, the question card and the

@@ -2466,6 +2466,7 @@
   "d07ed4990bbb5323": "Trådåtgärden är inte tillgänglig",
   "82e555245a78f961": "Den här anslutningen kan inte ändra en eller flera av de valda trådarna.",
   "e54720cac68f2adb": "Alla projekt",
+  "3d452b69b89d669e": "{count, plural, one {{count} subagent körs} other {{count} subagenter körs}}",
   "ac47f86df1c31a4a": "Det gick inte att kopiera grenen",
   "4e6305459e784fea": "Det gick inte att kopiera tråd-ID",
   "5a79b7c910831c76": "Trådens titel får inte vara tom",

@@ -723,8 +723,8 @@
   intent: >
     Sidebar V2 thread rows are two-line cards at 16px radius, drawn at a fixed
     54px (Figma 364:17299, "thread card v3"): a title line (prompt, then a
-    trailing group carrying the hover actions / elapsed time, the pinned
-    glyph and the status mark) and a repo line reading runtime glyph,
+    trailing group carrying the hover actions / running-subagent count, the
+    pinned glyph and the status mark) and a repo line reading runtime glyph,
     hairline, branch, terminal glyph, PR badge on the left and the model
     label on the right. Fixed corners are the point: the two things you
     compare across rows, which checkout a thread is on and what is running
@@ -911,8 +911,10 @@
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    - apps/web/src/custom/SidebarV2SubagentCount.tsx
     - apps/web/src/custom/SidebarV2ThreadCardMeta.tsx
     - apps/web/src/custom/icons/WorktreeIcon.tsx
+    - apps/web/src/custom/runningSubagentCounts.ts
     - apps/web/src/custom/sidebarV2CardAlignment.ts
     - apps/web/src/custom/sidebarV2RowPolicy.ts
     - apps/web/src/theme.custom.css
@@ -931,6 +933,8 @@
     - apps/web/src/components/Sidebar.shortcuts.browser.test.tsx
     # The fork customizes upstream's canonical Sidebar V2 implementation in place.
     - apps/web/src/components/Sidebar.tsx
+    # The row name carries the running-subagent count (subagentLabel).
+    - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/index.css
     # The PR badge's text-secondary-label number span, which the card's
     # number-ink rule inherits through.
@@ -1531,8 +1535,8 @@
     the trailing end again (Figma 364:17299) but in a cell of its own after
     the actions, never inside them, so the opacity-crossfade hit-path bug
     that used to eat settle clicks (an opacity-0 status span stacking above
-    the actions) cannot return; elapsed time is the only decoration that
-    still fades here, and it is pointer-events-none.
+    the actions) cannot return; the running-subagent count is the only
+    decoration that still fades here, and it is pointer-events-none.
 
     Placement: every trailing mark down the sidebar shares one vertical axis,
     24px in from the panel's content edge — the chrome rows' pe-3 plus half
@@ -2731,7 +2735,7 @@
     line, card titles), -row (14/16, slim titles and the rename field),
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
-    (11/15, model label and elapsed time), -status (12/14, a Petal card's
+    (11/15, model label and subagent count), -status (12/14, a Petal card's
     status line), -tile (10/12, a Petals grid name), plus h-sidebar-12 / -14 /
     -16 / -18 for the fixed line boxes. The
     cards' offscreen contain-intrinsic-size hints sum the same tokens. Line heights are unitless ratios, so
@@ -3715,7 +3719,7 @@
     card nearest the prompt in the banners dock (not upstream's portaled
     drawer layer), its tab hidden while it is open, and it shares the queue
     card's rules and parts (custom/ComposerCardParts.tsx: the counted title
-    and the trash remove). Its label reads at the interface size.
+    and the trash remove). Both titles read at text-sm/5 on the banner scale.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -6637,49 +6641,76 @@
   intent: >
     A settled thread offers its owner's next message as one pill in the
     composer's chip row (custom/ComposerNextStepPill), and a click sends it at
-    once. Rules come first (custom/composerNextStep.logic), from the thread's
-    PR as the PR chip beside it resolves it (resolveThreadCurrentPullRequestLink,
-    else resolveDisplayedThreadPr on the same git status), its watch, the checkout's git status and the owner's latest typed message
-    (scheduled tasks, watch wakes and agent-sent turns don't count): after a
-    sol loop with unmerged work off the default branch → Open PR; an open PR
-    nothing has watched → Babysit; one whose watch ended mergeable with checks
-    passing → Merge; a PR merged right after the owner asked to merge it ("merge
-    it", "lets merge", not negated), in this fork's repository only → Cut
-    release. A watched PR, or a watch that ended
-    short of mergeable, is the owner's call: nothing shows. There is no "Run
-    sol loop" rule: in the owner's history no state predicted it (4–8% at
+    once. One pure function picks it for web and iOS (client-runtime
+    pickComposerNextStep), from the thread's PR (its linked one, as the PR chip
+    resolves it with resolveThreadCurrentPullRequestLink, else an open one on
+    the thread's branch, as resolveDisplayedThreadPr finds it), that PR's
+    watch, the checkout's git status (only when it is on the thread's branch)
+    and the owner's latest typed message (scheduled tasks, watch wakes and
+    agent-sent turns don't count): after a sol loop with unmerged work off the
+    default branch → Open PR; an open PR nothing has watched → Babysit; one
+    whose watch ended mergeable with checks passing → Merge; a PR merged right
+    after the owner asked to merge it ("merge it", "lets merge", not negated),
+    in this fork's repository only → Cut release. A watched PR, or a watch that
+    ended short of mergeable, is the owner's call: nothing shows. There is no
+    "Run sol loop" rule: in the owner's history no state predicted it (4–8% at
     every threshold tried).
 
-    Where no rule speaks, a learned habit may (custom/composerHabits*): every
-    owner turn the send path commits (useComposerSend's onOwnerTurnDispatched,
-    fenced beside the optimistic message, so refused sends, answers and queued
-    edits never count; not in side chats), pill clicks included, counts as the
-    follow-up to the thread's previous owner message, keyed by its words
-    (lowercased, numbers collapsed, filler dropped, sorted). A follow-up sent
-    at least five times and making up at least three in ten of that message's
-    follow-ups shows with a sparkle, sending its latest wording; its × forgets
-    it. Long prose, slash commands, acknowledgements and follow-ups naming a
-    number are never learned. The table is device-local (localStorage, capped
-    at 300 messages × 8 follow-ups, the newest follow-up always kept), cached
-    between changes so the pill never re-parses it while a turn streams, and
-    re-read before each write and on another window's storage event so windows
-    don't overwrite each other. No server, contract or AI call.
-    Replayed over the owner's history it is right about half the time, almost
-    all of it on what the rules now cover, so it stays quiet until a new habit
-    forms.
+    Where no rule speaks, a learned habit may (client-runtime
+    forkComposerHabits): every owner turn the send path commits, pill clicks
+    included, counts as the follow-up to the thread's previous owner message,
+    keyed by its words (lowercased, numbers collapsed, filler dropped, sorted).
+    On web that is useComposerSend's onOwnerTurnDispatched, fenced beside the
+    optimistic message, so refused sends, answers and queued edits never count,
+    and not in side chats. A follow-up sent at least five times and making up
+    at least three in ten of that message's follow-ups shows with a sparkle,
+    sending its latest wording; its × forgets it. Long prose, slash commands,
+    acknowledgements and follow-ups naming a number are never learned. The
+    table is device-local, capped at 300 messages × 8 follow-ups (the newest
+    follow-up always kept), and kept by one store (createHabitStore) over a
+    per-client storage: localStorage on web (custom/composerHabits, refreshed
+    on another window's storage event), expo-sqlite's key-value store on iOS
+    (fork/no3yComposerHabits, imported on first use), so each device learns
+    apart. The store loads on first subscribe and caches the table so the pill
+    never re-parses it while a turn streams; each change re-reads storage
+    first, so windows don't overwrite each other, and changes save in order.
+    No server, contract or AI call. Replayed over the owner's history it is
+    right about half the time, almost all of it on what the rules now cover,
+    so it stays quiet until a new habit forms.
 
     The pill shows only once the latest run completed, nothing waits on an
     approval or question, the viewer can operate the thread and the composer
-    is empty, so a click never races what is written. Not in side chats. Web
-    and desktop; mobile is separate.
+    is empty, so a click never races what is written. Not in side chats.
+
+    iOS, on the no3y layout: the step is the last glass pill in the row above
+    the composer (No3yStatusPill's NextStepPill, a Pill with the × as its
+    trailing button) and counts toward the row's feed clearance. The screen
+    makes one call: useNo3yNextStep, gated by no3yNextStepSettled, which adds a
+    ready, created thread with no runless work or compaction, no link request
+    awaiting the owner (the shell's hasPendingUserInput), nothing queued on
+    the server or in the phone's outbox, and no sent message the thread has
+    not caught up to. A tap goes through the screen's own send
+    (handleSendMessage, then onSendMessage with the prompt in place of the
+    empty draft's text), so it takes the composer's model, runtime mode and
+    armed fresh session, follows a typed send's scrolling, and is learned at
+    the one point onSendMessage enqueues to the outbox (skipping approval
+    redirects and side chats). A tap first flushes typing still in transit,
+    and sends nothing while the draft has content or a paste, picker or import
+    still writing into it (hasComposerDraftOperations), so it never clears what
+    the owner put there. The pill stays hidden until that send settles. A
+    watched PR whose link has no snapshot yet is still the owner's call.
+    The shared logic avoids array methods Hermes lacks. The iOS New agent
+    screen has no suggestion list, so the launchpad's review row is web-only.
   tier: 4
   files:
     - apps/web/src/custom/ComposerNextStepPill.tsx
-    - apps/web/src/custom/composerNextStep.logic.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
     - apps/web/src/custom/composerHabits.ts
-    - apps/web/src/custom/composerHabits.logic.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
+    - apps/mobile/fork/useNo3yNextStep.ts
+    - apps/mobile/fork/no3yComposerHabits.ts
   shadows: []
   watch:
     # Fenced pill in the composer's status chips (the chip row is built after
@@ -6687,10 +6718,21 @@
     - apps/web/src/components/ChatView.tsx
     # Fenced onOwnerTurnDispatched option, called where a new owner turn commits.
     - apps/web/src/components/chat/useComposerSend.ts
+    # The two modules' subpath exports.
+    - packages/client-runtime/package.json
+    # iOS: the one useNo3yNextStep call, the prompt threaded through handleSendMessage, and the
+    # row's feed clearance.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    # iOS: the NextStepPill in the no3y pill row.
+    - apps/mobile/fork/No3yStatusPill.tsx
+    # iOS: the pill's prompt in place of the draft's text, and sends learned at the enqueue.
+    - apps/mobile/src/state/use-thread-composer-state.ts
+    # iOS: hasComposerDraftOperations, so a tap waits out a paste still converting.
+    - apps/mobile/src/state/composerDraftOperations.ts
   verify:
     - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
 
 - id: fork-draft-project-quick-picks
   intent: >
