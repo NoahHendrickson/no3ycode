@@ -2,9 +2,6 @@ import { m } from "../i18n/messages";
 import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import { useGT, useMessages } from "gt-react";
 import { ChildThreadApprovals } from "./chat/ChildThreadApprovals";
-/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-import { BotDigestAsks } from "~/custom/bots/BotDigest";
-/* fork:end fork-bot-digest */
 import { workspaceAreaProps } from "../lib/workspaceFocus";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
@@ -4340,10 +4337,6 @@ export default function ChatView(props: ChatViewProps) {
                     }
                   >
                     <ChildThreadApprovals threadRef={activeThreadRef} />
-                    {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest
-                        A Petal's asks sit just above its composer, in the chat column. */}
-                    <BotDigestAsks threadRef={activeThreadRef ?? null} />
-                    {/* fork:end fork-bot-digest */}
                     <div className="relative">
                       <ComposerSurface.Shell
                         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
@@ -4458,6 +4451,9 @@ export default function ChatView(props: ChatViewProps) {
                                 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
                                 forkQueuedRunsBanner={hasQueuedTurns ? queuedRunsControl : null}
                                 /* fork:end fork-queued-runs-banner */
+                                /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+                                forkBotDigestThreadRef={activeThreadRef}
+                                /* fork:end fork-bot-digest */
                                 resumeCompactionTokens={resumeCompactionTokens}
                                 keepFullHistory={keepFullHistory}
                                 onToggleKeepFullHistory={toggleKeepFullHistoryStable}

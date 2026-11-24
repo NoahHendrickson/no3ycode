@@ -44,6 +44,8 @@ function readSibling(relativePath: string): string {
 }
 
 const chatView = readSibling("../components/ChatView.tsx");
+const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
+const composerShell = readSibling("../custom/ComposerShell.tsx");
 const sidebar = readSibling("../components/Sidebar.tsx");
 const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
@@ -382,10 +384,17 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(server).toContain("yield* ForkBotWorkReports.ForkBotWorkReports;");
     expect(launch).toContain(": yield* forkBotCrewRules(forkBotId, input.initialMessage.text)");
     expect(wakeHold).toContain('if (shell?.archivedAt != null) return "skip";');
-    // A Petal's asks sit above its composer in the chat column; the Threads panel lists threads only.
-    expect(chatView).toMatch(
-      /<ChildThreadApprovals threadRef=\{activeThreadRef\} \/>\s*\{\/\* fork:begin fork-bot-digest[\s\S]*?<BotDigestAsks threadRef=\{activeThreadRef \?\? null\} \/>/u,
+    // A Petal's asks sit above its composer, under the status chips and above the banners; the
+    // Threads panel lists threads only.
+    expect(chatView).toContain("forkBotDigestThreadRef={activeThreadRef}");
+    expect(chatComposer).toContain(
+      "digest={<BotDigestAsks threadRef={props.forkBotDigestThreadRef ?? null} />}",
     );
+    const chipsAt = composerShell.indexOf('data-fork-composer-status-chips="true"');
+    const digestAt = composerShell.indexOf("{digest}");
+    expect(chipsAt).toBeGreaterThan(-1);
+    expect(digestAt).toBeGreaterThan(chipsAt);
+    expect(composerShell.indexOf('data-fork-composer-banners="true"')).toBeGreaterThan(digestAt);
     expect(threadsPanel).not.toContain("BotDigest");
     // iOS draws the same digest above its composer, from the parsing both clients share.
     expect(iosThread).toMatch(

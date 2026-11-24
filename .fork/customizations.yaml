@@ -7978,9 +7978,13 @@
     its thread's link from the thread tools and its pull request's URL, and end every approval or
     yes-or-no ask, and any other ask a word or two answers, with up to four answers after an arrow,
     links before the arrow, the yes naming the action: `OK to push and open a PR? <PR URL> → Open PR | Hold`). On the bot's own
-    conversation the digest sits just above its composer, in the chat column (BotDigestAsks, one
-    fenced line in ChatView beside upstream's ChildThreadApprovals, inside the composer stack so
-    the transcript's bottom inset counts it); the bot's Threads panel lists its threads only. It
+    conversation the digest sits just above its composer, in the chat column, under the composer's
+    status chips and above its banner cards (BotDigestAsks in ComposerShell's digest slot, fenced
+    in ChatComposer, its thread handed down from ChatView, so the transcript's bottom inset counts
+    it; theme.custom.thread-composer.css keeps its form-scoped vessel, surface and radius rules
+    off it, so it keeps the look it had outside the form, and focus on its buttons neither
+    expands the collapsed phone composer nor holds it open); the bot's Threads panel lists its
+    threads only. It
     shows the status line (parseBotDigestStatus; "Nothing yet." shows none) and one card per
     Needs you ask, nothing for any other thread or while there is neither. New and In progress
     stay in the file for the bot's own memory and draw nothing: its chat messages already say
@@ -8059,8 +8063,10 @@
     - apps/mobile/fork/no3yBotDigestAnswers.ts
   shadows: []
   watch:
-    # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
+    # Hands the composer the thread whose asks it draws (fenced).
     - apps/web/src/components/ChatView.tsx
+    # Draws the asks in ComposerShell's digest slot, under the status chips (fenced).
+    - apps/web/src/components/chat/ChatComposer.tsx
     # The same asks above the iPhone composer, beside ChildThreadApprovals (fenced).
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     # Exports the two subpaths both clients import.

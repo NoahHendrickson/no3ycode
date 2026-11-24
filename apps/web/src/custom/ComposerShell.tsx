@@ -34,6 +34,8 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   usageControls?: ReactNode;
   /** Chips above the composer (the thread's PR, background work); the row hides when empty. */
   statusChips?: ReactNode;
+  /** A Petal's digest, under the chips and above the notice cards. */
+  digest?: ReactNode;
   /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
   banners?: ReactNode;
 };
@@ -50,6 +52,7 @@ export const ComposerShell = memo(function ComposerShell({
   readoutControls,
   usageControls,
   statusChips,
+  digest,
   banners,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
@@ -98,6 +101,7 @@ export const ComposerShell = memo(function ComposerShell({
       >
         {collapsedMobile ? null : statusChips}
       </div>
+      {digest}
       <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
         {banners}
       </div>
