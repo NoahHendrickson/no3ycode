@@ -28,6 +28,7 @@ export const GLASS_NEW_AGENT_BACKDROP_LABELS: Record<GlassNewAgentBackdrop, stri
 export const {
   initialize: initializeForkGlassNewAgentPicture,
   useValue: useGlassNewAgentBackdrop,
+  set: setGlassNewAgentBackdrop,
 } = createForkRootSetting({
   storageKey: "t3code:fork:glass-new-agent-backdrop:v1",
   attribute: FORK_GLASS_PICTURE_OFF_ATTRIBUTE,
