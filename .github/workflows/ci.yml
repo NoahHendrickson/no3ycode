@@ -139,6 +139,14 @@ jobs:
         run: node .fork/lint-owned.mjs
       # fork:end fork-lint-cleanliness
 
+      # fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint
+      # The design rules (.fork/DESIGN-RULES.md) are off until the inventory reads zero.
+      # Switch on by uncommenting this step and setting DESIGN_LINT_BLOCKING in
+      # .fork/design-rules.mjs in the same change; forkDesignLint.test.ts holds them together.
+      # - name: Check fork design rules
+      #   run: node .fork/design-lint.mjs --check
+      # fork:end fork-design-lint
+
   build:
     permissions:
       contents: read

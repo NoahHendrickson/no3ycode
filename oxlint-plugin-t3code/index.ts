@@ -38,6 +38,11 @@ import requireSuppressionReason from "./rules/require-suppression-reason.ts";
 /* fork:begin no3y-worklet-default-params — see .fork/customizations.yaml#no3y-worklet-default-params */
 import noWorkletDefaultParams from "./rules/no-worklet-default-params.ts";
 /* fork:end no3y-worklet-default-params */
+/* fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint */
+import noDirectIconImports from "./rules/no-direct-icon-imports.ts";
+import noHandBuiltPrimitives from "./rules/no-hand-built-primitives.ts";
+import noHandBuiltStatusMarks from "./rules/no-hand-built-status-marks.ts";
+/* fork:end fork-design-lint */
 
 export default definePlugin({
   meta: {
@@ -82,5 +87,10 @@ export default definePlugin({
     /* fork:begin no3y-worklet-default-params — see .fork/customizations.yaml#no3y-worklet-default-params */
     "no-worklet-default-params": noWorkletDefaultParams,
     /* fork:end no3y-worklet-default-params */
+    /* fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint */
+    "no-direct-icon-imports": noDirectIconImports,
+    "no-hand-built-primitives": noHandBuiltPrimitives,
+    "no-hand-built-status-marks": noHandBuiltStatusMarks,
+    /* fork:end fork-design-lint */
   },
 });

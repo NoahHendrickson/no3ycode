@@ -49,6 +49,9 @@ fork only ever reads from; there is no valid reason to open one.
 
 ## Design defaults
 
+- **Design rules** (values from tokens, controls from `components/ui`) are in
+  `.fork/DESIGN-RULES.md`. They are report-only for now: run
+  `node .fork/design-lint.mjs --report` on fork UI changes and don't add findings.
 - **Dividers run full width**, edge to edge of the surface they divide: menus, popovers,
   panels, cards. An inset rule needs an explicit ask. `MenuSeparator`'s default is upstream's
   inset `mx-2`, so cancel every padding layer between it and the popup's edge: `-mx-1` as a
