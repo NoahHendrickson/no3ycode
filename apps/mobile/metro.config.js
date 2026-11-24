@@ -112,25 +112,22 @@ async function prepareStreamScripts() {
 
 module.exports = Promise.all([generateMobileThirdPartyLicenses(), prepareStreamScripts()]).then(
   () =>
-    /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
-    withForkBrandName(
-      /* fork:end fork-brand-name */
-      withUniwindConfig(config, {
-        cssEntryFile: "./global.css",
-        extraThemes,
-        polyfills: { rem: 14 },
-      }),
-    ),
+    withUniwindConfig(config, {
+      cssEntryFile: "./global.css",
+      extraThemes,
+      polyfills: { rem: 14 },
+    }),
 );
 
 /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
-// Workers inherit the environment, so the wrapper finds the transformer it replaces there.
-function withForkBrandName(finalConfig) {
+// Metro hands workers only the transformer's path, so the one it wraps travels in the environment,
+// which workers inherit.
+module.exports = module.exports.then((finalConfig) => {
   const wrapper = require.resolve("./fork/forkBrandNameTransformer.cjs");
   if (finalConfig.transformer.babelTransformerPath !== wrapper) {
     process.env.NO3Y_UPSTREAM_BABEL_TRANSFORMER = finalConfig.transformer.babelTransformerPath;
     finalConfig.transformer.babelTransformerPath = wrapper;
   }
   return finalConfig;
-}
+});
 /* fork:end fork-brand-name */

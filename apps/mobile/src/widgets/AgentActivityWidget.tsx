@@ -93,10 +93,10 @@ export function AgentActivityWidget(
               ? (text?.done ?? "Done")
               : "";
   const summaryTint = rows[0] ? phaseTint(rows[0].phase) : secondaryForeground;
+  /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
   const emptyMessage = loaded
     ? (props.subtitle ?? text?.noActiveAgents ?? "No active agents")
-    : /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
-      "Open no3y Code to load agent activity";
+    : "Open no3y Code to load agent activity";
   /* fork:end fork-brand-name */
 
   // Widget taps open the containing app, and every build accepts the prod

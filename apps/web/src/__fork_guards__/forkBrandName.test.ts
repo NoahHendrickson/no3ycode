@@ -2,9 +2,9 @@
 /**
  * Fork guard — see `.fork/customizations.yaml#fork-brand-name`.
  *
- * The fork's name reaches upstream's inline "T3 Code" copy through one
- * build-time rewrite, so a sync that drops the plugin wiring silently brings
- * upstream's name back everywhere at once.
+ * The fork's name reaches upstream's inline "T3 Code" and bare "T3 <word>" copy
+ * through one build-time rewrite, so a sync that drops the plugin wiring silently
+ * brings upstream's name back everywhere at once.
  */
 
 import * as NodeFS from "node:fs";
@@ -28,6 +28,28 @@ const repoRoot = NodePath.resolve(
 const read = (relativePath: string): string =>
   NodeFS.readFileSync(NodePath.join(repoRoot, relativePath), "utf8");
 
+/** The favicon's outline cells, merged into one rect per horizontal run. */
+function flowerOutlinePath(): string {
+  const favicon = read("assets/fork/n3-favicon.svg");
+  const cells = /<path d="([^"]*)" fill="#182E26"/u.exec(favicon)?.[1] ?? "";
+  const rows = new Map<number, number[]>();
+  for (const [, x, y] of cells.matchAll(/M(\d+) (\d+)h1v1h-1z/gu)) {
+    rows.set(Number(y), [...(rows.get(Number(y)) ?? []), Number(x)]);
+  }
+  let path = "";
+  for (const [y, xs] of [...rows].toSorted(([a], [b]) => a - b)) {
+    xs.sort((a, b) => a - b);
+    let start = xs[0] ?? 0;
+    for (let i = 1; i <= xs.length; i++) {
+      if (xs[i] === (xs[i - 1] ?? 0) + 1) continue;
+      const width = (xs[i - 1] ?? 0) - start + 1;
+      path += `M${start} ${y}h${width}v1h-${width}z`;
+      start = xs[i] ?? 0;
+    }
+  }
+  return path;
+}
+
 type TransformHook = (code: string, id: string) => { code: string; map: null } | null;
 const transform = forkBrandName().transform as TransformHook;
 
@@ -41,12 +63,16 @@ describe("fork guard: fork-brand-name", () => {
       ["`${reason}\\n\\nT3 Code will restart`", "`${reason}\\n\\nno3y Code will restart`"],
       ["Sign in to T3 Connect on the T3 server", null],
       ["Link T3 Chat for more tunnels", null],
+      ["Unable to connect to the T3 server WebSocket.", null],
+      ["This T3 home is unavailable. Open T3 Account.", null],
+      ["const T3 = 1; type T3Mark = T3;", null],
       [
         '"Start\\nStarting\\nStarted\\na T3 thread"',
         '"Start\\nStarting\\nStarted\\na no3y thread"',
       ],
       ["{completed {Created T3 threads}}", "{completed {Created no3y threads}}"],
-      ["Use T3 desktop. T3 could not ask.", "Use no3y Code desktop. no3y Code could not ask."],
+      ["Use T3 desktop. T3 could not ask.", "Use no3y desktop. no3y could not ask."],
+      ['"Create\\nCreated\\nT3 threads"', '"Create\\nCreated\\nno3y threads"'],
     ] as const) {
       expect(rewriteUpstreamDisplayName(input)).toBe(expected);
     }
@@ -100,18 +126,23 @@ describe("fork guard: fork-brand-name", () => {
     const glyph = read("apps/web/src/overrides/components/T3Wordmark.tsx");
     expect(glyph).toContain("export function T3Wordmark(");
     expect(glyph).toContain('viewBox="-0.5 -0.5 16 16"');
-    expect(glyph).not.toContain("M33.4509 93V47.56");
+    // One path everywhere, derived from the favicon's outline cells.
+    for (const file of [
+      "apps/web/src/overrides/components/T3Wordmark.tsx",
+      "apps/mobile/src/components/T3Wordmark.tsx",
+      "apps/mobile/assets/widget/T3Mark.svg",
+    ]) {
+      expect(read(file)).toContain(`d="${flowerOutlinePath()}"`);
+    }
     const standalone = read("apps/web/src/components/ui/standalone-page.tsx");
-    expect(standalone).toContain('aria-label="no3y Code"');
     expect(standalone).toContain(">no3y Code</span>");
   });
 
   it("rebrands the mobile app through Metro and its own marks", () => {
-    expect(read("apps/mobile/metro.config.js")).toContain("withForkBrandName(");
+    expect(read("apps/mobile/metro.config.js")).toContain("./fork/forkBrandNameTransformer.cjs");
     expect(read("apps/mobile/fork/forkBrandNameTransformer.cjs")).toContain(
       "rewriteUpstreamDisplayName(props.src)",
     );
-    expect(read("apps/mobile/src/components/T3Wordmark.tsx")).not.toContain("M33.4509 93V47.56");
     expect(read("apps/mobile/src/components/CompactBrandTitle.tsx")).toContain(
       'const WORDMARK_SUFFIX = "no3y Code";',
     );
@@ -126,7 +157,6 @@ describe("fork guard: fork-brand-name", () => {
     ]) {
       expect(read(widget)).not.toMatch(/\bT3( Code)?\b[^_]/u);
     }
-    expect(read("apps/mobile/assets/widget/T3Mark.svg")).not.toContain("M33.4509 93V47.56");
   });
 
   it("credits upstream in Settings and the desktop About panel", () => {

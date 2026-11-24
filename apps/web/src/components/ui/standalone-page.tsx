@@ -30,8 +30,7 @@ export function StandalonePageHeader({
       <div className="flex items-baseline justify-between gap-3 text-muted-foreground">
         {/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */}
         {/* The glyph is the no3y flower, not letters, so the name is spelled out beside it. */}
-        {/* oxlint-disable-next-line t3code/no-untranslated-copy -- product name */}
-        <span className="flex items-center gap-1.5" role="img" aria-label="no3y Code">
+        <span className="flex items-center gap-1.5" role="img" aria-label="T3 Code">
           <T3Wordmark className="size-4 shrink-0 text-foreground" aria-hidden />
           {/* oxlint-disable-next-line t3code/no-untranslated-copy -- product wordmark */}
           <span className="text-lg font-medium tracking-tight">no3y Code</span>

@@ -3,7 +3,8 @@ import Constants from "expo-constants";
 const appVariant = Constants.expoConfig?.extra?.appVariant;
 
 /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
-// The no3y flower tile, orange for development like the installed dev app.
+// The no3y flower tile, orange for development like the installed dev app. Preview builds share
+// the production tile; the fork ships no nightly art, and the badge beside it names the stage.
 export const T3_CODE_BRAND_MARK_SOURCE =
   appVariant === "development"
     ? require("../../../../assets/fork/n3-dev-web-apple-touch-180.png")

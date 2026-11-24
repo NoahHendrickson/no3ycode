@@ -164,7 +164,9 @@ function subscriptionUsageText(
   maxHiddenWindows: number,
 ): SubscriptionUsageText {
   return {
+    /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
     refresh: resolve(msg("Open {app} to refresh", { app: FORK_WIDGET_APP_NAME })),
+    /* fork:end fork-brand-name */
     noSessionLimit: resolve(msg("No session limit reported")),
     noWeeklyLimit: resolve(msg("No weekly limit reported")),
     subscriptionRemaining: resolve(msg("Subscription remaining")),
@@ -174,10 +176,14 @@ function subscriptionUsageText(
     ),
     left: resolve(msg("left", { $context: "follows a bold percentage, as in 40% left" })),
     notApplicable: resolve(msg("N/A", { $context: "no usage limit for the chosen period" })),
+    /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
     openApp: resolve(msg("Open {app}", { app: FORK_WIDGET_APP_NAME })),
+    /* fork:end fork-brand-name */
     noLimits: resolve(msg("No subscription limits available.")),
     asOf: resolve(msg("As of {time}", { time: "{time}" })),
+    /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
     tapToConnect: resolve(msg("Tap to connect in {app}", { app: FORK_WIDGET_APP_NAME })),
+    /* fork:end fork-brand-name */
     providerAccessibility: resolve(
       // oxlint-disable-next-line t3code/no-untranslated-copy -- placeholders the widget fills in
       msg("{provider}. {detail}.", { provider: "{provider}", detail: "{detail}" }),
@@ -198,7 +204,9 @@ function subscriptionUsageText(
         resolve(
           msg("{count, plural, one {{count} more in {app}} other {{count} more in {app}}}", {
             count: index + 1,
+            /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
             app: FORK_WIDGET_APP_NAME,
+            /* fork:end fork-brand-name */
           }),
         ),
       ]),
@@ -263,8 +271,10 @@ function subscriptionUsageProps(
           name,
           colors,
           detail: !fresh
-            ? resolve(msg("Open {app} to refresh", { app: FORK_WIDGET_APP_NAME }))
-            : pool.accounts.length > 1
+            ? /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+              resolve(msg("Open {app} to refresh", { app: FORK_WIDGET_APP_NAME }))
+            : /* fork:end fork-brand-name */
+              pool.accounts.length > 1
               ? resolve(
                   msg(
                     "{count, plural, one {{count} account · pooled} other {{count} accounts · pooled}}",
@@ -345,7 +355,9 @@ export function subscriptionUsageTimeline(snapshot: SubscriptionUsageSnapshot, n
               ...provider,
               detail:
                 snapshot.text?.refresh ??
+                /* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
                 m(msg("Open {app} to refresh", { app: FORK_WIDGET_APP_NAME })),
+              /* fork:end fork-brand-name */
               windows: [],
               totalWindows: 0,
             }

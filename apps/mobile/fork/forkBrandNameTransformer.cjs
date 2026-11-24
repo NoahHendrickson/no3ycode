@@ -1,12 +1,14 @@
 // Fork display-name rewrite for Metro — see .fork/customizations.yaml#fork-brand-name.
-// The same rewrite the web and desktop builds run (scripts/lib/fork-brand-name.ts),
-// applied to each app module's source before Expo's Babel transformer sees it.
+// The same rewrite the web and desktop builds run (scripts/lib/fork-brand-name-core.ts),
+// applied to each app module's source before the Babel transformer it wraps sees it.
 const NodeCrypto = require("node:crypto");
 const NodeFS = require("node:fs");
 const NodePath = require("node:path");
 
-const brandNameSource = NodePath.resolve(__dirname, "../../../scripts/lib/fork-brand-name.ts");
+const brandNameSource = NodePath.resolve(__dirname, "../../../scripts/lib/fork-brand-name-core.ts");
 const { isRebrandedModule, rewriteUpstreamDisplayName } = require(brandNameSource);
+// metro.config.js sets this: workers receive only this file's path, never a closure, so the
+// transformer it wraps (Expo's, plus whatever Uniwind layers on) can only arrive this way.
 const upstreamPath = process.env.NO3Y_UPSTREAM_BABEL_TRANSFORMER;
 if (!upstreamPath) {
   throw new Error("NO3Y_UPSTREAM_BABEL_TRANSFORMER is unset; load this through metro.config.js.");
