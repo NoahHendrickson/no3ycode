@@ -24,6 +24,7 @@ describe("forkSpaceTranscript gaps", () => {
     ["the live line under a tool row that continued", [tool(true), live], [0, 18]],
     ["the live line under reply text", [reply(), live], [0, 10]],
     ["the live line under viewed images", [images, live], [0, 12]],
+    ["the live line under a user message", [user, live], [0, 4]],
     ["a reply under a user message", [user, reply()], [0, 0]],
   ])("tops up %s to 24px", (_, rows, expected) => {
     expect(gaps(rows)).toEqual(expected);
