@@ -20,6 +20,7 @@ import {
   BEAD_RING_HALF_WIDTH,
   BEAD_RING_PERIOD,
   BEAD_RING_STILL_PROGRESS,
+  BEAD_RING_STRETCH,
   beadRingEase,
   beadRingPath,
 } from "./beadRing";
@@ -69,7 +70,9 @@ export function No3yBeadRing(props: { readonly color: string; readonly size: num
     return () => cancelAnimation(progress);
   }, [running, progress]);
 
-  const animatedProps = useAnimatedProps(() => ({ d: beadRingPath(progress.get()) }));
+  const animatedProps = useAnimatedProps(() => ({
+    d: beadRingPath(progress.get(), BEAD_RING_STRETCH),
+  }));
 
   return (
     <Svg width={props.size} height={props.size} viewBox="0 0 56 56">
