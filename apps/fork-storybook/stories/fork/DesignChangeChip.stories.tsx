@@ -1,6 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { DesignChangeChip } from "~/custom/designMode/ForkComposerDesignChanges";
+import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+
+import {
+  DesignChangeChip,
+  ForkComposerDesignChanges,
+} from "~/custom/designMode/ForkComposerDesignChanges";
+import { ForkTranscriptDesignChanges } from "~/custom/designMode/ForkTranscriptDesignChanges";
+import { useDesignChangeDraftStore } from "~/custom/designMode/designChangeDraftStore";
 import type { PendingDesignChange } from "~/custom/designMode/designChangeDraftStore";
 
 import { Row, Stack } from "../Specimen.tsx";
@@ -69,5 +76,51 @@ export const Shapes: Story = {
         />
       </Row>
     </Stack>
+  ),
+};
+
+const threadRef = { environmentId: EnvironmentId.make("story"), threadId: ThreadId.make("design") };
+
+/** The composer's row of pending changes, one chip per change, each removable. */
+export const Pending: Story = {
+  parameters: { controls: { disable: true } },
+  beforeEach: () => {
+    const store = useDesignChangeDraftStore.getState();
+    store.clear(threadRef);
+    for (const [tab, entry] of [
+      ["tab-a", ONE],
+      [
+        "tab-b",
+        change("e", [{ tag: "nav", sourceLabel: "Nav.tsx:3", deltas: ["gap 8px → 16px"] }]),
+      ],
+    ] as const) {
+      store.add(threadRef, tab, {
+        ...entry,
+        documentId: tab,
+        pageUrl: `http://localhost:3000/${tab}`,
+      });
+    }
+  },
+  render: () => <ForkComposerDesignChanges target={threadRef} />,
+};
+
+const block = (elements: ReadonlyArray<string>) =>
+  [
+    "<design_change_request>",
+    ...elements.map((label, index) => `## ${index + 1}. ${label}\n\n- padding-top 24px → 32px`),
+    "</design_change_request>",
+  ].join("\n");
+
+/** A sent message's change requests in the transcript: one element names it, several count. */
+export const Sent: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <ForkTranscriptDesignChanges
+      messageId="story-message"
+      blocks={[
+        block(["<button> — src/Hero.tsx:42:5"]),
+        block(["<h1> — src/Hero.tsx:12:3", "<p> — src/Hero.tsx:18:3"]),
+      ]}
+    />
   ),
 };

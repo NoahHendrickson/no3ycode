@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { MusicStripCardView } from "~/custom/music/MusicStrip";
-import type { MusicRow } from "~/custom/music/musicBridge";
+import type { MusicBridge, MusicRow } from "~/custom/music/musicBridge";
+import { SidebarMusicButton } from "~/custom/music/SidebarMusicButton";
+import { SidebarMenu } from "~/components/ui/sidebar";
 import type { MusicListing, MusicSnapshot, MusicSource } from "~/custom/music/musicStore";
 
 const source = (name: string, lists: MusicSource["lists"]): MusicSource => ({
@@ -100,3 +102,32 @@ export const Artists: Story = { args: { snapshot: { ...SNAPSHOT, tab: "artists" 
 
 /** ah ahh isn't open. */
 export const Closed: Story = { args: { snapshot: { ...SNAPSHOT, state: { status: "closed" } } } };
+
+/** A desktop music bridge that answers nothing, so the button (desktop only) draws. */
+const QUIET_MUSIC_BRIDGE: MusicBridge = {
+  canOpen: false,
+  follow: () => () => {},
+  open: async () => false,
+  command: async () => false,
+  upNext: async () => null,
+  libraryPage: async () => null,
+};
+
+/** The footer's music button beside Settings: shows or hides the strip above it. */
+export const SidebarButton: Story = {
+  name: "Sidebar button",
+  parameters: { surface: "app-sidebar", controls: { disable: true } },
+  beforeEach: () => {
+    const scope = globalThis as { forkDesktopBridge?: Record<string, unknown> | undefined };
+    const previous = scope.forkDesktopBridge;
+    scope.forkDesktopBridge = { ...previous, music: QUIET_MUSIC_BRIDGE };
+    return () => {
+      scope.forkDesktopBridge = previous;
+    };
+  },
+  render: () => (
+    <SidebarMenu className="px-2">
+      <SidebarMusicButton />
+    </SidebarMenu>
+  ),
+};

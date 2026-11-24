@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Layers02Icon } from "@hugeicons/core-free-icons";
 import { ProviderDriverKind, ProviderInstanceId, type ServerProvider } from "@t3tools/contracts";
 import type { CSSProperties } from "react";
 
@@ -8,6 +7,7 @@ import { CornerRadiusIcon } from "~/custom/designMode/panel/CornerRadiusIcon";
 import { LayerTypeIcon } from "~/custom/designMode/panel/LayerTypeIcon";
 import { PaddingIcon } from "~/custom/designMode/panel/PaddingIcon";
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
+import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
 import { HugeGlyph } from "~/custom/icons/lucide-hugeicons";
 import {
   ForkProviderMark,
@@ -48,6 +48,19 @@ const ENTRIES = deriveProviderInstanceEntries([
   provider(CURSOR, "Cursor"),
 ]);
 
+// A folder in Hugeicons' data shape (the package is the app's, not this library's): a closed outline
+// the filled weight fills, and a tab it keeps stroked.
+const FOLDER_GLYPH: IconSvgElement = [
+  [
+    "path",
+    {
+      d: "M3 7.5C3 6.1 4.1 5 5.5 5H9l2 2h7.5C19.9 7 21 8.1 21 9.5v7c0 1.4-1.1 2.5-2.5 2.5h-13C4.1 19 3 17.9 3 16.5v-9Z",
+      key: "0",
+    },
+  ],
+  ["path", { d: "M8 13h8", key: "1" }],
+];
+
 const LAYER_TAGS = ["div", "p", "button", "a", "img", "input", "ul", "svg", "section"] as const;
 
 /** Every glyph the fork draws for itself, at the size its call site draws it. */
@@ -87,8 +100,8 @@ function Glyphs() {
         <SidebarV2SectionCaret collapsed className="size-3.5 text-muted-foreground" />
       </Row>
       <Row label="Hugeicon">
-        <HugeGlyph data={Layers02Icon} filled={false} className="size-4" />
-        <HugeGlyph data={Layers02Icon} filled className="size-4" />
+        <HugeGlyph data={FOLDER_GLYPH} filled={false} className="size-4" />
+        <HugeGlyph data={FOLDER_GLYPH} filled className="size-4" />
       </Row>
     </Stack>
   );
