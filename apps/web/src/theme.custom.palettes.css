@@ -1858,7 +1858,7 @@
    lift up from the foot, a softer one down from the top and a faint 1px rim, over the picture
    whichever draws it (DOM or the native Liquid Glass layer beneath the page). Always painted;
    only its opacity moves, on the picture's 400ms clock, so the first send fades it with the
-   picture. */
+   picture. Deliberately softer than the Figma frame, whose top rim read as a harsh line. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-chat-column-maximized-away]::before {
   content: "";
