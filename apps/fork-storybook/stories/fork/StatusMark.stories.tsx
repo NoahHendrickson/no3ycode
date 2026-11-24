@@ -3,7 +3,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type SidebarV2CardStatusKind, sidebarV2CardTopStatus } from "~/custom/sidebarV2CardStatus";
 import {
   SIDEBAR_V2_WORKING_MARK_FORMS,
+  SidebarV2DraftMark,
+  SidebarV2IdleMark,
   SidebarV2StatusMark,
+  SidebarV2StillMonitoringMark,
+  SidebarV2StillWorkingMark,
+  SidebarV2WorkingMark,
 } from "~/custom/SidebarV2StatusIndicator";
 import { FORK_WORKING_MARK_LABELS, FORK_WORKING_MARKS } from "~/custom/forkWorkingMark";
 
@@ -82,6 +87,32 @@ export const WorkingForms: Story = {
           </Row>
         );
       })}
+    </Stack>
+  ),
+};
+
+/** The marks by name, for call sites that draw one outside a status: the working mark in the
+    Appearance setting's form (moving, then still), the idle and draft marks, and the still
+    working and waiting marks a status chip in a message draws. */
+export const Marks: Story = {
+  render: () => (
+    <Stack gap={3}>
+      <Row label="Working">
+        <SidebarV2WorkingMark seed="marks" />
+        <SidebarV2WorkingMark seed="marks" still />
+      </Row>
+      <Row label="Idle">
+        <SidebarV2IdleMark />
+      </Row>
+      <Row label="Draft">
+        <SidebarV2DraftMark />
+      </Row>
+      <Row label="Still working">
+        <SidebarV2StillWorkingMark />
+      </Row>
+      <Row label="Still waiting">
+        <SidebarV2StillMonitoringMark />
+      </Row>
     </Stack>
   ),
 };
