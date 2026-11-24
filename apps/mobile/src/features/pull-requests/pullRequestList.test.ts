@@ -234,7 +234,9 @@ describe("all-environment PR list", () => {
     expect(
       filterPullRequestList(
         merged.entries,
-        { ...DEFAULT_PR_LIST_CONTROLS, projectId: "project", projectEnvironmentId: mbp },
+        /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+        { ...DEFAULT_PR_LIST_CONTROLS, projects: [{ projectId: "project", environmentId: mbp }] },
+        /* fork:end no3y-pr-project-multiselect */
         merged.viewers,
         "",
         merged.localSearchHosts,
@@ -336,31 +338,37 @@ describe("withoutScratchProjectScope", () => {
   ];
 
   it("reads a scope saved on the Scratch folder as all projects", () => {
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
     const controls = withoutScratchProjectScope(
-      { ...DEFAULT_PR_LIST_CONTROLS, projectId: "scratch", projectEnvironmentId: "env-a" },
+      {
+        ...DEFAULT_PR_LIST_CONTROLS,
+        projects: [{ projectId: "scratch", environmentId: "env-a" }],
+      },
       projects,
     );
-    expect(controls.projectId).toBeUndefined();
-    expect(controls.projectEnvironmentId).toBeUndefined();
+    expect(controls.projects).toBeUndefined();
+    /* fork:end no3y-pr-project-multiselect */
   });
 
   it("keeps a repository scope, and one whose projects have not arrived yet", () => {
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
     const repository = {
       ...DEFAULT_PR_LIST_CONTROLS,
-      projectId: "repo",
-      projectEnvironmentId: "env-a",
+      projects: [{ projectId: "repo", environmentId: "env-a" }],
     };
     expect(withoutScratchProjectScope(repository, projects)).toBe(repository);
-    const pending = { ...repository, projectId: "scratch" };
+    const pending = { ...repository, projects: [{ projectId: "scratch", environmentId: "env-a" }] };
+    /* fork:end no3y-pr-project-multiselect */
     expect(withoutScratchProjectScope(pending, [])).toBe(pending);
   });
 
   it("keeps another server's project that shares the Scratch folder's id", () => {
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
     const elsewhere = {
       ...DEFAULT_PR_LIST_CONTROLS,
-      projectId: "scratch",
-      projectEnvironmentId: "env-b",
+      projects: [{ projectId: "scratch", environmentId: "env-b" }],
     };
+    /* fork:end no3y-pr-project-multiselect */
     expect(withoutScratchProjectScope(elsewhere, projects)).toBe(elsewhere);
   });
 });
@@ -417,7 +425,9 @@ describe("pullRequestProjectChoices", () => {
   const projects = [project("main", laptop), project("worktree", laptop), project("main", desktop)];
   const choices = (
     servesPullRequests: (environmentId: EnvironmentId) => boolean,
-    scope: { projectId?: string; projectEnvironmentId?: string } = {},
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    scope: { projects?: ReadonlyArray<{ projectId: string; environmentId: string }> } = {},
+    /* fork:end no3y-pr-project-multiselect */
   ) =>
     pullRequestProjectChoices(projects, {
       environmentId: null,
@@ -440,7 +450,9 @@ describe("pullRequestProjectChoices", () => {
   });
 
   it("keeps the saved scope when its environment stops serving or has not loaded", () => {
-    const scope = { projectId: "worktree", projectEnvironmentId: laptop };
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    const scope = { projects: [{ projectId: "worktree", environmentId: laptop }] };
+    /* fork:end no3y-pr-project-multiselect */
     expect(choices((environmentId) => environmentId === desktop, scope)).toEqual([
       { id: "main", environmentId: desktop, title: "t3code · desktop" },
       { id: "worktree", environmentId: laptop, title: "t3code · laptop" },

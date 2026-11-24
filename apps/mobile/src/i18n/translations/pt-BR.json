@@ -2749,6 +2749,7 @@
   "eb5436c1e3d63332": "{count, plural, one {Filtros, {count} ativo} other {Filtros, {count} ativos}}",
   "5c2014db0ebd008f": "Mais filtros",
   "96d9e225f8ef331b": "Escolher ambiente dos pull requests",
+  "6a97fd3aaafa6dce": "Filtrar por projeto",
   "52b927d1e3e7af8c": "verificações passando",
   "fc50eef55537db95": "verificações falhando",
   "570c6b35c94892df": "verificações pendentes",

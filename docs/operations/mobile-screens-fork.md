@@ -6,6 +6,12 @@ The fork owns the integration changes; the app does not patch this package.
 Each archive includes compiled JavaScript, declarations, native source and
 `t3-fork.json` recording its version, source commit and upstream base.
 
+<!-- fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign -->
+
+> **This fork (no3y) carries its own Screens build** with an iOS back-swipe change on top of the T3 fork's archive. Rebuild it on each new upstream archive as `apps/mobile/deps/README.md` describes, rather than taking upstream's archive as is.
+
+<!-- fork:end no3y-mobile-redesign -->
+
 To reproduce an archive, use Node 24 and the repository's pinned Yarn from a
 clean fork checkout at the source commit recorded in its `t3-fork.json`:
 

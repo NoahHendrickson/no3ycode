@@ -47,11 +47,15 @@ const cleanGit: LaunchpadGitStatus = {
   hasOpenPullRequest: false,
 };
 
-const kinds = (input: Parameters<typeof deriveLaunchpadSuggestions>[0]) =>
-  deriveLaunchpadSuggestions(input).map((suggestion) => `${suggestion.kind}:${suggestion.id}`);
+type DeriveInput = Parameters<typeof deriveLaunchpadSuggestions>[0];
+const derive = (input: Omit<DeriveInput, "offerDevServer"> & Partial<DeriveInput>) =>
+  deriveLaunchpadSuggestions({ offerDevServer: false, ...input });
+
+const kinds = (input: Parameters<typeof derive>[0]) =>
+  derive(input).map((suggestion) => `${suggestion.kind}:${suggestion.id}`);
 
 describe("deriveLaunchpadSuggestions", () => {
-  it("offers one fix per authored pull request, worst first, ahead of reviews and merges", () => {
+  it("offers one fix per authored pull request, worst first, ahead of reviews", () => {
     expect(
       kinds({
         authored: [
@@ -67,7 +71,7 @@ describe("deriveLaunchpadSuggestions", () => {
       "conflicts:conflicts:https://github.com/owner/a/pull/2",
       "changes:changes:https://github.com/owner/a/pull/3",
       "review:review:https://github.com/owner/a/pull/5",
-      "merge:merge:https://github.com/owner/a/pull/1",
+      "review-open:review-open:environment-test:project-a",
     ]);
   });
 
@@ -85,7 +89,10 @@ describe("deriveLaunchpadSuggestions", () => {
         ],
         checkouts: [],
       }),
-    ).toEqual(["checks:checks:https://github.com/owner/a/pull/1"]);
+    ).toEqual([
+      "checks:checks:https://github.com/owner/a/pull/1",
+      "review-open:review-open:environment-test:project-a",
+    ]);
   });
 
   it("never offers to merge a draft", () => {
@@ -95,11 +102,11 @@ describe("deriveLaunchpadSuggestions", () => {
         reviewing: [],
         checkouts: [],
       }),
-    ).toEqual([]);
+    ).toEqual(["review-open:review-open:environment-test:project-a"]);
   });
 
   it("turns the checkout's status into commit, pull and open-PR work", () => {
-    const suggestions = deriveLaunchpadSuggestions({
+    const suggestions = derive({
       authored: [],
       reviewing: [],
       checkouts: [
@@ -129,7 +136,7 @@ describe("deriveLaunchpadSuggestions", () => {
 
   it("names the project for a draft with no project yet, and picks it", () => {
     const project = (id: string) => ({ environmentId, projectId: ProjectId.make(id) });
-    const suggestions = deriveLaunchpadSuggestions({
+    const suggestions = derive({
       authored: [],
       reviewing: [],
       checkouts: [
@@ -173,9 +180,25 @@ describe("deriveLaunchpadSuggestions", () => {
     ).toEqual([]);
   });
 
+  it("reviews every open pull request in one row, after fixes and before merging", () => {
+    const other = { projectId: ProjectId.make("project-b") };
+    const suggestions = derive({
+      authored: [pr(1, { reviewDecision: "approved", checksState: "passing" }), pr(2)],
+      reviewing: [pr(2), pr(3, other), pr(4, { state: "merged" })],
+      checkouts: [],
+      offerDevServer: true,
+    });
+    expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
+      "Review 2 open PRs",
+      "Merge #1 · PR 1",
+      "Start the dev server",
+    ]);
+    expect(suggestions[0]?.prompt).toContain("(owner/a#1, owner/a#2)");
+  });
+
   it("stops at four", () => {
     expect(
-      deriveLaunchpadSuggestions({
+      derive({
         authored: [1, 2, 3, 4, 5].map((number) => pr(number, { checksState: "failing" })),
         reviewing: [],
         checkouts: [],
