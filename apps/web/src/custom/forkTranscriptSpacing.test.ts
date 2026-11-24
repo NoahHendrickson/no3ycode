@@ -16,16 +16,16 @@ const gaps = (rows: MessagesTimelineRow[]) =>
 
 describe("forkSpaceTranscript gaps", () => {
   it.each([
-    ["a tool row under reply text", [reply(), tool()], [0, 4]],
-    ["reply text under a tool row", [tool(), reply()], [0, 4]],
-    ["a sent message under a tool row", [tool(), sent], [0, 4]],
-    ["a tool row under a reply that already shows its meta", [reply(true), tool()], [0, 0]],
-    ["the live line under a tool row", [tool(), live], [0, 2]],
-    ["the live line under a tool row that continued", [tool(true), live], [0, 10]],
-    ["the live line under reply text", [reply(), live], [0, 2]],
-    ["the live line under viewed images", [images, live], [0, 4]],
+    ["a tool row under reply text", [reply(), tool()], [0, 12]],
+    ["reply text under a tool row", [tool(), reply()], [0, 12]],
+    ["a sent message under a tool row", [tool(), sent], [0, 12]],
+    ["a tool row under a reply that already shows its meta", [reply(true), tool()], [0, 4]],
+    ["the live line under a tool row", [tool(), live], [0, 10]],
+    ["the live line under a tool row that continued", [tool(true), live], [0, 18]],
+    ["the live line under reply text", [reply(), live], [0, 10]],
+    ["the live line under viewed images", [images, live], [0, 12]],
     ["a reply under a user message", [user, reply()], [0, 0]],
-  ])("tops up %s to 16px", (_, rows, expected) => {
+  ])("tops up %s to 24px", (_, rows, expected) => {
     expect(gaps(rows)).toEqual(expected);
   });
 });
@@ -36,17 +36,17 @@ describe("forkSpaceTranscript", () => {
     const spaced = forkSpaceTranscript(rows);
     expect(spaced[0]).toBe(rows[0]);
     expect(spaced[1]).not.toBe(rows[1]);
-    expect(forkTranscriptGapStyle(spaced[1]!)).toEqual({ paddingTop: 4 });
+    expect(forkTranscriptGapStyle(spaced[1]!)).toEqual({ paddingTop: 12 });
     expect(forkSpaceTranscript([...rows])[1]).toBe(spaced[1]);
   });
 
   it("hands over a fresh copy when a row's gap changes, and the bare row when it goes", () => {
     const first = forkSpaceTranscript([tool(), live])[1]!;
     const moved = forkSpaceTranscript([tool(true), live])[1]!;
-    expect(forkTranscriptGapStyle(first)).toEqual({ paddingTop: 2 });
+    expect(forkTranscriptGapStyle(first)).toEqual({ paddingTop: 10 });
     expect(moved).not.toBe(first);
-    expect(forkTranscriptGapStyle(moved)).toEqual({ paddingTop: 10 });
-    expect(forkSpaceTranscript([user, live])[1]).toBe(live);
+    expect(forkTranscriptGapStyle(moved)).toEqual({ paddingTop: 18 });
+    expect(forkSpaceTranscript([live])[0]).toBe(live);
   });
 
   it("returns the same array when no row needs a gap", () => {

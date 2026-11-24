@@ -6338,13 +6338,13 @@
 
 - id: fork-transcript-spacing
   intent: >
-    Reply text, tool rows and the live status line sit 16px apart, the way
-    the no3y iPhone transcript spaces them; upstream's gaps there run from
+    Reply text, tool rows and the live status line sit 24px apart, a touch
+    roomier than the no3y iPhone transcript; upstream's gaps there run from
     4px to 18px depending on which rows meet. A pass after
     fork-working-row-last's fold reads one box per row (boxOf: the space it
     draws above and below its content, from TimelineRowContent's padding,
     WorkLogBlock's, a reply's or ungrouped tool row's py-0.5, a reasoning
-    trace's py-1 and the status line's pt-1) and tops the gap up to 16px as
+    trace's py-1 and the status line's pt-1) and tops the gap up to 24px as
     padding on the row's root. Only reply-to-tool, tool-to-reply and
     anything-to-live-line gaps are spaced (a send_to_user sent message counts
     as a reply); user bubbles and every other row keep upstream's spacing.
