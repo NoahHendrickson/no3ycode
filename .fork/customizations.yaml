@@ -1471,11 +1471,21 @@
     This entry owns the size AND the placement of the Sidebar V2 row hover
     actions; the id predates the alignment half.
 
-    Every Sidebar V2 row hover action — pin/unpin, snooze, settle, un-settle,
+    Every Sidebar V2 row hover action — pin, snooze, settle, un-settle,
     wake now — is a 24px square with a hover fill. Pin leads the card's hover
     cell, ahead of snooze (Noey's placement); it is capability-gated like
-    settle/snooze, card-only (slim rows keep pin in the context menu), and
-    toggles between two literal labels so the guard's census counts each.
+    settle/snooze, and card-only (slim rows keep pin in the context menu).
+    Unpin is the pinned marker itself (pinIndicator): a filled Pin02 in white
+    (foreground in light) on the card's title line and the slim shelves, a
+    24px button held to the glyph's 12px footprint, so the pin you see is the
+    pin you click. Without pinning rights it stays a passive mark. With no
+    hovering pointer it takes no taps (`any-hover:none` pointer-events-none,
+    like the slim-row actions): its 44px coarse hit area covered the title and
+    repo line, so a tap meant to open a pinned thread unpinned it. Touch
+    unpins from the row menu. The white
+    is a literal (`dark:text-white`) on purpose: Noey asked for pure white,
+    and no tone's foreground is pure white (dark tones are #e8e8e8), so a
+    token would only alias white. Figma names the same ink Icon mode "Strong".
     Upstream sizes them from padding around a
     12px glyph, which lands at 24x18 on a card and 28x18 on a slim row: two
     different shapes, both under the 24px minimum, on transparent buttons whose
@@ -5325,9 +5335,13 @@
     animation per strip plays it with a per-thread phase offset, so the
     compositor runs it — never per-cell opacity keyframes (a core of
     renderer CPU with a few working threads on screen), a per-frame canvas
-    or a requestAnimationFrame loop. Both keep a still frame under reduced
-    motion. The bead ring's steady spin is set so a loop turns exactly once
-    and repeats as drawn: a rotation layer to make up a part turn doubled its
+    or a requestAnimationFrame loop. Every film plays at 30 fps with its
+    start pinned (Web Animations startTime) to one shared frame grid and its
+    phase in the delay, so all marks step on the same vsync whenever they
+    mounted: out of step at 60 fps, 40 bead rings cost 12.6% of a core
+    against 6.2%. Both keep a still frame under reduced motion. The bead
+    ring's steady spin is set so a loop turns exactly once and repeats as
+    drawn: a rotation layer to make up a part turn doubled its
     GPU cost (40 marks: 28% of a core against the helix's 15%). The
     helix is drawn at 12px for the card's 12px status box. The bead ring is
     12px across (a step past the 10px status dots) in a 15px box held to the
@@ -6604,6 +6618,65 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
+- id: fork-composer-next-step
+  intent: >
+    A settled thread offers its owner's next message as one pill in the
+    composer's chip row (custom/ComposerNextStepPill), and a click sends it at
+    once. Rules come first (custom/composerNextStep.logic), from the thread's
+    PR as the PR chip beside it resolves it (resolveThreadCurrentPullRequestLink,
+    else resolveDisplayedThreadPr on the same git status), its watch, the checkout's git status and the owner's latest typed message
+    (scheduled tasks, watch wakes and agent-sent turns don't count): after a
+    sol loop with unmerged work off the default branch → Open PR; an open PR
+    nothing has watched → Babysit; one whose watch ended mergeable with checks
+    passing → Merge; a PR merged right after the owner asked to merge it ("merge
+    it", "lets merge", not negated), in this fork's repository only → Cut
+    release. A watched PR, or a watch that ended
+    short of mergeable, is the owner's call: nothing shows. There is no "Run
+    sol loop" rule: in the owner's history no state predicted it (4–8% at
+    every threshold tried).
+
+    Where no rule speaks, a learned habit may (custom/composerHabits*): every
+    owner turn the send path commits (useComposerSend's onOwnerTurnDispatched,
+    fenced beside the optimistic message, so refused sends, answers and queued
+    edits never count; not in side chats), pill clicks included, counts as the
+    follow-up to the thread's previous owner message, keyed by its words
+    (lowercased, numbers collapsed, filler dropped, sorted). A follow-up sent
+    at least five times and making up at least three in ten of that message's
+    follow-ups shows with a sparkle, sending its latest wording; its × forgets
+    it. Long prose, slash commands, acknowledgements and follow-ups naming a
+    number are never learned. The table is device-local (localStorage, capped
+    at 300 messages × 8 follow-ups, the newest follow-up always kept), cached
+    between changes so the pill never re-parses it while a turn streams, and
+    re-read before each write and on another window's storage event so windows
+    don't overwrite each other. No server, contract or AI call.
+    Replayed over the owner's history it is right about half the time, almost
+    all of it on what the rules now cover, so it stays quiet until a new habit
+    forms.
+
+    The pill shows only once the latest run completed, nothing waits on an
+    approval or question, the viewer can operate the thread and the composer
+    is empty, so a click never races what is written. Not in side chats. Web
+    and desktop; mobile is separate.
+  tier: 4
+  files:
+    - apps/web/src/custom/ComposerNextStepPill.tsx
+    - apps/web/src/custom/composerNextStep.logic.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.ts
+    - apps/web/src/custom/composerHabits.logic.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+  shadows: []
+  watch:
+    # Fenced pill in the composer's status chips (the chip row is built after
+    # useComposerSend for the pill's send) and the habit recorder it passes.
+    - apps/web/src/components/ChatView.tsx
+    # Fenced onOwnerTurnDispatched option, called where a new owner turn commits.
+    - apps/web/src/components/chat/useComposerSend.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+
 - id: fork-draft-project-quick-picks
   intent: >
     An unassigned New agent draft picks its project from a launchpad under
@@ -6633,10 +6706,13 @@
     those projects, each read from the copy a pick runs on, the draft's
     machine (or, once a project is picked, for that project alone):
     conflicts, failing checks, requested changes and approved, mergeable pull
-    requests you opened; open pull requests that request your review; and,
+    requests you opened; open pull requests that request your review; one
+    "Review N open PRs" row, naming each open pull request listed (yours or
+    asking your review) as repo#N for the first project that has any; and,
     when the picked project runs in its own checkout rather than a new
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
-    request (custom/draftLaunchpadSuggestions). Before a pick, the same git
+    request, then, last, starting the dev server for a picked project in its
+    own checkout (custom/draftLaunchpadSuggestions). Before a pick, the same git
     work comes from each listed project's own checkout, named for its
     project; picking one moves the draft into that checkout ("local", pinned to
     that machine), never a new worktree; each suggestion carries that policy. The pull requests come from the cached pullRequests.list
@@ -8884,3 +8960,25 @@
     - apps/web/src/components/chat/TimelineAssistantRows.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
+
+- id: no3y-worklet-default-params
+  intent: >
+    Reanimated worklets in apps/mobile take no default parameters. The worklets
+    Babel plugin unpacks a worklet's captured names inside its body, after the
+    defaults run, so a default naming a captured value throws a ReferenceError
+    on the UI runtime and Release builds abort (TestFlight 202611232310 died on
+    launch from the bead ring). Node tests run the plain function and never see
+    it, so the fork's t3code/no-worklet-default-params lint rule guards every
+    function with a "worklet" directive under apps/mobile/src and apps/mobile/fork.
+  tier: 4
+  files:
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.ts
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+  shadows: []
+  watch:
+    # Registers the rule in the t3code plugin.
+    - oxlint-plugin-t3code/index.ts
+    # Turns the rule on for mobile code.
+    - vite.config.ts
+  verify:
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
