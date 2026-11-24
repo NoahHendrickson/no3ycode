@@ -301,6 +301,11 @@ export const MonitorIcon = icon("monitor", Hg.MonitorIcon, "themed");
 export const LaptopIcon = icon("laptop", Hg.LaptopIcon, "themed");
 export const SmartphoneIcon = icon("smartphone", Hg.SmartphoneIcon, "themed");
 export const ActivityIcon = icon("activity", Hg.ActivityIcon, "stroke");
+// Fork-only glyphs matching the iOS status pill and queue card.
+export const ComputerActivityIcon = icon("computer-activity", Hg.ComputerActivityIcon, "stroke");
+export const ComputerTerminalIcon = icon("computer-terminal", Hg.ComputerTerminal01Icon, "stroke");
+export const PencilEditIcon = icon("pencil-edit", Hg.PencilEdit02Icon, "stroke");
+export const ListNumberIcon = icon("list-number", Hg.LeftToRightListNumberIcon, "stroke");
 export const BatteryIcon = icon("battery", Hg.BatteryIcon, "themed");
 export const CpuIcon = icon("cpu", Hg.CpuIcon, "themed");
 export const DatabaseIcon = icon("database", Hg.DatabaseIcon, "themed");

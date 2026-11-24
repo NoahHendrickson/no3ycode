@@ -62,19 +62,22 @@ export function forkApprovalNoticeItem(input: {
       </span>
     ),
     description: (
-      <span className="flex w-full min-w-0 flex-col gap-1" data-fork-approval-notice="true">
-        <Detail
-          aria-label={DETAIL_LABEL[approval.requestKind]}
-          className={
-            approval.requestKind === "mcp-elicitation"
-              ? "block max-h-20 overflow-auto whitespace-pre-wrap text-foreground wrap-break-word [scrollbar-width:thin]"
-              : "block max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-foreground wrap-anywhere [scrollbar-width:thin]"
-          }
-          data-approval-detail="complete"
-          tabIndex={0}
-        >
-          {approval.detail || label}
-        </Detail>
+      <span className="flex w-full min-w-0 flex-col gap-1.5" data-fork-approval-notice="true">
+        {/* No detail means nothing new to show; echoing the title read as a duplicate line. */}
+        {approval.detail ? (
+          <Detail
+            aria-label={DETAIL_LABEL[approval.requestKind]}
+            className={
+              approval.requestKind === "mcp-elicitation"
+                ? "block max-h-20 overflow-auto whitespace-pre-wrap text-foreground wrap-break-word [scrollbar-width:thin]"
+                : "block max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-foreground wrap-anywhere [scrollbar-width:thin]"
+            }
+            data-approval-detail="complete"
+            tabIndex={0}
+          >
+            {approval.detail}
+          </Detail>
+        ) : null}
         {canRespond ? null : (
           <span className="text-warning">
             Provider process is gone. Interrupt or restart the run to respond.
@@ -98,17 +101,19 @@ export function forkApprovalNoticeItem(input: {
             </PopoverPopup>
           </Popover>
         ) : null}
+        {/* The actions sit under the request, bottom left, like the question card's Submit. */}
+        <span data-fork-approval-actions className="mt-3 flex flex-wrap items-center gap-2">
+          <ComposerPendingApprovalActions
+            requestId={approval.requestId}
+            disabled={input.disabled}
+            isResponding={input.isResponding}
+            options={approval.options}
+            acceptFirst
+            canRespond={canRespond}
+            onRespondToApproval={input.onRespondToApproval}
+          />
+        </span>
       </span>
-    ),
-    actions: (
-      <ComposerPendingApprovalActions
-        requestId={approval.requestId}
-        disabled={input.disabled}
-        isResponding={input.isResponding}
-        options={approval.options}
-        canRespond={canRespond}
-        onRespondToApproval={input.onRespondToApproval}
-      />
     ),
   };
 }

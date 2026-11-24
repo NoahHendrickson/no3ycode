@@ -147,7 +147,7 @@
      card's copy is inked for the vessel here rather than inherited. */
 
   &
-    [data-fork-composer-vessel]
+    :is([data-fork-composer-vessel], [data-fork-composer-banners])
     [data-fork-composer-notice="true"]
     [data-slot="composer-banner-content"] {
     color: #1c1c1a;

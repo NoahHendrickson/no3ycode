@@ -3693,6 +3693,8 @@
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
   watch:
+    # The permissions menu is a vertical list, so its keyboard test walks it with Up and Down.
+    - apps/web/src/components/chat/ComposerPermissionsSection.browser.test.tsx
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
     # Exports its shell reader for the background-work list's command gist.
@@ -4840,6 +4842,8 @@
     - apps/web/src/components/ChatView.tsx
     - docs/user/thread-sidebar.md
     - apps/web/src/components/chat/ThreadActivityBanners.tsx
+    # The usage-limit banner is a notice card with a primary Resume action.
+    - apps/web/src/components/chat/UsageLimitRecoveryBanner.tsx
   verify:
     - apps/web/src/__fork_guards__/forkComposerBannerSurface.test.ts
 
@@ -4979,9 +4983,18 @@
   watch:
     # Upstream's RTL test, fenced to the fork card (no header or collapse, radio rows).
     - apps/web/src/components/chat/ComposerPendingUserInputPanel.direction.browser.test.tsx
-    # data-fork-pending-user-input-action on Previous and Next/Submit; the
-    # outline + 24px restyle hangs off those attributes.
+    # In question mode the composer keeps only a round arrow (data-fork-pending-user-input-action
+    # "advance"); Previous and Submit moved into the card.
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
+    # Hands the card onPrevious, through the override-resolving alias import.
+    - apps/web/src/components/chat/ChatComposer.tsx
+    # Upstream's onPreviousPendingQuestion is gone from the composer's actions and their tests.
+    - apps/web/src/components/chat/ComposerFooterControls.tsx
+    - apps/web/src/components/chat/ComposerPrimaryActions.browser.test.tsx
+    - apps/web/src/components/chat/useQueuedRunEdit.browser.test.tsx
+    # A re-clicked single-select option clears (web card and iPhone share the toggle).
+    - packages/client-runtime/src/state/pendingUserInput.ts
+    - packages/client-runtime/src/state/pendingUserInput.test.ts
     # Swaps in the no3y iPhone card.
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
@@ -6678,6 +6691,8 @@
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/forkQueuedItems.ts
+    - apps/web/src/custom/ComposerQueuedChip.tsx
     - apps/web/src/custom/stashQueuedRun.ts
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
@@ -6729,7 +6744,7 @@
     - apps/web/src/components/ChatView.tsx
     # Owns the shelf items, the blocking-drawer state and the typing-held approval.
     - apps/web/src/components/chat/ChatComposer.tsx
-    # The approval buttons the notice renders.
+    # The approval buttons the notice renders; acceptFirst puts Approve ahead of Decline there.
     - apps/web/src/components/chat/ComposerPendingApprovalActions.tsx
     # Upstream's inline row the empty list keeps unmounted.
     - apps/web/src/components/chat/TimelinePendingApprovalRow.tsx

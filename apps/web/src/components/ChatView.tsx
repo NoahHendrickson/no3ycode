@@ -362,6 +362,9 @@ import {
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
 import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
+import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
+import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
+import { resolveComposerBackgroundWork } from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2809,7 +2812,15 @@ export default function ChatView(props: ChatViewProps) {
      Working fleets and monitoring leave the banner stack for a chip above the composer, beside
      the thread's PR (custom/ComposerBackgroundWork). Stop handler and task list come from
      useThreadLifecycle, like upstream's row. */
-  const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
+  const composerBackgroundWorkPresentation = resolveComposerBackgroundWork(
+    presentPendingBackgroundWork(activeBackgroundTasks),
+    serverProjection?.subagents,
+  );
+  // The queue card collapses into a pill in this row.
+  const [forkQueueExpanded, setForkQueueExpanded] = useState(true);
+  const forkQueuedCount = forkQueuedItemCount(serverProjection, optimisticUserMessages);
+  // A queue that empties forgets its collapse, so the next queued message opens as a card again.
+  if (forkQueuedCount === 0 && !forkQueueExpanded) setForkQueueExpanded(true);
   const composerStatusChips =
     activeThread && activeThreadRef && !isDraftHeroState ? (
       <>
@@ -2829,7 +2840,11 @@ export default function ChatView(props: ChatViewProps) {
             canStop={canOperateThread}
             onStop={() => void handleStopBackgroundWorkStable()}
             onOpenThread={onOpenRelatedThreadStable}
+            environmentId={activeThread.environmentId}
           />
+        ) : null}
+        {!forkQueueExpanded && forkQueuedCount > 0 ? (
+          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
         ) : null}
       </>
     ) : null;
@@ -3546,6 +3561,8 @@ export default function ChatView(props: ChatViewProps) {
           )}
           onEditQueuedRun={queuedRunEdit.beginEdit}
           onCancelEdit={queuedRunEdit.cancelEdit}
+          expanded={forkQueueExpanded}
+          onExpandedChange={setForkQueueExpanded}
         />
       </>
     ) : null;

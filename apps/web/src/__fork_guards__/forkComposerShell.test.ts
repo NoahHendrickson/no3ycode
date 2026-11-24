@@ -638,10 +638,11 @@ describe("fork guard: fork-composer-shell", () => {
     expect(action?.body).toMatch(/height:\s*var\(--fork-composer-action-slot\)/u);
     expect(theme).toMatch(/--fork-composer-action-slot:\s*32px/u);
     expect(action?.body).toMatch(/border-radius:\s*8px/u);
-    // Stop is flat like send; upstream's shadows read as a dark bottom lip.
+    // Stop is a ghost icon button: no fill, no shadow, the control row's ink.
     const stop = rules.find((rule) =>
-      rule.selector.endsWith('.dark [data-fork-composer-action="stop"]'),
+      rule.selector.endsWith('] [data-fork-composer-action="stop"]'),
     );
+    expect(stop?.body).toMatch(/background:\s*transparent/u);
     expect(stop?.body).toMatch(/box-shadow:\s*none/u);
     // Upstream's attach-files button (#8236) mounts in the primary cluster;
     // the fork moves it to the control row. It is stamped by name like send
@@ -803,6 +804,14 @@ describe("fork guard: fork-composer-shell", () => {
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
     // The row sits in flow above the vessel and hides when no chip renders.
     expect(shell).toContain('data-fork-composer-status-chips="true"');
+    // Banners are cards between the chips and the vessel, not floor inside it.
+    expect(shell.indexOf('data-fork-composer-status-chips="true"')).toBeLessThan(
+      shell.indexOf('data-fork-composer-banners="true"'),
+    );
+    expect(composer).toMatch(/banners=\{\s*<ComposerBanner\.Dock>/u);
+    expect(theme).toContain(
+      ':root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {',
+    );
     expect(shell).toContain("empty:hidden");
     expect(composer).toContain("statusChips={props.statusChips}");
     expect(chatView).toContain("statusChips={composerStatusChips}");

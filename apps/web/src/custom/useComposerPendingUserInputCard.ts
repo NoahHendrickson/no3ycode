@@ -2,11 +2,13 @@
  * Shared pending-user-input card logic for the fork Questions chrome.
  * See `.fork/customizations.yaml#fork-pending-user-input`.
  *
- * Owns auto-advance, optimistic single-select, and number-key selection so the
- * override can stay presentational. Port upstream effect fixes here first.
+ * Owns the selection guards and number-key selection so the override can stay presentational.
+ * Picking an option never submits or advances: a mis-click stays correctable, and the card's
+ * own Submit moves on. The selection rule itself is togglePendingUserInputOptionSelection's.
+ * Port upstream effect fixes here first.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type { PendingUserInputDraftAnswer } from "@t3tools/client-runtime/state/pending-user-input";
 import { derivePendingUserInputProgress } from "~/pendingUserInput";
@@ -21,7 +23,6 @@ export function useComposerPendingUserInputCard({
   answers,
   questionIndex,
   onToggleOption,
-  onAdvance,
 }: {
   prompt: PendingUserInput;
   /** Upstream #9786: the client lacks the operate scope, so the card is read-only. */
@@ -30,18 +31,12 @@ export function useComposerPendingUserInputCard({
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
   onToggleOption: (questionId: string, optionValue: string) => void;
-  onAdvance: () => void;
 }) {
   const progress = derivePendingUserInputProgress(prompt.questions, answers, questionIndex);
   const activeQuestion = progress.activeQuestion;
   // Message-mode requests remain answerable after their provider turn ends.
   const canRespond = prompt.responseCapability !== "not_resumable";
   const responseDisabled = disabled || isResponding || !canRespond;
-  const autoAdvanceTimerRef = useRef<number | null>(null);
-  const [optimisticSingleSelect, setOptimisticSingleSelect] = useState<{
-    questionId: string;
-    optionValue: string;
-  } | null>(null);
 
   // ComposerPendingUserInputCard is `memo(fn)`, and react-dom applies
   // useEffectEvent impls only for FunctionComponent fibers — memo and
@@ -52,70 +47,20 @@ export function useComposerPendingUserInputCard({
   // A layout-phase mirror instead, the same shape and reasoning as
   // useForkDictationHotkeyTarget. Audit on a React bump: grep useEffectEvent,
   // check whether the host component is memoized or a forwardRef.
-  const latestRef = useRef({ activeQuestion, onToggleOption, onAdvance, responseDisabled });
+  const latestRef = useRef({ onToggleOption, responseDisabled });
   useLayoutEffect(() => {
-    latestRef.current = { activeQuestion, onToggleOption, onAdvance, responseDisabled };
+    latestRef.current = { onToggleOption, responseDisabled };
   });
 
-  useEffect(() => {
-    if (!activeQuestion || activeQuestion.multiSelect || !optimisticSingleSelect) {
-      return;
-    }
-    if (optimisticSingleSelect.questionId !== activeQuestion.id) {
-      setOptimisticSingleSelect(null);
-      return;
-    }
-    if (
-      progress.customAnswer.trim().length === 0 &&
-      progress.selectedOptionValues.includes(optimisticSingleSelect.optionValue)
-    ) {
-      setOptimisticSingleSelect(null);
-    }
-  }, [
-    activeQuestion,
-    optimisticSingleSelect,
-    progress.customAnswer,
-    progress.selectedOptionValues,
-  ]);
-
-  // A pending auto-advance belongs to the question it was scheduled on. It must
-  // not fire once the user moves to another question, once responding is
-  // disabled (the operate scope can be withdrawn mid-timer, upstream #9786),
-  // or after unmount.
-  const activeQuestionId = activeQuestion?.id;
-  useEffect(() => {
-    const clearAutoAdvance = () => {
-      if (autoAdvanceTimerRef.current !== null) {
-        window.clearTimeout(autoAdvanceTimerRef.current);
-        autoAdvanceTimerRef.current = null;
-      }
-    };
-    if (responseDisabled || activeQuestionId === undefined) clearAutoAdvance();
-    return clearAutoAdvance;
-  }, [activeQuestionId, responseDisabled]);
-
-  // Everything this reads comes from the mirror or a setState, so the compiler
-  // keeps it stable and the number-key listener below is not rebuilt per render.
+  // Everything this reads comes from the mirror, so the compiler keeps it stable
+  // and the number-key listener below is not rebuilt per render.
   const handleOptionSelection = (questionId: string, optionValue: string) => {
-    const { activeQuestion: question, onToggleOption: toggle } = latestRef.current;
     if (latestRef.current.responseDisabled) return;
-    if (question?.multiSelect) {
-      toggle(questionId, optionValue);
-      return;
-    }
-    setOptimisticSingleSelect({ questionId, optionValue });
-    toggle(questionId, optionValue);
-    if (autoAdvanceTimerRef.current !== null) {
-      window.clearTimeout(autoAdvanceTimerRef.current);
-    }
-    autoAdvanceTimerRef.current = window.setTimeout(() => {
-      autoAdvanceTimerRef.current = null;
-      latestRef.current.onAdvance();
-    }, 200);
+    latestRef.current.onToggleOption(questionId, optionValue);
   };
 
   // Number keys 1-9 pick options when focus is outside editable fields: multi-select toggles
-  // in place, single-select auto-advances. Only the pane that owns window input takes them
+  // in place, single-select selects. Only the pane that owns window input takes them
   // (focused in a split, not behind Settings or Usage: fork-split-threads).
   const ownsInput = useOwnsGlobalInput();
   useEffect(() => {
@@ -152,7 +97,6 @@ export function useComposerPendingUserInputCard({
   return {
     progress,
     activeQuestion,
-    optimisticSingleSelect,
     responseDisabled,
     handleOptionSelection,
   } as const;

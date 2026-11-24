@@ -39,7 +39,9 @@ describe("fork-queued-runs-banner", () => {
 
   it("renders the collapsible banner with reorder, steer, edit, stash and remove", () => {
     expect(banner).toContain("<ComposerBanner.Attachment>");
-    expect(banner).toContain("<ComposerBanner.ToggleIcon expanded={expanded} />");
+    // Rendered only while expanded: its header collapses it into the chip row's pill.
+    expect(banner).toContain("<ComposerBanner.ToggleIcon expanded />");
+    expect(banner).toContain("onClick={() => props.onExpandedChange(false)}");
     expect(banner).toContain("useAtomCommand(threadEnvironment.reorderQueuedRun)");
     expect(banner).toContain("<GripVerticalIcon />");
     expect(banner).toContain('aria-label="Edit queued message"');
