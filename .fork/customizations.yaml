@@ -6617,6 +6617,58 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
+- id: fork-composer-next-step
+  intent: >
+    A settled thread offers its owner's next message as one pill in the
+    composer's chip row (custom/ComposerNextStepPill), and a click sends it at
+    once. Rules come first (custom/composerNextStep.logic), from the thread's
+    most recently linked PR (or, unlinked, the branch's PR in git status), its
+    watch, the checkout's git status and the owner's latest typed message
+    (scheduled tasks, watch wakes and agent-sent turns don't count): after a
+    sol loop with unmerged work off the default branch → Open PR; an open PR
+    nothing has watched → Babysit; one whose watch ended mergeable with checks
+    passing → Merge; a PR merged right after the owner asked to merge, in this
+    fork's repository only → Cut release. A watched PR, or a watch that ended
+    short of mergeable, is the owner's call: nothing shows. There is no "Run
+    sol loop" rule: in the owner's history no state predicted it (4–8% at
+    every threshold tried).
+
+    Where no rule speaks, a learned habit may (custom/composerHabits*): every
+    owner send from this composer, pill clicks included, counts as the
+    follow-up to the thread's previous owner message, keyed by its words
+    (lowercased, numbers collapsed, filler dropped, sorted). A follow-up sent
+    at least five times and making up at least three in ten of that message's
+    follow-ups shows with a sparkle, sending its latest wording; its × forgets
+    it. Long prose, slash commands, acknowledgements and follow-ups naming a
+    number are never learned. The table is device-local (localStorage, capped
+    at 300 messages × 8 follow-ups), read once and cached so the pill never
+    re-parses it while a turn streams, with no server, contract or AI call.
+    Replayed over the owner's history it is right about half the time, almost
+    all of it on what the rules now cover, so it stays quiet until a new habit
+    forms.
+
+    The pill shows only once the latest run completed, nothing waits on an
+    approval or question, the viewer can operate the thread and the composer
+    is empty, so a click never races what is written. Not in side chats. Web
+    and desktop; mobile is separate.
+  tier: 4
+  files:
+    - apps/web/src/custom/ComposerNextStepPill.tsx
+    - apps/web/src/custom/composerNextStep.logic.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.ts
+    - apps/web/src/custom/composerHabits.logic.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+  shadows: []
+  watch:
+    # Fenced pill in the composer's status chips, its send callback, and the
+    # composer send wrapper that records habits.
+    - apps/web/src/components/ChatView.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+
 - id: fork-draft-project-quick-picks
   intent: >
     An unassigned New agent draft picks its project from a launchpad under
@@ -6646,10 +6698,13 @@
     those projects, each read from the copy a pick runs on, the draft's
     machine (or, once a project is picked, for that project alone):
     conflicts, failing checks, requested changes and approved, mergeable pull
-    requests you opened; open pull requests that request your review; and,
+    requests you opened; open pull requests that request your review; one
+    "Review N open PRs" per project, naming every open pull request listed
+    (yours or asking your review); and,
     when the picked project runs in its own checkout rather than a new
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
-    request (custom/draftLaunchpadSuggestions). Before a pick, the same git
+    request, then, last, starting the dev server for a picked project in its
+    own checkout (custom/draftLaunchpadSuggestions). Before a pick, the same git
     work comes from each listed project's own checkout, named for its
     project; picking one moves the draft into that checkout ("local", pinned to
     that machine), never a new worktree; each suggestion carries that policy. The pull requests come from the cached pullRequests.list

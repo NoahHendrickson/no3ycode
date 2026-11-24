@@ -815,7 +815,7 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(shell).toContain("empty:hidden");
     expect(composer).toContain("statusChips={props.statusChips}");
-    expect(chatView).toContain("statusChips={composerStatusChips}");
+    expect(chatView).toMatch(/statusChips=\{[\s\S]{0,300}\{composerStatusChips\}/u);
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
     expect(work).toContain("<ElectricityStackIcon />");

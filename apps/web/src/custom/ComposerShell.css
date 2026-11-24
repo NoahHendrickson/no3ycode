@@ -43,8 +43,13 @@
   );
 }
 
-/* Two ComposerControls in one pill: the halves take the pill's height, ink and type. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="background-work"] {
+/* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
+   next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip]:is(
+    [data-fork-composer-status-chip="background-work"],
+    [data-fork-composer-status-chip="learned-step"]
+  ) {
   gap: 0;
   padding-inline: 0;
   /* The agents / monitoring chip wears the composer's own fill. */

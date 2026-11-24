@@ -13,7 +13,9 @@ export type LaunchpadSuggestionKind =
   | "commit"
   | "pull"
   | "open-pr"
-  | "merge";
+  | "merge"
+  | "review-open"
+  | "dev-server";
 
 export interface LaunchpadSuggestion {
   readonly id: string;
@@ -174,20 +176,64 @@ function gitSuggestions({ project, name, git }: LaunchpadCheckout): LaunchpadSug
   return suggestions;
 }
 
+/** One "review the open pull requests" row per project, listing the numbers so the agent
+    reviews exactly these. */
+function reviewOpenSuggestions(
+  openPullRequests: ReadonlyArray<LaunchpadPullRequest>,
+): LaunchpadSuggestion[] {
+  const byProject = new Map<
+    string,
+    { readonly project: NonNullable<LaunchpadSuggestion["project"]>; readonly numbers: number[] }
+  >();
+  for (const pr of openPullRequests) {
+    const key = `${pr.environmentId}:${pr.projectId}`;
+    const group = byProject.get(key) ?? {
+      project: { environmentId: pr.environmentId, projectId: pr.projectId },
+      numbers: [],
+    };
+    group.numbers.push(pr.number);
+    byProject.set(key, group);
+  }
+  return [...byProject].map(([key, { project, numbers }]) => ({
+    id: `review-open:${key}`,
+    kind: "review-open",
+    project,
+    envMode: null,
+    title: `Review ${numbers.length} open ${plural(numbers.length, "PR", "PRs")}`,
+    prompt: `Code-review the open PRs (${numbers.map((number) => `#${number}`).join(", ")}), leave your reviews on them, and tell me which are ready to merge.`,
+  }));
+}
+
+const DEV_SERVER_SUGGESTION: LaunchpadSuggestion = {
+  id: "dev-server",
+  kind: "dev-server",
+  project: null,
+  envMode: "local",
+  title: "Start the dev server",
+  prompt: "Start the dev server and give me a link.",
+};
+
 /**
- * Broken work on your own pull requests first, then reviews asked of you,
- * then the checkout's git work, then pull requests ready to merge. Newest
- * first within each group, as the list arrives.
+ * Broken work on your own pull requests first, then reviews asked of you, then a review of
+ * every open pull request, then the checkout's git work, then pull requests ready to merge,
+ * then starting the picked project's dev server. Newest first within each group, as the list
+ * arrives.
  */
 export function deriveLaunchpadSuggestions(input: {
   readonly authored: ReadonlyArray<LaunchpadPullRequest>;
   readonly reviewing: ReadonlyArray<LaunchpadPullRequest>;
   readonly checkouts: ReadonlyArray<LaunchpadCheckout>;
+  /** A picked project, so its own dev server is worth offering. */
+  readonly offerDevServer?: boolean;
 }): LaunchpadSuggestion[] {
   const fixes: LaunchpadSuggestion[] = [];
   const merges: LaunchpadSuggestion[] = [];
   // A project on two machines lists its pull requests from both.
   const seen = new Set<string>();
+  const open = new Map<string, LaunchpadPullRequest>();
+  for (const pr of [...input.authored, ...input.reviewing]) {
+    if (pr.state === "open" && !open.has(pr.url)) open.set(pr.url, pr);
+  }
   for (const pr of input.authored) {
     if (pr.state !== "open" || seen.has(pr.url)) continue;
     const kind = authoredKind(pr);
@@ -201,8 +247,12 @@ export function deriveLaunchpadSuggestions(input: {
     seen.add(pr.url);
     reviews.push(pullRequestSuggestion(pr, "review"));
   }
-  return [...fixes, ...reviews, ...input.checkouts.flatMap(gitSuggestions), ...merges].slice(
-    0,
-    LAUNCHPAD_SUGGESTION_LIMIT,
-  );
+  return [
+    ...fixes,
+    ...reviews,
+    ...reviewOpenSuggestions([...open.values()]),
+    ...input.checkouts.flatMap(gitSuggestions),
+    ...merges,
+    ...(input.offerDevServer ? [DEV_SERVER_SUGGESTION] : []),
+  ].slice(0, LAUNCHPAD_SUGGESTION_LIMIT);
 }

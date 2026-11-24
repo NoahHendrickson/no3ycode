@@ -363,6 +363,11 @@ import { renderComposerContextStripFallback } from "~/custom/composerContextStri
 import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
 import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { ComposerNextStepPill } from "~/custom/ComposerNextStepPill";
+import { recordComposerHabit } from "~/custom/composerHabits";
+import { lastOwnerPrompt } from "~/custom/composerNextStep.logic";
+/* fork:end fork-composer-next-step */
 import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
 import { composerBackgroundWorkItems } from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
@@ -3495,7 +3500,59 @@ export default function ChatView(props: ChatViewProps) {
     });
   };
   const onWorktreeSetupWorkLocallyStable = useStableCallback(onWorktreeSetupWorkLocally);
-  const onComposerSendStable = useStableCallback(onSend);
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+     Every owner send from this composer (pill clicks too) teaches the learned next step what
+     follows the thread's previous owner message. Answers, approval feedback, a queued message's
+     edit and a repeat click while a send is in flight are not follow-ups. */
+  const recordComposerHabitFor = (prompt: string) => {
+    if (
+      activePendingUserInput ||
+      activePendingApproval !== null ||
+      queuedRunEdit.isEditing ||
+      sendInFlightRef.current ||
+      !serverProjection
+    ) {
+      return;
+    }
+    recordComposerHabit(lastOwnerPrompt(serverProjection.messages), prompt);
+  };
+  const onComposerSendStable = useStableCallback((...args: Parameters<typeof onSend>) => {
+    recordComposerHabitFor(args[4]?.prompt ?? promptRef.current);
+    return onSend(...args);
+  });
+  /* fork:end fork-composer-next-step */
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+     Built after onSend, which the click calls; it rides the chip row beside composerStatusChips. */
+  const sendNextStepStable = useStableCallback((prompt: string) => {
+    const sendContext = composerRef.current?.getSendContext();
+    if (!sendContext) return;
+    recordComposerHabitFor(prompt);
+    void onSend(undefined, "auto", "foreground", undefined, {
+      prompt,
+      sendContext: { ...sendContext, prompt },
+    });
+  });
+  const composerNextStepPill =
+    activeThread && !isDraftHeroState && !embedded ? (
+      <ComposerNextStepPill
+        environmentId={activeThread.environmentId}
+        // A shared checkout on another branch is not this thread's work or PR.
+        cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
+        settled={
+          canOperateThread &&
+          !isWorking &&
+          activePendingApproval === null &&
+          !activePendingUserInput &&
+          announcedRun(activeThread.latestRun, serverProjection?.runs ?? EMPTY_RUNS)?.status ===
+            "completed"
+        }
+        pullRequests={activeThread.pullRequests}
+        messages={serverProjection?.messages ?? null}
+        draftTarget={composerDraftTarget}
+        onSend={sendNextStepStable}
+      />
+    ) : null;
+  /* fork:end fork-composer-next-step */
   const sendPreviewAnnotation = (
     annotation: PreviewAnnotationPayload,
     image: ComposerImageAttachment | null,
@@ -4389,7 +4446,16 @@ export default function ChatView(props: ChatViewProps) {
                                 {...(composerContextStrip
                                   ? { contextStrip: composerContextStrip }
                                   : {})}
-                                statusChips={composerStatusChips}
+                                statusChips={
+                                  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+                                  composerStatusChips || composerNextStepPill ? (
+                                    <>
+                                      {composerStatusChips}
+                                      {composerNextStepPill}
+                                    </>
+                                  ) : null
+                                  /* fork:end fork-composer-next-step */
+                                }
                                 /* fork:end fork-composer-shell */
                                 phase={phase}
                                 canSteer={canSteer}

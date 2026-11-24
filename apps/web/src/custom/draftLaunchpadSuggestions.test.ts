@@ -51,7 +51,7 @@ const kinds = (input: Parameters<typeof deriveLaunchpadSuggestions>[0]) =>
   deriveLaunchpadSuggestions(input).map((suggestion) => `${suggestion.kind}:${suggestion.id}`);
 
 describe("deriveLaunchpadSuggestions", () => {
-  it("offers one fix per authored pull request, worst first, ahead of reviews and merges", () => {
+  it("offers one fix per authored pull request, worst first, ahead of reviews", () => {
     expect(
       kinds({
         authored: [
@@ -67,7 +67,7 @@ describe("deriveLaunchpadSuggestions", () => {
       "conflicts:conflicts:https://github.com/owner/a/pull/2",
       "changes:changes:https://github.com/owner/a/pull/3",
       "review:review:https://github.com/owner/a/pull/5",
-      "merge:merge:https://github.com/owner/a/pull/1",
+      "review-open:review-open:environment-test:project-a",
     ]);
   });
 
@@ -85,7 +85,10 @@ describe("deriveLaunchpadSuggestions", () => {
         ],
         checkouts: [],
       }),
-    ).toEqual(["checks:checks:https://github.com/owner/a/pull/1"]);
+    ).toEqual([
+      "checks:checks:https://github.com/owner/a/pull/1",
+      "review-open:review-open:environment-test:project-a",
+    ]);
   });
 
   it("never offers to merge a draft", () => {
@@ -95,7 +98,7 @@ describe("deriveLaunchpadSuggestions", () => {
         reviewing: [],
         checkouts: [],
       }),
-    ).toEqual([]);
+    ).toEqual(["review-open:review-open:environment-test:project-a"]);
   });
 
   it("turns the checkout's status into commit, pull and open-PR work", () => {
@@ -171,6 +174,24 @@ describe("deriveLaunchpadSuggestions", () => {
         }),
       }),
     ).toEqual([]);
+  });
+
+  it("reviews every open pull request once per project, after fixes and before merging", () => {
+    const other = { projectId: ProjectId.make("project-b") };
+    const suggestions = deriveLaunchpadSuggestions({
+      authored: [pr(1, { reviewDecision: "approved", checksState: "passing" }), pr(2)],
+      reviewing: [pr(2), pr(3, other), pr(4, { state: "merged" })],
+      checkouts: [],
+      offerDevServer: true,
+    });
+    expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
+      "Review 2 open PRs",
+      "Review 1 open PR",
+      "Merge #1 · PR 1",
+      "Start the dev server",
+    ]);
+    expect(suggestions[0]?.prompt).toContain("(#1, #2)");
+    expect(suggestions[1]?.project?.projectId).toBe("project-b");
   });
 
   it("stops at four", () => {
