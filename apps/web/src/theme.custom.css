@@ -3063,12 +3063,10 @@
     [data-slot="select-item"],
     [data-slot="combobox-item"]
   ):is([data-highlighted], [data-popup-open], :hover),
-/* A model row while its effort value (an item of its own) is highlighted or open lights like
-   any row (fork-model-picker). */
+/* A model row stays lit while the menu its control opened is open, the pointer inside that menu
+   (fork-model-picker); dark palettes light rows with this wash instead of --accent. */
 :root[data-fork="noahhendrickson-t3code"].dark
-  [data-slot="menu-item"]:has(
-    > * > [data-model-row-control] :is([data-highlighted], [data-popup-open])
-  ) {
+  [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }

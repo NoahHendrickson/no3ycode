@@ -57,6 +57,7 @@ import {
 import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
+import { type RenderRowControl, RowControlSlot } from "~/custom/modelRowControl";
 import { orderClaudeFamilies } from "~/custom/claudeFamilyOrder";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
 import { MenuIconTab, MenuTabs } from "~/custom/Tabs";
@@ -197,9 +198,6 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
 /** Every row shares one shape: 32px, 4px corners, 12px medium label. */
 const ROW_CLASS =
   "h-8 min-h-8 rounded-[4px] px-2 py-0 text-base font-normal sm:min-h-8 sm:text-base";
-function isInRowControl(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest("[data-model-row-control]") !== null;
-}
 
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
@@ -228,10 +226,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   onOpenProviderSetup?: (instanceId: ProviderInstanceId) => void;
   getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   onInstanceModelChange: (instanceId: ProviderInstanceId, model: string) => void;
-  /** Rendered on the current model's row, before its check (the composer's effort menu). */
-  selectedRowControl?: ReactNode;
-  /** Shown on another row while it is hovered: what picking it would set (its effort). */
-  rowPreview?: (instanceId: ProviderInstanceId, model: string) => ReactNode;
+  /**
+   * A row's control before its pin (the composer's effort). The current model's row always gets
+   * one; other rows only outside search and when they can be picked. `pick` chooses the row.
+   */
+  renderRowControl?: RenderRowControl;
   /** The search field; a Menu has no `initialFocus`, so this content focuses it itself. */
   searchInputRef: RefObject<HTMLInputElement | null>;
 }) {
@@ -765,6 +764,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     const disabledReason = getModelDisabledReason?.(model.instanceId, model.slug) ?? null;
     const isFavorite = favoritesSet.has(modelKey);
     const isSelected = selectedModelKeySet.has(modelKey);
+    const isActive = modelKey === activeModelKey;
+    // Not on other rows in search results (a pick there refocuses the search field) or on rows
+    // that cannot be picked.
+    const showsRowControl =
+      props.renderRowControl !== undefined && (isActive || (!isSearching && !disabledReason));
     // Upstream retired its driver-keyed glyph table; the instance icon carries
     // the ACP registry art and accent the row's provider actually has.
     const providerEntry = showProvider ? entryByInstanceId.get(model.instanceId) : undefined;
@@ -810,22 +814,20 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         className={cn(
           ROW_CLASS,
           "group",
-          // Its effort control is an item of its own; the row stays lit while that one is.
-          "has-data-highlighted:bg-accent has-data-popup-open:bg-accent",
+          // Lit while the menu its control opened is open (dark palettes: theme.custom.css).
+          "has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
           disabledReason && "data-disabled:pointer-events-auto",
         )}
         onClick={(event) => chooseModel(model, event.shiftKey)}
-        // The row's control is a menu item of its own; moving over it must not hand the
-        // highlight back to the row, which would close the control's menu.
-        onMouseMove={(event) => {
-          if (isInRowControl(event.target)) event.preventBaseUIHandler();
-        }}
-        onPointerMove={(event) => {
-          if (isInRowControl(event.target)) event.preventBaseUIHandler();
-        }}
-        // React bubbles the control's focus here, where it would highlight (and focus) the row.
-        onFocus={(event) => {
-          if (isInRowControl(event.target)) event.preventBaseUIHandler();
+        // ArrowRight opens the row's control (the effort menu), as a submenu trigger would.
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowRight" || !showsRowControl) return;
+          const control = event.currentTarget.querySelector<HTMLElement>(
+            "[data-model-row-control] button",
+          );
+          if (!control) return;
+          event.preventDefault();
+          control.click();
         }}
       >
         {disabledReason ? (
@@ -841,15 +843,18 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
         )}
         <span className="flex shrink-0 items-center gap-1">
-          {modelKey === activeModelKey && props.selectedRowControl ? (
-            <span className="flex" data-model-row-control="">
-              {props.selectedRowControl}
-            </span>
-          ) : props.rowPreview && !isSearching && !disabledReason ? (
-            // Not in search results: picking one refocuses the search field, which would shut
-            // the effort menu the preview's click opens.
-            <span className={cn("flex", HOVER_REVEAL_CLASS)}>
-              {props.rowPreview(model.instanceId, model.slug)}
+          {showsRowControl && props.renderRowControl ? (
+            // Hidden when the host renders nothing for this row, so the trailing gap holds.
+            <span
+              className={cn("flex empty:hidden", !isActive && HOVER_REVEAL_CLASS)}
+              data-model-row-control=""
+            >
+              <RowControlSlot
+                render={props.renderRowControl}
+                model={model}
+                selected={isActive}
+                onPick={() => chooseModel(model)}
+              />
             </span>
           ) : null}
           {/* Pins the model without choosing the row: the item selects on click, so

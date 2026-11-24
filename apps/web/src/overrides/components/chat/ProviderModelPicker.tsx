@@ -27,6 +27,7 @@ import {
 import { RegistryContext } from "@effect/atom-react";
 import { T, useGT } from "gt-react";
 import {
+  type ComponentProps,
   createContext,
   memo,
   type ReactNode,
@@ -135,16 +136,13 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   onInstanceModelChange: (instanceId: ProviderInstanceId, model: string) => void;
   /**
-   * The selected model's reasoning: a trigger label, a control on the selected row (effort)
-   * and a panel of toggles under the model list.
+   * The selected model's reasoning: its trigger label, plus either a read-only panel under the
+   * list (an unlisted saved model) or a layer, popup-level content such as the effort menu that a
+   * row control opens (rendered here so it sits outside every row).
    */
-  traits?: {
-    label: string;
-    selectedRowControl?: ReactNode;
-    panel?: ReactNode;
-  };
-  /** Shown on another model's row while hovered: what picking it would set (its effort). */
-  rowPreview?: (instanceId: ProviderInstanceId, model: string) => ReactNode;
+  traits?: { label: string; panel?: ReactNode; layer?: ReactNode };
+  /** A row's control before its pin (see ModelPickerContent). */
+  renderRowControl?: ComponentProps<typeof ModelPickerContent>["renderRowControl"];
   /**
    * The composer's combined menu: a pick keeps it open (effort usually
    * follows a new model) at one width, whether or not the model has traits.
@@ -437,9 +435,9 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               : (props.getModelDisabledReason?.(instanceId, model) ?? null)
           }
           onInstanceModelChange={handleInstanceModelChange}
-          selectedRowControl={props.traits?.selectedRowControl}
-          {...(props.rowPreview ? { rowPreview: props.rowPreview } : {})}
+          {...(props.renderRowControl ? { renderRowControl: props.renderRowControl } : {})}
         />
+        {props.traits?.layer}
         {props.traits?.panel ? (
           <>
             {/* Edge to edge: the popup's scroll wrapper pads its children by

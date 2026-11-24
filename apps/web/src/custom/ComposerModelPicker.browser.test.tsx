@@ -6,7 +6,7 @@ import {
 } from "@t3tools/contracts";
 import { useState } from "react";
 import { expect, it, vi } from "vite-plus/test";
-import { page } from "vite-plus/test/browser";
+import { page, userEvent } from "vite-plus/test/browser";
 
 import "~/index.css";
 
@@ -18,7 +18,7 @@ import { ComposerModelPicker } from "./ComposerModelPicker";
 it("picks effort from the selected row's hover menu and fast mode from a checkbox", async () => {
   const instanceId = ProviderInstanceId.make("codex");
   const provider = ProviderDriverKind.make("codex");
-  const models: ServerProviderModel[] = ["Sol", "Astra"].map((name) => ({
+  const models: ServerProviderModel[] = ["Sol", "Astra", "Luna"].map((name) => ({
     slug: name.toLowerCase(),
     name,
     isCustom: false,
@@ -88,6 +88,12 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
           models,
           modelOptions: options,
           promptUltrathink: "none",
+          // The thread runs Luna at Extra High; nothing is remembered for Luna.
+          threadModelSelection: {
+            instanceId,
+            model: "luna",
+            options: [{ id: "reasoningEffort", value: "xhigh" }],
+          },
           onPromptEdit: () => {},
           onModelOptionsChange: (next) => {
             writes.push(next);
@@ -115,12 +121,16 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
   // Only the selected model's row carries its effort, and the model menu has no traits panel:
   // the toggles live in the effort menu, so the model menu's height never depends on the model.
   expect(document.body.textContent).not.toContain("Fast mode");
-  const effort = page.getByRole("menuitem", { name: "Effort: High" });
+  const effort = page.getByRole("button", { name: "Effort: High" });
   await expect.element(effort).toBeVisible();
   expect(document.querySelectorAll('[aria-label^="Effort:"]')).toHaveLength(1);
   // Another row previews the effort picking it would set.
   const sol = page.getByRole("menuitem", { name: /Sol/ });
   await vi.waitFor(() => expect(sol.element().textContent).toContain("Low"));
+  // With nothing remembered, the thread's own model previews the thread's options, as a pick
+  // restores them.
+  const luna = page.getByRole("menuitem", { name: /Luna/ });
+  await vi.waitFor(() => expect(luna.element().textContent).toContain("Extra High"));
 
   // Hovering the value never opens its menu; a click does, and stays open. A real press opens it
   // on mousedown before its click arrives; that click must not close it again.
@@ -135,7 +145,7 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
         ...(type.startsWith("pointer") ? { pointerType: "mouse", isPrimary: true } : {}),
       }),
     );
-  const isOpen = () => effort.element().hasAttribute("data-popup-open");
+  const isOpen = () => effort.element().hasAttribute("data-open");
   const press = async (click: boolean) => {
     for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
       mouse(effort.element(), type);
@@ -157,7 +167,7 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
     expect(writes.at(-1)).toContainEqual({ id: "reasoningEffort", value: "xhigh" }),
   );
   // The model menu stays open, now showing the new level.
-  const picked = page.getByRole("menuitem", { name: "Effort: Extra High" });
+  const picked = page.getByRole("button", { name: "Effort: Extra High" });
   await expect.element(picked).toBeVisible();
   // Every click on the value toggles its levels, and moving across it, or away, leaves them as
   // they are.
@@ -182,13 +192,30 @@ it("picks effort from the selected row's hover menu and fast mode from a checkbo
     .element(page.getByRole("menuitemcheckbox", { name: "Fast mode" }))
     .toHaveAttribute("aria-checked", "true");
   await expect
-    .element(page.getByRole("menuitem", { name: "Effort: Extra High, Fast mode on" }))
+    .element(page.getByRole("button", { name: "Effort: Extra High, Fast mode on" }))
     .toBeInTheDocument();
 
   // A click on another row's effort picks that model and opens its effort menu.
-  await page.getByRole("menuitem", { name: "Effort: Extra High, Fast mode on" }).click();
+  await page.getByRole("button", { name: "Effort: Extra High, Fast mode on" }).click();
   await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
   await page.getByRole("menuitem", { name: /Sol/ }).getByText("Low").click();
-  await expect.element(page.getByRole("menuitem", { name: "Effort: Low" })).toBeInTheDocument();
+  await expect.element(page.getByRole("button", { name: "Effort: Low" })).toBeInTheDocument();
+  await expect.element(page.getByRole("group", { name: "Effort" })).toBeVisible();
+
+  // The selected row stays lit while its effort menu is open and the pointer is inside it.
+  const solRow = page.getByRole("menuitem", { name: /Sol/ });
+  await page
+    .getByRole("menuitemradio", { name: /Medium|High/ })
+    .first()
+    .hover();
+  const background = (row: Element) => getComputedStyle(row).backgroundColor;
+  const astraRow = page.getByRole("menuitem", { name: /Astra/ }).element();
+  expect(background(solRow.element())).not.toBe(background(astraRow));
+
+  // ArrowRight on the focused selected row opens its effort menu, as a submenu trigger would.
+  await page.getByRole("button", { name: "Effort: Low" }).click();
+  await expect.element(page.getByRole("group", { name: "Effort" })).not.toBeInTheDocument();
+  (solRow.element() as HTMLElement).focus();
+  await userEvent.keyboard("{ArrowRight}");
   await expect.element(page.getByRole("group", { name: "Effort" })).toBeVisible();
 });

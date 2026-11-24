@@ -331,32 +331,26 @@ describe("fork guard: fork-model-picker", () => {
       /^\}, \[\s*clampEditorCursor,\s*cursor,\s*editor,[\s\S]*?skillLabelFor,[\s\S]*?value,\s*\]\);/u,
     );
     expect(tiptap.slice(effectStart, effectEnd)).not.toMatch(/\.focus\(/u);
-    // Effort sits on the selected model's row and opens, on click, a submenu above it holding
-    // the levels and the toggles; there is no slider and no tab strip.
+    // Effort sits on the selected model's row as a plain button; a click opens the effort menu,
+    // a submenu rendered outside every row (the picker's layer) and anchored to that button, so
+    // the shared row carries one control slot and no event suppression.
     expect(content).toMatch(
-      /\{modelKey === activeModelKey && props\.selectedRowControl \? \(\s*<span className="flex" data-model-row-control="">/u,
+      /<RowControlSlot\s+render=\{props\.renderRowControl\}[\s\S]*?onPick=\{\(\) => chooseModel\(model\)\}/u,
     );
-    // Moves over that control (a menu item of its own) never hand the highlight back to the row.
-    expect(content).toContain("if (isInRowControl(event.target)) event.preventBaseUIHandler();");
-    // Nor does the control's focus, which React bubbles to the row.
-    expect(content).toMatch(
-      /onFocus=\{\(event\) => \{\s*if \(isInRowControl\(event\.target\)\) event\.preventBaseUIHandler\(\);/u,
-    );
-    // The row stays lit while its effort control (an item of its own) is hovered or open,
-    // and other rows preview the effort a pick would set.
-    expect(content).toContain("has-data-highlighted:bg-accent has-data-popup-open:bg-accent");
-    expect(content).toContain("props.rowPreview(model.instanceId, model.slug)");
-    expect(composerPicker).toContain("store.stickyOptionsByModelByProvider");
-    expect(picker).toContain("selectedRowControl={props.traits?.selectedRowControl}");
-    // The effort menu opens on click only; another click closes it.
+    expect(content).not.toContain("isInRowControl");
+    expect(content).not.toMatch(/selectedRowControl|rowPreview/u);
+    expect(picker).toContain("{props.traits?.layer}");
+    expect(composerPicker).not.toContain("SubmenuTrigger");
     expect(composerPicker).toMatch(
-      /<MenuPrimitive\.SubmenuTrigger\s+ref=\{triggerRef\}\s+openOnHover=\{false\}/u,
+      /<MenuPopup\s+anchor=\{anchor\}\s+side="top"\s+align="center"\s+sideOffset=\{0\}/u,
     );
-    expect(composerPicker).toContain("setOpen(!wasOpen);");
-    expect(composerPicker).toMatch(/<MenuPopup\s+side="top"\s+align="center"\s+sideOffset=\{0\}/u);
-    // React bubbles the portaled menu's events through the row; they must stop at the popup.
-    expect(composerPicker).toMatch(/\{\.\.\.stopRowEvents\}\s*>/u);
-    expect(composerPicker).toContain("selectToggle(descriptor)");
+    // Other rows preview the effort by the pick's own rule (thread options included).
+    expect(composerPicker).toContain("resolvePickOptions({");
+    expect(readSibling("../components/chat/useComposerSelection.ts")).toContain(
+      "const pickOptions = resolvePickOptions({",
+    );
+    // The menu's sections come from the resolver, not from the component.
+    expect(readSibling("../custom/composerModelTraits.ts")).toMatch(/selects,\s*toggles,/u);
     expect(composerPicker).not.toContain("Slider");
     expect(composerPicker).not.toMatch(/<Tabs\b/u);
     // Toggles are checkbox rows in the effort menu, not a panel under the list, so the model
@@ -365,7 +359,6 @@ describe("fork guard: fork-model-picker", () => {
     // Its popup is stamped like the model menu's (wheel lock, focus checks, composer layer).
     expect(composerPicker).toContain('data-model-picker-content="true"');
     expect(composerPicker).toContain("composerFloatingLayerProps");
-    expect(composerPicker).not.toContain('variant="switch"');
     expect(composerPicker).toMatch(
       /traits\.modelIsUnavailable\s*\?\s*\{ panel: <UnavailableModelTraits/u,
     );

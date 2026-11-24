@@ -3712,6 +3712,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     models: selectedProviderModels,
     modelOptions: composerModelOptions?.[selectedInstanceId],
     reportedModelSelection,
+    threadModelSelection: activeThreadModelSelection,
     promptUltrathink,
     onPromptEdit: editPromptFromTraitsStable,
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
