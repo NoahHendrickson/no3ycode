@@ -991,18 +991,16 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
         ) && !rule.selector.includes("[data-fork-draft-liquid-glass"),
     );
     expect(liquidGlassRules.length).toBeGreaterThan(0);
-    for (const rule of liquidGlassRules) {
-      if (rule.selector.includes("[data-fork-has-thread-tabs]")) continue;
-      expect(rule.selector).not.toContain('[data-slot="sidebar-inset"]');
+    const insetRules = liquidGlassRules.filter((rule) =>
+      rule.selector.includes('[data-slot="sidebar-inset"]'),
+    );
+    expect(insetRules.length).toBeGreaterThan(0);
+    for (const rule of insetRules) {
+      expect(rule.selector).toContain("[data-fork-has-thread-tabs]");
+      expect(rule.body).toMatch(
+        /transparent 0 var\(--workspace-topbar-height\),\s*var\(--background\) 0/u,
+      );
     }
-    const tabRowInset = liquidGlassRules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-has-thread-tabs]") &&
-        rule.selector.includes('[data-slot="sidebar-inset"]'),
-    );
-    expect(tabRowInset?.body).toMatch(
-      /transparent 0 var\(--workspace-topbar-height\),\s*var\(--background\) 0/u,
-    );
     expect(desktopHandlers).toContain("setForkSidebarLiquidGlassFrame");
     expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
