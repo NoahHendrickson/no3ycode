@@ -3797,9 +3797,9 @@
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
     appearanceFonts.ts). The control row, context row and status chips read
-    --fork-composer-chip-text, a pixel under the interface size (calc(1rem -
-    1px)), so they follow Settings → Typography too; their heights add fixed
-    room around it.
+    --fork-composer-chip-text, a pixel under the interface size
+    (calc(var(--text-base) - 1px); rem no longer moves), so they follow
+    Settings → Typography too; their heights add fixed room around it.
     On Flat Glass and every Basic tone the thread composer (not a new agent's
     draft) is one recipe: it paints no vessel, the prompt is its one surface
     (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
