@@ -2087,6 +2087,9 @@ function renderFeedEntry(
     readonly workGroupScrollPositions: Map<string, ThreadWorkGroupScrollPosition>;
     readonly terminalAssistantMessageIds: ReadonlySet<string>;
     readonly unsettledTurnId: RunId | null;
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    readonly revealReplyActionsRunId: RunId | null;
+    /* fork:end mobile-feed-stable-end */
     readonly compactionLabelsByEntryId: ReadonlyMap<string, { title: string; compacting: string }>;
     readonly failedRunIds: ReadonlySet<RunId>;
     readonly onCopyWorkRow: (rowId: string, value: string) => void;
@@ -2896,44 +2899,53 @@ function renderFeedEntry(
           />
         ) : null}
         {showAssistantMeta ? (
-          <View
-            className="mt-1 flex-row items-center gap-1"
-            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-            style={props.no3y ? { marginLeft: -NO3Y_MESSAGE_ACTION_INSET } : undefined}
-            /* fork:end no3y-mobile-redesign */
+          /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+          <ReplyActionsReveal
+            reveal={message.runId != null && message.runId === props.revealReplyActionsRunId}
+            height={REPLY_ACTIONS_TOP_GAP + props.replyActionSize.button}
           >
-            <CopyTextButton
-              accessibilityLabel={m(msg("Copy message"))}
-              text={renderedText}
-              tintColor={iconSubtleColor}
-              buttonSize={props.replyActionSize.button}
-              iconSize={props.replyActionSize.icon}
+            {/* fork:end mobile-feed-stable-end */}
+            <View
+              className="mt-1 flex-row items-center gap-1"
               /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-              hugeIcons={props.no3y !== null}
+              style={props.no3y ? { marginLeft: -NO3Y_MESSAGE_ACTION_INSET } : undefined}
               /* fork:end no3y-mobile-redesign */
-            />
-            {message.projectedItem ? (
-              <AssistantForkButton
-                environmentId={props.environmentId}
-                iconColor={iconSubtleColor}
+            >
+              <CopyTextButton
+                accessibilityLabel={m(msg("Copy message"))}
+                text={renderedText}
+                tintColor={iconSubtleColor}
                 buttonSize={props.replyActionSize.button}
                 iconSize={props.replyActionSize.icon}
-                projectedItem={message.projectedItem}
-                sourceTitle={props.threadTitle}
                 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
                 hugeIcons={props.no3y !== null}
                 /* fork:end no3y-mobile-redesign */
               />
-            ) : null}
-            {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-            {props.no3y ? null : (
-              <Text className="font-t3-medium text-xs tabular-nums text-foreground-secondary">
-                {timestampLabel}
-              </Text>
-            )}
-            {/* fork:end no3y-mobile-redesign */}
-          </View>
-        ) : null}
+              {message.projectedItem ? (
+                <AssistantForkButton
+                  environmentId={props.environmentId}
+                  iconColor={iconSubtleColor}
+                  buttonSize={props.replyActionSize.button}
+                  iconSize={props.replyActionSize.icon}
+                  projectedItem={message.projectedItem}
+                  sourceTitle={props.threadTitle}
+                  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                  hugeIcons={props.no3y !== null}
+                  /* fork:end no3y-mobile-redesign */
+                />
+              ) : null}
+              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+              {props.no3y ? null : (
+                <Text className="font-t3-medium text-xs tabular-nums text-foreground-secondary">
+                  {timestampLabel}
+                </Text>
+              )}
+              {/* fork:end no3y-mobile-redesign */}
+            </View>
+            {/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */}
+          </ReplyActionsReveal>
+        ) : /* fork:end mobile-feed-stable-end */
+        null}
       </Animated.View>
     );
   }
@@ -3365,6 +3377,36 @@ let lastSplitViewport: { windowWidth: number; width: number; height: number } | 
 // On iOS a landed feed glides to its new end as rows arrive instead of jumping by each row's
 // height. Landing on open stays instant: the feed is hidden until it reaches the end.
 const FEED_END_FOLLOW_GLIDE = { ...THREAD_FEED_MAINTAIN_SCROLL_AT_END, animated: true } as const;
+const REPLY_ACTIONS_TOP_GAP = 4;
+const REPLY_ACTIONS_REVEAL_MS = 180;
+
+// A reply's actions appear as its turn ends. At full height in one frame they jumped the
+// end-pinned feed; growing in, they ride with the status space that eases away at the same time.
+function ReplyActionsReveal(props: { reveal: boolean; height: number; children: ReactNode }) {
+  const [reveal] = useState(props.reveal);
+  const [grown, setGrown] = useState(!reveal);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- starts the native height transition once the collapsed frame has committed
+  useEffect(() => {
+    if (grown) return;
+    const frame = requestAnimationFrame(() => setGrown(true));
+    return () => cancelAnimationFrame(frame);
+  }, [grown]);
+  if (!reveal) return props.children;
+  return (
+    <Animated.View
+      style={{
+        height: grown ? props.height : 0,
+        opacity: grown ? 1 : 0,
+        overflow: "hidden",
+        transitionProperty: ["height", "opacity"],
+        transitionDuration: REPLY_ACTIONS_REVEAL_MS,
+        transitionTimingFunction: "ease-out",
+      }}
+    >
+      {props.children}
+    </Animated.View>
+  );
+}
 /* fork:end mobile-feed-stable-end */
 
 export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
@@ -4601,6 +4643,12 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             workGroupScrollPositions,
             terminalAssistantMessageIds,
             unsettledTurnId,
+            /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+            revealReplyActionsRunId:
+              Platform.OS === "ios" && !reduceMotion && !settling
+                ? (props.latestRun?.runId ?? null)
+                : null,
+            /* fork:end mobile-feed-stable-end */
             compactionLabelsByEntryId,
             failedRunIds,
             onCopyWorkRow,
