@@ -158,7 +158,7 @@ export function SidebarV2ProjectGroupHeader(props: {
           // with the cards under it.
           "relative flex min-h-8 w-full items-center text-left",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
-          SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
+          props.collapsed ? "mb-0" : SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
             ? "mt-0"
             : props.afterOpenSection
@@ -226,9 +226,9 @@ export function SidebarV2ProjectGroupHeader(props: {
           <span
             role="heading"
             aria-level={3}
-            // Label/12 Medium at --muted-foreground (368:21364), lifting to
+            // Regular at the Sidebar font size, --muted-foreground (368:21364), lifting to
             // foreground with the mark while the row is hovered.
-            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-meta font-medium text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-row font-normal text-muted-foreground group-hover/collapse:text-sidebar-foreground"
           >
             {label}
           </span>

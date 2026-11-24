@@ -1096,7 +1096,7 @@
     project and skips the picker.
 
     The header is the design's 32px row (Figma 364:11442, 368:21364): a ghost
-    label button — 16px folder mark, Label/12 Medium name at muted foreground,
+    label button — 16px folder mark, Regular name at the Sidebar font size, muted foreground,
     lifting to foreground on hover, 12px inline padding that lands the mark on
     the cards' 20px prompt edge — then a 32px three-dot that opens the
     project's menu and a 32px plus, both on the list edge. The menu offers
@@ -1267,7 +1267,7 @@
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
     Completed titles are full strength, Working and Idle recede, and the open
-    or selected card never does. Section headers are a muted 12px medium label
+    or selected card never does. Section headers are a muted regular label at the Sidebar font size
     (no count) with an always-visible filled chevron on the cards' inset and no
     hairline; clicking collapses (down when expanded, rotated right when
     collapsed). Hovering the header or any row in its section reveals the shared

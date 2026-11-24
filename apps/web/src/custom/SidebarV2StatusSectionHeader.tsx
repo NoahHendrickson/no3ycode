@@ -2,7 +2,7 @@
  * The header above each status section — see
  * `.fork/customizations.yaml#sidebar-v2-status-grouping`.
  *
- * A quiet 32px row carrying the section label (12px medium on the muted
+ * A quiet 32px row carrying the section label (Sidebar font size, regular, on the muted
  * channel) with its filled fold caret right beside it, and the list's trailing
  * controls (add project, sort, view settings) revealed on hover/focus or while
  * one of their menus is open (`theme.custom.css` carries the reveal rules).
@@ -45,7 +45,7 @@ export function SidebarV2StatusSectionHeader(props: {
         // At the default size the row is 32px (8px above the 16px label), so mt-2 on top
         // of the 2px list gap puts 18px from the previous card's bottom edge to the label.
         props.isFirst ? "mt-0" : "mt-2",
-        SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
+        props.collapsed ? "mb-0" : SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
       )}
     >
       <button
@@ -54,7 +54,7 @@ export function SidebarV2StatusSectionHeader(props: {
         aria-expanded={!props.collapsed}
         data-testid="sidebar-v2-status-section-toggle"
         data-status={props.section}
-        className="inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-sidebar-meta font-medium text-muted-foreground hover:text-sidebar-foreground focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
+        className="inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-sidebar-row font-normal text-muted-foreground hover:text-sidebar-foreground focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
       >
         <span className="truncate">{SIDEBAR_V2_STATUS_SECTION_LABELS[props.section]}</span>
         <SidebarV2SectionCaret

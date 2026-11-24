@@ -460,7 +460,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(SIDEBAR_V2_CARD_ALIGNMENT.listGap).toBe(`gap-${px.listGap / 4}`);
     expect(SIDEBAR_V2_CARD_ALIGNMENT.headerLead).toBe(`mt-[${px.headerLead}px]`);
     expect(SIDEBAR_V2_CARD_ALIGNMENT.headerLeadCollapsed).toBe(`mt-${px.headerLeadCollapsed / 4}`);
-    expect(SIDEBAR_V2_CARD_ALIGNMENT.headerTrail).toBe(`mb-${px.headerTrail / 4}`);
+    expect(SIDEBAR_V2_CARD_ALIGNMENT.headerTrail).toBe(`-mb-${-px.headerTrail / 4}`);
     // The header row reads the same module, so the two sides cannot be
     // retuned apart without one of these going red.
     const header = readSibling("../custom/SidebarV2ProjectGroupHeader.tsx");
@@ -555,7 +555,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // Every margin here is only correct relative to the list gap it sits on,
     // so all five are pinned as totals rather than as their own values.
     const px = SIDEBAR_V2_CARD_ALIGNMENT_PX;
-    expect(px.listGap + px.headerTrail).toBe(2);
+    expect(px.listGap + px.headerTrail).toBe(-2);
     expect(px.listGap + px.headerLead).toBe(24);
     expect(px.listGap + px.headerLeadCollapsed).toBe(8);
     // The shelves and the pinned divider are NOT part of the card retune — the
