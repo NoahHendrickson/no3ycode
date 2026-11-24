@@ -5,7 +5,7 @@
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-peek.css";
 @import "./theme.custom.inlet-black.css";
-@import "./theme.custom.flat-glass-composer.css";
+@import "./theme.custom.thread-composer.css";
 
 /* Fork palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and each palette's own id). Kept out of theme.custom.css so a new sibling is a
@@ -88,12 +88,12 @@
   --workspace-topbar-height: 44px;
 }
 
-/* On Flat Glass, derive the opaque stage ladder from one warm-neutral base
-   (#1f1c1b) using flattened white washes (matching Basic's 4%/8%/12%/16% lift
-   steps) so cards, composer, chips, and borders stay opaque while blending
-   naturally with the stage and unfocused macOS sidebar. */
+/* On Flat Glass, derive the opaque stage ladder from one neutral base (#1d1d1d)
+   using flattened white washes (matching Basic's 4%/8%/12%/16% lift steps) so
+   cards, composer, chips, and borders stay opaque while blending naturally
+   with the stage and unfocused macOS sidebar. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
-  --fork-flat-glass-base: #1f1c1b;
+  --fork-flat-glass-base: #1d1d1d;
   --fork-flat-glass-lift-1: color-mix(in srgb, #ffffff 4%, var(--fork-flat-glass-base));
   --fork-flat-glass-lift-2: color-mix(in srgb, #ffffff 8%, var(--fork-flat-glass-base));
   --fork-flat-glass-lift-3: color-mix(in srgb, #ffffff 12%, var(--fork-flat-glass-base));
@@ -124,9 +124,9 @@
   --fork-composer-border-focus: rgb(255 255 255 / 16%);
   --fork-context-chip-bg: var(--fork-flat-glass-lift-3);
   --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
-  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#312e2d) flattens to
-     #a6a5a5, the solid fallback it replaces. */
+  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#2e2e2e). */
   --fork-composer-control-ink: rgb(255 255 255 / 57%);
+  --fork-thread-composer-card: var(--fork-flat-glass-lift-2);
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
@@ -169,7 +169,7 @@
 
 /* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
    digest cards and the scheduled editor. The thread composer paints no vessel and the draft
-   draws its own (theme.custom.flat-glass-composer.css, the draft-hero block below). */
+   draws its own (theme.custom.thread-composer.css, the draft-hero block below). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is([data-fork-bot-digest], [data-scheduled-composer])
   [data-fork-composer-vessel] {
@@ -222,7 +222,7 @@
 }
 
 /* On Flat Glass, non-Liquid-Glass sidebars (floating narrow overlay, collapsed
-   peek, web, Linux, macOS < 26) stay on the warm-neutral #1f1c1b ladder instead
+   peek, web, Linux, macOS < 26) stay on the Flat Glass base ladder instead
    of falling back to cool blue-grey #181b1e. Docked macOS Liquid Glass overrides
    this below with higher specificity. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
@@ -260,6 +260,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
   --fork-flat-radius: 8px;
   --fork-flat-model-picker-radius: 14px;
+  --fork-flat-popup-radius: 12px;
 }
 
 @supports (corner-shape: superellipse(1.6)) {
@@ -294,6 +295,32 @@
   & [data-fork-draft-launchpad-card] button {
     border-radius: var(--fork-flat-radius);
     corner-shape: superellipse(1.6);
+  }
+
+  /* Menus, selects, comboboxes and popovers round to 12px, rounder than the 8px rows they hold
+     (Noey, 2026-11-23). Circular, not superellipse: at 12px the smoothed corner reads as an 8px
+     one. The model picker's concentric shell below keeps its own radius. */
+  &
+    :is(
+      :is(
+        [data-slot="menu-popup"],
+        [data-slot="menu-sub-content"],
+        [data-slot="popover-popup"]
+      ).dropdown-glass,
+      [data-slot="select-popup"],
+      [data-slot="select-popup"] > .dropdown-glass,
+      .dropdown-glass:has(> [data-slot="combobox-popup"]),
+      [data-slot="autocomplete-positioner"] > *
+    ) {
+    border-radius: var(--fork-flat-popup-radius);
+  }
+
+  /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
+     the popup's 1px edge. */
+  & [data-slot="popover-popup"].dropdown-glass::before,
+  & [data-slot="autocomplete-positioner"] > ::before,
+  & [data-slot="popover-popup"].dropdown-glass > [data-slot="popover-viewport"] {
+    border-radius: calc(var(--fork-flat-popup-radius) - 1px);
   }
 
   /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
@@ -1364,12 +1391,7 @@
   --fork-context-chip-bg: var(--fork-glass-picture-tint);
   --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
-  &
-    :is(
-      [data-fork-composer-vessel],
-      [data-fork-composer-usage-drawer],
-      [data-fork-draft-launchpad-card]
-    ) {
+  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
   }
@@ -1383,17 +1405,6 @@
     --contrast-accent-foreground: #fff;
     background: var(--fork-glass-picture-tint);
     border-color: var(--fork-composer-border);
-  }
-
-  & [data-fork-composer-usage-drawer] {
-    --contrast-border: var(--fork-composer-border);
-    --contrast-foreground: #fff;
-    --contrast-muted-foreground: rgb(255 255 255 / 85%);
-    --muted: rgb(255 255 255 / 22%);
-    --accent: var(--fork-composer-control-hover);
-    --contrast-accent-foreground: #fff;
-    -webkit-backdrop-filter: blur(48px);
-    backdrop-filter: blur(48px);
   }
 
   &
@@ -1685,7 +1696,7 @@
    the docked sidebar has the page cut away beneath it (forkGlassPopupCutout.ts) and paints
    nothing, so it shows the sidebar's own glass, which follows the wallpaper and window focus. One
    reaching past the sidebar is solid in the sidebar's colour instead: on Flat Glass the glass as
-   measured on screen over its #1f1c1b backing (forkSidebarVibrancy.ts), on Full Glass its
+   measured on screen over its #1d1d1e backing (forkSidebarVibrancy.ts), on Full Glass its
    backing with a 4% lift. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-fork-liquid-glass-popup] {
@@ -1699,7 +1710,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
-  --fork-liquid-glass-sidebar: #2a2324;
+  --fork-liquid-glass-sidebar: #282427;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
@@ -1885,15 +1896,6 @@
     }
   }
 
-  &
-    [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
-    + [data-fork-composer-vessel]::after {
-    box-shadow:
-      inset 1px 0 0 rgb(255 255 255 / 16%),
-      inset -1px 0 0 rgb(255 255 255 / 16%),
-      inset 0 -1px 0 rgb(255 255 255 / 16%);
-  }
-
   & [data-fork-composer-box] .text-placeholder {
     color: rgb(255 255 255 / 50%);
   }
@@ -1920,18 +1922,6 @@
     background: rgb(0 0 0 / 16%);
     border-color: rgb(255 255 255 / 16%);
   }
-
-  & [data-fork-composer-usage-drawer] {
-    --contrast-border: rgb(255 255 255 / 12%);
-    --contrast-foreground: #ffffff;
-    --contrast-muted-foreground: rgb(255 255 255 / 85%);
-    --muted: rgb(255 255 255 / 16%);
-    --accent: rgb(255 255 255 / 10%);
-    --contrast-accent-foreground: #ffffff;
-    box-shadow:
-      inset 1px 1px 0 rgb(255 255 255 / 16%),
-      inset -1px 0 0 rgb(255 255 255 / 16%);
-  }
 }
 
 /* On opaque stages (macOS Liquid Glass and web), real backdrop-filter blurs
@@ -1943,7 +1933,6 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-    [data-fork-composer-usage-drawer],
     [data-fork-draft-launchpad-card]
   ) {
   background: var(--fork-composer-vessel-bg);
@@ -1980,12 +1969,7 @@
   --fork-composer-border: rgb(255 255 255 / 10%);
   --fork-composer-border-focus: rgb(255 255 255 / 18%);
 
-  &
-    :is(
-      [data-fork-composer-vessel],
-      [data-fork-draft-launchpad-card],
-      [data-fork-composer-usage-drawer]
-    ) {
+  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
     background: transparent;
     border-color: transparent;
     box-shadow: none;

@@ -55,7 +55,7 @@ function previewFor(
   if (palette === BASIC_THEME) return basicPreview(tone);
   if (palette === COOL_DARKER_THEME) {
     if (glass3d === "off") {
-      const base = "#1f1c1b";
+      const base = "#1d1d1d";
       const lift = (percent: number) => `color-mix(in srgb, #ffffff ${percent}%, ${base})`;
       return {
         sidebar: base,

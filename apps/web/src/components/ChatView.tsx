@@ -2589,23 +2589,7 @@ export default function ChatView(props: ChatViewProps) {
             ),
           })
         : nextHeight;
-    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-    // The composer's top drawer floats above the overlay, outside its measured height.
-    const topVessel = composerOverlayElement?.querySelector<HTMLElement>(
-      '[data-fork-composer-top-vessel="true"]',
-    );
-    const drawerRise =
-      composerOverlayElement && topVessel
-        ? Math.max(
-            0,
-            Math.ceil(
-              composerOverlayElement.getBoundingClientRect().top -
-                topVessel.getBoundingClientRect().top,
-            ),
-          )
-        : 0;
-    setScrollToEndClearance(clearance + drawerRise);
-    /* fork:end fork-composer-usage-limits */
+    setScrollToEndClearance(clearance);
   };
   const publishComposerOverlayHeightStable = useStableCallback(publishComposerOverlayHeight);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the composer overlay element before paint for a new thread or composer mount
@@ -2655,16 +2639,10 @@ export default function ChatView(props: ChatViewProps) {
     const stack = isDraftHeroState
       ? composerOverlayElement.querySelector<HTMLElement>('[data-chat-composer-stack="true"]')
       : null;
-    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-    // The floating top drawer opens without resizing the overlay; Scroll to end has to clear it.
-    const topVessel = composerOverlayElement.querySelector<HTMLElement>(
-      '[data-fork-composer-top-vessel="true"]',
+    return observeResize(
+      stack ? [composerOverlayElement, stack] : composerOverlayElement,
+      updateHeight,
     );
-    const observed = [composerOverlayElement, stack, topVessel].filter(
-      (element): element is HTMLElement => element !== null,
-    );
-    return observeResize(observed, updateHeight);
-    /* fork:end fork-composer-usage-limits */
   }, [
     composerOverlayElement,
     isDraftHeroState,

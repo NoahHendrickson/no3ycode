@@ -1,0 +1,43 @@
+/* The thread composer, shared by Flat Glass and every Basic tone — see
+   .fork/customizations.yaml#fork-composer-shell.
+
+   Figma kit 289:5475, since lightened. The prompt is the composer's one surface (its
+   --fork-composer-bg, the --fork-composer-border ring, 12px corners) and the vessel paints
+   nothing, so the control row sits on the stage below it. Banner cards and the Questions card sit
+   a step back toward the stage behind the same ring; each theme names that one fill,
+   --fork-thread-composer-card.
+
+   Scoped to the thread composer's form: a new agent's draft keeps its own composer, and Petal
+   digest cards and the scheduled editor reuse the vessel, box and surface markers outside any
+   form. */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form] {
+  --fork-composer-radius: 12px;
+
+  & [data-fork-composer-vessel] {
+    background: none;
+    box-shadow: none;
+  }
+
+  & [data-fork-composer-surface] {
+    /* The surface inherits the frame's radius unless it states its own. */
+    border-radius: var(--fork-composer-radius);
+  }
+
+  &
+    [data-fork-composer-banners]
+    [data-slot="composer-banner"][data-composer-banner-surface="attached"]::before {
+    background: var(--fork-thread-composer-card);
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+  }
+
+  /* Only the prompt's ring brightens on focus; the card above keeps the hairline. */
+  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
+    border-color: var(--fork-composer-border);
+    background: var(--fork-thread-composer-card);
+  }
+}

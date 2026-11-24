@@ -15,7 +15,7 @@ export const FORK_SIDEBAR_VIBRANCY_ATTRIBUTE = "data-fork-sidebar-vibrancy";
 export const FORK_SIDEBAR_LIQUID_GLASS_VALUE = "liquid-glass";
 
 const FULL_GLASS_BACKING_RGB = 0x141618;
-const FLAT_GLASS_BACKING_RGB = 0x1f1c1b;
+const FLAT_GLASS_BACKING_RGB = 0x1d1d1e;
 
 export type ForkSidebarVibrancyMode = "off" | "vibrancy" | "liquid-glass";
 

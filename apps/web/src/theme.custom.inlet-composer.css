@@ -25,24 +25,6 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-top-vessel]:has(
-    [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
-  )
-  + [data-fork-composer-vessel] {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-fork-composer-usage-drawer] {
-  border-radius: var(--fork-inlet-vessel-radius) var(--fork-inlet-vessel-radius) 0 0;
-
-  & > * {
-    padding-bottom: 2px;
-  }
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-draft-launchpad-card] {
   border-radius: 12px;
   border-color: transparent;

@@ -14,6 +14,7 @@ const status = figma.selectedInstance.getEnum("Status", {
   "Working · Bead 1": "working",
   "Working · Bead 2": "working",
   "Working · Bead 3": "working",
+  "Working · Still": "still",
   Failed: "failed",
   Monitoring: "monitoring",
   "Needs approval": "approval",
@@ -22,16 +23,22 @@ const status = figma.selectedInstance.getEnum("Status", {
   "Idle · dot": "dot",
   Draft: "draft",
 });
-const kinded = status !== undefined && !["idle", "dot", "draft"].includes(status);
+// Working · Still is the working mark drawn without motion, as status chips inside a message use it.
+const still = status === "still";
+const kinded = status !== undefined && !still && !["idle", "dot", "draft"].includes(status);
 const statusProp = kinded
   ? `{sidebarV2CardTopStatus("${status}", { goalActive: false })}`
   : "{null}";
 const idle = status === "dot" || status === "draft" ? ` idle="${status}"` : "";
 
 export default {
-  example: figma.tsx`<SidebarV2StatusMark status=${statusProp} seed={threadKey}${idle} />`,
+  example: still
+    ? figma.tsx`<SidebarV2StillWorkingMark />`
+    : figma.tsx`<SidebarV2StatusMark status=${statusProp} seed={threadKey}${idle} />`,
   imports: [
-    'import { SidebarV2StatusMark } from "~/custom/SidebarV2StatusIndicator";',
+    still
+      ? 'import { SidebarV2StillWorkingMark } from "~/custom/SidebarV2StatusIndicator";'
+      : 'import { SidebarV2StatusMark } from "~/custom/SidebarV2StatusIndicator";',
     ...(kinded ? ['import { sidebarV2CardTopStatus } from "~/custom/sidebarV2CardStatus";'] : []),
   ],
   id: "thread-status",

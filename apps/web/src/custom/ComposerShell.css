@@ -156,8 +156,10 @@
 }
 
 /* The background-work popover reads as a menu on the composer's corners: a 6px inset, rows
-   whose hover is a concentric rounded highlight, and full-width rules between them. */
+   whose hover is a concentric rounded highlight, and full-width rules between them. The custom
+   property carries the corners past Flat Glass's popup radius, which out-ranks this selector. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-background-work-popup] {
+  --fork-flat-popup-radius: var(--fork-composer-radius);
   border-radius: var(--fork-composer-radius);
 
   &::before {

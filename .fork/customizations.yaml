@@ -3055,13 +3055,12 @@
     token. Without a session window it shows Claude's account-wide weekly
     window (id seven_day) instead, for Claude plans with no 5-hour limit; other
     providers' weekly windows never draw it. Hidden when neither exists or when
-    the footer collapses. Nothing fills the composer's top vessel any more.
+    the footer collapses. The composer has no top vessel; the drawer it held is gone.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
-    - apps/web/src/components/ChatView.tsx
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
@@ -3703,13 +3702,14 @@
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
     appearanceFonts.ts), and the control and context rows are 14px regular.
-    On Flat Glass the thread composer (not a new agent's draft) paints no
-    vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
-    and the control row sits on the stage; attached
-    banners and the Questions card are lift-1 trays over it with an 8%
-    hairline; the prompt keeps its round corners and its frame fills the
-    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
-    scoped to the thread composer's form).
+    On Flat Glass and every Basic tone the thread composer (not a new agent's
+    draft) is one recipe: it paints no vessel, the prompt is its one surface
+    (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
+    attached banners and the Questions card sit a step back toward the stage
+    (lift-2) behind the same hairline. Each theme names the fills
+    (--fork-thread-composer-*); light Basic tones use their raised prompt
+    (kit 289:5475; theme.custom.thread-composer.css, scoped to the thread
+    composer's form).
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3731,7 +3731,8 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.flat-glass-composer.css
+    - apps/web/src/theme.custom.thread-composer.css
+    - apps/web/src/theme.custom.basic.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
@@ -8916,10 +8917,13 @@
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
-    sidebar's mark in its colour (working mark, dot for done or failed, half circle for
-    needs-you, muted dot for waiting, idle ring for stopped or unknown). Status follows the
+    sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
+    message: SidebarV2StillWorkingMark (a full green ring) for working and
+    SidebarV2StillMonitoringMark (a still muted dot) for waiting, and SidebarV2StatusMark with
+    celebrate={false} for the rest (dot for done or failed, half circle for needs-you, idle ring
+    for stopped or unknown). The label inherits the surrounding text's weight. Status follows the
     sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
-    another thread or parked on background work reads as waiting. No mark animates in a message. On mobile the marks are white PNGs drawn from
+    another thread or parked on background work reads as waiting. On mobile the marks are still white PNGs drawn from
     No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
     aria-hidden, with the status in the link's accessible name, and keeps the thread hover
     card. A period that closes the line right after the chip is dropped from the rendered
@@ -8928,7 +8932,9 @@
     read from the family of the thread the message is in (one cached read per thread, so
     links to ordinary or archived threads never trigger one). A cached family row is stale
     when the shell removed the child after the read, or when it is still live while the shell
-    has dropped the child: the chip shows the idle mark and that family is re-read once. Links to ordinary threads keep upstream's chip. User
+    has dropped the child: the chip shows the idle mark and that family is re-read once. On web, links
+    to ordinary threads in an assistant message take the same capsule (ContextChip shape="capsule")
+    around upstream's project icon and title. User
     messages, tool output, PR bodies, file previews and the composer are unchanged: on web only
     TimelineAssistantRows opts in; on mobile the reply, sent-message and reasoning rows pass
     their thread. Mobile's native pill reads only the label and link text, so screen readers
@@ -8954,8 +8960,12 @@
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     # Exposes the shell's per-thread removal sequence without importing the shell module.
     - apps/mobile/src/state/threads.ts
-    # Wraps the thread chip so a subagent link renders the capsule.
+    # Wraps the thread chip so a subagent link renders the capsule; passes the capsule shape.
     - apps/web/src/components/chat/MarkdownThreadLink.tsx
+    # The capsule shape variant.
+    - apps/web/src/components/ContextChip.tsx
+    # Passes the capsule shape through to ContextChip.
+    - apps/web/src/components/ThreadContextChip.tsx
     # Drops the period after a subagent chip before parsing.
     - apps/web/src/components/ChatMarkdown.tsx
     # Opts assistant messages into the capsule.
