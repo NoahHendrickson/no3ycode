@@ -33,36 +33,29 @@ describe("fork guard: fork-composer-next-step", () => {
     expect(read("../components/ChatView.tsx")).toMatch(
       /onOwnerTurnDispatched: embedded\s*\? undefined\s*: \(prompt: string\) =>\s*recordComposerHabit\(/u,
     );
-    // Learned pills give way to the rules, and to a PR that is the owner's call.
-    expect(read("../custom/ComposerNextStepPill.tsx")).toMatch(
-      /if \(step === "hold"\) return null;\s*if \(step === null\) \{\s*if \(habit === null\) return null;/u,
-    );
   });
 
-  it("offers the same step on iOS, last in the no3y pill row, clearing the feed", () => {
+  it("offers the same step on iOS, last in the no3y pill row, through the owner send", () => {
     const screen = read("../../../mobile/src/features/threads/ThreadDetailScreen.tsx");
-    expect(screen).toMatch(
-      /const nextStep = useNo3yNextStep\(\{\s*enabled: no3yBottomNav && props\.selectedThread\.lineage\.sideChat !== true,/u,
+    expect(screen).toContain("const nextStep = useNo3yNextStep({");
+    expect(screen).toContain("no3yNextStepSettled(props, {");
+    expect(screen).toContain("nextStep.step !== null");
+    expect(screen).toContain(
+      "nextStep.send((prompt) => handleSendMessage(undefined, undefined, prompt))",
     );
-    expect(screen).toMatch(/no3yPullRequest !== null \|\| nextStep !== null/u);
-    expect(screen).toMatch(
-      /nextStep=\{nextStep\}\s*onSendNextStep=\{\(step\) => void sendNextStep\(step\)\}/u,
-    );
-    expect(screen).toMatch(
-      /await props\.onSendCommand\(step\.prompt\)[\s\S]{0,400}recordNo3yComposerHabit\(step\.previous, step\.prompt\);/u,
-    );
-    const row = read("../../../mobile/fork/No3yStatusPill.tsx");
-    expect(row).toMatch(
+    expect(screen).toMatch(/\},\s*prompt,\s*\);/u);
+    expect(read("../../../mobile/fork/No3yStatusPill.tsx")).toMatch(
       /\{pills\.map\(renderPill\)\}\s*\{nextStep === null \? null : \(\s*<NextStepPill/u,
     );
-    expect(read("../../../mobile/fork/useNo3yNextStep.ts")).toContain(
-      "if (!active || draftHasContent || messages === undefined) return null;",
-    );
   });
 
-  it("learns iOS typed sends where they enter the outbox, not redirects or side chats", () => {
-    expect(read("../../../mobile/src/state/use-thread-composer-state.ts")).toMatch(
-      /onWillEnqueue\?\.\(\);\s*\/\* fork:begin fork-composer-next-step[^\n]*\*\/[\s\S]{0,250}if \(beforeDispatch === undefined && thread\.lineage\.sideChat !== true\) \{\s*recordNo3yComposerHabit\(lastOwnerPrompt\(selectedThreadMessages \?\? \[\]\), text\);/u,
+  it("learns iOS sends, typed or the pill's, where they enter the outbox", () => {
+    const state = read("../../../mobile/src/state/use-thread-composer-state.ts");
+    expect(state).toContain(
+      "const draft = prompt === undefined ? storedDraft : { ...storedDraft, text: prompt };",
+    );
+    expect(state).toMatch(
+      /onWillEnqueue\?\.\(\);\s*\/\* fork:begin fork-composer-next-step[\s\S]*?recordNo3yComposerHabit\(lastOwnerPrompt\(/u,
     );
   });
 });

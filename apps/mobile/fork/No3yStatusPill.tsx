@@ -28,6 +28,7 @@ import Target02Icon from "@hugeicons/core-free-icons/Target02Icon";
 import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WifiDisconnected02Icon from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
 import { StackActions, useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { PickedComposerNextStep } from "@t3tools/client-runtime/fork-composer-next-step";
 import { pullRequestChecksRefreshIntervalMs } from "@t3tools/client-runtime/pull-request-checks";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import type { PendingBackgroundWorkPresentation } from "@t3tools/client-runtime/state/thread-execution";
@@ -69,7 +70,6 @@ import {
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { forgetNo3yComposerHabit } from "./no3yComposerHabits";
-import type { No3yNextStep } from "./useNo3yNextStep";
 
 const PILL_HEIGHT = 32;
 const PILL_RADIUS = 14;
@@ -99,8 +99,8 @@ interface No3yPillExtras {
   /** The thread's pull request as useThreadPr resolves it; the screen keeps the feed clear of it. */
   readonly pullRequest: ThreadPrPresentation | null;
   /** The thread's next step (useNo3yNextStep.ts), sent on tap; last in the row. */
-  readonly nextStep: No3yNextStep | null;
-  readonly onSendNextStep: (step: No3yNextStep) => void;
+  readonly nextStep: PickedComposerNextStep | null;
+  readonly onSendNextStep: () => void;
 }
 
 /**
@@ -308,7 +308,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
               key={`next-step:${nextStep.prompt}`}
               step={nextStep}
               palette={palette}
-              onSend={() => props.onSendNextStep(nextStep)}
+              onSend={props.onSendNextStep}
             />
           )}
         </ScrollView>
@@ -372,8 +372,13 @@ function Pill(props: {
   readonly tint?: string | undefined;
   /** An inner glow, as a box shadow: the stacked pull request's purple-to-green. */
   readonly glow?: string | undefined;
+  /** A second button in the same glass, after the first: the learned next step's ×. */
+  readonly trailing?: ReactNode;
+  /** Caps the first button's width, so a long label truncates. */
+  readonly maxWidth?: number;
   readonly children: ReactNode;
 }) {
+  const split = props.trailing !== undefined;
   return (
     <Animated.View
       entering={NO3Y_GLASS_IN}
@@ -382,6 +387,7 @@ function Pill(props: {
         height: PILL_HEIGHT,
         borderRadius: PILL_RADIUS,
         boxShadow: props.palette.pillShadow,
+        ...(split ? { flexDirection: "row" as const } : {}),
       }}
     >
       <No3yGlassLayer radius={PILL_RADIUS} tint={props.tint} />
@@ -398,21 +404,22 @@ function Pill(props: {
         hitSlop={6}
         onPress={props.onPress}
         style={({ pressed }) => ({
-          flex: 1,
+          ...(split ? { paddingLeft: 8, paddingRight: 4 } : { flex: 1, paddingHorizontal: 8 }),
+          ...(props.maxWidth === undefined ? {} : { maxWidth: props.maxWidth }),
           flexDirection: "row",
           alignItems: "center",
           gap: 4,
-          paddingHorizontal: 8,
           opacity: pressed ? 0.6 : 1,
         })}
       >
         {props.children}
       </Pressable>
+      {props.trailing}
     </Animated.View>
   );
 }
 
-const NEXT_STEP_ICON: Record<No3yNextStep["kind"], HugeIconData> = {
+const NEXT_STEP_ICON: Record<PickedComposerNextStep["kind"], HugeIconData> = {
   "open-pr": GitPullRequestIcon,
   babysit: ViewIcon,
   merge: GitMergeIcon,
@@ -420,66 +427,47 @@ const NEXT_STEP_ICON: Record<No3yNextStep["kind"], HugeIconData> = {
   learned: SparklesIcon,
 };
 
-/** The next step: one glass pill, split for a learned habit by an × that stops suggesting it. */
+/** The next step, sent on tap; a learned one carries an × that stops suggesting it. */
 function NextStepPill(props: {
-  readonly step: No3yNextStep;
+  readonly step: PickedComposerNextStep;
   readonly palette: FlatGlassPalette;
   readonly onSend: () => void;
 }) {
   const { step, palette } = props;
   const { habit } = step;
   return (
-    <Animated.View
-      entering={NO3Y_GLASS_IN}
-      layout={NO3Y_LAYOUT}
-      style={{
-        height: PILL_HEIGHT,
-        borderRadius: PILL_RADIUS,
-        boxShadow: palette.pillShadow,
-        flexDirection: "row",
-      }}
+    <Pill
+      accessibilityLabel={`Send ${step.prompt}`}
+      accessibilityHint={habit === null ? undefined : "You usually send this next"}
+      onPress={props.onSend}
+      palette={palette}
+      maxWidth={220}
+      trailing={
+        habit === null ? undefined : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Stop suggesting this"
+            hitSlop={6}
+            onPress={() => forgetNo3yComposerHabit(habit)}
+            style={({ pressed }) => ({
+              alignItems: "center",
+              justifyContent: "center",
+              paddingLeft: 2,
+              paddingRight: 8,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <HugeIcon icon={Cancel01Icon} size={14} color={palette.quietInk} />
+          </Pressable>
+        )
+      }
     >
-      <No3yGlassLayer radius={PILL_RADIUS} />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Send ${step.prompt}`}
-        accessibilityHint={habit === null ? undefined : "You usually send this next"}
-        hitSlop={6}
-        onPress={props.onSend}
-        style={({ pressed }) => ({
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 4,
-          paddingLeft: 8,
-          paddingRight: habit === null ? 8 : 4,
-          maxWidth: 220,
-          opacity: pressed ? 0.6 : 1,
-        })}
-      >
-        <HugeIcon icon={NEXT_STEP_ICON[step.kind]} size={ICON_SIZE} color={palette.foreground} />
-        {/* Shrinks so a long learned message truncates inside the pill's max width. */}
-        <View style={{ flexShrink: 1 }}>
-          <PillText color={palette.foreground}>{step.label}</PillText>
-        </View>
-      </Pressable>
-      {habit === null ? null : (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Stop suggesting this"
-          hitSlop={6}
-          onPress={() => forgetNo3yComposerHabit(habit)}
-          style={({ pressed }) => ({
-            alignItems: "center",
-            justifyContent: "center",
-            paddingLeft: 2,
-            paddingRight: 8,
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <HugeIcon icon={Cancel01Icon} size={14} color={palette.quietInk} />
-        </Pressable>
-      )}
-    </Animated.View>
+      <HugeIcon icon={NEXT_STEP_ICON[step.kind]} size={ICON_SIZE} color={palette.foreground} />
+      {/* Shrinks so a long learned message truncates inside the max width. */}
+      <View style={{ flexShrink: 1 }}>
+        <PillText color={palette.foreground}>{step.label}</PillText>
+      </View>
+    </Pill>
   );
 }
 

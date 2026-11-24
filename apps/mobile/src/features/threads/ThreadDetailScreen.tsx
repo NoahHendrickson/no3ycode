@@ -10,9 +10,7 @@ import { useThreadPr } from "../../state/use-thread-pr";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
 /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
-import { recordNo3yComposerHabit } from "../../../fork/no3yComposerHabits";
-import { type No3yNextStep, useNo3yNextStep } from "../../../fork/useNo3yNextStep";
-import type { PendingThreadFeedEntry } from "./pending-thread-feed";
+import { no3yNextStepSettled, useNo3yNextStep } from "../../../fork/useNo3yNextStep";
 /* fork:end fork-composer-next-step */
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
 import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard";
@@ -344,6 +342,9 @@ export interface ThreadDetailScreenProps {
       hasAttachmentsOrContext: boolean,
     ) => Promise<boolean | "responded">,
     onWillEnqueue?: () => void,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    prompt?: string,
+    /* fork:end fork-composer-next-step */
   ) => Promise<MessageId | null>;
   /** Queues a standalone text command, such as `/goal clear`, without touching the draft. */
   readonly onSendCommand: (text: string) => Promise<MessageId | null>;
@@ -992,37 +993,21 @@ function ThreadDetailBody(
   const no3yPullRequest = useThreadPr(no3yPullRequestThread(props.selectedThread, no3yBottomNav));
   /* fork:end no3y-mobile-redesign */
   /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
-  const [sendingNextStep, setSendingNextStep] = useState(false);
-  // Sent messages stay at the feed's end until the thread catches up to them, past the outbox.
-  const feedTail: PendingThreadFeedEntry | undefined = props.selectedThreadFeed.at(-1);
   const nextStep = useNo3yNextStep({
-    enabled: no3yBottomNav && props.selectedThread.lineage.sideChat !== true,
-    settled:
-      !sendingNextStep &&
-      props.canOperateThread &&
-      contentPresentationKind === "ready" &&
-      props.creationState === null &&
-      !props.activeThreadBusy &&
-      props.activePendingApproval === null &&
-      props.activePendingUserInput === null &&
-      !props.selectedThread.hasPendingUserInput &&
-      !props.runlessWorkActive &&
-      !props.isCompacting &&
-      queuedCount === 0 &&
-      props.selectedThreadQueueCount === 0 &&
-      !(feedTail?.type === "message" && feedTail.pendingMessage !== undefined) &&
-      props.selectedThread.latestRun?.status === "completed",
-    thread: props.selectedThread,
-    detailRef: props.selectedThreadDetailRef,
-    cwd: props.threadCwd,
-    draftKey: props.composerDraftKey,
+    screen: props,
+    active:
+      no3yBottomNav &&
+      no3yNextStepSettled(props, {
+        feedReady: contentPresentationKind === "ready",
+        serverQueueCount: queuedCount,
+      }),
     pullRequest: no3yPullRequest,
   });
   /* fork:end fork-composer-next-step */
   /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
   // The next-step pill (fork-composer-next-step) keeps the feed clear of the row too.
   const showWorkingControl = no3yBottomNav
-    ? no3yStatus !== null || no3yPullRequest !== null || nextStep !== null
+    ? no3yStatus !== null || no3yPullRequest !== null || nextStep.step !== null
     : floatingStatus !== null;
   /* fork:end no3y-mobile-redesign */
   const showFloatingStatus =
@@ -1420,6 +1405,9 @@ function ThreadDetailBody(
   const handleSendMessage = async (
     followUp?: ActiveTurnComposerAction,
     stillSendable?: () => boolean,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    prompt?: string,
+    /* fork:end fork-composer-next-step */
   ) => {
     const scope = threadScope.current.signal;
     const targetThreadKey = selectedThreadKey;
@@ -1463,17 +1451,25 @@ function ThreadDetailBody(
           }
         : undefined;
     let dismissingKeyboard = false;
-    const messageId = await props.onSendMessage(followUp, declineBeforeDispatch, () => {
-      if (
-        scope.aborted ||
-        Platform.OS !== "ios" ||
-        !hasUserMessage ||
-        !KeyboardController.isVisible()
-      )
-        return;
-      setSendingWithKeyboard(true);
-      dismissingKeyboard = true;
-    });
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    // Upstream's call, plus the next-step pill's prompt as the last argument.
+    const messageId = await props.onSendMessage(
+      followUp,
+      declineBeforeDispatch,
+      () => {
+        if (
+          scope.aborted ||
+          Platform.OS !== "ios" ||
+          !hasUserMessage ||
+          !KeyboardController.isVisible()
+        )
+          return;
+        setSendingWithKeyboard(true);
+        dismissingKeyboard = true;
+      },
+      prompt,
+    );
+    /* fork:end fork-composer-next-step */
     if (messageId === null || scope.aborted) {
       return messageId;
     }
@@ -1582,32 +1578,6 @@ function ThreadDetailBody(
       freeze.set(false);
     });
   };
-
-  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
-  // Sent as its own message, like a typed one: the draft is empty while the pill shows. The pill
-  // stays hidden until the send lands in the outbox, so a second tap cannot repeat it.
-  const sendNextStep = async (step: No3yNextStep) => {
-    const scope = threadScope.current.signal;
-    setSendingNextStep(true);
-    const messageId = await props.onSendCommand(step.prompt).catch((error: unknown) => {
-      Dialog.alert(
-        gt("Failed to save the queued message."),
-        errorDisplayMessage(error, m) ?? gt("Try again."),
-      );
-      return null;
-    });
-    setSendingNextStep(false);
-    if (messageId === null || scope.aborted) return;
-    recordNo3yComposerHabit(step.previous, step.prompt);
-    if (contentPresentationKind !== "ready") return;
-    requestAnimationFrame(() => {
-      if (scope.aborted) return;
-      void scrollMessageToEnd({ animated: !reduceMotion, closeKeyboard: false }).catch(() => {
-        freeze.set(false);
-      });
-    });
-  };
-  /* fork:end fork-composer-next-step */
 
   const showScrollToEndButton = !props.draftMode && contentPresentationKind === "ready" && !isAtEnd;
   const { themeAppearance } = useAppearancePreferences();
@@ -1831,8 +1801,10 @@ function ThreadDetailBody(
                     thread={props.selectedThread}
                     pullRequest={no3yPullRequest}
                     /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
-                    nextStep={nextStep}
-                    onSendNextStep={(step) => void sendNextStep(step)}
+                    nextStep={nextStep.step}
+                    onSendNextStep={() =>
+                      nextStep.send((prompt) => handleSendMessage(undefined, undefined, prompt))
+                    }
                     /* fork:end fork-composer-next-step */
                   >
                     {/* fork:end no3y-mobile-redesign */}

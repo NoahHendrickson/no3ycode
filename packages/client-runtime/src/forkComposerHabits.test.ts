@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  createHabitStore,
   forgetHabit,
   habitKey,
   type HabitTable,
@@ -88,5 +89,46 @@ describe("recordHabit", () => {
     expect(Object.keys(table)).toHaveLength(300);
     expect(table[habitKey("fix aaa")!]).toBeUndefined();
     expect(table[habitKey(`fix ${word(300)}`)!]).toBeDefined();
+  });
+});
+
+describe("createHabitStore", () => {
+  // Async like iOS's key-value store; every write is kept to check the order they land in.
+  const fakeStorage = (initial: string | null = null) => {
+    const writes: string[] = [];
+    let stored = initial;
+    return {
+      writes,
+      setStored: (json: string) => {
+        stored = json;
+      },
+      storage: {
+        read: () => Promise.resolve(stored),
+        write: (json: string) => {
+          stored = json;
+          writes.push(json);
+          return Promise.resolve();
+        },
+      },
+    };
+  };
+
+  it("keeps another window's changes and saves in order", async () => {
+    const fake = fakeStorage();
+    const store = createHabitStore(fake.storage);
+    // Another window learned a habit after this one loaded.
+    fake.setStored(JSON.stringify(repeat({}, "ship it", "open a pr", 5)));
+    void store.record("ship it", "open a pr", 9);
+    await store.forget({ previousKey: "ship", nextKey: "open pr", text: "open a pr" });
+    const [recorded, forgotten] = fake.writes.map((json): HabitTable => JSON.parse(json));
+    expect(recorded?.["ship"]?.next["open pr"]?.count).toBe(6);
+    expect(forgotten?.["ship"]?.next).toEqual({});
+    expect(store.getTable()).toEqual(forgotten);
+  });
+
+  it("starts fresh from a corrupt table", async () => {
+    const store = createHabitStore(fakeStorage("{not json").storage);
+    await store.record("ship it", "open a pr", 0);
+    expect(Object.keys(store.getTable())).toEqual([habitKey("ship it")]);
   });
 });
