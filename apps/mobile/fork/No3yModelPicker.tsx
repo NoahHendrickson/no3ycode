@@ -23,6 +23,7 @@ import Animated, {
   ReduceMotion,
   type SharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
@@ -291,9 +292,13 @@ function ReasoningModelRow(
     props.onSave(picked && index !== props.committedIndex ? picked.id : null);
   };
 
+  // A meter closed from outside (the row left the list) can leave the shared value at 1.
+  const editing = props.editing;
+  const shown = useDerivedValue(() => (editing ? meter.get() : 0));
+
   // The meter grows out of the chip's pill to become the row, short of the save button.
   const meterStyle = useAnimatedStyle(() => {
-    const progress = meter.get();
+    const progress = shown.get();
     const rect = chip.get();
     const width = rowWidthValue.get();
     return {
@@ -305,21 +310,21 @@ function ReasoningModelRow(
     };
   });
   const fadeOutStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(meter.get(), [0, 0.6], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(shown.get(), [0, 0.6], [1, 0], Extrapolation.CLAMP),
   }));
   const fadeInStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(meter.get(), [0.25, 1], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(shown.get(), [0.25, 1], [0, 1], Extrapolation.CLAMP),
   }));
   // Glass never renders under a fading ancestor, so the knob arrives by scale alone.
   const knobInStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(meter.get(), [0.25, 1], [0.4, 1], Extrapolation.CLAMP) }],
+    transform: [{ scale: interpolate(shown.get(), [0.25, 1], [0, 1], Extrapolation.CLAMP) }],
   }));
   const saveFillStyle = useAnimatedStyle(() => ({
-    opacity: meter.get(),
-    transform: [{ scale: interpolate(meter.get(), [0, 1], [0.6, 1]) }],
+    opacity: shown.get(),
+    transform: [{ scale: interpolate(shown.get(), [0, 1], [0.6, 1]) }],
   }));
   const saveInkStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(meter.get(), [0, 0.6], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(shown.get(), [0, 0.6], [0, 1], Extrapolation.CLAMP),
   }));
 
   const chipText = { ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground } as const;
@@ -663,7 +668,7 @@ export function No3yModelPicker(props: {
   const effortIsPrimary =
     effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
   const editingIndex =
-    editingKey === null
+    editingKey === null || effort === null
       ? -1
       : models.findIndex(({ option }) => option.key === editingKey && session.isDisplayed(option));
   const editing = editingIndex >= 0;
