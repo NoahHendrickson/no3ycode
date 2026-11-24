@@ -43,7 +43,7 @@ beforeEach(() => {
     draftThreadsByThreadKey: {},
     logicalProjectDraftThreadKeyByLogicalProjectKey: {},
   });
-  useSplitThreadStore.setState({ pairs: [], floating: null });
+  useSplitThreadStore.setState({ pairs: [], floating: null, docked: null });
 });
 
 describe("landing drafts", () => {
@@ -79,10 +79,18 @@ describe("landing drafts", () => {
         },
       ],
     });
+    // The dock's left pane shows it even while the route is on the docked thread.
+    const besideDock = land("beside-dock");
+    useSplitThreadStore.setState({
+      docked: {
+        thread: scopeThreadRef(environmentId, ThreadId.make("thread-docked")),
+        left: scopeThreadRef(environmentId, ThreadId.make("thread-beside-dock")),
+      },
+    });
 
     sweepLandingDrafts(null);
 
-    expect([typed, branched, split].map(exists)).toEqual([true, true, true]);
+    expect([typed, branched, split, besideDock].map(exists)).toEqual([true, true, true, true]);
     // Taken up means forgotten: a later sweep leaves them alone even if emptied.
     store.setPrompt(typed, "");
     sweepLandingDrafts(null);

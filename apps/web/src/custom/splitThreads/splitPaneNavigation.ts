@@ -43,9 +43,13 @@ export async function closeSplitDraft(
   draftId: DraftId,
 ): Promise<void> {
   if (!(await leave())) return;
-  useSplitThreadStore.getState().closeDraftPane(ref);
+  const store = useSplitThreadStore.getState();
   const drafts = useComposerDraftStore.getState();
-  if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) return;
+  if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) {
+    store.closeDraftPane(ref);
+    return;
+  }
+  store.forget(ref);
   releaseComposerDraftUploads(draftId);
   drafts.clearDraftThread(draftId);
 }

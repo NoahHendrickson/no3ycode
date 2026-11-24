@@ -60,9 +60,10 @@ function isUntouchedLandingDraft(landing: LandingDraft, session: DraftSessionSta
   }
   const ref = scopeThreadRef(session.environmentId, session.threadId);
   if (Object.keys(readThreadPreviewState(ref).sessions).length > 0) return false;
-  const { pairs, floating } = useSplitThreadStore.getState();
+  const { pairs, floating, docked } = useSplitThreadStore.getState();
   if (
     sameThread(floating, ref) ||
+    sameThread(docked?.left ?? null, ref) ||
     pairs.some((p) => sameThread(p.a, ref) || sameThread(p.b, ref))
   ) {
     return false;

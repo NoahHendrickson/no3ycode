@@ -1242,7 +1242,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   const threadRef = scopeThreadRef(thread.environmentId, thread.id);
   const threadKey = scopedThreadKey(threadRef);
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-  const docked = useThreadDocked(threadKey);
+  const docked = useThreadDocked(threadRef);
   /* fork:end fork-split-threads */
   const canOperateThread = useEnvironmentScope(thread.environmentId, AuthOrchestrationOperateScope);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- losing operate access cancels the rename the parent owns
@@ -3502,7 +3502,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     navigateToThread(threadRef),
   );
   const splitDropHandlers = makeSplitDropHandlers({
-    canPair: (threadKey) => splitModel.pairable.has(threadKey),
+    // A pair made while a thread is docked would stay hidden behind the dock.
+    canPair: (threadKey) => !dockActive && splitModel.pairable.has(threadKey),
     openThreadKey: routeThreadKey,
     openThread: openDroppedThread,
   });

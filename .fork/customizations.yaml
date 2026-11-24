@@ -6450,6 +6450,9 @@
     undocks it. On the left pane the toggle swaps the two, and the window's
     Dock beside lands it in the left pane by navigating to it. The divider
     stores its share as dockRatio. A docked thread found missing is forgotten.
+    While a thread is docked, card drops in the sidebar and the tab strip do not
+    pair (the pair would stay hidden), and a landing draft in the left pane is
+    never swept as untouched.
     Its sidebar card wears a docked glyph last on the title line, after the
     status mark and the working timer (custom/splitThreads/SidebarDockedMark).
 
@@ -6538,6 +6541,8 @@
     - apps/web/src/custom/splitThreads/splitThreadDrag.ts
     - apps/web/src/custom/splitThreads/SidebarSplitPairRow.tsx
     - apps/web/src/custom/splitThreads/SidebarDockedMark.tsx
+    # Landing drafts beside the dock are on screen, so the sweep keeps them.
+    - apps/web/src/custom/landingDraft.ts
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     # Registers only the focused pane's composer.
     - apps/web/src/custom/voice/forkDictation.ts

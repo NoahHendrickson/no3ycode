@@ -204,13 +204,21 @@ describe("docking a thread to the right", () => {
     expect(useSplitThreadStore.getState().docked).toBeNull();
   });
 
-  it("closes a draft out of the left pane without dropping a pair the dock hides", async () => {
+  it("closes a draft out of the left pane, keeping a hidden pair only while the draft lives", async () => {
     const store = useSplitThreadStore.getState();
     store.pair(ref("s"), ref("draft"));
+    store.dock(ref("d"), ref("draft"));
+    // A written draft survives the close, and so does the pair the dock hides.
+    store.closeDraftPane(ref("draft"));
+    expect(useSplitThreadStore.getState()).toMatchObject({
+      docked: { thread: ref("d"), left: null },
+    });
+    expect(findSplitPair(useSplitThreadStore.getState().pairs, ref("draft"))).not.toBeNull();
+    // An empty one is discarded, so the pair goes with it.
     store.dock(ref("d"), ref("draft"));
     await closeSplitDraft(async () => true, ref("draft"), DraftId.make("draft-1"));
     const state = useSplitThreadStore.getState();
     expect(state).toMatchObject({ docked: { thread: ref("d"), left: null } });
-    expect(findSplitPair(state.pairs, ref("draft"))).not.toBeNull();
+    expect(findSplitPair(state.pairs, ref("draft"))).toBeNull();
   });
 });
