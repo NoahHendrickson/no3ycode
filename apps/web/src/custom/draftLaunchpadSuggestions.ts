@@ -19,7 +19,6 @@ export interface LaunchpadSuggestion {
   readonly id: string;
   readonly kind: LaunchpadSuggestionKind;
   readonly title: string;
-  readonly meta: string;
   readonly prompt: string;
   /** The project a pick from an unassigned draft moves it to; null for checkout work. */
   readonly project: { readonly environmentId: EnvironmentId; readonly projectId: ProjectId } | null;
@@ -62,7 +61,6 @@ function pullRequestSuggestion(
         project,
         envMode: null,
         title: `Resolve conflicts on ${ref}`,
-        meta: "Conflicts",
         prompt: `Resolve the merge conflicts on ${at}. Bring ${pr.headBranch} up to date with ${pr.baseBranch}, resolve the conflicts, run the affected tests, and push.`,
       };
     case "checks":
@@ -72,7 +70,6 @@ function pullRequestSuggestion(
         project,
         envMode: null,
         title: `Fix checks on ${ref}`,
-        meta: "Checks failing",
         prompt: `The checks on ${at} are failing. Read the failing job logs, find the root cause, and push a fix to ${pr.headBranch}.`,
       };
     case "changes":
@@ -82,7 +79,6 @@ function pullRequestSuggestion(
         project,
         envMode: null,
         title: `Address review on ${ref}`,
-        meta: "Changes requested",
         prompt: `Changes were requested on ${at}. Read the review comments, make the changes, and push them to ${pr.headBranch}.`,
       };
     case "review":
@@ -92,7 +88,6 @@ function pullRequestSuggestion(
         project,
         envMode: null,
         title: `Review ${ref}`,
-        meta: "Review requested",
         prompt: `Review ${at}. Read the diff, then summarize the real issues ranked by severity.`,
       };
     default:
@@ -102,7 +97,6 @@ function pullRequestSuggestion(
         project,
         envMode: null,
         title: `Merge ${ref}`,
-        meta: "Ready to merge",
         prompt: `${at} is approved and its checks pass. Confirm it is still mergeable, then merge it.`,
       };
   }
@@ -147,7 +141,6 @@ function gitSuggestions({ project, name, git }: LaunchpadCheckout): LaunchpadSug
       project,
       envMode: "local",
       title: `Commit ${files}${where}`,
-      meta: "Uncommitted",
       prompt: `Look at the uncommitted changes in this checkout (${files}), group them into sensible commits, and commit them.`,
     });
   }
@@ -159,7 +152,6 @@ function gitSuggestions({ project, name, git }: LaunchpadCheckout): LaunchpadSug
       project,
       envMode: "local",
       title: name === null ? `Pull ${commits} on ${branch}` : `Pull ${commits} into ${name}`,
-      meta: "Behind",
       prompt: `Pull the ${commits} on ${branch} into this checkout and summarize what changed.`,
     });
   }
@@ -176,7 +168,6 @@ function gitSuggestions({ project, name, git }: LaunchpadCheckout): LaunchpadSug
       project,
       envMode: "local",
       title: `Open a pull request for ${branch}${where}`,
-      meta: "No PR",
       prompt: `Open a pull request for ${branch}. Summarize what the branch changes in the description.`,
     });
   }
