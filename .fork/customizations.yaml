@@ -1098,8 +1098,8 @@
     The header is the design's 32px row (Figma 364:11442, 368:21364): a ghost
     label button — 16px folder mark, Regular name at the Sidebar font size, muted foreground,
     lifting to foreground on hover, 12px inline padding that lands the mark on
-    the cards' 20px prompt edge — then a 32px three-dot that opens the
-    project's menu and a 32px plus, both on the list edge. The menu offers
+    the cards' 20px prompt edge — then a 28px three-dot that opens the
+    project's menu and a 28px plus, both on the trailing axis. The menu offers
     "Settle all threads", which settles every active thread in the section
     through the multi-select batch path (post-settle navigation skips the
     batch; drafts, already-settled rows and environments without settlement

@@ -23,9 +23,8 @@
  * own px-3 closes that gap and then some, so a 24px box flush with the card's
  * content edge is already on the axis — but a box flush with a row that has
  * no such padding (a slim row's right-0 overlay) sits 4px too far right and
- * spends me-1 to get back. The project header's plus is the one 32px control
- * in the list: flush with the list's bare 8px edge, it centres 16 further —
- * 24 — and owes nothing.
+ * spends me-1 to get back. The group headers' buttons are 28px squares that
+ * stop 2px inside the list's bare 8px edge, so they centre 14 further — 24.
  *
  * Each offset below is derived from the inset of the edge its control is
  * flush against. They are not interchangeable and none of them is a taste
@@ -59,10 +58,10 @@ export const SIDEBAR_V2_TRAILING_OFFSET = {
    *  the row's border box — the list's 8px inset, padding notwithstanding — so
    *  a flush 24px button centres at 20. me-1 walks it the 4px back. */
   slimActions: "me-1",
-  /** The project header's plus. A 32px button (Figma 364:11451) flush with
-   *  the list's bare 8px edge centres 16px further — 24 exactly. Nothing
-   *  owed; the size is what a 24px box spent me-1 to fake. */
-  headerPlus: "",
+  /** The group headers' trailing buttons, 28px squares. The header's px-3 puts its
+   *  content 12px in from the list's 8px edge; -me-2.5 takes back 10 of it, so the
+   *  last button sits 2px inside that edge and centres 14px further — 24 exactly. */
+  headerPlus: "-me-2.5",
   /** Shelf header chevrons. px-2.5 on the shelf button makes an 18px inset,
    *  and a flush 12px glyph centres 6px further — 24 exactly. Nothing owed. */
   shelfChevron: "",

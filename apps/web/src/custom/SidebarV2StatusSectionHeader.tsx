@@ -68,8 +68,8 @@ export function SidebarV2StatusSectionHeader(props: {
           data-fork-section-actions=""
           data-fork-menu-open={menuOpen ? "" : undefined}
           className={cn(
-            // 24px tall so the hover fill keeps 2px clear of the first card, which headerTrail pulls up.
-            "-me-3 flex shrink-0 items-center [&_button]:h-6",
+            // 28px squares so the hover fill keeps 2px clear of the first card, which headerTrail pulls up.
+            "flex shrink-0 items-center [&_button]:size-7",
             SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
           )}
         >

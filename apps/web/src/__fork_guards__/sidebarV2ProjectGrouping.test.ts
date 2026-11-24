@@ -125,9 +125,9 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
       "group/collapse relative -ms-3 flex min-h-8 min-w-0 flex-1 items-center",
     );
     expect(header).toContain("absolute inset-0 z-0");
-    expect(header).toContain('"-me-3 relative z-10 flex shrink-0 items-center [&_button]:h-6"');
-    // The design's 32px buttons are SidebarV2IconButton's header box, and -me-3 pulls the group
-    // out of the row's padding onto the list edge the trailing derivation measures from.
+    expect(header).toContain('"relative z-10 flex shrink-0 items-center [&_button]:size-7"');
+    // The header slot sizes its buttons to 28px squares, and headerPlus pulls the group out of
+    // the row's padding to 2px inside the list edge the trailing derivation measures from.
     expect(header.split(/<SidebarV2IconButton\s+box="header"/u).length - 1).toBe(2);
     expect(header).toContain("group-hover/collapse:invisible");
     expect(header).toContain("group-hover/collapse:visible");
