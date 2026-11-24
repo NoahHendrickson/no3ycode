@@ -77,9 +77,12 @@ export function no3yPullRequestPill(
 export function no3yWatcherChecksState(
   rollup: PullRequestChecksState | null,
   live: PullRequestChecks | null,
-  syncedAt: string | undefined,
+  link: Pick<ThreadPullRequestLink, "snapshot" | "watch"> | null,
 ): PullRequestChecksState | null {
-  if (rollup !== "pending" && rollup !== "failing") return rollup;
+  // The watcher keeps a hold per head until the held run finishes, even through reads that omit
+  // it, and GitHub can hold a run before any check exists, under a passing or absent rollup.
+  const held = (link?.watch?.awaitingApproval?.length ?? 0) > 0;
+  if (rollup !== "pending" && rollup !== "failing") return held ? "pending" : rollup;
   // A placeholder stands for checks the host could not list; the watcher waits on it too.
   if (
     live === null ||
@@ -88,6 +91,7 @@ export function no3yWatcherChecksState(
   ) {
     return rollup;
   }
+  const syncedAt = link?.snapshot?.syncedAt;
   if (
     syncedAt !== undefined &&
     live.observedAt !== undefined &&
@@ -102,6 +106,7 @@ export function no3yWatcherChecksState(
   }
   // A run awaiting approval holds the watcher whether or not it is required.
   if (
+    held ||
     gate.some((check) => check.status === "pending") ||
     live.checks.some((check) => check.status === "action-required")
   ) {

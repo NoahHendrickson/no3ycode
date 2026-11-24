@@ -608,7 +608,7 @@ function useWatcherChecksState(thread: EnvironmentThreadShell, look: No3yPullReq
     const timer = setInterval(refresh, intervalMs);
     return () => clearInterval(timer);
   });
-  return no3yWatcherChecksState(look.checks, gated ? live.data : null, link?.snapshot?.syncedAt);
+  return no3yWatcherChecksState(look.checks, gated ? live.data : null, link);
 }
 
 /** Figma's checks-running mark: a ring with a three-quarter pie. */
