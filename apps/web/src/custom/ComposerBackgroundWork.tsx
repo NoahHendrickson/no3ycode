@@ -28,14 +28,10 @@ export interface ComposerBackgroundWorkViewProps {
   readonly environmentId: EnvironmentId;
 }
 
-function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): string {
-  return props.stopping ? "Stopping..." : composerBackgroundWorkLabel(props.items);
-}
-
 /** Background work as a chip above the composer (fork-composer-shell): the label opens the task
  * list, a subagent's row opens its thread, and the square stops it all. @public — Storybook draws it. */
 export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProps) {
-  const label = resolveBackgroundWorkLabel(props);
+  const label = props.stopping ? "Stopping..." : composerBackgroundWorkLabel(props.items);
   return (
     <span data-fork-composer-status-chip="background-work">
       {/* A button's children are presentational, so "Stopping..." is announced from here. */}

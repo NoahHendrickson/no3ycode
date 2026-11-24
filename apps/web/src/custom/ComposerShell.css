@@ -101,7 +101,8 @@
 
 /* Background tasks: a fill travels the Layers02 mark front → middle → back, one layer per 2s
    on a 6s loop. Each fades out over the 0.9s the next fades in, so the fill hands over.
-   Element opacity only, so the chip never repaints. Reduced motion keeps the outline. */
+   Element opacity only, with stepped ramps and static holds, so the compositor draws a few
+   frames a fade rather than one per vsync. Reduced motion keeps the outline. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-status-chip="background-work"]
   [data-fork-liveness-mark] {
@@ -112,7 +113,7 @@
     top: 0;
     left: 0;
     opacity: 0;
-    animation: fork-background-work-layers 6s ease-in-out infinite;
+    animation: fork-background-work-layers 6s infinite;
   }
   & > svg[data-fork-layer-fill="middle"] {
     animation-delay: 2s;
@@ -134,10 +135,14 @@
 @keyframes fork-background-work-layers {
   0% {
     opacity: 0;
+    animation-timing-function: steps(8);
   }
-  15%,
+  15% {
+    opacity: 1;
+  }
   33.333% {
     opacity: 1;
+    animation-timing-function: steps(8);
   }
   48.333%,
   100% {
