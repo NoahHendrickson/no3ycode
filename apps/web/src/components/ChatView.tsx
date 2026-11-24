@@ -2819,6 +2819,8 @@ export default function ChatView(props: ChatViewProps) {
   // The queue card collapses into a pill in this row.
   const [forkQueueExpanded, setForkQueueExpanded] = useState(true);
   const forkQueuedCount = forkQueuedItemCount(serverProjection, optimisticUserMessages);
+  // A queue that empties forgets its collapse, so the next queued message opens as a card again.
+  if (forkQueuedCount === 0 && !forkQueueExpanded) setForkQueueExpanded(true);
   const composerStatusChips =
     activeThread && activeThreadRef && !isDraftHeroState ? (
       <>
