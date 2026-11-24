@@ -7,6 +7,7 @@ import "~/theme.custom.palettes.css";
 import "~/theme.custom.glass-surfaces.css";
 import "~/theme.custom.glass-stage.css";
 import "~/theme.custom.focus-rings.css";
+import "~/theme.custom.interface-size.css";
 
 import type { Decorator, Preview } from "@storybook/react-vite";
 

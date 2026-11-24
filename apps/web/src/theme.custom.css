@@ -187,25 +187,26 @@
 
    The chat stream is always on: message and tool-row text (text-sm) is 1rem so
    it matches the composer's text-base, and every size multiplies Chat stream
-   size (1 at 100%). Line-height companions are unitless ratios and follow on
-   their own. Code keeps Code font size, which is in px and outside these. */
+   size (1 at 100%) and the Interface font size's text scale. Line-height
+   companions are unitless ratios and follow on their own. Code keeps Code font
+   size, which is in px and outside these. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
-  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
-  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
-  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
-  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
 }
 
 /* The banner cards above the composer read at the chat stream's sizes too. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {
-  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
-  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
-  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
-  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
 }
 
 /* What the tokens can't reach. text-2xs and text-3xs are @theme inline, so
@@ -215,10 +216,14 @@
    heading sits below it. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   .text-2xs {
-    font-size: calc(0.6875rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.6875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
   .text-3xs {
-    font-size: calc(0.625rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.625rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
   .chat-markdown {
     h1 {
@@ -234,7 +239,9 @@
       font-size: var(--text-sm);
     }
     table {
-      font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+      font-size: calc(
+        0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+      );
     }
   }
 }
@@ -1927,7 +1934,7 @@
   opacity: 1;
   width: auto;
   overflow: visible;
-  margin-inline-end: -0.75rem;
+  margin-inline-end: calc(var(--spacing) * -2.5);
   pointer-events: auto;
 }
 
@@ -1953,7 +1960,7 @@
     opacity: 1;
     width: auto;
     overflow: visible;
-    margin-inline-end: -0.75rem;
+    margin-inline-end: calc(var(--spacing) * -2.5);
     pointer-events: auto;
   }
 
@@ -2472,7 +2479,7 @@
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
   /* Chat stream size, like the transcript and the other banner cards. */
-  font-size: calc(1rem * var(--fork-chat-text-scale, 1));
+  font-size: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
   line-height: 1.375;
 }
 
@@ -2609,7 +2616,9 @@
 
   /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
   & [data-fork-question-hint] {
-    font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
 
   /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */
@@ -3651,4 +3660,16 @@
     padding: 0 16px 8px;
     border-bottom: 1px solid var(--border);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Settings nav — see `.fork/customizations.yaml#fork-settings-nav`.
+
+   Every section reads in the foreground at regular weight, active or not. Its icon rests at 65%,
+   the same ink as the group headings, through the token the menu button reads at rest, so the
+   button's own hover, press and selected icon states still brighten it. */
+:root[data-fork="noahhendrickson-t3code"] [data-settings-section] {
+  font-weight: 400;
+  color: var(--contrast-sidebar-foreground);
+  --sidebar-icon-color: color-mix(in srgb, var(--contrast-sidebar-foreground) 65%, transparent);
 }

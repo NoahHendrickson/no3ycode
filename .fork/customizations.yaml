@@ -1124,10 +1124,10 @@
     project and skips the picker.
 
     The header is the design's 32px row (Figma 364:11442, 368:21364): a ghost
-    label button — 16px folder mark, Label/12 Medium name at muted foreground,
+    label button — 16px folder mark, Regular name 1px under the Sidebar font size, muted foreground,
     lifting to foreground on hover, 12px inline padding that lands the mark on
-    the cards' 20px prompt edge — then a 32px three-dot that opens the
-    project's menu and a 32px plus, both on the list edge. The menu offers
+    the cards' 20px prompt edge — then a 28px three-dot that opens the
+    project's menu and a 28px plus, both on the trailing axis. The menu offers
     "Settle all threads", which settles every active thread in the section
     through the multi-select batch path (post-settle navigation skips the
     batch; drafts, already-settled rows and environments without settlement
@@ -1295,7 +1295,7 @@
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
     Completed titles are full strength, Working and Idle recede, and the open
-    or selected card never does. Section headers are a muted 12px medium label
+    or selected card never does. Section headers are a muted regular label 1px under the Sidebar font size
     (no count) with an always-visible filled chevron on the cards' inset and no
     hairline; clicking collapses (down when expanded, rotated right when
     collapsed). Hovering the header or any row in its section reveals the shared
@@ -2812,6 +2812,42 @@
   verify:
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
+
+- id: fork-interface-size-text-only
+  intent: >
+    Interface font size scales text only (Noey, 2026-11-24). Upstream applies it
+    as the root font size, so every rem in the app moved with it and inputs,
+    buttons, switches and padding shrank at 15px. The fork writes it as
+    --fork-interface-text-scale (size / 16) instead, so rem stays 16px and every
+    rem geometry token and class holds by default. Text is the closed set that
+    follows: the root --text-* tokens, the body size, the @theme-inline dense
+    steps (text-2xs..5xs), the Chat stream sizes (composed with Chat stream
+    size), index.css's rem font sizes and the few arbitrary rem text classes all
+    multiply the scale. A new rem font size must multiply it too; the guard
+    finds any that don't.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.interface-size.css
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/custom/CollapsedThreadTabs.tsx
+  shadows: []
+  watch:
+    # Fenced: writes the text scale instead of the root font size.
+    - apps/web/src/appearanceFonts.ts
+    # Fenced: the composer-size case loads the sheet and the fork root marker.
+    - apps/web/src/appearanceFonts.browser.test.ts
+    # Fenced: rem font sizes multiply the scale.
+    - apps/web/src/index.css
+    # Fenced: the arbitrary rem text classes multiply the scale.
+    - apps/web/src/components/ui/badge.tsx
+    - apps/web/src/components/ui/empty.tsx
+    # Fenced: imports the interface-size sheet.
+    - apps/web/src/main.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
 
 - id: fork-sidebar-chrome
   intent: >
@@ -6489,6 +6525,27 @@
     - apps/web/src/components/settings/SettingsGroup.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSettingsGlass.test.ts
+
+- id: fork-settings-nav
+  intent: >
+    The Settings nav reads calmer (Noey, 2026-11-24): section labels are the
+    foreground at regular weight, active or not, with their icons resting at
+    65% (via --sidebar-icon-color, so hover, press and selected still brighten
+    them); the group headings are the foreground at 65%; the search is the
+    app's outlined search field (InputGroup), used as-is; and a full-width hairline
+    divides each group from the next. Every theme, since the inks derive from
+    --contrast-sidebar-foreground (so Appearance → Contrast still applies).
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Fenced search field, heading and group classes.
+    - apps/web/src/components/settings/SettingsSidebarNav.tsx
+    # The label rule outranks the menu button's muted/80 ink and active font-medium.
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSettingsNav.test.ts
 
 - id: fork-split-threads
   intent: >

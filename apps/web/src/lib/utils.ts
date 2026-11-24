@@ -20,6 +20,7 @@ const twMerge = extendTailwindMerge({
         /* fork:begin fork-sidebar-type-size — see .fork/customizations.yaml#fork-sidebar-type-size */
         "sidebar-title",
         "sidebar-row",
+        "sidebar-label",
         "sidebar-chrome",
         "sidebar-meta",
         "sidebar-caption",
