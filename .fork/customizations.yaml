@@ -8652,8 +8652,9 @@
     filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatTab.tsx)
     has Threads' header (Chat; Search, Settings and Usage, Search turning the
     row into a search pill with a close button), its chats newest first as
-    thread cards (fork/No3yThreadRow.tsx, swiping to archive and delete, the
-    card long-press menu, no settle or snooze), and New agent's own draft
+    one-line rows (fork/No3yThreadRow.tsx's chat variant: provider mark, title,
+    then the queued, pin and status marks, no meta line; swiping to archive and
+    delete, the card long-press menu, no settle or snooze), and New agent's own draft
     composer for a No-project chat: the Chat tab keeps a draft for the
     environment's No-project workspace (opened on the server if it is not yet
     listed; fork/no3yChat.ts), as New agent's tab keeps its own. With no draft
