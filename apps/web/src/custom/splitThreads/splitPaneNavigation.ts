@@ -14,6 +14,7 @@ import {
 import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
+import { sameThread } from "./splitThreadPairs";
 import { type PaneRoute, useSplitThreadStore } from "./splitThreadStore";
 
 /** Puts a pane's thread on the route (replace): how focus moves between panes. */
@@ -43,7 +44,10 @@ export async function closeSplitDraft(
   draftId: DraftId,
 ): Promise<void> {
   if (!(await leave())) return;
-  useSplitThreadStore.getState().unpair(ref);
+  const store = useSplitThreadStore.getState();
+  // Beside a dock the draft only leaves the left pane; a pair the dock hides stays saved.
+  if (sameThread(store.dockLeft, ref)) useSplitThreadStore.setState({ dockLeft: null });
+  else store.unpair(ref);
   const drafts = useComposerDraftStore.getState();
   if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) return;
   releaseComposerDraftUploads(draftId);

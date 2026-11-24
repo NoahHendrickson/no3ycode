@@ -139,5 +139,10 @@ describe("fork guard: fork-split-threads", () => {
     expect(sidebar).toContain("active={pairOpen}");
     expect(sidebar).toContain("onOpenSplitPair: pairOpen,");
     expect(sidebar).toContain("onOpenPair: props.onOpenSplitPair === true,");
+    // The docked thread's card marks it after the status mark.
+    expect(sidebar).toContain("const docked = useThreadDocked(threadKey);");
+    expect(sidebar).toMatch(
+      /<SidebarV2StatusMark[\s\S]{0,600}\{docked && !isSwept \? \(\s*<SidebarDockedMark/u,
+    );
   });
 });

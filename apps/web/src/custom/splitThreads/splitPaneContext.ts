@@ -17,6 +17,13 @@ export interface PaneWindowAction {
   readonly run: () => void;
 }
 
+/** The header toggle that docks a thread as the column's right pane, where it
+    stays across navigation, or undocks the one docked there. */
+export interface PaneDockAction {
+  readonly kind: "dock" | "undock";
+  readonly run: () => void;
+}
+
 export interface SplitPaneState {
   /** True while two panes share the column. */
   readonly split: boolean;
@@ -35,6 +42,9 @@ export interface SplitPaneState {
       partner, or goes back to the route's previous thread. Dock lands the
       window beside the column's thread. Null when neither applies. */
   readonly windowAction: PaneWindowAction | null;
+  /** A thread is docked on the right, so the dock, not a pair, owns the column. */
+  readonly dockedLayout: boolean;
+  readonly dockAction: PaneDockAction | null;
 }
 
 export const SINGLE_PANE: SplitPaneState = {
@@ -45,6 +55,8 @@ export const SINGLE_PANE: SplitPaneState = {
   focusPartner: async () => true,
   floating: false,
   windowAction: null,
+  dockedLayout: false,
+  dockAction: null,
 };
 
 export const SplitPaneContext = createContext<SplitPaneState>(SINGLE_PANE);

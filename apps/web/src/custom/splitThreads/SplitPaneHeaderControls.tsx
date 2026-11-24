@@ -1,14 +1,17 @@
 /** A pane's header controls (fork-split-threads). Float lifts a thread into a window over the
  * column, where the same spot reads Dock; the window drops the split and panel toggles until it
- * docks. The split toggle sits just before details; an unsent split draft gets a closing X. */
+ * docks. Dock to right pins a thread as the column's right pane, pressed while it is docked
+ * there. The split toggle sits just before details; an unsent split draft gets a closing X. */
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { PictureInPicture2, SquareSplitHorizontal, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import type { DraftId } from "~/composerDraftStore";
 
+import { DockRightIcon } from "../icons/lucide-hugeicons";
 import { closeSplitDraft } from "./splitPaneNavigation";
 import { useSplitPane } from "./splitPaneContext";
 
@@ -50,7 +53,8 @@ export function SplitPaneHeaderControls(props: {
 }) {
   const { draftId, threadRef } = props;
   const splitPane = useSplitPane();
-  const { windowAction } = splitPane;
+  const { windowAction, dockAction } = splitPane;
+  const dockLabel = dockAction?.kind === "undock" ? "Undock" : "Dock to right";
 
   const close = (draft: DraftId, ref: ScopedThreadRef) =>
     void closeSplitDraft(splitPane.focusPartner, ref, draft);
@@ -69,6 +73,29 @@ export function SplitPaneHeaderControls(props: {
           }
           onPress={windowAction.run}
         />
+      ) : null}
+      {dockAction ? (
+        <div className="pointer-events-auto flex h-full items-center">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="flex shrink-0" data-fork-panel-toggle data-split-pane-action />
+              }
+            >
+              <Toggle
+                className="shrink-0 [-webkit-app-region:no-drag]"
+                pressed={dockAction.kind === "undock"}
+                aria-label={dockLabel}
+                variant="ghost"
+                size="sm"
+                onClick={dockAction.run}
+              >
+                <DockRightIcon className="size-4" />
+              </Toggle>
+            </TooltipTrigger>
+            <TooltipPopup side="bottom">{dockLabel}</TooltipPopup>
+          </Tooltip>
+        </div>
       ) : null}
       {splitPane.floating ? null : (
         <>

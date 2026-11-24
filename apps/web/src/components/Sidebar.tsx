@@ -498,6 +498,7 @@ import {
   splitThreadDragSourceProps,
 } from "~/custom/splitThreads/splitThreadDrag";
 import { buildSidebarSplitModel } from "~/custom/splitThreads/sidebarSplitRows";
+import { SidebarDockedMark, useThreadDocked } from "~/custom/splitThreads/SidebarDockedMark";
 import { useSplitThreadStore } from "~/custom/splitThreads/splitThreadStore";
 import { useStableCallback } from "~/hooks/useStableCallback";
 /* fork:end fork-split-threads */
@@ -1240,6 +1241,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   } = props;
   const threadRef = scopeThreadRef(thread.environmentId, thread.id);
   const threadKey = scopedThreadKey(threadRef);
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  const docked = useThreadDocked(threadKey);
+  /* fork:end fork-split-threads */
   const canOperateThread = useEnvironmentScope(thread.environmentId, AuthOrchestrationOperateScope);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- losing operate access cancels the rename the parent owns
   useEffect(() => {
@@ -2177,6 +2181,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           />
         </span>
         {/* fork:end sidebar-v2-card-rows */}
+        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+            Last on the line, at the content edge: ms-0.5 gives back the 2px the status box's
+            own edge pull takes from the gap. */}
+        {docked && !isSwept ? (
+          <SidebarDockedMark className={cn("ms-0.5", SIDEBAR_V2_TRAILING_OFFSET.cardStatus)} />
+        ) : null}
+        {/* fork:end fork-split-threads */}
         {isSwept ? sweepBadge : null}
       </span>
     </>
@@ -3360,6 +3371,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      order, and which cards take a drop. Pinned rows sort through dnd-kit and
      shelf rows carry their own actions, so only active cards pair. */
   const splitPairs = useSplitThreadStore((state) => state.pairs);
+  const dockActive = useSplitThreadStore((state) => state.docked !== null);
   const splitModel = useMemo(() => {
     const shelvedThreadKeys = new Set(
       [...visibleSnoozedThreads, ...renderedSettledThreads].map((thread) =>
@@ -5642,7 +5654,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       if (splitRow === undefined) {
                         return renderOneThreadRow(thread, section, options);
                       }
+                      // A docked thread owns the column, so the pair is not what is open.
                       const pairOpen =
+                        !dockActive &&
                         routeRowThreadKey !== null &&
                         splitRow.memberKeys.includes(routeRowThreadKey);
                       return (

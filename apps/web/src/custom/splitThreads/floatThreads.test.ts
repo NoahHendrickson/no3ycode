@@ -3,8 +3,11 @@ import { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { FLOAT_EDGE_GAP, moveFloatFrame, resizeFloatFrame, resolveFloatFrame } from "./floatFrame";
+import { DraftId } from "~/composerDraftStore";
+
+import { closeSplitDraft } from "./splitPaneNavigation";
 import { findSplitPair } from "./splitThreadPairs";
-import { useSplitThreadStore } from "./splitThreadStore";
+import { resolveDockedLayout, useSplitThreadStore } from "./splitThreadStore";
 
 const ref = (id: string) => scopeThreadRef(EnvironmentId.make("env"), ThreadId.make(id));
 const server = { kind: "server" } as const;
@@ -115,5 +118,92 @@ describe("floating a thread", () => {
     store.float(ref("f"));
     store.arrive({ ref: ref("f"), route: server });
     expect(useSplitThreadStore.getState().floating).toBeNull();
+  });
+});
+
+describe("docking a thread to the right", () => {
+  beforeEach(() => {
+    useSplitThreadStore.setState({
+      pairs: [],
+      floating: null,
+      routeCurrent: null,
+      routePrevious: null,
+      pendingFloat: null,
+      docked: null,
+      dockLeft: null,
+      dockRatio: null,
+    });
+  });
+
+  const layoutFor = (route: string) => {
+    const { docked, dockLeft } = useSplitThreadStore.getState();
+    return docked === null ? null : resolveDockedLayout(docked, dockLeft, 0.5, ref(route));
+  };
+
+  it("keeps the docked thread on the right while the route moves through other threads", () => {
+    const store = useSplitThreadStore.getState();
+    store.arrive({ ref: ref("d"), route: server });
+    store.dock(ref("d"), null);
+    // On its own route with nothing beside it yet, it shows alone.
+    expect(layoutFor("d")).toBeNull();
+    store.arrive({ ref: ref("a"), route: server });
+    expect(layoutFor("a")).toMatchObject({ left: ref("a"), right: ref("d") });
+    store.arrive({ ref: ref("b"), route: server });
+    expect(layoutFor("b")).toMatchObject({ left: ref("b"), right: ref("d") });
+    // Focusing the docked pane takes the route there; the left pane keeps the last thread.
+    store.arrive({ ref: ref("d"), route: server });
+    expect(layoutFor("d")).toMatchObject({ left: ref("b"), right: ref("d") });
+    store.undock();
+    expect(useSplitThreadStore.getState().docked).toBeNull();
+  });
+
+  it("takes a docked thread out of its pair, and out of the window", () => {
+    const store = useSplitThreadStore.getState();
+    store.pair(ref("a"), ref("b"));
+    store.float(ref("f"));
+    store.dock(ref("b"), ref("a"));
+    expect(findSplitPair(useSplitThreadStore.getState().pairs, ref("a"))).toBeNull();
+    store.dock(ref("f"), ref("a"));
+    expect(useSplitThreadStore.getState()).toMatchObject({ docked: ref("f"), floating: null });
+    // The window's thread stays in the window rather than filling the left pane.
+    store.float(ref("w"));
+    store.dock(ref("a"), ref("w"));
+    expect(useSplitThreadStore.getState()).toMatchObject({ floating: ref("w"), dockLeft: null });
+  });
+
+  it("undocks a thread that floats or pairs, and forgets one that is gone", () => {
+    const store = useSplitThreadStore.getState();
+    store.arrive({ ref: ref("a"), route: server });
+    store.dock(ref("d"), ref("a"));
+    store.float(ref("d"));
+    expect(useSplitThreadStore.getState()).toMatchObject({ docked: null, floating: ref("d") });
+
+    store.unfloat();
+    store.dock(ref("d"), ref("a"));
+    // Floating the docked thread from its own route lands once the route leaves it.
+    store.arrive({ ref: ref("d"), route: server });
+    store.floatOnLeave(ref("d"));
+    store.arrive({ ref: ref("a"), route: server });
+    expect(useSplitThreadStore.getState()).toMatchObject({ docked: null, floating: ref("d") });
+
+    store.dock(ref("d"), ref("a"));
+    store.pair(ref("d"), ref("b"));
+    expect(useSplitThreadStore.getState().docked).toBeNull();
+
+    store.dock(ref("d"), ref("a"));
+    store.forget(ref("a"));
+    expect(useSplitThreadStore.getState()).toMatchObject({ docked: ref("d"), dockLeft: null });
+    store.forget(ref("d"));
+    expect(useSplitThreadStore.getState().docked).toBeNull();
+  });
+
+  it("closes a draft out of the left pane without dropping a pair the dock hides", async () => {
+    const store = useSplitThreadStore.getState();
+    store.pair(ref("s"), ref("draft"));
+    store.dock(ref("d"), ref("draft"));
+    await closeSplitDraft(async () => true, ref("draft"), DraftId.make("draft-1"));
+    const state = useSplitThreadStore.getState();
+    expect(state).toMatchObject({ docked: ref("d"), dockLeft: null });
+    expect(findSplitPair(state.pairs, ref("draft"))).not.toBeNull();
   });
 });

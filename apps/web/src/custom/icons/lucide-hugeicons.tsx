@@ -414,6 +414,8 @@ export const PanelRightIcon = icon("panel-right", PanelRightHalf, "stroke");
 export const PanelBottomIcon = icon("panel-bottom", PanelBottomHalf, "stroke");
 export const PictureInPicture2 = icon("picture-in-picture-2", Hg.PictureInPictureIcon, "stroke");
 export const Columns2Icon = icon("columns-2", Hg.LayoutTwoColumnIcon, "themed");
+// Fork-only (no lucide name): docks a thread as the column's right pane.
+export const DockRightIcon = icon("dock-right", Hg.LayoutRightIcon, "themed");
 export const Rows3Icon = icon("rows-3", Hg.Rows3Icon, "themed");
 export const SquareSplitHorizontal = icon(
   "square-split-horizontal",
