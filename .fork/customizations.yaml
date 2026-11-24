@@ -9319,3 +9319,24 @@
     - apps/mobile/src/features/threads/ThreadPullRequestsSheet.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
+
+- id: pr-header-hierarchy
+  intent: >
+    The pull request header reads top down by importance. Under the title, one
+    meta line says who, when and how big (author, updated time, file count and
+    diff stats). Below it the branch flow reads left to right, head into base,
+    with the head branch brighter than the base, and the copyable checkout
+    command sits at the end of that row beside the branch it fetches. An
+    out-of-date base colours only its warning icon, not the branch name. The
+    condensed header (fenced in PullRequestDetailPanel) uses the same head
+    into base order so the two never disagree.
+  tier: 4
+  files: []
+  shadows:
+    - apps/web/src/components/pullRequest/PullRequestDetailLayout.tsx
+    - apps/web/src/components/pullRequest/PullRequestBaseBranch.tsx
+  watch:
+    # Fenced: the condensed header's branch flow and its arrow icon import.
+    - apps/web/src/components/pullRequest/PullRequestDetailPanel.tsx
+  verify:
+    - apps/web/src/__fork_guards__/prHeaderHierarchy.test.ts
