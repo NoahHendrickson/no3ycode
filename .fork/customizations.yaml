@@ -9065,3 +9065,43 @@
     - apps/mobile/src/features/pull-requests/PullRequestListRow.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
+
+- id: fork-design-lint
+  intent: >
+    Fork UI takes its values from tokens and its controls from components/ui,
+    per the rules in .fork/DESIGN-RULES.md (A1-A5 values, B1-B5 components,
+    C1-C6 theme CSS). design-lint.mjs checks the CSS and the cross-file rules
+    (stories, the per-theme token contract, dead [data-fork-*] selectors) and
+    runs the TSX rules through vp lint: the shadcn rules re-enabled for
+    custom/ and overrides/, plus the fork's three oxlint rules
+    (no-hand-built-primitives, no-hand-built-status-marks,
+    no-direct-icon-imports). Flat Glass, Basic Darker Neutral, Basic Light,
+    Inlet Black and Inlet Cream are enforced; Glass 3D is best effort. Report
+    only until the inventory reads zero: DESIGN_LINT_BLOCKING in
+    design-rules.mjs and the commented CI step switch on together, and the
+    guard fails if only one moves. No ratchet: when on, a rule passes or fails.
+  tier: 4
+  files:
+    - .fork/DESIGN-RULES.md
+    - .fork/design-lint.mjs
+    - .fork/design-rules.mjs
+    - .fork/design-rules.d.mts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.ts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
+  shadows: []
+  watch:
+    # Registers the three rules in the t3code plugin.
+    - oxlint-plugin-t3code/index.ts
+    # Appends the design overrides to lint.overrides behind the switch.
+    - vite.config.ts
+    # Carries the commented-out step that turns the check on.
+    - .github/workflows/ci.yml
+  verify:
+    - apps/web/src/__fork_guards__/forkDesignLint.test.ts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
