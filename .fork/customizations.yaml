@@ -3636,9 +3636,11 @@
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
     The chip reads "Background task(s)" beside a static ElectricityStack glyph
-    for any mix of work, and a live run's own subagents join it as soon as they
-    start; the Stop square is drawn only when it can act (work the run left
-    pending, operate scope), since mid-turn the composer owns Stop.
+    for any mix of work. A live run's own subagents join it while that run is
+    live (custom/composerBackgroundWork.logic.ts matches each to its record
+    once); after it settles only the pending list counts. The Stop square is
+    drawn only when upstream's row would enable Stop (useThreadLifecycle's
+    canStopBackgroundWork), since mid-turn the composer owns Stop.
     Neither shows on the draft hero. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed

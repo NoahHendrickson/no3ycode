@@ -34,7 +34,7 @@ const SUBAGENT: ForkSubagentTreeRow = {
   activity: null,
 };
 
-const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
+const TASKS: ComposerBackgroundWorkViewProps["items"] = [
   {
     taskId: "subagent-1",
     kind: "subagent",
@@ -55,11 +55,11 @@ const base = {
 
 const MONITORING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Monitoring", items: TASKS.slice(1), waiting: false },
+  items: TASKS.slice(1),
 };
 const WORKING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Working", items: TASKS, waiting: true },
+  items: TASKS,
 };
 
 /** The composer with the work chip above it. */

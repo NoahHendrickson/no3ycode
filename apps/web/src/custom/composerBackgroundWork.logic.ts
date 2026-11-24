@@ -1,9 +1,10 @@
-import type {
-  PendingBackgroundWorkItem,
-  PendingBackgroundWorkPresentation,
+import {
+  presentPendingBackgroundWork,
+  type PendingBackgroundWorkItem,
 } from "@t3tools/client-runtime/state/thread-execution";
 import type {
   OrchestrationV2PendingBackgroundTask,
+  OrchestrationV2Run,
   OrchestrationV2Subagent,
   ThreadId,
 } from "@t3tools/contracts";
@@ -16,78 +17,93 @@ export interface ComposerBackgroundWorkItem extends PendingBackgroundWorkItem {
   readonly subagent?: ForkSubagentTreeRow | undefined;
 }
 
-export interface ComposerBackgroundWorkPresentation extends Omit<
-  PendingBackgroundWorkPresentation,
-  "items"
-> {
-  readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
-}
-
 const LIVE_SUBAGENT_STATUSES: ReadonlySet<OrchestrationV2Subagent["status"]> = new Set([
   "pending",
   "running",
   "waiting",
 ]);
 
+// The runs deriveThreadPendingBackgroundTasks treats as live, whose items it leaves out as foreground.
+const LIVE_RUN_STATUSES: ReadonlySet<OrchestrationV2Run["status"]> = new Set([
+  "queued",
+  "preparing",
+  "starting",
+  "running",
+]);
+
 /** A follow-up delegation reuses its child thread, so the live record wins over a finished one. */
 function subagentForChildThread(
   childThreadId: ThreadId | undefined,
-  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
+  subagents: ReadonlyArray<OrchestrationV2Subagent>,
 ): OrchestrationV2Subagent | undefined {
   if (childThreadId === undefined) return undefined;
-  const matches = (subagents ?? []).filter(
-    (candidate) => candidate.childThreadId === childThreadId,
-  );
+  const matches = subagents.filter((candidate) => candidate.childThreadId === childThreadId);
   return (
     matches.find((candidate) => LIVE_SUBAGENT_STATUSES.has(candidate.status)) ?? matches.at(-1)
   );
 }
 
-/** The work the chip lists: the pending list, plus a live run's own subagents, which the pending
- * list leaves out as foreground work. */
-export function composerBackgroundTasks(
-  tasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>,
+/** What the chip lists: the pending list, plus a live run's own subagents, which that list leaves
+ * out as foreground work. Each subagent is matched to its record once and carries its card row.
+ * Once the run settles only the pending list counts, so a record that lost its end cannot hold
+ * the chip up. */
+export function composerBackgroundWorkItems(
+  pendingTasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>,
   subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
-): ReadonlyArray<OrchestrationV2PendingBackgroundTask> {
-  const pendingAgentIds = new Set<string>();
-  for (const task of tasks) {
+  runs: ReadonlyArray<Pick<OrchestrationV2Run, "id" | "status">> | null | undefined,
+): ReadonlyArray<ComposerBackgroundWorkItem> {
+  const agents = subagents ?? [];
+  const agentByTaskId = new Map<string, OrchestrationV2Subagent>();
+  const claimedAgentIds = new Set<string>();
+  const claimedThreadIds = new Set<ThreadId>();
+  for (const task of pendingTasks) {
     if (task.kind !== "subagent") continue;
+    const byThread = subagentForChildThread(task.childThreadId, agents);
+    const byId = agents.find(
+      (candidate) =>
+        candidate.id === task.taskId || candidate.nativeTaskRef?.nativeId === task.taskId,
+    );
+    for (const agent of [byThread, byId]) if (agent) claimedAgentIds.add(agent.id);
+    if (task.childThreadId !== undefined) claimedThreadIds.add(task.childThreadId);
     const agent =
-      subagentForChildThread(task.childThreadId, subagents) ??
-      subagents?.find(
-        (candidate) =>
-          candidate.id === task.taskId || candidate.nativeTaskRef?.nativeId === task.taskId,
-      );
-    if (agent !== undefined) pendingAgentIds.add(agent.id);
+      (byThread && LIVE_SUBAGENT_STATUSES.has(byThread.status) ? byThread : undefined) ??
+      byId ??
+      byThread;
+    if (agent) agentByTaskId.set(task.taskId, agent);
   }
-  const live = (subagents ?? []).flatMap((agent): OrchestrationV2PendingBackgroundTask[] => {
-    if (pendingAgentIds.has(agent.id) || !LIVE_SUBAGENT_STATUSES.has(agent.status)) return [];
-    const description = (agent.title ?? agent.prompt).trim();
-    return [
-      {
-        taskId: agent.id,
-        kind: "subagent",
-        ...(description.length === 0 ? {} : { description }),
-        ...(agent.childThreadId === null ? {} : { childThreadId: agent.childThreadId }),
-      },
-    ];
+  const liveRunIds = new Set(
+    (runs ?? []).filter((run) => LIVE_RUN_STATUSES.has(run.status)).map((run) => run.id),
+  );
+  const tasks = [...pendingTasks];
+  for (const agent of agents) {
+    if (
+      agent.runId === null ||
+      !liveRunIds.has(agent.runId) ||
+      !LIVE_SUBAGENT_STATUSES.has(agent.status) ||
+      claimedAgentIds.has(agent.id) ||
+      (agent.childThreadId !== null && claimedThreadIds.has(agent.childThreadId))
+    ) {
+      continue;
+    }
+    const description = agent.title?.trim() || agent.prompt.trim();
+    tasks.push({
+      taskId: agent.id,
+      kind: "subagent",
+      ...(description.length === 0 ? {} : { description }),
+      ...(agent.childThreadId === null ? {} : { childThreadId: agent.childThreadId }),
+    });
+    agentByTaskId.set(agent.id, agent);
+  }
+  // The presenter labels and orders the rows; each subagent row then takes its matched record.
+  return (presentPendingBackgroundWork(tasks)?.items ?? []).map((item) => {
+    const agent = agentByTaskId.get(item.taskId);
+    if (agent === undefined) return item;
+    return {
+      ...item,
+      childThreadId: item.childThreadId ?? agent.childThreadId ?? undefined,
+      subagent: forkSubagentRowFromAgent(agent),
+    };
   });
-  return live.length === 0 ? tasks : [...tasks, ...live];
-}
-
-/** Pairs each subagent task with its live record's card row, once, so a task row reads one item. */
-export function resolveComposerBackgroundWork(
-  presentation: PendingBackgroundWorkPresentation | null,
-  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
-): ComposerBackgroundWorkPresentation | null {
-  if (presentation === null) return null;
-  return {
-    ...presentation,
-    items: presentation.items.map((task) => {
-      const agent = subagentForChildThread(task.childThreadId, subagents);
-      return agent === undefined ? task : { ...task, subagent: forkSubagentRowFromAgent(agent) };
-    }),
-  };
 }
 
 /** The first index from which every token is a redirection, or null when the command has none. */

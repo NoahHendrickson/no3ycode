@@ -795,6 +795,7 @@ describe("fork guard: fork-composer-shell", () => {
 
   it("puts the thread's PR and its background work in chips above the composer", () => {
     const work = readSibling("../custom/ComposerBackgroundWork.tsx");
+    const lifecycle = readSibling("../components/chat/useThreadLifecycle.tsx");
     const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
     const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     const composer = readSibling("../components/chat/ChatComposer.tsx");
@@ -821,13 +822,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(work).toContain('"Background task" : "Background tasks"');
     // An unpressable Stop is not drawn, and a live run leaves Stop to the composer.
     expect(work).toContain("{props.canStop ? (");
-    expect(chatView).toMatch(
-      /canStop=\{\s*canOperateThread &&\s*activeBackgroundTasks\.length > 0 &&\s*!\(\(isWorking && activeRuntime\?\.status !== "waiting"\) \|\| phase === "connecting"\)\s*\}/u,
+    expect(chatView).toContain("canStop={canStopBackgroundWork}");
+    expect(lifecycle).toContain(
+      "const canStopBackgroundWork = !runIsLive && canOperateThread && activeBackgroundTasks.length > 0;",
     );
     // A live run's own subagents join the chip, not only work the run left pending.
-    expect(chatView).toContain(
-      "composerBackgroundTasks(activeBackgroundTasks, serverProjection?.subagents)",
-    );
+    expect(chatView).toContain("composerBackgroundWorkItems(");
     expect(work).toContain('role="status"');
     expect(work).toContain("Stop background work");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");

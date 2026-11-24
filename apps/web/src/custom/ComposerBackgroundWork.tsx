@@ -14,15 +14,14 @@ import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/component
 import {
   glanceCommandLabel,
   type ComposerBackgroundWorkItem,
-  type ComposerBackgroundWorkPresentation,
 } from "./composerBackgroundWork.logic";
 import { ForkSubagentIdentity, useForkSubagentEffort } from "./ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "./forkSubagentTree";
 import { StopSquareIcon } from "./StopSquareIcon";
 
 export interface ComposerBackgroundWorkViewProps {
-  /** A subagent's task row draws its transcript card's header (resolveComposerBackgroundWork). */
-  readonly presentation: ComposerBackgroundWorkPresentation;
+  /** A subagent's task row draws its transcript card's header (composerBackgroundWorkItems). */
+  readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
   readonly stopping: boolean;
   /** False when Stop has nothing to act on (mid-turn, or no operate scope): the square is not drawn. */
   readonly canStop: boolean;
@@ -34,7 +33,7 @@ export interface ComposerBackgroundWorkViewProps {
 /** One label for any mix of work: subagents, commands, monitors and PR watches alike. */
 function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): string {
   if (props.stopping) return "Stopping...";
-  return props.presentation.items.length === 1 ? "Background task" : "Background tasks";
+  return props.items.length === 1 ? "Background task" : "Background tasks";
 }
 
 /** Background work as a chip above the composer (fork-composer-shell): the label opens the task
@@ -74,13 +73,13 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           side="top"
           align="start"
           sideOffset={6}
-          width={props.presentation.items.some((item) => item.kind === "subagent") ? "md" : "sm"}
+          width={props.items.some((item) => item.kind === "subagent") ? "md" : "sm"}
           padding="compact"
           data-fork-glass-rim
           data-fork-background-work-popup
         >
           <ul data-fork-monitoring-tasks className="flex max-h-60 flex-col overflow-y-auto">
-            {props.presentation.items.map((task) => (
+            {props.items.map((task) => (
               <BackgroundWorkTaskRow
                 key={task.taskId}
                 task={task}
@@ -113,6 +112,16 @@ function BackgroundWorkTaskRow(props: {
 }) {
   const { task } = props;
   const childThreadId = task.childThreadId;
+  if (childThreadId === undefined && task.subagent !== undefined) {
+    // A subagent without a local child thread (a linked environment's) has nothing to open.
+    return (
+      <li className="flex">
+        <span data-fork-monitoring-task>
+          <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
+        </span>
+      </li>
+    );
+  }
   if (childThreadId === undefined) {
     const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
