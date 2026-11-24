@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { THREAD_FEED_MAINTAIN_SCROLL_AT_END } from "../src/features/threads/threadFeedEndFollow";
-import { isNo3yLiveRow, NO3Y_LIVE_ROW_ID, NO3Y_LIVE_ROW_TYPE } from "./no3yLiveStatus";
+import { isNo3yLiveRow, NO3Y_LIVE_ROW_ID } from "./no3yLiveStatus";
 import { resolveFeedEndBehavior, streamingReplyItemType } from "./threadFeedStableEnd";
 
 const glide = { ...THREAD_FEED_MAINTAIN_SCROLL_AT_END, animated: true };
@@ -63,8 +63,7 @@ describe("row estimate types", () => {
     expect(streamingReplyItemType(false, reply)).toBeUndefined();
   });
 
-  it("buckets the no3y live line on its own", () => {
-    expect(NO3Y_LIVE_ROW_TYPE).toBe("no3y-live");
+  it("recognizes the no3y live line", () => {
     expect(isNo3yLiveRow(true, { id: NO3Y_LIVE_ROW_ID })).toBe(true);
     expect(isNo3yLiveRow(false, { id: NO3Y_LIVE_ROW_ID })).toBe(false);
     expect(isNo3yLiveRow(true, { id: "message:m1" })).toBe(false);

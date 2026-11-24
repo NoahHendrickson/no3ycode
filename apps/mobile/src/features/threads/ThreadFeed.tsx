@@ -2904,54 +2904,54 @@ function renderFeedEntry(
             onOpenTurnDiff={props.onOpenTurnDiff}
           />
         ) : null}
-        {showAssistantMeta ? (
-          /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-          <ReplyActionsReveal
-            reveal={message.runId != null && message.runId === props.revealReplyActionsRunId}
-            height={REPLY_ACTIONS_TOP_GAP + props.replyActionSize.button}
+        {/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */}
+        <ReplyActionsReveal
+          shown={showAssistantMeta}
+          reveal={message.runId != null && message.runId === props.revealReplyActionsRunId}
+          height={REPLY_ACTIONS_TOP_GAP + props.replyActionSize.button}
+          bleed={props.no3y ? NO3Y_MESSAGE_ACTION_INSET : 0}
+        >
+          {/* fork:end mobile-feed-stable-end */}
+          <View
+            className="mt-1 flex-row items-center gap-1"
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            style={props.no3y ? { marginLeft: -NO3Y_MESSAGE_ACTION_INSET } : undefined}
+            /* fork:end no3y-mobile-redesign */
           >
-            {/* fork:end mobile-feed-stable-end */}
-            <View
-              className="mt-1 flex-row items-center gap-1"
+            <CopyTextButton
+              accessibilityLabel={m(msg("Copy message"))}
+              text={renderedText}
+              tintColor={iconSubtleColor}
+              buttonSize={props.replyActionSize.button}
+              iconSize={props.replyActionSize.icon}
               /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-              style={props.no3y ? { marginLeft: -NO3Y_MESSAGE_ACTION_INSET } : undefined}
+              hugeIcons={props.no3y !== null}
               /* fork:end no3y-mobile-redesign */
-            >
-              <CopyTextButton
-                accessibilityLabel={m(msg("Copy message"))}
-                text={renderedText}
-                tintColor={iconSubtleColor}
+            />
+            {message.projectedItem ? (
+              <AssistantForkButton
+                environmentId={props.environmentId}
+                iconColor={iconSubtleColor}
                 buttonSize={props.replyActionSize.button}
                 iconSize={props.replyActionSize.icon}
+                projectedItem={message.projectedItem}
+                sourceTitle={props.threadTitle}
                 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
                 hugeIcons={props.no3y !== null}
                 /* fork:end no3y-mobile-redesign */
               />
-              {message.projectedItem ? (
-                <AssistantForkButton
-                  environmentId={props.environmentId}
-                  iconColor={iconSubtleColor}
-                  buttonSize={props.replyActionSize.button}
-                  iconSize={props.replyActionSize.icon}
-                  projectedItem={message.projectedItem}
-                  sourceTitle={props.threadTitle}
-                  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                  hugeIcons={props.no3y !== null}
-                  /* fork:end no3y-mobile-redesign */
-                />
-              ) : null}
-              {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
-              {props.no3y ? null : (
-                <Text className="font-t3-medium text-xs tabular-nums text-foreground-secondary">
-                  {timestampLabel}
-                </Text>
-              )}
-              {/* fork:end no3y-mobile-redesign */}
-            </View>
-            {/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */}
-          </ReplyActionsReveal>
-        ) : /* fork:end mobile-feed-stable-end */
-        null}
+            ) : null}
+            {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+            {props.no3y ? null : (
+              <Text className="font-t3-medium text-xs tabular-nums text-foreground-secondary">
+                {timestampLabel}
+              </Text>
+            )}
+            {/* fork:end no3y-mobile-redesign */}
+          </View>
+          {/* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */}
+        </ReplyActionsReveal>
+        {/* fork:end mobile-feed-stable-end */}
       </Animated.View>
     );
   }

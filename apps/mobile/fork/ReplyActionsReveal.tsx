@@ -11,26 +11,40 @@ export const REPLY_ACTIONS_TOP_GAP = 4;
 const REPLY_ACTIONS_REVEAL_MS = 180;
 
 export function ReplyActionsReveal(props: {
-  /** Read once at mount: rows that mount with their actions (history, a reopened thread) show them as-is. */
+  readonly shown: boolean;
+  /**
+   * Grow them in if they appear now. Only a mounted reply gaining them grows; one that mounts
+   * with them (history, a remount while scrolling to the end) shows them as-is.
+   */
   readonly reveal: boolean;
   readonly height: number;
+  /** How far the actions row hangs left of the reply; the clip covers it so the button isn't cut. */
+  readonly bleed: number;
   readonly children: ReactNode;
 }) {
-  const [reveal] = useState(props.reveal);
-  const [grown, setGrown] = useState(!reveal);
+  const [wasShown, setWasShown] = useState(props.shown);
+  const [revealing, setRevealing] = useState(false);
+  const [grown, setGrown] = useState(false);
+  if (props.shown !== wasShown) {
+    setWasShown(props.shown);
+    if (props.shown && props.reveal) setRevealing(true);
+  }
   // Starts the native height transition once the collapsed frame has committed.
   useEffect(() => {
-    if (grown) return;
+    if (!revealing || grown) return;
     const frame = requestAnimationFrame(() => setGrown(true));
     return () => cancelAnimationFrame(frame);
-  }, [grown]);
-  if (!reveal) return props.children;
+  }, [revealing, grown]);
+  if (!props.shown) return null;
+  if (!revealing) return props.children;
   return (
     <Animated.View
       style={{
         height: grown ? props.height : 0,
         opacity: grown ? 1 : 0,
         overflow: "hidden",
+        marginLeft: -props.bleed,
+        paddingLeft: props.bleed,
         transitionProperty: ["height", "opacity"],
         transitionDuration: REPLY_ACTIONS_REVEAL_MS,
         transitionTimingFunction: "ease-out",

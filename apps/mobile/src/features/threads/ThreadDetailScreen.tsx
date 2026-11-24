@@ -1468,7 +1468,7 @@ function ThreadDetailBody(
     if (!dismissingKeyboard && !keepingKeyboard) composerEditorRef.current?.blur();
     const followSubmission =
       contentPresentationKind === "ready" &&
-      (dismissingKeyboard || keepingKeyboard || nextAnchorMessageId === messageId);
+      (dismissingKeyboard || nextAnchorMessageId === messageId);
     if (keepingKeyboard) {
       requestAnimationFrame(() => {
         if (scope.aborted) return;
