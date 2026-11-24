@@ -1,6 +1,6 @@
 /**
  * The no3y iPhone model picker: a half-height sheet with a close button and a Favorites/provider
- * select, the models for that choice, and the effort slider — see
+ * select, and the models for that choice, the selected one carrying its reasoning level — see
  * `.fork/customizations.yaml#no3y-mobile-redesign`. It drives the thread settings session the
  * upstream picker uses (ThreadSettingsSheet.tsx), so picks, favorites and options save the same way.
  */
@@ -14,9 +14,20 @@ import type { ModelSelection, ProviderOptionDescriptor, RuntimeMode } from "@t3t
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import * as Haptics from "expo-haptics";
 import type { MenuAction } from "@react-native-menu/menu";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  ReduceMotion,
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scheduleOnRN } from "react-native-worklets";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
@@ -28,6 +39,7 @@ import { HugeIcon } from "./HugeIcon";
 import { No3yAccessIcon, No3yAccessMenu } from "./No3yAccess";
 import { No3yProviderMark } from "./No3yProviderMark";
 import { No3yCircleButton } from "./No3yControls";
+import { No3yGlassLayer } from "./No3yGlass";
 import { No3yGlassMenuButton } from "./No3yGlassMenuButton";
 import { NO3Y_IPHONE } from "./no3yIphone";
 import { no3ySheetBackground } from "./no3ySheet";
@@ -95,146 +107,112 @@ function effortStopIndex(descriptor: SelectDescriptor, ultrathinkActive: boolean
   );
 }
 
-const TRACK_HEIGHT = 24;
-const THUMB_WIDTH = 20;
+const ROW_HEIGHT = 52;
+/** The tick's slot at the row's end, which becomes the meter's save button. */
+const TRAILING_SIZE = 40;
+const ROW_PADDING_LEFT = 14;
+const ROW_PADDING_RIGHT = 6;
+/** The open meter takes the row's whole height and width, short of the save button. */
+const METER_RIGHT = ROW_PADDING_RIGHT + TRAILING_SIZE + 6;
+const KNOB_INSET = 4;
+const KNOB_SIZE = ROW_HEIGHT - KNOB_INSET * 2;
+const DOT_SIZE = 4;
+const CHIP_HEIGHT = 30;
+/** Room under the open meter for its level names; the rows below move down by this much. */
+const LABEL_SPACE = 24;
+const LABEL_WIDTH = 76;
+/** Each row below starts moving this share of the meter's animation after the one above it. */
+const PUSH_STAGGER = 0.08;
+const PUSH_STAGGER_MAX = 0.4;
+const METER_TIMING = {
+  duration: 240,
+  easing: Easing.out(Easing.cubic),
+  reduceMotion: ReduceMotion.System,
+} as const;
 
-/**
- * The model's reasoning levels as a slider, like the Mac's effort bar: a notch per level, a tap
- * jumps to the nearest one, a drag snaps from level to level with a tick, and it writes on release.
- */
-function EffortSlider(props: {
-  readonly palette: FlatGlassPalette;
-  readonly descriptor: SelectDescriptor;
-  readonly committedIndex: number;
-  readonly disabled: boolean;
-  readonly onCommit: (optionId: string) => void;
+/** A row of the list, moved down out of the open meter's way `order` rows below it. */
+function PushedRow(props: {
+  readonly meter: SharedValue<number>;
+  readonly order: number;
+  readonly children: ReactNode;
 }) {
-  const { palette, descriptor } = props;
-  const [width, setWidth] = useState(0);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const lastIndex = descriptor.options.length - 1;
-  const index = dragIndex ?? props.committedIndex;
-  const option = descriptor.options[index];
-  const track = { width, thumbWidth: THUMB_WIDTH, levels: descriptor.options.length };
-  const thumbLeft = effortStopX(track, index) - THUMB_WIDTH / 2;
-  const snapTo = (x: number) => {
-    const next = effortLevelAt(track, x);
-    if (next !== index) void Haptics.selectionAsync().catch(() => {});
-    setDragIndex(next);
-  };
-  const commit = (next: number) => {
-    setDragIndex(null);
-    const picked = descriptor.options[next];
-    if (picked && next !== props.committedIndex) props.onCommit(picked.id);
-  };
-  const text = { ...NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 } as const;
-
-  return (
-    <View style={{ gap: 8, opacity: props.disabled ? 0.45 : 1 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ ...text, color: palette.metaInk }}>{descriptor.label}</Text>
-        <Text style={{ ...text, ...NO3Y_FONT.medium, color: palette.foreground }}>
-          {option?.isDefault ? `${option.label} · Default` : option?.label}
-        </Text>
-      </View>
-      <View
-        accessible
-        accessibilityRole="adjustable"
-        accessibilityLabel={descriptor.label}
-        accessibilityValue={{ text: option?.label ?? "" }}
-        accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-        onAccessibilityAction={(event) => {
-          if (props.disabled) return;
-          const step = event.nativeEvent.actionName === "increment" ? 1 : -1;
-          commit(Math.max(0, Math.min(lastIndex, props.committedIndex + step)));
-        }}
-        onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => !props.disabled}
-        onMoveShouldSetResponder={() => !props.disabled}
-        onResponderTerminationRequest={() => false}
-        onResponderGrant={(event) => snapTo(event.nativeEvent.locationX)}
-        onResponderMove={(event) => snapTo(event.nativeEvent.locationX)}
-        onResponderRelease={(event) => commit(effortLevelAt(track, event.nativeEvent.locationX))}
-        onResponderTerminate={() => setDragIndex(null)}
-        style={{
-          height: TRACK_HEIGHT,
-          borderRadius: 6,
-          backgroundColor: palette.circleFill,
-          justifyContent: "center",
-        }}
-      >
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: thumbLeft + THUMB_WIDTH / 2,
-            borderRadius: 6,
-            backgroundColor: palette.usageRingRemaining,
-            opacity: 0.55,
-          }}
-        />
-        {width > 0
-          ? descriptor.options.map((level, stop) => (
-              <View
-                key={level.id}
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  left: effortStopX(track, stop) - 1,
-                  width: 2,
-                  height: 8,
-                  borderRadius: 1,
-                  backgroundColor: palette.foreground,
-                  opacity: 0.45,
-                }}
-              />
-            ))
-          : null}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: thumbLeft,
-            width: THUMB_WIDTH,
-            height: TRACK_HEIGHT,
-            borderRadius: 6,
-            backgroundColor: palette.primaryFill,
-          }}
-        />
-      </View>
-    </View>
-  );
+  const { meter, order } = props;
+  const style = useAnimatedStyle(() => {
+    if (order <= 0) return { transform: [{ translateY: 0 }] };
+    const start = Math.min(PUSH_STAGGER_MAX, (order - 1) * PUSH_STAGGER);
+    const progress = Math.min(1, Math.max(0, (meter.get() - start) / (1 - start)));
+    return { transform: [{ translateY: progress * LABEL_SPACE }] };
+  });
+  return <Animated.View style={style}>{props.children}</Animated.View>;
 }
 
-function ModelRow(props: {
+function RowLead(props: {
   readonly palette: FlatGlassPalette;
   readonly option: ModelOption;
-  readonly providerLabel: string | null;
-  readonly selected: boolean;
   readonly favorite: boolean;
-  readonly onPress: () => void;
-  readonly onLongPress: () => void;
 }) {
   const { palette, option } = props;
   return (
+    <>
+      <No3yProviderMark
+        iconUrl={option.providerIconUrl}
+        provider={option.providerDriver}
+        size={20}
+      />
+      <Text
+        numberOfLines={1}
+        style={{ ...NO3Y_FONT.regular, flex: 1, fontSize: 17, color: palette.foreground }}
+      >
+        {option.label}
+      </Text>
+      {props.favorite ? (
+        <HugeIcon icon={StarIcon} size={14} color={palette.statusAttention} filled />
+      ) : null}
+    </>
+  );
+}
+
+interface ModelRowProps {
+  readonly palette: FlatGlassPalette;
+  readonly option: ModelOption;
+  readonly providerLabel: string;
+  readonly selected: boolean;
+  readonly favorite: boolean;
+  /** A star marks favorites in a provider's list; the Favorites list needs none. */
+  readonly showFavorite: boolean;
+  readonly onPress: () => void;
+  readonly onLongPress: () => void;
+}
+
+function rowAccessibility(props: ModelRowProps) {
+  return {
+    accessibilityRole: "button" as const,
+    accessibilityLabel: [
+      props.option.label,
+      props.providerLabel,
+      props.favorite ? "Favorite" : null,
+    ]
+      .filter(Boolean)
+      .join(", "),
+    accessibilityHint: "Long-press to add or remove a favorite",
+  };
+}
+
+function ModelRow(props: ModelRowProps) {
+  const { palette, option } = props;
+  return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={[option.label, props.providerLabel, props.favorite ? "Favorite" : null]
-        .filter(Boolean)
-        .join(", ")}
-      accessibilityHint="Long-press to add or remove a favorite"
+      {...rowAccessibility(props)}
       accessibilityState={{ selected: props.selected, disabled: option.isUnavailable === true }}
       onPress={props.onPress}
       onLongPress={props.onLongPress}
       style={({ pressed }) => ({
-        minHeight: 44,
+        height: ROW_HEIGHT,
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
-        paddingHorizontal: 12,
+        gap: 12,
+        paddingLeft: ROW_PADDING_LEFT,
+        paddingRight: ROW_PADDING_RIGHT,
         borderRadius: 12,
         backgroundColor: props.selected
           ? palette.rowSelected
@@ -244,31 +222,342 @@ function ModelRow(props: {
         opacity: option.isUnavailable ? 0.45 : 1,
       })}
     >
-      <No3yProviderMark
-        iconUrl={option.providerIconUrl}
-        provider={option.providerDriver}
-        size={16}
-      />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text
-          numberOfLines={1}
-          style={{ ...NO3Y_FONT.regular, fontSize: 15, color: palette.foreground }}
-        >
-          {option.label}
-        </Text>
-        {props.providerLabel ? (
-          <Text
-            numberOfLines={1}
-            style={{ ...NO3Y_FONT.regular, fontSize: 12, color: palette.metaInk }}
-          >
-            {props.providerLabel}
-          </Text>
+      <RowLead palette={palette} option={option} favorite={props.showFavorite && props.favorite} />
+      <View
+        style={{
+          width: TRAILING_SIZE,
+          height: TRAILING_SIZE,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {props.selected ? (
+          <HugeIcon icon={Tick02Icon} size={18} color={palette.foreground} />
         ) : null}
       </View>
-      {props.favorite && props.providerLabel === null ? (
-        <HugeIcon icon={StarIcon} size={14} color={palette.statusAttention} filled />
+    </Pressable>
+  );
+}
+
+function levelLabel(option: SelectDescriptor["options"][number] | undefined) {
+  return option?.isDefault ? `${option.label} · Default` : (option?.label ?? "");
+}
+
+/**
+ * The selected model's row, with its reasoning level as a chip before the tick. Tapping the chip
+ * grows it into a pill slider that takes over the row: a dot per level, a white fill and a glass
+ * knob with its level named beneath, the rows below stepping down to make room. Taps jump, drags
+ * snap with a haptic tick, and the tick becomes a save button that shrinks it back.
+ */
+function ReasoningModelRow(
+  props: ModelRowProps & {
+    readonly descriptor: SelectDescriptor;
+    readonly committedIndex: number;
+    readonly disabled: boolean;
+    /** 0 while the chip rests, 1 while the meter is open; the picker drives it. */
+    readonly meter: SharedValue<number>;
+    readonly editing: boolean;
+    readonly onOpen: () => void;
+    readonly onSave: (optionId: string | null) => void;
+  },
+) {
+  const { palette, option, descriptor, meter } = props;
+  const [rowWidth, setRowWidth] = useState(0);
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  const rowWidthValue = useSharedValue(0);
+  const chip = useSharedValue({ x: 0, y: 0, width: 0, height: CHIP_HEIGHT });
+  const lastIndex = descriptor.options.length - 1;
+  const index = pendingIndex ?? props.committedIndex;
+  const meterWidth = Math.max(0, rowWidth - METER_RIGHT);
+  const track = {
+    width: meterWidth - KNOB_INSET * 2,
+    thumbWidth: KNOB_SIZE,
+    levels: descriptor.options.length,
+  };
+  const stopX = (stop: number) => KNOB_INSET + effortStopX(track, stop);
+  const snapTo = (x: number) => {
+    const next = effortLevelAt(track, x - KNOB_INSET);
+    if (next !== index) void Haptics.selectionAsync().catch(() => {});
+    setPendingIndex(next);
+  };
+  const step = (delta: number) => setPendingIndex(Math.max(0, Math.min(lastIndex, index + delta)));
+  const open = () => {
+    setPendingIndex(null);
+    void Haptics.selectionAsync().catch(() => {});
+    props.onOpen();
+  };
+  const save = () => {
+    const picked = descriptor.options[index];
+    props.onSave(picked && index !== props.committedIndex ? picked.id : null);
+  };
+
+  // The meter grows out of the chip's pill to become the row, short of the save button.
+  const meterStyle = useAnimatedStyle(() => {
+    const progress = meter.get();
+    const rect = chip.get();
+    const width = rowWidthValue.get();
+    return {
+      left: interpolate(progress, [0, 1], [rect.x, 0]),
+      right: interpolate(progress, [0, 1], [width - rect.x - rect.width, METER_RIGHT]),
+      top: interpolate(progress, [0, 1], [rect.y, 0]),
+      bottom: interpolate(progress, [0, 1], [ROW_HEIGHT - rect.y - rect.height, 0]),
+      borderRadius: interpolate(progress, [0, 1], [CHIP_HEIGHT / 2, ROW_HEIGHT / 2]),
+    };
+  });
+  const fadeOutStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(meter.get(), [0, 0.6], [1, 0], Extrapolation.CLAMP),
+  }));
+  const fadeInStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(meter.get(), [0.25, 1], [0, 1], Extrapolation.CLAMP),
+  }));
+  // Glass never renders under a fading ancestor, so the knob arrives by scale alone.
+  const knobInStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(meter.get(), [0.25, 1], [0.4, 1], Extrapolation.CLAMP) }],
+  }));
+  const saveFillStyle = useAnimatedStyle(() => ({
+    opacity: meter.get(),
+    transform: [{ scale: interpolate(meter.get(), [0, 1], [0.6, 1]) }],
+  }));
+  const saveInkStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(meter.get(), [0, 0.6], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  const chipText = { ...NO3Y_FONT.medium, fontSize: 14, color: palette.foreground } as const;
+  const committedLabel = descriptor.options[props.committedIndex]?.label ?? "";
+
+  return (
+    <Pressable
+      {...rowAccessibility(props)}
+      // Open, the meter and its save button take VoiceOver focus themselves.
+      accessible={!props.editing}
+      accessibilityState={{ selected: true, disabled: option.isUnavailable === true }}
+      accessibilityActions={
+        props.disabled ? [] : [{ name: "reasoning", label: `Change ${descriptor.label}` }]
+      }
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === "reasoning") open();
+      }}
+      disabled={props.editing}
+      onPress={props.onPress}
+      onLongPress={props.onLongPress}
+      onLayout={(event: LayoutChangeEvent) => {
+        const width = event.nativeEvent.layout.width;
+        rowWidthValue.set(width);
+        setRowWidth(width);
+      }}
+      style={{
+        height: ROW_HEIGHT,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingLeft: ROW_PADDING_LEFT,
+        paddingRight: ROW_PADDING_RIGHT,
+        opacity: option.isUnavailable ? 0.45 : 1,
+      }}
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: "absolute",
+            inset: 0,
+            borderRadius: 12,
+            backgroundColor: palette.rowSelected,
+          },
+          fadeOutStyle,
+        ]}
+      />
+      <Animated.View
+        style={[
+          { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12 },
+          fadeOutStyle,
+        ]}
+      >
+        <RowLead
+          palette={palette}
+          option={option}
+          favorite={props.showFavorite && props.favorite}
+        />
+      </Animated.View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${descriptor.label}: ${committedLabel}`}
+        accessibilityHint="Opens a slider to change it"
+        accessibilityState={{ disabled: props.disabled }}
+        disabled={props.disabled || props.editing}
+        hitSlop={8}
+        onPress={open}
+        onLayout={(event: LayoutChangeEvent) => {
+          const { x, y, width, height } = event.nativeEvent.layout;
+          chip.set({ x, y, width, height });
+        }}
+        style={({ pressed }) => ({
+          height: CHIP_HEIGHT,
+          paddingHorizontal: 12,
+          borderRadius: CHIP_HEIGHT / 2,
+          justifyContent: "center",
+          backgroundColor: palette.circleFill,
+          opacity: props.editing ? 0 : props.disabled ? 0.45 : pressed ? 0.6 : 1,
+        })}
+      >
+        <Text numberOfLines={1} style={chipText}>
+          {committedLabel}
+        </Text>
+      </Pressable>
+      {props.editing ? (
+        <Animated.View
+          style={[
+            { position: "absolute", overflow: "hidden", backgroundColor: palette.circleFill },
+            meterStyle,
+          ]}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              { position: "absolute", top: 0, bottom: 0, right: 12, justifyContent: "center" },
+              fadeOutStyle,
+            ]}
+          >
+            <Text numberOfLines={1} style={chipText}>
+              {committedLabel}
+            </Text>
+          </Animated.View>
+          <Animated.View
+            accessible
+            accessibilityRole="adjustable"
+            accessibilityLabel={descriptor.label}
+            accessibilityValue={{ text: levelLabel(descriptor.options[index]) }}
+            accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
+            onAccessibilityAction={(event) =>
+              step(event.nativeEvent.actionName === "increment" ? 1 : -1)
+            }
+            onStartShouldSetResponder={() => true}
+            onMoveShouldSetResponder={() => true}
+            onResponderTerminationRequest={() => false}
+            onResponderGrant={(event) => snapTo(event.nativeEvent.locationX)}
+            onResponderMove={(event) => snapTo(event.nativeEvent.locationX)}
+            style={[
+              {
+                position: "absolute",
+                right: 0,
+                top: "50%",
+                marginTop: -ROW_HEIGHT / 2,
+                width: meterWidth,
+                height: ROW_HEIGHT,
+                justifyContent: "center",
+              },
+            ]}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[{ position: "absolute", inset: 0, justifyContent: "center" }, fadeInStyle]}
+            >
+              <View
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  // Ends in a cap around the knob, as the bar's own ends are round.
+                  width: stopX(index) + KNOB_SIZE / 2 + KNOB_INSET,
+                  borderRadius: ROW_HEIGHT / 2,
+                  backgroundColor: palette.primaryFill,
+                }}
+              />
+              {meterWidth > 0
+                ? descriptor.options.map((level, stop) => (
+                    <View
+                      key={level.id}
+                      style={{
+                        position: "absolute",
+                        left: stopX(stop) - DOT_SIZE / 2,
+                        width: DOT_SIZE,
+                        height: DOT_SIZE,
+                        borderRadius: DOT_SIZE / 2,
+                        backgroundColor: stop < index ? palette.primaryInk : palette.foreground,
+                        opacity: stop < index ? 0.25 : 0.35,
+                      }}
+                    />
+                  ))
+                : null}
+            </Animated.View>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                {
+                  position: "absolute",
+                  left: stopX(index) - KNOB_SIZE / 2,
+                  width: KNOB_SIZE,
+                  height: KNOB_SIZE,
+                  borderRadius: KNOB_SIZE / 2,
+                  // The sheet under the header's glass buttons, so the knob's glass matches theirs.
+                  backgroundColor: no3ySheetBackground(palette.stageBackground),
+                },
+                knobInStyle,
+              ]}
+            >
+              <No3yGlassLayer radius={KNOB_SIZE / 2} tint={palette.panelTint} />
+            </Animated.View>
+          </Animated.View>
+        </Animated.View>
       ) : null}
-      {props.selected ? <HugeIcon icon={Tick02Icon} size={16} color={palette.foreground} /> : null}
+      {props.editing && meterWidth > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            { position: "absolute", left: 0, top: ROW_HEIGHT + 4, width: meterWidth, height: 16 },
+            fadeInStyle,
+          ]}
+        >
+          <Text
+            numberOfLines={1}
+            style={{
+              ...NO3Y_FONT.medium,
+              position: "absolute",
+              left: stopX(index) - LABEL_WIDTH / 2,
+              width: LABEL_WIDTH,
+              fontSize: 12,
+              lineHeight: 16,
+              textAlign: "center",
+              color: palette.foreground,
+            }}
+          >
+            {descriptor.options[index]?.label}
+          </Text>
+        </Animated.View>
+      ) : null}
+      <Pressable
+        accessibilityRole={props.editing ? "button" : undefined}
+        accessibilityLabel={props.editing ? `Save ${descriptor.label.toLowerCase()}` : undefined}
+        accessibilityElementsHidden={!props.editing}
+        disabled={!props.editing}
+        onPress={save}
+        style={({ pressed }) => ({
+          width: TRAILING_SIZE,
+          height: TRAILING_SIZE,
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.6 : 1,
+        })}
+      >
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              inset: 0,
+              borderRadius: TRAILING_SIZE / 2,
+              backgroundColor: palette.primaryFill,
+            },
+            saveFillStyle,
+          ]}
+        />
+        <Animated.View style={[{ position: "absolute" }, fadeOutStyle]}>
+          <HugeIcon icon={Tick02Icon} size={18} color={palette.foreground} />
+        </Animated.View>
+        <Animated.View style={[{ position: "absolute" }, saveInkStyle]}>
+          <HugeIcon icon={Tick02Icon} size={18} color={palette.primaryInk} />
+        </Animated.View>
+      </Pressable>
     </Pressable>
   );
 }
@@ -282,8 +571,18 @@ export function No3yModelPicker(props: {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const choice = session.providerFilter ?? FAVORITES;
-  const setChoice = session.setProviderFilter;
   const committed = useRef(false);
+  const meter = useSharedValue(0);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  // Leaving an open meter without saving drops its pick.
+  const closeMeterNow = () => {
+    meter.set(0);
+    setEditingKey(null);
+  };
+  const setChoice = (next: string | null) => {
+    closeMeterNow();
+    session.setProviderFilter(next);
+  };
 
   // A swipe-down dismissal keeps the pick, as the close button does.
   const commitOnDismiss = useEffectEvent(() => {
@@ -363,6 +662,23 @@ export function No3yModelPicker(props: {
   };
   const effortIsPrimary =
     effort !== null && effort.id === session.promptTraits.primarySelectDescriptor?.id;
+  const editingIndex =
+    editingKey === null
+      ? -1
+      : models.findIndex(({ option }) => option.key === editingKey && session.isDisplayed(option));
+  const editing = editingIndex >= 0;
+  const openMeter = (key: string) => {
+    setEditingKey(key);
+    meter.set(withTiming(1, METER_TIMING));
+  };
+  const saveMeter = (optionId: string | null) => {
+    if (effort && optionId !== null) session.applyOptionChange(effort.id, optionId);
+    meter.set(
+      withTiming(0, METER_TIMING, (finished) => {
+        if (finished) scheduleOnRN(setEditingKey, null);
+      }),
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: no3ySheetBackground(palette.stageBackground) }}>
@@ -437,7 +753,9 @@ export function No3yModelPicker(props: {
       </View>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
+        // 24pt clear of the sheet's rounded bottom, as the usage sheet keeps its rows.
+        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: insets.bottom + 24 }}
+        scrollEnabled={!editing}
         showsVerticalScrollIndicator={false}
       >
         {models.length === 0 ? (
@@ -458,43 +776,50 @@ export function No3yModelPicker(props: {
               : "No models available"}
           </Text>
         ) : (
-          models.map(({ option, providerLabel }) => (
-            <ModelRow
-              key={option.key}
-              palette={palette}
-              option={option}
-              providerLabel={choice === FAVORITES ? providerLabel : null}
-              selected={session.isDisplayed(option)}
-              favorite={session.favoriteKeys.has(option.key)}
-              onPress={() => session.pressModel(option)}
-              onLongPress={() => session.toggleFavorite(option)}
-            />
-          ))
+          models.map(({ option, providerLabel }, position) => {
+            const rowProps = {
+              palette,
+              option,
+              providerLabel,
+              selected: session.isDisplayed(option),
+              favorite: session.favoriteKeys.has(option.key),
+              showFavorite: choice !== FAVORITES,
+              onPress: () => {
+                closeMeterNow();
+                session.pressModel(option);
+              },
+              onLongPress: () => session.toggleFavorite(option),
+            };
+            const row =
+              rowProps.selected && effort ? (
+                <ReasoningModelRow
+                  {...rowProps}
+                  descriptor={effort}
+                  committedIndex={effortStopIndex(
+                    effort,
+                    effortIsPrimary && session.promptTraits.ultrathinkPromptControlled,
+                  )}
+                  disabled={effortIsPrimary && session.promptTraits.ultrathinkInBodyText}
+                  meter={meter}
+                  editing={editing}
+                  onOpen={() => openMeter(option.key)}
+                  onSave={saveMeter}
+                />
+              ) : (
+                <ModelRow {...rowProps} />
+              );
+            return (
+              <PushedRow
+                key={option.key}
+                meter={meter}
+                order={editing ? position - editingIndex : 0}
+              >
+                {row}
+              </PushedRow>
+            );
+          })
         )}
       </ScrollView>
-      {effort ? (
-        <View
-          style={{
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            // 24pt clear of the sheet's rounded bottom, as the usage sheet keeps its rows.
-            paddingBottom: insets.bottom + 24,
-            borderTopWidth: 1,
-            borderTopColor: palette.hairline,
-          }}
-        >
-          <EffortSlider
-            palette={palette}
-            descriptor={effort}
-            committedIndex={effortStopIndex(
-              effort,
-              effortIsPrimary && session.promptTraits.ultrathinkPromptControlled,
-            )}
-            disabled={effortIsPrimary && session.promptTraits.ultrathinkInBodyText}
-            onCommit={(optionId) => session.applyOptionChange(effort.id, optionId)}
-          />
-        </View>
-      ) : null}
     </View>
   );
 }

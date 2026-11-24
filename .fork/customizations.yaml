@@ -8365,10 +8365,12 @@
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
-    agent draft's mode), the model list (long-press to favorite) and an effort
-    slider (24pt plus the safe area clear of the sheet's rounded bottom) with a
-    notch per level, tap-to-jump and snapping drags with a haptic
-    tick, driving the same thread settings session so picks, favorites and
+    agent draft's mode) and the model list (long-press to favorite; 17pt
+    names, 20pt marks, no provider subtitle). The selected row carries its
+    reasoning level as a chip; tapping it grows the chip into a pill slider that takes over the row
+    (a dot per level, a white fill up to a glass knob like the header buttons, the chosen level's name under the knob as the rows below step down one by one, tap-to-jump, snapping drags with a haptic tick) and
+    turns the tick into a save button, which writes the level and shrinks it
+    back. All of it drives the same thread settings session so picks, favorites and
     options save exactly as before. Claude and Codex draw the Mac fork's own
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
