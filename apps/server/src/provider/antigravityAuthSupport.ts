@@ -544,7 +544,7 @@ export const prepareAntigravityProfile = Effect.fn("prepareAntigravityProfile")(
     yield* copyAntigravityUserConfigFiles({ profileDirectory: geminiHome, userHome });
   }
   /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
-  yield* linkAntigravityUserMcpOAuthTokens({ profileDirectory: geminiHome, userHome });
+  yield* linkAntigravityUserMcpOAuthTokens({ profileDirectory: geminiHome, userHome, platform });
   /* fork:end fork-antigravity-user-mcp */
   return profile;
 });

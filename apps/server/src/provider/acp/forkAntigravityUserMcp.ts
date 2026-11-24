@@ -1,24 +1,20 @@
-// @effect-diagnostics-next-line nodeBuiltinImport:off - Effect's symlink has no type argument, and Windows needs "file" to link without ambiguity.
-import * as NodeFSP from "node:fs/promises";
-
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as Predicate from "effect/Predicate";
-import * as Schema from "effect/Schema";
 import type * as EffectAcpSchema from "effect-acp/compat";
 import type * as AcpSessionRuntime from "@t3tools/provider-acp/server/AcpSessionRuntime";
 
 const MAX_MCP_CONFIG_BYTES = 512 * 1024;
 
-class AntigravityMcpOAuthLinkError extends Schema.TaggedError<AntigravityMcpOAuthLinkError>()(
-  "AntigravityMcpOAuthLinkError",
-  { link: Schema.String, cause: Schema.Defect() },
-) {
-  override get message(): string {
-    return `Could not link Antigravity user MCP OAuth tokens at ${this.link}.`;
-  }
-}
+/** Each runtime start re-reads the config, so a warning about the same thing is logged once per process. */
+const loggedOnce = new Set<string>();
+const logOnce = (key: string, log: Effect.Effect<void>): Effect.Effect<void> =>
+  Effect.suspend(() => {
+    if (loggedOnce.has(key)) return Effect.void;
+    loggedOnce.add(key);
+    return log;
+  });
 
 /** Strip JSONC comments (`//`, `/* ... *\/`) and trailing commas outside string literals. */
 function stripJsonc(raw: string): string {
@@ -106,26 +102,53 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Predicate.isObject(value) && !Array.isArray(value);
 }
 
-function stringEntries(value: unknown): Array<{ readonly name: string; readonly value: string }> {
-  if (!isPlainRecord(value)) return [];
+/** agy itself drops a server whose args, env or headers hold anything but strings. */
+function stringEntries(
+  value: unknown,
+): Array<{ readonly name: string; readonly value: string }> | undefined {
+  if (value === undefined) return [];
+  if (!isPlainRecord(value)) return undefined;
   const entries: Array<{ readonly name: string; readonly value: string }> = [];
   for (const [name, entryValue] of Object.entries(value)) {
-    if (typeof entryValue === "string") {
-      entries.push({ name, value: entryValue });
-    }
+    if (typeof entryValue !== "string") return undefined;
+    entries.push({ name, value: entryValue });
   }
   return entries;
 }
 
+function isSet(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return !isPlainRecord(value) || Object.keys(value).length > 0;
+}
+
 /**
- * Parse Antigravity's `~/.gemini/config/mcp_config.json` into ACP `McpServer` entries.
+ * agy settings ACP's McpServer has no field for. Importing a server without them would widen its
+ * tools, drop its auth, launch it elsewhere, or send unsubstituted `${VAR}` placeholders.
+ */
+const UNSUPPORTED_SERVER_SETTINGS = [
+  "enabledTools",
+  "disabledTools",
+  "authProviderType",
+  "oauth",
+  "cwd",
+  "variables",
+] as const;
+
+export interface AntigravityUserMcpConfig {
+  readonly servers: ReadonlyArray<EffectAcpSchema.McpServer>;
+  readonly skipped: ReadonlyArray<{ readonly name: string; readonly reason: string }>;
+}
+
+/**
+ * Parse Antigravity's `~/.gemini/config/mcp_config.json` into ACP `McpServer` entries, following
+ * agy's schema: `url` (or legacy `serverUrl`) is Streamable HTTP whatever `type` says, `httpUrl`
+ * is ignored, and strings are passed as is because agy never expands environment variables.
  * Returns `undefined` when the file is not valid JSONC or does not hold a root object.
  */
-export function parseAntigravityUserMcpConfig(
-  raw: string,
-): ReadonlyArray<EffectAcpSchema.McpServer> | undefined {
+export function parseAntigravityUserMcpConfig(raw: string): AntigravityUserMcpConfig | undefined {
   const stripped = stripJsonc(raw).trim();
-  if (stripped.length === 0) return [];
+  if (stripped.length === 0) return { servers: [], skipped: [] };
   let parsed: unknown;
   try {
     parsed = JSON.parse(stripped);
@@ -133,13 +156,19 @@ export function parseAntigravityUserMcpConfig(
     return undefined;
   }
   if (!isPlainRecord(parsed)) return undefined;
-  if (parsed.mcpServers === undefined) return [];
+  if (parsed.mcpServers === undefined) return { servers: [], skipped: [] };
   if (!isPlainRecord(parsed.mcpServers)) return undefined;
 
   const servers: Array<EffectAcpSchema.McpServer> = [];
+  const skipped: Array<{ readonly name: string; readonly reason: string }> = [];
   for (const [name, rawEntry] of Object.entries(parsed.mcpServers)) {
     if (!name.trim() || !isPlainRecord(rawEntry)) continue;
     if (rawEntry.disabled === true) continue;
+    const unsupported = UNSUPPORTED_SERVER_SETTINGS.find((key) => isSet(rawEntry[key]));
+    if (unsupported !== undefined) {
+      skipped.push({ name, reason: `${unsupported} cannot be passed through ACP` });
+      continue;
+    }
 
     const rawUrl =
       typeof rawEntry.url === "string" && rawEntry.url.trim().length > 0
@@ -149,30 +178,26 @@ export function parseAntigravityUserMcpConfig(
           : undefined;
     if (rawUrl !== undefined) {
       const headers = stringEntries(rawEntry.headers);
-      servers.push({
-        type: rawEntry.type === "sse" ? "sse" : "http",
-        name,
-        url: rawUrl,
-        headers,
-      });
+      if (headers === undefined) {
+        skipped.push({ name, reason: "headers must be strings" });
+        continue;
+      }
+      servers.push({ type: "http", name, url: rawUrl, headers });
       continue;
     }
 
     const command = typeof rawEntry.command === "string" ? rawEntry.command.trim() : "";
     if (command.length > 0) {
-      const args = Array.isArray(rawEntry.args)
-        ? rawEntry.args.filter((arg): arg is string => typeof arg === "string")
-        : [];
+      const args = rawEntry.args ?? [];
       const env = stringEntries(rawEntry.env);
-      servers.push({
-        name,
-        command,
-        args,
-        env,
-      });
+      if (!Array.isArray(args) || !args.every(Predicate.isString) || env === undefined) {
+        skipped.push({ name, reason: "args and env must be strings" });
+        continue;
+      }
+      servers.push({ name, command, args, env });
     }
   }
-  return servers;
+  return { servers, skipped };
 }
 
 /**
@@ -211,7 +236,17 @@ export const loadAntigravityUserMcpServers = Effect.fn("loadAntigravityUserMcpSe
       });
       return [];
     }
-    return parsed;
+    for (const { name, reason } of parsed.skipped) {
+      yield* logOnce(
+        `skip:${configPath}:${name}:${reason}`,
+        Effect.logWarning("Skipping an Antigravity user MCP server T3 cannot load faithfully.", {
+          configPath,
+          server: name,
+          reason,
+        }),
+      );
+    }
+    return parsed.servers;
   }).pipe(
     Effect.catch((error) =>
       Effect.logWarning("Could not load Antigravity user mcp_config.json.", {
@@ -274,11 +309,19 @@ export const linkAntigravityUserMcpOAuthTokens = Effect.fn("linkAntigravityUserM
   function* (input: {
     readonly profileDirectory: string;
     readonly userHome: string;
+    readonly platform: NodeJS.Platform;
   }): Effect.fn.Return<void, never, FileSystem.FileSystem | Path.Path> {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
     const target = path.join(input.userHome, ".gemini", "antigravity-cli", "mcp_oauth_tokens.json");
     const link = path.join(input.profileDirectory, "antigravity-acp", "mcp_oauth_tokens.json");
+    // File symlinks need elevation or Developer Mode on Windows, and a copy would not sync refreshes.
+    if (input.platform === "win32") {
+      return yield* logOnce(
+        `win32:${link}`,
+        Effect.logInfo("Antigravity user MCP OAuth tokens are not shared on Windows.", { link }),
+      );
+    }
 
     yield* Effect.gen(function* () {
       const targetInfo = yield* fs
@@ -294,40 +337,47 @@ export const linkAntigravityUserMcpOAuthTokens = Effect.fn("linkAntigravityUserM
       }
 
       const existing = yield* fs.readLink(link).pipe(
-        Effect.map((value): string | undefined => path.resolve(path.dirname(link), value)),
+        Effect.map((value): string | null | undefined => path.resolve(path.dirname(link), value)),
         Effect.catchReason("PlatformError", "NotFound", () => Effect.undefined),
-        // Leave real non-empty token files untouched; replace only an empty placeholder.
-        Effect.catch((error) =>
+        // Not a link: an empty placeholder is replaced, anything else is the profile's own (null).
+        Effect.catch(() =>
           Effect.gen(function* () {
             const info = yield* fs.stat(link);
-            if (info.type !== "File" || info.size > 16n) {
-              return yield* error;
-            }
-            const trimmed = (yield* fs.readFileString(link)).trim();
-            if (trimmed !== "" && trimmed !== "{}") {
-              return yield* error;
-            }
+            const placeholder =
+              info.type === "File" &&
+              info.size <= 16n &&
+              ["", "{}"].includes((yield* fs.readFileString(link)).trim());
+            if (!placeholder) return null;
             yield* fs.remove(link);
             return undefined;
           }),
         ),
       );
+      if (existing === null) {
+        return yield* logOnce(
+          `own:${link}`,
+          Effect.logInfo("The Antigravity profile keeps its own MCP OAuth tokens.", {
+            link,
+            target,
+          }),
+        );
+      }
       if (existing === path.resolve(target)) return;
       if (existing !== undefined) {
         yield* fs.remove(link);
       }
       yield* fs.makeDirectory(path.dirname(link), { recursive: true });
-      yield* Effect.tryPromise({
-        try: () => NodeFSP.symlink(target, link, "file"),
-        catch: (cause) => new AntigravityMcpOAuthLinkError({ link, cause }),
-      });
+      yield* fs.symlink(target, link);
     }).pipe(
       Effect.catch((error) =>
-        Effect.logWarning("Antigravity user MCP OAuth tokens are not linked into the profile.", {
-          link,
-          target,
-          error,
-        }),
+        logOnce(
+          `link:${link}`,
+          Effect.logWarning("Antigravity user MCP OAuth tokens are not linked into the profile.", {
+            link,
+            target,
+            error,
+          }),
+        ),
       ),
     );
   },
