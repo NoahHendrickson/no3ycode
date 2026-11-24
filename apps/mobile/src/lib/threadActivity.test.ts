@@ -1108,6 +1108,24 @@ describe("buildThreadFeed", () => {
       "run-fold:run-1",
       "message-assistant",
     ]);
+
+    // A notification that woke the turn folds with its work.
+    const woken = buildThreadFeed([
+      projected(
+        {
+          ...base("wake", "2026-06-20T00:00:01.000Z", 0),
+          type: "notification",
+          source: { kind: "background_task" },
+          outcome: "completed",
+          summary: "Background task finished",
+        },
+        0,
+      ),
+      projected(assistantMessage(), 1),
+    ]);
+    expect(deriveThreadFeedPresentation(woken, null, new Set()).map((entry) => entry.type)).toEqual(
+      ["run-fold", "message"],
+    );
   });
 
   it("splits a settled turn's work fold at a steer", () => {

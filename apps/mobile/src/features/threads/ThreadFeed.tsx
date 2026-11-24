@@ -246,6 +246,7 @@ import {
   NO3Y_INLINE_CODE_CHIP,
   NO3Y_MESSAGE_ACTION_INSET,
   NO3Y_MESSAGE_ACTION_SIZE,
+  NO3Y_WORK_TEXT_CLASS,
 } from "../../../fork/no3yTranscriptSpacing";
 import GitForkIcon from "@hugeicons/core-free-icons/GitForkIcon";
 import { HugeIcon } from "../../../fork/HugeIcon";
@@ -2019,7 +2020,7 @@ function RunFoldButton({
           className={cn(
             "shrink text-sm tabular-nums text-foreground-muted",
             /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-            !no3y && "font-t3-medium",
+            no3y ? NO3Y_WORK_TEXT_CLASS : "font-t3-medium",
             /* fork:end no3y-mobile-redesign */
           )}
         >
@@ -2080,6 +2081,8 @@ function renderFeedEntry(
       readonly composerKeyboardOffset: number;
       /** The list shows its rows; a fresh bubble remounts then so its rise is seen. */
       readonly listReady: boolean;
+      /** The margin under this reply's footer when the next turn opens right below it. */
+      readonly footerMargin: number | undefined;
     } | null;
     /* fork:end no3y-mobile-redesign */
     readonly expandedWorkRows: Record<string, boolean>;
@@ -2858,10 +2861,23 @@ function renderFeedEntry(
       <Animated.View
         className={cn(
           showAssistantMeta && !(message.runId && props.failedRunIds.has(message.runId))
-            ? "mb-5 px-1"
+            ? /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              props.no3y?.footerMargin !== undefined
+              ? "px-1"
+              : /* fork:end no3y-mobile-redesign */
+                "mb-5 px-1"
             : "mb-1 px-1",
           hasWideBlock && "w-full",
         )}
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        style={
+          props.no3y?.footerMargin !== undefined &&
+          showAssistantMeta &&
+          !(message.runId && props.failedRunIds.has(message.runId))
+            ? { marginBottom: props.no3y.footerMargin }
+            : undefined
+        }
+        /* fork:end no3y-mobile-redesign */
         {...(enterAnimated ? { entering: FadeIn.duration(220) } : {})}
       >
         {renderedText.trim().length > 0 ? (
@@ -4581,6 +4597,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
                   composerInset: props.contentInsetEndAdjustment,
                   composerKeyboardOffset: props.keyboardOffset,
                   listReady: loadedListKey === feedThreadKey,
+                  footerMargin: info.item.no3yGap?.footer,
                 }
               : null,
             /* fork:end no3y-mobile-redesign */

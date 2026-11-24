@@ -1499,7 +1499,9 @@ function staysOutOfFold(entry: ThreadFeedEntry): boolean {
         (activity) =>
           activity.prominent ||
           activity.workEntry.questionAnswer !== undefined ||
-          activity.projectedItem.item.type === "notification" ||
+          /* fork:begin no3y-notification-in-fold — see .fork/customizations.yaml#no3y-notification-in-fold */
+          // A notification that opened the turn folds into its "Worked for" row.
+          /* fork:end no3y-notification-in-fold */
           activity.projectedItem.item.type === "handoff" ||
           // A child still working outlives its settled launching run;
           // its group stays visible while any member is live.
