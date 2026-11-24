@@ -612,7 +612,7 @@ function useWatcherChecksState(thread: EnvironmentThreadShell, look: No3yPullReq
 }
 
 /** Figma's checks-running mark: a ring with a three-quarter pie. */
-function ChecksRunningMark(props: { readonly color: string }) {
+export function ChecksRunningMark(props: { readonly color: string }) {
   return (
     <View
       style={{
@@ -634,7 +634,7 @@ function ChecksRunningMark(props: { readonly color: string }) {
 }
 
 /** The checks-failing mark: a solid dot the size of the running mark's inner pie. */
-function ChecksFailingMark(props: { readonly color: string }) {
+export function ChecksFailingMark(props: { readonly color: string }) {
   return (
     <View
       style={{

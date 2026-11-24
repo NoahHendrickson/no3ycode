@@ -35,3 +35,18 @@ describe("no3y-linked-pr-row", () => {
     expect(row).not.toContain("metaLineHeight");
   });
 });
+
+describe("no3y-linked-pr-row cards", () => {
+  const sheet = NodeFS.readFileSync(
+    NodeURL.fileURLToPath(
+      new URL("../../../mobile/src/features/threads/ThreadPullRequestsSheet.tsx", import.meta.url),
+    ),
+    "utf8",
+  );
+
+  it("swaps the Linked pull requests sheet's list for the glass cards", () => {
+    expect(sheet).toMatch(
+      /<No3yLinkedPullRequestCardsSwap[\s\S]*?>\s*\{content\}\s*<\/No3yLinkedPullRequestCardsSwap>/u,
+    );
+  });
+});

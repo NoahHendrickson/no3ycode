@@ -17,6 +17,9 @@ import {
   useLinkedPullRequestLines,
 } from "./LinkedPullRequestList";
 import { useLinkedPullRequestActions } from "./useLinkedPullRequestActions";
+/* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */
+import { No3yLinkedPullRequestCardsSwap } from "../../../fork/No3yLinkedPullRequestCards";
+/* fork:end no3y-linked-pr-row */
 
 export function ThreadPullRequestsSheet(
   _props: StaticScreenProps<{ readonly environmentId: string; readonly threadId: string }>,
@@ -114,7 +117,26 @@ export function ThreadPullRequestsSheet(
             : undefined
         }
       />
-      <ScreenContent>{content}</ScreenContent>
+      <ScreenContent>
+        {/* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */}
+        <No3yLinkedPullRequestCardsSwap
+          lines={lines}
+          summary={
+            lines.length > 0
+              ? gt("{open} open · {linked} linked", { open: openCount, linked: lines.length })
+              : null
+          }
+          emptyLabel={gt(
+            "{term, select, mr {No linked merge requests.} cr {No linked change requests.} other {No linked pull requests.}}",
+            { term },
+          )}
+          openPullRequest={openPullRequest}
+          actions={actions}
+        >
+          {content}
+        </No3yLinkedPullRequestCardsSwap>
+        {/* fork:end no3y-linked-pr-row */}
+      </ScreenContent>
     </View>
   );
 }

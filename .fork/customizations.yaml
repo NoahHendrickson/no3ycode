@@ -8913,18 +8913,25 @@
 
 - id: no3y-linked-pr-row
   intent: >
-    Linked pull request rows on mobile (the thread's Linked pull requests sheet
-    and the Git overview) lead with the title, then one meta line that wraps
-    instead of clipping: the repository's short name and number, stack, watch,
-    checks and review icons, diff stats and the updated time. Upstream put the
-    full owner/repo, number and every status on one fixed-height line above the
-    title, so at larger text sizes the repository truncated and the diff stats
-    were cut off mid-number. The full owner/repo stays in the accessibility
-    label and the long-press menu title.
+    Linked pull requests read at a glance on mobile. On no3y iPhone (the
+    redesign's useNo3yBottomNavEnabled gate) the thread's Linked pull requests
+    sheet draws them as the Agents sheet's glass cards, one card per stack with
+    a "Stack of N" label and full-width dividers between layers. Each layer
+    leads with its number on the status pill's tinted pull request pill
+    (palette.prPill, its state glyph) and the pill's checks marks, diff stats
+    and a chevron on the right, then the title, then the repository's short
+    name, conflicts, review, watching and the updated time. Elsewhere (the Git
+    overview sheet, iPad, Android) the upstream row leads with the title and
+    wraps its meta line instead of clipping it at a fixed height, which cut the
+    repository and diff stats off at larger text sizes. The full owner/repo
+    stays in accessibility labels and the long-press menu title.
   tier: 4
-  files: []
+  files:
+    - apps/mobile/fork/No3yLinkedPullRequestCards.tsx
   shadows: []
   watch:
     - apps/mobile/src/features/threads/LinkedPullRequestList.tsx
+    # Swaps the sheet's list for the cards.
+    - apps/mobile/src/features/threads/ThreadPullRequestsSheet.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
