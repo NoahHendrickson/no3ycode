@@ -3,10 +3,27 @@ import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 
 import { cn } from "~/lib/utils";
 
-function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
+function RadioGroup({
+  className,
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  density,
+  /* fork:end fork-design-row-variants */
+  ...props
+}: RadioGroupPrimitive.Props & {
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  /** `compact` stacks option rows 2px apart, as in a menu. */
+  density?: "compact";
+  /* fork:end fork-design-row-variants */
+}) {
   return (
     <RadioGroupPrimitive
-      className={cn("flex flex-col gap-3", className)}
+      className={cn(
+        "flex flex-col gap-3",
+        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        density === "compact" && "gap-0.5",
+        /* fork:end fork-design-row-variants */
+        className,
+      )}
       data-slot="radio-group"
       {...props}
     />

@@ -870,7 +870,8 @@ function ThreadTab(props: {
           <ThreadPullRequestBadgeControl
             render={
               <InlineButton
-                className="pointer-events-auto relative flex items-center gap-1 [&>span]:text-[0.75rem] [&>span]:leading-4"
+                size="xs"
+                className="pointer-events-auto relative flex items-center"
                 data-fork-sidebar-pr-badge
               />
             }

@@ -51,7 +51,7 @@ describe("fork guard: fork-new-agent-draft", () => {
       "newThreadActive={isUnassignedDraft(newThreadContext.activeDraftThread)}",
     );
     expect(chromeRows).toContain("active={props.newThreadActive}");
-    expect(chromeRows).toContain('active && "bg-sidebar-row-hover text-sidebar-foreground"');
+    expect(chromeRows).toContain('variant={active ? "chrome-held" : "chrome"}');
   });
 
   it("routes the chat.new shortcut through the same door", () => {
@@ -220,7 +220,7 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(pill).toContain('data-testid="draft-project-pill"');
     expect(pill).toContain("data-composer-context-control");
     expect(pill).toContain("data-composer-label");
-    expect(pill).toContain('variant="ghost"');
+    expect(pill).toContain('variant="chip"');
     expect(pill).not.toContain("rounded-full");
     // A pick that fails to resolve tells the user, rather than surfacing as
     // an unhandled rejection with the draft silently left where it was.

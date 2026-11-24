@@ -18,9 +18,8 @@ import {
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 
-/** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
-const DRAFT_PROJECT_CHIP_CLASS_NAME =
-  "min-w-0 max-w-72 font-normal text-muted-foreground/70 text-xs! hover:text-foreground/80 active:scale-100";
+/** Button variant="chip", the branch chip's dress; the row's CSS owns the chip fill. */
+const DRAFT_PROJECT_CHIP_CLASS_NAME = "min-w-0 max-w-72 active:scale-100";
 
 /** Upstream's collapsing chip label: hidden with its siblings when the strip overflows. */
 function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
@@ -47,7 +46,7 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
       <Button
         type="button"
         size="xs"
-        variant="ghost"
+        variant="chip"
         className={DRAFT_PROJECT_CHIP_CLASS_NAME}
         onClick={openAddProject}
         data-testid="draft-project-pill"
@@ -90,7 +89,7 @@ function DraftProjectChip(props: {
           <Button
             type="button"
             size="xs"
-            variant="ghost"
+            variant="chip"
             aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
             // No press-scale, like the branch chip: the popup aligns live to
             // this trigger and a momentary shrink drags it sideways.

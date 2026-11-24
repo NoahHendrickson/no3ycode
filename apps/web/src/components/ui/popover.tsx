@@ -8,9 +8,36 @@ const PopoverCreateHandle = PopoverPrimitive.createHandle;
 
 const Popover = PopoverPrimitive.Root;
 
-function PopoverTrigger({ className, children, ...props }: PopoverPrimitive.Trigger.Props) {
+/* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+// A bare trigger (an icon or meter) that draws its focus ring inside its own box.
+const FORK_TRIGGER_INSET_RING =
+  "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
+/* fork:end fork-design-row-variants */
+
+function PopoverTrigger({
+  className,
+  children,
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  focusRing,
+  /* fork:end fork-design-row-variants */
+  ...props
+}: PopoverPrimitive.Trigger.Props & {
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  focusRing?: "inset";
+  /* fork:end fork-design-row-variants */
+}) {
   return (
-    <PopoverPrimitive.Trigger className={className} data-slot="popover-trigger" {...props}>
+    <PopoverPrimitive.Trigger
+      className={
+        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        focusRing === "inset" && typeof className !== "function"
+          ? cn(FORK_TRIGGER_INSET_RING, className)
+          : className
+        /* fork:end fork-design-row-variants */
+      }
+      data-slot="popover-trigger"
+      {...props}
+    >
       {children}
     </PopoverPrimitive.Trigger>
   );

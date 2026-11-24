@@ -71,14 +71,15 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
   });
 
   it("sizes the shared action box at 24px with a visible hover surface", () => {
-    // Every icon-only control in the list is the Storybook Button, ghost-muted, pinned to the
+    // Every icon-only control in the list is the Storybook Button, ghost-tint, pinned to the
     // trailing column's fixed boxes: Button's icon sizes grow below sm, the column's offsets don't.
-    expect(iconButton).toContain('variant="ghost-muted"');
+    expect(iconButton).toContain('variant="ghost-tint"');
     expect(iconButton).toContain('row: { size: "icon-xs", className: "size-6" }');
     expect(iconButton).toContain('header: { size: "icon", className: "size-8 rounded-[10px]" }');
     // The fill makes the target legible, and a foreground tint stays a step off the row's own
     // hover and selected fills (accent is one of them in some themes).
-    expect(iconButton).toContain('"[:hover,[data-pressed]]:bg-foreground/10"');
+    const tint = readSibling("../components/ui/button.tsx").split('"ghost-tint":')[1] ?? "";
+    expect(tint.slice(0, tint.indexOf('",'))).toContain("[:hover,[data-pressed]]:bg-foreground/10");
     // No compositor layer per hidden row action.
     expect(iconButton).toContain(
       '"[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto"',

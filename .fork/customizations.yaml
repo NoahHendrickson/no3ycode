@@ -9073,8 +9073,12 @@
     takes size "xs" (py-0, 12px medium label: the model picker's 32px rows) and
     tone "muted". Button takes reveal "row": hidden until its group row is
     hovered or highlighted, shown on touch, a disabled one hidden at rest and
-    64% on hover. Kbd takes variant "faint", size "xs" and reveal "row" (the
-    model picker's jump hints). Every default is upstream's look, unchanged.
+    64% on hover; variants "ghost-tint" (ghost-muted with a foreground-tint
+    hover, the sidebar's icon buttons) and "chip" (the composer strip's muted
+    chip trigger). InlineButton takes size "xs" (the tab PR badge). Kbd takes
+    variant "faint", size "xs" and reveal "row" (the model picker's jump
+    hints). PopoverTrigger takes focusRing "inset" and RadioGroup density
+    "compact". Every default is upstream's look, unchanged.
   tier: 4
   files: []
   shadows: []
@@ -9082,6 +9086,8 @@
     - apps/web/src/components/ui/menu.tsx
     - apps/web/src/components/ui/button.tsx
     - apps/web/src/components/ui/kbd.tsx
+    - apps/web/src/components/ui/popover.tsx
+    - apps/web/src/components/ui/radio-group.tsx
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/__fork_guards__/forkTouchAffordances.test.ts
