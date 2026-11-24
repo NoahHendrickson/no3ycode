@@ -780,7 +780,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/fork/no3yPageColor.ts")).toContain(
       '"--color-grouped-card": NO3Y_CARD_COLOR,',
     );
-    // Transcript subagents draw as the Mac fork's card with the Threads list's status marks.
+    // Transcript subagents draw as rows of one grouped card with the Threads list's status marks.
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");
     expect(workLog).toContain("<No3ySubagentCardsSwap");
@@ -791,7 +791,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(subagentCards).not.toContain("sky");
     // No latest-activity line on the card.
     expect(subagentCards).not.toContain("no3ySubagentActivity");
-    expect(subagentCards).toContain("borderRadius: 20,");
+    expect(subagentCards).toContain("borderRadius: 18,");
+    // A batch is one card whose rows are split by hairlines, not a card per agent.
+    expect(subagentCards).toContain("borderTopColor: palette.hairline,");
     // The Agents sheet draws the same card, with a quiet round stop button, not the red tile.
     const agentsSheet = readRepoFile("apps/mobile/src/features/threads/ThreadAgentsSheet.tsx");
     const agentsSheetRow = readRepoFile("apps/mobile/fork/No3yAgentsSheetRow.tsx");
