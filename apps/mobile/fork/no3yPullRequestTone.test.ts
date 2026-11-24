@@ -1,4 +1,4 @@
-import type { ThreadPullRequestLink } from "@t3tools/contracts";
+import type { PullRequestCheck, ThreadPullRequestLink } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { presentThreadLinkedPullRequests } from "../src/state/thread-pr-presentation";
@@ -7,6 +7,7 @@ import {
   no3yPullRequestColor,
   no3yPullRequestPill,
   no3yPullRequestTone,
+  no3yWatcherChecksState,
 } from "./no3yPullRequestTone";
 
 function linkedPr(
@@ -66,11 +67,12 @@ describe("no3y pull request tone", () => {
 
 describe("no3y pull request pill", () => {
   it("marks running and failing checks on a single open pull request only", () => {
-    expect(pill([linkedPr(240, { checksState: "pending" })])).toEqual({
+    expect(pill([linkedPr(240, { checksState: "pending" })])).toMatchObject({
       tone: "open",
       several: false,
       more: 0,
       checks: "pending",
+      checksLink: { number: 240 },
     });
     expect(pill([linkedPr(240, { checksState: "failing" })]).checks).toBe("failing");
     expect(pill([linkedPr(240, { state: "merged", checksState: "pending" })]).checks).toBeNull();
@@ -86,5 +88,82 @@ describe("no3y pull request pill", () => {
     ];
     expect(pill(stack)).toMatchObject({ several: true, more: 3, checks: null });
     expect(pill([linkedPr(7), linkedPr(8)])).toMatchObject({ several: true, more: 1 });
+  });
+});
+
+describe("no3y watcher checks state", () => {
+  const SYNCED_AT = "2026-09-08T00:00:00.000Z";
+  const check = (
+    name: string,
+    status: PullRequestCheck["status"],
+    required?: boolean,
+  ): PullRequestCheck => ({
+    name,
+    status,
+    description: null,
+    url: null,
+    ...(required === undefined ? {} : { required }),
+  });
+  const live = (checks: ReadonlyArray<PullRequestCheck>, observedAt = Date.parse(SYNCED_AT)) => ({
+    observedAt,
+    state: "open" as const,
+    checks,
+  });
+  const LINK = linkedPr(240);
+
+  it("gates on required checks when the host names any, as the watcher does", () => {
+    const optionalRunning = [check("Lint", "success", true), check("Test Web 1", "pending", false)];
+    expect(no3yWatcherChecksState("pending", live(optionalRunning), LINK)).toBe("passing");
+    const optionalFailed = [check("Lint", "success", true), check("Flaky", "failure", false)];
+    expect(no3yWatcherChecksState("failing", live(optionalFailed), LINK)).toBe("passing");
+    const requiredRunning = [check("Lint", "pending", true), check("Flaky", "failure", false)];
+    expect(no3yWatcherChecksState("failing", live(requiredRunning), LINK)).toBe("pending");
+    const requiredFailed = [check("Lint", "cancelled", true), check("Test", "pending", true)];
+    expect(no3yWatcherChecksState("pending", live(requiredFailed), LINK)).toBe("failing");
+    // No required checks named: every check counts.
+    const noneRequired = [check("Lint", "success"), check("Test", "action-required")];
+    expect(no3yWatcherChecksState("pending", live(noneRequired), LINK)).toBe("pending");
+    // An unapproved workflow run holds the watcher even when it is not required.
+    const awaitingApproval = [check("Lint", "success", true), check("Fork CI", "action-required")];
+    expect(no3yWatcherChecksState("pending", live(awaitingApproval), LINK)).toBe("pending");
+  });
+
+  it("keeps the snapshot's rollup without a read at least as new as it", () => {
+    const passed = [check("Lint", "success", true)];
+    expect(no3yWatcherChecksState("pending", null, LINK)).toBe("pending");
+    expect(no3yWatcherChecksState("pending", live([]), LINK)).toBe("pending");
+    expect(no3yWatcherChecksState("pending", live(passed, Date.parse(SYNCED_AT) - 1), LINK)).toBe(
+      "pending",
+    );
+    expect(no3yWatcherChecksState("passing", live([check("Lint", "pending", true)]), LINK)).toBe(
+      "passing",
+    );
+  });
+
+  it("keeps the watcher's approval hold under a passing or absent rollup and reads that omit it", () => {
+    const run = "https://github.com/t3tools/t3code/actions/runs/1";
+    const watch = {
+      startedAt: SYNCED_AT,
+      headSha: "abc1234",
+      failedChecks: [],
+      passed: false,
+      passedChecks: [],
+      awaitingApproval: [run],
+      remarksThrough: SYNCED_AT,
+      remarkIds: [],
+      conflicting: false,
+      wakes: 0,
+    };
+    const held = { ...LINK, watch };
+    expect(no3yWatcherChecksState("passing", null, held)).toBe("pending");
+    expect(no3yWatcherChecksState(null, null, held)).toBe("pending");
+    // GitHub's approval lookup came back empty this time; the watcher still holds the run.
+    const omitted = live([check("Lint", "success", true)]);
+    expect(no3yWatcherChecksState("pending", omitted, held)).toBe("pending");
+    expect(no3yWatcherChecksState("pending", omitted, LINK)).toBe("passing");
+    // A push or a finished run clears the watcher's hold, and the mark goes with it.
+    const cleared = { ...LINK, watch: { ...watch, awaitingApproval: [] } };
+    expect(no3yWatcherChecksState("pending", omitted, cleared)).toBe("passing");
+    expect(no3yWatcherChecksState("passing", null, cleared)).toBe("passing");
   });
 });
