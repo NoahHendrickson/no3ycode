@@ -187,8 +187,9 @@ describe("fork guard: design mode", () => {
 
   it("widens the right panel to the room the docked design chrome takes", () => {
     // The widths design mode asks for are the widths its columns render at.
+    expect(DESIGN_PANEL_WIDTH_PX).toBe(81.25 * 4);
     expect(read("src/custom/designMode/panel/ForkDesignPanel.tsx")).toContain(
-      `w-[${DESIGN_PANEL_WIDTH_PX}px]`,
+      "flex w-81.25 shrink-0",
     );
     expect(LAYERS_RAIL_WIDTH_PX).toBe(52 * 4);
     expect(read("src/custom/designMode/ForkLayersTree.tsx")).toContain('"flex w-52 shrink-0');

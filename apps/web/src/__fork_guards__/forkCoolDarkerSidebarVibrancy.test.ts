@@ -493,7 +493,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     const panel = readSibling("../custom/designMode/panel/ForkDesignPanel.tsx");
     expect(panel).toContain("data-fork-design-panel");
     expect(panel, "the panel surface must stay driven by the token").toContain(
-      "bg-[var(--fork-design-surface)]",
+      "bg-(--fork-design-surface)",
     );
     const rail = readSibling("../custom/designMode/ForkLayersTree.tsx");
     expect(rail).toContain("data-fork-design-layers");

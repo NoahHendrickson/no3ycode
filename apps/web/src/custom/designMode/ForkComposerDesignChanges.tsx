@@ -89,7 +89,7 @@ export function DesignChangeChip({
                 right-most child is the X — an unremovable attachment is a one-way door
                 (PR #71 review). */}
             {unresolved > 0 ? (
-              <span className="min-w-0 truncate text-[11px] font-medium opacity-80">
+              <span className="min-w-0 truncate text-(length:--text-2xs) font-medium opacity-80">
                 {entry.elements.length === 1 ? "no source" : `${unresolved} without source`}
               </span>
             ) : null}

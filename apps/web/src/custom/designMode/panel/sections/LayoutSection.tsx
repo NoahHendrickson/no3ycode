@@ -54,7 +54,7 @@ function SizeModeSelect({
         const picked = SIZE_MODE_OPTIONS.find(([value]) => value === event.target.value);
         if (picked) onPick(picked[0]);
       }}
-      className="h-full shrink-0 cursor-pointer appearance-none bg-transparent pe-1.5 text-[10px] text-muted-foreground outline-none hover:text-foreground"
+      className="h-full shrink-0 cursor-pointer appearance-none bg-transparent pe-1.5 text-(length:--text-3xs) text-muted-foreground outline-none hover:text-foreground"
     >
       {mode === null ? <option value="">Mixed</option> : null}
       {SIZE_MODE_OPTIONS.map(([value, label]) => (

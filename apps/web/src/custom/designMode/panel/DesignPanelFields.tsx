@@ -55,7 +55,7 @@ function FieldRevert({ onRevert }: { onRevert: () => void }) {
       }}
       className="flex size-4 shrink-0 items-center justify-center"
     >
-      <span className="size-1.5 rounded-full bg-[var(--fork-design-accent)]" />
+      <span className="size-1.5 rounded-full bg-(--fork-design-accent)" />
     </button>
   );
 }
@@ -146,7 +146,7 @@ function NumericFieldChrome({
 
   return (
     <label
-      className="flex h-6 items-center overflow-hidden rounded bg-[var(--fork-design-field)]"
+      className="flex h-6 items-center overflow-hidden rounded bg-(--fork-design-field)"
       title={title}
     >
       <span
@@ -478,7 +478,7 @@ function SpacingTokenAffordance({
             className={cn(
               "me-1 shrink-0 rounded-[3px] px-1 font-mono text-[9px] leading-4 transition-colors",
               matched !== null
-                ? "bg-[var(--fork-design-accent-bg)] text-[var(--fork-design-accent)]"
+                ? "bg-(--fork-design-accent-bg) text-(--fork-design-accent)"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -554,7 +554,7 @@ export function ColorField({
 
   return (
     <label
-      className="flex h-6 items-center gap-1 overflow-hidden rounded bg-[var(--fork-design-field)]"
+      className="flex h-6 items-center gap-1 overflow-hidden rounded bg-(--fork-design-field)"
       title={title}
     >
       <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground [&_svg]:size-4">
@@ -610,7 +610,7 @@ export function ValueRow({
   return (
     <div
       className={cn(
-        "flex h-6 items-center overflow-hidden rounded bg-[var(--fork-design-field)]",
+        "flex h-6 items-center overflow-hidden rounded bg-(--fork-design-field)",
         className,
       )}
       title={`${title}: ${value}`}
@@ -654,8 +654,8 @@ export function PanelToggle({
         disabled
           ? "text-muted-foreground/30"
           : pressed
-            ? "bg-[var(--fork-design-accent-bg)] text-[var(--fork-design-accent)]"
-            : "bg-[var(--fork-design-field)] text-muted-foreground hover:text-foreground",
+            ? "bg-(--fork-design-accent-bg) text-(--fork-design-accent)"
+            : "bg-(--fork-design-field) text-muted-foreground hover:text-foreground",
       )}
     >
       {children}

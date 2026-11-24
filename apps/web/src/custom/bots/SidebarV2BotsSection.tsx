@@ -129,7 +129,7 @@ export function SidebarV2NewBotRow(props: {
         }
         className={cn(
           "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          compact ? "-mx-[7px]" : "-mx-[2px]",
+          compact ? "-mx-1.75" : "-mx-0.5",
         )}
       >
         {compact ? (

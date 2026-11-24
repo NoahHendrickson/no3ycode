@@ -137,7 +137,7 @@ export function ScreenSizeMenu({
         }
         className={cn(
           triggerClassName,
-          activeResolution && "bg-[var(--fork-design-accent-bg)] text-[var(--fork-design-accent)]",
+          activeResolution && "bg-(--fork-design-accent-bg) text-(--fork-design-accent)",
         )}
       >
         <ScreenSizeIcon />

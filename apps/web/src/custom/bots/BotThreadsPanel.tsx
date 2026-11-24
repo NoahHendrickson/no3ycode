@@ -148,7 +148,7 @@ function BotThreadsBody(props: {
   const header = (
     <div
       className={cn(
-        "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
+        "flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center gap-2 border-b border-border pl-3.5",
         "pr-2",
         isElectron && "drag-region",
         isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",

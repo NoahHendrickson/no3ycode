@@ -206,7 +206,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
           </div>
           {tokens && tokens.colors.length > 0 ? (
             <div className="space-y-1">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-(length:--text-3xs) font-medium uppercase tracking-wide text-muted-foreground">
                 Theme colors
               </p>
               <div className="grid max-h-28 grid-cols-10 gap-1 overflow-y-auto pr-0.5">

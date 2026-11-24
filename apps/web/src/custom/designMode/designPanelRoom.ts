@@ -6,7 +6,7 @@ import { create } from "zustand";
 import { selectDesignModeTab, useDesignModeStore } from "./designModeStore";
 import { layersRailAvailable, useLayersCollapsed } from "./layersCollapsed";
 
-/** The docked properties panel (ForkDesignPanel's `w-[325px]`). */
+/** The docked properties panel (ForkDesignPanel's `w-81.25`). */
 export const DESIGN_PANEL_WIDTH_PX = 325;
 /** The layers rail (ForkLayersTree's `w-52`). */
 export const LAYERS_RAIL_WIDTH_PX = 208;

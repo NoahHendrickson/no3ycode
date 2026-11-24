@@ -95,7 +95,7 @@ const LayerRowView = memo(function LayerRowView({
           ? "bg-accent text-foreground"
           : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
         active && !selected && "bg-accent/30",
-        "focus-visible:ring-1 focus-visible:ring-[var(--fork-design-accent)]",
+        "focus-visible:ring-1 focus-visible:ring-(--fork-design-accent)",
       )}
       style={{ paddingInlineStart: `${depth * 12 + 4}px` }}
     >
@@ -103,7 +103,7 @@ const LayerRowView = memo(function LayerRowView({
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-x-0 h-0.5 bg-[var(--fork-design-accent)]",
+            "pointer-events-none absolute inset-x-0 h-0.5 bg-(--fork-design-accent)",
             dropEdge === "before" ? "top-0" : "bottom-0",
           )}
         />
@@ -430,12 +430,12 @@ function LayersRail({ runtimeTabId }: { runtimeTabId: string }) {
           />
         ))}
         {rows.length === 0 ? (
-          <p className="px-1.5 py-1 text-[10px] text-muted-foreground">
+          <p className="px-1.5 py-1 text-(length:--text-3xs) text-muted-foreground">
             {query ? "No layers match." : "No layers yet."}
           </p>
         ) : null}
         {tab.layers.truncated ? (
-          <p className="px-1.5 py-1 text-[10px] text-muted-foreground">
+          <p className="px-1.5 py-1 text-(length:--text-3xs) text-muted-foreground">
             Tree truncated — deeper elements aren&apos;t shown.
           </p>
         ) : null}

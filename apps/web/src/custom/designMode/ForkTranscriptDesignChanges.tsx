@@ -25,7 +25,7 @@ function TranscriptVerdictLine({ messageId }: { messageId: string }) {
   if (!verdictLine) return null;
   return (
     <span
-      className="select-none self-center text-[10px] text-muted-foreground"
+      className="select-none self-center text-(length:--text-3xs) text-muted-foreground"
       data-fork-design-verdict-line
     >
       {verdictLine}
