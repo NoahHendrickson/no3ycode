@@ -8359,9 +8359,11 @@
     (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
     provider's mark in a tile with the Threads list's status mark at its corner
     (bead ring while working, never upstream's blue dot or blue "Working"), a
-    pure-white title over model and effort, and elapsed time, on a 20pt-radius
-    card with no activity line; a tap opens the agent's thread and a batch
-    keeps a "Kicked off N subagents" lead line. On
+    pure-white title over model and effort, and muted elapsed time, with no
+    activity line; a batch's agents are rows of one 18pt-radius card split by
+    full-width hairlines, under a "Kicked off N subagents" lead line whose
+    icon, status and time are muted, and a tap on a row opens the agent's
+    thread. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
