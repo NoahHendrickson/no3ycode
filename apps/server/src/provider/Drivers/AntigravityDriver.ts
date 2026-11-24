@@ -631,6 +631,9 @@ export const AntigravityDriver: ProviderDriver<
         ),
       ),
       profileDirectory,
+      /* fork:begin fork-antigravity-user-mcp — see .fork/customizations.yaml#fork-antigravity-user-mcp */
+      userHome,
+      /* fork:end fork-antigravity-user-mcp */
       onSessionStarted: (started, cwd) =>
         provider.onSessionStarted(started, cwd).pipe(Effect.andThen(authFlow.onSignedInElsewhere)),
       onSessionEvent: (event, cwd) => {
