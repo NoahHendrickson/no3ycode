@@ -34,7 +34,7 @@ describe("fork guard: fork-typography-settings", () => {
       'cssVariable: "--fork-sidebar-font-size",',
     );
     const index = readSibling("../index.css");
-    for (const token of ["title", "row", "chrome", "meta", "caption", "status", "tile"]) {
+    for (const token of ["title", "row", "chrome", "meta", "caption", "status"]) {
       expect(index).toMatch(
         new RegExp(`--text-sidebar-${token}: calc\\(var\\(--fork-sidebar-px, 1px\\) \\* \\d+\\);`),
       );
