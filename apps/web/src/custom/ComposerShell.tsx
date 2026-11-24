@@ -90,9 +90,8 @@ export const ComposerShell = memo(function ComposerShell({
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/* In flow, so the transcript's bottom inset makes room for it; the drawer floats over it.
-          Empty over the collapsed phone pill, like the context row and drawer: a tap there would
-          focus the composer and expand it. */}
+      {/* In flow, so the transcript's bottom inset makes room for it. Empty over the collapsed
+          phone pill, like the context row: a tap there would focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
         className="flex min-w-0 flex-wrap items-center gap-1.5 pb-2 empty:hidden"

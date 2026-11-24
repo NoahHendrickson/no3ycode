@@ -117,11 +117,6 @@
    Tones, one per appearance. Dark lays white over the base, light black; the
    raised fills differ because a menu lifts toward white on either. */
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
-  --fork-thread-composer-line: var(--basic-wash-2);
-  --fork-thread-composer-line-focus: var(--basic-wash-4);
-}
-
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"].dark {
   --basic-base: #232323;
   --basic-popup-shadow: 0 1px 2px rgb(0 0 0 / 16%), 0 8px 24px rgb(0 0 0 / 24%);
@@ -134,8 +129,7 @@
   --basic-raised-quiet: var(--basic-lift-1);
   --basic-composer-vessel: var(--basic-lift-2);
   --basic-composer-prompt: color-mix(in srgb, var(--basic-ink) 4%, var(--basic-lift-2));
-  /* The thread composer (theme.custom.thread-composer.css) on Flat Glass's ladder. */
-  --fork-thread-composer-prompt: var(--basic-lift-3);
+  /* The thread composer's cards (theme.custom.thread-composer.css), on Flat Glass's ladder. */
   --fork-thread-composer-card: var(--basic-lift-2);
   --basic-tab-pick: var(--basic-wash-3);
   --basic-tab-line: var(--basic-wash-2);
@@ -154,7 +148,6 @@
   --basic-composer-vessel: var(--basic-lift-1);
   --basic-composer-prompt: var(--basic-raised);
   /* A light stage lifts toward white, so the card sits two thirds of the way to the prompt. */
-  --fork-thread-composer-prompt: var(--basic-composer-prompt);
   --fork-thread-composer-card: color-mix(
     in srgb,
     var(--basic-composer-prompt) 67%,

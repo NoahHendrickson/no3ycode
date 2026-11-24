@@ -3,7 +3,7 @@
 // component=ComposerBackgroundWorkChip
 import figma from "figma";
 
-// The menu is the chip's own popup (the shared Menu); the chip renders it from its items.
+// The list is the chip's own hover popover; the chip renders it from its items.
 export default {
   example: figma.tsx`<ComposerBackgroundWorkChip
   items={items}
