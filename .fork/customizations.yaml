@@ -8394,7 +8394,7 @@
     listing rule, fork/forkBots.ts) sit above the status sections under
     "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
     tiles, five to a row and wrapping (fewer still span the row): 12pt-radius
-    liquid-glass tiles (fork/No3yGlass.tsx, tinted while pressed; rows rise in and
+    liquid-glass tiles (fork/No3yGlass.tsx, a wash over it while pressed; rows rise in and
     never fade, so the glass renders), the
     bare pixel mascot centred (art copied in fork/botMascotArt.ts, 26pt), the
     12pt name centred under it, no status line, and a 20pt mark in the top-right

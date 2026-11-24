@@ -6,7 +6,7 @@
 import ChevronDownIcon from "@hugeicons/core-free-icons/ChevronDownIcon";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
@@ -123,7 +123,16 @@ function PetalCard(props: {
       >
         {({ pressed }) => (
           <>
-            <No3yGlassLayer radius={TILE_RADIUS} tint={pressed ? palette.rowSelected : undefined} />
+            <No3yGlassLayer radius={TILE_RADIUS} />
+            {pressed ? (
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  { borderRadius: TILE_RADIUS, backgroundColor: palette.rowSelected },
+                ]}
+              />
+            ) : null}
             {content}
           </>
         )}
@@ -157,7 +166,6 @@ export function No3yBotsGrid(props: {
     [props.threads],
   );
   if (props.bots.length === 0) return null;
-  // Fewer Petals than a full row still span it; more wrap at PER_ROW.
   const perRow = Math.min(props.bots.length, PER_ROW);
   const rows: Array<ReadonlyArray<EnvironmentThreadShell>> = [];
   for (let index = 0; index < props.bots.length; index += perRow) {
