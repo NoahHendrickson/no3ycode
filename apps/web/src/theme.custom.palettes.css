@@ -260,6 +260,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
   --fork-flat-radius: 8px;
   --fork-flat-model-picker-radius: 14px;
+  --fork-flat-popup-radius: 12px;
 }
 
 @supports (corner-shape: superellipse(1.6)) {
@@ -294,6 +295,32 @@
   & [data-fork-draft-launchpad-card] button {
     border-radius: var(--fork-flat-radius);
     corner-shape: superellipse(1.6);
+  }
+
+  /* Menus, selects, comboboxes and popovers round to 12px, rounder than the 8px rows they hold
+     (Noey, 2026-11-23). Circular, not superellipse: at 12px the smoothed corner reads as an 8px
+     one. The model picker's concentric shell below keeps its own radius. */
+  &
+    :is(
+      :is(
+        [data-slot="menu-popup"],
+        [data-slot="menu-sub-content"],
+        [data-slot="popover-popup"]
+      ).dropdown-glass,
+      [data-slot="select-popup"],
+      [data-slot="select-popup"] > .dropdown-glass,
+      .dropdown-glass:has(> [data-slot="combobox-popup"]),
+      [data-slot="autocomplete-positioner"] > *
+    ) {
+    border-radius: var(--fork-flat-popup-radius);
+  }
+
+  /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
+     the popup's 1px edge. */
+  & [data-slot="popover-popup"].dropdown-glass::before,
+  & [data-slot="autocomplete-positioner"] > ::before,
+  & [data-slot="popover-popup"].dropdown-glass > [data-slot="popover-viewport"] {
+    border-radius: calc(var(--fork-flat-popup-radius) - 1px);
   }
 
   /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
