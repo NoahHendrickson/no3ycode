@@ -3,7 +3,7 @@ import { EnvironmentId, ProviderDriverKind, ProviderInstanceId } from "@t3tools/
 import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
-import { ForkSubagentCardView } from "~/custom/ForkSubagentGroup";
+import { ForkSubagentCardView, ForkSubagentIdentity } from "~/custom/ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 
 import { Stack } from "../Specimen.tsx";
@@ -162,4 +162,19 @@ export const WithoutThread: Story = {
       />
     );
   },
+};
+
+/** The card's header identity alone, as the composer's background-work list draws it: the
+    provider's mark with the status in its corner, then the title over the model and effort. */
+export const Identity: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <Stack gap={3}>
+      {Object.entries(MEMBERS).map(([name, member]) => (
+        <div key={name} className="flex w-80 items-center gap-2.5">
+          <ForkSubagentIdentity member={member} effort="High" environmentId={environmentId} />
+        </div>
+      ))}
+    </Stack>
+  ),
 };

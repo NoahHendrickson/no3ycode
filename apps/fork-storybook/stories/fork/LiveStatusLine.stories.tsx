@@ -9,6 +9,7 @@ import {
   type TimelineRowSharedState,
 } from "~/components/chat/timelineRowContext";
 import { WorkingTimelineRow } from "~/components/chat/TimelineWorkGroupRows";
+import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
 import type { ForkStatusLineRow } from "~/custom/forkWorkingRowLast";
 
 import { Row, Stack } from "../Specimen.tsx";
@@ -21,11 +22,13 @@ interface LineProps {
   group: boolean;
   label?: string;
   providerStartingLabel?: string;
+  /** The line by itself, with a fixed timer and nothing trailing, outside the timeline's row. */
+  bare?: boolean;
 }
 
 /** The timeline's working row, folded into the live status line as MessagesTimeline folds it.
     The line reads the row's group toggle and the environment's clock from the timeline. */
-function StatusLine({ timer, group, label, providerStartingLabel }: LineProps) {
+function StatusLine({ timer, group, label, providerStartingLabel, bare = false }: LineProps) {
   const [expanded, setExpanded] = useState(false);
   const [start] = useState(startedAt);
   const createdAt = timer ? start : null;
@@ -65,7 +68,11 @@ function StatusLine({ timer, group, label, providerStartingLabel }: LineProps) {
     <TimelineRowCtx value={shared as TimelineRowSharedState}>
       <TimelineRowActivityCtx value={activity}>
         <div className="w-[640px] max-w-full">
-          <WorkingTimelineRow row={row} />
+          {bare ? (
+            <ForkLiveStatusLine row={row} timer={timer ? "1m 23s" : null} trailing={null} />
+          ) : (
+            <WorkingTimelineRow row={row} />
+          )}
         </div>
       </TimelineRowActivityCtx>
     </TimelineRowCtx>
@@ -110,6 +117,26 @@ export const Variants: Story = {
       </Row>
       <Row label="Starting">
         <StatusLine timer group={false} providerStartingLabel="Starting Claude…" />
+      </Row>
+    </Stack>
+  ),
+};
+
+/** ForkLiveStatusLine on its own, as the working row draws it: the mark, the label, the timer it
+    is handed, and the chevron when the line toggles a group. */
+export const LineAlone: Story = {
+  name: "Line alone",
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <Stack gap={3}>
+      <Row label="Word">
+        <StatusLine bare timer={false} group={false} />
+      </Row>
+      <Row label="Group, timer">
+        <StatusLine bare timer group />
+      </Row>
+      <Row label="Label">
+        <StatusLine bare timer={false} group label="Waiting on 2 subagents" />
       </Row>
     </Stack>
   ),
