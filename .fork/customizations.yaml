@@ -5162,7 +5162,7 @@
 - id: fork-model-picker
   intent: >
     The model picker is a menu in the style of Figma t3-fork 342:8038
-    (8px inset, 32px rows with a 12px medium label and a check on the
+    (8px inset, 32px rows with a regular-weight label at the interface size and a check on the
     selected model), squared off a step from upstream's menus: 8px corners on
     the popup, 4px on the rows and search field. ProviderModelPicker's shadow
     swaps upstream's Popover for a non-modal Base UI Menu and keeps the rest
@@ -5188,8 +5188,8 @@
     popup. The rail runs edge to edge
     of the popup (top to the traits panel's rule, or to the popup's bottom),
     divided from the list by a full-height rule; its 32px tabs line up with
-    the search field and the rows. The tabs are Favorites (heart, always
-    shown; empty, it says how to add one), then one per enabled provider instance, icon only with
+    the search field and the rows. The tabs are Pinned (a pin, always
+    shown; empty, it says how to pin one; pins are the stored favorites), then one per enabled provider instance, icon only with
     a tooltip naming it (or why it is disabled), a tint on the chosen one and,
     when another scope is chosen, a dot on the current model's provider (its
     accessible name says "current model").
@@ -5218,8 +5218,17 @@
     provider-agnostic list of every matching model — glyph and instance name
     inline, ranked like upstream's search, locked provider still respected;
     Enter picks the first result and Escape clears the query before it
-    closes the menu. Rows reveal the favorites star and ⌘1–9 badge on hover;
-    the star toggles without choosing the row. ⌘1–9 map to the search
+    closes the menu. Rows reveal a pin at their far right on hover (Pin /
+    Unpin); it toggles without choosing the row, and never moves a row:
+    provider lists keep the provider's order, except that Claude reads by
+    family, Fable, Opus, Sonnet, Haiku, release order within each
+    (custom/claudeFamilyOrder; the manifest lists by release), pinned models gather on the
+    Pinned tab, not atop them), and placement in a provider list or search (a
+    pinned legacy model among the current ones, search ties) reads the pins as
+    they stood at the first toggle of an open, so a change shows on the next
+    open. The Pinned tab is the live list of pins: a pin joins it at once and an
+    unpin leaves it. Rows show no shortcut badge,
+    but ⌘1–9 still map to the search
     results, else the listed models in order, and the provider-cycling
     shortcuts step the provider tabs. Providers locked out of the thread or not
     ready stay in the rail but disabled, with the reason as a
@@ -5232,29 +5241,47 @@
     wraps ProviderModelPicker and fills its `traits` slot from the same input
     the composer used to hand upstream's TraitsPicker: the trigger reads
     "Opus 5.5 High Fast" (fast mode rides in the label text since upstream
-    #16069), and under the list a panel
-    shows the selected model's traits. The traits label truncates inside the
+    #16069). The selected model's row shows its effort beside the check
+    (Figma kUDQTOR0ndxERlBCqgy3nk 377:1125); its other traits live in the
+    effort menu that value opens. The traits label truncates inside the
     trigger's max width, and in the resting strip it collapses with the model
     name below 640px, where upstream moved the traits picker
     into the ⋯ menu. Effort (any reasoning select recognized by
     isReasoningSelect — including `effort`, `reasoningEffort`, `reasoning`,
     `variant`, `thinking_level`, and `role: "reasoning"` — when it has two or
-    more levels) is a slider over
-    the model's own levels, Ultrathink included as the top stop for Claude;
-    dragging previews and writes once on release. It is a 24px bar with a block
-    thumb, dot stops and a short bar at the default level, drawn under the fill
-    so the stops the thumb has passed are covered as it moves. The fill is an 8x8
-    Bayer dither (custom/EffortDither) through the provider's colours (Claude,
-    Codex, Antigravity, Grok, Cursor; any other runs from the done blue to the
-    working green), solid at the middle of the thumb and its last colour under
-    the rest, so Glass's see-through thumb shows one fill. Inlet keeps a flat
-    fill and hides the dither (theme.custom.inlet.css). On/off traits are
-    checkboxes and other selects are segments. Rows keep one order for every
+    more levels) is a "⇕ High" value on that row; clicking it (or ArrowRight)
+    opens a submenu above it (hover never does; another click closes it; a
+    click on another row's previewed effort picks that model and opens its
+    menu). The value is a plain button in the row's one control slot
+    (renderRowControl); the menu is a trigger-less submenu of the model menu,
+    rendered outside every row as the picker's layer and anchored to the
+    button, so the shared row needs no event suppression. The menu sits centred
+    above the value and lists the model's own levels, Ultrathink last for
+    Claude. There is no effort slider. The row stays lit while its menu is open
+    (one rule on the button's data-open). A level pick closes the menu.
+    Hovering any other row (outside search, and not a disabled one) previews,
+    in muted ink, the effort picking it would set, by the pick's own rule
+    (custom/pickOptions, also used by useComposerSelection): the options last
+    used with that model, else the thread's own when it is the thread's model,
+    else the model default. Every text in the menu (rows,
+    search, panel labels, the levels submenu) is text-base, so it follows the
+    interface font size, at regular weight; the search field is 36px tall.
+    The model menu has no traits panel (only an unlisted model's saved options
+    show there, read-only): the effort menu holds the levels under an "Effort"
+    header, any other select as its own ruled-off section, and the toggles as
+    checkbox rows with an icon each (the checkbox on the right) (Fast ⚡, Ultracode code, Cyber shield,
+    Thinking brain), so the model menu's height never depends on the model.
+    The row's value is led by the icon of each toggle that is on. On/off traits are
+    checkboxes, and so is a two-value select with a standard value ("default"
+    or "standard"): Codex's Service Tier reads "Fast mode" and Cyber Access
+    "Cyber mode", checked meaning the non-standard value. Nothing is a tab strip.
+    While the prompt body says "ultrathink" the levels are disabled and the
+    effort menu says why. Rows keep one order for every
     provider: the rest in the provider's order, then Fast Mode, then Context
     Window last. Writes match upstream's traits
     menu exactly: same draft-store options with persistSticky, same implicit
     fast-mode default, and Ultrathink as a prompt prefix that is stripped when
-    leaving it (the slider locks while the prompt body says "ultrathink").
+    leaving it.
     The panel keeps every key but Escape and Tab out of the menu's
     navigation. A pick keeps the menu open so effort can follow, and keeps
     focus there: ChatComposer's focusAtEnd stands down while its picker is
@@ -5283,10 +5310,9 @@
     verbatim and both shadows keep upstream's relative imports. Reaches every
     entry point through ProviderModelPicker (composer and Settings). Provider
     scopes sit in a horizontal top segmented Tabs strip above the search field,
-    model list, and reasoning/traits panel. Under Glass
-    (theme.custom.glass-surfaces.css), at Full 3D the effort thumb wears the
-    send button's glass and the selected provider and trait tabs wear the
-    segmented tabs' glass chips. An editable select whose one value is
+    model list, and traits panel. Under Glass
+    (theme.custom.glass-surfaces.css), at Full 3D the selected provider tab
+    wears the segmented tabs' glass chip. An editable select whose one value is
     already in force (Cyber Access for a login without Daybreak) offers no
     choice (composerModelTraits' offersChoice): it gets no row and stays out of
     the trigger label, the stored selection is untouched, and a model with
@@ -5296,12 +5322,16 @@
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
     - apps/web/src/overrides/components/chat/ModelPickerContent.tsx
     - apps/web/src/custom/ComposerModelPicker.tsx
-    - apps/web/src/custom/EffortDither.tsx
-    - apps/web/src/custom/EffortDither.test.ts
+    - apps/web/src/custom/ComposerModelPicker.browser.test.tsx
     - apps/web/src/custom/composerModelTraits.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - apps/web/src/custom/modelPickerFocus.ts
     - apps/web/src/custom/modelPickerDisplayName.ts
+    - apps/web/src/custom/claudeFamilyOrder.ts
+    - apps/web/src/custom/pickOptions.ts
+    - apps/web/src/custom/modelRowControl.tsx
+    - apps/web/src/custom/traitPresentation.ts
+    - apps/web/src/custom/claudeFamilyOrder.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
     - apps/web/src/custom/icons/ModelPickerProviderGlyph.tsx
     - apps/web/src/custom/assets/codex-mark.png
@@ -5330,6 +5360,9 @@
     # helpers (trigger label, unavailable descriptors, fast-mode default).
     - apps/web/src/components/chat/TraitsPicker.tsx
     - apps/web/src/components/chat/composerProviderState.tsx
+    # Fenced: the pick's option rule goes through custom/pickOptions, shared with the menu's
+    # effort preview so the preview shows what the pick restores.
+    - apps/web/src/components/chat/useComposerSelection.ts
     # Unfenced: the controlled-update effect must keep reading focus before it
     # rewrites and never focus the view itself (guard-pinned).
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx
@@ -5340,7 +5373,6 @@
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
-    - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - packages/provider-core/src/modelShortName.test.ts
 
@@ -8335,7 +8367,7 @@
     upstream appears without a story edit. Fork/ stories draw fork components
     through view exports that take plain props (ForkSubagentCardView,
     BotThreadsRowView,
-    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
+    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
     BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package

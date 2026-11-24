@@ -3079,7 +3079,11 @@
     [data-slot="menu-sub-trigger"],
     [data-slot="select-item"],
     [data-slot="combobox-item"]
-  ):is([data-highlighted], [data-popup-open], :hover) {
+  ):is([data-highlighted], [data-popup-open], :hover),
+/* A model row stays lit while the menu its control opened is open, the pointer inside that menu
+   (fork-model-picker); dark palettes light rows with this wash instead of --accent. */
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
@@ -3646,7 +3650,7 @@
 /* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
    inside an even 8px inset (the popup's 4px plus the section's 4px). */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  [data-slot="menu-popup"]:has(:is([data-composer-permissions], [data-fork-option-menu])) {
   border-radius: 18px;
 
   &::before,
@@ -3660,13 +3664,15 @@
     overflow-x: hidden;
   }
 
-  & [data-composer-permissions] [data-slot="menu-radio-item"] {
+  &
+    :is([data-composer-permissions], [data-fork-option-menu])
+    :is([data-slot="menu-radio-item"], [data-slot="menu-checkbox-item"]) {
     border-radius: 10px;
   }
 
   /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its
      text back in line with the option names. */
-  & [data-composer-permissions-label] {
+  & :is([data-composer-permissions-label], [data-fork-option-menu-label]) {
     margin-inline: -8px;
     margin-bottom: 4px;
     padding: 0 16px 8px;
