@@ -5,7 +5,11 @@ import { useSidebarWorkspaceTabs } from "../layout/workspace/useSystemWorkspaceT
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { no3yComposerBottomInset } from "../../../fork/flatGlassTheme";
 import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
-import { No3yStatusPillSwap, no3yPullRequestThread } from "../../../fork/No3yStatusPill";
+import {
+  No3yStatusPillSwap,
+  no3yPullRequestThread,
+  no3yFeedStatusCoverage,
+} from "../../../fork/No3yStatusPill";
 import { useThreadPr } from "../../state/use-thread-pr";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
@@ -587,6 +591,10 @@ function ThreadDetailBody(
   const composerBottomInset = no3yBottomNav
     ? no3yComposerBottomInset(upstreamComposerBottomInset, Boolean(props.draftMode))
     : upstreamComposerBottomInset;
+  const feedStatusCoverage = no3yFeedStatusCoverage(
+    FLOATING_WORKING_CONTROL_COVERAGE,
+    no3yBottomNav,
+  );
   /* fork:end no3y-mobile-redesign */
   const composerKeyboardOffset = composerBottomInset;
   const contentPresentationKind = props.contentPresentation.kind;
@@ -1244,7 +1252,14 @@ function ThreadDetailBody(
   const composerPopoverHeight = useSharedValue(0);
   const { freeze, scrollMessageToEnd } = useKeyboardScrollToEnd({ listRef });
   const reduceMotion = useReducedMotion();
-  const floatingCoverageTarget = showFloatingStatus ? FLOATING_WORKING_CONTROL_COVERAGE : 0;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The feed and an in-flow question never use this at once, so each gets its own clearance.
+  const floatingCoverageTarget = showFloatingStatus
+    ? questionInFlow
+      ? FLOATING_WORKING_CONTROL_COVERAGE
+      : feedStatusCoverage
+    : 0;
+  /* fork:end no3y-mobile-redesign */
   const floatingControlCoverage = useDerivedValue(
     () => withTiming(floatingCoverageTarget, { duration: 180, reduceMotion: ReduceMotion.System }),
     [floatingCoverageTarget],
@@ -1664,7 +1679,9 @@ function ThreadDetailBody(
                     questionInFlow
                       ? 0
                       : estimatedOverlayHeight +
-                        (showFloatingStatus ? FLOATING_WORKING_CONTROL_COVERAGE : FEED_END_GAP)
+                        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                        (showFloatingStatus ? feedStatusCoverage : FEED_END_GAP)
+                    /* fork:end no3y-mobile-redesign */
                   }
                   contentMaxWidth={contentMaxWidth}
                   historyControls={props.historyControls}
