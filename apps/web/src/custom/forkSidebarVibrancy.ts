@@ -16,11 +16,12 @@ export const FORK_SIDEBAR_LIQUID_GLASS_VALUE = "liquid-glass";
 
 const FULL_GLASS_BACKING_RGB = 0x141618;
 const FLAT_GLASS_BACKING_RGB = 0x1d1d1e;
+const THREAD_TABS_STAMP = "data-fork-has-thread-tabs";
 
 export type ForkSidebarVibrancyMode = "off" | "vibrancy" | "liquid-glass";
 
 type ForkSidebarLiquidGlassBridge = {
-  readonly setWidth: (width: number | null, backing?: number) => Promise<boolean>;
+  readonly setWidth: (width: number | null, backing?: number, height?: number) => Promise<boolean>;
 };
 
 type ForkDesktopBridge = {
@@ -89,6 +90,32 @@ function readDockedSidebarGlassWidth(
   return width > 0 ? width : null;
 }
 
+/** Full height beside the docked sidebar, or a band of `height` at the window's top. */
+type SidebarGlassFrame = { readonly width: number; readonly height?: number };
+
+/** On Flat Glass the collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the window's
+    titlebar, so the glass is a band behind the row alone: full height, it would cover the new
+    agent screen's native picture and cards. */
+function readThreadTabsGlass(doc: Document | null, root: Element): SidebarGlassFrame | null {
+  if (doc === null || typeof root.getAttribute !== "function") return null;
+  if (root.getAttribute(FORK_GLASS_3D_ATTRIBUTE) !== "off") return null;
+  if (root.getAttribute(THREAD_TABS_STAMP) === null) return null;
+  const strip = doc.querySelector<HTMLElement>("[data-fork-thread-tabs]");
+  if (strip === null) return null;
+  const rect = strip.getBoundingClientRect();
+  const width = Math.round(rect.right);
+  const height = Math.round(rect.bottom);
+  return width > 0 && height > 0 ? { width, height } : null;
+}
+
+/** The docked sidebar first: the tab row mounts as a collapse starts, and the sidebar keeps
+    its glass until the gap's slide-out ends. */
+function readSidebarGlass(root: Element): SidebarGlassFrame | null {
+  const doc = typeof document === "undefined" ? null : document;
+  const width = readDockedSidebarGlassWidth(doc);
+  return width === null ? readThreadTabsGlass(doc, root) : { width };
+}
+
 function readLiquidGlassBackingRgb(root: Element): number {
   if (typeof root.getAttribute !== "function") return FULL_GLASS_BACKING_RGB;
   return root.getAttribute(FORK_GLASS_3D_ATTRIBUTE) === "off"
@@ -105,8 +132,10 @@ function stopTracking(): void {
 
 /** Main converts CSS px to points with the zoom factor, so a zoom change (which moves
     devicePixelRatio) has to re-send an unchanged CSS width. */
-function widthKey(width: number | null, backing: number): string {
-  return width === null ? "null" : `${width}:${backing}:${window.devicePixelRatio}`;
+function frameKey(frame: SidebarGlassFrame | null, backing: number): string {
+  return frame === null
+    ? "null"
+    : `${frame.width}x${frame.height ?? "full"}:${backing}:${window.devicePixelRatio}`;
 }
 
 function startLiquidGlassTracking(
@@ -134,13 +163,13 @@ function startLiquidGlassTracking(
   const pushWidth = () => {
     rafId = null;
     if (!active || isStale() || inFlight) return;
-    const width = readDockedSidebarGlassWidth(document);
+    const frame = readSidebarGlass(root);
     const backing = readLiquidGlassBackingRgb(root);
-    const key = widthKey(width, backing);
+    const key = frameKey(frame, backing);
     if (key === lastAppliedKey) return;
     inFlight = true;
     void liquidGlass
-      .setWidth(width, backing)
+      .setWidth(frame?.width ?? null, backing, frame?.height)
       .then((applied) => {
         if (!active || isStale()) return;
         inFlight = false;
@@ -154,9 +183,7 @@ function startLiquidGlassTracking(
         lastAppliedKey = key;
         stampMarker(root, "liquid-glass");
         // Reconcile if the sidebar resized or reversed while IPC was in flight.
-        const liveWidth = readDockedSidebarGlassWidth(document);
-        const liveBacking = readLiquidGlassBackingRgb(root);
-        if (widthKey(liveWidth, liveBacking) !== lastAppliedKey) {
+        if (frameKey(readSidebarGlass(root), readLiquidGlassBackingRgb(root)) !== lastAppliedKey) {
           schedulePush();
         }
       })
@@ -227,7 +254,7 @@ function startLiquidGlassTracking(
     typeof MutationObserver === "function" ? new MutationObserver(() => schedulePush()) : null;
   rootObserver?.observe(root, {
     attributes: true,
-    attributeFilter: [FORK_GLASS_3D_ATTRIBUTE],
+    attributeFilter: [FORK_GLASS_3D_ATTRIBUTE, THREAD_TABS_STAMP],
   });
 
   window.addEventListener("resize", schedulePush);

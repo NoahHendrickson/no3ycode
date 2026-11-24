@@ -27,6 +27,7 @@ export const FORK_LIQUID_GLASS_BACKING_RGB = 0x141618;
 const ForkSidebarLiquidGlassWidthRequest = Schema.Struct({
   width: Schema.NullOr(Schema.Number),
   backing: Schema.optional(Schema.Number),
+  height: Schema.optional(Schema.Number),
 });
 
 const ForkRect2D = Schema.Struct({
@@ -71,6 +72,8 @@ const ForkDraftLiquidGlassRequest = Schema.Struct({
 export type SidebarGlassShowOptions = {
   readonly width: number;
   readonly backing: number;
+  /** Pins the glass to a band this tall at the window's top; absent runs it full height. */
+  readonly height?: number;
 };
 
 export type SidebarGlassNativeAddon = {
@@ -255,6 +258,7 @@ export function applyForkLiquidGlassWidth(
   window: Electron.BrowserWindow,
   cssWidth: number | null,
   backingRgb: number = FORK_LIQUID_GLASS_BACKING_RGB,
+  cssHeight?: number,
 ): boolean {
   if (window.isDestroyed()) return false;
 
@@ -281,8 +285,22 @@ export function applyForkLiquidGlassWidth(
       ? Math.trunc(backingRgb)
       : FORK_LIQUID_GLASS_BACKING_RGB;
 
+  // The band's height clamps to the content height as the width does to its width.
+  const [contentWidth = 0, contentHeight = 0] = window.getContentSize();
+  const height =
+    cssHeight === undefined
+      ? null
+      : clampLiquidGlassWidth(cssHeight, window.webContents.getZoomFactor(), [
+          contentHeight,
+          contentWidth,
+        ]);
+
   try {
-    return addon.show(window.getNativeWindowHandle(), { width, backing });
+    return addon.show(window.getNativeWindowHandle(), {
+      width,
+      backing,
+      ...(height !== null ? { height } : {}),
+    });
   } catch {
     return false;
   }
@@ -311,7 +329,7 @@ export const setForkSidebarLiquidGlassWidth = DesktopIpc.makeIpcMethod({
   handler: Effect.fn("desktop.ipc.fork.setSidebarLiquidGlassWidth")(function* (request, event) {
     const target = yield* resolveLiquidGlassWindow(event, request.width !== null);
     if (target === null) return false;
-    return applyForkLiquidGlassWidth(target, request.width, request.backing);
+    return applyForkLiquidGlassWidth(target, request.width, request.backing, request.height);
   }),
 });
 

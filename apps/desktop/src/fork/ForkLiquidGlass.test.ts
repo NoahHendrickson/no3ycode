@@ -73,6 +73,11 @@ describe("ForkLiquidGlass", () => {
         width: 310,
         backing: 0x1f1c1b,
       });
+      // Flat Glass's tab row: a band at the top, clamped to the content height.
+      assert.isTrue(applyForkLiquidGlassWidth(window, 1100, 0x1d1d1e, 44));
+      assert.isTrue(applyForkLiquidGlassWidth(window, 1100, 0x1d1d1e, 900));
+      assert.deepStrictEqual(showCalls[2]?.[1], { width: 1100, backing: 0x1d1d1e, height: 44 });
+      assert.deepStrictEqual(showCalls[3]?.[1], { width: 1100, backing: 0x1d1d1e, height: 800 });
 
       assert.isTrue(applyForkLiquidGlassWidth(window, null));
       assert.strictEqual(hideCalls.length, 1);

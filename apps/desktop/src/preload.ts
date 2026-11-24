@@ -599,10 +599,11 @@ contextBridge.exposeInMainWorld("forkDesktopBridge", {
   setSidebarVibrancy: (enabled: boolean): Promise<ForkSidebarVibrancyMode> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
   sidebarLiquidGlass: {
-    setWidth: (width: number | null, backing?: number): Promise<boolean> =>
+    setWidth: (width: number | null, backing?: number, height?: number): Promise<boolean> =>
       ipcRenderer.invoke("fork:set-sidebar-liquid-glass-width", {
         width,
         ...(backing !== undefined ? { backing } : {}),
+        ...(height !== undefined ? { height } : {}),
       }),
     setDraftGlass: (state: ForkDraftLiquidGlassState | null): Promise<boolean> =>
       ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),

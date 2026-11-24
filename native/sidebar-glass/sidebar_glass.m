@@ -230,10 +230,20 @@ static bool hide_draft_glass_on_main(NSView *rootView) {
   return remove_holder(rootView, kDraftHolderAssocKey);
 }
 
-static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentView,
-                                CGFloat width) {
+/* A band height pins the glass to the window's top edge (Flat Glass's tab row); 0 runs it the
+   full height beside the docked sidebar. */
+static NSRect sidebar_holder_frame(NSView *contentView, CGFloat width, CGFloat bandHeight) {
   CGFloat contentHeight = contentView.bounds.size.height;
-  holder.frame = NSMakeRect(0, 0, width, contentHeight);
+  if (bandHeight <= 0) return NSMakeRect(0, 0, width, contentHeight);
+  CGFloat height = fmin(bandHeight, contentHeight);
+  return NSMakeRect(0, contentHeight - height, width, height);
+}
+
+static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentView,
+                                CGFloat width, CGFloat bandHeight) {
+  holder.frame = sidebar_holder_frame(contentView, width, bandHeight);
+  holder.autoresizingMask = bandHeight > 0 ? NSViewMinYMargin : NSViewHeightSizable;
+  CGFloat contentHeight = holder.frame.size.height;
   if (holder.usingSplitView) {
     if (holder.sidebarItem != nil) {
       if (width < holder.sidebarItem.minimumThickness) {
@@ -255,8 +265,8 @@ static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentVie
   }
 }
 
-static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool hasBacking,
-                                       uint32_t backingRgb) {
+static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, CGFloat bandHeight,
+                                       bool hasBacking, uint32_t backingRgb) {
   if (rootView == nil || width <= 0) return false;
   if (!is_liquid_glass_supported_on_main()) {
     // Reduce Transparency or Increase Contrast turned on while mounted: the renderer
@@ -271,9 +281,10 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool has
 
   T3SidebarGlassHolder *holder = objc_getAssociatedObject(contentView, kHolderAssocKey);
   if (holder == nil) {
-    CGFloat contentHeight = contentView.bounds.size.height;
-    holder = [[T3SidebarGlassHolder alloc] initWithFrame:NSMakeRect(0, 0, width, contentHeight)];
-    holder.autoresizingMask = NSViewHeightSizable;
+    NSRect holderFrame = sidebar_holder_frame(contentView, width, bandHeight);
+    CGFloat contentHeight = holderFrame.size.height;
+    holder = [[T3SidebarGlassHolder alloc] initWithFrame:holderFrame];
+    holder.autoresizingMask = bandHeight > 0 ? NSViewMinYMargin : NSViewHeightSizable;
 
     if (macos_major_version() >= 27) {
       NSViewController *sidebarVC = [[NSViewController alloc] init];
@@ -321,7 +332,7 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, bool has
     [contentView addSubview:holder positioned:NSWindowBelow relativeTo:nil];
     objc_setAssociatedObject(contentView, kHolderAssocKey, holder, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
   } else {
-    apply_sidebar_width(holder, contentView, width);
+    apply_sidebar_width(holder, contentView, width, bandHeight);
   }
 
   if (window != nil) {
@@ -549,10 +560,13 @@ static napi_value napi_show(napi_env env, napi_callback_info info) {
 
   uint32_t backingRgb = 0;
   bool hasBacking = read_opt_uint32(env, argv[1], "backing", &backingRgb);
+  uint32_t bandHeight = 0;
+  read_opt_uint32(env, argv[1], "height", &bandHeight);
 
   __block bool ok = false;
   run_on_main(^{
-    ok = show_sidebar_glass_on_main(rootView, (CGFloat)width, hasBacking, backingRgb);
+    ok = show_sidebar_glass_on_main(rootView, (CGFloat)width, (CGFloat)bandHeight, hasBacking,
+                                    backingRgb);
   });
 
   napi_get_boolean(env, ok, &out);
