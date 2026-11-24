@@ -77,6 +77,15 @@ const ROW_INSET = 24;
 /** Room above and below the pills inside the scrolling row, so their shadow is not clipped. */
 const SHADOW_ROOM = 4;
 const ICON_SIZE = 16;
+/** How far the pills' top sits above the composer overlay's anchor. */
+const PILL_OVERLAY_OFFSET = PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET;
+/** Room between the transcript's last row and the pills, so the working row does not crowd them. */
+const TRANSCRIPT_GAP = 24;
+
+/** The transcript's clearance above the status row; in-flow question layout keeps upstream's. */
+export function no3yFeedStatusCoverage(upstreamCoverage: number, no3yLayout: boolean) {
+  return no3yLayout ? PILL_OVERLAY_OFFSET + TRANSCRIPT_GAP : upstreamCoverage;
+}
 
 type UpstreamProps = ComponentProps<typeof FloatingWorkingControl>;
 
@@ -266,7 +275,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
           position: "absolute",
           left: 0,
           right: 0,
-          top: -(PILL_HEIGHT + ROW_GAP - COMPOSER_CAPSULE_INSET) - SHADOW_ROOM,
+          top: -PILL_OVERLAY_OFFSET - SHADOW_ROOM,
           zIndex: 20,
           flexDirection: "row",
           alignItems: "center",

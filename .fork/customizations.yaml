@@ -8522,6 +8522,11 @@
     (fork/no3yTranscriptSpacing.ts): tool rows keep their fixed list sizes,
     so the gap is a spacer on the measured neighbour, a reply above or below
     or the live line above, and the row sizing reads the body line height.
+    The "Worked for …" fold label is set at that size too, and a settled fold
+    sits midway between the footer above it and its reply (27pt each way at
+    the default size): the footer's mb-5 drops to 6 before a fold, live or
+    settled so the turn doesn't jump when it settles, and the reply under it
+    takes 3pt more.
     Inline code in a reply is link-blue ink on a blue-tinted chip
     (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
     inlineCodeBackgroundColor style) at 0.95 of the body size
@@ -9065,6 +9070,25 @@
     - apps/mobile/src/features/pull-requests/PullRequestListRow.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
+
+- id: no3y-notification-in-fold
+  intent: >
+    On mobile, a notification in a turn (a delegated task or subagent
+    finishing, a background task or PR watch waking the thread) folds into
+    that settled turn's "Worked for …" row instead of staying in view, unless
+    it failed. Expanding the fold shows it again; zen never folds, so it
+    keeps the notification. The same predicate places the live fold, so
+    while such a turn runs its "Working for …" row sits above the
+    notification, where "Worked for" lands once it settles.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    # staysOutOfFold keeps only failed notifications in view.
+    - apps/mobile/src/lib/threadActivity.ts
+  verify:
+    - apps/mobile/src/lib/threadActivity.test.ts
+    - apps/web/src/__fork_guards__/no3yNotificationInFold.test.ts
 
 - id: no3y-linked-pr-row
   intent: >

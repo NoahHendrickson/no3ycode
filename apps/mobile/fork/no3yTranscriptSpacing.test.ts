@@ -21,6 +21,14 @@ describe("no3y transcript spacing", () => {
     expect(no3yTranscriptGaps(["work-block", "reply"])[1]).toEqual({ top: GAP - 4, bottom: 0 });
   });
 
+  it("centres a settled turn's fold between the footer above it and its reply", () => {
+    expect(no3yTranscriptGaps(["reply", "fold", "reply"])).toEqual([
+      { top: 0, bottom: 0, footer: 6 },
+      null,
+      { top: 3, bottom: 0 },
+    ]);
+  });
+
   it("leaves consecutive tool rows, user bubbles and back-to-back replies alone", () => {
     expect(no3yTranscriptGaps(["user", "work", "work-block", "user", "reply", "reply"])).toEqual([
       null,
@@ -47,6 +55,7 @@ describe("no3y transcript spacing", () => {
       "user-grouped",
       "work",
       "work-block",
+      "fold",
       "live",
       "other",
     ];
