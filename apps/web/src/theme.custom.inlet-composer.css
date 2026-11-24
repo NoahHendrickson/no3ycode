@@ -26,14 +26,14 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-draft-launchpad-card] {
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border-color: transparent;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-vessel]
   [data-fork-composer-box] {
-  margin: 4px;
+  margin: var(--fork-inlet-vessel-inset);
 }
 
 /* Attached cards (Questions, notices) take the prompt's inset. Only the
@@ -55,7 +55,7 @@
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]
   ) {
   width: auto;
-  margin: 4px 4px 0;
+  margin: var(--fork-inlet-vessel-inset) var(--fork-inlet-vessel-inset) 0;
 }
 
 /* theme.custom.css draws attached cards as vessel floor only under `.dark`;

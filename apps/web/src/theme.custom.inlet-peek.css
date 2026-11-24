@@ -12,6 +12,8 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   --fork-inlet-frame-ink: #e8e8e8;
+  /* The card's lift, which falls below it and never up onto its tab. */
+  --fork-inlet-peek-shadow: 0 18px 32px -12px rgb(0 0 0 / 0.3);
   /* The card is a step off the frame, so it reads as its own piece over it. */
   --fork-inlet-peek-fill: color-mix(
     in srgb,
@@ -43,6 +45,8 @@
   &
     [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
     [data-slot="sidebar-container"] {
+    /* design-lint-disable-next-line C1 -- square under its tab (H3); --fork-peek-radius also
+       places the shared card's tail, so it cannot carry one square corner */
     border-top-left-radius: 0;
     --sidebar: var(--fork-inlet-peek-fill);
     --background: var(--fork-inlet-peek-fill);
@@ -50,6 +54,8 @@
     --sidebar-stage-fade: var(--fork-inlet-peek-fill);
 
     /* The concave corner, where the tail was. */
+    /* design-lint-disable-next-line C1 -- the corner reuses the tail's pseudo at the fillet's
+       size; the tail's own size tokens also place the card */
     &::before {
       top: calc(-1 * var(--fork-inlet-fillet));
       left: calc(var(--workspace-titlebar-control-size) + 2 * var(--fork-inlet-peek-pad));
@@ -66,7 +72,9 @@
        tab. */
     &::after {
       border-color: transparent;
-      box-shadow: 0 18px 32px -12px rgb(0 0 0 / 0.3);
+      box-shadow: var(--fork-inlet-peek-shadow);
+      /* design-lint-disable-next-line C2 -- no outline: the shared card cuts its tail out of the
+         outline with this mask, and Inlet's card has neither */
       mask-image: none;
     }
   }
@@ -84,5 +92,5 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-slot="popover-popup"]:has([data-thread-details-card]) {
-  box-shadow: 0 8px 12px rgb(0 0 0 / 14%);
+  box-shadow: var(--fork-inlet-lift-down);
 }

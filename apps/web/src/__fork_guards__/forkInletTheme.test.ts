@@ -252,7 +252,10 @@ describe("fork guard: fork-inlet-theme", () => {
       .filter((rule) => rule.selector.replace(/\s+/gu, " ").trim() === openSelector)
       .map((rule) => rule.body)
       .join("\n");
-    expect(card).toMatch(/border-radius:\s*10px 0 0 10px/u);
+    expect(card).toMatch(
+      /border-radius:\s*var\(--fork-inlet-row-radius\) 0 0 var\(--fork-inlet-row-radius\)/u,
+    );
+    expect(inlet).toContain("--fork-inlet-row-radius: 0.625rem;");
     // The row sits on the panel, so it takes the panel's ink, contrast inks included; a
     // settled thread's open row is the slim row, on the same fill.
     const row = ruleNaming(inletRules, [
@@ -313,7 +316,7 @@ describe("fork guard: fork-inlet-theme", () => {
         "[data-fork-composer-vessel]",
         "[data-fork-composer-box]",
       ]),
-    ).toContain("margin: 4px");
+    ).toContain("margin: var(--fork-inlet-vessel-inset)");
     const chips = inletRules.find(
       (rule) =>
         rule.selector
@@ -321,7 +324,7 @@ describe("fork guard: fork-inlet-theme", () => {
           .startsWith(`${TEMPLATE} [data-fork-composer-context-row]`) &&
         rule.body.includes("border-radius"),
     );
-    expect(chips?.body).toContain("border-radius: 8px");
+    expect(chips?.body).toContain("border-radius: var(--radius-lg)");
     // Questions sits on the prompt at the same inset, on either appearance.
     const card = inletRules.find((rule) =>
       rule.selector
@@ -330,7 +333,9 @@ describe("fork guard: fork-inlet-theme", () => {
           `${TEMPLATE} [data-fork-composer-vessel] > [data-slot="composer-banner-attachment"]`,
         ),
     );
-    expect(card?.body).toContain("margin: 4px 4px 0");
+    expect(card?.body).toContain(
+      "margin: var(--fork-inlet-vessel-inset) var(--fork-inlet-vessel-inset) 0",
+    );
     const fused = inletRules.find(
       (rule) =>
         rule.selector.endsWith("[data-fork-composer-box]") &&
@@ -433,18 +438,14 @@ describe("fork guard: fork-inlet-theme", () => {
       inletRules.some(
         (rule) =>
           rule.selector.includes('[data-slot="menu-popup"]') &&
-          rule.body.includes("backdrop-filter: none"),
+          rule.body.includes("--fork-popup-filter: none"),
       ),
     ).toBe(true);
     // Menus and popovers share one 10px corner.
     expect(inlet).toContain("--fork-inlet-menu-radius: 10px;");
-    const corners = inletRules.find(
-      (rule) =>
-        rule.selector.includes('[data-slot="menu-popup"]') &&
-        rule.selector.includes('[data-slot="popover-popup"]') &&
-        rule.body.includes("border-radius: var(--fork-inlet-menu-radius)"),
-    );
-    expect(corners).toBeDefined();
+    // The popups read it as --fork-menu-radius (fork-primitive-tokens), rows 5px in.
+    expect(inlet).toContain("--fork-menu-radius: var(--fork-inlet-menu-radius);");
+    expect(inlet).toContain("--fork-menu-row-radius: var(--fork-inlet-menu-row-radius);");
   });
 
   it("joins the model menu to its button and its rail to its list", () => {
@@ -471,11 +472,12 @@ describe("fork guard: fork-inlet-theme", () => {
     const providers = inletRules.find((rule) =>
       rule.selector.endsWith('[data-fork-model-picker="providers"]'),
     )?.body;
-    expect(providers).toContain("padding: 4px 4px 0");
+    expect(providers).toContain("padding: var(--fork-inlet-inset) var(--fork-inlet-inset) 0");
+    expect(inlet).toContain("--fork-inlet-inset: 0.25rem;");
     const list = inletRules.find((rule) =>
       rule.selector.endsWith('[data-fork-model-picker="list"]'),
     )?.body;
-    expect(list).toContain("margin: 4px");
+    expect(list).toContain("margin: var(--fork-inlet-inset)");
     // The morph finds the docked details card's button by its stamp, not its label.
     const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
     expect(panelControls).toContain('data-fork-details-toggle=""');
