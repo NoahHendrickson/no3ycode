@@ -549,9 +549,10 @@ export function SplitThreadPanes(props: {
     paneRoute: PaneRoute | null,
     left: ScopedThreadRef | null,
   ): PaneDockAction | null => {
-    if (!wide || paneRef === null) return null;
+    if (paneRef === null) return null;
+    // Undock shows at any width, so a narrow window is never stuck with a dock.
     if (sameThread(paneRef, dockedRef)) return { kind: "undock", run: undock };
-    if (paneRoute?.kind !== "server") return null;
+    if (!wide || paneRoute?.kind !== "server") return null;
     return { kind: "dock", run: () => dock(paneRef, left) };
   };
 
