@@ -94,6 +94,8 @@ function isRunning(thread: EnvironmentThreadShell): boolean {
   }
 }
 
+const BOT_WORKING: BotWork = { attention: null, working: true };
+
 /** Per bot (`environmentId:threadId`), its work in one pass. Archived threads are put away, and
     so are settled ones unless they ask for the owner again; a failure counts until the owner has
     opened it. */
@@ -110,9 +112,11 @@ export function botWorkByBot(
   };
   for (const thread of threads) {
     if (thread.archivedAt !== null) continue;
-    if (isRunning(thread)) {
-      const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
-      if (botId !== undefined) entry(`${thread.environmentId}:${botId}`).working = true;
+    // Who the thread would count for first: the status read is the costly part, and most
+    // threads are neither a bot nor anyone's subagent.
+    const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
+    if (botId !== undefined && isRunning(thread)) {
+      entry(`${thread.environmentId}:${botId}`).working = true;
     }
     const owner = botWorkOwnerId(thread.source);
     if (owner === null || thread.pinnedAt !== null) continue;
@@ -130,6 +134,11 @@ export function botWorkByBot(
           : previous.status,
       count: (previous?.count ?? 0) + 1,
     };
+  }
+  // Working with nothing to ask is the usual card: one shared value keeps a memoized bot row
+  // from re-rendering on every pass.
+  for (const [key, work] of byBot) {
+    if (work.attention === null) byBot.set(key, BOT_WORKING);
   }
   return byBot;
 }

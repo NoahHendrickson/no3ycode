@@ -5297,8 +5297,11 @@
     animation per strip plays it with a per-thread phase offset, so the
     compositor runs it — never per-cell opacity keyframes (a core of
     renderer CPU with a few working threads on screen), a per-frame canvas
-    or a requestAnimationFrame loop. Both keep a still frame under reduced
-    motion. The bead ring's steady spin is set so a loop turns exactly once
+    or a requestAnimationFrame loop. Every film plays at 30 fps with its
+    start pinned (Web Animations startTime) to one shared frame grid, so all
+    marks step on the same vsync whenever they mounted: out of step at 60 fps,
+    40 bead rings cost 12.6% of a core against 6.2%. Both keep a still frame
+    under reduced motion. The bead ring's steady spin is set so a loop turns exactly once
     and repeats as drawn: a rotation layer to make up a part turn doubled its
     GPU cost (40 marks: 28% of a core against the helix's 15%). The
     helix is drawn at 12px for the card's 12px status box. The bead ring is
