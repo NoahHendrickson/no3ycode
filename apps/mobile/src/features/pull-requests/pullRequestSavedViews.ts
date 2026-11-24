@@ -1,4 +1,7 @@
 import type { Preferences, PullRequestSavedView } from "../../persistence/mobile-preferences";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import { pullRequestProjectSelection } from "../../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
 
 export type PullRequestSavedViewScope = Pick<
   PullRequestSavedView,
@@ -16,8 +19,11 @@ export function pullRequestViewMatches(
       controls.state,
       controls.involvement,
       controls.sort,
-      controls.projectId,
-      controls.projectEnvironmentId,
+      /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+      pullRequestProjectSelection(controls)
+        .map((project) => JSON.stringify([project.environmentId, project.projectId]))
+        .sort(),
+      /* fork:end no3y-pr-project-multiselect */
       controls.filters.draft,
       controls.filters.review,
       controls.filters.checks,

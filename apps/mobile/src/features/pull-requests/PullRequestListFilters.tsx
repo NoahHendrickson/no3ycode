@@ -13,6 +13,14 @@ import { useMobileProjectGroupingSettings } from "../../state/project-grouping";
 import { buildHomeProjectScopes, sortHomeProjectScopes } from "../home/homeThreadList";
 import { DEFAULT_PR_LIST_CONTROLS, type PullRequestListControls } from "./pullRequestList";
 import type { MessageResolver } from "../../i18n/messages";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import {
+  pullRequestProjectSelected,
+  pullRequestProjectSelection,
+  toggledPullRequestProject,
+  withPullRequestProjectSelection,
+} from "../../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
 
 const STATES = {
   open: msg("Open", { $context: "pull request state filter" }),
@@ -144,6 +152,15 @@ export function usePullRequestListFilters(props: {
   const selectedLabels = value.filters.labels?.flat() ?? [];
   const selectedLabelSet = new Set(selectedLabels);
   const author = value.filters.author;
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const projectSelection = pullRequestProjectSelection(value);
+  const selectedProjects = projects.filter((project) =>
+    pullRequestProjectSelected(projectSelection, {
+      projectId: project.id,
+      environmentId: project.environmentId,
+    }),
+  );
+  /* fork:end no3y-pr-project-multiselect */
   const select = (event: string) => {
     let selection: unknown;
     try {
@@ -180,14 +197,22 @@ export function usePullRequestListFilters(props: {
         props.onChange({ ...value, sort: next as PullRequestListControls["sort"] });
         break;
       case "project": {
+        /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
         const project = projects.find(
           (project) => JSON.stringify([project.environmentId, project.id]) === next,
         );
-        props.onChange({
-          ...value,
-          projectId: project?.id,
-          projectEnvironmentId: project?.environmentId,
-        });
+        props.onChange(
+          withPullRequestProjectSelection(
+            value,
+            project
+              ? toggledPullRequestProject(projectSelection, {
+                  projectId: project.id,
+                  environmentId: project.environmentId,
+                })
+              : [],
+          ),
+        );
+        /* fork:end no3y-pr-project-multiselect */
         break;
       }
       case "label": {
@@ -252,7 +277,31 @@ export function usePullRequestListFilters(props: {
     Number(Boolean(value.filters.draft)) +
     Number(Boolean(value.filters.review)) +
     Number(Boolean(value.filters.checks)) +
-    Number(Boolean(value.projectId));
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    projectSelection.length;
+  /* fork:end no3y-pr-project-multiselect */
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  // Several projects read as the first one's name and how many more, which needs no new copy.
+  const projectLabel = selectedProjects.length
+    ? selectedProjects.length > 1
+      ? `${selectedProjects[0]!.title} +${selectedProjects.length - 1}`
+      : selectedProjects[0]!.title
+    : m(msg("Project", { $context: "filter menu" }));
+  const projectActions: MenuProps["actions"] = [
+    {
+      id: id("project", ""),
+      title: m(msg("All projects")),
+      state: projectSelection.length ? "off" : "on",
+    },
+    ...projects.map((project) => ({
+      id: id("project", JSON.stringify([project.environmentId, project.id])),
+      title: project.title,
+      state: selectedProjects.includes(project) ? ("on" as const) : ("off" as const),
+      // Ticking a project leaves the menu open for the next one.
+      attributes: { keepsMenuPresented: true },
+    })),
+  ];
+  /* fork:end no3y-pr-project-multiselect */
   const more: MenuProps["actions"] = [
     {
       id: "drafts",
@@ -275,25 +324,9 @@ export function usePullRequestListFilters(props: {
         : m(msg("Checks", { $context: "filter menu" })),
       subactions: choices("checks", resolveOptions(CHECKS, m), value.filters.checks ?? "all"),
     },
-    {
-      id: "projects",
-      title:
-        projects.find(
-          (project) =>
-            project.id === value.projectId && project.environmentId === value.projectEnvironmentId,
-        )?.title ?? m(msg("Project", { $context: "filter menu" })),
-      subactions: choices(
-        "project",
-        Object.fromEntries([
-          ["", m(msg("All projects"))],
-          ...projects.map((project) => [
-            JSON.stringify([project.environmentId, project.id]),
-            project.title,
-          ]),
-        ]),
-        value.projectId ? JSON.stringify([value.projectEnvironmentId, value.projectId]) : "",
-      ),
-    },
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    { id: "projects", title: projectLabel, subactions: projectActions },
+    /* fork:end no3y-pr-project-multiselect */
     {
       id: "sort",
       title: m(SORTS[value.sort]),
@@ -415,6 +448,11 @@ export function usePullRequestListFilters(props: {
     labelActions,
     author,
     authorActions,
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    projectCount: projectSelection.length,
+    projectLabel,
+    projectActions,
+    /* fork:end no3y-pr-project-multiselect */
   };
 }
 

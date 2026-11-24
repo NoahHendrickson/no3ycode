@@ -38,6 +38,11 @@ export const PullRequestListControls = Schema.Struct({
   filters: PullRequestListFilters,
   projectId: Schema.optional(Schema.String),
   projectEnvironmentId: Schema.optional(Schema.String),
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  projects: Schema.optional(
+    Schema.Array(Schema.Struct({ projectId: Schema.String, environmentId: Schema.String })),
+  ),
+  /* fork:end no3y-pr-project-multiselect */
   sort: Schema.Literals(["updated", "created", "oldest"]),
 });
 export type PullRequestListControls = typeof PullRequestListControls.Type;

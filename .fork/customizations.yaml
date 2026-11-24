@@ -8910,3 +8910,57 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: no3y-pr-project-multiselect
+  intent: >
+    The mobile Pull requests project filter is a set: the Project menu ticks
+    several projects (or All projects) and stays open between ticks
+    (keepsMenuPresented, which the patched @react-native-menu refreshes in
+    place). Controls store `projects`; a single `projectId` saved before the
+    set reads as a one-project selection, and every write clears that pair
+    (fork/no3yPullRequestProjects.ts). Each environment is asked only for its
+    own selected projects through the existing `projectIds` list input, so no
+    contract or server change; environments with none selected are skipped.
+    Saved views compare the set regardless of tick order.
+  tier: 4
+  files:
+    - apps/mobile/fork/no3yPullRequestProjects.ts
+    - apps/mobile/fork/no3yPullRequestProjects.test.ts
+  shadows: []
+  watch:
+    # The `projects` field on the saved list controls.
+    - apps/mobile/src/persistence/mobile-preferences.ts
+    # Scratch pruning, project choices, list input and local filtering.
+    - apps/mobile/src/features/pull-requests/pullRequestList.ts
+    # The toggle, count and Project menu.
+    - apps/mobile/src/features/pull-requests/PullRequestListFilters.tsx
+    - apps/mobile/src/features/pull-requests/pullRequestSavedViews.ts
+    # Per-environment targets.
+    - apps/mobile/src/features/pull-requests/PullRequestsScreen.tsx
+  verify:
+    - apps/mobile/fork/no3yPullRequestProjects.test.ts
+    - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
+
+- id: no3y-pr-list-bottom-filters
+  intent: >
+    On the no3y iPhone layout (useNo3yBottomNavEnabled) the Pull requests
+    filters leave the list header for the bottom tray above the dock, within
+    thumb reach, as the Threads tab's do: the same glass chips and menus,
+    reordered Author, Project, State, Involvement, Labels, Environment,
+    Filters, Views (fork/No3yPullRequestFilterBar.tsx; Project has its own
+    chip there, so the Filters menu drops it). Rows draw as the Linked pull
+    requests sheet's glass cards (fork/No3yPullRequestListCard.tsx): the
+    number on the tinted PR pill with stack, checks and diff stats, then the
+    title, then repository · author · conflicts · review · updated, then
+    labels. iPad, split view and Android keep upstream's rows and header row.
+  tier: 4
+  files:
+    - apps/mobile/fork/No3yPullRequestFilterBar.tsx
+    - apps/mobile/fork/No3yPullRequestListCard.tsx
+  shadows: []
+  watch:
+    - apps/mobile/src/features/pull-requests/PullRequestsScreen.tsx
+    # Exposes the project chip's label and actions to the tray.
+    - apps/mobile/src/features/pull-requests/PullRequestListFilters.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts

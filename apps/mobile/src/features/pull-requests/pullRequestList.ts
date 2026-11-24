@@ -14,6 +14,14 @@ import { msg } from "gt-react-native";
 import type { PullRequestListControls } from "../../persistence/mobile-preferences";
 import { compareTimestamps } from "../../lib/time";
 import { m, type MessageResolver } from "../../i18n/messages";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import {
+  pullRequestProjectIdsFor,
+  pullRequestProjectSelected,
+  pullRequestProjectSelection,
+  withPullRequestProjectSelection,
+} from "../../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
 
 export const PR_LIST_PAGE_SIZE = 30;
 export type { PullRequestListControls } from "../../persistence/mobile-preferences";
@@ -28,14 +36,21 @@ export function withoutScratchProjectScope(
   controls: PullRequestListControls,
   projects: readonly { id: string; environmentId: string; isScratch?: true }[],
 ): PullRequestListControls {
-  return projects.some(
-    (project) =>
-      project.isScratch &&
-      project.id === controls.projectId &&
-      project.environmentId === controls.projectEnvironmentId,
-  )
-    ? { ...controls, projectId: undefined, projectEnvironmentId: undefined }
-    : controls;
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const selection = pullRequestProjectSelection(controls);
+  const kept = selection.filter(
+    (selected) =>
+      !projects.some(
+        (project) =>
+          project.isScratch &&
+          project.id === selected.projectId &&
+          project.environmentId === selected.environmentId,
+      ),
+  );
+  return kept.length === selection.length
+    ? controls
+    : withPullRequestProjectSelection(controls, kept);
+  /* fork:end no3y-pr-project-multiselect */
 }
 
 type FilterProject = Parameters<typeof pullRequestFilterProjects>[0][number];
@@ -51,9 +66,14 @@ export function pullRequestProjectChoices<
     readonly servesPullRequests: (environmentId: EnvironmentId) => boolean;
   },
 ) {
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const selection = pullRequestProjectSelection(input.controls);
   const isSelected = (project: Project) =>
-    project.id === input.controls.projectId &&
-    project.environmentId === input.controls.projectEnvironmentId;
+    pullRequestProjectSelected(selection, {
+      projectId: project.id,
+      environmentId: project.environmentId,
+    });
+  /* fork:end no3y-pr-project-multiselect */
   return pullRequestFilterProjects(
     projects.filter(
       (project) =>
@@ -306,14 +326,25 @@ export function patchPullRequestListEntry(
 export function pullRequestListInput(
   controls: PullRequestListControls,
   query: string,
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  environmentId?: string,
+  /* fork:end no3y-pr-project-multiselect */
 ): PullRequestListInput {
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const projectIds =
+    environmentId === undefined
+      ? undefined
+      : pullRequestProjectIdsFor(pullRequestProjectSelection(controls), environmentId);
+  /* fork:end no3y-pr-project-multiselect */
   const parsed = parsePullRequestQuery(query);
   return {
     state: controls.state,
     involvement: controls.involvement,
     filters: { ...controls.filters, ...parsed.filters },
     limit: PR_LIST_PAGE_SIZE,
-    ...(controls.projectId ? { projectId: ProjectId.make(controls.projectId) } : {}),
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    ...(projectIds ? { projectIds: projectIds.map((id) => ProjectId.make(id)) } : {}),
+    /* fork:end no3y-pr-project-multiselect */
     ...(parsed.text ? { query: parsed.text } : {}),
   };
 }
@@ -414,11 +445,21 @@ export function filterPullRequestList<
   const parsed = parsePullRequestQuery(query);
   const words = parsed.text.toLowerCase().split(/\s+/).filter(Boolean);
   const filters = { ...controls.filters, ...parsed.filters };
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const projectSelection = pullRequestProjectSelection(controls);
+  /* fork:end no3y-pr-project-multiselect */
   const filtered = entries.filter((entry) => {
     if (controls.state !== "all" && entry.state !== controls.state) return false;
-    if (controls.projectId && entry.projectId !== controls.projectId) return false;
-    if (controls.projectEnvironmentId && entry.environmentId !== controls.projectEnvironmentId)
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    if (
+      projectSelection.length &&
+      !projectSelection.some(
+        (project) =>
+          project.projectId === entry.projectId && project.environmentId === entry.environmentId,
+      )
+    )
       return false;
+    /* fork:end no3y-pr-project-multiselect */
     const viewerKey = entry.environmentId ? `${entry.environmentId} ${entry.host}` : entry.host;
     const viewer = viewers[viewerKey];
     if (controls.involvement === "reviewing" && !entry.viewerReviewRequested) return false;
