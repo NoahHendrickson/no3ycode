@@ -7645,7 +7645,7 @@
     draws SidebarV2BotGridBody: a 62px tile (8 + 28 + 16 + 10) washed 4% in the
     sidebar's ink, the columns sharing the width at least 56px each and 8px
     apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 24px in a 28px box over its name in
-    medium text-sidebar-row (14px), the
+    regular text-sidebar-row (14px), the
     status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the

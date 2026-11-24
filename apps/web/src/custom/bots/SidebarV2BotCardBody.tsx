@@ -83,7 +83,7 @@ export function SidebarV2BotGridBody(props: {
         className={cn(
           // A slim row's 16px line at the default size: room for descenders, and the taller rename
           // field overhangs the padding instead of growing the tile.
-          "flex h-sidebar-16 w-full min-w-0 items-center justify-center text-center font-medium",
+          "flex h-sidebar-16 w-full min-w-0 items-center justify-center text-center",
           THREAD_TITLE_TYPE,
           props.regenerating && "opacity-55",
         )}
