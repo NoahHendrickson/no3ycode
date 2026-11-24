@@ -119,7 +119,6 @@ import {
   useComposerThreadDraft,
 } from "../../composerDraftStore";
 import { buildDraftThreadRouteParams, buildThreadRouteParams } from "../../threadRoutes";
-import { ComposerStashBadge } from "./ComposerStashBadge";
 import { ComposerStashMenu } from "./ComposerStashMenu";
 import { useComposerTriggerState } from "./useComposerTriggerState";
 import { useComposerMenuItems } from "./useComposerMenuItems";
@@ -202,6 +201,7 @@ import {
   ComposerShell,
   isInsideComposerAside,
 } from "../../custom/ComposerShell";
+import { ComposerStashChip } from "../../custom/ComposerStashChip";
 import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
@@ -4053,6 +4053,16 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         collapsedMobile={isComposerCollapsedMobile}
         context={props.contextStrip}
         statusChips={props.statusChips}
+        /* The queue pill's twin, here so the new agent screen gets it too. */
+        persistentChips={
+          isStashMenuOpen ? null : (
+            <ComposerStashChip
+              count={stashQueue.length}
+              pulseKey={stashPulseKey}
+              onOpen={toggleStashMenuStable}
+            />
+          )
+        }
         /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
         digest={<BotDigestAsks threadRef={routeThreadRef} />}
         /* fork:end fork-bot-digest */
@@ -4122,15 +4132,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 </ComposerBanner.Attachment>
               ) : null}
             </ComposerBanner.Column>
-            {/* Its card names the stash while open, so the tab steps aside. */}
-            {stashDrawerOpen ? null : (
-              <ComposerStashBadge
-                count={stashQueue.length}
-                menuOpen={isStashMenuOpen}
-                pulseKey={stashPulseKey}
-                onToggleMenu={toggleStashMenuStable}
-              />
-            )}
           </ComposerBanner.Dock>
         }
       >
