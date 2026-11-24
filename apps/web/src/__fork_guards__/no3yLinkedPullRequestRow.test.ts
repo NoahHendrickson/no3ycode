@@ -16,10 +16,7 @@ const row = NodeFS.readFileSync(
   ),
   "utf8",
 );
-const fenced = row.slice(
-  row.indexOf("fork:begin no3y-linked-pr-row"),
-  row.indexOf("fork:end no3y-linked-pr-row"),
-);
+const fenced = row.slice(row.indexOf("export const LinkedPullRequestRow"));
 
 describe("no3y-linked-pr-row", () => {
   it("renders the title before the meta line", () => {
@@ -32,6 +29,11 @@ describe("no3y-linked-pr-row", () => {
   it("wraps the meta line instead of clipping it", () => {
     expect(fenced).toContain('className="flex-row flex-wrap items-center gap-x-2.5 gap-y-0.5"');
     expect(row).not.toContain("metaLineHeight");
+  });
+
+  it("shares one model and menu between the row and the no3y cards", () => {
+    expect(fenced).toContain("useLinkedPullRequestModel(props.line, props.openPullRequest");
+    expect(fenced).toContain("<LinkedPullRequestMenu link={link} actions={props.actions}>");
   });
 });
 

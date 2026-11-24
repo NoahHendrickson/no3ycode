@@ -8924,12 +8924,18 @@
     overview sheet, iPad, Android) the upstream row leads with the title and
     wraps its meta line instead of clipping it at a fixed height, which cut the
     repository and diff stats off at larger text sizes. The full owner/repo
-    stays in accessibility labels and the long-press menu title.
+    stays in accessibility labels and the long-press menu title. The cards
+    render only: state, the spoken label, opening and the long-press menu come
+    from the upstream row's useLinkedPullRequestModel and LinkedPullRequestMenu,
+    fenced in LinkedPullRequestList.tsx so both surfaces behave the same. The
+    checks marks live in fork/No3yChecksMarks.tsx, shared with the status pill.
   tier: 4
   files:
     - apps/mobile/fork/No3yLinkedPullRequestCards.tsx
+    - apps/mobile/fork/No3yChecksMarks.tsx
   shadows: []
   watch:
+    # Fenced shared model and menu; the row reads them and leads with its title.
     - apps/mobile/src/features/threads/LinkedPullRequestList.tsx
     # Swaps the sheet's list for the cards.
     - apps/mobile/src/features/threads/ThreadPullRequestsSheet.tsx
