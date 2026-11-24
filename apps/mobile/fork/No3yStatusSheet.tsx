@@ -142,21 +142,41 @@ function SubagentsSection(props: {
             divider={index > 0}
           />
         ) : (
-          <Row
+          <WorkflowRow
             key={subagent.id}
+            subagent={subagent}
             palette={palette}
             divider={index > 0}
-            leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
-            title={resolveSubagentRowPresentation(subagent).title}
-            trailing={
-              <No3yStatusMark kind={no3ySubagentMarkKind(subagent.status)} palette={palette} />
-            }
             onPress={props.leaveThen(subagents.onOpenAll)}
-            chevron
           />
         ),
       )}
     </Section>
+  );
+}
+
+/** A workflow as one row under its name; the Agents sheet groups its members. */
+function WorkflowRow(props: {
+  readonly subagent: NonNullable<No3yStatusSheetModel["subagents"]>["list"][number];
+  readonly palette: FlatGlassPalette;
+  readonly divider: boolean;
+  readonly onPress: () => void;
+}) {
+  const { subagent, palette } = props;
+  const presentation = resolveSubagentRowPresentation(subagent);
+  const mark = no3ySubagentMarkKind(subagent.status);
+  return (
+    <Row
+      palette={palette}
+      divider={props.divider}
+      leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
+      title={subagent.workflow?.name ?? presentation.title}
+      meta={presentation.statusLabel}
+      // A stopped workflow has no mark; its status line says how it ended.
+      trailing={mark === null ? null : <No3yStatusMark kind={mark} palette={palette} />}
+      onPress={props.onPress}
+      chevron
+    />
   );
 }
 
