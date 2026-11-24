@@ -425,11 +425,11 @@ function draftWithInsertedContext(
 }
 
 /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
-// Media picked over a selection replaces it, as a chip would, but with no text of its own.
+// Media replaces the selection a chip would have, so the slots the cap check freed stay free.
 function draftWithInsertionSelectionRemoved(
   draftKey: string,
   draft: ComposerDraft,
-  target: ComposerDraftInsertion,
+  target?: ComposerDraftInsertion,
 ): ComposerDraft {
   const { start, end } = contextInsertionRange(draftKey, draft, target);
   if (start === end) return draft;
@@ -1532,9 +1532,7 @@ export function appendComposerDraftAttachments(
               options.insertion,
               options.restore ? Infinity : COMPOSER_CONTEXT_MAX_RECORDS,
             )
-          : options.insertion
-            ? draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion)
-            : draft;
+          : draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion);
       /* fork:end no3y-media-attachment-no-chip */
       if (!inserted) {
         rejected = attachments;

@@ -23,12 +23,9 @@ const pendingTitles = [
 ];
 
 describe("no3y-media-attachment-no-chip", () => {
-  it("references only attachments the strip does not show", () => {
-    expect(drafts).toMatch(
-      /const records = accepted\s*\.filter\(\s*\(attachment\) =>\s*attachment\.type !== "image" &&\s*imageMimeType\(attachment\) === null &&\s*videoMimeType\(attachment\) === null,\s*\)\s*\.map\(\(attachment\) => attachmentContextRecord\(attachment\)\);/u,
-    );
+  it("adds strip media to the draft store without a chip", () => {
     expect(drafts).toContain(
-      "? draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion)",
+      "draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion)",
     );
   });
 

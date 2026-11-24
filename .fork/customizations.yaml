@@ -6003,8 +6003,8 @@
     a reference; the fork skips the chip for images and videos (the same test
     upstream's restoreMissingComposerFileReferences uses), so documents, HEIC
     picked through Files and pasted text keep their chips, since they have no
-    thumbnail. Media picked over a captured selection still replaces it, and
-    the selection still counts as freed toward the attachment limit.
+    thumbnail. Media still replaces the selection a chip would have replaced,
+    so that selection counts as freed toward the attachment limit.
     Unreferenced media still sends and survives text edits; only the chip's
     position in the prose is lost, the same trade-off as on web. Upstream
     relied on the chip to turn a media-only send into the attachment-only

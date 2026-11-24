@@ -1010,43 +1010,53 @@ describe("mobile composer drafts", () => {
   );
 
   /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
-  it("frees a selected file's slot for a video that replaces it at the limit", async () => {
-    const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);
-    onTestFinished(() => outboxLoad.mockRestore());
-    const cleanup = Promise.withResolvers<void>();
-    composerAttachmentCleanupMocks.remove.mockImplementationOnce(async () => {
-      cleanup.resolve();
-      return undefined;
-    });
-    const key = "environment-1:replace-file-with-video";
-    const files = Array.from({ length: 100 }, (_, index) => ({
-      id: `file-${index}`,
-      type: "file" as const,
-      name: `notes-${index}.txt`,
-      mimeType: "text/plain",
-      sizeBytes: 4,
-      fileUri: `file:///notes-${index}.txt`,
-    }));
-    appendComposerDraftAttachments(key, files, { appendReference: true });
-    const firstLink = "[notes-0.txt](t3-context://v1/file/file-0)";
-    const insertion = captureComposerDraftInsertion(key, { start: 0, end: firstLink.length });
-    const video = {
-      ...files[0]!,
-      id: "video",
-      name: "clip.mov",
-      mimeType: "video/quicktime",
-      fileUri: "file:///clip.mov",
-    };
-    expect(appendComposerDraftAttachments(key, [video], { appendReference: true, insertion })).toBe(
-      0,
-    );
-    const draft = getComposerDraftSnapshot(key);
-    expect(draft.attachments).toEqual([...files.slice(1), video]);
-    expect(draft.text).toBe(insertion.text.slice(firstLink.length));
-    expect(draft.context?.records.some((record) => record.contextId === "file-0")).toBe(false);
-    await cleanup.promise;
-    expect(composerAttachmentCleanupMocks.remove).toHaveBeenCalledWith(files[0]!.fileUri);
-  });
+  // Callers without a captured insertion, such as zip entries, replace the remembered selection.
+  it.each(["captured", "remembered"])(
+    "frees a %s selected file's slot for a video that replaces it at the limit",
+    async (selection) => {
+      const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);
+      onTestFinished(() => outboxLoad.mockRestore());
+      const cleanup = Promise.withResolvers<void>();
+      composerAttachmentCleanupMocks.remove.mockImplementationOnce(async () => {
+        cleanup.resolve();
+        return undefined;
+      });
+      const key = `environment-1:replace-file-with-video-${selection}`;
+      const files = Array.from({ length: 100 }, (_, index) => ({
+        id: `file-${index}`,
+        type: "file" as const,
+        name: `notes-${index}.txt`,
+        mimeType: "text/plain",
+        sizeBytes: 4,
+        fileUri: `file:///notes-${index}.txt`,
+      }));
+      appendComposerDraftAttachments(key, files, { appendReference: true });
+      const firstLink = "[notes-0.txt](t3-context://v1/file/file-0)";
+      const insertion = captureComposerDraftInsertion(key, { start: 0, end: firstLink.length });
+      const video = {
+        ...files[0]!,
+        id: "video",
+        name: "clip.mov",
+        mimeType: "video/quicktime",
+        fileUri: "file:///clip.mov",
+      };
+      if (selection === "remembered") {
+        rememberComposerDraftSelection(key, insertion.text, { start: 0, end: firstLink.length });
+      }
+      expect(
+        appendComposerDraftAttachments(key, [video], {
+          appendReference: true,
+          ...(selection === "captured" ? { insertion } : {}),
+        }),
+      ).toBe(0);
+      const draft = getComposerDraftSnapshot(key);
+      expect(draft.attachments).toEqual([...files.slice(1), video]);
+      expect(draft.text).toBe(insertion.text.slice(firstLink.length));
+      expect(draft.context?.records.some((record) => record.contextId === "file-0")).toBe(false);
+      await cleanup.promise;
+      expect(composerAttachmentCleanupMocks.remove).toHaveBeenCalledWith(files[0]!.fileUri);
+    },
+  );
   /* fork:end no3y-media-attachment-no-chip */
 
   it("rejects an imported file atomically when edits during import use up its replacement slot", async () => {
