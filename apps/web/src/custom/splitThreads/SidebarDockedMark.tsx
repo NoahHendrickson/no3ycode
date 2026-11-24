@@ -9,7 +9,7 @@ import { useSplitThreadStore } from "./splitThreadStore";
 
 export function useThreadDocked(threadKey: string): boolean {
   return useSplitThreadStore(
-    (state) => state.docked !== null && scopedThreadKey(state.docked) === threadKey,
+    (state) => state.docked !== null && scopedThreadKey(state.docked.thread) === threadKey,
   );
 }
 

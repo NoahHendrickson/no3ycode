@@ -14,7 +14,6 @@ import {
 import { releaseComposerDraftUploads } from "~/lib/composerDraftUploads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
-import { sameThread } from "./splitThreadPairs";
 import { type PaneRoute, useSplitThreadStore } from "./splitThreadStore";
 
 /** Puts a pane's thread on the route (replace): how focus moves between panes. */
@@ -35,7 +34,7 @@ export function navigateToPane(
 /**
  * Closes a split's new-agent pane. `leave` moves the route off the draft (to the pane beside it)
  * and answers whether it could: clearing the draft under the route would send it home instead.
- * Then the pair splits, and the draft goes only while it is still empty, as "Split agent" left
+ * Then the pane closes, and the draft goes only while it is still empty, as "Split agent" left
  * it; one the user has written in, or paired from the sidebar, stays a draft of its own.
  */
 export async function closeSplitDraft(
@@ -44,10 +43,7 @@ export async function closeSplitDraft(
   draftId: DraftId,
 ): Promise<void> {
   if (!(await leave())) return;
-  const store = useSplitThreadStore.getState();
-  // Beside a dock the draft only leaves the left pane; a pair the dock hides stays saved.
-  if (sameThread(store.dockLeft, ref)) useSplitThreadStore.setState({ dockLeft: null });
-  else store.unpair(ref);
+  useSplitThreadStore.getState().closeDraftPane(ref);
   const drafts = useComposerDraftStore.getState();
   if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) return;
   releaseComposerDraftUploads(draftId);

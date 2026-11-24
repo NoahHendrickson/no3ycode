@@ -18,8 +18,7 @@ import { usePendingSplitStore, useSplitThreadStore } from "./splitThreadStore";
     in a window wide enough (splitting a draft would only reopen the same
     draft). Beside a docked thread the dock toggle owns the layout instead. */
 export function splitAgentToggleShown(splitPane: SplitPaneState, startedThread: boolean): boolean {
-  if (splitPane.dockedLayout) return false;
-  return splitPane.split || (splitPane.canSplit && startedThread);
+  return splitPane.canSplit && (splitPane.split || startedThread);
 }
 
 export function SplitAgentToggle(props: {

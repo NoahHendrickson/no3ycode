@@ -6444,7 +6444,7 @@
     the route moves through other threads on the left, until the same
     toggle, pressed there, undocks it. The left pane is the route's thread,
     or, while the route is on the docked thread itself, the last other thread
-    it showed (dockLeft). A dock outranks pairs, which are kept but not drawn
+    it showed (the docked value's left). A dock outranks pairs, which are kept but not drawn
     while it is set, and hides the split toggle; docking takes the thread out
     of its pair or the window, and floating or pairing the docked thread
     undocks it. On the left pane the toggle swaps the two, and the window's

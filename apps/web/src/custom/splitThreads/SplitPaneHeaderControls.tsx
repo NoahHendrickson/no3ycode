@@ -15,10 +15,12 @@ import { DockRightIcon } from "../icons/lucide-hugeicons";
 import { closeSplitDraft } from "./splitPaneNavigation";
 import { useSplitPane } from "./splitPaneContext";
 
+/** `pressed` makes it a toggle that shows the state it undoes. */
 function PaneActionButton(props: {
   readonly label: string;
   readonly icon: ReactNode;
   readonly onPress: () => void;
+  readonly pressed?: boolean;
 }) {
   return (
     <div className="pointer-events-auto flex h-full items-center">
@@ -27,15 +29,28 @@ function PaneActionButton(props: {
           // data-split-pane-action keeps a press here from first focusing the pane.
           render={<span className="flex shrink-0" data-fork-panel-toggle data-split-pane-action />}
         >
-          <Button
-            className="shrink-0 [-webkit-app-region:no-drag]"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={props.label}
-            onClick={props.onPress}
-          >
-            {props.icon}
-          </Button>
+          {props.pressed === undefined ? (
+            <Button
+              className="shrink-0 [-webkit-app-region:no-drag]"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={props.label}
+              onClick={props.onPress}
+            >
+              {props.icon}
+            </Button>
+          ) : (
+            <Toggle
+              className="shrink-0 [-webkit-app-region:no-drag]"
+              pressed={props.pressed}
+              variant="ghost"
+              size="sm"
+              aria-label={props.label}
+              onClick={props.onPress}
+            >
+              {props.icon}
+            </Toggle>
+          )}
         </TooltipTrigger>
         <TooltipPopup side="bottom">{props.label}</TooltipPopup>
       </Tooltip>
@@ -54,7 +69,6 @@ export function SplitPaneHeaderControls(props: {
   const { draftId, threadRef } = props;
   const splitPane = useSplitPane();
   const { windowAction, dockAction } = splitPane;
-  const dockLabel = dockAction?.kind === "undock" ? "Undock" : "Dock to right";
 
   const close = (draft: DraftId, ref: ScopedThreadRef) =>
     void closeSplitDraft(splitPane.focusPartner, ref, draft);
@@ -75,27 +89,12 @@ export function SplitPaneHeaderControls(props: {
         />
       ) : null}
       {dockAction ? (
-        <div className="pointer-events-auto flex h-full items-center">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="flex shrink-0" data-fork-panel-toggle data-split-pane-action />
-              }
-            >
-              <Toggle
-                className="shrink-0 [-webkit-app-region:no-drag]"
-                pressed={dockAction.kind === "undock"}
-                aria-label={dockLabel}
-                variant="ghost"
-                size="sm"
-                onClick={dockAction.run}
-              >
-                <DockRightIcon className="size-4" />
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipPopup side="bottom">{dockLabel}</TooltipPopup>
-          </Tooltip>
-        </div>
+        <PaneActionButton
+          label={dockAction.kind === "undock" ? "Undock" : "Dock to right"}
+          icon={<DockRightIcon className="size-4" />}
+          pressed={dockAction.kind === "undock"}
+          onPress={dockAction.run}
+        />
       ) : null}
       {splitPane.floating ? null : (
         <>

@@ -11,18 +11,16 @@
 import { createContext, use, useContext } from "react";
 import { BackgroundThreadContext } from "~/components/chat/backgroundThread";
 
-/** The header button that moves a pane between the column and the window. */
-export interface PaneWindowAction {
-  readonly kind: "float" | "dock";
+/** A header control that moves the pane's thread somewhere else. */
+export interface PaneAction<K extends string> {
+  readonly kind: K;
   readonly run: () => void;
 }
 
-/** The header toggle that docks a thread as the column's right pane, where it
-    stays across navigation, or undocks the one docked there. */
-export interface PaneDockAction {
-  readonly kind: "dock" | "undock";
-  readonly run: () => void;
-}
+/** Moves a pane between the column and the window. */
+export type PaneWindowAction = PaneAction<"float" | "dock">;
+/** Docks a thread as the column's right pane, or undocks the one docked there. */
+export type PaneDockAction = PaneAction<"dock" | "undock">;
 
 export interface SplitPaneState {
   /** True while two panes share the column. */
@@ -31,7 +29,7 @@ export interface SplitPaneState {
   readonly focused: boolean;
   /** The left pane, the only one that can sit under the macOS traffic lights. */
   readonly leading: boolean;
-  /** The window is wide enough for two panes. */
+  /** The window is wide enough for two panes and no docked thread owns the column. */
   readonly canSplit: boolean;
   /** Hands the route to the other pane's thread, so this one can close.
       Resolves false when the route could not leave this pane. */
@@ -42,8 +40,6 @@ export interface SplitPaneState {
       partner, or goes back to the route's previous thread. Dock lands the
       window beside the column's thread. Null when neither applies. */
   readonly windowAction: PaneWindowAction | null;
-  /** A thread is docked on the right, so the dock, not a pair, owns the column. */
-  readonly dockedLayout: boolean;
   readonly dockAction: PaneDockAction | null;
 }
 
@@ -55,7 +51,6 @@ export const SINGLE_PANE: SplitPaneState = {
   focusPartner: async () => true,
   floating: false,
   windowAction: null,
-  dockedLayout: false,
   dockAction: null,
 };
 

@@ -233,7 +233,6 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
   readonly windowActionKind: PaneWindowAction["kind"] | null;
   readonly focusPartner: () => Promise<boolean>;
   readonly runWindowAction: () => void;
-  readonly dockedLayout: boolean;
   readonly dockActionKind: PaneDockAction["kind"] | null;
   readonly runDockAction: () => void;
   readonly composerRef: ComposerRef;
@@ -248,7 +247,7 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
   const { windowActionKind, routeView, environmentId, threadId, elementKey } = props;
   const windowAction =
     windowActionKind === null ? null : { kind: windowActionKind, run: props.runWindowAction };
-  const { dockedLayout, dockActionKind } = props;
+  const { dockActionKind } = props;
   const dockAction =
     dockActionKind === null ? null : { kind: dockActionKind, run: props.runDockAction };
   const state: SplitPaneState = {
@@ -259,7 +258,6 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
     floating,
     focusPartner,
     windowAction,
-    dockedLayout,
     dockAction,
   };
   const view =
@@ -360,7 +358,6 @@ function SplitPane(props: {
         windowActionKind={state.windowAction?.kind ?? null}
         focusPartner={focusPartner}
         runWindowAction={runWindowAction}
-        dockedLayout={state.dockedLayout}
         dockActionKind={state.dockAction?.kind ?? null}
         runDockAction={runDockAction}
         composerRef={props.composerRef}
@@ -478,7 +475,7 @@ export function SplitThreadPanes(props: {
   const resizeDock = useSplitThreadStore((state) => state.resizeDock);
   const dock = useSplitThreadStore((state) => state.dock);
   const undock = useSplitThreadStore((state) => state.undock);
-  const dockedRef = useSplitThreadStore((state) => state.docked);
+  const dockedRef = useSplitThreadStore((state) => state.docked?.thread ?? null);
   const pair = useSplitThreadStore((state) => state.pair);
   const floatThread = useSplitThreadStore((state) => state.float);
   const floatOnLeave = useSplitThreadStore((state) => state.floatOnLeave);
@@ -611,7 +608,7 @@ export function SplitThreadPanes(props: {
             split: true,
             focused,
             leading: left,
-            canSplit: true,
+            canSplit: !dockedLayout,
             focusPartner: async () => {
               if (!holdsRoute) return true;
               if (partnerRef === null || partner.route === null) return false;
@@ -619,10 +616,9 @@ export function SplitThreadPanes(props: {
               return true;
             },
             windowAction,
-            dockedLayout,
             dockAction,
           }
-        : { ...SINGLE_PANE, focused, canSplit: wide, windowAction, dockedLayout, dockAction };
+        : { ...SINGLE_PANE, focused, canSplit: wide && !dockedLayout, windowAction, dockAction };
       onEnter = !holdsRoute
         ? paneRef === null || paneRoute === null
           ? null

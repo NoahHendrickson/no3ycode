@@ -130,14 +130,13 @@ describe("docking a thread to the right", () => {
       routePrevious: null,
       pendingFloat: null,
       docked: null,
-      dockLeft: null,
       dockRatio: null,
     });
   });
 
   const layoutFor = (route: string) => {
-    const { docked, dockLeft } = useSplitThreadStore.getState();
-    return docked === null ? null : resolveDockedLayout(docked, dockLeft, 0.5, ref(route));
+    const { docked } = useSplitThreadStore.getState();
+    return docked === null ? null : resolveDockedLayout(docked, 0.5, ref(route));
   };
 
   it("keeps the docked thread on the right while the route moves through other threads", () => {
@@ -164,11 +163,17 @@ describe("docking a thread to the right", () => {
     store.dock(ref("b"), ref("a"));
     expect(findSplitPair(useSplitThreadStore.getState().pairs, ref("a"))).toBeNull();
     store.dock(ref("f"), ref("a"));
-    expect(useSplitThreadStore.getState()).toMatchObject({ docked: ref("f"), floating: null });
+    expect(useSplitThreadStore.getState()).toMatchObject({
+      docked: { thread: ref("f") },
+      floating: null,
+    });
     // The window's thread stays in the window rather than filling the left pane.
     store.float(ref("w"));
     store.dock(ref("a"), ref("w"));
-    expect(useSplitThreadStore.getState()).toMatchObject({ floating: ref("w"), dockLeft: null });
+    expect(useSplitThreadStore.getState()).toMatchObject({
+      floating: ref("w"),
+      docked: { left: null },
+    });
   });
 
   it("undocks a thread that floats or pairs, and forgets one that is gone", () => {
@@ -192,7 +197,9 @@ describe("docking a thread to the right", () => {
 
     store.dock(ref("d"), ref("a"));
     store.forget(ref("a"));
-    expect(useSplitThreadStore.getState()).toMatchObject({ docked: ref("d"), dockLeft: null });
+    expect(useSplitThreadStore.getState()).toMatchObject({
+      docked: { thread: ref("d"), left: null },
+    });
     store.forget(ref("d"));
     expect(useSplitThreadStore.getState().docked).toBeNull();
   });
@@ -203,7 +210,7 @@ describe("docking a thread to the right", () => {
     store.dock(ref("d"), ref("draft"));
     await closeSplitDraft(async () => true, ref("draft"), DraftId.make("draft-1"));
     const state = useSplitThreadStore.getState();
-    expect(state).toMatchObject({ docked: ref("d"), dockLeft: null });
+    expect(state).toMatchObject({ docked: { thread: ref("d"), left: null } });
     expect(findSplitPair(state.pairs, ref("draft"))).not.toBeNull();
   });
 });
