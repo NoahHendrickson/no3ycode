@@ -3467,7 +3467,7 @@
   .chat-markdown-file-link:not([data-state="invalid"]) {
   border-radius: 5px;
   background: var(--fork-inline-code-wash);
-  padding-inline: 4px;
+  padding-inline: 6px;
   color: var(--info-foreground);
   font-size: 0.95em;
 }

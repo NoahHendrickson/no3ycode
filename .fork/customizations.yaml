@@ -6326,7 +6326,7 @@
 - id: fork-inline-code-chip
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
-    --info at 12% (16% in dark), 5px corners, 4px either side, at 0.95em.
+    --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's
