@@ -176,7 +176,7 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(offsets).toMatch(/cardActions:\s*""/u);
     expect(offsets).toMatch(/cardStatus:\s*"-me-0\.5"/u);
     expect(offsets).toMatch(/slimActions:\s*"me-1"/u);
-    expect(offsets).toMatch(/headerPlus:\s*""/u);
+    expect(offsets).toMatch(/headerPlus:\s*"-me-2\.5"/u);
     expect(offsets).toMatch(/shelfChevron:\s*""/u);
     expect(offsets).toMatch(/chromeRow:\s*""/u);
     expect(offsets).toMatch(/chromeStatus:\s*"-me-0\.5"/u);

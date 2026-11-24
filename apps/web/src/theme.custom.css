@@ -1927,7 +1927,7 @@
   opacity: 1;
   width: auto;
   overflow: visible;
-  margin-inline-end: -0.75rem;
+  margin-inline-end: calc(var(--spacing) * -2.5);
   pointer-events: auto;
 }
 
@@ -1953,7 +1953,7 @@
     opacity: 1;
     width: auto;
     overflow: visible;
-    margin-inline-end: -0.75rem;
+    margin-inline-end: calc(var(--spacing) * -2.5);
     pointer-events: auto;
   }
 
