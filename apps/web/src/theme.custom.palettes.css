@@ -1744,13 +1744,6 @@
   background: var(--fork-liquid-glass-sidebar);
 }
 
-/* The route modals (Settings, Usage) are pages, not popups: on Flat Glass they keep the stage
-   base they paint in the browser, not the sidebar's glass colour. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-slot="dialog-popup"][data-app-modal][data-fork-liquid-glass-popup] {
-  background: var(--background);
-}
-
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
     [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
