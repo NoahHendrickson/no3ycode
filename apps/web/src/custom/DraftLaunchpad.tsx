@@ -275,7 +275,6 @@ export function DraftLaunchpad(
                 <Icon className="size-4 shrink-0 text-muted-foreground" />
               )}
               <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
-              <span className="shrink-0 text-muted-foreground/60 text-xs">{suggestion.meta}</span>
             </button>
           );
         })}
