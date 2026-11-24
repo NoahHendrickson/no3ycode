@@ -101,7 +101,7 @@
     --fork-context-chip-bg: rgb(208 204 181 / 55%);
     --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
 
-    & :is([data-fork-composer-vessel], [data-fork-composer-usage-drawer]) {
+    & [data-fork-composer-vessel] {
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
     }
@@ -114,11 +114,6 @@
     --fork-composer-vessel-bg: rgb(208 204 181 / 55%);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
-  }
-
-  & [data-fork-composer-usage-drawer] {
-    --border: rgb(28 28 26 / 16%);
-    --contrast-border: rgb(28 28 26 / 16%);
   }
 
   & [data-fork-draft-launchpad-card] {
@@ -147,7 +142,7 @@
      card's copy is inked for the vessel here rather than inherited. */
 
   &
-    [data-fork-composer-vessel]
+    :is([data-fork-composer-vessel], [data-fork-composer-banners])
     [data-fork-composer-notice="true"]
     [data-slot="composer-banner-content"] {
     color: #1c1c1a;

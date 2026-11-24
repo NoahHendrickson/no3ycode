@@ -47,7 +47,11 @@ import {
   useSearchableSetting,
 } from "./settingsSearch";
 /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import { ForkFontPresetPicker, ForkTypographyScaleRows } from "../../custom/ForkTypographyControls";
+import {
+  ForkChatStreamSizeRow,
+  ForkFontPresetPicker,
+  ForkSidebarFontSizeRow,
+} from "../../custom/ForkTypographyControls";
 import { FORK_DEFAULT_SANS_FAMILY } from "../../custom/forkTypographyScale";
 /* fork:end fork-typography-settings */
 
@@ -309,6 +313,9 @@ function FontSettingsGroup() {
   return (
     <>
       <InterfaceFontRow />
+      {/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */}
+      <ForkSidebarFontSizeRow />
+      {/* fork:end fork-typography-settings */}
       <PromptFontRow />
       <CodeFontRow />
       <TerminalFontRow />
@@ -348,6 +355,9 @@ function SimpleFontRows() {
   return (
     <>
       <InterfaceFontRow preview={<PromptFontPreview />} />
+      {/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */}
+      <ForkSidebarFontSizeRow />
+      {/* fork:end fork-typography-settings */}
       <CodeFontRow
         title={gt("Monospace font")}
         resetLabel={gt("Reset monospace font to default")}
@@ -396,7 +406,7 @@ export function TypographySection() {
     <SettingsSection id="typography" title={gt("Typography")}>
       {showAdvanced ? <FontSettingsGroup /> : <SimpleFontRows />}
       {/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */}
-      <ForkTypographyScaleRows />
+      <ForkChatStreamSizeRow />
       {/* fork:end fork-typography-settings */}
       <WordWrapRow />
       <AdvancedSettings

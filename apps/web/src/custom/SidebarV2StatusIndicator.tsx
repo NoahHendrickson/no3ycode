@@ -101,10 +101,9 @@ function rainAlpha(dy: number): number {
     sidebar full of working threads would read as a single blinking block, so
     each row gets its own offset. Hashing the thread key rather than randomizing
     is what makes the spread deterministic: the same thread always draws the same
-    offset, so a re-render cannot reshuffle the row's phase. (A *remount* still
-    restarts the CSS delay clock, so a row that scrolls out and back re-phases
-    regardless — the hash guarantees rows differ from each other, not that any
-    one row is continuous across remount.) Every column moves
+    offset, so a re-render cannot reshuffle the row's phase, and a remount picks
+    up where the row would have been (the films run on the document timeline).
+    Every column moves
     by the same absolute amount, which preserves their relationship to each
     other: the row looks exactly like one that started working moments earlier. */
 export function workingMarkOffsetSeconds(seed: string): number {
@@ -177,30 +176,45 @@ function bakeFilm(
   return `url("${URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }))}")`;
 }
 
+/** Every film plays at this rate, and steps on the same grid of the document
+    timeline: marks out of step each woke the compositor on vsyncs of their own
+    (measured in .fork/customizations.yaml#fork-working-mark). */
+const FILM_FPS = 30;
+const FILM_FRAME_MS = 1000 / FILM_FPS;
+
+/** The frame count that plays a loop of `seconds` at FILM_FPS. */
+function filmFrames(seconds: number): number {
+  return Math.round(seconds * FILM_FPS);
+}
+
 /** One strip of a working mark: the baked film, coloured by the status token
     through the mask, stepped by a single compositor transform animation.
     The strip is `frames` clip boxes tall, so a frame is exactly the clip's
-    height. `startSeconds` is how far into its `period` the strip is at time
-    zero; `column` masks the film to one column, in CSS px. The keyframe name
-    stays in a class so `motion-reduce:animate-none` can still win (a class
-    cannot override an inline `animation-name`); the inline transform is the
-    still frame left once it does. */
+    height, and a loop lasts `frames / FILM_FPS`. `startSeconds` is how far
+    into its loop the strip is at time zero; `column` masks the film to one
+    column, in CSS px. The keyframe name stays in a class so
+    `motion-reduce:animate-none` can still win (a class cannot override an
+    inline `animation-name`); the inline transform is the still frame left
+    once it does. */
 function FilmStrip(props: {
   readonly film: string;
   readonly frames: number;
-  readonly period: number;
   readonly startSeconds: number;
   readonly column?: { readonly left: number; readonly width: number };
   readonly still?: boolean | undefined;
 }) {
-  const start = wrap(props.startSeconds, props.period);
+  const period = props.frames / FILM_FPS;
   // The outer modulo only catches floating-point error at the top of the range.
-  const still =
-    Math.floor(
-      (wrap(props.startSeconds + STILL_SECONDS, props.period) / props.period) * props.frames,
-    ) % props.frames;
+  const frameAt = (seconds: number) => Math.floor(wrap(seconds, period) * FILM_FPS) % props.frames;
+  const still = frameAt(props.startSeconds + STILL_SECONDS);
   return (
     <span
+      // A CSS animation starts on the frame it is created (mount, a hidden row shown again,
+      // reduced motion turned off), off the grid; its first event moves the start onto it. The
+      // delay keeps the phase, so the frames before that are already the right ones.
+      onAnimationStart={(event) => {
+        for (const animation of event.currentTarget.getAnimations()) animation.startTime = 0;
+      }}
       className={
         props.still
           ? "absolute inset-x-0 top-0 bg-current"
@@ -213,31 +227,38 @@ function FilmStrip(props: {
         maskPosition: props.column ? `${props.column.left}px 0` : undefined,
         maskRepeat: "no-repeat",
         transform: `translateY(${(-still / props.frames) * 100}%)`,
-        animationDuration: `${props.period.toFixed(4)}s`,
+        // Unrounded: a rounded loop drifts off the grid over minutes.
+        animationDuration: `${period}s`,
         animationTimingFunction: `steps(${props.frames})`,
-        animationDelay: `${(-start).toFixed(4)}s`,
+        animationDelay: `${-frameAt(props.startSeconds) * FILM_FRAME_MS}ms`,
       }}
     />
   );
 }
 
-/** Per loop of each column's fall: ~37 fps on the slowest column, ~68 on the
-    fastest. */
-const RAIN_FRAMES = 120;
-
-/** Every column runs the same five-row fall at its own speed, so one film of a
-    single column serves all three, each strip masked at its column's x. */
-const rainFilm = once(() =>
-  bakeFilm(CELL, HEIGHT, RAIN_FRAMES, { width: CELL, height: CELL, rx: CELL * 0.28 }, (index) =>
-    Array.from({ length: ROWS }, (_, row) => ({
-      x: 0,
-      y: row * PITCH,
-      opacity: rainAlpha(((index + 0.5) / RAIN_FRAMES) * RAIN_SPAN - 1.5 - row),
-    })),
-  ),
-);
 /** Mark units to CSS px: the 14px slot over the grid's native height. */
 const RAIN_SCALE = SLOT / HEIGHT;
+
+/** Every column runs the same five-row fall at its own speed, to a whole number of frames so it
+    stays on the shared grid: a single-column film each, masked at its column's x. */
+const RAIN_STRIPS = COLUMNS.map((column, col) => {
+  const frames = filmFrames(RAIN_SPAN / column.speed);
+  return {
+    key: column.phase,
+    frames,
+    film: once(() =>
+      bakeFilm(CELL, HEIGHT, frames, { width: CELL, height: CELL, rx: CELL * 0.28 }, (index) =>
+        Array.from({ length: ROWS }, (_, row) => ({
+          x: 0,
+          y: row * PITCH,
+          opacity: rainAlpha(((index + 0.5) / frames) * RAIN_SPAN - 1.5 - row),
+        })),
+      ),
+    ),
+    startSeconds: column.phase / column.speed,
+    column: { left: col * PITCH * RAIN_SCALE, width: CELL * RAIN_SCALE },
+  };
+});
 
 interface WorkingMarkProps {
   readonly seed: string;
@@ -252,21 +273,19 @@ interface WorkingMarkProps {
     native Canvas does too, so every drop stays exactly square. */
 function SidebarV2WorkingRain({ seed, still }: WorkingMarkProps) {
   const offset = workingMarkOffsetSeconds(seed);
-  const film = rainFilm();
   return (
     <span
       aria-hidden
       className="relative block h-[14px] shrink-0 overflow-hidden"
       style={{ width: DRAW_WIDTH }}
     >
-      {COLUMNS.map((column, col) => (
+      {RAIN_STRIPS.map((strip) => (
         <FilmStrip
-          key={column.phase}
-          film={film}
-          frames={RAIN_FRAMES}
-          period={RAIN_SPAN / column.speed}
-          startSeconds={column.phase / column.speed + offset}
-          column={{ left: col * PITCH * RAIN_SCALE, width: CELL * RAIN_SCALE }}
+          key={strip.key}
+          film={strip.film()}
+          frames={strip.frames}
+          startSeconds={strip.startSeconds + offset}
+          column={strip.column}
           still={still}
         />
       ))}
@@ -289,12 +308,10 @@ const HELIX_CELL = (HELIX_BOX - (HELIX_GRID - 1) * HELIX_GAP) / HELIX_GRID;
 /** Radians per second, and the phase each row trails the one above it by. */
 const HELIX_SPEED = 3.2;
 const HELIX_ROW_LAG = 0.785;
-/** One film loop. The curve repeats every half twist (π, not 2π): moving the
-    phase by π swaps the two strands along with their depth weights, which
-    leaves the `max` in `helixAlpha` unchanged. */
-const HELIX_LOOP = Math.PI / HELIX_SPEED;
-/** ~61 fps over the loop. */
-const HELIX_FRAMES = 60;
+/** One film loop is a half twist (π, not 2π): moving the phase by π swaps the
+    two strands along with their depth weights, which leaves the `max` in
+    `helixAlpha` unchanged. Rounded to whole frames, which plays it ~1.5% fast. */
+const HELIX_FRAMES = filmFrames(Math.PI / HELIX_SPEED);
 
 /** The drawn opacity of a cell in `column` at strand phase `phase`. Each strand
     lights the cells nearest it with an exponential falloff, dimmed while it is
@@ -334,7 +351,6 @@ function SidebarV2WorkingHelix({ seed, still }: WorkingMarkProps) {
       <FilmStrip
         film={helixFilm()}
         frames={HELIX_FRAMES}
-        period={HELIX_LOOP}
         startSeconds={workingMarkOffsetSeconds(seed)}
         still={still}
       />
@@ -342,8 +358,7 @@ function SidebarV2WorkingHelix({ seed, still }: WorkingMarkProps) {
   );
 }
 
-/** ~60 fps over the 1.9s loop. */
-const BEAD_RING_FRAMES = 114;
+const BEAD_RING_FRAMES = filmFrames(BEAD_RING_PERIOD);
 /** Baked at 3x the 15px box, so it stays sharp on any display up to 3x. */
 const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
 
@@ -358,7 +373,6 @@ function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
       <FilmStrip
         film={beadRingFilm()}
         frames={BEAD_RING_FRAMES}
-        period={BEAD_RING_PERIOD}
         startSeconds={workingMarkOffsetSeconds(seed)}
         still={still}
       />
@@ -449,10 +463,29 @@ export function SidebarV2DraftMark() {
     column stays aligned; the slow white opacity breath (50% → 20%) is the
     signal, not a hue or a text label. Keyframes in `theme.custom.css` are
     duty-cycled and stepped so the compositor is not woken every vsync. */
-export function SidebarV2MonitoringMark() {
+function SidebarV2MonitoringMark() {
   return (
     <span aria-hidden className={MARK_SLOT_CLASS}>
       <span data-fork-monitoring-pulse className="size-2.5 rounded-full" />
+    </span>
+  );
+}
+
+/** Working, drawn still where nothing should move (a status chip in a message): the bead
+    ring's outline closed into a full ring, at its 12px size and stroke. */
+export function SidebarV2StillWorkingMark() {
+  return (
+    <span aria-hidden className={MARK_SLOT_CLASS}>
+      <span className="size-3 rounded-full border-[1.5px] border-sidebar-v2-status-working" />
+    </span>
+  );
+}
+
+/** Waiting, drawn still: the monitoring dot at rest, in the muted ink. */
+export function SidebarV2StillMonitoringMark() {
+  return (
+    <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
+      <span className="size-2.5 rounded-full bg-current" />
     </span>
   );
 }
@@ -471,10 +504,12 @@ export function SidebarV2StatusMark(props: {
   /** Card rows draw the idle dot; without one an idle mark draws nothing.
       Unpromoted drafts use the pencil as their idle glyph. */
   readonly idle?: "dot" | "draft";
+  /** False where nothing should move: a Done dot that turns up there does not celebrate. */
+  readonly celebrate?: boolean | undefined;
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
-  useDoneCelebration(props.seed, status, dot);
+  useDoneCelebration(props.celebrate === false ? null : props.seed, status, dot);
   if (status === null) {
     if (props.idle === "draft") {
       return (

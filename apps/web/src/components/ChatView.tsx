@@ -362,8 +362,15 @@ import {
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
 import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
+import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { ComposerNextStepPill } from "~/custom/ComposerNextStepPill";
+import { recordComposerHabit } from "~/custom/composerHabits";
+import { lastOwnerPrompt } from "~/custom/composerNextStep.logic";
+/* fork:end fork-composer-next-step */
+import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
+import { composerBackgroundWorkItems } from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
-import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
 import { forkChatColumnRef, forkDraftHeroShownRef } from "~/custom/forkStageStamps";
@@ -2582,23 +2589,7 @@ export default function ChatView(props: ChatViewProps) {
             ),
           })
         : nextHeight;
-    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-    // The composer's top drawer floats above the overlay, outside its measured height.
-    const topVessel = composerOverlayElement?.querySelector<HTMLElement>(
-      '[data-fork-composer-top-vessel="true"]',
-    );
-    const drawerRise =
-      composerOverlayElement && topVessel
-        ? Math.max(
-            0,
-            Math.ceil(
-              composerOverlayElement.getBoundingClientRect().top -
-                topVessel.getBoundingClientRect().top,
-            ),
-          )
-        : 0;
-    setScrollToEndClearance(clearance + drawerRise);
-    /* fork:end fork-composer-usage-limits */
+    setScrollToEndClearance(clearance);
   };
   const publishComposerOverlayHeightStable = useStableCallback(publishComposerOverlayHeight);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- measures the composer overlay element before paint for a new thread or composer mount
@@ -2648,16 +2639,10 @@ export default function ChatView(props: ChatViewProps) {
     const stack = isDraftHeroState
       ? composerOverlayElement.querySelector<HTMLElement>('[data-chat-composer-stack="true"]')
       : null;
-    /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
-    // The floating top drawer opens without resizing the overlay; Scroll to end has to clear it.
-    const topVessel = composerOverlayElement.querySelector<HTMLElement>(
-      '[data-fork-composer-top-vessel="true"]',
+    return observeResize(
+      stack ? [composerOverlayElement, stack] : composerOverlayElement,
+      updateHeight,
     );
-    const observed = [composerOverlayElement, stack, topVessel].filter(
-      (element): element is HTMLElement => element !== null,
-    );
-    return observeResize(observed, updateHeight);
-    /* fork:end fork-composer-usage-limits */
   }, [
     composerOverlayElement,
     isDraftHeroState,
@@ -2760,6 +2745,7 @@ export default function ChatView(props: ChatViewProps) {
     shortcuts: threadLifecycleShortcuts,
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
     activeBackgroundTasks,
+    canStopBackgroundWork,
     isStoppingBackgroundWork,
     handleStopBackgroundWorkStable,
     /* fork:end fork-composer-shell */
@@ -2809,30 +2795,16 @@ export default function ChatView(props: ChatViewProps) {
      Working fleets and monitoring leave the banner stack for a chip above the composer, beside
      the thread's PR (custom/ComposerBackgroundWork). Stop handler and task list come from
      useThreadLifecycle, like upstream's row. */
-  const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
-  const composerStatusChips =
-    activeThread && activeThreadRef && !isDraftHeroState ? (
-      <>
-        {/* A side chat mounts no right panel for the PR list to open in. */}
-        {embedded ? null : (
-          <ComposerPullRequestChip
-            threadRef={activeThreadRef}
-            branch={activeThreadBranch}
-            cwd={gitStatusCwd}
-          />
-        )}
-        {composerBackgroundWorkPresentation ? (
-          <ComposerBackgroundWorkChip
-            presentation={composerBackgroundWorkPresentation}
-            seed={`${activeThread.environmentId}:${activeThread.id}`}
-            stopping={isStoppingBackgroundWork}
-            canStop={canOperateThread}
-            onStop={() => void handleStopBackgroundWorkStable()}
-            onOpenThread={onOpenRelatedThreadStable}
-          />
-        ) : null}
-      </>
-    ) : null;
+  const composerBackgroundWork = composerBackgroundWorkItems(
+    activeBackgroundTasks,
+    serverProjection?.subagents,
+    serverProjection?.runs,
+  );
+  // The queue card collapses into a pill in this row.
+  const [forkQueueExpanded, setForkQueueExpanded] = useState(true);
+  const forkQueuedCount = forkQueuedItemCount(serverProjection, optimisticUserMessages);
+  // A queue that empties forgets its collapse, so the next queued message opens as a card again.
+  if (forkQueuedCount === 0 && !forkQueueExpanded) setForkQueueExpanded(true);
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = hasCompactableConversation({
     visibleTurnItems: serverVisibleTurnItems,
@@ -3469,6 +3441,14 @@ export default function ChatView(props: ChatViewProps) {
     handleNewThreadInActiveProject,
     persistThreadSettingsForNextTurn,
     linkCheckoutPullRequest,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+       A committed owner turn teaches the learned next step what follows the thread's previous
+       owner message; not in side chats, where the pill never shows. */
+    onOwnerTurnDispatched: embedded
+      ? undefined
+      : (prompt: string) =>
+          recordComposerHabit(lastOwnerPrompt(serverProjection?.messages ?? []), prompt),
+    /* fork:end fork-composer-next-step */
   });
 
   const onWorktreeSetupWorkLocally = () => {
@@ -3481,6 +3461,67 @@ export default function ChatView(props: ChatViewProps) {
   };
   const onWorktreeSetupWorkLocallyStable = useStableCallback(onWorktreeSetupWorkLocally);
   const onComposerSendStable = useStableCallback(onSend);
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+     The pill sends like the composer, so it is built after onSend, with the chip row it rides. */
+  const sendNextStepStable = useStableCallback((prompt: string) => {
+    const sendContext = composerRef.current?.getSendContext();
+    if (!sendContext) return;
+    void onSend(undefined, "auto", "foreground", undefined, {
+      prompt,
+      sendContext: { ...sendContext, prompt },
+    });
+  });
+  /* fork:end fork-composer-next-step */
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  const composerStatusChips =
+    activeThread && activeThreadRef && !isDraftHeroState ? (
+      <>
+        {/* A side chat mounts no right panel for the PR list to open in. */}
+        {embedded ? null : (
+          <ComposerPullRequestChip
+            threadRef={activeThreadRef}
+            branch={activeThreadBranch}
+            cwd={gitStatusCwd}
+          />
+        )}
+        {composerBackgroundWork.length > 0 ? (
+          <ComposerBackgroundWorkChip
+            items={composerBackgroundWork}
+            stopping={isStoppingBackgroundWork}
+            canStop={canStopBackgroundWork}
+            onStop={() => void handleStopBackgroundWorkStable()}
+            onOpenThread={onOpenRelatedThreadStable}
+            environmentId={activeThread.environmentId}
+          />
+        ) : null}
+        {!forkQueueExpanded && forkQueuedCount > 0 ? (
+          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
+        ) : null}
+        {/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */}
+        {embedded ? null : (
+          <ComposerNextStepPill
+            environmentId={activeThread.environmentId}
+            // A shared checkout on another branch is not this thread's work or PR.
+            cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
+            branch={activeThreadBranch}
+            settled={
+              canOperateThread &&
+              !isWorking &&
+              activePendingApproval === null &&
+              !activePendingUserInput &&
+              announcedRun(activeThread.latestRun, serverProjection?.runs ?? EMPTY_RUNS)?.status ===
+                "completed"
+            }
+            pullRequests={activeThread.pullRequests}
+            messages={serverProjection?.messages ?? null}
+            draftTarget={composerDraftTarget}
+            onSend={sendNextStepStable}
+          />
+        )}
+        {/* fork:end fork-composer-next-step */}
+      </>
+    ) : null;
+  /* fork:end fork-composer-shell */
   const sendPreviewAnnotation = (
     annotation: PreviewAnnotationPayload,
     image: ComposerImageAttachment | null,
@@ -3546,6 +3587,8 @@ export default function ChatView(props: ChatViewProps) {
           )}
           onEditQueuedRun={queuedRunEdit.beginEdit}
           onCancelEdit={queuedRunEdit.cancelEdit}
+          expanded={forkQueueExpanded}
+          onExpandedChange={setForkQueueExpanded}
         />
       </>
     ) : null;

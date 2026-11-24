@@ -1,39 +1,65 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ThreadId } from "@t3tools/contracts";
+import {
+  EnvironmentId,
+  ProviderDriverKind,
+  ProviderInstanceId,
+  ThreadId,
+} from "@t3tools/contracts";
 
 import {
   ComposerBackgroundWorkChip,
   type ComposerBackgroundWorkViewProps,
 } from "~/custom/ComposerBackgroundWork";
+import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 
 import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
-const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
+const SUBAGENT: ForkSubagentTreeRow = {
+  id: "subagent-1",
+  title: "Research jellyfish",
+  titled: true,
+  status: "running",
+  mark: "working",
+  model: "claude-opus-5-5",
+  modelSelection: undefined,
+  startedAt: new Date(Date.now() - 150_000).toISOString(),
+  completedAt: null,
+  childThreadId: ThreadId.make("thread-child-1"),
+  remote: undefined,
+  driver: ProviderDriverKind.make("claudeAgent"),
+  providerInstanceId: ProviderInstanceId.make("claudeAgent"),
+  statusLabel: "Running",
+  prompt: "Research how jellyfish sleep.",
+  activity: null,
+};
+
+const TASKS: ComposerBackgroundWorkViewProps["items"] = [
   {
     taskId: "subagent-1",
     kind: "subagent",
     label: "Research jellyfish",
     childThreadId: ThreadId.make("thread-child-1"),
+    subagent: SUBAGENT,
   },
   { taskId: "monitor-1", kind: "monitor", label: "Watch CI on #377", childThreadId: undefined },
 ];
 
 const base = {
-  seed: "story",
   stopping: false,
   canStop: true,
   onStop: () => {},
   onOpenThread: () => {},
+  environmentId: EnvironmentId.make("story"),
 } as const;
 
 const MONITORING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Monitoring", items: TASKS.slice(1), waiting: false },
+  items: TASKS.slice(1),
 };
 const WORKING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Working", items: TASKS, waiting: true },
+  items: TASKS,
 };
 
 /** The composer with the work chip above it. */
@@ -60,7 +86,7 @@ type Story = StoryObj<typeof Composer>;
     opening its thread, and the square stops them. */
 export const Playground: Story = {};
 
-/** Working and monitoring, stopping, and a client without the operate scope (Stop inert). */
+/** Several tasks, one task, stopping, and a client with nothing to stop (no square). */
 export const States: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

@@ -23,6 +23,9 @@ import { pullRequestFilterChoices, pullRequestLabelColors } from "./pullRequestL
 import { PullRequestLabelDot } from "./PullRequestLabelDot";
 import { PullRequestSearchSheet } from "./PullRequestSearchSheet";
 import { usePullRequestListControls } from "./usePullRequestListControls";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import { pullRequestProjectIdsByEnvironment } from "../../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
 
 export type PullRequestFilterSearchParams = {
   readonly kind: PullRequestFilterOptionKind;
@@ -64,12 +67,19 @@ export function PullRequestFilterSearchScreen({
   const sent = useDebouncedValue(typed, 250);
   // Until the search catches up with the typing, the host's answers are for older text.
   const settled = sent === typed;
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const projectIds = pullRequestProjectIdsByEnvironment(controls);
+  /* fork:end no3y-pr-project-multiselect */
   const key = JSON.stringify(
     environmentIds.map((id) => ({
       environmentId: EnvironmentId.make(id),
       input: {
         kind,
-        ...(controls.projectId ? { projectId: ProjectId.make(controls.projectId) } : {}),
+        /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+        ...(projectIds.has(id)
+          ? { projectIds: projectIds.get(id)!.map((projectId) => ProjectId.make(projectId)) }
+          : {}),
+        /* fork:end no3y-pr-project-multiselect */
         ...(sent ? { query: sent } : {}),
       },
     })),

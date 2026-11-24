@@ -155,6 +155,13 @@ export function togglePendingUserInputOptionSelection(
     };
   }
 
+  /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+     Clicking the picked option again clears it, so a stray click before typing an own answer
+     can be undone. */
+  if (isPendingUserInputOptionSelected(question, draft, resolvedOptionValue)) {
+    return { customAnswer: "" };
+  }
+  /* fork:end fork-pending-user-input */
   return {
     customAnswer: "",
     selectedOptionValues: [resolvedOptionValue],

@@ -15,6 +15,7 @@ import {
   CheckIcon,
   ClockIcon,
   HistoryIcon,
+  LayersIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlayIcon,
@@ -24,7 +25,7 @@ import {
   XIcon,
   ZapIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   AuthOrchestrationOperateScope,
   type EnvironmentId,
@@ -47,7 +48,15 @@ import {
   EmptyTitle,
 } from "~/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "~/components/ui/input-group";
-import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "~/components/ui/menu";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { SidebarInset } from "~/components/ui/sidebar";
 import { Switch } from "~/components/ui/switch";
@@ -65,6 +74,7 @@ import { WorkspacePageContainer } from "~/components/WorkspacePageContainer";
 import { WorkspacePageHeader } from "~/components/WorkspacePageHeader";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { isElectron } from "~/env";
+import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { useClientSettings } from "~/hooks/useSettings";
 import { useProjects } from "~/state/entities";
 import { type EnvironmentPresentation } from "~/state/environments";
@@ -73,7 +83,15 @@ import { serverEnvironment } from "~/state/server";
 import { readEnvironmentScope } from "~/state/session";
 import { useAtomCommand } from "~/state/use-atom-command";
 import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
-import { matchesTaskQuery, relativeLabel, shortModelName } from "./scheduledPage.logic";
+import {
+  AutomationGrouping,
+  groupAutomations,
+  isAutomationGrouping,
+  matchesTaskQuery,
+  relativeLabel,
+  shortModelName,
+} from "./scheduledPage.logic";
+import { usePetalTitles } from "./petalRoster";
 import { ScheduledCard, useConnectedEnvironments } from "./scheduledPageChrome";
 import { ScheduledRunRows, ScheduledRunsHeader } from "./ScheduledRunsTable";
 import { ScheduledTaskDetail } from "./ScheduledTaskDetail";
@@ -161,6 +179,7 @@ function TaskList(props: { readonly environments: ReadonlyArray<EnvironmentPrese
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [environmentFilter, setEnvironmentFilter] = useState<EnvironmentId | "all">("all");
+  const [grouping, setGrouping] = useAutomationGrouping();
   const defaultEnvironmentId = props.environments[0]?.environmentId ?? null;
   const canCreate = useAtomValue(
     serverEnvironment.upsertScheduledTask.permissionAtom(defaultEnvironmentId),
@@ -248,6 +267,31 @@ function TaskList(props: { readonly environments: ReadonlyArray<EnvironmentPrese
                 All runs
                 <ArrowUpRightIcon className="size-3.5" aria-hidden />
               </Link>
+              <Menu>
+                <MenuTrigger
+                  render={
+                    <Button size="sm" variant="ghost-muted" data-testid="scheduled-group-by" />
+                  }
+                >
+                  <LayersIcon />
+                  {grouping === "petal" ? "By Petal" : "Group"}
+                </MenuTrigger>
+                <MenuPopup align="end">
+                  <MenuRadioGroup
+                    value={grouping}
+                    onValueChange={(value) => {
+                      if (isAutomationGrouping(value)) setGrouping(value);
+                    }}
+                  >
+                    <MenuRadioItem value="none" closeOnClick>
+                      No grouping
+                    </MenuRadioItem>
+                    <MenuRadioItem value="petal" closeOnClick>
+                      Yours and each Petal's
+                    </MenuRadioItem>
+                  </MenuRadioGroup>
+                </MenuPopup>
+              </Menu>
               <div className="w-56">
                 <InputGroup>
                   <InputGroupAddon>
@@ -283,6 +327,7 @@ function TaskList(props: { readonly environments: ReadonlyArray<EnvironmentPrese
                   environment={environment}
                   showEnvironment={visibleEnvironments.length > 1}
                   query={query}
+                  grouping={grouping}
                 />
               ))}
             </Table>
@@ -290,6 +335,15 @@ function TaskList(props: { readonly environments: ReadonlyArray<EnvironmentPrese
         </>
       )}
     </div>
+  );
+}
+
+/** Device-local, like the sidebar's grouping (sidebarV2ProjectGrouping). */
+function useAutomationGrouping() {
+  return useLocalStorage<AutomationGrouping, AutomationGrouping>(
+    "t3code:fork:automations-grouping:v1",
+    "none",
+    AutomationGrouping,
   );
 }
 
@@ -313,6 +367,7 @@ function EnvironmentTaskRows(props: {
   readonly environment: EnvironmentPresentation;
   readonly showEnvironment: boolean;
   readonly query: string;
+  readonly grouping: AutomationGrouping;
 }) {
   const { environmentId } = props.environment;
   const tasksQuery = useEnvironmentQuery(
@@ -322,6 +377,7 @@ function EnvironmentTaskRows(props: {
     () => tasksQuery.data?.tasks.filter((task) => matchesTaskQuery(task, props.query)) ?? null,
     [tasksQuery.data, props.query],
   );
+  const petalTitles = usePetalTitles(environmentId, props.grouping === "petal");
   useRelativeTimeTick(60_000);
   return (
     <TableBody>
@@ -341,13 +397,27 @@ function EnvironmentTaskRows(props: {
           {props.query.trim() ? "No automations match your search." : "No automations yet."}
         </TaskNoticeRow>
       ) : (
-        tasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            environmentId={environmentId}
-            task={task}
-            timeZone={tasksQuery.data?.timeZone}
-          />
+        groupAutomations(tasks, props.grouping, petalTitles).map((group) => (
+          <Fragment key={group.key}>
+            {group.label === null ? null : (
+              <TableRow className="hover:bg-transparent" data-testid="scheduled-task-group">
+                <TableCell
+                  colSpan={TASK_COLUMN_COUNT}
+                  className="font-medium text-muted-foreground"
+                >
+                  {group.label}
+                </TableCell>
+              </TableRow>
+            )}
+            {group.tasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                environmentId={environmentId}
+                task={task}
+                timeZone={tasksQuery.data?.timeZone}
+              />
+            ))}
+          </Fragment>
         ))
       )}
     </TableBody>

@@ -31,13 +31,13 @@ import { useActiveForkPalette } from "./forkActivePalette";
 import { useForkDraftLiquidGlass } from "./forkDraftLiquidGlass";
 import { useGlassNewAgentBackdrop } from "./forkGlassNewAgentPicture";
 import {
-  BASIC_TONE_OPTIONS,
+  BASIC_OPTIONS,
   COOL_DARKER_BACKGROUND,
   COOL_DARKER_THEME,
   INLET_BACKGROUND,
   INLET_COLOR_OPTIONS,
   type InletColor,
-  useActiveBasicTone,
+  useActiveBasicAppearance,
   useActiveInletColor,
 } from "./forkTheme";
 import { useInletNewAgentBackdrop } from "./inletNewAgentBackdropSetting";
@@ -53,15 +53,15 @@ const INLET_TEXTURE_COLORS: Record<InletColor, { ground: string; text: string }>
 };
 
 export function BasicNewAgentBackdrop(props: { readonly shown: boolean }) {
-  const tone = useActiveBasicTone();
+  const basicAppearance = useActiveBasicAppearance();
   const glass = useActiveForkPalette() === COOL_DARKER_THEME;
   const [basicBackdrop] = useBasicNewAgentBackdrop();
   const [glassBackdrop] = useGlassNewAgentBackdrop();
   const inletColor = useActiveInletColor();
   const [inletBackdrop] = useInletNewAgentBackdrop(inletColor ?? "black");
   if (!props.shown) return null;
-  if (tone !== null) {
-    const { base, text } = BASIC_TONE_OPTIONS[tone];
+  if (basicAppearance !== null) {
+    const { base, text } = BASIC_OPTIONS[basicAppearance];
     return <Picture backdrop={basicBackdrop} textureColors={{ ground: base, text }} />;
   }
   if (glass && glassBackdrop !== "portrait") {

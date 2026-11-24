@@ -94,25 +94,26 @@ function isRunning(thread: EnvironmentThreadShell): boolean {
   }
 }
 
+/** The usual card, shared so a memoized bot row keeps its props from one pass to the next. */
+const BOT_WORKING: BotWork = { attention: null, working: true };
+
 /** Per bot (`environmentId:threadId`), its work in one pass. Archived threads are put away, and
     so are settled ones unless they ask for the owner again; a failure counts until the owner has
     opened it. */
 export function botWorkByBot(
   threads: ReadonlyArray<EnvironmentThreadShell>,
 ): ReadonlyMap<string, BotWork> {
-  const byBot = new Map<string, { attention: BotWorkAttention | null; working: boolean }>();
-  const entry = (key: string) => {
-    const existing = byBot.get(key);
-    if (existing !== undefined) return existing;
-    const created = { attention: null, working: false };
-    byBot.set(key, created);
-    return created;
-  };
+  const byBot = new Map<string, BotWork>();
   for (const thread of threads) {
     if (thread.archivedAt !== null) continue;
-    if (isRunning(thread)) {
-      const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
-      if (botId !== undefined) entry(`${thread.environmentId}:${botId}`).working = true;
+    // Who the thread would count for first: the status read is the costly part, and most
+    // threads are neither a bot nor anyone's subagent.
+    const botId = isBotThread(thread.source) ? thread.id : threadParentOf(thread)?.threadId;
+    if (botId !== undefined && isRunning(thread)) {
+      const key = `${thread.environmentId}:${botId}`;
+      const previous = byBot.get(key);
+      if (previous === undefined) byBot.set(key, BOT_WORKING);
+      else if (!previous.working) byBot.set(key, { ...previous, working: true });
     }
     const owner = botWorkOwnerId(thread.source);
     if (owner === null || thread.pinnedAt !== null) continue;
@@ -121,15 +122,19 @@ export function botWorkByBot(
     if (status === "failed" && (thread.settledOverride === "settled" || !failureUnread(thread))) {
       continue;
     }
-    const work = entry(`${thread.environmentId}:${owner}`);
-    const previous = work.attention;
-    work.attention = {
-      status:
-        previous === null || ATTENTION_RANK[status] < ATTENTION_RANK[previous.status]
-          ? status
-          : previous.status,
-      count: (previous?.count ?? 0) + 1,
-    };
+    const key = `${thread.environmentId}:${owner}`;
+    const previous = byBot.get(key);
+    const attention = previous?.attention ?? null;
+    byBot.set(key, {
+      working: previous?.working ?? false,
+      attention: {
+        status:
+          attention === null || ATTENTION_RANK[status] < ATTENTION_RANK[attention.status]
+            ? status
+            : attention.status,
+        count: (attention?.count ?? 0) + 1,
+      },
+    });
   }
   return byBot;
 }

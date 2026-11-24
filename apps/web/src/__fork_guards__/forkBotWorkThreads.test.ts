@@ -53,6 +53,7 @@ const launchTool = readSibling("../../../server/src/mcp/toolkits/project/handler
 const server = readSibling("../../../server/src/server.ts");
 const wakeHold = readSibling("../../../server/src/scheduledTasks/forkScheduledWakeHold.ts");
 const threadsPanel = readSibling("../custom/bots/BotThreadsPanel.tsx");
+const iosThread = readSibling("../../../mobile/src/features/threads/ThreadDetailScreen.tsx");
 
 const AT = "2026-11-14T12:00:00.000Z";
 
@@ -386,6 +387,10 @@ describe("fork guard: fork-bot-work-threads", () => {
       /<ChildThreadApprovals threadRef=\{activeThreadRef\} \/>\s*\{\/\* fork:begin fork-bot-digest[\s\S]*?<BotDigestAsks threadRef=\{activeThreadRef \?\? null\} \/>/u,
     );
     expect(threadsPanel).not.toContain("BotDigest");
+    // iOS draws the same digest above its composer, from the parsing both clients share.
+    expect(iosThread).toMatch(
+      /<ChildThreadApprovals[\s\S]*?\/>\s*\{\/\* fork:begin fork-bot-digest[\s\S]*?<No3yBotDigest\n/u,
+    );
     expect(threadsPanel).toContain("openSidebarThreadMenu(ref, {");
     expect(sidebar).toContain("...botCrewMenuItems(");
     expect(sidebar).toContain("void setBotWork(thread, botId);");

@@ -1,6 +1,3 @@
-/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import { forkEffectiveZoom } from "../custom/forkTypographyScale";
-/* fork:end fork-typography-settings */
 const motionTiming = { duration: 150, easing: "ease-out" };
 const rowTravel = (height: number) => Math.min(height, 40);
 // Fades clone removed rows and animate clones and entries; intervening layout reads force reflows.
@@ -300,15 +297,11 @@ export function createSidebarListMotion(
     release() {
       suspend();
       const origin = parent.getBoundingClientRect().top;
-      /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings
-         Rects are visual px and offsetTop is local, so a zoomed sidebar needs the rects unzoomed. */
-      const zoom = forkEffectiveZoom(parent);
       released = new Map(
         Array.from(parent.children)
           .filter((node): node is HTMLElement => node instanceof HTMLElement && !exiting.has(node))
-          .map((node) => [node, (node.getBoundingClientRect().top - origin) / zoom]),
+          .map((node) => [node, node.getBoundingClientRect().top - origin]),
       );
-      /* fork:end fork-typography-settings */
     },
     suspend,
     dispose() {

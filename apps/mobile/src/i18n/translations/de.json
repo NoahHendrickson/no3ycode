@@ -2753,6 +2753,7 @@
   "eb5436c1e3d63332": "{count, plural, one {Filter, {count} aktiv} other {Filter, {count} aktiv}}",
   "5c2014db0ebd008f": "Weitere Filter",
   "96d9e225f8ef331b": "Pull-Request-Umgebung wählen",
+  "6a97fd3aaafa6dce": "Nach Projekt filtern",
   "52b927d1e3e7af8c": "Checks erfolgreich",
   "fc50eef55537db95": "Checks fehlgeschlagen",
   "570c6b35c94892df": "Checks ausstehend",

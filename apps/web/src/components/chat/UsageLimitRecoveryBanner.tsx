@@ -18,7 +18,7 @@ import { useState } from "react";
 import { useDeadlinePassed } from "../../hooks/useDeadline";
 import { OpenAI } from "../Icons";
 import { ChatGptUsageButton } from "../settings/ChatGptUsageButton";
-import { Button, InlineButton } from "../ui/button";
+import { Button } from "../ui/button";
 import { formatUpcomingTimestamp } from "../../timestampFormat";
 import { toastManager } from "../ui/toast";
 import type { ComposerBannerStackItem } from "./ComposerBannerStack";
@@ -120,6 +120,9 @@ export function usageLimitRecoveryBannerItem(
       title: resolve(msg("Usage limit reached")),
       description: resetDescription,
       actions: recoveryActions,
+      /* fork:begin fork-composer-banner-surface — see .fork/customizations.yaml#fork-composer-banner-surface */
+      noticeCard: true,
+      /* fork:end fork-composer-banner-surface */
     };
   }
   // OpenAI's partner guidelines specify this ChatGPT notice and its actions.
@@ -129,6 +132,9 @@ export function usageLimitRecoveryBannerItem(
     group: "environment",
     icon: <OpenAI aria-hidden="true" />,
     title: resolve(msg("ChatGPT usage limit reached")),
+    /* fork:begin fork-composer-banner-surface — see .fork/customizations.yaml#fork-composer-banner-surface */
+    noticeCard: true,
+    /* fork:end fork-composer-banner-surface */
     description: workspaceLimit
       ? resolve(
           msg("You've reached your workspace's limit for using your ChatGPT plan in other apps."),
@@ -194,7 +200,16 @@ function RecoveryActions({ runId, resetAt, recovery, snoozedUntil, onChange }: R
   // Inline errors would widen the actions column and crush the title.
   return (
     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
-      <InlineButton touchTarget="padded" disabled={pending} onClick={() => void toggle("resume")}>
+      {/* fork:begin fork-composer-banner-surface — see .fork/customizations.yaml#fork-composer-banner-surface
+          A notice card: resume is the primary action, as Unsettle is on the settled card,
+          and snooze the quiet secondary at the same size. */}
+      <Button
+        size="xs"
+        variant="default"
+        data-fork-composer-notice-action="primary"
+        disabled={pending}
+        onClick={() => void toggle("resume")}
+      >
         {pending
           ? gt("Saving...")
           : scheduled
@@ -202,14 +217,17 @@ function RecoveryActions({ runId, resetAt, recovery, snoozedUntil, onChange }: R
             : resetPassed
               ? gt("Resume now")
               : gt("Resume at reset")}
-      </InlineButton>
-      <InlineButton
-        touchTarget="padded"
+      </Button>
+      <Button
+        size="xs"
+        variant="ghost"
+        data-fork-composer-notice-action="secondary"
         disabled={pending || (!snoozed && resetPassed)}
         onClick={() => void toggle("snooze")}
       >
         {pending ? gt("Saving...") : snoozed ? gt("Wake now") : gt("Snooze until reset")}
-      </InlineButton>
+      </Button>
+      {/* fork:end fork-composer-banner-surface */}
     </span>
   );
 }

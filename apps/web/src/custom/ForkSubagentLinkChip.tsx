@@ -23,6 +23,7 @@ import {
   threadLinkCandidates,
 } from "@t3tools/shared/threadLinks";
 import { Link } from "@tanstack/react-router";
+import * as Equal from "effect/Equal";
 import { Atom } from "effect/reactivity";
 import { useGT } from "gt-react";
 import { createContext, use, useEffect, type ReactNode } from "react";
@@ -31,7 +32,6 @@ import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
 import { ThreadChipHoverCard } from "~/components/ThreadChipHoverCard";
 import { ThreadHoverCardPopup } from "~/components/ThreadHoverCard";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
-import { cn } from "~/lib/utils";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useProject } from "~/state/entities";
 import { environmentShell } from "~/state/shell";
@@ -44,8 +44,12 @@ import {
   isForkSubagentLinkThread,
   type ForkSubagentLinkKind,
 } from "./forkSubagentLinkLogic";
-import { CircleHalfIcon } from "./icons/lucide-hugeicons";
-import { SidebarV2IdleMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
+import { sidebarV2CardTopStatus } from "./sidebarV2CardStatus";
+import {
+  SidebarV2StatusMark,
+  SidebarV2StillMonitoringMark,
+  SidebarV2StillWorkingMark,
+} from "./SidebarV2StatusIndicator";
 
 /** Provided around assistant messages only; everything else keeps upstream's thread chip. */
 interface ForkSubagentLinkScopeValue {
@@ -105,7 +109,7 @@ const subagentLinkAtom = Atom.family((key: string) => {
     ThreadId | null,
   ];
   return Atom.make((get): SubagentLink | null => {
-    let shell = get(environmentThreadShells.threadShellAtom({ environmentId, threadId }));
+    let shell = get(environmentThreadShells.quietThreadShellAtom({ environmentId, threadId }));
     let staleKey: string | null = null;
     if (shell === null && familyThreadId !== null) {
       const read = selectEnvironmentQueryData(
@@ -142,11 +146,12 @@ const subagentHrefsAtom = Atom.family((key: string) => {
       if (!link) return false;
       const candidates = threadLinkCandidates(link, environmentId);
       const ref =
-        candidates.find((candidate) => get(environmentThreadShells.threadShellAtom(candidate))) ??
-        candidates[0];
+        candidates.find((candidate) =>
+          get(environmentThreadShells.quietThreadShellAtom(candidate)),
+        ) ?? candidates[0];
       return ref !== undefined && get(subagentLinkAtom(linkKey(ref, familyRef))) !== null;
     }),
-  ).pipe(Atom.withLabel(`fork-subagent-link-hrefs:${key}`));
+  ).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`fork-subagent-link-hrefs:${key}`));
 });
 
 /** The message without the period that closes a line after a subagent chip. */
@@ -168,48 +173,34 @@ export function useForkSubagentLinkText(
   return subagents.length === 0 ? text : dropPeriodAfterSubagentLinks(text, subagents, streaming);
 }
 
-const MARK_SLOT = "flex h-[14px] w-[12px] shrink-0 items-center justify-center";
-
-/** The sidebar's marks, drawn still and hidden: the link's name carries the status. */
-function SubagentLinkMark(props: {
+/** The sidebar's marks, with its still glyphs for working and waiting: nothing moves inside a
+    message. The link's accessible name carries the status, so the mark stays hidden.
+    @public — Storybook draws it. */
+export function SubagentLinkMark(props: {
   readonly kind: ForkSubagentLinkKind | null;
   readonly seed: string;
 }) {
-  switch (props.kind) {
-    case "working":
-      return (
-        <span aria-hidden className="text-sidebar-v2-status-working">
-          <SidebarV2WorkingMark seed={props.seed} still />
-        </span>
-      );
-    case "approval":
-    case "input":
-      return (
-        <span aria-hidden className={cn(MARK_SLOT, "text-sidebar-v2-status-input")}>
-          <CircleHalfIcon />
-        </span>
-      );
-    case "done":
-    case "failed":
-    case "waiting":
-      return (
-        <span
-          aria-hidden
-          className={cn(
-            MARK_SLOT,
-            props.kind === "done"
-              ? "text-sidebar-v2-status-done"
-              : props.kind === "failed"
-                ? "text-sidebar-v2-status-failed"
-                : "text-muted-foreground",
-          )}
-        >
-          <span className="size-2.5 rounded-full bg-current" />
-        </span>
-      );
-    case null:
-      return <SidebarV2IdleMark />;
-  }
+  return (
+    <span aria-hidden className="inline-flex shrink-0">
+      {props.kind === "working" ? (
+        <SidebarV2StillWorkingMark />
+      ) : props.kind === "waiting" ? (
+        <SidebarV2StillMonitoringMark />
+      ) : (
+        <SidebarV2StatusMark
+          status={sidebarV2CardTopStatus(props.kind, { goalActive: false })}
+          seed={props.seed}
+          idle="dot"
+          celebrate={false}
+        />
+      )}
+    </span>
+  );
+}
+
+/** The capsule inside an assistant message, where every thread link takes it; else upstream's chip. */
+export function useForkThreadLinkShape(): "capsule" | undefined {
+  return use(ForkSubagentLinkScopeContext) === null ? undefined : "capsule";
 }
 
 /** Renders `children`, the upstream chip, unless the link names a subagent in an assistant message. */
@@ -253,7 +244,7 @@ export function ForkSubagentLinkChip(props: {
             aria-label={gt("Thread, {title}", { title: `${title}, ${status}` })}
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
-            className="gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] text-foreground no-underline [--context-chip-ink:currentColor]"
+            shape="capsule"
           >
             <SubagentLinkMark kind={link.kind} seed={key} />
             <ContextChipLabel>{link.label || props.title}</ContextChipLabel>

@@ -696,7 +696,7 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(access).toContain('"approval-required": { icon: SquareLock02Icon, filled: true },');
     expect(access).toContain('"full-access": { icon: ShieldOffIcon, filled: false },');
     expect(modelPicker).toContain("onSelect={session.onUpdateRuntimeMode}");
-    expect(modelPicker).toContain("paddingBottom: insets.bottom + 24,");
+    expect(modelPicker).toContain("paddingBottom: insets.bottom + 24 }");
     expect(threadComposer).toContain("runtimeMode: props.selectedThread.runtimeMode");
     // The composer chip opens the half-sheet model picker on iPhone.
     expect(threadSettings).toContain("<No3yModelPickerHost onClose={props.onClose} />");
@@ -780,16 +780,27 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(readRepoFile("apps/mobile/fork/no3yPageColor.ts")).toContain(
       '"--color-grouped-card": NO3Y_CARD_COLOR,',
     );
-    // Transcript subagents draw as the Mac fork's card with the Threads list's status marks.
+    // Transcript subagents draw as rows of one grouped card with the Threads list's status marks.
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");
     expect(workLog).toContain("<No3ySubagentCardsSwap");
-    expect(subagentCards).toContain("<No3yStatusMark kind={mark} palette={palette} size={14} />");
+    expect(subagentCards).toContain(
+      "<No3yStatusMark kind={props.mark} palette={props.palette} size={14} />",
+    );
     expect(subagentCards).toContain("<No3yProviderMark");
     expect(subagentCards).not.toContain("sky");
     // No latest-activity line on the card.
     expect(subagentCards).not.toContain("no3ySubagentActivity");
-    expect(subagentCards).toContain("borderRadius: 20,");
+    expect(subagentCards).toContain("borderRadius: 18,");
+    // A batch is one card whose rows are split by hairlines, not a card per agent.
+    expect(subagentCards).toContain("borderTopColor: palette.hairline,");
+    // The Agents sheet draws the same card, with a quiet round stop button, not the red tile.
+    const agentsSheet = readRepoFile("apps/mobile/src/features/threads/ThreadAgentsSheet.tsx");
+    const agentsSheetRow = readRepoFile("apps/mobile/fork/No3yAgentsSheetRow.tsx");
+    expect(agentsSheet).toContain("<No3yAgentsSheetRowSwap");
+    expect(agentsSheetRow).toContain("<No3ySubagentTile");
+    expect(agentsSheetRow).toContain("<StopGlyphButton");
+    expect(agentsSheetRow).not.toContain('variant="danger"');
     // Chat: Threads' header shape, thread cards, and New agent's draft composer for a No-project
     // chat, kept with its Home tab and served by the new-task flow while the tab shows.
     const chat = readRepoFile("apps/mobile/fork/No3yChatTab.tsx");

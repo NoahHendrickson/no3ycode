@@ -120,7 +120,7 @@ export const CHROME_ROW_ICON_TINT = "[&>svg]:text-sidebar-foreground [&>svg]:opa
     a draft is held. The Threads label matches the status-section labels and
     spells its own. */
 const CHROME_TYPE =
-  "text-[0.875rem] leading-5 font-normal text-sidebar-foreground data-[active=true]:font-normal";
+  "text-sidebar-chrome font-normal text-sidebar-foreground data-[active=true]:font-normal";
 /** The Projects row's two icon buttons (Figma 368:21214 / 368:21215): the
     design system's 32px icon-only ghost button at muted foreground, the same
     box the project headers' plus and settings buttons draw. Icon tint is
@@ -144,7 +144,7 @@ const SORT_ORDERS: ReadonlyArray<SidebarProjectSortOrder> = ["updated_at", "crea
     SidebarMenuButton rather than ui/button so the row keeps the sidebar's own
     hover token and the base-icon displacement above. */
 const CHROME_ACTION = cn(
-  "h-8 w-full gap-1.5 rounded-[10px] border-0 bg-transparent px-3 hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+  "h-auto w-full gap-1.5 rounded-[10px] py-1.5 border-0 bg-transparent px-3 hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
   CHROME_TYPE,
   CHROME_ROW_ICON_TINT,
 );
@@ -428,7 +428,7 @@ function ChromeAutomationsRow() {
           // overflow-hidden still bounds the row.
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1.5 overflow-visible! text-[0.75rem] leading-4 text-muted-foreground tabular-nums",
+              "flex shrink-0 items-center gap-1.5 overflow-visible! text-sidebar-meta text-muted-foreground tabular-nums",
               SIDEBAR_V2_TRAILING_OFFSET.chromeStatus,
             )}
             data-testid="sidebar-v2-scheduled-activity"
@@ -643,7 +643,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     // data-fork-projects-row is the palette's hook: Glass re-inks this row, the
     // project headers and the card meta lines together (theme.custom.palettes.css).
     <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
-      <div className="flex h-8 items-center gap-1.5 px-3">
+      <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
             collapsed={props.collapsed === true}

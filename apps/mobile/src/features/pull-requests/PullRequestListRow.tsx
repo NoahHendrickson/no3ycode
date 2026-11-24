@@ -53,6 +53,52 @@ export function ListRowLabel(props: {
   );
 }
 
+/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+/** What VoiceOver reads for a list row; the no3y iPhone card reads the same. */
+export function pullRequestListRowAccessibilityLabel(
+  item: EnvironmentPullRequestListEntry,
+  gt: ReturnType<typeof useGT>,
+  m: ReturnType<typeof useMessages>,
+) {
+  const status = pullRequestStatus(item, m);
+  const conflict = pullRequestConflict(item, m);
+  const review = pullRequestListReviewStatus(item, m);
+  const checksSpoken = item.checksState
+    ? {
+        passing: gt("checks passing"),
+        failing: gt("checks failing"),
+        pending: gt("checks pending"),
+      }[item.checksState]
+    : null;
+  return [
+    gt("{term, select, mr {Merge request} cr {Change request} other {Pull request}} {number}", {
+      term: changeRequestTermKind(sourceControlClients.get(item.provider).changeRequest),
+      number: item.number,
+    }),
+    item.title,
+    status.label,
+    item.visibility === "private" ? gt("Private") : null,
+    conflict ? conflict.label.toLowerCase() : null,
+    gt("by {author}", { author: item.author?.login ?? gt("unknown author") }),
+    review ? review.accessibleLabel : null,
+    checksSpoken,
+    item.stack
+      ? gt("stack {position} of {size}", {
+          position: item.stack.position,
+          size: item.stack.size,
+        })
+      : null,
+    item.labels.length ? item.labels.map((label) => label.name).join(", ") : null,
+    gt("{additions} additions, {deletions} deletions", {
+      additions: item.additions,
+      deletions: item.deletions,
+    }),
+  ]
+    .filter((part) => part !== null)
+    .join(", ");
+}
+/* fork:end no3y-pr-list-bottom-filters */
+
 export const PullRequestListRow = memo(
   function PullRequestListRow(props: {
     readonly item: EnvironmentPullRequestListEntry;
@@ -84,13 +130,6 @@ export const PullRequestListRow = memo(
     const status = pullRequestStatus(item, m);
     const conflict = pullRequestConflict(item, m);
     const review = pullRequestListReviewStatus(item, m);
-    const checksSpoken = item.checksState
-      ? {
-          passing: gt("checks passing"),
-          failing: gt("checks failing"),
-          pending: gt("checks pending"),
-        }[item.checksState]
-      : null;
     const checksLabel = item.checksState
       ? {
           passing: gt("Checks passing"),
@@ -110,37 +149,9 @@ export const PullRequestListRow = memo(
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ selected: props.selected, busy: props.busy }}
-            accessibilityLabel={[
-              gt(
-                "{term, select, mr {Merge request} cr {Change request} other {Pull request}} {number}",
-                {
-                  term: changeRequestTermKind(
-                    sourceControlClients.get(item.provider).changeRequest,
-                  ),
-                  number: item.number,
-                },
-              ),
-              item.title,
-              status.label,
-              item.visibility === "private" ? gt("Private") : null,
-              conflict ? conflict.label.toLowerCase() : null,
-              gt("by {author}", { author: item.author?.login ?? gt("unknown author") }),
-              review ? review.accessibleLabel : null,
-              checksSpoken,
-              item.stack
-                ? gt("stack {position} of {size}", {
-                    position: item.stack.position,
-                    size: item.stack.size,
-                  })
-                : null,
-              item.labels.length ? item.labels.map((label) => label.name).join(", ") : null,
-              gt("{additions} additions, {deletions} deletions", {
-                additions: item.additions,
-                deletions: item.deletions,
-              }),
-            ]
-              .filter((part) => part !== null)
-              .join(", ")}
+            /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+            accessibilityLabel={pullRequestListRowAccessibilityLabel(item, gt, m)}
+            /* fork:end no3y-pr-list-bottom-filters */
             accessibilityHint={gt("Double tap to open. Touch and hold for quick actions.")}
             onPress={() => props.onSelect(item)}
             disabled={props.busy}

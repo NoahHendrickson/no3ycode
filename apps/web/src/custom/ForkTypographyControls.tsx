@@ -16,13 +16,15 @@ import {
 } from "~/components/ui/select";
 
 import {
+  DEFAULT_FORK_SIDEBAR_FONT_SIZE,
   DEFAULT_FORK_TYPOGRAPHY_SCALE,
   FORK_INTERFACE_FONT_PRESETS,
   FORK_TYPOGRAPHY_SCALE_OPTIONS,
   forkInterfaceFontPreset,
-  type ForkTypographyScale,
+  MAX_FORK_SIDEBAR_FONT_SIZE,
+  MIN_FORK_SIDEBAR_FONT_SIZE,
   useForkChatTextScale,
-  useForkSidebarZoom,
+  useForkSidebarFontSize,
 } from "./forkTypographyScale";
 
 const CUSTOM = "custom";
@@ -84,38 +86,57 @@ export function ForkFontPresetPicker({
   );
 }
 
-/** Sidebar size and Chat stream size. */
-export function ForkTypographyScaleRows() {
-  const [sidebarZoom, setSidebarZoom] = useForkSidebarZoom();
-  const [chatTextScale, setChatTextScale] = useForkChatTextScale();
+const SIDEBAR_FONT_SIZES = Array.from(
+  { length: MAX_FORK_SIDEBAR_FONT_SIZE - MIN_FORK_SIDEBAR_FONT_SIZE + 1 },
+  (_, index) => MIN_FORK_SIDEBAR_FONT_SIZE + index,
+);
+
+export function ForkSidebarFontSizeRow() {
+  const [size, setSize] = useForkSidebarFontSize();
   return (
-    <>
-      <ScaleRow
-        title="Sidebar size"
-        description="Text, icons, and spacing in the sidebar. Saved on this device."
-        scale={sidebarZoom}
-        onScaleChange={setSidebarZoom}
-      />
-      <ScaleRow
-        title="Chat stream size"
-        description="Text in messages and tool rows. Code follows the code font size. Saved on this device."
-        scale={chatTextScale}
-        onScaleChange={setChatTextScale}
-      />
-    </>
+    <SizeRow
+      title="Sidebar font size"
+      description="Thread titles, project names, and the rest of the sidebar, separate from the interface font size. Rows grow to fit. Saved on this device."
+      value={size}
+      defaultValue={DEFAULT_FORK_SIDEBAR_FONT_SIZE}
+      options={SIDEBAR_FONT_SIZES}
+      format={(px) => `${px} px`}
+      onChange={setSize}
+    />
   );
 }
 
-function ScaleRow({
+export function ForkChatStreamSizeRow() {
+  const [scale, setScale] = useForkChatTextScale();
+  return (
+    <SizeRow
+      title="Chat stream size"
+      description="Text in messages and tool rows. Code follows the code font size. Saved on this device."
+      value={scale}
+      defaultValue={DEFAULT_FORK_TYPOGRAPHY_SCALE}
+      options={FORK_TYPOGRAPHY_SCALE_OPTIONS}
+      format={(percent) => `${percent}%`}
+      onChange={setScale}
+    />
+  );
+}
+
+function SizeRow<T extends number>({
   title,
   description,
-  scale,
-  onScaleChange,
+  value,
+  defaultValue,
+  options,
+  format,
+  onChange,
 }: {
   readonly title: string;
   readonly description: string;
-  readonly scale: ForkTypographyScale;
-  readonly onScaleChange: (scale: ForkTypographyScale) => void;
+  readonly value: T;
+  readonly defaultValue: T;
+  readonly options: ReadonlyArray<T>;
+  readonly format: (value: T) => string;
+  readonly onChange: (value: T) => void;
 }) {
   return (
     <SettingsRow
@@ -123,28 +144,28 @@ function ScaleRow({
       description={description}
       devicePreference
       resetAction={
-        scale === DEFAULT_FORK_TYPOGRAPHY_SCALE ? null : (
+        value === defaultValue ? null : (
           <SettingResetButton
             ariaLabel={`Reset ${title.toLowerCase()} to default`}
-            onClick={() => onScaleChange(DEFAULT_FORK_TYPOGRAPHY_SCALE)}
+            onClick={() => onChange(defaultValue)}
           />
         )
       }
       control={
         <Select
-          value={String(scale)}
+          value={String(value)}
           onValueChange={(next) => {
-            const picked = FORK_TYPOGRAPHY_SCALE_OPTIONS.find((option) => String(option) === next);
-            if (picked !== undefined) onScaleChange(picked);
+            const picked = options.find((option) => String(option) === next);
+            if (picked !== undefined) onChange(picked);
           }}
         >
           <SelectTrigger size="sm" className="w-22 shrink-0" aria-label={title}>
-            <SelectValue>{scale}%</SelectValue>
+            <SelectValue>{format(value)}</SelectValue>
           </SelectTrigger>
           <SelectPopup align="end" alignItemWithTrigger={false}>
-            {FORK_TYPOGRAPHY_SCALE_OPTIONS.map((option) => (
+            {options.map((option) => (
               <SelectItem hideIndicator key={option} value={String(option)}>
-                {option}%
+                {format(option)}
               </SelectItem>
             ))}
           </SelectPopup>

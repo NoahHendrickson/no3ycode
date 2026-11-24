@@ -751,11 +751,10 @@ describe("mobile composer drafts", () => {
     expect(reloaded.cloudDrafts.signedOut).toEqual({});
   });
 
-  it.each([
-    { name: "notes.txt", mimeType: "text/plain" },
-    { name: "document-photo.png", mimeType: "image/png" },
-    { name: "recording.mp4", mimeType: "video/mp4" },
-  ])(
+  /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+  // Media gets no chip, so only a document can lose its last reference.
+  it.each([{ name: "notes.txt", mimeType: "text/plain" }])(
+    /* fork:end no3y-media-attachment-no-chip */
     "removes $name after its last reference is deleted, while retaining native images",
     async ({ name, mimeType }) => {
       const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);
@@ -802,6 +801,32 @@ describe("mobile composer drafts", () => {
       await cleanup.promise;
     },
   );
+
+  /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+  it.each([
+    { name: "document-photo.png", mimeType: "image/png" },
+    { name: "recording.mp4", mimeType: "video/mp4" },
+  ])("adds $name without a chip and keeps it through text edits", ({ name, mimeType }) => {
+    const key = `environment-1:media-no-chip-${name}`;
+    const media = {
+      id: "media-1",
+      type: "file" as const,
+      name,
+      mimeType,
+      sizeBytes: 4,
+      fileUri: `file:///${name}`,
+    };
+    setComposerDraftText(key, "keep this");
+    const insertion = captureComposerDraftInsertion(key, { start: 9, end: 9 });
+    expect(appendComposerDraftAttachments(key, [media], { appendReference: true, insertion })).toBe(
+      0,
+    );
+    expect(getComposerDraftSnapshot(key).text).toBe("keep this");
+    expect(getComposerDraftSnapshot(key).context?.records ?? []).toEqual([]);
+    setComposerDraftText(key, "plain text");
+    expect(getComposerDraftSnapshot(key).attachments).toEqual([media]);
+  });
+  /* fork:end no3y-media-attachment-no-chip */
 
   it("rejects attachments atomically when no context slots remain", async () => {
     const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);
@@ -983,6 +1008,56 @@ describe("mobile composer drafts", () => {
       expect(composerAttachmentCleanupMocks.remove).toHaveBeenCalledWith(files[0]!.fileUri);
     },
   );
+
+  /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+  // Callers without a captured insertion, such as zip entries, replace the remembered selection.
+  it.each(["captured", "remembered"])(
+    "frees a %s selected file's slot for a video that replaces it at the limit",
+    async (selection) => {
+      const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);
+      onTestFinished(() => outboxLoad.mockRestore());
+      const cleanup = Promise.withResolvers<void>();
+      composerAttachmentCleanupMocks.remove.mockImplementationOnce(async () => {
+        cleanup.resolve();
+        return undefined;
+      });
+      const key = `environment-1:replace-file-with-video-${selection}`;
+      const files = Array.from({ length: 100 }, (_, index) => ({
+        id: `file-${index}`,
+        type: "file" as const,
+        name: `notes-${index}.txt`,
+        mimeType: "text/plain",
+        sizeBytes: 4,
+        fileUri: `file:///notes-${index}.txt`,
+      }));
+      appendComposerDraftAttachments(key, files, { appendReference: true });
+      const firstLink = "[notes-0.txt](t3-context://v1/file/file-0)";
+      const insertion = captureComposerDraftInsertion(key, { start: 0, end: firstLink.length });
+      const video = {
+        ...files[0]!,
+        id: "video",
+        name: "clip.mov",
+        mimeType: "video/quicktime",
+        fileUri: "file:///clip.mov",
+      };
+      if (selection === "remembered") {
+        rememberComposerDraftSelection(key, insertion.text, { start: 0, end: firstLink.length });
+      }
+      expect(
+        appendComposerDraftAttachments(key, [video], {
+          appendReference: true,
+          ...(selection === "captured" ? { insertion } : {}),
+        }),
+      ).toBe(0);
+      const draft = getComposerDraftSnapshot(key);
+      expect(draft.attachments).toEqual([...files.slice(1), video]);
+      expect(draft.text).toBe(insertion.text.slice(firstLink.length));
+      expect(draft.context?.records.some((record) => record.contextId === "file-0")).toBe(false);
+      await cleanup.promise;
+      expect(composerAttachmentCleanupMocks.remove).toHaveBeenCalledWith(files[0]!.fileUri);
+    },
+  );
+  /* fork:end no3y-media-attachment-no-chip */
 
   it("rejects an imported file atomically when edits during import use up its replacement slot", async () => {
     const outboxLoad = vi.spyOn(threadOutboxManager, "load").mockResolvedValue(true);

@@ -156,7 +156,9 @@ function Harness(props: {
       hasSendableContent={sendState.hasSendableContent}
       isEditingQueuedMessage
       onSubmitMessage={() => void result.saveEdit(savedContent(draft.prompt), () => {})}
-      onPreviousPendingQuestion={() => {}}
+      /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+         Previous lives in the question card, so there is no onPreviousPendingQuestion. */
+      /* fork:end fork-pending-user-input */
       onInterrupt={() => {}}
     />
   ) : null;

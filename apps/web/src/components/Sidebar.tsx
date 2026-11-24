@@ -35,9 +35,7 @@ import { SIDEBAR_V2_PROJECT_HEADER_SORTING_STRATEGY } from "~/custom/SidebarV2Pr
 import { sidebarV2ProjectSectionCollision } from "~/custom/sidebarV2ProjectGrouping";
 /* fork:end sidebar-v2-project-grouping */
 import { restrictToFirstScrollableAncestor, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import { forkSidebarSortableTranslate } from "../custom/forkTypographyScale";
-/* fork:end fork-typography-settings */
+import { CSS } from "@dnd-kit/utilities";
 import {
   canSnooze,
   effectiveSnoozed,
@@ -93,7 +91,6 @@ import {
   ClockIcon,
   GitBranchIcon,
   PinIcon,
-  PinOffIcon,
   PlusIcon,
   SquarePenIcon,
   TerminalIcon,
@@ -117,10 +114,8 @@ import { ChevronDownIcon } from "lucide-react";
 import { Globe2Icon } from "lucide-react";
 /* fork:end sidebar-v2-dev-server-pulse */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-// PinOffIcon used to need a statement of its own here, for the phosphor-guard
-// reason XIcon and Globe2Icon still do. Upstream's v0.0.33 unpin-from-
-// multi-select imports it in its own list, so the fork's hover unpin action
-// reads it from there; keep the name in that list.
+// Upstream imports PinOffIcon in its list for its pin marker's hover swap; the
+// fork's marker unpins on its own filled pin, so the name is dropped from it.
 /* fork:end sidebar-v2-row-action-hit-area */
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
 // The card's PR badge leads with the glyph (Figma 364:14308). GitPullRequestIcon
@@ -498,6 +493,7 @@ import {
   splitThreadDragSourceProps,
 } from "~/custom/splitThreads/splitThreadDrag";
 import { buildSidebarSplitModel } from "~/custom/splitThreads/sidebarSplitRows";
+import { SidebarDockedMark, useThreadDocked } from "~/custom/splitThreads/SidebarDockedMark";
 import { useSplitThreadStore } from "~/custom/splitThreads/splitThreadStore";
 import { useStableCallback } from "~/hooks/useStableCallback";
 /* fork:end fork-split-threads */
@@ -704,14 +700,14 @@ function threadTimeTimestamp(thread: SidebarThreadSummary): string {
    while they are skipped. The li carries no padding of its own, so it equals the drawn card. */
 const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // 8 + 18 + 4 + 16 + 8, sidebarV2CardHeight() in custom/sidebarV2CardAlignment.
-  card: "[contain-intrinsic-size:auto_54px]",
+  card: "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_20px)]",
   // The title line alone, 7 + 18 + 7, sidebarV2CompactCardHeight() (sidebar-v2-compact-cards).
-  compact: "[contain-intrinsic-size:auto_32px]",
-  // A bot's avatar card, 6 + 16 + 2 + 14 + 6 (fork-bots, custom/bots/SidebarV2BotCardBody).
-  bot: "[contain-intrinsic-size:auto_44px]",
-  "bot-compact": "[contain-intrinsic-size:auto_32px]",
+  compact: "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_14px)]",
+  // A bot's avatar card, 6 + 16 + 2 + 14 + 6; the rows never drop below the 32px mascot (fork-bots).
+  bot: "[contain-intrinsic-size:auto_calc(max(16px,var(--spacing-sidebar-16))_+_max(14px,var(--spacing-sidebar-14))_+_14px)]",
+  "bot-compact": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_14px)]",
   // A Petals grid tile, 8 + 28 + 12 + 10 (fork-bots).
-  "bot-grid": "[contain-intrinsic-size:auto_58px]",
+  "bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-12)_+_46px)]",
 };
 /* fork:end sidebar-v2-card-rows */
 
@@ -1240,6 +1236,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   } = props;
   const threadRef = scopeThreadRef(thread.environmentId, thread.id);
   const threadKey = scopedThreadKey(threadRef);
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  const docked = useThreadDocked(threadRef);
+  /* fork:end fork-split-threads */
   const canOperateThread = useEnvironmentScope(thread.environmentId, AuthOrchestrationOperateScope);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- losing operate access cancels the rename the parent owns
   useEffect(() => {
@@ -1606,12 +1605,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   }
   const showSnoozeButton =
     canOperateThread && props.snoozeSupported && canSnooze(thread, { now: snoozeGateNow });
+  /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
+  const canPin = canOperateThread && props.pinningSupported;
+  const showPinAction = canPin && !props.isPinned;
+  /* fork:end sidebar-v2-row-action-hit-area */
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
   // After showSnoozeButton — using it above its declaration fails typecheck.
   // Settle and pin write to the thread, so a read-only connection loses them
   // (upstream #9787); discarding a client-only draft never reaches the server.
   const hasHoverActions =
-    (canOperateThread && (props.settlementSupported || props.pinningSupported)) ||
+    (canOperateThread && props.settlementSupported) ||
+    showPinAction ||
     showSnoozeButton ||
     showDiscardDraft;
   /* fork:end sidebar-v2-draft-rows */
@@ -1697,7 +1701,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         className={cn(
           "min-w-0 flex-1 transition-opacity motion-reduce:transition-none",
           // Card titles own size+leading in threadCardTitleClassName
-          // (0.875rem / 14px). text-xs here used to win the cascade and inject
+          // (text-sidebar-title). text-xs here used to win the cascade and inject
           // --text-xs--line-height: 1rem (16px), which grew the title row past
           // its h-[14px] via flex min-height:auto — the rain then read as 16px.
           variant === "card"
@@ -1750,8 +1754,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             className={cn(
               "shrink-0",
               variant === "card" &&
-                // oxlint-disable-next-line shadcn/no-restyle, shadcn/no-arbitrary-values -- the card's 12px meta
-                "flex items-center gap-1 [&>span]:text-[0.75rem] [&>span]:leading-4",
+                // oxlint-disable-next-line shadcn/no-restyle -- the card's 12px meta
+                "flex items-center gap-1 [&>span]:text-sidebar-meta",
               // Settled history mutes its PR state at rest, like the favicon
               // beside it; hovering or focusing the row brings the color back.
               variant === "slim" &&
@@ -1812,13 +1816,27 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     </Tooltip>
   ) : null;
   /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-     Upstream hoists one pin marker that doubles as an unpin button in every
-     row variant. Unpin stays a card hover action (below) and a context-menu
-     item here, so both the card's title line and the slim shelves draw this
-     passive marker: a pinned thread shows it wherever it sits, without a
-     second 12px target. */
+     A pinned thread's marker is its unpin button, on the card's title line and
+     the slim shelves alike; the hover cell only offers Pin. -m-1.5 keeps the
+     24px target at the glyph's 12px footprint. Without pinning rights it stays
+     a passive mark. With no hovering pointer it takes no taps: its 44px coarse
+     hit area would cover the title and repo line, so a tap meant to open the
+     thread unpinned it. Touch unpins from the row menu. */
+  const pinGlyph = <PinIcon weight="fill" className="size-3 text-foreground dark:text-white" />;
   const pinIndicator = props.isPinned ? (
-    <PinIcon aria-label="Pinned" role="img" className="size-3 shrink-0 text-muted-foreground/65" />
+    canPin ? (
+      <SidebarV2IconButton
+        aria-label="Unpin thread"
+        onClick={handleUnpinClick}
+        className="-m-1.5 [@media(any-hover:none)]:pointer-events-none"
+      >
+        {pinGlyph}
+      </SidebarV2IconButton>
+    ) : (
+      <span role="img" aria-label="Pinned" className="inline-flex shrink-0">
+        {pinGlyph}
+      </span>
+    )
   ) : null;
   /* fork:end sidebar-v2-row-action-hit-area */
   // A sweep shows the action it will apply on release where the status and
@@ -1865,7 +1883,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 data-fork-thread-row=""
                 /* fork:end fork-inlet-theme */
                 aria-busy={isRegeneratingTitle || undefined}
-                className={cn(rowSurfaceClassName, "flex h-9 items-center gap-2.5 px-2.5")}
+                className={cn(rowSurfaceClassName, "flex min-h-9 items-center gap-2.5 px-2.5")}
                 onClick={handleClick}
                 onDoubleClick={handleDoubleClick}
                 onKeyDown={handleKeyDown}
@@ -2059,11 +2077,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   snoozeMenuOpen && "opacity-0",
                 )}
               >
-                <span
-                  aria-hidden
-                  // oxlint-disable-next-line shadcn/no-arbitrary-values -- the drawn 11/15 duration
-                  className="text-[11px] leading-[15px] text-foreground tabular-nums"
-                >
+                <span aria-hidden className="text-sidebar-caption text-foreground tabular-nums">
                   <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
                 </span>
               </span>
@@ -2100,19 +2114,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 )}
               >
                 {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                          Pin leads the cell, ahead of snooze: the two literal
-                          labels are separate branches on purpose — the hit-area
-                          guard counts each label's call sites. */}
-                {props.pinningSupported && canOperateThread ? (
-                  props.isPinned ? (
-                    <SidebarV2IconButton aria-label="Unpin thread" onClick={handleUnpinClick}>
-                      <PinOffIcon className="size-3" />
-                    </SidebarV2IconButton>
-                  ) : (
-                    <SidebarV2IconButton aria-label="Pin thread" onClick={handlePinClick}>
-                      <PinIcon className="size-3" />
-                    </SidebarV2IconButton>
-                  )
+                          Pin leads the cell, ahead of snooze. A pinned card
+                          unpins from its marker (pinIndicator), not from here. */}
+                {showPinAction ? (
+                  <SidebarV2IconButton aria-label="Pin thread" onClick={handlePinClick}>
+                    <PinIcon weight="stroke" className="size-3" />
+                  </SidebarV2IconButton>
                 ) : null}
                 {/* fork:end sidebar-v2-row-action-hit-area */}
                 {showSnoozeButton ? (
@@ -2177,6 +2184,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           />
         </span>
         {/* fork:end sidebar-v2-card-rows */}
+        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+            Last on the line, at the content edge: ms-0.5 gives back the 2px the status box's
+            own edge pull takes from the gap. */}
+        {docked && !isSwept ? (
+          <SidebarDockedMark className={cn("ms-0.5", SIDEBAR_V2_TRAILING_OFFSET.cardStatus)} />
+        ) : null}
+        {/* fork:end fork-split-threads */}
         {isSwept ? sweepBadge : null}
       </span>
     </>
@@ -2198,9 +2212,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       style={
         sortable
           ? {
-              /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-              transform: forkSidebarSortableTranslate(sortable.transform),
-              /* fork:end fork-typography-settings */
+              transform: CSS.Translate.toString(sortable.transform),
               transition: sortable.transition,
             }
           : undefined
@@ -2303,7 +2315,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 status slot below. */}
               <div
                 className={cn(
-                  "flex h-[18px] min-h-[18px] min-w-0 items-center",
+                  "flex h-sidebar-18 min-h-sidebar-18 min-w-0 items-center",
                   SIDEBAR_V2_CARD_ALIGNMENT.titleGap,
                 )}
               >
@@ -3360,6 +3372,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
      order, and which cards take a drop. Pinned rows sort through dnd-kit and
      shelf rows carry their own actions, so only active cards pair. */
   const splitPairs = useSplitThreadStore((state) => state.pairs);
+  const dockActive = useSplitThreadStore((state) => state.docked !== null);
   const splitModel = useMemo(() => {
     const shelvedThreadKeys = new Set(
       [...visibleSnoozedThreads, ...renderedSettledThreads].map((thread) =>
@@ -3490,7 +3503,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     navigateToThread(threadRef),
   );
   const splitDropHandlers = makeSplitDropHandlers({
-    canPair: (threadKey) => splitModel.pairable.has(threadKey),
+    // A pair made while a thread is docked would stay hidden behind the dock.
+    canPair: (threadKey) => !dockActive && splitModel.pairable.has(threadKey),
     openThreadKey: routeThreadKey,
     openThread: openDroppedThread,
   });
@@ -5263,7 +5277,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
           draftCaps.canPin &&
           /* fork:end sidebar-v2-draft-rows */
-          isCard &&
           serverConfigs.get(thread.environmentId)?.environment.capabilities.threadPinning === true
         }
         onPin={attemptPin}
@@ -5642,7 +5655,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       if (splitRow === undefined) {
                         return renderOneThreadRow(thread, section, options);
                       }
+                      // A docked thread owns the column, so the pair is not what is open.
                       const pairOpen =
+                        !dockActive &&
                         routeRowThreadKey !== null &&
                         splitRow.memberKeys.includes(routeRowThreadKey);
                       return (

@@ -37,8 +37,7 @@ const iconButton = readSibling("../custom/SidebarV2IconButton.tsx");
  * has lost its button; one that appears more often has grown a call site this
  * guard has never seen. */
 const ROW_ACTIONS: ReadonlyArray<readonly [label: string, count: number]> = [
-  // Pin and Unpin are one slot with two literal labels: the card renders one
-  // branch per state so each label stays greppable here.
+  // Pin is the card's hover action; Unpin is the pinned marker both variants draw.
   ["Pin thread", 1],
   ["Unpin thread", 1],
   ["Snooze thread", 1],
@@ -113,17 +112,24 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(found).toEqual(ROW_ACTIONS.map(([label, count]) => [label, count]));
   });
 
-  it("leads the card's hover cell with pin, ahead of snooze", () => {
-    // The manifest claims placement, so the guard has to see sibling order:
-    // both pin branches render before the SnoozeMenuButton in the same
-    // actions cell. Source order is render order inside one flex row.
+  it("leads the card's hover cell with pin, and unpins from the pinned marker", () => {
+    // Source order is render order inside the hover cell's flex row.
     const pin = sidebarV2.indexOf('aria-label="Pin thread"');
-    const unpin = sidebarV2.indexOf('aria-label="Unpin thread"');
     const snooze = sidebarV2.indexOf("<SnoozeMenuButton");
     expect(pin).toBeGreaterThanOrEqual(0);
-    expect(unpin).toBeGreaterThanOrEqual(0);
     expect(snooze).toBeGreaterThan(pin);
-    expect(snooze).toBeGreaterThan(unpin);
+    // The one Unpin (the census above counts it) is the pinned marker itself, not a
+    // hover action: the nearest declaration above it is pinIndicator.
+    const unpin = sidebarV2.indexOf('aria-label="Unpin thread"');
+    expect(unpin).toBeGreaterThanOrEqual(0);
+    const declaration = /const (\w+) =/gu;
+    const owners = [...sidebarV2.slice(0, unpin).matchAll(declaration)];
+    expect(owners.at(-1)?.[1]).toBe("pinIndicator");
+    // Visible at rest, so on a touch-only screen its 44px coarse hit area would
+    // swallow taps meant to open the row.
+    expect(openingTags("Unpin thread")[0]).toContain(
+      "[@media(any-hover:none)]:pointer-events-none",
+    );
   });
 
   it("lets no action re-grow padding of its own", () => {

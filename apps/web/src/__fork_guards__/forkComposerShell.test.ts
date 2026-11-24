@@ -638,10 +638,11 @@ describe("fork guard: fork-composer-shell", () => {
     expect(action?.body).toMatch(/height:\s*var\(--fork-composer-action-slot\)/u);
     expect(theme).toMatch(/--fork-composer-action-slot:\s*32px/u);
     expect(action?.body).toMatch(/border-radius:\s*8px/u);
-    // Stop is flat like send; upstream's shadows read as a dark bottom lip.
+    // Stop is a ghost icon button: no fill, no shadow, the control row's ink.
     const stop = rules.find((rule) =>
-      rule.selector.endsWith('.dark [data-fork-composer-action="stop"]'),
+      rule.selector.endsWith('] [data-fork-composer-action="stop"]'),
     );
+    expect(stop?.body).toMatch(/background:\s*transparent/u);
     expect(stop?.body).toMatch(/box-shadow:\s*none/u);
     // Upstream's attach-files button (#8236) mounts in the primary cluster;
     // the fork moves it to the control row. It is stamped by name like send
@@ -794,6 +795,7 @@ describe("fork guard: fork-composer-shell", () => {
 
   it("puts the thread's PR and its background work in chips above the composer", () => {
     const work = readSibling("../custom/ComposerBackgroundWork.tsx");
+    const lifecycle = readSibling("../components/chat/useThreadLifecycle.tsx");
     const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
     const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     const composer = readSibling("../components/chat/ChatComposer.tsx");
@@ -803,13 +805,33 @@ describe("fork guard: fork-composer-shell", () => {
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
     // The row sits in flow above the vessel and hides when no chip renders.
     expect(shell).toContain('data-fork-composer-status-chips="true"');
+    // Banners are cards between the chips and the vessel, not floor inside it.
+    expect(shell.indexOf('data-fork-composer-status-chips="true"')).toBeLessThan(
+      shell.indexOf('data-fork-composer-banners="true"'),
+    );
+    expect(composer).toMatch(/banners=\{\s*<ComposerBanner\.Dock>/u);
+    expect(theme).toContain(
+      ':root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {',
+    );
     expect(shell).toContain("empty:hidden");
     expect(composer).toContain("statusChips={props.statusChips}");
     expect(chatView).toContain("statusChips={composerStatusChips}");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
-    expect(work).toContain("SidebarV2WorkingMark");
-    expect(work).toContain("SidebarV2MonitoringMark");
+    // A fill travels the Layers02 mark front → middle → back; reduced motion hides it.
+    expect(work).toContain("<BackgroundWorkLayersMark />");
+    expect(shellCss).toMatch(
+      /prefers-reduced-motion: reduce\)\s*\{[^{}]*svg\[data-fork-layer-fill\] \{\s*display: none;/u,
+    );
+    expect(work).toContain("composerBackgroundWorkLabel(props.items)");
+    // An unpressable Stop is not drawn, and a live run leaves Stop to the composer.
+    expect(work).toContain("{props.canStop ? (");
+    expect(chatView).toContain("canStop={canStopBackgroundWork}");
+    expect(lifecycle).toContain(
+      "const canStopBackgroundWork = !runIsLive && canOperateThread && activeBackgroundTasks.length > 0;",
+    );
+    // A live run's own subagents join the chip, not only work the run left pending.
+    expect(chatView).toContain("composerBackgroundWorkItems(");
     expect(work).toContain('role="status"');
     expect(work).toContain("Stop background work");
     expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
@@ -820,9 +842,8 @@ describe("fork guard: fork-composer-shell", () => {
     // Nothing of the work rides the usage drawer or the context row any more.
     expect(usage).not.toContain("backgroundWork");
     expect(chatView).not.toContain("composerContextTrailing");
-    expect(shell).toContain(
-      'className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"',
-    );
+    // The usage drawer's floating slot went with the drawer.
+    expect(shell).not.toContain("topVessel");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
     expect(branchToolbar).toContain(
@@ -833,8 +854,37 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
     expect(shellCss).toContain("[data-fork-composer-status-chip]");
+    // A status list, not a menu: a Popover whose rows stay reachable, on the composer's corners.
+    expect(work).toContain("<PopoverPopup");
     expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
+    expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
+  it("paints a started thread's composer menus solid on Flat Glass, glass on a new agent", () => {
+    // Scoped off while a new agent's draft shows; its menus open over a picture.
+    const solid = paletteRules.find(
+      (rule) =>
+        rule.selector.includes("[data-fork-draft-hero-shown]") &&
+        rule.selector.includes("[data-fork-background-work-popup]"),
+    );
+    expect(solid, "the solid composer-menu rule must exist").toBeDefined();
+    for (const marker of [
+      '[data-chat-composer-floating-layer="true"]',
+      '[data-fork-tab-menu="composer"]',
+      '.dropdown-glass:has(> [data-chat-composer-floating-layer="true"])',
+    ]) {
+      expect(solid?.selector).toContain(marker);
+    }
+    expect(solid?.selector.replace(/\s+/gu, "")).toContain(":not([data-fork-draft-hero-shown])");
+    // Tokens only, so the popup-surface rule paints and Liquid Glass cutouts keep their own fill.
+    // The material is the popup frost laid over the stage, which is opaque, with no blur.
+    const body = solid?.body.replace(/\s+/gu, " ") ?? "";
+    expect(body).toContain("--fork-popup-filter: none;");
+    expect(body).toContain(
+      "--fork-popup-fill: color-mix( in srgb, var(--contrast-foreground) 8%, color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base)) );",
+    );
+    expect(body).not.toMatch(/(^|;)\s*(background|backdrop-filter)\s*:/u);
+  });
+
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the
     // composer to cover it. That fails wherever the composer is translucent —

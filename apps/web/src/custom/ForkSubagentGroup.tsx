@@ -296,18 +296,7 @@ function ForkSubagentCard(props: {
       ? scopeThreadRef(environmentId, member.childThreadId)
       : null,
   )?.source.title;
-  // Selected down to the label, so a provider update re-renders only the cards whose effort changed.
-  const effort = useAtomValue(serverEnvironment.providersValueAtom(environmentId), (providers) => {
-    const provider = providers?.find(
-      (candidate) => candidate.instanceId === member.providerInstanceId,
-    );
-    const { modelSlug } = resolveSubagentMetadata({
-      model: member.model,
-      modelSelection: member.modelSelection,
-      provider,
-    });
-    return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
-  });
+  const effort = useForkSubagentEffort(member, environmentId);
   return (
     <ForkSubagentCardView
       member={childTitle ? { ...member, title: formatSubagentDisplayTitle(childTitle) } : member}
@@ -320,6 +309,25 @@ function ForkSubagentCard(props: {
       openInPanel={opener.panel}
     />
   );
+}
+
+/** The reasoning effort a subagent runs at, in the picker's words; null when none is reported.
+    Selected down to the label, so a provider update re-renders only the cards whose effort changed. */
+export function useForkSubagentEffort(
+  member: Pick<ForkSubagentTreeRow, "model" | "modelSelection" | "providerInstanceId">,
+  environmentId: EnvironmentId,
+): string | null {
+  return useAtomValue(serverEnvironment.providersValueAtom(environmentId), (providers) => {
+    const provider = providers?.find(
+      (candidate) => candidate.instanceId === member.providerInstanceId,
+    );
+    const { modelSlug } = resolveSubagentMetadata({
+      model: member.model,
+      modelSelection: member.modelSelection,
+      provider,
+    });
+    return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
+  });
 }
 
 /** @public — the card as drawn, without the timeline's state; Storybook renders it on its own. */
@@ -341,8 +349,6 @@ export function ForkSubagentCardView(props: {
   const trigger = useSideThreadTrigger();
   const remote = member.remote;
   const failed = member.mark === "failed";
-  // The status is the tile's badge; the line under the title says what it runs on.
-  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
   // One list of rows: a subagent that has only just started can have none yet, and then the card
   // offers no chevron and no well.
   const details: Array<{ readonly term: string; readonly detail: ReactNode }> = [];
@@ -367,65 +373,12 @@ export function ForkSubagentCardView(props: {
     });
   }
   const identity = (
-    <>
-      <span
-        aria-hidden
-        className="relative flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-border bg-accent"
-      >
-        {/* A linked environment's task names its driver only as a label; the avatar resolves the
-            provider that really runs it there. */}
-        {remote === undefined && hasForkProviderMark(member.driver) ? (
-          <>
-            <span className="flex" style={MARK_SIZE}>
-              <ForkProviderMark driver={member.driver} />
-            </span>
-            {/* As the model picker does: the resolved avatar over the mark, glyph hidden, draws
-                the instance badge alone when shouldShowInstanceBadge asks for one, in the corner
-                the status mark leaves free. */}
-            <EnvironmentSubagentAvatar
-              environmentId={environmentId}
-              providerInstanceId={member.providerInstanceId}
-              driver={member.driver}
-              className="absolute inset-0 size-auto rounded-none border-0 bg-transparent ring-0"
-              providerIconClassName="absolute inset-0"
-              iconClassName="hidden"
-              badgeClassName="top-[-0.3125rem] right-[-0.3125rem] bottom-auto h-3 min-w-3 px-0.5 text-5xs"
-            />
-          </>
-        ) : (
-          <EnvironmentSubagentAvatar
-            environmentId={environmentId}
-            providerInstanceId={member.providerInstanceId}
-            driver={member.driver}
-            remote={remote}
-            className="size-5 rounded-none border-0 bg-transparent ring-0"
-            iconClassName="size-5"
-          />
-        )}
-        <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full bg-card">
-          <span className="flex scale-75 items-center justify-center">
-            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
-          </span>
-        </span>
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-        <span
-          id={titleId}
-          className="w-full min-w-0 truncate text-sm leading-4 font-medium text-foreground"
-        >
-          {member.title}
-        </span>
-        <span
-          className={cn(
-            "w-full min-w-0 truncate text-xs leading-4",
-            failed && !spec ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
-          )}
-        >
-          {spec || member.statusLabel}
-          {remote !== undefined ? ` · on ${remote.label}` : null}
-        </span>
-      </span>
-    </>
+    <ForkSubagentIdentity
+      member={member}
+      effort={props.effort}
+      titleId={titleId}
+      environmentId={environmentId}
+    />
   );
   const elapsed = member.startedAt ? (
     <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
@@ -505,6 +458,80 @@ export function ForkSubagentCardView(props: {
         </dl>
       )}
     </div>
+  );
+}
+
+/** A card's header identity: the provider's mark in a tile with the status mark in its corner,
+    the title over the model and effort. The composer's background-work list draws it too. */
+export function ForkSubagentIdentity(props: {
+  readonly member: ForkSubagentTreeRow;
+  readonly effort?: string | null | undefined;
+  readonly titleId?: string | undefined;
+  readonly environmentId: EnvironmentId;
+}) {
+  const { member, titleId, environmentId } = props;
+  const remote = member.remote;
+  const failed = member.mark === "failed";
+  // The status is the tile's badge; the line under the title says what it runs on.
+  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
+  return (
+    <>
+      <span
+        aria-hidden
+        data-fork-task-tile
+        className="relative flex size-8 shrink-0 items-center justify-center"
+      >
+        {/* A linked environment's task names its driver only as a label; the avatar resolves the
+            provider that really runs it there. */}
+        {remote === undefined && hasForkProviderMark(member.driver) ? (
+          <>
+            <span className="flex" style={MARK_SIZE}>
+              <ForkProviderMark driver={member.driver} />
+            </span>
+            {/* As the model picker does: the resolved avatar over the mark, glyph hidden, draws
+                the instance badge alone when shouldShowInstanceBadge asks for one, in the corner
+                the status mark leaves free. */}
+            <EnvironmentSubagentAvatar
+              environmentId={environmentId}
+              providerInstanceId={member.providerInstanceId}
+              driver={member.driver}
+              className="absolute inset-0 size-auto rounded-none border-0 bg-transparent ring-0"
+              providerIconClassName="absolute inset-0"
+              iconClassName="hidden"
+              badgeClassName="top-[-0.3125rem] right-[-0.3125rem] bottom-auto h-3 min-w-3 px-0.5 text-5xs"
+            />
+          </>
+        ) : (
+          <EnvironmentSubagentAvatar
+            environmentId={environmentId}
+            providerInstanceId={member.providerInstanceId}
+            driver={member.driver}
+            remote={remote}
+            className="size-5 rounded-none border-0 bg-transparent ring-0"
+            iconClassName="size-5"
+          />
+        )}
+        <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full bg-card">
+          <span className="flex scale-75 items-center justify-center">
+            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
+          </span>
+        </span>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+        <span id={titleId} className="w-full min-w-0 truncate text-sm leading-5 text-foreground">
+          {member.title}
+        </span>
+        <span
+          className={cn(
+            "w-full min-w-0 truncate text-xs leading-4",
+            failed && !spec ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
+          )}
+        >
+          {spec || member.statusLabel}
+          {remote !== undefined ? ` · on ${remote.label}` : null}
+        </span>
+      </span>
+    </>
   );
 }
 

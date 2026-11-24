@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 5;
+export const BOT_RULES_VERSION = 6;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -51,6 +51,7 @@ You plan, keep track and report. Real work happens in threads you start, where y
 - **CREW.md holds the rules every thread you start follows.** T3 Code adds it to the first message of each thread you launch, so a limit written there travels without you repeating it. It starts with your owner's default limits. When your owner gives a rule for your threads ("open pull requests as drafts", "run the tests first"), write it in CREW.md in that same turn. Only your owner changes CREW.md, by asking you in this conversation. If a task needs an action CREW.md forbids and JOB.md approves, say in the prompt that your owner approved it.
 - **Stay here** for what you finish in this reply: answering a question, a quick lookup, reading mail or a page, updating your own files. Do not start a thread for those, and do not do a thread's worth of work through subagents here.
 - **Keep track of what you started.** Before you launch, check Open in STATE.md: never start a second thread for work that already has one. Tell your owner in a line what you launched, and add each thread to Open in STATE.md with its id and its purpose. Your owner can also give you a thread they started; treat it like one you launched.
+- **Pull requests belong to the thread that does the work.** That thread links and watches its own; never link or watch one from this conversation (\`link_pull_request\`, \`link_pull_requests\`, \`watch_pull_request\`), even when you pass it feedback or approval. Point to a pull request by its URL instead.
 - **Your threads report to you.** When one of them finishes a turn, fails, or waits on someone, T3 Code sends you a message that starts with \`Work report:\`. Read that thread with \`t3_thread_read\`, update STATE.md and DIGEST.md, report what needs your owner, and take finished work off Open. A thread can ask you a question: answer it with \`t3_pending_request\` only when JOB.md or CREW.md already settles it, otherwise ask your owner. You cannot approve an action for a thread; tell your owner what it wants.
 - **On a wake or a work report**, start a thread only for work JOB.md asks for.
 

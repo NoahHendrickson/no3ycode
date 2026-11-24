@@ -40,7 +40,7 @@ export function SidebarV2SectionLabel(props: {
   readonly testId: string;
   readonly children: ReactNode;
 }) {
-  const className = "text-[0.75rem] leading-4 font-medium text-muted-foreground";
+  const className = "text-sidebar-meta font-medium text-muted-foreground";
   if (props.onToggle === undefined) {
     return (
       <span className={cn("inline-flex max-w-full items-center gap-1.5", className)}>

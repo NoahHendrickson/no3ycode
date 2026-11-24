@@ -173,7 +173,7 @@ export const CircleIcon = icon("circle", Hg.CircleIcon, "themed");
 export const CircleDashedIcon = icon("circle-dashed", Hg.CircleDashedIcon, "stroke");
 export const CircleDotIcon = icon("circle-dot", Hg.CircleDotIcon, "themed");
 export const CheckCircle2Icon = icon("check-circle-2", Hg.CircleCheckIcon, "themed");
-export const PinIcon = icon("pin", Hg.PinIcon, "themed");
+export const PinIcon = icon("pin", Hg.Pin02Icon, "themed");
 export const PinOffIcon = icon("pin-off", Hg.PinOffIcon, "stroke");
 export const PlusIcon = icon("plus", Hg.PlusIcon, "stroke");
 // lucide renamed PlusCircle -> CirclePlus; both names still resolve there, so
@@ -301,6 +301,12 @@ export const MonitorIcon = icon("monitor", Hg.MonitorIcon, "themed");
 export const LaptopIcon = icon("laptop", Hg.LaptopIcon, "themed");
 export const SmartphoneIcon = icon("smartphone", Hg.SmartphoneIcon, "themed");
 export const ActivityIcon = icon("activity", Hg.ActivityIcon, "stroke");
+// Fork-only glyphs matching the iOS status pill and queue card.
+export const ComputerActivityIcon = icon("computer-activity", Hg.ComputerActivityIcon, "stroke");
+export const ComputerTerminalIcon = icon("computer-terminal", Hg.ComputerTerminal01Icon, "stroke");
+export const ElectricityStackIcon = icon("electricity-stack", Hg.ElectricityStackIcon, "stroke");
+export const PencilEditIcon = icon("pencil-edit", Hg.PencilEdit02Icon, "stroke");
+export const ListNumberIcon = icon("list-number", Hg.LeftToRightListNumberIcon, "stroke");
 export const BatteryIcon = icon("battery", Hg.BatteryIcon, "themed");
 export const CpuIcon = icon("cpu", Hg.CpuIcon, "themed");
 export const DatabaseIcon = icon("database", Hg.DatabaseIcon, "themed");
@@ -409,6 +415,8 @@ export const PanelRightIcon = icon("panel-right", PanelRightHalf, "stroke");
 export const PanelBottomIcon = icon("panel-bottom", PanelBottomHalf, "stroke");
 export const PictureInPicture2 = icon("picture-in-picture-2", Hg.PictureInPictureIcon, "stroke");
 export const Columns2Icon = icon("columns-2", Hg.LayoutTwoColumnIcon, "themed");
+// Fork-only (no lucide name): docks a thread as the column's right pane.
+export const DockRightIcon = icon("dock-right", Hg.LayoutRightIcon, "themed");
 export const Rows3Icon = icon("rows-3", Hg.Rows3Icon, "themed");
 export const SquareSplitHorizontal = icon(
   "square-split-horizontal",

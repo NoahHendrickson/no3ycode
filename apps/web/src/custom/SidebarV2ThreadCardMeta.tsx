@@ -89,7 +89,7 @@ export interface SidebarV2ThreadCardMetaProps {
     between the checkout cluster and the PR badge, and between the left group
     and the model label. */
 const REPO_ROW =
-  "flex h-4 min-w-0 items-center justify-between gap-3 text-[0.75rem] leading-4 text-muted-foreground";
+  "flex h-sidebar-16 min-w-0 items-center justify-between gap-3 text-sidebar-meta text-muted-foreground";
 const MARK = "size-3 shrink-0";
 
 /** The design's folder mark for the repo line, decorative like every other
@@ -221,7 +221,7 @@ export function SidebarV2ThreadCardMeta(props: SidebarV2ThreadCardMetaProps) {
           The caption style (11/15) even though the cluster sits on the 12px
           repo line, so it carries its own size rather than inheriting. */}
       {props.modelLabel ? (
-        <span className="min-w-0 max-w-[45%] truncate text-[11px] leading-[15px]">
+        <span className="min-w-0 max-w-[45%] truncate text-sidebar-caption">
           {props.modelLabel}
         </span>
       ) : null}

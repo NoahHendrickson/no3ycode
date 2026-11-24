@@ -17,7 +17,7 @@ import {
   botDigestQuotes,
   botDigestRevision,
   nextBotDigestRead,
-} from "./botDigestSections";
+} from "@t3tools/client-runtime/fork-bot-digest";
 
 export interface BotDigestConversation {
   readonly revision: string;

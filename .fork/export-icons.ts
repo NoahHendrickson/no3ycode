@@ -11,8 +11,8 @@
  * macOS platform so each one carries the system Liquid Glass tile; the Dock
  * PNG pads the 1024 render onto a transparent 1272 canvas, the standard Mac
  * icon footprint. `--check` renders into memory and fails on any stale file.
- * Web favicons are not rendered here: they are the bare sparkle
- * (assets/fork/n3-project-icon.svg) with no tile, committed as rasters.
+ * Web favicons are not rendered here: they are a 15-square leaf drawn for
+ * small sizes (assets/fork/n3-favicon.svg) with no tile, committed as rasters.
  */
 
 import * as NodeChildProcess from "node:child_process";

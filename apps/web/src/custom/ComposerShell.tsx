@@ -32,12 +32,13 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   modelControls: ReactNode;
   readoutControls: ReactNode;
   usageControls?: ReactNode;
-  topVessel?: ReactNode;
   /** Chips above the composer (the thread's PR, background work); the row hides when empty. */
   statusChips?: ReactNode;
+  /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
+  banners?: ReactNode;
 };
 
-/** Owns the fork's vessel(topVessel + surface + controls) composition and state gates. */
+/** Owns the fork's vessel (surface + controls) composition and state gates. */
 export const ComposerShell = memo(function ComposerShell({
   approvalPending,
   children,
@@ -48,8 +49,8 @@ export const ComposerShell = memo(function ComposerShell({
   modelControls,
   readoutControls,
   usageControls,
-  topVessel,
   statusChips,
+  banners,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
     approvalPending,
@@ -89,27 +90,18 @@ export const ComposerShell = memo(function ComposerShell({
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/* In flow, so the transcript's bottom inset makes room for it; the drawer floats over it.
-          Empty over the collapsed phone pill, like the context row and drawer: a tap there would
-          focus the composer and expand it. */}
+      {/* In flow, so the transcript's bottom inset makes room for it. Empty over the collapsed
+          phone pill, like the context row: a tap there would focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
-        className="flex min-w-0 flex-wrap items-center gap-1.5 pb-1.5 empty:hidden"
+        className="flex min-w-0 flex-wrap items-center gap-1.5 pb-2 empty:hidden"
       >
         {collapsedMobile ? null : statusChips}
       </div>
+      <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
+        {banners}
+      </div>
       <div className="relative flex min-w-0 flex-col">
-        {/* Sibling of the vessel (not its child): the vessel's backdrop-filter makes it a
-          Chromium Backdrop Root, which would stop a child from blurring the picture. It floats
-          over the transcript rather than pushing it up. */}
-        {!collapsedMobile && topVessel ? (
-          <div
-            data-fork-composer-top-vessel="true"
-            className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"
-          >
-            {topVessel}
-          </div>
-        ) : null}
         {/* No vessel paint while collapsed: the mobile pill rounds to 12px and
           the vessel's 8px corners would peek out as background wedges (and a
           live readout row would slab onto the pill). */}
