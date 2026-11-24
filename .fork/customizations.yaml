@@ -6482,6 +6482,10 @@
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
     --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
+    No block padding or border (upstream code has both). Inline code stays inline,
+    so its wash spans the code font's ascent + descent: 1.3em for Geist Mono. File
+    links set line-height 1.3, so with the default code font both pills are one
+    height under any interface font; a user-picked code font can differ.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's

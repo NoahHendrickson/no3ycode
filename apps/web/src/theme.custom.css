@@ -3468,11 +3468,15 @@
   :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
   .chat-markdown
   .chat-markdown-file-link:not([data-state="invalid"]) {
+  border: 0;
   border-radius: 5px;
   background: var(--fork-inline-code-wash);
-  padding-inline: 6px;
+  padding: 0 6px;
   color: var(--info-foreground);
   font-size: 0.95em;
+  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
+     (one line box tall) matches it under any interface font. */
+  line-height: 1.3;
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
