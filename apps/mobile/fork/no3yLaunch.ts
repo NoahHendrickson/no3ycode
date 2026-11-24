@@ -5,12 +5,6 @@
  */
 /** A launch ready within this shows the still mark and fades; only a longer wait spins. */
 export const NO3Y_LAUNCH_SPIN_DELAY_MS = 180;
-/** The leaves sweep clockwise into one stack at the top. */
-export const NO3Y_LAUNCH_GATHER_MS = 320;
-/** …then fan back out clockwise into the mark. */
-export const NO3Y_LAUNCH_FAN_MS = 560;
-/** The mark rests whole between spins. */
-export const NO3Y_LAUNCH_HOLD_MS = 420;
 /** The closing scale-up and fade. */
 export const NO3Y_LAUNCH_OUTRO_MS = 260;
 

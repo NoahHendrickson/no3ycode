@@ -8326,25 +8326,29 @@
     A cold launch of the no3y iPhone app opens on the pixel leaf mark from the
     app icon. The iOS launch screen is the leaf at 147pt (7pt a cell) on the
     dark page (#191817) (fork/identity.ts sets expo-splash-screen's iOS
-    options; fork/assets/no3y-splash-leaf.png is the 21-cell grid of
-    assets/fork/app-icon.icon/Assets/mark.svg at 21px a cell). The JS overlay
-    (fork/No3yLaunchLeaf.tsx, mounted in App.tsx) draws the same frame as four
-    whole leaves (the halves the logo hides mirrored from the visible half,
-    stacked bottom, right, top, left so they rest as the logo), hides the native splash under it, and if the app is still loading
-    after 180ms spins on the UI thread: the leaves sweep clockwise into one
-    stack at the top and fan back out clockwise, resting between spins. When
-    the first screen is ready (where SplashScreenCoordinator hides the splash)
-    it scales up and fades at once, a spin under way playing on beneath it,
-    so it never delays the app (fork/no3yLaunch.ts). Once per process, so
-    returning from the background does not replay it; Reduce Motion only
-    fades; iPad, Android and upstream's identity build skip it. The app icons
-    are not touched here.
+    options). fork/no3yLeafMark.ts is the one source for the mark: the top
+    leaf on its 21-cell grid, turned a quarter at a time for the others, in
+    the one paint order that rests as the logo (bottom, right, top, left).
+    fork/assets/no3y-splash-leaf.png is rendered from it at 21px a cell by
+    `node .fork/export-launch-leaf.ts` (`--check` fails on a stale PNG). The
+    JS overlay (fork/No3yLaunchLeaf.tsx, mounted in App.tsx) draws the same
+    frame, hides the native splash under it, and if the app is still loading
+    after 180ms spins on the UI thread: each leaf laps once clockwise, up
+    into one stack at the top and on round to its place, resting between
+    spins. When the first screen is ready (where SplashScreenCoordinator
+    hides the splash) it scales up and fades at once, a spin under way
+    playing on beneath it, so it never delays the app (fork/no3yLaunch.ts).
+    Once per process, so returning from the background does not replay it;
+    Reduce Motion only fades; iPad, Android and upstream's identity build
+    skip it. The app icons are not touched here.
   tier: 3
   files:
     - apps/mobile/fork/No3yLaunchLeaf.tsx
+    - apps/mobile/fork/no3yLeafMark.ts
     - apps/mobile/fork/no3yLaunch.ts
     - apps/mobile/fork/no3yLaunch.test.ts
     - apps/mobile/fork/assets/no3y-splash-leaf.png
+    - .fork/export-launch-leaf.ts
   shadows: []
   watch:
     - apps/mobile/src/App.tsx
