@@ -53,6 +53,21 @@ describe("fork guard: interface size scales text only", () => {
     expect(index).toContain("--settings-slider-fill-offset: 0.5rem;");
     expect(sheet).toContain(':root[data-fork="noahhendrickson-t3code"] .settings-slider {');
     expect(sheet).toContain("--settings-slider-fill-offset: 8px;");
+    const slider = sheet.slice(
+      sheet.indexOf(':root[data-fork="noahhendrickson-t3code"] .settings-slider {'),
+    );
+    expect(slider).toMatch(/^[^}]*height: 24px;/u);
+    for (const part of [
+      "-webkit-slider-runnable-track",
+      "-moz-range-track",
+      "-moz-range-progress",
+    ]) {
+      expect(slider).toMatch(new RegExp(`&::${part} \\{\\s*height: 6px;`, "u"));
+    }
+    expect(slider).toMatch(
+      /&::-webkit-slider-thumb \{\s*width: 16px;\s*height: 16px;\s*margin-top: -5px;/u,
+    );
+    expect(slider).toMatch(/&::-moz-range-thumb \{\s*width: 16px;\s*height: 16px;/u);
     const fold = readSibling("../components/chat/useTallEnoughToFold.ts");
     expect(fold).toContain("const remPx = 16;");
     const panel = readSibling("../components/settings/AppearanceSettingsPanel.tsx");
