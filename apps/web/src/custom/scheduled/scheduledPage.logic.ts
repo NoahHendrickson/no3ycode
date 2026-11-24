@@ -16,6 +16,7 @@ import {
 } from "@t3tools/contracts";
 
 import type { TimestampFormat } from "@t3tools/contracts/settings";
+import * as Schema from "effect/Schema";
 import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
 import { formatRelativeTime } from "~/timestampFormat";
 
@@ -331,31 +332,41 @@ export function draftSignature(draft: {
   return JSON.stringify({ ...draft, weekdays: [...draft.weekdays].toSorted((a, b) => a - b) });
 }
 
-export type AutomationGrouping = "none" | "petal";
+export const AutomationGrouping = Schema.Literals(["none", "petal"]);
+export type AutomationGrouping = typeof AutomationGrouping.Type;
+export const isAutomationGrouping = Schema.is(AutomationGrouping);
 
 export interface AutomationGroup<T> {
-  /** "yours", or the Petal's thread id. */
+  /** "all" ungrouped, "yours", or the Petal's thread id. */
   readonly key: string;
-  readonly label: string;
+  /** The section header; null for the ungrouped list, which has none. */
+  readonly label: string | null;
   readonly tasks: ReadonlyArray<T>;
 }
 
-/** Your automations first, then one group per Petal by name. A Petal's automation is one that
-    runs in the Petal's own thread; one whose Petal is gone counts as yours. */
-export function groupAutomationsByPetal<T extends { readonly threadId: string | null }>(
+/** Ungrouped, one headerless group. By Petal, yours first, then one group per Petal by name. A
+    Petal's automation is one that runs in the Petal's own thread; one whose Petal is gone or
+    archived counts as yours. */
+export function groupAutomations<T extends { readonly threadId: string | null }>(
   tasks: ReadonlyArray<T>,
+  grouping: AutomationGrouping,
   petalTitles: ReadonlyMap<string, string>,
 ): ReadonlyArray<AutomationGroup<T>> {
+  if (grouping === "none") return [{ key: "all", label: null, tasks }];
   const yours: T[] = [];
-  const byPetal = new Map<string, T[]>();
+  const byPetal = new Map<string, { label: string; tasks: T[] }>();
   for (const task of tasks) {
-    const petalId = task.threadId !== null && petalTitles.has(task.threadId) ? task.threadId : null;
-    if (petalId === null) yours.push(task);
-    else if (byPetal.has(petalId)) byPetal.get(petalId)!.push(task);
-    else byPetal.set(petalId, [task]);
+    const label = task.threadId === null ? undefined : petalTitles.get(task.threadId);
+    if (task.threadId === null || label === undefined) {
+      yours.push(task);
+      continue;
+    }
+    const group = byPetal.get(task.threadId) ?? { label, tasks: [] };
+    group.tasks.push(task);
+    byPetal.set(task.threadId, group);
   }
   const petals = [...byPetal]
-    .map(([key, grouped]) => ({ key, label: petalTitles.get(key)!, tasks: grouped }))
+    .map(([key, group]) => ({ key, ...group }))
     .toSorted((left, right) => left.label.localeCompare(right.label));
   return [...(yours.length > 0 ? [{ key: "yours", label: "Yours", tasks: yours }] : []), ...petals];
 }

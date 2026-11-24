@@ -4,7 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   draftTriggerLabel,
   formatDuration,
-  groupAutomationsByPetal,
+  groupAutomations,
   matchesTaskQuery,
   overlayRunStatus,
   presentRunStatus,
@@ -43,7 +43,7 @@ describe("matchesTaskQuery", () => {
   });
 });
 
-describe("groupAutomationsByPetal", () => {
+describe("groupAutomations", () => {
   it("puts yours first, then each Petal by name, and counts a gone Petal's task as yours", () => {
     const petals = new Map([
       ["p-zinnia", "Zinnia"],
@@ -57,7 +57,7 @@ describe("groupAutomationsByPetal", () => {
       { id: "e", threadId: "plain-thread" },
     ];
     expect(
-      groupAutomationsByPetal(tasks, petals).map((group) => [
+      groupAutomations(tasks, "petal", petals).map((group) => [
         group.label,
         group.tasks.map((task) => task.id),
       ]),
@@ -66,6 +66,7 @@ describe("groupAutomationsByPetal", () => {
       ["Aster", ["c"]],
       ["Zinnia", ["a", "d"]],
     ]);
+    expect(groupAutomations(tasks, "none", petals)).toEqual([{ key: "all", label: null, tasks }]);
   });
 });
 
