@@ -5,7 +5,7 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { BASIC_THEME, FORK_PALETTE_STORAGE_KEY } from "../custom/forkTheme";
+import { COOL_DARKER_THEME, FORK_PALETTE_STORAGE_KEY } from "../custom/forkTheme";
 
 function read(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -67,10 +67,14 @@ describe("fork-storybook", () => {
     }
   });
 
-  it("stores Basic before any app module loads, and moves themes as Settings does", () => {
+  it("stores the default theme, Flat Glass, before any app module loads, and moves themes as Settings does", () => {
     const appearance = read(`${storybook}appearance.ts`);
     expect(preview.indexOf('import "./appearance.ts"')).toBe(preview.indexOf("import "));
-    expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${BASIC_THEME}"`);
+    expect(read("../../../fork-storybook/stories/storyTheme.ts")).toContain(
+      'export const DEFAULT_STORY_THEME = "glass_off";',
+    );
+    expect(appearance).toContain(`"${FORK_PALETTE_STORAGE_KEY}": "${COOL_DARKER_THEME}"`);
+    expect(appearance).toContain(`"t3code:fork:glass-3d:v1": '"off"'`);
     expect(preview).toMatch(
       /setForkAppearance\(BASIC_THEME, setTheme\);\s*setAppearanceMode\(theme\.appearance\);/u,
     );
