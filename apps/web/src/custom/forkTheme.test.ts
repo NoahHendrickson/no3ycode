@@ -110,21 +110,34 @@ describe("fork theme synchronization", () => {
     migrateLegacyForkPalettes();
     expect(values.get("t3code:theme")).toBe("dark");
     expect(values.get("t3code:fork-theme")).toBe("basic");
-    expect(readBasicTone("dark")).toBe("dark-cool");
+    expect(readBasicTone("dark")).toBe("darker-neutral");
 
     values.set("t3code:fork-theme", "neutral-darker");
     migrateLegacyForkPalettes();
     expect(readForkPalette()).toBe("basic");
-    expect(readBasicTone("dark")).toBe("darkest-neutral");
+    expect(readBasicTone("dark")).toBe("darker-neutral");
     expect(readBasicTone("light")).toBe("light");
 
-    // A retired dark tone becomes the tone that replaced it.
-    values.set("t3code:fork-basic-tone-dark", "cool");
+    // Every retired dark tone and look becomes Darker Neutral, and stays written that way.
+    for (const retired of [
+      "cool",
+      "dark-cool",
+      "darkest-warm",
+      "dark-neutral",
+      "darkest-neutral",
+    ]) {
+      values.set("t3code:fork-basic-tone-dark", retired);
+      migrateLegacyForkPalettes();
+      expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
+    }
+
+    // Cream, the retired light tone, becomes Light.
+    values.set("t3code:fork-basic-tone-light", "cream");
     migrateLegacyForkPalettes();
-    expect(readBasicTone("dark")).toBe("dark-cool");
+    expect(values.get("t3code:fork-basic-tone-light")).toBe("light");
 
     // A tone stored for the wrong appearance is not that appearance's tone.
-    values.set("t3code:fork-basic-tone-light", "dark-cool");
+    values.set("t3code:fork-basic-tone-light", "darker-neutral");
     expect(readBasicTone("light")).toBe("light");
   });
 
@@ -338,13 +351,13 @@ describe("fork theme synchronization", () => {
       await import("./forkTheme");
     initializeForkTheme();
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("dark-neutral");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("darker-neutral");
 
-    // System turns light: Basic follows, onto the light tone.
+    // System turns light: Basic follows, onto the light tone (a retired one reads as Light).
     values.set("t3code:fork-basic-tone-light", "cream");
     classes.delete("dark");
     themeChangeHandler?.();
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("cream");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("light");
 
     // ThemeEditorHost writes through upstream's same-tab store, where the browser does not
     // emit a storage event; an imported theme turns every fork palette off.
@@ -496,19 +509,19 @@ describe("fork theme synchronization", () => {
       setForkBasicTone,
     } = await import("./forkTheme");
     // From an imported theme: Basic takes over upstream's standard theme, keeping the mode.
-    setForkBasicTone("dark-cool", setTheme);
+    setForkBasicTone("darker-neutral", setTheme);
     expect(values.get("t3code:theme")).toBe("system");
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("dark-cool");
+    expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
     expect(attributes.get(FORK_THEME_ATTRIBUTE)).toBe("basic");
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("dark-cool");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("darker-neutral");
     expect(setAppearanceMode).not.toHaveBeenCalled();
 
-    setForkBasicTone("cream", setTheme);
+    setForkBasicTone("light", setTheme);
     expect(state.mode).toBe("light");
     expect(classes.has("dark")).toBe(false);
-    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("cream");
+    expect(attributes.get(BASIC_TONE_ATTRIBUTE)).toBe("light");
     // The dark tone is kept for when the user comes back to dark.
-    expect(values.get("t3code:fork-basic-tone-dark")).toBe("dark-cool");
+    expect(values.get("t3code:fork-basic-tone-dark")).toBe("darker-neutral");
 
     // Restore defaults puts both tones back, the one not showing too, and leaves the mode.
     resetForkBasicTones();

@@ -65,19 +65,9 @@ const BASIC_TONE_STORAGE_KEYS = {
   light: "t3code:fork-basic-tone-light",
 } as const;
 export const BASIC_TONE_ATTRIBUTE = "data-fork-basic-tone";
-export const BASIC_TONES = [
-  "light",
-  "cream",
-  "darkest-warm",
-  "darker-warm",
-  "dark-warm",
-  "darkest-cool",
-  "darker-cool",
-  "dark-cool",
-  "darkest-neutral",
-  "darker-neutral",
-  "dark-neutral",
-] as const;
+/** Two tones, one per appearance (2026-11-24): the other nine retired into these through
+    RETIRED_DARK_LOOKS and RETIRED_LIGHT_TONES. */
+export const BASIC_TONES = ["light", "darker-neutral"] as const;
 export type BasicTone = (typeof BASIC_TONES)[number];
 /** `base` is the one colour the tone is built from (theme.custom.basic.css derives every other
     surface from it); index.html carries the same table for the pre-paint, so a new tone is a
@@ -95,29 +85,15 @@ export const BASIC_TONE_OPTIONS: Readonly<
   >
 > = {
   light: { label: "Light", base: "#f7f7f7", text: "#1a1a1a", appearance: "light" },
-  cream: { label: "Cream", base: "#f8f3d8", text: "#1f1c16", appearance: "light" },
-  "darkest-warm": { label: "Darkest Warm", base: "#1b1714", text: "#e8e8e8", appearance: "dark" },
-  "darker-warm": { label: "Darker Warm", base: "#2c2a28", text: "#e8e8e8", appearance: "dark" },
-  "dark-warm": { label: "Dark Warm", base: "#3e3c3a", text: "#e8e8e8", appearance: "dark" },
-  "darkest-cool": { label: "Darkest Cool", base: "#16181b", text: "#e8e8e8", appearance: "dark" },
-  "darker-cool": { label: "Darker Cool", base: "#202226", text: "#e8e8e8", appearance: "dark" },
-  "dark-cool": { label: "Dark Cool", base: "#2e3138", text: "#e8e8e8", appearance: "dark" },
-  "darkest-neutral": {
-    label: "Darkest Neutral",
-    base: "#171717",
-    text: "#e8e8e8",
-    appearance: "dark",
-  },
   "darker-neutral": {
     label: "Darker Neutral",
     base: "#232323",
     text: "#e8e8e8",
     appearance: "dark",
   },
-  "dark-neutral": { label: "Dark Neutral", base: "#2b2b2b", text: "#e8e8e8", appearance: "dark" },
 };
 export const DEFAULT_BASIC_TONES = {
-  dark: "dark-neutral",
+  dark: "darker-neutral",
   light: "light",
 } as const satisfies Record<"dark" | "light", BasicTone>;
 
@@ -201,12 +177,25 @@ function resolveInletColor(raw: string | null): InletColor {
 /** Retired dark looks and the Basic tone each became: palette ids and tone ids, which never
     collide, so the palette and the stored dark tone share one lookup. */
 const RETIRED_DARK_LOOKS: Readonly<Record<string, BasicTone>> = {
-  "cool-dark": "dark-cool",
-  "neutral-dark": "dark-neutral",
-  "neutral-darker": "darkest-neutral",
-  cool: "dark-cool",
-  neutral: "dark-neutral",
-  darker: "darkest-neutral",
+  "cool-dark": "darker-neutral",
+  "neutral-dark": "darker-neutral",
+  "neutral-darker": "darker-neutral",
+  cool: "darker-neutral",
+  neutral: "darker-neutral",
+  darker: "darker-neutral",
+  "darkest-warm": "darker-neutral",
+  "darker-warm": "darker-neutral",
+  "dark-warm": "darker-neutral",
+  "darkest-cool": "darker-neutral",
+  "darker-cool": "darker-neutral",
+  "dark-cool": "darker-neutral",
+  "darkest-neutral": "darker-neutral",
+  "dark-neutral": "darker-neutral",
+};
+
+/** Retired light tones and the tone each became. */
+const RETIRED_LIGHT_TONES: Readonly<Record<string, BasicTone>> = {
+  cream: "light",
 };
 
 type AttributeRoot = {
@@ -312,6 +301,11 @@ export function migrateLegacyForkPalettes(): void {
       RETIRED_DARK_LOOKS[window.localStorage.getItem(BASIC_TONE_STORAGE_KEYS.dark) ?? ""];
     if (retiredTone !== undefined) {
       window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.dark, retiredTone);
+    }
+    const retiredLightTone =
+      RETIRED_LIGHT_TONES[window.localStorage.getItem(BASIC_TONE_STORAGE_KEYS.light) ?? ""];
+    if (retiredLightTone !== undefined) {
+      window.localStorage.setItem(BASIC_TONE_STORAGE_KEYS.light, retiredLightTone);
     }
     const tone = RETIRED_DARK_LOOKS[window.localStorage.getItem(FORK_PALETTE_STORAGE_KEY) ?? ""];
     if (tone !== undefined) {

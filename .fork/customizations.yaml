@@ -1692,15 +1692,9 @@
     hairlines and raised fills, 12% chips, 16% the strongest lift. The
     sidebar, header and stage are one surface separated by 8% hairlines.
 
-    Eleven tones (Figma t3-fork 729:28816 for the dark ones): Light #f7f7f7,
-    Cream #f8f3d8, and three dark depths in three temperatures. Darkest, Darker,
-    Dark: warm #1b1714, #2c2a28, #3e3c3a; cool #16181b, #202226, #2e3138;
-    neutral #171717, #232323, #2b2b2b. Darkest Warm sits a step warmer than
-    its Figma frame; Darker and Dark Warm are hand-picked values, not from
-    Figma, and run close to neutral. Dark Neutral keeps the retired Neutral
-    Dark's #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
-    changes only --basic-base (and Cream's warm text); theme.custom.basic.css
-    derives the lifts with color-mix. Surfaces that float over content
+    Two tones, one per appearance (cut from eleven on 2026-11-24): Light
+    #f7f7f7 and Darker Neutral #232323, the default dark tone. A tone changes
+    only --basic-base; theme.custom.basic.css derives the lifts with color-mix. Surfaces that float over content
     (menus, composer, chips) are the ink flattened over the base, so nothing
     shows through them; hovers, selections and lines stay translucent, as
     drawn. Menus open flat on the raised fill (no frost, which belongs to
@@ -1713,9 +1707,10 @@
     Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
     -light, stamped as data-fork-basic-tone), so under System it follows the
     OS between them. Picking a tone on the other appearance moves the mode;
-    picking one on the current appearance does not. Westworld migrates to
-    Dark Cool, Neutral Dark to Dark Neutral, Neutral Darker to Darkest Neutral;
-    the retired dark tones Neutral Dark, Cool Dark and Darker move the same way.
+    picking one on the current appearance does not. Every retired dark look
+    (Westworld, Neutral Dark, Neutral Darker, and the nine retired dark tones)
+    migrates to Darker Neutral, and the retired Cream tone to Light, in
+    forkTheme.ts and index.html's pre-paint alike.
     Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
     (custom/ForkThemePicker.tsx) with the picked theme's own rows below:
     Basic's tone swatches, Inlet's colour, Glass's picture and depth.

@@ -14,7 +14,7 @@ const PREFERENCES = {
   "t3code:theme-appearance-mode": "dark",
   "t3code:theme-follow-system": "false",
   "t3code:fork-theme": "basic",
-  "t3code:fork-basic-tone-dark": "dark-neutral",
+  "t3code:fork-basic-tone-dark": "darker-neutral",
   "t3code:fork-basic-tone-light": "light",
 };
 
