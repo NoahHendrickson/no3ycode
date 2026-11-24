@@ -45,13 +45,16 @@ import {
 } from "../lib/enrichedLinkPresentation";
 
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { no3yChipPaddings } from "../../fork/no3yChipHeight";
+import { no3yChipSizes, type No3yChipSizes } from "../../fork/no3yChipHeight";
 /* fork:end no3y-mobile-redesign */
 
 function enrichedStyle(
   style: SelectableMarkdownTextProps["textStyle"],
   dark: boolean,
   fontScale: number,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  chipSizes?: No3yChipSizes,
+  /* fork:end no3y-mobile-redesign */
 ): MarkdownStyle {
   const monospace = Platform.OS === "ios" ? "Menlo" : "monospace";
   // Android only bolds fallback glyphs when the bold family is asked for at a bold weight (app.config.ts).
@@ -127,14 +130,7 @@ function enrichedStyle(
         ? {
             borderRadius: style.inlineCodeChip.radius,
             paddingHorizontal: style.inlineCodeChip.paddingHorizontal,
-            paddingVertical:
-              style.inlineCodeChip.paddingVertical +
-              no3yChipPaddings({
-                bodyFontSize: style.fontSize,
-                chipFontScale: style.inlineCodeChip.fontScale,
-                fontScale,
-                hairlineWidth: StyleSheet.hairlineWidth,
-              }).code,
+            paddingVertical: chipSizes?.code.paddingVertical ?? 0,
           }
         : null),
       /* fork:end no3y-mobile-redesign */
@@ -344,7 +340,28 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
   const linkUrls = textLinkKey
     ? [...new Set([...parsedLinkUrls, ...textLinkKey.split("\n")])]
     : parsedLinkUrls;
-  const { linkVariants, linkPillContent } = useEnrichedLinkVariants(linkUrls, props, fileHrefs);
+  const { fontScale } = useWindowDimensions();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const inlineCodeChip = props.textStyle.inlineCodeChip;
+  const chipSizes = useMemo(
+    () =>
+      inlineCodeChip
+        ? no3yChipSizes({
+            bodyFontSize: props.textStyle.fontSize,
+            chipFontScale: inlineCodeChip.fontScale,
+            fontScale,
+            hairlineWidth: StyleSheet.hairlineWidth,
+          })
+        : undefined,
+    [inlineCodeChip, props.textStyle.fontSize, fontScale],
+  );
+  /* fork:end no3y-mobile-redesign */
+  const { linkVariants, linkPillContent } = useEnrichedLinkVariants(
+    linkUrls,
+    props,
+    fileHrefs,
+    chipSizes,
+  );
   const linkRecognition = useMemo(() => ({ text: textLinkRegex ?? undefined }), [textLinkRegex]);
   const [activeMenu, setActiveMenu] = useState<{
     url: string;
@@ -426,16 +443,15 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
       mimeTypes: { "app.t3.context-fragment": props.contextClipboardFragment! },
     };
   }, [props.contextClipboardFragment, props.markdown]);
-  const { fontScale } = useWindowDimensions();
   const baseMarkdownStyle = useMemo(() => {
-    const style = enrichedStyle(props.textStyle, themeAppearance === "dark", fontScale);
+    const style = enrichedStyle(props.textStyle, themeAppearance === "dark", fontScale, chipSizes);
     return {
       ...style,
       paragraph: props.textAlign
         ? { ...style.paragraph, textAlign: props.textAlign }
         : style.paragraph,
     };
-  }, [props.textStyle, props.textAlign, themeAppearance, fontScale]);
+  }, [props.textStyle, props.textAlign, themeAppearance, fontScale, chipSizes]);
   // Link variants change as a message streams. The code renderer reads only the base style, so
   // it stays the same function and the library keeps its rendered blocks.
   const markdownStyle = useMemo(

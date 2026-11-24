@@ -2,7 +2,7 @@
  * One height for every chip in a no3y reply on iOS — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  * enriched-markdown draws hugging inline code as Menlo's ascender + descender plus its padding, and
  * a link pill as its label font's (the system font) plus padding and border, rounded up to a whole
- * point. Each gets the padding that brings it to the tallest of them.
+ * point. Each chip gets the padding that brings it to the tallest of them.
  */
 
 const SYSTEM_TEXT_BOX = 1.1931;
@@ -14,10 +14,12 @@ const CAPSULE_LABEL_INSET = 0.05;
 
 /** React Native's RCTFont rounds a Dynamic Type-scaled size to a whole point. */
 function rctFontSize(size: number, fontScale: number): number {
-  return fontScale > 0 && fontScale !== 1 ? Math.round(size * fontScale) : size;
+  return fontScale !== 1 ? Math.round(size * fontScale) : size;
 }
 
-export function no3yChipPaddings(input: {
+export type No3yChipSizes = ReturnType<typeof no3yChipSizes>;
+
+export function no3yChipSizes(input: {
   readonly bodyFontSize: number;
   readonly chipFontScale: number;
   readonly fontScale: number;
@@ -32,11 +34,10 @@ export function no3yChipPaddings(input: {
   const capsuleBox = SYSTEM_TEXT_BOX * body * capsuleLabelScale + 2 * hairlineWidth;
   const height = Math.ceil(Math.max(codeBox, fileBox, capsuleBox));
   // enriched-markdown clamps pill padding at 0; no pill box exceeds the height, so none needs less.
-  const pill = (box: number) => Math.max(0, (height - box - CEIL_SLACK) / 2);
+  const pillPadding = (box: number) => Math.max(0, (height - box - CEIL_SLACK) / 2);
   return {
-    code: (height - codeBox) / 2,
-    file: pill(fileBox),
-    capsule: pill(capsuleBox),
-    capsuleLabelScale,
+    code: { paddingVertical: (height - codeBox) / 2 },
+    file: { paddingVertical: pillPadding(fileBox), fontScale: chipFontScale },
+    capsule: { paddingVertical: pillPadding(capsuleBox), fontScale: capsuleLabelScale },
   };
 }

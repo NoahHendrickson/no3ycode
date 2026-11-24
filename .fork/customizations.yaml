@@ -8761,7 +8761,7 @@
     marked fileReference) wear the same ink, wash and chip shape instead of
     the teal mention chip, keeping their file icon, with the label at the code
     chip's scale (pill.fontScale). In body text every reply chip stands one
-    height (19pt at the default 16pt body): fork/no3yChipHeight.ts pads code
+    height: fork/no3yChipHeight.ts pads code
     (Menlo's ascender + descender), file chips and the subagent capsule (the
     system font's, rounded up to a whole point) to the tallest of them, from
     the sizes RCTFont actually draws (it rounds Dynamic Type sizes to a whole

@@ -6,7 +6,7 @@ import {
 } from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { StyleSheet } from "react-native";
 /* fork:end no3y-subagent-link-chip */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
@@ -31,7 +31,7 @@ import {
 } from "../lib/enrichedLinkPresentation";
 import { formatProviderSkillDisplayName } from "@t3tools/shared/inlineSkills";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-import { no3yChipPaddings } from "../../fork/no3yChipHeight";
+import type { No3yChipSizes } from "../../fork/no3yChipHeight";
 /* fork:end no3y-mobile-redesign */
 
 function chipCustomization(
@@ -127,24 +127,12 @@ export function useEnrichedLinkVariants(
   urls: ReadonlyArray<string>,
   props: SelectableMarkdownTextProps,
   fileHrefs: ReadonlySet<string>,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  chipSizes?: No3yChipSizes,
+  /* fork:end no3y-mobile-redesign */
 ) {
   const { linkCustomization, skills, models, textStyle, fileEmbedLabel } = props;
   const theme = useUniwindTheme();
-  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-  const { fontScale } = useWindowDimensions();
-  const chipPaddings = useMemo(
-    () =>
-      textStyle.inlineCodeChip
-        ? no3yChipPaddings({
-            bodyFontSize: textStyle.fontSize,
-            chipFontScale: textStyle.inlineCodeChip.fontScale,
-            fontScale,
-            hairlineWidth: StyleSheet.hairlineWidth,
-          })
-        : undefined,
-    [textStyle, fontScale],
-  );
-  /* fork:end no3y-mobile-redesign */
   const links = useMemo(() => {
     const byUrl = new Map<string, MarkdownLinkCustomization>();
     for (const url of urls) {
@@ -185,14 +173,14 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // Where the reply draws code as a chip, padding brings the capsule to its height.
+                // Where the reply draws code as a chip, the capsule takes its height (no3yChipSizes).
                 pill: {
                   borderColor: link.capsule.border,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
                   paddingHorizontal: 6,
-                  paddingVertical: chipPaddings?.capsule ?? 0,
-                  fontScale: chipPaddings?.capsuleLabelScale,
+                  paddingVertical: 0,
+                  ...chipSizes?.capsule,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -217,8 +205,9 @@ export function useEnrichedLinkVariants(
                   borderWidth: 0,
                   borderRadius: codeChip.radius,
                   paddingHorizontal: codeChip.paddingHorizontal,
-                  paddingVertical: codeChip.paddingVertical + (chipPaddings?.file ?? 0),
+                  paddingVertical: 0,
                   fontScale: codeChip.fontScale,
+                  ...chipSizes?.file,
                 },
                 fontFamily: textStyle.fontFamily,
                 color: textStyle.fileTextColor,
@@ -247,7 +236,7 @@ export function useEnrichedLinkVariants(
           ];
         }),
       ),
-    [chipForegrounds, links, textStyle, chipPaddings],
+    [chipForegrounds, links, textStyle, chipSizes],
   );
   const linkPillContent = useMemo<Record<string, LinkPillContent>>(
     () =>
