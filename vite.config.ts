@@ -648,6 +648,12 @@ export default defineConfig({
         excludeFiles: ["**/*.test.ts", "**/*.test.tsx"],
         rules: { "t3code/no-hermes-unsupported-apis": "error" },
       },
+      /* fork:begin no3y-worklet-default-params — see .fork/customizations.yaml#no3y-worklet-default-params */
+      {
+        files: ["apps/mobile/src/**", "apps/mobile/fork/**"],
+        rules: { "t3code/no-worklet-default-params": "error" },
+      },
+      /* fork:end no3y-worklet-default-params */
       {
         // Directives hide bailouts from mobile's compiler-coverage check; retain hooks until its allowlist is empty.
         files: ["apps/mobile/src/**/*.{ts,tsx}"],

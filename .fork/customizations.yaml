@@ -8837,3 +8837,25 @@
     - apps/web/src/components/chat/TimelineAssistantRows.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSubagentLinkChip.test.ts
+
+- id: no3y-worklet-default-params
+  intent: >
+    Reanimated worklets in apps/mobile take no default parameters. The worklets
+    Babel plugin unpacks a worklet's captured names inside its body, after the
+    defaults run, so a default naming a captured value throws a ReferenceError
+    on the UI runtime and Release builds abort (TestFlight 202611232310 died on
+    launch from the bead ring). Node tests run the plain function and never see
+    it, so the fork's t3code/no-worklet-default-params lint rule guards every
+    function with a "worklet" directive under apps/mobile/src and apps/mobile/fork.
+  tier: 4
+  files:
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.ts
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+  shadows: []
+  watch:
+    # Registers the rule in the t3code plugin.
+    - oxlint-plugin-t3code/index.ts
+    # Turns the rule on for mobile code.
+    - vite.config.ts
+  verify:
+    - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts

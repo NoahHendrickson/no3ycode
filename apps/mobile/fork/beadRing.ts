@@ -12,7 +12,7 @@ export const BEAD_RING_HALF_WIDTH = 2.5;
 const PIECES = 4;
 const LINE_LENGTH = 38;
 /** How much further the line reaches while the pieces are strung out, before it pulls back. */
-const STRETCH = 7;
+export const BEAD_RING_STRETCH = 7;
 /** The gap between pieces once they are fully apart. */
 const GAP = 13.2;
 /** One loop turns exactly once, so a loop repeats as drawn with no rotation layer. */
@@ -31,10 +31,8 @@ export function beadRingEase(progress: number): number {
 
 /** The SVG path (56x56 units, stroke it 2 x half width, round caps) at `progress` 0..1 of a loop.
     The still frame passes `stretch` 0 to keep the design frame. */
-export function beadRingPath(progress: number, stretch?: number): string {
+export function beadRingPath(progress: number, stretch: number): string {
   "worklet";
-  // Not a default parameter: those run before the UI runtime unpacks the closure holding STRETCH.
-  const reach = stretch ?? STRETCH;
   const p = progress - Math.floor(progress);
   const t = p * BEAD_RING_PERIOD;
   const pulling = p < 0.5;
@@ -51,7 +49,7 @@ export function beadRingPath(progress: number, stretch?: number): string {
   // The line's trailing end: a steady spin, plus the line moving on while it pulls.
   const tailOfLine = t * SPIN + (pulling ? strung : PIECES * GAP) / RING_RADIUS;
   const tails = [tailOfLine];
-  const heads = [tailOfLine + (LINE_LENGTH + (reach * strung) / (PIECES * GAP)) / RING_RADIUS];
+  const heads = [tailOfLine + (LINE_LENGTH + (stretch * strung) / (PIECES * GAP)) / RING_RADIUS];
   for (let k = 0; k < PIECES; k++) {
     const front = tails[k]! - gaps[k]! / RING_RADIUS;
     heads.push(front);
