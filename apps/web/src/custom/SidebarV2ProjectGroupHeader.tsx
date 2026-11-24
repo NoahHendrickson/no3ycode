@@ -156,9 +156,9 @@ export function SidebarV2ProjectGroupHeader(props: {
           // Gap, padding and margins are all derived — see
           // custom/sidebarV2CardAlignment for the arithmetic this row shares
           // with the cards under it.
-          "relative flex min-h-8 w-full items-center text-left",
+          "relative flex min-h-8 w-full items-center rounded-[10px] text-left hover:bg-sidebar-row-hover",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
-          props.collapsed ? "mb-0" : SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
+          SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
             ? "mt-0"
             : props.afterOpenSection
@@ -167,8 +167,8 @@ export function SidebarV2ProjectGroupHeader(props: {
         )}
       >
         {/* group/collapse on the label wrapper so hovering the label swaps the
-            mark and paints the ghost hover fill strictly to the left of the
-            trailing controls, never underneath them. */}
+            mark. The hover fill is the whole row's, like a card's, with the
+            trailing controls inside it. */}
         <div
           className={cn(
             "group/collapse relative -ms-3 flex min-h-8 min-w-0 flex-1 items-center px-3",
@@ -185,7 +185,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             className={cn(
               "absolute inset-0 z-0 cursor-pointer rounded-[10px]",
               props.reorderable && "cursor-grab active:cursor-grabbing",
-              "outline-none hover:bg-sidebar-row-hover",
+              "outline-none",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",
             )}
           />
@@ -226,9 +226,9 @@ export function SidebarV2ProjectGroupHeader(props: {
           <span
             role="heading"
             aria-level={3}
-            // Regular at the Sidebar font size, --muted-foreground (368:21364), lifting to
+            // Regular, 1px under the Sidebar font size, --muted-foreground (368:21364), lifting to
             // foreground with the mark while the row is hovered.
-            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-row font-normal text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-label font-normal text-muted-foreground group-hover/collapse:text-sidebar-foreground"
           >
             {label}
           </span>
@@ -243,7 +243,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             data-fork-section-actions=""
             data-fork-menu-open={anyMenuOpen ? "" : undefined}
             className={cn(
-              "relative z-10 flex shrink-0 items-center [&_button]:size-7",
+              "relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px]",
               SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
             )}
           >

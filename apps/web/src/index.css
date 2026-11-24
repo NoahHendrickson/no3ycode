@@ -214,6 +214,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --text-sidebar-title--line-height: calc(18 / 14);
   --text-sidebar-row: calc(var(--fork-sidebar-px, 1px) * 14);
   --text-sidebar-row--line-height: calc(16 / 14);
+  /* Group and section labels: one px under the Sidebar font size itself, not a ratio of it. */
+  --text-sidebar-label: calc(var(--fork-sidebar-font-size, 14px) - 1px);
+  --text-sidebar-label--line-height: calc(16 / 13);
   --text-sidebar-chrome: calc(var(--fork-sidebar-px, 1px) * 14);
   --text-sidebar-chrome--line-height: calc(20 / 14);
   --text-sidebar-meta: calc(var(--fork-sidebar-px, 1px) * 12);

@@ -299,7 +299,9 @@
       [data-fork-thread-row],
       [data-fork-chrome-row],
       li[data-fork-split-pair] > ul,
-      [data-testid="sidebar-v2-project-group-collapse"]
+      [data-testid="sidebar-v2-project-group-collapse"],
+      [data-testid="sidebar-v2-project-group-header"],
+      li[data-fork-status-section-header]
     ),
   & [data-fork-thread-tabs] [data-fork-thread-tab],
   &
@@ -316,6 +318,15 @@
   & [data-fork-model-picker="list"] > label,
   & [data-fork-draft-launchpad-card] button {
     border-radius: var(--fork-flat-radius);
+    corner-shape: superellipse(1.6);
+  }
+
+  /* A group header's 28px buttons sit 2px inside its row, so their corners nest inside the row's. */
+  &
+    :is(li[data-fork-status-section-header], [data-testid="sidebar-v2-project-group-header"])
+    [data-fork-section-actions]
+    button {
+    border-radius: calc(var(--fork-flat-radius) - 2px);
     corner-shape: superellipse(1.6);
   }
 

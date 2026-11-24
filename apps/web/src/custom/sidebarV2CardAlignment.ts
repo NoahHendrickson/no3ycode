@@ -36,13 +36,13 @@
  * the rest of its own spacing out of its margins:
  *
  * - card to card:            `listGap` 2
- * - header to first card:    `listGap` 2 + `headerTrail` -2           = 0
+ * - header to first card:    `listGap` 2 + `headerTrail` 0            = 2
  * - card to next header:     `listGap` 2 + `headerLead` 22            = 24
  * - closed header to header: `listGap` 2 + `headerLeadCollapsed` 6    = 8
  *
- * The design stacks the first card flush under its header (364:18052). The
- * header row keeps 8px under its label for the hover actions, so a negative
- * trail pulls the first card 2px up into it. 24 above a header is the design's gap between groups —
+ * The design stacks the first card flush under its header (364:18052); the
+ * list pitch is the floor, so 2 is as close as a header can get without a
+ * negative margin. 24 above a header is the design's gap between groups —
  * and it is the *open* group's, spent below its last card: a header that
  * follows a closed group (or one that painted nothing) takes the compact
  * lead instead, so a run of closed projects reads as a list rather than as
@@ -103,10 +103,8 @@ export const SIDEBAR_V2_CARD_ALIGNMENT = {
   /** What a header adds above itself, on top of `listGap`, to reach 8 —
       when the section above it is closed or empty. */
   headerLeadCollapsed: "mt-1.5",
-  /** What a header adds below itself, on top of `listGap`: it pulls the first card 2px
-      into its own row, so the label sits closer to the card it heads. A collapsed header
-      has no card under it and keeps 0, so the gap to the next header is unchanged. */
-  headerTrail: "-mb-0.5",
+  /** What a header adds below itself, on top of `listGap`: nothing. */
+  headerTrail: "mb-0",
   /** The pinned block's hairline, each side, on top of `listGap`, to reach 10. */
   pinnedDividerMargin: "my-2",
   /** A snoozed/settled shelf header above, on top of `listGap`, to reach 16. */
@@ -137,7 +135,7 @@ export const SIDEBAR_V2_CARD_ALIGNMENT_PX = {
   listGap: 2,
   headerLead: 22,
   headerLeadCollapsed: 6,
-  headerTrail: -2,
+  headerTrail: 0,
   pinnedDividerMargin: 8,
   shelfHeaderLead: 14,
   shelfHeaderTrail: 6,
