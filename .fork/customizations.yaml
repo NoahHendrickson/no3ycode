@@ -5126,6 +5126,10 @@
     multi-select toggles in place. Free-text answers, the collapsed bar with
     Stop, and upstream's feed-inset mechanics carry over unchanged. iPad and
     Android keep upstream's card.
+    The composer's placeholder under a question with options reads "Or type
+    your own answer" (a fenced hunk in ChatComposer), not upstream's "Type
+    your own answer, or leave this blank to use the selected option", which
+    wrapped to two lines beside the composer's controls.
   tier: 2
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
