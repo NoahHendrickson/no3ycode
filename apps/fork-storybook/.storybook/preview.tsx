@@ -22,6 +22,8 @@ import {
 } from "~/custom/forkTheme";
 import { installInletMenuMorph } from "~/custom/inletMenuMorph";
 import { setTheme } from "~/hooks/useTheme";
+import { I18nProvider } from "~/i18n/I18nProvider";
+import { initializeI18n } from "~/i18n/initializeI18n";
 
 import { forceStateStyles } from "../stories/forcedStates.ts";
 import { DEFAULT_STORY_THEME, STORY_THEME_ITEMS, storyTheme } from "../stories/storyTheme.ts";
@@ -34,16 +36,20 @@ applyForkMarker(document.documentElement);
 initializeForkTheme();
 initializeForkGlass3d();
 installInletMenuMorph();
+// AppRoot.tsx's i18n, English only: useGT, useMessages and m() read GT's config.
+initializeI18n(() => {});
 
 const withSurface: Decorator = (Story, context) => {
   const surface = (
-    <Surface
-      name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
-      inline={context.viewMode === "docs"}
-      dockedSidebar={storyTheme(context.globals).palette === "glass"}
-    >
-      <Story />
-    </Surface>
+    <I18nProvider>
+      <Surface
+        name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
+        inline={context.viewMode === "docs"}
+        dockedSidebar={storyTheme(context.globals).palette === "glass"}
+      >
+        <Story />
+      </Surface>
+    </I18nProvider>
   );
   // `parameters.router`: a path (or true for "/") mounts the story under a memory router.
   const router: unknown = context.parameters["router"];
