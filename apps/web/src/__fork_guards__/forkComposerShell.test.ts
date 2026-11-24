@@ -842,7 +842,9 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
     expect(shellCss).toContain("[data-fork-composer-status-chip]");
-    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
+    // Background work lists in the shared Menu, on the composer's corners.
+    expect(work).toContain("<MenuPopup");
+    expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the

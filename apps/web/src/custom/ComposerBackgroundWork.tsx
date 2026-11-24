@@ -1,11 +1,12 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
+import { Fragment } from "react";
 
 import { ComputerActivityIcon, ComputerTerminalIcon } from "./icons/lucide-hugeicons";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
-import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
+import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
 
 import {
   glanceCommandLabel,
@@ -50,8 +51,8 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
       <span role="status" className="sr-only">
         {label}
       </span>
-      <Popover>
-        <PopoverTrigger
+      <Menu>
+        <MenuTrigger
           openOnHover
           render={
             <ComposerControl
@@ -75,28 +76,29 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           <span aria-hidden className="min-w-0 truncate">
             {label}
           </span>
-        </PopoverTrigger>
-        <PopoverPopup
+        </MenuTrigger>
+        <MenuPopup
           side="top"
           align="start"
           sideOffset={6}
-          width={props.presentation.items.some((item) => item.kind === "subagent") ? "md" : "sm"}
-          padding="compact"
+          className={
+            props.presentation.items.some((item) => item.kind === "subagent") ? "w-80" : "w-64"
+          }
           data-fork-glass-rim
           data-fork-background-work-popup
         >
-          <ul data-fork-monitoring-tasks className="flex max-h-60 flex-col overflow-y-auto">
-            {props.presentation.items.map((task) => (
+          {props.presentation.items.map((task, index) => (
+            <Fragment key={task.taskId}>
+              {index > 0 ? <MenuSeparator className="-mx-1" /> : null}
               <BackgroundWorkTaskRow
-                key={task.taskId}
                 task={task}
                 environmentId={props.environmentId}
                 onOpenThread={props.onOpenThread}
               />
-            ))}
-          </ul>
-        </PopoverPopup>
-      </Popover>
+            </Fragment>
+          ))}
+        </MenuPopup>
+      </Menu>
       <ComposerControl
         size="xs"
         data-fork-status-chip-stop
@@ -120,41 +122,40 @@ function BackgroundWorkTaskRow(props: {
   if (childThreadId === undefined) {
     const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
-      <li className="flex">
-        <span data-fork-monitoring-task aria-description={task.kind}>
-          <span
-            aria-hidden
-            data-fork-task-tile
-            className="flex size-8 shrink-0 items-center justify-center"
-          >
-            {task.kind === "command" ? (
-              <ComputerTerminalIcon className="size-4" />
-            ) : (
-              <ComputerActivityIcon className="size-4" />
-            )}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-sm leading-4 font-medium">{label}</span>
+      <div
+        data-fork-monitoring-task
+        aria-description={task.kind}
+        className="flex min-h-8 items-center gap-2 px-2 py-1 text-sm sm:min-h-7"
+      >
+        <span
+          aria-hidden
+          data-fork-task-tile
+          className="flex size-8 shrink-0 items-center justify-center"
+        >
+          {task.kind === "command" ? (
+            <ComputerTerminalIcon className="size-4" />
+          ) : (
+            <ComputerActivityIcon className="size-4" />
+          )}
         </span>
-      </li>
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+      </div>
     );
   }
   return (
-    <li className="flex">
-      {/* Closes the list: the thread may open beside this composer, which stays mounted. */}
-      <PopoverClose
-        render={<button type="button" />}
-        data-fork-monitoring-task
-        aria-label={`Open ${task.label}`}
-        onClick={() => props.onOpenThread(childThreadId)}
-      >
-        {task.subagent === undefined ? (
-          <span className="min-w-0 flex-1 truncate">{task.label}</span>
-        ) : (
-          <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
-        )}
-        <ArrowUpRightIcon aria-hidden className="size-3.5 shrink-0 text-foreground" />
-      </PopoverClose>
-    </li>
+    // Choosing it closes the menu: the thread may open beside this composer, which stays mounted.
+    <MenuItem
+      data-fork-monitoring-task
+      aria-label={`Open ${task.label}`}
+      onClick={() => props.onOpenThread(childThreadId)}
+    >
+      {task.subagent === undefined ? (
+        <span className="min-w-0 flex-1 truncate">{task.label}</span>
+      ) : (
+        <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
+      )}
+      <ArrowUpRightIcon aria-hidden className="size-3.5 shrink-0 text-foreground" />
+    </MenuItem>
   );
 }
 
