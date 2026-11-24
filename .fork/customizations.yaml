@@ -8124,13 +8124,14 @@
 
 - id: fork-storybook
   intent: >
-    apps/fork-storybook is the fork's component library for the Basic theme: a
-    Storybook that renders the app's real components (apps/web/src through the
-    override tree, never copies). Its preview stores Basic before any app module
-    loads, loads exactly main.tsx's stylesheets in main.tsx's order, runs
-    main.tsx's theme startup (applyForkMarker, initializeForkTheme,
-    initializeForkGlass3d, installInletMenuMorph), and offers every theme in the
-    toolbar (Basic's two tones, Glass, Inlet's colours), moved through
+    apps/fork-storybook is the fork's component library: a Storybook that renders
+    the app's real components (apps/web/src through the override tree, never
+    copies). Its preview stores Basic before any app module loads, loads exactly
+    main.tsx's stylesheets in main.tsx's order, runs main.tsx's theme startup
+    (applyForkMarker, initializeForkTheme, initializeForkGlass3d,
+    installInletMenuMorph), and offers every theme in the toolbar, opening on
+    Flat Glass (glass_off), the primary theme, with Basic's two tones, Glass 3D
+    and Inlet's colours a pick away, moved through
     setForkAppearance / setAppearanceMode / setForkInletColor as Settings ›
     Appearance moves them. Glass stands in a desktop bridge that reports the
     window material (appearance.ts) as macOS 26+ sidebar Liquid Glass, and paints

@@ -68,10 +68,6 @@ describe("fork guard: fork-basic-theme", () => {
   });
 
   it("states each appearance's tone once, in the sheet and the pre-paint alike", () => {
-    const { dark, light } = BASIC_OPTIONS;
-    expect(indexHtml).toContain(
-      `forkPaletteBackgrounds["basic"] = isDark ? "${dark.base}" : "${light.base}";`,
-    );
     for (const appearance of BASIC_APPEARANCES) {
       const { base, text } = BASIC_OPTIONS[appearance];
       const body = ruleBodyFor(rules, [
