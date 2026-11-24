@@ -6447,7 +6447,7 @@
     group headings are the foreground at 65%; the search is the app's outlined
     search field (InputGroup) with its icon at 65%; and a full-width hairline
     divides each group from the next. Every theme, since the inks derive from
-    --sidebar-foreground.
+    --contrast-sidebar-foreground (so Appearance → Contrast still applies).
   tier: 2
   files:
     - apps/web/src/theme.custom.css

@@ -24,9 +24,9 @@ describe("fork guard: settings nav", () => {
     const rule = sheet.slice(
       sheet.indexOf(':root[data-fork="noahhendrickson-t3code"] [data-settings-section] {'),
     );
-    expect(rule).toMatch(/^[^}]*font-weight: 400;\s*color: var\(--sidebar-foreground\);/u);
+    expect(rule).toMatch(/^[^}]*font-weight: 400;\s*color: var\(--contrast-sidebar-foreground\);/u);
     expect(rule).toMatch(
-      /& > svg \{\s*color: color-mix\(in srgb, var\(--sidebar-foreground\) 65%, transparent\);/u,
+      /& > svg \{\s*color: color-mix\(in srgb, var\(--contrast-sidebar-foreground\) 65%, transparent\);/u,
     );
   });
 

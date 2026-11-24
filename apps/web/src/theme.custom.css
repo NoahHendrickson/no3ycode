@@ -3640,9 +3640,9 @@
    the same ink as the group headings. */
 :root[data-fork="noahhendrickson-t3code"] [data-settings-section] {
   font-weight: 400;
-  color: var(--sidebar-foreground);
+  color: var(--contrast-sidebar-foreground);
 
   & > svg {
-    color: color-mix(in srgb, var(--sidebar-foreground) 65%, transparent);
+    color: color-mix(in srgb, var(--contrast-sidebar-foreground) 65%, transparent);
   }
 }
