@@ -273,11 +273,15 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
           <div className="flex flex-col gap-2">
             <div
               className={cn(
-                "flex h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
+                // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                "flex h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
+                // fork:end fork-settings-nav
                 !compactSearchOpen && "max-md:hidden",
               )}
             >
-              <SearchIcon className="size-4 shrink-0 text-sidebar-muted-foreground/80" />
+              {/* fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav */}
+              <SearchIcon className="size-4 shrink-0 text-sidebar-foreground/65" />
+              {/* fork:end fork-settings-nav */}
               {/* Native search inputs clear on Escape even during IME composition. */}
               <SidebarInput
                 ref={searchInputRef}
@@ -386,12 +390,16 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
                   {navGroups.map((group, index) => (
                     <div
                       key={group.heading}
-                      className="flex flex-col gap-1 max-md:border-t max-md:border-sidebar-border max-md:pt-4 max-md:first:border-t-0 max-md:first:pt-0"
+                      // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                      className="-mx-(--sidebar-content-inset) flex flex-col gap-1 border-t border-sidebar-border px-(--sidebar-content-inset) pt-4 first:border-t-0 first:pt-0"
+                      // fork:end fork-settings-nav
                     >
                       <h3
                         id={`settings-nav-group-${index}`}
                         className={cn(
-                          "px-2 text-xs font-medium text-sidebar-muted-foreground/80",
+                          // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                          "px-2 text-xs font-medium text-sidebar-foreground/65",
+                          // fork:end fork-settings-nav
                           group.headingHidden ? "sr-only" : !compactSearchOpen && "max-md:sr-only",
                         )}
                       >

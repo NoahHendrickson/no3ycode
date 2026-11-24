@@ -6440,6 +6440,25 @@
   verify:
     - apps/web/src/__fork_guards__/forkSettingsGlass.test.ts
 
+- id: fork-settings-nav
+  intent: >
+    The Settings nav reads calmer (Noey, 2026-11-24): section labels are the
+    foreground at regular weight, active or not, with their icons at 65%; the
+    group headings are the foreground at 65%; the search row is regular weight
+    with its icon at 65%; and a full-width hairline divides each group from the
+    next. Every theme, since the inks derive from --sidebar-foreground.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Fenced search row, heading and group classes.
+    - apps/web/src/components/settings/SettingsSidebarNav.tsx
+    # The label rule outranks the menu button's muted/80 ink and active font-medium.
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSettingsNav.test.ts
+
 - id: fork-split-threads
   intent: >
     Two threads can share the chat column side by side. A split icon toggle in

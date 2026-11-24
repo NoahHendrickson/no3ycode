@@ -3632,3 +3632,17 @@
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Settings nav — see `.fork/customizations.yaml#fork-settings-nav`.
+
+   Every section reads in the foreground at regular weight, active or not, with its icon at 65%,
+   the same ink as the group headings. */
+:root[data-fork="noahhendrickson-t3code"] [data-settings-section] {
+  font-weight: 400;
+  color: var(--sidebar-foreground);
+
+  & > svg {
+    color: color-mix(in srgb, var(--sidebar-foreground) 65%, transparent);
+  }
+}
