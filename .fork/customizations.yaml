@@ -8364,7 +8364,7 @@
     so apps/mobile/deps carries a react-native-screens build whose pop
     gesture delegate stops forwarding the UIKit hook that drops it: branch
     no3y/hidden-bar-back-swipe of NoahHendrickson/react-native-screens
-    (commit ca56dc59), on Julius's t3.61. When upstream bumps the tarball,
+    (commit af5cf075), on Julius's t3.61. When upstream bumps the tarball,
     rebuild this change on top of theirs rather than taking theirs, or the
     thread loses its back swipe. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
@@ -8705,6 +8705,7 @@
     - apps/mobile/src/features/threads/CopyTextButton.tsx
     - apps/mobile/src/native/useEnrichedLinkVariants.ts
     - apps/mobile/deps/README.md
+    - docs/operations/mobile-screens-fork.md
     - pnpm-workspace.yaml
     - apps/mobile/global.css
     - apps/mobile/src/lib/fontFamilies.ts
