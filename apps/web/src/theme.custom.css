@@ -967,25 +967,26 @@
   }
 }
 
-/* The control row's ghost controls: single owner of 26px / 8px / 6px geometry
+/* The control row's ghost controls: single owner of their height / 8px / 6px geometry
    and hover/ink tokens across left context controls and right model/mode/usage controls. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  height: 26px;
-  min-height: 26px;
+  /* A pixel under the interface font size, with the 12px around the text the 14px row had. */
+  height: calc(1rem + 11px);
+  min-height: calc(1rem + 11px);
   gap: 5px;
   padding-inline: 8px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: calc(1rem - 1px);
   font-weight: 400;
-  line-height: 20px;
+  line-height: calc(1rem + 5px);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row-slot="right"]
   :is([data-fork-composer-usage-limits], [data-fork-composer-mode-chip]) {
-  width: 26px;
+  width: calc(1rem + 11px);
   padding-inline: 0;
 }
 
@@ -1366,18 +1367,19 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  /* 24px tall, 6px radius. Inline padding is refined per trigger below so
+  /* 6px radius. Inline padding is refined per trigger below so
      workspace and branch match; [data-fork-context-chip] is the locked
      workspace/env span — same pill when there is no interactive trigger. */
-  height: 24px;
-  min-height: 24px;
+  /* A pixel under the interface font size, like the status chips above the composer; the height keeps
+     10px around the text. */
+  height: calc(1rem + 9px);
+  min-height: calc(1rem + 9px);
   gap: 6px;
   padding-inline: 8px;
   border-radius: 6px;
-  /* 14px regular, matching the vessel's control row. */
-  font-size: 14px;
+  font-size: calc(1rem - 1px);
   font-weight: 400;
-  line-height: 20px;
+  line-height: calc(1rem + 5px);
   background: var(--fork-context-chip-bg);
 }
 
