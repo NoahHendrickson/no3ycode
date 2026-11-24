@@ -9,8 +9,8 @@ const kind = figma.selectedInstance.getEnum("Kind", {
   "PR · Draft": "pr",
   "PR · Merged": "pr",
   "PR · Closed": "pr",
-  "Background work · Agents": "work",
-  "Background work · Monitoring": "work",
+  "Background work": "work",
+  "Background work · Solo": "work",
   Queued: "queued",
 });
 const count = Number(figma.selectedInstance.getString("Queued count"));
