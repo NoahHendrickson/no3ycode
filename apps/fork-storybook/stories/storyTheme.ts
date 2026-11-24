@@ -41,7 +41,8 @@ export const STORY_THEME_ITEMS = [
   })),
 ];
 
-export const DEFAULT_STORY_THEME = "basic_dark";
+/** Flat Glass, the primary theme: what the library opens on. */
+export const DEFAULT_STORY_THEME = "glass_off";
 
 /** The toolbar's theme, the one reader of `globals.theme` for the preview and the stories. */
 export function storyTheme(globals: Readonly<Record<string, unknown>>): StoryTheme {
