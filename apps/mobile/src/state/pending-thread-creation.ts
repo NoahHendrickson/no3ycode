@@ -9,6 +9,10 @@ import { asLaunchingThread } from "@t3tools/client-runtime/state/thread-inbox";
 import { Atom } from "effect/reactivity";
 import * as DateTime from "effect/DateTime";
 
+/* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+import { deriveThreadTitleSeed } from "@t3tools/client-runtime/operations";
+import { m } from "../i18n/messages";
+/* fork:end no3y-media-attachment-no-chip */
 import { deriveThreadTitleFromPrompt } from "../lib/projectThreadStartTurn";
 import { scopedThreadKey } from "../lib/scopedEntities";
 import { appAtomRegistry } from "./atom-registry";
@@ -173,7 +177,12 @@ export function pendingThreadCreationShell(
   return presentThreadShell(message.environmentId, {
     id: message.threadId,
     projectId: creation.projectId,
-    title: deriveThreadTitleFromPrompt(message.text),
+    /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+    // Media-only messages carry no chip text, so title them from the attachments as the server will.
+    title: message.text.trim()
+      ? deriveThreadTitleFromPrompt(message.text)
+      : deriveThreadTitleSeed({ text: "", attachments: message.attachments }, m),
+    /* fork:end no3y-media-attachment-no-chip */
     providerInstanceId: message.modelSelection.instanceId,
     modelSelection: message.modelSelection,
     runtimeMode: message.runtimeMode ?? DEFAULT_RUNTIME_MODE,

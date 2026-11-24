@@ -18,6 +18,10 @@ interface ComposerPendingApprovalActionsProps {
   canRespond: boolean;
   disabled?: boolean;
   options?: ReadonlyArray<ProviderApprovalOption> | undefined;
+  /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */
+  /** The composer's notice card leads with Approve; the timeline rows keep upstream's order. */
+  acceptFirst?: boolean;
+  /* fork:end fork-composer-approval-notice */
   onRespondToApproval: (
     requestId: RuntimeRequestId,
     decision: ProviderApprovalDecision,
@@ -47,6 +51,9 @@ export const ComposerPendingApprovalActions = memo(function ComposerPendingAppro
   canRespond,
   disabled = false,
   options = DEFAULT_APPROVAL_OPTIONS,
+  /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */
+  acceptFirst = false,
+  /* fork:end fork-composer-approval-notice */
   onRespondToApproval,
 }: ComposerPendingApprovalActionsProps) {
   const gt = useGT();
@@ -56,6 +63,14 @@ export const ComposerPendingApprovalActions = memo(function ComposerPendingAppro
   const primaryOptions = options.filter(
     (option) => option.decision === "decline" || option.decision === "accept",
   );
+  /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice
+     Sorts the filtered copy, so `options` keeps the identity the label translation checks. */
+  if (acceptFirst) {
+    primaryOptions.sort(
+      (left, right) => Number(right.decision === "accept") - Number(left.decision === "accept"),
+    );
+  }
+  /* fork:end fork-composer-approval-notice */
   const moreOptions = options.filter(
     (option) => option.decision !== "decline" && option.decision !== "accept",
   );

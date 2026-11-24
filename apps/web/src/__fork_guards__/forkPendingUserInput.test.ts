@@ -6,7 +6,7 @@
  * custom/. A sync that deletes the override silently falls back to upstream's
  * primary-tint options and number-key badges — everything still compiles.
  * Assert the outcomes the design depends on: Questions progress, checkbox vs
- * radio affordances, and the outline Previous/Next chrome.
+ * radio affordances, and Previous/Submit living in the card.
  */
 
 import * as NodeFS from "node:fs";
@@ -32,7 +32,9 @@ const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
 describe("fork guard: fork-pending-user-input", () => {
   it("keeps a thin shadow that owns the Questions chrome", () => {
     expect(override).toContain('data-fork-pending-user-input="true"');
-    expect(override).toContain(">Questions</");
+    // No "Questions" label: the question itself heads the card, ruled off from its options.
+    expect(override).not.toContain(">Questions</");
+    expect(override).toContain("data-fork-pending-user-input-question");
     expect(override).toContain("questionIndex + 1");
     expect(override).toContain("prompt.questions.length > 1");
     expect(override).toContain("useComposerPendingUserInputCard");
@@ -44,7 +46,10 @@ describe("fork guard: fork-pending-user-input", () => {
     // Card interaction lives in custom/; the override must not re-own it.
     expect(override).not.toContain("autoAdvanceTimerRef");
     expect(override).not.toContain('addEventListener("keydown"');
-    expect(hook).toContain("autoAdvanceTimerRef");
+    // Picking an option never submits or advances; the card's own button does.
+    expect(hook).not.toContain("autoAdvanceTimerRef");
+    expect(hook).not.toContain("onAdvance");
+    expect(override).toContain("data-fork-pending-user-input-submit");
     expect(hook).toContain('addEventListener("keydown"');
     // Number keys stay wired; announce via aria-keyshortcuts without kbd badges.
     expect(override).toContain("aria-keyshortcuts");
@@ -84,31 +89,20 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain('multiSelect ? "rounded-[4px]" : "rounded-full"');
   });
 
-  it("marks pending Previous/Next and dark-scopes the true-outline chrome", () => {
-    expect(primaryActions).toContain('data-fork-pending-user-input-action="previous"');
+  it("keeps Previous in the card and only the advance arrow in the composer", () => {
+    expect(primaryActions).not.toContain('data-fork-pending-user-input-action="previous"');
+    expect(primaryActions).not.toContain("onPreviousPendingQuestion:");
     expect(primaryActions).toContain('data-fork-pending-user-input-action="advance"');
+    expect(chatComposer).not.toContain("onPreviousPendingQuestion=");
+    expect(override).toContain("onPrevious: () => void;");
+    expect(override).toContain("onClick={onPrevious}");
     const begin = primaryActions.match(/fork:begin fork-pending-user-input/gu) ?? [];
     const end = primaryActions.match(/fork:end fork-pending-user-input/gu) ?? [];
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
     expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
-    // Compact Previous stays square.
-    expect(theme).toMatch(
-      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*28px/u,
-    );
-
-    const outline = cssRules(theme).find(
-      (rule) =>
-        rule.selector.includes('[data-fork-pending-user-input-action="previous"]') &&
-        rule.body.includes("background: transparent"),
-    );
-    expect(outline?.selector).toContain(MARKER);
-    expect(outline?.selector).toContain(".dark");
-    // The changed-files header actions are ghost buttons and must not share
-    // this outline (forkChangedFilesCard.test.ts pins their own rule).
-    expect(outline?.selector).not.toContain("[data-changed-files-header]");
-    expect(outline?.body).toMatch(/border-color:\s*var\(--fork-outline-border\)/u);
+    expect(theme).not.toContain('[data-fork-pending-user-input-action="previous"]');
   });
 
   it("stacks the Questions card onto the prompt surface (Figma 322:6316)", () => {

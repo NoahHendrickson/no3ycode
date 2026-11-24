@@ -1,4 +1,50 @@
+import type {
+  PendingBackgroundWorkItem,
+  PendingBackgroundWorkPresentation,
+} from "@t3tools/client-runtime/state/thread-execution";
+import type { OrchestrationV2Subagent } from "@t3tools/contracts";
 import { forkShellCommandParsing as shell } from "@t3tools/client-runtime/work-log/command-label";
+
+import { forkSubagentRowFromAgent, type ForkSubagentTreeRow } from "./forkSubagentTree";
+
+/** A background task, with its transcript card row when the task is a subagent's. */
+export interface ComposerBackgroundWorkItem extends PendingBackgroundWorkItem {
+  readonly subagent?: ForkSubagentTreeRow | undefined;
+}
+
+export interface ComposerBackgroundWorkPresentation extends Omit<
+  PendingBackgroundWorkPresentation,
+  "items"
+> {
+  readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
+}
+
+const LIVE_SUBAGENT_STATUSES: ReadonlySet<OrchestrationV2Subagent["status"]> = new Set([
+  "pending",
+  "running",
+  "waiting",
+]);
+
+/** Pairs each subagent task with its live record's card row, once, so a task row reads one item. */
+export function resolveComposerBackgroundWork(
+  presentation: PendingBackgroundWorkPresentation | null,
+  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
+): ComposerBackgroundWorkPresentation | null {
+  if (presentation === null) return null;
+  return {
+    ...presentation,
+    items: presentation.items.map((task) => {
+      // A follow-up delegation reuses its child thread, so prefer the live record over a finished one.
+      const matches =
+        task.childThreadId === undefined
+          ? []
+          : (subagents ?? []).filter((candidate) => candidate.childThreadId === task.childThreadId);
+      const agent =
+        matches.find((candidate) => LIVE_SUBAGENT_STATUSES.has(candidate.status)) ?? matches.at(-1);
+      return agent === undefined ? task : { ...task, subagent: forkSubagentRowFromAgent(agent) };
+    }),
+  };
+}
 
 /** The first index from which every token is a redirection, or null when the command has none. */
 function redirectionTailStart(tokens: ReadonlyArray<string>): number | null {

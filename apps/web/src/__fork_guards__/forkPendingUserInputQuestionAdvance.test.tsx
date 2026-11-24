@@ -5,10 +5,11 @@
  * stays mounted while questionIndex advances. react-dom refreshes a
  * useEffectEvent impl only for FunctionComponent fibers, so one declared in
  * useComposerPendingUserInputCard would answer every later question with
- * question 1's closure — taking the single-select branch on a multi-select
- * question, arming the 200 ms auto-advance, and writing through the
- * mount-time onToggleOption. This pins the selection handler against the
- * question actually on screen.
+ * question 1's closure, writing through the mount-time onToggleOption. Picking
+ * an option never advances (the card's Submit does), so the hook takes no
+ * advance callback at all, and the single- vs multi-select rule lives in
+ * togglePendingUserInputOptionSelection. This pins the selection handler
+ * against the question actually on screen.
  */
 import { act, memo, StrictMode, useLayoutEffect, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -48,7 +49,6 @@ let root: Root;
 let card: Card;
 let mountToken: object;
 let toggled: Array<[string, string]>;
-let advances: number;
 
 const Host = memo(function Host({
   questionIndex,
@@ -67,9 +67,6 @@ const Host = memo(function Host({
     questionIndex,
     onToggleOption: (questionId, optionValue) => {
       toggled.push([questionId, optionValue]);
-    },
-    onAdvance: () => {
-      advances += 1;
     },
   });
   useLayoutEffect(() => {
@@ -124,12 +121,6 @@ beforeEach(() => {
       document,
       // react-dom's before-mutation phase walks document.activeElement.
       HTMLIFrameElement: EventTarget,
-      // The single-select branch arms its auto-advance through window.
-      // Delegate lazily, so a test switching to fake timers is honoured.
-      setTimeout: (...args: Parameters<typeof globalThis.setTimeout>) =>
-        globalThis.setTimeout(...args),
-      clearTimeout: (handle?: Parameters<typeof globalThis.clearTimeout>[0]) =>
-        globalThis.clearTimeout(handle),
     }),
   );
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -139,7 +130,6 @@ beforeEach(() => {
     vi.stubGlobal(name, Element);
   }
   toggled = [];
-  advances = 0;
   root = createRoot(container as unknown as HTMLElement);
 });
 
@@ -154,59 +144,29 @@ afterEach(async () => {
 });
 
 describe("fork guard: pending user input question advance", () => {
-  it("takes the multi-select branch once the card advances to a multi-select question", async () => {
-    vi.useFakeTimers();
-    try {
-      const mounts = new Set<object>();
-      await renderQuestion(0);
-      mounts.add(mountToken);
-      await renderQuestion(1);
-      mounts.add(mountToken);
-      // The card is reconciled, not remounted — the premise the bug needs.
-      // A remount would rebuild the hook and hide the staleness entirely.
-      expect(mounts.size).toBe(1);
-      expect(card.activeQuestion?.id).toBe("q2");
+  it("toggles through the question on screen once the card advances", async () => {
+    const mounts = new Set<object>();
+    await renderQuestion(0);
+    mounts.add(mountToken);
+    await renderQuestion(1);
+    mounts.add(mountToken);
+    // The card is reconciled, not remounted — the premise the bug needs.
+    // A remount would rebuild the hook and hide the staleness entirely.
+    expect(mounts.size).toBe(1);
+    expect(card.activeQuestion?.id).toBe("q2");
 
-      await act(async () => {
-        card.handleOptionSelection("q2", "auth");
-      });
-      expect(toggled).toEqual([["q2", "auth"]]);
-      // Multi-select toggles in place: no optimistic single pick, no timer.
-      expect(card.optimisticSingleSelect).toBeNull();
-      await act(async () => {
-        vi.advanceTimersByTime(500);
-      });
-      expect(advances).toBe(0);
+    await act(async () => {
+      card.handleOptionSelection("q2", "auth");
+    });
+    expect(toggled).toEqual([["q2", "auth"]]);
 
-      await act(async () => {
-        card.handleOptionSelection("q2", "billing");
-      });
-      expect(toggled).toEqual([
-        ["q2", "auth"],
-        ["q2", "billing"],
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("still auto-advances a single-select question", async () => {
-    vi.useFakeTimers();
-    try {
-      await renderQuestion(0);
-      await act(async () => {
-        card.handleOptionSelection("q1", "zod");
-      });
-      expect(toggled).toEqual([["q1", "zod"]]);
-      expect(card.optimisticSingleSelect).toEqual({ questionId: "q1", optionValue: "zod" });
-      expect(advances).toBe(0);
-      await act(async () => {
-        vi.advanceTimersByTime(200);
-      });
-      expect(advances).toBe(1);
-    } finally {
-      vi.useRealTimers();
-    }
+    await act(async () => {
+      card.handleOptionSelection("q2", "billing");
+    });
+    expect(toggled).toEqual([
+      ["q2", "auth"],
+      ["q2", "billing"],
+    ]);
   });
 
   // Upstream keeps the thread mounted under Settings or Usage.
@@ -227,40 +187,12 @@ describe("fork guard: pending user input question advance", () => {
   // cannot answer. The compact mobile mount and the expanded one share this
   // hook, so the guard holds for both.
   it("ignores option selection while the card is disabled", async () => {
-    vi.useFakeTimers();
-    try {
-      await renderQuestion(0, true);
-      expect(card.responseDisabled).toBe(true);
-      await act(async () => {
-        card.handleOptionSelection("q1", "zod");
-      });
-      expect(toggled).toEqual([]);
-      expect(card.optimisticSingleSelect).toBeNull();
-      await act(async () => {
-        vi.advanceTimersByTime(200);
-      });
-      expect(advances).toBe(0);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("cancels a pending auto-advance when the scope is withdrawn mid-timer", async () => {
-    vi.useFakeTimers();
-    try {
-      await renderQuestion(0);
-      await act(async () => {
-        card.handleOptionSelection("q1", "zod");
-      });
-      expect(toggled).toEqual([["q1", "zod"]]);
-      await renderQuestion(0, true);
-      await act(async () => {
-        vi.advanceTimersByTime(200);
-      });
-      expect(advances).toBe(0);
-    } finally {
-      vi.useRealTimers();
-    }
+    await renderQuestion(0, true);
+    expect(card.responseDisabled).toBe(true);
+    await act(async () => {
+      card.handleOptionSelection("q1", "zod");
+    });
+    expect(toggled).toEqual([]);
   });
 
   it("advances through the callbacks of the render that is on screen", async () => {
@@ -272,6 +204,5 @@ describe("fork guard: pending user input question advance", () => {
       retained.handleOptionSelection("q2", "billing");
     });
     expect(toggled).toEqual([["q2", "billing"]]);
-    expect(card.optimisticSingleSelect).toBeNull();
   });
 });

@@ -8,8 +8,8 @@ import {
 } from "react";
 import { msg, useGT, useMessages } from "gt-react";
 import {
+  ArrowRightIcon,
   CheckIcon,
-  ChevronLeftIcon,
   Minimize2Icon,
   PlayIcon,
   CornerUpRightIcon,
@@ -31,7 +31,6 @@ import { formatContextWindowTokens } from "~/lib/contextWindow";
 import { cn, isMacPlatform } from "~/lib/utils";
 import { useShortcutModifierState } from "../../shortcutModifierState";
 import { StageBackdropButtonArt, useSidebarStageBackdropVariant } from "../SidebarStageBackdrop";
-import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import {
@@ -78,7 +77,9 @@ interface ComposerPrimaryActionsProps {
   isEditingQueuedMessage?: boolean;
   onSubmitMessage?: MouseEventHandler<HTMLButtonElement>;
   onResume?: () => void;
-  onPreviousPendingQuestion: () => void;
+  /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+     Previous lives in the question card, so upstream's onPreviousPendingQuestion is gone. */
+  /* fork:end fork-pending-user-input */
   onInterrupt: () => void;
   compactBeforeSendTokens?: number | null;
   hideCompactToggle?: boolean;
@@ -277,7 +278,6 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   isEditingQueuedMessage = false,
   onSubmitMessage,
   onResume,
-  onPreviousPendingQuestion,
   onInterrupt,
   compactBeforeSendTokens = null,
   hideCompactToggle = false,
@@ -327,45 +327,16 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   );
 
   if (pendingAction) {
+    /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+       Previous and Submit live in the question card; the composer keeps a round arrow that
+       sends a typed answer (or the picked option), labelled for screen readers. */
     return (
       <div className={cn("flex items-center justify-end", compact ? "gap-1.5" : "gap-2")}>
-        {pendingAction.questionIndex > 0 ? (
-          compact ? (
-            <Button
-              size="icon-sm"
-              variant="outline"
-              /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
-              data-fork-pending-user-input-action="previous"
-              /* fork:end fork-pending-user-input */
-              {...pointerFocusProps}
-              onClick={onPreviousPendingQuestion}
-              disabled={pendingAction.isResponding}
-              aria-label={gt("Previous question")}
-            >
-              <ChevronLeftIcon className="size-3.5" />
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
-              data-fork-pending-user-input-action="previous"
-              /* fork:end fork-pending-user-input */
-              {...pointerFocusProps}
-              onClick={onPreviousPendingQuestion}
-              disabled={pendingAction.isResponding}
-            >
-              {gt("Previous", { $context: "button that goes to the previous question" })}
-            </Button>
-          )
-        ) : null}
         {children}
         <button
           type="submit"
-          className={cn(messageActionPillClassName, "h-8 sm:h-7", compact ? "px-3" : "px-4")}
-          /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+          className={cn(messageActionPillClassName, "size-8 px-0 sm:size-7")}
           data-fork-pending-user-input-action="advance"
-          /* fork:end fork-pending-user-input */
           {...pointerFocusProps}
           onClick={(event) => {
             if (stopPhase === "landed") event.preventDefault();
@@ -380,8 +351,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
                 ? !pendingAction.isComplete
                 : !pendingAction.canAdvance))
           }
-        >
-          {formatPendingPrimaryActionLabel(
+          aria-label={formatPendingPrimaryActionLabel(
             {
               compact,
               isLastQuestion: pendingAction.isLastQuestion,
@@ -390,12 +360,15 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
             },
             m,
           )}
+        >
+          <ArrowRightIcon className="size-3.5" strokeWidth={2.4} />
         </button>
         {canInterrupt || stopPhase === "pending" || stopPhase === "timedOut"
           ? renderStopGenerationButton(true)
           : null}
       </div>
     );
+    /* fork:end fork-pending-user-input */
   }
 
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
@@ -541,14 +514,15 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
         <Spinner size="sm" aria-hidden="true" />
       ) : showResume ? (
         <PlayIcon className="size-4 fill-current" aria-hidden="true" />
-      ) : isEditingQueuedMessage ? (
-        <CheckIcon className="size-4" aria-hidden="true" />
+      ) : /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+        Every send state draws at the return glyph's weight: 14px on a 2.4 stroke. */
+      isEditingQueuedMessage ? (
+        <CheckIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : isRunning && isQueuing ? (
-        <ListPlusIcon className="size-4" aria-hidden="true" />
+        <ListPlusIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : isRunning ? (
-        <CornerUpRightIcon className="size-4" aria-hidden="true" />
+        <CornerUpRightIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : (
-        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
         <ForkReturnGlyph />
         /* fork:end fork-composer-shell */
       )}

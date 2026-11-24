@@ -519,6 +519,14 @@
       "types": "./src/changeRequestLinks.ts",
       "default": "./src/changeRequestLinks.ts"
     },
+    "./fork-bot-digest": {
+      "types": "./src/forkBotDigest.ts",
+      "default": "./src/forkBotDigest.ts"
+    },
+    "./fork-bot-digest-links": {
+      "types": "./src/forkBotDigestLinks.ts",
+      "default": "./src/forkBotDigestLinks.ts"
+    },
     "./thread-pull-requests": {
       "types": "./src/threadPullRequests.ts",
       "default": "./src/threadPullRequests.ts"

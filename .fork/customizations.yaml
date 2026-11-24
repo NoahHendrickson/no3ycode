@@ -379,7 +379,7 @@
     first V2 launch carries the fork's drafts over and never upstream's.
     The fork presents as "no3y Code": bundle id com.t3tools.t3code.fork,
     installs as "no3y Code.app", ships no3y-Code-* artifacts, packages the
-    sparkle mark from assets/fork on all three platforms (plus web splash
+    pixel leaf mark from assets/fork on all three platforms (plus web splash
     and favicon), and keeps all filesystem state under ~/.t3-fork. The bundle
     id and the base directory are the stable identities and must never change
     across display renames; display strings are safe to rename precisely
@@ -414,17 +414,14 @@
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
     apps/web/public for local/dev and into the packaged desktop client at
     build time via FORK_WEB_ICON_ASSETS + the shared applyWebIconOverrides
-    path). The brand mark is the sparkle (Figma OnHdu0r2mAwMEiC4s7Gvjv
-    39:4), one path drawn identically everywhere. The layered Icon Composer
-    projects in assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon
-    are its app-icon source of truth: a white sparkle placed as in the no3y
-    app icon design (Figma 1qVCaK2XuosbVJtYqa3n0n 54:3507), about 56% of the
-    tile wide. Production is a black tile under that design's blurred glows,
-    rendered from Figma to Assets/background.png and layered as a flat image
-    (no glass) beneath the mark, since Icon Composer cannot draw SVG blur
-    filters; development keeps a solid orange tile so installed variants
-    remain distinguishable in the Dock. Glass is on for the mark layer as well
-    as the tile — the smooth shape takes the system treatment cleanly. Every
+    path). The app icon and favicon are the pixel leaf (Figma t3-fork
+    fZRyRTZJtLKwuq8rj2SLg4 755:6703): nine paths, one per colour, drawn
+    identically everywhere. The Icon Composer projects in
+    assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon are its
+    app-icon source of truth, the leaf placed as in that frame on a solid
+    tile: #08B776 green for production, orange for development so installed
+    variants remain distinguishable in the Dock. Glass is off for the mark
+    layer, which would smear the pixel cells; the tile still takes it. Every
     app-icon raster, including the Linux PNG, the Windows ICO, the 192/512
     installable web icons and the apps/web/public apple-touch and icon copies,
     is rendered from these projects by `node .fork/export-icons.ts` (macOS
@@ -432,11 +429,17 @@
     the same artwork. The macOS Dock exports add only a transparent outer
     canvas around the rendered artwork, matching the standard Mac icon
     footprint. The local dev splash uses the orange family, while packaged
-    builds stamp the black production family. Web favicons and the project
-    icon are the bare sparkle in #00C26B with no tile, which stays legible at
-    16px: assets/fork/n3-project-icon.svg carries the same path, and the
-    n3-web-favicon* rasters (with apps/web/public copies) are rendered from it
-    as vectors at 16 and 32px; export-icons.ts leaves them alone. Filenames
+    builds stamp the green production family. The project icon is the bare
+    leaf with no tile (assets/fork/n3-project-icon.svg, the same paths
+    cropped to the leaf, with a black outline). Web favicons are a separate 15-square redraw of the
+    leaf (Figma Noey-Brand h7PWAQCOhl8NwRoFTs3Cbu 158:5247 with its top and
+    left end caps restored, outline and highlights matched to the full leaf)
+    in assets/fork/n3-favicon.svg: the full leaf's 21 squares cannot land on
+    whole pixels at 16 or 32px, these land on exactly 1 and 2. The 32px
+    raster is centred; the 16px one sits 1px off centre, as 15 in 16 must. The n3-web-favicon* rasters (with
+    apps/web/public copies) are rendered from it; export-icons.ts leaves
+    them alone. The iOS launch screen keeps the sparkle
+    (no3y-launch-sparkle). Filenames
     still say n3-* for path stability. t3.json's
     iconPath points at n3-project-icon.svg, never upstream's
     assets/dev/blueprint-*. The apple-touch icons keep the tile because iOS
@@ -488,6 +491,7 @@
     - assets/fork/n3-web-favicon-32x32.png
     - assets/fork/n3-web-favicon.ico
     - assets/fork/n3-project-icon.svg
+    - assets/fork/n3-favicon.svg
   shadows: []
   watch:
     - apps/desktop/src/window/DesktopApplicationMenu.test.ts
@@ -3689,6 +3693,8 @@
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
   watch:
+    # The permissions menu is a vertical list, so its keyboard test walks it with Up and Down.
+    - apps/web/src/components/chat/ComposerPermissionsSection.browser.test.tsx
     # Carries the base row, the control row, leading attach action, and contextStrip prop.
     - apps/web/src/components/chat/ChatComposer.tsx
     # Exports its shell reader for the background-work list's command gist.
@@ -4836,6 +4842,8 @@
     - apps/web/src/components/ChatView.tsx
     - docs/user/thread-sidebar.md
     - apps/web/src/components/chat/ThreadActivityBanners.tsx
+    # The usage-limit banner is a notice card with a primary Resume action.
+    - apps/web/src/components/chat/UsageLimitRecoveryBanner.tsx
   verify:
     - apps/web/src/__fork_guards__/forkComposerBannerSurface.test.ts
 
@@ -4975,9 +4983,18 @@
   watch:
     # Upstream's RTL test, fenced to the fork card (no header or collapse, radio rows).
     - apps/web/src/components/chat/ComposerPendingUserInputPanel.direction.browser.test.tsx
-    # data-fork-pending-user-input-action on Previous and Next/Submit; the
-    # outline + 24px restyle hangs off those attributes.
+    # In question mode the composer keeps only a round arrow (data-fork-pending-user-input-action
+    # "advance"); Previous and Submit moved into the card.
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
+    # Hands the card onPrevious, through the override-resolving alias import.
+    - apps/web/src/components/chat/ChatComposer.tsx
+    # Upstream's onPreviousPendingQuestion is gone from the composer's actions and their tests.
+    - apps/web/src/components/chat/ComposerFooterControls.tsx
+    - apps/web/src/components/chat/ComposerPrimaryActions.browser.test.tsx
+    - apps/web/src/components/chat/useQueuedRunEdit.browser.test.tsx
+    # A re-clicked single-select option clears (web card and iPhone share the toggle).
+    - packages/client-runtime/src/state/pendingUserInput.ts
+    - packages/client-runtime/src/state/pendingUserInput.test.ts
     # Swaps in the no3y iPhone card.
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
   verify:
@@ -5986,6 +6003,41 @@
   verify:
     - apps/web/src/__fork_guards__/forkImageAttachmentNoChip.test.ts
 
+- id: no3y-media-attachment-no-chip
+  intent: >
+    The mobile counterpart of fork-image-attachment-no-chip. A photo or video
+    added to an iOS/Android composer draft (media picker, file picker, pasted
+    image, review comment, returned question attachment, zip entry) shows
+    once: as its thumbnail in the strip above the prompt. Upstream's draft
+    store inserts an inline file-name chip for every attachment appended with
+    a reference; the fork skips the chip for images and videos (the same test
+    upstream's restoreMissingComposerFileReferences uses), so documents, HEIC
+    picked through Files and pasted text keep their chips, since they have no
+    thumbnail. Media still replaces the selection a chip would have replaced,
+    so that selection counts as freed toward the attachment limit.
+    Unreferenced media still sends and survives text edits; only the chip's
+    position in the prose is lost, the same trade-off as on web. Upstream
+    relied on the chip to turn a media-only send into the attachment-only
+    bootstrap prompt, so outbox delivery restores that prompt from the
+    attachment count instead (as the side-chat send already does), and a
+    media-only new thread's pending row is titled from its attachments, as
+    the server titles it, rather than "New thread". The thread composer's
+    strip thumbnails are 88pt instead of upstream's 72pt default; the review
+    comment sheet keeps 60pt.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/mobile/src/state/use-composer-drafts.ts
+    - apps/mobile/src/features/threads/ThreadComposer.tsx
+    - apps/mobile/src/state/threadOutboxDelivery.ts
+    - apps/mobile/src/state/pending-thread-creation.ts
+    - apps/mobile/src/state/pending-new-tasks-model.ts
+  verify:
+    - apps/mobile/src/state/use-composer-drafts.test.ts
+    - apps/mobile/src/state/threadOutboxDelivery.test.ts
+    - apps/web/src/__fork_guards__/no3yMediaAttachmentNoChip.test.ts
+
 - id: fork-touch-affordances
   intent: >
     Phone usability for controls that only a mouse could reach. On iOS
@@ -6639,6 +6691,8 @@
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/forkQueuedItems.ts
+    - apps/web/src/custom/ComposerQueuedChip.tsx
     - apps/web/src/custom/stashQueuedRun.ts
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
@@ -6690,7 +6744,7 @@
     - apps/web/src/components/ChatView.tsx
     # Owns the shelf items, the blocking-drawer state and the typing-held approval.
     - apps/web/src/components/chat/ChatComposer.tsx
-    # The approval buttons the notice renders.
+    # The approval buttons the notice renders; acceptFirst puts Approve ahead of Decline there.
     - apps/web/src/components/chat/ComposerPendingApprovalActions.tsx
     # Upstream's inline row the empty list keeps unmounted.
     - apps/web/src/components/chat/TimelinePendingApprovalRow.tsx
@@ -7828,13 +7882,13 @@
     dismissed" on the status row brings them back. Reply (a ghost
     beside answers, outline alone) quotes the ask into the composer beneath, or, when a thread it links waits
     on a question (hasPendingUserInput), opens that thread to answer it there. Each line is
-    parsed by custom/bots/botDigestSections: one plain line per item (list marks, emphasis and
+    parsed by client-runtime forkBotDigest (shared with iOS): one plain line per item (list marks, emphasis and
     link targets dropped; links that follow a line's last sentence dropped, so it reads as its
     ask, while a link the sentence runs into keeps its words; a bare pull request URL reads as
     its number; "Nothing." left out). Under a line (custom/bots/BotDigestItem), each linked
     thread shows its sidebar status mark and title and opens it (one chip however the link
     spells it; one it cannot find shows the bot's label), and each pull request the line names
-    or a linked thread has (its linked one, else its branch's: custom/bots/botDigestItemLinks,
+    or a linked thread has (its linked one, else its branch's: client-runtime forkBotDigestLinks,
     also the Threads rows' order) shows its state and number (custom/bots/BotPullRequestMark,
     shared with the Threads rows; a branch pull request's state from the shared summaries) and
     opens it as the sidebar PR badge does, opening its thread when it lands in that thread's
@@ -7844,21 +7898,45 @@
     (revisionedQuery keyed by botDigestRevision, so a read never lands before the answers it
     settles; the shell's latest run until the conversation loads). An empty, missing or unreadable digest
     draws nothing.
+    On the no3y iPhone composer (fork/No3yBotDigest.tsx, fenced in ThreadDetailScreen beside
+    ChildThreadApprovals, under the no3y layout) the same digest is a 24pt-radius glass card
+    rising in above the composer (the panel stack above the composer draws over the composer's
+    fade-to-page scrim on the no3y layout, a fenced animated zIndex, so the scrim never darkens the
+    bottom edge of the card or any other banner there; it drops back under the composer while the
+    composer's command popover, drawn inside the composer on iOS, is open; the card carries the composer's own No3yBottomScrim, so the transcript never
+    reads through it, and sits under the banners before it so that scrim never covers them):
+    the status strip with the pager and, at its end, the X
+    that dismisses the ask on show (so the question runs the card's full width), then
+    the ask on show with its tile (the pull request state glyph in the no3y PR tones, else the
+    attention amber with a question glyph), question, detail, linked threads (their no3y status
+    mark and title) and pull requests (glyph and number, opening the PR screen), answers as
+    outline pills and Reply. The same answered-ask rules hold (fork/no3yBotDigestAnswers.ts, on
+    the mobile atom registry); answers queue through startTurn, and Reply quotes into the
+    thread's composer draft. Dismissals last for the app session rather than per device, with no way to bring one back
+    early (no "Show N dismissed", by the owner's choice). The
+    digest reads again when the conversation's run revision moves (one effect refresh), and a
+    branch pull request's state comes from the thread's own PR badge (useThreadPr).
   tier: 4
   files:
     - apps/web/src/custom/bots/BotDigest.tsx
     - apps/web/src/custom/bots/BotDigestItem.tsx
     - apps/web/src/custom/bots/BotPullRequestMark.tsx
-    - apps/web/src/custom/bots/botDigestItemLinks.ts
-    - apps/web/src/custom/bots/botDigestSections.ts
     - apps/web/src/custom/bots/useAnsweredBotDigestAsks.ts
+    - packages/client-runtime/src/forkBotDigest.ts
+    - packages/client-runtime/src/forkBotDigestLinks.ts
+    - apps/mobile/fork/No3yBotDigest.tsx
+    - apps/mobile/fork/no3yBotDigestAnswers.ts
   shadows: []
   watch:
     # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
     - apps/web/src/components/ChatView.tsx
+    # The same asks above the iPhone composer, beside ChildThreadApprovals (fenced).
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    # Exports the two subpaths both clients import.
+    - packages/client-runtime/package.json
   verify:
-    - apps/web/src/custom/bots/botDigestSections.test.ts
-    - apps/web/src/custom/bots/botDigestItemLinks.test.ts
+    - packages/client-runtime/src/forkBotDigest.test.ts
+    - packages/client-runtime/src/forkBotDigestLinks.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-crew
   intent: >
@@ -8258,7 +8336,8 @@
     line already shows that, so a running turn alone draws no pill and stop
     stays on the composer), the thread's pull request on its state's tinted
     glass (open green, merged purple, closed red, draft plain; a stack or
-    several as layers plus how many more; a running or failing checks mark),
+    several as layers plus how many more; a running or failing checks mark
+    gated on required checks as the PR watcher gates them),
     then background processes, monitors and subagents, which fold into one
     "N background tasks" pill once two kinds of live work run (finished
     subagents and child requests keep their own pill), then Pi status and
@@ -8364,14 +8443,23 @@
     activity line; a batch's agents are rows of one 18pt-radius card split by
     full-width hairlines, under a "Kicked off N subagents" lead line whose
     icon, status and time are muted, and a tap on a row opens the agent's
-    thread. On
+    thread. The Agents sheet's rows (fork/No3yAgentsSheetRow.tsx) draw the
+    same row, tile and elapsed time, each in its own 20pt-radius card, plus a
+    running agent's progress or a failure, and a running agent shows a small
+    neutral round stop button in place of the chevron instead of upstream's
+    red tile; workflow groups keep upstream's rows. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
-    agent draft's mode), the model list (long-press to favorite) and an effort
-    slider (24pt plus the safe area clear of the sheet's rounded bottom) with a
-    notch per level, tap-to-jump and snapping drags with a haptic
-    tick, driving the same thread settings session so picks, favorites and
+    agent draft's mode) and the model list (long-press to favorite; 17pt
+    names, 20pt marks, no provider subtitle). The selected row carries its
+    reasoning level as a chip; tapping it grows the chip into a pill slider that takes over the row
+    (a dot per level, a white fill up to a glass knob like the header buttons, the chosen level's name under the knob as the rows below step down one by one, tap-to-jump, snapping drags with a haptic tick) and
+    turns the tick into a save button, which writes the level and shrinks it
+    back; opening it first scrolls the row and its label into view, as the list
+    stays still while the meter is open. When the selected model is not in the
+    list shown (Favorites without it), reasoning moves to the Options menu.
+    All of it drives the same thread settings session so picks, favorites and
     options save exactly as before. Claude and Codex draw the Mac fork's own
     marks (fork/No3yProviderMark.tsx and fork/assets/codex-mark.png); other
     providers keep the app's icon. Icons come from @hugeicons/core-free-icons at
@@ -8529,6 +8617,7 @@
     - apps/mobile/fork/no3yPillStatus.ts
     - apps/mobile/fork/no3yPillStatus.test.ts
     - apps/mobile/fork/No3ySubagentCards.tsx
+    - apps/mobile/fork/No3yAgentsSheetRow.tsx
     - apps/mobile/fork/no3ySubagentCard.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yLiveStatus.ts
@@ -8574,6 +8663,7 @@
     - apps/mobile/src/features/home/HomeScreen.tsx
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     - apps/mobile/src/features/threads/thread-work-log.tsx
+    - apps/mobile/src/features/threads/ThreadAgentsSheet.tsx
     - apps/mobile/src/features/threads/work-log-layout.tsx
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     - apps/mobile/src/features/settings/SettingsScheduledTasksRouteScreen.tsx

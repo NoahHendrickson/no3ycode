@@ -40,6 +40,9 @@ import type { DraftComposerAttachment } from "../lib/composerImages";
 import { scopedThreadKey } from "../lib/scopedEntities";
 import { buildProjectThreadStartTurnInput } from "../lib/projectThreadStartTurn";
 import { serializeComposerMessageForServer, uploadedComposerContext } from "../lib/composerContext";
+/* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+import { restoreAttachmentOnlyBootstrapPrompt } from "@t3tools/shared/composerContextReferences";
+/* fork:end no3y-media-attachment-no-chip */
 import { prepareTurnAttachments } from "../lib/attachmentUpload";
 import { randomHex } from "../lib/uuid";
 import {
@@ -1014,7 +1017,12 @@ export function createThreadOutboxDelivery(): {
           messageId: queuedMessage.messageId,
           role: "user",
           ...serializeComposerMessageForServer(
-            queuedMessage.text,
+            /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+            restoreAttachmentOnlyBootstrapPrompt(
+              queuedMessage.text,
+              prepared.attachments.length > 0,
+            ),
+            /* fork:end no3y-media-attachment-no-chip */
             uploadedComposerContext(
               queuedMessage.context,
               queuedMessage.attachments,
@@ -1192,7 +1200,12 @@ export function createThreadOutboxDelivery(): {
         createdAt: queuedMessage.createdAt,
         titleText: queuedMessage.text,
         ...serializeComposerMessageForServer(
-          queuedMessage.text.trim(),
+          /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+          restoreAttachmentOnlyBootstrapPrompt(
+            queuedMessage.text.trim(),
+            prepared.attachments.length > 0,
+          ),
+          /* fork:end no3y-media-attachment-no-chip */
           uploadedComposerContext(
             queuedMessage.context,
             queuedMessage.attachments,

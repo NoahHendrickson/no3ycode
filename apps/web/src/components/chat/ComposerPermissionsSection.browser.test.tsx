@@ -53,12 +53,15 @@ it("reaches Permissions with arrow keys, previews, and picks with Enter", async 
     .element(supervised)
     .toHaveAccessibleDescription("Ask before commands and file changes.");
 
-  await userEvent.keyboard("{ArrowRight}");
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+     The fork lists the modes vertically, so Up and Down move between them. */
+  await userEvent.keyboard("{ArrowDown}");
   await expect
     .element(page.getByRole("menuitemradio", { name: "Auto-accept edits" }))
     .toHaveFocus();
-  await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+  await userEvent.keyboard("{ArrowUp}");
   await expect.element(page.getByRole("menuitemradio", { name: "Supervised" })).toHaveFocus();
+  /* fork:end fork-composer-shell */
 
   await userEvent.keyboard("{ArrowDown}{Enter}");
   await expect.element(screen.getByRole("status")).toHaveTextContent("auto-accept-edits");

@@ -17,6 +17,8 @@ function read(relativePath: string): string {
 const chatView = read("../components/ChatView.tsx");
 const composer = read("../components/chat/ChatComposer.tsx");
 const notice = read("../custom/forkApprovalNotice.tsx");
+const actions = read("../components/chat/ComposerPendingApprovalActions.tsx");
+const theme = read("../theme.custom.css");
 
 describe("fork-composer-approval-notice", () => {
   it("answers only from the composer while the timeline still knows the run is waiting", () => {
@@ -42,5 +44,11 @@ describe("fork-composer-approval-notice", () => {
     expect(composer).toContain("<ComposerBannerStack items={forkShelfItems} />");
     expect(notice).toContain("noticeCard: true");
     expect(notice).toContain("<ComposerPendingApprovalActions");
+  });
+
+  it("leads the notice card with Approve in DOM order, not by CSS order", () => {
+    expect(notice).toMatch(/<ComposerPendingApprovalActions[^/]*\bacceptFirst\b/u);
+    expect(actions).toContain("if (acceptFirst) {");
+    expect(theme).not.toContain("[data-approval-decision");
   });
 });
