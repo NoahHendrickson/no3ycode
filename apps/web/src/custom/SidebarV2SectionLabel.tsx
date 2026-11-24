@@ -32,7 +32,7 @@ export function SidebarV2SectionCaret({
   );
 }
 
-/** A section's label, 12px medium like the status headers under it. With `onToggle` it folds
+/** A section's label, regular and 1px under the Sidebar font size like the status headers under it. With `onToggle` it folds
     its section: the label and the always-visible chevron. */
 export function SidebarV2SectionLabel(props: {
   readonly collapsed?: boolean;
@@ -40,7 +40,7 @@ export function SidebarV2SectionLabel(props: {
   readonly testId: string;
   readonly children: ReactNode;
 }) {
-  const className = "text-sidebar-meta font-medium text-muted-foreground";
+  const className = "text-sidebar-label font-normal text-muted-foreground";
   if (props.onToggle === undefined) {
     return (
       <span className={cn("inline-flex max-w-full items-center gap-1.5", className)}>

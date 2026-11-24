@@ -20,7 +20,7 @@ import { makeQueuedMessageMetadata } from "../src/lib/commandMetadata";
 import { enqueueThreadOutboxMessage } from "../src/state/thread-outbox";
 import { flatGlassPalette, NO3Y_CONTROL_SIZE, NO3Y_FONT } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
-import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_PANEL_MARGIN, No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import {
   dismissNo3yResumeCompaction,
@@ -98,8 +98,7 @@ export function No3yCompactBanner(props: {
       entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
       style={{
-        marginHorizontal: 16,
-        marginBottom: 6,
+        ...NO3Y_PANEL_MARGIN,
         height: BUBBLE,
         flexDirection: "row",
         alignItems: "center",

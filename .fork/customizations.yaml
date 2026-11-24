@@ -1096,10 +1096,10 @@
     project and skips the picker.
 
     The header is the design's 32px row (Figma 364:11442, 368:21364): a ghost
-    label button — 16px folder mark, Label/12 Medium name at muted foreground,
+    label button — 16px folder mark, Regular name 1px under the Sidebar font size, muted foreground,
     lifting to foreground on hover, 12px inline padding that lands the mark on
-    the cards' 20px prompt edge — then a 32px three-dot that opens the
-    project's menu and a 32px plus, both on the list edge. The menu offers
+    the cards' 20px prompt edge — then a 28px three-dot that opens the
+    project's menu and a 28px plus, both on the trailing axis. The menu offers
     "Settle all threads", which settles every active thread in the section
     through the multi-select batch path (post-settle navigation skips the
     batch; drafts, already-settled rows and environments without settlement
@@ -1267,7 +1267,7 @@
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
     Completed titles are full strength, Working and Idle recede, and the open
-    or selected card never does. Section headers are a muted 12px medium label
+    or selected card never does. Section headers are a muted regular label 1px under the Sidebar font size
     (no count) with an always-visible filled chevron on the cards' inset and no
     hairline; clicking collapses (down when expanded, rotated right when
     collapsed). Hovering the header or any row in its section reveals the shared
@@ -2002,7 +2002,9 @@
     26+ main windows where apps/desktop/src/fork/ForkLiquidGlass.ts loads our
     native macOS addon (native/sidebar-glass/sidebar_glass.m) to mount AppKit's
     NSSplitViewItem.sidebarWithViewController: on macOS 27+ (or a sidebar-variant
-    NSGlassEffectView on macOS 26) strictly behind the docked sidebar while
+    NSGlassEffectView on macOS 26) strictly behind the docked sidebar (on Flat
+    Glass with the sidebar collapsed into the tab row, a band behind that row
+    alone, so it never covers the new agent screen's draft glass) while
     keeping the chat stage opaque (and clearing Electron's NSVisualEffectView so
     the two never conflict). Side Chat, macOS < 26, and
     Windows 11 keep whole-window vibrancy. The CSS in theme.custom.palettes.css
@@ -2171,6 +2173,15 @@
     restate --accent (and the header pills' --fork-pill-hover) as
     rgb(255 255 255 / 8%), which lands on the stage where the opaque token
     used to, so upstream's bg-accent/N variants keep their relative weight.
+
+    Under Liquid Glass, a Flat Glass new-agent draft on a still picture (Mountain
+    Dither, Jolly Petal) sits on native NSGlassEffectView cards drawn by
+    custom/forkDraftLiquidGlass.ts. The window holds one such layer, so the hook
+    stamps data-fork-draft-liquid-glass on the picture it drew natively. A
+    picture without that stamp (a split pane, or an apply that was refused or is
+    still pending) keeps the CSS blur fallback, with a darker vessel wash than
+    Figma's 16% black so it reads like the native cards rather than a white wash.
+    Native and fallback share one prompt well.
 
     Must not alter Westworld, Neutral Dark, Neutral Darker, or default Dark,
     and must not make the window transparent for any other palette.
@@ -2773,6 +2784,42 @@
   verify:
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
+
+- id: fork-interface-size-text-only
+  intent: >
+    Interface font size scales text only (Noey, 2026-11-24). Upstream applies it
+    as the root font size, so every rem in the app moved with it and inputs,
+    buttons, switches and padding shrank at 15px. The fork writes it as
+    --fork-interface-text-scale (size / 16) instead, so rem stays 16px and every
+    rem geometry token and class holds by default. Text is the closed set that
+    follows: the root --text-* tokens, the body size, the @theme-inline dense
+    steps (text-2xs..5xs), the Chat stream sizes (composed with Chat stream
+    size), index.css's rem font sizes and the few arbitrary rem text classes all
+    multiply the scale. A new rem font size must multiply it too; the guard
+    finds any that don't.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.interface-size.css
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/custom/CollapsedThreadTabs.tsx
+  shadows: []
+  watch:
+    # Fenced: writes the text scale instead of the root font size.
+    - apps/web/src/appearanceFonts.ts
+    # Fenced: the composer-size case loads the sheet and the fork root marker.
+    - apps/web/src/appearanceFonts.browser.test.ts
+    # Fenced: rem font sizes multiply the scale.
+    - apps/web/src/index.css
+    # Fenced: the arbitrary rem text classes multiply the scale.
+    - apps/web/src/components/ui/badge.tsx
+    - apps/web/src/components/ui/empty.tsx
+    # Fenced: imports the interface-size sheet.
+    - apps/web/src/main.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
 
 - id: fork-sidebar-chrome
   intent: >
@@ -3689,8 +3736,8 @@
     refs load and focusing the workspace radiogroup on Mod+Shift+X). Attach (+)
     leads the prompt row opposite Send, and the dictation mic sits beside Send.
     [data-fork-composer-control-row] in theme.custom.css is the single owner of
-    the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
-    control-row slots. Attach, send and stop are 32px squares at 8px radius
+    the ghost control geometry (text + 12px tall, 8px padding, 6px radius) and
+    hover/ink tokens across both control-row slots. Attach, send and stop are 32px squares at 8px radius
     (the kit's icon button) with 16px glyphs, inside a 16px-cornered vessel and
     prompt (--fork-composer-radius; Inlet adds its 4px inset); send uses
     Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
@@ -3700,7 +3747,10 @@
     hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
-    appearanceFonts.ts), and the control and context rows are 14px regular.
+    appearanceFonts.ts). The control row, context row and status chips read
+    --fork-composer-chip-text, a pixel under the interface size (calc(1rem -
+    1px)), so they follow Settings → Typography too; their heights add fixed
+    room around it.
     On Flat Glass and every Basic tone the thread composer (not a new agent's
     draft) is one recipe: it paints no vessel, the prompt is its one surface
     (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
@@ -3715,6 +3765,11 @@
     stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
     a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
     keep the glass.
+    The open stash is the queue card's twin: ChatComposer renders it as the
+    card nearest the prompt in the banners dock (not upstream's portaled
+    drawer layer), its tab hidden while it is open, and it shares the queue
+    card's rules and parts (custom/ComposerCardParts.tsx: the counted title
+    and the trash remove). Both titles read at text-sm/5 on the banner scale.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3787,6 +3842,9 @@
     - apps/web/src/components/chat/ComposerSurface.tsx
     # The dock the drawers, banners and stash badge now ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
+    # The stash card's title, trash remove and composer-controls stamp, fenced.
+    - apps/web/src/components/chat/ComposerStashMenu.tsx
+    - apps/web/src/custom/ComposerCardParts.tsx
     # Carries .fork-timeline-cutoff on the scroller, unconditionally, so the
     # transcript mask survives the banner states that drop upstream's top fade.
     # Upstream reworking that className is what would silently un-mask it.
@@ -5664,7 +5722,7 @@
     shows as the first chip in the composer's context row
     (custom/DraftProjectPill, which renders nothing while unassigned), ahead
     of the workspace and branch chips and dressed like them: the row's CSS
-    paints it as the same filled 24px chip and its label collapses with
+    paints it as the same filled chip, at the same type, and its label collapses with
     theirs when the strip overflows. Its menu, like the launchpad, offers a
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
@@ -6342,13 +6400,13 @@
 
 - id: fork-transcript-spacing
   intent: >
-    Reply text, tool rows and the live status line sit 16px apart, the way
-    the no3y iPhone transcript spaces them; upstream's gaps there run from
+    Reply text, tool rows and the live status line sit 24px apart, a touch
+    roomier than the no3y iPhone transcript; upstream's gaps there run from
     4px to 18px depending on which rows meet. A pass after
     fork-working-row-last's fold reads one box per row (boxOf: the space it
     draws above and below its content, from TimelineRowContent's padding,
     WorkLogBlock's, a reply's or ungrouped tool row's py-0.5, a reasoning
-    trace's py-1 and the status line's pt-1) and tops the gap up to 16px as
+    trace's py-1 and the status line's pt-1) and tops the gap up to 24px as
     padding on the row's root. Only reply-to-tool, tool-to-reply and
     anything-to-live-line gaps are spaced (a send_to_user sent message counts
     as a reply); user bubbles and every other row keep upstream's spacing.
@@ -6440,6 +6498,27 @@
   verify:
     - apps/web/src/__fork_guards__/forkSettingsGlass.test.ts
 
+- id: fork-settings-nav
+  intent: >
+    The Settings nav reads calmer (Noey, 2026-11-24): section labels are the
+    foreground at regular weight, active or not, with their icons resting at
+    65% (via --sidebar-icon-color, so hover, press and selected still brighten
+    them); the group headings are the foreground at 65%; the search is the
+    app's outlined search field (InputGroup), used as-is; and a full-width hairline
+    divides each group from the next. Every theme, since the inks derive from
+    --contrast-sidebar-foreground (so Appearance → Contrast still applies).
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Fenced search field, heading and group classes.
+    - apps/web/src/components/settings/SettingsSidebarNav.tsx
+    # The label rule outranks the menu button's muted/80 ink and active font-medium.
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSettingsNav.test.ts
+
 - id: fork-split-threads
   intent: >
     Two threads can share the chat column side by side. A split icon toggle in
@@ -6506,8 +6585,8 @@
     While a thread is docked, card drops in the sidebar and the tab strip do not
     pair (the pair would stay hidden), and a landing draft in the left pane is
     never swept as untouched.
-    Its sidebar card wears a docked glyph last on the title line, after the
-    status mark and the working timer (custom/splitThreads/SidebarDockedMark).
+    Its sidebar card wears a docked glyph on the title line, styled like the
+    pin glyph and beside it, before the status mark (custom/splitThreads/SidebarDockedMark).
 
     The route's thread is the focused pane. Pressing into the other pane
     navigates to its thread (replace), so the right panel, the sidebar
@@ -8439,7 +8518,9 @@
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
     listing rule, fork/forkBots.ts) sit above the status sections under
     "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
-    tiles, five to a row and wrapping: 12pt-radius tiles on the 4% wash, the
+    tiles, five to a row and wrapping (fewer still span the row): 12pt-radius
+    liquid-glass tiles (fork/No3yGlass.tsx, a wash over it while pressed; rows rise in and
+    never fade, so the glass renders), the
     bare pixel mascot centred (art copied in fork/botMascotArt.ts, 26pt), the
     12pt name centred under it, no status line, and a 20pt mark in the top-right
     corner that, over an idle petal, takes its launched work's need of you or
@@ -9051,6 +9132,41 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: mobile-feed-stable-end
+  intent: >
+    The iOS thread feed stays put while you send and a turn streams, and what
+    changes at its end glides. While the feed follows its end, end following
+    alone owns the scroll position: LegendList's visible-content anchoring
+    (maintainVisibleContentPosition) is on only once the reader scrolls away,
+    or while landing a jump to a message. With both on, a row appended at the
+    end with a guessed height made the anchoring move the offset by hundreds of
+    points (once to the top of the thread) and end following drag it back. New
+    rows start at their item type's average height, so the no3y live status
+    line gets its own type (it shared one with fixed-height rows and started at
+    180pt) and a streaming reply gets a per-message type with no average (the
+    shared one averaged finished replies, ~500pt). A landed feed follows its
+    end animated (not under Reduce Motion); landing on open stays instant,
+    since the feed is hidden until it reaches the end. As a turn ends, its
+    reply's copy/fork row grows in instead of appearing at full height, which
+    jumped the pinned feed. Sending a follow-up keeps the keyboard up (as in
+    Messages) instead of closing it, which dropped the feed with the keyboard
+    just as the sent row lifted it again. The policy is one pure function in
+    threadFeedStableEnd.ts. Android keeps upstream's anchoring, instant end
+    following, item types and keyboard dismissal on send.
+  tier: 4
+  files:
+    - apps/mobile/fork/threadFeedStableEnd.ts
+    - apps/mobile/fork/ReplyActionsReveal.tsx
+  shadows: []
+  watch:
+    # End following, anchoring, the item types the estimates hang on, and the reply actions.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Keyboard dismissal on send.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+  verify:
+    - apps/mobile/fork/threadFeedStableEnd.test.ts
+    - apps/web/src/__fork_guards__/mobileFeedStableEnd.test.ts
 
 - id: no3y-pr-project-multiselect
   intent: >

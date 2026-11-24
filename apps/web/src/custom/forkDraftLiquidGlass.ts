@@ -380,6 +380,15 @@ export function useForkDraftLiquidGlass(input: {
     let stampedPopups = new Set<HTMLElement>();
     const maskedCards = new Map<HTMLElement, string>();
 
+    // The root gates the window-wide rules (sidebar inset, popups); the stage tells its own
+    // composer whether native glass or the CSS fallback is behind it.
+    const markNativeApplied = (applied: boolean) => {
+      for (const el of [document.documentElement, stageEl]) {
+        if (applied) el.setAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE, "true");
+        else el.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+      }
+    };
+
     const clearCardMasks = () => {
       for (const el of maskedCards.keys()) {
         el.style.maskImage = "";
@@ -398,7 +407,7 @@ export function useForkDraftLiquidGlass(input: {
 
     const clearNative = () => {
       clearStampedPopups();
-      document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+      markNativeApplied(false);
       lastSentKey = "";
       uploadedImageKey = null;
       retrying = false;
@@ -422,7 +431,7 @@ export function useForkDraftLiquidGlass(input: {
       uploadedImageKey = null;
       lastSentKey = "";
       clearStampedPopups();
-      document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
+      markNativeApplied(false);
       if (!retrying) {
         retrying = true;
         scheduleSync();
@@ -595,7 +604,7 @@ export function useForkDraftLiquidGlass(input: {
               if (applied) {
                 uploadedImageKey = url;
                 retrying = false;
-                document.documentElement.setAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE, "true");
+                markNativeApplied(true);
               } else {
                 handleApplyFailure();
               }

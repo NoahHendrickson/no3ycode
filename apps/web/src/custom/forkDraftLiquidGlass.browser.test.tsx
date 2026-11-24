@@ -18,7 +18,7 @@ function DraftStage() {
       data-chat-column-maximized-away=""
       style={{ position: "relative", width: 800, height: 600 }}
     >
-      <div ref={ref} style={{ position: "absolute", inset: 0 }} />
+      <div ref={ref} data-testid="stage" style={{ position: "absolute", inset: 0 }} />
       <div data-chat-composer-overlay="true" data-draft-hero="">
         <div
           data-fork-composer-vessel=""
@@ -75,11 +75,15 @@ describe("useForkDraftLiquidGlass", () => {
     using _window = stubLiquidGlassWindow(setDraftGlass);
     await using screen = await render(<DraftStage />);
     await vi.waitFor(() => expect(root.hasAttribute("data-fork-draft-liquid-glass")).toBe(true));
+    // The stage carries it too, so its composer drops the CSS fallback.
+    const stage = screen.getByTestId("stage").element();
+    expect(stage.hasAttribute("data-fork-draft-liquid-glass")).toBe(true);
     using _timers = fakeTimers();
 
     await screen.unmount();
     // Hiding first shows the window's black base through the still-transparent stage.
     expect(root.hasAttribute("data-fork-draft-liquid-glass")).toBe(false);
+    expect(stage.hasAttribute("data-fork-draft-liquid-glass")).toBe(false);
     expect(setDraftGlass).not.toHaveBeenCalledWith(null);
     vi.advanceTimersToNextFrame();
     expect(setDraftGlass).not.toHaveBeenCalledWith(null);

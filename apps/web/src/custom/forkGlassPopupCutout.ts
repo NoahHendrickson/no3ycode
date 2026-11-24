@@ -42,23 +42,27 @@ import { isForkSidebarLiquidGlassApplied } from "./forkSidebarVibrancy";
 /** The root while a new agent's picture is switched off. */
 const PICTURE_OFF = `[${FORK_GLASS_PICTURE_OFF_ATTRIBUTE}="off"]`;
 
-/** Where each primitive puts `dropdown-glass` — the arms of the popup rule. */
-export const FORK_GLASS_POPUP_SELECTOR = [
+/** The Settings and Usage route modals (AppRouteModal), which carry no dropdown-glass. */
+const ROUTE_MODAL_ARM = '[data-slot="dialog-popup"][data-app-modal]';
+
+const POPUP_ARMS = [
   ':is([data-slot="menu-popup"], [data-slot="menu-sub-content"], [data-slot="popover-popup"], [data-slot="tooltip-popup"], [data-slot="dialog-popup"]).dropdown-glass',
   '[data-slot="select-popup"] > .dropdown-glass',
   '.dropdown-glass:has(> [data-slot="combobox-popup"])',
-  // The Settings and Usage route modals (AppRouteModal), which carry no dropdown-glass.
-  '[data-slot="dialog-popup"][data-app-modal]',
   // The command palette and the confirm dialogs, on dialog-glass.
   '.dialog-glass:not(.dropdown-glass)[data-slot$="dialog-popup"]',
   // The thread details card, popover-presented where nothing is frosted: the
   // portaled wrapper carries data-fork-popup outside a new agent's draft, and
   // the root attribute stands in for it while the picture is switched off.
   `[data-thread-details-panel="popover"]:is([data-fork-popup], ${PICTURE_OFF} *) > [data-thread-details-card].dropdown-glass`,
-].join(", ");
+];
 
-/** Sidebar mode also takes plain tooltips, so one over the docked sidebar wears its glass too. */
-const SIDEBAR_MODE_POPUP_SELECTOR = `${FORK_GLASS_POPUP_SELECTOR}, [data-slot="tooltip-popup"]:not(.dropdown-glass):not([data-fork-row-hover-card])`;
+/** Where each primitive puts `dropdown-glass` — the arms of the popup rule. */
+export const FORK_GLASS_POPUP_SELECTOR = [...POPUP_ARMS, ROUTE_MODAL_ARM].join(", ");
+
+/** Sidebar mode also takes plain tooltips, so one over the docked sidebar wears its glass too. It
+    leaves the route modals out: they are pages, so they keep their own fill and are never cut. */
+const SIDEBAR_MODE_POPUP_SELECTOR = `${POPUP_ARMS.join(", ")}, [data-slot="tooltip-popup"]:not(.dropdown-glass):not([data-fork-row-hover-card])`;
 
 /**
  * ChatView's root while its composer is a new-agent draft: the picture card's
