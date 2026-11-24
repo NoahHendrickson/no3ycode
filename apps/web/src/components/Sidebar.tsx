@@ -2057,24 +2057,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             )}
           >
             {/* fork:end sidebar-v2-row-action-hit-area */}
-            {runningSubagentCount > 0 ? (
-              <span
-                className={cn(
-                  "pointer-events-none col-start-1 row-start-1 flex items-center pr-1",
-                  // The fade exists to yield the cell to the hover
-                  // actions. When neither action is offered there is
-                  // nothing to yield to, and an unconditional fade
-                  // blanks the count on hover with nothing in its place.
-                  /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
-                  hasHoverActions &&
-                    /* fork:end sidebar-v2-draft-rows */
-                    "transition-opacity group-any-hover/v2-row:opacity-0 group-has-[[data-fork-thread-card-actions]:focus-within]/v2-row:opacity-0",
-                  snoozeMenuOpen && "opacity-0",
-                )}
-              >
-                <SidebarV2SubagentCount count={runningSubagentCount} />
-              </span>
-            ) : null}
             {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
             {hasHoverActions ? (
               /* fork:end sidebar-v2-draft-rows */
@@ -2102,7 +2084,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   // crossfade sibling (subagent count) that shares this cell.
                   // fork:end sidebar-v2-row-action-hit-area
                   SIDEBAR_V2_TRAILING_OFFSET.cardActions,
-                  "relative col-start-1 row-start-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-opacity focus-within:w-auto focus-within:overflow-visible focus-within:opacity-100 group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",
+                  "peer/card-actions relative col-start-1 row-start-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-opacity focus-within:w-auto focus-within:overflow-visible focus-within:opacity-100 group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",
                   snoozeMenuOpen && "w-auto opacity-100",
                 )}
               >
@@ -2145,6 +2127,22 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   </SidebarV2IconButton>
                 ) : null}
                 {/* fork:end sidebar-v2-draft-rows */}
+              </span>
+            ) : null}
+            {runningSubagentCount > 0 ? (
+              <span
+                className={cn(
+                  "pointer-events-none col-start-1 row-start-1 flex items-center pr-1",
+                  // Fades only to yield the cell to hover actions, when any are offered.
+                  // It follows them for peer-focus-within; they are relative, so paint on top.
+                  /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
+                  hasHoverActions &&
+                    /* fork:end sidebar-v2-draft-rows */
+                    "transition-opacity group-any-hover/v2-row:opacity-0 peer-focus-within/card-actions:opacity-0",
+                  snoozeMenuOpen && "opacity-0",
+                )}
+              >
+                <SidebarV2SubagentCount count={runningSubagentCount} />
               </span>
             ) : null}
           </span>
