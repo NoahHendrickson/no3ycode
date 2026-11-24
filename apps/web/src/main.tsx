@@ -29,7 +29,6 @@ import "./theme.custom.interface-size.css";
 /* fork:end fork-interface-size-text-only */
 /* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
 import { applyDevHouseLook } from "./custom/devHouseLook";
-import { isSideChatSurface } from "./custom/sideChat/surface";
 /* fork:end fork-dev-house-look */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import { initializeForkTheme } from "./custom/forkTheme";
@@ -69,7 +68,7 @@ const router = startAppServices();
 applyForkMarker(document.documentElement);
 /* fork:end fork-marker */
 /* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
-if (import.meta.env.DEV && isElectron && !isSideChatSurface) applyDevHouseLook();
+applyDevHouseLook();
 /* fork:end fork-dev-house-look */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 initializeForkTheme();

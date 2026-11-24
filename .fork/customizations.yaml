@@ -9429,7 +9429,8 @@
     start where the maintainer works: Flat Glass, Jolly Petal behind a new
     agent, the bead ring as the working mark, Inter at a 15px interface size
     and a 14px sidebar. It applies once per window session before the theme
-    initializers paint, so a reload keeps changes made since launch. The side chat
+    initializers paint, so a reload keeps changes made since launch; a window
+    reopened from the dock is a new session and gets it again. The side chat
     window skips it, so opening one keeps the main window's changes. Dev
     builds in Electron only; the browser dev server and packaged apps keep
     the product defaults.
@@ -9444,7 +9445,7 @@
     - apps/web/src/custom/forkWorkingMark.ts
   shadows: []
   watch:
-    # Fenced import and the dev-only call ahead of initializeForkTheme.
+    # Fenced import and the call ahead of initializeForkTheme.
     - apps/web/src/main.tsx
   verify:
     - apps/web/src/__fork_guards__/forkDevHouseLook.test.ts

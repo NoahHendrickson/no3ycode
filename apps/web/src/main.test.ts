@@ -6,7 +6,7 @@ vi.mock("./i18n/runtime", () => ({ whenLocaleReady: async () => {} }));
 vi.mock("react-dom/client", () => ({ default: { createRoot: () => ({ render: () => {} }) } }));
 /* fork:begin fork-marker — see .fork/customizations.yaml#fork-marker
    main.tsx also boots the fork's page-level installers, which need a real document. */
-vi.mock("./custom/sideChat/surface", () => ({ isSideChatSurface: false }));
+vi.mock("./custom/sideChat/surface", () => ({}));
 vi.mock("./custom/forkMarker", () => ({ applyForkMarker: () => {} }));
 vi.mock("./custom/devHouseLook", () => ({ applyDevHouseLook: () => {} }));
 vi.mock("./custom/forkTheme", () => ({ initializeForkTheme: () => {} }));
