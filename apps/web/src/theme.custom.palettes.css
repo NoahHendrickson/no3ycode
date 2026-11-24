@@ -1699,7 +1699,7 @@
    the docked sidebar has the page cut away beneath it (forkGlassPopupCutout.ts) and paints
    nothing, so it shows the sidebar's own glass, which follows the wallpaper and window focus. One
    reaching past the sidebar is solid in the sidebar's colour instead: on Flat Glass the glass as
-   measured on screen over its #1d1d1d backing (forkSidebarVibrancy.ts), on Full Glass its
+   measured on screen over its #1d1d1e backing (forkSidebarVibrancy.ts), on Full Glass its
    backing with a 4% lift. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-fork-liquid-glass-popup] {
@@ -1713,7 +1713,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
-  --fork-liquid-glass-sidebar: #282426;
+  --fork-liquid-glass-sidebar: #282427;
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
