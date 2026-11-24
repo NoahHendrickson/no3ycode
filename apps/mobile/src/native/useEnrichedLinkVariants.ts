@@ -167,13 +167,18 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // No vertical padding: the capsule stands as tall as an inline code chip.
+                // No vertical padding: the capsule stands as tall as an inline code chip. Where the
+                // reply draws code as a hugging chip, the label sits 0.05 under the code's scale so
+                // the hairline border makes up the rest.
                 pill: {
                   borderColor: link.capsule.border,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
                   paddingHorizontal: 6,
                   paddingVertical: 0,
+                  fontScale: textStyle.inlineCodeChip
+                    ? textStyle.inlineCodeChip.fontScale - 0.05
+                    : undefined,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -184,32 +189,46 @@ export function useEnrichedLinkVariants(
           }
           /* fork:end no3y-subagent-link-chip */
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          // A file reference wears inline code's chip and ink when the reply styles one.
+          // A file reference wears inline code's chip, ink and size when the reply styles one.
           const codeChip =
             link.fileReference && textStyle.inlineCodeBackgroundColor !== undefined
               ? textStyle.inlineCodeChip
               : undefined;
-          const chipForeground = codeChip ? undefined : chipForegrounds.get(url);
+          if (codeChip) {
+            return [
+              enrichedLinkVariantPattern(url),
+              {
+                pill: {
+                  borderColor: "transparent",
+                  borderWidth: 0,
+                  borderRadius: codeChip.radius,
+                  paddingHorizontal: codeChip.paddingHorizontal,
+                  paddingVertical: codeChip.paddingVertical,
+                  fontScale: codeChip.fontScale,
+                },
+                fontFamily: textStyle.fontFamily,
+                color: textStyle.fileTextColor,
+                underline: false,
+                backgroundColor: textStyle.inlineCodeBackgroundColor,
+              },
+            ];
+          }
           /* fork:end no3y-mobile-redesign */
+          const chipForeground = chipForegrounds.get(url);
           return [
             enrichedLinkVariantPattern(url),
             {
               pill: {
                 borderColor: "transparent",
                 borderWidth: 0,
-                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                borderRadius: codeChip?.radius ?? 6,
-                paddingHorizontal: codeChip?.paddingHorizontal ?? 5,
-                /* fork:end no3y-mobile-redesign */
+                borderRadius: 6,
+                paddingHorizontal: 5,
                 paddingVertical: 2,
               },
               fontFamily: chipForeground ? FONT_FAMILIES.medium : textStyle.fontFamily,
-              /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-              color:
-                chipForeground ?? (codeChip ? undefined : link.color) ?? textStyle.fileTextColor,
+              color: chipForeground ?? link.color ?? textStyle.fileTextColor,
               underline: false,
-              backgroundColor: codeChip ? textStyle.inlineCodeBackgroundColor : "transparent",
-              /* fork:end no3y-mobile-redesign */
+              backgroundColor: "transparent",
             },
           ];
         }),

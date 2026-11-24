@@ -8665,22 +8665,27 @@
     Inline code in a reply is link-blue ink on a blue-tinted chip
     (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
     inlineCodeBackgroundColor style) at 0.95 of the body size
-    (inlineCodeFontScale, upstream 0.9), with 5pt corners and 4pt of room
-    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip). File
+    (NO3Y_INLINE_CODE_CHIP.fontScale, upstream 0.9), with 5pt corners and 4pt of room
+    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), only as tall
+    as the code's font (paddingVertical 0) so chips on consecutive lines keep
+    a gap. File
     references in a reply (both the embed-label and the resolved file link,
     marked fileReference) wear the same ink, wash and chip shape instead of
-    the teal mention chip, keeping their file icon. A table's header row
+    the teal mention chip, keeping their file icon, with no vertical padding
+    and the label at the code chip's scale (pill.fontScale) so both chips stand
+    the same height. A table's header row
     takes the palette's 4% cardWash (tableHeaderBackgroundColor) instead of
     the dark code block fill. The native
     library draws that chip, so apps/mobile/deps carries a fork build of
     enriched-markdown: Julius's fork/t3-mobile plus its open #15, the shipped
     blockquote lift, code.borderRadius/code.paddingHorizontal (iOS kerns the
     padding outside the span so copied text stays the code; a chip at a line
-    start stops at the view's edge), and a numeric
+    start stops at the view's edge), code.paddingVertical (the chip hugs the
+    code's font instead of filling the line), pill.fontScale, and a numeric
     strong.fontWeight, which lets replies set bold text and headings at
     medium (emphasisFontWeight "500"). Its source is branch
     no3y/inline-code-chip of NoahHendrickson/enriched-markdown (commit
-    9584829b). When upstream bumps the tarball, rebuild this change on top of
+    be8dc327). When upstream bumps the tarball, rebuild this change on top of
     theirs (deps/README.md) rather than taking theirs, or the chip loses its
     shape.
     While a turn runs, the status line carries the timer: no3yLivePresentation
@@ -9060,7 +9065,9 @@
   intent: >
     On mobile and desktop/web, a link in an assistant message to a subagent thread (a
     delegated task or subagent child) reads as a neutral capsule instead of the thread
-    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
+    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder; its label at
+    0.05 under the code chip's scale, pill.fontScale, where replies draw one, so it stands as
+    tall as an inline code chip), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a

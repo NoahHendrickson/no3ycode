@@ -118,11 +118,12 @@ function enrichedStyle(
       /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
       backgroundColor: style.inlineCodeBackgroundColor ?? "transparent",
       borderColor: "transparent",
-      fontSize: style.fontSize * (style.inlineCodeFontScale ?? 0.9),
+      fontSize: style.fontSize * (style.inlineCodeChip?.fontScale ?? 0.9),
       ...(style.inlineCodeChip
         ? {
             borderRadius: style.inlineCodeChip.radius,
             paddingHorizontal: style.inlineCodeChip.paddingHorizontal,
+            paddingVertical: style.inlineCodeChip.paddingVertical,
           }
         : null),
       /* fork:end no3y-mobile-redesign */
