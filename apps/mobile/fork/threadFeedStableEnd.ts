@@ -32,6 +32,10 @@ export function resolveFeedEndBehavior(feed: {
     maintainVisibleContentPosition: !feed.stableEnd || !feed.followingEnd || feed.jumpReady,
     // A reply's actions appear as its turn ends; at full height in one frame they jumped the feed.
     revealReplyActions: glide,
+    // The keyboard lifts content only within 20pt of the end, and a glide toward it is often
+    // further: the composer covered the reply until end following caught up. Following, always lift.
+    keyboardLiftBehavior:
+      feed.stableEnd && feed.followingEnd ? ("always" as const) : ("whenAtEnd" as const),
   };
 }
 

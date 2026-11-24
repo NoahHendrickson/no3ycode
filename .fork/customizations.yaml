@@ -9087,7 +9087,10 @@
     reply's copy/fork row grows in instead of appearing at full height, which
     jumped the pinned feed. Sending a follow-up keeps the keyboard up (as in
     Messages) instead of closing it, which dropped the feed with the keyboard
-    just as the sent row lifted it again. The policy is one pure function in
+    just as the sent row lifted it again. While the feed follows its end the
+    keyboard always lifts it: the lift only counts as "at the end" within
+    20pt, and an end glide is often further, so the composer covered the
+    reply until end following caught up. The policy is one pure function in
     threadFeedStableEnd.ts. Android keeps upstream's anchoring, instant end
     following, item types and keyboard dismissal on send.
   tier: 4

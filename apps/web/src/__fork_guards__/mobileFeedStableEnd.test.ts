@@ -21,6 +21,9 @@ describe("mobile-feed-stable-end", () => {
       "maintainVisibleContentPosition={endBehavior.maintainVisibleContentPosition}",
     );
     expect(feed).toContain("useFeedFollowingEnd(");
+    expect(feed).toContain(
+      `props.sendingWithKeyboard ? "persistent" : endBehavior.keyboardLiftBehavior`,
+    );
   });
 
   it("gives rows landing at the end their own estimate buckets", () => {
