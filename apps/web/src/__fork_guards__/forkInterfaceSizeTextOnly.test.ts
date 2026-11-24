@@ -3,77 +3,100 @@
  * Fork guard — see `.fork/README.md` §4b and
  * `.fork/customizations.yaml#fork-interface-size-text-only`.
  *
- * Interface font size is the root font size, so a rem geometry token would shrink controls with
- * it. Each token upstream defines in rem is pinned to its 16px value in px at the fork root.
+ * Interface font size scales text only: rem stays 16px, and every rem text size multiplies
+ * --fork-interface-text-scale. Text is the closed set, so the guard sweeps it: any rem font size
+ * that does not multiply the scale would stop following the setting.
  */
 
 import * as NodeFS from "node:fs";
+import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-function readSibling(relativePath: string): string {
-  return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
+const SRC = NodeURL.fileURLToPath(new URL("..", import.meta.url));
+const SCALE = "var(--fork-interface-text-scale, 1)";
+
+function read(relativePath: string): string {
+  return NodeFS.readFileSync(NodePath.join(SRC, relativePath), "utf8");
 }
 
-/** Token → [upstream's rem value in index.css, the fork's px pin]. */
-const PINNED: Record<string, readonly [string | null, string]> = {
-  "--spacing": [null, "4px"],
-  "--radius": ["0.5rem", "8px"],
-  "--radius-xs": [null, "2px"],
-  "--radius-4xl": [null, "32px"],
-  "--control-radius": ["0.5rem", "8px"],
-  "--sidebar-content-inset": ["0.5rem", "8px"],
-  "--sidebar-control-gap": ["0.5rem", "8px"],
-  "--sidebar-row-content-inset": ["0.625rem", "10px"],
-  "--command-shell-inset": ["0.5rem", "8px"],
-  "--command-content-inset": ["1rem", "16px"],
-  "--floating-content-inset": ["0.75rem", "12px"],
-  "--workspace-titlebar-control-size": ["1.75rem", "28px"],
-  "--workspace-titlebar-control-gap": ["0.75rem", "12px"],
-};
+function sourceFiles(extensions: ReadonlyArray<string>): string[] {
+  return NodeFS.readdirSync(SRC, { recursive: true, encoding: "utf8" }).filter(
+    (file) =>
+      extensions.some((extension) => file.endsWith(extension)) &&
+      !file.includes("__fork_guards__") &&
+      !/\.(test|spec)\.tsx?$/u.test(file) &&
+      !file.includes("/vendor/"),
+  );
+}
 
 describe("fork guard: interface size scales text only", () => {
-  const sheet = readSibling("../theme.custom.css");
-  const index = readSibling("../index.css");
-  const start = sheet.indexOf("Interface font size scales text only");
-  const block = sheet.slice(sheet.indexOf("{", start), sheet.indexOf("}", start) + 1);
+  it("writes a text scale instead of the root font size", () => {
+    const fonts = read("appearanceFonts.ts");
+    expect(fonts).not.toMatch(/root\.style\.fontSize\s*=/u);
+    expect(fonts).toContain('"--fork-interface-text-scale"');
+    expect(read("main.tsx")).toContain('import "./theme.custom.interface-size.css";');
+  });
 
-  it("pins every rem geometry token to its 16px value", () => {
-    expect(sheet.slice(start, sheet.indexOf("{", start))).toContain(
-      ':root[data-fork="noahhendrickson-t3code"]',
+  it("scales Tailwind's text tokens, the body and the dense steps", () => {
+    const sheet = read("theme.custom.interface-size.css");
+    const tailwindRem = {
+      xs: "0.75rem",
+      sm: "0.875rem",
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem",
+      "6xl": "3.75rem",
+      "7xl": "4.5rem",
+      "8xl": "6rem",
+      "9xl": "8rem",
+    };
+    for (const [step, rem] of Object.entries(tailwindRem)) {
+      expect(sheet).toContain(`--text-${step}: calc(${rem} * ${SCALE});`);
+    }
+    expect(sheet).toMatch(
+      / body \{\s*font-size: calc\(1rem \* var\(--fork-interface-text-scale, 1\)\);/u,
     );
-    for (const [token, [upstream, pin]] of Object.entries(PINNED)) {
-      expect(block).toContain(`${token}: ${pin};`);
-      // A changed upstream default moves the 16px baseline, so the pin must be revisited.
-      if (upstream !== null) expect(index).toContain(`${token}: ${upstream};`);
+    for (const [step, rem] of [
+      ["2xs", "0.6875rem"],
+      ["3xs", "0.625rem"],
+      ["4xs", "0.5rem"],
+      ["5xs", "0.4375rem"],
+    ]) {
+      expect(read("index.css")).toContain(`--text-${step}: ${rem};`);
+      expect(sheet).toContain(`.text-${step} {\n  font-size: calc(${rem} * ${SCALE});`);
     }
   });
 
-  it("pins the Appearance sliders and the fold threshold", () => {
-    expect(index).toContain("--settings-slider-fill-offset: 0.5rem;");
-    expect(sheet).toContain(':root[data-fork="noahhendrickson-t3code"] .settings-slider {');
-    expect(sheet).toContain("--settings-slider-fill-offset: 8px;");
-    const slider = sheet.slice(
-      sheet.indexOf(':root[data-fork="noahhendrickson-t3code"] .settings-slider {'),
+  it("leaves no rem font size in a stylesheet that skips the scale", () => {
+    const unscaled = sourceFiles([".css"]).flatMap((file) =>
+      read(file)
+        .split("\n")
+        .filter((line) => /font-size:[^;]*\d(\.\d+)?rem/u.test(line))
+        .filter((line) => !line.includes(SCALE) && !/var\([^,]+,\s*[\d.]+rem\)/u.test(line))
+        .map((line) => `${file}: ${line.trim()}`),
     );
-    expect(slider).toMatch(/^[^}]*height: 24px;/u);
-    for (const part of [
-      "-webkit-slider-runnable-track",
-      "-moz-range-track",
-      "-moz-range-progress",
-    ]) {
-      expect(slider).toMatch(new RegExp(`&::${part} \\{\\s*height: 6px;`, "u"));
-    }
-    expect(slider).toMatch(
-      /&::-webkit-slider-thumb \{\s*width: 16px;\s*height: 16px;\s*margin-top: -5px;/u,
+    expect(unscaled).toEqual([]);
+  });
+
+  it("leaves no arbitrary rem text class that skips the scale", () => {
+    const unscaled = sourceFiles([".tsx", ".ts"]).flatMap((file) =>
+      [...read(file).matchAll(/text-\[(?:length:)?[^\]]*\d(?:\.\d+)?rem[^\]]*\]/gu)]
+        .map(([match]) => match)
+        .filter((match) => !match.includes("var(--fork-interface-text-scale,1)"))
+        .map((match) => `${file}: ${match}`),
     );
-    expect(slider).toMatch(/&::-moz-range-thumb \{\s*width: 16px;\s*height: 16px;/u);
-    const fold = readSibling("../components/chat/useTallEnoughToFold.ts");
-    expect(fold).toContain("const remPx = 16;");
-    const panel = readSibling("../components/settings/AppearanceSettingsPanel.tsx");
-    expect(panel.match(/"--settings-slider-fill-offset": `\$\{8 - \w+ \* 16\}px`/gu)).toHaveLength(
-      3,
-    );
-    expect(panel).not.toContain("}rem`");
+    expect(unscaled).toEqual([]);
+  });
+
+  it("composes the Chat stream sizes with the interface scale", () => {
+    const sheet = read("theme.custom.css");
+    const chat = sheet.match(/var\(--fork-chat-text-scale, 1\)[^)]*\)/gu) ?? [];
+    expect(chat.length).toBeGreaterThan(0);
+    for (const use of chat) expect(use).toContain(SCALE);
   });
 });

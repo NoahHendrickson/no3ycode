@@ -148,59 +148,6 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Interface font size scales text only — see
-   `.fork/customizations.yaml#fork-interface-size-text-only`.
-
-   The setting sets the root font size, so every rem moves with it. Spacing, radii and the
-   compact control geometry are pinned to their 16px values here, so inputs, buttons, switches,
-   padding and gaps hold their size while text (the rem `--text-*` scale) still follows. */
-:root[data-fork="noahhendrickson-t3code"] {
-  --spacing: 4px;
-  --radius: 8px;
-  --radius-xs: 2px;
-  --radius-4xl: 32px;
-  --control-radius: 8px;
-  --sidebar-content-inset: 8px;
-  --sidebar-control-gap: 8px;
-  --sidebar-row-content-inset: 10px;
-  --command-shell-inset: 8px;
-  --command-content-inset: 16px;
-  --floating-content-inset: 12px;
-  --workspace-titlebar-control-size: 28px;
-  --workspace-titlebar-control-gap: 12px;
-}
-
-/* The Appearance sliders draw their track and thumb in stylesheet rem (index.css). */
-:root[data-fork="noahhendrickson-t3code"] .settings-slider {
-  --settings-slider-fill-offset: 8px;
-  height: 24px;
-
-  /* One rule per engine's pseudo-element: an unknown one in a list drops the whole rule. */
-  &::-webkit-slider-runnable-track {
-    height: 6px;
-  }
-
-  &::-moz-range-track {
-    height: 6px;
-  }
-
-  &::-moz-range-progress {
-    height: 6px;
-  }
-
-  &::-webkit-slider-thumb {
-    width: 16px;
-    height: 16px;
-    margin-top: -5px;
-  }
-
-  &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-/* ---------------------------------------------------------------------------
    Sidebar type size — see `.fork/customizations.yaml#fork-sidebar-type-size`.
 
    Tailwind's text-xs / text-sm utilities read --text-xs / --text-sm (they are
@@ -240,25 +187,26 @@
 
    The chat stream is always on: message and tool-row text (text-sm) is 1rem so
    it matches the composer's text-base, and every size multiplies Chat stream
-   size (1 at 100%). Line-height companions are unitless ratios and follow on
-   their own. Code keeps Code font size, which is in px and outside these. */
+   size (1 at 100%) and the Interface font size's text scale. Line-height
+   companions are unitless ratios and follow on their own. Code keeps Code font
+   size, which is in px and outside these. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
-  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
-  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
-  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
-  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
 }
 
 /* The banner cards above the composer read at the chat stream's sizes too. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {
-  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
-  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
-  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
-  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
-  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
 }
 
 /* What the tokens can't reach. text-2xs and text-3xs are @theme inline, so
@@ -268,10 +216,14 @@
    heading sits below it. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   .text-2xs {
-    font-size: calc(0.6875rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.6875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
   .text-3xs {
-    font-size: calc(0.625rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.625rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
   .chat-markdown {
     h1 {
@@ -287,7 +239,9 @@
       font-size: var(--text-sm);
     }
     table {
-      font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+      font-size: calc(
+        0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+      );
     }
   }
 }
@@ -2518,7 +2472,7 @@
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
   /* Chat stream size, like the transcript and the other banner cards. */
-  font-size: calc(1rem * var(--fork-chat-text-scale, 1));
+  font-size: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
   line-height: 1.375;
 }
 
@@ -2655,7 +2609,9 @@
 
   /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
   & [data-fork-question-hint] {
-    font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+    font-size: calc(
+      0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
   }
 
   /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */

@@ -1513,7 +1513,9 @@ html[data-theme-token-probe] *::after {
   background: var(--popover);
   box-shadow: 0 4px 16px rgb(0 0 0 / 24%);
   color: var(--contrast-popover-foreground);
-  font-size: 0.6875rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(0.6875rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
   font-weight: 600;
   line-height: 1rem;
   text-overflow: ellipsis;
@@ -1966,21 +1968,29 @@ code {
 }
 
 :is(.chat-markdown, .composer-tiptap) h1 {
-  font-size: 1.25rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(1.25rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 :is(.chat-markdown, .composer-tiptap) h2 {
-  font-size: 1.125rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(1.125rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 :is(.chat-markdown, .composer-tiptap) h3 {
-  font-size: 1rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(1rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 :is(.chat-markdown, .composer-tiptap) h4,
 :is(.chat-markdown, .composer-tiptap) h5,
 :is(.chat-markdown, .composer-tiptap) h6 {
-  font-size: 0.875rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(0.875rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 :is(.chat-markdown, .composer-tiptap) h6 {
@@ -2194,7 +2204,9 @@ code {
   border-top: 1px solid var(--contrast-border);
   padding-top: 0.75rem;
   color: var(--contrast-muted-foreground);
-  font-size: 0.75rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 .chat-markdown section[data-footnotes] ol {
@@ -2213,7 +2225,9 @@ code {
   justify-content: center;
   border-radius: 0.25rem;
   text-decoration: none;
-  font-size: 0.6875rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(0.6875rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
   font-weight: 600;
 }
 
@@ -2337,7 +2351,9 @@ code {
   overflow-wrap: normal;
   word-break: normal;
   /* One step under 15px prose. */
-  font-size: 0.875rem;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
+  font-size: calc(0.875rem * var(--fork-interface-text-scale, 1));
+  /* fork:end fork-interface-size-text-only */
 }
 
 /* Top-aligned so wrapped rows share a first line, and the outer columns sit
