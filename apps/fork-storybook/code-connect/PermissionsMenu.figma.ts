@@ -3,7 +3,8 @@
 // component=ComposerPermissionsSection
 import figma from "figma";
 
-// The permissions chip's menu body; the picked mode and its description come from runtimeMode.
+// The permissions chip's menu body, a radio list of modes; the picked mode comes from runtimeMode,
+// and a managed policy disables the modes it rules out.
 export default {
   example: figma.tsx`<ComposerPermissionsSection
   runtimeMode={props.runtimeMode}

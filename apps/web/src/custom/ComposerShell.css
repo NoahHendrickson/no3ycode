@@ -43,8 +43,13 @@
   );
 }
 
-/* Two ComposerControls in one pill: the halves take the pill's height, ink and type. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="background-work"] {
+/* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
+   next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it. */
+:root[data-fork="noahhendrickson-t3code"]
+  :is(
+    [data-fork-composer-status-chip="background-work"],
+    [data-fork-composer-status-chip="learned-step"]
+  ) {
   gap: 0;
   padding-inline: 0;
   /* The agents / monitoring chip wears the composer's own fill. */
@@ -99,9 +104,62 @@
   height: 14px;
 }
 
+/* Background tasks: a fill travels the Layers02 mark front → middle → back, one layer per 2s
+   on a 6s loop. Each fades out over the 0.9s the next fades in, so the fill hands over.
+   Element opacity only, with stepped ramps and static holds, so the compositor draws a few
+   frames a fade rather than one per vsync. Reduced motion keeps the outline. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="background-work"]
+  [data-fork-liveness-mark] {
+  position: relative;
+
+  & > svg[data-fork-layer-fill] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    animation: fork-background-work-layers 6s infinite;
+  }
+  & > svg[data-fork-layer-fill="middle"] {
+    animation-delay: 2s;
+  }
+  & > svg[data-fork-layer-fill="back"] {
+    animation-delay: 4s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-fork-composer-status-chip="background-work"]
+    [data-fork-liveness-mark]
+    > svg[data-fork-layer-fill] {
+    display: none;
+  }
+}
+
+@keyframes fork-background-work-layers {
+  0% {
+    opacity: 0;
+    animation-timing-function: steps(8);
+  }
+  15% {
+    opacity: 1;
+  }
+  33.333% {
+    opacity: 1;
+    animation-timing-function: steps(8);
+  }
+  48.333%,
+  100% {
+    opacity: 0;
+  }
+}
+
 /* The background-work popover reads as a menu on the composer's corners: a 6px inset, rows
-   whose hover is a concentric rounded highlight, and full-width rules between them. */
+   whose hover is a concentric rounded highlight, and full-width rules between them. The custom
+   property carries the corners past Flat Glass's popup radius, which out-ranks this selector. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-background-work-popup] {
+  --fork-flat-popup-radius: var(--fork-composer-radius);
   border-radius: var(--fork-composer-radius);
 
   &::before {

@@ -35,9 +35,10 @@ export function createDoneTransitions() {
 
 const transitions = createDoneTransitions();
 
-/** Plays the celebration on `dot` when the mark keyed `threadKey` turns from Working to Done. */
+/** Plays the celebration on `dot` when the mark keyed `threadKey` turns from Working to Done.
+    A null key (a still mark) takes no part, so it cannot overwrite a live copy's record. */
 export function useDoneCelebration(
-  threadKey: string,
+  threadKey: string | null,
   status: SidebarV2TopStatusMark | null,
   dot: RefObject<HTMLElement | null>,
 ) {
@@ -49,6 +50,7 @@ export function useDoneCelebration(
         : "other";
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- animates the DOM when the mark's status changes, keyed across remounts
   useEffect(() => {
+    if (threadKey === null) return;
     let live = true;
     const element = dot.current;
     const now = performance.now();

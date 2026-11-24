@@ -40,8 +40,8 @@ import { TypographySection } from "./TypographySettings";
 import { COOL_DARKER_THEME, useForkAppearance } from "../../custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
 /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
-import { BASIC_THEME, BASIC_TONE_OPTIONS, DEFAULT_BASIC_TONES } from "../../custom/forkTheme";
-import { ForkBasicTonePicker, ForkThemePicker } from "../../custom/ForkThemePicker";
+import { BASIC_THEME } from "../../custom/forkTheme";
+import { ForkThemePicker } from "../../custom/ForkThemePicker";
 import {
   BASIC_NEW_AGENT_BACKDROP_LABELS,
   BASIC_NEW_AGENT_BACKDROPS,
@@ -152,9 +152,8 @@ export function AppearanceSettingsPanel() {
   const customThemes = useCustomThemes();
   const [isImportThemeOpen, setIsImportThemeOpen] = useState(false);
   /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
-  const { appearance, setAppearance, inletColor, setInletColor, basicTone, setBasicTone } =
+  const { appearance, setAppearance, inletColor, setInletColor, basicAppearance } =
     useForkAppearance(setTheme);
-  const defaultBasicTone = DEFAULT_BASIC_TONES[BASIC_TONE_OPTIONS[basicTone].appearance];
   /* fork:end fork-cool-dark-theme */
   /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
   const [basicNewAgentBackdrop, setBasicNewAgentBackdrop] = useBasicNewAgentBackdrop();
@@ -226,27 +225,12 @@ export function AppearanceSettingsPanel() {
         <div className="p-4">
           <ForkThemePicker
             value={appearance}
-            basicTone={basicTone}
+            basicAppearance={basicAppearance}
             inletColor={inletColor}
             glass3d={glass3d}
             onChange={setAppearance}
           />
         </div>
-        {appearance === BASIC_THEME ? (
-          <SettingsRow
-            title="Tone"
-            description="The colour everything in Basic is built from."
-            resetAction={
-              basicTone === defaultBasicTone ? null : (
-                <SettingResetButton
-                  ariaLabel="Reset Basic tone to default"
-                  onClick={() => setBasicTone(defaultBasicTone)}
-                />
-              )
-            }
-            control={<ForkBasicTonePicker value={basicTone} onChange={setBasicTone} />}
-          />
-        ) : null}
         {appearance === BASIC_THEME ? (
           <SettingsRow
             title="New agent background"

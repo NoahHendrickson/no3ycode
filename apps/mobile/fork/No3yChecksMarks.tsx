@@ -1,5 +1,6 @@
 /**
- * Pull request checks marks on no3y iOS: the status pill and the linked pull request cards —
+ * Pull request checks marks on no3y iOS: the status pill, the linked pull request cards and the
+ * Pull requests list cards —
  * see `.fork/customizations.yaml#no3y-linked-pr-row`.
  */
 import { View } from "react-native";
