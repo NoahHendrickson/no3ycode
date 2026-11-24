@@ -243,7 +243,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             data-fork-section-actions=""
             data-fork-menu-open={anyMenuOpen ? "" : undefined}
             className={cn(
-              "-me-3 relative z-10 flex shrink-0 items-center [&_button]:h-7",
+              "-me-3 relative z-10 flex shrink-0 items-center [&_button]:h-6",
               SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
             )}
           >
