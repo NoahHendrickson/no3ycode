@@ -39,7 +39,7 @@ import { initializeForkGlass3d } from "./custom/forkGlass3d";
 /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
 import {
   initializeForkChatTextScale,
-  initializeForkSidebarZoom,
+  initializeForkSidebarFontSize,
 } from "./custom/forkTypographyScale";
 /* fork:end fork-typography-settings */
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
@@ -74,7 +74,7 @@ initializeForkSidebarMode();
 initializeForkGlass3d();
 /* fork:end fork-glass-3d */
 /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-initializeForkSidebarZoom();
+initializeForkSidebarFontSize();
 initializeForkChatTextScale();
 /* fork:end fork-typography-settings */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */

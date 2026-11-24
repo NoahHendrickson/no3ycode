@@ -80,9 +80,9 @@ export function SidebarV2BotGridBody(props: {
       </span>
       <span
         className={cn(
-          // A fixed 12px line: room for descenders, and the taller rename field overhangs the padding
+          // A 12px line at the default size: room for descenders, and the taller rename field overhangs the padding
           // instead of growing the tile.
-          "flex h-3 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-3 font-medium",
+          "flex h-sidebar-12 w-full min-w-0 items-center justify-center text-center text-sidebar-tile font-medium",
           props.regenerating && "opacity-55",
         )}
       >
@@ -115,14 +115,14 @@ export function SidebarV2BotCardBody(props: {
   return (
     <div
       className={cn(
-        "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[16px_14px] items-center gap-x-2 gap-y-0.5 py-1.5",
+        "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[var(--spacing-sidebar-16)_var(--spacing-sidebar-14)] items-center gap-x-2 gap-y-0.5 py-1.5",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}
     >
       <span className="row-span-2 flex items-center justify-center">
         <BotMascotTile shape={botMascotShape(props.shell)} mood={props.mood} />
       </span>
-      <span className="flex h-4 min-w-0 items-center">{props.title}</span>
+      <span className="flex h-sidebar-16 min-w-0 items-center">{props.title}</span>
       {/* ms-2 on the 8px column gap keeps the title line's 16px to the trailing group. */}
       <span className="row-span-2 ms-2 flex items-center">{props.trailing}</span>
       <BotCardStatusLine

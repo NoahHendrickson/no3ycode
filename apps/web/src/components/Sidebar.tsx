@@ -35,9 +35,7 @@ import { SIDEBAR_V2_PROJECT_HEADER_SORTING_STRATEGY } from "~/custom/SidebarV2Pr
 import { sidebarV2ProjectSectionCollision } from "~/custom/sidebarV2ProjectGrouping";
 /* fork:end sidebar-v2-project-grouping */
 import { restrictToFirstScrollableAncestor, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-import { forkSidebarSortableTranslate } from "../custom/forkTypographyScale";
-/* fork:end fork-typography-settings */
+import { CSS } from "@dnd-kit/utilities";
 import {
   canSnooze,
   effectiveSnoozed,
@@ -701,17 +699,18 @@ function threadTimeTimestamp(thread: SidebarThreadSummary): string {
 
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
    content-visibility skips offscreen rows; each kind's drawn height keeps the scrollbar honest
-   while they are skipped. The li carries no padding of its own, so it equals the drawn card. */
+   while they are skipped. The li carries no padding of its own, so it equals the drawn card.
+   No `auto`: every kind is a fixed height, and a remembered one goes stale when Sidebar font size changes. */
 const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // 8 + 18 + 4 + 16 + 8, sidebarV2CardHeight() in custom/sidebarV2CardAlignment.
-  card: "[contain-intrinsic-size:auto_54px]",
+  card: "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_20px)]",
   // The title line alone, 7 + 18 + 7, sidebarV2CompactCardHeight() (sidebar-v2-compact-cards).
-  compact: "[contain-intrinsic-size:auto_32px]",
+  compact: "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_14px)]",
   // A bot's avatar card, 6 + 16 + 2 + 14 + 6 (fork-bots, custom/bots/SidebarV2BotCardBody).
-  bot: "[contain-intrinsic-size:auto_44px]",
-  "bot-compact": "[contain-intrinsic-size:auto_32px]",
+  bot: "[contain-intrinsic-size:calc(var(--spacing-sidebar-16)_+_var(--spacing-sidebar-14)_+_14px)]",
+  "bot-compact": "[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_14px)]",
   // A Petals grid tile, 8 + 28 + 12 + 10 (fork-bots).
-  "bot-grid": "[contain-intrinsic-size:auto_58px]",
+  "bot-grid": "[contain-intrinsic-size:calc(var(--spacing-sidebar-12)_+_46px)]",
 };
 /* fork:end sidebar-v2-card-rows */
 
@@ -1750,8 +1749,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             className={cn(
               "shrink-0",
               variant === "card" &&
-                // oxlint-disable-next-line shadcn/no-restyle, shadcn/no-arbitrary-values -- the card's 12px meta
-                "flex items-center gap-1 [&>span]:text-[0.75rem] [&>span]:leading-4",
+                // oxlint-disable-next-line shadcn/no-restyle -- the card's 12px meta
+                "flex items-center gap-1 [&>span]:text-sidebar-meta",
               // Settled history mutes its PR state at rest, like the favicon
               // beside it; hovering or focusing the row brings the color back.
               variant === "slim" &&
@@ -1865,7 +1864,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 data-fork-thread-row=""
                 /* fork:end fork-inlet-theme */
                 aria-busy={isRegeneratingTitle || undefined}
-                className={cn(rowSurfaceClassName, "flex h-9 items-center gap-2.5 px-2.5")}
+                className={cn(rowSurfaceClassName, "flex min-h-9 items-center gap-2.5 px-2.5")}
                 onClick={handleClick}
                 onDoubleClick={handleDoubleClick}
                 onKeyDown={handleKeyDown}
@@ -2059,11 +2058,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   snoozeMenuOpen && "opacity-0",
                 )}
               >
-                <span
-                  aria-hidden
-                  // oxlint-disable-next-line shadcn/no-arbitrary-values -- the drawn 11/15 duration
-                  className="text-[11px] leading-[15px] text-foreground tabular-nums"
-                >
+                <span aria-hidden className="text-sidebar-caption text-foreground tabular-nums">
                   <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
                 </span>
               </span>
@@ -2198,9 +2193,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       style={
         sortable
           ? {
-              /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
-              transform: forkSidebarSortableTranslate(sortable.transform),
-              /* fork:end fork-typography-settings */
+              transform: CSS.Translate.toString(sortable.transform),
               transition: sortable.transition,
             }
           : undefined
@@ -2303,7 +2296,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 status slot below. */}
               <div
                 className={cn(
-                  "flex h-[18px] min-h-[18px] min-w-0 items-center",
+                  "flex h-sidebar-18 min-h-sidebar-18 min-w-0 items-center",
                   SIDEBAR_V2_CARD_ALIGNMENT.titleGap,
                 )}
               >
@@ -6106,7 +6099,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                           olderSettledShelf.retry();
                           showMoreSettled();
                         }}
-                        className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground aria-disabled:cursor-default"
+                        className="flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-sidebar-muted-foreground/55 hover:bg-sidebar-row-hover hover:text-sidebar-foreground aria-disabled:cursor-default"
                       >
                         <PlusIcon aria-hidden className="size-4 shrink-0" />
                         {olderSettledShelf.loading

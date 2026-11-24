@@ -211,7 +211,7 @@ export function SidebarV2BotsRow(props: {
 }) {
   return (
     <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
-      <div className="flex h-8 items-center gap-1.5 px-3">
+      <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
             collapsed={props.collapsed}

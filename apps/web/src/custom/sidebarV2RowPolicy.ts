@@ -141,9 +141,9 @@ export function threadRowSurfaceClassName(input: {
   );
 }
 
-/** A slim row's title and the rename field: a card title's 14px on the panel's 16px line,
-    explicit so the panel's 13px --text-sm remap cannot shrink them. */
-export const THREAD_TITLE_TYPE = "text-[0.875rem] leading-4";
+/** A slim row's title and the rename field: a card title's size on the panel's 16px line
+    (at the default 14px), named so the panel's 13px --text-sm remap cannot shrink them. */
+export const THREAD_TITLE_TYPE = "text-sidebar-row";
 
 /** A card title's colour and size. Hover restores a receded title, which is
     what keeps the dimming reading as depth rather than as a disabled row.
@@ -162,7 +162,7 @@ export function threadCardTitleClassName(input: { readonly recedes: boolean }): 
     // leading, and one of the terms the card's 54 is measured from (see
     // custom/sidebarV2CardAlignment). The status mark on the line's trailing
     // end centres in the same box, so neither hangs against the other.
-    "truncate text-[0.875rem] leading-[18px] font-normal",
+    "truncate text-sidebar-title font-normal",
     input.recedes
       ? "text-[color:var(--fork-sidebar-card-title-receded,var(--muted-foreground))] group-any-hover/v2-row:text-foreground"
       : "text-foreground",

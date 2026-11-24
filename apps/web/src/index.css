@@ -206,6 +206,28 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     monospace
   );
   /* fork:end geist-typography */
+  /* fork:begin fork-sidebar-type-size — see .fork/customizations.yaml#fork-sidebar-type-size
+     The sidebar's type, as ratios of Sidebar font size (the thread title, 14px by default).
+     Line heights are unitless, so each line box and the row around it grow with the text. */
+  --text-sidebar-title: var(--fork-sidebar-font-size, 14px);
+  --text-sidebar-title--line-height: calc(18 / 14);
+  --text-sidebar-row: var(--fork-sidebar-font-size, 14px);
+  --text-sidebar-row--line-height: calc(16 / 14);
+  --text-sidebar-chrome: var(--fork-sidebar-font-size, 14px);
+  --text-sidebar-chrome--line-height: calc(20 / 14);
+  --text-sidebar-meta: calc(var(--fork-sidebar-font-size, 14px) * 12 / 14);
+  --text-sidebar-meta--line-height: calc(16 / 12);
+  --text-sidebar-caption: calc(var(--fork-sidebar-font-size, 14px) * 11 / 14);
+  --text-sidebar-caption--line-height: calc(15 / 11);
+  --text-sidebar-status: calc(var(--fork-sidebar-font-size, 14px) * 12 / 14);
+  --text-sidebar-status--line-height: calc(14 / 12);
+  --text-sidebar-tile: calc(var(--fork-sidebar-font-size, 14px) * 10 / 14);
+  --text-sidebar-tile--line-height: calc(12 / 10);
+  --spacing-sidebar-12: calc(var(--fork-sidebar-font-size, 14px) * 12 / 14);
+  --spacing-sidebar-14: calc(var(--fork-sidebar-font-size, 14px) * 14 / 14);
+  --spacing-sidebar-16: calc(var(--fork-sidebar-font-size, 14px) * 16 / 14);
+  --spacing-sidebar-18: calc(var(--fork-sidebar-font-size, 14px) * 18 / 14);
+  /* fork:end fork-sidebar-type-size */
 }
 
 @theme inline {

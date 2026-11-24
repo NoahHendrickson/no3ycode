@@ -7,12 +7,7 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import {
-  FORK_DEFAULT_SANS_FAMILY,
-  FORK_SIDEBAR_ZOOM_ATTRIBUTE,
-  forkInterfaceFontPreset,
-  forkSidebarSortableTranslate,
-} from "../custom/forkTypographyScale";
+import { FORK_DEFAULT_SANS_FAMILY, forkInterfaceFontPreset } from "../custom/forkTypographyScale";
 import { cssRules } from "./cssRules";
 
 function readSibling(relativePath: string): string {
@@ -29,40 +24,36 @@ const rule = (selector: string) => theme.find((entry) => normalize(entry.selecto
 describe("fork guard: fork-typography-settings", () => {
   it("stamps both sizes on the root before first render", () => {
     const main = readSibling("../main.tsx");
-    expect(main).toContain("initializeForkSidebarZoom();");
+    expect(main).toContain("initializeForkSidebarFontSize();");
     expect(main).toContain("initializeForkChatTextScale();");
   });
 
-  it("zooms the sidebar's content and footer, never the header, only while the size is set", () => {
-    // The header holds the macOS traffic-light inset and must match the workspace top bar. The
-    // descendant match covers the narrow-web sheet, whose content has no sidebar-inner around it.
-    const zoom = rule(
-      `${MARKER}[${FORK_SIDEBAR_ZOOM_ATTRIBUTE}] [data-sidebar-version="v2"] :is([data-slot="sidebar-content"], [data-slot="sidebar-footer"])`,
+  it("sizes the sidebar's type and line boxes from Sidebar font size", () => {
+    // One px variable, so the rows grow with the text instead of clipping it.
+    expect(readSibling("../custom/forkTypographyScale.ts")).toContain(
+      'root.style.setProperty("--fork-sidebar-font-size", `${size}px`)',
     );
-    expect(zoom?.body).toContain("zoom: var(--fork-sidebar-zoom, 1)");
-    const primitives = readSibling("../components/ui/sidebar.tsx");
-    expect(primitives).toContain('data-slot="sidebar-content"');
-    expect(primitives).toContain('data-slot="sidebar-footer"');
-  });
-
-  it("keeps sidebar drags on the pointer while zoomed", () => {
-    expect(forkSidebarSortableTranslate(null)).toBeUndefined();
-    expect(forkSidebarSortableTranslate({ x: 0, y: 30.4 })).toBe(
-      "translate3d(calc(0px / var(--fork-sidebar-zoom, 1)), calc(30px / var(--fork-sidebar-zoom, 1)), 0)",
-    );
-    for (const path of [
-      "../components/Sidebar.tsx",
-      "../components/sidebar/SidebarListMarkers.tsx",
-      "../components/sidebar/SidebarThreadRow.tsx",
-      "../custom/SidebarV2ProjectGroupHeader.tsx",
-    ]) {
-      const source = readSibling(path);
-      expect(source, path).toContain("transform: forkSidebarSortableTranslate(");
-      expect(source, path).not.toContain("CSS.Translate.toString(");
+    const index = readSibling("../index.css");
+    for (const token of ["title", "row", "chrome", "meta", "caption"]) {
+      expect(index).toMatch(
+        new RegExp(`--text-sidebar-${token}: [^;]*var\\(--fork-sidebar-font-size, 14px\\)`),
+      );
+      expect(index).toMatch(
+        new RegExp(`--text-sidebar-${token}--line-height: calc\\(\\d+ / \\d+\\);`),
+      );
     }
-    expect(readSibling("../components/Sidebar.motion.ts")).toContain(
-      "(node.getBoundingClientRect().top - origin) / zoom",
+    const panel = rule(`${MARKER} [data-sidebar-version="v2"]`);
+    expect(panel?.body).toContain("--text-sm: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14)");
+    expect(panel?.body).toContain("--text-xs: calc(var(--fork-sidebar-font-size, 14px) * 13 / 14)");
+    // Spacing is px as well, so rows keep their drawn heights at any Interface font size.
+    const rows = rule(
+      `${MARKER} [data-sidebar-version="v2"] :is([data-slot="sidebar-content"], [data-slot="sidebar-footer"])`,
     );
+    expect(rows?.body).toContain("--spacing: 4px");
+    const sidebarZoom = theme.filter(
+      (entry) => entry.selector.includes("data-sidebar-version") && entry.body.includes("zoom:"),
+    );
+    expect(sidebarZoom).toEqual([]);
   });
 
   it("scales every chat stream size from one always-on block", () => {
@@ -101,7 +92,13 @@ describe("fork guard: fork-typography-settings", () => {
   it("mounts the fork controls from the Typography shadow", () => {
     const shadow = readSibling("../overrides/components/settings/TypographySettings.tsx");
     expect(shadow).toContain("renderFamilyField={(familyField) => (");
-    expect(shadow).toContain("<ForkTypographyScaleRows />");
+    expect(shadow).toMatch(
+      /<InterfaceFontRow \/>\s*\{\/\* fork:begin[^\n]*\*\/\}\s*<ForkSidebarFontSizeRow \/>/u,
+    );
+    expect(shadow).toMatch(
+      /<InterfaceFontRow preview=\{<PromptFontPreview \/>\} \/>\s*\{\/\* fork:begin[^\n]*\*\/\}\s*<ForkSidebarFontSizeRow \/>/u,
+    );
+    expect(shadow).toContain("<ForkChatStreamSizeRow />");
     expect(shadow).toContain("const sans = FORK_DEFAULT_SANS_FAMILY;");
   });
 

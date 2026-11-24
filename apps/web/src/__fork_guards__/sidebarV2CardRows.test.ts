@@ -159,7 +159,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     // shelves keep upstream's text-xs.
     expect(sidebarV2).toContain("<ThreadPullRequestBadgeControl");
     expect(sidebarV2).toMatch(
-      /variant === "card" &&\n(?:\s*\/\/ oxlint-disable-next-line [^\n]*\n)?\s*"flex items-center gap-1 \[&>span\]:text-\[0\.75rem\] \[&>span\]:leading-4"/u,
+      /variant === "card" &&\n(?:\s*\/\/ oxlint-disable-next-line [^\n]*\n)?\s*"flex items-center gap-1 \[&>span\]:text-sidebar-meta"/u,
     );
     expect(sidebarV2).not.toContain("{prBadge || hasHoverActions");
     // Settled slim rows mute the badge's state colour at rest; upstream's own
@@ -272,17 +272,24 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(threadCardTitleClassName({ recedes: false })).not.toContain("font-medium");
   });
 
-  it("sizes the card title at 0.875rem / 18px line and the repo line at 0.75rem", () => {
-    // Explicit rem so the panel's --text-xs/--text-sm → 13px remap cannot
+  it("sizes the card title on an 18px line and the repo line at 12px, at the default size", () => {
+    // Named tokens so the panel's --text-xs/--text-sm → 13px remap cannot
     // flatten title and branch to the chrome body size. 18px is the title
     // line's drawn box and one of the terms in the card's 54 — retune it
     // without the alignment module and the intrinsic-size hint lies.
-    expect(threadCardTitleClassName({ recedes: false })).toContain("text-[0.875rem]");
-    expect(threadCardTitleClassName({ recedes: false })).toContain("leading-[18px]");
+    expect(threadCardTitleClassName({ recedes: false })).toContain("text-sidebar-title");
+    const index = readSibling("../index.css");
+    expect(index).toContain("--text-sidebar-title--line-height: calc(18 / 14);");
+    expect(index).toContain(
+      "--spacing-sidebar-18: calc(var(--fork-sidebar-font-size, 14px) * 18 / 14);",
+    );
+    expect(index).toContain(
+      "--text-sidebar-meta: calc(var(--fork-sidebar-font-size, 14px) * 12 / 14);",
+    );
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.titleLine).toBe(18);
     const meta = readSibling("../custom/SidebarV2ThreadCardMeta.tsx");
     expect(meta).toContain(
-      'REPO_ROW =\n  "flex h-4 min-w-0 items-center justify-between gap-3 text-[0.75rem] leading-4 text-muted-foreground"',
+      'REPO_ROW =\n  "flex h-sidebar-16 min-w-0 items-center justify-between gap-3 text-sidebar-meta text-muted-foreground"',
     );
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.metaLine).toBe(16);
   });
@@ -424,9 +431,9 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(meta).not.toContain("repoIndent");
     // No overflow-hidden: the trailing h-6 settle/X cell overhangs this line
     // on purpose; clipping it was what squashed the hover fill into a bar.
-    expect(sidebarV2).toContain("flex h-[18px] min-h-[18px] min-w-0 items-center");
+    expect(sidebarV2).toContain("flex h-sidebar-18 min-h-sidebar-18 min-w-0 items-center");
     expect(sidebarV2).not.toMatch(
-      /flex h-\[18px\] min-h-\[18px\] min-w-0 items-center[^"]*overflow-hidden/u,
+      /flex h-sidebar-18 min-h-sidebar-18 min-w-0 items-center[^"]*overflow-hidden/u,
     );
   });
 
@@ -489,7 +496,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     const meta = readSibling("../custom/SidebarV2ThreadCardMeta.tsx");
     expect(meta).not.toContain("text-muted-foreground/70");
     expect(meta).not.toContain("text-foreground/70");
-    expect(meta).toContain("text-[11px] leading-[15px]");
+    expect(meta).toContain("text-sidebar-caption");
   });
 
   it("draws every card at one height, whatever it carries", () => {
@@ -518,7 +525,14 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(sidebarV2CardHeight()).toBe(54);
     expect(sidebarV2).toContain("SIDEBAR_V2_CARD_ALIGNMENT.rowGap");
     expect(sidebarV2).toContain("SIDEBAR_V2_CARD_ALIGNMENT.cardPadY");
-    expect(sidebarV2).toContain(`[contain-intrinsic-size:auto_${sidebarV2CardHeight()}px]`);
+    // The two line boxes follow Sidebar font size, so the hint sums their tokens with the padding.
+    const fixed =
+      sidebarV2CardHeight() -
+      SIDEBAR_V2_CARD_ALIGNMENT_PX.titleLine -
+      SIDEBAR_V2_CARD_ALIGNMENT_PX.metaLine;
+    expect(sidebarV2).toContain(
+      `[contain-intrinsic-size:calc(var(--spacing-sidebar-18)_+_var(--spacing-sidebar-16)_+_${fixed}px)]`,
+    );
     expect(sidebarV2).not.toMatch(/contain-intrinsic-size:auto_(?:52|77)px/u);
   });
 
