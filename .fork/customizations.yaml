@@ -8759,14 +8759,17 @@
     (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
     inlineCodeBackgroundColor style) at 0.95 of the body size
     (NO3Y_INLINE_CODE_CHIP.fontScale, upstream 0.9), with 5pt corners and 4pt of room
-    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), only as tall
-    as the code's font (paddingVertical 0) so chips on consecutive lines keep
-    a gap. File
+    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), hugging
+    the code's font so chips on consecutive lines keep a gap. File
     references in a reply (both the embed-label and the resolved file link,
     marked fileReference) wear the same ink, wash and chip shape instead of
-    the teal mention chip, keeping their file icon, with no vertical padding
-    and the label at the code chip's scale (pill.fontScale) so both chips stand
-    the same height. A table's header row
+    the teal mention chip, keeping their file icon, with the label at the code
+    chip's scale (pill.fontScale). In body text every reply chip stands one
+    height: fork/no3yChipHeight.ts pads code
+    (Menlo's ascender + descender), file chips and the subagent capsule (the
+    system font's, rounded up to a whole point) to the tallest of them, from
+    the sizes RCTFont actually draws (it rounds Dynamic Type sizes to a whole
+    point). Chips in a heading take the heading's size. A table's header row
     takes the palette's 4% cardWash (tableHeaderBackgroundColor) instead of
     the dark code block fill. The native
     library draws that chip, so apps/mobile/deps carries a fork build of
@@ -9003,6 +9006,8 @@
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/no3yTranscriptSpacing.ts
     - apps/mobile/fork/no3yTranscriptSpacing.test.ts
+    - apps/mobile/fork/no3yChipHeight.ts
+    - apps/mobile/fork/no3yChipHeight.test.ts
     - apps/mobile/fork/No3ySentBubbleRise.tsx
     - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
@@ -9159,8 +9164,8 @@
     On mobile and desktop/web, a link in an assistant message to a subagent thread (a
     delegated task or subagent child) reads as a neutral capsule instead of the thread
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder; its label at
-    0.05 under the code chip's scale, pill.fontScale, where replies draw one, so it stands as
-    tall as an inline code chip), body ink,
+    0.05 under the code chip's scale, pill.fontScale, where replies draw one, padded by
+    fork/no3yChipHeight.ts to stand as tall as an inline code chip), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
