@@ -34,7 +34,7 @@ export function navigateToPane(
 /**
  * Closes a split's new-agent pane. `leave` moves the route off the draft (to the pane beside it)
  * and answers whether it could: clearing the draft under the route would send it home instead.
- * Then the pair splits, and the draft goes only while it is still empty, as "Split agent" left
+ * Then the pane closes, and the draft goes only while it is still empty, as "Split agent" left
  * it; one the user has written in, or paired from the sidebar, stays a draft of its own.
  */
 export async function closeSplitDraft(
@@ -43,9 +43,13 @@ export async function closeSplitDraft(
   draftId: DraftId,
 ): Promise<void> {
   if (!(await leave())) return;
-  useSplitThreadStore.getState().unpair(ref);
+  const store = useSplitThreadStore.getState();
   const drafts = useComposerDraftStore.getState();
-  if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) return;
+  if (composerDraftHasUserContent(drafts.getComposerDraft(draftId))) {
+    store.closeDraftPane(ref);
+    return;
+  }
+  store.forget(ref);
   releaseComposerDraftUploads(draftId);
   drafts.clearDraftThread(draftId);
 }

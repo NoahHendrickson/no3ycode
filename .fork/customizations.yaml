@@ -6466,6 +6466,23 @@
     floats, mask a rounded hole at its frame so only the stage is behind it.
     Other themes paint it on the opaque popover.
 
+    Any started thread can also dock to the right: a toggle beside the float
+    icon makes it the column's right pane, where it stays (persisted) while
+    the route moves through other threads on the left, until the same
+    toggle, pressed there, undocks it. The left pane is the route's thread,
+    or, while the route is on the docked thread itself, the last other thread
+    it showed (the docked value's left). A dock outranks pairs, which are kept but not drawn
+    while it is set, and hides the split toggle; docking takes the thread out
+    of its pair or the window, and floating or pairing the docked thread
+    undocks it. On the left pane the toggle swaps the two, and the window's
+    Dock beside lands it in the left pane by navigating to it. The divider
+    stores its share as dockRatio. A docked thread found missing is forgotten.
+    While a thread is docked, card drops in the sidebar and the tab strip do not
+    pair (the pair would stay hidden), and a landing draft in the left pane is
+    never swept as untouched.
+    Its sidebar card wears a docked glyph last on the title line, after the
+    status mark and the working timer (custom/splitThreads/SidebarDockedMark).
+
     The route's thread is the focused pane. Pressing into the other pane
     navigates to its thread (replace), so the right panel, the sidebar
     highlight and every route-keyed global shortcut follow focus with no
@@ -6550,6 +6567,9 @@
     - apps/web/src/custom/splitThreads/sidebarSplitRows.ts
     - apps/web/src/custom/splitThreads/splitThreadDrag.ts
     - apps/web/src/custom/splitThreads/SidebarSplitPairRow.tsx
+    - apps/web/src/custom/splitThreads/SidebarDockedMark.tsx
+    # Landing drafts beside the dock are on screen, so the sweep keeps them.
+    - apps/web/src/custom/landingDraft.ts
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     # Registers only the focused pane's composer.
     - apps/web/src/custom/voice/forkDictation.ts
