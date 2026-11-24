@@ -114,7 +114,7 @@ function No3ySubagentCards(props: CardsProps) {
   );
 }
 
-function Elapsed(props: {
+export function Elapsed(props: {
   readonly agents: ReadonlyArray<AgentTiming>;
   readonly palette: FlatGlassPalette;
 }) {
@@ -215,37 +215,13 @@ function SubagentCard(props: {
       })}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View
-          style={{
-            width: TILE,
-            height: TILE,
-            borderRadius: 6,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: palette.circleFill,
-          }}
-        >
-          {driver !== undefined && (hasNo3yProviderMark(driver) || provider !== undefined) ? (
-            <No3yProviderMark provider={driver} iconUrl={provider?.iconUrl} size={20} />
-          ) : (
-            <HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />
-          )}
-          <View
-            style={{
-              position: "absolute",
-              right: -5,
-              bottom: -5,
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: palette.stageBackground,
-            }}
-          >
-            <No3yStatusMark kind={mark} palette={palette} size={14} />
-          </View>
-        </View>
+        <No3ySubagentTile
+          driver={driver}
+          iconUrl={provider?.iconUrl}
+          knownProvider={provider !== undefined}
+          mark={mark}
+          palette={palette}
+        />
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text
             numberOfLines={1}
@@ -273,5 +249,55 @@ function SubagentCard(props: {
         ) : null}
       </View>
     </Pressable>
+  );
+}
+
+/** The provider's mark in a tile with the agent's status mark at its corner. */
+export function No3ySubagentTile(props: {
+  readonly driver: OrchestrationV2Subagent["driver"] | undefined;
+  readonly iconUrl: string | undefined;
+  /** The environment reports this provider instance, so its icon can draw. */
+  readonly knownProvider: boolean;
+  readonly mark: ReturnType<typeof no3ySubagentMarkKind>;
+  readonly palette: FlatGlassPalette;
+}) {
+  const { driver } = props;
+  return (
+    <View
+      style={{
+        width: TILE,
+        height: TILE,
+        borderRadius: 6,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: props.palette.circleFill,
+      }}
+    >
+      {driver !== undefined && (hasNo3yProviderMark(driver) || props.knownProvider) ? (
+        <No3yProviderMark provider={driver} iconUrl={props.iconUrl} size={20} />
+      ) : (
+        <HugeIcon icon={Robot01Icon} size={18} color={props.palette.foreground} />
+      )}
+      <View
+        style={{
+          position: "absolute",
+          right: -5,
+          bottom: -5,
+          width: 18,
+          height: 18,
+          borderRadius: 9,
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          backgroundColor: props.palette.stageBackground,
+        }}
+      >
+        {/* The card's own wash over the page, so the ring reads as a cutout of the card. */}
+        <View
+          style={[StyleSheet.absoluteFill, { backgroundColor: props.palette.controlSurface }]}
+        />
+        <No3yStatusMark kind={props.mark} palette={props.palette} size={14} />
+      </View>
+    </View>
   );
 }

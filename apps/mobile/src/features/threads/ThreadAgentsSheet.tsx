@@ -34,6 +34,9 @@ import { useLinkedThreadReach } from "../../state/linkedThread";
 
 import { useOpenThreadInspector } from "./thread-inspector-navigation";
 import { useOpenLinkedThreadRead } from "./useOpenLinkedThread";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yAgentsSheetRowSwap } from "../../../fork/No3yAgentsSheetRow";
+/* fork:end no3y-mobile-redesign */
 
 type AgentsTarget = { readonly environmentId: EnvironmentId; readonly threadId: ThreadId };
 
@@ -111,15 +114,24 @@ export function ThreadAgentsSheet({ route }: StaticScreenProps<AgentsTarget>) {
         subagents.map((subagent) => {
           const group = workflowGroups.get(subagent.id);
           return group === undefined ? (
-            <View key={subagent.id} className="border-b border-border">
-              <AgentRow
-                subagent={subagent}
-                environmentId={target.environmentId}
-                tickSeconds={hasLiveAgent}
-                onOpen={openChildThread}
-              />
-            </View>
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            <No3yAgentsSheetRowSwap
+              key={subagent.id}
+              environmentId={target.environmentId}
+              subagent={subagent}
+              onOpen={openChildThread}
+            >
+              <View key={subagent.id} className="border-b border-border">
+                <AgentRow
+                  subagent={subagent}
+                  environmentId={target.environmentId}
+                  tickSeconds={hasLiveAgent}
+                  onOpen={openChildThread}
+                />
+              </View>
+            </No3yAgentsSheetRowSwap>
           ) : (
+            /* fork:end no3y-mobile-redesign */
             <ThreadWorkflowGroup
               key={subagent.id}
               environmentId={target.environmentId}

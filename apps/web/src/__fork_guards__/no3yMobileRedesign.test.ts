@@ -784,12 +784,21 @@ describe("fork guard: no3y-mobile-redesign", () => {
     const workLog = readRepoFile("apps/mobile/src/features/threads/thread-work-log.tsx");
     const subagentCards = readRepoFile("apps/mobile/fork/No3ySubagentCards.tsx");
     expect(workLog).toContain("<No3ySubagentCardsSwap");
-    expect(subagentCards).toContain("<No3yStatusMark kind={mark} palette={palette} size={14} />");
+    expect(subagentCards).toContain(
+      "<No3yStatusMark kind={props.mark} palette={props.palette} size={14} />",
+    );
     expect(subagentCards).toContain("<No3yProviderMark");
     expect(subagentCards).not.toContain("sky");
     // No latest-activity line on the card.
     expect(subagentCards).not.toContain("no3ySubagentActivity");
     expect(subagentCards).toContain("borderRadius: 20,");
+    // The Agents sheet draws the same card, with a quiet round stop button, not the red tile.
+    const agentsSheet = readRepoFile("apps/mobile/src/features/threads/ThreadAgentsSheet.tsx");
+    const agentsSheetRow = readRepoFile("apps/mobile/fork/No3yAgentsSheetRow.tsx");
+    expect(agentsSheet).toContain("<No3yAgentsSheetRowSwap");
+    expect(agentsSheetRow).toContain("<No3ySubagentTile");
+    expect(agentsSheetRow).toContain("<StopGlyphButton");
+    expect(agentsSheetRow).not.toContain('variant="danger"');
     // Chat: Threads' header shape, thread cards, and New agent's draft composer for a No-project
     // chat, kept with its Home tab and served by the new-task flow while the tab shows.
     const chat = readRepoFile("apps/mobile/fork/No3yChatTab.tsx");
