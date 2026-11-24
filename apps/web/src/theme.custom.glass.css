@@ -472,7 +472,7 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   [data-chat-header]
   [data-fork-panel-toggle] {
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   outline: 1px solid rgb(from var(--contrast-foreground) r g b / 12%);
   outline-offset: -1px;
   background: var(--fork-popup-fill);

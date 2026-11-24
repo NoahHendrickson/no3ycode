@@ -15,21 +15,21 @@
    hairline so they read as part of it. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip] {
   display: inline-flex;
-  height: 26px;
-  min-height: 26px;
+  height: calc(var(--spacing) * 6.5);
+  min-height: calc(var(--spacing) * 6.5);
   min-width: 0;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--spacing) * 1.5);
   padding-block: 0;
-  padding-inline: 8px;
+  padding-inline: calc(var(--spacing) * 2);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--fork-composer-vessel-bg, var(--card));
   box-shadow: inset 0 0 0 1px var(--fork-composer-border, var(--border));
   /* 13px, the PR pill's number size, so every chip in the row reads the same. */
-  font-size: 13px;
+  font-size: var(--fork-text-chip);
   font-weight: 400;
-  line-height: 1rem;
+  line-height: calc(var(--spacing) * 4);
   color: var(--foreground);
 }
 
@@ -64,22 +64,22 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-status-chip-main] {
-  gap: 6px;
-  padding-inline: 8px 6px;
-  border-radius: 8px 0 0 8px;
+  gap: calc(var(--spacing) * 1.5);
+  padding-inline: calc(var(--spacing) * 2) calc(var(--spacing) * 1.5);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 
   /* No Stop square beside it: the label is the whole pill. An attribute, not :last-child,
      since the open popover puts focus guards after the trigger. */
   &[data-fork-status-chip-solo] {
-    padding-inline: 8px;
-    border-radius: 8px;
+    padding-inline: calc(var(--spacing) * 2);
+    border-radius: var(--radius-lg);
   }
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-status-chip-stop] {
-  width: 26px;
+  width: calc(var(--spacing) * 6.5);
   padding-inline: 0;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   opacity: 0.7;
 
   &:hover:not(:disabled) {
@@ -91,8 +91,8 @@
   }
 
   & svg {
-    width: 10px;
-    height: 10px;
+    width: calc(var(--spacing) * 2.5);
+    height: calc(var(--spacing) * 2.5);
   }
 }
 
@@ -101,7 +101,7 @@
   [data-fork-liveness-mark]
   svg {
   width: auto;
-  height: 14px;
+  height: calc(var(--spacing) * 3.5);
 }
 
 /* Background tasks: a fill travels the Layers02 mark front → middle → back, one layer per 2s
@@ -167,7 +167,7 @@
   }
 
   & > [data-slot="popover-viewport"] {
-    --viewport-inline-padding: 6px;
+    --viewport-inline-padding: calc(var(--spacing) * 1.5);
     padding-block: 0;
   }
 }
@@ -178,7 +178,7 @@
   margin-inline: calc(-1 * var(--viewport-inline-padding, 0px));
 
   & > li {
-    padding: 6px var(--viewport-inline-padding, 0px);
+    padding: calc(var(--spacing) * 1.5) var(--viewport-inline-padding, 0px);
   }
 
   & > li + li {
@@ -187,15 +187,15 @@
 
   /* A one-line monitor row matches a subagent row's title-over-model height. */
   & [data-fork-monitoring-task] {
-    min-height: 50px;
-    padding: 6px 8px;
-    border-radius: calc(var(--fork-composer-radius) - 6px);
+    min-height: calc(var(--spacing) * 12.5);
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+    border-radius: calc(var(--fork-composer-radius) - var(--spacing) * 1.5);
   }
 
   /* Without its fill the 32px card tile is mostly air beside the mark; the list keeps it tight. */
   & [data-fork-task-tile] {
-    width: 24px;
-    height: 24px;
+    width: calc(var(--spacing) * 6);
+    height: calc(var(--spacing) * 6);
   }
 }
 
@@ -204,14 +204,14 @@
   width: 100%;
   min-width: 0;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--foreground);
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: var(--text-xs);
+  line-height: calc(var(--spacing) * 4);
   text-align: left;
 }
 
@@ -232,14 +232,14 @@
    along the bottom), and the state's ink on the glyph and number. A draft, or a PR whose state
    is unknown, stays neutral. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
-  gap: 6px;
-  padding-inline: 9px 10px;
+  gap: calc(var(--spacing) * 1.5);
+  padding-inline: calc(var(--spacing) * 2.25) calc(var(--spacing) * 2.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-status-chip="pull-request"]
   .text-secondary-label {
-  font-size: 13px;
+  font-size: var(--fork-text-chip);
   font-weight: 400;
 }
 

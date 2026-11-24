@@ -268,7 +268,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
   :is([data-sidebar-version="v2"], [data-app-modal])
   [data-fork-chrome-row] {
-  border-radius: 9999px;
+  border-radius: var(--fork-pill-radius);
 }
 
 /* On Flat Glass, list rows across the sidebar (threads, top chrome rows,
@@ -347,7 +347,7 @@
 
   /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
   & [data-sidebar-version="v2"] [data-fork-petals-grid] [data-fork-thread-row] {
-    border-radius: calc(var(--fork-flat-radius) + 4px);
+    border-radius: calc(var(--fork-flat-radius) + var(--spacing));
   }
 
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
@@ -1198,6 +1198,7 @@
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
   border-color: rgb(255 255 255 / 8%);
   /* The hole below is drawn with this radius; keep the two together. */
+  /* design-lint-disable-next-line A2 -- the hole is an SVG rx="14" in a mask url, which cannot read a token */
   border-radius: 14px;
   box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
 }
@@ -1792,8 +1793,8 @@
   ).dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-inset"]
   [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
-  --radius-sm: 12px;
-  border-radius: 12px;
+  --radius-sm: var(--radius-xl);
+  border-radius: var(--radius-xl);
 }
 
 /* On Flat Glass, segmented tab strips (Code / Chat, menu tabs, page tabs,
@@ -1801,17 +1802,17 @@
    tabs) using translucent white washes so Liquid Glass shines through. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
-  gap: 2px;
-  padding: 2px;
-  border-radius: 8px;
+  gap: calc(var(--spacing) * 0.5);
+  padding: calc(var(--spacing) * 0.5);
+  border-radius: var(--radius-lg);
   background-color: rgb(255 255 255 / 8%);
 
   & > * {
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-clip: border-box;
     box-shadow: none;
     color: var(--foreground);
-    font-size: 0.75rem;
+    font-size: var(--fork-segmented-tab-font-size);
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
@@ -1833,7 +1834,7 @@
   }
 
   & > :not([aria-label], [data-fork-music-strip] *) {
-    padding-inline: 6px;
+    padding-inline: calc(var(--spacing) * 1.5);
   }
 
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {

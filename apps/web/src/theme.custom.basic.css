@@ -193,7 +193,7 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
   border: 1px solid var(--basic-wash-2);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   box-shadow: none;
 }
 
@@ -206,14 +206,14 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-row] {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-fork-petals-grid]
   [data-fork-thread-row] {
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 /* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
@@ -225,17 +225,17 @@
    Petal strips beside them take this one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
-  gap: 2px;
-  padding: 2px;
-  border-radius: 8px;
+  gap: calc(var(--spacing) * 0.5);
+  padding: calc(var(--spacing) * 0.5);
+  border-radius: var(--radius-lg);
   background-color: var(--basic-wash-2);
 
   & > * {
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-clip: border-box;
     box-shadow: none;
     color: var(--basic-text);
-    font-size: 0.75rem;
+    font-size: var(--fork-segmented-tab-font-size);
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
@@ -261,7 +261,7 @@
   /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
      that keep their own width; the music strip's equal-width tabs keep their tight sides. */
   & > :not([aria-label], [data-fork-music-strip] *) {
-    padding-inline: 6px;
+    padding-inline: calc(var(--spacing) * 1.5);
   }
 
   /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
@@ -442,14 +442,14 @@
 
 /* The row hover card is a card, at the popups' 8px. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-row-hover-card] {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 /* Cards on a page (Settings groups, Usage and Automations) take the 8% line and
    8px corners, like the composer; upstream draws them at 12px on a fainter line. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-slot="settings-group"], [data-scheduled-card]) {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   border-color: var(--basic-wash-2);
 }
 

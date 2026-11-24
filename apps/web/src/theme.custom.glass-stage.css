@@ -254,8 +254,8 @@
         [data-fork-stage-card] [data-fork-stage-card-title]
       ) {
       /* 16px inside the card on each side, whatever its left inset. */
-      padding-left: calc(var(--fork-glass-card-inset-left) + 16px);
-      padding-right: 24px;
+      padding-left: calc(var(--fork-glass-card-inset-left) + var(--spacing) * 4);
+      padding-right: calc(var(--spacing) * 6);
     }
   }
 
@@ -295,7 +295,7 @@
      and corners and the gutter beside it. Not on a new agent's empty draft,
      which centres the composer instead. */
   &.dark[data-fork-theme="cool-darker"] [data-chat-composer-overlay="true"]:not([data-draft-hero]) {
-    padding-bottom: 4px;
+    padding-bottom: calc(var(--spacing) * 1);
     background: none;
   }
 
@@ -343,7 +343,7 @@
       )
       [data-sidebar-version="v2"]
       [data-slot="sidebar-group"]:is([data-fork-chrome-rows], [data-fork-projects-row]) {
-      padding-inline-end: 6px;
+      padding-inline-end: calc(var(--spacing) * 1.5);
     }
   }
 
@@ -354,7 +354,7 @@
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-split-threads]
     > [data-fork-split-pane][data-fork-split-side="right"] {
-    margin-inline-start: -3px;
+    margin-inline-start: calc(var(--spacing) * -0.75);
 
     & [data-chat-column-maximized-away] {
       --fork-glass-card-inset-left: 3px;

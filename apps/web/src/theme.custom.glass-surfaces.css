@@ -270,8 +270,8 @@
   &.dark[data-fork-theme="cool-darker"]
     [data-fork-composer-context-row]
     [data-slot="composer-context-strip"] {
-    margin-inline: -4px;
-    padding-inline: 4px;
+    margin-inline: calc(var(--spacing) * -1);
+    padding-inline: calc(var(--spacing) * 1);
   }
 
   /* The music strip (fork-music-panel) and its open button wear the chips'
@@ -466,11 +466,11 @@
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-list"] {
-    padding: 6px;
+    padding: calc(var(--spacing) * 1.5);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-item"] {
-    padding: 6px 10px;
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
     border-radius: 10px;
   }
 
@@ -570,7 +570,7 @@
     position: absolute;
     inset: -1px;
     padding: 1px;
-    border-radius: 9999px;
+    border-radius: var(--fork-pill-radius);
     background: var(--fork-glass-dark-edge);
     mask:
       linear-gradient(#000 0 0) content-box exclude,
@@ -586,14 +586,14 @@
   &.dark[data-fork-theme="cool-darker"]
     [data-sidebar-version="v2"]
     :is([data-thread-item] > .rounded-md) {
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
   }
 
   &.dark[data-fork-theme="cool-darker"]
     [data-sidebar-version="v2"]
     [data-thread-item]
     > .rounded-\[16px\] {
-    border-radius: 20px;
+    border-radius: var(--radius-3xl);
   }
 
   /* Every row's li skips offscreen paint with content-visibility: auto, which
@@ -615,7 +615,7 @@
     position: absolute;
     inset: -1px;
     padding: 1px;
-    border-radius: 13px;
+    border-radius: calc(var(--radius-xl) + 1px);
     background: var(--fork-glass-dark-edge);
     mask:
       linear-gradient(#000 0 0) content-box exclude,
@@ -626,13 +626,13 @@
   &.dark[data-fork-theme="cool-darker"]
     [data-sidebar-version="v2"]
     [data-thread-item]:has(> .rounded-\[16px\][aria-current="page"])::before {
-    border-radius: 21px;
+    border-radius: calc(var(--radius-3xl) + 1px);
   }
 
   &.dark[data-fork-theme="cool-darker"]
     [data-sidebar-version="v2"]
     [data-thread-item]:has(> .rounded-full[aria-current="page"])::before {
-    border-radius: 9999px;
+    border-radius: var(--fork-pill-radius);
   }
 
   /* An active top row lets its dark edge out, and on an opaque client takes
@@ -722,13 +722,13 @@
      its icon on a neutral wash. */
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-tabs] {
     & [data-fork-thread-tab][data-fork-tab-has-mark] > [data-fork-tab-content] {
-      padding-inline-start: 4px;
+      padding-inline-start: calc(var(--spacing) * 1);
     }
 
     & [data-fork-tab-provider-mark] {
-      width: 20px;
-      height: 20px;
-      border-radius: 9999px;
+      width: calc(var(--spacing) * 5);
+      height: calc(var(--spacing) * 5);
+      border-radius: var(--fork-pill-radius);
       background-color: rgb(255 255 255 / 12%);
       background-image: linear-gradient(
         to bottom,
@@ -747,7 +747,7 @@
     & [data-fork-tab-provider-mark="branded"] {
       --fork-mark-ink: #fff;
       --fork-mark-cutout: rgb(0 0 0 / 0%);
-      --fork-mark-size: 12px;
+      --fork-mark-size: calc(var(--spacing) * 3);
       background-color: rgb(from var(--fork-tab-mark-brand) r g b / 72%);
     }
   }
@@ -824,7 +824,7 @@
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-sort] > div {
-    padding: 6px;
+    padding: calc(var(--spacing) * 1.5);
   }
 
   &.dark[data-fork-theme="cool-darker"] [data-fork-thread-sort] [data-slot="menu-radio-item"] {

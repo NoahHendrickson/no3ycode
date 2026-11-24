@@ -191,6 +191,8 @@
    their own. Code keeps Code font size, which is in px and outside these. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
+  --text-2xs: calc(0.6875rem * var(--fork-chat-text-scale, 1));
+  --text-3xs: calc(0.625rem * var(--fork-chat-text-scale, 1));
   --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
   --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
   --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
@@ -215,10 +217,10 @@
    heading sits below it. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   .text-2xs {
-    font-size: calc(0.6875rem * var(--fork-chat-text-scale, 1));
+    font-size: var(--text-2xs);
   }
   .text-3xs {
-    font-size: calc(0.625rem * var(--fork-chat-text-scale, 1));
+    font-size: var(--text-3xs);
   }
   .chat-markdown {
     h1 {
@@ -234,7 +236,7 @@
       font-size: var(--text-sm);
     }
     table {
-      font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+      font-size: var(--fork-chat-text-sm);
     }
   }
 }
@@ -273,13 +275,13 @@
    `data-slot="tooltip-trigger"` / `"menu-trigger"`. Two of the three pills are
    built that way, so a slot-based selector silently matches nothing. */
 :root[data-fork="noahhendrickson-t3code"] :is(button[data-fork-pill], [data-fork-pill] > button) {
-  height: 28px;
-  min-height: 28px;
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
   border-color: var(--fork-pill-border);
   background: transparent;
   color: var(--fork-pill-fg);
   box-shadow: none;
-  gap: 6px;
+  gap: calc(var(--spacing) * 1.5);
 }
 
 /* The `::before` overlay carries the variant's inset highlight and its own
@@ -305,7 +307,7 @@
   border-start-start-radius: var(--fork-pill-radius);
   border-end-start-radius: var(--fork-pill-radius);
   /* 10px in the design, less the 1px border the box already spends. */
-  padding-inline: 9px;
+  padding-inline: calc(var(--spacing) * 2.25);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -318,7 +320,7 @@
    square that `size="icon-xs"` would keep after the height lift. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pill] > button:last-child:not(:first-child) {
   width: auto;
-  padding-inline: 7px;
+  padding-inline: calc(var(--spacing) * 1.75);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pill] > [data-slot="separator"] {
@@ -428,20 +430,20 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"]
   [data-chat-composer-body="true"] {
-  padding: 8px;
+  padding: calc(var(--spacing) * 2);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-chat-composer-body="true"] {
-  padding: 10px 12px 12px;
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3) calc(var(--spacing) * 3);
 }
 
 /* Attach and send sit 2px either side of the prompt on the compact row. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt-row] {
-  column-gap: 2px;
+  column-gap: calc(var(--spacing) * 0.5);
 }
 
 /* Prompt on top, + on the bottom-left and mic + send on the bottom-right. */
@@ -464,7 +466,7 @@
   [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt] {
   --fork-composer-prompt-pad-block: calc(
-    (var(--fork-composer-action-slot) - var(--fork-composer-prompt-line)) / 2 + 4px
+    (var(--fork-composer-action-slot) - var(--fork-composer-prompt-line)) / 2 + var(--spacing)
   );
   padding-block: var(--fork-composer-prompt-pad-block);
 }
@@ -476,9 +478,9 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-fork-composer-prompt] {
-  --fork-composer-prompt-pad-block: 4px;
+  --fork-composer-prompt-pad-block: calc(var(--spacing) * 1);
   grid-area: prompt;
-  min-height: 54px;
+  min-height: calc(var(--spacing) * 13.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -529,8 +531,8 @@
    desktop scrollport below turns that into a horizontal scrollbar thumb
    under the prompt and a 4px vertical one beside it. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
-  margin: -4px;
-  padding: 4px;
+  margin: calc(var(--spacing) * -1);
+  padding: calc(var(--spacing) * 1);
 }
 
 /* The draft composer is narrower than the docked one: Figma 418:11501 draws
@@ -760,6 +762,16 @@
   --fork-menu-row-radius: 0.5rem;
   --fork-menu-radius: 0.75rem;
   --fork-composer-popover-radius: 1rem;
+  /* 13px, between text-xs and text-sm: status chips, notice actions, the Dictate tooltip. */
+  --fork-text-chip: 0.8125rem;
+  /* The chat stream's sizes, for its cards outside the timeline. */
+  --fork-chat-text-sm: calc(0.875rem * var(--fork-chat-text-scale, 1));
+  --fork-chat-text-base: calc(1rem * var(--fork-chat-text-scale, 1));
+  --fork-inline-code-size: 0.95em;
+  /* Segmented tab labels: 12px wherever the strip sits, the sidebar's remapped text-xs included. */
+  --fork-segmented-tab-font-size: 0.75rem;
+  --fork-inline-code-radius: 0.3125rem;
+  --fork-pill-radius: 9999px;
   /* Cards that sit beside the composer (thread details, changed files). */
   --fork-card-radius: 8px;
   --fork-composer-bg: var(--card);
@@ -818,7 +830,7 @@
 /* Mobile's collapsed tap target remains a distinct functional state. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-mobile-collapsed="true"][data-fork-composer-surface] {
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 /* Selected by name, not by position. This used to be `[data-fork-composer-box]
@@ -929,7 +941,7 @@
     /* The prompt size (16px by default, appearanceFonts.ts) on a 1.5 line. The 32px action
        slot sets the 48px compact row (8 + 32 + 8); the one-line prompt sits centred beside it,
        and each wrapped line adds one more. Below sm the type stays 16px so iOS does not zoom. */
-    font-size: var(--font-size-prompt, 1rem);
+    font-size: var(--font-size-prompt, var(--text-base));
     line-height: var(--fork-composer-prompt-line);
   }
 
@@ -976,20 +988,20 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  height: 26px;
-  min-height: 26px;
-  gap: 5px;
-  padding-inline: 8px;
-  border-radius: 6px;
-  font-size: 14px;
+  height: calc(var(--spacing) * 6.5);
+  min-height: calc(var(--spacing) * 6.5);
+  gap: calc(var(--spacing) * 1.25);
+  padding-inline: calc(var(--spacing) * 2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   font-weight: 400;
-  line-height: 20px;
+  line-height: calc(var(--spacing) * 5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-control-row-slot="right"]
   :is([data-fork-composer-usage-limits], [data-fork-composer-mode-chip]) {
-  width: 26px;
+  width: calc(var(--spacing) * 6.5);
   padding-inline: 0;
 }
 
@@ -997,8 +1009,8 @@
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-composer-usage-limits])
   svg {
-  width: 12px;
-  height: 12px;
+  width: calc(var(--spacing) * 3);
+  height: calc(var(--spacing) * 3);
   opacity: 1;
 }
 
@@ -1091,12 +1103,12 @@
   width: var(--fork-composer-action-slot);
   height: var(--fork-composer-action-slot);
   min-height: var(--fork-composer-action-slot);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action] svg {
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* A Petals grid tile's jump hint sits in its top-left corner, off the mascot (fork-bots). */
@@ -1133,10 +1145,10 @@
     [data-fork-composer-action="send"],
     [data-fork-composer-action="stop"]
   ) {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5);
 }
 
 /* Attach (+) and dictate (mic) sit inside the prompt row as ghost squares
@@ -1157,10 +1169,10 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate"] {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
@@ -1169,17 +1181,17 @@
     + [data-fork-composer-action="stop"],
     + span > [data-fork-composer-action="send"]
   ) {
-  margin-inline-end: -6px;
+  margin-inline-end: calc(var(--spacing) * -1.5);
 }
 
 /* A live session's cancel X sits closer to its check, like the mic beside Send. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate-cancel"] {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px -4px 2px 0;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5) calc(var(--spacing) * -1) calc(var(--spacing) * 0.5) 0;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1230,7 +1242,7 @@
 /* Stop is a ghost icon button, like attach and the mic: no red fill, the control row's ink,
    and their hover wash. 3D Glass still repaints it with its own lighting. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="stop"] {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: transparent;
   box-shadow: none;
   color: var(--fork-composer-control-ink, var(--muted-foreground));
@@ -1287,7 +1299,7 @@
   padding: 0;
   /* Match the context row's pb-2 (8px) above the composer so the space
      between checkout and branch equals the space under both pills. */
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* Upstream nests the PR pill with the branch trigger at gap-1 (4px), while the
@@ -1308,7 +1320,7 @@
   justify-content: flex-start;
   margin-inline-start: 0;
   max-width: 100%;
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* The packing above only reaches children that are literally `.flex`, which
@@ -1373,15 +1385,15 @@
   /* 24px tall, 6px radius. Inline padding is refined per trigger below so
      workspace and branch match; [data-fork-context-chip] is the locked
      workspace/env span — same pill when there is no interactive trigger. */
-  height: 24px;
-  min-height: 24px;
-  gap: 6px;
-  padding-inline: 8px;
-  border-radius: 6px;
+  height: calc(var(--spacing) * 6);
+  min-height: calc(var(--spacing) * 6);
+  gap: calc(var(--spacing) * 1.5);
+  padding-inline: calc(var(--spacing) * 2);
+  border-radius: var(--radius-md);
   /* 14px regular, matching the vessel's control row. */
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 400;
-  line-height: 20px;
+  line-height: calc(var(--spacing) * 5);
   background: var(--fork-context-chip-bg);
 }
 
@@ -1466,7 +1478,7 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   :is([data-slot="select-trigger"], [data-slot="combobox-trigger"], [data-fork-context-chip]) {
-  padding-inline: 8px;
+  padding-inline: calc(var(--spacing) * 2);
 }
 
 /* The xs select trigger carries a Tailwind `before:rounded-*` utility, and the
@@ -1496,8 +1508,8 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip])
   svg {
-  width: 12px;
-  height: 12px;
+  width: calc(var(--spacing) * 3);
+  height: calc(var(--spacing) * 3);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-control-row-slot="right"] {
@@ -1531,11 +1543,11 @@
 
   /* 4px from each chip's icon to its label; the project chip keeps 6px below. */
   & :is(button, [data-slot="button"], [data-fork-context-chip]) {
-    gap: 4px;
+    gap: calc(var(--spacing) * 1);
   }
 
   & > :is([data-fork-draft-project-chip], [data-fork-context-chip="project"]) {
-    column-gap: 6px;
+    column-gap: calc(var(--spacing) * 1.5);
   }
 
   &[data-compact] > [data-fork-draft-project-chip] {
@@ -1742,7 +1754,7 @@
   border-radius: inherit;
   overflow: hidden;
   /* The hidden header held the rows off the top; match their 8px side inset. */
-  padding-top: 8px;
+  padding-top: calc(var(--spacing) * 2);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -2240,16 +2252,16 @@
 /* The composer's question-mode send sits in the prompt row with items-end. Pin it to stop
    and send's 28px box and 8px corners so the placeholder does not hang low in the surface. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action] {
-  height: 28px;
-  border-radius: 8px;
-  font-size: 12px;
+  height: calc(var(--spacing) * 7);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 /* The composer's question-mode send is an icon arrow: a 28px square like stop and send. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action="advance"] {
-  width: 28px;
+  width: calc(var(--spacing) * 7);
   padding: 0;
 }
 
@@ -2469,8 +2481,8 @@
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
   /* Chat stream size, like the transcript and the other banner cards. */
-  font-size: calc(1rem * var(--fork-chat-text-scale, 1));
-  line-height: 1.375;
+  font-size: var(--fork-chat-text-base);
+  line-height: var(--leading-snug);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2480,7 +2492,8 @@
   )
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"] {
-  padding: 12px 8px 12px 16px;
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 2) calc(var(--spacing) * 3)
+    calc(var(--spacing) * 4);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2491,7 +2504,7 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-composer-banner-row] {
-  column-gap: 6px;
+  column-gap: calc(var(--spacing) * 1.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2504,8 +2517,8 @@
   [data-slot="composer-banner-icon"]
   > svg {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* Notices stack title over description. Title is Regular at the source
@@ -2523,8 +2536,8 @@
   flex-direction: column;
   align-items: flex-start;
   align-self: start;
-  gap: 4px;
-  line-height: 16px;
+  gap: calc(var(--spacing) * 1);
+  line-height: calc(var(--spacing) * 4);
   padding-inline: 0;
   white-space: normal;
 }
@@ -2551,7 +2564,7 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-actions"] {
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* Banners as cards (fork-composer-shell). The dock now sits above the composer in
@@ -2565,10 +2578,10 @@
     margin: 0;
   }
   & > [data-slot="composer-banner-attachment"] {
-    margin-bottom: 8px;
+    margin-bottom: calc(var(--spacing) * 2);
   }
   & [data-slot="composer-banner-attachment"] + [data-slot="composer-banner-attachment"] {
-    margin-top: 6px;
+    margin-top: calc(var(--spacing) * 1.5);
   }
   & [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
     --chat-composer-attachment-overlap: 0px;
@@ -2606,7 +2619,7 @@
 
   /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
   & [data-fork-question-hint] {
-    font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+    font-size: var(--fork-chat-text-sm);
   }
 
   /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */
@@ -2637,9 +2650,9 @@
     border-radius: var(--fork-composer-radius);
 
     & [data-composer-banner-row] {
-      min-height: 40px;
-      padding-inline: 12px 8px;
-      column-gap: 8px;
+      min-height: calc(var(--spacing) * 10);
+      padding-inline: calc(var(--spacing) * 3) calc(var(--spacing) * 2);
+      column-gap: calc(var(--spacing) * 2);
       border-radius: 0;
     }
 
@@ -2675,10 +2688,10 @@
   height: var(--fork-notice-action-height);
   min-height: var(--fork-notice-action-height);
   border-radius: var(--fork-notice-action-radius);
-  padding-inline: 12px;
-  font-size: 13px;
+  padding-inline: calc(var(--spacing) * 3);
+  font-size: var(--fork-text-chip);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2687,11 +2700,11 @@
     [data-fork-theme="inlet"]
   )
   [data-fork-composer-notice-action="dismiss"] {
-  width: 24px;
-  height: 24px;
-  min-height: 24px;
+  width: calc(var(--spacing) * 6);
+  height: calc(var(--spacing) * 6);
+  min-height: calc(var(--spacing) * 6);
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2701,8 +2714,8 @@
   )
   [data-fork-composer-notice-action="dismiss"]
   svg {
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* ── Popup frost (fork-popup-surface) ────────────────────────────────────────
@@ -2917,7 +2930,7 @@
   position: absolute;
   inset-inline: 0;
   top: -2px;
-  height: 2px;
+  height: calc(var(--spacing) * 0.5);
   background: var(--ring);
   pointer-events: none;
   z-index: 2;
@@ -2938,7 +2951,7 @@
   position: absolute;
   inset-inline: 0;
   bottom: -2px;
-  height: 2px;
+  height: calc(var(--spacing) * 0.5);
   background: var(--ring);
   pointer-events: none;
   z-index: 2;
@@ -2967,15 +2980,15 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not(.font-mono) {
   border-radius: 8px;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-sm);
+  line-height: calc(var(--spacing) * 5);
 
   &::before {
     border-radius: 7px;
   }
 
   & [data-slot="tooltip-viewport"] {
-    padding: 4px 10px;
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
   }
 }
 
@@ -2984,16 +2997,16 @@
    glass tooltip shares. A step larger than the default tooltip (12px / 8×4)
    so "Dictate" does not read as a status crumb. */
 :root[data-fork="noahhendrickson-t3code"] [data-slot="tooltip-popup"][data-fork-glass-tooltip] {
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--fork-text-chip);
+  line-height: calc(var(--spacing) * 4.5);
   border-radius: 8px;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="tooltip-popup"][data-fork-glass-tooltip]
   [data-slot="tooltip-viewport"] {
-  padding-block: 6px;
-  padding-inline: 10px;
+  padding-block: calc(var(--spacing) * 1.5);
+  padding-inline: calc(var(--spacing) * 2.5);
 }
 
 /* ── Dictation session (fork-local-dictation) ──────────────────────────────
@@ -3291,7 +3304,7 @@
   position: fixed;
   top: 0;
   left: -10000px;
-  padding: 12px;
+  padding: calc(var(--spacing) * 3);
   pointer-events: none;
 }
 
@@ -3378,7 +3391,7 @@
   [data-slot="composer-banner-content"]:has([data-fork-approval-notice]) {
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: calc(var(--spacing) * 1.5);
   white-space: normal;
 }
 
@@ -3387,10 +3400,10 @@
   height: var(--fork-notice-action-height);
   min-height: var(--fork-notice-action-height);
   border-radius: var(--fork-notice-action-radius);
-  padding-inline: 12px;
-  font-size: 13px;
+  padding-inline: calc(var(--spacing) * 3);
+  font-size: var(--fork-text-chip);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 /* More is the row's menu trigger: a 32px square. Matched by its slot, not its (translated) label. */
@@ -3435,11 +3448,11 @@
   :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
   .chat-markdown
   .chat-markdown-file-link:not([data-state="invalid"]) {
-  border-radius: 5px;
+  border-radius: var(--fork-inline-code-radius);
   background: var(--fork-inline-code-wash);
-  padding-inline: 6px;
+  padding-inline: calc(var(--spacing) * 1.5);
   color: var(--info-foreground);
-  font-size: 0.95em;
+  font-size: var(--fork-inline-code-size);
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
@@ -3630,9 +3643,9 @@
   /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its
      text back in line with the option names. */
   & [data-composer-permissions-label] {
-    margin-inline: -8px;
-    margin-bottom: 4px;
-    padding: 0 16px 8px;
+    margin-inline: calc(var(--spacing) * -2);
+    margin-bottom: calc(var(--spacing) * 1);
+    padding: 0 calc(var(--spacing) * 4) calc(var(--spacing) * 2);
     border-bottom: 1px solid var(--border);
   }
 }
