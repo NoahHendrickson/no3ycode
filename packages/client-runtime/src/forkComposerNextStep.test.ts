@@ -26,6 +26,7 @@ const link = (
     readonly checksState?: "passing" | "failing" | "pending";
     readonly watch?: "active" | "ended";
     readonly source?: "agent" | "stack-dismissed";
+    readonly synced?: boolean;
   } = {},
 ) =>
   decodeLink({
@@ -35,18 +36,21 @@ const link = (
     url: `https://github.com/${options.repository ?? "acme/app"}/pull/${number}`,
     source: options.source ?? "agent",
     linkedAt: options.linkedAt ?? "2026-11-23T12:00:00.000Z",
-    snapshot: {
-      state: options.state ?? "open",
-      title: `PR ${number}`,
-      headBranch: `feature-${number}`,
-      baseBranch: "main",
-      isDraft: false,
-      updatedAt: null,
-      syncedAt: "2026-11-23T12:00:00.000Z",
-      checksState: options.checksState ?? "pending",
-      mergeability: "mergeable",
-      reviewDecision: null,
-    },
+    snapshot:
+      options.synced === false
+        ? null
+        : {
+            state: options.state ?? "open",
+            title: `PR ${number}`,
+            headBranch: `feature-${number}`,
+            baseBranch: "main",
+            isDraft: false,
+            updatedAt: null,
+            syncedAt: "2026-11-23T12:00:00.000Z",
+            checksState: options.checksState ?? "pending",
+            mergeability: "mergeable",
+            reviewDecision: null,
+          },
     stack: null,
     ...(options.watch === "active" ? { watch: watchFields } : {}),
     ...(options.watch === "ended" ? { endedWatch: watchFields } : {}),
@@ -91,6 +95,17 @@ describe("pickComposerNextStep", () => {
   it("holds while the PR is the owner's call, so nothing learned shows either", () => {
     // Babysitting already.
     expect(step({ links: [link(1, { watch: "active" })], habit })).toBe(null);
+    // A watch that started before the link's first snapshot, on a PR git status also sees.
+    expect(
+      step({
+        links: [link(1, { watch: "active", synced: false })],
+        gitStatus: {
+          ...branchWork,
+          pr: { state: "open", url: "https://github.com/acme/app/pull/1" },
+        },
+        habit,
+      }),
+    ).toBe(null);
     // The watch ended with checks failing.
     expect(step({ links: [link(1, { watch: "ended", checksState: "failing" })], habit })).toBe(
       null,

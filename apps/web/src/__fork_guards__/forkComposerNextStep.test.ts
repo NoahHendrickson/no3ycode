@@ -40,8 +40,8 @@ describe("fork guard: fork-composer-next-step", () => {
     expect(screen).toContain("const nextStep = useNo3yNextStep({");
     expect(screen).toContain("no3yNextStepSettled(props, {");
     expect(screen).toContain("nextStep.step !== null");
-    expect(screen).toContain(
-      "nextStep.send((prompt) => handleSendMessage(undefined, undefined, prompt))",
+    expect(screen).toMatch(
+      /nextStep\.send\(async \(prompt\) => \{[\s\S]{0,200}flushPendingInput\(\);\s*return handleSendMessage\(undefined, undefined, prompt\);/u,
     );
     expect(screen).toMatch(/\},\s*prompt,\s*\);/u);
     expect(read("../../../mobile/fork/No3yStatusPill.tsx")).toMatch(

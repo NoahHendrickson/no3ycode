@@ -9,9 +9,10 @@ import {
   type PickedComposerNextStep,
 } from "@t3tools/client-runtime/fork-composer-next-step";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
-import type { ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useState } from "react";
 
+import { armAgentAwarenessLiveActivityForLocalWork } from "../src/features/agent-awareness/remoteRegistration";
 import type { PendingThreadFeedEntry } from "../src/features/threads/pending-thread-feed";
 import { composerDraftsAtom } from "../src/state/use-composer-drafts";
 import { useQuietThreadStructure } from "../src/state/use-thread-detail";
@@ -22,6 +23,8 @@ import { useNo3yComposerHabitSuggestion } from "./no3yComposerHabits";
 
 /** The slice of ThreadDetailScreen's props the pill's gate and inputs read. */
 export interface No3yNextStepScreen {
+  readonly environmentId: EnvironmentId;
+  readonly environmentLabel: string | null;
   readonly selectedThread: EnvironmentThreadShell;
   readonly selectedThreadDetailRef: ScopedThreadRef | null;
   readonly selectedThreadFeed: ReadonlyArray<PendingThreadFeedEntry>;
@@ -69,7 +72,7 @@ export function no3yNextStepSettled(
 export interface No3yNextStep {
   readonly step: PickedComposerNextStep | null;
   /** Sends the step through `dispatch` (the screen's owner send), hiding it until that settles. */
-  readonly send: (dispatch: (prompt: string) => Promise<unknown>) => void;
+  readonly send: (dispatch: (prompt: string) => Promise<string | null>) => void;
 }
 
 export function useNo3yNextStep(input: {
@@ -119,7 +122,16 @@ export function useNo3yNextStep(input: {
       if (step === null) return;
       setSending(true);
       void dispatch(step.prompt).then(
-        () => setSending(false),
+        (messageId) => {
+          setSending(false);
+          if (messageId === null) return;
+          // As ThreadComposer's Send does, so the lock screen follows the turn.
+          armAgentAwarenessLiveActivityForLocalWork({
+            environmentId: screen.environmentId,
+            threadTitle: thread.title,
+            projectTitle: screen.environmentLabel ?? "T3 Code",
+          });
+        },
         () => setSending(false),
       );
     },

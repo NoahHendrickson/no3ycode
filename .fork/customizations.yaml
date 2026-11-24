@@ -6682,7 +6682,11 @@
     empty draft's text), so it takes the composer's model, runtime mode and
     armed fresh session, follows a typed send's scrolling, and is learned at
     the one point onSendMessage enqueues to the outbox (skipping approval
-    redirects and side chats). The pill stays hidden until that send settles.
+    redirects and side chats). A tap first flushes typing still in transit,
+    and sends nothing while the draft has content or a paste, picker or import
+    still writing into it (hasComposerDraftOperations), so it never clears what
+    the owner put there. The pill stays hidden until that send settles. A
+    watched PR whose link has no snapshot yet is still the owner's call.
     The shared logic avoids array methods Hermes lacks. The iOS New agent
     screen has no suggestion list, so the launchpad's review row is web-only.
   tier: 4
@@ -6711,6 +6715,8 @@
     - apps/mobile/fork/No3yStatusPill.tsx
     # iOS: the pill's prompt in place of the draft's text, and sends learned at the enqueue.
     - apps/mobile/src/state/use-thread-composer-state.ts
+    # iOS: hasComposerDraftOperations, so a tap waits out a paste still converting.
+    - apps/mobile/src/state/composerDraftOperations.ts
   verify:
     - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
     - packages/client-runtime/src/forkComposerNextStep.test.ts

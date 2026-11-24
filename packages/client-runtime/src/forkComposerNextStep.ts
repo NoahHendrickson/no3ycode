@@ -108,8 +108,13 @@ function nextStepPullRequestFromLinks(
   links: ReadonlyArray<ThreadPullRequestLink>,
 ): NextStepPullRequest | null {
   const link = resolveThreadCurrentPullRequestLink(links);
-  const snapshot = link?.snapshot;
-  if (!link || !snapshot) return null;
+  if (!link) return null;
+  // A watch can start before the link's first snapshot syncs; it is the owner's call either way.
+  if (link.watch !== undefined && !link.snapshot) {
+    return { state: "open", watching: true, watchedBefore: false, ready: false, releasable: false };
+  }
+  const { snapshot } = link;
+  if (!snapshot) return null;
   return {
     state: snapshot.state,
     watching: link.watch !== undefined,

@@ -1803,7 +1803,11 @@ function ThreadDetailBody(
                     /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
                     nextStep={nextStep.step}
                     onSendNextStep={() =>
-                      nextStep.send((prompt) => handleSendMessage(undefined, undefined, prompt))
+                      nextStep.send(async (prompt) => {
+                        // As Send does, so typing still in transit from UIKit reaches the draft.
+                        await composerEditorRef.current?.flushPendingInput();
+                        return handleSendMessage(undefined, undefined, prompt);
+                      })
                     }
                     /* fork:end fork-composer-next-step */
                   >

@@ -145,6 +145,7 @@ import { readNo3yHomeTabs } from "../../fork/no3yHomeTabs";
 /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
 import { lastOwnerPrompt } from "@t3tools/client-runtime/fork-composer-next-step";
 import { recordNo3yComposerHabit } from "../../fork/no3yComposerHabits";
+import { hasComposerDraftOperations } from "./composerDraftOperations";
 /* fork:end fork-composer-next-step */
 
 const EMPTY_QUEUE_WORKFLOW_ATOM = Atom.make<null>(null).pipe(
@@ -661,6 +662,16 @@ export function useThreadComposerState(input: {
     const threadKey = scopedThreadKey(selectedThreadShell.environmentId, selectedThreadShell.id);
     /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
     const storedDraft = getComposerDraftSnapshot(threadKey);
+    // The pill sends only into an empty composer, so anything written since it rendered, or a
+    // paste still converting into it, stays for the owner's own send.
+    if (
+      prompt !== undefined &&
+      (storedDraft.text.trim().length > 0 ||
+        storedDraft.attachments.length > 0 ||
+        storedDraft.context !== undefined ||
+        hasComposerDraftOperations(threadKey))
+    )
+      return null;
     const draft = prompt === undefined ? storedDraft : { ...storedDraft, text: prompt };
     /* fork:end fork-composer-next-step */
     if (appAtomRegistry.get(composerContextImportsAtom)[threadKey]) return null;
