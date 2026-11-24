@@ -363,6 +363,11 @@ import { renderComposerContextStripFallback } from "~/custom/composerContextStri
 import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
 import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { ComposerNextStepPill } from "~/custom/ComposerNextStepPill";
+import { recordComposerHabit } from "~/custom/composerHabits";
+import { lastOwnerPrompt } from "~/custom/composerNextStep.logic";
+/* fork:end fork-composer-next-step */
 import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
 import { composerBackgroundWorkItems } from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
@@ -2822,32 +2827,6 @@ export default function ChatView(props: ChatViewProps) {
   const forkQueuedCount = forkQueuedItemCount(serverProjection, optimisticUserMessages);
   // A queue that empties forgets its collapse, so the next queued message opens as a card again.
   if (forkQueuedCount === 0 && !forkQueueExpanded) setForkQueueExpanded(true);
-  const composerStatusChips =
-    activeThread && activeThreadRef && !isDraftHeroState ? (
-      <>
-        {/* A side chat mounts no right panel for the PR list to open in. */}
-        {embedded ? null : (
-          <ComposerPullRequestChip
-            threadRef={activeThreadRef}
-            branch={activeThreadBranch}
-            cwd={gitStatusCwd}
-          />
-        )}
-        {composerBackgroundWork.length > 0 ? (
-          <ComposerBackgroundWorkChip
-            items={composerBackgroundWork}
-            stopping={isStoppingBackgroundWork}
-            canStop={canStopBackgroundWork}
-            onStop={() => void handleStopBackgroundWorkStable()}
-            onOpenThread={onOpenRelatedThreadStable}
-            environmentId={activeThread.environmentId}
-          />
-        ) : null}
-        {!forkQueueExpanded && forkQueuedCount > 0 ? (
-          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
-        ) : null}
-      </>
-    ) : null;
   /* fork:end fork-composer-shell */
   const activeThreadHasCompactableConversation = hasCompactableConversation({
     visibleTurnItems: serverVisibleTurnItems,
@@ -3484,6 +3463,14 @@ export default function ChatView(props: ChatViewProps) {
     handleNewThreadInActiveProject,
     persistThreadSettingsForNextTurn,
     linkCheckoutPullRequest,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+       A committed owner turn teaches the learned next step what follows the thread's previous
+       owner message; not in side chats, where the pill never shows. */
+    onOwnerTurnDispatched: embedded
+      ? undefined
+      : (prompt: string) =>
+          recordComposerHabit(lastOwnerPrompt(serverProjection?.messages ?? []), prompt),
+    /* fork:end fork-composer-next-step */
   });
 
   const onWorktreeSetupWorkLocally = () => {
@@ -3496,6 +3483,67 @@ export default function ChatView(props: ChatViewProps) {
   };
   const onWorktreeSetupWorkLocallyStable = useStableCallback(onWorktreeSetupWorkLocally);
   const onComposerSendStable = useStableCallback(onSend);
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step
+     The pill sends like the composer, so it is built after onSend, with the chip row it rides. */
+  const sendNextStepStable = useStableCallback((prompt: string) => {
+    const sendContext = composerRef.current?.getSendContext();
+    if (!sendContext) return;
+    void onSend(undefined, "auto", "foreground", undefined, {
+      prompt,
+      sendContext: { ...sendContext, prompt },
+    });
+  });
+  /* fork:end fork-composer-next-step */
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  const composerStatusChips =
+    activeThread && activeThreadRef && !isDraftHeroState ? (
+      <>
+        {/* A side chat mounts no right panel for the PR list to open in. */}
+        {embedded ? null : (
+          <ComposerPullRequestChip
+            threadRef={activeThreadRef}
+            branch={activeThreadBranch}
+            cwd={gitStatusCwd}
+          />
+        )}
+        {composerBackgroundWork.length > 0 ? (
+          <ComposerBackgroundWorkChip
+            items={composerBackgroundWork}
+            stopping={isStoppingBackgroundWork}
+            canStop={canStopBackgroundWork}
+            onStop={() => void handleStopBackgroundWorkStable()}
+            onOpenThread={onOpenRelatedThreadStable}
+            environmentId={activeThread.environmentId}
+          />
+        ) : null}
+        {!forkQueueExpanded && forkQueuedCount > 0 ? (
+          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
+        ) : null}
+        {/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */}
+        {embedded ? null : (
+          <ComposerNextStepPill
+            environmentId={activeThread.environmentId}
+            // A shared checkout on another branch is not this thread's work or PR.
+            cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
+            branch={activeThreadBranch}
+            settled={
+              canOperateThread &&
+              !isWorking &&
+              activePendingApproval === null &&
+              !activePendingUserInput &&
+              announcedRun(activeThread.latestRun, serverProjection?.runs ?? EMPTY_RUNS)?.status ===
+                "completed"
+            }
+            pullRequests={activeThread.pullRequests}
+            messages={serverProjection?.messages ?? null}
+            draftTarget={composerDraftTarget}
+            onSend={sendNextStepStable}
+          />
+        )}
+        {/* fork:end fork-composer-next-step */}
+      </>
+    ) : null;
+  /* fork:end fork-composer-shell */
   const sendPreviewAnnotation = (
     annotation: PreviewAnnotationPayload,
     image: ComposerImageAttachment | null,
