@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { BASIC_TONE_OPTIONS, BASIC_TONES, type BasicTone } from "~/custom/forkTheme";
+import { BASIC_APPEARANCES, BASIC_OPTIONS, type BasicAppearance } from "~/custom/forkTheme";
 import indexCss from "~/index.css?raw";
 
-import { storyBasicTone, storyThemeKey } from "../storyTheme.ts";
+import { storyBasicAppearance, storyThemeKey } from "../storyTheme.ts";
 import { type ResolvedColor, readTokenColor } from "./resolveColor.ts";
 import { sweepTones, type ToneTable } from "./toneSweep.ts";
 
@@ -160,19 +160,19 @@ function paint(color: ResolvedColor, base: ResolvedColor | undefined): string {
   return `linear-gradient(color-mix(in srgb, ${color.hex} ${color.alpha * 100}%, transparent), color-mix(in srgb, ${color.hex} ${color.alpha * 100}%, transparent)), ${base.hex}`;
 }
 
-function ToneTableView({ tone }: { tone: BasicTone }) {
-  const table: ToneTable = useMemo(() => sweepTones(TABLE_VARIABLES, tone), [tone]);
+function ToneTableView({ appearance }: { appearance: BasicAppearance }) {
+  const table: ToneTable = useMemo(() => sweepTones(TABLE_VARIABLES, appearance), [appearance]);
   return (
     <table className="border-separate border-spacing-1 text-left">
       <thead>
         <tr>
           <th />
-          {BASIC_TONES.map((name) => (
+          {BASIC_APPEARANCES.map((name) => (
             <th
               key={name}
               className="w-20 px-1 pb-2 align-bottom text-[11px] font-medium text-foreground"
             >
-              {BASIC_TONE_OPTIONS[name].label}
+              {BASIC_OPTIONS[name].label}
             </th>
           ))}
         </tr>
@@ -183,7 +183,7 @@ function ToneTableView({ tone }: { tone: BasicTone }) {
             <th className="pr-3 font-mono text-[11px] font-normal whitespace-nowrap text-muted-foreground">
               {variable.slice(2)}
             </th>
-            {BASIC_TONES.map((name) => {
+            {BASIC_APPEARANCES.map((name) => {
               const values = table.get(name);
               const color = values?.get(variable);
               if (!values || !color) return <td key={name} />;
@@ -210,7 +210,7 @@ function ToneTableView({ tone }: { tone: BasicTone }) {
 function BasicOnly() {
   return (
     <p className="text-sm text-muted-foreground">
-      Basic only: pick a Basic tone in the toolbar's Theme menu.
+      Basic only: pick Basic in the toolbar's Theme menu.
     </p>
   );
 }
@@ -238,8 +238,8 @@ export const SidebarScope: Story = {
 export const BasicRamp: Story = {
   name: "Basic ramp",
   render: (_args, { globals }) => {
-    const tone = storyBasicTone(globals);
-    return tone === null ? <BasicOnly /> : <Ramp key={tone} />;
+    const appearance = storyBasicAppearance(globals);
+    return appearance === null ? <BasicOnly /> : <Ramp key={appearance} />;
   },
 };
 
@@ -247,7 +247,7 @@ export const BasicRamp: Story = {
 export const AllTones: Story = {
   name: "All tones",
   render: (_args, { globals }) => {
-    const tone = storyBasicTone(globals);
-    return tone === null ? <BasicOnly /> : <ToneTableView tone={tone} />;
+    const appearance = storyBasicAppearance(globals);
+    return appearance === null ? <BasicOnly /> : <ToneTableView appearance={appearance} />;
   },
 };

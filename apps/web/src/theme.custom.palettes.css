@@ -129,6 +129,28 @@
   --fork-thread-composer-card: var(--fork-flat-glass-lift-2);
 }
 
+/* A started thread's composer menus (model, permissions, mode chips, branch and environment
+   pickers, usage, background work) take the popup material (fork-popup-surface) laid over the
+   stage instead of over a blur: only text sits behind them. A new agent's draft keeps the frost,
+   since its menus open over a picture. Tokens only: the popup rule still paints, so Liquid Glass
+   cutouts and draft-glass popups keep their own fills. The combobox's glass is its wrapper. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]:not(
+    [data-fork-draft-hero-shown]
+  )
+  :is(
+    [data-chat-composer-floating-layer="true"],
+    [data-fork-tab-menu="composer"],
+    [data-fork-background-work-popup],
+    .dropdown-glass:has(> [data-chat-composer-floating-layer="true"])
+  ) {
+  --fork-popup-fill: color-mix(
+    in srgb,
+    var(--contrast-foreground) 8%,
+    color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base))
+  );
+  --fork-popup-filter: none;
+}
+
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
    panel's selected fill while its menu is open, so the menu names the button it came from. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]

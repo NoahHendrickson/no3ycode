@@ -1,17 +1,16 @@
 /**
- * The fork's theme cards and Basic's tone swatches — see
- * `.fork/customizations.yaml#fork-basic-theme`. Settings leads with these: Basic, Glass or Inlet,
- * each a wireframe of its own surfaces, then the picked theme's own options below.
+ * The fork's theme cards — see `.fork/customizations.yaml#fork-basic-theme`. Settings leads with
+ * these: Basic, Glass or Inlet, each a wireframe of its own surfaces, then the picked theme's own
+ * options below.
  */
 
 import { ThemeWireframe } from "../components/settings/ThemeWireframe";
 import type { ThemeCardPreviewColors } from "../components/settings/ThemePreviewCircles";
 import { cn } from "../lib/utils";
 import {
+  BASIC_OPTIONS,
   BASIC_THEME,
-  BASIC_TONE_OPTIONS,
-  BASIC_TONES,
-  type BasicTone,
+  type BasicAppearance,
   COOL_DARKER_THEME,
   FORK_PALETTE_LABELS,
   FORK_PALETTES,
@@ -21,7 +20,6 @@ import {
   INLET_THEME,
   type InletColor,
 } from "./forkTheme";
-import { ForkSwatchPicker } from "./ForkSwatchPicker";
 import type { ForkGlass3dMode } from "./forkGlass3d";
 
 const FORK_PALETTE_DESCRIPTIONS = {
@@ -31,8 +29,8 @@ const FORK_PALETTE_DESCRIPTIONS = {
 } as const satisfies Record<ForkPalette, string>;
 
 /** Basic's ladder in miniature: the base with its ink laid over it, as theme.custom.basic.css. */
-function basicPreview(tone: BasicTone): ThemeCardPreviewColors {
-  const { base, appearance } = BASIC_TONE_OPTIONS[tone];
+function basicPreview(appearance: BasicAppearance): ThemeCardPreviewColors {
+  const { base } = BASIC_OPTIONS[appearance];
   const ink = appearance === "dark" ? "#ffffff" : "#000000";
   const lift = (percent: number) => `color-mix(in srgb, ${ink} ${percent}%, ${base})`;
   return {
@@ -48,11 +46,11 @@ function basicPreview(tone: BasicTone): ThemeCardPreviewColors {
 
 function previewFor(
   palette: ForkPalette,
-  tone: BasicTone,
+  basicAppearance: BasicAppearance,
   inletColor: InletColor,
   glass3d: ForkGlass3dMode,
 ) {
-  if (palette === BASIC_THEME) return basicPreview(tone);
+  if (palette === BASIC_THEME) return basicPreview(basicAppearance);
   if (palette === COOL_DARKER_THEME) {
     if (glass3d === "off") {
       const base = "#1d1d1d";
@@ -91,7 +89,7 @@ function previewFor(
 
 export function ForkThemePicker(props: {
   readonly value: ForkPalettePreference;
-  readonly basicTone: BasicTone;
+  readonly basicAppearance: BasicAppearance;
   readonly inletColor: InletColor;
   readonly glass3d?: ForkGlass3dMode;
   readonly onChange: (palette: ForkPalette) => void;
@@ -122,7 +120,7 @@ export function ForkThemePicker(props: {
                 {
                   colors: previewFor(
                     palette,
-                    props.basicTone,
+                    props.basicAppearance,
                     props.inletColor,
                     props.glass3d ?? "full",
                   ),
@@ -146,26 +144,5 @@ export function ForkThemePicker(props: {
         );
       })}
     </div>
-  );
-}
-
-/** @public — Storybook's Fork/Swatch picker story drives the picker with it. */
-export const BASIC_TONE_SWATCHES = BASIC_TONES.map((tone) => ({
-  value: tone,
-  label: BASIC_TONE_OPTIONS[tone].label,
-  swatch: BASIC_TONE_OPTIONS[tone].base,
-}));
-
-export function ForkBasicTonePicker(props: {
-  readonly value: BasicTone;
-  readonly onChange: (tone: BasicTone) => void;
-}) {
-  return (
-    <ForkSwatchPicker
-      label="Basic tone"
-      options={BASIC_TONE_SWATCHES}
-      value={props.value}
-      onChange={props.onChange}
-    />
   );
 }
