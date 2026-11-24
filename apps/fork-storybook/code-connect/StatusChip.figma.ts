@@ -1,5 +1,5 @@
 // url=https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=321-869
-// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/custom/ComposerShell.css
+// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/custom/ComposerPullRequestChip.tsx
 // component=ComposerPullRequestChip
 import figma from "figma";
 
