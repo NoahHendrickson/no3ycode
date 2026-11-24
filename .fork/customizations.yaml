@@ -1474,8 +1474,11 @@
     Every Sidebar V2 row hover action — pin/unpin, snooze, settle, un-settle,
     wake now — is a 24px square with a hover fill. Pin leads the card's hover
     cell, ahead of snooze (Noey's placement); it is capability-gated like
-    settle/snooze, card-only (slim rows keep pin in the context menu), and
-    toggles between two literal labels so the guard's census counts each.
+    settle/snooze, and card-only (slim rows keep pin in the context menu).
+    Unpin is the pinned marker itself (pinIndicator): a filled Pin02 in white
+    (foreground in light) on the card's title line and the slim shelves, a
+    24px button held to the glyph's 12px footprint, so the pin you see is the
+    pin you click. Without pinning rights it stays a passive mark.
     Upstream sizes them from padding around a
     12px glyph, which lands at 24x18 on a card and 28x18 on a slim row: two
     different shapes, both under the 24px minimum, on transparent buttons whose
