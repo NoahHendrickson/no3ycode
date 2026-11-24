@@ -8,56 +8,21 @@
 
 import type { Plugin } from "vite-plus";
 
-export const FORK_DISPLAY_NAME = "no3y Code";
+import { isRebrandedModule, rewriteUpstreamDisplayName } from "./fork-brand-name-core.ts";
 
-/** Phrases that name something other than this app, kept exactly as written. */
-export const PRESERVED_PHRASES = [
-  // The fork's credit, and prose about upstream itself.
-  "Fork of T3 Code",
-  "fork of T3 Code",
-  "upstream T3 Code",
-  // The Linux capture extension ships under its upstream name.
-  "T3 Code SnapShots",
-  "T3 Code GNOME extension",
-  "T3 Code extension",
-  // Upstream's registered GitHub App, whose install URL still names it.
-  "T3 Code for GitHub",
-  // The server issues peer-link sessions as "T3 Code · <label>"; a revoke prompt quotes it.
-  "T3 Code · ",
-] as const;
-
-/** Modules whose "T3 Code" strings are identities (legacy profile names). */
-export const EXCLUDED_MODULES = [/\/apps\/desktop\/src\/app\/DesktopUserData\.ts$/u] as const;
-
-const UPSTREAM_DISPLAY_NAME = "T3 Code";
-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-const PRESERVED_OR_NAME = new RegExp(
-  [...PRESERVED_PHRASES, UPSTREAM_DISPLAY_NAME].map(escapeRegExp).join("|"),
-  "gu",
-);
-
-export function rewriteUpstreamDisplayName(code: string): string | null {
-  if (!code.includes(UPSTREAM_DISPLAY_NAME)) {
-    return null;
-  }
-  const rewritten = code.replace(PRESERVED_OR_NAME, (match) =>
-    match === UPSTREAM_DISPLAY_NAME ? FORK_DISPLAY_NAME : match,
-  );
-  return rewritten === code ? null : rewritten;
-}
-
-const SCRIPT_MODULE = /\.[cm]?[jt]sx?$/u;
+export {
+  EXCLUDED_MODULES,
+  FORK_DISPLAY_NAME,
+  PRESERVED_PHRASES,
+  isRebrandedModule,
+  rewriteUpstreamDisplayName,
+} from "./fork-brand-name-core.ts";
 
 export function forkBrandName(): Plugin {
   return {
     name: "fork:brand-name",
     transform(code, id) {
-      const path = id.split("?", 1)[0] ?? id;
-      if (
-        !SCRIPT_MODULE.test(path) ||
-        path.includes("/node_modules/") ||
-        EXCLUDED_MODULES.some((pattern) => pattern.test(path))
-      ) {
+      if (!isRebrandedModule(id)) {
         return null;
       }
       const rewritten = rewriteUpstreamDisplayName(code);

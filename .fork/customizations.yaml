@@ -583,43 +583,89 @@
 
 - id: fork-brand-name
   intent: >
-    Every web and desktop string a user reads names the app "no3y Code", the
-    same name fork-app-identity gives the installed app, and the fork still
-    says where it comes from. Upstream writes "T3 Code" inline in hundreds of
-    strings and adds more each sync, so the name is rewritten at build time
-    instead of in each file: one plugin (scripts/lib/fork-brand-name.ts) runs
-    in the web Vite build and dev server and in both desktop pack entries
-    (main, workers), and replaces "T3 Code" in script modules and index.html.
-    The web config leaves it out under Vitest so upstream tests keep
-    asserting upstream copy; desktop pack never runs under Vitest.
-    The whole keep-as-written policy is two lists in that file:
+    Every web, desktop and mobile string a user reads names the app "no3y
+    Code", the same name fork-app-identity gives the installed app, and the
+    fork still says where it comes from. Upstream writes "T3 Code" and bare
+    "T3 <word>" inline in hundreds of strings and adds more each sync, so the
+    name is rewritten at build time instead of in each file. The rewrite is
+    a rename-by-default rule in scripts/lib/fork-brand-name-core.ts: every
+    "T3 " that starts a word and precedes a letter becomes "no3y " ("T3 Code"
+    → "no3y Code", "Started a T3 thread" → "Started a no3y thread"). The
+    t3_thread_* tool-row lookups key on the same rewritten labels, so they
+    keep matching. The core is import-free because two bundlers load it:
+    the Vite plugin (scripts/lib/fork-brand-name.ts) in the web build and dev
+    server and in both desktop pack entries (main, workers), and a Metro
+    Babel-transformer wrapper (apps/mobile/fork/forkBrandNameTransformer.cjs)
+    for mobile. The web config leaves it out under Vitest so upstream tests
+    keep asserting upstream copy; desktop pack and Metro never run under
+    Vitest.
+    The whole keep-as-written policy is two lists in the core:
     PRESERVED_PHRASES (the fork's credit, prose about upstream, the Linux
     capture extension's own name, upstream's registered "T3 Code for GitHub"
-    app, and the server-issued "T3 Code · <label>" peer session a revoke
-    prompt quotes) and EXCLUDED_MODULES (DesktopUserData's legacy profile
-    names and the dictation vocabulary). A string that must match something
-    outside this bundle (server text, an OS or third-party name) is added
-    there, never as a one-off elsewhere.
+    app, the server-issued peer session a revoke prompt quotes as "T3 Code ·
+    …", Ping's services and accounts — T3 Connect, T3 Chat, T3 Account —
+    and the T3 server and T3 home, whose names the client also matches in
+    server text such as "Unable to connect to the T3 server WebSocket") and
+    EXCLUDED_MODULES (DesktopUserData's legacy profile names). A string that
+    must match something outside this bundle (server text, an OS or
+    third-party name) is added there, never as a one-off elsewhere.
     Decided, not incidental: the rewrite also renames the labels this client
     sends when it pairs or links ("no3y Code Desktop", "no3y Code Web",
     "no3y Code link"), so a host's Connections list names the fork's
     clients; nothing compares those labels. Connection copy about software on
     another host is renamed too, though a linked VPS may run upstream.
-    T3 Connect, the T3 server, and the t3 CLI keep their names.
+    Decided trade-off: GT looks translations up by a hash of the source
+    text, so a rewritten string misses its catalog entry and shows in
+    English in every other locale. The fork's copy is English-first; this
+    keeps the name right everywhere instead of translated.
+    Upstream's "T3" letter glyph (T3Wordmark), which marks the app's own tool
+    rows in the transcript and heads the standalone auth pages, is shadowed
+    with the no3y flower as currentColor line art: the outline cells of
+    assets/fork/n3-favicon.svg merged into row runs, the same path in the
+    web shadow, the mobile T3Wordmark and the widget T3Mark.svg (the guard
+    derives it from the favicon). The auth header spells "no3y Code" beside
+    it. Mobile also shows "no3y Code" in its header title, the no3y tile on
+    its loading screen (preview builds share the production tile), and
+    "no3y" as the widget's app name ("Open no3y"). Native copy that Expo
+    reads from the app config before Metro runs (permission prompts, widget
+    gallery descriptions) takes the same rename in fork/identity.ts's
+    no3yNativeConfig, limited by key to display fields so build inputs such
+    as file paths stay untouched, and the Android agent-notification status-bar icon is
+    the same flower path. The iOS widgets bundle
+    through expo-widgets' own Metro config, outside the rewrite, so their
+    fallback copy and their T3Mark.svg logo (the flower, centred in the 1.5:1
+    frame they draw it in) are edited in place.
     Not bundled, so edited in place: public/manifest.webmanifest and the
     macOS permission prompts (local network, screen capture, camera) in
     build-desktop-artifact.ts, beside fork-local-dictation's microphone
     prompt. Settings, About carries a row crediting T3 Code with a link to
     the upstream repository, and the macOS About panel credits it.
-    Server-sent text and the mobile app are out of scope and still say
-    T3 Code.
+    Server-sent text (including agent-facing prompts and the relay's Live
+    Activity title, which the activity layout does not draw) is out of scope
+    and still says T3 Code.
   tier: 4
   files:
+    - scripts/lib/fork-brand-name-core.ts
     - scripts/lib/fork-brand-name.ts
     - apps/web/src/custom/ForkUpstreamCreditRow.tsx
-  shadows: []
+    - apps/mobile/fork/forkBrandNameTransformer.cjs
+  shadows:
+    - apps/web/src/components/T3Wordmark.tsx
   watch:
     - apps/web/vite.config.ts
+    - apps/web/src/components/ui/standalone-page.tsx
+    - apps/mobile/metro.config.js
+    - apps/mobile/src/components/T3Wordmark.tsx
+    - apps/mobile/src/components/CompactBrandTitle.tsx
+    - apps/mobile/src/components/brandAssets.ts
+    - apps/mobile/src/widgets/subscriptionUsageSnapshot.ts
+    # Widget layouts bundle through expo-widgets' own Metro config, outside the rename.
+    - apps/mobile/src/widgets/SubscriptionUsage.tsx
+    - apps/mobile/src/widgets/SubscriptionUsage.android.tsx
+    - apps/mobile/src/widgets/AgentActivityWidget.tsx
+    - apps/mobile/assets/widget/T3Mark.svg
+    - apps/mobile/modules/t3-agent-notifications/android/src/main/res/drawable/agent_activity_mark.xml
+    - apps/mobile/fork/identity.ts
     - apps/desktop/vite.config.ts
     - apps/web/public/manifest.webmanifest
     - apps/web/src/components/settings/SettingsPanels.tsx
