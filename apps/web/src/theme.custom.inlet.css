@@ -187,13 +187,25 @@
   }
 }
 
-/* Menus, popovers, selects and the row hover card share one corner radius.
-   Hung menus square the corner at their join with longhands that outrank
-   this. A select draws its surface on a child, so that child takes it too. */
-
+/* Menus, popovers, selects and the row hover card share one corner radius: the
+   primitives read --fork-menu-radius (set above), and menus built without one
+   and the row hover card take it here. Hung menus square the corner at their
+   join with longhands that outrank both. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  :is([role="menu"], [data-fork-row-hover-card]) {
+  :is(
+    [role="menu"]:not([data-slot="menu-popup"], [data-slot="menu-sub-content"]),
+    [data-fork-row-hover-card]
+  ) {
   border-radius: var(--fork-inlet-menu-radius);
+}
+
+/* A ghost item takes Button's corner through buttonVariants, which tailwind-merge puts over
+   the row token, so it is rounded as the other rows here. */
+
+/* design-lint-disable-next-line C1 -- the ghost variant's own class outranks the row token */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-slot="menu-item"][data-variant="ghost"] {
+  border-radius: var(--fork-inlet-menu-row-radius);
 }
 
 /* The combobox and autocomplete paint their wrappers, which keep 8px. */
