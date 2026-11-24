@@ -1178,6 +1178,14 @@
   margin: 2px -4px 2px 0;
 }
 
+/* Stop mirrors the X on the check's other side, so both ghosts sit equally close to it. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-chat-composer-actions="right"]
+  [data-fork-dictation-action="done"]
+  + [data-fork-composer-action="stop"] {
+  margin-inline-start: -4px;
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]):is(
     :hover,
