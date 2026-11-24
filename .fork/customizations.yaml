@@ -8910,3 +8910,19 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: no3y-mobile-queue-default
+  intent: >
+    On the iPhone, a message sent while a turn is running queues behind it by
+    default instead of steering the turn (upstream switched its default to steer
+    in #24718). A phone that picked Steer in Settings > Chat keeps it, and
+    long-pressing send still offers the other option for one message. Web and
+    desktop keep upstream's server-side default.
+  tier: 4
+  files:
+    - apps/web/src/__fork_guards__/no3yMobileQueueDefault.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/lib/followUpBehavior.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileQueueDefault.test.ts
