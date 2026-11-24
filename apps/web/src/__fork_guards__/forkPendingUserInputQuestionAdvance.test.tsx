@@ -5,11 +5,11 @@
  * stays mounted while questionIndex advances. react-dom refreshes a
  * useEffectEvent impl only for FunctionComponent fibers, so one declared in
  * useComposerPendingUserInputCard would answer every later question with
- * question 1's closure — taking the single-select branch on a multi-select
- * question and writing through the mount-time onToggleOption. Picking an
- * option never advances (the card's Submit does), so the hook takes no
- * advance callback at all. This pins the selection handler against the
- * question actually on screen.
+ * question 1's closure, writing through the mount-time onToggleOption. Picking
+ * an option never advances (the card's Submit does), so the hook takes no
+ * advance callback at all, and the single- vs multi-select rule lives in
+ * togglePendingUserInputOptionSelection. This pins the selection handler
+ * against the question actually on screen.
  */
 import { act, memo, StrictMode, useLayoutEffect, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -144,7 +144,7 @@ afterEach(async () => {
 });
 
 describe("fork guard: pending user input question advance", () => {
-  it("takes the multi-select branch once the card advances to a multi-select question", async () => {
+  it("toggles through the question on screen once the card advances", async () => {
     const mounts = new Set<object>();
     await renderQuestion(0);
     mounts.add(mountToken);
@@ -159,8 +159,6 @@ describe("fork guard: pending user input question advance", () => {
       card.handleOptionSelection("q2", "auth");
     });
     expect(toggled).toEqual([["q2", "auth"]]);
-    // Multi-select toggles in place: no optimistic single pick.
-    expect(card.optimisticSingleSelect).toBeNull();
 
     await act(async () => {
       card.handleOptionSelection("q2", "billing");
@@ -195,7 +193,6 @@ describe("fork guard: pending user input question advance", () => {
       card.handleOptionSelection("q1", "zod");
     });
     expect(toggled).toEqual([]);
-    expect(card.optimisticSingleSelect).toBeNull();
   });
 
   it("advances through the callbacks of the render that is on screen", async () => {
@@ -207,6 +204,5 @@ describe("fork guard: pending user input question advance", () => {
       retained.handleOptionSelection("q2", "billing");
     });
     expect(toggled).toEqual([["q2", "billing"]]);
-    expect(card.optimisticSingleSelect).toBeNull();
   });
 });

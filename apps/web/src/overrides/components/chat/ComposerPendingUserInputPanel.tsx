@@ -9,7 +9,10 @@ import { useComposerPendingUserInputCard } from "~/custom/useComposerPendingUser
 import { ComposerBanner } from "./ComposerBanner";
 import ChatMarkdown from "../ChatMarkdown";
 import { cn } from "~/lib/utils";
-import type { PendingUserInputDraftAnswer } from "@t3tools/client-runtime/state/pending-user-input";
+import {
+  isPendingUserInputOptionSelected,
+  type PendingUserInputDraftAnswer,
+} from "@t3tools/client-runtime/state/pending-user-input";
 import { markdownProseDirection, textDirection } from "~/textDirection";
 import { type PendingUserInput } from "~/session-logic";
 
@@ -24,7 +27,7 @@ interface PendingUserInputPanelProps {
   onToggleOption: (questionId: string, optionValue: string) => void;
   onAdvance: () => void;
   /** Back to the previous question; the card owns Previous and Submit. */
-  onPrevious?: () => void;
+  onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
 }
 
@@ -107,7 +110,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   questionIndex: number;
   onToggleOption: (questionId: string, optionValue: string) => void;
   onAdvance: () => void;
-  onPrevious?: (() => void) | undefined;
+  onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
 }) {
   const gt = useGT();
@@ -115,21 +118,19 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   // cannot answer. The hook owns the click and number-key guards
   // from the same two inputs; the option buttons mirror them visually.
   const interactionDisabled = disabled || isResponding;
-  const { progress, activeQuestion, optimisticSingleSelect, handleOptionSelection } =
-    useComposerPendingUserInputCard({
-      prompt,
-      disabled,
-      isResponding,
-      answers,
-      questionIndex,
-      onToggleOption,
-    });
+  const { progress, activeQuestion, handleOptionSelection } = useComposerPendingUserInputCard({
+    prompt,
+    disabled,
+    isResponding,
+    answers,
+    questionIndex,
+    onToggleOption,
+  });
 
   if (!activeQuestion) {
     return null;
   }
 
-  const customAnswerActive = progress.customAnswer.trim().length > 0;
   const multiSelect = activeQuestion.multiSelect === true;
   // Upstream: right-to-left prompts lay out and align right to left.
   const promptDirection = markdownProseDirection(
@@ -192,15 +193,14 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
           <div className="flex flex-col gap-1" role={multiSelect ? "group" : "radiogroup"}>
             {activeQuestion.options.map((option, index) => {
               const optionValue = option.value ?? option.label;
-              const isOptimisticallySelected =
-                optimisticSingleSelect?.questionId === activeQuestion.id &&
-                optimisticSingleSelect.optionValue === optionValue;
-              const isSelected =
-                isOptimisticallySelected ||
-                (!customAnswerActive && progress.selectedOptionValues.includes(optionValue));
+              const isSelected = isPendingUserInputOptionSelected(
+                activeQuestion,
+                answers[activeQuestion.id],
+                optionValue,
+              );
               const digitShortcut = index < 9 ? String(index + 1) : undefined;
 
-              // The preview sits outside the button: it can hold links, and a click on a single-select option advances.
+              // The preview sits outside the button: it can hold links.
               return (
                 <div key={`${activeQuestion.id}:${optionValue}`} className="flex flex-col gap-1">
                   <button
@@ -284,7 +284,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
                 ? gt("Submit answers")
                 : gt("Submit", { $context: "verb, submits answers" })}
         </Button>
-        {questionIndex > 0 && onPrevious ? (
+        {questionIndex > 0 ? (
           <Button
             size="sm"
             variant="outline"

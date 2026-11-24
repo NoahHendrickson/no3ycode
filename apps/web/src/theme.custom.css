@@ -2266,20 +2266,16 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Dark outline chrome for pending Previous; the hover lift is shared with the
-   changed-files card. White-alpha only under `.dark` — Light keeps upstream
-   outline fills. */
+/* Dark outline tokens; the hover lift is shared with the changed-files card.
+   White-alpha only under `.dark` — Light keeps upstream outline fills. */
 :root[data-fork="noahhendrickson-t3code"].dark {
   --fork-outline-border: rgb(255 255 255 / 24%);
   --fork-outline-border-hover: rgb(255 255 255 / 32%);
   --fork-outline-hover-bg: rgb(255 255 255 / 4%);
 }
 
-/* Pending Previous / Next sit in the prompt row with items-end. Upstream's
-   sm outline pills are taller than the one-line prompt, so the placeholder
-   hangs low in the surface. Pin height to stop and send's 28px box and 8px
-   corners. Compact Previous is icon-sm (a square) — also pin width so it stays
-   28×28 beside them rather than a wider squat pill. */
+/* The composer's question-mode send sits in the prompt row with items-end. Pin it to stop
+   and send's 28px box and 8px corners so the placeholder does not hang low in the surface. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action] {
   height: 28px;
   border-radius: 8px;
@@ -2288,41 +2284,15 @@
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-pending-user-input-action="previous"][aria-label="Previous question"] {
-  width: 28px;
-  padding: 0;
-}
-
 /* The composer's question-mode send is an icon arrow: a 28px square like stop and send. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action="advance"] {
   width: 28px;
   padding: 0;
 }
 
-/* True outline (dark only): upstream outline still paints dark:bg-input/32. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-pending-user-input-action="previous"] {
-  background: transparent;
-  border-color: var(--fork-outline-border);
-  color: var(--foreground);
-  box-shadow: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-pending-user-input-action="previous"]::before {
-  display: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-pending-user-input-action="previous"]:is(:hover, [data-pressed]) {
-  background: var(--fork-outline-hover-bg);
-  border-color: var(--fork-outline-border-hover);
-}
-
 /* The changed-files header actions (fold toggle, Open diff) are ghost-muted
-   Buttons upstream and draw no border; they used to ride the outline rule
-   above, which recoloured their transparent border into a visible one. What
+   Buttons upstream and draw no border; they used to ride a shared outline
+   rule, which recoloured their transparent border into a visible one. What
    they keep is the foreground ink; their hover is the card-wide lift
    (fork-changed-files-card). Selected as `button`, not `[data-slot="button"]`
    — see fork-workspace-header note: TooltipTrigger stamps
@@ -2332,11 +2302,6 @@
   > div
   button {
   color: var(--foreground);
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-pending-user-input-action="previous"]:not([aria-label="Previous question"]) {
-  padding-inline: 8px;
 }
 
 /* ── Questions card stacked on the prompt surface ────────────────────────────
@@ -3465,13 +3430,6 @@
   min-height: 32px;
   border-radius: 10px;
   padding: 0;
-}
-
-/* Approve leads, Decline follows, More stays last. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-approval-actions]
-  [data-approval-decision="accept"] {
-  order: -1;
 }
 /* fork:end fork-composer-approval-notice */
 

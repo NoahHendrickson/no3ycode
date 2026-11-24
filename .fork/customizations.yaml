@@ -4984,6 +4984,10 @@
     - apps/web/src/components/chat/ComposerPrimaryActions.tsx
     # Hands the card onPrevious, through the override-resolving alias import.
     - apps/web/src/components/chat/ChatComposer.tsx
+    # Upstream's onPreviousPendingQuestion is gone from the composer's actions and their tests.
+    - apps/web/src/components/chat/ComposerFooterControls.tsx
+    - apps/web/src/components/chat/ComposerPrimaryActions.browser.test.tsx
+    - apps/web/src/components/chat/useQueuedRunEdit.browser.test.tsx
     # A re-clicked single-select option clears (web card and iPhone share the toggle).
     - packages/client-runtime/src/state/pendingUserInput.ts
     - packages/client-runtime/src/state/pendingUserInput.test.ts
@@ -6648,6 +6652,8 @@
   tier: 4
   files:
     - apps/web/src/custom/ForkQueuedRunsBanner.tsx
+    - apps/web/src/custom/forkQueuedItems.ts
+    - apps/web/src/custom/ComposerQueuedChip.tsx
     - apps/web/src/custom/stashQueuedRun.ts
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
@@ -6699,7 +6705,7 @@
     - apps/web/src/components/ChatView.tsx
     # Owns the shelf items, the blocking-drawer state and the typing-held approval.
     - apps/web/src/components/chat/ChatComposer.tsx
-    # The approval buttons the notice renders.
+    # The approval buttons the notice renders; acceptFirst puts Approve ahead of Decline there.
     - apps/web/src/components/chat/ComposerPendingApprovalActions.tsx
     # Upstream's inline row the empty list keeps unmounted.
     - apps/web/src/components/chat/TimelinePendingApprovalRow.tsx

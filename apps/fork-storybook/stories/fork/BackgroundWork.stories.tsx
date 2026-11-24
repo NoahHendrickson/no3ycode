@@ -15,35 +15,34 @@ import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
+const SUBAGENT: ForkSubagentTreeRow = {
+  id: "subagent-1",
+  title: "Research jellyfish",
+  titled: true,
+  status: "running",
+  mark: "working",
+  model: "claude-opus-5-5",
+  modelSelection: undefined,
+  startedAt: new Date(Date.now() - 150_000).toISOString(),
+  completedAt: null,
+  childThreadId: ThreadId.make("thread-child-1"),
+  remote: undefined,
+  driver: ProviderDriverKind.make("claudeAgent"),
+  providerInstanceId: ProviderInstanceId.make("claudeAgent"),
+  statusLabel: "Running",
+  prompt: "Research how jellyfish sleep.",
+  activity: null,
+};
+
 const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
   {
     taskId: "subagent-1",
     kind: "subagent",
     label: "Research jellyfish",
     childThreadId: ThreadId.make("thread-child-1"),
+    subagent: SUBAGENT,
   },
   { taskId: "monitor-1", kind: "monitor", label: "Watch CI on #377", childThreadId: undefined },
-];
-
-const SUBAGENTS: ReadonlyArray<ForkSubagentTreeRow> = [
-  {
-    id: "subagent-1",
-    title: "Research jellyfish",
-    titled: true,
-    status: "running",
-    mark: "working",
-    model: "claude-opus-5-5",
-    modelSelection: undefined,
-    startedAt: new Date(Date.now() - 150_000).toISOString(),
-    completedAt: null,
-    childThreadId: ThreadId.make("thread-child-1"),
-    remote: undefined,
-    driver: ProviderDriverKind.make("claudeAgent"),
-    providerInstanceId: ProviderInstanceId.make("claudeAgent"),
-    statusLabel: "Running",
-    prompt: "Research how jellyfish sleep.",
-    activity: null,
-  },
 ];
 
 const base = {
@@ -53,7 +52,6 @@ const base = {
   onStop: () => {},
   onOpenThread: () => {},
   environmentId: EnvironmentId.make("story"),
-  subagents: SUBAGENTS,
 } as const;
 
 const MONITORING: ComposerBackgroundWorkViewProps = {

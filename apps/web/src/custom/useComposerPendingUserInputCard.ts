@@ -2,12 +2,13 @@
  * Shared pending-user-input card logic for the fork Questions chrome.
  * See `.fork/customizations.yaml#fork-pending-user-input`.
  *
- * Owns optimistic single-select and number-key selection so the override can stay
- * presentational. Picking an option never submits or advances: a mis-click stays
- * correctable, and the card's own Submit moves on. Port upstream effect fixes here first.
+ * Owns the selection guards and number-key selection so the override can stay presentational.
+ * Picking an option never submits or advances: a mis-click stays correctable, and the card's
+ * own Submit moves on. The selection rule itself is togglePendingUserInputOptionSelection's.
+ * Port upstream effect fixes here first.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type { PendingUserInputDraftAnswer } from "@t3tools/client-runtime/state/pending-user-input";
 import { derivePendingUserInputProgress } from "~/pendingUserInput";
@@ -36,10 +37,6 @@ export function useComposerPendingUserInputCard({
   // Message-mode requests remain answerable after their provider turn ends.
   const canRespond = prompt.responseCapability !== "not_resumable";
   const responseDisabled = disabled || isResponding || !canRespond;
-  const [optimisticSingleSelect, setOptimisticSingleSelect] = useState<{
-    questionId: string;
-    optionValue: string;
-  } | null>(null);
 
   // ComposerPendingUserInputCard is `memo(fn)`, and react-dom applies
   // useEffectEvent impls only for FunctionComponent fibers — memo and
@@ -50,51 +47,16 @@ export function useComposerPendingUserInputCard({
   // A layout-phase mirror instead, the same shape and reasoning as
   // useForkDictationHotkeyTarget. Audit on a React bump: grep useEffectEvent,
   // check whether the host component is memoized or a forwardRef.
-  // What reads as picked right now: the optimistic pick, else the saved one (no typed answer).
-  const pickedValues = optimisticSingleSelect
-    ? [optimisticSingleSelect.optionValue]
-    : progress.customAnswer.trim().length > 0
-      ? []
-      : progress.selectedOptionValues;
-  const latestRef = useRef({ activeQuestion, onToggleOption, responseDisabled, pickedValues });
+  const latestRef = useRef({ onToggleOption, responseDisabled });
   useLayoutEffect(() => {
-    latestRef.current = { activeQuestion, onToggleOption, responseDisabled, pickedValues };
+    latestRef.current = { onToggleOption, responseDisabled };
   });
 
-  useEffect(() => {
-    if (!activeQuestion || activeQuestion.multiSelect || !optimisticSingleSelect) {
-      return;
-    }
-    if (optimisticSingleSelect.questionId !== activeQuestion.id) {
-      setOptimisticSingleSelect(null);
-      return;
-    }
-    if (
-      progress.customAnswer.trim().length === 0 &&
-      progress.selectedOptionValues.includes(optimisticSingleSelect.optionValue)
-    ) {
-      setOptimisticSingleSelect(null);
-    }
-  }, [
-    activeQuestion,
-    optimisticSingleSelect,
-    progress.customAnswer,
-    progress.selectedOptionValues,
-  ]);
-
-  // Everything this reads comes from the mirror or a setState, so the compiler
-  // keeps it stable and the number-key listener below is not rebuilt per render.
+  // Everything this reads comes from the mirror, so the compiler keeps it stable
+  // and the number-key listener below is not rebuilt per render.
   const handleOptionSelection = (questionId: string, optionValue: string) => {
-    const { activeQuestion: question, onToggleOption: toggle } = latestRef.current;
     if (latestRef.current.responseDisabled) return;
-    if (question?.multiSelect) {
-      toggle(questionId, optionValue);
-      return;
-    }
-    // Clicking the picked option again clears it (the toggle does the same to the draft).
-    const unpick = latestRef.current.pickedValues.includes(optionValue);
-    setOptimisticSingleSelect(unpick ? null : { questionId, optionValue });
-    toggle(questionId, optionValue);
+    latestRef.current.onToggleOption(questionId, optionValue);
   };
 
   // Number keys 1-9 pick options when focus is outside editable fields: multi-select toggles
@@ -135,7 +97,6 @@ export function useComposerPendingUserInputCard({
   return {
     progress,
     activeQuestion,
-    optimisticSingleSelect,
     responseDisabled,
     handleOptionSelection,
   } as const;

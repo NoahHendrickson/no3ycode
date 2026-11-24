@@ -3936,7 +3936,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null
         }
         /* fork:end fork-local-dictation */
-        onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
+        /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+           Previous lives in the question card (onPrevious below). */
+        /* fork:end fork-pending-user-input */
         onInterrupt={handleInterruptPrimaryActionStable}
         compactBeforeSendTokens={props.resumeCompactionTokens}
         hideCompactToggle={false}
@@ -4423,7 +4425,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                           isPreparingWorktree={false}
                           hasSendableContent={false}
                           preserveComposerFocusOnPointerDown
-                          onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
+                          /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+                             Previous lives in the question card. */
+                          /* fork:end fork-pending-user-input */
                           onInterrupt={handleInterruptPrimaryActionStable}
                         />
                       </div>

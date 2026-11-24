@@ -1,7 +1,3 @@
-import type {
-  PendingBackgroundWorkItem,
-  PendingBackgroundWorkPresentation,
-} from "@t3tools/client-runtime/state/thread-execution";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
 
@@ -11,14 +7,19 @@ import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
 import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 
-import { glanceCommandLabel } from "./composerBackgroundWork.logic";
+import {
+  glanceCommandLabel,
+  type ComposerBackgroundWorkItem,
+  type ComposerBackgroundWorkPresentation,
+} from "./composerBackgroundWork.logic";
 import { ForkSubagentIdentity, useForkSubagentEffort } from "./ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "./forkSubagentTree";
 import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
 
 export interface ComposerBackgroundWorkViewProps {
-  readonly presentation: PendingBackgroundWorkPresentation;
+  /** A subagent's task row draws its transcript card's header (resolveComposerBackgroundWork). */
+  readonly presentation: ComposerBackgroundWorkPresentation;
   /** Stable seed for the working mark so remounts keep the same phase. */
   readonly seed: string;
   readonly stopping: boolean;
@@ -27,8 +28,6 @@ export interface ComposerBackgroundWorkViewProps {
   readonly onStop: () => void;
   readonly onOpenThread: (threadId: ThreadId) => void;
   readonly environmentId: EnvironmentId;
-  /** The thread's subagents as transcript card rows; a subagent's task row draws its card's header. */
-  readonly subagents: ReadonlyArray<ForkSubagentTreeRow>;
 }
 
 /** `waiting` is upstream's "this work will wake the agent" (subagents, monitors); a dev server
@@ -92,7 +91,6 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
                 key={task.taskId}
                 task={task}
                 environmentId={props.environmentId}
-                subagents={props.subagents}
                 onOpenThread={props.onOpenThread}
               />
             ))}
@@ -113,9 +111,8 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
 }
 
 function BackgroundWorkTaskRow(props: {
-  readonly task: PendingBackgroundWorkItem;
+  readonly task: ComposerBackgroundWorkItem;
   readonly environmentId: EnvironmentId;
-  readonly subagents: ReadonlyArray<ForkSubagentTreeRow>;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
   const { task } = props;
@@ -141,7 +138,6 @@ function BackgroundWorkTaskRow(props: {
       </li>
     );
   }
-  const member = props.subagents.find((candidate) => candidate.childThreadId === childThreadId);
   return (
     <li className="flex">
       {/* Closes the list: the thread may open beside this composer, which stays mounted. */}
@@ -151,10 +147,10 @@ function BackgroundWorkTaskRow(props: {
         aria-label={`Open ${task.label}`}
         onClick={() => props.onOpenThread(childThreadId)}
       >
-        {member === undefined ? (
+        {task.subagent === undefined ? (
           <span className="min-w-0 flex-1 truncate">{task.label}</span>
         ) : (
-          <SubagentTaskIdentity member={member} environmentId={props.environmentId} />
+          <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
         )}
         <ArrowUpRightIcon aria-hidden className="size-3.5 shrink-0 text-foreground" />
       </PopoverClose>

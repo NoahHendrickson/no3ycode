@@ -28,7 +28,9 @@ function setup() {
     isEnvironmentUnavailable: false,
     isPreparingWorktree: false,
     hasSendableContent: false,
-    onPreviousPendingQuestion: vi.fn(),
+    /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+       Previous lives in the question card, so there is no onPreviousPendingQuestion. */
+    /* fork:end fork-pending-user-input */
     onInterrupt: vi.fn(),
     onResume: vi.fn(),
     onSubmitMessage: vi.fn(),

@@ -18,6 +18,7 @@ import type {
 import { ArrowUpIcon, BookmarkIcon, Clock3Icon, GripVerticalIcon, Trash2Icon } from "lucide-react";
 import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
 
+import { forkUnacknowledgedQueuedMessages } from "./forkQueuedItems";
 import { ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
 
 import { useAssetUrls } from "~/assets/assetUrls";
@@ -115,7 +116,6 @@ export function ForkQueuedRunsBanner({
     reportFailure: false,
     refresh: true,
   });
-  const expanded = props.expanded;
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
   // Rows opened with "Read more", and the hovered row with whether its text is cut off.
@@ -140,8 +140,6 @@ export function ForkQueuedRunsBanner({
   // Drags start from the grip only, never from a text-drag on the row.
   const dragArmedRunIdRef = useRef<RunId | null>(null);
   const steerInFlightRef = useRef(false);
-  // Run-only acknowledgements can resurrect pending rows after cancellation or startup.
-  const acknowledgedMessageIds = new Set((projection?.messages ?? []).map((message) => message.id));
   const queuedImageAttachmentResources = queuedImageResources(projection);
   const queuedImageAttachmentUrls = useAssetUrls(
     props.environmentId,
@@ -162,9 +160,7 @@ export function ForkQueuedRunsBanner({
       return url && resource ? [[resource.attachmentId, url] as const] : [];
     }),
   );
-  const optimisticQueued = props.optimisticMessages.filter(
-    (message) => message.inputIntent === "queued_turn" && !acknowledgedMessageIds.has(message.id),
-  );
+  const optimisticQueued = forkUnacknowledgedQueuedMessages(projection, props.optimisticMessages);
   const items = [
     ...queued.map(({ run, text, attachments, context, message }, serverIndex) => ({
       key: run.id,
@@ -300,7 +296,7 @@ export function ForkQueuedRunsBanner({
     },
   }));
 
-  if (items.length === 0 || !expanded) return null;
+  if (items.length === 0 || !props.expanded) return null;
 
   const remove = async (runId: RunId) => {
     setBusyRunId(runId);
@@ -380,11 +376,11 @@ export function ForkQueuedRunsBanner({
       >
         <ComposerBanner.Row
           render={<button type="button" />}
-          aria-label={expanded ? "Collapse queued messages" : "Expand queued messages"}
-          aria-expanded={expanded}
+          aria-label="Collapse queued messages"
+          aria-expanded
           aria-controls={queueListId}
           onPointerDown={(event) => event.preventDefault()}
-          onClick={() => props.onExpandedChange(!expanded)}
+          onClick={() => props.onExpandedChange(false)}
         >
           <ComposerBanner.Icon>
             <ListNumberIcon />
@@ -396,10 +392,10 @@ export function ForkQueuedRunsBanner({
             </span>
           </ComposerBanner.Content>
           <ComposerBanner.Actions>
-            <ComposerBanner.ToggleIcon expanded={expanded} />
+            <ComposerBanner.ToggleIcon expanded />
           </ComposerBanner.Actions>
         </ComposerBanner.Row>
-        <ComposerBanner.Scroll className={cn("max-h-32", !expanded && "hidden")}>
+        <ComposerBanner.Scroll className="max-h-32">
           <ComposerBanner.Children render={<ol />} id={queueListId}>
             {items.map((item) => {
               // Design-change blocks ride the queued text; the row names them instead of showing markup.

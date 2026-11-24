@@ -77,7 +77,9 @@ interface ComposerPrimaryActionsProps {
   isEditingQueuedMessage?: boolean;
   onSubmitMessage?: MouseEventHandler<HTMLButtonElement>;
   onResume?: () => void;
-  onPreviousPendingQuestion: () => void;
+  /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+     Previous lives in the question card, so upstream's onPreviousPendingQuestion is gone. */
+  /* fork:end fork-pending-user-input */
   onInterrupt: () => void;
   compactBeforeSendTokens?: number | null;
   hideCompactToggle?: boolean;

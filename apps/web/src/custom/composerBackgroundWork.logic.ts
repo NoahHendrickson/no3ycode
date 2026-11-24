@@ -1,4 +1,41 @@
+import type {
+  PendingBackgroundWorkItem,
+  PendingBackgroundWorkPresentation,
+} from "@t3tools/client-runtime/state/thread-execution";
+import type { OrchestrationV2Subagent } from "@t3tools/contracts";
 import { forkShellCommandParsing as shell } from "@t3tools/client-runtime/work-log/command-label";
+
+import { forkSubagentRowFromAgent, type ForkSubagentTreeRow } from "./forkSubagentTree";
+
+/** A background task, with its transcript card row when the task is a subagent's. */
+export interface ComposerBackgroundWorkItem extends PendingBackgroundWorkItem {
+  readonly subagent?: ForkSubagentTreeRow | undefined;
+}
+
+export interface ComposerBackgroundWorkPresentation extends Omit<
+  PendingBackgroundWorkPresentation,
+  "items"
+> {
+  readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
+}
+
+/** Pairs each subagent task with its live record's card row, once, so a task row reads one item. */
+export function resolveComposerBackgroundWork(
+  presentation: PendingBackgroundWorkPresentation | null,
+  subagents: ReadonlyArray<OrchestrationV2Subagent> | null | undefined,
+): ComposerBackgroundWorkPresentation | null {
+  if (presentation === null) return null;
+  return {
+    ...presentation,
+    items: presentation.items.map((task) => {
+      const agent =
+        task.childThreadId === undefined
+          ? undefined
+          : subagents?.find((candidate) => candidate.childThreadId === task.childThreadId);
+      return agent === undefined ? task : { ...task, subagent: forkSubagentRowFromAgent(agent) };
+    }),
+  };
+}
 
 /** The first index from which every token is a redirection, or null when the command has none. */
 function redirectionTailStart(tokens: ReadonlyArray<string>): number | null {

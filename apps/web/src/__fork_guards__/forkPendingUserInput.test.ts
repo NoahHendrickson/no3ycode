@@ -6,7 +6,7 @@
  * custom/. A sync that deletes the override silently falls back to upstream's
  * primary-tint options and number-key badges — everything still compiles.
  * Assert the outcomes the design depends on: Questions progress, checkbox vs
- * radio affordances, and the outline Previous/Next chrome.
+ * radio affordances, and Previous/Submit living in the card.
  */
 
 import * as NodeFS from "node:fs";
@@ -89,32 +89,20 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain('multiSelect ? "rounded-[4px]" : "rounded-full"');
   });
 
-  it("marks pending Previous/Next and dark-scopes the true-outline chrome", () => {
-    // Previous lives in the card now; the composer keeps only the advance arrow.
+  it("keeps Previous in the card and only the advance arrow in the composer", () => {
     expect(primaryActions).not.toContain('data-fork-pending-user-input-action="previous"');
+    expect(primaryActions).not.toContain("onPreviousPendingQuestion:");
     expect(primaryActions).toContain('data-fork-pending-user-input-action="advance"');
+    expect(chatComposer).not.toContain("onPreviousPendingQuestion=");
+    expect(override).toContain("onPrevious: () => void;");
+    expect(override).toContain("onClick={onPrevious}");
     const begin = primaryActions.match(/fork:begin fork-pending-user-input/gu) ?? [];
     const end = primaryActions.match(/fork:end fork-pending-user-input/gu) ?? [];
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
     expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
-    // Compact Previous stays square.
-    expect(theme).toMatch(
-      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*28px/u,
-    );
-
-    const outline = cssRules(theme).find(
-      (rule) =>
-        rule.selector.includes('[data-fork-pending-user-input-action="previous"]') &&
-        rule.body.includes("background: transparent"),
-    );
-    expect(outline?.selector).toContain(MARKER);
-    expect(outline?.selector).toContain(".dark");
-    // The changed-files header actions are ghost buttons and must not share
-    // this outline (forkChangedFilesCard.test.ts pins their own rule).
-    expect(outline?.selector).not.toContain("[data-changed-files-header]");
-    expect(outline?.body).toMatch(/border-color:\s*var\(--fork-outline-border\)/u);
+    expect(theme).not.toContain('[data-fork-pending-user-input-action="previous"]');
   });
 
   it("stacks the Questions card onto the prompt surface (Figma 322:6316)", () => {

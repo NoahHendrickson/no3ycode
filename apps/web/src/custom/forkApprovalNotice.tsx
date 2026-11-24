@@ -108,6 +108,7 @@ export function forkApprovalNoticeItem(input: {
             disabled={input.disabled}
             isResponding={input.isResponding}
             options={approval.options}
+            acceptFirst
             canRespond={canRespond}
             onRespondToApproval={input.onRespondToApproval}
           />

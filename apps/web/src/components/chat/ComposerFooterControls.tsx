@@ -213,7 +213,9 @@ export const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryA
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
   forkDictation?: ComponentProps<typeof ComposerPrimaryActions>["forkDictation"];
   /* fork:end fork-local-dictation */
-  onPreviousPendingQuestion: () => void;
+  /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+     Previous lives in the question card, so upstream's onPreviousPendingQuestion is gone. */
+  /* fork:end fork-pending-user-input */
   onInterrupt: () => void;
   compactBeforeSendTokens: number | null;
   hideCompactToggle: boolean;
@@ -247,7 +249,6 @@ export const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryA
         /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
         forkDictation={props.forkDictation ?? null}
         /* fork:end fork-local-dictation */
-        onPreviousPendingQuestion={props.onPreviousPendingQuestion}
         onInterrupt={props.onInterrupt}
         compactBeforeSendTokens={props.compactBeforeSendTokens}
         hideCompactToggle={props.hideCompactToggle}
