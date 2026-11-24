@@ -167,13 +167,15 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // No vertical padding: the capsule stands as tall as an inline code chip.
+                // No vertical padding and a smaller label: the capsule, border included, stands
+                // as tall as an inline code chip.
                 pill: {
                   borderColor: link.capsule.border,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
                   paddingHorizontal: 6,
                   paddingVertical: 0,
+                  fontScale: 0.9,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -200,8 +202,10 @@ export function useEnrichedLinkVariants(
                 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
                 borderRadius: codeChip?.radius ?? 6,
                 paddingHorizontal: codeChip?.paddingHorizontal ?? 5,
+                paddingVertical: codeChip?.paddingVertical ?? 2,
+                // At inline code's size, so the chip matches a code chip's height.
+                fontScale: codeChip ? textStyle.inlineCodeFontScale : undefined,
                 /* fork:end no3y-mobile-redesign */
-                paddingVertical: 2,
               },
               fontFamily: chipForeground ? FONT_FAMILIES.medium : textStyle.fontFamily,
               /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */

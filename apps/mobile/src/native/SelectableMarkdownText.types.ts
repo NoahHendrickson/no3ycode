@@ -11,8 +11,15 @@ export interface NativeMarkdownTextStyle {
   readonly inlineCodeBackgroundColor?: string;
   /** Inline code's size against the body text; upstream sets it at 0.9. */
   readonly inlineCodeFontScale?: number;
-  /** The chip's corner radius and side padding; iOS only, upstream draws 2pt corners and no padding. */
-  readonly inlineCodeChip?: { readonly radius: number; readonly paddingHorizontal: number };
+  /**
+   * The chip's corner radius and padding; iOS only. Upstream draws 2pt corners, no side padding,
+   * and fills the line, so chips on consecutive lines touch; paddingVertical hugs the code instead.
+   */
+  readonly inlineCodeChip?: {
+    readonly radius: number;
+    readonly paddingHorizontal: number;
+    readonly paddingVertical: number;
+  };
   /** iOS weight for bold text and headings; the fork otherwise draws them bold. */
   readonly emphasisFontWeight?: "500";
   /** Fills a table's header row; upstream uses the code block fill. */

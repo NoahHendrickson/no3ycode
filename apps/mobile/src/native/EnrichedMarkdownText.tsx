@@ -123,6 +123,7 @@ function enrichedStyle(
         ? {
             borderRadius: style.inlineCodeChip.radius,
             paddingHorizontal: style.inlineCodeChip.paddingHorizontal,
+            paddingVertical: style.inlineCodeChip.paddingVertical,
           }
         : null),
       /* fork:end no3y-mobile-redesign */
