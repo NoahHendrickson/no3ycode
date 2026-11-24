@@ -76,6 +76,7 @@
         };
         /* fork:end fork-inlet-theme */
         const CUSTOM_THEMES_STORAGE_KEY = "t3code:themes:v1";
+        const ENVIRONMENT_THEMES_STORAGE_KEY = "t3code:environment-themes:v1";
         const THEME_FOLLOW_SYSTEM_STORAGE_KEY = "t3code:theme-follow-system";
         const THEME_APPEARANCE_MODE_STORAGE_KEY = "t3code:theme-appearance-mode";
         const THEME_HALVES_STORAGE_KEY = "t3code:theme-halves:v1";
@@ -258,12 +259,9 @@
               (appearance === value.appearance || isRecord(colors)),
           );
         };
-        const findCustomTheme = (themeId) => {
-          if (RESERVED_THEME_IDS.includes(themeId)) return null;
+        const findStoredTheme = (storageKey, themeId) => {
           try {
-            const parsed = JSON.parse(
-              window.localStorage.getItem(CUSTOM_THEMES_STORAGE_KEY) ?? "null",
-            );
+            const parsed = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
             if (!Array.isArray(parsed)) return null;
             return (
               parsed.find((value) => isStoredCustomTheme(value) && value.id === themeId) ?? null
@@ -271,6 +269,14 @@
           } catch {
             return null;
           }
+        };
+        // Same precedence as getThemeDefinition: saved custom themes, then published ones.
+        const findCustomTheme = (themeId) => {
+          if (RESERVED_THEME_IDS.includes(themeId)) return null;
+          return (
+            findStoredTheme(CUSTOM_THEMES_STORAGE_KEY, themeId) ??
+            findStoredTheme(ENVIRONMENT_THEMES_STORAGE_KEY, themeId)
+          );
         };
 
         try {
@@ -443,6 +449,17 @@
             document.documentElement.removeAttribute("data-fork-basic-tone");
           }
           /* fork:end fork-basic-theme */
+          /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
+          const forkGlass3d = window.localStorage.getItem("t3code:fork:glass-3d:v1");
+          if (forkGlass3d === '"off"') {
+            document.documentElement.setAttribute("data-fork-glass-3d", "off");
+            if (activeForkPalette === "cool-darker") {
+              forkPaletteBackgrounds["cool-darker"] = "#1f1c1b";
+            }
+          } else {
+            document.documentElement.removeAttribute("data-fork-glass-3d");
+          }
+          /* fork:end fork-cool-darker-theme */
           if (activeForkPalette === "inlet") {
             document.documentElement.setAttribute("data-fork-inlet-color", forkInletColor);
           } else {
@@ -618,6 +635,10 @@
       /* fork:begin fork-cool-darker-theme — see .fork/customizations.yaml#fork-cool-darker-theme */
       html.dark[data-fork-theme="cool-darker"] body {
         background: #141618;
+        color: #e8e8e8;
+      }
+      html.dark[data-fork-theme="cool-darker"][data-fork-glass-3d="off"] body {
+        background: #1f1c1b;
         color: #e8e8e8;
       }
       /* fork:end fork-cool-darker-theme */

@@ -55,6 +55,7 @@
  * visually hidden, since the header carries it for sighted users — so grouped
  * mode never carries less information than flat mode.
  */
+import type { ReactNode } from "react";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -65,7 +66,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { type SortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { forkSidebarSortableTranslate } from "./forkTypographyScale";
 
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { cn } from "~/lib/utils";
@@ -113,9 +114,16 @@ export function SidebarV2ProjectGroupHeader(props: {
       rather than hiding it, so the menu keeps its shape. */
   readonly settleAllCount?: number | undefined;
   readonly onSettleAllThreads?: (() => void) | undefined;
+  /** Trailing list controls (add project, sort, view settings) revealed
+      beside the project's actions on hover/focus or while a menu is open. */
+  readonly renderTrailingListControls?:
+    | ((onMenuOpenChange: (open: boolean) => void) => ReactNode)
+    | undefined;
 }) {
   const label = props.label ?? UNGROUPED_PROJECT_LABEL;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [listControlsMenuOpen, setListControlsMenuOpen] = useState(false);
+  const anyMenuOpen = menuOpen || listControlsMenuOpen;
   const sortable = useSortable({ id: props.projectKey, disabled: !props.reorderable });
   const dropEdge =
     sortable.isOver && !sortable.isDragging && sortable.activeIndex !== -1
@@ -123,7 +131,8 @@ export function SidebarV2ProjectGroupHeader(props: {
         ? "above"
         : "below"
       : null;
-  const trailingCount = (props.onProjectSettings ? 1 : 0) + (props.onNewThread ? 1 : 0);
+  const hasProjectActions = Boolean(props.onProjectSettings || props.onNewThread);
+  const hasTrailingActions = hasProjectActions || props.renderTrailingListControls !== undefined;
   const settleAllCount = props.settleAllCount ?? 0;
   return (
     <li
@@ -135,23 +144,20 @@ export function SidebarV2ProjectGroupHeader(props: {
       style={
         props.reorderable
           ? {
-              transform: CSS.Translate.toString(sortable.transform),
+              transform: forkSidebarSortableTranslate(sortable.transform),
               transition: sortable.transition,
             }
           : undefined
       }
     >
-      {/* group/collapse on the row so hovering the label still swaps the mark.
-          Collapse is a behind-layer button; the plus paints above it. */}
       <div
         data-testid="sidebar-v2-project-group-header"
         className={cn(
           // Gap, padding and margins are all derived — see
           // custom/sidebarV2CardAlignment for the arithmetic this row shares
           // with the cards under it.
-          "group/collapse relative flex h-8 w-full items-center text-left",
+          "relative flex h-8 w-full items-center text-left",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
-          SIDEBAR_V2_CARD_ALIGNMENT.headerGap,
           SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
             ? "mt-0"
@@ -160,77 +166,82 @@ export function SidebarV2ProjectGroupHeader(props: {
               : SIDEBAR_V2_CARD_ALIGNMENT.headerLeadCollapsed,
         )}
       >
-        {/* The design's label button (364:11475): 32px tall, 10px corners,
-            ghost hover. It stops one 32px column short of the row's end per
-            trailing button, so each of those is its own target. */}
-        <button
-          type="button"
-          data-testid="sidebar-v2-project-group-collapse"
-          aria-expanded={!props.collapsed}
-          aria-label={props.collapsed ? `Expand ${label}` : `Collapse ${label}`}
-          onClick={props.onToggleCollapsed}
-          {...(props.reorderable ? sortable.listeners : {})}
+        {/* group/collapse on the label wrapper so hovering the label swaps the
+            mark and paints the ghost hover fill strictly to the left of the
+            trailing controls, never underneath them. */}
+        <div
           className={cn(
-            "absolute inset-y-0 left-0 z-0 cursor-pointer rounded-[10px]",
-            props.reorderable && "cursor-grab active:cursor-grabbing",
-            trailingCount === 2 ? "right-16" : trailingCount === 1 ? "right-8" : "right-0",
-            "outline-none hover:bg-sidebar-row-hover",
-            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",
-          )}
-        />
-        {/* Open folder when expanded, closed when collapsed; chevron on hover
-            either way. Stacked in one 16px box so the swap does not shift the
-            label. pointer-events none so clicks fall through to the collapse
-            layer. */}
-        <span
-          className={cn(
-            "pointer-events-none relative z-[1] flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
-            SIDEBAR_V2_CARD_ALIGNMENT.headerMarkBox,
+            "group/collapse relative -ms-3 flex h-8 min-w-0 flex-1 items-center px-3",
+            SIDEBAR_V2_CARD_ALIGNMENT.headerGap,
           )}
         >
-          <FolderOpenIcon
-            aria-hidden
+          <button
+            type="button"
+            data-testid="sidebar-v2-project-group-collapse"
+            aria-expanded={!props.collapsed}
+            aria-label={props.collapsed ? `Expand ${label}` : `Collapse ${label}`}
+            onClick={props.onToggleCollapsed}
+            {...(props.reorderable ? sortable.listeners : {})}
             className={cn(
-              "size-4",
-              props.collapsed ? "invisible" : "group-hover/collapse:invisible",
+              "absolute inset-0 z-0 cursor-pointer rounded-[10px]",
+              props.reorderable && "cursor-grab active:cursor-grabbing",
+              "outline-none hover:bg-sidebar-row-hover",
+              "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",
             )}
           />
-          <FolderClosedIcon
-            aria-hidden
+          {/* Open folder when expanded, closed when collapsed; chevron on hover
+              either way. Stacked in one 16px box so the swap does not shift the
+              label. pointer-events none so clicks fall through to the collapse
+              layer. */}
+          <span
             className={cn(
-              "absolute size-4",
-              props.collapsed ? "group-hover/collapse:invisible" : "invisible",
+              "pointer-events-none relative z-[1] flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
+              SIDEBAR_V2_CARD_ALIGNMENT.headerMarkBox,
             )}
-          />
-          <ChevronDownIcon
-            aria-hidden
-            className={cn(
-              "absolute size-4 transition-transform invisible group-hover/collapse:visible",
-              props.collapsed && "-rotate-90",
-            )}
-          />
-        </span>
-        {/* The heading is the label, not the collapse button: a heading that
-            wraps the button would take "Collapse <project>" as its name. */}
-        <span
-          role="heading"
-          aria-level={3}
-          // Label/12 Medium at --muted-foreground (368:21364), lifting to
-          // foreground with the mark while the row is hovered.
-          className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-[0.75rem] font-medium leading-4 text-muted-foreground group-hover/collapse:text-sidebar-foreground"
-        >
-          {label}
-        </span>
-        {trailingCount > 0 ? (
+          >
+            <FolderOpenIcon
+              aria-hidden
+              className={cn(
+                "size-4",
+                props.collapsed ? "invisible" : "group-hover/collapse:invisible",
+              )}
+            />
+            <FolderClosedIcon
+              aria-hidden
+              className={cn(
+                "absolute size-4",
+                props.collapsed ? "group-hover/collapse:invisible" : "invisible",
+              )}
+            />
+            <ChevronDownIcon
+              aria-hidden
+              className={cn(
+                "absolute size-4 transition-transform invisible group-hover/collapse:visible",
+                props.collapsed && "-rotate-90",
+              )}
+            />
+          </span>
+          {/* The heading is the label, not the collapse button: a heading that
+              wraps the button would take "Collapse <project>" as its name. */}
+          <span
+            role="heading"
+            aria-level={3}
+            // Label/12 Medium at --muted-foreground (368:21364), lifting to
+            // foreground with the mark while the row is hovered.
+            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-[0.75rem] font-medium leading-4 text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+          >
+            {label}
+          </span>
+        </div>
+        {hasTrailingActions ? (
           // The design's 32px icon buttons (364:11451, 368:21126), the
           // header box of SidebarV2IconButton. -me-3 pulls the group out of the row's
           // own padding so it sits flush with the list edge, where the
-          // trailing derivation puts it. Above the collapse layer — without
-          // z-10 the absolute button steals the click and the buttons look
-          // dead. Hidden until the section is hovered — see the file note.
+          // trailing derivation puts it. Hidden until the section is hovered —
+          // see the file note.
           <span
             data-fork-section-actions=""
-            data-fork-menu-open={menuOpen ? "" : undefined}
+            data-fork-menu-open={anyMenuOpen ? "" : undefined}
             className={cn(
               "-me-3 relative z-10 flex shrink-0 items-center",
               SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
@@ -244,8 +255,6 @@ export function SidebarV2ProjectGroupHeader(props: {
                       box="header"
                       aria-label={`Actions for ${label}`}
                       data-testid="sidebar-v2-project-group-menu"
-                      // The collapse layer sits under the row; a click here
-                      // is the menu's, never a toggle.
                       onClick={(event) => event.stopPropagation()}
                     />
                   }
@@ -278,8 +287,6 @@ export function SidebarV2ProjectGroupHeader(props: {
                 // to tell them apart.
                 aria-label={`New thread in ${label}`}
                 onClick={(event) => {
-                  // The collapse layer sits under the row; stop anything from
-                  // treating this as a toggle if an ancestor starts listening.
                   event.stopPropagation();
                   props.onNewThread?.();
                 }}
@@ -287,6 +294,10 @@ export function SidebarV2ProjectGroupHeader(props: {
                 <PlusIcon aria-hidden className="size-4" />
               </SidebarV2IconButton>
             ) : null}
+            {hasProjectActions && props.renderTrailingListControls ? (
+              <span aria-hidden className="mx-0.5 h-3.5 w-px shrink-0 bg-sidebar-border/60" />
+            ) : null}
+            {props.renderTrailingListControls?.(setListControlsMenuOpen)}
           </span>
         ) : null}
       </div>

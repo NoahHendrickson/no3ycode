@@ -1,3 +1,6 @@
+import { msg } from "gt-react-native";
+
+import { m } from "../../i18n/messages";
 import {
   AuthOrchestrationOperateScope,
   type CloudSpeechModelId,
@@ -32,6 +35,9 @@ import { connectionAtomRuntime } from "../../connection/runtime";
 import { uuidv4 } from "../../lib/uuid";
 import { createEnvironmentTranscriber } from "./environmentTranscriber";
 import { readVoiceGrant, writeVoiceGrant, type VoiceGrant } from "./voiceGrantStorage";
+/* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+import { createVoicePrepareCache } from "../../../fork/no3yVoicePrepareCache";
+/* fork:end no3y-voice-prepare-cache */
 
 const storedGrant = Atom.make(Effect.promise(readVoiceGrant)).pipe(Atom.keepAlive);
 const choice = Atom.make<VoiceGrant | null | undefined>(undefined).pipe(Atom.keepAlive);
@@ -124,7 +130,7 @@ export function runSpeech<A, E>(
             if (signal?.aborted || !canSend())
               throw new VoiceTranscriptionError({
                 code: "cancelled",
-                message: "Your transcription choice changed.",
+                message: m(msg("Your transcription choice changed.")),
               });
             return expoFetch(url, { ...options, redirect: "error" });
           }),
@@ -135,6 +141,15 @@ export function runSpeech<A, E>(
     { signal },
   );
 }
+/* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+const voicePrepareCache = createVoicePrepareCache<string>();
+let warmLatestVoicePrepare: (() => void) | null = null;
+
+/** Fetches the current destination's speech status ahead of a dictation tap, if it is stale. */
+export function prefetchVoicePrepare() {
+  if (appAtomRegistry.get(voiceRouteAtom)?.transcriber) warmLatestVoicePrepare?.();
+}
+/* fork:end no3y-voice-prepare-cache */
 function environmentTranscriber(
   prepared: PreparedConnection,
   canSend: () => boolean,
@@ -142,37 +157,50 @@ function environmentTranscriber(
 ) {
   const provider = cloud?.provider;
   const model = cloud?.provider === "openrouter" ? cloud.model : undefined;
+  /* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+  const prepareDestination = async (signal?: AbortSignal) => {
+    /* fork:end no3y-voice-prepare-cache */
+    if (provider) {
+      await runSpeech(requireCloudSpeechKey(prepared, provider), signal, canSend);
+      return "auto";
+    }
+    const status = await runSpeech(getEnvironmentSpeechStatus(prepared), signal, canSend);
+    if (!status.supported)
+      throw new VoiceTranscriptionError({ code: "unavailable", message: status.reason });
+    if (status.state === "missing-model")
+      throw new VoiceTranscriptionError({
+        code: "unavailable",
+        message: m(
+          msg(
+            "Install a transcription model for this environment in Settings → Voice, then try again.",
+          ),
+        ),
+      });
+    return status.languages
+      ? effectiveSpeechLanguage(
+          {
+            languages: status.languages,
+            supportsLanguageDetection: status.supportsLanguageDetection ?? false,
+          },
+          "auto",
+        )
+      : "auto";
+    /* fork:begin no3y-voice-prepare-cache — see .fork/customizations.yaml#no3y-voice-prepare-cache */
+  };
+  const destinationKey = provider ? `cloud:${provider}:${model ?? ""}` : "environment";
+  // The shared fetch takes the cache's signal, which aborts once every waiting tap has.
+  const prepare = (signal?: AbortSignal) =>
+    voicePrepareCache.read(prepared, destinationKey, prepareDestination, signal);
+  warmLatestVoicePrepare = () => void prepare().catch(() => {});
   return createEnvironmentTranscriber({
     canSend,
-    prepare: async (signal) => {
-      if (provider) {
-        await runSpeech(requireCloudSpeechKey(prepared, provider), signal, canSend);
-        return "auto";
-      }
-      const status = await runSpeech(getEnvironmentSpeechStatus(prepared), signal, canSend);
-      if (!status.supported)
-        throw new VoiceTranscriptionError({ code: "unavailable", message: status.reason });
-      if (status.state === "missing-model")
-        throw new VoiceTranscriptionError({
-          code: "unavailable",
-          message:
-            "Install a transcription model for this environment in Settings → Voice, then try again.",
-        });
-      return status.languages
-        ? effectiveSpeechLanguage(
-            {
-              languages: status.languages,
-              supportsLanguageDetection: status.supportsLanguageDetection ?? false,
-            },
-            "auto",
-          )
-        : "auto";
-    },
+    prepare,
+    /* fork:end no3y-voice-prepare-cache */
     decode: (uri) => {
       if (!native?.decodeRecording)
         throw new VoiceTranscriptionError({
           code: "unavailable",
-          message: "Update T3 Code to transcribe on an environment.",
+          message: m(msg("Update T3 Code to transcribe on an environment.")),
         });
       return native.decodeRecording(uri);
     },

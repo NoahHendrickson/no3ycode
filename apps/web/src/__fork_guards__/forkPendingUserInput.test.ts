@@ -92,10 +92,10 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
-    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*24px/u);
+    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
     // Compact Previous stays square.
     expect(theme).toMatch(
-      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*24px/u,
+      /\[data-fork-pending-user-input-action="previous"\]\[aria-label="Previous question"\][\s\S]{0,120}width:\s*28px/u,
     );
 
     const outline = cssRules(theme).find(
@@ -190,5 +190,17 @@ describe("fork guard: fork-pending-user-input", () => {
         /border-top:\s*0/u.test(rule.body),
     );
     expect(topless).toEqual([]);
+  });
+
+  it("draws the no3y iPhone Questions card in the composer's place, never a blue primary", () => {
+    const mobileThreadDetail = readSibling(
+      "../../../mobile/src/features/threads/ThreadDetailScreen.tsx",
+    );
+    const mobileCard = readSibling("../../../mobile/fork/No3yPendingUserInputCard.tsx");
+    expect(mobileThreadDetail).toContain("<No3yPendingUserInputSwap>");
+    expect(mobileCard).toContain("<No3yGlassLayer radius={CARD_RADIUS} />");
+    expect(mobileCard).toContain("backgroundColor: props.selected ? palette.primaryFill");
+    expect(mobileCard).toContain("no3yQuestionAfterSelect({");
+    expect(mobileCard).not.toMatch(/bg-primary|border-primary|peekRing/u);
   });
 });

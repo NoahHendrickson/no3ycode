@@ -1,0 +1,96 @@
+/* Flat Glass thread composer — see .fork/customizations.yaml#fork-composer-shell.
+
+   Figma kit 289:5475. The prompt is the composer's one surface (lift-2, a 16% ring, 12px
+   corners) and the vessel paints nothing, so the control row sits on the stage below it. The
+   usage drawer, attached banners and the Questions card are lift-1 trays with an 8% hairline.
+   The prompt keeps all four corners under a tray: its frame squares instead and paints the
+   tray's lift and side hairlines, which show only in the wedges beside the prompt's corners.
+
+   Scoped to the thread composer's form: a new agent's draft keeps its own glass composer
+   (Figma 19:6831), and Petal digest cards and the scheduled editor reuse the vessel, box and
+   surface markers outside any form. Every :has() is anchored on the drawer slot or the banner
+   dock, never on the vessel, whose subtree holds the editor. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"]:not([data-draft-hero])
+  [data-chat-composer-form] {
+  --fork-composer-radius: 12px;
+  --fork-composer-bg: var(--fork-flat-glass-lift-2);
+  --fork-composer-tray-border: rgb(255 255 255 / 8%);
+
+  & [data-fork-composer-vessel] {
+    background: none;
+    box-shadow: none;
+  }
+
+  & [data-fork-composer-surface] {
+    --fork-composer-border: rgb(255 255 255 / 16%);
+    --fork-composer-border-focus: rgb(255 255 255 / 24%);
+    /* The surface inherits the frame's radius unless it states its own. */
+    border-radius: var(--fork-composer-radius);
+  }
+
+  &
+    :is(
+      [data-fork-composer-usage-drawer],
+      [data-fork-composer-vessel]
+        > [data-slot="composer-banner-attachment"]:has([data-composer-banner-surface="attached"])
+    ) {
+    border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
+    background: var(--fork-flat-glass-lift-1);
+    box-shadow:
+      inset 1px 1px 0 var(--fork-composer-tray-border),
+      inset -1px 0 0 var(--fork-composer-tray-border);
+  }
+
+  /* Only the prompt's ring brightens on focus; the card above keeps the tray's hairline. */
+  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
+    border-color: var(--fork-composer-tray-border);
+    background: var(--fork-flat-glass-lift-1);
+  }
+
+  &
+    :is(
+      [data-fork-composer-top-vessel]:has(
+          [data-fork-composer-usage-drawer]:not(
+            [hidden],
+            [data-starting-style],
+            [data-ending-style]
+          )
+        )
+        + [data-fork-composer-vessel],
+      [data-fork-composer-vessel]
+        > [data-slot="composer-banner-attachment"]:has([data-composer-banner-surface="attached"])
+        + *
+    )
+    [data-fork-composer-box] {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: var(--fork-flat-glass-lift-1);
+    box-shadow:
+      inset 1px 0 0 var(--fork-composer-tray-border),
+      inset -1px 0 0 var(--fork-composer-tray-border);
+  }
+
+  /* Under the open drawer a banner keeps its round top corners; the dock paints the drawer's
+     lift and side hairlines behind them, under its own fill. */
+  &
+    [data-fork-composer-top-vessel]:has(
+      [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
+    )
+    + [data-fork-composer-vessel]
+    > [data-slot="composer-banner-attachment"]:has([data-composer-banner-surface="attached"]) {
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: -1;
+      height: var(--fork-composer-radius);
+      background: var(--fork-flat-glass-lift-1);
+      box-shadow:
+        inset 1px 0 0 var(--fork-composer-tray-border),
+        inset -1px 0 0 var(--fork-composer-tray-border);
+    }
+  }
+}

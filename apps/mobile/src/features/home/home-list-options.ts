@@ -1,17 +1,25 @@
 import type { EnvironmentId, SidebarProjectGroupingMode } from "@t3tools/contracts";
 import { DEFAULT_SIDEBAR_PROJECT_SORT_ORDER } from "@t3tools/contracts";
-import { RegistryContext, useAtomSet, useAtomValue } from "@effect/atom-react";
+import { RegistryContext, useAtomValue } from "@effect/atom-react";
 import { Atom } from "effect/reactivity";
 import { createContext, createElement, useContext, useState, type PropsWithChildren } from "react";
 
 import type { ThreadListFilters } from "../../persistence/mobile-preferences";
-import { updateMobilePreferencesAtom } from "../../state/preferences";
+import { saveMobilePreferences } from "../../state/preferences";
+import { useAtomCommand } from "../../state/use-atom-command";
 import type { HomeProjectSortOrder } from "./homeThreadList";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { No3yStatusFilter, No3yThreadSortOrder } from "../../../fork/mobileStatusGrouping";
+/* fork:end no3y-mobile-redesign */
 
 export interface HomeListOptions {
   readonly selectedEnvironmentId: EnvironmentId | null;
   readonly selectedProjectKey: string | null;
   readonly projectSortOrder: HomeProjectSortOrder;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  readonly statusFilter: No3yStatusFilter;
+  readonly threadSortOrder: No3yThreadSortOrder;
+  /* fork:end no3y-mobile-redesign */
 }
 
 export interface ResolvedHomeListOptions extends HomeListOptions {
@@ -26,6 +34,10 @@ function defaultHomeListOptions(filters?: ThreadListFilters): HomeListOptions {
       DEFAULT_SIDEBAR_PROJECT_SORT_ORDER === "manual"
         ? "updated_at"
         : DEFAULT_SIDEBAR_PROJECT_SORT_ORDER,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    statusFilter: "all",
+    threadSortOrder: "status",
+    /* fork:end no3y-mobile-redesign */
   };
 }
 
@@ -48,7 +60,7 @@ export function HomeListOptionsProvider({
   const registry = useContext(RegistryContext);
   const [optionsAtom] = useState(() => Atom.make(defaultHomeListOptions(savedFilters)));
   const options = useAtomValue(optionsAtom);
-  const savePreferences = useAtomSet(updateMobilePreferencesAtom);
+  const savePreferences = useAtomCommand(saveMobilePreferences);
   // Only the scope persists; the sort order is per session. Updates read the
   // registry, so several in one event each build on the last and save it.
   const updateOptions = (patch: Partial<HomeListOptions>) => {
@@ -59,7 +71,7 @@ export function HomeListOptionsProvider({
       next.selectedEnvironmentId !== current.selectedEnvironmentId ||
       next.selectedProjectKey !== current.selectedProjectKey
     ) {
-      savePreferences({
+      void savePreferences({
         threadListFilters: {
           environmentId: next.selectedEnvironmentId,
           projectKey: next.selectedProjectKey,
@@ -101,10 +113,22 @@ export function useHomeListOptions(availableEnvironmentIds: ReadonlySet<Environm
   const setProjectSortOrder = (value: HomeProjectSortOrder) => {
     updateOptions({ projectSortOrder: value });
   };
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const setStatusFilter = (value: No3yStatusFilter) => {
+    updateOptions({ statusFilter: value });
+  };
+  const setThreadSortOrder = (value: No3yThreadSortOrder) => {
+    updateOptions({ threadSortOrder: value });
+  };
+  /* fork:end no3y-mobile-redesign */
   return {
     options: resolvedOptions,
     setSelectedEnvironmentId,
     setSelectedProjectKey,
     setProjectSortOrder,
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    setStatusFilter,
+    setThreadSortOrder,
+    /* fork:end no3y-mobile-redesign */
   } as const;
 }

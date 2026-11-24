@@ -3,6 +3,9 @@ import { cn } from "../../lib/cn";
 import type { ComponentProps, ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { THREAD_WORK_ROW_MIN_HEIGHT, type deriveThreadWorkLogSizing } from "../../lib/layout";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { useNo3yWorkTextClass } from "../../../fork/no3yBottomNavEnabled";
+/* fork:end no3y-mobile-redesign */
 
 export function WorkLogBlock({
   children,
@@ -55,6 +58,9 @@ export function WorkLogLabel({
   children: ReactNode;
   tone?: "default" | "danger" | "warning";
 }) {
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yTextClass = useNo3yWorkTextClass();
+  /* fork:end no3y-mobile-redesign */
   return (
     <Text
       selectable={false}
@@ -64,6 +70,9 @@ export function WorkLogLabel({
         "min-w-0 flex-1 text-sm text-foreground-muted",
         tone === "danger" && "font-t3-medium text-adaptive-rose-600-400",
         tone === "warning" && "font-t3-medium text-warning-foreground",
+        /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+        no3yTextClass,
+        /* fork:end no3y-mobile-redesign */
       )}
     >
       {children}

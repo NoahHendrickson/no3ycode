@@ -36,6 +36,12 @@ import { initializeForkSidebarMode } from "./custom/chatMode";
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 import { initializeForkGlass3d } from "./custom/forkGlass3d";
 /* fork:end fork-glass-3d */
+/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+import {
+  initializeForkChatTextScale,
+  initializeForkSidebarZoom,
+} from "./custom/forkTypographyScale";
+/* fork:end fork-typography-settings */
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
 import { installTouchLongPressContextMenu } from "./custom/touchLongPressContextMenu";
 /* fork:end fork-touch-affordances */
@@ -48,7 +54,7 @@ import { isElectron } from "./env";
 import { startAppServices } from "./appInit";
 import { AppRoot } from "./AppRoot";
 import { whenLocaleReady } from "./i18n/runtime";
-import { reloadOnceForChunkLoadError } from "./lib/chunkReloadGuard";
+import { chunkLoadState } from "./lib/chunkReloadGuard";
 
 const router = startAppServices();
 
@@ -67,6 +73,10 @@ initializeForkSidebarMode();
 /* fork:begin fork-glass-3d — see .fork/customizations.yaml#fork-glass-3d */
 initializeForkGlass3d();
 /* fork:end fork-glass-3d */
+/* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings */
+initializeForkSidebarZoom();
+initializeForkChatTextScale();
+/* fork:end fork-typography-settings */
 /* fork:begin fork-inlet-theme — see .fork/customizations.yaml#fork-inlet-theme */
 installInletMenuMorph();
 /* fork:end fork-inlet-theme */
@@ -75,14 +85,6 @@ installTouchLongPressContextMenu();
 /* fork:end fork-touch-affordances */
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
-
-let reloadScheduled = false;
-window.addEventListener("vite:preloadError", (event) => {
-  if (reloadOnceForChunkLoadError()) {
-    reloadScheduled = true;
-    event.preventDefault();
-  }
-});
 
 const app = <AppRoot router={router} />;
 
@@ -101,7 +103,7 @@ export const startup = Promise.all([
 ])
   .then(([ManagedAuthShell]) => {
     // Route chunk failures resolve router.load() and surface later through the error boundary.
-    if (reloadScheduled) return;
+    if (chunkLoadState.reloadScheduled) return;
     ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <React.StrictMode>
         {ManagedAuthShell && clerkPublishableKey ? (
@@ -113,6 +115,6 @@ export const startup = Promise.all([
     );
   })
   .catch((error: unknown) => {
-    if (reloadScheduled) return;
+    if (chunkLoadState.reloadScheduled) return;
     throw error;
   });

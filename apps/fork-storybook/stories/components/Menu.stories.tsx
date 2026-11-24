@@ -41,6 +41,8 @@ import {
   MenuTrigger,
 } from "~/components/ui/menu";
 
+import { POPUP_ANCHOR } from "../Specimen.tsx";
+
 const ITEM_VARIANTS = ["default", "destructive", "ghost"] as const;
 const CHECKBOX_VARIANTS = ["default", "icon", "switch"] as const;
 const DENSITIES = ["default", "touch"] as const;
@@ -51,10 +53,8 @@ const ALIGNS = ["start", "center", "end"] as const;
 // Fork rule: menu dividers run edge to edge, so each cancels the popup's 4px scroll padding.
 const FULL_WIDTH_SEPARATOR = "-mx-1";
 
-// Story layout uses inline styles: the canvas centres, and a popup opens below its trigger.
-const TOP: CSSProperties = { alignSelf: "flex-start", paddingTop: 24 };
 const columns = (count: number): CSSProperties => ({
-  ...TOP,
+  ...POPUP_ANCHOR,
   display: "grid",
   gridTemplateColumns: `repeat(${count}, 240px)`,
   alignItems: "start",
@@ -230,7 +230,7 @@ export const Sizes: Story = {
 
 export const States: Story = {
   render: () => (
-    <div style={TOP}>
+    <div style={POPUP_ANCHOR}>
       <Menu defaultOpen modal={false}>
         <LabelledTrigger>Item states</LabelledTrigger>
         <MenuPopup align="start" className="w-64">
@@ -295,7 +295,7 @@ export const Closed: Story = {
 export const Open: Story = {
   name: "Open (pull request actions)",
   render: () => (
-    <div style={TOP}>
+    <div style={POPUP_ANCHOR}>
       <Menu defaultOpen>
         <MoreTrigger label="Pull request actions" />
         <MenuPopup align="start" className="w-72">
@@ -370,7 +370,7 @@ export const Open: Story = {
 export const WithSubmenu: Story = {
   name: "Groups and submenu",
   render: () => (
-    <div style={{ ...TOP, marginRight: 320 }}>
+    <div style={{ ...POPUP_ANCHOR, marginRight: 320 }}>
       <Menu defaultOpen modal={false}>
         <MenuTrigger render={<Button variant="ghost" size="xs" />}>
           <LaptopIcon />
@@ -443,7 +443,7 @@ export const WithSubmenu: Story = {
 export const TrailingDetail: Story = {
   name: "Trailing detail (snooze)",
   render: () => (
-    <div style={TOP}>
+    <div style={POPUP_ANCHOR}>
       <Menu defaultOpen>
         <MoreTrigger label="Snooze thread" />
         <MenuPopup side="bottom" align="end">
@@ -474,7 +474,7 @@ export const TrailingDetail: Story = {
 export const WithSearch: Story = {
   name: "With search input",
   render: () => (
-    <div style={TOP}>
+    <div style={POPUP_ANCHOR}>
       <Menu defaultOpen>
         <LabelledTrigger>Author</LabelledTrigger>
         <MenuPopup align="start" className="w-64">

@@ -1,5 +1,12 @@
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import CheckIcon from "@hugeicons/core-free-icons/CheckIcon";
+import CopyIcon from "@hugeicons/core-free-icons/CopyIcon";
+
+import { HugeIcon } from "../../../fork/HugeIcon";
+/* fork:end no3y-mobile-redesign */
 import * as Dialog from "../../components/ui/Dialog";
 import { SymbolView } from "../../components/ui/AppSymbol";
+import { useGT } from "gt-react-native";
 import { memo, useState } from "react";
 import { Pressable, type ColorValue } from "react-native";
 
@@ -20,7 +27,12 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
   readonly borderColor?: ColorValue;
   readonly iconSize?: number;
   readonly buttonSize?: number;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  /** Draws the desktop's Hugeicons copy and check glyphs instead of SF Symbols. */
+  readonly hugeIcons?: boolean;
+  /* fork:end no3y-mobile-redesign */
 }) {
+  const gt = useGT();
   const [copiedAtMs, setCopiedAtMs] = useState<number | null>(null);
   const feedbackEnded = useDeadlinePassed(
     copiedAtMs === null ? null : copiedAtMs + COPY_FEEDBACK_DURATION_MS,
@@ -30,7 +42,7 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={copied ? "Copied" : props.accessibilityLabel}
+      accessibilityLabel={copied ? gt("Copied") : props.accessibilityLabel}
       disabled={props.text.length === 0}
       hitSlop={8}
       onLongPress={props.onLongPress}
@@ -38,11 +50,11 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
         try {
           if (props.onCopy) await props.onCopy();
           else if (!(await tryCopyTextWithHaptic(props.text))) {
-            Dialog.alert("Could not copy", "Try again.");
+            Dialog.alert(gt("Could not copy"), gt("Try again."));
             return;
           }
         } catch {
-          Dialog.alert("Could not copy", "Try again.");
+          Dialog.alert(gt("Could not copy"), gt("Try again."));
           return;
         }
         setCopiedAtMs(Date.now());
@@ -59,17 +71,27 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
         opacity: pressed ? 0.52 : 1,
       })}
     >
-      <SymbolView
-        name={
-          copied
-            ? { ios: "checkmark", android: "check" }
-            : { ios: "doc.on.doc", android: "content_copy" }
-        }
-        size={props.iconSize ?? 13}
-        tintColor={copied ? (props.copiedTintColor ?? props.tintColor) : props.tintColor}
-        tintColorClassName={props.tintColor ? undefined : "accent-foreground"}
-        type="monochrome"
-      />
+      {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+      {props.hugeIcons && props.tintColor !== undefined ? (
+        <HugeIcon
+          icon={copied ? CheckIcon : CopyIcon}
+          size={props.iconSize ?? 13}
+          color={props.tintColor}
+        />
+      ) : (
+        /* fork:end no3y-mobile-redesign */
+        <SymbolView
+          name={
+            copied
+              ? { ios: "checkmark", android: "check" }
+              : { ios: "doc.on.doc", android: "content_copy" }
+          }
+          size={props.iconSize ?? 13}
+          tintColor={copied ? (props.copiedTintColor ?? props.tintColor) : props.tintColor}
+          tintColorClassName={props.tintColor ? undefined : "accent-foreground"}
+          type="monochrome"
+        />
+      )}
     </Pressable>
   );
 });

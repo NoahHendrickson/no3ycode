@@ -7,11 +7,8 @@
 import {
   CHATGPT_USAGE_URL,
   collectLimitAccounts,
-  collectExternalUsageLinks,
   collectLimitPools,
-  cursorUsageWindowDetails,
   displayLimitWindows,
-  formatResetsIn,
   type LimitAccount,
   type LimitPool,
   type LimitPoolMember,
@@ -19,10 +16,10 @@ import {
   paceRemainingPercent,
   remainingPercent,
   type ResetCreditChoice,
-  resetCreditChoices,
 } from "@t3tools/shared/usageLimits";
+import { T, useGT, useMessages } from "gt-react";
 import type { Popover as PopoverPrimitive } from "@base-ui/react/popover";
-import { AlertTriangleIcon, ExternalLinkIcon, TicketIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronRightIcon, ExternalLinkIcon, TicketIcon } from "lucide-react";
 import {
   createContext,
   Fragment,
@@ -44,11 +41,19 @@ import { RedactedSensitiveText } from "../settings/RedactedSensitiveText";
 import { Button } from "../ui/button";
 import { OpenAI } from "../Icons";
 import { Alert, AlertTitle } from "../ui/alert";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import { Popover, PopoverCreateHandle, PopoverPopup, PopoverTrigger } from "../ui/popover";
+import { ForkProviderMark, hasForkProviderMark } from "~/custom/icons/ModelPickerProviderGlyph";
 import { ScheduledCard } from "~/custom/scheduled/scheduledPageChrome";
 import { UsageMeter } from "~/custom/UsageMeter";
 import { actionableLimitNotices } from "~/custom/usageLimitNotices";
 import { PaceIcon, ResetCreditDialog, useResetCredit } from "./UsageLimits";
+import {
+  collectExternalUsageLinks,
+  cursorUsageWindowDetails,
+  formatResetsIn,
+  resetCreditChoices,
+} from "@t3tools/shared/usageLimitsCopy";
 
 function accountInitials(email: string): string {
   const [local = "", domain = ""] = email.split("@");
@@ -65,10 +70,11 @@ function accountHue(email: string): number {
 
 function AccountChip({ email }: { readonly email: string }) {
   const hue = accountHue(email);
+  const gt = useGT();
   return (
     <span
       role="img"
-      aria-label={`Account ${accountInitials(email)}`}
+      aria-label={gt("Account {initials}", { initials: accountInitials(email) })}
       className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-3xs leading-none font-semibold"
       style={{ backgroundColor: `oklch(0.85 0.08 ${hue})`, color: `oklch(0.35 0.1 ${hue})` }}
     >
@@ -151,16 +157,18 @@ function SegmentPopover({
   readonly onRedeem: (choice: ResetCreditChoice) => void;
 }) {
   const timestampFormat = usePrimarySettings((settings) => settings.timestampFormat);
+  const gt = useGT();
+  const m = useMessages();
   const remaining = remainingPercent(window);
   const timeLeft = paceRemainingPercent(window, now);
-  const resetsIn = formatResetsIn(window, now);
+  const resetsIn = formatResetsIn(window, now, m, "in");
   const where =
     account.environments.length > 0
       ? account.environments.map((environment) => environment.label).join(", ")
       : account.sourceLabel;
   const choices =
     redeem && account.redeem && account.limits.resetCredits?.availableCount
-      ? resetCreditChoices(account.limits.resetCredits, account.redeem.input, now, true)
+      ? resetCreditChoices(account.limits.resetCredits, account.redeem.input, now, true, m)
       : [];
   return (
     <div className="flex w-72 max-w-[calc(100vw-3rem)] flex-col gap-2.5 text-xs">
@@ -174,30 +182,44 @@ function SegmentPopover({
         {account.email ? (
           <RedactedSensitiveText
             value={account.email}
-            ariaLabel="Toggle account email visibility"
-            revealTooltip="Click to reveal email"
-            hideTooltip="Click to hide email"
+            ariaLabel={gt("Toggle account email visibility")}
+            revealTooltip={gt("Click to reveal email")}
+            hideTooltip={gt("Click to hide email")}
             className="w-fit"
           />
         ) : null}
       </div>
       <div className="flex flex-col gap-1 border-t border-border/60 pt-2.5">
-        {account.plan ? <Row label="Plan">{account.plan}</Row> : null}
+        {account.plan ? (
+          <Row label={gt("Plan", { $context: "subscription plan" })}>{account.plan}</Row>
+        ) : null}
         {where ? (
-          <Row label={account.environments.length > 0 ? "Signed in" : "Via"}>{where}</Row>
+          <Row
+            label={
+              account.environments.length > 0
+                ? gt("Signed in")
+                : gt("Via", { $context: "signed in through a source" })
+            }
+          >
+            {where}
+          </Row>
         ) : null}
       </div>
       <div className="flex flex-col gap-1 border-t border-border/60 pt-2.5">
-        <Row label="Left">{remaining}%</Row>
+        <Row label={gt("Left", { $context: "remaining usage" })}>{remaining}%</Row>
         {window.resetsAt ? (
-          <Row label="Resets">
-            {formatUpcomingTimestamp(window.resetsAt, timestampFormat, now)}
-            {resetsIn ? ` · ${resetsIn.replace("resets in ", "in ")}` : ""}
+          <Row label={gt("Resets", { $context: "when the usage window resets" })}>
+            {formatUpcomingTimestamp(window.resetsAt, timestampFormat, now, undefined, m)}
+            {resetsIn ? ` · ${resetsIn}` : ""}
           </Row>
         ) : null}
-        {timeLeft !== null ? <Row label="Even pace">{timeLeft}% left by now</Row> : null}
+        {timeLeft !== null ? (
+          <Row label={gt("Even pace")}>{gt("{timeLeft}% left by now", { timeLeft })}</Row>
+        ) : null}
         {reset && reset.restoresPercent > 0 ? (
-          <Row label="Restores">+{reset.restoresPercent}% of pool</Row>
+          <Row label={gt("Restores", { $context: "a reset credit restores part of the pool" })}>
+            {gt("+{percent}% of pool", { percent: reset.restoresPercent })}
+          </Row>
         ) : null}
       </div>
       {choices.length > 0 && redeem ? (
@@ -213,7 +235,7 @@ function SegmentPopover({
                   className="ms-auto"
                   onClick={() => onRedeem(choice)}
                 >
-                  {redeem.busy ? "Using…" : choice.actionLabel}
+                  {redeem.busy ? gt("Using…") : choice.actionLabel}
                 </Button>
               ) : null}
             </span>
@@ -240,12 +262,14 @@ function ActiveSegmentPopover({
   payload,
   pools,
   now,
+  compact,
 }: {
   readonly handle: ReturnType<typeof PopoverCreateHandle<SegmentPayload>>;
   readonly actions: RefObject<PopoverPrimitive.Root.Actions | null>;
   readonly payload: SegmentPayload;
   readonly pools: readonly LimitPool[];
   readonly now: number;
+  readonly compact: boolean;
 }) {
   const available = pools.some((pool) =>
     displayLimitWindows(pool).some((window) =>
@@ -254,7 +278,7 @@ function ActiveSegmentPopover({
           member.account.key === payload.account.key &&
           member.window.id === payload.window.id &&
           member.window.kind === payload.window.kind &&
-          Boolean(member.account.redeem) === Boolean(payload.redeem),
+          Boolean(member.account.redeem && !compact) === Boolean(payload.redeem),
       ),
     ),
   );
@@ -296,8 +320,11 @@ function PoolSegment({
   readonly window: LimitPoolMember["window"];
   readonly reset: LimitPoolWindow["resets"][number] | undefined;
   readonly now: number;
+  readonly compact: boolean;
 }) {
-  return account.redeem ? (
+  // The composer's menu is itself a popover, which would stack above the confirm dialog, so
+  // credits are spent from the Usage page only.
+  return account.redeem && !props.compact ? (
     <RedeemableSegment account={account} redeemAt={account.redeem} {...props} />
   ) : (
     <SegmentTriggers account={account} redeem={null} {...props} />
@@ -311,6 +338,7 @@ function RedeemableSegment({
   readonly redeemAt: NonNullable<LimitAccount["redeem"]>;
 }) {
   const redeem = useResetCredit(redeemAt.environmentId);
+  const gt = useGT();
   return (
     <>
       <SegmentTriggers redeem={redeem} {...props} />
@@ -326,7 +354,7 @@ function RedeemableSegment({
       {redeem.busy || redeem.status ? (
         <span role="status" className="order-last basis-full text-xs text-muted-foreground">
           <AccountName account={props.account} className="font-medium text-foreground" />{" "}
-          {redeem.busy ? "Using reset credit…" : redeem.status}
+          {redeem.busy ? gt("Using reset credit…") : redeem.status}
         </span>
       ) : null}
     </>
@@ -339,15 +367,36 @@ function SegmentTriggers({
   reset,
   redeem,
   now,
+  compact,
 }: SegmentPayload & {
   readonly now: number;
+  readonly compact: boolean;
 }) {
   const popover = use(SegmentPopoverContext) ?? undefined;
   const payload: SegmentPayload = { account, window, reset, redeem };
   const remaining = remainingPercent(window);
   const timeLeft = paceRemainingPercent(window, now);
-  const resetsIn = formatResetsIn(window, now);
+  const m = useMessages();
+  const resetsIn = formatResetsIn(window, now, m);
   const credits = account.limits.resetCredits?.availableCount ?? 0;
+  const gt = useGT();
+  const segmentLabel = [
+    gt("{name}: {remaining}% left", {
+      name:
+        account.displayName ?? (account.email ? accountInitials(account.email) : account.driver),
+      remaining,
+    }),
+    resetsIn,
+    timeLeft === null ? null : gt("{timeLeft}% of the window left", { timeLeft }),
+    credits
+      ? gt(
+          "{count, plural, one {{count} reset credit banked} other {{count} reset credits banked}}",
+          { count: credits },
+        )
+      : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
   return (
     <PopoverTrigger
       handle={popover}
@@ -356,14 +405,17 @@ function SegmentTriggers({
       render={
         <button
           type="button"
-          aria-label={`${account.displayName ?? (account.email ? accountInitials(account.email) : account.driver)}: ${remaining}% left${resetsIn ? `, ${resetsIn}` : ""}${timeLeft === null ? "" : `, ${timeLeft}% of the window left`}${credits ? `, ${credits} reset ${credits === 1 ? "credit" : "credits"} banked` : ""}`}
-          className="group/segment flex h-4 min-w-0 flex-1 cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={segmentLabel}
+          className={cn(
+            "group/segment flex min-w-0 flex-1 cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            compact ? "h-3" : "h-4",
+          )}
         />
       }
     >
       <UsageMeter
         remaining={remaining}
-        className="h-1.5 w-full"
+        className={cn("w-full", compact ? "h-1" : "h-1.5")}
         fillClassName="opacity-85 group-hover/segment:opacity-100 group-data-[popup-open]/segment:opacity-100"
       />
     </PopoverTrigger>
@@ -375,21 +427,30 @@ function PoolWindowRow({
   now,
   label,
   description,
+  compact,
 }: {
   readonly pool: LimitPoolWindow;
   readonly now: number;
   readonly label?: string | null | undefined;
   readonly description?: string | undefined;
+  readonly compact: boolean;
 }) {
   const restores = new Map(pool.resets.map((reset) => [reset.member.account.key, reset]));
   // The soonest reset that hands anything back; an untouched account resets to no effect.
   const nextRefill = pool.resets.find((reset) => reset.restoresPercent > 0);
   const nextReset = nextRefill ?? pool.resets[0];
-  const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now) : null;
+  const m = useMessages();
+  const gt = useGT();
+  const resetsIn = nextReset ? formatResetsIn(nextReset.member.window, now, m, "refill") : null;
   const pooled = pool.columns.length > 1;
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
+      <div
+        className={cn(
+          "flex min-w-0 items-center justify-between gap-3",
+          compact ? "text-xs" : "text-sm",
+        )}
+      >
         {/* "Weekly · Fable" reads as one label here; the dot is for inline use. */}
         {label !== null ? (
           <span className="truncate text-foreground">
@@ -399,11 +460,13 @@ function PoolWindowRow({
         <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap tabular-nums">
           {pool.pace ? <PaceIcon pace={pool.pace} /> : null}
           <span className="font-medium text-foreground">{pool.remainingPercent}%</span>
-          <span className="sr-only">left</span>
+          <span className="sr-only">
+            <T context="remaining usage percentage">left</T>
+          </span>
           {resetsIn ? (
             <span className="font-medium text-muted-foreground">
               {pooled && nextRefill ? `+${nextRefill.restoresPercent}% ` : ""}
-              {resetsIn.replace("resets in ", "↻ ")}
+              {resetsIn}
             </span>
           ) : null}
         </span>
@@ -417,12 +480,23 @@ function PoolWindowRow({
               window={member.window}
               reset={restores.get(member.account.key)}
               now={now}
+              compact={compact}
             />
+          ) : pool.kind === "monthly" && member.account.limits.zeroSpendCap ? (
+            <span
+              key={member.account.key}
+              className="flex h-4 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap text-muted-foreground"
+            >
+              {pooled ? (
+                <AccountName account={member.account} className="min-w-0 truncate" />
+              ) : null}
+              {gt("$0 cap")}
+            </span>
           ) : (
             <UsageMeter
               key={member.account.key}
               remaining={null}
-              className="h-1.5 min-w-0 flex-1"
+              className={cn("min-w-0 flex-1", compact ? "h-1" : "h-1.5")}
             />
           ),
         )}
@@ -432,77 +506,173 @@ function PoolWindowRow({
   );
 }
 
-/** One ScheduledCard per provider: mark and name, banked credits, and one row per window. */
-function PoolSection({ pool, now }: { readonly pool: LimitPool; readonly now: number }) {
+/** The composer's limits menu opens these providers; every other one starts collapsed. */
+const COMPACT_EXPANDED_DRIVERS: ReadonlySet<string> = new Set(["codex", "claudeAgent"]);
+
+/**
+ * One card per provider: the provider's mark and name, banked reset credits
+ * across its accounts, then one compact row per window. Compact (the
+ * composer's limits menu) drops the card for a divider between providers,
+ * and folds each provider to its header, Codex and Claude starting open.
+ */
+function PoolSection({
+  pool,
+  now,
+  compact,
+}: {
+  readonly pool: LimitPool;
+  readonly now: number;
+  readonly compact: boolean;
+}) {
   const label = providerClients.get(pool.driver)?.label ?? String(pool.driver);
   const windows = displayLimitWindows(pool);
   const credits = pool.accounts.reduce(
     (total, account) => total + (account.limits.resetCredits?.availableCount ?? 0),
     0,
   );
-  return (
-    <ScheduledCard className="flex flex-col gap-3 p-4">
-      <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+  const gt = useGT();
+  const m = useMessages();
+  const header = (
+    <>
+      {compact && hasForkProviderMark(pool.driver) ? (
+        <span
+          aria-hidden
+          className={cn(
+            "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]",
+            pool.driver === "claudeAgent" && "translate-y-px",
+          )}
+        >
+          <ForkProviderMark driver={pool.driver} />
+        </span>
+      ) : (
         <ProviderInstanceIcon
           driverKind={pool.driver}
           displayName={label}
-          indicatorBackground="var(--background)"
-          className="size-5"
-          iconClassName="size-4 text-foreground/80"
+          indicatorBackground={compact ? "var(--popover)" : "var(--background)"}
+          className={compact ? "size-4" : "size-5"}
+          iconClassName={cn(compact ? "size-3.5" : "size-4", "text-foreground/80")}
         />
-        {label}
-        <span className="ms-auto flex items-center gap-1 text-xs font-normal text-muted-foreground tabular-nums">
-          {credits ? (
-            <span className="inline-flex items-center gap-1">
-              <TicketIcon className="size-3.5" aria-hidden />
-              {credits}
-              <span className="sr-only">reset {credits === 1 ? "credit" : "credits"} banked</span>
+      )}
+      {label}
+      <span className="ms-auto flex items-center gap-1 text-xs font-normal text-muted-foreground tabular-nums">
+        {credits ? (
+          <span className="inline-flex items-center gap-1">
+            <TicketIcon className="size-3.5" aria-hidden />
+            <span aria-hidden>{credits}</span>
+            <span className="sr-only">
+              {gt(
+                "{count, plural, one {{count} reset credit banked} other {{count} reset credits banked}}",
+                { count: credits },
+              )}
             </span>
-          ) : null}
-        </span>
-      </h2>
-      <div className="flex flex-col gap-3">
-        {windows.map((window) => {
-          const details =
-            pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool) : undefined;
-          return (
-            <PoolWindowRow
-              key={`${window.kind}:${window.id}`}
-              pool={window}
-              now={now}
-              label={details?.label}
-              description={details?.description}
+          </span>
+        ) : null}
+        {compact ? (
+          <>
+            {/* collectLimitAccounts drops accounts with no windows, so a pool always has one. */}
+            <span className="group-data-panel-open/provider:hidden">
+              {Math.min(...windows.map((window) => window.remainingPercent))}%
+              <span className="sr-only">
+                {" "}
+                <T context="remaining usage percentage">left</T>
+              </span>
+            </span>
+            <ChevronRightIcon
+              className="size-3.5 group-data-panel-open/provider:rotate-90"
+              aria-hidden
             />
-          );
-        })}
-      </div>
-    </ScheduledCard>
+          </>
+        ) : null}
+      </span>
+    </>
+  );
+  const rows = (
+    <div className={cn("flex flex-col", compact ? "gap-2" : "gap-3")}>
+      {windows.map((window) => {
+        const details =
+          pool.driver === "cursor" ? cursorUsageWindowDetails(window.id, pool, m) : undefined;
+        return (
+          <PoolWindowRow
+            key={`${window.kind}:${window.id}`}
+            pool={window}
+            now={now}
+            label={details?.label}
+            description={details?.description}
+            compact={compact}
+          />
+        );
+      })}
+    </div>
+  );
+  return compact ? (
+    <LimitsCard compact>
+      <Collapsible
+        className="flex flex-col"
+        defaultOpen={COMPACT_EXPANDED_DRIVERS.has(pool.driver)}
+      >
+        <h2>
+          <CollapsibleTrigger className="group/provider flex w-full items-center gap-2 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+            {header}
+          </CollapsibleTrigger>
+        </h2>
+        <CollapsiblePanel animate={false}>
+          <div className="pt-2">{rows}</div>
+        </CollapsiblePanel>
+      </Collapsible>
+    </LimitsCard>
+  ) : (
+    <LimitsCard compact={false} className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">{header}</h2>
+      {rows}
+    </LimitsCard>
+  );
+}
+
+/** A provider's block: a card on the Usage page, a divided section in the compact menu. */
+function LimitsCard({
+  compact,
+  className,
+  children,
+}: {
+  readonly compact: boolean;
+  readonly className?: string;
+  readonly children: ReactNode;
+}) {
+  return compact ? (
+    <section className={cn("px-3 py-2.5", className)}>{children}</section>
+  ) : (
+    <ScheduledCard className={cn("p-4", className)}>{children}</ScheduledCard>
   );
 }
 
 export function UsageLimitsPooled({
   presentations,
   now,
+  compact = false,
 }: {
   readonly presentations: Parameters<typeof collectLimitAccounts>[0];
   readonly now: number;
+  /** The composer's limits menu: providers split by dividers instead of cards, smaller type. */
+  readonly compact?: boolean;
 }) {
+  const gt = useGT();
+  const m = useMessages();
   const [segmentPopover] = useState(() => PopoverCreateHandle<SegmentPayload>());
   const segmentPopoverActions = useRef<PopoverPrimitive.Root.Actions | null>(null);
   const pools = collectLimitPools(collectLimitAccounts(presentations), now);
-  const notices = actionableLimitNotices(presentations);
-  const externalLinks = collectExternalUsageLinks(presentations);
+  const notices = actionableLimitNotices(presentations, m);
+  const externalLinks = collectExternalUsageLinks(presentations, m);
   return (
-    <div className="flex flex-col gap-4">
+    <div className={compact ? "flex flex-col divide-y divide-border" : "flex flex-col gap-4"}>
       {pools.length === 0 && notices.length === 0 && externalLinks.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No provider on the selected environments reports subscription limits.
+        <p className={cn("text-muted-foreground", compact ? "px-3 py-2.5 text-xs" : "text-sm")}>
+          <T>No provider on the selected environments reports subscription limits.</T>
         </p>
       ) : null}
       <SegmentPopoverContext value={segmentPopover}>
         {pools.map((pool) => (
           <Fragment key={pool.driver}>
-            <PoolSection pool={pool} now={now} />
+            <PoolSection pool={pool} now={now} compact={compact} />
           </Fragment>
         ))}
       </SegmentPopoverContext>
@@ -515,14 +685,16 @@ export function UsageLimitsPooled({
               payload={payload}
               pools={pools}
               now={now}
+              compact={compact}
             />
           ) : null
         }
       </Popover>
       {externalLinks.map((link) => (
-        <ScheduledCard
+        <LimitsCard
           key={link.url}
-          className="flex flex-wrap items-center justify-between gap-3 p-4"
+          compact={compact}
+          className="flex flex-wrap items-center justify-between gap-3"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {link.url === CHATGPT_USAGE_URL ? (
@@ -535,7 +707,7 @@ export function UsageLimitsPooled({
               </p>
               {link.url === CHATGPT_USAGE_URL ? (
                 <p className="text-xs text-muted-foreground">
-                  View usage in ChatGPT with your connected account.
+                  <T>View usage in ChatGPT with your connected account.</T>
                 </p>
               ) : link.message ? (
                 <p className="max-w-xl text-xs text-muted-foreground">{link.message}</p>
@@ -547,12 +719,16 @@ export function UsageLimitsPooled({
             size="xs"
             onClick={() => void ensureLocalApi().shell.openExternal(link.url)}
           >
-            Manage usage
+            {gt("Manage usage")}
             <ExternalLinkIcon className="size-3.5" aria-hidden="true" />
           </Button>
-        </ScheduledCard>
+        </LimitsCard>
       ))}
-      {notices.length > 0 ? <LimitNotices notices={notices} /> : null}
+      {notices.length > 0 ? (
+        <div className={cn(compact && "px-3 py-2.5")}>
+          <LimitNotices notices={notices} />
+        </div>
+      ) : null}
     </div>
   );
 }

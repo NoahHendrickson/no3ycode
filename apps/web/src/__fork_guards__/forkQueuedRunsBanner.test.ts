@@ -20,6 +20,9 @@ const banner = read("../custom/ForkQueuedRunsBanner.tsx");
 const stashStore = read("../promptStashStore.ts");
 const commands = read("../../../../packages/client-runtime/src/operations/commands.ts");
 const threadCommands = read("../../../../packages/client-runtime/src/state/threadCommands.ts");
+const mobileThreadDetail = read("../../../mobile/src/features/threads/ThreadDetailScreen.tsx");
+const mobileBanner = read("../../../mobile/fork/No3yQueuedRunsBanner.tsx");
+const mobilePill = read("../../../mobile/fork/No3yStatusPill.tsx");
 
 describe("fork-queued-runs-banner", () => {
   it("mounts the banner in the composer dock, not the timeline footer", () => {
@@ -45,6 +48,15 @@ describe("fork-queued-runs-banner", () => {
     expect(banner).toContain("await moveQueuedRunToStash({");
     expect(stashStore).toContain("unstashEntry: (entryId, evicted) => {");
     expect(banner).toContain('workflow?.canSendNow ? "Send now" : "Steer"');
+  });
+
+  it("puts the no3y iPhone queue above the composer instead of behind the status pill", () => {
+    expect(mobileThreadDetail).toContain("<No3yQueuedRunsBanner");
+    expect(mobileBanner).toContain("useAtomCommand(threadEnvironment.reorderQueuedRun");
+    expect(mobileBanner).toContain('workflow?.canSendNow ? "Send now" : "Steer"');
+    expect(mobileBanner).toContain('title: "Move up"');
+    expect(mobileBanner).toContain("<No3yGlassLayer radius={RADIUS} />");
+    expect(mobilePill).toContain("queuedCount: 0,");
   });
 
   it("keeps the client reorder command that upstream removed", () => {

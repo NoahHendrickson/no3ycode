@@ -5,6 +5,7 @@
 @import "./theme.custom.inlet-menus.css";
 @import "./theme.custom.inlet-peek.css";
 @import "./theme.custom.inlet-black.css";
+@import "./theme.custom.flat-glass-composer.css";
 
 /* Fork palette overlays — see .fork/customizations.yaml#fork-cool-dark-theme
    (and each palette's own id). Kept out of theme.custom.css so a new sibling is a
@@ -78,10 +79,65 @@
   --fork-glass-card-radius: 8px;
 }
 
-/* A section header's icon button (Threads: add, sort, settings; Petals: view, new) holds the
+/* On Flat Glass, match Basic's compact 44px header height (with native macOS
+   traffic lights recentered via forkTopbarHeight.ts). Windows' caption overlay
+   (.wco) keeps the height the OS gives it. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]:not(
+    .wco
+  ) {
+  --workspace-topbar-height: 44px;
+}
+
+/* On Flat Glass, derive the opaque stage ladder from one warm-neutral base
+   (#1f1c1b) using flattened white washes (matching Basic's 4%/8%/12%/16% lift
+   steps) so cards, composer, chips, and borders stay opaque while blending
+   naturally with the stage and unfocused macOS sidebar. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-flat-glass-base: #1f1c1b;
+  --fork-flat-glass-lift-1: color-mix(in srgb, #ffffff 4%, var(--fork-flat-glass-base));
+  --fork-flat-glass-lift-2: color-mix(in srgb, #ffffff 8%, var(--fork-flat-glass-base));
+  --fork-flat-glass-lift-3: color-mix(in srgb, #ffffff 12%, var(--fork-flat-glass-base));
+  --fork-flat-glass-lift-4: color-mix(in srgb, #ffffff 16%, var(--fork-flat-glass-base));
+  --background: var(--fork-flat-glass-base);
+  --app-chrome-background: var(--fork-flat-glass-base);
+  --primary-foreground: var(--fork-flat-glass-base);
+  --card: var(--fork-flat-glass-lift-1);
+  --popover: var(--fork-flat-glass-lift-2);
+  --secondary: var(--fork-flat-glass-lift-2);
+  --muted: var(--fork-flat-glass-lift-2);
+  --accent: var(--fork-flat-glass-lift-2);
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 12%);
+  --sidebar: var(--fork-flat-glass-base);
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-stage-fade: var(--fork-flat-glass-base);
+  --sidebar-control-surface: var(--fork-flat-glass-lift-2);
+  --sidebar-row-hover: var(--fork-flat-glass-lift-1);
+  --sidebar-row-active: var(--fork-flat-glass-lift-2);
+  --sidebar-row-selected: var(--fork-flat-glass-lift-2);
+  --fork-glass-panel: var(--fork-flat-glass-base);
+  --fork-pill-border: rgb(255 255 255 / 8%);
+  --fork-pill-hover: var(--fork-flat-glass-lift-2);
+  --fork-composer-vessel-bg: var(--fork-flat-glass-lift-2);
+  --fork-composer-bg: color-mix(in srgb, #ffffff 4%, var(--fork-flat-glass-lift-2));
+  --fork-composer-border: rgb(255 255 255 / 8%);
+  --fork-composer-border-focus: rgb(255 255 255 / 16%);
+  --fork-context-chip-bg: var(--fork-flat-glass-lift-3);
+  --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
+  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#312e2d) flattens to
+     #a6a5a5, the solid fallback it replaces. */
+  --fork-composer-control-ink: rgb(255 255 255 / 57%);
+}
+
+/* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
    panel's selected fill while its menu is open, so the menu names the button it came from. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
-  :is([data-fork-projects-row], [data-fork-bots-row])
+  :is(
+    [data-fork-projects-row],
+    [data-fork-bots-row],
+    [data-fork-status-section-header],
+    [data-fork-project-section-header]
+  )
   button[data-popup-open] {
   background-color: var(--sidebar-row-selected);
   color: var(--sidebar-foreground);
@@ -105,6 +161,28 @@
   [data-fork-thread-started]
   [data-chat-header] {
   box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-glass-tabs-line: var(--border);
+}
+
+/* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
+   digest cards and the scheduled editor. The thread composer paints no vessel and the draft
+   draws its own (theme.custom.flat-glass-composer.css, the draft-hero block below). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-bot-digest], [data-scheduled-composer])
+  [data-fork-composer-vessel] {
+  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is(
+    [data-fork-thread-started] [data-chat-header],
+    [data-fork-stage-card-title],
+    [data-right-panel-tabbar]
+  ) {
+  box-shadow: inset 0 -1px 0 var(--border);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
@@ -143,12 +221,90 @@
   --sidebar-row-selected: #2c3134;
 }
 
+/* On Flat Glass, non-Liquid-Glass sidebars (floating narrow overlay, collapsed
+   peek, web, Linux, macOS < 26) stay on the warm-neutral #1f1c1b ladder instead
+   of falling back to cool blue-grey #181b1e. Docked macOS Liquid Glass overrides
+   this below with higher specificity. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-sidebar-version="v2"] {
+  --background: var(--fork-flat-glass-base);
+  --card: var(--fork-flat-glass-base);
+  --sidebar: var(--fork-flat-glass-base);
+  --border: rgb(255 255 255 / 8%);
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-stage-fade: var(--fork-flat-glass-base);
+  --muted: var(--fork-flat-glass-lift-2);
+  --accent: var(--fork-flat-glass-lift-2);
+  --sidebar-control-surface: var(--fork-flat-glass-lift-2);
+  --sidebar-row-hover: var(--fork-flat-glass-lift-1);
+  --sidebar-row-active: var(--fork-flat-glass-lift-2);
+  --sidebar-row-selected: var(--fork-flat-glass-lift-2);
+}
+
 /* Glass's top sidebar rows (Search, New agent, Usage, Automations, …) are
    pills, hovered or active, whatever the 3D glass setting. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
   :is([data-sidebar-version="v2"], [data-app-modal])
   [data-fork-chrome-row] {
   border-radius: 9999px;
+}
+
+/* On Flat Glass, list rows across the sidebar (threads, top chrome rows,
+   active split pairs, project group headers, collapsed thread tabs), menus,
+   selects, command palette items, Petals drawer rows, the model picker search
+   field, and the draft launchpad cards share one 8px continuous (iOS-smoothed)
+   corner radius. CSS corner-shape stays inside border-radius (unlike iOS/Figma,
+   which extend ~1.5x along the edge), so engines supporting superellipse(1.6)
+   bump the token to 12px (18px on the concentric model picker shell) while
+   others fall back to 8px (14px). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-flat-radius: 8px;
+  --fork-flat-model-picker-radius: 14px;
+}
+
+@supports (corner-shape: superellipse(1.6)) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+    --fork-flat-radius: 12px;
+    --fork-flat-model-picker-radius: 18px;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  &
+    :is([data-sidebar-version="v2"], [data-app-modal])
+    :is(
+      [data-fork-thread-row],
+      [data-fork-chrome-row],
+      li[data-fork-split-pair] > ul,
+      [data-testid="sidebar-v2-project-group-collapse"]
+    ),
+  & [data-fork-thread-tabs] [data-fork-thread-tab],
+  &
+    :is(
+      [data-slot="menu-item"],
+      [data-slot="menu-checkbox-item"],
+      [data-slot="menu-radio-item"],
+      [data-slot="menu-sub-trigger"],
+      [data-slot="select-item"],
+      [data-slot="combobox-item"],
+      [data-slot="command-item"],
+      [data-testid="bot-threads-row"]
+    ),
+  & [data-fork-model-picker="list"] > label,
+  & [data-fork-draft-launchpad-card] button {
+    border-radius: var(--fork-flat-radius);
+    corner-shape: superellipse(1.6);
+  }
+
+  /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
+  & [data-sidebar-version="v2"] [data-fork-petals-grid] [data-fork-thread-row] {
+    border-radius: calc(var(--fork-flat-radius) + 4px);
+  }
+
+  & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
+    border-radius: var(--fork-flat-model-picker-radius);
+    corner-shape: superellipse(1.6);
+  }
 }
 
 /* Project chrome — the Projects row, the recent-projects strip, every project
@@ -1166,8 +1322,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   :is(
     [data-fork-composer-vessel],
-    [data-fork-composer-context-row]
-      :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip])
+    [data-fork-composer-context-row] :is(button, [data-slot="button"], [data-fork-context-chip])
   ) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -1245,16 +1400,12 @@
     :is(
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
-      [data-fork-composer-control-row]
-        :is(button, [data-slot="button"], [data-fork-context-chip]):not(
-          [data-fork-composer-mode-chip],
-          [data-fork-pr-chip]
-        )
+      [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
     color: #fff;
   }
 
-  & :is([data-chat-provider-model-picker-traits], [data-fork-composer-mode-chip]) {
+  & [data-chat-provider-model-picker-traits] {
     color: rgb(255 255 255 / 70%);
   }
 }
@@ -1508,13 +1659,353 @@
   border-color: rgb(210 210 210 / 42%);
 }
 
+/* ---------------------------------------------------------------------------
+   macOS 26+ native Liquid Glass under the docked sidebar only — see
+   `.fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy`.
+
+   When the main process mounts AppKit's `NSGlassEffectView` strictly behind
+   the docked sidebar (ForkLiquidGlass.ts), `forkSidebarVibrancy.ts` stamps
+   `data-fork-sidebar-vibrancy="liquid-glass"` instead of `"true"`. Every
+   whole-window vibrancy rule above is gated on `="true"`, so the chat stage,
+   stage card, composer, popups and modals automatically keep their opaque
+   Glass fills while only the docked sidebar goes clear over the live glass. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  body {
+  background-color: transparent !important;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  :is([data-slot="sidebar-wrapper"], [data-slot="sidebar-gap"], [data-slot="sidebar-container"]) {
+  background: transparent;
+}
+
+/* No backdrop-filter blurs on screen over the native glass (the "NO backdrop-filter" note
+   above), so a popup's frost over the sidebar left the rows under it sharp. A popup wholly over
+   the docked sidebar has the page cut away beneath it (forkGlassPopupCutout.ts) and paints
+   nothing, so it shows the sidebar's own glass, which follows the wallpaper and window focus. One
+   reaching past the sidebar is solid in the sidebar's colour instead: on Flat Glass the glass as
+   measured on screen over its #1f1c1b backing (forkSidebarVibrancy.ts), on Full Glass its
+   backing with a 4% lift. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-fork-liquid-glass-popup] {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: color-mix(in srgb, #ffffff 4%, #141618);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  --fork-liquid-glass-sidebar: #2a2324;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  :is(
+    [data-fork-liquid-glass-popup="solid"],
+    /* A closing tooltip gives its hole back before it fades, so it fades out solid. */
+    [data-slot="tooltip-popup"][data-fork-liquid-glass-popup="glass"][data-ending-style]
+  ) {
+  background: var(--fork-liquid-glass-sidebar);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-wrapper"]:not([data-fork-sidebar-overlay="true"]):not(
+    [data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
+  )
+  [data-sidebar-version="v2"] {
+  --background: transparent;
+  --card: transparent;
+  --sidebar: transparent;
+  --sidebar-stage-fade: transparent;
+  --border: rgb(255 255 255 / 12%);
+  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-icon-color: #8a8a8a;
+  --contrast-sidebar-foreground: #e8e8e8;
+  --contrast-sidebar-muted-foreground: #d0d4d6;
+  --sidebar-control-surface: rgb(255 255 255 / 8%);
+  --sidebar-row-hover: rgb(255 255 255 / 6%);
+  --sidebar-row-active: rgb(255 255 255 / 10%);
+  --sidebar-row-selected: rgb(255 255 255 / 8%);
+  --accent: rgb(255 255 255 / 10%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-footer"] {
+  --fork-music-card: rgb(255 255 255 / 6%);
+
+  & [data-fork-music-strip] {
+    --fork-music-step: rgb(255 255 255 / 8%);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-app-sidebar] {
+  --fork-sidebar-rule: color-mix(in srgb, var(--contrast-sidebar-foreground) 12%, transparent);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-container"][data-sidebar-version="v2"] {
+  border-color: rgb(255 255 255 / 16%);
+}
+
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
-   track whatever the 3D setting, so they sit outside its gates in this sheet. The chip's
-   corner is calc(var(--radius-sm) - 2px), concentric inside the 2px inset; the
-   track's rounded-sm is inlined by @theme inline, so it takes the radius too. */
-:root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+   track in Full 3D; Flat Glass switches every tab strip to Basic's 8px/6px
+   translucent glass strip below. */
+:root[data-fork="noahhendrickson-t3code"]:not(
+    [data-fork-glass-3d="off"]
+  ).dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-inset"]
   [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
   --radius-sm: 12px;
   border-radius: 12px;
+}
+
+/* On Flat Glass, segmented tab strips (Code / Chat, menu tabs, page tabs,
+   segmented ToggleGroup) match Basic's geometry (2px inset, 8px track, 6px
+   tabs) using translucent white washes so Liquid Glass shines through. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: rgb(255 255 255 / 8%);
+
+  & > * {
+    border-radius: 6px;
+    background-clip: border-box;
+    box-shadow: none;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    font-weight: 400;
+
+    &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
+      background-color: rgb(255 255 255 / 4%);
+    }
+
+    &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
+      background-color: rgb(255 255 255 / 0%);
+    }
+
+    &[data-pressed] {
+      border-color: rgb(255 255 255 / 8%);
+      background-color: rgb(255 255 255 / 12%);
+    }
+
+    &:focus-visible {
+      outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
+    }
+  }
+
+  & > :not([aria-label], [data-fork-music-strip] *) {
+    padding-inline: 6px;
+  }
+
+  & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+}
+
+/* On Flat Glass, a new-agent draft hides the header's breadcrumb and panel
+   controls (matching Basic), keeping the row as the window's drag strip. A
+   split pane keeps its header so its close button stays reachable. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header] {
+  background: none;
+
+  & > * {
+    visibility: hidden;
+  }
+}
+
+/* The Flat Glass new-agent stage's glass inner glow (Figma no3y-code 13:3284, "Rays"): a broad
+   lift up from the foot, a softer one down from the top and a bright 1px rim, over the picture
+   whichever draws it (DOM or the native Liquid Glass layer beneath the page). Always painted;
+   only its opacity moves, on the picture's 400ms clock, so the first send fades it with the
+   picture. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow:
+    inset 0 -4px 16px rgb(255 255 255 / 25%),
+    inset 0 8px 8px rgb(255 255 255 / 12%),
+    inset 0 1px 2px rgb(255 255 255 / 50%);
+  opacity: 0;
+  transition: opacity 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away]::before {
+    transition: none;
+  }
+}
+
+/* On Flat Glass, the new-agent draft composer matches Figma 19:6831's glass
+   surfaces: a 16% black vessel blurred at 100px Figma (50px CSS) behind a
+   subtle 16% white inside stroke, an 8% white prompt well with an 8% white
+   inside stroke, white placeholder/footer ink, and plain ghost mode controls.
+   Applies across every new-agent background without touching Full 3D. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-composer-overlay="true"][data-draft-hero] {
+  --fork-composer-vessel-bg: rgb(0 0 0 / 16%);
+  --fork-composer-bg: rgb(255 255 255 / 8%);
+  --fork-composer-border: rgb(255 255 255 / 8%);
+  --fork-composer-border-focus: rgb(255 255 255 / 16%);
+  --fork-composer-control-ink: #ffffff;
+  --fork-composer-control-hover: rgb(255 255 255 / 10%);
+  --fork-context-chip-bg: rgb(0 0 0 / 16%);
+  --fork-context-chip-bg-hover: rgb(0 0 0 / 26%);
+
+  & [data-fork-composer-vessel] {
+    position: relative;
+    box-shadow: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+      pointer-events: none;
+    }
+  }
+
+  &
+    [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
+    + [data-fork-composer-vessel]::after {
+    box-shadow:
+      inset 1px 0 0 rgb(255 255 255 / 16%),
+      inset -1px 0 0 rgb(255 255 255 / 16%),
+      inset 0 -1px 0 rgb(255 255 255 / 16%);
+  }
+
+  & [data-fork-composer-box] .text-placeholder {
+    color: #ffffff;
+  }
+
+  &
+    :is(
+      [data-fork-composer-action="attach"],
+      [data-fork-composer-action="dictate"],
+      [data-chat-provider-model-picker-traits],
+      [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
+    ) {
+    color: #ffffff;
+  }
+
+  & [data-fork-draft-launchpad-card] {
+    --card: rgb(0 0 0 / 16%);
+    --contrast-border: rgb(255 255 255 / 12%);
+    --contrast-foreground: #ffffff;
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+    /* Folder glyphs: the glass's quiet ink, so they tint with the picture under the card. */
+    --contrast-icon-muted: rgb(255 255 255 / 65%);
+    --accent: rgb(255 255 255 / 10%);
+    --contrast-accent-foreground: #ffffff;
+    background: rgb(0 0 0 / 16%);
+    border-color: rgb(255 255 255 / 16%);
+  }
+
+  & [data-fork-composer-usage-drawer] {
+    --contrast-border: rgb(255 255 255 / 12%);
+    --contrast-foreground: #ffffff;
+    --contrast-muted-foreground: rgb(255 255 255 / 85%);
+    --muted: rgb(255 255 255 / 16%);
+    --accent: rgb(255 255 255 / 10%);
+    --contrast-accent-foreground: #ffffff;
+    box-shadow:
+      inset 1px 1px 0 rgb(255 255 255 / 16%),
+      inset -1px 0 0 rgb(255 255 255 / 16%);
+  }
+}
+
+/* On opaque stages (macOS Liquid Glass and web), real backdrop-filter blurs
+   both the portrait and Settings pictures directly, replacing the portrait's
+   baked frost copy on the Flat Glass draft composer. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"]:not(
+    [data-fork-sidebar-vibrancy="true"]
+  ).dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]
+  :is(
+    [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+    [data-fork-composer-usage-drawer],
+    [data-fork-draft-launchpad-card]
+  ) {
+  background: var(--fork-composer-vessel-bg);
+  clip-path: none;
+  -webkit-backdrop-filter: blur(50px);
+  backdrop-filter: blur(50px);
+
+  &::before {
+    content: none;
+  }
+}
+
+/* Native macOS Liquid Glass behind the Flat Glass new-agent composer and
+   launchpad (forkDraftLiquidGlass.ts): clear the DOM backdrop and card fills
+   so the native backdrop image + NSGlassEffectView cards behind Chromium show
+   through while composer text and controls stay crisp on top. Split panes keep
+   their DOM backdrop and CSS blur fallback. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-slot="sidebar-inset"], [data-fork-workspace-root]) {
+  background: transparent;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]:not([data-fork-split-pane] *)
+  [data-fork-opaque-backdrop] {
+  opacity: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]:not([data-fork-split-pane] *)
+  [data-chat-composer-overlay="true"][data-draft-hero] {
+  --fork-composer-vessel-bg: transparent;
+  --fork-composer-bg: rgb(255 255 255 / 6%);
+  --fork-composer-border: rgb(255 255 255 / 10%);
+  --fork-composer-border-focus: rgb(255 255 255 / 18%);
+
+  &
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
+      [data-fork-composer-usage-drawer]
+    ) {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  & [data-fork-composer-vessel]::after {
+    content: none;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  body
+  .dropdown-glass[data-fork-draft-glass-popup="true"] {
+  --contrast-muted-foreground: rgb(255 255 255 / 72%);
+  --contrast-border: rgb(255 255 255 / 14%);
+  /* The page is cut away beneath it (forkGlassPopupCutout.ts), so the native card is the menu. */
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

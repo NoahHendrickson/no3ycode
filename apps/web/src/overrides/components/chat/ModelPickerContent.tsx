@@ -15,6 +15,7 @@
  * or Shift+Enter toggles a model into `selectedModels`) works the same way,
  * and its provider-cycling shortcuts step the provider tabs.
  */
+import { T, useGT, useLocale, useMessages } from "gt-react";
 import {
   ANTIGRAVITY_DEFAULT_MODEL,
   type ProviderInstanceId,
@@ -24,9 +25,13 @@ import {
 } from "@t3tools/contracts";
 import { resolveSelectableModel } from "@t3tools/shared/model";
 import { useAtomValue } from "@effect/atom-react";
-import { formatProviderUpdateRequiredNotice } from "@t3tools/client-runtime/providerUpdateRequiredModels";
+import {
+  formatProviderUpdateRequiredNotice,
+  providerUpdateChannelLags,
+} from "@t3tools/client-runtime/providerUpdateRequiredModels";
+import { groupModelsBySubProvider } from "@t3tools/client-runtime/providerSubProviders";
 import { useNavigate } from "@tanstack/react-router";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { CheckIcon, ChevronDownIcon, HeartIcon, SearchIcon, StarIcon } from "lucide-react";
 import { getProviderStatusMessage, hasProviderSetup } from "./ProviderStatusBanner";
@@ -39,6 +44,7 @@ import { Badge } from "../ui/badge";
 import { Kbd } from "../ui/kbd";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { isCommandPaletteOpen } from "../../commandPaletteBus";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { registerModelPickerContent } from "../../modelPickerVisibility";
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import {
@@ -55,6 +61,7 @@ import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
+import { MenuIconTab, MenuTabs } from "~/custom/Tabs";
 import {
   isProviderInstancePickerReady,
   isProviderInstancePickerVisible,
@@ -62,6 +69,8 @@ import {
   type ProviderInstanceEntry,
 } from "../../providerInstances";
 import { providerModelKey, sortProviderModelItems } from "../../modelOrdering";
+import { hasRuntimeModelCatalog } from "../../providerModels";
+import { modelPickerSubProviderSectionKey } from "./modelPickerKeys";
 
 type ModelPickerItem = {
   slug: string;
@@ -108,9 +117,7 @@ function shouldIncludeModelPickerOption(input: {
   if (isProviderInstancePickerReady(input.entry)) return true;
   return (
     input.entry.enabled &&
-    (input.entry.driverKind === "opencode" ||
-      input.entry.driverKind === "antigravity" ||
-      input.entry.driverKind === "cursor") &&
+    hasRuntimeModelCatalog(input.entry.driverKind) &&
     input.entry.instanceId === input.activeInstanceId &&
     input.option.slug === input.activeModel &&
     input.option.isUnavailable === true
@@ -193,8 +200,6 @@ const EMPTY_MODEL_JUMP_LABELS = new Map<string, string>();
 
 /** Every row shares one shape: 32px, 4px corners, 12px medium label. */
 const ROW_CLASS = "h-8 min-h-8 rounded-[4px] px-2 py-0 text-xs font-medium sm:min-h-8 sm:text-xs";
-/** A provider tab: a 32px square, so the rail lines up with the search field and rows. */
-const TAB_CLASS = "relative size-8 min-h-8 justify-center rounded-[4px] p-0 sm:min-h-8";
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
   "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100";
@@ -225,6 +230,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   /** The search field; a Menu has no `initialFocus`, so this content focuses it itself. */
   searchInputRef: RefObject<HTMLInputElement | null>;
 }) {
+  const gt = useGT();
+  const messages = useMessages();
+  const locale = useLocale();
   const {
     searchInputRef,
     keybindings: providedKeybindings,
@@ -280,6 +288,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     ) &&
     !isProviderInstancePickerReady(activeEntry);
 
+  const coarsePointer = useMediaQuery({ pointer: "coarse" });
   const focusSearchInput = () => {
     searchInputRef.current?.focus({ preventScroll: true });
   };
@@ -288,6 +297,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   // after it does, so typing searches straight away.
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- moves DOM focus to the search field after the menu focuses its popup on open
   useLayoutEffect(() => {
+    // Touch opens on the popup itself so the on-screen keyboard stays down until the search
+    // is tapped.
+    if (window.matchMedia("(pointer: coarse)").matches) return;
     focusSearchInput();
     const frame = window.requestAnimationFrame(focusSearchInput);
     const timeout = window.setTimeout(focusSearchInput, 0);
@@ -315,11 +327,14 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   // and driver kind so a row renders its glyph without another lookup.
   const flatModels = (() => {
     const out: ModelPickerItem[] = [];
+    const seenKeys = new Set<string>();
     for (const [instanceId, models] of modelOptionsByInstance) {
       const entry = entryByInstanceId.get(instanceId);
       if (!entry) continue;
       for (const model of models) {
+        const key = providerModelKey(instanceId, model.slug);
         if (
+          seenKeys.has(key) ||
           !shouldIncludeModelPickerOption({
             entry,
             option: model,
@@ -329,6 +344,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         ) {
           continue;
         }
+        seenKeys.add(key);
         out.push({
           slug: model.slug,
           name: model.name,
@@ -418,8 +434,55 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       { favoriteModelKeys: favoritesSet, groupFavorites: true, instanceOrder: [] },
     );
     return {
+      all: models,
       current: models.filter((model) => !isLegacyModel(model)),
       legacy: models.filter(isLegacyModel),
+    };
+  };
+
+  // The thread's backend opens expanded, so its models show without a click.
+  const [expandedSubProviderKeys, setExpandedSubProviderKeys] = useState(
+    () =>
+      new Set<string>(
+        activeModel?.subProvider
+          ? [modelPickerSubProviderSectionKey(props.activeInstanceId, activeModel.subProvider)]
+          : [],
+      ),
+  );
+  const toggleSubProviderSection = (key: string) => {
+    setExpandedSubProviderKeys((expanded) => {
+      const next = new Set(expanded);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  };
+  // A provider whose models run on several backends, such as fx, lists each
+  // backend as a collapsible heading. Search and Favorites stay flat.
+  const subProviderSectionsFor = (instanceId: ProviderInstanceId) => {
+    const subProviders = entryByInstanceId.get(instanceId)?.snapshot.subProviders;
+    if (!subProviders?.length) return null;
+    const { ungrouped, groups } = groupModelsBySubProvider(
+      modelsForInstance(instanceId).all,
+      subProviders,
+      (model) => model.subProvider,
+    );
+    const sections = groups.map(({ subProvider, models }) => {
+      const key = modelPickerSubProviderSectionKey(instanceId, subProvider.name);
+      return {
+        key,
+        name: subProvider.name,
+        unavailableReason: subProvider.unavailableReason,
+        models,
+        isExpanded: expandedSubProviderKeys.has(key),
+      };
+    });
+    return {
+      ungrouped,
+      sections,
+      visible: [
+        ...ungrouped,
+        ...sections.flatMap((section) => (section.isExpanded ? section.models : [])),
+      ],
     };
   };
 
@@ -493,6 +556,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     setSearchQuery("");
     setStoredScope(next);
     setShowLegacy(options?.showLegacy ?? false);
+    // Focusing the search on touch raises the on-screen keyboard on every provider tap.
+    if (window.matchMedia("(pointer: coarse)").matches) return;
     window.requestAnimationFrame(focusSearchInput);
     window.setTimeout(focusSearchInput, 0);
   };
@@ -521,7 +586,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     });
     selectScope(next);
     announce(
-      next === "favorites" ? "Favorites" : (entryByInstanceId.get(next)?.displayName ?? next),
+      next === "favorites" ? gt("Favorites") : (entryByInstanceId.get(next)?.displayName ?? next),
       "model-picker",
     );
   };
@@ -531,6 +596,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   const jumpModels = (() => {
     if (isSearching) return searchResults;
     if (scope === "favorites") return favoriteModels;
+    const subProviderSections = subProviderSectionsFor(scope);
+    if (subProviderSections) return subProviderSections.visible;
     const { current, legacy } = modelsForInstance(scope);
     return showLegacy ? [...current, ...legacy] : current;
   })();
@@ -593,7 +660,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       const name = flatModels.find(
         (item) => item.slug === selectedSlug && item.instanceId === target.instanceId,
       )?.name;
-      announce(`Model: ${name ?? selectedSlug}`, "model-picker");
+      announce(gt("Model: {name}", { name: name ?? selectedSlug }), "model-picker");
     };
     window.addEventListener("keydown", onWindowKeyDown, true);
     return () => window.removeEventListener("keydown", onWindowKeyDown, true);
@@ -657,20 +724,27 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   // any of them; a provider's list explains its own.
   const renderUpdateRequiredNotices = (entries: ReadonlyArray<ProviderInstanceEntry>) =>
     entries.flatMap((entry) => {
-      const notice = formatProviderUpdateRequiredNotice(entry.snapshot, searchQuery);
+      const notice = formatProviderUpdateRequiredNotice(
+        entry.snapshot,
+        searchQuery,
+        messages,
+        locale,
+      );
       return notice
         ? [
             <div key={`update:${entry.instanceId}`} className="px-2 py-1.5 text-xs leading-snug">
               <p className="text-muted-foreground">{notice}</p>
-              <MenuItem
-                className={cn(ROW_CLASS, "mt-1 -mx-2")}
-                onClick={() => {
-                  props.onRequestClose?.();
-                  void navigate({ to: "/settings/providers" });
-                }}
-              >
-                Provider settings
-              </MenuItem>
+              {providerUpdateChannelLags(entry.snapshot, searchQuery) ? null : (
+                <MenuItem
+                  className={cn(ROW_CLASS, "mt-1 -mx-2")}
+                  onClick={() => {
+                    props.onRequestClose?.();
+                    void navigate({ to: "/settings/providers" });
+                  }}
+                >
+                  <T>Provider settings</T>
+                </MenuItem>
+              )}
             </div>,
           ]
         : [];
@@ -711,7 +785,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         ) : null}
         {model.isUnavailable ? (
           <Badge variant="outline" size="sm">
-            Unavailable
+            <T context="badge on a model that cannot be selected">Unavailable</T>
           </Badge>
         ) : null}
       </>
@@ -756,7 +830,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             variant="ghost-muted"
             size="icon-xs"
             tabIndex={-1}
-            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            aria-label={isFavorite ? gt("Remove from favorites") : gt("Add to favorites")}
             className={cn(
               HOVER_REVEAL_CLASS,
               // No hover on touch: the star stays shown, or tapping a row's
@@ -795,8 +869,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     />
   );
 
-  /** One of the rail's tabs. It sets the scope rather than choosing a model,
-      so it never closes the menu. */
+  /** One of the top bar's provider tabs. It sets the scope rather than choosing
+      a model, so it never closes the menu. */
   const renderScopeTab = (input: {
     target: ModelPickerScope;
     icon: ReactNode;
@@ -806,37 +880,38 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   }) => {
     const isSelected = scope === input.target;
     const holdsCurrentModel = !isSelected && input.target === props.activeInstanceId;
-    // The tab itself is the trigger: the menu moves focus to the item, so a
-    // trigger inside it would only ever open on hover.
     return (
       <Tooltip key={input.target}>
         <TooltipTrigger
           render={
-            <MenuItem
+            <MenuIconTab
+              value={input.target}
               disabled={input.disabled}
-              closeOnClick={false}
               aria-label={holdsCurrentModel ? `${input.title} (current model)` : input.title}
               aria-current={isSelected ? "true" : undefined}
               data-model-picker-provider={input.target}
+              // A pick goes through onValueChange; clicking the open tab again
+              // only lands here, and still clears the search back to its list.
+              onClick={() => {
+                if (isSelected && !input.disabled) selectScope(input.target);
+              }}
               className={cn(
-                TAB_CLASS,
-                isSelected && "bg-foreground/8",
+                "relative aspect-auto min-w-7 flex-1",
                 input.disabled && "data-disabled:pointer-events-auto",
               )}
-              onClick={() => selectScope(input.target)}
-            />
+            >
+              {input.icon}
+              {holdsCurrentModel ? (
+                // Where the current model lives, when the list shows another scope.
+                <span
+                  className="pointer-events-none absolute top-1 right-1 size-1.5 rounded-full bg-foreground/60"
+                  aria-hidden
+                />
+              ) : null}
+            </MenuIconTab>
           }
-        >
-          {input.icon}
-          {holdsCurrentModel ? (
-            // Where the current model lives, when the list shows another scope.
-            <span
-              className="pointer-events-none absolute top-1 right-1 size-1.5 rounded-full bg-foreground/60"
-              aria-hidden
-            />
-          ) : null}
-        </TooltipTrigger>
-        <TooltipPopup side="left" sideOffset={8} align="center" className={TOOLTIP_CLASS}>
+        />
+        <TooltipPopup side="top" sideOffset={6} align="center" className={TOOLTIP_CLASS}>
           {input.title}
         </TooltipPopup>
       </Tooltip>
@@ -860,31 +935,96 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       target: entry.instanceId,
       icon: renderProviderGlyph(entry),
       title: isContextDisabled
-        ? `${entry.displayName} is unavailable in this thread. Start a new thread to switch providers.`
+        ? gt("{provider} is unavailable in this thread. Start a new thread to switch providers.", {
+            provider: entry.displayName,
+          })
         : describeUnavailableInstance(entry),
       disabled: isDisabled,
     });
   };
 
-  /** The provider tabs, top to bottom. They follow the list in the menu's
-      arrow order, so ArrowDown from the search field reaches the models first.
-      Capped at the list column's tallest, so many providers scroll here
-      instead of growing the popup. */
-  const renderProviderRail = () => (
+  /** Horizontal provider tabs above the search field, using the fork's segmented
+      MenuTabs strip so the tabs stay in the menu's keyboard navigation. */
+  const renderProviderTabs = () => (
     <div
-      role="group"
-      aria-label="Providers"
-      className="flex max-h-92 shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain border-e border-border px-1 pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex shrink-0 items-center overflow-x-auto overscroll-contain px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       data-fork-model-picker="providers"
     >
-      {renderScopeTab({
-        target: "favorites",
-        title: "Favorites",
-        icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
-      })}
-      {providerEntries.map(renderProviderTab)}
+      <MenuTabs
+        size="md"
+        aria-label="Providers"
+        value={scope}
+        onValueChange={(next) => {
+          if (typeof next === "string") selectScope(next as ModelPickerScope);
+        }}
+        className="min-w-full"
+      >
+        {renderScopeTab({
+          target: "favorites",
+          title: gt("Favorites"),
+          icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
+        })}
+        {providerEntries.map(renderProviderTab)}
+      </MenuTabs>
     </div>
   );
+
+  const renderSubProviderSection = (section: {
+    key: string;
+    name: string;
+    unavailableReason: string | undefined;
+    models: ReadonlyArray<ModelPickerItem>;
+    isExpanded: boolean;
+  }) => {
+    const unavailable = section.unavailableReason !== undefined;
+    const label = (
+      <>
+        <span className="min-w-0 truncate">{section.name}</span>
+        {unavailable ? (
+          <Badge variant="outline" size="sm">
+            {gt("Unavailable", { $context: "backend cannot be used right now" })}
+          </Badge>
+        ) : null}
+      </>
+    );
+    return (
+      <Fragment key={section.key}>
+        <MenuItem
+          closeOnClick={false}
+          disabled={unavailable}
+          aria-expanded={unavailable ? undefined : section.isExpanded}
+          className={cn(ROW_CLASS, "gap-2", unavailable && "data-disabled:pointer-events-auto")}
+          onClick={() => toggleSubProviderSection(section.key)}
+        >
+          {unavailable ? (
+            <Tooltip>
+              <TooltipTrigger render={<span className="flex min-w-0 flex-1 items-center gap-2" />}>
+                {label}
+              </TooltipTrigger>
+              <TooltipPopup side="left" align="center" className={TOOLTIP_CLASS}>
+                {section.unavailableReason}
+              </TooltipPopup>
+            </Tooltip>
+          ) : (
+            <>
+              <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
+              <span className="shrink-0 font-normal text-muted-foreground/70">
+                {section.models.length}
+              </span>
+              <ChevronDownIcon
+                className={cn(
+                  "size-4 shrink-0 transition-transform",
+                  section.isExpanded && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </>
+          )}
+        </MenuItem>
+        {section.isExpanded ? section.models.map((model) => renderModelItem(model, false)) : null}
+      </Fragment>
+    );
+  };
 
   const renderInstanceModels = (entry: ProviderInstanceEntry) => {
     const { instanceId } = entry;
@@ -892,30 +1032,42 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     const needsSetup =
       props.onOpenProviderSetup !== undefined &&
       shouldOfferModelPickerSetup(entry, modelOptionsByInstance.get(instanceId) ?? []);
+    const subProviderSections = subProviderSectionsFor(instanceId);
     return (
       <>
-        {current.map((model) => renderModelItem(model, false))}
-        {legacy.length > 0 ? (
-          <MenuItem
-            closeOnClick={false}
-            aria-expanded={showLegacy}
-            data-model-picker-legacy-toggle="true"
-            className={cn(ROW_CLASS, "gap-2 text-muted-foreground")}
-            onClick={() => setShowLegacy((shown) => !shown)}
-          >
-            <span className="min-w-0 flex-1 truncate">Legacy models</span>
-            <span className="shrink-0 font-normal text-muted-foreground/70">{legacy.length}</span>
-            <ChevronDownIcon
-              className={cn("size-4 shrink-0 transition-transform", showLegacy && "rotate-180")}
-              aria-hidden
-            />
-          </MenuItem>
-        ) : null}
-        {showLegacy ? legacy.map((model) => renderModelItem(model, false)) : null}
+        {subProviderSections ? (
+          <>
+            {subProviderSections.ungrouped.map((model) => renderModelItem(model, false))}
+            {subProviderSections.sections.map(renderSubProviderSection)}
+          </>
+        ) : (
+          <>
+            {current.map((model) => renderModelItem(model, false))}
+            {legacy.length > 0 ? (
+              <MenuItem
+                closeOnClick={false}
+                aria-expanded={showLegacy}
+                data-model-picker-legacy-toggle="true"
+                className={cn(ROW_CLASS, "gap-2 text-muted-foreground")}
+                onClick={() => setShowLegacy((shown) => !shown)}
+              >
+                <span className="min-w-0 flex-1 truncate">Legacy models</span>
+                <span className="shrink-0 font-normal text-muted-foreground/70">
+                  {legacy.length}
+                </span>
+                <ChevronDownIcon
+                  className={cn("size-4 shrink-0 transition-transform", showLegacy && "rotate-180")}
+                  aria-hidden
+                />
+              </MenuItem>
+            ) : null}
+            {showLegacy ? legacy.map((model) => renderModelItem(model, false)) : null}
+          </>
+        )}
         {needsSetup ? (
           <div className="px-2 py-1.5 text-xs leading-snug">
             <p className="line-clamp-3 text-muted-foreground">
-              {getProviderStatusMessage(entry.snapshot)}
+              {getProviderStatusMessage(entry.snapshot, messages)}
             </p>
             <MenuItem
               className={cn(ROW_CLASS, "mt-1 -mx-2")}
@@ -924,13 +1076,16 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 props.onOpenProviderSetup?.(instanceId);
               }}
             >
-              Open provider setup
+              {gt("Open provider setup")}
             </MenuItem>
           </div>
         ) : null}
-        {current.length === 0 && legacy.length === 0 && !needsSetup ? (
+        {current.length === 0 &&
+        legacy.length === 0 &&
+        !subProviderSections?.sections.length &&
+        !needsSetup ? (
           <p className="px-2 py-2 text-xs text-muted-foreground">
-            {workspaceModelsScanning ? "Searching project models..." : "No models"}
+            {workspaceModelsScanning ? gt("Searching project models...") : "No models"}
           </p>
         ) : null}
         {renderUpdateRequiredNotices([entry])}
@@ -945,7 +1100,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           {searchResults.length > 0 ? (
             searchResults.map((model) => renderModelItem(model, true))
           ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">No models found</p>
+            <p className="px-2 py-2 text-xs text-muted-foreground">{gt("No models found")}</p>
           )}
           {renderUpdateRequiredNotices(instanceEntries.filter(matchesLockedProvider))}
         </>
@@ -965,24 +1120,24 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
 
   return (
     <TooltipProvider delay={0}>
-      {/* Flush with the popup's edges past its 4px scroll padding, so the rail's
-          divider runs edge to edge: to the panel under the list, or to the
-          popup's bottom when nothing follows. Reversed so the rail, last in
-          the DOM, shows on the left. */}
       <div
         ref={contentRef}
-        className="-mx-1 -mt-1 flex min-h-0 flex-row-reverse last:-mb-1"
+        className="-mx-1 -mt-1 flex min-h-0 flex-col last:-mb-1"
         data-model-picker-content="true"
         data-fork-model-picker="true"
         onKeyDownCapture={redirectTypingToSearch}
       >
+        {renderProviderTabs()}
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
           <label className="flex h-8 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
               ref={searchInputRef}
-              aria-label="Search models"
-              placeholder="Search models"
+              // The menu focuses its first tabbable element as it opens; on touch that would raise
+              // the keyboard, so the popup takes focus and a tap still reaches the field.
+              tabIndex={coarsePointer ? -1 : undefined}
+              aria-label={gt("Search models")}
+              placeholder={gt("Search models")}
               className="h-full min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
               value={searchQuery}
               onChange={(event) => {
@@ -994,7 +1149,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           {/* Scrolls on its own so whatever the host renders below stays put. */}
           <div className="flex max-h-80 min-h-0 flex-col overflow-y-auto">{renderModelList()}</div>
         </div>
-        {renderProviderRail()}
       </div>
     </TooltipProvider>
   );

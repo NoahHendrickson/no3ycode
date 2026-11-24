@@ -47,7 +47,7 @@ describe("fork guard: fork-stage-columns", () => {
 
   it("gives each panel's header its own close button", () => {
     expect(chatView).toMatch(
-      /<StagePanelCloseButton\s+label="Close right panel"\s+onClose=\{closePreviewPanelStable\}/u,
+      /<StagePanelCloseButton\s+(?:\/\*[^*]*\*\/\s*)?label="Close right panel"\s+onClose=\{closePreviewPanelStable\}/u,
     );
     expect(chatRightPanel).toMatch(/mode="inline"[\s\S]*?layoutControls=\{layoutControls\}/u);
     expect(threadsPanel).toContain('label="Close threads panel"');

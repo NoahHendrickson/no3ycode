@@ -33,8 +33,8 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
       /isDraftHeroState &&\s*\(composerBannerItems\.length > 0 \|\| isLocalDraftThread\)[\s\S]{0,1600}<DraftLaunchpad/u,
     );
     expect(launchpad).toContain("choices.pick(entry.group.projectKey, event.currentTarget)");
-    expect(choices).toMatch(/const pick = \(next: string, pill\?: Element\) => \{/u);
-    expect(choices).toMatch(/void assignDraftProject\(draftId, entry\)\.catch\(/u);
+    expect(choices).toMatch(/const pick = \(\s*next: string,\s*pill\?: Element,\s*options\?:/u);
+    expect(choices).toMatch(/void assignDraftProject\(draftId, entry, options\)\.catch\(/u);
   });
 
   it("opens a picked row into the project chip from where it was", () => {

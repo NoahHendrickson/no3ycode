@@ -43,7 +43,7 @@ describe("fork guard: fork-workspace-header", () => {
     // mark there leaves it on the raised outline while Open / Commit & push stay pills.
     const scripts = readSibling("../components/ProjectScriptsControl.tsx");
     expect(scripts).toMatch(
-      /aria-label=\{isPanel \? "Add project script" : "Add action"\}[\s\S]{0,80}data-fork-pill/u,
+      /aria-label=\{isPanel \? gt\("Add project script"\) : gt\("Add action"\)\}[\s\S]{0,80}data-fork-pill/u,
     );
     // Upstream's "Initialize Git" button now renders only in the thread details panel,
     // which stays unmarked; see the git-actions case below.
@@ -116,20 +116,12 @@ describe("fork guard: fork-workspace-header", () => {
     );
   });
 
-  it("inverts the project/title weight and drops the favicon", () => {
-    // The project is the landmark; the title is prose. Reverting either half
-    // gives two competing bold runs, which is what upstream had.
-    //
-    // The semibold must be anchored to the project name itself. A loose
-    // class-pair match also hits the `/` separator, which keeps the test green
-    // after the name reverts to upstream's font-medium — the exact
-    // tripwire-dressed-as-proof failure the pill-scoping test above was
-    // rewritten to eliminate.
-    expect(chatHeader).toMatch(/text-sm font-semibold">\s*\{activeProjectName\}/u);
+  it("keeps project and title at 14px regular and drops the favicon", () => {
+    expect(chatHeader).toMatch(/text-sm font-normal">\s*\{activeProjectName\}/u);
     // The muted colour lives on the breadcrumb trigger and cascades to the
     // name; hover restores foreground, which is upstream's affordance.
     expect(chatHeader).toMatch(
-      /aria-label=\{`New thread in \$\{activeProjectName\}`\}[\s\S]{0,400}text-muted-foreground/u,
+      /aria-label=\{gt\("New thread in \{project\}", \{ project: activeProjectName \}\)\}[\s\S]{0,400}text-muted-foreground/u,
     );
     // Upstream's WorkspaceBreadcrumbText owns the truncation now; the fork's
     // regular weight sits on the h2 around it.
@@ -144,7 +136,7 @@ describe("fork guard: fork-workspace-header", () => {
     // this check, dropping the click silently loses an upstream feature with
     // CI green.
     expect(chatHeader).toContain("onClick={onNewThreadInProject}");
-    expect(chatHeader).toMatch(/TooltipPopup side="top">New thread in \{activeProjectName\}/u);
+    expect(chatHeader).toMatch(/New thread in <Var>\{activeProjectName\}<\/Var>/u);
   });
 
   it("maps the panel toggles to the design's half-square glyphs", () => {

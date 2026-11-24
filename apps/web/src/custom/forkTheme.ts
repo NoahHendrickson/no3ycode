@@ -40,7 +40,7 @@ import { setActiveForkPalette, useActiveForkPalette, useIsInletActive } from "./
 import { syncForkGlassFloorColor } from "./forkGlassFloorColor";
 import { syncForkGlassPopupCutout } from "./forkGlassPopupCutout";
 import { isForkSidebarVibrancyApplied, syncForkSidebarVibrancy } from "./forkSidebarVibrancy";
-import { BASIC_TOPBAR_HEIGHT, syncForkTopbarHeight } from "./forkTopbarHeight";
+import { syncForkTopbarHeightFromRoot } from "./forkTopbarHeight";
 import type { ThemePreference } from "../themePalette";
 
 export const FORK_THEME_ATTRIBUTE = "data-fork-theme";
@@ -444,7 +444,7 @@ function syncForkPaletteFromStorage(): void {
     setForkDesktopThemeOverride(
       activePalette === INLET_THEME ? inletChromeOverride(inletColor) : null,
     );
-    syncForkTopbarHeight(activePalette === BASIC_THEME ? BASIC_TOPBAR_HEIGHT : null);
+    syncForkTopbarHeightFromRoot();
     // Synchronous, inside the suppressed-transition window: switching between
     // two fork palettes can keep upstream theme where it is, so applyTheme
     // no-ops and this is the only repaint of html/body overscroll and theme-color.
@@ -467,7 +467,16 @@ function syncForkPaletteFromStorage(): void {
       .then(() => {
         const glassOn = isForkSidebarVibrancyApplied();
         void syncForkGlassFloorColor(glassOn).catch(() => undefined);
-        syncForkGlassPopupCutout(glassOn);
+        // Sidebar-only Liquid Glass stamps its marker one more IPC round trip later, so
+        // the cutout runs for the Glass palette and reads that marker per popup. The palette
+        // is read off the root, not this call, so a superseded answer cannot start it.
+        syncForkGlassPopupCutout(
+          glassOn
+            ? "window"
+            : document.documentElement.getAttribute(FORK_THEME_ATTRIBUTE) === COOL_DARKER_THEME
+              ? "sidebar"
+              : null,
+        );
       })
       .catch(() => undefined);
   }

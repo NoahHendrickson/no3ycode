@@ -111,3 +111,13 @@ export function useEnvironmentThread(
   ) as EnvironmentThreadState;
   return state;
 }
+
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+/** The shell sequence that last removed a thread, or -1; keyed by `JSON.stringify([env, thread])`. */
+export const shellThreadRemovedSequenceAtom = Atom.family((key: string) => {
+  const [environmentId, threadId] = JSON.parse(key) as [EnvironmentId, ThreadId];
+  return Atom.make(
+    (get) => get(environmentShell.stateValueAtom(environmentId)).removedAt.get(threadId) ?? -1,
+  ).pipe(Atom.withLabel(`mobile-shell-thread-removed:${key}`));
+});
+/* fork:end no3y-subagent-link-chip */

@@ -14,13 +14,17 @@ vi.mock("./custom/forkGlassNewAgentPicture", () => ({
 }));
 vi.mock("./custom/chatMode", () => ({ initializeForkSidebarMode: () => {} }));
 vi.mock("./custom/forkGlass3d", () => ({ initializeForkGlass3d: () => {} }));
+vi.mock("./custom/forkTypographyScale", () => ({
+  initializeForkSidebarZoom: () => {},
+  initializeForkChatTextScale: () => {},
+}));
 vi.mock("./custom/inletMenuMorph", () => ({ installInletMenuMorph: () => {} }));
 vi.mock("./custom/touchLongPressContextMenu", () => ({
   installTouchLongPressContextMenu: () => {},
 }));
 /* fork:end fork-marker */
 
-// Boots main in a fresh page that shares the tab's sessionStorage, as a reload does.
+// Boots the entry in a fresh page that shares the tab's sessionStorage, as a reload does.
 async function bootThenFailLazyChunk(sessionStorage: Map<string, string>) {
   vi.resetModules();
   const reload = vi.fn().mockName("location.reload");
@@ -35,8 +39,8 @@ async function bootThenFailLazyChunk(sessionStorage: Map<string, string>) {
   vi.stubGlobal("window", page);
   vi.stubGlobal("document", { getElementById: () => ({}) });
   try {
-    const { startup } = await import("./main");
-    await startup;
+    const { boot } = await import("./bootstrap");
+    await boot;
     page.dispatchEvent(new Event("vite:preloadError", { cancelable: true }));
     return reload;
   } finally {

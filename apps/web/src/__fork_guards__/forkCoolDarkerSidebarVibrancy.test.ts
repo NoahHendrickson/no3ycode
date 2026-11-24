@@ -17,7 +17,9 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { COOL_DARKER_THEME, FORK_THEME_ATTRIBUTE } from "../custom/forkTheme";
 import {
+  FORK_SIDEBAR_LIQUID_GLASS_VALUE,
   FORK_SIDEBAR_VIBRANCY_ATTRIBUTE,
+  isForkSidebarLiquidGlassApplied,
   isForkSidebarVibrancyApplied,
   syncForkSidebarVibrancy,
 } from "../custom/forkSidebarVibrancy";
@@ -584,9 +586,10 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopMethod).not.toContain("electronWindow.syncAllAppearance");
     expect(desktopMethod).toContain("const target = yield* forkSenderWindow(event);");
     expect(desktopMethod).toContain("const painted = target !== null && !target.isDestroyed();");
-    // An unpainted window answers false, or the renderer would stamp its Glass
+    // An unpainted window answers "off", or the renderer would stamp its Glass
     // marker over an opaque fill.
-    expect(desktopMethod).toContain("const applied = enabled && painted;");
+    expect(desktopMethod).toContain('let mode: ForkSidebarVibrancyMode = "off";');
+    expect(desktopMethod).toContain('const applied = mode !== "off";');
     // A sender that does not resolve paints nothing. Main is only the answer
     // when there is no IPC event at all, never a fallback for a lost sender,
     // or a torn-down side chat would repaint the main window.
@@ -918,7 +921,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(desktopMethod).toMatch(
       /platform === "darwin" \|\|\s+\(platform === "win32" && supportsWindowsBackdrop\(/u,
     );
-    expect(desktopMethod).toContain("return applied;");
+    expect(desktopMethod).toContain("return mode;");
 
     // forkTheme drives it outside the synchronous chrome repaint, and owns the
     // palette decision so the helper imports nothing back — the cycle that
@@ -927,4 +930,163 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(forkVibrancy).not.toContain('from "./forkTheme"');
     expect(forkVibrancy).toContain(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE);
   });
+
+  it("uses liquid-glass mode for sidebar-only glass while keeping the stage opaque", async () => {
+    const root = makeRoot();
+    (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
+      setSidebarVibrancy: (enabled: boolean) => Promise.resolve(enabled ? "liquid-glass" : "off"),
+      sidebarLiquidGlass: {
+        setWidth: () => Promise.resolve(true),
+      },
+    };
+    try {
+      await expect(syncForkSidebarVibrancy(true, root)).resolves.toBe(true);
+      expect(root.attributes.get(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(
+        FORK_SIDEBAR_LIQUID_GLASS_VALUE,
+      );
+      expect(isForkSidebarLiquidGlassApplied(root)).toBe(true);
+      // Whole-window vibrancy marker stays false so floor-color and popup cutouts stay off.
+      expect(isForkSidebarVibrancyApplied(root)).toBe(false);
+
+      await expect(syncForkSidebarVibrancy(false, root)).resolves.toBe(false);
+      expect(root.attributes.has(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(false);
+    } finally {
+      delete (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
+    }
+
+    // No started-thread liquid-glass CSS rule may clear or tint the stage inset.
+    const liquidGlassRules = glassRules.filter(
+      (rule) =>
+        rule.selector.includes(
+          `[${FORK_SIDEBAR_VIBRANCY_ATTRIBUTE}="${FORK_SIDEBAR_LIQUID_GLASS_VALUE}"]`,
+        ) && !rule.selector.includes("[data-fork-draft-liquid-glass"),
+    );
+    expect(liquidGlassRules.length).toBeGreaterThan(0);
+    for (const rule of liquidGlassRules) {
+      expect(rule.selector).not.toContain('[data-slot="sidebar-inset"]');
+    }
+    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassWidth");
+    expect(desktopPreload).toContain("sidebarLiquidGlass:");
+  });
+
+  it("waits for the next sidebar change after the native glass refuses a width", async () => {
+    using dom = stubDockedSidebar(256);
+    const glass = stubLiquidGlassBridge(() => false);
+    const root = makeRoot();
+    try {
+      await syncForkSidebarVibrancy(true, root);
+      await glass.answered();
+      dom.runFrames();
+      await glass.answered();
+      // A refusal schedules nothing; retrying each frame would spin on IPC.
+      expect(dom.pendingFrames()).toBe(0);
+      expect(root.attributes.has(FORK_SIDEBAR_VIBRANCY_ATTRIBUTE)).toBe(false);
+
+      // A real change (here a resize) is what earns the next attempt.
+      const attempts = glass.calls.length;
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls.length).toBe(attempts + 1);
+      expect(dom.pendingFrames()).toBe(0);
+    } finally {
+      await syncForkSidebarVibrancy(false, root);
+      glass.dispose();
+    }
+  });
+
+  it("re-sends an unchanged CSS width when the page zoom changes", async () => {
+    using dom = stubDockedSidebar(256);
+    const glass = stubLiquidGlassBridge(() => true);
+    const root = makeRoot();
+    try {
+      await syncForkSidebarVibrancy(true, root);
+      await glass.answered();
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([256]);
+
+      // Main converts CSS px to points with the zoom factor, so Cmd+= must re-send.
+      dom.window.devicePixelRatio = 2.5;
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([256, 256]);
+    } finally {
+      await syncForkSidebarVibrancy(false, root);
+      glass.dispose();
+    }
+  });
 });
+
+/** A Liquid Glass bridge whose `setWidth` answers with `applied`. */
+function stubLiquidGlassBridge(applied: () => boolean) {
+  const calls: Array<number | null> = [];
+  let pending: Array<Promise<boolean>> = [];
+  const globals = globalThis as { forkDesktopBridge?: unknown };
+  globals.forkDesktopBridge = {
+    setSidebarVibrancy: () => Promise.resolve("liquid-glass"),
+    sidebarLiquidGlass: {
+      setWidth: (width: number | null) => {
+        calls.push(width);
+        const answer = Promise.resolve(applied());
+        pending.push(answer);
+        return answer;
+      },
+    },
+  };
+  return {
+    calls,
+    /** Resolves once every `setWidth` so far has answered and the tracker has handled it. */
+    async answered() {
+      const answers = pending;
+      pending = [];
+      await Promise.all(answers);
+    },
+    dispose() {
+      delete globals.forkDesktopBridge;
+    },
+  };
+}
+
+/** A docked sidebar gap of `width` CSS px, with frames and window events run by hand. */
+function stubDockedSidebar(width: number) {
+  const gap = { getBoundingClientRect: () => ({ width }) };
+  const wrapper = {
+    getAttribute: () => null,
+    querySelector: (selector: string) => (selector === '[data-slot="sidebar-gap"]' ? gap : null),
+  };
+  let frames: Array<() => void> = [];
+  const listeners = new Map<string, () => void>();
+  const window = {
+    devicePixelRatio: 2,
+    requestAnimationFrame: (callback: () => void) => frames.push(callback),
+    cancelAnimationFrame: () => {},
+    addEventListener: (type: string, listener: () => void) => listeners.set(type, listener),
+    removeEventListener: (type: string) => listeners.delete(type),
+  };
+  const document = {
+    body: null,
+    querySelector: (selector: string) =>
+      selector === '[data-slot="sidebar-wrapper"]' ? wrapper : null,
+  };
+  const globals = globalThis as { window?: unknown; document?: unknown };
+  globals.window = window;
+  globals.document = document;
+  return {
+    window,
+    emit(type: string) {
+      listeners.get(type)?.();
+    },
+    runFrames() {
+      const queued = frames;
+      frames = [];
+      for (const frame of queued) frame();
+    },
+    pendingFrames: () => frames.length,
+    [Symbol.dispose]() {
+      delete globals.window;
+      delete globals.document;
+    },
+  };
+}

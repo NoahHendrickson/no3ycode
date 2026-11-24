@@ -2,6 +2,9 @@ import type { ExpoConfig } from "expo/config";
 
 import { BRAND_ASSET_PATHS } from "../../scripts/lib/brand-assets.ts";
 import { loadRepoEnv } from "../../scripts/lib/public-config.ts";
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+import { no3yNativeConfig, no3yVariant } from "./fork/identity.ts";
+/* fork:end no3y-mobile-identity */
 
 type AppVariant = "development" | "preview" | "production";
 
@@ -117,7 +120,9 @@ function resolveAppVariant(value: string | undefined): AppVariant {
   }
 }
 
-const variant = VARIANT_CONFIG[APP_VARIANT];
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+const variant = no3yVariant(APP_VARIANT, VARIANT_CONFIG[APP_VARIANT], repoEnv);
+/* fork:end no3y-mobile-identity */
 // Copied thread links open the app. app.t3.codes/.well-known lists every variant's identifiers.
 const HOSTED_APP_HOST = "app.t3.codes";
 const iosBundleIdentifier = isIosPersonalTeamBuild
@@ -277,6 +282,8 @@ const config: ExpoConfig = {
       },
       NSLocalNetworkUsageDescription:
         "Allow T3 Code to connect to T3 Code servers on your local network or tailnet.",
+      // Built with the iOS 27 SDK, only view controllers can hide or style the status bar.
+      UIViewControllerBasedStatusBarAppearance: true,
       NSPhotoLibraryAddUsageDescription: "Allow T3 Code to save images to your photo library.",
       // System picture in picture needs background audio to start and survive outside the app.
       UIBackgroundModes: ["audio"],
@@ -344,7 +351,12 @@ const config: ExpoConfig = {
             },
             {
               fontFamily: "DMSans-Bold",
-              fontDefinitions: [{ path: dmSansFonts.bold, weight: 700 }],
+              // Android picks fallback glyphs (such as Vietnamese) at the requested weight, so bold text
+              // asks for 700; the 400 entry lets a relative bold step (Typeface.BOLD) land on 700 too.
+              fontDefinitions: [
+                { path: dmSansFonts.bold, weight: 400 },
+                { path: dmSansFonts.bold, weight: 700 },
+              ],
             },
           ],
         },
@@ -464,9 +476,6 @@ const config: ExpoConfig = {
   ],
   extra: {
     appVariant: APP_VARIANT,
-    secretsFeatureEnabled: ["1", "true"].includes(
-      process.env.T3CODE_FEATURE_SECRETS?.trim().toLowerCase() ?? "",
-    ),
     iosPersonalTeamBuild: isIosPersonalTeamBuild,
     relay: {
       url: repoEnv.T3CODE_RELAY_URL ?? null,
@@ -497,4 +506,6 @@ const config: ExpoConfig = {
   },
 };
 
-export default config;
+/* fork:begin no3y-mobile-identity — see .fork/customizations.yaml#no3y-mobile-identity */
+export default no3yNativeConfig(config, repoEnv);
+/* fork:end no3y-mobile-identity */

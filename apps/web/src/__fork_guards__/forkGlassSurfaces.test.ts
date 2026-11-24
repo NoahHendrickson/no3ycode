@@ -26,10 +26,8 @@ function readSibling(relativePath: string): string {
 }
 
 const FORK_ROOT = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
-// The chips, buttons, tabs and popups need Full 3D; the tokens hold with
-// selected items only (forkGlass3d.test.ts).
+// Every glass surface, tokens included, needs Full 3D (forkGlass3d.test.ts).
 const MARKER = `${FORK_ROOT}:where(:not([${FORK_GLASS_3D_ATTRIBUTE}]))`;
-const TOKENS = `${FORK_ROOT}:where(:not([${FORK_GLASS_3D_ATTRIBUTE}="off"]))`;
 const PALETTE = `[${FORK_THEME_ATTRIBUTE}="${COOL_DARKER_THEME}"]`;
 
 const sheet = readSibling("../theme.custom.glass-surfaces.css");
@@ -76,7 +74,7 @@ describe("fork guard: glass surfaces", () => {
     expect(stopFace).toMatch(/background:\s*rgb\(234 49 80 \/ 48%\)/u);
     expect(stopFace).toMatch(/color:\s*#ffffff/u);
 
-    const root = ruleBodyFor(rules, [`${TOKENS}.dark${PALETTE}`]);
+    const root = ruleBodyFor(rules, [`${MARKER}.dark${PALETTE}`]);
     expect(stopFace).not.toContain("--fork-popup-glass-floor");
     for (const tone of ["glint", "light", "shade"]) {
       // The floor only exists under desktop vibrancy; without a fallback the

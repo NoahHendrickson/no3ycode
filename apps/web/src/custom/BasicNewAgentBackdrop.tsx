@@ -28,6 +28,7 @@ import {
 import { runWhileFocused } from "./backgroundPausedLoop";
 import { cellsFromRgba, createDitherLight } from "./ditherLight";
 import { useActiveForkPalette } from "./forkActivePalette";
+import { useForkDraftLiquidGlass } from "./forkDraftLiquidGlass";
 import { useGlassNewAgentBackdrop } from "./forkGlassNewAgentPicture";
 import {
   BASIC_TONE_OPTIONS,
@@ -83,12 +84,7 @@ function Picture(props: {
   }
   if (backdrop === "jollyPetal") {
     return (
-      <StillBackdrop
-        url={jollyPetalUrl}
-        cells={JOLLY_PETAL_CELLS}
-        layoutFor={jollyPetalLayout}
-        scrim="rgb(0 0 0 / 18%)"
-      />
+      <StillBackdrop url={jollyPetalUrl} cells={JOLLY_PETAL_CELLS} layoutFor={jollyPetalLayout} />
     );
   }
   return (
@@ -128,14 +124,10 @@ function StillBackdrop(props: {
   readonly url: string;
   readonly cells: { readonly width: number; readonly height: number };
   readonly layoutFor: LayoutFor;
-  readonly scrim?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const layout = useColumnLayout(ref, props.layoutFor);
-  const size = layout
-    ? `${props.cells.width * layout.cell}px ${props.cells.height * layout.cell}px`
-    : undefined;
-  const position = layout ? `${layout.left}px ${layout.top}px` : undefined;
+  useForkDraftLiquidGlass({ ref, url: props.url, cells: props.cells, layoutFor: props.layoutFor });
   return (
     <div
       ref={ref}
@@ -147,11 +139,9 @@ function StillBackdrop(props: {
       style={
         layout
           ? {
-              backgroundImage: props.scrim
-                ? `linear-gradient(${props.scrim}, ${props.scrim}), url(${props.url})`
-                : `url(${props.url})`,
-              backgroundSize: props.scrim ? `100% 100%, ${size}` : size,
-              backgroundPosition: props.scrim ? `0 0, ${position}` : position,
+              backgroundImage: `url(${props.url})`,
+              backgroundSize: `${props.cells.width * layout.cell}px ${props.cells.height * layout.cell}px`,
+              backgroundPosition: `${layout.left}px ${layout.top}px`,
             }
           : undefined
       }

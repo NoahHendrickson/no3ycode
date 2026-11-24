@@ -352,7 +352,10 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-composer-prompt]") &&
         !rule.selector.includes('[data-testid="composer-editor"]'),
     );
-    expect(theme).toMatch(/--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 8px\)/u);
+    // The cap holds 12.5rem of prompt over whatever block padding the prompt wears.
+    expect(theme).toMatch(
+      /--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 2 \* var\(--fork-composer-prompt-pad-block, 4px\)\)/u,
+    );
     expect(scrollport?.body).toMatch(/max-height:\s*var\(--fork-composer-prompt-cap\)/u);
     expect(scrollport?.body).toMatch(/overflow-y:\s*auto/u);
 
@@ -388,8 +391,11 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-testid="composer-editor"]') &&
         rule.body.includes("font-size"),
     );
-    expect(promptType?.body).toMatch(/font-size:\s*14px/u);
-    expect(promptType?.body).toMatch(/line-height:\s*23px/u);
+    expect(promptType?.body).toMatch(/font-size:\s*var\(--font-size-prompt, 1rem\)/u);
+    expect(promptType?.body).toMatch(/line-height:\s*var\(--fork-composer-prompt-line\)/u);
+    expect(theme).toMatch(
+      /--fork-composer-prompt-line:\s*calc\(var\(--font-size-prompt, 1rem\) \* 1\.5\)/u,
+    );
     const placeholderColor = rules.find(
       (rule) =>
         /:has\(>\s*\[data-testid="composer-editor"\]\)\s*~\s*div/u.test(rule.selector) &&
@@ -407,7 +413,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
-    expect(geometry?.body).toMatch(/font-size:\s*12px/u);
+    expect(geometry?.body).toMatch(/font-size:\s*14px/u);
     expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
   });
 
@@ -458,13 +464,15 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(/--fork-context-chip-bg-hover:/u);
   });
 
-  it("renders the mode control as a muted ghost button on shared geometry", () => {
+  it("renders the mode control in the row's control ink on shared geometry", () => {
     const modeInk = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-mode-controls]") &&
         rule.selector.endsWith("[data-fork-composer-mode-chip]"),
     );
-    expect(modeInk?.body).toMatch(/color:\s*var\(--color-muted-foreground\)/u);
+    expect(modeInk?.body).toMatch(
+      /color:\s*var\(--fork-composer-control-ink,\s*var\(--color-muted-foreground\)\)/u,
+    );
     const sharedGeometry = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-control-row]") &&
@@ -478,6 +486,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(readSibling("../custom/ComposerShell.tsx")).toContain(
       'data-fork-composer-vessel-context="true"',
     );
+    const compactProject = ruleBodyFor(rules, [
+      MARKER,
+      "[data-fork-composer-vessel-context]",
+      '[data-slot="composer-context-strip"][data-compact] > [data-fork-draft-project-chip]',
+    ]);
+    expect(compactProject).toMatch(/column-gap:\s*0\s*;/u);
   });
 
   it("combines workspace and branch into one caret-free split menu in the composer strip", () => {
@@ -528,49 +542,22 @@ describe("fork guard: fork-composer-shell", () => {
     );
   });
 
-  it("lets the PR chip keep its state colour and ride the strip's far end", () => {
-    // Upstream inks the glyph emerald / violet / red by PR state and grays #N;
-    // the fork's #N inherits the glyph's ink, which the white chip ink would
-    // flatten.
+  it("lets the PR chip keep its state colour", () => {
+    // Upstream inks the glyph emerald / violet / red by PR state and grays #N; the chip above the
+    // composer fills by that same state and inks the glyph and #N to match.
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
-    expect(branchSelector).toContain("data-fork-pr-chip");
+    const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
+    expect(prChip).toContain("data-fork-pr-chip");
+    expect(prChip).toContain("data-pr-state={state}");
+    expect(prChip).toContain("resolvePullRequestChipState(");
     expect(branchSelector).toContain("data-fork-branch-group");
-    expect(branchSelector).toContain("status={prStatus}");
-    const chipInk = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.selector.includes("[data-fork-context-chip]") &&
-        rule.body.includes("color:"),
+    expect(shellCss).toMatch(
+      /\[data-pr-state="open"\],\s*\[data-pr-state="merged"\],\s*\[data-pr-state="closed"\]/u,
     );
-    expect(chipInk?.selector).toContain(":not([data-fork-pr-chip])");
-    // Any palette ink rule that touches context-row buttons must exempt the PR
-    // chip so it never flattens PR state colours.
-    const paletteChipInk = paletteRules.filter(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        !rule.selector.includes(":not([data-fork-pr-chip])") &&
-        /(^|[^-])color:/u.test(rule.body),
-    );
-    expect(paletteChipInk).toEqual([]);
-    const chipHover = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("var(--fork-context-chip-bg-hover)"),
-    );
-    expect(chipHover?.selector).toContain("[data-fork-pr-chip]");
-    const chipFill = rules.find(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("background: var(--fork-context-chip-bg)"),
-    );
-    expect(chipFill?.selector).toContain("[data-fork-pr-chip]");
-    const prFill = [...rules, ...paletteRules].filter(
-      (rule) =>
-        rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.selector.includes("[data-fork-pr-chip]") &&
-        rule.body.includes("color-mix(in oklab, currentColor"),
-    );
-    expect(prFill).toEqual([]);
+    expect(shellCss).toMatch(/\.fork-pr-tone\s*\{\s*color:\s*var\(--fork-pr-chip-ink\)/u);
+    for (const state of ["open", "merged", "closed"]) {
+      expect(shellCss.split(`&[data-pr-state="${state}"]`).length - 1).toBe(2);
+    }
     expect(
       ruleBodyFor(rules, [
         MARKER,
@@ -589,13 +576,6 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(grow?.body).toMatch(/flex:\s*1 1 auto/u);
     expect(grow?.body).toMatch(/justify-content:\s*space-between/u);
-    const place = rules.find(
-      (rule) =>
-        rule.selector.includes('[data-slot="composer-context-strip"]') &&
-        rule.selector.trim().endsWith("[data-fork-pr-chip]"),
-    );
-    expect(place?.body).toMatch(/order:\s*1/u);
-    expect(place?.body).not.toMatch(/margin-inline-start:\s*auto/u);
   });
 
   it("hides only separators in the left mode slot", () => {
@@ -652,10 +632,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(primaryActions).toContain('data-fork-composer-action="stop"');
     const action = rules.find(
       (rule) =>
-        rule.selector.endsWith("[data-fork-composer-action]") && rule.body.includes("width: 24px"),
+        rule.selector.endsWith("[data-fork-composer-action]") &&
+        rule.body.includes("width: var(--fork-composer-action-slot)"),
     );
-    expect(action?.body).toMatch(/height:\s*24px/u);
-    expect(action?.body).toMatch(/border-radius:\s*4px/u);
+    expect(action?.body).toMatch(/height:\s*var\(--fork-composer-action-slot\)/u);
+    expect(theme).toMatch(/--fork-composer-action-slot:\s*32px/u);
+    expect(action?.body).toMatch(/border-radius:\s*8px/u);
     // Stop is flat like send; upstream's shadows read as a dark bottom lip.
     const stop = rules.find((rule) =>
       rule.selector.endsWith('.dark [data-fork-composer-action="stop"]'),
@@ -684,15 +666,19 @@ describe("fork guard: fork-composer-shell", () => {
     expect(theme).toMatch(
       /:is\(\[data-fork-composer-action="attach"\],\s*\[data-fork-composer-action="dictate"\]\)\s*\{[^}]*padding-inline:\s*0/u,
     );
+    // The compact row is the base: one line centres on the action slot from the two tokens, and
+    // the draft's own box sets its prompt back to 4px.
     const promptLift = rules.find(
       (rule) =>
-        rule.selector.includes(":not([data-draft-hero])") &&
+        rule.selector.includes('[data-chat-composer-overlay="true"]') &&
+        !rule.selector.includes("[data-draft-hero]") &&
         rule.selector.endsWith("[data-fork-composer-prompt]") &&
-        rule.body.includes("translate:"),
+        rule.body.includes("padding-block:"),
     );
-    expect(promptLift?.body, "text is lifted 1px to centre on send").toMatch(
-      /translate:\s*0 -1px/u,
+    expect(promptLift?.body, "one line centres on the 32px buttons").toMatch(
+      /--fork-composer-prompt-pad-block:\s*calc\(\s*\(var\(--fork-composer-action-slot\) - var\(--fork-composer-prompt-line\)\) \/ 2 \+ 4px\s*\)/u,
     );
+    expect(theme).not.toMatch(/:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt\]/u);
     expect(chatComposer).not.toMatch(
       /data-chat-composer-actions="right"[\s\S]{0,600}?\{showComposerAttachAction \? \(/u,
     );
@@ -806,71 +792,49 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain("composerControlsHostRef");
   });
 
-  it("moves background liveness off the banner stack onto a context-strip pill with stop", () => {
-    const pill = readSibling("../custom/ComposerMonitoringPill.tsx");
+  it("puts the thread's PR and its background work in chips above the composer", () => {
+    const work = readSibling("../custom/ComposerBackgroundWork.tsx");
+    const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
+    const usage = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
+    const composer = readSibling("../components/chat/ChatComposer.tsx");
+    const shell = readSibling("../custom/ComposerShell.tsx");
     const strip = readSibling("../custom/composerContextStrip.tsx");
     const branchToolbar = readSibling("../components/BranchToolbar.tsx");
-    expect(pill).toContain("export function ComposerBackgroundLivenessPill");
-    expect(pill).toContain('readonly kind: "monitoring"');
-    expect(pill).toContain('readonly kind: "working"');
-    expect(pill).toContain("SidebarV2WorkingMark");
-    expect(pill).toContain("SidebarV2MonitoringMark");
-    expect(pill).toContain("StopSquareIcon");
-    expect(pill).toContain('role="status"');
-    expect(pill).toContain("data-fork-liveness-mark");
-    expect(pill).toContain("data-fork-monitoring-pill");
-    expect(pill).toContain("data-fork-monitoring-stop");
-    expect(pill).toContain("Stop background work");
-    // The count opens the list of what is running; a subagent's row opens its
-    // thread. The popup is a popover-popup, so it takes the one frost recipe.
-    expect(pill).toContain("data-fork-monitoring-list");
-    expect(pill).toContain("data-fork-monitoring-tasks");
-    expect(pill).toContain("onClick={() => props.onOpenThread(childThreadId)}");
-    // The pill takes upstream's pending-work roster as is; ChatView hands the
-    // presentation over and the strip derives liveness and the list from it.
-    expect(pill).toContain("readonly tasks: ReadonlyArray<PendingBackgroundWorkItem>;");
-    expect(strip).toContain("readonly presentation: PendingBackgroundWorkPresentation;");
-    expect(strip).toContain("tasks: input.presentation.items,");
-    expect(chatView).toContain("onOpenThread: onOpenRelatedThreadStable,");
-    // The live region sits beside the trigger: inside it, "Stopping..." is
-    // presentational and never announced.
-    expect(pill).toMatch(/<span role="status" className="sr-only">[\s\S]{0,80}<Popover>/u);
-    expect(shellCss).toContain("button[data-fork-monitoring-list]");
-    expect(shellCss).toContain(
-      "button[data-fork-monitoring-list]:is(:hover, [data-pressed], [data-popup-open]):not(:disabled)",
+    const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
+    // The row sits in flow above the vessel and hides when no chip renders.
+    expect(shell).toContain('data-fork-composer-status-chips="true"');
+    expect(shell).toContain("empty:hidden");
+    expect(composer).toContain("statusChips={props.statusChips}");
+    expect(chatView).toContain("statusChips={composerStatusChips}");
+    // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
+    expect(work).toContain("export function ComposerBackgroundWorkChip");
+    expect(work).toContain("SidebarV2WorkingMark");
+    expect(work).toContain("SidebarV2MonitoringMark");
+    expect(work).toContain('role="status"');
+    expect(work).toContain("Stop background work");
+    expect(work).toContain("onClick={() => props.onOpenThread(childThreadId)}");
+    expect(chatView).toContain("onOpenThread={onOpenRelatedThreadStable}");
+    // The PR chip left the branch group for the row above.
+    expect(prChip).toContain("<ThreadPullRequestBadgeControl");
+    expect(branchSelector).not.toContain("<ThreadPullRequestBadgeControl");
+    // Nothing of the work rides the usage drawer or the context row any more.
+    expect(usage).not.toContain("backgroundWork");
+    expect(chatView).not.toContain("composerContextTrailing");
+    expect(shell).toContain(
+      'className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex flex-col"',
     );
-    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
-    expect(strip).toContain("resolveComposerLivenessPillProps");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
-    expect(branchToolbar).toContain("trailing?: ReactNode");
-    expect(branchToolbar).toMatch(/\{trailing\}\s*<\/ComposerSurface\.ContextStrip>/u);
-    // The bare fallback strip has one owner: the no-thread branch reuses it
-    // instead of re-rendering the strip inline with a dead measure ref.
     expect(branchToolbar).toContain(
       "return renderComposerContextStripFallback({ leading, trailing });",
     );
     expect(branchToolbar).not.toMatch(/<ComposerSurface\.ContextStrip ref=\{setStripElement\}>/u);
-    expect(chatView).toContain("resolveComposerLivenessPillProps");
-    expect(chatView).toContain("renderComposerLivenessPill");
-    expect(chatView).toContain("trailing: composerContextTrailing");
-    expect(chatView).toMatch(/const composerContextTrailing =[\s\S]*?\{composerLivenessPill\}/u);
     expect(chatView).not.toContain("backgroundLivenessBannerItem");
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
-    // Pill chrome lives with fork-composer-shell, not theme.custom.css sprawl.
-    expect(shellCss).toContain("[data-fork-monitoring-pill]");
-    expect(shellCss).toContain("button[data-fork-monitoring-stop]");
-    expect(shellCss).toContain("[data-fork-liveness-mark]");
-    expect(shellCss).toMatch(
-      /button\[data-fork-monitoring-stop\]\s*\{[^}]*width:\s*24px[^}]*height:\s*24px/u,
-    );
-    expect(shellCss).toMatch(
-      /button\[data-fork-monitoring-stop\]:disabled\s*\{[^}]*background:\s*transparent/u,
-    );
-    expect(theme).not.toContain("[data-fork-monitoring-pill]");
+    expect(shellCss).toContain("[data-fork-composer-status-chip]");
+    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
   });
-
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the
     // composer to cover it. That fails wherever the composer is translucent —

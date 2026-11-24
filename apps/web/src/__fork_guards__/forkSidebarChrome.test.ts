@@ -42,7 +42,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // effect would make the shortcut itself conditional on the sidebar being
     // open — the one state in which you need it most.
     // Formatting may break the comparison across lines; match the token pair.
-    const effect = layout.search(/!==\s*"sidebar\.toggle"/u);
+    const effect = layout.search(/!isSidebarToggleShortcut\(event,/u);
     const earlyReturn = layout.indexOf("{showSidebar && !isSidebarVisible ? (");
     expect(effect).toBeGreaterThanOrEqual(0);
     expect(earlyReturn).toBeGreaterThan(effect);
@@ -257,169 +257,14 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(sidebarV2).not.toMatch(/pe-\[[^\]]*--app-scrollbar-width/u);
   });
 
-  it("puts the exact brand lockup on the header's trailing edge", () => {
-    expect(chrome).toMatch(/sidebar-brand[^"]*ml-auto/u);
-    // Upstream 9885a845c deleted the .sidebar-brand stylesheet rule that hid
-    // the lockup below 48rem and showed it as a flex row above. The fork's
-    // divergent link never picked up upstream's inline replacement and fell
-    // back to display:block, which stacked the mark over the name and clipped
-    // the name out of the 24px header. Pin both halves of the inline gate,
-    // whitespace-anchored so flex-none, inline-flex, or flex-row cannot stand
-    // in for the display utility.
-    expect(chrome).toMatch(/sidebar-brand[^"]*\shidden\s/u);
-    expect(chrome).toMatch(/sidebar-brand[^"]*\smd:flex(?=[\s"])/u);
-    // The link must be allowed to shrink at the sidebar's 208px minimum; the
-    // mark and wordmark below keep shrink-0.
-    expect(chrome).not.toMatch(/sidebar-brand[^"]*\sshrink-0(?=[\s"])/u);
-    expect(chrome).not.toContain("ml-[var(--workspace-titlebar-content-left)]");
-    expect(chrome).toMatch(/sidebar-brand[^"]*text-sidebar-foreground/u);
-    expect(chrome).toContain("<SidebarBrandWordmark");
-    expect(chrome).not.toContain("text-[0.875rem] leading-4 font-medium");
+  it("draws no brand in the header, and keeps the mode tabs on its trailing edge", () => {
+    // The pixel flower and the "no3y" wordmark were removed; neither upstream's brand link nor
+    // its T3 wordmark comes back in their place.
+    expect(chrome).not.toMatch(/SidebarBrand(Mark|Wordmark)?\b(?!WidthProbe)/u);
+    expect(chrome).not.toContain("sidebar-brand");
+    expect(chrome).not.toContain("T3Wordmark");
     expect(chrome).not.toContain("{APP_BASE_NAME}");
-    // The pixelated hack lived on the component, not the asset — a substring
-    // check on the class list would not notice it coming back beside it.
-    expect(chrome).not.toContain("image-rendering");
-    // The mark's art is a 21x21 pixel grid drawn at a 16px slot. A bitmap can
-    // only get there by resampling 21 cells onto 16 pixels, which blends every
-    // cell into its neighbours — the blur the vector mark replaced. Keep it
-    // vector, keep the viewBox on the 21-unit grid, and keep crispEdges so the
-    // cells stay hard-edged at every DPR instead of antialiasing back to mush.
-    // Inline SVG rather than an <img>, so a palette can recolour the arms
-    // through the --fork-brand-mark-* variables (Westworld does). The design's
-    // own colours ride along as the var() fallbacks, each leaf's outline too.
-    const mark = readSibling("../custom/SidebarBrandMark.tsx");
-    const lowDensityMark = readSibling("../custom/SidebarBrandMarkLowDensity.tsx");
-    expect(chrome).toContain("<SidebarBrandMark />");
-    expect(mark).toContain('className="size-4 shrink-0"');
-    expect(chrome).not.toContain("sidebar-brand-mark.svg");
-    expect(mark).toContain('viewBox="0 0 21 21"');
-    expect(mark).toContain('shapeRendering="crispEdges"');
-    expect(mark).not.toMatch(/image-rendering|<image\b/u);
-    for (const [slot, fallback] of [
-      ["top", "#26b846"],
-      ["top-light", "#3aed62"],
-      ["left", "#008755"],
-      ["left-light", "#08b776"],
-      ["right", "#f95b1c"],
-      ["right-light", "#ff8f0c"],
-      ["bottom", "#fcb01a"],
-      ["bottom-light", "#ffd233"],
-    ]) {
-      expect(mark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
-      expect(lowDensityMark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
-    }
-    for (const [slot, fallback] of [
-      ["top-outline", "#0e440c"],
-      ["left-outline", "#0a2a18"],
-      ["right-outline", "#3e2e14"],
-      ["bottom-outline", "#4c3f0f"],
-    ]) {
-      expect(mark).toContain(`fill="var(--fork-brand-mark-${slot}, ${fallback})"`);
-    }
-    // Under 1.5x the 15-cell redraw replaces the 21-cell art. At 1x that is one
-    // device pixel per cell, and three per cell for the wordmark.
-    const lowDensity =
-      /@media \(max-resolution: 1\.49dppx\) \{([\s\S]*?)\n\}/u.exec(
-        readSibling("../theme.custom.css"),
-      )?.[1] ?? "";
-    expect(lowDensity).toMatch(/\[data-fork-brand-art="high"\] \{\s*display: none;/u);
-    expect(lowDensity).toMatch(/\[data-fork-brand-art="low"\] \{\s*display: block;/u);
-    expect(lowDensity).toMatch(/\[data-fork-brand-wordmark\] \{\s*width: 39px;\s*height: 10px;/u);
-    expect(mark).toContain('data-fork-brand-art="high"');
-    expect(lowDensityMark).toContain('data-fork-brand-art="low"');
-    expect(lowDensityMark).toContain('viewBox="0 0 15 15"');
-    // Even-height boxes inside the 16px clip, so centring lands on a whole pixel.
-    expect(lowDensityMark).toContain("h-4 w-[15px]");
-    expect(lowDensityMark).toContain('preserveAspectRatio="xMidYMin meet"');
-    expect(lowDensityMark).toContain('shapeRendering="crispEdges"');
-    // Hand-drawn art, so the grid is pinned: # outline, t/l/r/b arms, capitals light.
-    const lowDensityCells = new Map<string, string>();
-    for (const [, fill = "", body = ""] of lowDensityMark.matchAll(
-      /<g fill="([^"]+)">([\s\S]*?)<\/g>/gu,
-    )) {
-      const slot = /--fork-brand-mark-([a-z-]+),/u.exec(fill)?.[1];
-      const letter = !slot
-        ? "#"
-        : slot.endsWith("-light")
-          ? slot.charAt(0).toUpperCase()
-          : slot.charAt(0);
-      for (const [, w, x, y] of body.matchAll(/width="(\d+)" x="(\d+)" y="(\d+)"/gu)) {
-        for (let dx = 0; dx < Number(w); dx += 1) {
-          lowDensityCells.set(`${Number(x) + dx},${y}`, letter);
-        }
-      }
-    }
-    const lowDensityRows = [
-      "......###......",
-      ".....#t#T#.....",
-      "....#tt#tT#....",
-      "....#tt#tT#....",
-      "..####t#t####..",
-      ".#LLLl###rrrr#.",
-      "#Llllll#rrrrrr#",
-      "###############",
-      "#llllll#rrrrrR#",
-      ".#llll###rrRR#.",
-      "..####B#b####..",
-      "....#Bb#bb#....",
-      "....#Bb#bb#....",
-      ".....#B#b#.....",
-      "......###......",
-    ];
-    expect(lowDensityCells).toEqual(
-      new Map(
-        lowDensityRows.flatMap((row, y) =>
-          [...row].flatMap((cell, x): [string, string][] =>
-            cell === "." ? [] : [[`${x},${y}`, cell]],
-          ),
-        ),
-      ),
-    );
-    // Every cell edge must land on the integer grid; a fractional coordinate is
-    // the same smearing defect re-entering through the asset. The count keeps
-    // the loop from passing vacuously, and the transform/<path> check pins the
-    // geometry to plain rect attributes — an svgo pass or Figma re-export that
-    // moves it into transforms or path data would otherwise hide fractional
-    // coordinates from this guard entirely.
-    for (const art of [mark, lowDensityMark]) {
-      const coords = [...art.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)];
-      expect(coords.length).toBeGreaterThan(100);
-      for (const coord of coords) {
-        expect(coord[1]).toMatch(/^\d+$/u);
-      }
-      expect(art).not.toMatch(/transform=|<path\b/u);
-    }
-
-    // The name is the 13×3 pixel wordmark (Figma Union 387:21624), not Geist
-    // type, and currentColor at 40% so it tracks Light / Dark instead of the
-    // design file's baked white.
-    const wordmark = readSibling("../custom/SidebarBrandWordmark.tsx");
-    expect(wordmark).toContain("data-fork-brand-wordmark");
-    expect(wordmark).toContain('preserveAspectRatio="xMidYMin meet"');
-    expect(wordmark).toContain('viewBox="0 0 13 3"');
-    expect(wordmark).toContain('shapeRendering="crispEdges"');
-    expect(wordmark).toContain("text-sidebar-foreground/40");
-    expect(wordmark).toContain('fill="currentColor"');
-    expect(wordmark).not.toMatch(/transform=|<path\b/u);
-    const wordmarkCoords = [...wordmark.matchAll(/\s(?:x|y|width|height)="([^"]+)"/gu)];
-    expect(wordmarkCoords.length).toBe(68);
-    for (const coord of wordmarkCoords) {
-      expect(coord[1]).toMatch(/^\d+$/u);
-    }
-    // The cells themselves, row by row, as the designer's Union export draws
-    // them. A count of coordinates stayed green while the "3" glyph's middle
-    // cell sat one column right and the name read "no7y"; the grid is the
-    // artwork, so the guard has to spell it.
-    const cells = new Set(
-      [...wordmark.matchAll(/<rect height="1" width="1" x="(\d+)" y="(\d+)" \/>/gu)].map(
-        (m) => `${m[1]},${m[2]}`,
-      ),
-    );
-    const rows = ["##..#..##.#.#", "#.#..#.#...#.", "#.#.#...#.#.."];
-    const expected = new Set(
-      rows.flatMap((row, y) => [...row].flatMap((cell, x) => (cell === "#" ? [`${x},${y}`] : []))),
-    );
-    expect(cells).toEqual(expected);
+    expect(chrome).toMatch(/className="mr-3 ml-auto flex shrink-0[^"]*">\{modeTabs\}/u);
   });
 
   it("keeps the flat header independent of identification mode and honors the pill", () => {
@@ -487,14 +332,14 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(merged).toContain("data-[active=true]:font-normal");
     expect(merged).not.toContain("font-medium");
     // The action rows read it; the Threads label spells its own, matching
-    // the status-section labels under it (13px semibold) so the list's
+    // the status-section labels under it (12px medium) so the list's
     // headings read as one family.
     expect(rows).toContain("CHROME_TYPE");
     expect(rows.split("CHROME_TYPE").length - 1).toBeGreaterThanOrEqual(2);
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
-      '"text-[0.8125rem] leading-4 font-semibold text-muted-foreground"',
+      '"text-[0.75rem] leading-4 font-medium text-muted-foreground"',
     );
   });
 
@@ -615,7 +460,8 @@ describe("fork guard: fork-sidebar-chrome", () => {
     const footer = themeRules.find(
       (rule) =>
         rule.selector.includes('[data-fork="noahhendrickson-t3code"]') &&
-        rule.selector.includes('[data-slot="sidebar-footer"]'),
+        rule.selector.includes('[data-slot="sidebar-footer"]') &&
+        rule.body.includes("padding-bottom"),
     );
     expect(footer?.body).toContain("padding-bottom: var(--sidebar-content-inset)");
     expect(sidebarPrimitive).toContain('data-slot="sidebar-footer"');

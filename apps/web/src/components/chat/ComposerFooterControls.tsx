@@ -1,28 +1,27 @@
 import type { ModelSelection, ProviderInstanceId, RuntimeMode } from "@t3tools/contracts";
 import { createModelSelection } from "@t3tools/shared/model";
+import { T, useGT, useMessages } from "gt-react";
 import { type ComponentProps, memo, useId, useRef, useState } from "react";
 
-import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { focusRequestedPermission, useComposerMenuProps } from "./composerEventScope";
 import { ComposerPrimaryActions } from "./ComposerPrimaryActions";
 import { resolveModelPickerSelectedModel } from "./ModelPickerContent";
 import { ProviderModelPicker } from "./ProviderModelPicker";
-import { runtimeModeConfig } from "./runtimeModeConfig";
+import { resolveRuntimeModeOption, runtimeModeConfig } from "./runtimeModeConfig";
 import { useComposerMenuState } from "./useComposerMenuState";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import { ComposerControlIcon } from "./ComposerControl";
 import { ComposerRuntimeModeTrigger } from "../../custom/ComposerShell";
+import { ShieldOffFilledIcon } from "../../custom/icons/ShieldOffFilledIcon";
+import { MenuIconTab, MenuTabs } from "../../custom/Tabs";
 /* fork:end fork-composer-shell */
 
 export type RuntimeModeOption = {
   mode: RuntimeMode;
   disabledReason?: string;
 } & (typeof runtimeModeConfig)[RuntimeMode];
-const supervisedRuntimeModeOption: RuntimeModeOption = {
-  mode: "approval-required" as const,
-  ...runtimeModeConfig["approval-required"],
-};
 export const ComposerFooterModeControls = memo(function ComposerFooterModeControls(props: {
   runtimeMode: RuntimeMode;
   runtimeModeOptions: ReadonlyArray<RuntimeModeOption>;
@@ -34,6 +33,8 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
   emphasized?: boolean;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
 }) {
+  const gt = useGT();
+  const messages = useMessages();
   const size = props.size ?? "sm";
   const accessDisplay = props.accessDisplay ?? "label";
   const composerFloatingLayerProps = useComposerMenuProps();
@@ -41,12 +42,16 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
   const permissionsChipRef = useRef<HTMLButtonElement>(null);
   const runtimeModeOption =
     props.runtimeModeOptions.find((option) => option.mode === props.runtimeMode) ??
-    supervisedRuntimeModeOption;
+    resolveRuntimeModeOption("approval-required", messages);
+  const RuntimeModeIcon = runtimeModeOption.icon;
   /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-  // Upstream reads runtimeModeOption.icon here for the permissions chip glyph.
+  const ChipIcon = props.runtimeMode === "full-access" ? ShieldOffFilledIcon : RuntimeModeIcon;
   /* fork:end fork-composer-shell */
   // The chip opens the same Permissions toggle used in the model picker and the overflow menu.
-  const permissionsTooltip = `Permissions: ${runtimeModeOption.label}. ${runtimeModeOption.description}`;
+  const permissionsTooltip = gt("Permissions: {mode}. {description}", {
+    mode: runtimeModeOption.label,
+    description: runtimeModeOption.description,
+  });
   const permissionsChip = (
     <Menu
       open={open}
@@ -66,19 +71,27 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
                   data-composer-shortcut="composer.mode"
                   size={size}
                   runtimeMode={props.runtimeMode}
-                  aria-label={`Permissions: ${runtimeModeOption.label}`}
+                  aria-label={gt("Permissions: {mode}", { mode: runtimeModeOption.label })}
                 />
                 /* fork:end fork-composer-shell */
               }
             />
           }
         >
-          {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-              Label only: no RuntimeModeIcon on the mode chip, and no
-              data-composer-control-label, which upstream's icon-only collapse
-              hides — with no icon that left a bare chevron. */}
-          <span>{runtimeModeOption.label}</span>
-          {/* fork:end fork-composer-shell */}
+          <ComposerControlIcon
+            /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+            icon={ChipIcon}
+            /* fork:end fork-composer-shell */
+            size={size}
+            // Match the label, not full foreground: the chip's presence already marks the mode.
+            {...(props.emphasized ? { className: "text-current" } : {})}
+          />
+          <span
+            data-composer-control-label
+            className={accessDisplay === "icon" ? "sr-only" : undefined}
+          >
+            {runtimeModeOption.label}
+          </span>
         </TooltipTrigger>
         <TooltipPopup side="top">{permissionsTooltip}</TooltipPopup>
       </Tooltip>
@@ -114,23 +127,30 @@ export function ComposerPermissionsSection(props: {
   runtimeModeOptions: ReadonlyArray<RuntimeModeOption>;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
 }) {
+  const gt = useGT();
+  const messages = useMessages();
   // Hover or keyboard focus previews a mode's name and description before a pick.
   const [previewMode, setPreviewMode] = useState<RuntimeMode | null>(null);
   const shownMode = previewMode ?? props.runtimeMode;
   const shown =
     props.runtimeModeOptions.find((option) => option.mode === shownMode) ??
-    supervisedRuntimeModeOption;
+    resolveRuntimeModeOption("approval-required", messages);
   const descriptionId = useId();
   return (
     <div data-composer-permissions className="grid w-72 gap-1.5 px-2 py-1.5">
-      <div className="font-medium text-muted-foreground text-xs">Permissions</div>
-      <MenuPrimitive.RadioGroup
-        aria-label="Permissions"
+      <div className="font-medium text-muted-foreground text-xs">
+        <T>Permissions</T>
+      </div>
+      {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+          The fork's menu tab strip (custom/Tabs), as the model picker's provider tabs use. */}
+      <MenuTabs
+        size="md"
+        aria-label={gt("Permissions")}
         value={props.runtimeMode}
         onValueChange={(value: RuntimeMode) => {
           if (value !== props.runtimeMode) props.onRuntimeModeChange(value);
         }}
-        className="flex rounded-lg bg-input/40 p-0.5"
+        className="w-full"
         // Menus navigate with Up/Down only; the row reads horizontally, so Left/Right move too.
         onKeyDown={(event) => {
           if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -146,9 +166,9 @@ export function ComposerPermissionsSection(props: {
         }}
       >
         {props.runtimeModeOptions.map((option) => {
-          const OptionIcon = option.icon;
+          const OptionIcon = option.mode === "full-access" ? ShieldOffFilledIcon : option.icon;
           return (
-            <MenuPrimitive.RadioItem
+            <MenuIconTab
               key={option.mode}
               value={option.mode}
               disabled={option.disabledReason !== undefined}
@@ -160,13 +180,14 @@ export function ComposerPermissionsSection(props: {
               onPointerLeave={() => setPreviewMode(null)}
               onFocus={() => setPreviewMode(option.mode)}
               onBlur={() => setPreviewMode(null)}
-              className="flex h-6 flex-1 cursor-pointer items-center justify-center text-muted-foreground outline-none first:rounded-l-md last:rounded-r-md data-disabled:cursor-not-allowed data-disabled:opacity-40 data-checked:bg-input/72 data-checked:text-foreground data-highlighted:text-foreground not-data-checked:data-highlighted:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+              className="aspect-auto flex-1 data-disabled:cursor-not-allowed"
             >
-              <OptionIcon aria-hidden="true" className="size-3.5" />
-            </MenuPrimitive.RadioItem>
+              <OptionIcon aria-hidden="true" className="size-4" />
+            </MenuIconTab>
           );
         })}
-      </MenuPrimitive.RadioGroup>
+      </MenuTabs>
+      {/* fork:end fork-composer-shell */}
       {/* Static per-mode descriptions for screen readers; the preview below is visual only. */}
       {props.runtimeModeOptions.map((option) => (
         <span key={option.mode} id={`${descriptionId}-${option.mode}`} className="sr-only">
@@ -212,6 +233,7 @@ export const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryA
   alternateShortcutLabel: string | null;
   voiceInputActive?: boolean;
   isSendBusy: boolean;
+  isSendHeld?: boolean;
   sendDisabledReason: string | null;
   isEnvironmentUnavailable: boolean;
   hasSendableContent: boolean;
@@ -244,6 +266,7 @@ export const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryA
         alternateShortcutLabel={props.alternateShortcutLabel}
         voiceInputActive={props.voiceInputActive ?? false}
         isSendBusy={props.isSendBusy}
+        isSendHeld={props.isSendHeld ?? false}
         sendDisabledReason={props.sendDisabledReason}
         isEnvironmentUnavailable={props.isEnvironmentUnavailable}
         isPreparingWorktree={props.isPreparingWorktree}

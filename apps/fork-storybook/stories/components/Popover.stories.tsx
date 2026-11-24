@@ -12,16 +12,16 @@ import {
 } from "~/components/ui/popover";
 import { QRCodeSvg } from "~/components/ui/qr-code";
 
+import { POPUP_ANCHOR } from "../Specimen.tsx";
+
 const PADDINGS = ["default", "compact", "none"] as const;
 const WIDTHS = ["auto", "sm", "md", "lg"] as const;
 const VARIANTS = ["default", "panel"] as const;
 const SIDES = ["top", "bottom", "left", "right", "inline-start", "inline-end"] as const;
 const ALIGNS = ["start", "center", "end"] as const;
 
-// Story layout uses inline styles: the canvas centres, and each popup opens beside its trigger.
-const TOP: CSSProperties = { alignSelf: "flex-start", paddingTop: 24 };
 const rows = (gap: number): CSSProperties => ({
-  ...TOP,
+  ...POPUP_ANCHOR,
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
@@ -150,7 +150,7 @@ export const Closed: Story = {
 export const Open: Story = {
   name: "Open (mobile app QR)",
   render: () => (
-    <div style={TOP}>
+    <div style={POPUP_ANCHOR}>
       <Popover defaultOpen>
         <PopoverTrigger render={<Button size="sm" variant="outline" />}>
           <SmartphoneIcon />

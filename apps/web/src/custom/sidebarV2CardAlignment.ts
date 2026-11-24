@@ -70,6 +70,8 @@ export const SIDEBAR_V2_CARD_ALIGNMENT = {
   cardPad: "px-3",
   /** The card's block padding, 8px each side of the two rows. */
   cardPadY: "py-2",
+  /** A compact one-line card's block padding, 7px each side (7 + 18 + 7 = 32px). */
+  compactCardPadY: "py-[7px]",
   /** Title row to repo row. */
   rowGap: "gap-1",
   /** Prompt to the trailing group (actions, pin, status mark) — the design's
@@ -117,6 +119,7 @@ export const SIDEBAR_V2_CARD_ALIGNMENT_PX = {
   listPad: 8,
   cardPad: 12,
   cardPadY: 8,
+  compactCardPadY: 7,
   rowGap: 4,
   titleLine: 18,
   metaLine: 16,
@@ -156,10 +159,10 @@ export function sidebarV2CardHeight(): number {
   return px.cardPadY * 2 + px.titleLine + px.rowGap + px.metaLine;
 }
 
-/** A compact card's drawn height: the title line alone in the same padding
+/** A compact card's drawn height: the title line alone in its 7px vertical padding
     (`sidebar-v2-compact-cards`). Its contain-intrinsic-size hint has to match
     for the same reason `sidebarV2CardHeight()`'s does. */
 export function sidebarV2CompactCardHeight(): number {
   const px = SIDEBAR_V2_CARD_ALIGNMENT_PX;
-  return px.cardPadY * 2 + px.titleLine;
+  return px.compactCardPadY * 2 + px.titleLine;
 }

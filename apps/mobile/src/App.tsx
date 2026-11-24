@@ -3,7 +3,11 @@ import { installComposerAttachmentUploads } from "./state/composer-attachment-up
 import { installThreadOutboxDelivery } from "./state/threadOutboxDelivery";
 import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
+/* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */
+import { markNo3yLaunchReady, No3yLaunchSparkle } from "../fork/No3yLaunchSparkle";
+/* fork:end no3y-launch-sparkle */
 import { requireNativeModule } from "expo";
+import { useLocale } from "gt-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Platform, StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -37,8 +41,12 @@ import {
   installAgentNotificationNavigation,
   setAgentNotificationPathname,
 } from "./features/agent-awareness/notificationNavigation";
+/* fork:begin no3y-push — see .fork/customizations.yaml#no3y-push */
+import { installNo3yPushRegistration } from "../fork/pushRegistration";
+/* fork:end no3y-push */
 import {
   installAppShortcuts,
+  republishAppShortcuts,
   recordAppShortcutNavigationState,
 } from "./features/shortcuts/appShortcutsRuntime";
 import {
@@ -47,6 +55,8 @@ import {
   useAppearancePreferences,
 } from "./features/settings/appearance/AppearancePreferencesProvider";
 import { RootStack, rootPathnameFromState, workspaceLocationFromState } from "./Stack";
+import { I18nProvider } from "./i18n/I18nProvider";
+import { DEFAULT_LOCALE } from "./i18n/locales";
 import { appAtomRegistry } from "./state/atom-registry";
 import { subscribeComposerDraftModelReconciliation } from "./state/use-composer-drafts";
 import { environmentThreadShells, threadEnvironment } from "./state/threads";
@@ -75,6 +85,7 @@ import {
 import { useMobileNavigationTheme } from "./lib/useMobileNavigationTheme";
 import { installUiRuntimeMemoryWarningGc } from "./lib/useUiRuntimeMemoryWarningGc";
 import { SubscriptionUsageCoordinator } from "./widgets/SubscriptionUsageCoordinator";
+import { ConnectDeviceApprovalCoordinator } from "./features/connection/ConnectDeviceApprovalCoordinator";
 import { installSubscriptionUsageRefresh } from "./widgets/useSubscriptionUsage";
 import { GlobalVoiceInputControl } from "./features/voice-input/GlobalVoiceInputControl";
 import {
@@ -83,7 +94,10 @@ import {
   splashCanHide,
   useLaunchSplashHomeRowsPending,
 } from "./features/home/home-launch-splash";
-import { restoreSettingsLinkState } from "./features/settings/settings-navigation";
+import {
+  restoreSettingsLinkState,
+  settingsLinkAction,
+} from "./features/settings/settings-navigation";
 import {
   hydrateWorkspaceSelections,
   launchWorkspaceURL,
@@ -143,14 +157,16 @@ const appLinking = {
   getActionFromState: (
     state: Parameters<typeof getActionFromState>[0],
     options: Parameters<typeof getActionFromState>[1],
-  ): ReturnType<typeof getActionFromState> =>
-    // Our router handles the selection; React Navigation's type only lists its own actions.
-    (workspaceDetailLinkAction(state) as ReturnType<typeof getActionFromState>) ??
-    pairingFormLinkAction(
-      state,
-      rootNavigationRef.isReady() ? rootNavigationRef.getRootState() : undefined,
-    ) ??
-    getActionFromState(state, options),
+  ): ReturnType<typeof getActionFromState> => {
+    const current = rootNavigationRef.isReady() ? rootNavigationRef.getRootState() : undefined;
+    return (
+      // Our router handles the selection; React Navigation's type only lists its own actions.
+      (workspaceDetailLinkAction(state) as ReturnType<typeof getActionFromState>) ??
+      pairingFormLinkAction(state, current) ??
+      settingsLinkAction(state, current) ??
+      getActionFromState(state, options)
+    );
+  },
   getStateFromPath: getAppStateFromPath,
 };
 
@@ -204,6 +220,9 @@ const appServiceDisposers = [
   installComposerAttachmentUploads(),
   startIncomingShareInbox(),
   installAgentNotificationNavigation(linkToAppPath),
+  /* fork:begin no3y-push — see .fork/customizations.yaml#no3y-push */
+  installNo3yPushRegistration(),
+  /* fork:end no3y-push */
   installAppShortcuts(linkToAppPath),
   installAppUpdateChecks(),
   installShowcaseCapture(rootPathnameFromState),
@@ -243,8 +262,24 @@ function SplashScreenCoordinator() {
     hidden.current = true;
     settleLaunchSplashHomeRows();
     void SplashScreen.hide();
+    /* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */
+    markNo3yLaunchReady();
+    /* fork:end no3y-launch-sparkle */
   }, [isReady, shellCachesRead, homeRowsPending, waitEnded]);
 
+  return null;
+}
+
+function QuickActionsLanguage() {
+  const locale = useLocale();
+  // Shortcuts published before the catalog loaded are English.
+  const publishedLocale = useRef(DEFAULT_LOCALE);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- the launcher keeps quick action titles from the last publish, so a language switch republishes them
+  useEffect(() => {
+    if (Platform.OS !== "android" || publishedLocale.current === locale) return;
+    publishedLocale.current = locale;
+    republishAppShortcuts();
+  }, [locale]);
   return null;
 }
 
@@ -253,7 +288,9 @@ export default function App() {
     <RegistryContext.Provider value={appAtomRegistry}>
       <CloudAuthProvider>
         <AppearancePreferencesProvider>
-          <AppContent />
+          <I18nProvider>
+            <AppContent />
+          </I18nProvider>
         </AppearancePreferencesProvider>
       </CloudAuthProvider>
     </RegistryContext.Provider>
@@ -275,7 +312,9 @@ function AppContent() {
   return (
     <>
       <SplashScreenCoordinator />
+      <QuickActionsLanguage />
       <SubscriptionUsageCoordinator />
+      <ConnectDeviceApprovalCoordinator />
       <GestureHandlerRootView className="flex-1">
         <KeyboardProvider statusBarTranslucent>
           <SafeAreaProvider>
@@ -299,6 +338,9 @@ function AppContent() {
           </SafeAreaProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>
+      {/* fork:begin no3y-launch-sparkle — see .fork/customizations.yaml#no3y-launch-sparkle */}
+      <No3yLaunchSparkle />
+      {/* fork:end no3y-launch-sparkle */}
     </>
   );
 }

@@ -333,6 +333,11 @@
     }
   }
 
+  /* The open usage ring's track takes the shell's ink; its arc keeps its tone. */
+  & [data-fork-composer-usage-limits][data-fork-tab-trigger][aria-expanded="true"] > svg {
+    color: var(--fork-inlet-black-ink);
+  }
+
   /* Inlet Black's thread details card is the sidebar's #141414 too, its
      hover the sidebar rows' (theme.custom.palettes.css maps its inks). Inside
      it, rows lift as the sidebar's rows hover (theme.custom.css's card lift

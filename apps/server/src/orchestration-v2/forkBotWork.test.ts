@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 
 import type { ThreadManagementService } from "./ThreadManagementService.ts";
-import { linkForkBotWork, withForkBotCrewRules } from "./forkBotWork.ts";
+import { forkBotIdFor, linkForkBotWork, withForkBotCrewRules } from "./forkBotWork.ts";
 
 const botId = ThreadId.make("bot");
 
@@ -41,12 +41,6 @@ function filesWith(files: Record<string, string>) {
   });
 }
 
-const launchedBy = (id: string) => ({
-  commandId: CommandId.make("command:launch"),
-  threadId: ThreadId.make("thread:new"),
-  launchedBy: ThreadId.make(id),
-});
-
 it.effect("links a thread to the bot that launched it, or to its launcher's bot", () =>
   Effect.gen(function* () {
     const { threads, tagged } = threadsWith({
@@ -54,10 +48,15 @@ it.effect("links a thread to the bot that launched it, or to its launcher's bot"
       work: { tags: ["bot-work:bot"] },
       plain: { tags: [] },
     });
-    assert.equal(yield* linkForkBotWork(threads, launchedBy("bot")), botId);
-    assert.equal(yield* linkForkBotWork(threads, launchedBy("work")), botId);
-    assert.isNull(yield* linkForkBotWork(threads, launchedBy("plain")));
-    assert.deepEqual(tagged, ["bot-work:bot", "bot-work:bot"]);
+    assert.equal(yield* forkBotIdFor(threads, ThreadId.make("bot")), botId);
+    assert.equal(yield* forkBotIdFor(threads, ThreadId.make("work")), botId);
+    assert.isNull(yield* forkBotIdFor(threads, ThreadId.make("plain")));
+    yield* linkForkBotWork(threads, {
+      commandId: CommandId.make("command:launch"),
+      threadId: ThreadId.make("thread:new"),
+      botId,
+    });
+    assert.deepEqual(tagged, ["bot-work:bot"]);
   }),
 );
 

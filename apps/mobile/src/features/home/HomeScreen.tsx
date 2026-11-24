@@ -1,3 +1,5 @@
+import { useGT, useMessages } from "gt-react-native";
+
 import { useContentTopInset } from "../../components/ui/useBarInset";
 import { usePaneRole } from "../../components/ui/Pane";
 import { ScreenContent } from "../../components/ui/ScreenContent";
@@ -7,7 +9,7 @@ import { useAndroidControlSizing } from "../../components/ui/useAndroidControlSi
 import type { ThreadMoveDestination } from "../threads/threadOrder";
 import type { LegendListRef } from "@legendapp/list/react-native";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
-import { THREAD_SIDEBAR_ROW_LAYOUT } from "../threads/threadListAnimations";
+import { THREAD_LIST_ROW_LAYOUT } from "../threads/threadListAnimations";
 import {
   type EnvironmentProject,
   type EnvironmentThreadShell,
@@ -62,6 +64,7 @@ import { useThreadSearch } from "../../state/queries";
 import { requestThreadMessageJump } from "../threads/threadMessageJump";
 import { useThreadListSearchMatches } from "../threads/useThreadListSearchMatches";
 import { useThreadListV2 } from "../threads/useThreadListV2";
+import { useSidebarRowThreadKey } from "../threads/useSidebarRowThreadKey";
 import { useThreadListNow } from "../threads/use-thread-list-now";
 import { useSearchScrollRestoration } from "../layout/workspace/useSearchScrollRestoration";
 import { useThreadJumpShortcuts } from "../keyboard/threadKeyboardShortcuts";
@@ -92,6 +95,7 @@ import {
   buildHomeProjectScopes,
   findHomeProjectScope,
   type HomeProjectSortOrder,
+  sortHomeProjectScopes,
 } from "./homeThreadList";
 import { createSwipeRowActivation } from "./swipe-row-activation";
 import { SwipeableScrollGateProvider, useSwipeableScrollGate } from "./thread-swipe-actions";
@@ -100,6 +104,12 @@ import { holdLaunchSplashForHomeRows, settleLaunchSplashHomeRows } from "./home-
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import { ThreadListFilters } from "./ThreadListFilters";
 import { deriveHomeEmptyState } from "./home-empty-state";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { No3yStatusFilter, No3yThreadSortOrder } from "../../../fork/mobileStatusGrouping";
+import { No3yThreadsListView } from "../../../fork/No3yThreadsListView";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yThreadsHeader } from "../../../fork/No3yScreenHeader";
+/* fork:end no3y-mobile-redesign */
 
 interface HomeScreenProps {
   /** Whether this list is the one on screen; see `useHomeRouteVisible`. */
@@ -115,6 +125,12 @@ interface HomeScreenProps {
   readonly searchQuery: string;
   readonly selectedEnvironmentId: EnvironmentId | null;
   readonly selectedProjectKey: string | null;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  readonly statusFilter: No3yStatusFilter;
+  readonly threadSortOrder: No3yThreadSortOrder;
+  readonly onStatusFilterChange: (filter: No3yStatusFilter) => void;
+  readonly onThreadSortOrderChange: (order: No3yThreadSortOrder) => void;
+  /* fork:end no3y-mobile-redesign */
   readonly projectSortOrder: HomeProjectSortOrder;
   readonly projectGroupingMode: SidebarProjectGroupingMode;
   readonly onSearchQueryChange: (query: string) => void;
@@ -190,6 +206,8 @@ function renderHomeScrollView(props: ScrollViewProps) {
 }
 
 export function HomeScreen(props: HomeScreenProps) {
+  const gt = useGT();
+  const m = useMessages();
   const usesNativeWorkspaceColumns = useNativeWorkspaceColumnsSupported();
   const workspace = useWorkspaceTabs();
   const [initialScrollOffset] = useState(() => workspace?.getScrollOffset("threads") ?? 0);
@@ -202,7 +220,8 @@ export function HomeScreen(props: HomeScreenProps) {
   );
   const columnMetrics = useNativeColumnLayoutMetrics();
   const activeNewTask = useActiveNewTask();
-  const selectedThreadKey = activeNewTask ? null : (primaryColumn?.selectedThreadKey ?? null);
+  const sidebarRowThreadKey = useSidebarRowThreadKey(primaryColumn?.selectedThreadKey ?? null);
+  const selectedThreadKey = activeNewTask ? null : sidebarRowThreadKey;
   const fullSwipeWidth = primaryColumn && columnMetrics ? columnMetrics.width - 20 : undefined;
   const queuedThreadKeys = useQueuedThreadKeys();
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
@@ -317,12 +336,15 @@ export function HomeScreen(props: HomeScreenProps) {
   const { projects, selectedEnvironmentId, projectGroupingMode } = props;
   const projectScopes = useMemo(
     () =>
-      buildHomeProjectScopes({
-        projects,
-        environmentId: selectedEnvironmentId,
-        projectGroupingMode,
-      }),
-    [projects, selectedEnvironmentId, projectGroupingMode],
+      buildHomeProjectScopes(
+        {
+          projects,
+          environmentId: selectedEnvironmentId,
+          projectGroupingMode,
+        },
+        m,
+      ),
+    [projects, selectedEnvironmentId, projectGroupingMode, m],
   );
   const hasSearchQuery = props.searchQuery.trim().length > 0;
   const projectByKey = (() => {
@@ -445,7 +467,7 @@ export function HomeScreen(props: HomeScreenProps) {
     }
     onSelectThread(thread);
   };
-  useThreadJumpShortcuts(threadListV2Items, selectThread);
+  useThreadJumpShortcuts(threadListV2Items, selectThread, props.onSelectPendingTask);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads the list's visible range after commit to enable swipe gestures on those rows
   useEffect(() => {
     if (swipeEnabled) activateVisibleRows(threadListV2Items);
@@ -468,7 +490,6 @@ export function HomeScreen(props: HomeScreenProps) {
                 selectedThreadKey)
           }
           project={projectByKey.get(pendingScopeKey) ?? null}
-          projectTitle={v2ProjectTitleByProjectKey.get(pendingScopeKey)}
           environmentLabel={
             Object.keys(props.savedConnectionsById).length > 1
               ? (props.savedConnectionsById[item.pendingTask.environmentId]?.environmentLabel ??
@@ -619,11 +640,19 @@ export function HomeScreen(props: HomeScreenProps) {
       ? null
       : (props.savedConnectionsById[props.selectedEnvironmentId]?.environmentLabel ??
         "this environment");
-  const emptyState = deriveHomeEmptyState(props.catalogState, props.projects.length);
+  const emptyState = deriveHomeEmptyState(props.catalogState, props.projects.length, m);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The dock layout hides the native header, so an empty list keeps Settings and Usage here,
+  // and only that layout swaps in the Flat Glass list.
+  const no3yBottomNav = useNo3yBottomNavEnabled();
+  /* fork:end no3y-mobile-redesign */
 
   if (!hasAnyThreads) {
     return (
       <View className={containerClassName}>
+        {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
+        {no3yBottomNav ? <No3yThreadsHeader /> : null}
+        {/* fork:end no3y-mobile-redesign */}
         <ScreenContent surface={sidebarSurface ? "drawer" : "screen"}>
           <View
             className={cn(
@@ -642,12 +671,12 @@ export function HomeScreen(props: HomeScreenProps) {
               <EmptyState
                 title={emptyState.title}
                 detail={emptyState.detail}
-                actionLabel={emptyState.showsAddEnvironment ? "Add environment" : undefined}
+                actionLabel={emptyState.showsAddEnvironment ? gt("Add environment") : undefined}
                 onAction={emptyState.showsAddEnvironment ? props.onAddConnection : undefined}
                 action={
                   Platform.OS === "android" && emptyState.showsAddEnvironment ? (
                     <FloatingActionButton
-                      label="Add environment"
+                      label={gt("Add environment")}
                       icon="plus"
                       variant="extended"
                       tone="primary"
@@ -678,7 +707,14 @@ export function HomeScreen(props: HomeScreenProps) {
         <ThreadListFilters
           gutter={sidebarSurface ? 8 : 0}
           environments={props.environments}
-          projects={pickableProjectGroups(projectScopes).map((scope) => ({
+          projects={pickableProjectGroups(
+            sortHomeProjectScopes({
+              scopes: projectScopes,
+              threads: props.threads,
+              pendingTasks: [],
+              projectSortOrder: "updated_at",
+            }),
+          ).map((scope) => ({
             key: scope.key,
             label: scope.title,
           }))}
@@ -694,32 +730,40 @@ export function HomeScreen(props: HomeScreenProps) {
   const v2ListEmpty =
     hasSearchQuery && threadSearch.isPending ? (
       <EmptyState
-        title="Searching thread messages…"
-        detail={`Looking for "${props.searchQuery}" in messages.`}
+        title={gt("Searching thread messages…")}
+        detail={gt('Looking for "{query}" in messages.', { query: props.searchQuery })}
+        variant={Platform.OS === "android" ? "plain" : undefined}
+      />
+    ) : hasSearchQuery && threadSearch.failed ? (
+      <EmptyState
+        title={gt("Search failed")}
+        detail={gt('Couldn\'t search messages for "{query}". Change the search to try again.', {
+          query: props.searchQuery,
+        })}
         variant={Platform.OS === "android" ? "plain" : undefined}
       />
     ) : hasSearchQuery ? (
       <EmptyState
-        title="No results"
-        detail={`No threads matching "${props.searchQuery}".`}
+        title={gt("No results")}
+        detail={gt('No threads matching "{query}".', { query: props.searchQuery })}
         variant={Platform.OS === "android" ? "plain" : undefined}
       />
     ) : v2ScopedProjectGroup !== null ? (
       <EmptyState
-        title={`No threads in ${v2ScopedProjectGroup.title}`}
-        detail="Choose another project or create a new task."
+        title={gt("No threads in {name}", { name: v2ScopedProjectGroup.title })}
+        detail={gt("Choose another project or create a new task.")}
         variant={Platform.OS === "android" ? "plain" : undefined}
       />
     ) : selectedEnvironmentLabel ? (
       <EmptyState
-        title={`No threads in ${selectedEnvironmentLabel}`}
-        detail="Choose another environment or create a new task."
+        title={gt("No threads in {name}", { name: selectedEnvironmentLabel })}
+        detail={gt("Choose another environment or create a new task.")}
         variant={Platform.OS === "android" ? "plain" : undefined}
       />
     ) : (
       <EmptyState
-        title="No threads yet"
-        detail="Create a task to start a new coding session."
+        title={gt("No threads yet")}
+        detail={gt("Create a task to start a new coding session.")}
         variant={Platform.OS === "android" ? "plain" : undefined}
       />
     );
@@ -737,6 +781,71 @@ export function HomeScreen(props: HomeScreenProps) {
     );
   }
 
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The phone dock layout only: iPad keeps upstream's list, which has no Chat tab or Petal grid.
+  if (no3yBottomNav) {
+    return (
+      <No3yThreadsListView
+        visible={props.visible}
+        sidebarSurface={sidebarSurface}
+        selectedThreadKey={selectedThreadKey}
+        fullSwipeWidth={fullSwipeWidth}
+        contentSideInsets={contentSideInsets}
+        threads={props.threads}
+        projects={props.projects}
+        projectScopes={projectScopes}
+        scopedProjectGroup={v2ScopedProjectGroup}
+        projectByKey={projectByKey}
+        projectTitleByProjectKey={v2ProjectTitleByProjectKey}
+        pendingTasks={props.pendingTasks}
+        savedConnectionsById={props.savedConnectionsById}
+        environments={props.environments}
+        searchQuery={props.searchQuery}
+        searchIsPending={threadSearch.isPending}
+        searchMatchByKey={threadSearchMatchByKey}
+        searchMatchedQuery={threadSearch.query}
+        selectedEnvironmentId={props.selectedEnvironmentId}
+        selectedProjectKey={props.selectedProjectKey}
+        statusFilter={props.statusFilter}
+        sortOrder={props.threadSortOrder}
+        now={now}
+        queuedThreadKeys={queuedThreadKeys}
+        providersByEnvironmentId={providersByEnvironmentId}
+        machineByEnvironmentId={machineByEnvironmentId}
+        settlementEnvironmentIds={settlementEnvironmentIds}
+        snoozeEnvironmentIds={snoozeEnvironmentIds}
+        snoozePresetsByEnvironmentId={snoozePresetsByEnvironmentId}
+        pinningEnvironmentIds={pinningEnvironmentIds}
+        autoSettleOptOutEnvironmentIds={autoSettleOptOutEnvironmentIds}
+        pinReorderEnvironmentIds={pinReorderEnvironmentIds}
+        activeReorderEnvironmentIds={activeReorderEnvironmentIds}
+        titleRegenerationEnvironmentIds={titleRegenerationEnvironmentIds}
+        onSearchQueryChange={props.onSearchQueryChange}
+        onEnvironmentChange={props.onEnvironmentChange}
+        onProjectChange={props.onProjectChange}
+        onStatusFilterChange={props.onStatusFilterChange}
+        onSortOrderChange={props.onThreadSortOrderChange}
+        onSelectThread={props.onSelectThread}
+        onArchiveThread={props.onArchiveThread}
+        onDeleteThread={props.onDeleteThread}
+        onSettleThread={props.onSettleThread}
+        onSnoozeThread={props.onSnoozeThread}
+        onUnsnoozeThread={props.onUnsnoozeThread}
+        onUnsettleThread={props.onUnsettleThread}
+        onPinThread={props.onPinThread}
+        onUnpinThread={props.onUnpinThread}
+        onSetThreadAutoSettle={props.onSetThreadAutoSettle}
+        onMoveThread={props.onMoveThread}
+        onRenameThread={props.onRenameThread}
+        onRegenerateThreadTitle={props.onRegenerateThreadTitle}
+        onSelectPendingTask={props.onSelectPendingTask}
+        onDeletePendingTask={props.onDeletePendingTask}
+        onNewThreadOnBranch={props.onNewThreadOnBranch}
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
+
   return (
     <View className={containerClassName}>
       <ScreenContent surface="screen">
@@ -744,7 +853,7 @@ export function HomeScreen(props: HomeScreenProps) {
           <SwipeableScrollGateProvider enabled={swipeEnabled} activation={swipeRowActivation}>
             <GestureDetector gesture={homeScrollGesture}>
               <AnimatedLegendList
-                itemLayoutAnimation={sidebarSurface ? THREAD_SIDEBAR_ROW_LAYOUT : undefined}
+                itemLayoutAnimation={THREAD_LIST_ROW_LAYOUT}
                 ref={listRef}
                 onLoad={() => {
                   settleLaunchSplashHomeRows();

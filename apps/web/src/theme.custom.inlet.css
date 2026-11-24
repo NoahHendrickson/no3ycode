@@ -453,6 +453,15 @@
   border-radius: 10px 0 0 10px;
 }
 
+/* A Petals grid tile is 4px rounder than a row, and stays round open: it sits mid-grid, not
+   on the panel's edge. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row] {
+  border-radius: 14px;
+}
+
 /* An open split pair (fork-split-threads) is one item: its row is the shape
    that joins the panel. */
 
@@ -552,7 +561,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]:not(.dark)
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   color: var(--foreground);
 }
 
@@ -563,7 +572,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip], [data-fork-pr-chip]) {
+  :is(button, [data-slot="button"], [data-fork-context-chip]) {
   --control-icon-color: currentColor;
   border-radius: 8px;
 }
@@ -967,7 +976,10 @@
     :is(
       :is([data-fork-composer-context-row], [data-fork-composer-vessel-context])
         :is(button, [data-slot="button"], [data-fork-context-chip]),
-      [data-fork-tab-trigger]:not([data-chat-provider-model-picker]),
+      [data-fork-tab-trigger]:not(
+        [data-chat-provider-model-picker],
+        [data-fork-composer-usage-limits]
+      ),
       [data-fork-panel-toggle] > button
     ) {
     transition-property: background-color, color, border-radius, box-shadow, scale;

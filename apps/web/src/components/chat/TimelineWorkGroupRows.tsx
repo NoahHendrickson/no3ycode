@@ -2,15 +2,22 @@ import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import { WorkLogButton, WorkLogList, WorkLogRow } from "./WorkLog";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { type ToolActivityIcon } from "@t3tools/contracts";
-import { liveThoughtLine } from "@t3tools/client-runtime/work-log/presentation";
+import {
+  liveThoughtLine,
+  resolveViewedImageAsset,
+  workEntriesViewedImagePaths,
+} from "@t3tools/client-runtime/work-log/presentation";
 import { resolveWorkGroupScrollAnchor } from "@t3tools/client-runtime/work-log/scroll-anchor";
+import { useAssetUrls } from "~/assets/assetUrls";
 import { observeResize } from "~/lib/observeResize";
 import { tickTextContent } from "~/lib/tickTextContent";
 import { observeVisibleAnimation } from "../../lib/visibleAnimation";
+import { T, useGT, useMessages } from "gt-react";
 import { memo, use, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { LegendList, type LegendListRef } from "@legendapp/list/react";
 import { workEntryDisplayIndicatesToolFailure } from "../../session-logic";
 import ChatMarkdown from "../ChatMarkdown";
+import { assetMediaActionsSource } from "./ChatMarkdownMedia";
 import { Minimize2Icon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { getVirtualizedScrollFadeClassName } from "../ui/scroll-area";
@@ -30,6 +37,7 @@ import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
   WorkGroupViewCtx,
+  type WorkGroupViewedImage,
   type TimelineWorkEntry,
   type TimelineRow,
 } from "./timelineRowContext";
@@ -48,8 +56,7 @@ import {
   SimpleWorkEntryRow,
 } from "./TimelineWorkEntryRow";
 import {
-  THINKING_PREVIEW_PLUGINS,
-  THOUGHT_PREVIEW_PLUGINS,
+  thoughtPreviewMarkdown,
   THOUGHT_PREVIEW_SOURCE_MAX_LENGTH,
   toolGroupSummaryIconName,
   workEntryIconName,
@@ -60,7 +67,7 @@ import { SidebarV2WorkingMark } from "~/custom/SidebarV2StatusIndicator";
 /* fork:end fork-chat-working-rain */
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
-import { isForkStatusLine } from "~/custom/forkWorkingRowLast";
+import { forkStatusLineRow, isForkStatusLine } from "~/custom/forkWorkingRowLast";
 import { WorkLogBlock } from "./WorkLog";
 /* fork:end fork-working-row-last */
 
@@ -84,6 +91,7 @@ export const WorkGroupSection = memo(function WorkGroupSection({
     onWorkEntryContentReady,
     pendingApprovals,
   } = use(TimelineRowCtx);
+  const gt = useGT();
   const nonEmptyEntries = groupedEntries.filter((entry) => {
     const item = entry.projectedItem?.item;
     return (
@@ -103,13 +111,14 @@ export const WorkGroupSection = memo(function WorkGroupSection({
         anchorKey={anchorKey}
         disclosureAnchorKey={disclosureAnchorKey}
         entries={nonEmptyEntries}
+        groupedEntries={groupedEntries}
         workspaceRoot={workspaceRoot}
       />
     );
   }
 
   return (
-    <section aria-label="Activity">
+    <section aria-label={gt("Activity")}>
       {nonEmptyEntries.map((workEntry) => (
         <SimpleWorkEntryRow
           key={workEntry.id}
@@ -127,9 +136,10 @@ export const WorkGroupSection = memo(function WorkGroupSection({
 });
 
 function WorkingTimer({ createdAt }: { createdAt: string }) {
+  const { activeThreadEnvironmentId } = use(TimelineRowCtx);
   return (
     <span
-      ref={tickTextContent(() => formatWorkingTimerNow(createdAt), true)}
+      ref={tickTextContent(() => formatWorkingTimerNow(createdAt, activeThreadEnvironmentId), true)}
       className="tabular-nums"
     />
   );
@@ -137,15 +147,62 @@ function WorkingTimer({ createdAt }: { createdAt: string }) {
 
 const compactWorkEntryHeight = 24;
 
+// The thumbnail strip below the group is its own virtualized row, so the gallery an expanded
+// entry opens is built from the same entries rather than from the strip's mounted images.
+function useWorkGroupViewedImages(
+  groupedEntries: ReadonlyArray<TimelineWorkEntry>,
+): ReadonlyArray<WorkGroupViewedImage> {
+  const { threadRef, workspaceRoot, activeThreadEnvironmentId } = use(TimelineRowCtx);
+  const gt = useGT();
+  const fallbackName = gt("image", { $context: "fallback name of an image without alt text" });
+  const viewed = threadRef
+    ? workEntriesViewedImagePaths(groupedEntries).flatMap((path) => {
+        const asset = resolveViewedImageAsset(path, {
+          threadId: threadRef.threadId,
+          workspaceRoot,
+        });
+        return asset ? [{ path, asset }] : [];
+      })
+    : [];
+  const environmentId = threadRef?.environmentId ?? activeThreadEnvironmentId;
+  const urls = useAssetUrls(
+    environmentId,
+    viewed.map(({ asset }) => asset.resource),
+  );
+  return viewed.map(({ path, asset }, index) => {
+    const url = urls[index];
+    if (!url) return { path, item: null };
+    const src = url + asset.srcFragment;
+    const name = asset.alt.trim() || fallbackName;
+    return {
+      path,
+      item: {
+        src,
+        name,
+        actionsSource: assetMediaActionsSource({
+          environmentId,
+          resource: asset.resource,
+          kind: "image",
+          name: asset.alt || fallbackName,
+          src,
+          workspaceRoot,
+        }),
+      },
+    };
+  });
+}
+
 function ExpandedWorkGroupEntries({
   anchorKey,
   disclosureAnchorKey,
   entries,
+  groupedEntries,
   workspaceRoot,
 }: {
   anchorKey: string;
   disclosureAnchorKey: string;
   entries: TimelineWorkEntry[];
+  groupedEntries: ReadonlyArray<TimelineWorkEntry>;
   workspaceRoot: string | undefined;
 }) {
   const {
@@ -153,6 +210,7 @@ function ExpandedWorkGroupEntries({
     onToggleWorkEntry,
     onWorkEntryContentReady,
   } = use(TimelineRowCtx);
+  const gt = useGT();
   const [initialScrollIndex] = useState(() =>
     resolveWorkGroupScrollIndex(entries, viewState.scrollPositions.get(anchorKey)),
   );
@@ -172,8 +230,10 @@ function ExpandedWorkGroupEntries({
     });
   }
 
+  const viewedImages = useWorkGroupViewedImages(groupedEntries);
   const groupView = {
     state: viewState,
+    viewedImages,
     onToggleEntry: (collapsed: boolean, entryId: string) =>
       onToggleWorkEntry(disclosureAnchorKey, collapsed, entryId),
     onContentReady: (entryId: string) => onWorkEntryContentReady?.(disclosureAnchorKey, entryId),
@@ -281,7 +341,7 @@ function ExpandedWorkGroupEntries({
           onItemSizeChanged={updateExpandedContentHeight}
           tabIndex={0}
           role="region"
-          aria-label="Tool calls"
+          aria-label={gt("Tool calls")}
           data-tool-group-scroll
           style={{ maxHeight: `calc(min(18rem, 50dvh) + ${expandedContentHeight}px)` }}
           className={cn(
@@ -302,10 +362,11 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
   const compacting = row.compacting === true || isCompacting;
   const shimmer = isPreparingWorktree || compacting;
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  if (isForkStatusLine(row) && !shimmer) {
+  const forkLine = forkStatusLineRow(row, use(TimelineRowActivityCtx).awaitingUser);
+  if (forkLine && !shimmer) {
     return (
       <ForkLiveStatusLine
-        row={row}
+        row={forkLine}
         timer={row.createdAt ? <WorkingTimer createdAt={row.createdAt} /> : null}
         trailing={
           backgroundWorktreeSetup ? (
@@ -315,24 +376,24 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       />
     );
   }
-  // The compaction or setup label owns the line; a running tool keeps its upstream row above it.
-  const forkRunningTool =
-    isForkStatusLine(row) && row.forkLive.kind === "work-live" ? (
+  // The compaction or setup label owns the line; folded live reasoning keeps its row above it.
+  const forkFoldedReasoning =
+    isForkStatusLine(row) && row.forkLive?.kind === "work-live" ? (
       <WorkLogBlock>
         <LiveWorkEntryTimelineRow row={row.forkLive} />
       </WorkLogBlock>
     ) : null;
   /* fork:end fork-working-row-last */
   const label = isPreparingWorktree ? (
-    "Setting up worktree…"
+    <T>Setting up worktree…</T>
   ) : compacting ? (
     <CompactingLabel createdAt={row.createdAt} />
   ) : row.createdAt ? (
-    <>
+    <T>
       Working for <WorkingTimer createdAt={row.createdAt} />
-    </>
+    </T>
   ) : (
-    "Working..."
+    <T>Working...</T>
   );
   return (
     <div
@@ -342,7 +403,7 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       /* fork:end fork-working-row-last */
     >
       {/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */}
-      {forkRunningTool}
+      {forkFoldedReasoning}
       {/* fork:end fork-working-row-last */}
       <div
         /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain
@@ -372,10 +433,11 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
 
 function BackgroundWorktreeSetupChip({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
   const ctx = use(TimelineRowCtx);
+  const gt = useGT();
   const terminalId = snapshot.setupScript?.terminalId ?? null;
   const openTerminal = ctx.onOpenWorktreeSetupTerminal;
   const onOpenTerminal = openTerminal && terminalId ? () => openTerminal(terminalId) : null;
-  const scriptName = snapshot.setupScript?.name ?? "Setup script";
+  const scriptName = snapshot.setupScript?.name ?? gt("Setup script");
   return (
     <Popover>
       <PopoverTrigger
@@ -384,12 +446,17 @@ function BackgroundWorktreeSetupChip({ snapshot }: { snapshot: WorktreeSetupSnap
             variant="ghost-muted"
             size="micro"
             className="ml-auto min-w-0 shrink-0"
-            aria-label={`Background setup is still running: ${scriptName}. Show setup progress.`}
+            aria-label={gt(
+              "Background setup is still running: {scriptName}. Show setup progress.",
+              { scriptName },
+            )}
           />
         }
       >
         <Spinner className="size-3 shrink-0" />
-        <span className="truncate">Background setup</span>
+        <span className="truncate">
+          <T>Background setup</T>
+        </span>
       </PopoverTrigger>
       <PopoverPopup side="bottom" align="end" width="lg" padding="compact">
         <WorktreeSetupCard
@@ -410,10 +477,12 @@ function CompactingLabel({ createdAt }: { createdAt: string | null }) {
       <Minimize2Icon aria-hidden="true" className="size-3" />
       {createdAt ? (
         <span>
-          Compacting for <WorkingTimer createdAt={createdAt} />
+          <T>
+            Compacting for <WorkingTimer createdAt={createdAt} />
+          </T>
         </span>
       ) : (
-        "Compacting…"
+        <T>Compacting…</T>
       )}
     </span>
   );
@@ -421,6 +490,8 @@ function CompactingLabel({ createdAt }: { createdAt: string | null }) {
 
 export function ThinkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "thinking" }> }) {
   const ctx = use(TimelineRowCtx);
+  const gt = useGT();
+  const m = useMessages();
   const { isCompacting, isPreparingWorktree, liveAnswerPreview, providerStartingLabel } =
     use(TimelineRowActivityCtx);
   if (isPreparingWorktree || isCompacting) return <WorkLogRow label="" />;
@@ -428,7 +499,12 @@ export function ThinkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind:
   const live = ctx.pendingApprovals.size === 0;
   const activity = (
     <LiveActivityRow
-      label={providerStartingLabel ?? liveAnswerPreview ?? "Thinking"}
+      label={
+        (providerStartingLabel === null ? null : m(providerStartingLabel)) ??
+        row.label ??
+        liveAnswerPreview ??
+        gt("Thinking")
+      }
       iconName="brain"
       active={live}
       shimmer={live}
@@ -504,6 +580,7 @@ function LiveActivityContent({
   active?: boolean;
   highlighted?: boolean;
 }) {
+  const gt = useGT();
   const showTrailingFailureMark =
     failed && iconName !== undefined && !toolIconAcceptsTint(toolIcon);
 
@@ -521,7 +598,7 @@ function LiveActivityContent({
                   : "text-icon-muted",
             )}
             role={announceFailure ? "img" : undefined}
-            aria-label={announceFailure ? "Tool call failed" : undefined}
+            aria-label={announceFailure ? gt("Tool call failed") : undefined}
           >
             <ToolActivityIconView
               icon={toolIcon}
@@ -558,9 +635,11 @@ export function LiveWorkEntryTimelineRow({
   row: Extract<TimelineRow, { kind: "work-live" }>;
 }) {
   const ctx = use(TimelineRowCtx);
+  const gt = useGT();
+  const m = useMessages();
   const threadTarget = useThreadReadTarget(row.entry, ctx.activeThreadEnvironmentId);
-  const label = liveWorkEntryLabel(row.entry, ctx.workspaceRoot, row.active);
-  const threadLabel = threadReadLabel(label, threadTarget);
+  const label = liveWorkEntryLabel(row.entry, ctx.workspaceRoot, row.active, m);
+  const threadLabel = threadReadLabel(label, row.entry, threadTarget, m);
 
   const item = row.entry.projectedItem?.item;
   const pendingApproval =
@@ -583,7 +662,9 @@ export function LiveWorkEntryTimelineRow({
       )}
       aria-label={
         failed
-          ? `${thoughtLine ? `${thoughtLine} ` : ""}${threadLabel?.text ?? label}, tool call failed`
+          ? gt("{label}, tool call failed", {
+              label: `${thoughtLine ? `${thoughtLine} ` : ""}${threadLabel?.text ?? label}`,
+            })
           : undefined
       }
       aria-expanded={row.expanded}
@@ -608,7 +689,7 @@ export function LiveWorkEntryTimelineRow({
                 text={thoughtLine}
                 cwd={ctx.markdownCwd}
                 parseRawHtml={false}
-                extraRemarkPlugins={THOUGHT_PREVIEW_PLUGINS}
+                extensions={thoughtPreviewMarkdown(gt("Thought"))}
               />
             </span>
           }
@@ -619,9 +700,9 @@ export function LiveWorkEntryTimelineRow({
         label={
           thoughtIsStatus ? (
             row.active ? (
-              "Thinking"
+              gt("Thinking")
             ) : (
-              "Thought"
+              gt("Thought")
             )
           ) : row.entry.itemType === "reasoning" ? (
             <ChatMarkdown
@@ -629,7 +710,11 @@ export function LiveWorkEntryTimelineRow({
               text={(row.entry.detail ?? label).slice(0, THOUGHT_PREVIEW_SOURCE_MAX_LENGTH)}
               cwd={ctx.markdownCwd}
               parseRawHtml={false}
-              extraRemarkPlugins={row.active ? THINKING_PREVIEW_PLUGINS : THOUGHT_PREVIEW_PLUGINS}
+              extensions={
+                row.active
+                  ? thoughtPreviewMarkdown(gt("Thinking"))
+                  : thoughtPreviewMarkdown(gt("Thought"))
+              }
             />
           ) : threadLabel ? (
             <ThreadReadLabel
@@ -680,9 +765,12 @@ function WorkGroupHeader(props: {
   timestampFormat: TimestampFormat;
   onToggle: () => void;
 }) {
+  const gt = useGT();
   return (
     <WorkLogButton
-      aria-label={props.failed ? `${props.label}, tool call failed` : props.label}
+      aria-label={
+        props.failed ? gt("{label}, tool call failed", { label: props.label }) : props.label
+      }
       aria-expanded={props.expanded}
       onClick={props.onToggle}
       icon={

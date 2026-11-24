@@ -1,4 +1,5 @@
 import type { ModelSelection, ProviderDriverKind } from "@t3tools/contracts";
+import { useGT, useMessages } from "gt-react-native";
 import {
   buildTraitsTriggerDisplay,
   getPromptControlledTraits,
@@ -8,6 +9,10 @@ import { resolveProviderOptionDescriptors } from "../lib/providerOptions";
 import { AppText as Text } from "./ui/AppText";
 import { ComposerInlineControl } from "./ComposerToolbar";
 import { ProviderIcon, ProviderInstanceIcon, providerInstanceNameLabel } from "./ProviderIcon";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { No3yModelChip, useNo3yComposerStyle } from "../../fork/No3yComposerStyle";
+import { No3yProviderMark } from "../../fork/No3yProviderMark";
+/* fork:end no3y-mobile-redesign */
 
 export function ComposerModelControl(props: {
   readonly modelOption: ModelOption | null;
@@ -21,22 +26,30 @@ export function ComposerModelControl(props: {
   readonly iconOnly?: boolean;
   readonly onPress: () => void;
 }) {
+  const gt = useGT();
+  const m = useMessages();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const no3yCard = useNo3yComposerStyle();
+  /* fork:end no3y-mobile-redesign */
   const descriptors = resolveProviderOptionDescriptors({
     capabilities: props.modelOption?.capabilities,
     selections: props.selection?.options,
   });
   const promptTraits = getPromptControlledTraits(descriptors, props.prompt);
   const summary = props.provider
-    ? buildTraitsTriggerDisplay({
-        descriptors,
-        primarySelectDescriptorId: promptTraits.primarySelectDescriptor?.id ?? null,
-        ultrathinkPromptControlled: promptTraits.ultrathinkPromptControlled,
-        modelSelection: props.selection,
-        reportedModelSelection: props.reportedSelection,
-      }).label
+    ? buildTraitsTriggerDisplay(
+        {
+          descriptors,
+          primarySelectDescriptorId: promptTraits.primarySelectDescriptor?.id ?? null,
+          ultrathinkPromptControlled: promptTraits.ultrathinkPromptControlled,
+          modelSelection: props.selection,
+          reportedModelSelection: props.reportedSelection,
+        },
+        m,
+      ).label
     : "";
   const badge = props.modelOption?.providerBadge;
-  const label = props.modelOption?.label ?? props.selection?.model ?? "Choose model";
+  const label = props.modelOption?.label ?? props.selection?.model ?? gt("Choose model");
   const providerNameLabel = badge
     ? providerInstanceNameLabel({
         provider: props.modelOption?.providerDriver,
@@ -46,10 +59,32 @@ export function ComposerModelControl(props: {
       })
     : null;
   const shortLabel = props.modelOption?.shortName ?? label;
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (no3yCard) {
+    return (
+      <No3yModelChip
+        accessibilityLabel={["Model and reasoning settings", label, summary]
+          .filter(Boolean)
+          .join(", ")}
+        icon={
+          <No3yProviderMark
+            iconUrl={props.modelOption?.providerIconUrl}
+            provider={props.modelOption?.providerDriver}
+            size={16}
+          />
+        }
+        label={providerNameLabel ?? shortLabel}
+        detail={summary}
+        disabled={props.disabled}
+        onPress={props.onPress}
+      />
+    );
+  }
+  /* fork:end no3y-mobile-redesign */
   return (
     <ComposerInlineControl
       accessibilityLabel={[
-        "Model and reasoning settings",
+        gt("Model and reasoning settings"),
         label,
         badge?.showBadge ? badge.displayName : null,
         summary,

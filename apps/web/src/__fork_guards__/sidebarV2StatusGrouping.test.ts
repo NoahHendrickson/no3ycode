@@ -92,8 +92,12 @@ describe("fork guard: sidebar-v2-status-grouping", () => {
       /if \(settledSectionShown\) \{\s*items\.push\(\s*<SidebarV2StatusSectionHeader\s+key="status-section-header:settled"/u,
     );
     expect(sidebar).toContain('section="settled"');
-    expect(sidebar).toContain("count={settledCount}");
     expect(sidebar).toContain("collapsed={!settledShelfExpanded}");
+    expect(sidebar).toContain(
+      "renderTrailing={hasGroupingHeaders ? renderGroupingControls : undefined}",
+    );
+    const statusHeader = readSibling("../custom/SidebarV2StatusSectionHeader.tsx");
+    expect(statusHeader).not.toContain("props.count");
   });
 
   it("keeps the Working shelf beta out of the way while status grouping is on", () => {

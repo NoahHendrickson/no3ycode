@@ -3,33 +3,11 @@
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
 import { ChevronRightIcon } from "lucide-react";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { use, type ReactNode } from "react";
-import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
-import { threadReadLabel, useThreadReadTarget } from "~/components/chat/TimelineWorkEntryRow";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
-import {
-  forkStatusLineLabel,
-  type ForkLiveRow,
-  type ForkStatusLineRow,
-} from "./forkWorkingRowLast";
-
-function WorkStatusLabel({ live }: { live: Extract<ForkLiveRow, { kind: "work-live" }> }) {
-  const ctx = use(TimelineRowCtx);
-  const activity = use(TimelineRowActivityCtx);
-  const target = useThreadReadTarget(live.entry, ctx.activeThreadEnvironmentId);
-  const toolLabel = liveWorkEntryLabel(live.entry, ctx.workspaceRoot, true);
-  return forkStatusLineLabel(live, activity, threadReadLabel(toolLabel, target)?.text ?? toolLabel);
-}
-
-function StatusLabel({ live }: { live: ForkLiveRow }) {
-  const activity = use(TimelineRowActivityCtx);
-  return live.kind === "work-live" ? (
-    <WorkStatusLabel live={live} />
-  ) : (
-    forkStatusLineLabel(live, activity, "")
-  );
-}
+import { forkStatusLineLabel, type ForkStatusLineRow } from "./forkWorkingRowLast";
 
 export function ForkLiveStatusLine({
   row,
@@ -42,13 +20,13 @@ export function ForkLiveStatusLine({
 }) {
   const ctx = use(TimelineRowCtx);
   const live = row.forkLive;
-  const groupId = live.groupId;
+  const groupId = live?.groupId;
+  const label =
+    forkStatusLineLabel(live, use(TimelineRowActivityCtx)) ?? forkThinkingWord(row.forkWordSeed);
   const content = (
     <>
       <SidebarV2WorkingMark seed={row.id} />
-      <span className="min-w-0 truncate">
-        <StatusLabel live={live} />
-      </span>
+      <span className="min-w-0 truncate">{label}</span>
       {timer ? (
         <>
           <span aria-hidden className="size-[3px] shrink-0 rounded-full bg-current" />
@@ -58,7 +36,7 @@ export function ForkLiveStatusLine({
       {groupId === undefined ? null : (
         <ChevronRightIcon
           aria-hidden
-          className={`size-3.5 shrink-0 text-icon-muted ${live.expanded ? "rotate-90" : ""}`}
+          className={`size-3.5 shrink-0 text-icon-muted ${live?.expanded ? "rotate-90" : ""}`}
         />
       )}
     </>
@@ -72,7 +50,7 @@ export function ForkLiveStatusLine({
       ) : (
         <button
           type="button"
-          aria-expanded={live.expanded === true}
+          aria-expanded={live?.expanded === true}
           className={`${lineClassName} cursor-pointer rounded-md hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70`}
           onClick={() => ctx.onToggleWorkGroup(groupId, row.id)}
         >

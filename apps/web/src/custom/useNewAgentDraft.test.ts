@@ -23,6 +23,8 @@ import {
   assignDraftProject,
   type DraftProjectTarget,
   moveUnassignedDraft,
+  type NewAgentScratch,
+  placeNewAgentDraftOnScratch,
   readPendingDraftProjectKey,
 } from "./useNewAgentDraft";
 
@@ -113,6 +115,10 @@ describe("assignDraftProject", () => {
     expect(Date.parse(session()?.createdAt ?? "")).toBeGreaterThan(
       Date.parse("2026-09-08T09:00:00.000Z"),
     );
+
+    // Checkout work (a launchpad commit or pull) keeps the draft in the project's own checkout.
+    await assignDraftProject(draftId, target("b"), settings, { envMode: "local" });
+    expect(session()).toMatchObject({ projectId: "proj-b", envMode: "local" });
   });
 
   it("applies the project's own permissions, worktree origin and model", async () => {
@@ -296,5 +302,66 @@ describe("moveUnassignedDraft", () => {
       projectId: "proj-a",
       logicalProjectKey: "proj-a",
     });
+  });
+});
+
+describe("placeNewAgentDraftOnScratch", () => {
+  const scratchProject = (on: EnvironmentId) =>
+    ({ environmentId: on, id: ProjectId.make(`scratch-${on}`) }) as Awaited<
+      ReturnType<NewAgentScratch["openScratchProject"]>
+    >;
+  const scratch = (
+    open: NewAgentScratch["openScratchProject"] = async (on) => scratchProject(on),
+    root: string | null = "/scratch",
+  ): NewAgentScratch => ({ scratchWorkspaceRootFor: () => root, openScratchProject: open });
+
+  it("puts the draft on its machine's No project, still the New agent draft with its settings", async () => {
+    useComposerDraftStore
+      .getState()
+      .setLogicalProjectDraftThreadId(
+        NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+        newAgentDraftProjectRef(environmentId),
+        draftId,
+        { runtimeMode: "full-access" },
+      );
+    await placeNewAgentDraftOnScratch(draftId, scratch());
+    expect(session()).toMatchObject({
+      logicalProjectKey: NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
+      projectId: "scratch-env-local",
+      runtimeMode: "full-access",
+    });
+  });
+
+  it("leaves a draft unassigned where its machine has no scratch folder", async () => {
+    await placeNewAgentDraftOnScratch(draftId, scratch(undefined, null));
+    expect(session()?.projectId).toBe(newAgentDraftProjectRef(environmentId).projectId);
+  });
+
+  it("yields to a machine change made while the scratch project opens", async () => {
+    let open!: () => void;
+    const placing = placeNewAgentDraftOnScratch(
+      draftId,
+      scratch(
+        (on) =>
+          new Promise((resolve) => {
+            open = () => resolve(scratchProject(on));
+          }),
+      ),
+    );
+    const remote = EnvironmentId.make("env-remote");
+    moveUnassignedDraft(draftId, remote);
+    open();
+    await placing;
+    expect(session()).toMatchObject({
+      environmentId: remote,
+      projectId: newAgentDraftProjectRef(remote).projectId,
+    });
+  });
+
+  it("yields to a project pick in flight", async () => {
+    readProjectFile.mockImplementation(() => new Promise(() => {}));
+    void assignDraftProject(draftId, target("a"), settings);
+    await placeNewAgentDraftOnScratch(draftId, scratch());
+    expect(session()?.projectId).toBe(newAgentDraftProjectRef(environmentId).projectId);
   });
 });

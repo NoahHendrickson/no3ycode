@@ -7,7 +7,7 @@ import {
   type AndroidNavigationStyle,
 } from "../../../lib/androidNavigationStyle";
 
-import { useAtomSet, useAtomValue } from "@effect/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { Atom, AsyncResult } from "effect/reactivity";
 
 import { ScopedTheme, ScopedVariables, Uniwind } from "uniwind";
@@ -18,7 +18,8 @@ import {
   type ResolvedAppearance,
 } from "../../../lib/appearancePreferences";
 import { appAtomRegistry } from "../../../state/atom-registry";
-import { mobilePreferencesAtom, updateMobilePreferencesAtom } from "../../../state/preferences";
+import { mobilePreferencesAtom, saveMobilePreferences } from "../../../state/preferences";
+import { useAtomCommand } from "../../../state/use-atom-command";
 import type { Preferences } from "../../../persistence/mobile-preferences";
 import {
   isSystemColorsAvailable,
@@ -28,6 +29,14 @@ import {
 import { materialYouPaletteToMobileThemeVariables } from "../../../lib/materialYouTheme";
 import { getMobileThemeRuntimeVariables } from "../../../lib/mobileThemeVariables";
 import type { MobileThemeVariables } from "../../../lib/mobileTheme";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import {
+  NO3Y_DARK_UNIWIND_THEMES,
+  no3yDarkPageVariables,
+  withNo3yPageColor,
+} from "../../../../fork/no3yPageColor";
+import { NO3Y_IPHONE } from "../../../../fork/no3yIphone";
+/* fork:end no3y-mobile-redesign */
 import {
   createMobileThemePairPatch,
   createMobileThemeSelectionPatch,
@@ -111,9 +120,13 @@ function resolveThemeVariablesByAppearance(
 ): Readonly<Record<MobileThemeAppearance, MobileThemeVariables>> {
   const resolve = (appearance: MobileThemeAppearance) => {
     const base = getMobileThemeRuntimeVariables(themeIds[appearance], appearance, Platform.OS);
-    return themeIds[appearance] === "material-you" && palettes
-      ? materialYouPaletteToMobileThemeVariables(palettes[appearance], appearance, base)
-      : base;
+    const variables =
+      themeIds[appearance] === "material-you" && palettes
+        ? materialYouPaletteToMobileThemeVariables(palettes[appearance], appearance, base)
+        : base;
+    /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+    return NO3Y_IPHONE ? withNo3yPageColor(variables, appearance, Platform.OS) : variables;
+    /* fork:end no3y-mobile-redesign */
   };
   return { light: resolve("light"), dark: resolve("dark") };
 }
@@ -179,6 +192,13 @@ export function installAppearanceRuntime(): () => void {
     immediate: true,
   });
   const releasePalettes = appAtomRegistry.mount(systemColorPalettesAtom);
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  if (NO3Y_IPHONE) {
+    for (const themeName of NO3Y_DARK_UNIWIND_THEMES) {
+      Uniwind.updateCSSVariables(themeName, no3yDarkPageVariables());
+    }
+  }
+  /* fork:end no3y-mobile-redesign */
   return () => {
     unsubscribeRuntime();
     releasePalettes();
@@ -187,7 +207,7 @@ export function installAppearanceRuntime(): () => void {
 
 export function AppearancePreferencesProvider(props: { readonly children: ReactNode }) {
   const preferencesResult = useAtomValue(mobilePreferencesAtom);
-  const savePreferences = useAtomSet(updateMobilePreferencesAtom);
+  const savePreferences = useAtomCommand(saveMobilePreferences);
   const systemColorScheme = useColorScheme() === "dark" ? "dark" : "light";
   const storedPreferences = AsyncResult.isSuccess(preferencesResult)
     ? preferencesResult.value
@@ -224,11 +244,13 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
   );
   const isReady = AsyncResult.isSuccess(preferencesResult);
   const updatePreferences = (patch: Partial<Preferences>) => {
-    startTransition(() => savePreferences(patch));
+    startTransition(() => {
+      void savePreferences(patch);
+    });
   };
 
   const updateThemePreferences = (patch: Partial<Preferences>) => {
-    savePreferences(patch);
+    void savePreferences(patch);
   };
 
   const setThemeIdForAppearance = (appearance: MobileThemeAppearance, value: MobileThemeId) => {

@@ -1,4 +1,7 @@
 import type { ContextMenuItem } from "@t3tools/contracts";
+import { msg } from "gt-react";
+
+import { m } from "./i18n/messages";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -405,7 +408,7 @@ export function showContextMenuFallback<T extends string>(
       if (anchor) menu.dataset[level === 0 ? "forkAnchoredMenu" : "forkAnchoredSubmenu"] = "";
       /* fork:end fork-inlet-theme */
       menu.setAttribute("role", "menu");
-      menu.setAttribute("aria-label", parentTrigger?.textContent ?? "Context menu");
+      menu.setAttribute("aria-label", parentTrigger?.textContent ?? m(msg("Context menu")));
       menu.tabIndex = -1;
 
       const inner = document.createElement("div");
@@ -564,10 +567,6 @@ export function showContextMenuFallback<T extends string>(
               if (!childMenu) {
                 return;
               }
-              const childRect = childMenu.getBoundingClientRect();
-              if (childRect.right > window.innerWidth) {
-                clampMenuPosition(childMenu, rect.left - childRect.width - 4, rect.top);
-              }
               if (focusFirstItem) {
                 [...childMenu.querySelectorAll<HTMLButtonElement>("button")]
                   .find((childButton) => !childButton.disabled)
@@ -612,7 +611,18 @@ export function showContextMenuFallback<T extends string>(
       submenuTriggerStack[level] = parentTrigger;
 
       requestAnimationFrame(() => {
-        clampMenuPosition(menu, preferredLeft, preferredTop);
+        if (!parentTrigger) {
+          clampMenuPosition(menu, preferredLeft, preferredTop);
+          return;
+        }
+        // A fixed menu near the right edge shrinks to the space left; measure its real width.
+        menu.style.width = "max-content";
+        menu.style.maxWidth = "min(24rem, calc(100vw - 0.5rem))";
+        const { width } = menu.getBoundingClientRect();
+        const roomLeft = parentTrigger.getBoundingClientRect().left - 4;
+        const roomRight = window.innerWidth - preferredLeft;
+        const flipLeft = width > roomRight && roomLeft > roomRight;
+        clampMenuPosition(menu, flipLeft ? roomLeft - width : preferredLeft, preferredTop);
       });
     };
 

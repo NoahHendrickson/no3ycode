@@ -1,5 +1,9 @@
 import { modelChipIcon } from "../lib/contextChipIconSource";
 import { useMemo } from "react";
+import {
+  assistantCitationLabel,
+  parseAssistantCitationHref,
+} from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
@@ -65,6 +69,13 @@ function presentation(
 ): MarkdownLinkCustomization | undefined {
   const custom = props.linkCustomization?.(url);
   if (custom) return custom;
+  const citation = parseAssistantCitationHref(url);
+  if (citation)
+    return {
+      label: assistantCitationLabel(citation),
+      icon: CONTEXT_CHIP_ICON_SOURCES["message-circle"],
+      chip: { accent: contextChipPresentation("citation").accent, tintsIcon: true },
+    };
   const context = enrichedContextLinkCustomization(url);
   if (context) return context;
   const skill = enrichedSkillReference(url, props.skills);
@@ -92,6 +103,9 @@ function presentation(
       label: link.label,
       icon: markdownFileIconSource(link.icon),
       chip: { accent: contextChipPresentation("mention").accent, tintsIcon: false },
+      /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+      fileReference: true,
+      /* fork:end no3y-mobile-redesign */
     };
   const icon = link.kind === "external" ? markdownLinkIcon(link.host) : null;
   return icon
@@ -120,6 +134,9 @@ export function useEnrichedLinkVariants(
             label,
             color: textStyle.fileTextColor,
             icon: markdownFileIconSource(resolveMarkdownFileIcon(label)),
+            /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+            fileReference: true as const,
+            /* fork:end no3y-mobile-redesign */
           }
         : presentation(url, { linkCustomization, skills, models, textStyle });
       if (value) byUrl.set(url, value);
@@ -142,21 +159,53 @@ export function useEnrichedLinkVariants(
     () =>
       Object.fromEntries(
         [...links].map(([url, link]) => {
-          const chipForeground = chipForegrounds.get(url);
+          /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+          if (link.capsule) {
+            return [
+              enrichedLinkVariantPattern(url),
+              {
+                pill: {
+                  borderColor: link.capsule.border,
+                  borderWidth: 1,
+                  borderRadius: 999,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                },
+                fontFamily: FONT_FAMILIES.medium,
+                color: textStyle.color,
+                underline: false,
+                backgroundColor: link.capsule.surface,
+              },
+            ];
+          }
+          /* fork:end no3y-subagent-link-chip */
+          /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+          // A file reference wears inline code's chip and ink when the reply styles one.
+          const codeChip =
+            link.fileReference && textStyle.inlineCodeBackgroundColor !== undefined
+              ? textStyle.inlineCodeChip
+              : undefined;
+          const chipForeground = codeChip ? undefined : chipForegrounds.get(url);
+          /* fork:end no3y-mobile-redesign */
           return [
             enrichedLinkVariantPattern(url),
             {
               pill: {
                 borderColor: "transparent",
                 borderWidth: 0,
-                borderRadius: 6,
-                paddingHorizontal: 5,
+                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+                borderRadius: codeChip?.radius ?? 6,
+                paddingHorizontal: codeChip?.paddingHorizontal ?? 5,
+                /* fork:end no3y-mobile-redesign */
                 paddingVertical: 2,
               },
               fontFamily: chipForeground ? FONT_FAMILIES.medium : textStyle.fontFamily,
-              color: chipForeground ?? link.color ?? textStyle.fileTextColor,
+              /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+              color:
+                chipForeground ?? (codeChip ? undefined : link.color) ?? textStyle.fileTextColor,
               underline: false,
-              backgroundColor: "transparent",
+              backgroundColor: codeChip ? textStyle.inlineCodeBackgroundColor : "transparent",
+              /* fork:end no3y-mobile-redesign */
             },
           ];
         }),

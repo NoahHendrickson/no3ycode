@@ -43,10 +43,16 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
       "Effect.Effect<VcsStatusLocalResult | null, RunFinalizationRefreshError>",
     );
     expect(hunks).toContain("const follower = yield* LocalCheckoutBranchFollower;");
+    // Upstream runs the refresh in a background fiber; the follow rides the same fiber.
     expect(hunks).toContain(
-      "yield* follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local });",
+      ": follower.follow({ cwd, threadId: input.threadId, runId: input.runId, local }),",
     );
+    // A shared-checkout thread follows before finalize returns; the rest stay in the background.
+    expect(hunks).toContain("if (yield* follower.canFollow(input.threadId)) yield* refresh;");
+    expect(hunks).toContain("else yield* refresh.pipe(FiberSet.run(refreshes));");
     expect(hunks).toContain("return local;");
+    // The inline follow waits on the status read only; the rescan runs on its own fiber.
+    expect(hunks).toContain("yield* workspaceEntries.refresh(cwd).pipe(FiberSet.run(rescans));");
     expect(finalization).not.toMatch(/local\.isDefaultRef\) return;/u);
   });
 
@@ -56,7 +62,9 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
       "ForkLocalCheckoutBranchFollow.layer.pipe(Layer.provide(layerThreadManagementProvided))",
     );
     // Elsewhere the reference keeps its no-op default.
-    expect(follower).toContain("defaultValue: () => ({ follow: () => Effect.void })");
+    expect(follower).toContain(
+      "defaultValue: () => ({ canFollow: () => Effect.succeed(false), follow: () => Effect.void })",
+    );
   });
 
   it("keeps the policy's outcomes in the follower", () => {
@@ -65,7 +73,8 @@ describe("fork guard: server-local-checkout-branch-follow", () => {
     expect(follower).toContain(
       "if (checkedOut === null || input.local.isDefaultRef || isTemporaryWorktreeBranch(checkedOut))",
     );
-    expect(follower).toContain("thread.worktreePath !== null ||");
+    expect(follower).toContain("!isSharedCheckoutThread(thread) ||");
+    expect(follower).toContain("return thread.worktreePath === null && thread.branch !== null;");
     expect(follower).toContain(
       "if (thread.activeRunId !== null && thread.activeRunId !== input.runId)",
     );

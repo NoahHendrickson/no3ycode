@@ -102,7 +102,13 @@ function emit(value: string, resetGeneration = native.resetGeneration) {
 vi.mock("expo", () => ({ requireNativeView: () => NativeView }));
 // Vite resolves the platform-neutral module; the race lives in the iOS editor.
 vi.mock("../native/T3ComposerEditor", () => import("../native/T3ComposerEditor.ios"));
-vi.mock("react-native", () => ({ StyleSheet: { flatten: (style: unknown) => style } }));
+vi.mock("react-native", () => ({
+  StyleSheet: { flatten: (style: unknown) => style },
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // fork/no3yIphone.ts reads Platform at load; an iPad keeps upstream's look under test.
+  Platform: { OS: "ios", isPad: true },
+  /* fork:end no3y-mobile-redesign */
+}));
 vi.mock("expo-file-system", () => ({
   Directory: class {
     create() {}
@@ -116,7 +122,8 @@ vi.mock("expo-file-system", () => ({
 vi.mock("./ui/Dialog", () => ({ alert: vi.fn() }));
 vi.mock("./ui/AppText", () => ({ AppText: ({ children }: { children?: ReactNode }) => children }));
 vi.mock("./ComposerContextSheet", () => ({ ComposerContextSheet: () => null }));
-vi.mock("../features/threads/useOpenLinkedThread", () => ({ useOpenLinkedThread: () => vi.fn() }));
+vi.mock("./AssistantCitationSheet", () => ({ AssistantCitationSheet: () => null }));
+vi.mock("../features/threads/useOpenThreadLink", () => ({ useOpenThreadLink: () => vi.fn() }));
 vi.mock("../state/peerLinks", () => ({ useLinkedEnvironments: () => [] }));
 vi.mock("../state/model-mentions", () => ({ useModelMentions: () => [] }));
 vi.mock("../state/preferences", async () => {
@@ -128,7 +135,7 @@ vi.mock("../lib/useUniwindTheme", () => ({ useUniwindTheme: () => ({}) }));
 vi.mock("../lib/nativeComposerTheme", () => ({ createNativeComposerTheme: () => ({}) }));
 vi.mock("../lib/contextChipIconSource", () => ({ contextChipIconUri: () => "" }));
 vi.mock("../features/settings/appearance/useScaledTextRole", () => ({
-  useScaledTextRole: () => ({ fontSize: 16, lineHeight: 22 }),
+  useComposerTextRole: () => ({ fontSize: 16, lineHeight: 22 }),
 }));
 vi.mock("../lib/uuid", () => ({ uuidv4: () => "uuid", randomHex: () => "0000" }));
 vi.mock("../state/assets", () => ({ assetEnvironment: {} }));
