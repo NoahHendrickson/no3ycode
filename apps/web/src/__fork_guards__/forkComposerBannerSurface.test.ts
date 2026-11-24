@@ -11,8 +11,8 @@
  *
  * The colour half works by re-pointing the `--chat-composer-attached-*`
  * variables ComposerBanner's Surface and Peek both read. The geometry half is
- * keyed on the Root's slot, the attachment wrapper's slot, the shoulder-tab
- * attribute and the notice stack's drawer attribute. A sync that renames any
+ * keyed on the Root's slot, the attachment wrapper's slot and the notice
+ * stack's drawer attribute. A sync that renames any
  * of them, or paints the peek's severity edge some other way, quietly brings
  * the blue inset slab back — everything still compiles.
  */
@@ -37,7 +37,6 @@ const CARD = '[data-slot="composer-banner"][data-composer-banner-surface="attach
 const theme = readSibling("../theme.custom.css");
 const banner = readSibling("../components/chat/ComposerBanner.tsx");
 const bannerStack = readSibling("../components/chat/ComposerBannerStack.tsx");
-const stashBadge = readSibling("../components/chat/ComposerStashBadge.tsx");
 // Upstream moved ChatView's banner items (branch mismatch) into ThreadActivityBanners.
 const activityBanners = readSibling("../components/chat/ThreadActivityBanners.tsx");
 const rules = cssRules(theme);
@@ -125,7 +124,6 @@ describe("fork guard: fork-composer-banner-surface", () => {
     const [rule, ...rest] = cardRules(() => true);
     expect(rest).toHaveLength(0);
     expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
-    expect(rule?.selector).not.toContain("[data-composer-shoulder-tab]");
     expect(rule?.body).toMatch(/--chat-composer-attachment-overlap:\s*0px/u);
     for (const painted of ["background", "border", "box-shadow"]) {
       expect(rule?.body, painted).not.toContain(painted);
@@ -167,18 +165,7 @@ describe("fork guard: fork-composer-banner-surface", () => {
       (candidate) =>
         flat(candidate.selector).includes(CARD) && flat(candidate.selector).endsWith("::before"),
     );
-    expect(rule?.selector).not.toContain("[data-composer-shoulder-tab]");
     expect(rule?.body).toMatch(/display:\s*none/u);
-  });
-
-  it("gives both shoulder tabs the tasks drawer's density", () => {
-    const rule = rules.find((candidate) =>
-      flat(candidate.selector).endsWith(
-        ":is([data-fork-composer-vessel], [data-fork-composer-banners]) [data-composer-shoulder-tab]",
-      ),
-    );
-    expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
-    expect(rule?.body).toMatch(/--composer-banner-padding-block:\s*calc\(var\(--spacing\) \* 1\)/u);
   });
 
   it("gives notices and the activity strip the design's metrics", () => {
@@ -255,7 +242,6 @@ describe("fork guard: fork-composer-banner-surface", () => {
     // its own attachment.
     expect(bannerStack).toContain('data-composer-banner-stack="true"');
     expect(bannerStack).toContain("<ComposerBanner.Attachment");
-    expect(stashBadge).toContain("data-composer-shoulder-tab");
   });
 
   it("keeps the notice primary action on the fork's white Primary", () => {

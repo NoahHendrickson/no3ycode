@@ -39,6 +39,8 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   usageControls?: ReactNode;
   /** Chips above the composer (the thread's PR, background work); the row hides when empty. */
   statusChips?: ReactNode;
+  /** The collapsed stash, last in the chip row; it stays over the collapsed phone pill, where a tap expands and opens it. */
+  stashChip?: ReactNode;
   /** A Petal's digest, under the chips and above the notice cards. */
   digest?: ReactNode;
   /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
@@ -57,6 +59,7 @@ export const ComposerShell = memo(function ComposerShell({
   readoutControls,
   usageControls,
   statusChips,
+  stashChip,
   digest,
   banners,
 }: ComposerShellProps) {
@@ -98,13 +101,14 @@ export const ComposerShell = memo(function ComposerShell({
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/* In flow, so the transcript's bottom inset makes room for it. Empty over the collapsed
-          phone pill, like the context row: a tap there would focus the composer and expand it. */}
+      {/* In flow, so the transcript's bottom inset makes room for it. Only the stash over the
+          collapsed phone pill, like the context row: a tap there would focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
         className="flex min-w-0 flex-wrap items-center gap-1.5 pb-2 empty:hidden"
       >
         {collapsedMobile ? null : statusChips}
+        {stashChip}
       </div>
       {/* In the form, but not the composer: the body's theme and focus rules stop here. */}
       <div data-fork-composer-aside="true" className="contents">

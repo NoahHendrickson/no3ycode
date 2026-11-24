@@ -3816,9 +3816,12 @@
     keep the glass.
     The open stash is the queue card's twin: ChatComposer renders it as the
     card nearest the prompt in the banners dock (not upstream's portaled
-    drawer layer), its tab hidden while it is open, and it shares the queue
+    drawer layer), and it shares the queue
     card's rules and parts (custom/ComposerCardParts.tsx: the counted title
     and the trash remove). Both titles read at text-sm/5 on the banner scale.
+    Collapsed, it is a "Stash N" pill in the status-chip row like the queue's
+    (custom/ComposerStashChip.tsx), rendered by ChatComposer so the new agent
+    screen shows it too; upstream's ComposerStashBadge shoulder tab is deleted.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3829,6 +3832,7 @@
     - apps/web/src/custom/ComposerBackgroundWork.tsx
     - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
+    - apps/web/src/custom/ComposerStashChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/composerPullRequestChip.logic.ts
@@ -3889,7 +3893,7 @@
     # pseudo-elements this customization switches off. An upstream rework of
     # that paint would leave the fork disabling rules that no longer match.
     - apps/web/src/components/chat/ComposerSurface.tsx
-    # The dock the drawers, banners and stash badge now ride inside the vessel.
+    # The dock the drawers, banners and stash card ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
     # The stash card's title, trash remove and composer-controls stamp, fenced.
     - apps/web/src/components/chat/ComposerStashMenu.tsx
@@ -4968,9 +4972,7 @@
     only drawn edge in the vessel; the Questions card, which fuses with the
     prompt into one bordered box on the composer fill, is the deliberate
     exception and keeps that construction — including its own top edge under
-    a notice, since the notice above it paints no outline to share. Shoulder tabs (stash, tasks) are
-    banner Roots and take the same floor treatment; only the dock stacking and
-    the tabs' shared drawer density name them. The remaining Figma
+    a notice, since the notice above it paints no outline to share. The remaining Figma
     467:33308 card (branch changed) is stamped data-fork-composer-notice so
     drawer density stays on Reconnect / Update / tasks. It drops font-medium /
     leading-7 at the source, stacks title over description, and stamps its
@@ -5112,9 +5114,7 @@
     leaves the card transparent) and a top/left/right composer hairline on
     8px top corners (recoloured with the prompt's focus ring so the stack
     keeps one ring), and square the prompt surface's top corners so the two read as
-    one box. Because the card takes the whole dock row, the stash tab cannot
-    sit beside it as it does beside upstream's inset drawer: the dock stacks
-    and the tab sits as a floor row above the card, right-aligned.
+    one box.
     On the no3y iPhone layout (fork/No3yPendingUserInputCard.tsx, swapped in
     by a fenced wrapper in ThreadDetailScreen) the same design is a glass card
     in the composer card's place at its width: a Questions header with the

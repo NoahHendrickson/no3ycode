@@ -820,6 +820,10 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(shell).toContain("empty:hidden");
     expect(composer).toContain("statusChips={props.statusChips}");
+    // ChatComposer owns the stash pill, so the new agent screen shows it too, and the shell
+    // keeps it over the collapsed phone pill.
+    expect(composer).toMatch(/stashChip=\{[\s\S]*?<ComposerStashChip/u);
+    expect(shell).toMatch(/\{collapsedMobile \? null : statusChips\}\s*\{stashChip\}/u);
     expect(chatView).toContain("statusChips={composerStatusChips}");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");

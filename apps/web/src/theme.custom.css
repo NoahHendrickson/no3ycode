@@ -2380,9 +2380,7 @@
    translucent on some palettes, so a second copy would composite twice, and a
    literal value would stop tracking the token the control row reads.
 
-   Shoulder tabs (the stash and tasks badges) are ComposerBanner.Roots too and
-   take the same floor treatment; only the dock stacking and the tab density
-   below name them. The collapsed stack's peek cap has no surface attribute but reads
+   The collapsed stack's peek cap has no surface attribute but reads
    the same fill variable, so the colour remap lists its slot beside the
    surface and gives it the hairline in place of its severity border utility;
    it takes the composer radius so the cap reads as one more card behind.
@@ -2402,12 +2400,9 @@
 }
 
 /* The attachment wrappers carry the inset width and the tuck, and the dock is
-   one of them, so any wrapper around a card goes full width and flush. The
-   shoulder tabs (stash, tasks) are banner Roots too, so they count: upstream's
-   inset tab tucked under the prompt box reads as a dark slab jammed against
-   the vessel's top edge, and like the banners they are vessel floor instead.
-   The match is by descendant so the dock also goes flush around the tasks row
-   nested in its column, whether or not the stash tab is showing. */
+   one of them, so any wrapper around a card goes full width and flush.
+   The match is by descendant so the dock also goes flush around the cards
+   nested in its column. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(
@@ -2416,31 +2411,6 @@
   width: 100%;
   max-width: none;
   margin: 0;
-}
-
-/* A full-width card would squeeze the stash tab sharing the dock row. Stack
-   the dock instead: the tab is a floor row above the card, right-aligned. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-slot="composer-banner-attachment"]:has(> [data-composer-shoulder-tab]):has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
-        [data-composer-shoulder-tab]
-      )
-  ) {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-slot="composer-banner-attachment"]:has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
-        [data-composer-shoulder-tab]
-      )
-  )
-  > [data-composer-shoulder-tab] {
-  order: -1;
-  align-self: flex-end;
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
@@ -2460,16 +2430,6 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
   --chat-composer-attachment-overlap: 0px;
-}
-
-/* The collapsed tasks badge is the header row of the open tasks drawer, so
-   both shoulder tabs take the drawer's default density: toggling tasks only
-   adds or removes the list beneath it, and a stash tab sharing the dock row
-   keeps the same text line. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-composer-shoulder-tab] {
-  --composer-banner-padding-block: calc(var(--spacing) * 1);
 }
 
 /* Notice metrics, Figma 467:33308, keyed on data-fork-composer-notice so
