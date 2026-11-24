@@ -1,6 +1,7 @@
 /**
- * The selected provider's session quota as a ring in the composer's control row, opening every
- * provider's limits as a menu — see `.fork/customizations.yaml#fork-composer-usage-limits`.
+ * The selected provider's session quota (or Claude's weekly one, without a session limit) as a
+ * ring in the composer's control row, opening every provider's limits as a menu. See
+ * `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
@@ -27,9 +28,13 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
   const gt = useGT();
   // The menu's clock advances on open rather than ticking while it shows.
   const [openedAt, setOpenedAt] = useState(() => Date.now());
-  const session = props.usageLimits?.windows.find((window) => window.kind === "session");
-  if (!session) return null;
-  const remaining = remainingPercent(session);
+  const windows = props.usageLimits?.windows ?? [];
+  // Claude plans without a 5-hour limit fall back to Claude's account-wide weekly window.
+  const ring =
+    windows.find((window) => window.kind === "session") ??
+    windows.find((window) => window.id === "seven_day");
+  if (!ring) return null;
+  const remaining = remainingPercent(ring);
   return (
     <Popover
       onOpenChange={(open) => {
@@ -40,7 +45,7 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
         data-fork-composer-usage-limits="true"
         // Inlet hangs the menu from this button (theme.custom.inlet-menus.css).
         data-fork-tab-trigger=""
-        aria-label={`${session.label} limit: ${remaining}% left. Show usage limits`}
+        aria-label={`${ring.label} limit: ${remaining}% left. Show usage limits`}
         className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <UsageCircleMeter remaining={remaining} />

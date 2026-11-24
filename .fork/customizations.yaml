@@ -3042,8 +3042,10 @@
     subscribes to environment presentations only while open, and its clock
     advances on open. The calmer #38a169 green is scoped via --success to the
     ring and its menu so the Usage settings page keeps each theme's --success
-    token. Hidden when the provider reports no session window or when the
-    footer collapses. Nothing fills the composer's top vessel any more.
+    token. Without a session window it shows Claude's account-wide weekly
+    window (id seven_day) instead, for Claude plans with no 5-hour limit; other
+    providers' weekly windows never draw it. Hidden when neither exists or when
+    the footer collapses. Nothing fills the composer's top vessel any more.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
