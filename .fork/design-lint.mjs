@@ -91,11 +91,83 @@ const KNOWN_ROOT_CLASSES = new Set(["dark"]);
 
 /**
  * Exceptions that are not a line comment: a whole selector or file the rule does not fit.
- * `match` is a substring of the selector (or of the component name for B5). Each needs a reason.
+ * `match` is a substring of the selector (or of the component name for B5); a B5 `name` must match
+ * the component exactly. Each needs a reason.
  */
 export const ALLOWLIST = [
   // { rule: "A1", file: "apps/web/src/theme.custom.css", match: ".fork-wordmark", reason: "…" },
+  ...b5Exempt("route page", {
+    "scheduled/ScheduledPage.tsx": ["ScheduledPage"],
+    "scheduled/ScheduledTaskDetail.tsx": ["ScheduledTaskDetail"],
+    "scheduled/ScheduledTaskEditor.tsx": ["ScheduledTaskEditor"],
+  }),
+  ...b5Exempt("page layout: lays out one screen or panel", {
+    "DraftLaunchpad.tsx": ["DraftLaunchpad"],
+    "sideChat/SideChatShell.tsx": ["SideChatShell"],
+    "splitThreads/SplitThreadPanes.tsx": ["SplitThreadPanes"],
+    "bots/BotThreadsPanel.tsx": ["BotThreadsPanel"],
+    "designMode/panel/ForkDesignPanel.tsx": ["ForkDesignPanel"],
+    "designMode/ForkLayersTree.tsx": ["ForkLayersTree"],
+  }),
+  ...b5Exempt("section: lays out storied atoms for one region of one screen", {
+    "SidebarV2ChromeRows.tsx": ["SidebarV2ChromeActionRows", "SidebarV2ChatActionRows"],
+    "CollapsedThreadTabs.tsx": ["CollapsedThreadTabs"],
+    "bots/CollapsedPetalTabs.tsx": ["CollapsedPetalTabs"],
+    "bots/SidebarV2BotsSection.tsx": ["SidebarV2BotsRow"],
+    "bots/BotMascotDetailsSection.tsx": ["BotMascotDetailsSection"],
+    "bots/BotDigest.tsx": ["BotDigestAsks"],
+    "scheduled/ScheduledRunsTable.tsx": ["ScheduledRunsHeader", "ScheduledRunRows"],
+    "designMode/panel/SentPreviewResolution.tsx": ["SentPreviewResolution"],
+    "designMode/panel/sections/AppearanceSection.tsx": ["AppearanceSection"],
+    "designMode/panel/sections/LayoutSection.tsx": ["LayoutSection"],
+    "designMode/panel/sections/PaintSections.tsx": [
+      "FillSection",
+      "StrokeSection",
+      "MarginSection",
+    ],
+    "designMode/panel/sections/PositionSection.tsx": ["PositionSection"],
+    "designMode/panel/sections/TypographySection.tsx": ["TypographySection"],
+    "designMode/panel/sections/section.tsx": ["SideFields"],
+  }),
+  ...b5Exempt("provider/host: draws no UI of its own", {
+    "ForkSubagentLinkChip.tsx": ["ForkSubagentLinkScope"],
+    "forkTimelineRowMotion.tsx": ["ForkTimelineRowFrame"],
+    "voice/ForkDictationHotkeyHost.tsx": ["ForkDictationHotkeyHost"],
+    "designMode/ForkPreviewDesignMode.tsx": ["ForkPreviewDesignMode"],
+  }),
+  ...b5Exempt("screen backdrop: full-bleed art behind a screen", {
+    "BasicNewAgentBackdrop.tsx": ["BasicNewAgentBackdrop"],
+    "pixelTexture/PixelTextureBackdrop.tsx": ["PixelTextureBackdrop"],
+  }),
+  ...b5Exempt("wrapper: the unstyled base under Tabs and MenuTabs (Components/Tabs)", {
+    "SegmentedTabs.tsx": ["SegmentedTabs", "SegmentedTab", "SegmentedMenuTabs", "SegmentedMenuTab"],
+  }),
+  ...b5Exempt("wrapper: reads live thread state, then draws a storied view", {
+    // ForkSubagentCardView, Fork/Subagent card.
+    "ForkSubagentGroup.tsx": ["ForkSubagentGroup", "ForkSubagentNotice"],
+    // SubagentLinkMark in a ContextChip, Fork/Subagent link.
+    "ForkSubagentLinkChip.tsx": ["ForkSubagentLinkChip"],
+    // BotMascot, Fork/Petal mascot.
+    "bots/BotMascot.tsx": ["BotEmptyConversation", "BotHeaderMascot"],
+    // SidebarProviderUpdatesButtonView.
+    "SidebarProviderUpdatesButton.tsx": ["SidebarProviderUpdatesButton"],
+    // MusicStripCardView, Fork/Music strip.
+    "music/MusicStrip.tsx": ["SidebarMusicStrip"],
+  }),
+  ...b5Exempt("wrapper around ComposerModelPicker", {
+    "scheduled/ScheduledTaskModelPicker.tsx": ["ScheduledTaskModelPicker"],
+  }),
+  ...b5Exempt("wrapper around upstream's ThreadHoverCardPopup, which places it", {
+    "SubagentRowHoverCardPopup.tsx": ["SubagentRowHoverCardPopup"],
+  }),
 ];
+
+/** B5 entries for components that are not atomic: one per name, which must match exactly. */
+function b5Exempt(reason, byFile) {
+  return Object.entries(byFile).flatMap(([file, names]) =>
+    names.map((name) => ({ rule: "B5", file: `${WEB_SRC}/custom/${file}`, name, reason })),
+  );
+}
 
 /** Custom properties another library or the browser sets at runtime, so C3 cannot see them. */
 const RUNTIME_TOKEN_PREFIXES = [
@@ -1120,7 +1192,9 @@ const allowlisted = (entry) =>
     (allowed) =>
       allowed.rule === entry.rule &&
       (allowed.file === undefined || allowed.file === entry.file) &&
-      (entry.selector ?? entry.component ?? "").includes(allowed.match),
+      (allowed.name === undefined
+        ? (entry.selector ?? entry.component ?? "").includes(allowed.match)
+        : entry.component === allowed.name),
   );
 
 const parseReport = (stdout) => {

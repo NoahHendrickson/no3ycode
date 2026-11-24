@@ -24,13 +24,13 @@ fails.
 
 ## B. Reuse components
 
-| ID  | Rule                                                                                                                                               | Why                                                      | Use instead                                                                   |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| B1  | Don't restyle a `components/ui` export with `className` beyond layout                                                                              | The primitive owns its look; restyles fork the design    | A `variant` or `size`, or add one to the primitive                            |
-| B2  | No hand-built interactive primitives: a styled raw `<button>`, or `role="menu"`, `listbox`, `dialog`, `alertdialog` or `tooltip` on a host element | They miss the primitives' focus, keyboard and theme work | `Button`, `Menu`, `Select`/`Combobox`, `Dialog`/`Sheet`/`Popover`, `Tooltip`  |
-| B3  | Status marks come only from `custom/SidebarV2StatusIndicator.tsx`: no `CircleHalfIcon`, no hand-drawn status dots                                  | One status language across sidebar, tabs and chips       | `SidebarV2StatusMark` and its siblings                                        |
-| B4  | Icons come only from the Hugeicons shim, never an icon package directly                                                                            | The shim owns each glyph's stroke and fill policy        | `~/custom/icons/lucide-hugeicons`                                             |
-| B5  | Every exported UI component in `custom/` has a Storybook story                                                                                     | The story is where Figma and code are compared           | A story in `apps/fork-storybook/stories`, or an allowlist entry with a reason |
+| ID  | Rule                                                                                                                                               | Why                                                      | Use instead                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | Don't restyle a `components/ui` export with `className` beyond layout                                                                              | The primitive owns its look; restyles fork the design    | A `variant` or `size`, or add one to the primitive                                                                                                              |
+| B2  | No hand-built interactive primitives: a styled raw `<button>`, or `role="menu"`, `listbox`, `dialog`, `alertdialog` or `tooltip` on a host element | They miss the primitives' focus, keyboard and theme work | `Button`, `Menu`, `Select`/`Combobox`, `Dialog`/`Sheet`/`Popover`, `Tooltip`                                                                                    |
+| B3  | Status marks come only from `custom/SidebarV2StatusIndicator.tsx`: no `CircleHalfIcon`, no hand-drawn status dots                                  | One status language across sidebar, tabs and chips       | `SidebarV2StatusMark` and its siblings                                                                                                                          |
+| B4  | Icons come only from the Hugeicons shim, never an icon package directly                                                                            | The shim owns each glyph's stroke and fill policy        | `~/custom/icons/lucide-hugeicons`                                                                                                                               |
+| B5  | Every exported **atomic** component in `custom/` (a button, chip, mark, row, card, menu, picker, indicator) has a Storybook story                  | The story is where Figma and code are compared           | A story in `apps/fork-storybook/stories`; a page, layout, section, provider or wrapper gets a `b5Exempt` entry in `design-lint.mjs` with its kind as the reason |
 
 B4 applies to `custom/` only. Upstream files (and their copies in `overrides/`) keep
 `from "lucide-react"`, which the build aliases to the shim.
@@ -59,7 +59,9 @@ Only when the rule really doesn't fit, and always with a reason.
   exceptions go in `design-rules.mjs` (the A5 allowlist, or an `excludeFiles` entry with a
   comment).
 - **Whole selectors or components** (brand marks, B5 exceptions): an `ALLOWLIST` entry in
-  `design-lint.mjs` with a `reason`.
+  `design-lint.mjs` with a `reason`. B5 lists components that are not atomic through `b5Exempt`,
+  grouped by kind (route page, page layout, section, provider/host, backdrop, wrapper); the name
+  must match exactly. Blocks and templates get their own stories later.
 
 ## How the checks run
 
