@@ -44,6 +44,10 @@ import {
   enrichedLinkVariantPattern,
 } from "../lib/enrichedLinkPresentation";
 
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { no3yChipPaddings } from "../../fork/no3yChipHeight";
+/* fork:end no3y-mobile-redesign */
+
 function enrichedStyle(
   style: SelectableMarkdownTextProps["textStyle"],
   dark: boolean,
@@ -123,7 +127,14 @@ function enrichedStyle(
         ? {
             borderRadius: style.inlineCodeChip.radius,
             paddingHorizontal: style.inlineCodeChip.paddingHorizontal,
-            paddingVertical: style.inlineCodeChip.paddingVertical,
+            paddingVertical:
+              style.inlineCodeChip.paddingVertical +
+              no3yChipPaddings({
+                bodyFontSize: style.fontSize,
+                chipFontScale: style.inlineCodeChip.fontScale,
+                fontScale,
+                hairlineWidth: StyleSheet.hairlineWidth,
+              }).code,
           }
         : null),
       /* fork:end no3y-mobile-redesign */

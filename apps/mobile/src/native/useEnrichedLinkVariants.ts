@@ -6,7 +6,7 @@ import {
 } from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-import { StyleSheet } from "react-native";
+import { StyleSheet, useWindowDimensions } from "react-native";
 /* fork:end no3y-subagent-link-chip */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
@@ -30,6 +30,9 @@ import {
   enrichedThreadLinkPresentation,
 } from "../lib/enrichedLinkPresentation";
 import { formatProviderSkillDisplayName } from "@t3tools/shared/inlineSkills";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import { no3yChipPaddings } from "../../fork/no3yChipHeight";
+/* fork:end no3y-mobile-redesign */
 
 function chipCustomization(
   chip: ReturnType<typeof enrichedContextLinkPresentation>,
@@ -127,6 +130,21 @@ export function useEnrichedLinkVariants(
 ) {
   const { linkCustomization, skills, models, textStyle, fileEmbedLabel } = props;
   const theme = useUniwindTheme();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const { fontScale } = useWindowDimensions();
+  const chipPaddings = useMemo(
+    () =>
+      textStyle.inlineCodeChip
+        ? no3yChipPaddings({
+            bodyFontSize: textStyle.fontSize,
+            chipFontScale: textStyle.inlineCodeChip.fontScale,
+            fontScale,
+            hairlineWidth: StyleSheet.hairlineWidth,
+          })
+        : undefined,
+    [textStyle, fontScale],
+  );
+  /* fork:end no3y-mobile-redesign */
   const links = useMemo(() => {
     const byUrl = new Map<string, MarkdownLinkCustomization>();
     for (const url of urls) {
@@ -167,18 +185,14 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // No vertical padding: the capsule stands as tall as an inline code chip. Where the
-                // reply draws code as a hugging chip, the label sits 0.05 under the code's scale so
-                // the hairline border makes up the rest.
+                // Where the reply draws code as a chip, padding brings the capsule to its height.
                 pill: {
                   borderColor: link.capsule.border,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
                   paddingHorizontal: 6,
-                  paddingVertical: 0,
-                  fontScale: textStyle.inlineCodeChip
-                    ? textStyle.inlineCodeChip.fontScale - 0.05
-                    : undefined,
+                  paddingVertical: chipPaddings?.capsule ?? 0,
+                  fontScale: chipPaddings?.capsuleLabelScale,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -203,7 +217,7 @@ export function useEnrichedLinkVariants(
                   borderWidth: 0,
                   borderRadius: codeChip.radius,
                   paddingHorizontal: codeChip.paddingHorizontal,
-                  paddingVertical: codeChip.paddingVertical,
+                  paddingVertical: codeChip.paddingVertical + (chipPaddings?.file ?? 0),
                   fontScale: codeChip.fontScale,
                 },
                 fontFamily: textStyle.fontFamily,
@@ -233,7 +247,7 @@ export function useEnrichedLinkVariants(
           ];
         }),
       ),
-    [chipForegrounds, links, textStyle],
+    [chipForegrounds, links, textStyle, chipPaddings],
   );
   const linkPillContent = useMemo<Record<string, LinkPillContent>>(
     () =>
