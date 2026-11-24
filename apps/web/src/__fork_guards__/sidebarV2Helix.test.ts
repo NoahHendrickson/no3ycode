@@ -62,6 +62,13 @@ describe("fork guard: working mark film", () => {
     expect(marks).not.toMatch(/<rect\s+key=/u);
   });
 
+  it("steps every film on one shared 30 fps grid", () => {
+    // Out of step, each mark woke the compositor on vsyncs of its own: about twice the CPU.
+    expect(marks).toContain("const FILM_FPS = 30;");
+    expect(marks).toContain("animation.startTime = 0");
+    expect(marks).toContain("animationDelay: `${-frameAt(props.startSeconds) * FILM_FRAME_MS}ms`");
+  });
+
   it("loops the helix film every half twist", () => {
     // The film bakes phase 0..π once; a curve that did not repeat every π
     // would jump at the loop seam.

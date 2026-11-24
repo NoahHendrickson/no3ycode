@@ -2066,11 +2066,14 @@
    text (`sr-only` labels, the branch name) and only the glyph is the signal.
 
    4s and `alternate`, so a full breath is 8s — slow enough to read as ambient
-   status rather than an alert; every notification-shaped pulse in this app is
-   something blocked on you, and a healthy dev server is the opposite. Under
-   `prefers-reduced-motion` the copy is hidden and the mark stays statically
-   green, so the state survives without the motion. Rows offscreen pay
-   nothing: `content-visibility: auto` on the li skips them. */
+   status rather than an alert. A linear ramp in `steps(16)` rather than an
+   ease: 4 updates a second instead of one every vsync for as long as a server
+   runs, in ~6% opacity steps a 12px glyph does not show. Every
+   notification-shaped pulse in this app is something blocked on you, and a
+   healthy dev server is the opposite. Under `prefers-reduced-motion` the copy
+   is hidden and the mark stays statically green, so the state survives
+   without the motion. Rows offscreen pay nothing: `content-visibility: auto`
+   on the li skips them. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dev-server-live] {
   position: relative;
 }
@@ -2088,7 +2091,7 @@
   translate: 0 -50%;
   color: var(--foreground);
   opacity: 0;
-  animation: sidebar-v2-dev-server-pulse 4s ease-in-out infinite alternate;
+  animation: sidebar-v2-dev-server-pulse 4s steps(16) infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {

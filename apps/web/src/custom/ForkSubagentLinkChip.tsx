@@ -23,6 +23,7 @@ import {
   threadLinkCandidates,
 } from "@t3tools/shared/threadLinks";
 import { Link } from "@tanstack/react-router";
+import * as Equal from "effect/Equal";
 import { Atom } from "effect/reactivity";
 import { useGT } from "gt-react";
 import { createContext, use, useEffect, type ReactNode } from "react";
@@ -105,7 +106,7 @@ const subagentLinkAtom = Atom.family((key: string) => {
     ThreadId | null,
   ];
   return Atom.make((get): SubagentLink | null => {
-    let shell = get(environmentThreadShells.threadShellAtom({ environmentId, threadId }));
+    let shell = get(environmentThreadShells.quietThreadShellAtom({ environmentId, threadId }));
     let staleKey: string | null = null;
     if (shell === null && familyThreadId !== null) {
       const read = selectEnvironmentQueryData(
@@ -142,11 +143,12 @@ const subagentHrefsAtom = Atom.family((key: string) => {
       if (!link) return false;
       const candidates = threadLinkCandidates(link, environmentId);
       const ref =
-        candidates.find((candidate) => get(environmentThreadShells.threadShellAtom(candidate))) ??
-        candidates[0];
+        candidates.find((candidate) =>
+          get(environmentThreadShells.quietThreadShellAtom(candidate)),
+        ) ?? candidates[0];
       return ref !== undefined && get(subagentLinkAtom(linkKey(ref, familyRef))) !== null;
     }),
-  ).pipe(Atom.withLabel(`fork-subagent-link-hrefs:${key}`));
+  ).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`fork-subagent-link-hrefs:${key}`));
 });
 
 /** The message without the period that closes a line after a subagent chip. */
