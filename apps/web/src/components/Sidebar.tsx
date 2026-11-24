@@ -444,7 +444,7 @@ import { useSidebarV2CompactCards } from "~/custom/sidebarV2CompactCards";
 /* fork:end sidebar-v2-compact-cards */
 /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
 import { SidebarV2SubagentCount } from "~/custom/SidebarV2SubagentCount";
-import { useRunningSubagentCount } from "~/custom/runningSubagentCounts";
+import { useRunningSubagents } from "~/custom/runningSubagentCounts";
 /* fork:end sidebar-v2-card-rows */
 /* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
 import { WorktreeIcon } from "~/custom/icons/WorktreeIcon";
@@ -1251,8 +1251,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   const terminalProcessCount = runningTerminalIds.length;
   const hasUnsentDraft = useThreadHasUnsentDraft(threadRef) && !props.isRouteThread;
   /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
-  const runningSubagentCount = useRunningSubagentCount(threadRef);
-  const gt = useGT();
+  const runningSubagents = useRunningSubagents(threadRef);
+  const runningSubagentCount = runningSubagents.count;
   /* fork:end sidebar-v2-card-rows */
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows
      Upstream pairs the marker with a "Discard draft" hover action in the row's
@@ -1666,20 +1666,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
 
   const accessibility = resolveSidebarRowAccessibility({
     title: thread.title,
-    /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-       The subagent count is drawn aria-hidden, so the row name carries it. */
-    statusLabel:
-      [
-        topStatus?.label,
-        runningSubagentCount > 0
-          ? gt(
-              "{count, plural, one {{count} subagent running} other {{count} subagents running}}",
-              { count: runningSubagentCount },
-            )
-          : null,
-      ]
-        .filter(Boolean)
-        .join(", ") || null,
+    statusLabel: topStatus?.label ?? null,
+    /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+    subagentLabel: runningSubagents.label,
     /* fork:end sidebar-v2-card-rows */
     projectDisplayName: props.projectTitle,
     isActive: props.isActive,

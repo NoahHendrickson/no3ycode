@@ -933,6 +933,8 @@
     - apps/web/src/components/Sidebar.shortcuts.browser.test.tsx
     # The fork customizes upstream's canonical Sidebar V2 implementation in place.
     - apps/web/src/components/Sidebar.tsx
+    # The row name carries the running-subagent count (subagentLabel).
+    - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/index.css
     # The PR badge's text-secondary-label number span, which the card's
     # number-ink rule inherits through.

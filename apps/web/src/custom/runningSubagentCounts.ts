@@ -1,7 +1,7 @@
 /**
  * How many subagents are running under each listed thread — see
- * `.fork/customizations.yaml#sidebar-v2-card-rows`. A nested subagent counts
- * toward the listed thread at the top of its chain, the row that stands in for it.
+ * `.fork/customizations.yaml#sidebar-v2-card-rows`. Each counts toward the row
+ * that stands in for it, the same row route highlighting resolves to.
  */
 import { useAtomValue } from "@effect/atom-react";
 import type { ScopedThreadRef } from "@t3tools/contracts";
@@ -9,38 +9,32 @@ import { scopeThreadRef, scopedThreadKey } from "@t3tools/client-runtime/environ
 import {
   threadRuntimeIsActive,
   type EnvironmentThreadShell,
+  type ThreadStructureRuntime,
 } from "@t3tools/client-runtime/state/models";
+import { resolveListedAncestorThreadRef } from "@t3tools/client-runtime/state/threads";
 import { Atom } from "effect/reactivity";
+import { useGT } from "gt-react";
 
 import { environmentThreadShells } from "~/state/threads";
+import { isForkSubagentLinkThread } from "./forkSubagentLinkLogic";
 
 type CountedShell = Pick<
   EnvironmentThreadShell,
-  "id" | "environmentId" | "lineage" | "archivedAt" | "runtime"
->;
+  "id" | "environmentId" | "lineage" | "delegatedFrom" | "archivedAt"
+> & { readonly runtime: ThreadStructureRuntime | null };
 
 export function countRunningSubagents(
   threads: ReadonlyArray<CountedShell>,
 ): ReadonlyMap<string, number> {
-  const keyOf = (thread: CountedShell) =>
-    scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id));
-  const byKey = new Map(threads.map((thread) => [keyOf(thread), thread] as const));
   const counts = new Map<string, number>();
   for (const thread of threads) {
-    if (thread.lineage.relationshipToParent !== "subagent") continue;
-    if (thread.archivedAt !== null || !threadRuntimeIsActive(thread.runtime)) continue;
-    let parentKey: string | null = null;
-    let current: CountedShell | undefined = thread;
-    const seen = new Set<string>();
-    while (current?.lineage.relationshipToParent === "subagent") {
-      const parentId = current.lineage.parentThreadId;
-      if (parentId === null) break;
-      parentKey = scopedThreadKey(scopeThreadRef(current.environmentId, parentId));
-      if (seen.has(parentKey)) break;
-      seen.add(parentKey);
-      current = byKey.get(parentKey);
-    }
-    if (parentKey !== null) counts.set(parentKey, (counts.get(parentKey) ?? 0) + 1);
+    if (!isForkSubagentLinkThread(thread) || thread.archivedAt !== null) continue;
+    if (!threadRuntimeIsActive(thread.runtime)) continue;
+    const ref = scopeThreadRef(thread.environmentId, thread.id);
+    const rowKey = scopedThreadKey(resolveListedAncestorThreadRef(ref, threads));
+    // Resolving to itself: a broken chain, or a delegated task that keeps its own row.
+    if (rowKey === scopedThreadKey(ref)) continue;
+    counts.set(rowKey, (counts.get(rowKey) ?? 0) + 1);
   }
   return counts;
 }
@@ -56,6 +50,20 @@ const runningSubagentCountAtom = Atom.family((key: string) =>
   ),
 );
 
-export function useRunningSubagentCount(ref: ScopedThreadRef): number {
-  return useAtomValue(runningSubagentCountAtom(scopedThreadKey(ref)));
+/** The count, and the phrase the row's accessible name carries for it (null at zero). */
+export function useRunningSubagents(ref: ScopedThreadRef): {
+  readonly count: number;
+  readonly label: string | null;
+} {
+  const count = useAtomValue(runningSubagentCountAtom(scopedThreadKey(ref)));
+  const gt = useGT();
+  return {
+    count,
+    label:
+      count > 0
+        ? gt("{count, plural, one {{count} subagent running} other {{count} subagents running}}", {
+            count,
+          })
+        : null,
+  };
 }
