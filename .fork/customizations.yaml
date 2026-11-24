@@ -9114,8 +9114,8 @@
     card) round from --fork-menu-radius (their 1px rims keep upstream's radius); menu,
     select, combobox and autocomplete rows from --fork-menu-row-radius;
     tooltips take --fork-tooltip-radius, -font-size, -line-height and
-    -padding-inline / -block; a sidebar group's end padding is
-    --fork-sidebar-group-padding-end. Every read falls back to upstream's own
+    -padding-inline / -block; a sidebar group's top and end padding are
+    --fork-sidebar-group-padding-top / -end. Every read falls back to upstream's own
     class value, so a theme that sets none draws what upstream draws.
   tier: 4
   files:

@@ -45,7 +45,7 @@ describe("fork guard: fork-primitive-tokens", () => {
       "px-(--fork-tooltip-padding-inline,calc(var(--spacing)*2)) py-(--fork-tooltip-padding-block,var(--spacing))",
     );
     expect(read("sidebar.tsx")).toContain(
-      "pe-(--fork-sidebar-group-padding-end,var(--sidebar-content-inset))",
+      "pt-(--fork-sidebar-group-padding-top,var(--sidebar-content-inset)) pe-(--fork-sidebar-group-padding-end,var(--sidebar-content-inset))",
     );
   });
 });
