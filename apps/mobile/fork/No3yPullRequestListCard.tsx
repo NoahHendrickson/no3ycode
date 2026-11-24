@@ -27,7 +27,7 @@ import { NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { NO3Y_PULL_REQUEST_GLYPHS } from "./No3yPullRequestMark";
 import { no3yPullRequestTone } from "./no3yPullRequestTone";
-import { ChecksFailingMark, ChecksRunningMark } from "./No3yStatusPill";
+import { ChecksFailingMark, ChecksRunningMark } from "./No3yChecksMarks";
 
 const STAT = { fontSize: 13, ...NO3Y_FONT.medium, fontVariant: ["tabular-nums" as const] };
 
