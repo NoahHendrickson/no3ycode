@@ -438,8 +438,8 @@
     whole pixels at 16 or 32px, these land on exactly 1 and 2. The 32px
     raster is centred; the 16px one sits 1px off centre, as 15 in 16 must. The n3-web-favicon* rasters (with
     apps/web/public copies) are rendered from it; export-icons.ts leaves
-    them alone. The iOS launch screen keeps the sparkle
-    (no3y-launch-sparkle). Filenames
+    them alone. The iOS launch screen shows the same leaf
+    (no3y-launch-leaf). Filenames
     still say n3-* for path stability. t3.json's
     iconPath points at n3-project-icon.svg, never upstream's
     assets/dev/blueprint-*. The apple-touch icons keep the tile because iOS
@@ -5513,8 +5513,8 @@
   intent: >
     The mobile app builds as no3y Code, signed by the fork owner's Apple team
     (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
-    other variants), with the fork's app icons and, on iOS, the sparkle
-    launch screen (no3y-launch-sparkle). Ping's team, bundle IDs, linked
+    other variants), with the fork's app icons and, on iOS, the leaf
+    launch screen (no3y-launch-leaf). Ping's team, bundle IDs, linked
     domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
     serve a different bundle, so they are swapped out or dropped, and OTA
     updates stay off until the fork has its own Expo project.
@@ -8378,32 +8378,39 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
-- id: no3y-launch-sparkle
+- id: no3y-launch-leaf
   intent: >
-    A cold launch of the no3y iPhone app opens on the new sparkle logo. The
-    iOS launch screen is the green (#00C26B) sparkle at 220pt on the dark page
-    (#191817) (fork/identity.ts sets expo-splash-screen's iOS options;
-    fork/assets/no3y-splash-sparkle.png is rendered from the logo SVG). The
-    JS overlay (fork/No3yLaunchSparkle.tsx, mounted in App.tsx) draws the same
-    frame, hides the native splash under it, and twinkles on the UI thread: a
-    squeeze and spring back with a slight turn and a white glint across the
-    mark. When the first screen is ready (where SplashScreenCoordinator hides
-    the splash) it scales up and fades, after a 320ms floor so a fast launch
-    does not flicker (fork/no3yLaunch.ts); it never waits for the twinkle, so
-    it never delays the app. Once per process, so returning from the
-    background does not replay it; Reduce Motion only fades; iPad, Android and
-    upstream's identity build skip it. The app icons are not touched here.
+    A cold launch of the no3y iPhone app opens on the pixel leaf mark from the
+    app icon. The iOS launch screen is the leaf at 147pt (7pt a cell) on the
+    dark page (#191817) (fork/identity.ts sets expo-splash-screen's iOS
+    options). fork/no3yLeafMark.ts is the one source for the mark: the top
+    leaf on its 21-cell grid, turned a quarter at a time for the others, in
+    the one paint order that rests as the logo (bottom, right, top, left).
+    fork/assets/no3y-splash-leaf.png is rendered from it at 21px a cell by
+    `node .fork/export-launch-leaf.ts` (`--check` fails on a stale PNG). The
+    JS overlay (fork/No3yLaunchLeaf.tsx, mounted in App.tsx) draws the same
+    frame, hides the native splash under it, and if the app is still loading
+    after 180ms spins on the UI thread: each leaf laps once clockwise, up
+    into one stack at the top and on round to its place, resting between
+    spins. When the first screen is ready (where SplashScreenCoordinator
+    hides the splash) it scales up and fades at once, a spin under way
+    playing on beneath it, so it never delays the app (fork/no3yLaunch.ts).
+    Once per process, so returning from the background does not replay it;
+    Reduce Motion only fades; iPad, Android and upstream's identity build
+    skip it. The app icons are not touched here.
   tier: 3
   files:
-    - apps/mobile/fork/No3yLaunchSparkle.tsx
+    - apps/mobile/fork/No3yLaunchLeaf.tsx
+    - apps/mobile/fork/no3yLeafMark.ts
     - apps/mobile/fork/no3yLaunch.ts
     - apps/mobile/fork/no3yLaunch.test.ts
-    - apps/mobile/fork/assets/no3y-splash-sparkle.png
+    - apps/mobile/fork/assets/no3y-splash-leaf.png
+    - .fork/export-launch-leaf.ts
   shadows: []
   watch:
     - apps/mobile/src/App.tsx
   verify:
-    - apps/web/src/__fork_guards__/no3yLaunchSparkle.test.ts
+    - apps/web/src/__fork_guards__/no3yLaunchLeaf.test.ts
     - apps/mobile/fork/no3yLaunch.test.ts
     - apps/mobile/fork/identity.test.ts
 - id: no3y-prompt-stash
