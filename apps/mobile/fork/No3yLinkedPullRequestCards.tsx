@@ -165,13 +165,14 @@ function Layer(props: {
     (sourceControlClients.findByChangeRequestUrl(link.url) ?? sourceControlClients.get(undefined))
       .changeRequest,
   );
-  const meta: Array<{ readonly text: string; readonly color: string }> = [
+  const meta: Array<{ readonly text: string; readonly spoken?: string; readonly color: string }> = [
     { text: repository, color: palette.metaInk },
   ];
   if (conflicts) meta.push({ text: gt("Conflicts"), color: palette.statusFailed });
   if (review !== null)
     meta.push({
       text: review.label,
+      spoken: review.accessibleLabel,
       color:
         snapshot?.reviewDecision === "changes-requested"
           ? palette.statusFailed
@@ -191,7 +192,7 @@ function Layer(props: {
         ),
         status?.label,
         link.repository,
-        ...meta.slice(1).map((item) => item.text),
+        ...meta.slice(1).map((item) => item.spoken ?? item.text),
         checks === "failing"
           ? gt("checks failing")
           : checks === "pending"
@@ -228,10 +229,13 @@ function Layer(props: {
         backgroundColor: pressed ? palette.rowSelected : "transparent",
       })}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View
+        style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, rowGap: 4 }}
+      >
         <View
           style={{
-            height: 24,
+            minHeight: 24,
+            paddingVertical: 2,
             borderRadius: 12,
             paddingLeft: 7,
             paddingRight: 9,
@@ -272,7 +276,7 @@ function Layer(props: {
       >
         {snapshot?.title ?? gt("Waiting for host state")}
       </Text>
-      <Text numberOfLines={1} style={{ fontSize: 13, color: palette.metaInk }}>
+      <Text style={{ fontSize: 13, color: palette.metaInk }}>
         {meta.map((item, index) => (
           <Text key={item.text} style={{ color: item.color }}>
             {index > 0 ? " · " : ""}

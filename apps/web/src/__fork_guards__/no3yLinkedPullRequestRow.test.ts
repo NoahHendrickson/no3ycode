@@ -29,9 +29,8 @@ describe("no3y-linked-pr-row", () => {
     );
   });
 
-  it("wraps the meta line instead of clipping it, with the repository's short name", () => {
+  it("wraps the meta line instead of clipping it", () => {
     expect(fenced).toContain('className="flex-row flex-wrap items-center gap-x-2.5 gap-y-0.5"');
-    expect(fenced).toContain('{link.repository.split("/").at(-1)}');
     expect(row).not.toContain("metaLineHeight");
   });
 });

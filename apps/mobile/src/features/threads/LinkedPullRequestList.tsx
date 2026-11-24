@@ -169,7 +169,7 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
           <View className="min-w-0 max-w-full shrink flex-row items-center gap-1.5">
             {snapshot?.author ? <PullRequestAvatar actor={snapshot.author} size={16} /> : null}
             <Text className="min-w-0 shrink text-xs text-foreground-muted" numberOfLines={1}>
-              {link.repository.split("/").at(-1)}
+              {link.repository}
             </Text>
             <Text className="shrink-0 text-xs text-foreground-tertiary">#{link.number}</Text>
           </View>
