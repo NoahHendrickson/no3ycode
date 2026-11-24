@@ -19,8 +19,17 @@ export function resolveFeedEndBehavior(feed: {
   /** Landing on open: the feed is hidden until it reaches its end, so that stays instant. */
   readonly settling: boolean;
   readonly reduceMotion: boolean;
+  /** Upstream's send path keeps the lift as the keyboard closes. */
+  readonly sendingWithKeyboard: boolean;
 }) {
   const glide = feed.stableEnd && !feed.settling && !feed.reduceMotion;
+  const endOwnsPosition = feed.stableEnd && feed.followingEnd && !feed.jumpReady;
+  // keyboard-controller lifts only within 20pt of the end; a glide toward it is often further.
+  const keyboardLiftBehavior: "persistent" | "always" | "whenAtEnd" = feed.sendingWithKeyboard
+    ? "persistent"
+    : endOwnsPosition
+      ? "always"
+      : "whenAtEnd";
   return {
     maintainScrollAtEnd: feed.jumpReady
       ? (false as const)
@@ -29,13 +38,10 @@ export function resolveFeedEndBehavior(feed: {
         : THREAD_FEED_MAINTAIN_SCROLL_AT_END,
     // Anchoring fights end following whenever a row lands at the end with a guessed size: its
     // correction moved the offset by hundreds of points and end following dragged it back.
-    maintainVisibleContentPosition: !feed.stableEnd || !feed.followingEnd || feed.jumpReady,
+    maintainVisibleContentPosition: !endOwnsPosition,
     // A reply's actions appear as its turn ends; at full height in one frame they jumped the feed.
     revealReplyActions: glide,
-    // The keyboard lifts content only within 20pt of the end, and a glide toward it is often
-    // further: the composer covered the reply until end following caught up. Following, always lift.
-    keyboardLiftBehavior:
-      feed.stableEnd && feed.followingEnd ? ("always" as const) : ("whenAtEnd" as const),
+    keyboardLiftBehavior,
   };
 }
 

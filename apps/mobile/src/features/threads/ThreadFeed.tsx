@@ -4192,6 +4192,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     jumpReady,
     settling,
     reduceMotion,
+    sendingWithKeyboard: props.sendingWithKeyboard ?? false,
   });
   /* fork:end mobile-feed-stable-end */
   if (jumpReady && revealedMessageId !== jumpToMessageId) {
@@ -4781,9 +4782,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             // as a user scroll and drops end following before the keyboard closes.
             scrollsChildToFocus={false}
             /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
-            keyboardLiftBehavior={
-              props.sendingWithKeyboard ? "persistent" : endBehavior.keyboardLiftBehavior
-            }
+            keyboardLiftBehavior={endBehavior.keyboardLiftBehavior}
             /* fork:end mobile-feed-stable-end */
             // Seed the initial viewport before native onLayout.
             {...(viewportHeight > 0 && viewportWidth > 0

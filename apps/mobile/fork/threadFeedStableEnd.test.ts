@@ -8,30 +8,35 @@ const glide = { ...THREAD_FEED_MAINTAIN_SCROLL_AT_END, animated: true };
 const instant = THREAD_FEED_MAINTAIN_SCROLL_AT_END;
 
 describe("resolveFeedEndBehavior", () => {
-  // stableEnd, followingEnd, jumpReady, settling, reduceMotion → scrollAtEnd, anchoring, reveal, keyboard lift
+  // stableEnd, followingEnd, jumpReady, settling, reduceMotion, sending
+  //   → scrollAtEnd, anchoring, reveal, keyboard lift
   it.each([
     // iOS following its end: end following owns the position and glides; the keyboard always lifts.
-    [true, true, false, false, false, glide, false, true, "always"],
+    [true, true, false, false, false, false, glide, false, true, "always"],
     // Scrolled away: anchoring holds what the reader sees, and the keyboard lifts only at the end.
-    [true, false, false, false, false, glide, true, true, "whenAtEnd"],
+    [true, false, false, false, false, false, glide, true, true, "whenAtEnd"],
     // Landing on open stays instant; the feed is hidden until it reaches its end.
-    [true, true, false, true, false, instant, false, false, "always"],
+    [true, true, false, true, false, false, instant, false, false, "always"],
     // Reduce Motion follows instantly and pops the reply actions in.
-    [true, true, false, false, true, instant, false, false, "always"],
-    // A jump to a message owns the scroll: no end following, anchoring on.
-    [true, true, true, false, false, false, true, true, "always"],
+    [true, true, false, false, true, false, instant, false, false, "always"],
+    // A jump to a message owns the scroll: no end following, anchoring on, no forced lift.
+    [true, true, true, false, false, false, false, true, true, "whenAtEnd"],
+    // Upstream's send path keeps the lift as the keyboard closes, over everything else.
+    [true, true, false, false, false, true, glide, false, true, "persistent"],
+    [false, true, false, false, false, true, instant, true, false, "persistent"],
     // Android keeps upstream: anchoring always, instant end following, no reveal.
-    [false, true, false, false, false, instant, true, false, "whenAtEnd"],
-    [false, false, false, false, false, instant, true, false, "whenAtEnd"],
-    [false, true, true, false, false, false, true, false, "whenAtEnd"],
+    [false, true, false, false, false, false, instant, true, false, "whenAtEnd"],
+    [false, false, false, false, false, false, instant, true, false, "whenAtEnd"],
+    [false, true, true, false, false, false, false, true, false, "whenAtEnd"],
   ] as const)(
-    "stableEnd=%s following=%s jump=%s settling=%s reduceMotion=%s",
+    "stableEnd=%s following=%s jump=%s settling=%s reduceMotion=%s sending=%s",
     (
       stableEnd,
       followingEnd,
       jumpReady,
       settling,
       reduceMotion,
+      sendingWithKeyboard,
       scrollAtEnd,
       anchoring,
       reveal,
@@ -43,6 +48,7 @@ describe("resolveFeedEndBehavior", () => {
         jumpReady,
         settling,
         reduceMotion,
+        sendingWithKeyboard,
       });
       expect(behavior.maintainScrollAtEnd).toEqual(scrollAtEnd);
       expect(behavior.maintainVisibleContentPosition).toBe(anchoring);
