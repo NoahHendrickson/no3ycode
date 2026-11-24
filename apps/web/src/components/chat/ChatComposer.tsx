@@ -2739,6 +2739,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     importContextRecords,
     expandMobileComposer: expandMobileComposerStable,
   });
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  const stashDrawerOpen = isStashMenuOpen && !composerMenuOpen;
+  /* fork:end fork-composer-shell */
   /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */
   const hasBlockingComposerTopDrawer =
     activePendingApproval !== null || pendingUserInputs.length > 0;
@@ -4082,13 +4085,35 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   </ComposerBanner.Root>
                 </ComposerBanner.Attachment>
               ) : null}
+              {/* The stash is the queue card's twin, the card nearest the prompt. */}
+              {stashDrawerOpen ? (
+                <ComposerBanner.Attachment>
+                  <ComposerStashMenu
+                    composerFormRef={composerFormRef}
+                    entries={stashQueue}
+                    stashShortcutLabel={shortcutLabelForCommand(keybindings, "composer.stash", {
+                      context: {
+                        terminalFocus: false,
+                        terminalOpen,
+                        modelPickerOpen: false,
+                      },
+                    })}
+                    onRestore={restoreStashEntryStable}
+                    onDelete={deleteStashEntryStable}
+                    onClose={() => setIsStashMenuOpen(false)}
+                  />
+                </ComposerBanner.Attachment>
+              ) : null}
             </ComposerBanner.Column>
-            <ComposerStashBadge
-              count={stashQueue.length}
-              menuOpen={isStashMenuOpen}
-              pulseKey={stashPulseKey}
-              onToggleMenu={toggleStashMenuStable}
-            />
+            {/* Its card names the stash while open, so the tab steps aside. */}
+            {stashDrawerOpen ? null : (
+              <ComposerStashBadge
+                count={stashQueue.length}
+                menuOpen={isStashMenuOpen}
+                pulseKey={stashPulseKey}
+                onToggleMenu={toggleStashMenuStable}
+              />
+            )}
           </ComposerBanner.Dock>
         }
       >
@@ -4220,24 +4245,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   isComposerCollapsedMobile && speechInput.state.phase === "idle" && "hidden",
                 )}
               >
-                {isStashMenuOpen && !composerMenuOpen && (
-                  <ComposerCommandMenuLayer anchor={composerMenuAnchor} canOverflowTop>
-                    <ComposerStashMenu
-                      composerFormRef={composerFormRef}
-                      entries={stashQueue}
-                      stashShortcutLabel={shortcutLabelForCommand(keybindings, "composer.stash", {
-                        context: {
-                          terminalFocus: false,
-                          terminalOpen,
-                          modelPickerOpen: false,
-                        },
-                      })}
-                      onRestore={restoreStashEntryStable}
-                      onDelete={deleteStashEntryStable}
-                      onClose={() => setIsStashMenuOpen(false)}
-                    />
-                  </ComposerCommandMenuLayer>
-                )}
+                {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+                    The stash renders as a card in the banners dock (ComposerShell's banners slot). */}
+                {/* fork:end fork-composer-shell */}
 
                 <div role="status" aria-atomic="true" className="sr-only">
                   {composerSuggestionsVisible && composerMenuItems.length === 0

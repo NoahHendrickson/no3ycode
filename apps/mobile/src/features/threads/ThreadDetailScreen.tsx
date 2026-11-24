@@ -13,6 +13,9 @@ import {
 import { useThreadPr } from "../../state/use-thread-pr";
 import { NO3Y_NO_STATUS_LINES, no3yPillStatus } from "../../../fork/no3yPillStatus";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { no3yNextStepSettled, useNo3yNextStep } from "../../../fork/useNo3yNextStep";
+/* fork:end fork-composer-next-step */
 /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
 import { No3yPendingUserInputSwap } from "../../../fork/No3yPendingUserInputCard";
 /* fork:end fork-pending-user-input */
@@ -343,6 +346,9 @@ export interface ThreadDetailScreenProps {
       hasAttachmentsOrContext: boolean,
     ) => Promise<boolean | "responded">,
     onWillEnqueue?: () => void,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    prompt?: string,
+    /* fork:end fork-composer-next-step */
   ) => Promise<MessageId | null>;
   /** Queues a standalone text command, such as `/goal clear`, without touching the draft. */
   readonly onSendCommand: (text: string) => Promise<MessageId | null>;
@@ -993,8 +999,23 @@ function ThreadDetailBody(
     : null;
   // The pull request pill alone keeps the feed clear of the row, as a status does.
   const no3yPullRequest = useThreadPr(no3yPullRequestThread(props.selectedThread, no3yBottomNav));
+  /* fork:end no3y-mobile-redesign */
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+  const nextStep = useNo3yNextStep({
+    screen: props,
+    active:
+      no3yBottomNav &&
+      no3yNextStepSettled(props, {
+        feedReady: contentPresentationKind === "ready",
+        serverQueueCount: queuedCount,
+      }),
+    pullRequest: no3yPullRequest,
+  });
+  /* fork:end fork-composer-next-step */
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  // The next-step pill (fork-composer-next-step) keeps the feed clear of the row too.
   const showWorkingControl = no3yBottomNav
-    ? no3yStatus !== null || no3yPullRequest !== null
+    ? no3yStatus !== null || no3yPullRequest !== null || nextStep.step !== null
     : floatingStatus !== null;
   /* fork:end no3y-mobile-redesign */
   const showFloatingStatus =
@@ -1399,6 +1420,9 @@ function ThreadDetailBody(
   const handleSendMessage = async (
     followUp?: ActiveTurnComposerAction,
     stillSendable?: () => boolean,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    prompt?: string,
+    /* fork:end fork-composer-next-step */
   ) => {
     const scope = threadScope.current.signal;
     const targetThreadKey = selectedThreadKey;
@@ -1442,17 +1466,35 @@ function ThreadDetailBody(
           }
         : undefined;
     let dismissingKeyboard = false;
-    const messageId = await props.onSendMessage(followUp, declineBeforeDispatch, () => {
-      if (
-        scope.aborted ||
-        Platform.OS !== "ios" ||
-        !hasUserMessage ||
-        !KeyboardController.isVisible()
-      )
-        return;
-      setSendingWithKeyboard(true);
-      dismissingKeyboard = true;
-    });
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    // The keyboard stays up after a follow-up, as in Messages: closing it dropped the feed with
+    // it just as the sent row and the turn's first rows lifted it again.
+    let keepingKeyboard = false;
+    /* fork:end mobile-feed-stable-end */
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    // Upstream's call, plus the next-step pill's prompt as the last argument.
+    const messageId = await props.onSendMessage(
+      followUp,
+      declineBeforeDispatch,
+      () => {
+        if (
+          scope.aborted ||
+          Platform.OS !== "ios" ||
+          !hasUserMessage ||
+          !KeyboardController.isVisible()
+        )
+          return;
+        // mobile-feed-stable-end: keep the keyboard up instead of dismissing it.
+        if (composerEditorRef.current !== null) {
+          keepingKeyboard = true;
+          return;
+        }
+        setSendingWithKeyboard(true);
+        dismissingKeyboard = true;
+      },
+      prompt,
+    );
+    /* fork:end fork-composer-next-step */
     if (messageId === null || scope.aborted) {
       return messageId;
     }
@@ -1468,10 +1510,21 @@ function ThreadDetailBody(
       deliveryDeferred: props.connectionStateLabel !== "connected",
     });
     setAnchorMessageId(nextAnchorMessageId);
-    if (!dismissingKeyboard) composerEditorRef.current?.blur();
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    if (!dismissingKeyboard && !keepingKeyboard) composerEditorRef.current?.blur();
     const followSubmission =
       contentPresentationKind === "ready" &&
       (dismissingKeyboard || nextAnchorMessageId === messageId);
+    if (keepingKeyboard) {
+      requestAnimationFrame(() => {
+        if (scope.aborted) return;
+        void scrollMessageToEnd({ animated: !reduceMotion, closeKeyboard: false }).catch(() => {
+          if (!scope.aborted) freeze.set(false);
+        });
+      });
+      return messageId;
+    }
+    /* fork:end mobile-feed-stable-end */
     if (dismissingKeyboard || followSubmission) {
       // Commit the optimistic row before UIKit chooses the closing scroll offset.
       requestAnimationFrame(() => {
@@ -1785,6 +1838,16 @@ function ThreadDetailBody(
                     no3yStatus={no3yStatus}
                     thread={props.selectedThread}
                     pullRequest={no3yPullRequest}
+                    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+                    nextStep={nextStep.step}
+                    onSendNextStep={() =>
+                      nextStep.send(async (prompt) => {
+                        // As Send does, so typing still in transit from UIKit reaches the draft.
+                        await composerEditorRef.current?.flushPendingInput();
+                        return handleSendMessage(undefined, undefined, prompt);
+                      })
+                    }
+                    /* fork:end fork-composer-next-step */
                   >
                     {/* fork:end no3y-mobile-redesign */}
                     <FloatingWorkingControl

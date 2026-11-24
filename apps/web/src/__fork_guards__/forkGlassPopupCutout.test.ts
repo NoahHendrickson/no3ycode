@@ -202,7 +202,7 @@ describe("fork guard: fork-glass-popup-cutout", () => {
     (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
       setSidebarVibrancy: (enabled: boolean) =>
         new Promise<boolean | string>((resolve) => answers.push({ enabled, resolve })),
-      sidebarLiquidGlass: { setWidth: () => new Promise<boolean>(() => {}) },
+      sidebarLiquidGlass: { setFrame: () => new Promise<boolean>(() => {}) },
     };
 
     const { setForkAppearance } = await import("../custom/forkTheme");

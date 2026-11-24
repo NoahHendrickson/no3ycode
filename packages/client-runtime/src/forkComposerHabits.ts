@@ -3,6 +3,8 @@
  * own sends on this device. See `.fork/customizations.yaml#fork-composer-next-step`.
  */
 
+import * as Schema from "effect/Schema";
+
 export interface HabitTable {
   readonly [previousKey: string]: {
     /** Last time this message was followed by anything, for pruning. */
@@ -56,7 +58,7 @@ export function habitKey(text: string): string | null {
     .split(/\s+/u)
     .filter((word) => word.length > 0 && !STOPWORDS.has(word));
   if (words.every((word) => ACKNOWLEDGEMENTS.has(word))) return null;
-  return [...new Set(words)].toSorted().join(" ");
+  return [...new Set(words)].sort().join(" ");
 }
 
 /** Counts `next` as a follow-up to `previous`. A follow-up naming a number (a PR, an issue) is
@@ -78,7 +80,7 @@ export function recordHabit(
   // the least-sent other follow-up makes room.
   const others = Object.entries(entry?.next ?? {})
     .filter(([key]) => key !== nextKey)
-    .toSorted(([, a], [, b]) => b.count - a.count)
+    .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, MAX_NEXT - 1);
   const updated = {
     ...table,
@@ -112,4 +114,101 @@ export function forgetHabit(table: HabitTable, previousKey: string, nextKey: str
   if (entry === undefined || own(entry.next, nextKey) === undefined) return table;
   const { [nextKey]: _forgotten, ...next } = entry.next;
   return { ...table, [previousKey]: { ...entry, next } };
+}
+
+/** Where a client keeps its table: localStorage on web, expo-sqlite's key-value store on iOS. */
+export const HABITS_STORAGE_KEY = "t3code:fork:composer-habits:v1";
+
+const StoredHabits = Schema.Record(
+  Schema.String,
+  Schema.Struct({
+    at: Schema.Number,
+    next: Schema.Record(
+      Schema.String,
+      Schema.Struct({ count: Schema.Number, text: Schema.String }),
+    ),
+  }),
+);
+const decodeStoredHabits = Schema.decodeUnknownSync(StoredHabits);
+
+function parseHabits(json: string | null): HabitTable {
+  if (json === null) return {};
+  try {
+    return decodeStoredHabits(JSON.parse(json));
+  } catch {
+    // A corrupt table starts fresh rather than blocking the composer.
+    return {};
+  }
+}
+
+export interface HabitStorage {
+  readonly read: () => string | null | Promise<string | null>;
+  readonly write: (json: string) => void | Promise<void>;
+  /** Calls back when another window wrote the table. */
+  readonly watch?: (onChange: () => void) => () => void;
+}
+
+export interface HabitStore {
+  readonly subscribe: (listener: () => void) => () => void;
+  /** The table as last read, cached so renders never re-parse it. */
+  readonly getTable: () => HabitTable;
+  /** `now` dates the entry, so the least recently used one is pruned first. */
+  readonly record: (previous: string | null, next: string, now: number) => Promise<void>;
+  readonly forget: (suggestion: HabitSuggestion) => Promise<void>;
+}
+
+/**
+ * One device's habit table. It loads on first subscribe. Each change re-reads storage first, so
+ * another window's counts and dismissals are kept, and changes run one at a time, so saves land
+ * in order.
+ */
+export function createHabitStore(storage: HabitStorage): HabitStore {
+  let table: HabitTable = {};
+  let loaded = false;
+  let queue: Promise<void> = Promise.resolve();
+  let unwatch: (() => void) | null = null;
+  const listeners = new Set<() => void>();
+  const notify = () => {
+    for (const listener of listeners) listener();
+  };
+  // Unreadable or unwritable storage keeps whatever table this session has.
+  const enqueue = (task: () => Promise<void>) => (queue = queue.then(task).catch(() => undefined));
+  const reload = () =>
+    enqueue(async () => {
+      table = parseHabits(await storage.read());
+      notify();
+    });
+  const update = (change: (current: HabitTable) => HabitTable) =>
+    enqueue(async () => {
+      const current = parseHabits(await storage.read());
+      const next = change(current);
+      table = next;
+      notify();
+      if (next !== current) await storage.write(JSON.stringify(next));
+    });
+  return {
+    subscribe: (listener) => {
+      if (listeners.size === 0) {
+        unwatch = storage.watch?.(reload) ?? null;
+        if (!loaded) {
+          loaded = true;
+          void reload();
+        }
+      }
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size > 0) return;
+        unwatch?.();
+        unwatch = null;
+      };
+    },
+    getTable: () => table,
+    record: (previous, next, now) =>
+      previous === null
+        ? Promise.resolve()
+        : update((current) => recordHabit(current, previous, next, now)),
+    forget: (suggestion) =>
+      update((current) => forgetHabit(current, suggestion.previousKey, suggestion.nextKey)),
+  };
 }

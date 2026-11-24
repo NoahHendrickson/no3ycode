@@ -12,6 +12,10 @@ import { useAppearancePreferences } from "../src/features/settings/appearance/Ap
 import { NATIVE_LIQUID_GLASS_SUPPORTED } from "../src/native/native-glass";
 import { flatGlassPalette } from "./flatGlassTheme";
 
+/** Every glass panel above the composer takes 6pt on each side, so the pills, each panel and the
+    composer sit 12pt apart whichever panels show. */
+export const NO3Y_PANEL_MARGIN = { marginHorizontal: 16, marginVertical: 6 } as const;
+
 export function No3yGlassLayer(props: {
   readonly radius: number;
   readonly tint?: string | undefined;

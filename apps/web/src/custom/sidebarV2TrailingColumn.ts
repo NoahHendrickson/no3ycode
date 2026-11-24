@@ -98,3 +98,6 @@ export const SIDEBAR_V2_SLIM_ROW_ACTION_CLASS = cn(
   "[@media(any-hover:none)]:pointer-events-none",
   SIDEBAR_V2_TRAILING_OFFSET.slimActions,
 );
+
+/** The look the card title line's state glyphs share (the pin, the docked mark), so they stay matched. */
+export const SIDEBAR_V2_TITLE_GLYPH_CLASS = "size-3 shrink-0 text-foreground dark:text-white";

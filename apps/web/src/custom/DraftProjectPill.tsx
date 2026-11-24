@@ -20,7 +20,7 @@ import {
 
 /** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
 const DRAFT_PROJECT_CHIP_CLASS_NAME =
-  "min-w-0 max-w-72 font-normal text-muted-foreground/70 text-xs! hover:text-foreground/80 active:scale-100";
+  "min-w-0 max-w-72 font-normal text-muted-foreground/70 hover:text-foreground/80 active:scale-100";
 
 /** Upstream's collapsing chip label: hidden with its siblings when the strip overflows. */
 function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {

@@ -18,15 +18,24 @@ import * as DesktopIpc from "../ipc/DesktopIpc.ts";
 import { isForkAuxiliaryWindow } from "./ForkAuxiliaryWindows.ts";
 import { forkSenderWindow, isForkGlassActive } from "./ForkGlassState.ts";
 
-const FORK_SET_SIDEBAR_LIQUID_GLASS_WIDTH_CHANNEL = "fork:set-sidebar-liquid-glass-width";
+const FORK_SET_SIDEBAR_LIQUID_GLASS_FRAME_CHANNEL = "fork:set-sidebar-liquid-glass-frame";
 const FORK_SET_DRAFT_LIQUID_GLASS_CHANNEL = "fork:set-draft-liquid-glass";
 
 /** Window backing colour behind AppKit's floating sidebar capsule (`#141618` for Full Glass). */
 export const FORK_LIQUID_GLASS_BACKING_RGB = 0x141618;
 
-const ForkSidebarLiquidGlassWidthRequest = Schema.Struct({
-  width: Schema.NullOr(Schema.Number),
-  backing: Schema.optional(Schema.Number),
+/** CSS px: the docked sidebar's column runs the window's full height; a `height` makes it a band
+    that tall along the window's top (Flat Glass's tab row). */
+const ForkSidebarLiquidGlassFrame = Schema.Struct({
+  width: Schema.Number,
+  height: Schema.optional(Schema.Number),
+});
+
+export type ForkSidebarLiquidGlassFrame = typeof ForkSidebarLiquidGlassFrame.Type;
+
+const ForkSidebarLiquidGlassFrameRequest = Schema.Struct({
+  frame: Schema.NullOr(ForkSidebarLiquidGlassFrame),
+  backing: Schema.Number,
 });
 
 const ForkRect2D = Schema.Struct({
@@ -71,6 +80,8 @@ const ForkDraftLiquidGlassRequest = Schema.Struct({
 export type SidebarGlassShowOptions = {
   readonly width: number;
   readonly backing: number;
+  /** Pins the glass to a band this tall at the window's top; absent runs it full height. */
+  readonly height?: number;
 };
 
 export type SidebarGlassNativeAddon = {
@@ -147,19 +158,12 @@ export function setSidebarGlassAddonForTests(
   cachedAddon = addon;
 }
 
-/** Computes the sidebar Liquid Glass width in macOS points, clamped to content bounds. */
-export function clampLiquidGlassWidth(
-  cssWidth: number,
-  zoomFactor: number,
-  contentSize: readonly number[],
-): number | null {
-  if (!Number.isFinite(cssWidth) || cssWidth <= 0) return null;
+/** A CSS length in macOS points at the page zoom, clamped to `limit` points; null when none is left. */
+export function toClampedPoints(css: number, zoomFactor: number, limit: number): number | null {
+  if (!Number.isFinite(css) || css <= 0 || limit <= 0) return null;
   const zoom = Number.isFinite(zoomFactor) && zoomFactor > 0 ? zoomFactor : 1;
-  const contentWidth = contentSize[0] ?? 0;
-  const contentHeight = contentSize[1] ?? 0;
-  if (contentWidth <= 0 || contentHeight <= 0) return null;
-  const width = Math.min(contentWidth, Math.round(cssWidth * zoom));
-  return width > 0 ? width : null;
+  const points = Math.min(limit, Math.round(css * zoom));
+  return points > 0 ? points : null;
 }
 
 /** True when macOS 26+ Liquid Glass is loadable and currently available. */
@@ -251,24 +255,20 @@ function applyForkDraftLiquidGlass(
 }
 
 /** Attaches, updates, or removes the sidebar Liquid Glass view on `window`. */
-export function applyForkLiquidGlassWidth(
+export function applyForkSidebarLiquidGlassFrame(
   window: Electron.BrowserWindow,
-  cssWidth: number | null,
+  frame: ForkSidebarLiquidGlassFrame | null,
   backingRgb: number = FORK_LIQUID_GLASS_BACKING_RGB,
 ): boolean {
   if (window.isDestroyed()) return false;
 
-  if (cssWidth === null) {
-    hideForkSidebarLiquidGlass(window);
-    return true;
-  }
-
-  const width = clampLiquidGlassWidth(
-    cssWidth,
-    window.webContents.getZoomFactor(),
-    window.getContentSize(),
-  );
-  if (width === null) {
+  const zoom = window.webContents.getZoomFactor();
+  const [contentWidth = 0, contentHeight = 0] = window.getContentSize();
+  const width =
+    frame === null || contentHeight <= 0 ? null : toClampedPoints(frame.width, zoom, contentWidth);
+  const height =
+    frame?.height === undefined ? undefined : toClampedPoints(frame.height, zoom, contentHeight);
+  if (width === null || height === null) {
     hideForkSidebarLiquidGlass(window);
     return true;
   }
@@ -282,7 +282,10 @@ export function applyForkLiquidGlassWidth(
       : FORK_LIQUID_GLASS_BACKING_RGB;
 
   try {
-    return addon.show(window.getNativeWindowHandle(), { width, backing });
+    return addon.show(
+      window.getNativeWindowHandle(),
+      height === undefined ? { width, backing } : { width, backing, height },
+    );
   } catch {
     return false;
   }
@@ -304,14 +307,14 @@ const resolveLiquidGlassWindow = Effect.fn("desktop.ipc.fork.resolveLiquidGlassW
   return target;
 });
 
-export const setForkSidebarLiquidGlassWidth = DesktopIpc.makeIpcMethod({
-  channel: FORK_SET_SIDEBAR_LIQUID_GLASS_WIDTH_CHANNEL,
-  payload: ForkSidebarLiquidGlassWidthRequest,
+export const setForkSidebarLiquidGlassFrame = DesktopIpc.makeIpcMethod({
+  channel: FORK_SET_SIDEBAR_LIQUID_GLASS_FRAME_CHANNEL,
+  payload: ForkSidebarLiquidGlassFrameRequest,
   result: Schema.Boolean,
-  handler: Effect.fn("desktop.ipc.fork.setSidebarLiquidGlassWidth")(function* (request, event) {
-    const target = yield* resolveLiquidGlassWindow(event, request.width !== null);
+  handler: Effect.fn("desktop.ipc.fork.setSidebarLiquidGlassFrame")(function* (request, event) {
+    const target = yield* resolveLiquidGlassWindow(event, request.frame !== null);
     if (target === null) return false;
-    return applyForkLiquidGlassWidth(target, request.width, request.backing);
+    return applyForkSidebarLiquidGlassFrame(target, request.frame, request.backing);
   }),
 });
 

@@ -408,13 +408,17 @@ describe("fork guard: fork-composer-shell", () => {
     const geometry = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-control-row]") &&
-        rule.body.includes("height: 26px"),
+        rule.body.includes("height: var(--fork-composer-control-height)"),
     );
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
-    // Text follows the interface size (the root size), not a fixed pixel size.
-    expect(geometry?.body).toMatch(/font-size:\s*1rem/u);
+    expect(geometry?.body).toMatch(/font-size:\s*var\(--fork-composer-chip-text\)/u);
+    // A pixel under the Interface font size, so the row follows the setting.
+    expect(theme).toContain("--fork-composer-chip-text: calc(1rem - 1px);");
+    expect(theme).toContain(
+      "--fork-composer-control-height: calc(var(--fork-composer-chip-text) + 12px);",
+    );
     expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
   });
 
@@ -477,7 +481,7 @@ describe("fork guard: fork-composer-shell", () => {
     const sharedGeometry = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-control-row]") &&
-        rule.body.includes("height: 26px"),
+        rule.body.includes("height: var(--fork-composer-control-height)"),
     );
     expect(sharedGeometry?.selector).not.toContain(":not([data-fork-composer-mode-chip])");
   });
@@ -508,11 +512,11 @@ describe("fork guard: fork-composer-shell", () => {
     expect(readSibling("../custom/DraftProjectPill.tsx")).not.toContain("ChevronDownIcon");
   });
 
-  it("keeps floating context chips at 24px for ScheduledTaskEditor", () => {
+  it("keeps floating context chips at text + 10px for ScheduledTaskEditor", () => {
     const context = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("height: 24px"),
+        rule.body.includes("height: calc(var(--fork-composer-chip-text) + 10px)"),
     );
     expect(context?.body).toMatch(/border-radius:\s*6px/u);
     expect(context?.body).toMatch(/padding-inline:\s*8px/u);
