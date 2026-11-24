@@ -17,8 +17,9 @@ const view = {
       excludedLabels: ["hold", "later"],
     },
     sort: "created",
-    projectId: "project",
-    projectEnvironmentId: "remote",
+    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+    projects: [{ projectId: "project", environmentId: "remote" }],
+    /* fork:end no3y-pr-project-multiselect */
   },
 } as const satisfies PullRequestSavedView;
 
@@ -37,7 +38,9 @@ it("recognizes a saved view regardless of filter property or label ordering", ()
   expect(
     pullRequestViewMatches(view, {
       ...view,
-      controls: { ...view.controls, projectEnvironmentId: "other" },
+      /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+      controls: { ...view.controls, projects: [{ projectId: "project", environmentId: "other" }] },
+      /* fork:end no3y-pr-project-multiselect */
     }),
   ).toBe(false);
 });
