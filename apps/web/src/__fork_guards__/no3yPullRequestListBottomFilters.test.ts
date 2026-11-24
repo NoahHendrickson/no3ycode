@@ -15,7 +15,8 @@ const read = (path: string) =>
   NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(path, import.meta.url)), "utf8");
 const screen = read("../../../mobile/src/features/pull-requests/PullRequestsScreen.tsx");
 const filters = read("../../../mobile/src/features/pull-requests/PullRequestListFilters.tsx");
-const list = read("../../../mobile/src/features/pull-requests/pullRequestList.ts");
+const search = read("../../../mobile/src/features/pull-requests/PullRequestFilterSearchScreen.tsx");
+const preferences = read("../../../mobile/src/persistence/mobile-preferences.ts");
 
 describe("no3y-pr-list-bottom-filters", () => {
   it("moves the filters from the list header to the bottom tray on the iPhone layout", () => {
@@ -36,8 +37,12 @@ describe("no3y-pr-project-multiselect", () => {
     expect(filters).toContain("attributes: { keepsMenuPresented: true }");
   });
 
-  it("asks each environment for its own selected projects", () => {
-    expect(list).toContain("pullRequestProjectIdsFor(pullRequestProjectSelection(controls)");
-    expect(screen).toContain("pullRequestListInput(controls, query, environment.environmentId)");
+  it("loads a single saved project as a one-project set", () => {
+    expect(preferences.match(/withPullRequestProjectSet\(/gu)).toHaveLength(2);
+  });
+
+  it("asks each environment for its own selected projects, in the list and the filter search", () => {
+    expect(screen).toContain("projectIds.get(environment.environmentId)");
+    expect(search).toContain("projectIds.get(id)");
   });
 });

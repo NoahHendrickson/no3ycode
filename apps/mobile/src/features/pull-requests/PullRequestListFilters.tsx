@@ -16,9 +16,7 @@ import type { MessageResolver } from "../../i18n/messages";
 /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
 import {
   pullRequestProjectSelected,
-  pullRequestProjectSelection,
   toggledPullRequestProject,
-  withPullRequestProjectSelection,
 } from "../../../fork/no3yPullRequestProjects";
 /* fork:end no3y-pr-project-multiselect */
 
@@ -148,12 +146,15 @@ export function usePullRequestListFilters(props: {
 }) {
   const { value } = props;
   const m = useMessages();
+  /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+  const gt = useGT();
+  /* fork:end no3y-pr-list-bottom-filters */
   const projects = useProjectsInSidebarOrder(props.projects);
   const selectedLabels = value.filters.labels?.flat() ?? [];
   const selectedLabelSet = new Set(selectedLabels);
   const author = value.filters.author;
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  const projectSelection = pullRequestProjectSelection(value);
+  const projectSelection = value.projects ?? [];
   const selectedProjects = projects.filter((project) =>
     pullRequestProjectSelected(projectSelection, {
       projectId: project.id,
@@ -201,17 +202,15 @@ export function usePullRequestListFilters(props: {
         const project = projects.find(
           (project) => JSON.stringify([project.environmentId, project.id]) === next,
         );
-        props.onChange(
-          withPullRequestProjectSelection(
-            value,
-            project
-              ? toggledPullRequestProject(projectSelection, {
-                  projectId: project.id,
-                  environmentId: project.environmentId,
-                })
-              : [],
-          ),
-        );
+        props.onChange({
+          ...value,
+          projects: project
+            ? toggledPullRequestProject(projectSelection, {
+                projectId: project.id,
+                environmentId: project.environmentId,
+              })
+            : undefined,
+        });
         /* fork:end no3y-pr-project-multiselect */
         break;
       }
@@ -301,6 +300,7 @@ export function usePullRequestListFilters(props: {
       attributes: { keepsMenuPresented: true },
     })),
   ];
+  const projectMenu = { id: "projects", title: projectLabel, subactions: projectActions };
   /* fork:end no3y-pr-project-multiselect */
   const more: MenuProps["actions"] = [
     {
@@ -325,7 +325,7 @@ export function usePullRequestListFilters(props: {
       subactions: choices("checks", resolveOptions(CHECKS, m), value.filters.checks ?? "all"),
     },
     /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-    { id: "projects", title: projectLabel, subactions: projectActions },
+    projectMenu,
     /* fork:end no3y-pr-project-multiselect */
     {
       id: "sort",
@@ -428,33 +428,105 @@ export function usePullRequestListFilters(props: {
           customized,
         }
       : null;
+  /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+  const environmentLabel =
+    props.environments.length > 1
+      ? (props.environments.find((environment) => environment.id === props.environmentId)?.label ??
+        m(msg("All environments")))
+      : null;
+  // Each chip once; upstream's header row and the iPhone bottom tray lay them out in their orders.
+  const chips = {
+    filters: {
+      key: "filters",
+      label: count ? String(count) : gt("Filters"),
+      icon: true,
+      active: count > 0,
+      accessibilityLabel: count
+        ? gt("{count, plural, one {Filters, {count} active} other {Filters, {count} active}}", {
+            count,
+          })
+        : gt("More filters"),
+      actions: [...more, reset(false)],
+    },
+    environment:
+      environmentLabel === null
+        ? null
+        : {
+            key: "environment",
+            label: environmentLabel,
+            accessibilityLabel: gt("Choose pull request environment"),
+            actions: environmentActions,
+          },
+    state: {
+      key: "state",
+      label: m(STATES[value.state]),
+      active: value.state !== "open",
+      accessibilityLabel: gt("Filter by state"),
+      actions: stateActions,
+    },
+    involvement: {
+      key: "involvement",
+      label: m(INVOLVEMENT[value.involvement]),
+      active: value.involvement !== "all",
+      accessibilityLabel: gt("Filter by involvement"),
+      actions: involvementActions,
+    },
+    labels: {
+      key: "labels",
+      label: selectedLabels.length
+        ? gt("Labels {count}", { count: selectedLabels.length })
+        : gt("Labels", { $context: "filter menu" }),
+      active: selectedLabels.length > 0,
+      accessibilityLabel: gt("Filter by label"),
+      actions: labelActions,
+    },
+    author: {
+      key: "author",
+      label: author === "me" ? gt("By you") : (author ?? gt("Author", { $context: "filter menu" })),
+      active: Boolean(author),
+      accessibilityLabel: gt("Filter by author"),
+      actions: authorActions,
+    },
+    project: {
+      key: "project",
+      label: projectLabel,
+      active: projectSelection.length > 0,
+      accessibilityLabel: gt("Filter by project"),
+      actions: projectActions,
+    },
+  } satisfies Record<string, FilterChip | null>;
+  /* fork:end no3y-pr-list-bottom-filters */
   return {
     headerMenu,
     select,
     count,
     more,
     reset,
-    environmentLabel:
-      props.environments.length > 1
-        ? (props.environments.find((environment) => environment.id === props.environmentId)
-            ?.label ?? m(msg("All environments")))
-        : null,
-    environmentActions,
-    state: value.state,
-    stateActions,
-    involvement: value.involvement,
-    involvementActions,
-    selectedLabelCount: selectedLabels.length,
-    labelActions,
-    author,
-    authorActions,
-    /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-    projectCount: projectSelection.length,
-    projectLabel,
-    projectActions,
-    /* fork:end no3y-pr-project-multiselect */
+    /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+    moreWithoutProject: more.filter((action) => action !== projectMenu),
+    chips,
+    /* fork:end no3y-pr-list-bottom-filters */
   };
 }
+
+/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+export interface FilterChip {
+  readonly key: string;
+  readonly label: string;
+  readonly accessibilityLabel: string;
+  readonly active?: boolean;
+  readonly icon?: boolean;
+  readonly actions: MenuProps["actions"];
+}
+
+export function FilterChipMenu(props: {
+  readonly chip: FilterChip;
+  readonly onSelect: (id: string) => void;
+}) {
+  const { key: _key, ...chip } = props.chip;
+  return <ListFilterMenu {...chip} onSelect={props.onSelect} />;
+}
+/* fork:end no3y-pr-list-bottom-filters */
 
 export function PullRequestListFilters(props: {
   /** Android sidebar rows sit further in than full-width rows; the pills follow them. */
@@ -462,9 +534,9 @@ export function PullRequestListFilters(props: {
   readonly filters: ReturnType<typeof usePullRequestListFilters>;
   readonly savedViewsMenu: ReactNode;
 }) {
-  const { count, more, reset, select, author, selectedLabelCount } = props.filters;
-  const gt = useGT();
-  const m = useMessages();
+  /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+  const { select, chips } = props.filters;
+  /* fork:end no3y-pr-list-bottom-filters */
   return (
     <ScrollView
       horizontal
@@ -479,65 +551,18 @@ export function PullRequestListFilters(props: {
       }
     >
       {props.savedViewsMenu}
-      {Platform.OS === "android" ? null : (
-        <ListFilterMenu
-          label={count ? String(count) : gt("Filters")}
-          icon
-          active={count > 0}
-          accessibilityLabel={
-            count
-              ? gt(
-                  "{count, plural, one {Filters, {count} active} other {Filters, {count} active}}",
-                  { count },
-                )
-              : gt("More filters")
-          }
-          actions={[...more, reset(false)]}
-          onSelect={select}
-        />
+      {/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */}
+      {[
+        Platform.OS === "android" ? null : chips.filters,
+        chips.environment,
+        chips.state,
+        chips.involvement,
+        chips.labels,
+        chips.author,
+      ].map((chip) =>
+        chip ? <FilterChipMenu key={chip.key} chip={chip} onSelect={select} /> : null,
       )}
-      {props.filters.environmentLabel !== null ? (
-        <ListFilterMenu
-          label={props.filters.environmentLabel}
-          accessibilityLabel={gt("Choose pull request environment")}
-          actions={props.filters.environmentActions}
-          onSelect={select}
-        />
-      ) : null}
-      <ListFilterMenu
-        label={m(STATES[props.filters.state])}
-        active={props.filters.state !== "open"}
-        accessibilityLabel={gt("Filter by state")}
-        actions={props.filters.stateActions}
-        onSelect={select}
-      />
-      <ListFilterMenu
-        label={m(INVOLVEMENT[props.filters.involvement])}
-        active={props.filters.involvement !== "all"}
-        accessibilityLabel={gt("Filter by involvement")}
-        actions={props.filters.involvementActions}
-        onSelect={select}
-      />
-      <ListFilterMenu
-        label={
-          selectedLabelCount
-            ? gt("Labels {count}", { count: selectedLabelCount })
-            : gt("Labels", { $context: "filter menu" })
-        }
-        active={selectedLabelCount > 0}
-        accessibilityLabel={gt("Filter by label")}
-        actions={props.filters.labelActions}
-        onSelect={select}
-      />
-      <ListFilterMenu
-        label={
-          author === "me" ? gt("By you") : (author ?? gt("Author", { $context: "filter menu" }))
-        }
-        active={Boolean(author)}
-        accessibilityLabel={gt("Filter by author")}
-        actions={props.filters.authorActions}
-        onSelect={select}
-      />
+      {/* fork:end no3y-pr-list-bottom-filters */}
     </ScrollView>
   );
 }

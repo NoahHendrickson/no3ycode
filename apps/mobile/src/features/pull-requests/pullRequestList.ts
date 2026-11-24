@@ -15,12 +15,7 @@ import type { PullRequestListControls } from "../../persistence/mobile-preferenc
 import { compareTimestamps } from "../../lib/time";
 import { m, type MessageResolver } from "../../i18n/messages";
 /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-import {
-  pullRequestProjectIdsFor,
-  pullRequestProjectSelected,
-  pullRequestProjectSelection,
-  withPullRequestProjectSelection,
-} from "../../../fork/no3yPullRequestProjects";
+import { pullRequestProjectSelected } from "../../../fork/no3yPullRequestProjects";
 /* fork:end no3y-pr-project-multiselect */
 
 export const PR_LIST_PAGE_SIZE = 30;
@@ -37,7 +32,7 @@ export function withoutScratchProjectScope(
   projects: readonly { id: string; environmentId: string; isScratch?: true }[],
 ): PullRequestListControls {
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  const selection = pullRequestProjectSelection(controls);
+  const selection = controls.projects ?? [];
   const kept = selection.filter(
     (selected) =>
       !projects.some(
@@ -49,7 +44,7 @@ export function withoutScratchProjectScope(
   );
   return kept.length === selection.length
     ? controls
-    : withPullRequestProjectSelection(controls, kept);
+    : { ...controls, projects: kept.length ? kept : undefined };
   /* fork:end no3y-pr-project-multiselect */
 }
 
@@ -67,7 +62,7 @@ export function pullRequestProjectChoices<
   },
 ) {
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  const selection = pullRequestProjectSelection(input.controls);
+  const selection = input.controls.projects ?? [];
   const isSelected = (project: Project) =>
     pullRequestProjectSelected(selection, {
       projectId: project.id,
@@ -79,8 +74,8 @@ export function pullRequestProjectChoices<
       (input.environmentId === null || project.environmentId === input.environmentId) &&
       (input.servesPullRequests(project.environmentId) || isSelected(project)),
   );
-  // Each repository keeps the first project it meets, so selected ones go first: every selected
-  // project stays in the menu, not only the first.
+  // pullRequestFilterProjects keeps the first project it meets per repository (its one
+  // `selectedProject` aside), so selected ones go first: every selected project stays listed.
   return pullRequestFilterProjects(
     [...candidates.filter(isSelected), ...candidates.filter((project) => !isSelected(project))],
     input.environmentLabels,
@@ -329,15 +324,10 @@ export function pullRequestListInput(
   controls: PullRequestListControls,
   query: string,
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  environmentId?: string,
+  /** The environment's selected projects (pullRequestProjectIdsByEnvironment), if any. */
+  projectIds?: ReadonlyArray<string>,
   /* fork:end no3y-pr-project-multiselect */
 ): PullRequestListInput {
-  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  const projectIds =
-    environmentId === undefined
-      ? undefined
-      : pullRequestProjectIdsFor(pullRequestProjectSelection(controls), environmentId);
-  /* fork:end no3y-pr-project-multiselect */
   const parsed = parsePullRequestQuery(query);
   return {
     state: controls.state,
@@ -448,17 +438,17 @@ export function filterPullRequestList<
   const words = parsed.text.toLowerCase().split(/\s+/).filter(Boolean);
   const filters = { ...controls.filters, ...parsed.filters };
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-  const projectSelection = pullRequestProjectSelection(controls);
+  const projectSelection = controls.projects ?? [];
   /* fork:end no3y-pr-project-multiselect */
   const filtered = entries.filter((entry) => {
     if (controls.state !== "all" && entry.state !== controls.state) return false;
     /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
     if (
       projectSelection.length &&
-      !projectSelection.some(
-        (project) =>
-          project.projectId === entry.projectId && project.environmentId === entry.environmentId,
-      )
+      !pullRequestProjectSelected(projectSelection, {
+        projectId: entry.projectId,
+        environmentId: entry.environmentId ?? "",
+      })
     )
       return false;
     /* fork:end no3y-pr-project-multiselect */

@@ -5,7 +5,6 @@
  */
 import ArrowRight01Icon from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import Layers01Icon from "@hugeicons/core-free-icons/Layers01Icon";
-import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 import { useGT, useMessages } from "gt-react-native";
 import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -14,17 +13,16 @@ import { RelativeTime } from "../src/components/RelativeTime";
 import { AppText as Text } from "../src/components/ui/AppText";
 import { Menu } from "../src/components/ui/Menu";
 import type { MenuProps } from "../src/components/ui/Menu.types";
-import { changeRequestTermKind } from "../src/lib/changeRequestTerm";
-import { ListRowLabel } from "../src/features/pull-requests/PullRequestListRow";
+import {
+  ListRowLabel,
+  pullRequestListRowAccessibilityLabel,
+} from "../src/features/pull-requests/PullRequestListRow";
 import {
   pullRequestListReviewStatus,
   pullRequestListRowsAreEqual,
   type EnvironmentPullRequestListEntry,
 } from "../src/features/pull-requests/pullRequestList";
-import {
-  pullRequestConflict,
-  pullRequestStatus,
-} from "../src/features/pull-requests/pullRequestStatus";
+import { pullRequestConflict } from "../src/features/pull-requests/pullRequestStatus";
 import { NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
 import { NO3Y_PULL_REQUEST_GLYPHS } from "./No3yPullRequestMark";
@@ -48,7 +46,6 @@ export const No3yPullRequestListCard = memo(
     const open = item.state === "open";
     const tone = no3yPullRequestTone({ state: item.state, isDraft: item.isDraft });
     const pill = palette.prPill[tone];
-    const status = pullRequestStatus(item, messages);
     const conflict = pullRequestConflict(item, messages);
     const review = open ? pullRequestListReviewStatus(item, messages) : null;
     const checks = open ? (item.checksState ?? null) : null;
@@ -85,43 +82,7 @@ export const No3yPullRequestListCard = memo(
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ busy: props.busy }}
-            accessibilityLabel={[
-              gt(
-                "{term, select, mr {Merge request} cr {Change request} other {Pull request}} {number}",
-                {
-                  term: changeRequestTermKind(
-                    sourceControlClients.get(item.provider).changeRequest,
-                  ),
-                  number: item.number,
-                },
-              ),
-              item.title,
-              status.label,
-              item.visibility === "private" ? gt("Private") : null,
-              conflict ? conflict.label.toLowerCase() : null,
-              gt("by {author}", { author: item.author?.login ?? gt("unknown author") }),
-              review ? review.accessibleLabel : null,
-              checks === "failing"
-                ? gt("checks failing")
-                : checks === "pending"
-                  ? gt("checks pending")
-                  : checks === "passing"
-                    ? gt("checks passing")
-                    : null,
-              item.stack
-                ? gt("stack {position} of {size}", {
-                    position: item.stack.position,
-                    size: item.stack.size,
-                  })
-                : null,
-              item.labels.length ? item.labels.map((label) => label.name).join(", ") : null,
-              gt("{additions} additions, {deletions} deletions", {
-                additions: item.additions,
-                deletions: item.deletions,
-              }),
-            ]
-              .filter((part) => part !== null)
-              .join(", ")}
+            accessibilityLabel={pullRequestListRowAccessibilityLabel(item, gt, messages)}
             accessibilityHint={gt("Double tap to open. Touch and hold for quick actions.")}
             onPress={() => props.onSelect(item)}
             disabled={props.busy}

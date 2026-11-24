@@ -50,7 +50,7 @@ import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import { useSearchScrollRestoration } from "../layout/workspace/useSearchScrollRestoration";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
 /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
-import { pullRequestProjectSelection } from "../../../fork/no3yPullRequestProjects";
+import { pullRequestProjectIdsByEnvironment } from "../../../fork/no3yPullRequestProjects";
 /* fork:end no3y-pr-project-multiselect */
 /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
@@ -162,21 +162,18 @@ export function PullRequestsScreen(
   );
   /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
   const targets = useMemo(() => {
-    const projectSelection = pullRequestProjectSelection(controls);
+    const projectIds = pullRequestProjectIdsByEnvironment(controls);
     return environments
       .filter(
         (environment) =>
           configs.get(environment.environmentId) !== undefined &&
           (environmentId === null || environment.environmentId === environmentId) &&
-          (projectSelection.length === 0 ||
-            projectSelection.some(
-              (project) => project.environmentId === environment.environmentId,
-            )),
+          (projectIds.size === 0 || projectIds.has(environment.environmentId)),
       )
       .sort((left, right) => left.environmentId.localeCompare(right.environmentId))
       .map((environment) => ({
         environmentId: environment.environmentId,
-        input: pullRequestListInput(controls, query, environment.environmentId),
+        input: pullRequestListInput(controls, query, projectIds.get(environment.environmentId)),
       }));
   }, [environments, environmentId, configs, controls, query]);
   /* fork:end no3y-pr-project-multiselect */
