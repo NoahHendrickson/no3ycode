@@ -1819,6 +1819,12 @@
     --sidebar-row-selected: rgb(255 255 255 / 8%);
     --accent: rgb(255 255 255 / 10%);
   }
+
+  /* The floating sidebar toggle sits on the same glass, outside the strip; it hovers with the
+     docked toggle's wash. */
+  & [data-sidebar-control] {
+    --accent: rgb(255 255 255 / 6%);
+  }
 }
 
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
