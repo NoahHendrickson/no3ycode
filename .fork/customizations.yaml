@@ -9069,6 +9069,41 @@
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
 
+- id: mobile-feed-stable-end
+  intent: >
+    The iOS thread feed stays put while you send and a turn streams, and what
+    changes at its end glides. While the feed follows its end, end following
+    alone owns the scroll position: LegendList's visible-content anchoring
+    (maintainVisibleContentPosition) is on only once the reader scrolls away,
+    or while landing a jump to a message. With both on, a row appended at the
+    end with a guessed height made the anchoring move the offset by hundreds of
+    points (once to the top of the thread) and end following drag it back. New
+    rows start at their item type's average height, so the no3y live status
+    line gets its own type (it shared one with fixed-height rows and started at
+    180pt) and a streaming reply gets a per-message type with no average (the
+    shared one averaged finished replies, ~500pt). A landed feed follows its
+    end animated (not under Reduce Motion); landing on open stays instant,
+    since the feed is hidden until it reaches the end. As a turn ends, its
+    reply's copy/fork row grows in instead of appearing at full height, which
+    jumped the pinned feed. Sending a follow-up keeps the keyboard up (as in
+    Messages) instead of closing it, which dropped the feed with the keyboard
+    just as the sent row lifted it again. The policy is one pure function in
+    threadFeedStableEnd.ts. Android keeps upstream's anchoring, instant end
+    following, item types and keyboard dismissal on send.
+  tier: 4
+  files:
+    - apps/mobile/fork/threadFeedStableEnd.ts
+    - apps/mobile/fork/ReplyActionsReveal.tsx
+  shadows: []
+  watch:
+    # End following, anchoring, the item types the estimates hang on, and the reply actions.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Keyboard dismissal on send.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+  verify:
+    - apps/mobile/fork/threadFeedStableEnd.test.ts
+    - apps/web/src/__fork_guards__/mobileFeedStableEnd.test.ts
+
 - id: no3y-pr-project-multiselect
   intent: >
     The mobile Pull requests project filter is a set: the Project menu ticks
