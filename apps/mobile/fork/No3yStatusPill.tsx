@@ -43,7 +43,6 @@ import { AppText as Text } from "../src/components/ui/AppText";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { FloatingWorkingControl } from "../src/features/threads/floating-working-control";
 import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
-import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
 import { usePullRequestConnected } from "../src/features/pull-requests/usePullRequestConnected";
 import { useOpenThreadPullRequests } from "../src/features/threads/use-open-thread-pull-requests";
 import { useOpenLinkedThread } from "../src/features/threads/useOpenLinkedThread";
@@ -62,11 +61,7 @@ import {
   no3yWatcherChecksState,
   type No3yPullRequestPill,
 } from "./no3yPullRequestTone";
-import {
-  no3yStatusSegments,
-  no3ySubagentMarkKind,
-  type No3yStatusSegment,
-} from "./no3yStatusSegments";
+import { no3yStatusSegments, type No3yStatusSegment } from "./no3yStatusSegments";
 import { publishNo3yStatusSheet, type No3yStatusSheetModel } from "./no3yStatusSheetStore";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { forgetNo3yComposerHabit } from "./no3yComposerHabits";
@@ -188,18 +183,10 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
                 threadId: props.threadId,
               }),
           },
-    subagents: turnSubagents.map((subagent) => {
-      const child = childInputs.find((input) => input.id === subagent.childThreadId);
-      return {
-        id: subagent.id,
-        title: resolveSubagentRowPresentation(subagent).title,
-        mark: no3ySubagentMarkKind(
-          subagent.status,
-          child === undefined ? null : child.hasPendingApprovals ? "approval" : "input",
-        ),
-      };
-    }),
-    onOpenAgents: props.agents !== null ? props.onOpenAgents : null,
+    subagents:
+      turnSubagents.length > 0 && props.detailRef !== null
+        ? { thread: props.detailRef, list: turnSubagents, onOpenAll: props.onOpenAgents }
+        : null,
     childInputs: childInputs.map((child) => ({
       id: child.id,
       title: child.title,

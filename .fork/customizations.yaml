@@ -8613,12 +8613,17 @@
     and counts it toward the feed's clearance. An amber dot marks what needs
     the user; queued messages are in the queued-runs banner above the card;
     scroll-to-end sits at the row's right. The status and background pills,
-    and a subagents pill with a child waiting, open a half-height sheet
-    (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
-    upstream control had (stop background work, force stop, wake, un-settle,
-    dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, previews); the others open their own target (the pull request or
-    the list of them, the agents sheet, Pi status, the preview). iPad and
+    and a subagents pill with a child waiting, open the Activity sheet
+    (fork/No3yStatusSheet.tsx), which opens at half height and pulls up to
+    full, listing every item by kind in one glass card per kind
+    (fork/No3yGlassCard.tsx) with every action the upstream control had (stop
+    background work, force stop, wake, un-settle, dismiss, reconnect, open a
+    subagent, open a child that needs the user, Pi status, previews). Its
+    subagents are the Agents sheet's rows, opened through the Agents sheet's
+    own useOpenSubagentThread (fenced in ThreadAgentsSheet.tsx); a workflow
+    opens the Agents sheet's grouped view, and background rows open the
+    background-work sheet. The others open their own target (the pull request
+    or the list of them, the agents sheet, Pi status, the preview). iPad and
     Android keep the upstream control.
     Upstream moved working, compacting, background work and snooze/settle
     out of its floating status into the feed's closing status lines, and
@@ -8720,7 +8725,8 @@
     same row, tile and elapsed time, each in its own 20pt-radius card, plus a
     running agent's progress or a failure, and a running agent shows a small
     neutral round stop button in place of the chevron instead of upstream's
-    red tile; workflow groups keep upstream's rows. On
+    red tile, both on the title line in one 28pt slot so elapsed times align;
+    workflow groups keep upstream's rows. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -8892,6 +8898,7 @@
     - apps/mobile/fork/no3yPillStatus.test.ts
     - apps/mobile/fork/No3ySubagentCards.tsx
     - apps/mobile/fork/No3yAgentsSheetRow.tsx
+    - apps/mobile/fork/No3yGlassCard.tsx
     - apps/mobile/fork/no3ySubagentCard.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yLiveStatus.ts
