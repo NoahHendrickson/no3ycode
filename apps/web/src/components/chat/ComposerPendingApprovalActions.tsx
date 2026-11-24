@@ -66,6 +66,10 @@ export const ComposerPendingApprovalActions = memo(function ComposerPendingAppro
         const buttonProps = {
           disabled: disabled || isResponding || !canRespond,
           "aria-description": option.warning,
+          /* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice
+             Names the decision, so the notice card can put Approve first without positional selectors. */
+          "data-approval-decision": option.decision,
+          /* fork:end fork-composer-approval-notice */
           onClick: () => {
             if (!disabled && !isResponding && canRespond) {
               void onRespondToApproval(requestId, option.decision);

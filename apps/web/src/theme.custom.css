@@ -196,6 +196,16 @@
   --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
 }
 
+/* The banner cards above the composer read at the chat stream's sizes too. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {
+  --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1));
+  --text-sm: calc(1rem * var(--fork-chat-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-chat-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-chat-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-chat-text-scale, 1));
+}
+
 /* What the tokens can't reach. text-2xs and text-3xs are @theme inline, so
    their utilities bake index.css's sizes; 4xs and 5xs size icon badges to
    fixed overlays and stay put. Markdown headings and tables are literal rem in
@@ -1257,11 +1267,24 @@
   display: none;
 }
 
-/* Stop is flat like send: upstream's drop shadow and inset highlight read as
-   a dark lip under the solid fill. Glass repaints it with its own lighting. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-action="stop"] {
-  background: #ea3150;
+/* Stop is a ghost icon button, like attach and the mic: no red fill, the control row's ink,
+   and their hover wash. 3D Glass still repaints it with its own lighting. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="stop"] {
+  border-radius: 8px;
+  background: transparent;
   box-shadow: none;
+  color: var(--fork-composer-control-ink, var(--muted-foreground));
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="stop"]:hover:not(:disabled) {
+  background: var(--fork-composer-control-hover, var(--accent));
+  color: var(--foreground);
+}
+
+/* In dark the stop square is pure white; light keeps the foreground ink. */
+:root[data-fork="noahhendrickson-t3code"].dark
+  :is([data-fork-composer-action="stop"], [data-fork-composer-action="stop"]:hover:not(:disabled)) {
+  color: white;
 }
 
 /* The mode controls carry leading and interleaved vertical rules, which earned
@@ -2271,8 +2294,10 @@
   padding: 0;
 }
 
+/* The composer's question-mode send is an icon arrow: a 28px square like stop and send. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action="advance"] {
-  padding-inline: 10px;
+  width: 28px;
+  padding: 0;
 }
 
 /* True outline (dark only): upstream outline still paints dark:bg-input/32. */
@@ -2333,7 +2358,7 @@
    the drawer hands its padding to the panel, and the panel paints the card
    itself, so the collapsible header and the option list can own the inset. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-vessel]
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
   padding: 0;
 }
@@ -2450,7 +2475,7 @@
 /* A full-width card would squeeze the stash tab sharing the dock row. Stack
    the dock instead: the tab is a floor row above the card, right-aligned. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-vessel]
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-slot="composer-banner-attachment"]:has(> [data-composer-shoulder-tab]):has(
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
         [data-composer-shoulder-tab]
@@ -2461,7 +2486,7 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-vessel]
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-slot="composer-banner-attachment"]:has(
     [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
         [data-composer-shoulder-tab]
@@ -2486,7 +2511,7 @@
    Zeroing the overlap is all that is left to do: it is the variable upstream
    measures its tuck in, and the Root reserves bottom padding for it. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-vessel]
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
   --chat-composer-attachment-overlap: 0px;
 }
@@ -2496,7 +2521,7 @@
    adds or removes the list beneath it, and a stash tab sharing the dock row
    keeps the same text line. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-vessel]
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-composer-shoulder-tab] {
   --composer-banner-padding-block: calc(var(--spacing) * 1);
 }
@@ -2507,29 +2532,46 @@
    line at 16px padding — including when it is folded into the stack.
    Every Inlet colour takes them too: the light ones would otherwise keep
    upstream's one-line row, whose copy crowds the action off the card. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
-  font-size: 14px;
-  line-height: 16px;
+  /* Chat stream size, like the transcript and the other banner cards. */
+  font-size: calc(1rem * var(--fork-chat-text-scale, 1));
+  line-height: 1.375;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"] {
   padding: 12px 8px 12px 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-composer-banner-row] {
   column-gap: 6px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-icon"]
   > svg {
@@ -2542,8 +2584,12 @@
    (ComposerBannerStack drops font-medium / leading-7 on these cards); only
    branch names inside the copy go Medium. padding-inline zeros the no-icon
    ps-2 so settled copy starts on the 16px pad. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"] {
   flex-direction: column;
@@ -2555,8 +2601,12 @@
   white-space: normal;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-content"]
   > :not(:first-of-type) {
@@ -2565,27 +2615,142 @@
   text-overflow: unset;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-vessel]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-actions"] {
   gap: 8px;
 }
 
+/* Banners as cards (fork-composer-shell). The dock now sits above the composer in
+   ComposerShell's banners slot, so each banner is a whole card of its own: full
+   corners, the composer hairline, the vessel's fill. 6px between cards, 8px down to
+   the pills or the composer, matching the pills' own lift. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-banners] {
+  & [data-slot="composer-banner-attachment"] {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  & > [data-slot="composer-banner-attachment"] {
+    margin-bottom: 8px;
+  }
+  & [data-slot="composer-banner-attachment"] + [data-slot="composer-banner-attachment"] {
+    margin-top: 6px;
+  }
+  & [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
+    --chat-composer-attachment-overlap: 0px;
+    --composer-banner-corner-top: var(--radius-xl);
+  }
+  & [data-slot="composer-banner"][data-composer-banner-surface="attached"]::before {
+    display: block;
+    border: 0;
+    border-radius: var(--fork-composer-radius);
+    background: var(--fork-composer-bg, var(--card));
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+    mask-image: none;
+    backdrop-filter: none;
+  }
+  /* The Questions panel paints its own card, so its drawer draws none. */
+  & [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input])::before {
+    display: none;
+  }
+
+  /* Its drawer hands all padding to the panel, in every scheme. */
+  & [data-chat-composer-top-drawer]:has(> [data-fork-pending-user-input]) {
+    padding: 0;
+  }
+  /* The question card wears the prompt's own fill, so it reads as part of the composer. */
+  & [data-chat-composer-top-drawer] > [data-fork-pending-user-input] {
+    border: 1px solid var(--fork-composer-border);
+    border-radius: var(--fork-composer-radius);
+    background: var(--fork-composer-bg);
+  }
+
+  /* The question heads the card, ruled off from its options. */
+  & [data-fork-pending-user-input-question] {
+    border-bottom: 1px solid var(--fork-composer-border);
+  }
+
+  /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
+  & [data-fork-question-hint] {
+    font-size: calc(0.875rem * var(--fork-chat-text-scale, 1));
+  }
+
+  /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */
+  & [data-fork-pending-user-input] {
+    --fork-question-accent: #3b8bff;
+  }
+
+  & [data-fork-question-option][aria-checked="true"] {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  & [data-fork-question-option][aria-checked="true"]:hover {
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  }
+
+  & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
+    border-color: transparent;
+    background: var(--fork-question-accent);
+    color: white;
+  }
+
+  /* The queue card follows the iOS one: a 40px header and 40px rows that run edge to edge,
+     split by full-width hairlines. */
+  & [data-fork-queued-runs-banner] {
+    padding: 0;
+    overflow: clip;
+    border-radius: var(--fork-composer-radius);
+
+    & [data-composer-banner-row] {
+      min-height: 40px;
+      padding-inline: 12px 8px;
+      column-gap: 8px;
+      border-radius: 0;
+    }
+
+    & ol {
+      gap: 0;
+    }
+
+    & li[data-composer-banner-row] {
+      border-top: 1px solid var(--fork-composer-border);
+    }
+  }
+}
+
 /* Primaries and Dismiss are stamped in ChatView / ComposerBannerStack —
    never selected by child position or :has(svg). The stamp survives
    Compact's TooltipTrigger <span> wrapper. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
-  [data-fork-composer-notice-action="primary"] {
-  height: 24px;
-  min-height: 24px;
-  border-radius: 4px;
-  padding-inline: 6px;
-  font-size: 10px;
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
+  :is(
+    [data-fork-composer-notice-action="primary"],
+    [data-fork-composer-notice-action="secondary"]
+  ) {
+  height: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 16px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
   [data-fork-composer-notice-action="dismiss"] {
   width: 24px;
   height: 24px;
@@ -2594,7 +2759,11 @@
   border-radius: 4px;
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="inlet"])
+:root[data-fork="noahhendrickson-t3code"]:is(
+    .dark,
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  )
   [data-fork-composer-notice-action="dismiss"]
   svg {
   width: 16px;
@@ -3274,8 +3443,35 @@
   [data-slot="composer-banner-content"]:has([data-fork-approval-notice]) {
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
   white-space: normal;
+}
+
+/* Approve, Decline and More sit under the request at the notice cards' action size. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="button"] {
+  height: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+/* More is the row's menu trigger: a 32px square. Matched by its slot, not its (translated) label. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="menu-trigger"] {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  padding: 0;
+}
+
+/* Approve leads, Decline follows, More stays last. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-approval-actions]
+  [data-approval-decision="accept"] {
+  order: -1;
 }
 /* fork:end fork-composer-approval-notice */
 
@@ -3481,3 +3677,34 @@
   color: inherit;
 }
 /* fork:end fork-working-row-last */
+
+/* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
+   inside an even 8px inset (the popup's 4px plus the section's 4px). */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  border-radius: 18px;
+
+  &::before,
+  &::after {
+    border-radius: inherit;
+  }
+
+  /* The label's edge-to-edge rule bleeds into the scroll wrapper's padding; never let that
+     read as sideways overflow (macOS drew an overlay scrollbar along the bottom). */
+  & > div {
+    overflow-x: hidden;
+  }
+
+  & [data-composer-permissions] [data-slot="menu-radio-item"] {
+    border-radius: 10px;
+  }
+
+  /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its
+     text back in line with the option names. */
+  & [data-composer-permissions-label] {
+    margin-inline: -8px;
+    margin-bottom: 4px;
+    padding: 0 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+}

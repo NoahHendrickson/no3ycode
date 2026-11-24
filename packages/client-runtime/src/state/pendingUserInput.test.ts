@@ -153,6 +153,29 @@ describe("togglePendingUserInputOptionSelection", () => {
       first,
     );
   });
+
+  // fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+  it("clears a single-select pick when the same option is clicked again", () => {
+    const picked = togglePendingUserInputOptionSelection(
+      singleSelectQuestion,
+      undefined,
+      "Node.js",
+    );
+    expect(isPendingUserInputOptionSelected(singleSelectQuestion, picked, "Node.js")).toBe(true);
+    const cleared = togglePendingUserInputOptionSelection(singleSelectQuestion, picked, "Node.js");
+    expect(isPendingUserInputOptionSelected(singleSelectQuestion, cleared, "Node.js")).toBe(false);
+    expect(buildPendingUserInputAnswers([singleSelectQuestion], { scope: cleared })).toBeNull();
+    // Another option still switches the pick rather than clearing it.
+    const switched = togglePendingUserInputOptionSelection(
+      singleSelectQuestion,
+      picked,
+      "Orchestration-first",
+    );
+    expect(
+      isPendingUserInputOptionSelected(singleSelectQuestion, switched, "Orchestration-first"),
+    ).toBe(true);
+  });
+  // fork:end fork-pending-user-input
 });
 
 describe("setPendingUserInputCustomAnswer", () => {

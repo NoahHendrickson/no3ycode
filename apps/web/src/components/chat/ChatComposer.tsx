@@ -272,7 +272,10 @@ import {
   ComposerFooterModeControls,
   /* fork:end fork-composer-shell */
 } from "./ComposerFooterControls";
-import { ComposerPendingUserInputPanel } from "./ComposerPendingUserInputPanel";
+/* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
+   The alias resolves the override for TypeScript too, so its onPrevious prop type-checks. */
+import { ComposerPendingUserInputPanel } from "~/components/chat/ComposerPendingUserInputPanel";
+/* fork:end fork-pending-user-input */
 import { resolveComposerMenuActiveItemId } from "./composerMenuHighlight";
 import { buildPullRequestReferenceContext } from "../pullRequest/pullRequestDetail.logic";
 import { getComposerPromptInjectionState, getComposerReasoningStep } from "./composerProviderState";
@@ -4036,48 +4039,54 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         /* fork:begin fork-composer-usage-limits — see .fork/customizations.yaml#fork-composer-usage-limits */
         usageControls={usageReadout}
         /* fork:end fork-composer-usage-limits */
+        /* Banners are cards above the composer, not floor inside its vessel. */
+        banners={
+          <ComposerBanner.Dock>
+            <ComposerBanner.Column>
+              {/* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */}
+              <ComposerBannerStack items={forkShelfItems} />
+              {/* fork:end fork-composer-approval-notice */}
+              {/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */}
+              {props.forkQueuedRunsBanner}
+              {/* fork:end fork-queued-runs-banner */}
+              {showComposerTopDrawer ? (
+                <ComposerBanner.Attachment>
+                  <ComposerBanner.Root data-chat-composer-top-drawer="true" variant="info">
+                    {pendingUserInputs.length > 0 ? (
+                      <ComposerPendingUserInputPanel
+                        pendingUserInputs={pendingUserInputs}
+                        cwd={gitCwd ?? undefined}
+                        threadRef={routeThreadRef}
+                        disabled={!canOperateThread}
+                        respondingRequestIds={
+                          activePendingIsResponding && activePendingUserInput
+                            ? [...respondingRequestIds, activePendingUserInput.requestId]
+                            : respondingRequestIds
+                        }
+                        answers={activePendingDraftAnswers}
+                        questionIndex={activePendingQuestionIndex}
+                        onToggleOption={onSelectActivePendingUserInputOption}
+                        onAdvance={onAdvanceActivePendingUserInput}
+                        /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+                        onPrevious={onPreviousActivePendingUserInputQuestion}
+                        /* fork:end fork-pending-user-input */
+                        onDismiss={onDismissActivePendingUserInput}
+                      />
+                    ) : null}
+                  </ComposerBanner.Root>
+                </ComposerBanner.Attachment>
+              ) : null}
+            </ComposerBanner.Column>
+            <ComposerStashBadge
+              count={stashQueue.length}
+              menuOpen={isStashMenuOpen}
+              pulseKey={stashPulseKey}
+              onToggleMenu={toggleStashMenuStable}
+            />
+          </ComposerBanner.Dock>
+        }
       >
         {/* fork:end fork-composer-shell */}
-        <ComposerBanner.Dock>
-          <ComposerBanner.Column>
-            {/* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */}
-            <ComposerBannerStack items={forkShelfItems} />
-            {/* fork:end fork-composer-approval-notice */}
-            {/* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */}
-            {props.forkQueuedRunsBanner}
-            {/* fork:end fork-queued-runs-banner */}
-            {showComposerTopDrawer ? (
-              <ComposerBanner.Attachment>
-                <ComposerBanner.Root data-chat-composer-top-drawer="true" variant="info">
-                  {pendingUserInputs.length > 0 ? (
-                    <ComposerPendingUserInputPanel
-                      pendingUserInputs={pendingUserInputs}
-                      cwd={gitCwd ?? undefined}
-                      threadRef={routeThreadRef}
-                      disabled={!canOperateThread}
-                      respondingRequestIds={
-                        activePendingIsResponding && activePendingUserInput
-                          ? [...respondingRequestIds, activePendingUserInput.requestId]
-                          : respondingRequestIds
-                      }
-                      answers={activePendingDraftAnswers}
-                      questionIndex={activePendingQuestionIndex}
-                      onToggleOption={onSelectActivePendingUserInputOption}
-                      onAdvance={onAdvanceActivePendingUserInput}
-                      onDismiss={onDismissActivePendingUserInput}
-                    />
-                  ) : null}
-                </ComposerBanner.Root>
-              </ComposerBanner.Attachment>
-            ) : null}
-          </ComposerBanner.Column>
-          <ComposerStashBadge
-            count={stashQueue.length}
-            menuOpen={isStashMenuOpen}
-            pulseKey={stashPulseKey}
-            onToggleMenu={toggleStashMenuStable}
-          />
-        </ComposerBanner.Dock>
         <div className="relative">
           <ComposerSurface.Main
             ref={composerMainSurfaceRef}

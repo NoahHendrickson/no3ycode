@@ -173,7 +173,9 @@ describe("fork guard: fork-composer-banner-surface", () => {
 
   it("gives both shoulder tabs the tasks drawer's density", () => {
     const rule = rules.find((candidate) =>
-      flat(candidate.selector).endsWith("[data-fork-composer-vessel] [data-composer-shoulder-tab]"),
+      flat(candidate.selector).endsWith(
+        ":is([data-fork-composer-vessel], [data-fork-composer-banners]) [data-composer-shoulder-tab]",
+      ),
     );
     expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
     expect(rule?.body).toMatch(/--composer-banner-padding-block:\s*calc\(var\(--spacing\) \* 1\)/u);
@@ -188,7 +190,8 @@ describe("fork guard: fork-composer-banner-surface", () => {
     expect(rule?.selector).not.toContain("activity-strip");
     expect(rule?.selector).not.toContain('[data-composer-banner-drawer="true"]');
     expect(rule?.body).toMatch(/--composer-banner-icon-column:\s*16px/u);
-    expect(rule?.body).toMatch(/font-size:\s*14px/u);
+    // Notices read at Chat stream size, like the transcript and the other banner cards.
+    expect(rule?.body).toMatch(/font-size:\s*calc\(1rem \* var\(--fork-chat-text-scale, 1\)\)/u);
     const noticePadding = rules.find(
       (candidate) =>
         flat(candidate.selector).includes('[data-fork-composer-notice="true"]') &&

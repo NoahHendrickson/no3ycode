@@ -362,6 +362,8 @@ import {
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
 import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
+import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
+import { forkSubagentRowFromAgent } from "~/custom/forkSubagentTree";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
@@ -2810,6 +2812,15 @@ export default function ChatView(props: ChatViewProps) {
      the thread's PR (custom/ComposerBackgroundWork). Stop handler and task list come from
      useThreadLifecycle, like upstream's row. */
   const composerBackgroundWorkPresentation = presentPendingBackgroundWork(activeBackgroundTasks);
+  // The queue card collapses into a pill in this row; the card owns its count rule, this mirrors it.
+  const [forkQueueExpanded, setForkQueueExpanded] = useState(true);
+  const forkQueuedCount =
+    (serverProjection ? getUserQueuedThreadRuns(serverProjection).length : 0) +
+    optimisticUserMessages.filter(
+      (message) =>
+        message.inputIntent === "queued_turn" &&
+        !serverProjection?.messages.some((committed) => committed.id === message.id),
+    ).length;
   const composerStatusChips =
     activeThread && activeThreadRef && !isDraftHeroState ? (
       <>
@@ -2829,7 +2840,12 @@ export default function ChatView(props: ChatViewProps) {
             canStop={canOperateThread}
             onStop={() => void handleStopBackgroundWorkStable()}
             onOpenThread={onOpenRelatedThreadStable}
+            environmentId={activeThread.environmentId}
+            subagents={(serverProjection?.subagents ?? []).map(forkSubagentRowFromAgent)}
           />
+        ) : null}
+        {!forkQueueExpanded && forkQueuedCount > 0 ? (
+          <ComposerQueuedChip count={forkQueuedCount} onExpand={() => setForkQueueExpanded(true)} />
         ) : null}
       </>
     ) : null;
@@ -3546,6 +3562,8 @@ export default function ChatView(props: ChatViewProps) {
           )}
           onEditQueuedRun={queuedRunEdit.beginEdit}
           onCancelEdit={queuedRunEdit.cancelEdit}
+          expanded={forkQueueExpanded}
+          onExpandedChange={setForkQueueExpanded}
         />
       </>
     ) : null;

@@ -15,15 +15,10 @@ import type {
   RunId,
   ThreadId,
 } from "@t3tools/contracts";
-import {
-  BookmarkIcon,
-  Clock3Icon,
-  CornerUpRightIcon,
-  GripVerticalIcon,
-  ListOrderedIcon,
-  PencilIcon,
-} from "lucide-react";
+import { ArrowUpIcon, BookmarkIcon, Clock3Icon, GripVerticalIcon, Trash2Icon } from "lucide-react";
 import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
+
+import { ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
 
 import { useAssetUrls } from "~/assets/assetUrls";
 import { m } from "~/i18n/messages";
@@ -104,6 +99,9 @@ export function ForkQueuedRunsBanner({
   readonly editBlockedReason: string | null;
   readonly onEditQueuedRun: (request: EditQueuedRunRequest) => void;
   readonly onCancelEdit: () => void;
+  /** Collapsed, the card leaves the dock and ChatView shows it as a pill in the chip row. */
+  readonly expanded: boolean;
+  readonly onExpandedChange: (expanded: boolean) => void;
 }) {
   const messages = useMessages();
   const projection = useQuietThreadProjection(
@@ -117,9 +115,24 @@ export function ForkQueuedRunsBanner({
     reportFailure: false,
     refresh: true,
   });
-  const [expanded, setExpanded] = useState(true);
+  const expanded = props.expanded;
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
+  // Rows opened with "Read more", and the hovered row with whether its text is cut off.
+  const [readKeys, setReadKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [hovered, setHovered] = useState<{
+    readonly key: string;
+    readonly overflowing: boolean;
+  } | null>(null);
+  // Read more is offered only while the row's text is cut off. An opened row wraps, so it
+  // measures as fitting; it stays offered so Read less still folds back to Read more.
+  const showReadMore = (row: HTMLElement, key: string) => {
+    const text = row.querySelector<HTMLElement>("[data-fork-queued-text]");
+    setHovered({
+      key,
+      overflowing: readKeys.has(key) || (text !== null && text.scrollWidth > text.clientWidth),
+    });
+  };
   const [dragState, setDragState] = useState<{
     readonly runId: RunId;
     readonly insertIndex: number | null;
@@ -275,7 +288,7 @@ export function ForkQueuedRunsBanner({
         return false;
       }
       if (!repeat) {
-        setExpanded(true);
+        props.onExpandedChange(true);
         props.onEditQueuedRun({
           runId: latest.run.id,
           messageId: latest.run.userMessageId,
@@ -287,7 +300,7 @@ export function ForkQueuedRunsBanner({
     },
   }));
 
-  if (items.length === 0) return null;
+  if (items.length === 0 || !expanded) return null;
 
   const remove = async (runId: RunId) => {
     setBusyRunId(runId);
@@ -371,14 +384,18 @@ export function ForkQueuedRunsBanner({
           aria-expanded={expanded}
           aria-controls={queueListId}
           onPointerDown={(event) => event.preventDefault()}
-          onClick={() => setExpanded((value) => !value)}
+          onClick={() => props.onExpandedChange(!expanded)}
         >
           <ComposerBanner.Icon>
-            <ListOrderedIcon />
+            <ListNumberIcon />
           </ComposerBanner.Icon>
-          <ComposerBanner.Content className="text-muted-foreground">Queued</ComposerBanner.Content>
+          <ComposerBanner.Content className="font-medium text-muted-foreground">
+            Queued
+            <span className="font-normal text-muted-foreground/70 tabular-nums">
+              {` ${items.length}`}
+            </span>
+          </ComposerBanner.Content>
           <ComposerBanner.Actions>
-            <ComposerBanner.Count>{items.length}</ComposerBanner.Count>
             <ComposerBanner.ToggleIcon expanded={expanded} />
           </ComposerBanner.Actions>
         </ComposerBanner.Row>
@@ -400,6 +417,7 @@ export function ForkQueuedRunsBanner({
               const rowRunId = item.runId;
               const rowServerIndex = item.serverIndex;
               const isEditing = rowRunId !== null && rowRunId === props.editingRunId;
+              const isRead = readKeys.has(item.key);
               const rowDraggable =
                 rowRunId !== null && rowServerIndex !== null && canReorder && busyRunId === null;
               return (
@@ -407,6 +425,12 @@ export function ForkQueuedRunsBanner({
                   render={<li />}
                   key={item.key}
                   aria-current={isEditing ? "true" : undefined}
+                  onPointerEnter={(event) => showReadMore(event.currentTarget, item.key)}
+                  onPointerLeave={() => setHovered(null)}
+                  onFocus={(event) => showReadMore(event.currentTarget, item.key)}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) setHovered(null);
+                  }}
                   className={cn(
                     "relative rounded-sm",
                     isEditing && "bg-accent text-accent-foreground",
@@ -485,7 +509,7 @@ export function ForkQueuedRunsBanner({
                       </Button>
                     ) : null}
                   </ComposerBanner.Icon>
-                  <ComposerBanner.Content className="text-foreground/80">
+                  <ComposerBanner.Content className="text-sm text-foreground">
                     {isEditing ? <span className="sr-only">Editing queued message: </span> : null}
                     {item.pending ? (
                       <Clock3Icon
@@ -530,14 +554,31 @@ export function ForkQueuedRunsBanner({
                     {designChangeLabel !== null ? (
                       <span className="shrink-0 text-muted-foreground">{designChangeLabel}</span>
                     ) : null}
-                    <Tooltip>
-                      <TooltipTrigger render={<span className="min-w-0 flex-1 truncate" />}>
-                        {previewText}
-                      </TooltipTrigger>
-                      <TooltipPopup side="top" className="max-w-96 break-words">
-                        {previewText}
-                      </TooltipPopup>
-                    </Tooltip>
+                    <span
+                      data-fork-queued-text
+                      className={cn(
+                        "min-w-0 flex-1",
+                        isRead ? "py-2 break-words whitespace-pre-wrap" : "truncate",
+                      )}
+                    >
+                      {previewText}
+                    </span>
+                    {isRead || (hovered?.key === item.key && hovered.overflowing) ? (
+                      <button
+                        type="button"
+                        className="shrink-0 cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() =>
+                          setReadKeys((keys) => {
+                            const next = new Set(keys);
+                            if (isRead) next.delete(item.key);
+                            else next.add(item.key);
+                            return next;
+                          })
+                        }
+                      >
+                        {isRead ? "Read less" : "Read more"}
+                      </button>
+                    ) : null}
                   </ComposerBanner.Content>
                   <ComposerBanner.Actions>
                     {isEditing ? (
@@ -551,6 +592,33 @@ export function ForkQueuedRunsBanner({
                       </Button>
                     ) : (
                       <>
+                        {/* A /clear message cannot steer the running turn; like upstream, it offers no send. */}
+                        {item.freshContext && !canSendRun(true) ? null : (
+                          <Tooltip>
+                            <TooltipTrigger render={<span className="flex shrink-0" />}>
+                              <Button
+                                size="icon-xs"
+                                variant="ghost-muted"
+                                aria-label={sendLabel}
+                                disabled={
+                                  item.runId === null ||
+                                  busyRunId !== null ||
+                                  !canSendRun(item.freshContext)
+                                }
+                                onClick={() => {
+                                  if (item.runId !== null) void sendQueuedMessage(item.runId);
+                                }}
+                              >
+                                <ArrowUpIcon />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipPopup>
+                              {!canSendRun(item.freshContext)
+                                ? "There is no active run to steer"
+                                : `${workflow?.canSendNow ? "Start a turn with this message" : workflow?.promoteSkipsCompaction ? "Skip compaction and send this message" : "Send as a steer instead"}${item.serverIndex === 0 && props.steerShortcutLabel ? ` (${props.steerShortcutLabel})` : ""}`}
+                            </TooltipPopup>
+                          </Tooltip>
+                        )}
                         <Tooltip>
                           {/* The span keeps the tooltip, and its reason, on a disabled button. */}
                           <TooltipTrigger render={<span className="flex shrink-0" />}>
@@ -575,7 +643,7 @@ export function ForkQueuedRunsBanner({
                                 }
                               }}
                             >
-                              <PencilIcon />
+                              <PencilEditIcon />
                             </Button>
                           </TooltipTrigger>
                           <TooltipPopup>
@@ -596,42 +664,17 @@ export function ForkQueuedRunsBanner({
                               }
                               onClick={() => void stash(item)}
                             >
-                              <BookmarkIcon />
+                              <BookmarkIcon weight="stroke" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipPopup>{item.stashBlockedReason ?? "Move to stash"}</TooltipPopup>
                         </Tooltip>
-                        {/* A /clear message cannot steer the running turn; like upstream, it offers no send. */}
-                        {item.freshContext && !canSendRun(true) ? null : (
-                          <Tooltip>
-                            <TooltipTrigger render={<span className="flex shrink-0" />}>
-                              <Button
-                                size="xs"
-                                variant="ghost-muted"
-                                disabled={
-                                  item.runId === null ||
-                                  busyRunId !== null ||
-                                  !canSendRun(item.freshContext)
-                                }
-                                onClick={() => {
-                                  if (item.runId !== null) void sendQueuedMessage(item.runId);
-                                }}
-                              >
-                                <CornerUpRightIcon />
-                                {sendLabel}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipPopup>
-                              {!canSendRun(item.freshContext)
-                                ? "There is no active run to steer"
-                                : `${workflow?.canSendNow ? "Start a turn with this message" : workflow?.promoteSkipsCompaction ? "Skip compaction and send this message" : "Send as a steer instead"}${item.serverIndex === 0 && props.steerShortcutLabel ? ` (${props.steerShortcutLabel})` : ""}`}
-                            </TooltipPopup>
-                          </Tooltip>
-                        )}
                         <Tooltip>
                           <TooltipTrigger
                             render={
-                              <ComposerBanner.Dismiss
+                              <Button
+                                size="icon-xs"
+                                variant="ghost-muted"
                                 aria-label="Remove queued message"
                                 disabled={item.runId === null || busyRunId !== null}
                                 onClick={() => {
@@ -639,7 +682,9 @@ export function ForkQueuedRunsBanner({
                                 }}
                               />
                             }
-                          />
+                          >
+                            <Trash2Icon weight="stroke" />
+                          </TooltipTrigger>
                           <TooltipPopup>Remove from queue</TooltipPopup>
                         </Tooltip>
                       </>

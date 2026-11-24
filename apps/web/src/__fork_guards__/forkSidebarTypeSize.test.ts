@@ -81,12 +81,13 @@ describe("fork guard: fork-sidebar-type-size", () => {
 
   it("scopes every text-size remap to the sidebar panel", () => {
     // A bare :root { --text-xs: … } would resize the whole app. Every remap sits under the
-    // sidebar panel, or the chat stream for its own size setting (fork-typography-settings).
+    // sidebar panel, or the chat stream (and the banner cards above the composer) for its own
+    // size setting (fork-typography-settings).
     const rules = textSizeRules();
     expect(rules.length).toBeGreaterThan(0);
     for (const rule of rules) {
       expect(rule.selector, `text-size remap leaked outside the panel: ${rule.selector}`).toMatch(
-        /\[data-sidebar-version=|\[data-timeline-root\]$/u,
+        /\[data-sidebar-version=|\[data-timeline-root\]$|\[data-fork-composer-banners\]$/u,
       );
       expect(rule.selector).toContain(MARKER);
     }

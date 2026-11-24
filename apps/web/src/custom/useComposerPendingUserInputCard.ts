@@ -2,8 +2,9 @@
  * Shared pending-user-input card logic for the fork Questions chrome.
  * See `.fork/customizations.yaml#fork-pending-user-input`.
  *
- * Owns auto-advance, optimistic single-select, and number-key selection so the
- * override can stay presentational. Port upstream effect fixes here first.
+ * Owns optimistic single-select and number-key selection so the override can stay
+ * presentational. Picking an option never submits or advances: a mis-click stays
+ * correctable, and the card's own Submit moves on. Port upstream effect fixes here first.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -21,7 +22,6 @@ export function useComposerPendingUserInputCard({
   answers,
   questionIndex,
   onToggleOption,
-  onAdvance,
 }: {
   prompt: PendingUserInput;
   /** Upstream #9786: the client lacks the operate scope, so the card is read-only. */
@@ -30,14 +30,12 @@ export function useComposerPendingUserInputCard({
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
   onToggleOption: (questionId: string, optionValue: string) => void;
-  onAdvance: () => void;
 }) {
   const progress = derivePendingUserInputProgress(prompt.questions, answers, questionIndex);
   const activeQuestion = progress.activeQuestion;
   // Message-mode requests remain answerable after their provider turn ends.
   const canRespond = prompt.responseCapability !== "not_resumable";
   const responseDisabled = disabled || isResponding || !canRespond;
-  const autoAdvanceTimerRef = useRef<number | null>(null);
   const [optimisticSingleSelect, setOptimisticSingleSelect] = useState<{
     questionId: string;
     optionValue: string;
@@ -52,9 +50,15 @@ export function useComposerPendingUserInputCard({
   // A layout-phase mirror instead, the same shape and reasoning as
   // useForkDictationHotkeyTarget. Audit on a React bump: grep useEffectEvent,
   // check whether the host component is memoized or a forwardRef.
-  const latestRef = useRef({ activeQuestion, onToggleOption, onAdvance, responseDisabled });
+  // What reads as picked right now: the optimistic pick, else the saved one (no typed answer).
+  const pickedValues = optimisticSingleSelect
+    ? [optimisticSingleSelect.optionValue]
+    : progress.customAnswer.trim().length > 0
+      ? []
+      : progress.selectedOptionValues;
+  const latestRef = useRef({ activeQuestion, onToggleOption, responseDisabled, pickedValues });
   useLayoutEffect(() => {
-    latestRef.current = { activeQuestion, onToggleOption, onAdvance, responseDisabled };
+    latestRef.current = { activeQuestion, onToggleOption, responseDisabled, pickedValues };
   });
 
   useEffect(() => {
@@ -78,22 +82,6 @@ export function useComposerPendingUserInputCard({
     progress.selectedOptionValues,
   ]);
 
-  // A pending auto-advance belongs to the question it was scheduled on. It must
-  // not fire once the user moves to another question, once responding is
-  // disabled (the operate scope can be withdrawn mid-timer, upstream #9786),
-  // or after unmount.
-  const activeQuestionId = activeQuestion?.id;
-  useEffect(() => {
-    const clearAutoAdvance = () => {
-      if (autoAdvanceTimerRef.current !== null) {
-        window.clearTimeout(autoAdvanceTimerRef.current);
-        autoAdvanceTimerRef.current = null;
-      }
-    };
-    if (responseDisabled || activeQuestionId === undefined) clearAutoAdvance();
-    return clearAutoAdvance;
-  }, [activeQuestionId, responseDisabled]);
-
   // Everything this reads comes from the mirror or a setState, so the compiler
   // keeps it stable and the number-key listener below is not rebuilt per render.
   const handleOptionSelection = (questionId: string, optionValue: string) => {
@@ -103,19 +91,14 @@ export function useComposerPendingUserInputCard({
       toggle(questionId, optionValue);
       return;
     }
-    setOptimisticSingleSelect({ questionId, optionValue });
+    // Clicking the picked option again clears it (the toggle does the same to the draft).
+    const unpick = latestRef.current.pickedValues.includes(optionValue);
+    setOptimisticSingleSelect(unpick ? null : { questionId, optionValue });
     toggle(questionId, optionValue);
-    if (autoAdvanceTimerRef.current !== null) {
-      window.clearTimeout(autoAdvanceTimerRef.current);
-    }
-    autoAdvanceTimerRef.current = window.setTimeout(() => {
-      autoAdvanceTimerRef.current = null;
-      latestRef.current.onAdvance();
-    }, 200);
   };
 
   // Number keys 1-9 pick options when focus is outside editable fields: multi-select toggles
-  // in place, single-select auto-advances. Only the pane that owns window input takes them
+  // in place, single-select selects. Only the pane that owns window input takes them
   // (focused in a split, not behind Settings or Usage: fork-split-threads).
   const ownsInput = useOwnsGlobalInput();
   useEffect(() => {

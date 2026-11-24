@@ -35,6 +35,8 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   topVessel?: ReactNode;
   /** Chips above the composer (the thread's PR, background work); the row hides when empty. */
   statusChips?: ReactNode;
+  /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
+  banners?: ReactNode;
 };
 
 /** Owns the fork's vessel(topVessel + surface + controls) composition and state gates. */
@@ -50,6 +52,7 @@ export const ComposerShell = memo(function ComposerShell({
   usageControls,
   topVessel,
   statusChips,
+  banners,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
     approvalPending,
@@ -94,9 +97,12 @@ export const ComposerShell = memo(function ComposerShell({
           focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
-        className="flex min-w-0 flex-wrap items-center gap-1.5 pb-1.5 empty:hidden"
+        className="flex min-w-0 flex-wrap items-center gap-1.5 pb-2 empty:hidden"
       >
         {collapsedMobile ? null : statusChips}
+      </div>
+      <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
+        {banners}
       </div>
       <div className="relative flex min-w-0 flex-col">
         {/* Sibling of the vessel (not its child): the vessel's backdrop-filter makes it a

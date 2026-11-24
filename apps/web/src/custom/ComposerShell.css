@@ -26,8 +26,9 @@
   border-radius: 8px;
   background: var(--fork-composer-vessel-bg, var(--card));
   box-shadow: inset 0 0 0 1px var(--fork-composer-border, var(--border));
-  font-size: 0.75rem;
-  font-weight: 500;
+  /* 13px, the PR pill's number size, so every chip in the row reads the same. */
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1rem;
   color: var(--foreground);
 }
@@ -46,6 +47,8 @@
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="background-work"] {
   gap: 0;
   padding-inline: 0;
+  /* The agents / monitoring chip wears the composer's own fill. */
+  background: var(--fork-composer-bg, var(--card));
 
   & > button {
     height: 100%;
@@ -89,6 +92,48 @@
   height: 14px;
 }
 
+/* The background-work popover reads as a menu on the composer's corners: a 6px inset, rows
+   whose hover is a concentric rounded highlight, and full-width rules between them. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-background-work-popup] {
+  border-radius: var(--fork-composer-radius);
+
+  &::before {
+    border-radius: calc(var(--fork-composer-radius) - 1px);
+  }
+
+  & > [data-slot="popover-viewport"] {
+    --viewport-inline-padding: 6px;
+    padding-block: 0;
+  }
+}
+
+/* The list bleeds to the popup's edges so the rule between tasks runs full width; each row
+   takes the inset back, and every row's highlight gets 6px of room on every side. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-monitoring-tasks] {
+  margin-inline: calc(-1 * var(--viewport-inline-padding, 0px));
+
+  & > li {
+    padding: 6px var(--viewport-inline-padding, 0px);
+  }
+
+  & > li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  /* A one-line monitor row matches a subagent row's title-over-model height. */
+  & [data-fork-monitoring-task] {
+    min-height: 46px;
+    padding: 6px 8px;
+    border-radius: calc(var(--fork-composer-radius) - 6px);
+  }
+
+  /* Without its fill the 32px card tile is mostly air beside the mark; the list keeps it tight. */
+  & [data-fork-task-tile] {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 :root[data-fork="noahhendrickson-t3code"] [data-fork-monitoring-task] {
   display: flex;
   width: 100%;
@@ -118,8 +163,9 @@
   outline-offset: -2px;
 }
 
-/* The PR chip wears its state: a deep fill, a bright rim along its top that fades down, and the
-   state's ink on the glyph and number. A draft, or a PR whose state is unknown, stays neutral. */
+/* The PR chip wears its state: a deep fill, soft glass rims (brighter along the top, fainter
+   along the bottom), and the state's ink on the glyph and number. A draft, or a PR whose state
+   is unknown, stays neutral. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
   gap: 6px;
   padding-inline: 9px 10px;
@@ -129,7 +175,7 @@
   [data-fork-composer-status-chip="pull-request"]
   .text-secondary-label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -140,9 +186,10 @@
   ) {
   background: var(--fork-pr-chip-fill);
   box-shadow:
-    inset 0 1px 0 rgb(from var(--fork-pr-chip-ink) r g b / 45%),
-    inset 0 7px 7px -7px rgb(from var(--fork-pr-chip-ink) r g b / 30%),
-    inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 10%),
+    inset 0 1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 32%),
+    inset 0 7px 8px -7px rgb(from var(--fork-pr-chip-ink) r g b / 18%),
+    inset 0 -1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 20%),
+    inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 8%),
     0 0 2px 1px rgb(0 0 0 / 25%);
 
   &:hover {
@@ -174,18 +221,18 @@
 
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-status-chip="pull-request"] {
   &[data-pr-state="open"] {
-    --fork-pr-chip-fill: #185d42;
-    --fork-pr-chip-fill-hover: #1b6849;
+    --fork-pr-chip-fill: #2f5e45;
+    --fork-pr-chip-fill-hover: #31664f;
     --fork-pr-chip-ink: #74f1a1;
   }
   &[data-pr-state="merged"] {
-    --fork-pr-chip-fill: #3d2a6e;
-    --fork-pr-chip-fill-hover: #45307a;
+    --fork-pr-chip-fill: #483b6a;
+    --fork-pr-chip-fill-hover: #4e3f72;
     --fork-pr-chip-ink: #c9b2ff;
   }
   &[data-pr-state="closed"] {
-    --fork-pr-chip-fill: #5e2226;
-    --fork-pr-chip-fill-hover: #6a272b;
+    --fork-pr-chip-fill: #5f3639;
+    --fork-pr-chip-fill-hover: #67393c;
     --fork-pr-chip-ink: #ffa3a3;
   }
 }

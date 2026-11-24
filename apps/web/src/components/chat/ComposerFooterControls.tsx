@@ -1,9 +1,16 @@
 import type { ModelSelection, ProviderInstanceId, RuntimeMode } from "@t3tools/contracts";
 import { createModelSelection } from "@t3tools/shared/model";
 import { T, useGT, useMessages } from "gt-react";
-import { type ComponentProps, memo, useId, useRef, useState } from "react";
+import { type ComponentProps, memo, useId, useRef } from "react";
 
-import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
+import {
+  Menu,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuRadioItemIndicator,
+  MenuTrigger,
+} from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { focusRequestedPermission, useComposerMenuProps } from "./composerEventScope";
 import { ComposerPrimaryActions } from "./ComposerPrimaryActions";
@@ -15,7 +22,6 @@ import { useComposerMenuState } from "./useComposerMenuState";
 import { ComposerControlIcon } from "./ComposerControl";
 import { ComposerRuntimeModeTrigger } from "../../custom/ComposerShell";
 import { ShieldOffFilledIcon } from "../../custom/icons/ShieldOffFilledIcon";
-import { MenuIconTab, MenuTabs } from "../../custom/Tabs";
 /* fork:end fork-composer-shell */
 
 export type RuntimeModeOption = {
@@ -117,9 +123,7 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
 });
 
 /**
- * Permission modes as one horizontal toggle, with the shown mode named below.
- * Each segment is a real menu radio item, so arrow keys reach it from the rest of the menu
- * and a pick closes the menu. Lives inside a Menu: the permissions chip, the model picker,
+ * Permission modes as a menu list. Lives inside a Menu: the permissions chip, the model picker,
  * or the overflow menu.
  */
 export function ComposerPermissionsSection(props: {
@@ -128,89 +132,53 @@ export function ComposerPermissionsSection(props: {
   onRuntimeModeChange: (mode: RuntimeMode) => void;
 }) {
   const gt = useGT();
-  const messages = useMessages();
-  // Hover or keyboard focus previews a mode's name and description before a pick.
-  const [previewMode, setPreviewMode] = useState<RuntimeMode | null>(null);
-  const shownMode = previewMode ?? props.runtimeMode;
-  const shown =
-    props.runtimeModeOptions.find((option) => option.mode === shownMode) ??
-    resolveRuntimeModeOption("approval-required", messages);
   const descriptionId = useId();
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+     A plain menu: each mode's name over its description, the picked one checked on the right.
+     Radio items keep menu arrow-key navigation and close the menu on a pick. */
   return (
-    <div data-composer-permissions className="grid w-72 gap-1.5 px-2 py-1.5">
-      <div className="font-medium text-muted-foreground text-xs">
+    <div data-composer-permissions className="grid w-72 gap-0.5 p-1">
+      <div
+        data-composer-permissions-label
+        className="px-2 pb-1 font-medium text-muted-foreground text-sm"
+      >
         <T>Permissions</T>
       </div>
-      {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
-          The fork's menu tab strip (custom/Tabs), as the model picker's provider tabs use. */}
-      <MenuTabs
-        size="md"
+      <MenuRadioGroup
         aria-label={gt("Permissions")}
         value={props.runtimeMode}
         onValueChange={(value: RuntimeMode) => {
           if (value !== props.runtimeMode) props.onRuntimeModeChange(value);
         }}
-        className="w-full"
-        // Menus navigate with Up/Down only; the row reads horizontally, so Left/Right move too.
-        onKeyDown={(event) => {
-          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-          const items = Array.from(
-            event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
-          );
-          const index = items.findIndex((item) => item === document.activeElement);
-          const next = items[index + (event.key === "ArrowRight" ? 1 : -1)];
-          if (index < 0 || !next) return;
-          event.preventDefault();
-          event.stopPropagation();
-          next.focus();
-        }}
       >
-        {props.runtimeModeOptions.map((option) => {
-          const OptionIcon = option.mode === "full-access" ? ShieldOffFilledIcon : option.icon;
-          return (
-            <MenuIconTab
-              key={option.mode}
-              value={option.mode}
-              disabled={option.disabledReason !== undefined}
-              label={option.label}
-              aria-label={option.label}
-              aria-describedby={`${descriptionId}-${option.mode}`}
-              closeOnClick
-              onPointerEnter={() => setPreviewMode(option.mode)}
-              onPointerLeave={() => setPreviewMode(null)}
-              onFocus={() => setPreviewMode(option.mode)}
-              onBlur={() => setPreviewMode(null)}
-              className="aspect-auto flex-1 data-disabled:cursor-not-allowed"
-            >
-              <OptionIcon aria-hidden="true" className="size-4" />
-            </MenuIconTab>
-          );
-        })}
-      </MenuTabs>
-      {/* fork:end fork-composer-shell */}
-      {/* Static per-mode descriptions for screen readers; the preview below is visual only. */}
-      {props.runtimeModeOptions.map((option) => (
-        <span key={option.mode} id={`${descriptionId}-${option.mode}`} className="sr-only">
-          {option.disabledReason ?? option.description}
-        </span>
-      ))}
-      <div className="grid gap-0.5" aria-hidden="true">
-        <span
-          className={
-            shownMode === props.runtimeMode
-              ? "text-foreground text-sm"
-              : "text-muted-foreground text-sm"
-          }
-        >
-          {shown.label}
-        </span>
-        {/* Two lines reserved so the menu does not shift while you preview modes. */}
-        <span className="min-h-8 text-muted-foreground text-xs leading-4">
-          {shown.disabledReason ?? shown.description}
-        </span>
-      </div>
+        {props.runtimeModeOptions.map((option) => (
+          <MenuRadioItem
+            key={option.mode}
+            value={option.mode}
+            disabled={option.disabledReason !== undefined}
+            closeOnClick
+            className="my-0.5"
+            aria-label={option.label}
+            aria-describedby={`${descriptionId}-${option.mode}`}
+          >
+            <span className="flex w-full items-center gap-3 py-0.5">
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="font-medium">{option.label}</span>
+                <span
+                  id={`${descriptionId}-${option.mode}`}
+                  className="text-muted-foreground text-xs leading-4"
+                >
+                  {option.disabledReason ?? option.description}
+                </span>
+              </span>
+              <MenuRadioItemIndicator />
+            </span>
+          </MenuRadioItem>
+        ))}
+      </MenuRadioGroup>
     </div>
   );
+  /* fork:end fork-composer-shell */
 }
 
 export const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(props: {

@@ -32,7 +32,9 @@ const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
 describe("fork guard: fork-pending-user-input", () => {
   it("keeps a thin shadow that owns the Questions chrome", () => {
     expect(override).toContain('data-fork-pending-user-input="true"');
-    expect(override).toContain(">Questions</");
+    // No "Questions" label: the question itself heads the card, ruled off from its options.
+    expect(override).not.toContain(">Questions</");
+    expect(override).toContain("data-fork-pending-user-input-question");
     expect(override).toContain("questionIndex + 1");
     expect(override).toContain("prompt.questions.length > 1");
     expect(override).toContain("useComposerPendingUserInputCard");
@@ -44,7 +46,10 @@ describe("fork guard: fork-pending-user-input", () => {
     // Card interaction lives in custom/; the override must not re-own it.
     expect(override).not.toContain("autoAdvanceTimerRef");
     expect(override).not.toContain('addEventListener("keydown"');
-    expect(hook).toContain("autoAdvanceTimerRef");
+    // Picking an option never submits or advances; the card's own button does.
+    expect(hook).not.toContain("autoAdvanceTimerRef");
+    expect(hook).not.toContain("onAdvance");
+    expect(override).toContain("data-fork-pending-user-input-submit");
     expect(hook).toContain('addEventListener("keydown"');
     // Number keys stay wired; announce via aria-keyshortcuts without kbd badges.
     expect(override).toContain("aria-keyshortcuts");
@@ -85,7 +90,8 @@ describe("fork guard: fork-pending-user-input", () => {
   });
 
   it("marks pending Previous/Next and dark-scopes the true-outline chrome", () => {
-    expect(primaryActions).toContain('data-fork-pending-user-input-action="previous"');
+    // Previous lives in the card now; the composer keeps only the advance arrow.
+    expect(primaryActions).not.toContain('data-fork-pending-user-input-action="previous"');
     expect(primaryActions).toContain('data-fork-pending-user-input-action="advance"');
     const begin = primaryActions.match(/fork:begin fork-pending-user-input/gu) ?? [];
     const end = primaryActions.match(/fork:end fork-pending-user-input/gu) ?? [];
