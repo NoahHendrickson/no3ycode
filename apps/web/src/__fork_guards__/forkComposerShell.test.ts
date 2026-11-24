@@ -854,6 +854,25 @@ describe("fork guard: fork-composer-shell", () => {
     expect(work).toContain("<MenuPopup");
     expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
+  it("paints a started thread's composer menus solid on Flat Glass, glass on a new agent", () => {
+    const threadComposer = readSibling("../theme.custom.thread-composer.css");
+    // Scoped off while a new agent's draft shows; its menus open over a picture.
+    const solid = cssRules(threadComposer).find(
+      (rule) =>
+        rule.selector.includes("[data-fork-draft-hero-shown]") &&
+        rule.selector.includes("[data-fork-background-work-popup]"),
+    );
+    expect(solid, "the solid composer-menu rule must exist").toBeDefined();
+    for (const marker of [
+      '[data-chat-composer-floating-layer="true"]',
+      '[data-fork-tab-menu="composer"]',
+      "[data-fork-background-work-popup]",
+    ]) {
+      expect(solid?.selector).toContain(marker);
+    }
+    expect(solid?.body).toContain("backdrop-filter: none");
+  });
+
   it("ends the transcript above the composer instead of hiding it behind", () => {
     // The transcript used to scroll the full column height and rely on the
     // composer to cover it. That fails wherever the composer is translucent —
