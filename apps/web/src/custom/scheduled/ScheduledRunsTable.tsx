@@ -59,10 +59,10 @@ const COLUMN_COUNT = 8;
 
 function NoticeRow(props: { readonly children: string; readonly tone?: "error" | "muted" }) {
   return (
-    <TableRow className="hover:bg-transparent">
+    <TableRow interactive={false}>
       <TableCell
         colSpan={COLUMN_COUNT}
-        className={props.tone === "error" ? "text-destructive" : "text-muted-foreground"}
+        tone={props.tone === "error" ? "destructive" : "muted"}
         role="status"
       >
         {props.children}
@@ -109,8 +109,8 @@ export function ScheduledRunRows(props: {
   return (
     <TableBody>
       {props.environmentLabel !== undefined ? (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={COLUMN_COUNT} className="text-muted-foreground">
+        <TableRow interactive={false}>
+          <TableCell colSpan={COLUMN_COUNT} tone="muted">
             {props.environmentLabel}
           </TableCell>
         </TableRow>
@@ -222,38 +222,40 @@ function ScheduledRunRow(props: {
           ) : null}
         </div>
       </TableCell>
-      <TableCell className="max-w-48 truncate text-muted-foreground">
+      <TableCell tone="muted" truncate className="max-w-48">
         {project?.title ?? "—"}
       </TableCell>
-      <TableCell className="text-muted-foreground tabular-nums">
-        {pullRequest ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <a
-                  href={pullRequest.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                  className="underline underline-offset-2 hover:text-foreground"
-                />
-              }
-            >
-              #{pullRequest.number}
-            </TooltipTrigger>
-            <TooltipPopup side="top">{pullRequest.label}</TooltipPopup>
-          </Tooltip>
-        ) : (
-          "—"
-        )}
+      <TableCell tone="muted">
+        <span className="tabular-nums">
+          {pullRequest ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <a
+                    href={pullRequest.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  />
+                }
+              >
+                #{pullRequest.number}
+              </TooltipTrigger>
+              <TooltipPopup side="top">{pullRequest.label}</TooltipPopup>
+            </Tooltip>
+          ) : (
+            "—"
+          )}
+        </span>
       </TableCell>
-      <TableCell className="text-muted-foreground">{TRIGGER_LABELS[run.trigger]}</TableCell>
-      <TableCell className="text-muted-foreground">{relativeLabel(run.requestedAt)}</TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell tone="muted">{TRIGGER_LABELS[run.trigger]}</TableCell>
+      <TableCell tone="muted">{relativeLabel(run.requestedAt)}</TableCell>
+      <TableCell tone="muted">
         {duration === null ? (status.live ? "Running" : "—") : formatDuration(duration)}
       </TableCell>
-      <TableCell className="text-right text-muted-foreground">
+      <TableCell tone="muted" className="text-right">
         <ArrowUpRightIcon className="inline size-3.5" aria-hidden />
       </TableCell>
     </TableRow>

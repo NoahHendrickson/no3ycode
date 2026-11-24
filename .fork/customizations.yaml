@@ -9123,3 +9123,20 @@
     - apps/web/src/components/ui/sidebar.tsx
   verify:
     - apps/web/src/__fork_guards__/forkDesignVariants.test.ts
+
+- id: fork-design-table-alert-variants
+  intent: >
+    Table and Alert carry the looks fork screens used to restyle them with
+    className (.fork/DESIGN-RULES.md B1): TableRow interactive={false} for rows
+    that only label or report (no hover wash), TableCell tone ("muted",
+    "destructive") and truncate, and Alert size="sm" (design mode's compact
+    result alert: 11px type, relaxed leading, tighter padding and description
+    gap). Every default is upstream's look, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/table.tsx
+    - apps/web/src/components/ui/alert.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts

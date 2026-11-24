@@ -206,8 +206,8 @@ export function SentPreviewResolution({
      * user a choice between restoring everything and discarding everything. */
     const landed = measured?.summary.applied ?? 0;
     return (
-      <Alert variant="success" className="rounded-md px-2.5 py-2" data-fork-design-resolve-previews>
-        <AlertTitle className="text-[11px] leading-relaxed">
+      <Alert variant="success" size="sm" data-fork-design-resolve-previews>
+        <AlertTitle>
           {comparing
             ? "Showing the live page — your previews are hidden."
             : "The agent finished this turn."}
@@ -216,7 +216,7 @@ export function SentPreviewResolution({
           /* The peek's exits. The discard's blast radius is stated beside the button that
              has it, on this path as on every other — a user who kept editing after the
              send must read it. */
-          <AlertDescription className="gap-1.5 text-[11px] leading-relaxed">
+          <AlertDescription>
             <p>Discarding clears every edit on this tab — including any made after the send.</p>
             <div className="flex flex-wrap items-center gap-1">
               <Button variant="secondary" size="xs" onClick={onRestorePreviews} type="button">
