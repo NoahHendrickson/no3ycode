@@ -88,12 +88,12 @@
   --workspace-topbar-height: 44px;
 }
 
-/* On Flat Glass, derive the opaque stage ladder from one warm-neutral base
-   (#1f1c1b) using flattened white washes (matching Basic's 4%/8%/12%/16% lift
+/* On Flat Glass, derive the opaque stage ladder from one near-neutral base, a touch cool
+   (#1c1d1f), using flattened white washes (matching Basic's 4%/8%/12%/16% lift
    steps) so cards, composer, chips, and borders stay opaque while blending
    naturally with the stage and unfocused macOS sidebar. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
-  --fork-flat-glass-base: #1f1c1b;
+  --fork-flat-glass-base: #1c1d1f;
   --fork-flat-glass-lift-1: color-mix(in srgb, #ffffff 4%, var(--fork-flat-glass-base));
   --fork-flat-glass-lift-2: color-mix(in srgb, #ffffff 8%, var(--fork-flat-glass-base));
   --fork-flat-glass-lift-3: color-mix(in srgb, #ffffff 12%, var(--fork-flat-glass-base));
@@ -124,8 +124,7 @@
   --fork-composer-border-focus: rgb(255 255 255 / 16%);
   --fork-context-chip-bg: var(--fork-flat-glass-lift-3);
   --fork-context-chip-bg-hover: var(--fork-flat-glass-lift-4);
-  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#312e2d) flattens to
-     #a6a5a5, the solid fallback it replaces. */
+  /* The control row's ink as a wash: 57% white over the lift-2 vessel (#2e2f31). */
   --fork-composer-control-ink: rgb(255 255 255 / 57%);
 }
 
@@ -222,7 +221,7 @@
 }
 
 /* On Flat Glass, non-Liquid-Glass sidebars (floating narrow overlay, collapsed
-   peek, web, Linux, macOS < 26) stay on the warm-neutral #1f1c1b ladder instead
+   peek, web, Linux, macOS < 26) stay on the Flat Glass base ladder instead
    of falling back to cool blue-grey #181b1e. Docked macOS Liquid Glass overrides
    this below with higher specificity. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
