@@ -42,6 +42,8 @@ interface RowProps {
   readonly environmentId: EnvironmentId;
   readonly subagent: OrchestrationV2Subagent;
   readonly onOpen: (child: SubagentThreadTarget, title: string | null) => void;
+  /** A row of a shared card (the Activity sheet), not a card of its own. */
+  readonly joined?: boolean;
 }
 
 /** Draws the no3y card in place of the upstream row it wraps while the redesign is on. */
@@ -57,7 +59,7 @@ export function No3yAgentsSheetRowSwap(props: RowProps & { readonly children: Re
   );
 }
 
-function No3yAgentsSheetRow(props: RowProps) {
+export function No3yAgentsSheetRow(props: RowProps) {
   const { subagent } = props;
   const gt = useGT();
   const { themeAppearance } = useAppearancePreferences();
@@ -103,18 +105,23 @@ function No3yAgentsSheetRow(props: RowProps) {
     provider?.driver ?? (subagent.remoteChild === undefined ? subagent.driver : undefined);
   const stop = useNo3yAgentStop(props.environmentId, subagent, presentation.title);
 
-  // The stop button sits beside the link, not inside it, so VoiceOver reaches both.
+  // The stop button sits beside the link, not inside it, so VoiceOver reaches both. Elapsed time
+  // and the stop button or arrow share the title's line; the trailing slot is one width either way.
   return (
     <View
-      style={{
-        marginTop: 8,
-        flexDirection: "row",
-        borderRadius: 20,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: palette.controlBorder,
-        backgroundColor: palette.controlSurface,
-        overflow: "hidden",
-      }}
+      style={[
+        { flexDirection: "row" },
+        props.joined
+          ? null
+          : {
+              marginTop: 8,
+              borderRadius: 20,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: palette.controlBorder,
+              backgroundColor: palette.controlSurface,
+              overflow: "hidden",
+            },
+      ]}
     >
       <Pressable
         accessibilityRole={target === null ? undefined : "link"}
@@ -144,13 +151,16 @@ function No3yAgentsSheetRow(props: RowProps) {
         style={({ pressed }) => ({
           flex: 1,
           minWidth: 0,
+          flexDirection: "row",
+          alignItems: "flex-start",
+          gap: 10,
           paddingLeft: 12,
           paddingRight: stop === null ? 8 : 10,
-          paddingVertical: 10,
+          paddingVertical: 12,
           backgroundColor: pressed ? palette.rowSelected : "transparent",
         })}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View style={{ marginTop: 3 }}>
           <No3ySubagentTile
             driver={driver}
             iconUrl={provider?.iconUrl}
@@ -158,64 +168,75 @@ function No3yAgentsSheetRow(props: RowProps) {
             mark={mark}
             palette={palette}
           />
-          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <Text
-              numberOfLines={1}
-              style={{ fontSize: 15, ...NO3Y_FONT.medium, color: palette.titleInk }}
-            >
-              {presentation.title}
-            </Text>
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <View
+            style={{ minHeight: TITLE_LINE, flexDirection: "row", alignItems: "center", gap: 10 }}
+          >
             <Text
               numberOfLines={1}
               style={{
-                fontSize: 13,
-                color:
-                  failed && spec === presentation.statusLabel
-                    ? palette.statusFailed
-                    : palette.metaInk,
+                flex: 1,
+                fontSize: 15,
+                lineHeight: TITLE_LINE,
+                ...NO3Y_FONT.medium,
+                color: palette.titleInk,
               }}
             >
-              {spec}
-              {outcome !== null ? (
-                <Text style={{ color: failed ? palette.statusFailed : palette.metaInk }}>
-                  {` · ${outcome}`}
-                </Text>
-              ) : null}
-              {presentation.runsOn !== null ? (
-                <>
-                  {" · "}
-                  <T>
-                    on <Var>{presentation.runsOn}</Var>
-                  </T>
-                </>
-              ) : null}
+              {presentation.title}
             </Text>
+            {subagent.startedAt ? <Elapsed agents={[subagent]} palette={palette} /> : null}
+            {stop === null ? (
+              <View style={{ width: STOP_SIZE, alignItems: "center" }}>
+                {target !== null ? (
+                  <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
+                ) : null}
+              </View>
+            ) : null}
           </View>
-          {subagent.startedAt ? <Elapsed agents={[subagent]} palette={palette} /> : null}
-          {stop === null && target !== null ? (
-            <View style={{ width: 20, alignItems: "center" }}>
-              <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
-            </View>
-          ) : null}
-        </View>
-        {detail ? (
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             style={{
-              marginTop: 8,
-              marginLeft: 42,
-              marginRight: 4,
               fontSize: 13,
-              lineHeight: 18,
-              color: failed ? palette.statusFailed : palette.metaInk,
+              color:
+                failed && spec === presentation.statusLabel
+                  ? palette.statusFailed
+                  : palette.metaInk,
             }}
           >
-            {detail}
+            {spec}
+            {outcome !== null ? (
+              <Text style={{ color: failed ? palette.statusFailed : palette.metaInk }}>
+                {` · ${outcome}`}
+              </Text>
+            ) : null}
+            {presentation.runsOn !== null ? (
+              <>
+                {" · "}
+                <T>
+                  on <Var>{presentation.runsOn}</Var>
+                </T>
+              </>
+            ) : null}
           </Text>
-        ) : null}
+          {detail ? (
+            <Text
+              numberOfLines={2}
+              style={{
+                marginTop: 6,
+                marginRight: 4,
+                fontSize: 13,
+                lineHeight: 18,
+                color: failed ? palette.statusFailed : palette.metaInk,
+              }}
+            >
+              {detail}
+            </Text>
+          ) : null}
+        </View>
       </Pressable>
       {stop !== null ? (
-        <View style={{ paddingTop: 12, paddingRight: 8 }}>
+        <View style={{ paddingTop: 12 + (TITLE_LINE - STOP_SIZE) / 2, paddingRight: 8 }}>
           <StopGlyphButton palette={palette} {...stop} />
         </View>
       ) : null}
@@ -223,6 +244,7 @@ function No3yAgentsSheetRow(props: RowProps) {
   );
 }
 
+const TITLE_LINE = 20;
 const STOP_SIZE = 28;
 
 /**

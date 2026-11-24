@@ -4,10 +4,10 @@
  * take functions as params; the sheet reads it by thread key.
  */
 import type { PendingBackgroundWorkItem } from "@t3tools/client-runtime/state/thread-execution";
+import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useSyncExternalStore } from "react";
 
 import type { FloatingStatusAction } from "../src/features/threads/floating-working-status";
-import type { SidebarV2CardStatusKind } from "./forkStatusGrouping";
 import type { No3yPillStatus } from "./no3yPillStatus";
 
 export interface No3yStatusOpener {
@@ -24,12 +24,8 @@ export interface No3yStatusSheetModel {
     readonly stop: FloatingStatusAction | null;
     readonly onOpenDetails: () => void;
   } | null;
-  readonly subagents: ReadonlyArray<{
-    readonly id: string;
-    readonly title: string;
-    readonly mark: SidebarV2CardStatusKind | null;
-  }>;
-  readonly onOpenAgents: (() => void) | null;
+  /** The thread whose turn subagents the sheet lists, read live from the Agents sheet's atom. */
+  readonly agents: ScopedThreadRef | null;
   readonly childInputs: ReadonlyArray<{
     readonly id: string;
     readonly title: string;
