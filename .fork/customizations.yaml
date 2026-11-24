@@ -2002,7 +2002,9 @@
     26+ main windows where apps/desktop/src/fork/ForkLiquidGlass.ts loads our
     native macOS addon (native/sidebar-glass/sidebar_glass.m) to mount AppKit's
     NSSplitViewItem.sidebarWithViewController: on macOS 27+ (or a sidebar-variant
-    NSGlassEffectView on macOS 26) strictly behind the docked sidebar while
+    NSGlassEffectView on macOS 26) strictly behind the docked sidebar (on Flat
+    Glass with the sidebar collapsed into the tab row, a band behind that row
+    alone, so it never covers the new agent screen's draft glass) while
     keeping the chat stage opaque (and clearing Electron's NSVisualEffectView so
     the two never conflict). Side Chat, macOS < 26, and
     Windows 11 keep whole-window vibrancy. The CSS in theme.custom.palettes.css

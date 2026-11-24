@@ -759,6 +759,34 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(declared(floating?.body, "--accent"), "--accent in the floating panel").toMatch(wash);
   });
 
+  it("gives Flat Glass's tab row the docked sidebar's washes over the same glass", () => {
+    const declared = (body: string | undefined, token: string) =>
+      new RegExp(`${token}:\\s*([^;]+);`, "u").exec(body ?? "")?.[1];
+    const docked = glassRules.find(
+      (rule) =>
+        rule.selector.includes('[data-fork-sidebar-vibrancy="liquid-glass"]') &&
+        rule.selector.includes('[data-slot="sidebar-wrapper"]') &&
+        rule.selector.endsWith('[data-sidebar-version="v2"]'),
+    );
+    const tabRow = glassRules.find(
+      (rule) =>
+        rule.selector.includes("[data-fork-has-thread-tabs]") &&
+        rule.selector.endsWith("[data-fork-thread-tabs]"),
+    );
+    for (const token of [
+      "--border",
+      "--sidebar-row-hover",
+      "--sidebar-row-active",
+      "--sidebar-row-selected",
+      "--accent",
+    ]) {
+      expect(declared(docked?.body, token), `${token} in the docked panel`).toBeDefined();
+      expect(declared(tabRow?.body, token), `${token} in the tab row`).toBe(
+        declared(docked?.body, token),
+      );
+    }
+  });
+
   it("stamps the marker from the resolved answer, not the request", async () => {
     const root = makeRoot();
 
@@ -936,7 +964,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
       setSidebarVibrancy: (enabled: boolean) => Promise.resolve(enabled ? "liquid-glass" : "off"),
       sidebarLiquidGlass: {
-        setWidth: () => Promise.resolve(true),
+        setFrame: () => Promise.resolve(true),
       },
     };
     try {
@@ -954,7 +982,8 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       delete (globalThis as { forkDesktopBridge?: unknown }).forkDesktopBridge;
     }
 
-    // No started-thread liquid-glass CSS rule may clear or tint the stage inset.
+    // No started-thread liquid-glass CSS rule may clear or tint the stage inset, except Flat
+    // Glass's tab row, which clears only the titlebar band and keeps the stage below it.
     const liquidGlassRules = glassRules.filter(
       (rule) =>
         rule.selector.includes(
@@ -962,10 +991,17 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
         ) && !rule.selector.includes("[data-fork-draft-liquid-glass"),
     );
     expect(liquidGlassRules.length).toBeGreaterThan(0);
-    for (const rule of liquidGlassRules) {
-      expect(rule.selector).not.toContain('[data-slot="sidebar-inset"]');
+    const insetRules = liquidGlassRules.filter((rule) =>
+      rule.selector.includes('[data-slot="sidebar-inset"]'),
+    );
+    expect(insetRules.length).toBeGreaterThan(0);
+    for (const rule of insetRules) {
+      expect(rule.selector).toContain("[data-fork-has-thread-tabs]");
+      expect(rule.body).toMatch(
+        /transparent 0 var\(--workspace-topbar-height\),\s*var\(--background\) 0/u,
+      );
     }
-    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassWidth");
+    expect(desktopHandlers).toContain("setForkSidebarLiquidGlassFrame");
     expect(desktopPreload).toContain("sidebarLiquidGlass:");
   });
 
@@ -1026,6 +1062,39 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     }
   });
 
+  it("spans Flat Glass's tab row as a top band and hands the glass back to the sidebar", async () => {
+    // The row mounts as the collapse starts; the sliding sidebar keeps its glass till it is gone.
+    using dom = stubDockedSidebar(256, { right: 1100, bottom: 44 });
+    const glass = stubLiquidGlassBridge(() => true);
+    const root = makeRoot();
+    root.setAttribute("data-fork-glass-3d", "off");
+    root.setAttribute("data-fork-has-thread-tabs", "");
+    try {
+      await syncForkSidebarVibrancy(true, root);
+      await glass.answered();
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([{ width: 256 }]);
+
+      dom.setGapWidth(0);
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      // Full height, the band would cover the new agent screen's native picture.
+      expect(glass.calls).toEqual([{ width: 256 }, { width: 1100, height: 44 }]);
+
+      root.removeAttribute("data-fork-has-thread-tabs");
+      dom.setGapWidth(256);
+      dom.emit("resize");
+      dom.runFrames();
+      await glass.answered();
+      expect(glass.calls).toEqual([{ width: 256 }, { width: 1100, height: 44 }, { width: 256 }]);
+    } finally {
+      await syncForkSidebarVibrancy(false, root);
+      glass.dispose();
+    }
+  });
+
   it("re-sends an unchanged CSS width when the page zoom changes", async () => {
     using dom = stubDockedSidebar(256);
     const glass = stubLiquidGlassBridge(() => true);
@@ -1035,14 +1104,14 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       await glass.answered();
       dom.runFrames();
       await glass.answered();
-      expect(glass.calls).toEqual([256]);
+      expect(glass.calls).toEqual([{ width: 256 }]);
 
       // Main converts CSS px to points with the zoom factor, so Cmd+= must re-send.
       dom.window.devicePixelRatio = 2.5;
       dom.emit("resize");
       dom.runFrames();
       await glass.answered();
-      expect(glass.calls).toEqual([256, 256]);
+      expect(glass.calls).toEqual([{ width: 256 }, { width: 256 }]);
     } finally {
       await syncForkSidebarVibrancy(false, root);
       glass.dispose();
@@ -1050,16 +1119,16 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
   });
 });
 
-/** A Liquid Glass bridge whose `setWidth` answers with `applied`. */
+/** A Liquid Glass bridge whose `setFrame` answers with `applied`. */
 function stubLiquidGlassBridge(applied: () => boolean) {
-  const calls: Array<number | null> = [];
+  const calls: Array<{ readonly width: number; readonly height?: number } | null> = [];
   let pending: Array<Promise<boolean>> = [];
   const globals = globalThis as { forkDesktopBridge?: unknown };
   globals.forkDesktopBridge = {
     setSidebarVibrancy: () => Promise.resolve("liquid-glass"),
     sidebarLiquidGlass: {
-      setWidth: (width: number | null) => {
-        calls.push(width);
+      setFrame: (frame: { readonly width: number; readonly height?: number } | null) => {
+        calls.push(frame);
         const answer = Promise.resolve(applied());
         pending.push(answer);
         return answer;
@@ -1068,7 +1137,7 @@ function stubLiquidGlassBridge(applied: () => boolean) {
   };
   return {
     calls,
-    /** Resolves once every `setWidth` so far has answered and the tracker has handled it. */
+    /** Resolves once every `setFrame` so far has answered and the tracker has handled it. */
     async answered() {
       const answers = pending;
       pending = [];
@@ -1080,8 +1149,11 @@ function stubLiquidGlassBridge(applied: () => boolean) {
   };
 }
 
-/** A docked sidebar gap of `width` CSS px, with frames and window events run by hand. */
-function stubDockedSidebar(width: number) {
+/** A docked sidebar gap of `width` CSS px (and optionally the tab row), with frames and window
+    events run by hand. */
+function stubDockedSidebar(initialWidth: number, tabs?: { right: number; bottom: number }) {
+  const strip = tabs === undefined ? null : { getBoundingClientRect: () => tabs };
+  let width = initialWidth;
   const gap = { getBoundingClientRect: () => ({ width }) };
   const wrapper = {
     getAttribute: () => null,
@@ -1096,10 +1168,13 @@ function stubDockedSidebar(width: number) {
     addEventListener: (type: string, listener: () => void) => listeners.set(type, listener),
     removeEventListener: (type: string) => listeners.delete(type),
   };
+  const elements = new Map<string, unknown>([
+    ['[data-slot="sidebar-wrapper"]', wrapper],
+    ["[data-fork-thread-tabs]", strip],
+  ]);
   const document = {
     body: null,
-    querySelector: (selector: string) =>
-      selector === '[data-slot="sidebar-wrapper"]' ? wrapper : null,
+    querySelector: (selector: string) => elements.get(selector) ?? null,
   };
   const globals = globalThis as { window?: unknown; document?: unknown };
   globals.window = window;
@@ -1115,6 +1190,9 @@ function stubDockedSidebar(width: number) {
       for (const frame of queued) frame();
     },
     pendingFrames: () => frames.length,
+    setGapWidth(next: number) {
+      width = next;
+    },
     [Symbol.dispose]() {
       delete globals.window;
       delete globals.document;

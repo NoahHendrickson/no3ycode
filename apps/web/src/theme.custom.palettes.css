@@ -1784,6 +1784,32 @@
   border-color: rgb(255 255 255 / 16%);
 }
 
+/* Flat Glass's collapsed-sidebar tab row is the window's titlebar: the sidebar glass spans the
+   row (forkSidebarVibrancy.ts) and the stage paints everything below it. Its tabs lift with the
+   docked sidebar's washes, since an opaque fill over the glass reads as a plaque. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"] {
+  & [data-slot="sidebar-inset"] {
+    background-color: transparent;
+    background-image: linear-gradient(
+      transparent 0 var(--workspace-topbar-height),
+      var(--background) 0
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  /* Clear over the glass, so the wallpaper's colour comes through; its foot takes the docked
+     sidebar's edge over glass. */
+  & [data-fork-thread-tabs] {
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 16%);
+    --border: rgb(255 255 255 / 12%);
+    --sidebar-row-hover: rgb(255 255 255 / 6%);
+    --sidebar-row-active: rgb(255 255 255 / 10%);
+    --sidebar-row-selected: rgb(255 255 255 / 8%);
+    --accent: rgb(255 255 255 / 10%);
+  }
+}
+
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
    track in Full 3D; Flat Glass switches every tab strip to Basic's 8px/6px
    translucent glass strip below. */
