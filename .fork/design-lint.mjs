@@ -674,7 +674,10 @@ export function checkStylesheet(sheet, slots = new Set()) {
           property === "line-height" ||
           (custom && TYPE_TOKEN_NAME.test(property)))
       ) {
-        const literals = numericLiterals(value).filter(({ number, unit }) =>
+        // A step on the spacing scale (calc(var(--spacing) * 4)) is the scale, not a ratio.
+        const literals = numericLiterals(
+          value.replace(/var\(\s*--spacing\s*\)\s*\*\s*-?\d*\.?\d+/gu, "var(--spacing)"),
+        ).filter(({ number, unit }) =>
           property === "font-size" || /font-size|text-size/u.test(property)
             ? unit !== "" && !(number === 100 && unit === "%") && !(number === 1 && unit === "em")
             : !(unit === "" && (number === 0 || number === 1)),

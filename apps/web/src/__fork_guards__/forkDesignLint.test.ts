@@ -73,7 +73,8 @@ describe("fork guard: fork-design-lint", () => {
         height: 1px;
         font-size: var(--text-sm);
         line-height: 1;
-      }`;
+      }
+      ${ROOT} .fork-y { line-height: calc(var(--spacing) * 4.5); }`;
       expect(rules(check(css))).toEqual([]);
     });
 
