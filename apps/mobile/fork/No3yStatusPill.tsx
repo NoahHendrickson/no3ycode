@@ -64,7 +64,7 @@ const ROW_GAP = 12;
 const COMPOSER_CAPSULE_INSET = 6;
 // The no3y composer card's side inset (ThreadComposer's no3y padding).
 const CARD_SIDE_INSET = 16;
-/** The pills start this far in from the card's left edge. */
+/** The pills and the scroll button sit this far in from the card's edges, clear of its corners. */
 const ROW_INSET = 24;
 /** Room above and below the pills inside the scrolling row, so their shadow is not clipped. */
 const SHADOW_ROOM = 4;
@@ -291,7 +291,7 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
             width: PILL_HEIGHT,
             height: PILL_HEIGHT,
             marginLeft: "auto",
-            marginRight: CARD_SIDE_INSET,
+            marginRight: CARD_SIDE_INSET + ROW_INSET,
             boxShadow: palette.pillShadow,
             borderRadius: PILL_HEIGHT / 2,
           }}
