@@ -723,8 +723,8 @@
   intent: >
     Sidebar V2 thread rows are two-line cards at 16px radius, drawn at a fixed
     54px (Figma 364:17299, "thread card v3"): a title line (prompt, then a
-    trailing group carrying the hover actions / elapsed time, the pinned
-    glyph and the status mark) and a repo line reading runtime glyph,
+    trailing group carrying the hover actions / running-subagent count, the
+    pinned glyph and the status mark) and a repo line reading runtime glyph,
     hairline, branch, terminal glyph, PR badge on the left and the model
     label on the right. Fixed corners are the point: the two things you
     compare across rows, which checkout a thread is on and what is running
@@ -911,8 +911,10 @@
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    - apps/web/src/custom/SidebarV2SubagentCount.tsx
     - apps/web/src/custom/SidebarV2ThreadCardMeta.tsx
     - apps/web/src/custom/icons/WorktreeIcon.tsx
+    - apps/web/src/custom/runningSubagentCounts.ts
     - apps/web/src/custom/sidebarV2CardAlignment.ts
     - apps/web/src/custom/sidebarV2RowPolicy.ts
     - apps/web/src/theme.custom.css
@@ -1531,8 +1533,8 @@
     the trailing end again (Figma 364:17299) but in a cell of its own after
     the actions, never inside them, so the opacity-crossfade hit-path bug
     that used to eat settle clicks (an opacity-0 status span stacking above
-    the actions) cannot return; elapsed time is the only decoration that
-    still fades here, and it is pointer-events-none.
+    the actions) cannot return; the running-subagent count is the only
+    decoration that still fades here, and it is pointer-events-none.
 
     Placement: every trailing mark down the sidebar shares one vertical axis,
     24px in from the panel's content edge — the chrome rows' pe-3 plus half
@@ -2731,7 +2733,7 @@
     line, card titles), -row (14/16, slim titles and the rename field),
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
-    (11/15, model label and elapsed time), -status (12/14, a Petal card's
+    (11/15, model label and subagent count), -status (12/14, a Petal card's
     status line), -tile (10/12, a Petals grid name), plus h-sidebar-12 / -14 /
     -16 / -18 for the fixed line boxes. The
     cards' offscreen contain-intrinsic-size hints sum the same tokens. Line heights are unitless ratios, so

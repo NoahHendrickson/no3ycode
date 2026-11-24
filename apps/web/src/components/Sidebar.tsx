@@ -58,7 +58,6 @@ import {
   sortSettledThreads,
 } from "@t3tools/client-runtime/state/thread-sort";
 import {
-  formatWorkingDurationLabel,
   threadRuntimeCanArchive,
   type EnvironmentThreadShell,
 } from "@t3tools/client-runtime/state/models";
@@ -240,7 +239,6 @@ import { updateClientSettings, useClientSettings } from "../hooks/useSettings";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useNowMinute } from "../hooks/useNowMinute";
-import { useNowSecond } from "../hooks/useNowSecond";
 import { useDeadlinePassed } from "~/hooks/useDeadline";
 import {
   useEnvironmentIdentities,
@@ -301,7 +299,6 @@ import {
   resolveSidebarThreadSection,
   resolveSidebarRowAccessibility,
   resolveThreadLastVisitedAt,
-  resolveWorkingStartedAt,
   shouldNavigateAfterThreadPark,
   sidebarThreadKeyAtY,
   sortInboxThreadsByReturn,
@@ -444,6 +441,12 @@ import {
   SidebarV2ThreadCardCompactMarks,
 } from "~/custom/SidebarV2ThreadCardCompactMarks";
 import { useSidebarV2CompactCards } from "~/custom/sidebarV2CompactCards";
+/* fork:end sidebar-v2-compact-cards */
+/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+import { SidebarV2SubagentCount } from "~/custom/SidebarV2SubagentCount";
+import { useRunningSubagentCount } from "~/custom/runningSubagentCounts";
+/* fork:end sidebar-v2-card-rows */
+/* fork:begin sidebar-v2-compact-cards — see .fork/customizations.yaml#sidebar-v2-compact-cards */
 import { WorktreeIcon } from "~/custom/icons/WorktreeIcon";
 /* fork:end sidebar-v2-compact-cards */
 /* fork:begin sidebar-v2-list-animation — see .fork/customizations.yaml#sidebar-v2-list-animation */
@@ -720,21 +723,6 @@ function JumpHintBadge(props: { label: string }) {
     >
       {props.label}
     </span>
-  );
-}
-
-function WorkingDuration(props: { startedAt: string | null }) {
-  const startedMs = props.startedAt !== null ? Date.parse(props.startedAt) : Number.NaN;
-  if (Number.isNaN(startedMs)) return null;
-  return <WorkingDurationLabel startedMs={startedMs} />;
-}
-
-// Self-ticking so only this span re-renders each second, not the whole row;
-// the shared tick lands every working row's update in the same frame.
-function WorkingDurationLabel(props: { startedMs: number }) {
-  const nowMs = useNowSecond();
-  return (
-    <span className="tabular-nums">{formatWorkingDurationLabel(nowMs - props.startedMs)}</span>
   );
 }
 
@@ -1262,6 +1250,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   const terminalStatus = terminalStatusFromRunningIds(runningTerminalIds);
   const terminalProcessCount = runningTerminalIds.length;
   const hasUnsentDraft = useThreadHasUnsentDraft(threadRef) && !props.isRouteThread;
+  /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+  const runningSubagentCount = useRunningSubagentCount(threadRef);
+  const gt = useGT();
+  /* fork:end sidebar-v2-card-rows */
   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows
      Upstream pairs the marker with a "Discard draft" hover action in the row's
      trailing cell. That cell is fork-owned on both variants (it already holds
@@ -1674,7 +1666,21 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
 
   const accessibility = resolveSidebarRowAccessibility({
     title: thread.title,
-    statusLabel: topStatus?.label ?? null,
+    /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
+       The subagent count is drawn aria-hidden, so the row name carries it. */
+    statusLabel:
+      [
+        topStatus?.label,
+        runningSubagentCount > 0
+          ? gt(
+              "{count, plural, one {{count} subagent running} other {{count} subagents running}}",
+              { count: runningSubagentCount },
+            )
+          : null,
+      ]
+        .filter(Boolean)
+        .join(", ") || null,
+    /* fork:end sidebar-v2-card-rows */
     projectDisplayName: props.projectTitle,
     isActive: props.isActive,
   });
@@ -2017,7 +2023,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   const trailingGroup = (
     <>
       {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
-                  Trailing group (Figma 364:18276): the elapsed time / hover
+                  Trailing group (Figma 364:18276): the running-subagent count / hover
                   actions cell, the pinned glyph, then the status mark flush
                   with the card's content edge. Status is a cell of its own,
                   after the actions, on purpose: it used to share their
@@ -2037,7 +2043,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           />
         ) : null}
         {/* fork:end sidebar-v2-compact-cards */}
-        {/* Elapsed while working, hover actions when offered.
+        {/* Running subagents, hover actions when offered.
                     Stacked and right-aligned so the title truncates against
                     whichever child is showing. */}
         {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */}
@@ -2054,7 +2060,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
         {hasHoverActions ||
         /* fork:end sidebar-v2-draft-rows */
-        status === "working" ? (
+        runningSubagentCount > 0 ? (
           <span
             className={cn(
               "grid h-6 shrink-0 grid-cols-1 items-center justify-items-end",
@@ -2062,24 +2068,22 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             )}
           >
             {/* fork:end sidebar-v2-row-action-hit-area */}
-            {status === "working" ? (
+            {runningSubagentCount > 0 ? (
               <span
                 className={cn(
                   "pointer-events-none col-start-1 row-start-1 flex items-center pr-1",
                   // The fade exists to yield the cell to the hover
                   // actions. When neither action is offered there is
                   // nothing to yield to, and an unconditional fade
-                  // blanks the timer on hover with nothing in its place.
+                  // blanks the count on hover with nothing in its place.
                   /* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */
                   hasHoverActions &&
                     /* fork:end sidebar-v2-draft-rows */
-                    "transition-opacity group-any-hover/v2-row:opacity-0",
+                    "transition-opacity group-any-hover/v2-row:opacity-0 group-has-[[data-fork-thread-card-actions]:focus-within]/v2-row:opacity-0",
                   snoozeMenuOpen && "opacity-0",
                 )}
               >
-                <span aria-hidden className="text-sidebar-caption text-foreground tabular-nums">
-                  <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
-                </span>
+                <SidebarV2SubagentCount count={runningSubagentCount} />
               </span>
             ) : null}
             {/* fork:begin sidebar-v2-draft-rows — see .fork/customizations.yaml#sidebar-v2-draft-rows */}
@@ -2106,7 +2110,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                   // The offset is derived in custom/sidebarV2TrailingColumn
                   // with the rest of the column's; `relative` keeps the
                   // actions in the positioned layer with any opacity
-                  // crossfade sibling (elapsed) that shares this cell.
+                  // crossfade sibling (subagent count) that shares this cell.
                   // fork:end sidebar-v2-row-action-hit-area
                   SIDEBAR_V2_TRAILING_OFFSET.cardActions,
                   "relative col-start-1 row-start-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-opacity focus-within:w-auto focus-within:overflow-visible focus-within:opacity-100 group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",

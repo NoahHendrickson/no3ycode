@@ -2466,6 +2466,7 @@
   "d07ed4990bbb5323": "Acción de hilo no disponible",
   "82e555245a78f961": "Esta conexión no puede cambiar uno o más de los hilos seleccionados.",
   "e54720cac68f2adb": "Todos los proyectos",
+  "3d452b69b89d669e": "{count, plural, one {{count} subagente en ejecución} other {{count} subagentes en ejecución}}",
   "ac47f86df1c31a4a": "No se pudo copiar la rama",
   "4e6305459e784fea": "No se pudo copiar el ID del hilo",
   "5a79b7c910831c76": "El título del hilo no puede estar vacío",

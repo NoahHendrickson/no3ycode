@@ -2466,6 +2466,7 @@
   "d07ed4990bbb5323": "Thread-Aktion nicht verfügbar",
   "82e555245a78f961": "Diese Verbindung kann einen oder mehrere der ausgewählten Threads nicht ändern.",
   "e54720cac68f2adb": "Alle Projekte",
+  "3d452b69b89d669e": "{count, plural, one {{count} Subagent läuft} other {{count} Subagents laufen}}",
   "ac47f86df1c31a4a": "Branch konnte nicht kopiert werden",
   "4e6305459e784fea": "Thread-ID konnte nicht kopiert werden",
   "5a79b7c910831c76": "Der Thread-Titel darf nicht leer sein",
