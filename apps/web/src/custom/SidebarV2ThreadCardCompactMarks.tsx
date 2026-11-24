@@ -40,7 +40,7 @@ export function SidebarV2ThreadCardCompactMarks(props: SidebarV2ThreadCardCompac
     <span
       data-testid="sidebar-v2-card-compact-marks"
       data-fork-thread-card-meta=""
-      className="flex shrink-0 items-center gap-1.5 text-[0.75rem] leading-4 text-muted-foreground"
+      className="flex shrink-0 items-center gap-1.5 text-sidebar-meta text-muted-foreground"
     >
       {props.isRemote ? (
         <>

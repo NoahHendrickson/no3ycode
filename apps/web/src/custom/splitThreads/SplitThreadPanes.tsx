@@ -15,6 +15,10 @@
  * the column (floatWindow), so floating and docking move one ChatView between
  * layouts without remounting it. Pressing into it does not take the route,
  * only window-level input.
+ *
+ * A docked thread is the right pane of every layout until it is undocked: the
+ * left pane is the route's thread or, while the route is on the docked thread
+ * itself, the last other thread the route showed.
  */
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
@@ -51,6 +55,7 @@ import { FLOAT_WINDOW_CLASS, useDockOnPanelOpen, useFloatWindow } from "./floatW
 import {
   SINGLE_PANE,
   SplitPaneContext,
+  type PaneDockAction,
   type PaneWindowAction,
   type SplitPaneState,
 } from "./splitPaneContext";
@@ -228,6 +233,8 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
   readonly windowActionKind: PaneWindowAction["kind"] | null;
   readonly focusPartner: () => Promise<boolean>;
   readonly runWindowAction: () => void;
+  readonly dockActionKind: PaneDockAction["kind"] | null;
+  readonly runDockAction: () => void;
   readonly composerRef: ComposerRef;
   /** The route's own view; null for a pane that shows its thread through paneView. */
   readonly routeView: ReactNode;
@@ -240,6 +247,9 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
   const { windowActionKind, routeView, environmentId, threadId, elementKey } = props;
   const windowAction =
     windowActionKind === null ? null : { kind: windowActionKind, run: props.runWindowAction };
+  const { dockActionKind } = props;
+  const dockAction =
+    dockActionKind === null ? null : { kind: dockActionKind, run: props.runDockAction };
   const state: SplitPaneState = {
     split,
     focused,
@@ -248,6 +258,7 @@ const SplitPaneBody = memo(function SplitPaneBody(props: {
     floating,
     focusPartner,
     windowAction,
+    dockAction,
   };
   const view =
     routeView ??
@@ -284,6 +295,7 @@ function SplitPane(props: {
   // The parent rebuilds these closures every render; the body gets one identity that calls the latest.
   const focusPartner = useStableCallback(() => state.focusPartner());
   const runWindowAction = useStableCallback(() => state.windowAction?.run());
+  const runDockAction = useStableCallback(() => state.dockAction?.run());
   const {
     setElement: setFloatElement,
     style: floatStyle,
@@ -346,6 +358,8 @@ function SplitPane(props: {
         windowActionKind={state.windowAction?.kind ?? null}
         focusPartner={focusPartner}
         runWindowAction={runWindowAction}
+        dockActionKind={state.dockAction?.kind ?? null}
+        runDockAction={runDockAction}
         composerRef={props.composerRef}
         routeView={props.routeView}
         environmentId={paneRoute === null ? null : (paneRef?.environmentId ?? null)}
@@ -456,15 +470,19 @@ export function SplitThreadPanes(props: {
   // yet" for "gone".
   const partnerMissing = partner.missing;
   const floatingMissing = floating.missing;
-  const unpair = useSplitThreadStore((state) => state.unpair);
+  const forget = useSplitThreadStore((state) => state.forget);
   const resize = useSplitThreadStore((state) => state.resize);
+  const resizeDock = useSplitThreadStore((state) => state.resizeDock);
+  const dock = useSplitThreadStore((state) => state.dock);
+  const undock = useSplitThreadStore((state) => state.undock);
+  const dockedRef = useSplitThreadStore((state) => state.docked?.thread ?? null);
   const pair = useSplitThreadStore((state) => state.pair);
   const floatThread = useSplitThreadStore((state) => state.float);
   const floatOnLeave = useSplitThreadStore((state) => state.floatOnLeave);
   const unfloat = useSplitThreadStore((state) => state.unfloat);
   useEffect(() => {
-    if (partnerMissing && partnerRef !== null) unpair(partnerRef);
-  }, [partnerMissing, partnerRef, unpair]);
+    if (partnerMissing && partnerRef !== null) forget(partnerRef);
+  }, [partnerMissing, partnerRef, forget]);
   useEffect(() => {
     if (floatingMissing) unfloat();
   }, [floatingMissing, unfloat]);
@@ -480,11 +498,18 @@ export function SplitThreadPanes(props: {
     floatInput?.floatKey === floatingKey &&
     floatInput.routeKey === focusedKey;
   const floatRoute = floating.route;
+  // Also while the docked thread shows alone, so Split agent and Dock beside cannot undock it.
+  const dockedLayout = wide && dockedRef !== null;
   // A window that owns input keeps it once docked: an unfocused pane is skipped by
-  // workspace focus, so its panel or composer would never get focus back.
+  // workspace focus, so its panel or composer would never get focus back. Beside a
+  // docked thread the window lands in the left pane, which the route decides.
   const dockFloat =
     floatShown && focusedRef !== null && floatingRef !== null
       ? () => {
+          if (dockedLayout) {
+            if (floatRoute !== null) void navigateToPane(navigate, floatingRef, floatRoute);
+            return;
+          }
           pair(focusedRef, floatingRef);
           if (floatOwnsInput && floatRoute !== null)
             void navigateToPane(navigate, floatingRef, floatRoute);
@@ -514,6 +539,21 @@ export function SplitThreadPanes(props: {
         void navigateToPane(navigate, targetRef, targetRoute);
       },
     };
+  };
+
+  /** Docking a started thread as the right pane. Its left neighbour is the
+      other pane of a split, or the column's thread under a window. Beside a
+      docked thread the left pane's toggle swaps the two; the docked pane's undocks. */
+  const dockActionFor = (
+    paneRef: ScopedThreadRef | null,
+    paneRoute: PaneRoute | null,
+    left: ScopedThreadRef | null,
+  ): PaneDockAction | null => {
+    if (paneRef === null) return null;
+    // Undock shows at any width, so a narrow window is never stuck with a dock.
+    if (sameThread(paneRef, dockedRef)) return { kind: "undock", run: undock };
+    if (!wide || paneRoute?.kind !== "server") return null;
+    return { kind: "dock", run: () => dock(paneRef, left) };
   };
 
   const shown: SplitPaneSlot[] = [];
@@ -548,6 +588,7 @@ export function SplitThreadPanes(props: {
         leading: false,
         floating: true,
         windowAction: dockFloat === null ? null : { kind: "dock", run: dockFloat },
+        dockAction: dockActionFor(floatingRef, floating.route, focusedRef),
       };
       onEnter =
         floatOwnsInput || floatingKey === null || focusedKey === null
@@ -557,13 +598,18 @@ export function SplitThreadPanes(props: {
       const focused = holdsRoute && !floatOwnsInput;
       const paneRoute = holdsRoute ? focusedRoute : partner.route;
       const windowAction = floatAction(paneRef, paneRoute, holdsRoute);
+      const dockAction = dockActionFor(
+        paneRef,
+        paneRoute,
+        split ? (holdsRoute ? partnerRef : focusedRef) : behindRef,
+      );
       state = split
         ? {
             ...SINGLE_PANE,
             split: true,
             focused,
             leading: left,
-            canSplit: true,
+            canSplit: !dockedLayout,
             focusPartner: async () => {
               if (!holdsRoute) return true;
               if (partnerRef === null || partner.route === null) return false;
@@ -571,8 +617,9 @@ export function SplitThreadPanes(props: {
               return true;
             },
             windowAction,
+            dockAction,
           }
-        : { ...SINGLE_PANE, focused, canSplit: wide, windowAction };
+        : { ...SINGLE_PANE, focused, canSplit: wide && !dockedLayout, windowAction, dockAction };
       onEnter = !holdsRoute
         ? paneRef === null || paneRoute === null
           ? null
@@ -611,7 +658,7 @@ export function SplitThreadPanes(props: {
         {split ? (
           <SplitResizeHandle
             floatBehind={floatShown}
-            onResize={(ratio) => resize(layout.left, ratio)}
+            onResize={(ratio) => (layout.docked ? resizeDock(ratio) : resize(layout.left, ratio))}
           />
         ) : null}
       </div>

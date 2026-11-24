@@ -43,7 +43,7 @@ beforeEach(() => {
     draftThreadsByThreadKey: {},
     logicalProjectDraftThreadKeyByLogicalProjectKey: {},
   });
-  useSplitThreadStore.setState({ pairs: [], floating: null });
+  useSplitThreadStore.setState({ pairs: [], floating: null, docked: null });
 });
 
 describe("landing drafts", () => {
@@ -87,6 +87,27 @@ describe("landing drafts", () => {
     store.setPrompt(typed, "");
     sweepLandingDrafts(null);
     expect(exists(typed)).toBe(true);
+  });
+
+  it("keeps an untouched landing draft while it is the dock's left pane, then discards it", () => {
+    const docked = scopeThreadRef(environmentId, ThreadId.make("thread-docked"));
+    const besideDock = land("beside-dock");
+    useSplitThreadStore.setState({
+      docked: {
+        thread: docked,
+        left: scopeThreadRef(environmentId, ThreadId.make("thread-beside-dock")),
+      },
+    });
+    // The route moves to the docked thread; the left pane still shows the draft.
+    sweepLandingDrafts(null);
+    sweepLandingDrafts(null);
+    expect(exists(besideDock)).toBe(true);
+
+    useSplitThreadStore.setState({
+      docked: { thread: docked, left: scopeThreadRef(environmentId, ThreadId.make("thread-y")) },
+    });
+    sweepLandingDrafts(null);
+    expect(exists(besideDock)).toBe(false);
   });
 
   it("never touches a draft the landing did not open", () => {

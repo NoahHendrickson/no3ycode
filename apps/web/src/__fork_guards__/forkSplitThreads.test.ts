@@ -132,12 +132,19 @@ describe("fork guard: fork-split-threads", () => {
     expect(sidebar).toMatch(/const splitModel = useMemo\([\s\S]*?buildSidebarSplitModel\(/u);
     expect(sidebar).toMatch(/const renderThreadRow = \([\s\S]*?splitModel\.rows\.get\(/u);
     expect(sidebar).toMatch(/splitModel\.order\s*(\/\*[\s\S]*?\*\/\s*)?\.map\(/u);
-    expect(sidebar).toContain("canPair: (threadKey) => splitModel.pairable.has(threadKey),");
+    expect(sidebar).toContain(
+      "canPair: (threadKey) => !dockActive && splitModel.pairable.has(threadKey),",
+    );
     expect(sidebar).toContain("{...splitDropHandlers}");
     expect(sidebar).toContain("splitThreadDragSourceProps(threadKey,");
     // An open pair is one item: its row paints the open fill and its cards leave it alone.
     expect(sidebar).toContain("active={pairOpen}");
     expect(sidebar).toContain("onOpenSplitPair: pairOpen,");
     expect(sidebar).toContain("onOpenPair: props.onOpenSplitPair === true,");
+    // The docked thread's card marks it after the status mark.
+    expect(sidebar).toContain("const docked = useThreadDocked(threadRef);");
+    expect(sidebar).toMatch(
+      /<SidebarV2StatusMark[\s\S]{0,600}\{docked && !isSwept \? \(\s*<SidebarDockedMark/u,
+    );
   });
 });

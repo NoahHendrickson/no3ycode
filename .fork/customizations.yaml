@@ -2717,38 +2717,53 @@
 
 - id: fork-sidebar-type-size
   intent: >
-    Sidebar V2 body type is 0.8125rem (13px at the default root) for project
-    headers and slim shelves. The panel remaps Tailwind's --text-xs and
-    --text-sm (and their --line-height companions) to 0.8125rem / 1rem so those
-    share one size without rewriting each className. Search, New thread, Add
-    project, and the Projects label opt out at 0.875rem (14px) via CHROME_TYPE;
-    card titles, slim (settled and snoozed) titles and the rename field are
-    0.875rem, and the repo/branch line 0.75rem, as literal rem sizes (see
-    sidebar-v2-card-rows) so the remap cannot flatten them. Rem, not px:
-    a px pin would freeze the sidebar while h-4 and the rest of the app still
-    honour the browser font-size setting. Line-height stays 1rem so the card's
-    h-4 rows scale with the type. Literal captions (text-[11px], text-[10px]
-    for meta, ⌘K, elapsed) stay at their drawn sizes. Scoped to
-    [data-sidebar-version="v2"] under the fork marker; light and dark share
-    the size. Portaled menus outside the panel keep upstream sizes.
+    Sidebar V2 type follows one device-local px setting, Sidebar font size
+    (Settings → Appearance → Typography, right under the interface font; see
+    fork-typography-settings), which writes --fork-sidebar-font-size on the
+    root and is the thread title's size, 14px by default. theme.custom.css turns
+    it into one unit, --fork-sidebar-px (a drawn px at the current size), and
+    index.css registers the panel's named sizes as multiples of it: text-sidebar-title (14 on an 18px
+    line, card titles), -row (14/16, slim titles and the rename field),
+    -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
+    and status headers, the repo line, the card's PR badge) and -caption
+    (11/15, model label and elapsed time), -status (12/14, a Petal card's
+    status line), -tile (10/12, a Petals grid name), plus h-sidebar-12 / -14 /
+    -16 / -18 for the fixed line boxes. The
+    cards' offscreen contain-intrinsic-size hints sum the same tokens. Line heights are unitless ratios, so
+    rows built from padding plus a line box grow with the text instead of
+    clipping it: cards, chrome rows (h-auto on the menu button's py-1.5), and
+    min-h floors on headers and slim rows, whose 32px / 24px controls set the
+    height until the text outgrows them. The panel also remaps Tailwind's
+    --text-xs and --text-sm (and their line heights) to 13px on a 16px line at
+    the default size, so slim shelves and other small type share one body
+    size. Px, not rem: the Interface font size no longer moves the sidebar.
+    Its content and footer also pin --spacing and the sidebar insets to px, so
+    rows keep their drawn heights (32px chrome rows at 14px) at any Interface
+    size; the header stays rem to match the workspace top bar. Literal captions (text-2xs / 3xs, @theme
+    inline, and text-[10px] / [11px] meta) and icons keep their drawn sizes.
+    Scoped to [data-sidebar-version="v2"] under the fork marker; portaled
+    menus outside the panel keep upstream sizes. lib/utils.ts registers the
+    text-sidebar-* names with tailwind-merge, which would otherwise read them
+    as colours and drop them beside text-sidebar-foreground.
 
     The remap depends on two upstream facts the drift job must watch:
     apps/web/src/index.css (text scale must stay non-inline @theme so
-    utilities emit var(--text-xs); moving it into this repo's @theme inline
-    block would bake the values and silently ignore the override — the same
-    failure geist-typography documents), and
-    apps/web/src/components/AppSidebarLayout.tsx (sole site rendering
-    data-sidebar-version; dropping the attribute makes the selector match
-    nothing).
+    utilities emit var(--text-xs)), and apps/web/src/components/AppSidebarLayout.tsx
+    (sole site rendering data-sidebar-version; dropping the attribute makes
+    the selector match nothing).
   tier: 1
   files:
     - apps/web/src/theme.custom.css
   shadows: []
   watch:
     - apps/web/src/index.css
+    - apps/web/src/lib/utils.ts
     - apps/web/src/components/AppSidebarLayout.tsx
+    # The px spacing pin keys on its sidebar-content / sidebar-footer slots.
+    - apps/web/src/components/ui/sidebar.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
+    - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
 
 - id: fork-sidebar-chrome
   intent: >
@@ -3027,8 +3042,10 @@
     subscribes to environment presentations only while open, and its clock
     advances on open. The calmer #38a169 green is scoped via --success to the
     ring and its menu so the Usage settings page keeps each theme's --success
-    token. Hidden when the provider reports no session window or when the
-    footer collapses. The composer has no top vessel; the drawer it held is gone.
+    token. Without a session window it shows Claude's account-wide weekly
+    window (id seven_day) instead, for Claude plans with no 5-hour limit; other
+    providers' weekly windows never draw it. Hidden when neither exists or when
+    the footer collapses. The composer has no top vessel; the drawer it held is gone.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
@@ -3202,7 +3219,7 @@
   intent: >
     /scheduled is a workspace page, laid out like Cursor's Automations: a
     heading with New task and a filter row (environment chips when there is more than one, All
-    runs, search), and one table of every scheduled task across every
+    runs, a Group menu, search), and one table of every scheduled task across every
     connected environment with its project, trigger and next run,
     Active/Inactive, last run, and model. A row opens the task as its own
     page: the title is the heading, the on/off switch and the project sit
@@ -3234,9 +3251,14 @@
     clips its table so a hovered row never paints past its corners.
     That composer wears the chat composer's own context-row, vessel,
     surface and control-row stamps, so every palette paints it the same.
+    Grouped by Petal (a device-local choice, off by default), each environment's table
+    lists your automations under Yours first, then a section per listed Petal by name; an
+    automation is a Petal's when it runs in that Petal's own thread. The roster is read from
+    the complete shell list, so the tag filter never moves an automation between sections.
   tier: 4
   files:
     - apps/web/src/custom/scheduled/ScheduledPage.tsx
+    - apps/web/src/custom/scheduled/petalRoster.ts
     - apps/web/src/custom/scheduled/ScheduledTriggerTabs.tsx
     - apps/web/src/custom/SegmentedTabs.tsx
     - apps/web/src/custom/scheduled/ScheduledTaskDetail.tsx
@@ -3634,6 +3656,12 @@
     monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
+    The chip reads "Background task(s)" beside a static ElectricityStack glyph
+    for any mix of work. A live run's own subagents join it while that run is
+    live (custom/composerBackgroundWork.logic.ts matches each to its record
+    once); after it settles only the pending list counts. The Stop square is
+    drawn only when upstream's row would enable Stop (useThreadLifecycle's
+    canStopBackgroundWork), since mid-turn the composer owns Stop.
     Neither shows on the draft hero. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
@@ -5286,8 +5314,7 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the background-work chip above the composer,
-    subagent members):
+    transcript working row, subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
     into beads and merges back). Until one is picked, Inlet and Basic draw the
@@ -6322,7 +6349,7 @@
 - id: fork-inline-code-chip
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
-    --info at 12% (16% in dark), 5px corners, 4px either side, at 0.95em.
+    --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's
@@ -6440,6 +6467,23 @@
     floats, mask a rounded hole at its frame so only the stage is behind it.
     Other themes paint it on the opaque popover.
 
+    Any started thread can also dock to the right: a toggle beside the float
+    icon makes it the column's right pane, where it stays (persisted) while
+    the route moves through other threads on the left, until the same
+    toggle, pressed there, undocks it. The left pane is the route's thread,
+    or, while the route is on the docked thread itself, the last other thread
+    it showed (the docked value's left). A dock outranks pairs, which are kept but not drawn
+    while it is set, and hides the split toggle; docking takes the thread out
+    of its pair or the window, and floating or pairing the docked thread
+    undocks it. On the left pane the toggle swaps the two, and the window's
+    Dock beside lands it in the left pane by navigating to it. The divider
+    stores its share as dockRatio. A docked thread found missing is forgotten.
+    While a thread is docked, card drops in the sidebar and the tab strip do not
+    pair (the pair would stay hidden), and a landing draft in the left pane is
+    never swept as untouched.
+    Its sidebar card wears a docked glyph last on the title line, after the
+    status mark and the working timer (custom/splitThreads/SidebarDockedMark).
+
     The route's thread is the focused pane. Pressing into the other pane
     navigates to its thread (replace), so the right panel, the sidebar
     highlight and every route-keyed global shortcut follow focus with no
@@ -6524,6 +6568,9 @@
     - apps/web/src/custom/splitThreads/sidebarSplitRows.ts
     - apps/web/src/custom/splitThreads/splitThreadDrag.ts
     - apps/web/src/custom/splitThreads/SidebarSplitPairRow.tsx
+    - apps/web/src/custom/splitThreads/SidebarDockedMark.tsx
+    # Landing drafts beside the dock are on screen, so the sweep keeps them.
+    - apps/web/src/custom/landingDraft.ts
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     # Registers only the focused pane's composer.
     - apps/web/src/custom/voice/forkDictation.ts
@@ -8435,17 +8482,20 @@
     instead of SF Symbols (fork/no3yWorkIcons.tsx, keyed by upstream's symbol,
     with the web fork's themed glyphs filled); the pull-request glyph, the T3
     wordmark and the browser app icon stay upstream's.
-    Subagents in the transcript draw as the Mac fork's subagent card
-    (fork/No3ySubagentCards.tsx, a port of ForkSubagentGroup's look): the
+    Subagents in the transcript draw as rows modelled on the Mac fork's
+    subagent card (fork/No3ySubagentCards.tsx; unlike ForkSubagentGroup's
+    one card per member, mobile groups a batch into a single card): the
     provider's mark in a tile with the Threads list's status mark at its corner
     (bead ring while working, never upstream's blue dot or blue "Working"), a
-    pure-white title over model and effort, and elapsed time, on a 20pt-radius
-    card with no activity line; a tap opens the agent's thread and a batch
-    keeps a "Kicked off N subagents" lead line. The Agents sheet's rows
-    (fork/No3yAgentsSheetRow.tsx) draw the same card plus a running agent's
-    progress or a failure, and a running agent shows a small neutral round stop button in
-    place of the chevron instead of upstream's red tile; workflow groups keep
-    upstream's rows. On
+    pure-white title over model and effort, and muted elapsed time, with no
+    activity line; a batch's agents are rows of one 18pt-radius card split by
+    full-width hairlines, under a "Kicked off N subagents" lead line whose
+    icon, status and time are muted, and a tap on a row opens the agent's
+    thread. The Agents sheet's rows (fork/No3yAgentsSheetRow.tsx) draw the
+    same row, tile and elapsed time, each in its own 20pt-radius card, plus a
+    running agent's progress or a failure, and a running agent shows a small
+    neutral round stop button in place of the chevron instead of upstream's
+    red tile; workflow groups keep upstream's rows. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -8740,27 +8790,22 @@
     fills, labelled Geist Variable, the bundled face), Inter (bundled by
     upstream's main.tsx import) and System. Custom… opens upstream's
     any-installed-font field, and any value that matches no preset shows as
-    Custom. The section also has Sidebar size and Chat stream size, 80–150% in
-    steps, stored per device (a contracts field would put a fork key in a
-    schema upstream owns), so mobile and other devices keep their own sizes.
-    Both are percentages so they compose with upstream's Interface font size.
-    The controls live in custom/ForkTypographyControls; the shadow only mounts
-    them. Sidebar size stamps a root attribute when it is not 100% and zooms
-    the sidebar's content and footer as a whole (its rows have fixed rem
-    heights, so text alone would crowd them), in the docked panel and the
-    narrow-web sheet alike. The header stays at 100%: it holds the macOS
-    traffic-light inset and matches the workspace top bar. Zoom sits inside
-    the container, so the width the resize handle sets is the width you see.
-    dnd-kit measures in visual px while a transform inside zoom is local, so
-    every sidebar sortable divides its translation by the zoom, and the list
-    motion's drop release unzooms its rects. The chat stream rules are always
-    on: inside [data-timeline-root], message and tool-row text (text-sm) is
-    1rem so it matches the composer (text-base), and every type token, the
-    text-2xs / text-3xs utilities (@theme inline, so they bake their size),
-    markdown headings and tables multiply Chat stream size (1 at 100%).
-    Headings read the scaled tokens, with h4-h6 on the body size so no heading
-    sits below it. Code blocks keep Code font size; 4xs/5xs icon badges and
-    the few literal text-[13px] captions stay put.
+    Custom. Directly under the interface font (in the simple and the separate
+    fonts layouts alike) sits Sidebar font size, 11–20px, and lower down Chat
+    stream size, 80–150% in steps. Both are stored per device (a contracts
+    field would put a fork key in a schema upstream owns), so mobile and other
+    devices keep their own sizes. Interface font keeps upstream's translated
+    description; the sidebar row says it is separate from the interface size.
+    Sidebar font size is drawn by fork-sidebar-type-size; it replaced a percentage zoom of
+    the whole panel. The controls live in custom/ForkTypographyControls; the
+    shadow only mounts them. The chat stream rules are always on: inside
+    [data-timeline-root], message and tool-row text (text-sm) is 1rem so it
+    matches the composer (text-base), and every type token, the text-2xs /
+    text-3xs utilities (@theme inline, so they bake their size), markdown
+    headings and tables multiply Chat stream size (1 at 100%). Headings read
+    the scaled tokens, with h4-h6 on the body size so no heading sits below
+    it. Code blocks keep Code font size; 4xs/5xs icon badges and the few
+    literal text-[13px] captions stay put.
   tier: 4
   files:
     - apps/web/src/custom/forkTypographyScale.ts
@@ -8771,12 +8816,7 @@
     - apps/web/src/components/settings/TypographySettings.tsx
   watch:
     - apps/web/src/main.tsx
-    - apps/web/src/components/Sidebar.tsx
-    - apps/web/src/components/Sidebar.motion.ts
-    - apps/web/src/components/sidebar/SidebarListMarkers.tsx
-    - apps/web/src/components/sidebar/SidebarThreadRow.tsx
-    # The selectors key on these DOM hooks and on the text scale staying non-inline @theme.
-    - apps/web/src/components/ui/sidebar.tsx
+    # The selectors key on this DOM hook and on the text scale staying non-inline @theme.
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - apps/web/src/index.css
   verify:

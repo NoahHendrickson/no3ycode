@@ -2,7 +2,11 @@ import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { ArrowUpRightIcon } from "lucide-react";
 import { Fragment } from "react";
 
-import { ComputerActivityIcon, ComputerTerminalIcon } from "./icons/lucide-hugeicons";
+import {
+  ComputerActivityIcon,
+  ComputerTerminalIcon,
+  ElectricityStackIcon,
+} from "./icons/lucide-hugeicons";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -11,34 +15,26 @@ import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "~/compone
 import {
   glanceCommandLabel,
   type ComposerBackgroundWorkItem,
-  type ComposerBackgroundWorkPresentation,
 } from "./composerBackgroundWork.logic";
 import { ForkSubagentIdentity, useForkSubagentEffort } from "./ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "./forkSubagentTree";
-import { SidebarV2MonitoringMark, SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { StopSquareIcon } from "./StopSquareIcon";
 
 export interface ComposerBackgroundWorkViewProps {
-  /** A subagent's task row draws its transcript card's header (resolveComposerBackgroundWork). */
-  readonly presentation: ComposerBackgroundWorkPresentation;
-  /** Stable seed for the working mark so remounts keep the same phase. */
-  readonly seed: string;
+  /** A subagent's task row draws its transcript card's header (composerBackgroundWorkItems). */
+  readonly items: ReadonlyArray<ComposerBackgroundWorkItem>;
   readonly stopping: boolean;
-  /** False when the client lacks the operate scope: Stop stays visible but inert. */
+  /** False when Stop has nothing to act on (mid-turn, or no operate scope): the square is not drawn. */
   readonly canStop: boolean;
   readonly onStop: () => void;
   readonly onOpenThread: (threadId: ThreadId) => void;
   readonly environmentId: EnvironmentId;
 }
 
-/** `waiting` is upstream's "this work will wake the agent" (subagents, monitors); a dev server
- * that merely outlives the turn is monitoring-only, so it does not rain. */
+/** One label for any mix of work: subagents, commands, monitors and PR watches alike. */
 function resolveBackgroundWorkLabel(props: ComposerBackgroundWorkViewProps): string {
   if (props.stopping) return "Stopping...";
-  if (!props.presentation.waiting) return "Monitoring";
-  const liveCount = props.presentation.items.filter((item) => item.kind === "subagent").length;
-  if (liveCount > 0) return `${liveCount} ${liveCount === 1 ? "agent" : "agents"}`;
-  return "Working";
+  return props.items.length === 1 ? "Background task" : "Background tasks";
 }
 
 /** Background work as a chip above the composer (fork-composer-shell): the label opens the task
@@ -58,6 +54,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
             <ComposerControl
               size="xs"
               data-fork-status-chip-main
+              data-fork-status-chip-solo={props.canStop ? undefined : ""}
               aria-label={`${label}: show background work`}
             />
           }
@@ -67,11 +64,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
             aria-hidden
             className="flex size-3.5 shrink-0 items-center justify-center"
           >
-            {props.presentation.waiting ? (
-              <SidebarV2WorkingMark seed={props.seed} />
-            ) : (
-              <SidebarV2MonitoringMark />
-            )}
+            <ElectricityStackIcon />
           </span>
           <span aria-hidden className="min-w-0 truncate">
             {label}
@@ -81,13 +74,11 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           side="top"
           align="start"
           sideOffset={6}
-          className={
-            props.presentation.items.some((item) => item.kind === "subagent") ? "w-80" : "w-64"
-          }
+          className={props.items.some((item) => item.kind === "subagent") ? "w-80" : "w-64"}
           data-fork-glass-rim
           data-fork-background-work-popup
         >
-          {props.presentation.items.map((task, index) => (
+          {props.items.map((task, index) => (
             <Fragment key={task.taskId}>
               {index > 0 ? <MenuSeparator className="-mx-1" /> : null}
               <BackgroundWorkTaskRow
@@ -99,18 +90,24 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           ))}
         </MenuPopup>
       </Menu>
-      <ComposerControl
-        size="xs"
-        data-fork-status-chip-stop
-        aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
-        disabled={props.stopping || !props.canStop}
-        onClick={props.onStop}
-      >
-        <StopSquareIcon size={10} />
-      </ComposerControl>
+      {props.canStop ? (
+        <ComposerControl
+          size="xs"
+          data-fork-status-chip-stop
+          aria-label={props.stopping ? "Stopping background work" : "Stop background work"}
+          disabled={props.stopping}
+          onClick={props.onStop}
+        >
+          <StopSquareIcon size={10} />
+        </ComposerControl>
+      ) : null}
     </span>
   );
 }
+
+/** A row the menu cannot open: MenuItem's padding without its highlight, as tall as a subagent's
+    two-line row so the list reads even. */
+const TASK_ROW_CLASS_NAME = "flex min-h-11.5 items-center gap-2 px-2 py-1 text-sm";
 
 function BackgroundWorkTaskRow(props: {
   readonly task: ComposerBackgroundWorkItem;
@@ -119,14 +116,18 @@ function BackgroundWorkTaskRow(props: {
 }) {
   const { task } = props;
   const childThreadId = task.childThreadId;
+  if (childThreadId === undefined && task.subagent !== undefined) {
+    // A subagent without a local child thread (a linked environment's) has nothing to open.
+    return (
+      <div data-fork-monitoring-task className={TASK_ROW_CLASS_NAME}>
+        <SubagentTaskIdentity member={task.subagent} environmentId={props.environmentId} />
+      </div>
+    );
+  }
   if (childThreadId === undefined) {
     const label = task.kind === "command" ? glanceCommandLabel(task.label) : task.label;
     return (
-      <div
-        data-fork-monitoring-task
-        aria-description={task.kind}
-        className="flex min-h-8 items-center gap-2 px-2 py-1 text-sm sm:min-h-7"
-      >
+      <div data-fork-monitoring-task aria-description={task.kind} className={TASK_ROW_CLASS_NAME}>
         <span
           aria-hidden
           data-fork-task-tile

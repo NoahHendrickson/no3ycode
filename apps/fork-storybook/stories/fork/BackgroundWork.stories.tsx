@@ -34,7 +34,7 @@ const SUBAGENT: ForkSubagentTreeRow = {
   activity: null,
 };
 
-const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
+const TASKS: ComposerBackgroundWorkViewProps["items"] = [
   {
     taskId: "subagent-1",
     kind: "subagent",
@@ -46,7 +46,6 @@ const TASKS: ComposerBackgroundWorkViewProps["presentation"]["items"] = [
 ];
 
 const base = {
-  seed: "story",
   stopping: false,
   canStop: true,
   onStop: () => {},
@@ -56,11 +55,11 @@ const base = {
 
 const MONITORING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Monitoring", items: TASKS.slice(1), waiting: false },
+  items: TASKS.slice(1),
 };
 const WORKING: ComposerBackgroundWorkViewProps = {
   ...base,
-  presentation: { title: "Working", items: TASKS, waiting: true },
+  items: TASKS,
 };
 
 /** The composer with the work chip above it. */
@@ -87,7 +86,7 @@ type Story = StoryObj<typeof Composer>;
     opening its thread, and the square stops them. */
 export const Playground: Story = {};
 
-/** Working and monitoring, stopping, and a client without the operate scope (Stop inert). */
+/** Several tasks, one task, stopping, and a client with nothing to stop (no square). */
 export const States: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

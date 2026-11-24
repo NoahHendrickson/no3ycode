@@ -449,7 +449,7 @@ export function SidebarV2DraftMark() {
     column stays aligned; the slow white opacity breath (50% → 20%) is the
     signal, not a hue or a text label. Keyframes in `theme.custom.css` are
     duty-cycled and stepped so the compositor is not woken every vsync. */
-export function SidebarV2MonitoringMark() {
+function SidebarV2MonitoringMark() {
   return (
     <span aria-hidden className={MARK_SLOT_CLASS}>
       <span data-fork-monitoring-pulse className="size-2.5 rounded-full" />

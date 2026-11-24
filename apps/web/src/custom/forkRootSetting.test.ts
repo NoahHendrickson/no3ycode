@@ -6,6 +6,7 @@ const ATTRIBUTE = "data-fork-test-switch";
 function stubBrowser(stored: string | null) {
   const values = new Map<string, string>(stored === null ? [] : [[STORAGE_KEY, stored]]);
   const attributes = new Map<string, string>();
+  const properties = new Map<string, string>();
   const storageListeners: Array<(event: { key: string | null }) => void> = [];
   vi.stubGlobal("window", {
     localStorage: {
@@ -21,6 +22,10 @@ function stubBrowser(stored: string | null) {
     documentElement: {
       setAttribute: (name: string, value: string) => attributes.set(name, value),
       removeAttribute: (name: string) => attributes.delete(name),
+      style: {
+        setProperty: (name: string, value: string) => properties.set(name, value),
+        removeProperty: (name: string) => properties.delete(name),
+      },
     },
   });
   const fireStorage = (value: string | null) => {
@@ -28,7 +33,7 @@ function stubBrowser(stored: string | null) {
     else values.set(STORAGE_KEY, value);
     for (const listener of storageListeners) listener({ key: STORAGE_KEY });
   };
-  return { attributes, fireStorage, storageListeners };
+  return { attributes, properties, fireStorage, storageListeners };
 }
 
 async function initialize() {
@@ -65,6 +70,23 @@ describe("createForkRootSetting", () => {
     (await initialize())();
     fireStorage("true");
     expect(attributes.has(ATTRIBUTE)).toBe(false);
+  });
+
+  it("writes a CSS variable instead of an attribute when given one", async () => {
+    const { attributes, properties, fireStorage } = stubBrowser("false");
+    const Schema = await import("effect/Schema");
+    const { createForkRootSetting } = await import("./forkRootSetting");
+    createForkRootSetting({
+      storageKey: STORAGE_KEY,
+      schema: Schema.Boolean,
+      defaultValue: true,
+      cssVariable: "--fork-test-switch",
+      cssValue: (enabled) => (enabled ? null : "0"),
+    }).initialize();
+    expect(properties.get("--fork-test-switch")).toBe("0");
+    expect(attributes.size).toBe(0);
+    fireStorage("true");
+    expect(properties.has("--fork-test-switch")).toBe(false);
   });
 
   it("treats an unreadable value as on", async () => {

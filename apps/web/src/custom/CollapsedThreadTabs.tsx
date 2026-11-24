@@ -110,6 +110,7 @@ import { ScopeCheckboxItem } from "./SidebarV2ChromeRows";
 import { openSidebarThreadMenu, startSidebarThreadInProject } from "./sidebarActionsBridge";
 import { makeSplitDropHandlers, splitThreadDragSourceProps } from "./splitThreads/splitThreadDrag";
 import { closeSplitDraftAt } from "./splitThreads/splitPaneNavigation";
+import { useSplitThreadStore } from "./splitThreads/splitThreadStore";
 import { resolveSidebarV2CardStatus } from "./sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
 import { sidebarDraftModelSelection, sidebarDraftTitleFromPrompt } from "./sidebarV2DraftRows";
@@ -219,6 +220,7 @@ type StripEntry =
 
 function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly ScopedThreadRef[] }) {
   const paneThreadKeys = props.paneThreadRefs.map(scopedThreadKey);
+  const dockActive = useSplitThreadStore((state) => state.docked !== null);
   // Looked up by each pane's own thread: the route names only the focused pane's draft.
   const paneDraftIds = useComposerDraftStore(
     useShallow((store) => props.paneThreadRefs.map((ref) => store.getDraftIdByRef(ref))),
@@ -444,7 +446,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       .map((tab) => tab.threadKey),
   );
   const splitDropHandlers = makeSplitDropHandlers({
-    canPair: (threadKey) => splitPairableKeys.has(threadKey),
+    // A pair made while a thread is docked would stay hidden behind the dock.
+    canPair: (threadKey) => !dockActive && splitPairableKeys.has(threadKey),
     openThreadKey,
     openThread: (threadRef) => {
       clearSidebarSelection();

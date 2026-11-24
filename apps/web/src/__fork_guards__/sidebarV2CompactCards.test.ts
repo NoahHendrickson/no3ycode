@@ -58,7 +58,9 @@ describe("fork guard: sidebar-v2-compact-cards", () => {
     const px = SIDEBAR_V2_CARD_ALIGNMENT_PX;
     expect(sidebarV2CompactCardHeight()).toBe(px.compactCardPadY * 2 + px.titleLine);
     expect(sidebarV2CompactCardHeight()).toBe(32);
-    expect(sidebar).toContain(`[contain-intrinsic-size:auto_${sidebarV2CompactCardHeight()}px]`);
+    expect(sidebar).toContain(
+      `[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_${sidebarV2CompactCardHeight() - px.titleLine}px)]`,
+    );
   });
 
   it("gives a compact card a pill, not the shelf row's corner", () => {

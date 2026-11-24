@@ -74,20 +74,27 @@ function isUntouchedLandingDraft(landing: LandingDraft, session: DraftSessionSta
 
 /**
  * Settles every remembered landing draft except the open one: discards it if
- * untouched, otherwise forgets it. Either way it is no longer a landing draft.
+ * untouched, otherwise forgets it. An untouched one still showing as the dock's
+ * left pane stays remembered, so a later sweep discards it once it is not.
  */
 export function sweepLandingDrafts(openDraftId: DraftId | null): void {
   const drafts = readLandingDrafts();
   if (drafts.length === 0) return;
   const store = useComposerDraftStore.getState();
   const kept: LandingDraft[] = [];
+  const dockLeft = useSplitThreadStore.getState().docked?.left ?? null;
   for (const landing of drafts) {
     if (landing.id === openDraftId) {
       kept.push(landing);
       continue;
     }
     const session = store.getDraftSession(landing.id);
-    if (session && isUntouchedLandingDraft(landing, session)) store.clearDraftThread(landing.id);
+    if (!session || !isUntouchedLandingDraft(landing, session)) continue;
+    if (sameThread(dockLeft, scopeThreadRef(session.environmentId, session.threadId))) {
+      kept.push(landing);
+    } else {
+      store.clearDraftThread(landing.id);
+    }
   }
   writeLandingDrafts(kept);
 }

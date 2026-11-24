@@ -202,7 +202,8 @@ describe("fork guard: fork-sidebar-chrome", () => {
     const action = /const CHROME_ACTION = cn\(\s*"([^"]+)"/u.exec(rows)?.[1];
     expect(action).toBeDefined();
     for (const cls of [
-      "h-8",
+      "h-auto",
+      "py-1.5",
       "w-full",
       "gap-1.5",
       "rounded-[10px]",
@@ -304,11 +305,11 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(rows.split("CHROME_ROW_ICON_TINT").length - 1).toBeGreaterThanOrEqual(3);
   });
 
-  it("keeps chrome type at 14px for actions and the Threads label", () => {
+  it("keeps chrome type at Sidebar font size for actions and the Threads label", () => {
     const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
     const type = /const CHROME_TYPE\s*=\s*"([^"]+)"/u.exec(rows)?.[1];
     expect(type).toBeDefined();
-    expect(type).toContain("text-[0.875rem]");
+    expect(type).toContain("text-sidebar-chrome");
     // Label/14 Regular at the panel's foreground. The active twin displaces
     // sidebarMenuButtonVariants' data-[active=true]:font-medium so a held
     // New agent draft does not jump back to Medium.
@@ -339,7 +340,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
-      '"text-[0.75rem] leading-4 font-medium text-muted-foreground"',
+      '"text-sidebar-meta font-medium text-muted-foreground"',
     );
   });
 

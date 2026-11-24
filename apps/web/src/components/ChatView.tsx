@@ -364,9 +364,8 @@ import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";
 import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";
 import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";
 import { forkQueuedItemCount } from "~/custom/forkQueuedItems";
-import { resolveComposerBackgroundWork } from "~/custom/composerBackgroundWork.logic";
+import { composerBackgroundWorkItems } from "~/custom/composerBackgroundWork.logic";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
-import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-stage-stamps — see .fork/customizations.yaml#fork-stage-stamps */
 import { forkChatColumnRef, forkDraftHeroShownRef } from "~/custom/forkStageStamps";
@@ -2741,6 +2740,7 @@ export default function ChatView(props: ChatViewProps) {
     shortcuts: threadLifecycleShortcuts,
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
     activeBackgroundTasks,
+    canStopBackgroundWork,
     isStoppingBackgroundWork,
     handleStopBackgroundWorkStable,
     /* fork:end fork-composer-shell */
@@ -2790,9 +2790,10 @@ export default function ChatView(props: ChatViewProps) {
      Working fleets and monitoring leave the banner stack for a chip above the composer, beside
      the thread's PR (custom/ComposerBackgroundWork). Stop handler and task list come from
      useThreadLifecycle, like upstream's row. */
-  const composerBackgroundWorkPresentation = resolveComposerBackgroundWork(
-    presentPendingBackgroundWork(activeBackgroundTasks),
+  const composerBackgroundWork = composerBackgroundWorkItems(
+    activeBackgroundTasks,
     serverProjection?.subagents,
+    serverProjection?.runs,
   );
   // The queue card collapses into a pill in this row.
   const [forkQueueExpanded, setForkQueueExpanded] = useState(true);
@@ -2810,12 +2811,11 @@ export default function ChatView(props: ChatViewProps) {
             cwd={gitStatusCwd}
           />
         )}
-        {composerBackgroundWorkPresentation ? (
+        {composerBackgroundWork.length > 0 ? (
           <ComposerBackgroundWorkChip
-            presentation={composerBackgroundWorkPresentation}
-            seed={`${activeThread.environmentId}:${activeThread.id}`}
+            items={composerBackgroundWork}
             stopping={isStoppingBackgroundWork}
-            canStop={canOperateThread}
+            canStop={canStopBackgroundWork}
             onStop={() => void handleStopBackgroundWorkStable()}
             onOpenThread={onOpenRelatedThreadStable}
             environmentId={activeThread.environmentId}

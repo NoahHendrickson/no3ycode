@@ -1,5 +1,5 @@
 /**
- * The transcript's subagents as the Mac fork's subagent card (`.fork/customizations.yaml#no3y-mobile-redesign`):
+ * The transcript's subagents as rows of one grouped card (`.fork/customizations.yaml#no3y-mobile-redesign`):
  * the provider's mark in a tile with the Threads list's status mark at its corner, the title over
  * model and effort, and the elapsed time; no activity line. A tap opens the agent's thread.
  */
@@ -88,27 +88,35 @@ function No3ySubagentCards(props: CardsProps) {
       <View style={{ gap: 8, paddingVertical: 4 }}>
         {agents.length > 1 ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <HugeIcon icon={Robot01Icon} size={16} color={palette.foreground} />
-            <Text
-              numberOfLines={1}
-              style={{ flex: 1, fontSize: 14, ...NO3Y_FONT.medium, color: palette.titleInk }}
-            >
-              {`Kicked off ${agents.length} subagents`}
-              <Text style={{ ...NO3Y_FONT.regular, color: palette.metaInk }}>
-                {`  ${summarizeSubagentStatuses(agents.map((agent) => agent.status))}`}
+            <HugeIcon icon={Robot01Icon} size={15} color={palette.metaInk} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, color: palette.metaInk }}>
+              <Text style={{ ...NO3Y_FONT.medium, color: palette.foreground }}>
+                {`Kicked off ${agents.length} subagents`}
               </Text>
+              {` · ${summarizeSubagentStatuses(agents.map((agent) => agent.status))}`}
             </Text>
             <Elapsed agents={agents} palette={palette} />
           </View>
         ) : null}
-        {agents.map((agent) => (
-          <SubagentCard
-            key={agent.item.id}
-            agent={agent}
-            environmentId={props.environmentId}
-            palette={palette}
-          />
-        ))}
+        <View
+          style={{
+            overflow: "hidden",
+            borderRadius: 18,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: palette.controlBorder,
+            backgroundColor: palette.controlSurface,
+          }}
+        >
+          {agents.map((agent, index) => (
+            <SubagentRow
+              key={agent.item.id}
+              agent={agent}
+              divided={index > 0}
+              environmentId={props.environmentId}
+              palette={palette}
+            />
+          ))}
+        </View>
       </View>
     </WorkLogBlock>
   );
@@ -125,9 +133,8 @@ export function Elapsed(props: {
     <Text
       style={{
         fontSize: 13,
-        ...NO3Y_FONT.medium,
         fontVariant: ["tabular-nums"],
-        color: props.palette.foreground,
+        color: props.palette.metaInk,
       }}
     >
       {elapsed}
@@ -137,9 +144,10 @@ export function Elapsed(props: {
 
 const TILE = 32;
 
-function SubagentCard(props: {
+function SubagentRow(props: {
   readonly agent: SubagentItem &
     Pick<OrchestrationV2Subagent, "model" | "modelSelection"> & { readonly item: SubagentItem };
+  readonly divided: boolean;
   readonly environmentId: EnvironmentId;
   readonly palette: FlatGlassPalette;
 }) {
@@ -206,15 +214,14 @@ function SubagentCard(props: {
       disabled={target === null}
       onPress={open}
       style={({ pressed }) => ({
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 20,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: palette.controlBorder,
-        backgroundColor: pressed ? palette.rowSelected : palette.controlSurface,
+        paddingHorizontal: 14,
+        paddingVertical: 11,
+        borderTopWidth: props.divided ? StyleSheet.hairlineWidth : 0,
+        borderTopColor: palette.hairline,
+        backgroundColor: pressed ? palette.rowPressed : "transparent",
       })}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <No3ySubagentTile
           driver={driver}
           iconUrl={provider?.iconUrl}
@@ -225,7 +232,7 @@ function SubagentCard(props: {
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text
             numberOfLines={1}
-            style={{ fontSize: 15, ...NO3Y_FONT.medium, color: palette.titleInk }}
+            style={{ fontSize: 15, lineHeight: 20, ...NO3Y_FONT.medium, color: palette.titleInk }}
           >
             {presentation.title}
           </Text>
@@ -233,6 +240,7 @@ function SubagentCard(props: {
             numberOfLines={1}
             style={{
               fontSize: 13,
+              lineHeight: 17,
               color:
                 failed && spec === presentation.statusLabel
                   ? palette.statusFailed
@@ -245,7 +253,7 @@ function SubagentCard(props: {
         </View>
         {agent.startedAt ? <Elapsed agents={[agent]} palette={palette} /> : null}
         {target !== null ? (
-          <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
+          <HugeIcon icon={ArrowRight01Icon} size={13} color={palette.faintInk} />
         ) : null}
       </View>
     </Pressable>
