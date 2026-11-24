@@ -110,7 +110,7 @@ function ChatList(props: { readonly topInset: number; readonly bottomInset: numb
       data={chats}
       // A sent, archived or deleted chat moves the others along rather than jumping.
       itemLayoutAnimation={NO3Y_LAYOUT}
-      estimatedItemSize={64}
+      estimatedItemSize={42}
       keyExtractor={(thread) => `${thread.environmentId}:${thread.id}`}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
@@ -169,6 +169,7 @@ function ChatList(props: { readonly topInset: number; readonly bottomInset: numb
         <No3yThreadRow
           thread={thread}
           variant="card"
+          chatLine
           statusKind={resolveNo3yThreadCardStatusKind(thread, { now: nowIso })}
           statusSection={undefined}
           selected={false}

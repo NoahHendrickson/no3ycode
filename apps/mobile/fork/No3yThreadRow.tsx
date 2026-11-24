@@ -179,6 +179,8 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
 export const No3yThreadRow = memo(function No3yThreadRow(props: {
   readonly thread: EnvironmentThreadShell;
   readonly variant: "card" | "slim";
+  /** Chat tab card: one line, the provider mark before the title. */
+  readonly chatLine?: boolean | undefined;
   readonly statusKind: SidebarV2CardStatusKind | null;
   readonly statusSection: SidebarV2StatusBucket | undefined;
   readonly selected: boolean;
@@ -589,6 +591,43 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
   const prBadgeLabel = pr ? resolveThreadPrBadgeAction(pr).accessibilityLabel : null;
   const isSlim = variant === "slim";
 
+  const providerMark = props.providerInstance ? (
+    hasNo3yProviderMark(props.providerInstance.driverKind) && !props.providerInstance.showBadge ? (
+      <No3yProviderMark provider={props.providerInstance.driverKind} size={14} />
+    ) : (
+      <ProviderInstanceIcon
+        iconUrl={providerIconUrl}
+        provider={props.providerInstance.driverKind}
+        size={14}
+        displayName={props.providerInstance.displayName}
+        accentColor={props.providerInstance.accentColor}
+        showBadge={props.providerInstance.showBadge}
+        surfaceColor={palette.stageBackground}
+      />
+    )
+  ) : null;
+
+  const trailingMarks = (
+    <>
+      {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
+      {pinned ? (
+        <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
+      ) : null}
+      {statusKind === "woke" && props.wokeAt !== null ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss Woke notification"
+          hitSlop={8}
+          onPress={handleAcknowledgeWoke}
+        >
+          <No3yStatusMark kind="woke" palette={palette} idleMode="dot" />
+        </Pressable>
+      ) : (
+        <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
+      )}
+    </>
+  );
+
   const renderPressable = (close: () => void) => (
     <View style={{ paddingHorizontal: 10 }}>
       <Pressable
@@ -642,6 +681,23 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                 ? props.snoozeWakeLabelText
                 : props.timeLabel}
             </Text>
+          </>
+        ) : props.chatLine ? (
+          <>
+            {providerMark}
+            <Text
+              numberOfLines={1}
+              style={{
+                flex: 1,
+                ...NO3Y_FONT.regular,
+                fontSize: 16,
+                lineHeight: 18,
+                color: palette.titleInk,
+              }}
+            >
+              {thread.title}
+            </Text>
+            {trailingMarks}
           </>
         ) : (
           <>
@@ -740,25 +796,9 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         />
                       </Pressable>
                     ) : null}
-                    {props.providerInstance ? (
+                    {providerMark ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        {hasNo3yProviderMark(props.providerInstance.driverKind) &&
-                        !props.providerInstance.showBadge ? (
-                          <No3yProviderMark
-                            provider={props.providerInstance.driverKind}
-                            size={14}
-                          />
-                        ) : (
-                          <ProviderInstanceIcon
-                            iconUrl={providerIconUrl}
-                            provider={props.providerInstance.driverKind}
-                            size={14}
-                            displayName={props.providerInstance.displayName}
-                            accentColor={props.providerInstance.accentColor}
-                            showBadge={props.providerInstance.showBadge}
-                            surfaceColor={palette.stageBackground}
-                          />
-                        )}
+                        {providerMark}
                         <Text
                           numberOfLines={1}
                           style={{
@@ -777,22 +817,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                 )}
               </View>
             </View>
-            {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
-            {pinned ? (
-              <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
-            ) : null}
-            {statusKind === "woke" && props.wokeAt !== null ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss Woke notification"
-                hitSlop={8}
-                onPress={handleAcknowledgeWoke}
-              >
-                <No3yStatusMark kind="woke" palette={palette} idleMode="dot" />
-              </Pressable>
-            ) : (
-              <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
-            )}
+            {trailingMarks}
           </>
         )}
       </Pressable>
