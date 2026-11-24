@@ -470,8 +470,8 @@ function SidebarV2StillWorkingMark() {
 /** Waiting, drawn still: the monitoring dot at rest, in the muted ink. */
 function SidebarV2StillMonitoringMark() {
   return (
-    <span aria-hidden className={MARK_SLOT_CLASS}>
-      <span className="size-2.5 rounded-full bg-muted-foreground" />
+    <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
+      <span className="size-2.5 rounded-full bg-current" />
     </span>
   );
 }
