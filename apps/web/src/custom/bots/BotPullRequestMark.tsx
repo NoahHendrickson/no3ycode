@@ -13,7 +13,7 @@ import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPre
 import { cn } from "~/lib/utils";
 import { useSharedPullRequestSummary } from "~/state/pullRequests";
 
-import type { BotPullRequest } from "./botDigestItemLinks";
+import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
 
 /** Its state and title: a thread's own link carries them; for a branch's pull request, the
     summary the sidebar badge already read, if it has. */

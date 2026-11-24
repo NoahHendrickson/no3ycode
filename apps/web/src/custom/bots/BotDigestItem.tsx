@@ -1,6 +1,6 @@
 /**
  * One line of a bot's digest — see `.fork/customizations.yaml#fork-bot-digest`: its words, then
- * the threads and pull requests it links (botDigestItemLinks), each opening its target.
+ * the threads and pull requests it links (client-runtime fork-bot-digest-links), each opening its target.
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
@@ -22,9 +22,9 @@ import {
   type BotPullRequest,
   resolveBotDigestLinks,
   waitingQuestionThread,
-} from "./botDigestItemLinks";
+} from "@t3tools/client-runtime/fork-bot-digest-links";
 import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
-import type { BotDigestItem } from "./botDigestSections";
+import type { BotDigestItem } from "@t3tools/client-runtime/fork-bot-digest";
 
 /** The threads the panel already holds, which the digest reads its links against. */
 export interface BotDigestThreads {

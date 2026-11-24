@@ -7867,13 +7867,13 @@
     dismissed" on the status row brings them back. Reply (a ghost
     beside answers, outline alone) quotes the ask into the composer beneath, or, when a thread it links waits
     on a question (hasPendingUserInput), opens that thread to answer it there. Each line is
-    parsed by custom/bots/botDigestSections: one plain line per item (list marks, emphasis and
+    parsed by client-runtime forkBotDigest (shared with iOS): one plain line per item (list marks, emphasis and
     link targets dropped; links that follow a line's last sentence dropped, so it reads as its
     ask, while a link the sentence runs into keeps its words; a bare pull request URL reads as
     its number; "Nothing." left out). Under a line (custom/bots/BotDigestItem), each linked
     thread shows its sidebar status mark and title and opens it (one chip however the link
     spells it; one it cannot find shows the bot's label), and each pull request the line names
-    or a linked thread has (its linked one, else its branch's: custom/bots/botDigestItemLinks,
+    or a linked thread has (its linked one, else its branch's: client-runtime forkBotDigestLinks,
     also the Threads rows' order) shows its state and number (custom/bots/BotPullRequestMark,
     shared with the Threads rows; a branch pull request's state from the shared summaries) and
     opens it as the sidebar PR badge does, opening its thread when it lands in that thread's
@@ -7883,21 +7883,45 @@
     (revisionedQuery keyed by botDigestRevision, so a read never lands before the answers it
     settles; the shell's latest run until the conversation loads). An empty, missing or unreadable digest
     draws nothing.
+    On the no3y iPhone composer (fork/No3yBotDigest.tsx, fenced in ThreadDetailScreen beside
+    ChildThreadApprovals, under the no3y layout) the same digest is a 24pt-radius glass card
+    rising in above the composer (the panel stack above the composer draws over the composer's
+    fade-to-page scrim on the no3y layout, a fenced animated zIndex, so the scrim never darkens the
+    bottom edge of the card or any other banner there; it drops back under the composer while the
+    composer's command popover, drawn inside the composer on iOS, is open; the card carries the composer's own No3yBottomScrim, so the transcript never
+    reads through it, and sits under the banners before it so that scrim never covers them):
+    the status strip with the pager and, at its end, the X
+    that dismisses the ask on show (so the question runs the card's full width), then
+    the ask on show with its tile (the pull request state glyph in the no3y PR tones, else the
+    attention amber with a question glyph), question, detail, linked threads (their no3y status
+    mark and title) and pull requests (glyph and number, opening the PR screen), answers as
+    outline pills and Reply. The same answered-ask rules hold (fork/no3yBotDigestAnswers.ts, on
+    the mobile atom registry); answers queue through startTurn, and Reply quotes into the
+    thread's composer draft. Dismissals last for the app session rather than per device, with no way to bring one back
+    early (no "Show N dismissed", by the owner's choice). The
+    digest reads again when the conversation's run revision moves (one effect refresh), and a
+    branch pull request's state comes from the thread's own PR badge (useThreadPr).
   tier: 4
   files:
     - apps/web/src/custom/bots/BotDigest.tsx
     - apps/web/src/custom/bots/BotDigestItem.tsx
     - apps/web/src/custom/bots/BotPullRequestMark.tsx
-    - apps/web/src/custom/bots/botDigestItemLinks.ts
-    - apps/web/src/custom/bots/botDigestSections.ts
     - apps/web/src/custom/bots/useAnsweredBotDigestAsks.ts
+    - packages/client-runtime/src/forkBotDigest.ts
+    - packages/client-runtime/src/forkBotDigestLinks.ts
+    - apps/mobile/fork/No3yBotDigest.tsx
+    - apps/mobile/fork/no3yBotDigestAnswers.ts
   shadows: []
   watch:
     # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
     - apps/web/src/components/ChatView.tsx
+    # The same asks above the iPhone composer, beside ChildThreadApprovals (fenced).
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    # Exports the two subpaths both clients import.
+    - packages/client-runtime/package.json
   verify:
-    - apps/web/src/custom/bots/botDigestSections.test.ts
-    - apps/web/src/custom/bots/botDigestItemLinks.test.ts
+    - packages/client-runtime/src/forkBotDigest.test.ts
+    - packages/client-runtime/src/forkBotDigestLinks.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-crew
   intent: >

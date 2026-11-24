@@ -17,7 +17,7 @@ import {
   type No3yPullRequestTone,
 } from "./no3yPullRequestTone";
 
-const GLYPHS: Record<No3yPullRequestTone, HugeIconData> = {
+export const NO3Y_PULL_REQUEST_GLYPHS: Record<No3yPullRequestTone, HugeIconData> = {
   open: GitPullRequestIcon,
   merged: GitMergeIcon,
   closed: GitPullRequestClosedIcon,
@@ -38,7 +38,7 @@ export function No3yPullRequestMark(props: {
   const color = no3yPullRequestColor(tone, props.palette);
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: props.gap }}>
-      <HugeIcon icon={GLYPHS[tone]} size={12} color={color} strokeWidth={1.5} />
+      <HugeIcon icon={NO3Y_PULL_REQUEST_GLYPHS[tone]} size={12} color={color} strokeWidth={1.5} />
       <Text style={{ ...props.textStyle, color }}>{props.pr.label}</Text>
     </View>
   );

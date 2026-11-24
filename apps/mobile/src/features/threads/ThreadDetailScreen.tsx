@@ -24,6 +24,9 @@ import { NO3Y_PICK_PROJECT_REASON } from "../../../fork/no3yInPlaceProject";
 /* fork:begin fork-queued-runs-banner — see .fork/customizations.yaml#fork-queued-runs-banner */
 import { No3yQueuedRunsBanner } from "../../../fork/No3yQueuedRunsBanner";
 /* fork:end fork-queued-runs-banner */
+/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+import { No3yBotDigest } from "../../../fork/No3yBotDigest";
+/* fork:end fork-bot-digest */
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import {
   isAtomCommandInterrupted,
@@ -1270,6 +1273,13 @@ function ThreadDetailBody(
       { duration: 180, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System },
     ),
   );
+  /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+  // The panels draw over the composer's scrim so it never fades their bottoms, but drop under the
+  // composer while its iOS command popover (drawn inside the composer) is open.
+  const no3yPanelsLayer = useAnimatedStyle(() => ({
+    zIndex: composerPopoverHeight.value > 0 ? 0 : 1,
+  }));
+  /* fork:end fork-bot-digest */
   const floatingControlLift = useDerivedValue(
     () =>
       Math.max(
@@ -1742,7 +1752,12 @@ function ThreadDetailBody(
                 list's bottom inset, so any padding above the pill/composer
                 pushes the resting content floor up by the same amount. */}
               <View onLayout={handleComposerOverlayLayout} className="w-full">
-                <View className="w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+                {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+                <Animated.View
+                  className="w-full self-center"
+                  style={[{ maxWidth: contentMaxWidth }, no3yBottomNav ? no3yPanelsLayer : null]}
+                >
+                  {/* fork:end fork-bot-digest */}
                   {/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */}
                   <No3yStatusPillSwap
                     enabled={no3yBottomNav}
@@ -1826,6 +1841,21 @@ function ThreadDetailBody(
                       threadRef={props.selectedThreadDetailRef}
                       maxHeight={pendingUserInputMaxHeight}
                     />
+                    {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+                    {no3yBottomNav ? (
+                      <No3yBotDigest
+                        threadRef={props.selectedThreadDetailRef}
+                        // A queued message being edited owns the composer, and a hidden composer
+                        // (an open question, a failed start) shows nothing: Reply writes into neither.
+                        composerDraftKey={
+                          props.queuedRunEdit === null && !composerSlotHidden
+                            ? props.composerDraftKey
+                            : null
+                        }
+                        canOperateThread={props.canOperateThread}
+                      />
+                    ) : null}
+                    {/* fork:end fork-bot-digest */}
                     <ThreadGuestShareBar
                       threadRef={props.selectedThreadDetailRef}
                       canOperateThread={props.canOperateThread}
@@ -1988,7 +2018,9 @@ function ThreadDetailBody(
                     ) : null}
                     {/* fork:end fork-queued-runs-banner */}
                   </ComposerPanels>
-                </View>
+                  {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+                </Animated.View>
+                {/* fork:end fork-bot-digest */}
 
                 <View style={composerSlotHidden ? { display: "none" } : undefined}>
                   {isProviderSubagent ? (
