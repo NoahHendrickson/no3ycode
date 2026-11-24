@@ -2632,9 +2632,12 @@
     color: white;
   }
 
-  /* The queue card follows the iOS one: a 40px header and 40px rows that run edge to edge,
-     split by full-width hairlines. */
-  & [data-fork-queued-runs-banner] {
+  /* The queue card follows the iOS one, and the stash is its twin: a 40px header and 40px rows
+     that run edge to edge, split by full-width hairlines. */
+  & :is([data-fork-queued-runs-banner], [data-composer-stash-drawer]) {
+    /* Row highlights and ghost buttons fill with --accent, which on Flat Glass is the card's
+       own lift; the composer's control hover reads on it. */
+    --accent: var(--fork-composer-control-hover);
     padding: 0;
     overflow: clip;
     border-radius: var(--fork-composer-radius);
@@ -2646,12 +2649,22 @@
       border-radius: 0;
     }
 
-    & ol {
+    & :is(ol, ul) {
       gap: 0;
     }
 
     & li[data-composer-banner-row] {
       border-top: 1px solid var(--fork-composer-border);
+    }
+
+    /* A scrolling list clears the scrollbar inside each row, so the rules and highlights still
+       reach the card's edge. */
+    & [data-slot="scroll-area-viewport"][data-has-overflow-y] > div {
+      padding-inline-end: 0;
+    }
+
+    & [data-has-overflow-y] li[data-composer-banner-row] {
+      padding-inline-end: 16px;
     }
   }
 }

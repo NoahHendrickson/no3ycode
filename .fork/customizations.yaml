@@ -3727,6 +3727,11 @@
     stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
     a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
     keep the glass.
+    The open stash is the queue card's twin: ChatComposer renders it as the
+    card nearest the prompt in the banners dock (not upstream's portaled
+    drawer layer), its tab hidden while it is open, and it shares the queue
+    card's rules and parts (custom/ComposerCardParts.tsx: the counted title
+    and the trash remove). Both titles read at text-sm/5 on the banner scale.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3799,6 +3804,9 @@
     - apps/web/src/components/chat/ComposerSurface.tsx
     # The dock the drawers, banners and stash badge now ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
+    # The stash card's title, trash remove and composer-controls stamp, fenced.
+    - apps/web/src/components/chat/ComposerStashMenu.tsx
+    - apps/web/src/custom/ComposerCardParts.tsx
     # Carries .fork-timeline-cutoff on the scroller, unconditionally, so the
     # transcript mask survives the banner states that drop upstream's top fade.
     # Upstream reworking that className is what would silently un-mask it.
