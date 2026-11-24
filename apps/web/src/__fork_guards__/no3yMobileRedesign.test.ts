@@ -680,6 +680,9 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(botsGrid).toContain("<PetalCard");
     expect(botsGrid).toContain("const PER_ROW = 5;");
     expect(botsGrid).not.toContain("StatusLine");
+    // Glass tiles, so their rows rise in rather than fade.
+    expect(botsGrid).toContain("<No3yGlassLayer");
+    expect(botsGrid).not.toContain("NO3Y_FADE_IN");
     expect(readRepoFile("apps/mobile/fork/No3yThreadRow.tsx")).not.toContain(
       'statusKind === "limited" ? palette.statusAttention : palette.statusFailed',
     );
