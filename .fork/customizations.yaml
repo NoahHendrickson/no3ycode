@@ -6433,6 +6433,11 @@
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
     --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
+    Code and file links are both exactly line-height 1.3 tall, whatever fonts the user picks: no
+    block padding or border (upstream code has both), and code is inline-block
+    so its box is the line, not the font's ascent + descent. A code span longer
+    than the line wraps inside one rounded box. The file icon is the only
+    difference between the two.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's

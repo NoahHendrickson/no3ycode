@@ -3468,11 +3468,24 @@
   :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
   .chat-markdown
   .chat-markdown-file-link:not([data-state="invalid"]) {
+  border: 0;
   border-radius: 5px;
   background: var(--fork-inline-code-wash);
-  padding-inline: 6px;
+  padding: 0 6px;
   color: var(--info-foreground);
   font-size: 0.95em;
+  line-height: 1.3;
+}
+
+/* An inline box's background spans its font's ascent + descent, which differs per
+   user-picked code font; as a one-line box it is exactly line-height, like a file link. */
+:root[data-fork="noahhendrickson-t3code"]
+  :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
+  .chat-markdown
+  :not(pre)
+  > code {
+  display: inline-block;
+  max-inline-size: 100%;
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
