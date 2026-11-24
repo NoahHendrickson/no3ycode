@@ -11,7 +11,11 @@ import {
 } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 
-import { composerBackgroundWorkItems, glanceCommandLabel } from "./composerBackgroundWork.logic";
+import {
+  composerBackgroundWorkItems,
+  composerBackgroundWorkLabel,
+  glanceCommandLabel,
+} from "./composerBackgroundWork.logic";
 
 describe("glanceCommandLabel", () => {
   it.each([
@@ -37,6 +41,18 @@ describe("glanceCommandLabel", () => {
     ["vp run dev &", "vp run dev"],
   ])("%s → %s", (command, expected) => {
     expect(glanceCommandLabel(command)).toBe(expected);
+  });
+});
+
+describe("composerBackgroundWorkLabel", () => {
+  it.each([
+    [["subagent"], "1 subagent"],
+    [["subagent", "subagent", "subagent", "subagent"], "4 subagents"],
+    [["monitor"], "Monitoring"],
+    [["command", "monitor", "background_task"], "Monitoring"],
+    [["subagent", "monitor"], "Background tasks"],
+  ] as const)("%j → %s", (kinds, expected) => {
+    expect(composerBackgroundWorkLabel(kinds.map((kind) => ({ kind })))).toBe(expected);
   });
 });
 

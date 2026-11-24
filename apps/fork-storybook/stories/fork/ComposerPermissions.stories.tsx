@@ -43,8 +43,8 @@ function Chip({ mode }: { mode: RuntimeMode }) {
   );
 }
 
-/** The chip's menu, open, with the composer popup's marker: the fork's menu tab strip, and the
-    shown mode named under it. */
+/** The chip's menu, open, mounted as the chip mounts it: a radio list of the modes, each name
+    over its description, the picked one checked on the right. */
 function PermissionsMenu(props: SectionProps) {
   return (
     <Menu defaultOpen modal={false}>
@@ -91,7 +91,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Picking a mode moves the `runtimeMode` control; the options control feeds the menu. */
+/** Picking a mode moves the `runtimeMode` control and closes the menu, as in the app; the
+    options control feeds the menu. */
 export const Playground: Story = {
   parameters: { surface: "stage" },
   render: function Render(args) {
@@ -122,8 +123,9 @@ export const Chips: Story = {
   ),
 };
 
-/** The strip with each mode picked, and with a managed policy capping threads at Auto-accept
-    edits, which rules Auto and Full access out. */
+/** The list with each mode picked, and with a managed policy capping threads at Auto-accept
+    edits, which rules Auto and Full access out: those rows are disabled and give the reason in
+    place of their description. */
 export const Menus: Story = {
   parameters: { surface: "stage" },
   render: () => (
@@ -132,7 +134,7 @@ export const Menus: Story = {
         ...POPUP_ANCHOR,
         display: "grid",
         gridTemplateColumns: "repeat(3, 320px)",
-        rowGap: 200,
+        rowGap: 340,
         alignItems: "start",
         justifyItems: "start",
       }}

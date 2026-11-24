@@ -49,6 +49,17 @@ import { useDebouncedValue } from "../../state/queries";
 import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import { useSearchScrollRestoration } from "../layout/workspace/useSearchScrollRestoration";
 import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
+/* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+import { pullRequestProjectIdsByEnvironment } from "../../../fork/no3yPullRequestProjects";
+/* fork:end no3y-pr-project-multiselect */
+/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
+import { flatGlassPalette } from "../../../fork/flatGlassTheme";
+import { No3yBottomTray, useNo3yTrayContentInset } from "../../../fork/No3yBottomTray";
+import { useNo3yBottomNavEnabled } from "../../../fork/no3yBottomNavEnabled";
+import { No3yPullRequestFilterBar } from "../../../fork/No3yPullRequestFilterBar";
+import { No3yPullRequestListCard } from "../../../fork/No3yPullRequestListCard";
+/* fork:end no3y-pr-list-bottom-filters */
 
 function PullRequestListError(props: { readonly message: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -149,23 +160,23 @@ export function PullRequestsScreen(
     () => withoutScratchProjectScope(savedControls, allProjects),
     [allProjects, savedControls],
   );
-  const targets = useMemo(
-    () =>
-      environments
-        .filter(
-          (environment) =>
-            configs.get(environment.environmentId) !== undefined &&
-            (environmentId === null || environment.environmentId === environmentId) &&
-            (!controls.projectEnvironmentId ||
-              environment.environmentId === controls.projectEnvironmentId),
-        )
-        .sort((left, right) => left.environmentId.localeCompare(right.environmentId))
-        .map((environment) => ({
-          environmentId: environment.environmentId,
-          input: pullRequestListInput(controls, query),
-        })),
-    [environments, environmentId, configs, controls, query],
-  );
+  /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
+  const targets = useMemo(() => {
+    const projectIds = pullRequestProjectIdsByEnvironment(controls);
+    return environments
+      .filter(
+        (environment) =>
+          configs.get(environment.environmentId) !== undefined &&
+          (environmentId === null || environment.environmentId === environmentId) &&
+          (projectIds.size === 0 || projectIds.has(environment.environmentId)),
+      )
+      .sort((left, right) => left.environmentId.localeCompare(right.environmentId))
+      .map((environment) => ({
+        environmentId: environment.environmentId,
+        input: pullRequestListInput(controls, query, projectIds.get(environment.environmentId)),
+      }));
+  }, [environments, environmentId, configs, controls, query]);
+  /* fork:end no3y-pr-project-multiselect */
   const result = usePullRequestList(targets);
   const connectedTargets = targets.filter((target) =>
     environments.some(
@@ -261,6 +272,24 @@ export function PullRequestsScreen(
         labelColors,
       }),
   });
+  /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+  // The iPhone dock layout draws rows as the Linked pull requests sheet's cards and keeps the
+  // filters in the bottom tray, within thumb reach.
+  const no3y = useNo3yBottomNavEnabled();
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
+  const trayContentInset = useNo3yTrayContentInset();
+  const renderNo3yPullRequest = ({ item }: { readonly item: EnvironmentPullRequestListEntry }) => (
+    <No3yPullRequestListCard
+      item={item}
+      palette={palette}
+      onSelect={selectPullRequest}
+      getActions={actions}
+      onAction={select}
+      busy={busyKey === pullRequestKey(item)}
+    />
+  );
+  /* fork:end no3y-pr-list-bottom-filters */
   const renderPullRequest = ({ item }: { readonly item: EnvironmentPullRequestListEntry }) => (
     <PullRequestListRow
       item={item}
@@ -272,6 +301,40 @@ export function PullRequestsScreen(
       sidebar={sidebar}
     />
   );
+  /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+  // Built once for both homes: the list header's row, or the bottom tray on the iPhone layout.
+  const savedViewsMenu = (
+    <SavedViewsMenu
+      read={(preferences) => preferences.pullRequestSavedViews}
+      write={(pullRequestSavedViews) => ({ pullRequestSavedViews })}
+      list="pullRequest"
+      suggestedName={controls.involvement === "reviewing" ? gt("PRs Requesting My Review") : ""}
+      matches={pullRequestViewMatches}
+      scope={{
+        environmentId,
+        controls,
+        query: tab.searchMode === "resting" ? "" : tab.query,
+      }}
+      onApply={async (view) => {
+        await listControls.applyView(view);
+        workspace.dispatch(
+          view.query.trim()
+            ? { type: "search", tab: "pullRequests" }
+            : { type: "cancel", tab: "pullRequests", scrollToTop: true },
+        );
+        workspace.dispatch({
+          type: "query",
+          tab: "pullRequests",
+          query: view.query.trim(),
+        });
+        void listRef.current?.scrollToOffset({
+          offset: Platform.OS === "ios" ? -insets.top : 0,
+          animated: false,
+        });
+      }}
+    />
+  );
+  /* fork:end no3y-pr-list-bottom-filters */
   const list = (
     <View className={sidebar ? "flex-1 bg-drawer" : "flex-1 bg-screen"}>
       <LegendList
@@ -308,7 +371,11 @@ export function PullRequestsScreen(
           initialScrollOffset > 0 ? initialScrollOffset - contentTopInset : undefined
         }
         contentContainerStyle={{
-          paddingBottom: Math.max(bottomSafeArea, workspace.bottomClearance),
+          /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+          paddingBottom: no3y
+            ? trayContentInset
+            : Math.max(bottomSafeArea, workspace.bottomClearance),
+          /* fork:end no3y-pr-list-bottom-filters */
         }}
         onScroll={(event) => {
           workspace.recordScrollOffset(
@@ -318,48 +385,22 @@ export function PullRequestsScreen(
         }}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        renderItem={renderPullRequest}
+        /* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */
+        renderItem={no3y ? renderNo3yPullRequest : renderPullRequest}
+        /* fork:end no3y-pr-list-bottom-filters */
         // Lifted above the rows so an iOS filter menu's dismissal morph is not covered.
         ListHeaderComponentStyle={{ zIndex: 1 }}
         ListHeaderComponent={
           <>
-            <PullRequestListFilters
-              sidebar={sidebar}
-              savedViewsMenu={
-                <SavedViewsMenu
-                  read={(preferences) => preferences.pullRequestSavedViews}
-                  write={(pullRequestSavedViews) => ({ pullRequestSavedViews })}
-                  list="pullRequest"
-                  suggestedName={
-                    controls.involvement === "reviewing" ? gt("PRs Requesting My Review") : ""
-                  }
-                  matches={pullRequestViewMatches}
-                  scope={{
-                    environmentId,
-                    controls,
-                    query: tab.searchMode === "resting" ? "" : tab.query,
-                  }}
-                  onApply={async (view) => {
-                    await listControls.applyView(view);
-                    workspace.dispatch(
-                      view.query.trim()
-                        ? { type: "search", tab: "pullRequests" }
-                        : { type: "cancel", tab: "pullRequests", scrollToTop: true },
-                    );
-                    workspace.dispatch({
-                      type: "query",
-                      tab: "pullRequests",
-                      query: view.query.trim(),
-                    });
-                    void listRef.current?.scrollToOffset({
-                      offset: Platform.OS === "ios" ? -insets.top : 0,
-                      animated: false,
-                    });
-                  }}
-                />
-              }
-              filters={filters}
-            />
+            {/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */}
+            {no3y ? null : (
+              <PullRequestListFilters
+                sidebar={sidebar}
+                savedViewsMenu={savedViewsMenu}
+                filters={filters}
+              />
+            )}
+            {/* fork:end no3y-pr-list-bottom-filters */}
             {result.data?.errors.length ? (
               <View key={JSON.stringify(targets)}>
                 {result.data.errors.map((error) => (
@@ -433,6 +474,13 @@ export function PullRequestsScreen(
           )
         }
       />
+      {/* fork:begin no3y-pr-list-bottom-filters — see .fork/customizations.yaml#no3y-pr-list-bottom-filters */}
+      {no3y ? (
+        <No3yBottomTray color={palette.stageBackground}>
+          <No3yPullRequestFilterBar filters={filters} savedViewsMenu={savedViewsMenu} />
+        </No3yBottomTray>
+      ) : null}
+      {/* fork:end no3y-pr-list-bottom-filters */}
     </View>
   );
   return props.renderFrame ? props.renderFrame(filters.headerMenu, list) : list;

@@ -13,15 +13,17 @@ import type { Decorator, Preview } from "@storybook/react-vite";
 import { FORK_GLASS_3D_ATTRIBUTE, initializeForkGlass3d } from "~/custom/forkGlass3d";
 import { applyForkMarker } from "~/custom/forkMarker";
 import {
+  BASIC_THEME,
   COOL_DARKER_THEME,
   initializeForkTheme,
   INLET_THEME,
   setForkAppearance,
-  setForkBasicTone,
   setForkInletColor,
 } from "~/custom/forkTheme";
 import { installInletMenuMorph } from "~/custom/inletMenuMorph";
-import { setTheme } from "~/hooks/useTheme";
+import { setAppearanceMode, setTheme } from "~/hooks/useTheme";
+import { I18nProvider } from "~/i18n/I18nProvider";
+import { initializeI18n } from "~/i18n/initializeI18n";
 
 import { forceStateStyles } from "../stories/forcedStates.ts";
 import { DEFAULT_STORY_THEME, STORY_THEME_ITEMS, storyTheme } from "../stories/storyTheme.ts";
@@ -34,16 +36,20 @@ applyForkMarker(document.documentElement);
 initializeForkTheme();
 initializeForkGlass3d();
 installInletMenuMorph();
+// AppRoot.tsx's i18n, English only: useGT, useMessages and m() read GT's config.
+initializeI18n(() => {});
 
 const withSurface: Decorator = (Story, context) => {
   const surface = (
-    <Surface
-      name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
-      inline={context.viewMode === "docs"}
-      dockedSidebar={storyTheme(context.globals).palette === "glass"}
-    >
-      <Story />
-    </Surface>
+    <I18nProvider>
+      <Surface
+        name={(context.parameters["surface"] as SurfaceName | undefined) ?? "stage"}
+        inline={context.viewMode === "docs"}
+        dockedSidebar={storyTheme(context.globals).palette === "glass"}
+      >
+        <Story />
+      </Surface>
+    </I18nProvider>
   );
   // `parameters.router`: a path (or true for "/") mounts the story under a memory router.
   const router: unknown = context.parameters["router"];
@@ -55,7 +61,7 @@ const preview: Preview = {
   decorators: [withSurface],
   globalTypes: {
     theme: {
-      description: "Theme: a Basic tone, Glass, or an Inlet colour",
+      description: "Theme: Basic light or dark, Glass, or an Inlet colour",
       toolbar: { title: "Theme", icon: "paintbrush", dynamicTitle: true, items: STORY_THEME_ITEMS },
     },
   },
@@ -70,8 +76,10 @@ const preview: Preview = {
     } else {
       document.documentElement.removeAttribute(FORK_GLASS_3D_ATTRIBUTE);
     }
-    if (theme.palette === "basic") setForkBasicTone(theme.tone, setTheme);
-    else if (theme.palette === "glass") setForkAppearance(COOL_DARKER_THEME, setTheme);
+    if (theme.palette === "basic") {
+      setForkAppearance(BASIC_THEME, setTheme);
+      setAppearanceMode(theme.appearance);
+    } else if (theme.palette === "glass") setForkAppearance(COOL_DARKER_THEME, setTheme);
     else {
       // Colour first, while the palette isn't Inlet yet, so turning Inlet on settles on the new
       // colour instead of painting the old one for a frame.

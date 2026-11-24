@@ -25,11 +25,6 @@ const DRAFT_POPUP_SELECTOR = [
 
 const POPUP_SETTLE_FRAMES = 6;
 
-/** The usage drawer's slide in and out (ComposerUsageLimitsReadout). The native card replays it
-    in AppKit, since per-frame updates from the page lag the glass. */
-const USAGE_DRAWER_OPEN_ANIMATION = { duration: 0.2, x1: 0.23, y1: 1, x2: 0.32, y2: 1 };
-const USAGE_DRAWER_CLOSE_ANIMATION = { duration: 0.15, x1: 0.4, y1: 0, x2: 1, y2: 1 };
-
 interface DraftLiquidGlassRect {
   readonly x: number;
   readonly y: number;
@@ -47,7 +42,6 @@ interface DraftLiquidGlassPayload {
   readonly imageBase64?: string;
   readonly image: DraftLiquidGlassRect;
   readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
-  readonly animation?: typeof USAGE_DRAWER_OPEN_ANIMATION;
 }
 
 type DraftLiquidGlassSetter = (state: DraftLiquidGlassPayload | null) => Promise<boolean>;
@@ -143,8 +137,7 @@ function rectsIntersect(a: DraftLiquidGlassRect, b: DraftLiquidGlassRect): boole
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
-/** The largest corner: the vessel squares its top corners under an open usage drawer, and one
-    native card takes a single radius. */
+/** The largest corner, since one native card takes a single radius. */
 function readCornerRadius(el: HTMLElement): number {
   const style = getComputedStyle(el);
   const parsed = Math.max(
@@ -156,17 +149,6 @@ function readCornerRadius(el: HTMLElement): number {
     ].map((value) => Number.parseFloat(value) || 0),
   );
   return parsed > 0 ? parsed : 8;
-}
-
-function unionRect(a: DraftLiquidGlassRect, b: DraftLiquidGlassRect): DraftLiquidGlassRect {
-  const x = Math.min(a.x, b.x);
-  const y = Math.min(a.y, b.y);
-  return {
-    x,
-    y,
-    width: Math.max(a.x + a.width, b.x + b.width) - x,
-    height: Math.max(a.y + a.height, b.y + b.height) - y,
-  };
 }
 
 function readDraftPopupElements(stageBox: DraftLiquidGlassRect): HTMLElement[] {
@@ -206,11 +188,7 @@ function buildCardPopupMask(
 function readDraftCardElements(chatView: Element): HTMLElement[] {
   const hero = chatView.querySelector('[data-chat-composer-overlay="true"][data-draft-hero]');
   if (hero === null) return [];
-  const selectors = [
-    "[data-fork-composer-vessel]",
-    "[data-fork-draft-launchpad-card]",
-    "[data-fork-composer-usage-drawer]:not([hidden], [data-ending-style])",
-  ];
+  const selectors = ["[data-fork-composer-vessel]", "[data-fork-draft-launchpad-card]"];
   const elements: HTMLElement[] = [];
   for (const selector of selectors) {
     for (const el of hero.querySelectorAll<HTMLElement>(selector)) {
@@ -272,7 +250,6 @@ interface MeasuredDraftScene {
   readonly popups: ReadonlyArray<HTMLElement>;
   readonly popupCards: ReadonlyArray<DraftLiquidGlassCard>;
   readonly cards: ReadonlyArray<DraftLiquidGlassCard>;
-  readonly drawerOpen: boolean;
 }
 
 function measureDraftGlassScene(
@@ -286,38 +263,14 @@ function measureDraftGlassScene(
 
   const cardBoxes: Array<{ readonly el: HTMLElement; readonly box: DOMRect }> = [];
   const cards: DraftLiquidGlassCard[] = [];
-  let vesselCard: number | null = null;
-  let drawer: DraftLiquidGlassCard | null = null;
   for (const el of readDraftCardElements(chatView)) {
-    // The drawer slides inside a clipping wrapper that keeps its resting box; the card
-    // takes that box, and AppKit animates the move.
-    const isDrawer = el.hasAttribute("data-fork-composer-usage-drawer");
-    const measured = isDrawer && el.parentElement !== null ? el.parentElement : el;
-    const clipped = clipRectToAncestors(measured, chatView, stageBox);
+    const clipped = clipRectToAncestors(el, chatView, stageBox);
     if (clipped === null) continue;
     cardBoxes.push({ el, box: el.getBoundingClientRect() });
-    // An open usage drawer and the vessel under it read as one shape, so they
-    // are one native card: the drawer is folded into the vessel below.
-    if (isDrawer) {
-      drawer = { ...clipped, cornerRadius: readCornerRadius(el) };
-      continue;
-    }
-    if (el.hasAttribute("data-fork-composer-vessel")) vesselCard = cards.length;
     cards.push({
       ...roundRect(clipped),
       cornerRadius: readCornerRadius(el),
     });
-  }
-  if (drawer !== null) {
-    const vessel = vesselCard === null ? undefined : cards[vesselCard];
-    if (vessel === undefined || vesselCard === null) {
-      cards.push({ ...roundRect(drawer), cornerRadius: drawer.cornerRadius });
-    } else {
-      cards[vesselCard] = {
-        ...roundRect(unionRect(vessel, drawer)),
-        cornerRadius: vessel.cornerRadius,
-      };
-    }
   }
   if (cards.length === 0) return null;
 
@@ -348,7 +301,6 @@ function measureDraftGlassScene(
     popups,
     popupCards,
     cards,
-    drawerOpen: drawer !== null,
   };
 }
 
@@ -415,7 +367,6 @@ export function useForkDraftLiquidGlass(input: {
     let rafId: number | null = null;
     let settleRemaining = 0;
     let lastSentKey = "";
-    let lastDrawerOpen: boolean | null = null;
     // Set once a payload is sent and kept through failures: a refused update leaves the
     // previous native layer mounted, so only an explicit hide may clear it.
     let nativeShown = false;
@@ -449,7 +400,6 @@ export function useForkDraftLiquidGlass(input: {
       clearStampedPopups();
       document.documentElement.removeAttribute(FORK_DRAFT_LIQUID_GLASS_ATTRIBUTE);
       lastSentKey = "";
-      lastDrawerOpen = null;
       uploadedImageKey = null;
       retrying = false;
       if (nativeShown) {
@@ -617,16 +567,6 @@ export function useForkDraftLiquidGlass(input: {
 
       stampedPopups = applyDraftPopupCutouts(scene, stampedPopups, maskedCards);
 
-      const animation =
-        lastDrawerOpen === null ||
-        lastDrawerOpen === scene.drawerOpen ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? undefined
-          : scene.drawerOpen
-            ? USAGE_DRAWER_OPEN_ANIMATION
-            : USAGE_DRAWER_CLOSE_ANIMATION;
-      lastDrawerOpen = scene.drawerOpen;
-
       const key = JSON.stringify({
         url,
         // Main scales CSS px by the zoom factor, so a zoom change must re-send.
@@ -649,7 +589,6 @@ export function useForkDraftLiquidGlass(input: {
             ...(imageBase64 !== undefined ? { imageBase64 } : {}),
             image: scene.image,
             cards: scene.cards,
-            ...(animation !== undefined ? { animation } : {}),
           })
             .then((applied) => {
               if (disposed || key !== lastSentKey) return;

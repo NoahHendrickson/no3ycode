@@ -117,6 +117,16 @@ const CONNECTED_NODES = [
   "244-382",
   "245-510",
   "245-569",
+  // Nov 24 sync: composer cards, status chip, menus, transcript pieces.
+  "318-578",
+  "318-654",
+  "321-626",
+  "321-781",
+  "321-869",
+  "323-1154",
+  "323-1260",
+  "327-732",
+  "327-886",
 ];
 
 describe("fork guard: fork-figma-code-connect", () => {

@@ -1661,7 +1661,7 @@
     every fence in index.html, main.tsx, SettingsPanels and the Appearance
     panel that carries the palette plumbing is named after it, so the id
     stays. Westworld, Neutral Dark and Neutral Darker were retired into
-    Basic's tones (fork-basic-theme); their stored ids migrate there.
+    Basic (fork-basic-theme); their stored ids read as Basic.
 
     Basic is the default: an absent, unknown or retired id reads as Basic,
     which paints whenever upstream is on its standard theme (Light / Dark /
@@ -1702,16 +1702,11 @@
     hairlines and raised fills, 12% chips, 16% the strongest lift. The
     sidebar, header and stage are one surface separated by 8% hairlines.
 
-    Eleven tones (Figma t3-fork 729:28816 for the dark ones): Light #f7f7f7,
-    Cream #f8f3d8, and three dark depths in three temperatures. Darkest, Darker,
-    Dark: warm #1b1714, #2c2a28, #3e3c3a; cool #16181b, #202226, #2e3138;
-    neutral #171717, #232323, #2b2b2b. Darkest Warm sits a step warmer than
-    its Figma frame; Darker and Dark Warm are hand-picked values, not from
-    Figma, and run close to neutral. Dark Neutral keeps the retired Neutral
-    Dark's #2b2b2b. Dark Neutral is the default dark tone. Changing temperature
-    changes only --basic-base (and Cream's warm text); theme.custom.basic.css
-    derives the lifts with color-mix. Surfaces that float over content
-    (menus, composer, chips) are the ink flattened over the base, so nothing
+    One tone per appearance: Light #f7f7f7 and Darker Neutral #232323. A
+    tone sets only --basic-base, on the sheet's .dark and :not(.dark) Basic
+    blocks; theme.custom.basic.css derives the lifts with color-mix.
+    Surfaces that float over content (menus, composer, chips) are the ink
+    flattened over the base, so nothing
     shows through them; hovers, selections and lines stay translucent, as
     drawn. Menus open flat on the raised fill (no frost, which belongs to
     Glass), and so do dialogs, the command palette, toasts, the web context
@@ -1720,16 +1715,14 @@
     (Settings groups, Usage, Automations) take the same 8px corners and 8% line,
     and every tab strip draws the Figma tabs (fork-tabs).
 
-    Basic keeps one tone per appearance (t3code:fork-basic-tone-dark /
-    -light, stamped as data-fork-basic-tone), so under System it follows the
-    OS between them. Picking a tone on the other appearance moves the mode;
-    picking one on the current appearance does not. Westworld migrates to
-    Dark Cool, Neutral Dark to Dark Neutral, Neutral Darker to Darkest Neutral;
-    the retired dark tones Neutral Dark, Cool Dark and Darker move the same way.
+    Upstream's light/dark mode picks the tone, so under System Basic follows
+    the OS; Basic stores no tone of its own. Retired values fall back to the
+    appearance's tone: a retired palette id reads as Basic, and a stored tone
+    from before the cut is never read.
     Settings › Appearance › Theme shows Basic, Glass and Inlet as cards
     (custom/ForkThemePicker.tsx) with the picked theme's own rows below:
-    Basic's tone swatches, Inlet's colour, Glass's picture and depth.
-    index.html pre-paints the tone's base.
+    Basic's new agent background, Inlet's colour, Glass's picture and depth.
+    index.html pre-paints the appearance's base.
     Header rows (workspace, panels, tab strip, sidebar) are 44px rather than 52,
     and the desktop moves the macOS window buttons onto that axis over the fork's
     own bridge (forkDesktopBridge.setTopbarHeight, desktop fork/ForkTopbarHeight);
@@ -1755,7 +1748,7 @@
     Jolly Petal (assets/basic-new-agent-jolly-petal.png), both opaque and
     still, cover the column centred, at the smallest whole-device-pixel cell
     that covers it. Restore defaults resets the pick.
-    Light and Cream keep the fork's composer geometry, which other light builds
+    Light keeps the fork's composer geometry, which other light builds
     leave to upstream: theme.custom.css scopes those rules (vessel corners, the
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
@@ -1794,9 +1787,11 @@
     - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
     - apps/web/src/components/ChatView.tsx
+    - apps/web/src/themeBoot.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkBasicTheme.test.ts
     - apps/web/src/custom/forkTheme.test.ts
+    - apps/web/src/themeBoot.test.ts
     - apps/web/src/custom/basicNewAgentDither.test.ts
     - apps/web/src/custom/ditherLight.test.ts
 
@@ -3055,13 +3050,12 @@
     token. Without a session window it shows Claude's account-wide weekly
     window (id seven_day) instead, for Claude plans with no 5-hour limit; other
     providers' weekly windows never draw it. Hidden when neither exists or when
-    the footer collapses. Nothing fills the composer's top vessel any more.
+    the footer collapses. The composer has no top vessel; the drawer it held is gone.
   tier: 4
   files:
     - apps/web/src/custom/ComposerUsageLimitsReadout.tsx
     - apps/web/src/custom/UsageMeter.tsx
     - apps/web/src/theme.custom.css
-    - apps/web/src/components/ChatView.tsx
   shadows: []
   watch:
     - apps/web/src/components/chat/ChatComposer.tsx
@@ -3667,9 +3661,13 @@
     monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
-    The chip reads "Background task(s)" beside a static ElectricityStack glyph
-    for any mix of work. A live run's own subagents join it while that run is
-    live (custom/composerBackgroundWork.logic.ts matches each to its record
+    The chip names one kind of work ("4 subagents", or "Monitoring" for
+    monitors and commands) and reads "Background tasks" for a mix, beside a
+    Layers02 mark (custom/BackgroundWorkLayersMark.tsx): a fill travels front →
+    middle → back on a 6s loop, each layer its own svg so only element
+    opacity animates, in stepped ramps; reduced motion keeps the outline. A
+    live run's own subagents join it while that run is live
+    (custom/composerBackgroundWork.logic.ts matches each to its record
     once); after it settles only the pending list counts. The Stop square is
     drawn only when upstream's row would enable Stop (useThreadLifecycle's
     canStopBackgroundWork), since mid-turn the composer owns Stop.
@@ -3699,13 +3697,20 @@
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
     appearanceFonts.ts), and the control and context rows are 14px regular.
-    On Flat Glass the thread composer (not a new agent's draft) paints no
-    vessel: the prompt is its one surface (lift-2, a 16% ring, 12px corners)
-    and the control row sits on the stage; attached
-    banners and the Questions card are lift-1 trays over it with an 8%
-    hairline; the prompt keeps its round corners and its frame fills the
-    wedges beside them (kit 289:5475; theme.custom.flat-glass-composer.css,
-    scoped to the thread composer's form).
+    On Flat Glass and every Basic tone the thread composer (not a new agent's
+    draft) is one recipe: it paints no vessel, the prompt is its one surface
+    (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
+    attached banners and the Questions card sit a step back toward the stage
+    (lift-2) behind the same hairline. Each theme names the fills
+    (--fork-thread-composer-*); light Basic tones use their raised prompt
+    (kit 289:5475; theme.custom.thread-composer.css, scoped to the thread
+    composer's form).
+    On Flat Glass a started thread's composer menus (model, permissions, mode
+    chips, branch and environment pickers, usage, background work) are solid:
+    they override fork-popup-surface's tokens (--fork-popup-fill laid over the
+    stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
+    a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
+    keep the glass.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3714,6 +3719,7 @@
     - apps/web/src/custom/ComposerShell.tsx
     - apps/web/src/custom/ComposerShell.css
     - apps/web/src/custom/ComposerBackgroundWork.tsx
+    - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
@@ -3726,7 +3732,8 @@
     - apps/web/src/custom/icons/ShieldOffFilledIcon.tsx
     - apps/web/src/custom/composerModelSlotCompact.ts
     - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.flat-glass-composer.css
+    - apps/web/src/theme.custom.thread-composer.css
+    - apps/web/src/theme.custom.basic.css
     - apps/web/src/overrides/components/composerFooterLayout.ts
   shadows:
     - apps/web/src/components/composerFooterLayout.ts
@@ -4561,7 +4568,8 @@
   intent: >
     Popup menus (menu and submenu, select, combobox and popover popups — the
     model picker among them), glass tooltips and the Usage dialog open on one
-    frosted material in dark: an 8% contrast-foreground wash over a 45%
+    frosted material in dark (except a Flat Glass started thread's composer
+    menus, which set the tokens below to an opaque fill; fork-composer-shell): an 8% contrast-foreground wash over a 45%
     --popover tint, blurred at 28px and saturated at 1.4 (upstream's
     dropdown-glass is 12px at 80%), under a 12% contrast hairline. The
     fork's dark palettes put --popover a step off the stage, so upstream's
@@ -6617,6 +6625,65 @@
     - apps/web/src/custom/splitThreads/splitThreads.test.ts
     - apps/web/src/custom/splitThreads/floatThreads.test.ts
 
+- id: fork-composer-next-step
+  intent: >
+    A settled thread offers its owner's next message as one pill in the
+    composer's chip row (custom/ComposerNextStepPill), and a click sends it at
+    once. Rules come first (custom/composerNextStep.logic), from the thread's
+    PR as the PR chip beside it resolves it (resolveThreadCurrentPullRequestLink,
+    else resolveDisplayedThreadPr on the same git status), its watch, the checkout's git status and the owner's latest typed message
+    (scheduled tasks, watch wakes and agent-sent turns don't count): after a
+    sol loop with unmerged work off the default branch → Open PR; an open PR
+    nothing has watched → Babysit; one whose watch ended mergeable with checks
+    passing → Merge; a PR merged right after the owner asked to merge it ("merge
+    it", "lets merge", not negated), in this fork's repository only → Cut
+    release. A watched PR, or a watch that ended
+    short of mergeable, is the owner's call: nothing shows. There is no "Run
+    sol loop" rule: in the owner's history no state predicted it (4–8% at
+    every threshold tried).
+
+    Where no rule speaks, a learned habit may (custom/composerHabits*): every
+    owner turn the send path commits (useComposerSend's onOwnerTurnDispatched,
+    fenced beside the optimistic message, so refused sends, answers and queued
+    edits never count; not in side chats), pill clicks included, counts as the
+    follow-up to the thread's previous owner message, keyed by its words
+    (lowercased, numbers collapsed, filler dropped, sorted). A follow-up sent
+    at least five times and making up at least three in ten of that message's
+    follow-ups shows with a sparkle, sending its latest wording; its × forgets
+    it. Long prose, slash commands, acknowledgements and follow-ups naming a
+    number are never learned. The table is device-local (localStorage, capped
+    at 300 messages × 8 follow-ups, the newest follow-up always kept), cached
+    between changes so the pill never re-parses it while a turn streams, and
+    re-read before each write and on another window's storage event so windows
+    don't overwrite each other. No server, contract or AI call.
+    Replayed over the owner's history it is right about half the time, almost
+    all of it on what the rules now cover, so it stays quiet until a new habit
+    forms.
+
+    The pill shows only once the latest run completed, nothing waits on an
+    approval or question, the viewer can operate the thread and the composer
+    is empty, so a click never races what is written. Not in side chats. Web
+    and desktop; mobile is separate.
+  tier: 4
+  files:
+    - apps/web/src/custom/ComposerNextStepPill.tsx
+    - apps/web/src/custom/composerNextStep.logic.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.ts
+    - apps/web/src/custom/composerHabits.logic.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+  shadows: []
+  watch:
+    # Fenced pill in the composer's status chips (the chip row is built after
+    # useComposerSend for the pill's send) and the habit recorder it passes.
+    - apps/web/src/components/ChatView.tsx
+    # Fenced onOwnerTurnDispatched option, called where a new owner turn commits.
+    - apps/web/src/components/chat/useComposerSend.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
+    - apps/web/src/custom/composerNextStep.logic.test.ts
+    - apps/web/src/custom/composerHabits.logic.test.ts
+
 - id: fork-draft-project-quick-picks
   intent: >
     An unassigned New agent draft picks its project from a launchpad under
@@ -6646,10 +6713,13 @@
     those projects, each read from the copy a pick runs on, the draft's
     machine (or, once a project is picked, for that project alone):
     conflicts, failing checks, requested changes and approved, mergeable pull
-    requests you opened; open pull requests that request your review; and,
+    requests you opened; open pull requests that request your review; one
+    "Review N open PRs" row, naming each open pull request listed (yours or
+    asking your review) as repo#N for the first project that has any; and,
     when the picked project runs in its own checkout rather than a new
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
-    request (custom/draftLaunchpadSuggestions). Before a pick, the same git
+    request, then, last, starting the dev server for a picked project in its
+    own checkout (custom/draftLaunchpadSuggestions). Before a pick, the same git
     work comes from each listed project's own checkout, named for its
     project; picking one moves the draft into that checkout ("local", pinned to
     that machine), never a new worktree; each suggestion carries that policy. The pull requests come from the cached pullRequests.list
@@ -8066,14 +8136,15 @@
 
 - id: fork-storybook
   intent: >
-    apps/fork-storybook is the fork's component library for the Basic theme: a
-    Storybook that renders the app's real components (apps/web/src through the
-    override tree, never copies). Its preview stores Basic before any app module
-    loads, loads exactly main.tsx's stylesheets in main.tsx's order, runs
-    main.tsx's theme startup (applyForkMarker, initializeForkTheme,
-    initializeForkGlass3d, installInletMenuMorph), and offers every theme in the
-    toolbar (Basic's tones, Glass, Inlet's colours), moved through
-    setForkBasicTone / setForkAppearance / setForkInletColor as Settings ›
+    apps/fork-storybook is the fork's component library: a Storybook that renders
+    the app's real components (apps/web/src through the override tree, never
+    copies). Its preview stores Basic before any app module loads, loads exactly
+    main.tsx's stylesheets in main.tsx's order, runs main.tsx's theme startup
+    (applyForkMarker, initializeForkTheme, initializeForkGlass3d,
+    installInletMenuMorph), and offers every theme in the toolbar, opening on
+    Flat Glass (glass_off), the primary theme, with Basic's two tones, Glass 3D
+    and Inlet's colours a pick away, moved through
+    setForkAppearance / setAppearanceMode / setForkInletColor as Settings ›
     Appearance moves them. Glass stands in a desktop bridge that reports the
     window material (appearance.ts) as macOS 26+ sidebar Liquid Glass, and paints
     the window backing and the app's --fork-liquid-glass-sidebar where the docked
@@ -8360,7 +8431,13 @@
     plus the git, terminal and files items, their one home, reachable in every
     thread state. The transcript's top inset is that row's (No3yThreadBarInset
     gives the body it as its header height) and it scrolls under the bubbles;
-    the back swipe stays native. Because the bubbles are not in a UIKit
+    the back swipe stays native. Hiding the bar disables UIKit's back swipe,
+    so apps/mobile/deps carries a react-native-screens build whose pop
+    gesture delegate stops forwarding the UIKit hook that drops it: branch
+    no3y/hidden-bar-back-swipe of NoahHendrickson/react-native-screens
+    (commit af5cf075), on Julius's t3.61. When upstream bumps the tarball,
+    rebuild this change on top of theirs rather than taking theirs, or the
+    thread loses its back swipe. Because the bubbles are not in a UIKit
     navigation bar, iOS 27's scroll-to-top-on-bar-tap never fires from them.
     On iOS 26 the no3y half sheets (usage, model, status, prompt stash) have
     a clear body and route content, so the native sheet owns the surface and
@@ -8699,6 +8776,7 @@
     - apps/mobile/src/features/threads/CopyTextButton.tsx
     - apps/mobile/src/native/useEnrichedLinkVariants.ts
     - apps/mobile/deps/README.md
+    - docs/operations/mobile-screens-fork.md
     - pnpm-workspace.yaml
     - apps/mobile/global.css
     - apps/mobile/src/lib/fontFamilies.ts
@@ -8842,10 +8920,13 @@
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
-    sidebar's mark in its colour (working mark, dot for done or failed, half circle for
-    needs-you, muted dot for waiting, idle ring for stopped or unknown). Status follows the
+    sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
+    message: SidebarV2StillWorkingMark (a full green ring) for working and
+    SidebarV2StillMonitoringMark (a still muted dot) for waiting, and SidebarV2StatusMark with
+    celebrate={false} for the rest (dot for done or failed, half circle for needs-you, idle ring
+    for stopped or unknown). The label inherits the surrounding text's weight. Status follows the
     sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
-    another thread or parked on background work reads as waiting. No mark animates in a message. On mobile the marks are white PNGs drawn from
+    another thread or parked on background work reads as waiting. On mobile the marks are still white PNGs drawn from
     No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
     aria-hidden, with the status in the link's accessible name, and keeps the thread hover
     card. A period that closes the line right after the chip is dropped from the rendered
@@ -8854,7 +8935,9 @@
     read from the family of the thread the message is in (one cached read per thread, so
     links to ordinary or archived threads never trigger one). A cached family row is stale
     when the shell removed the child after the read, or when it is still live while the shell
-    has dropped the child: the chip shows the idle mark and that family is re-read once. Links to ordinary threads keep upstream's chip. User
+    has dropped the child: the chip shows the idle mark and that family is re-read once. On web, links
+    to ordinary threads in an assistant message take the same capsule (ContextChip shape="capsule")
+    around upstream's project icon and title. User
     messages, tool output, PR bodies, file previews and the composer are unchanged: on web only
     TimelineAssistantRows opts in; on mobile the reply, sent-message and reasoning rows pass
     their thread. Mobile's native pill reads only the label and link text, so screen readers
@@ -8880,8 +8963,12 @@
     - apps/mobile/src/features/threads/ThreadFeed.tsx
     # Exposes the shell's per-thread removal sequence without importing the shell module.
     - apps/mobile/src/state/threads.ts
-    # Wraps the thread chip so a subagent link renders the capsule.
+    # Wraps the thread chip so a subagent link renders the capsule; passes the capsule shape.
     - apps/web/src/components/chat/MarkdownThreadLink.tsx
+    # The capsule shape variant.
+    - apps/web/src/components/ContextChip.tsx
+    # Passes the capsule shape through to ContextChip.
+    - apps/web/src/components/ThreadContextChip.tsx
     # Drops the period after a subagent chip before parsing.
     - apps/web/src/components/ChatMarkdown.tsx
     # Opts assistant messages into the capsule.
@@ -8910,6 +8997,74 @@
     - vite.config.ts
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
+
+- id: no3y-pr-project-multiselect
+  intent: >
+    The mobile Pull requests project filter is a set: the Project menu ticks
+    several projects (or All projects) and stays open between ticks
+    on iOS (keepsMenuPresented, which the patched @react-native-menu refreshes
+    in place). Controls store `projects`; sanitizePreferences turns a single
+    `projectId` saved before the set (list controls and saved views) into a
+    one-project set as preferences load, so nothing downstream reads the old
+    pair (fork/no3yPullRequestProjects.ts). Each environment is asked only for
+    its own selected projects through the existing `projectIds` inputs, for
+    the list and for the label and author search, so no contract or server
+    change; environments with none selected are skipped. Selected projects go
+    first into pullRequestFilterProjects, whose dedup keeps the first project
+    per repository, so every selected one stays in the menu. Saved views
+    compare the set regardless of tick order.
+  tier: 4
+  files:
+    - apps/mobile/fork/no3yPullRequestProjects.ts
+    - apps/mobile/fork/no3yPullRequestProjects.test.ts
+  shadows: []
+  watch:
+    # The `projects` field on the saved list controls.
+    - apps/mobile/src/persistence/mobile-preferences.ts
+    # Scratch pruning, project choices, list input and local filtering.
+    - apps/mobile/src/features/pull-requests/pullRequestList.ts
+    # The toggle, count and Project menu.
+    - apps/mobile/src/features/pull-requests/PullRequestListFilters.tsx
+    - apps/mobile/src/features/pull-requests/pullRequestSavedViews.ts
+    # Per-environment targets.
+    - apps/mobile/src/features/pull-requests/PullRequestsScreen.tsx
+    # The label and author search scopes to the same projects.
+    - apps/mobile/src/features/pull-requests/PullRequestFilterSearchScreen.tsx
+    # Upstream tests that scoped to one project now pass a one-project set.
+    - apps/mobile/src/features/pull-requests/pullRequestList.test.ts
+    - apps/mobile/src/features/pull-requests/pullRequestSavedViews.test.ts
+  verify:
+    - apps/mobile/fork/no3yPullRequestProjects.test.ts
+    - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
+
+- id: no3y-pr-list-bottom-filters
+  intent: >
+    On the no3y iPhone layout (useNo3yBottomNavEnabled) the Pull requests
+    filters leave the list header for the bottom tray above the dock, within
+    thumb reach, as the Threads tab's do. usePullRequestListFilters builds
+    each chip once (`chips`); upstream's header row and the tray
+    (fork/No3yPullRequestFilterBar.tsx) only lay them out, the tray as Author,
+    Project, State, Involvement, Labels, Environment, Filters, Views. Project
+    has its own chip there, so the tray's Filters menu drops it. Rows draw as the Linked pull
+    requests sheet's glass cards (fork/No3yPullRequestListCard.tsx): the
+    number on the tinted PR pill with stack, checks and diff stats, then the
+    title, then repository · author · conflicts · review · updated, then
+    labels. VoiceOver reads the upstream row's label
+    (pullRequestListRowAccessibilityLabel, shared). iPad, split view and
+    Android keep upstream's rows and header row.
+  tier: 4
+  files:
+    - apps/mobile/fork/No3yPullRequestFilterBar.tsx
+    - apps/mobile/fork/No3yPullRequestListCard.tsx
+  shadows: []
+  watch:
+    - apps/mobile/src/features/pull-requests/PullRequestsScreen.tsx
+    # Builds the chips both rows lay out.
+    - apps/mobile/src/features/pull-requests/PullRequestListFilters.tsx
+    # Shares the row's accessibility label with the card.
+    - apps/mobile/src/features/pull-requests/PullRequestListRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
 
 - id: no3y-mobile-queue-default
   intent: >

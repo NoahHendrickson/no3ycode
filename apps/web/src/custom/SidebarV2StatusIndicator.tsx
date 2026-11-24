@@ -471,6 +471,25 @@ function SidebarV2MonitoringMark() {
   );
 }
 
+/** Working, drawn still where nothing should move (a status chip in a message): the bead
+    ring's outline closed into a full ring, at its 12px size and stroke. */
+export function SidebarV2StillWorkingMark() {
+  return (
+    <span aria-hidden className={MARK_SLOT_CLASS}>
+      <span className="size-3 rounded-full border-[1.5px] border-sidebar-v2-status-working" />
+    </span>
+  );
+}
+
+/** Waiting, drawn still: the monitoring dot at rest, in the muted ink. */
+export function SidebarV2StillMonitoringMark() {
+  return (
+    <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
+      <span className="size-2.5 rounded-full bg-current" />
+    </span>
+  );
+}
+
 export type SidebarV2TopStatusMark =
   | { readonly label: string; readonly mark: "working"; readonly tone?: "working" }
   | { readonly label: string; readonly mark: "monitoring" }
@@ -485,10 +504,12 @@ export function SidebarV2StatusMark(props: {
   /** Card rows draw the idle dot; without one an idle mark draws nothing.
       Unpromoted drafts use the pencil as their idle glyph. */
   readonly idle?: "dot" | "draft";
+  /** False where nothing should move: a Done dot that turns up there does not celebrate. */
+  readonly celebrate?: boolean | undefined;
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
-  useDoneCelebration(props.seed, status, dot);
+  useDoneCelebration(props.celebrate === false ? null : props.seed, status, dot);
   if (status === null) {
     if (props.idle === "draft") {
       return (

@@ -9,9 +9,9 @@ import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  BASIC_APPEARANCES,
+  BASIC_OPTIONS,
   BASIC_THEME,
-  BASIC_TONE_OPTIONS,
-  BASIC_TONES,
   FORK_PALETTES,
   FORK_THEME_ATTRIBUTE,
   readForkPalette,
@@ -67,25 +67,21 @@ describe("fork guard: fork-basic-theme", () => {
     expect(ruleBodyFor(rules, [`${BASIC}:not(.dark)`])).toMatch(/--basic-ink:\s*#000000/u);
   });
 
-  it("states each tone's base once, in the sheet and the pre-paint alike", () => {
-    for (const tone of BASIC_TONES) {
-      const { base, text, appearance } = BASIC_TONE_OPTIONS[tone];
-      const body = ruleBodyFor(rules, [`${BASIC}[data-fork-basic-tone="${tone}"]`]);
-      expect(declarationHex(body, "--basic-base"), tone).toBe(base);
-      // The texture inks from the table; the sheet sets the text per tone or per appearance.
-      const appearanceBody = ruleBodyFor(rules, [
+  it("states each appearance's tone once, in the sheet and the pre-paint alike", () => {
+    for (const appearance of BASIC_APPEARANCES) {
+      const { base, text } = BASIC_OPTIONS[appearance];
+      const body = ruleBodyFor(rules, [
         appearance === "dark" ? `${BASIC}.dark` : `${BASIC}:not(.dark)`,
       ]);
-      const sheetText = body.includes("--basic-text:") ? body : appearanceBody;
-      expect(declarationHex(sheetText, "--basic-text"), tone).toBe(text);
-      // An unquoted hyphenated key is a syntax error that stops the whole pre-paint script.
-      const key = /^[a-z]+$/u.test(tone) ? tone : `"${tone}"`;
-      expect(indexHtml, tone).toContain(`${key}: { base: "${base}", appearance: "${appearance}" }`);
-      expect(indexHtml, tone).toMatch(
-        new RegExp(
-          `html\\[data-fork-theme="basic"\\]\\[data-fork-basic-tone="${tone}"\\] body \\{\\s*background: ${base};`,
-          "u",
-        ),
+      expect(declarationHex(body, "--basic-base"), appearance).toBe(base);
+      // BasicNewAgentBackdrop inks its texture from the table.
+      expect(declarationHex(body, "--basic-text"), appearance).toBe(text);
+      const html =
+        appearance === "dark"
+          ? 'html.dark[data-fork-theme="basic"]'
+          : 'html[data-fork-theme="basic"]:not(.dark)';
+      expect(indexHtml.replace(/\s+/gu, " "), appearance).toContain(
+        `${html} body { background: ${base};`,
       );
     }
   });
@@ -121,11 +117,10 @@ describe("fork guard: fork-basic-theme", () => {
     );
   });
 
-  it("leads Appearance with the theme cards and Basic's tones", () => {
+  it("leads Appearance with the theme cards", () => {
     const cards = appearancePanel.indexOf("<ForkThemePicker");
     expect(cards).toBeGreaterThanOrEqual(0);
     expect(cards).toBeLessThan(appearancePanel.indexOf("<ThemeLibrary"));
-    expect(appearancePanel).toMatch(/appearance === BASIC_THEME \?[\s\S]*?<ForkBasicTonePicker/u);
   });
 
   it("offers the dither pictures behind a new agent, one PNG pixel per cell", () => {

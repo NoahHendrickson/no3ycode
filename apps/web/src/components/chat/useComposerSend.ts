@@ -295,6 +295,10 @@ interface ComposerSendInput {
   }) => Promise<AtomCommandResult<void, unknown>>;
   /** Links a checked-out pull request to its thread; best effort, failures only logged. */
   readonly linkCheckoutPullRequest: (threadRef: ScopedThreadRef, url: string) => void;
+  /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+  /** Called once a new owner turn is committed, with the prompt as written. */
+  readonly onOwnerTurnDispatched?: ((prompt: string) => void) | undefined;
+  /* fork:end fork-composer-next-step */
 }
 
 /**
@@ -378,6 +382,9 @@ export function useComposerSend(input: ComposerSendInput) {
     handleNewThreadInActiveProject,
     persistThreadSettingsForNextTurn,
     linkCheckoutPullRequest,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    onOwnerTurnDispatched,
+    /* fork:end fork-composer-next-step */
   } = input;
   const linkedEnvironments = useLinkedEnvironments(environmentId);
   const handleNewThread = useNewThreadHandler();
@@ -1426,6 +1433,9 @@ export function useComposerSend(input: ComposerSendInput) {
       optimisticBlobPreviews.release(optimisticMessage);
     }
     setOptimisticUserMessages((existing) => [...existing, optimisticMessage]);
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    onOwnerTurnDispatched?.(promptAtSend);
+    /* fork:end fork-composer-next-step */
     setThreadError(threadIdForSend, null);
     if (expiredTerminalContextCount > 0) {
       const toastCopy = buildExpiredTerminalContextToastCopy(
