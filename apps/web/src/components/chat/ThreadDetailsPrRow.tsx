@@ -335,7 +335,9 @@ export function ThreadDetailsPrRow({
             <div className="flex min-w-0 items-center gap-2">
               <GitBranchIcon className="size-3 shrink-0 stroke-muted-foreground" />
               <div className="min-w-0 truncate text-foreground/75">
-                {detail.baseBranch} ← {detail.headBranch}
+                {/* fork:begin pr-header-hierarchy — see .fork/customizations.yaml#pr-header-hierarchy */}
+                {detail.headBranch} → {detail.baseBranch}
+                {/* fork:end pr-header-hierarchy */}
               </div>
             </div>
             {detail.state === "open" && checksState !== "none" ? (

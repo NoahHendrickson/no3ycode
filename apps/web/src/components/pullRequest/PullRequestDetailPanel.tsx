@@ -28,17 +28,14 @@ import {
   resolveEnvironmentMachineKind,
   type ScopedThreadRef,
 } from "@t3tools/contracts";
-/* fork:begin pr-header-hierarchy — see .fork/customizations.yaml#pr-header-hierarchy */
 import {
   ArrowDownUpIcon,
-  ArrowRightIcon,
   CircleDotIcon,
   FileDiffIcon,
   GitCommitHorizontalIcon,
   MessageSquareIcon,
   PanelRightIcon,
 } from "lucide-react";
-/* fork:end pr-header-hierarchy */
 import {
   lazy,
   Suspense,
@@ -95,6 +92,9 @@ import {
   PullRequestPrivateBadge,
   PullRequestDetailTabBar,
 } from "./PullRequestDetailLayout";
+/* fork:begin pr-header-hierarchy — see .fork/customizations.yaml#pr-header-hierarchy */
+import { PullRequestBranchFlow } from "~/components/pullRequest/PullRequestDetailLayout";
+/* fork:end pr-header-hierarchy */
 import { PullRequestDetailGhost, PullRequestTimelineGhost } from "./PullRequestGhosts";
 import { PullRequestCopyableCode } from "./PullRequestCopyableCode";
 import { pullRequestRefKey, usePullRequestDetail } from "./usePullRequestDetail";
@@ -1730,33 +1730,31 @@ export function PullRequestDetailPanel({
                   </span>
                   <span aria-hidden className="h-3 w-px shrink-0 bg-border/70" />
                   {/* fork:begin pr-header-hierarchy — see .fork/customizations.yaml#pr-header-hierarchy */}
-                  <span className="flex min-w-0 flex-1 items-center gap-1.5 font-mono text-2xs text-muted-foreground">
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <code className="flex min-w-0 shrink text-foreground/85">
-                            <MiddleTruncate value={detail.headBranch} showTitle={false} />
-                          </code>
-                        }
+                  <PullRequestBranchFlow
+                    density="compact"
+                    head={
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <code className="flex min-w-0">
+                              <MiddleTruncate value={detail.headBranch} showTitle={false} />
+                            </code>
+                          }
+                        />
+                        <TooltipPopup side="top">{detail.headBranch}</TooltipPopup>
+                      </Tooltip>
+                    }
+                    base={
+                      <PullRequestBaseBranch
+                        baseBranch={detail.baseBranch}
+                        freshness={freshness}
+                        stacked={isStackedPullRequest}
+                        pending={actionPending}
+                        onUpdate={(method) => void perform("update-branch", undefined, method)}
+                        iconClassName="size-3"
                       />
-                      <TooltipPopup side="top">{detail.headBranch}</TooltipPopup>
-                    </Tooltip>
-                    <ArrowRightIcon
-                      aria-label={gt("merges into", {
-                        $context:
-                          "screen reader label for an arrow between the head branch, read before it, and the base branch it merges into, read after it",
-                      })}
-                      className="size-3 shrink-0 opacity-50"
-                    />
-                    <PullRequestBaseBranch
-                      baseBranch={detail.baseBranch}
-                      freshness={freshness}
-                      stacked={isStackedPullRequest}
-                      pending={actionPending}
-                      onUpdate={(method) => void perform("update-branch", undefined, method)}
-                      iconClassName="size-3"
-                    />
-                  </span>
+                    }
+                  />
                   {/* fork:end pr-header-hierarchy */}
                   <span className="ml-auto inline-flex shrink-0 items-baseline justify-end gap-2 text-2xs">
                     <span

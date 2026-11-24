@@ -131,7 +131,7 @@ export function PullRequestBaseBranch({
         pending={pending}
         onUpdate={onUpdate}
         iconClassName={iconClassName}
-        className="max-w-[40%]"
+        className="max-w-[40%] shrink"
       >
         {label}
       </PullRequestBaseFreshnessWarning>
@@ -141,9 +141,7 @@ export function PullRequestBaseBranch({
     <Tooltip>
       <TooltipTrigger
         render={
-          <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1">
-            {label}
-          </span>
+          <span className="inline-flex min-w-0 max-w-[40%] shrink items-center gap-1">{label}</span>
         }
       />
       <TooltipPopup side="top">

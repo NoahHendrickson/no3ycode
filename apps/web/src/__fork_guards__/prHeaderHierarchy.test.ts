@@ -13,27 +13,34 @@ const beforeIn = (source: string, first: string, second: string) =>
   source.indexOf(first) >= 0 && source.indexOf(first) < source.indexOf(second);
 
 describe("pr-header-hierarchy", () => {
-  it("reads the branch flow head into base in the full and condensed header", () => {
+  it("draws the branch flow head into base from one component in both headers", () => {
     const layout = read("../overrides/components/pullRequest/PullRequestDetailLayout.tsx");
     const panel = read("../components/pullRequest/PullRequestDetailPanel.tsx");
-    expect(beforeIn(layout, "{head}", "{base}")).toBe(true);
-    expect(layout).toContain('gt("merges into"');
-    const fenced = panel.slice(
-      panel.indexOf("{/* fork:begin pr-header-hierarchy"),
-      panel.indexOf("{/* fork:end pr-header-hierarchy */}"),
-    );
-    expect(beforeIn(fenced, "detail.headBranch", "<PullRequestBaseBranch")).toBe(true);
+    const flow = layout.slice(layout.indexOf("export function PullRequestBranchFlow"));
+    expect(beforeIn(flow, "{head}", "{base}")).toBe(true);
+    expect(flow).toContain('gt("merges into"');
+    expect(layout).toContain('<PullRequestBranchFlow head={head} base={base} density="default" />');
+    expect(panel).toContain("<PullRequestBranchFlow");
+    expect(panel).toContain('density="compact"');
   });
 
-  it("keeps the checkout command on the branch row and the stats in the meta line", () => {
+  it("keeps the stats in the meta line and the checkout command on the branch row", () => {
     const layout = read("../overrides/components/pullRequest/PullRequestDetailLayout.tsx");
-    expect(beforeIn(layout, "{diffStat}", "{head}")).toBe(true);
-    expect(beforeIn(layout, "{base}", "{checkout}")).toBe(true);
+    const body = layout.slice(layout.indexOf("export function PullRequestDetailHeaderBody"));
+    expect(beforeIn(body, "{diffStat}", "<PullRequestBranchFlow")).toBe(true);
+    expect(beforeIn(body, "<PullRequestBranchFlow", "{checkout}")).toBe(true);
   });
 
   it("colours only the warning icon when the base branch is out of date", () => {
     const base = read("../overrides/components/pullRequest/PullRequestBaseBranch.tsx");
     expect(base.match(/text-warning-foreground/gu)).toHaveLength(1);
-    expect(base).toContain('"size-3.5 shrink-0 text-warning-foreground"');
+    expect(base.slice(base.indexOf("<TriangleAlertIcon"))).toMatch(
+      /^<TriangleAlertIcon[^>]*text-warning-foreground/u,
+    );
+  });
+
+  it("reads head into base in the thread details pull request row", () => {
+    const row = read("../components/chat/ThreadDetailsPrRow.tsx");
+    expect(row).toContain("{detail.headBranch} → {detail.baseBranch}");
   });
 });

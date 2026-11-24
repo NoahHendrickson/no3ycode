@@ -1,36 +1,45 @@
+// Fork shadow of upstream PullRequestDetailLayout — see
+// `.fork/customizations.yaml#pr-header-hierarchy`. Everything else passes through untouched.
 import { useGT } from "gt-react";
-import { ArrowRightIcon, GitBranchIcon, LockIcon } from "lucide-react";
-import { useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { ArrowRightIcon, GitBranchIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
 
-import { Badge } from "../ui/badge";
-import { Toggle, ToggleGroup } from "../ui/toggle-group";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { PullRequestMetaLine } from "./pullRequestPresentation";
 
-export function PullRequestPrivateMark({ className }: { className?: string }) {
-  const gt = useGT();
-  const label = gt("Private");
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<LockIcon role="img" aria-label={label} className={cn("shrink-0", className)} />}
-      />
-      <TooltipPopup side="top">{label}</TooltipPopup>
-    </Tooltip>
-  );
-}
+export * from "~upstream/components/pullRequest/PullRequestDetailLayout";
 
-export function PullRequestPrivateBadge() {
+/** Head into base, left to right; the full header and the condensed row both render it. */
+export function PullRequestBranchFlow({
+  head,
+  base,
+  density,
+}: {
+  head: ReactNode;
+  base: ReactNode;
+  density: "default" | "compact";
+}) {
   const gt = useGT();
+  const compact = density === "compact";
   return (
-    <Badge size="control" variant="outline">
-      <span className="flex items-center gap-1 text-muted-foreground">
-        <LockIcon className="size-3.5" />
-        {gt("Private")}
-      </span>
-    </Badge>
+    <span
+      className={cn(
+        "flex min-w-0 flex-auto items-center gap-1.5 font-mono text-muted-foreground",
+        compact ? "text-2xs" : "text-xs",
+      )}
+    >
+      {compact ? null : <GitBranchIcon aria-hidden className="size-3.5 shrink-0 opacity-70" />}
+      <span className="flex min-w-12 shrink text-foreground/85">{head}</span>
+      <ArrowRightIcon
+        aria-label={gt("merges into", {
+          $context:
+            "screen reader label for an arrow between the head branch, read before it, and the base branch it merges into, read after it",
+        })}
+        className={cn("shrink-0 opacity-50", compact ? "size-3" : "size-3.5")}
+      />
+      {base}
+    </span>
   );
 }
 
@@ -53,14 +62,13 @@ export function PullRequestDetailHeaderBody({
   files: ReactNode;
   diffStat: ReactNode;
 }) {
-  const gt = useGT();
   return (
     <div className="col-span-2 mt-1 min-w-0 px-4 pb-3.5">
       {title}
-      <div className="mt-1.5 flex min-h-5 min-w-0 items-center overflow-hidden text-xs text-muted-foreground">
+      <div className="mt-1.5 flex min-h-5 min-w-0 items-center text-xs text-muted-foreground">
         <PullRequestMetaLine className="min-w-0 whitespace-nowrap">
           {author}
-          {updated}
+          <span className="min-w-0 truncate">{updated}</span>
           <span className="inline-flex shrink-0 items-baseline gap-1.5 tabular-nums">
             <span>{files}</span>
             {diffStat}
@@ -68,110 +76,13 @@ export function PullRequestDetailHeaderBody({
         </PullRequestMetaLine>
       </div>
       <div className="mt-2.5 flex min-h-5 min-w-0 items-center gap-3 text-xs">
-        <span className="flex min-w-0 flex-1 items-center gap-1.5 font-mono text-xs text-muted-foreground">
-          <GitBranchIcon aria-hidden className="size-3.5 shrink-0 opacity-70" />
-          <span className="flex min-w-0 shrink text-foreground/85">{head}</span>
-          <ArrowRightIcon
-            aria-label={gt("merges into", {
-              $context:
-                "screen reader label for an arrow between the head branch, read before it, and the base branch it merges into, read after it",
-            })}
-            className="size-3.5 shrink-0 opacity-50"
-          />
-          {base}
-        </span>
+        <PullRequestBranchFlow head={head} base={base} density="default" />
         {checkout ? (
-          <span className="flex min-w-0 max-w-[40%] shrink-0 justify-end text-muted-foreground/70">
+          <span className="flex min-w-0 max-w-[40%] shrink-[12] justify-end text-muted-foreground/70 @max-[28rem]/pr-header:hidden">
             {checkout}
           </span>
         ) : null}
       </div>
     </div>
-  );
-}
-
-export function PullRequestDetailTitleRow({ className, ...props }: ComponentProps<"div">) {
-  return (
-    <div className={cn("flex min-h-7 min-w-0 items-center sm:min-h-6", className)} {...props} />
-  );
-}
-
-export function PullRequestDetailTabBar<Tab extends string>({
-  tabs,
-  value,
-  onValueChange,
-  onTabIntent,
-  inert,
-  children,
-}: {
-  tabs: ReadonlyArray<{ readonly value: Tab; readonly label: string }>;
-  value: Tab;
-  onValueChange?: (tab: Tab) => void;
-  onTabIntent?: (tab: Tab) => void;
-  inert?: boolean;
-  children?: ReactNode;
-}) {
-  const gt = useGT();
-  // A pointer passing over a tab is not intent; it must rest like a list row does.
-  const pointerIntent = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- A rest timer still pending when the bar unmounts must not read for a closed panel.
-  useEffect(() => () => clearTimeout(pointerIntent.current), []);
-  return (
-    <nav
-      className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 border-t border-border/60 px-4 py-2"
-      aria-label={gt("Pull request tabs")}
-      inert={inert}
-    >
-      <ToggleGroup
-        className="shrink-0"
-        size="segmented"
-        variant="segmented"
-        value={[value]}
-        onValueChange={(next) => {
-          const nextTab = tabs.find((item) => item.value === next[0])?.value;
-          if (nextTab) onValueChange?.(nextTab);
-        }}
-      >
-        {tabs.map((tab) => (
-          <Toggle
-            key={tab.value}
-            value={tab.value}
-            onPointerEnter={
-              onTabIntent
-                ? () => {
-                    clearTimeout(pointerIntent.current);
-                    pointerIntent.current = setTimeout(() => onTabIntent(tab.value), 150);
-                  }
-                : undefined
-            }
-            onPointerLeave={onTabIntent ? () => clearTimeout(pointerIntent.current) : undefined}
-            onFocus={onTabIntent ? () => onTabIntent(tab.value) : undefined}
-          >
-            {tab.label}
-          </Toggle>
-        ))}
-      </ToggleGroup>
-      {children}
-    </nav>
-  );
-}
-
-export function PullRequestChecksStatusLine({
-  icon,
-  label,
-  className,
-  ...props
-}: Omit<ComponentProps<"span">, "children"> & { icon: ReactNode; label: ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "ml-auto flex h-4 min-w-0 flex-1 flex-wrap content-start items-center justify-end gap-x-1.5 overflow-hidden text-xs",
-        className,
-      )}
-      {...props}
-    >
-      {icon}
-      <span className="whitespace-nowrap">{label}</span>
-    </span>
   );
 }
