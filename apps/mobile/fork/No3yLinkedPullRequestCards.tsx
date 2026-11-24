@@ -192,7 +192,9 @@ function Layer(props: {
         onPress={model.onPress}
         style={({ pressed }) => ({
           gap: 6,
-          paddingHorizontal: 12,
+          // Siblings in a branching stack share a depth, so the indent shows what each layer sits on.
+          paddingLeft: 12 + Math.min(props.line.depth, 3) * 12,
+          paddingRight: 12,
           paddingTop: 10,
           paddingBottom: 11,
           borderTopWidth: props.divider ? StyleSheet.hairlineWidth : 0,
