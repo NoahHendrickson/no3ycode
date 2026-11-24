@@ -2,8 +2,7 @@
  * Whether focus sits in an open model picker — see
  * `.fork/customizations.yaml#fork-model-picker`. The menu parks focus on its
  * popup as well as on rows inside the stamped content, so look both ways.
- * ProviderModelPicker stamps the reasoning panel too, so its slider, checkboxes
- * and segments count.
+ * The effort menu's popup is stamped too, so its levels and checkboxes count.
  */
 const MODEL_PICKER_CONTENT_SELECTOR = "[data-model-picker-content]";
 

@@ -30,6 +30,9 @@ import {
   enrichedThreadLinkPresentation,
 } from "../lib/enrichedLinkPresentation";
 import { formatProviderSkillDisplayName } from "@t3tools/shared/inlineSkills";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { No3yChipSizes } from "../../fork/no3yChipHeight";
+/* fork:end no3y-mobile-redesign */
 
 function chipCustomization(
   chip: ReturnType<typeof enrichedContextLinkPresentation>,
@@ -124,6 +127,9 @@ export function useEnrichedLinkVariants(
   urls: ReadonlyArray<string>,
   props: SelectableMarkdownTextProps,
   fileHrefs: ReadonlySet<string>,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  chipSizes?: No3yChipSizes,
+  /* fork:end no3y-mobile-redesign */
 ) {
   const { linkCustomization, skills, models, textStyle, fileEmbedLabel } = props;
   const theme = useUniwindTheme();
@@ -167,18 +173,14 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // No vertical padding: the capsule stands as tall as an inline code chip. Where the
-                // reply draws code as a hugging chip, the label sits 0.05 under the code's scale so
-                // the hairline border makes up the rest.
+                // Where the reply draws code as a chip, the capsule takes its height (no3yChipSizes).
                 pill: {
                   borderColor: link.capsule.border,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
                   paddingHorizontal: 6,
                   paddingVertical: 0,
-                  fontScale: textStyle.inlineCodeChip
-                    ? textStyle.inlineCodeChip.fontScale - 0.05
-                    : undefined,
+                  ...chipSizes?.capsule,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -203,8 +205,9 @@ export function useEnrichedLinkVariants(
                   borderWidth: 0,
                   borderRadius: codeChip.radius,
                   paddingHorizontal: codeChip.paddingHorizontal,
-                  paddingVertical: codeChip.paddingVertical,
+                  paddingVertical: 0,
                   fontScale: codeChip.fontScale,
+                  ...chipSizes?.file,
                 },
                 fontFamily: textStyle.fontFamily,
                 color: textStyle.fileTextColor,
@@ -233,7 +236,7 @@ export function useEnrichedLinkVariants(
           ];
         }),
       ),
-    [chipForegrounds, links, textStyle],
+    [chipForegrounds, links, textStyle, chipSizes],
   );
   const linkPillContent = useMemo<Record<string, LinkPillContent>>(
     () =>

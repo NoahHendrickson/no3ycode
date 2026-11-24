@@ -10,14 +10,13 @@ export interface NativeMarkdownTextStyle {
   /** Fills inline code's chip; upstream leaves it transparent. */
   readonly inlineCodeBackgroundColor?: string;
   /**
-   * The chip's corner radius, padding and size against the body text; iOS only. Upstream draws 2pt
-   * corners, no side padding and 0.9 text, and fills the line, so chips on consecutive lines
-   * touch; paddingVertical hugs the code instead.
+   * The chip's corner radius, side padding and size against the body text; iOS only. Upstream draws
+   * 2pt corners, no side padding and 0.9 text, and fills the line, so chips on consecutive lines
+   * touch; the fork's chip hugs the code at fork/no3yChipHeight's height instead.
    */
   readonly inlineCodeChip?: {
     readonly radius: number;
     readonly paddingHorizontal: number;
-    readonly paddingVertical: number;
     readonly fontScale: number;
   };
   /** iOS weight for bold text and headings; the fork otherwise draws them bold. */

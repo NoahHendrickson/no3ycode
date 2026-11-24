@@ -2380,9 +2380,7 @@
    translucent on some palettes, so a second copy would composite twice, and a
    literal value would stop tracking the token the control row reads.
 
-   Shoulder tabs (the stash and tasks badges) are ComposerBanner.Roots too and
-   take the same floor treatment; only the dock stacking and the tab density
-   below name them. The collapsed stack's peek cap has no surface attribute but reads
+   The collapsed stack's peek cap has no surface attribute but reads
    the same fill variable, so the colour remap lists its slot beside the
    surface and gives it the hairline in place of its severity border utility;
    it takes the composer radius so the cap reads as one more card behind.
@@ -2402,12 +2400,9 @@
 }
 
 /* The attachment wrappers carry the inset width and the tuck, and the dock is
-   one of them, so any wrapper around a card goes full width and flush. The
-   shoulder tabs (stash, tasks) are banner Roots too, so they count: upstream's
-   inset tab tucked under the prompt box reads as a dark slab jammed against
-   the vessel's top edge, and like the banners they are vessel floor instead.
-   The match is by descendant so the dock also goes flush around the tasks row
-   nested in its column, whether or not the stash tab is showing. */
+   one of them, so any wrapper around a card goes full width and flush.
+   The match is by descendant so the dock also goes flush around the cards
+   nested in its column. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-vessel]
   [data-slot="composer-banner-attachment"]:has(
@@ -2416,31 +2411,6 @@
   width: 100%;
   max-width: none;
   margin: 0;
-}
-
-/* A full-width card would squeeze the stash tab sharing the dock row. Stack
-   the dock instead: the tab is a floor row above the card, right-aligned. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-slot="composer-banner-attachment"]:has(> [data-composer-shoulder-tab]):has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
-        [data-composer-shoulder-tab]
-      )
-  ) {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-slot="composer-banner-attachment"]:has(
-    [data-slot="composer-banner"][data-composer-banner-surface="attached"]:not(
-        [data-composer-shoulder-tab]
-      )
-  )
-  > [data-composer-shoulder-tab] {
-  order: -1;
-  align-self: flex-end;
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
@@ -2460,16 +2430,6 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
   --chat-composer-attachment-overlap: 0px;
-}
-
-/* The collapsed tasks badge is the header row of the open tasks drawer, so
-   both shoulder tabs take the drawer's default density: toggling tasks only
-   adds or removes the list beneath it, and a stash tab sharing the dock row
-   keeps the same text line. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  :is([data-fork-composer-vessel], [data-fork-composer-banners])
-  [data-composer-shoulder-tab] {
-  --composer-banner-padding-block: calc(var(--spacing) * 1);
 }
 
 /* Notice metrics, Figma 467:33308, keyed on data-fork-composer-notice so
@@ -3079,7 +3039,11 @@
     [data-slot="menu-sub-trigger"],
     [data-slot="select-item"],
     [data-slot="combobox-item"]
-  ):is([data-highlighted], [data-popup-open], :hover) {
+  ):is([data-highlighted], [data-popup-open], :hover),
+/* A model row stays lit while the menu its control opened is open, the pointer inside that menu
+   (fork-model-picker); dark palettes light rows with this wash instead of --accent. */
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
@@ -3468,11 +3432,15 @@
   :is([data-message-role="assistant"], [data-timeline-row-kind="sent-message"])
   .chat-markdown
   .chat-markdown-file-link:not([data-state="invalid"]) {
+  border: 0;
   border-radius: 5px;
   background: var(--fork-inline-code-wash);
-  padding-inline: 6px;
+  padding: 0 6px;
   color: var(--info-foreground);
   font-size: 0.95em;
+  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
+     (one line box tall) matches it under any interface font. */
+  line-height: 1.3;
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
@@ -3642,7 +3610,7 @@
 /* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
    inside an even 8px inset (the popup's 4px plus the section's 4px). */
 :root[data-fork="noahhendrickson-t3code"]
-  [data-slot="menu-popup"]:has([data-composer-permissions]) {
+  [data-slot="menu-popup"]:has(:is([data-composer-permissions], [data-fork-option-menu])) {
   border-radius: 18px;
 
   &::before,
@@ -3656,13 +3624,15 @@
     overflow-x: hidden;
   }
 
-  & [data-composer-permissions] [data-slot="menu-radio-item"] {
+  &
+    :is([data-composer-permissions], [data-fork-option-menu])
+    :is([data-slot="menu-radio-item"], [data-slot="menu-checkbox-item"]) {
     border-radius: 10px;
   }
 
   /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its
      text back in line with the option names. */
-  & [data-composer-permissions-label] {
+  & :is([data-composer-permissions-label], [data-fork-option-menu-label]) {
     margin-inline: -8px;
     margin-bottom: 4px;
     padding: 0 16px 8px;

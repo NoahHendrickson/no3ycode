@@ -583,43 +583,89 @@
 
 - id: fork-brand-name
   intent: >
-    Every web and desktop string a user reads names the app "no3y Code", the
-    same name fork-app-identity gives the installed app, and the fork still
-    says where it comes from. Upstream writes "T3 Code" inline in hundreds of
-    strings and adds more each sync, so the name is rewritten at build time
-    instead of in each file: one plugin (scripts/lib/fork-brand-name.ts) runs
-    in the web Vite build and dev server and in both desktop pack entries
-    (main, workers), and replaces "T3 Code" in script modules and index.html.
-    The web config leaves it out under Vitest so upstream tests keep
-    asserting upstream copy; desktop pack never runs under Vitest.
-    The whole keep-as-written policy is two lists in that file:
+    Every web, desktop and mobile string a user reads names the app "no3y
+    Code", the same name fork-app-identity gives the installed app, and the
+    fork still says where it comes from. Upstream writes "T3 Code" and bare
+    "T3 <word>" inline in hundreds of strings and adds more each sync, so the
+    name is rewritten at build time instead of in each file. The rewrite is
+    a rename-by-default rule in scripts/lib/fork-brand-name-core.ts: every
+    "T3 " that starts a word and precedes a letter becomes "no3y " ("T3 Code"
+    → "no3y Code", "Started a T3 thread" → "Started a no3y thread"). The
+    t3_thread_* tool-row lookups key on the same rewritten labels, so they
+    keep matching. The core is import-free because two bundlers load it:
+    the Vite plugin (scripts/lib/fork-brand-name.ts) in the web build and dev
+    server and in both desktop pack entries (main, workers), and a Metro
+    Babel-transformer wrapper (apps/mobile/fork/forkBrandNameTransformer.cjs)
+    for mobile. The web config leaves it out under Vitest so upstream tests
+    keep asserting upstream copy; desktop pack and Metro never run under
+    Vitest.
+    The whole keep-as-written policy is two lists in the core:
     PRESERVED_PHRASES (the fork's credit, prose about upstream, the Linux
     capture extension's own name, upstream's registered "T3 Code for GitHub"
-    app, and the server-issued "T3 Code · <label>" peer session a revoke
-    prompt quotes) and EXCLUDED_MODULES (DesktopUserData's legacy profile
-    names and the dictation vocabulary). A string that must match something
-    outside this bundle (server text, an OS or third-party name) is added
-    there, never as a one-off elsewhere.
+    app, the server-issued peer session a revoke prompt quotes as "T3 Code ·
+    …", Ping's services and accounts — T3 Connect, T3 Chat, T3 Account —
+    and the T3 server and T3 home, whose names the client also matches in
+    server text such as "Unable to connect to the T3 server WebSocket") and
+    EXCLUDED_MODULES (DesktopUserData's legacy profile names). A string that
+    must match something outside this bundle (server text, an OS or
+    third-party name) is added there, never as a one-off elsewhere.
     Decided, not incidental: the rewrite also renames the labels this client
     sends when it pairs or links ("no3y Code Desktop", "no3y Code Web",
     "no3y Code link"), so a host's Connections list names the fork's
     clients; nothing compares those labels. Connection copy about software on
     another host is renamed too, though a linked VPS may run upstream.
-    T3 Connect, the T3 server, and the t3 CLI keep their names.
+    Decided trade-off: GT looks translations up by a hash of the source
+    text, so a rewritten string misses its catalog entry and shows in
+    English in every other locale. The fork's copy is English-first; this
+    keeps the name right everywhere instead of translated.
+    Upstream's "T3" letter glyph (T3Wordmark), which marks the app's own tool
+    rows in the transcript and heads the standalone auth pages, is shadowed
+    with the no3y flower as currentColor line art: the outline cells of
+    assets/fork/n3-favicon.svg merged into row runs, the same path in the
+    web shadow, the mobile T3Wordmark and the widget T3Mark.svg (the guard
+    derives it from the favicon). The auth header spells "no3y Code" beside
+    it. Mobile also shows "no3y Code" in its header title, the no3y tile on
+    its loading screen (preview builds share the production tile), and
+    "no3y" as the widget's app name ("Open no3y"). Native copy that Expo
+    reads from the app config before Metro runs (permission prompts, widget
+    gallery descriptions) takes the same rename in fork/identity.ts's
+    no3yNativeConfig, limited by key to display fields so build inputs such
+    as file paths stay untouched, and the Android agent-notification status-bar icon is
+    the same flower path. The iOS widgets bundle
+    through expo-widgets' own Metro config, outside the rewrite, so their
+    fallback copy and their T3Mark.svg logo (the flower, centred in the 1.5:1
+    frame they draw it in) are edited in place.
     Not bundled, so edited in place: public/manifest.webmanifest and the
     macOS permission prompts (local network, screen capture, camera) in
     build-desktop-artifact.ts, beside fork-local-dictation's microphone
     prompt. Settings, About carries a row crediting T3 Code with a link to
     the upstream repository, and the macOS About panel credits it.
-    Server-sent text and the mobile app are out of scope and still say
-    T3 Code.
+    Server-sent text (including agent-facing prompts and the relay's Live
+    Activity title, which the activity layout does not draw) is out of scope
+    and still says T3 Code.
   tier: 4
   files:
+    - scripts/lib/fork-brand-name-core.ts
     - scripts/lib/fork-brand-name.ts
     - apps/web/src/custom/ForkUpstreamCreditRow.tsx
-  shadows: []
+    - apps/mobile/fork/forkBrandNameTransformer.cjs
+  shadows:
+    - apps/web/src/components/T3Wordmark.tsx
   watch:
     - apps/web/vite.config.ts
+    - apps/web/src/components/ui/standalone-page.tsx
+    - apps/mobile/metro.config.js
+    - apps/mobile/src/components/T3Wordmark.tsx
+    - apps/mobile/src/components/CompactBrandTitle.tsx
+    - apps/mobile/src/components/brandAssets.ts
+    - apps/mobile/src/widgets/subscriptionUsageSnapshot.ts
+    # Widget layouts bundle through expo-widgets' own Metro config, outside the rename.
+    - apps/mobile/src/widgets/SubscriptionUsage.tsx
+    - apps/mobile/src/widgets/SubscriptionUsage.android.tsx
+    - apps/mobile/src/widgets/AgentActivityWidget.tsx
+    - apps/mobile/assets/widget/T3Mark.svg
+    - apps/mobile/modules/t3-agent-notifications/android/src/main/res/drawable/agent_activity_mark.xml
+    - apps/mobile/fork/identity.ts
     - apps/desktop/vite.config.ts
     - apps/web/public/manifest.webmanifest
     - apps/web/src/components/settings/SettingsPanels.tsx
@@ -1590,6 +1636,9 @@
     # is title-recede and row surface.
     - apps/web/src/custom/sidebarV2TrailingColumn.ts
     - apps/web/src/custom/SidebarV2IconButton.tsx
+    # The icon buttons' foreground hover tint, shared with the composer cards' row actions
+    # (custom/ComposerCardParts.tsx).
+    - apps/web/src/custom/ghostIconTint.ts
     # Owned by sidebar-v2-project-grouping; this entry owns only its plus
     # button's box and the 2px that puts it on the trailing column's axis.
     - apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx
@@ -3767,9 +3816,16 @@
     keep the glass.
     The open stash is the queue card's twin: ChatComposer renders it as the
     card nearest the prompt in the banners dock (not upstream's portaled
-    drawer layer), its tab hidden while it is open, and it shares the queue
+    drawer layer), and it shares the queue
     card's rules and parts (custom/ComposerCardParts.tsx: the counted title
     and the trash remove). Both titles read at text-sm/5 on the banner scale.
+    Collapsed, it is a "Stash N" pill in the status-chip row like the queue's
+    (custom/ComposerStashChip.tsx), rendered by ChatComposer so the new agent
+    screen shows it too, through ComposerShell's persistentChips slot, which
+    stays over the collapsed phone pill. Upstream's ComposerStashBadge shoulder
+    tab (components/chat/ComposerStashBadge.tsx) is deleted on purpose: resolve
+    a sync modify/delete on it as delete. Its stash-pulse-row keyframes in index.css stay unused, as
+    upstream's, to keep sync diffs small.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3780,6 +3836,7 @@
     - apps/web/src/custom/ComposerBackgroundWork.tsx
     - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
+    - apps/web/src/custom/ComposerStashChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/composerPullRequestChip.logic.ts
@@ -3840,7 +3897,7 @@
     # pseudo-elements this customization switches off. An upstream rework of
     # that paint would leave the fork disabling rules that no longer match.
     - apps/web/src/components/chat/ComposerSurface.tsx
-    # The dock the drawers, banners and stash badge now ride inside the vessel.
+    # The dock the drawers, banners and stash card ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
     # The stash card's title, trash remove and composer-controls stamp, fenced.
     - apps/web/src/components/chat/ComposerStashMenu.tsx
@@ -4919,9 +4976,7 @@
     only drawn edge in the vessel; the Questions card, which fuses with the
     prompt into one bordered box on the composer fill, is the deliberate
     exception and keeps that construction — including its own top edge under
-    a notice, since the notice above it paints no outline to share. Shoulder tabs (stash, tasks) are
-    banner Roots and take the same floor treatment; only the dock stacking and
-    the tabs' shared drawer density name them. The remaining Figma
+    a notice, since the notice above it paints no outline to share. The remaining Figma
     467:33308 card (branch changed) is stamped data-fork-composer-notice so
     drawer density stays on Reconnect / Update / tasks. It drops font-medium /
     leading-7 at the source, stacks title over description, and stamps its
@@ -5063,9 +5118,7 @@
     leaves the card transparent) and a top/left/right composer hairline on
     8px top corners (recoloured with the prompt's focus ring so the stack
     keeps one ring), and square the prompt surface's top corners so the two read as
-    one box. Because the card takes the whole dock row, the stash tab cannot
-    sit beside it as it does beside upstream's inset drawer: the dock stacks
-    and the tab sits as a floor row above the card, right-aligned.
+    one box.
     On the no3y iPhone layout (fork/No3yPendingUserInputCard.tsx, swapped in
     by a fenced wrapper in ThreadDetailScreen) the same design is a glass card
     in the composer card's place at its width: a Questions header with the
@@ -5077,6 +5130,10 @@
     multi-select toggles in place. Free-text answers, the collapsed bar with
     Stop, and upstream's feed-inset mechanics carry over unchanged. iPad and
     Android keep upstream's card.
+    The composer's placeholder under a question with options reads "Or type
+    your own answer" (a fenced hunk in ChatComposer), not upstream's "Type
+    your own answer, or leave this blank to use the selected option", which
+    wrapped to two lines beside the composer's controls.
   tier: 2
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
@@ -5113,7 +5170,7 @@
 - id: fork-model-picker
   intent: >
     The model picker is a menu in the style of Figma t3-fork 342:8038
-    (8px inset, 32px rows with a 12px medium label and a check on the
+    (8px inset, 32px rows with a regular-weight label at the interface size and a check on the
     selected model), squared off a step from upstream's menus: 8px corners on
     the popup, 4px on the rows and search field. ProviderModelPicker's shadow
     swaps upstream's Popover for a non-modal Base UI Menu and keeps the rest
@@ -5139,8 +5196,8 @@
     popup. The rail runs edge to edge
     of the popup (top to the traits panel's rule, or to the popup's bottom),
     divided from the list by a full-height rule; its 32px tabs line up with
-    the search field and the rows. The tabs are Favorites (heart, always
-    shown; empty, it says how to add one), then one per enabled provider instance, icon only with
+    the search field and the rows. The tabs are Pinned (a pin, always
+    shown; empty, it says how to pin one; pins are the stored favorites), then one per enabled provider instance, icon only with
     a tooltip naming it (or why it is disabled), a tint on the chosen one and,
     when another scope is chosen, a dot on the current model's provider (its
     accessible name says "current model").
@@ -5169,8 +5226,17 @@
     provider-agnostic list of every matching model — glyph and instance name
     inline, ranked like upstream's search, locked provider still respected;
     Enter picks the first result and Escape clears the query before it
-    closes the menu. Rows reveal the favorites star and ⌘1–9 badge on hover;
-    the star toggles without choosing the row. ⌘1–9 map to the search
+    closes the menu. Rows reveal a pin at their far right on hover (Pin /
+    Unpin); it toggles without choosing the row, and never moves a row:
+    provider lists keep the provider's order, except that Claude reads by
+    family, Fable, Opus, Sonnet, Haiku, release order within each
+    (custom/claudeFamilyOrder; the manifest lists by release), pinned models gather on the
+    Pinned tab, not atop them), and placement in a provider list or search (a
+    pinned legacy model among the current ones, search ties) reads the pins as
+    they stood at the first toggle of an open, so a change shows on the next
+    open. The Pinned tab is the live list of pins: a pin joins it at once and an
+    unpin leaves it. Rows show no shortcut badge,
+    but ⌘1–9 still map to the search
     results, else the listed models in order, and the provider-cycling
     shortcuts step the provider tabs. Providers locked out of the thread or not
     ready stay in the rail but disabled, with the reason as a
@@ -5183,29 +5249,47 @@
     wraps ProviderModelPicker and fills its `traits` slot from the same input
     the composer used to hand upstream's TraitsPicker: the trigger reads
     "Opus 5.5 High Fast" (fast mode rides in the label text since upstream
-    #16069), and under the list a panel
-    shows the selected model's traits. The traits label truncates inside the
+    #16069). The selected model's row shows its effort beside the check
+    (Figma kUDQTOR0ndxERlBCqgy3nk 377:1125); its other traits live in the
+    effort menu that value opens. The traits label truncates inside the
     trigger's max width, and in the resting strip it collapses with the model
     name below 640px, where upstream moved the traits picker
     into the ⋯ menu. Effort (any reasoning select recognized by
     isReasoningSelect — including `effort`, `reasoningEffort`, `reasoning`,
     `variant`, `thinking_level`, and `role: "reasoning"` — when it has two or
-    more levels) is a slider over
-    the model's own levels, Ultrathink included as the top stop for Claude;
-    dragging previews and writes once on release. It is a 24px bar with a block
-    thumb, dot stops and a short bar at the default level, drawn under the fill
-    so the stops the thumb has passed are covered as it moves. The fill is an 8x8
-    Bayer dither (custom/EffortDither) through the provider's colours (Claude,
-    Codex, Antigravity, Grok, Cursor; any other runs from the done blue to the
-    working green), solid at the middle of the thumb and its last colour under
-    the rest, so Glass's see-through thumb shows one fill. Inlet keeps a flat
-    fill and hides the dither (theme.custom.inlet.css). On/off traits are
-    checkboxes and other selects are segments. Rows keep one order for every
+    more levels) is a "⇕ High" value on that row; clicking it (or ArrowRight)
+    opens a submenu above it (hover never does; another click closes it; a
+    click on another row's previewed effort picks that model and opens its
+    menu). The value is a plain button in the row's one control slot
+    (renderRowControl); the menu is a trigger-less submenu of the model menu,
+    rendered outside every row as the picker's layer and anchored to the
+    button, so the shared row needs no event suppression. The menu sits centred
+    above the value and lists the model's own levels, Ultrathink last for
+    Claude. There is no effort slider. The row stays lit while its menu is open
+    (one rule on the button's data-open). A level pick closes the menu.
+    Hovering any other row (outside search, and not a disabled one) previews,
+    in muted ink, the effort picking it would set, by the pick's own rule
+    (custom/pickOptions, also used by useComposerSelection): the options last
+    used with that model, else the thread's own when it is the thread's model,
+    else the model default. Every text in the menu (rows,
+    search, panel labels, the levels submenu) is text-base, so it follows the
+    interface font size, at regular weight; the search field is 36px tall.
+    The model menu has no traits panel (only an unlisted model's saved options
+    show there, read-only): the effort menu holds the levels under an "Effort"
+    header, any other select as its own ruled-off section, and the toggles as
+    checkbox rows with an icon each (the checkbox on the right) (Fast ⚡, Ultracode code, Cyber shield,
+    Thinking brain), so the model menu's height never depends on the model.
+    The row's value is led by the icon of each toggle that is on. On/off traits are
+    checkboxes, and so is a two-value select with a standard value ("default"
+    or "standard"): Codex's Service Tier reads "Fast mode" and Cyber Access
+    "Cyber mode", checked meaning the non-standard value. Nothing is a tab strip.
+    While the prompt body says "ultrathink" the levels are disabled and the
+    effort menu says why. Rows keep one order for every
     provider: the rest in the provider's order, then Fast Mode, then Context
     Window last. Writes match upstream's traits
     menu exactly: same draft-store options with persistSticky, same implicit
     fast-mode default, and Ultrathink as a prompt prefix that is stripped when
-    leaving it (the slider locks while the prompt body says "ultrathink").
+    leaving it.
     The panel keeps every key but Escape and Tab out of the menu's
     navigation. A pick keeps the menu open so effort can follow, and keeps
     focus there: ChatComposer's focusAtEnd stands down while its picker is
@@ -5234,10 +5318,9 @@
     verbatim and both shadows keep upstream's relative imports. Reaches every
     entry point through ProviderModelPicker (composer and Settings). Provider
     scopes sit in a horizontal top segmented Tabs strip above the search field,
-    model list, and reasoning/traits panel. Under Glass
-    (theme.custom.glass-surfaces.css), at Full 3D the effort thumb wears the
-    send button's glass and the selected provider and trait tabs wear the
-    segmented tabs' glass chips. An editable select whose one value is
+    model list, and traits panel. Under Glass
+    (theme.custom.glass-surfaces.css), at Full 3D the selected provider tab
+    wears the segmented tabs' glass chip. An editable select whose one value is
     already in force (Cyber Access for a login without Daybreak) offers no
     choice (composerModelTraits' offersChoice): it gets no row and stays out of
     the trigger label, the stored selection is untouched, and a model with
@@ -5247,12 +5330,16 @@
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
     - apps/web/src/overrides/components/chat/ModelPickerContent.tsx
     - apps/web/src/custom/ComposerModelPicker.tsx
-    - apps/web/src/custom/EffortDither.tsx
-    - apps/web/src/custom/EffortDither.test.ts
+    - apps/web/src/custom/ComposerModelPicker.browser.test.tsx
     - apps/web/src/custom/composerModelTraits.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - apps/web/src/custom/modelPickerFocus.ts
     - apps/web/src/custom/modelPickerDisplayName.ts
+    - apps/web/src/custom/claudeFamilyOrder.ts
+    - apps/web/src/custom/pickOptions.ts
+    - apps/web/src/custom/modelRowControl.tsx
+    - apps/web/src/custom/traitPresentation.ts
+    - apps/web/src/custom/claudeFamilyOrder.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
     - apps/web/src/custom/icons/ModelPickerProviderGlyph.tsx
     - apps/web/src/custom/assets/codex-mark.png
@@ -5281,6 +5368,9 @@
     # helpers (trigger label, unavailable descriptors, fast-mode default).
     - apps/web/src/components/chat/TraitsPicker.tsx
     - apps/web/src/components/chat/composerProviderState.tsx
+    # Fenced: the pick's option rule goes through custom/pickOptions, shared with the menu's
+    # effort preview so the preview shows what the pick restores.
+    - apps/web/src/components/chat/useComposerSelection.ts
     # Unfenced: the controlled-update effect must keep reading focus before it
     # rewrites and never focus the view itself (guard-pinned).
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx
@@ -5291,7 +5381,6 @@
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
-    - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - packages/provider-core/src/modelShortName.test.ts
 
@@ -6433,6 +6522,10 @@
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
     --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
+    No block padding or border (upstream code has both). Inline code stays inline,
+    so its wash spans the code font's ascent + descent: 1.3em for Geist Mono. File
+    links set line-height 1.3, so with the default code font both pills are one
+    height under any interface font; a user-picked code font can differ.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's
@@ -8099,9 +8192,13 @@
     its thread's link from the thread tools and its pull request's URL, and end every approval or
     yes-or-no ask, and any other ask a word or two answers, with up to four answers after an arrow,
     links before the arrow, the yes naming the action: `OK to push and open a PR? <PR URL> → Open PR | Hold`). On the bot's own
-    conversation the digest sits just above its composer, in the chat column (BotDigestAsks, one
-    fenced line in ChatView beside upstream's ChildThreadApprovals, inside the composer stack so
-    the transcript's bottom inset counts it); the bot's Threads panel lists its threads only. It
+    conversation the digest sits just above its composer, in the chat column, under the composer's
+    status chips and above its banner cards (BotDigestAsks in ComposerShell's aside slot, fenced
+    in ChatComposer with the composer's own thread, so the transcript's bottom inset counts it).
+    The aside is in the composer's form but not the composer: theme.custom.thread-composer.css
+    themes only ComposerShell's body (banners and vessel), so the digest keeps its own look, and
+    focus in the aside (isInsideComposerAside) neither expands the collapsed phone composer nor
+    holds it open. The bot's Threads panel lists its threads only. It
     shows the status line (parseBotDigestStatus; "Nothing yet." shows none) and one card per
     Needs you ask, nothing for any other thread or while there is neither. New and In progress
     stay in the file for the bot's own memory and draw nothing: its chat messages already say
@@ -8180,8 +8277,8 @@
     - apps/mobile/fork/no3yBotDigestAnswers.ts
   shadows: []
   watch:
-    # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
-    - apps/web/src/components/ChatView.tsx
+    # Draws the asks in ComposerShell's aside slot, under the status chips (fenced).
+    - apps/web/src/components/chat/ChatComposer.tsx
     # The same asks above the iPhone composer, beside ChildThreadApprovals (fenced).
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     # Exports the two subpaths both clients import.
@@ -8278,7 +8375,7 @@
     upstream appears without a story edit. Fork/ stories draw fork components
     through view exports that take plain props (ForkSubagentCardView,
     BotThreadsRowView,
-    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
+    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
     BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package
@@ -8666,14 +8763,17 @@
     (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
     inlineCodeBackgroundColor style) at 0.95 of the body size
     (NO3Y_INLINE_CODE_CHIP.fontScale, upstream 0.9), with 5pt corners and 4pt of room
-    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), only as tall
-    as the code's font (paddingVertical 0) so chips on consecutive lines keep
-    a gap. File
+    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), hugging
+    the code's font so chips on consecutive lines keep a gap. File
     references in a reply (both the embed-label and the resolved file link,
     marked fileReference) wear the same ink, wash and chip shape instead of
-    the teal mention chip, keeping their file icon, with no vertical padding
-    and the label at the code chip's scale (pill.fontScale) so both chips stand
-    the same height. A table's header row
+    the teal mention chip, keeping their file icon, with the label at the code
+    chip's scale (pill.fontScale). In body text every reply chip stands one
+    height: fork/no3yChipHeight.ts pads code
+    (Menlo's ascender + descender), file chips and the subagent capsule (the
+    system font's, rounded up to a whole point) to the tallest of them, from
+    the sizes RCTFont actually draws (it rounds Dynamic Type sizes to a whole
+    point). Chips in a heading take the heading's size. A table's header row
     takes the palette's 4% cardWash (tableHeaderBackgroundColor) instead of
     the dark code block fill. The native
     library draws that chip, so apps/mobile/deps carries a fork build of
@@ -8910,6 +9010,8 @@
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/no3yTranscriptSpacing.ts
     - apps/mobile/fork/no3yTranscriptSpacing.test.ts
+    - apps/mobile/fork/no3yChipHeight.ts
+    - apps/mobile/fork/no3yChipHeight.test.ts
     - apps/mobile/fork/No3ySentBubbleRise.tsx
     - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
@@ -9066,8 +9168,8 @@
     On mobile and desktop/web, a link in an assistant message to a subagent thread (a
     delegated task or subagent child) reads as a neutral capsule instead of the thread
     chip: a faint fill with a hairline (mobile: controlSurface/controlBorder; its label at
-    0.05 under the code chip's scale, pill.fontScale, where replies draw one, so it stands as
-    tall as an inline code chip), body ink,
+    0.05 under the code chip's scale, pill.fontScale, where replies draw one, padded by
+    fork/no3yChipHeight.ts to stand as tall as an inline code chip), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
@@ -9346,3 +9448,29 @@
     - apps/web/src/main.tsx
   verify:
     - apps/web/src/__fork_guards__/forkDevHouseLook.test.ts
+
+- id: pr-header-hierarchy
+  intent: >
+    The pull request header reads top down by importance. Under the title, one
+    meta line says who, when and how big (author, updated time, file count and
+    diff stats); the author and updated time truncate before the stats do.
+    Below it the branch flow reads left to right, head into base, with the head
+    brighter than the base, and the copyable checkout command sits at the end
+    of that row, gives up width first and hides below a 28rem header. An out-of-date base colours only its
+    warning icon, not the branch name. One PullRequestBranchFlow (layout
+    override) draws the flow for both the full header and the condensed
+    header (fenced in PullRequestDetailPanel), and the thread details PR row
+    reads head into base too, so no surface disagrees. The layout override
+    re-exports upstream and replaces only the header body.
+  tier: 4
+  files: []
+  shadows:
+    - apps/web/src/components/pullRequest/PullRequestDetailLayout.tsx
+    - apps/web/src/components/pullRequest/PullRequestBaseBranch.tsx
+  watch:
+    # Fenced: the condensed header renders PullRequestBranchFlow; ArrowLeftIcon import removed.
+    - apps/web/src/components/pullRequest/PullRequestDetailPanel.tsx
+    # Fenced: the hover card branch line reads head into base.
+    - apps/web/src/components/chat/ThreadDetailsPrRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/prHeaderHierarchy.test.ts

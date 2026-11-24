@@ -118,3 +118,16 @@ module.exports = Promise.all([generateMobileThirdPartyLicenses(), prepareStreamS
       polyfills: { rem: 14 },
     }),
 );
+
+/* fork:begin fork-brand-name — see .fork/customizations.yaml#fork-brand-name */
+// Metro hands workers only the transformer's path, so the one it wraps travels in the environment,
+// which workers inherit.
+module.exports = module.exports.then((finalConfig) => {
+  const wrapper = require.resolve("./fork/forkBrandNameTransformer.cjs");
+  if (finalConfig.transformer.babelTransformerPath !== wrapper) {
+    process.env.NO3Y_UPSTREAM_BABEL_TRANSFORMER = finalConfig.transformer.babelTransformerPath;
+    finalConfig.transformer.babelTransformerPath = wrapper;
+  }
+  return finalConfig;
+});
+/* fork:end fork-brand-name */

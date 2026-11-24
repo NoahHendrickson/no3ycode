@@ -15,11 +15,29 @@ import type {
   RunId,
   ThreadId,
 } from "@t3tools/contracts";
-import { ArrowUpIcon, BookmarkIcon, Clock3Icon, GripVerticalIcon } from "lucide-react";
-import { useId, useImperativeHandle, useRef, useState, type Ref } from "react";
+import {
+  ArrowUpIcon,
+  BookmarkIcon,
+  ChevronDownIcon,
+  Clock3Icon,
+  GripVerticalIcon,
+} from "lucide-react";
+import {
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from "react";
 
 import { forkUnacknowledgedQueuedMessages } from "./forkQueuedItems";
-import { ComposerCardRemoveButton, ComposerCardTitle } from "./ComposerCardParts";
+import {
+  ComposerCardIconButton,
+  ComposerCardRemoveButton,
+  ComposerCardTitle,
+} from "./ComposerCardParts";
 import { ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
 
 import { useAssetUrls } from "~/assets/assetUrls";
@@ -119,21 +137,8 @@ export function ForkQueuedRunsBanner({
   });
   const queueListId = useId();
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
-  // Rows opened with "Read more", and the hovered row with whether its text is cut off.
-  const [readKeys, setReadKeys] = useState<ReadonlySet<string>>(() => new Set());
-  const [hovered, setHovered] = useState<{
-    readonly key: string;
-    readonly overflowing: boolean;
-  } | null>(null);
-  // Read more is offered only while the row's text is cut off. An opened row wraps, so it
-  // measures as fitting; it stays offered so Read less still folds back to Read more.
-  const showReadMore = (row: HTMLElement, key: string) => {
-    const text = row.querySelector<HTMLElement>("[data-fork-queued-text]");
-    setHovered({
-      key,
-      overflowing: readKeys.has(key) || (text !== null && text.scrollWidth > text.clientWidth),
-    });
-  };
+  // The hovered or focused row, which offers its expand chevron.
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{
     readonly runId: RunId;
     readonly insertIndex: number | null;
@@ -391,7 +396,7 @@ export function ForkQueuedRunsBanner({
             <ComposerBanner.ToggleIcon expanded />
           </ComposerBanner.Actions>
         </ComposerBanner.Row>
-        <ComposerBanner.Scroll className="max-h-32">
+        <ComposerBanner.Scroll>
           <ComposerBanner.Children render={<ol />} id={queueListId}>
             {items.map((item) => {
               // Design-change blocks ride the queued text; the row names them instead of showing markup.
@@ -409,7 +414,6 @@ export function ForkQueuedRunsBanner({
               const rowRunId = item.runId;
               const rowServerIndex = item.serverIndex;
               const isEditing = rowRunId !== null && rowRunId === props.editingRunId;
-              const isRead = readKeys.has(item.key);
               const rowDraggable =
                 rowRunId !== null && rowServerIndex !== null && canReorder && busyRunId === null;
               return (
@@ -417,15 +421,15 @@ export function ForkQueuedRunsBanner({
                   render={<li />}
                   key={item.key}
                   aria-current={isEditing ? "true" : undefined}
-                  onPointerEnter={(event) => showReadMore(event.currentTarget, item.key)}
-                  onPointerLeave={() => setHovered(null)}
-                  onFocus={(event) => showReadMore(event.currentTarget, item.key)}
+                  onPointerEnter={() => setActiveKey(item.key)}
+                  onPointerLeave={() => setActiveKey(null)}
+                  onFocus={() => setActiveKey(item.key)}
                   onBlur={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) setHovered(null);
+                    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
                   }}
                   className={cn(
                     "relative rounded-sm",
-                    isEditing && "bg-accent text-accent-foreground",
+                    isEditing ? "bg-accent text-accent-foreground" : "hover:bg-foreground/5",
                     dragState !== null && dragState.runId === item.runId && "opacity-50",
                   )}
                   draggable={rowDraggable}
@@ -501,7 +505,7 @@ export function ForkQueuedRunsBanner({
                       </Button>
                     ) : null}
                   </ComposerBanner.Icon>
-                  <ComposerBanner.Content className="text-sm text-foreground">
+                  <QueuedRowText rowActive={activeKey === item.key} text={previewText}>
                     {isEditing ? <span className="sr-only">Editing queued message: </span> : null}
                     {item.pending ? (
                       <Clock3Icon
@@ -546,32 +550,7 @@ export function ForkQueuedRunsBanner({
                     {designChangeLabel !== null ? (
                       <span className="shrink-0 text-muted-foreground">{designChangeLabel}</span>
                     ) : null}
-                    <span
-                      data-fork-queued-text
-                      className={cn(
-                        "min-w-0 flex-1",
-                        isRead ? "py-2 break-words whitespace-pre-wrap" : "truncate",
-                      )}
-                    >
-                      {previewText}
-                    </span>
-                    {isRead || (hovered?.key === item.key && hovered.overflowing) ? (
-                      <button
-                        type="button"
-                        className="shrink-0 cursor-pointer text-xs text-muted-foreground hover:text-foreground"
-                        onClick={() =>
-                          setReadKeys((keys) => {
-                            const next = new Set(keys);
-                            if (isRead) next.delete(item.key);
-                            else next.add(item.key);
-                            return next;
-                          })
-                        }
-                      >
-                        {isRead ? "Read less" : "Read more"}
-                      </button>
-                    ) : null}
-                  </ComposerBanner.Content>
+                  </QueuedRowText>
                   <ComposerBanner.Actions>
                     {isEditing ? (
                       <Button
@@ -588,9 +567,7 @@ export function ForkQueuedRunsBanner({
                         {item.freshContext && !canSendRun(true) ? null : (
                           <Tooltip>
                             <TooltipTrigger render={<span className="flex shrink-0" />}>
-                              <Button
-                                size="icon-xs"
-                                variant="ghost-muted"
+                              <ComposerCardIconButton
                                 aria-label={sendLabel}
                                 disabled={
                                   item.runId === null ||
@@ -602,7 +579,7 @@ export function ForkQueuedRunsBanner({
                                 }}
                               >
                                 <ArrowUpIcon />
-                              </Button>
+                              </ComposerCardIconButton>
                             </TooltipTrigger>
                             <TooltipPopup>
                               {!canSendRun(item.freshContext)
@@ -614,9 +591,7 @@ export function ForkQueuedRunsBanner({
                         <Tooltip>
                           {/* The span keeps the tooltip, and its reason, on a disabled button. */}
                           <TooltipTrigger render={<span className="flex shrink-0" />}>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost-muted"
+                            <ComposerCardIconButton
                               aria-label="Edit queued message"
                               disabled={
                                 item.runId === null ||
@@ -636,7 +611,7 @@ export function ForkQueuedRunsBanner({
                               }}
                             >
                               <PencilEditIcon />
-                            </Button>
+                            </ComposerCardIconButton>
                           </TooltipTrigger>
                           <TooltipPopup>
                             {props.editBlockedReason ??
@@ -645,9 +620,7 @@ export function ForkQueuedRunsBanner({
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger render={<span className="flex shrink-0" />}>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost-muted"
+                            <ComposerCardIconButton
                               aria-label="Move queued message to stash"
                               disabled={
                                 item.runId === null ||
@@ -657,7 +630,7 @@ export function ForkQueuedRunsBanner({
                               onClick={() => void stash(item)}
                             >
                               <BookmarkIcon weight="stroke" />
-                            </Button>
+                            </ComposerCardIconButton>
                           </TooltipTrigger>
                           <TooltipPopup>{item.stashBlockedReason ?? "Move to stash"}</TooltipPopup>
                         </Tooltip>
@@ -685,5 +658,56 @@ export function ForkQueuedRunsBanner({
         </ComposerBanner.Scroll>
       </ComposerBanner.Root>
     </ComposerBanner.Attachment>
+  );
+}
+
+const isCutOff = (text: HTMLElement | null) => text !== null && text.scrollWidth > text.clientWidth;
+
+/** A queued row's text cell: cut-off text offers a chevron while its row is hovered or focused,
+    and a click anywhere in the cell (the chevron's included) toggles the full text. */
+function QueuedRowText(props: {
+  readonly rowActive: boolean;
+  readonly text: string;
+  readonly children: ReactNode;
+}) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [cutOff, setCutOff] = useState(false);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- reads whether the text is cut off at the row's current width
+  useLayoutEffect(() => {
+    if (props.rowActive && !expanded) setCutOff(isCutOff(textRef.current));
+  }, [props.rowActive, expanded]);
+  const showChevron = expanded || (props.rowActive && cutOff);
+  return (
+    <ComposerBanner.Content
+      className={cn("text-sm text-foreground", showChevron && "cursor-pointer")}
+      onClick={() => {
+        // A text selection is not a click. Measured now: a touch tap ends the hover before its click.
+        if (!(window.getSelection()?.isCollapsed ?? true)) return;
+        if (!expanded && !isCutOff(textRef.current)) return;
+        setExpanded(!expanded);
+      }}
+    >
+      {props.children}
+      <span
+        ref={textRef}
+        className={cn(
+          "min-w-0 flex-1",
+          expanded ? "py-2 break-words whitespace-pre-wrap" : "truncate",
+        )}
+      >
+        {props.text}
+      </span>
+      {showChevron ? (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse queued message" : "Expand queued message"}
+          className="flex size-4 shrink-0 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDownIcon className={cn("size-3.5", expanded && "rotate-180")} />
+        </button>
+      ) : null}
+    </ComposerBanner.Content>
   );
 }

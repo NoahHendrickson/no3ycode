@@ -9161,6 +9161,8 @@
   "6afaa3e3739dc570": "Elige un icono para el proyecto",
   "51651ce45d481a20": "Elige un archivo de icono para el proyecto",
   "a10ff8b39e16d7f8": "Fijar",
+  "876e7a8c229f3d07": "Desfijar",
+  "7253764d0ff8ff8e": "Aún no hay modelos fijados. Fija un modelo para tenerlo aquí.",
   "c65b6d4b82c9eb43": "Los proyectos fijados aparecen primero en los selectores de proyectos.",
   "2a546119bf3879ee": "Archivados",
   "63e237776ff48bea": "Oculto en los selectores de proyectos. Se conservan los hilos y archivos.",
@@ -12456,5 +12458,6 @@
   "27d76249d09eb69f": "Guía de revisión lista",
   "faa3bb26abb39c93": "Falló la guía de revisión",
   "b7df38b7d8792d78": "Abrir guía",
-  "9e91e9a77b664e4e": "No se pudo iniciar una guía de revisión"
+  "9e91e9a77b664e4e": "No se pudo iniciar una guía de revisión",
+  "93804cc08b314998": "se fusiona en"
 }

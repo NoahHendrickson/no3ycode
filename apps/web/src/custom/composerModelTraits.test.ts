@@ -3,10 +3,11 @@ import { describe, expect, it } from "vite-plus/test";
 import { DraftId } from "../composerDraftStore";
 
 import {
-  effortStopIndex,
+  effortLevel,
   findEffortDescriptor,
   orderTraitRows,
   resolveComposerModelTraits,
+  selectToggle,
   type ComposerModelTraitsInput,
   type SelectDescriptor,
 } from "./composerModelTraits";
@@ -47,7 +48,55 @@ describe("controlled model traits", () => {
     const composer = resolveComposerModelTraits({ ...input, draftId: DraftId.make("draft") });
     expect(controlled).not.toBeNull();
     expect(controlled).toEqual(composer);
-    expect(controlled?.effortDescriptor?.currentValue).toBe("max");
+    expect(controlled?.effort?.level?.id).toBe("max");
+  });
+
+  it("splits the effort menu: the effort, other selects, then toggles in one order", () => {
+    const traits = resolveComposerModelTraits({
+      ...input,
+      draftId: DraftId.make("draft"),
+      modelOptions: [{ id: "serviceTier", value: "fast" }],
+      models: [
+        {
+          ...input.models[0]!,
+          capabilities: {
+            optionDescriptors: [
+              claudeEffort,
+              { id: "fastMode", label: "Fast Mode", type: "boolean" },
+              {
+                id: "serviceTier",
+                label: "Service Tier",
+                type: "select",
+                options: [
+                  { id: "default", label: "Standard", isDefault: true },
+                  { id: "fast", label: "Fast" },
+                ],
+              },
+              {
+                id: "contextWindow",
+                label: "Context Window",
+                type: "select",
+                options: [
+                  { id: "200k", label: "200k", isDefault: true },
+                  { id: "1m", label: "1M" },
+                ],
+              },
+              { id: "ultracode", label: "Ultracode", type: "boolean", currentValue: true },
+            ],
+          },
+        },
+      ],
+    });
+    expect(traits?.effort?.level?.id).toBe("high");
+    expect(traits?.effort?.locked).toBe(false);
+    expect(traits?.selects.map((d) => d.id)).toEqual(["contextWindow"]);
+    expect(
+      traits?.toggles.map((t) => [t.descriptor.id, t.label, t.checked, t.values?.on ?? null]),
+    ).toEqual([
+      ["serviceTier", "Fast mode", true, "fast"],
+      ["ultracode", "Ultracode", true, null],
+      ["fastMode", "Fast Mode", false, null],
+    ]);
   });
 
   it("still hides editable traits without a draft or controlled destination", () => {
@@ -69,12 +118,13 @@ describe("controlled model traits", () => {
         models: [{ ...input.models[0]!, capabilities: { optionDescriptors } }],
       });
     const traits = withTraits([claudeEffort, cyber]);
-    expect(traits?.rows).toEqual([]);
+    expect(traits?.selects).toEqual([]);
+    expect(traits?.toggles).toEqual([]);
     expect(traits?.descriptors.map((d) => d.id)).toEqual(["effort", "cyberAccessProgram"]);
     expect(traits?.trigger.label).not.toContain("Standard");
     // Without a known default, picking the one value still changes the request.
     const { isDefault: _, ...standard } = cyber.options[0]!;
-    expect(withTraits([claudeEffort, { ...cyber, options: [standard] }])?.rows).toHaveLength(1);
+    expect(withTraits([claudeEffort, { ...cyber, options: [standard] }])?.selects).toHaveLength(1);
     // Nothing left to show: no panel at all.
     expect(withTraits([cyber])).toBeNull();
   });
@@ -127,14 +177,66 @@ describe("findEffortDescriptor", () => {
   });
 });
 
-describe("effortStopIndex", () => {
+describe("effortLevel", () => {
   it("lands on the stored level, else the default", () => {
-    expect(effortStopIndex({ ...claudeEffort, currentValue: "max" }, false)).toBe(3);
-    expect(effortStopIndex(claudeEffort, false)).toBe(2);
+    expect(effortLevel({ ...claudeEffort, currentValue: "max" }, false)?.id).toBe("max");
+    expect(effortLevel(claudeEffort, false)?.id).toBe("high");
   });
 
   it("lands on Ultrathink while the prompt carries it, whatever is stored", () => {
-    expect(effortStopIndex({ ...claudeEffort, currentValue: "low" }, true)).toBe(4);
+    expect(effortLevel({ ...claudeEffort, currentValue: "low" }, true)?.id).toBe("ultrathink");
+  });
+});
+
+describe("selectToggle", () => {
+  const tier: SelectDescriptor = {
+    id: "serviceTier",
+    label: "Service Tier",
+    type: "select",
+    options: [
+      { id: "default", label: "Standard", isDefault: true },
+      { id: "fast", label: "Fast" },
+    ],
+    currentValue: "default",
+  };
+
+  it("reads a standard-or-other select as an on/off checkbox", () => {
+    expect(selectToggle(tier)).toEqual({
+      off: "default",
+      on: "fast",
+      checked: false,
+      label: "Fast mode",
+    });
+    expect(selectToggle({ ...tier, currentValue: "fast" })?.checked).toBe(true);
+    expect(
+      selectToggle({
+        id: "cyberAccessProgram",
+        label: "Cyber Access",
+        type: "select",
+        options: [
+          { id: "standard", label: "Standard", isDefault: true },
+          { id: "daybreakBlue", label: "Daybreak Blue" },
+        ],
+        currentValue: "daybreakBlue",
+      }),
+    ).toMatchObject({ off: "standard", on: "daybreakBlue", checked: true, label: "Cyber mode" });
+  });
+
+  it("leaves selects without a standard value, or with more than two, as menus", () => {
+    expect(
+      selectToggle({ ...tier, options: [...tier.options, { id: "flex", label: "Flex" }] }),
+    ).toBeNull();
+    expect(
+      selectToggle({
+        id: "agent",
+        label: "Agent",
+        type: "select",
+        options: [
+          { id: "build", label: "Build", isDefault: true },
+          { id: "plan", label: "Plan" },
+        ],
+      }),
+    ).toBeNull();
   });
 });
 

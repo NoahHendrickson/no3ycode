@@ -27,6 +27,7 @@ import {
 import { RegistryContext } from "@effect/atom-react";
 import { T, useGT } from "gt-react";
 import {
+  type ComponentProps,
   createContext,
   memo,
   type ReactNode,
@@ -134,8 +135,14 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
   onOpenProviderSetup?: (instanceId: ProviderInstanceId) => void;
   getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   onInstanceModelChange: (instanceId: ProviderInstanceId, model: string) => void;
-  /** The selected model's reasoning: a trigger label plus a panel under the model list. */
-  traits?: { label: string; panel: ReactNode };
+  /**
+   * The selected model's reasoning: its trigger label, plus either a read-only panel under the
+   * list (an unlisted saved model) or a layer, popup-level content such as the effort menu that a
+   * row control opens (rendered here so it sits outside every row).
+   */
+  traits?: { label: string; panel?: ReactNode; layer?: ReactNode };
+  /** A row's control before its pin (see ModelPickerContent). */
+  renderRowControl?: ComponentProps<typeof ModelPickerContent>["renderRowControl"];
   /**
    * The composer's combined menu: a pick keeps it open (effort usually
    * follows a new model) at one width, whether or not the model has traits.
@@ -400,6 +407,9 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
         className={props.combined ? "w-72" : "w-64"}
         data-fork-tab-menu={props.isComposerOwned ? "composer" : undefined}
       >
+        {/* Before the list: its portal leaves focus guards here, and the list must stay the last child
+            for its `last:-mb-1`, or opening the layer grows the menu. */}
+        {props.traits?.layer}
         <ModelPickerContent
           searchInputRef={searchInputRef}
           environmentId={props.environmentId}
@@ -428,8 +438,9 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               : (props.getModelDisabledReason?.(instanceId, model) ?? null)
           }
           onInstanceModelChange={handleInstanceModelChange}
+          {...(props.renderRowControl ? { renderRowControl: props.renderRowControl } : {})}
         />
-        {props.traits ? (
+        {props.traits?.panel ? (
           <>
             {/* Edge to edge: the popup's scroll wrapper pads its children by
                 4px, so the rule pulls back out by the same amount. It ends at

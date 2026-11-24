@@ -119,7 +119,6 @@ import {
   useComposerThreadDraft,
 } from "../../composerDraftStore";
 import { buildDraftThreadRouteParams, buildThreadRouteParams } from "../../threadRoutes";
-import { ComposerStashBadge } from "./ComposerStashBadge";
 import { ComposerStashMenu } from "./ComposerStashMenu";
 import { useComposerTriggerState } from "./useComposerTriggerState";
 import { useComposerMenuItems } from "./useComposerMenuItems";
@@ -183,6 +182,9 @@ import { isUnassignedDraft } from "~/custom/newAgentDraft";
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:end fork-touch-affordances */
+/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+import { BotDigestAsks } from "~/custom/bots/BotDigest";
+/* fork:end fork-bot-digest */
 import {
   formatComposerContextReference,
   threadContextRecord,
@@ -194,7 +196,12 @@ import {
 } from "../composerFooterLayout";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { shouldUseCompactComposerModelSlot } from "../../custom/composerModelSlotCompact";
-import { ComposerPromptRow, ComposerShell } from "../../custom/ComposerShell";
+import {
+  ComposerPromptRow,
+  ComposerShell,
+  isInsideComposerAside,
+} from "../../custom/ComposerShell";
+import { ComposerStashChip } from "../../custom/ComposerStashChip";
 import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
@@ -3298,6 +3305,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       }
       if (
         activeElement instanceof Node &&
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        !isInsideComposerAside(activeElement) &&
+        /* fork:end fork-bot-digest */
         ((composerSurface && composerSurface.contains(activeElement)) ||
           (composerForm && composerForm.contains(activeElement)))
       ) {
@@ -3712,6 +3722,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     models: selectedProviderModels,
     modelOptions: composerModelOptions?.[selectedInstanceId],
     reportedModelSelection,
+    threadModelSelection: activeThreadModelSelection,
     promptUltrathink,
     onPromptEdit: editPromptFromTraitsStable,
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
@@ -3998,6 +4009,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         if (isInsideCollapsedComposerControls(activeElement)) {
           return;
         }
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        if (isInsideComposerAside(activeElement)) return;
+        /* fork:end fork-bot-digest */
         if (composerBlurFrameRef.current !== null) {
           window.cancelAnimationFrame(composerBlurFrameRef.current);
           composerBlurFrameRef.current = null;
@@ -4039,6 +4053,19 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         collapsedMobile={isComposerCollapsedMobile}
         context={props.contextStrip}
         statusChips={props.statusChips}
+        /* The queue pill's twin, here so the new agent screen gets it too. */
+        persistentChips={
+          isStashMenuOpen ? null : (
+            <ComposerStashChip
+              count={stashQueue.length}
+              pulseKey={stashPulseKey}
+              onOpen={toggleStashMenuStable}
+            />
+          )
+        }
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        digest={<BotDigestAsks threadRef={routeThreadRef} />}
+        /* fork:end fork-bot-digest */
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}
         modelControls={composerModelControls}
@@ -4105,15 +4132,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 </ComposerBanner.Attachment>
               ) : null}
             </ComposerBanner.Column>
-            {/* Its card names the stash while open, so the tab steps aside. */}
-            {stashDrawerOpen ? null : (
-              <ComposerStashBadge
-                count={stashQueue.length}
-                menuOpen={isStashMenuOpen}
-                pulseKey={stashPulseKey}
-                onToggleMenu={toggleStashMenuStable}
-              />
-            )}
           </ComposerBanner.Dock>
         }
       >
@@ -4366,10 +4384,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                                 ? gt("Choose an option above")
                                 : activePendingProgress.activeQuestion?.options.length === 0
                                   ? gt("Type your answer")
-                                  : gt(
-                                      "Type your own answer, or leave this blank to use the selected option",
-                                    )
-                              : projectSelectionRequired
+                                  : /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input */
+                                    // One line, so it never wraps beside the composer's controls.
+                                    /* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */
+                                    "Or type your own answer"
+                              : /* fork:end fork-pending-user-input */
+                                projectSelectionRequired
                                 ? /* fork:begin fork-new-agent-draft — see .fork/customizations.yaml#fork-new-agent-draft */
                                   // The fork's project list sits under the composer, not above it.
                                   /* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */

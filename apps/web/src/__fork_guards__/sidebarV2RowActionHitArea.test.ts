@@ -28,6 +28,7 @@ const sidebarV2 = readSibling("../components/Sidebar.tsx");
 const chromeRows = readSibling("../custom/SidebarV2ChromeRows.tsx");
 const trailingColumn = readSibling("../custom/sidebarV2TrailingColumn.ts");
 const groupHeader = readSibling("../custom/SidebarV2ProjectGroupHeader.tsx");
+const ghostIconTint = readSibling("../custom/ghostIconTint.ts");
 const theme = readSibling("../theme.custom.css");
 const button = readSibling("../components/ui/button.tsx");
 const iconButton = readSibling("../custom/SidebarV2IconButton.tsx");
@@ -78,7 +79,8 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(iconButton).toContain('header: { size: "icon", className: "size-8 rounded-[10px]" }');
     // The fill makes the target legible, and a foreground tint stays a step off the row's own
     // hover and selected fills (accent is one of them in some themes).
-    expect(iconButton).toContain('"[:hover,[data-pressed]]:bg-foreground/10"');
+    expect(iconButton).toContain("GHOST_ICON_TINT_CLASS,");
+    expect(ghostIconTint).toContain('"[:hover,[data-pressed]]:bg-foreground/10"');
     // No compositor layer per hidden row action.
     expect(iconButton).toContain(
       '"[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto"',
