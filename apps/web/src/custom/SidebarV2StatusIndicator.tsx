@@ -459,7 +459,7 @@ function SidebarV2MonitoringMark() {
 
 /** Working, drawn still where nothing should move (a status chip in a message): the bead
     ring's outline closed into a full ring, at its 12px size and stroke. */
-function SidebarV2StillWorkingMark() {
+export function SidebarV2StillWorkingMark() {
   return (
     <span aria-hidden className={MARK_SLOT_CLASS}>
       <span className="size-3 rounded-full border-[1.5px] border-sidebar-v2-status-working" />
@@ -468,7 +468,7 @@ function SidebarV2StillWorkingMark() {
 }
 
 /** Waiting, drawn still: the monitoring dot at rest, in the muted ink. */
-function SidebarV2StillMonitoringMark() {
+export function SidebarV2StillMonitoringMark() {
   return (
     <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
       <span className="size-2.5 rounded-full bg-current" />
@@ -490,12 +490,12 @@ export function SidebarV2StatusMark(props: {
   /** Card rows draw the idle dot; without one an idle mark draws nothing.
       Unpromoted drafts use the pencil as their idle glyph. */
   readonly idle?: "dot" | "draft";
-  /** Nothing moves: working and waiting draw still glyphs, and Done does not celebrate. */
-  readonly still?: boolean | undefined;
+  /** False where nothing should move: a Done dot that turns up there does not celebrate. */
+  readonly celebrate?: boolean | undefined;
 }) {
   const status = props.status;
   const dot = useRef<HTMLSpanElement>(null);
-  useDoneCelebration(props.still ? null : props.seed, status, dot);
+  useDoneCelebration(props.celebrate === false ? null : props.seed, status, dot);
   if (status === null) {
     if (props.idle === "draft") {
       return (
@@ -521,17 +521,9 @@ export function SidebarV2StatusMark(props: {
         {status.label}
       </span>
       {status.mark === "monitoring" ? (
-        props.still ? (
-          <SidebarV2StillMonitoringMark />
-        ) : (
-          <SidebarV2MonitoringMark />
-        )
+        <SidebarV2MonitoringMark />
       ) : status.mark === "working" ? (
-        props.still ? (
-          <SidebarV2StillWorkingMark />
-        ) : (
-          <SidebarV2WorkingMark seed={props.seed} />
-        )
+        <SidebarV2WorkingMark seed={props.seed} />
       ) : status.mark === "woke" ? (
         <SidebarV2WokeMark />
       ) : (

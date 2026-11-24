@@ -838,7 +838,7 @@ describe("fork guard: fork-composer-shell", () => {
     // Nothing of the work rides the usage drawer or the context row any more.
     expect(usage).not.toContain("backgroundWork");
     expect(chatView).not.toContain("composerContextTrailing");
-    // The usage drawer's floating slot went with the drawer (#421).
+    // The usage drawer's floating slot went with the drawer.
     expect(shell).not.toContain("topVessel");
     expect(strip).toContain("<ComposerSurface.ContextStrip>");
     expect(strip).toContain("export function renderComposerContextStripFallback({");
@@ -850,8 +850,9 @@ describe("fork guard: fork-composer-shell", () => {
     expect(chatView).not.toContain('"Monitoring in the background"');
     expect(chatView).not.toContain('"Background work running"');
     expect(shellCss).toContain("[data-fork-composer-status-chip]");
-    // Background work lists in the shared Menu, on the composer's corners.
-    expect(work).toContain("<MenuPopup");
+    // A status list, not a menu: a Popover whose rows stay reachable, on the composer's corners.
+    expect(work).toContain("<PopoverPopup");
+    expect(shellCss).toContain("button[data-fork-monitoring-task]:hover");
     expect(shellCss).toContain("--fork-flat-popup-radius: var(--fork-composer-radius);");
   });
   it("ends the transcript above the composer instead of hiding it behind", () => {

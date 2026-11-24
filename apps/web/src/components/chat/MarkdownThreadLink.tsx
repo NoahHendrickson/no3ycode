@@ -23,7 +23,7 @@ import { ContextChip, ContextChipLabel } from "../ContextChip";
 import { UnresolvedChip } from "../contextChipParts";
 import { ThreadContextChip } from "../ThreadContextChip";
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-import { ForkSubagentLinkChip, useForkThreadLinkCapsule } from "../../custom/ForkSubagentLinkChip";
+import { ForkSubagentLinkChip, useForkThreadLinkShape } from "../../custom/ForkSubagentLinkChip";
 /* fork:end no3y-subagent-link-chip */
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
@@ -39,7 +39,7 @@ export function MarkdownThreadLink(props: {
   const messages = useMessages();
   const navigate = useNavigate();
   /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-  const capsule = useForkThreadLinkCapsule() ? ("capsule" as const) : undefined;
+  const capsule = useForkThreadLinkShape();
   /* fork:end no3y-subagent-link-chip */
   const trigger = useSideThreadTrigger();
   const panelRef = props.threadRef ?? null;

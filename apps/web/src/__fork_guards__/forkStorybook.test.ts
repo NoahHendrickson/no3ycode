@@ -22,7 +22,33 @@ function styleImports(source: string): string[] {
     .filter((path) => path.endsWith(".css") || path.startsWith("@fontsource"));
 }
 
+/** Markup StoryComposer and the composer-card stories copy from the app, so the theme sheets that
+    select on it keep reaching the stories. Each must still appear in its app source. */
+const COPIED_COMPOSER_MARKUP: ReadonlyArray<readonly [string, string]> = [
+  ['data-chat-composer-overlay="true"', "../components/ChatView.tsx"],
+  ["chat-composer-lane", "../components/ChatView.tsx"],
+  ['data-chat-composer-stack="true"', "../components/ChatView.tsx"],
+  ['data-fork-composer-stack="true"', "../components/ChatView.tsx"],
+  ['data-chat-composer-form="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-inline-resting-controls="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-fork-composer-box="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-fork-composer-surface="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-surface="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-body="true"', "../components/chat/ChatComposer.tsx"],
+  ['data-chat-composer-top-drawer="true"', "../components/chat/ChatComposer.tsx"],
+];
+
 describe("fork-storybook", () => {
+  it("copies composer markup the app still renders", () => {
+    const stories =
+      read("../../../fork-storybook/stories/StoryComposer.tsx") +
+      read("../../../fork-storybook/stories/fork/ComposerCards.stories.tsx");
+    for (const [markup, source] of COPIED_COMPOSER_MARKUP) {
+      expect(stories, markup).toContain(markup);
+      expect(read(source), `${markup} in ${source}`).toContain(markup);
+    }
+  });
+
   it("loads exactly the app's stylesheets, in main.tsx's order", () => {
     const appStyles = styleImports(mainTsx).map((path) => path.replace(/^\.\//, "~/"));
     expect(appStyles.length).toBeGreaterThan(0);

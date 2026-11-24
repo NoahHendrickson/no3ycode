@@ -99,17 +99,77 @@
   height: 14px;
 }
 
-/* The background-work menu opens on the composer's corners. The custom property carries it
-   past Flat Glass's popup radius, which out-ranks this selector. */
+/* The background-work popover reads as a menu on the composer's corners: a 6px inset, rows
+   whose hover is a concentric rounded highlight, and full-width rules between them. The custom
+   property carries the corners past Flat Glass's popup radius, which out-ranks this selector. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-background-work-popup] {
   --fork-flat-popup-radius: var(--fork-composer-radius);
   border-radius: var(--fork-composer-radius);
+
+  &::before {
+    border-radius: calc(var(--fork-composer-radius) - 1px);
+  }
+
+  & > [data-slot="popover-viewport"] {
+    --viewport-inline-padding: 6px;
+    padding-block: 0;
+  }
 }
 
-/* Without its fill the 32px card tile is mostly air beside the mark; the list keeps it tight. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-background-work-popup] [data-fork-task-tile] {
-  width: 24px;
-  height: 24px;
+/* The list bleeds to the popup's edges so the rule between tasks runs full width; each row
+   takes the inset back, and every row's highlight gets 6px of room on every side. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-monitoring-tasks] {
+  margin-inline: calc(-1 * var(--viewport-inline-padding, 0px));
+
+  & > li {
+    padding: 6px var(--viewport-inline-padding, 0px);
+  }
+
+  & > li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  /* A one-line monitor row matches a subagent row's title-over-model height. */
+  & [data-fork-monitoring-task] {
+    min-height: 50px;
+    padding: 6px 8px;
+    border-radius: calc(var(--fork-composer-radius) - 6px);
+  }
+
+  /* Without its fill the 32px card tile is mostly air beside the mark; the list keeps it tight. */
+  & [data-fork-task-tile] {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-fork-monitoring-task] {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-align: left;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-monitoring-task] {
+  cursor: pointer;
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-monitoring-task]:hover {
+  background: var(--fork-outline-hover-bg, rgb(255 255 255 / 4%));
+}
+
+:root[data-fork="noahhendrickson-t3code"] button[data-fork-monitoring-task]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 /* The PR chip wears its state: a deep fill, soft glass rims (brighter along the top, fainter

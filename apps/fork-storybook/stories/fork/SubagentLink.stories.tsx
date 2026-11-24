@@ -6,8 +6,7 @@ import type { ReactNode } from "react";
 import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
 import { ThreadContextChip } from "~/components/ThreadContextChip";
 import type { ForkSubagentLinkKind } from "~/custom/forkSubagentLinkLogic";
-import { sidebarV2CardTopStatus } from "~/custom/sidebarV2CardStatus";
-import { SidebarV2StatusMark } from "~/custom/SidebarV2StatusIndicator";
+import { SubagentLinkMark } from "~/custom/ForkSubagentLinkChip";
 
 import { Row, Stack } from "../Specimen.tsx";
 
@@ -42,14 +41,7 @@ function SubagentLink({ status, title }: { status: Status; title: string }) {
       data-fork-subagent-link=""
       shape="capsule"
     >
-      <span aria-hidden className="inline-flex shrink-0">
-        <SidebarV2StatusMark
-          status={status === "idle" ? null : sidebarV2CardTopStatus(status, { goalActive: false })}
-          seed={threadId}
-          idle="dot"
-          still
-        />
-      </span>
+      <SubagentLinkMark kind={status === "idle" ? null : status} seed={threadId} />
       <ContextChipLabel>{title}</ContextChipLabel>
     </ContextChip>
   );
