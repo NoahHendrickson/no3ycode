@@ -128,7 +128,7 @@ const subagentLinkAtom = Atom.family((key: string) => {
       label: shell.title.trim() ? forkSubagentLinkLabel(shell.title) : "",
       staleKey,
     };
-  }).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`fork-subagent-link:${key}`));
+  }).pipe(Atom.withLabel(`fork-subagent-link:${key}`));
 });
 
 const subagentHrefsAtom = Atom.family((key: string) => {

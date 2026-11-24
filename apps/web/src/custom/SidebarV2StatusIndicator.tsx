@@ -101,10 +101,9 @@ function rainAlpha(dy: number): number {
     sidebar full of working threads would read as a single blinking block, so
     each row gets its own offset. Hashing the thread key rather than randomizing
     is what makes the spread deterministic: the same thread always draws the same
-    offset, so a re-render cannot reshuffle the row's phase. (A *remount* still
-    restarts the CSS delay clock, so a row that scrolls out and back re-phases
-    regardless — the hash guarantees rows differ from each other, not that any
-    one row is continuous across remount.) Every column moves
+    offset, so a re-render cannot reshuffle the row's phase, and a remount picks
+    up where the row would have been (the films run on the document timeline).
+    Every column moves
     by the same absolute amount, which preserves their relationship to each
     other: the row looks exactly like one that started working moments earlier. */
 export function workingMarkOffsetSeconds(seed: string): number {
@@ -179,7 +178,7 @@ function bakeFilm(
 
 /** Every film plays at this rate, and steps on the same grid of the document
     timeline: marks out of step each woke the compositor on vsyncs of their own
-    (40 bead rings: 12.6% of a core at 60 fps out of step, 6.2% here). */
+    (measured in .fork/customizations.yaml#fork-working-mark). */
 const FILM_FPS = 30;
 const FILM_FRAME_MS = 1000 / FILM_FPS;
 
@@ -205,19 +204,16 @@ function FilmStrip(props: {
   readonly still?: boolean | undefined;
 }) {
   const period = props.frames / FILM_FPS;
-  // The outer modulos only catch floating-point error at the top of the range.
-  const phase = Math.round(wrap(props.startSeconds, period) * FILM_FPS) % props.frames;
-  const still =
-    Math.floor((wrap(props.startSeconds + STILL_SECONDS, period) / period) * props.frames) %
-    props.frames;
+  // The outer modulo only catches floating-point error at the top of the range.
+  const frameAt = (seconds: number) => Math.floor(wrap(seconds, period) * FILM_FPS) % props.frames;
+  const still = frameAt(props.startSeconds + STILL_SECONDS);
   return (
     <span
-      // A CSS animation starts on the frame it is created (mount, a hidden row shown again, reduced
-      // motion turned off); its first event pins it onto the shared grid.
+      // A CSS animation starts on the frame it is created (mount, a hidden row shown again,
+      // reduced motion turned off), off the grid; its first event moves the start onto it. The
+      // delay keeps the phase, so the frames before that are already the right ones.
       onAnimationStart={(event) => {
-        for (const animation of event.currentTarget.getAnimations()) {
-          animation.startTime = -phase * FILM_FRAME_MS;
-        }
+        for (const animation of event.currentTarget.getAnimations()) animation.startTime = 0;
       }}
       className={
         props.still
@@ -234,31 +230,35 @@ function FilmStrip(props: {
         // Unrounded: a rounded loop drifts off the grid over minutes.
         animationDuration: `${period}s`,
         animationTimingFunction: `steps(${props.frames})`,
+        animationDelay: `${-frameAt(props.startSeconds) * FILM_FRAME_MS}ms`,
       }}
     />
   );
 }
 
-/** Every column runs the same five-row fall at its own speed, each to a whole
-    number of frames so it stays on the shared grid; one film of a single
-    column per frame count, each strip masked at its column's x. */
-const rainFilms = new Map<number, string>();
-function rainFilm(frames: number): string {
-  let film = rainFilms.get(frames);
-  if (film === undefined) {
-    film = bakeFilm(CELL, HEIGHT, frames, { width: CELL, height: CELL, rx: CELL * 0.28 }, (index) =>
-      Array.from({ length: ROWS }, (_, row) => ({
-        x: 0,
-        y: row * PITCH,
-        opacity: rainAlpha(((index + 0.5) / frames) * RAIN_SPAN - 1.5 - row),
-      })),
-    );
-    rainFilms.set(frames, film);
-  }
-  return film;
-}
 /** Mark units to CSS px: the 14px slot over the grid's native height. */
 const RAIN_SCALE = SLOT / HEIGHT;
+
+/** Every column runs the same five-row fall at its own speed, to a whole number of frames so it
+    stays on the shared grid: a single-column film each, masked at its column's x. */
+const RAIN_STRIPS = COLUMNS.map((column, col) => {
+  const frames = filmFrames(RAIN_SPAN / column.speed);
+  return {
+    key: column.phase,
+    frames,
+    film: once(() =>
+      bakeFilm(CELL, HEIGHT, frames, { width: CELL, height: CELL, rx: CELL * 0.28 }, (index) =>
+        Array.from({ length: ROWS }, (_, row) => ({
+          x: 0,
+          y: row * PITCH,
+          opacity: rainAlpha(((index + 0.5) / frames) * RAIN_SPAN - 1.5 - row),
+        })),
+      ),
+    ),
+    startSeconds: column.phase / column.speed,
+    column: { left: col * PITCH * RAIN_SCALE, width: CELL * RAIN_SCALE },
+  };
+});
 
 interface WorkingMarkProps {
   readonly seed: string;
@@ -279,19 +279,16 @@ function SidebarV2WorkingRain({ seed, still }: WorkingMarkProps) {
       className="relative block h-[14px] shrink-0 overflow-hidden"
       style={{ width: DRAW_WIDTH }}
     >
-      {COLUMNS.map((column, col) => {
-        const frames = filmFrames(RAIN_SPAN / column.speed);
-        return (
-          <FilmStrip
-            key={column.phase}
-            film={rainFilm(frames)}
-            frames={frames}
-            startSeconds={column.phase / column.speed + offset}
-            column={{ left: col * PITCH * RAIN_SCALE, width: CELL * RAIN_SCALE }}
-            still={still}
-          />
-        );
-      })}
+      {RAIN_STRIPS.map((strip) => (
+        <FilmStrip
+          key={strip.key}
+          film={strip.film()}
+          frames={strip.frames}
+          startSeconds={strip.startSeconds + offset}
+          column={strip.column}
+          still={still}
+        />
+      ))}
     </span>
   );
 }
