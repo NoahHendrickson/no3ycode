@@ -173,7 +173,7 @@ export const CircleIcon = icon("circle", Hg.CircleIcon, "themed");
 export const CircleDashedIcon = icon("circle-dashed", Hg.CircleDashedIcon, "stroke");
 export const CircleDotIcon = icon("circle-dot", Hg.CircleDotIcon, "themed");
 export const CheckCircle2Icon = icon("check-circle-2", Hg.CircleCheckIcon, "themed");
-export const PinIcon = icon("pin", Hg.PinIcon, "themed");
+export const PinIcon = icon("pin", Hg.Pin02Icon, "themed");
 export const PinOffIcon = icon("pin-off", Hg.PinOffIcon, "stroke");
 export const PlusIcon = icon("plus", Hg.PlusIcon, "stroke");
 // lucide renamed PlusCircle -> CirclePlus; both names still resolve there, so
