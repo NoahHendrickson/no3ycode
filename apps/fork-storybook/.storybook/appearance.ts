@@ -7,13 +7,15 @@ Object.defineProperty(window, "localStorage", {
 });
 
 // The preferences a user on Basic has stored, written before any app module loads: useTheme
-// applies the stored theme as it imports, and the mode picks Basic's tone. The toolbar then moves
-// the palette and the mode as Settings › Appearance does.
+// applies the stored theme as it imports. They are the toolbar's default, Flat Glass, so a page with
+// no story to run the toolbar's hook (Introduction) already paints it. The toolbar then moves the
+// palette and the mode as Settings › Appearance does.
 const PREFERENCES = {
   "t3code:theme": "system",
   "t3code:theme-appearance-mode": "dark",
   "t3code:theme-follow-system": "false",
-  "t3code:fork-theme": "basic",
+  "t3code:fork-theme": "cool-darker",
+  "t3code:fork:glass-3d:v1": '"off"',
 };
 
 for (const [key, value] of Object.entries(PREFERENCES)) {

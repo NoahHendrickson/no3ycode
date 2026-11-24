@@ -27,7 +27,8 @@ interface LineProps {
     The line reads the row's group toggle and the environment's clock from the timeline. */
 function StatusLine({ timer, group, label, providerStartingLabel }: LineProps) {
   const [expanded, setExpanded] = useState(false);
-  const [createdAt] = useState(() => (timer ? startedAt() : null));
+  const [start] = useState(startedAt);
+  const createdAt = timer ? start : null;
   const row: ForkStatusLineRow = {
     kind: "working",
     id: "working-indicator-row",
