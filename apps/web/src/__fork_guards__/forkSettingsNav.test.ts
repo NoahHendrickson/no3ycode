@@ -24,9 +24,10 @@ describe("fork guard: settings nav", () => {
     const rule = sheet.slice(
       sheet.indexOf(':root[data-fork="noahhendrickson-t3code"] [data-settings-section] {'),
     );
-    expect(rule).toMatch(/^[^}]*font-weight: 400;\s*color: var\(--contrast-sidebar-foreground\);/u);
+    // The icon's rest ink goes through the button's own token, so its hover, press and selected
+    // icon states (utilities layer) still apply.
     expect(rule).toMatch(
-      /& > svg \{\s*color: color-mix\(in srgb, var\(--contrast-sidebar-foreground\) 65%, transparent\);/u,
+      /^[^}]*font-weight: 400;\s*color: var\(--contrast-sidebar-foreground\);\s*--sidebar-icon-color: color-mix\(in srgb, var\(--contrast-sidebar-foreground\) 65%, transparent\);\s*\}/u,
     );
   });
 
@@ -35,7 +36,6 @@ describe("fork guard: settings nav", () => {
     expect(nav).toContain(
       '<InputGroup role="none" className={cn(!compactSearchOpen && "max-md:hidden")}>',
     );
-    expect(nav).toContain('<SearchIcon aria-hidden className="opacity-65" />');
     expect(nav).toContain("border-t border-sidebar-border");
     expect(nav).toContain("first:border-t-0 first:pt-0");
   });

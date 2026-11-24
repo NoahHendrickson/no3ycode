@@ -3636,13 +3636,11 @@
 /* ---------------------------------------------------------------------------
    Settings nav — see `.fork/customizations.yaml#fork-settings-nav`.
 
-   Every section reads in the foreground at regular weight, active or not, with its icon at 65%,
-   the same ink as the group headings. */
+   Every section reads in the foreground at regular weight, active or not. Its icon rests at 65%,
+   the same ink as the group headings, through the token the menu button reads at rest, so the
+   button's own hover, press and selected icon states still brighten it. */
 :root[data-fork="noahhendrickson-t3code"] [data-settings-section] {
   font-weight: 400;
   color: var(--contrast-sidebar-foreground);
-
-  & > svg {
-    color: color-mix(in srgb, var(--contrast-sidebar-foreground) 65%, transparent);
-  }
+  --sidebar-icon-color: color-mix(in srgb, var(--contrast-sidebar-foreground) 65%, transparent);
 }

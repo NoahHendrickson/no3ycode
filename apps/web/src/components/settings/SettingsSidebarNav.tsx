@@ -277,7 +277,7 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
                 The search is the app's outlined search field, not a nav row. */}
             <InputGroup role="none" className={cn(!compactSearchOpen && "max-md:hidden")}>
               <InputGroupAddon>
-                <SearchIcon aria-hidden className="opacity-65" />
+                <SearchIcon aria-hidden />
               </InputGroupAddon>
               {/* Native search inputs clear on Escape even during IME composition. */}
               <InputGroupInput
