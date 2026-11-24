@@ -51,13 +51,12 @@ const SERVER_CONFIG = "apps/server/src/config.ts";
 const BUILD_SCRIPT = "scripts/build-desktop-artifact.ts";
 const FORK_RELEASE_WORKFLOW = ".github/workflows/fork-release.yml";
 
-// The one drawn shape of a single-path SVG: its path data and lowercase fill.
-const soleShape = (svg: string) => {
+// Every drawn shape of an all-path SVG, as "d|fill" with the fill lowercased.
+const pathShapes = (svg: string) => {
   expect(svg.match(/<(?:rect|circle|ellipse|polygon|image|g)\b/gu)).toBeNull();
-  expect(svg.match(/<path\b/gu)).toHaveLength(1);
   const paths = [...svg.matchAll(/<path\b[^>]*\bd="([^"]+)"[^>]*\bfill="([^"]+)"/gu)];
-  expect(paths).toHaveLength(1);
-  return { d: paths[0]?.[1] ?? "", fill: paths[0]?.[2]?.toLowerCase() ?? "" };
+  expect(paths).toHaveLength(svg.match(/<path\b/gu)?.length ?? 0);
+  return paths.map(([, d, fill = ""]) => `${d}|${fill.toLowerCase()}`);
 };
 
 describe("fork guard: fork-app-identity", () => {
@@ -205,29 +204,23 @@ describe("fork guard: fork-app-identity", () => {
     ) as IconComposerProject;
     expect(developmentIcon.fill?.solid).toBe("srgb:1.00000,0.41569,0.00000,1.00000");
     for (const icon of [productionIcon, developmentIcon]) {
-      // The smooth sparkle takes the system glass on the mark itself.
+      // Glass would smear the leaf's pixel cells, so only the tile takes it.
       expect(icon.groups[0]?.layers[0]).toMatchObject({
-        glass: true,
+        glass: false,
         "image-name": "mark.svg",
       });
       expect(icon.groups[0]?.translucency?.enabled).toBe(true);
     }
-    // Production is a black tile under the Figma glows (no3y app icon, 54:3507), a flat image
-    // with no glass; development stays a solid orange tile.
-    expect(productionIcon.fill?.solid).toBe("srgb:0.00000,0.00000,0.00000,1.00000");
-    expect(productionIcon.groups).toHaveLength(2);
-    expect(productionIcon.groups[1]?.layers).toMatchObject([
-      { glass: false, "image-name": "background.png" },
-    ]);
-    expect(productionIcon.groups[1]?.translucency?.enabled).toBe(false);
+    // Production is the Figma #08B776 tile (t3-fork 755:6703); development stays a solid orange tile.
+    expect(productionIcon.fill?.solid).toBe("srgb:0.03137,0.71765,0.46275,1.00000");
+    expect(productionIcon.groups).toHaveLength(1);
     expect(developmentIcon.groups).toHaveLength(1);
 
-    // One white sparkle, the same drawing as the project icon and favicons.
+    // The pixel leaf, the same drawing as the project icon (whose outline alone is black).
     const mark = read("assets/fork/app-icon.icon/Assets/mark.svg");
     expect(mark).toContain('viewBox="0 0 1024 1024"');
-    const markShape = soleShape(mark);
-    expect(markShape.fill).toBe("#ffffff");
-    expect(markShape.d).toBe(soleShape(read("assets/fork/n3-project-icon.svg")).d);
+    const drawing = (svg: string) => pathShapes(svg).map((shape) => shape.split("|")[0]);
+    expect(drawing(mark)).toEqual(drawing(read("assets/fork/n3-project-icon.svg")));
     expect(
       NodeFS.readFileSync(NodePath.join(repoRoot, "assets/fork/dev-app-icon.icon/Assets/mark.svg")),
     ).toEqual(
@@ -246,11 +239,21 @@ describe("fork guard: fork-app-identity", () => {
 
   it("shows the fork's own icon beside this repo's project", () => {
     expect(JSON.parse(read("t3.json")).iconPath).toBe("assets/fork/n3-project-icon.svg");
-    // The bare sparkle in the tile's green with no backdrop; the web favicons
-    // are rendered from it, so they move together.
-    const icon = soleShape(read("assets/fork/n3-project-icon.svg"));
-    expect(icon.fill).toBe("#00c26b");
-    expect(icon.d).toMatch(/^M407\.129 346\.602C/u);
+    // The bare pixel leaf (t3-fork 755:6693) with no tile and a black outline.
+    const fills = pathShapes(read("assets/fork/n3-project-icon.svg")).map((shape) =>
+      shape.slice(shape.indexOf("|") + 1),
+    );
+    expect(fills).toEqual([
+      "#26b846",
+      "#3aed62",
+      "#f95b1c",
+      "#ff8f0c",
+      "#fcb01a",
+      "#ffd233",
+      "#008755",
+      "#08b776",
+      "#000000",
+    ]);
   });
 
   it("keeps packaged state out of the shared ~/.t3 base directory", () => {

@@ -379,7 +379,7 @@
     first V2 launch carries the fork's drafts over and never upstream's.
     The fork presents as "no3y Code": bundle id com.t3tools.t3code.fork,
     installs as "no3y Code.app", ships no3y-Code-* artifacts, packages the
-    sparkle mark from assets/fork on all three platforms (plus web splash
+    pixel leaf mark from assets/fork on all three platforms (plus web splash
     and favicon), and keeps all filesystem state under ~/.t3-fork. The bundle
     id and the base directory are the stable identities and must never change
     across display renames; display strings are safe to rename precisely
@@ -414,17 +414,14 @@
     points at the fork's own constant instead of upstream's "T3 Code". Splash and favicon also ship from assets/fork (copied into
     apps/web/public for local/dev and into the packaged desktop client at
     build time via FORK_WEB_ICON_ASSETS + the shared applyWebIconOverrides
-    path). The brand mark is the sparkle (Figma OnHdu0r2mAwMEiC4s7Gvjv
-    39:4), one path drawn identically everywhere. The layered Icon Composer
-    projects in assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon
-    are its app-icon source of truth: a white sparkle placed as in the no3y
-    app icon design (Figma 1qVCaK2XuosbVJtYqa3n0n 54:3507), about 56% of the
-    tile wide. Production is a black tile under that design's blurred glows,
-    rendered from Figma to Assets/background.png and layered as a flat image
-    (no glass) beneath the mark, since Icon Composer cannot draw SVG blur
-    filters; development keeps a solid orange tile so installed variants
-    remain distinguishable in the Dock. Glass is on for the mark layer as well
-    as the tile — the smooth shape takes the system treatment cleanly. Every
+    path). The app icon and favicon are the pixel leaf (Figma t3-fork
+    fZRyRTZJtLKwuq8rj2SLg4 755:6703): nine paths, one per colour, drawn
+    identically everywhere. The Icon Composer projects in
+    assets/fork/app-icon.icon and assets/fork/dev-app-icon.icon are its
+    app-icon source of truth, the leaf placed as in that frame on a solid
+    tile: #08B776 green for production, orange for development so installed
+    variants remain distinguishable in the Dock. Glass is off for the mark
+    layer, which would smear the pixel cells; the tile still takes it. Every
     app-icon raster, including the Linux PNG, the Windows ICO, the 192/512
     installable web icons and the apps/web/public apple-touch and icon copies,
     is rendered from these projects by `node .fork/export-icons.ts` (macOS
@@ -432,11 +429,17 @@
     the same artwork. The macOS Dock exports add only a transparent outer
     canvas around the rendered artwork, matching the standard Mac icon
     footprint. The local dev splash uses the orange family, while packaged
-    builds stamp the black production family. Web favicons and the project
-    icon are the bare sparkle in #00C26B with no tile, which stays legible at
-    16px: assets/fork/n3-project-icon.svg carries the same path, and the
-    n3-web-favicon* rasters (with apps/web/public copies) are rendered from it
-    as vectors at 16 and 32px; export-icons.ts leaves them alone. Filenames
+    builds stamp the green production family. The project icon is the bare
+    leaf with no tile (assets/fork/n3-project-icon.svg, the same paths
+    cropped to the leaf, with a black outline). Web favicons are a separate 15-square redraw of the
+    leaf (Figma Noey-Brand h7PWAQCOhl8NwRoFTs3Cbu 158:5247 with its top and
+    left end caps restored, outline and highlights matched to the full leaf)
+    in assets/fork/n3-favicon.svg: the full leaf's 21 squares cannot land on
+    whole pixels at 16 or 32px, these land on exactly 1 and 2. The 32px
+    raster is centred; the 16px one sits 1px off centre, as 15 in 16 must. The n3-web-favicon* rasters (with
+    apps/web/public copies) are rendered from it; export-icons.ts leaves
+    them alone. The iOS launch screen keeps the sparkle
+    (no3y-launch-sparkle). Filenames
     still say n3-* for path stability. t3.json's
     iconPath points at n3-project-icon.svg, never upstream's
     assets/dev/blueprint-*. The apple-touch icons keep the tile because iOS
@@ -488,6 +491,7 @@
     - assets/fork/n3-web-favicon-32x32.png
     - assets/fork/n3-web-favicon.ico
     - assets/fork/n3-project-icon.svg
+    - assets/fork/n3-favicon.svg
   shadows: []
   watch:
     - apps/desktop/src/window/DesktopApplicationMenu.test.ts

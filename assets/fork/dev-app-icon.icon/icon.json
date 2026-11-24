@@ -6,9 +6,9 @@
     {
       "layers": [
         {
-          "glass": true,
+          "glass": false,
           "image-name": "mark.svg",
-          "name": "Sparkle",
+          "name": "Leaf Mark",
           "position": {
             "scale": 1,
             "translation-in-points": [0, 0]
