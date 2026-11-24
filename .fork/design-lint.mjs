@@ -482,8 +482,8 @@ export function colorLiterals(property, value) {
       else if (text[end] === ")" && --depth === 0) break;
     }
     const call = text.slice(match.index, end + 1);
-    // Relative colour syntax over a token (rgb(from var(--x) r g b / 12%)) derives from the token.
-    if (!/^\w+\(\s*from\s+var\(/u.test(call)) out.push(call);
+    // Channels from a token (rgb(from var(--x) r g b / 12%), rgb(var(--tint) / 8%)) derive from it.
+    if (!/^\w+\(\s*(?:from\s+)?var\(/u.test(call)) out.push(call);
   }
   if (COLOR_PROPERTY.test(property)) {
     for (const match of text.matchAll(/(?<![\w-])[a-z]+(?![\w(-])/giu)) {
