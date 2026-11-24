@@ -1,9 +1,10 @@
 /**
- * The selected provider's session quota as a ring in the composer's control row, opening every
- * provider's limits as a menu — see `.fork/customizations.yaml#fork-composer-usage-limits`.
+ * The selected provider's session quota (or its weekly one, without a session limit) as a ring in
+ * the composer's control row, opening every provider's limits as a menu. See
+ * `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
-import type { ServerProviderUsageLimits } from "@t3tools/contracts";
+import type { ServerProviderUsageLimits, ServerProviderUsageWindow } from "@t3tools/contracts";
 import { remainingPercent } from "@t3tools/shared/usageLimits";
 import { useGT } from "gt-react";
 import { memo, useState } from "react";
@@ -21,15 +22,29 @@ export function composerUsageReadout(props: {
   return props.enabled ? <ComposerUsageLimitsReadout usageLimits={props.usageLimits} /> : null;
 }
 
+/** The session window, else the account-wide weekly one for plans without a 5-hour limit. */
+export function composerRingWindow(windows: readonly ServerProviderUsageWindow[]) {
+  return (
+    windows.find((window) => window.kind === "session") ??
+    // Claude's model-scoped weekly windows (`seven_day_<model>`) carry no modelIds.
+    windows.find(
+      (window) =>
+        window.kind === "weekly" &&
+        window.modelIds === undefined &&
+        !window.id.startsWith("seven_day_"),
+    )
+  );
+}
+
 const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(props: {
   readonly usageLimits: ServerProviderUsageLimits | undefined;
 }) {
   const gt = useGT();
   // The menu's clock advances on open rather than ticking while it shows.
   const [openedAt, setOpenedAt] = useState(() => Date.now());
-  const session = props.usageLimits?.windows.find((window) => window.kind === "session");
-  if (!session) return null;
-  const remaining = remainingPercent(session);
+  const ring = composerRingWindow(props.usageLimits?.windows ?? []);
+  if (!ring) return null;
+  const remaining = remainingPercent(ring);
   return (
     <Popover
       onOpenChange={(open) => {
@@ -40,7 +55,7 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
         data-fork-composer-usage-limits="true"
         // Inlet hangs the menu from this button (theme.custom.inlet-menus.css).
         data-fork-tab-trigger=""
-        aria-label={`${session.label} limit: ${remaining}% left. Show usage limits`}
+        aria-label={`${ring.label} limit: ${remaining}% left. Show usage limits`}
         className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <UsageCircleMeter remaining={remaining} />

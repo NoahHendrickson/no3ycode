@@ -19,6 +19,7 @@ import {
 } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
+import { composerRingWindow } from "../custom/ComposerUsageLimitsReadout";
 import { actionableLimitNotices } from "../custom/usageLimitNotices";
 
 function readSibling(relativePath: string): string {
@@ -54,6 +55,18 @@ describe("fork guard: fork-composer-usage-limits", () => {
     expect(readout).toContain(
       "<UsageLimitsPooled presentations={presentations} now={props.now} compact />",
     );
+  });
+
+  it("falls back to the account-wide weekly window when no session window exists", () => {
+    const weekly = { id: "seven_day", kind: "weekly", label: "Weekly", usedPercent: 40 } as const;
+    const fable = {
+      id: "seven_day_fable",
+      kind: "weekly",
+      label: "Weekly · Fable",
+      usedPercent: 90,
+    } as const;
+    expect(composerRingWindow([fable, weekly])).toBe(weekly);
+    expect(composerRingWindow([fable])).toBeUndefined();
   });
 });
 
