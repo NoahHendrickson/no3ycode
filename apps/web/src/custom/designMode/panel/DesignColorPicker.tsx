@@ -155,8 +155,8 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
           />
         }
       />
-      <PopoverPopup className="w-56 p-2" data-fork-design-color-picker>
-        <div className="space-y-2">
+      <PopoverPopup className="w-56" data-fork-design-color-picker>
+        <div className="space-y-2 p-2">
           <div
             className="relative h-32 w-full cursor-crosshair touch-none rounded"
             style={{

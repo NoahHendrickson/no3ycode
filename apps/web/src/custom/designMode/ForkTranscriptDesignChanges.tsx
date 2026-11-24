@@ -78,9 +78,11 @@ export function ForkTranscriptDesignChanges({
                 />
               }
             />
-            <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-[11px]">
-              {block.slice(0, 600)}
-              {block.length > 600 ? "…" : ""}
+            <TooltipPopup className="max-w-96 whitespace-pre-wrap">
+              <span className="block font-mono text-2xs leading-snug">
+                {block.slice(0, 600)}
+                {block.length > 600 ? "…" : ""}
+              </span>
             </TooltipPopup>
           </Tooltip>
         );

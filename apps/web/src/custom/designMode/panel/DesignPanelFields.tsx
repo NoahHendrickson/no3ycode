@@ -486,24 +486,28 @@ function SpacingTokenAffordance({
           </button>
         }
       />
-      <PopoverPopup className="w-32 p-1" data-fork-design-token-ladder>
-        <div className="max-h-48 overflow-y-auto">
-          {TAILWIND_SPACING_STEPS.map((scaleStep) => (
-            <button
-              key={scaleStep}
-              type="button"
-              onClick={() => onPickStep(scaleStep)}
-              className={cn(
-                "flex w-full items-center justify-between rounded px-1.5 py-0.5 text-xs",
-                scaleStep === matched
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              )}
-            >
-              <span className="font-mono">{scaleStep}</span>
-              <span className="text-[10px] text-muted-foreground">{scaleStep * basePx}px</span>
-            </button>
-          ))}
+      <PopoverPopup className="w-32" data-fork-design-token-ladder>
+        <div className="p-1">
+          <div className="max-h-48 overflow-y-auto">
+            {TAILWIND_SPACING_STEPS.map((scaleStep) => (
+              <button
+                key={scaleStep}
+                type="button"
+                onClick={() => onPickStep(scaleStep)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded px-1.5 py-0.5 text-xs",
+                  scaleStep === matched
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                )}
+              >
+                <span className="font-mono">{scaleStep}</span>
+                <span className="text-(length:--text-3xs) text-muted-foreground">
+                  {scaleStep * basePx}px
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </PopoverPopup>
     </Popover>
