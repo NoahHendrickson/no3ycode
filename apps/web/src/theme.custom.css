@@ -756,6 +756,10 @@
 
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-composer-radius: 16px;
+  /* Menu corners: rows inside a menu, the menu itself, popovers off the composer. */
+  --fork-menu-row-radius: 0.5rem;
+  --fork-menu-radius: 0.75rem;
+  --fork-composer-popover-radius: 1rem;
   /* Cards that sit beside the composer (thread details, changed files). */
   --fork-card-radius: 8px;
   --fork-composer-bg: var(--card);
