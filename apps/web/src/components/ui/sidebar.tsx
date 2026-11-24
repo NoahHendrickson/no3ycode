@@ -740,11 +740,32 @@ function SidebarContent({
   );
 }
 
-function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
+/* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+const forkSidebarGroupInsetClassName = {
+  default: "",
+  chrome: "px-2 pt-0 pb-0",
+  "chrome-stack": "gap-0.5 px-2 pt-0 pb-0",
+} as const;
+/* fork:end fork-design-variants */
+
+function SidebarGroup({
+  className,
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  inset = "default",
+  /* fork:end fork-design-variants */
+  ...props
+}: React.ComponentProps<"div"> & {
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  inset?: keyof typeof forkSidebarGroupInsetClassName;
+  /* fork:end fork-design-variants */
+}) {
   return (
     <div
       className={cn(
         "relative flex w-full min-w-0 flex-col p-[var(--sidebar-content-inset)]",
+        /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+        forkSidebarGroupInsetClassName[inset],
+        /* fork:end fork-design-variants */
         className,
       )}
       data-sidebar="group"

@@ -147,15 +147,11 @@ export function ScreenSizeMenu({
           value={selectedValue}
           onValueChange={(value) => selectResolution(String(value))}
         >
-          <MenuRadioItem value={FILL_VALUE} className="min-h-7 py-1 sm:text-xs">
+          <MenuRadioItem value={FILL_VALUE} size="sm" className="min-h-7">
             Fill preview
           </MenuRadioItem>
           {CANVAS_RESOLUTIONS.map((resolution) => (
-            <MenuRadioItem
-              key={resolution.id}
-              value={resolution.id}
-              className="min-h-7 py-1 sm:text-xs"
-            >
+            <MenuRadioItem key={resolution.id} value={resolution.id} size="sm" className="min-h-7">
               <span className="flex w-full items-center justify-between gap-4">
                 <span>{resolution.label}</span>
                 <span className="tabular-nums text-muted-foreground">
@@ -172,7 +168,8 @@ export function ScreenSizeMenu({
           checked={trueHeight}
           onCheckedChange={toggleTrueHeight}
           title="Frame the screen's real height instead of filling the preview area"
-          className="min-h-7 py-1 sm:text-xs"
+          size="sm"
+          className="min-h-7"
         >
           True height
         </MenuCheckboxItem>

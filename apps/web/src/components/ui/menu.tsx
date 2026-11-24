@@ -177,14 +177,28 @@ function MenuItemLabel({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+/* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+const forkMenuItemSizeClassName = {
+  default: "",
+  sm: "sm:text-xs",
+  chrome: "py-0 text-sm font-medium",
+} as const;
+/* fork:end fork-design-variants */
+
 function MenuCheckboxItem({
   className,
   children,
   checked,
   variant = "default",
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size = "default",
+  /* fork:end fork-design-variants */
   ...props
 }: MenuPrimitive.CheckboxItem.Props & {
   variant?: "default" | "icon" | "switch";
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size?: keyof typeof forkMenuItemSizeClassName;
+  /* fork:end fork-design-variants */
 }) {
   return (
     <MenuPrimitive.CheckboxItem
@@ -195,6 +209,9 @@ function MenuCheckboxItem({
           ? "grid-cols-[1fr_auto] gap-4 pe-1.5"
           : "grid-cols-[1rem_minmax(0,1fr)] pe-4",
         variant === "icon" && "grid-cols-[0.625rem_minmax(0,1fr)]",
+        /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+        forkMenuItemSizeClassName[size],
+        /* fork:end fork-design-variants */
         className,
       )}
       data-slot="menu-checkbox-item"
@@ -247,14 +264,23 @@ function MenuRadioItem({
   className,
   children,
   hideIndicator: _hideIndicator = false,
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size = "default",
+  /* fork:end fork-design-variants */
   ...props
 }: MenuPrimitive.RadioItem.Props & {
   hideIndicator?: boolean;
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size?: keyof typeof forkMenuItemSizeClassName;
+  /* fork:end fork-design-variants */
 }) {
   return (
     <MenuPrimitive.RadioItem
       className={cn(
         "[&_svg]:-mx-0.5 flex min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-pointer items-center rounded-sm px-2 py-1 text-base text-foreground outline-none data-checked:bg-foreground/[0.08] data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+        forkMenuItemSizeClassName[size],
+        /* fork:end fork-design-variants */
         className,
       )}
       data-slot="menu-radio-item"

@@ -9105,3 +9105,21 @@
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
+
+- id: fork-design-variants
+  intent: >
+    Primitive variants that the sidebar chrome uses instead of restyling the
+    primitive with className (.fork/DESIGN-RULES.md B1). MenuRadioItem and
+    MenuCheckboxItem take size: "sm" (sm:text-xs, compact menus such as design
+    mode's screen sizes) and "chrome" (py-0 text-sm font-medium, the sidebar's
+    sort menus). SidebarGroup takes inset: "chrome" (px-2 pt-0 pb-0, the chrome
+    row groups) and "chrome-stack" (the same with gap-0.5, the action-row
+    stacks). Every default is upstream's look, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkDesignVariants.test.ts

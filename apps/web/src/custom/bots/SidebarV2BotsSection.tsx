@@ -210,7 +210,7 @@ export function SidebarV2BotsRow(props: {
   readonly naming: ReactNode;
 }) {
   return (
-    <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+    <SidebarGroup data-fork-bots-row="" inset="chrome" className={cn("mt-6", CHROME_ROW_INSET)}>
       <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
