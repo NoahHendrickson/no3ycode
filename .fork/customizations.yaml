@@ -6455,8 +6455,6 @@
   watch:
     # Fenced search field, heading and group classes.
     - apps/web/src/components/settings/SettingsSidebarNav.tsx
-    # Fenced: the group count skips the search field's unnamed InputGroup.
-    - apps/web/src/components/settings/SettingsSidebarNav.composition.browser.test.tsx
     # The label rule outranks the menu button's muted/80 ink and active font-medium.
     - apps/web/src/components/ui/sidebar.tsx
   verify:

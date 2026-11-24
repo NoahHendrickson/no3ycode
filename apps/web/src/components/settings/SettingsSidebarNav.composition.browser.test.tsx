@@ -103,13 +103,7 @@ it.each([1280, 390])("names each group by a heading outside it at %ipx wide", as
       false,
     );
   }
-  // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
-  // The search field's InputGroup is an unnamed group of its own; only the section groups count.
-  const groups = page
-    .getByRole("group")
-    .elements()
-    .filter((group) => group.getAttribute("data-slot") !== "input-group");
-  // fork:end fork-settings-nav
+  const groups = page.getByRole("group").elements();
   expect(groups).toHaveLength(settingsNavGroups(false).length);
   for (const group of groups) {
     const first = group.querySelector("[data-settings-section]")?.textContent;

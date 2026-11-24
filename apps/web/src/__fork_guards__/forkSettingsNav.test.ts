@@ -32,7 +32,9 @@ describe("fork guard: settings nav", () => {
 
   it("keeps headings at 65%, the search an outlined field, and rules off each group", () => {
     expect(nav).toContain('"px-2 text-xs font-medium text-sidebar-foreground/65"');
-    expect(nav).toContain('<InputGroup className={cn(!compactSearchOpen && "max-md:hidden")}>');
+    expect(nav).toContain(
+      '<InputGroup role="none" className={cn(!compactSearchOpen && "max-md:hidden")}>',
+    );
     expect(nav).toContain('<SearchIcon aria-hidden className="opacity-65" />');
     expect(nav).toContain("border-t border-sidebar-border");
     expect(nav).toContain("first:border-t-0 first:pt-0");

@@ -42,7 +42,6 @@ import { Button } from "../ui/button";
 import { Kbd } from "../ui/kbd";
 // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
 import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
-// fork:end fork-settings-nav
 import {
   SidebarContent,
   SidebarFooter,
@@ -51,6 +50,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+// fork:end fork-settings-nav
 import { scrollToSettingsTarget } from "./settingsLayout";
 import {
   searchSettings,
@@ -275,7 +275,7 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
           <div className="flex flex-col gap-2">
             {/* fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
                 The search is the app's outlined search field, not a nav row. */}
-            <InputGroup className={cn(!compactSearchOpen && "max-md:hidden")}>
+            <InputGroup role="none" className={cn(!compactSearchOpen && "max-md:hidden")}>
               <InputGroupAddon>
                 <SearchIcon aria-hidden className="opacity-65" />
               </InputGroupAddon>
