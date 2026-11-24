@@ -412,7 +412,10 @@ import { botWorkRowThreadId } from "~/custom/bots/botWorkRoster";
 import { openBotThreadsPanel } from "~/custom/bots/botThreadsPanelStore";
 /* fork:end fork-bot-work-threads */
 /* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area */
-import { SIDEBAR_V2_TRAILING_OFFSET } from "~/custom/sidebarV2TrailingColumn";
+import {
+  SIDEBAR_V2_TITLE_GLYPH_CLASS,
+  SIDEBAR_V2_TRAILING_OFFSET,
+} from "~/custom/sidebarV2TrailingColumn";
 import { SidebarV2IconButton, SidebarV2SlimRowAction } from "~/custom/SidebarV2IconButton";
 /* fork:end sidebar-v2-row-action-hit-area */
 /* fork:begin sidebar-v2-project-grouping — see .fork/customizations.yaml#sidebar-v2-project-grouping */
@@ -1822,7 +1825,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
      a passive mark. With no hovering pointer it takes no taps: its 44px coarse
      hit area would cover the title and repo line, so a tap meant to open the
      thread unpinned it. Touch unpins from the row menu. */
-  const pinGlyph = <PinIcon weight="fill" className="size-3 text-foreground dark:text-white" />;
+  const pinGlyph = <PinIcon weight="fill" className={SIDEBAR_V2_TITLE_GLYPH_CLASS} />;
   const pinIndicator = props.isPinned ? (
     canPin ? (
       <SidebarV2IconButton
@@ -2157,14 +2160,13 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           </span>
         ) : null}
         {/* fork:begin sidebar-v2-row-action-hit-area — see .fork/customizations.yaml#sidebar-v2-row-action-hit-area
-                    Pinned state rides the title line as a 12px glyph beside
-                    the status mark: the pinned block above the divider
+                    Pinned state rides the title line as a 12px glyph ahead of
+                    the docked glyph and status mark: the pinned block above the divider
                     carries the grouping, the glyph names the state per card. */}
         {pinIndicator}
         {/* fork:end sidebar-v2-row-action-hit-area */}
-        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-            Beside the pin glyph, ahead of the status mark. */}
-        {docked && !isSwept ? <SidebarDockedMark /> : null}
+        {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
+        {docked ? <SidebarDockedMark /> : null}
         {/* fork:end fork-split-threads */}
         {/* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows
                     The status box (Figma 364:17299 `Vector`, 9.75px): the

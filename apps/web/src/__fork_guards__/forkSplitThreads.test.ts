@@ -144,7 +144,7 @@ describe("fork guard: fork-split-threads", () => {
     // The docked thread's card marks it beside the pin glyph, ahead of the status mark.
     expect(sidebar).toContain("const docked = useThreadDocked(threadRef);");
     expect(sidebar).toMatch(
-      /\{pinIndicator\}[\s\S]{0,300}\{docked && !isSwept \? <SidebarDockedMark \/> : null\}[\s\S]{0,1200}<SidebarV2StatusMark/u,
+      /\{pinIndicator\}[\s\S]{0,300}\{docked \? <SidebarDockedMark \/> : null\}[\s\S]{0,1200}<SidebarV2StatusMark/u,
     );
   });
 });
