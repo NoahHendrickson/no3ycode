@@ -1784,6 +1784,32 @@
   border-color: rgb(255 255 255 / 16%);
 }
 
+/* Flat Glass's collapsed-sidebar tab row is the window's titlebar: the sidebar glass spans the
+   row (forkSidebarVibrancy.ts) and the stage paints everything below it. Its tabs lift with the
+   docked sidebar's washes, since an opaque fill over the glass reads as a plaque. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"] {
+  & [data-slot="sidebar-inset"] {
+    background-color: transparent;
+    background-image: linear-gradient(
+      transparent 0 var(--workspace-topbar-height),
+      var(--background) 0
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  /* Clear over the glass, so the wallpaper's colour comes through; its foot takes the docked
+     sidebar's edge over glass. */
+  & [data-fork-thread-tabs] {
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 16%);
+    --border: rgb(255 255 255 / 12%);
+    --sidebar-row-hover: rgb(255 255 255 / 6%);
+    --sidebar-row-active: rgb(255 255 255 / 10%);
+    --sidebar-row-selected: rgb(255 255 255 / 8%);
+    --accent: rgb(255 255 255 / 10%);
+  }
+}
+
 /* Page tabs (Usage, Automations' triggers) take the Code / Chat switch's 12px
    track in Full 3D; Flat Glass switches every tab strip to Basic's 8px/6px
    translucent glass strip below. */
@@ -1970,26 +1996,36 @@
 /* Native macOS Liquid Glass behind the Flat Glass new-agent composer and
    launchpad (forkDraftLiquidGlass.ts): clear the DOM backdrop and card fills
    so the native backdrop image + NSGlassEffectView cards behind Chromium show
-   through while composer text and controls stay crisp on top. Split panes keep
-   their DOM backdrop and CSS blur fallback. */
+   through while composer text and controls stay crisp on top. The hook stamps
+   the still picture it drew natively; one it did not (a split pane, a refused or
+   pending apply) keeps its DOM backdrop and the CSS blur fallback. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   :is([data-slot="sidebar-inset"], [data-fork-workspace-root]) {
   background: transparent;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away][data-fork-draft-hero]:not([data-fork-split-pane] *)
-  [data-fork-opaque-backdrop] {
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]
+  [data-fork-opaque-backdrop][data-fork-draft-liquid-glass] {
   opacity: 0;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-chat-column-maximized-away][data-fork-draft-hero]:not([data-fork-split-pane] *)
+/* A still picture's prompt well, native or fallback. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-opaque-backdrop]
+  ~ *
   [data-chat-composer-overlay="true"][data-draft-hero] {
-  --fork-composer-vessel-bg: transparent;
   --fork-composer-bg: rgb(255 255 255 / 6%);
   --fork-composer-border: rgb(255 255 255 / 10%);
   --fork-composer-border-focus: rgb(255 255 255 / 18%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column-maximized-away][data-fork-draft-hero]
+  [data-fork-opaque-backdrop][data-fork-draft-liquid-glass]
+  ~ *
+  [data-chat-composer-overlay="true"][data-draft-hero] {
+  --fork-composer-vessel-bg: transparent;
 
   & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
     background: transparent;
@@ -2002,6 +2038,16 @@
   & [data-fork-composer-vessel]::after {
     content: none;
   }
+}
+
+/* The fallback, where Figma's 16% black reads as a white wash over the picture: a wash as dark
+   as the native cards it stands in for (18% black over the dark glass material). Estimated.
+   The launchpad cards take it too, through the opaque-stage rule's vessel-token background. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-opaque-backdrop]:not([data-fork-draft-liquid-glass])
+  ~ *
+  [data-chat-composer-overlay="true"][data-draft-hero] {
+  --fork-composer-vessel-bg: rgb(0 0 0 / 40%);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]

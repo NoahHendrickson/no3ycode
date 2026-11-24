@@ -81,6 +81,17 @@ describe("syncForkGlassPopupCutout, sidebar-only glass", () => {
     expect(hoverCard.hasAttribute(MARK)).toBe(false);
   });
 
+  it("never stamps a route modal, which keeps its own fill as a page", () => {
+    using scene = stage();
+    liquidGlass();
+    const modal = scene.open(200);
+    modal.className = "";
+    modal.setAttribute("data-slot", "dialog-popup");
+    modal.setAttribute("data-app-modal", "");
+    syncForkGlassPopupCutout("sidebar");
+    expect(modal.hasAttribute(MARK)).toBe(false);
+  });
+
   it("cuts the page from under a menu the draft's native glass took, wherever it sits", () => {
     using scene = stage();
     liquidGlass();

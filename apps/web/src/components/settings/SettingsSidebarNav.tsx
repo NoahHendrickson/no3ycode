@@ -40,6 +40,8 @@ import { T, useGT, useMessages } from "gt-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Kbd } from "../ui/kbd";
+// fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 import {
   SidebarContent,
   SidebarFooter,
@@ -47,8 +49,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarInput,
 } from "../ui/sidebar";
+// fork:end fork-settings-nav
 import { scrollToSettingsTarget } from "./settingsLayout";
 import {
   searchSettings,
@@ -271,15 +273,14 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
       <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
           <div className="flex flex-col gap-2">
-            <div
-              className={cn(
-                "flex h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
-                !compactSearchOpen && "max-md:hidden",
-              )}
-            >
-              <SearchIcon className="size-4 shrink-0 text-sidebar-muted-foreground/80" />
+            {/* fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                The search is the app's outlined search field, not a nav row. */}
+            <InputGroup role="none" className={cn(!compactSearchOpen && "max-md:hidden")}>
+              <InputGroupAddon>
+                <SearchIcon aria-hidden />
+              </InputGroupAddon>
               {/* Native search inputs clear on Escape even during IME composition. */}
-              <SidebarInput
+              <InputGroupInput
                 ref={searchInputRef}
                 nativeInput
                 type="text"
@@ -304,26 +305,27 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
                     ? `settings-search-result-${results[activeResultIndex].id}`
                     : undefined
                 }
-                className="min-w-0 flex-1"
               />
-              {isSearching ? (
-                <Button
-                  type="button"
-                  size="icon-micro"
-                  variant="ghost-muted"
-                  className="shrink-0"
-                  aria-label={gt("Clear settings search")}
-                  onClick={() => {
-                    clearSearch();
-                    searchInputRef.current?.focus();
-                  }}
-                >
-                  <XIcon className="size-3" />
-                </Button>
-              ) : (
-                <Kbd>/</Kbd>
-              )}
-            </div>
+              <InputGroupAddon align="inline-end">
+                {isSearching ? (
+                  <Button
+                    type="button"
+                    size="icon-micro"
+                    variant="ghost-muted"
+                    aria-label={gt("Clear settings search")}
+                    onClick={() => {
+                      clearSearch();
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <XIcon className="size-3" />
+                  </Button>
+                ) : (
+                  <Kbd>/</Kbd>
+                )}
+              </InputGroupAddon>
+            </InputGroup>
+            {/* fork:end fork-settings-nav */}
             {isSearching && results.length === 0 ? (
               <p
                 role="status"
@@ -386,12 +388,16 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
                   {navGroups.map((group, index) => (
                     <div
                       key={group.heading}
-                      className="flex flex-col gap-1 max-md:border-t max-md:border-sidebar-border max-md:pt-4 max-md:first:border-t-0 max-md:first:pt-0"
+                      // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                      className="-mx-(--sidebar-content-inset) flex flex-col gap-1 border-t border-sidebar-border px-(--sidebar-content-inset) pt-4 first:border-t-0 first:pt-0"
+                      // fork:end fork-settings-nav
                     >
                       <h3
                         id={`settings-nav-group-${index}`}
                         className={cn(
-                          "px-2 text-xs font-medium text-sidebar-muted-foreground/80",
+                          // fork:begin fork-settings-nav — see .fork/customizations.yaml#fork-settings-nav
+                          "px-2 text-xs font-medium text-sidebar-foreground/65",
+                          // fork:end fork-settings-nav
                           group.headingHidden ? "sr-only" : !compactSearchOpen && "max-md:sr-only",
                         )}
                       >

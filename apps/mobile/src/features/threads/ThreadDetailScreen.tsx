@@ -1466,6 +1466,11 @@ function ThreadDetailBody(
           }
         : undefined;
     let dismissingKeyboard = false;
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    // The keyboard stays up after a follow-up, as in Messages: closing it dropped the feed with
+    // it just as the sent row and the turn's first rows lifted it again.
+    let keepingKeyboard = false;
+    /* fork:end mobile-feed-stable-end */
     /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
     // Upstream's call, plus the next-step pill's prompt as the last argument.
     const messageId = await props.onSendMessage(
@@ -1479,6 +1484,11 @@ function ThreadDetailBody(
           !KeyboardController.isVisible()
         )
           return;
+        // mobile-feed-stable-end: keep the keyboard up instead of dismissing it.
+        if (composerEditorRef.current !== null) {
+          keepingKeyboard = true;
+          return;
+        }
         setSendingWithKeyboard(true);
         dismissingKeyboard = true;
       },
@@ -1500,10 +1510,21 @@ function ThreadDetailBody(
       deliveryDeferred: props.connectionStateLabel !== "connected",
     });
     setAnchorMessageId(nextAnchorMessageId);
-    if (!dismissingKeyboard) composerEditorRef.current?.blur();
+    /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+    if (!dismissingKeyboard && !keepingKeyboard) composerEditorRef.current?.blur();
     const followSubmission =
       contentPresentationKind === "ready" &&
       (dismissingKeyboard || nextAnchorMessageId === messageId);
+    if (keepingKeyboard) {
+      requestAnimationFrame(() => {
+        if (scope.aborted) return;
+        void scrollMessageToEnd({ animated: !reduceMotion, closeKeyboard: false }).catch(() => {
+          if (!scope.aborted) freeze.set(false);
+        });
+      });
+      return messageId;
+    }
+    /* fork:end mobile-feed-stable-end */
     if (dismissingKeyboard || followSubmission) {
       // Commit the optimistic row before UIKit chooses the closing scroll offset.
       requestAnimationFrame(() => {
