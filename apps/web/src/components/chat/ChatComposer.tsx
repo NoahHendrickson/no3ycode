@@ -183,6 +183,9 @@ import { isUnassignedDraft } from "~/custom/newAgentDraft";
 /* fork:begin fork-touch-affordances — see .fork/customizations.yaml#fork-touch-affordances */
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:end fork-touch-affordances */
+/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+import { BotDigestAsks } from "~/custom/bots/BotDigest";
+/* fork:end fork-bot-digest */
 import {
   formatComposerContextReference,
   threadContextRecord,
@@ -194,7 +197,11 @@ import {
 } from "../composerFooterLayout";
 /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import { shouldUseCompactComposerModelSlot } from "../../custom/composerModelSlotCompact";
-import { ComposerPromptRow, ComposerShell } from "../../custom/ComposerShell";
+import {
+  ComposerPromptRow,
+  ComposerShell,
+  isInsideComposerAside,
+} from "../../custom/ComposerShell";
 import { ComposerControl } from "./ComposerControl";
 import { CompactComposerControlsMenu } from "./CompactComposerControlsMenu";
 import { Button } from "../ui/button";
@@ -3298,6 +3305,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       }
       if (
         activeElement instanceof Node &&
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        !isInsideComposerAside(activeElement) &&
+        /* fork:end fork-bot-digest */
         ((composerSurface && composerSurface.contains(activeElement)) ||
           (composerForm && composerForm.contains(activeElement)))
       ) {
@@ -3998,6 +4008,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         if (isInsideCollapsedComposerControls(activeElement)) {
           return;
         }
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        if (isInsideComposerAside(activeElement)) return;
+        /* fork:end fork-bot-digest */
         if (composerBlurFrameRef.current !== null) {
           window.cancelAnimationFrame(composerBlurFrameRef.current);
           composerBlurFrameRef.current = null;
@@ -4039,6 +4052,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         collapsedMobile={isComposerCollapsedMobile}
         context={props.contextStrip}
         statusChips={props.statusChips}
+        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
+        digest={<BotDigestAsks threadRef={routeThreadRef} />}
+        /* fork:end fork-bot-digest */
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}
         modelControls={composerModelControls}
