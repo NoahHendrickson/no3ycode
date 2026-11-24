@@ -1856,7 +1856,8 @@
 /* On Flat Glass, the new-agent draft composer matches Figma 19:6831's glass
    surfaces: a 16% black vessel blurred at 100px Figma (50px CSS) behind a
    subtle 16% white inside stroke, an 8% white prompt well with an 8% white
-   inside stroke, white placeholder/footer ink, and plain ghost mode controls.
+   inside stroke, a 50% white whisper placeholder, white footer ink, and plain
+   ghost mode controls.
    Applies across every new-agent background without touching Full 3D. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-chat-composer-overlay="true"][data-draft-hero] {
@@ -1894,7 +1895,7 @@
   }
 
   & [data-fork-composer-box] .text-placeholder {
-    color: #ffffff;
+    color: rgb(255 255 255 / 50%);
   }
 
   &
