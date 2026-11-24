@@ -2466,6 +2466,7 @@
   "d07ed4990bbb5323": "Thread action unavailable",
   "82e555245a78f961": "This connection cannot change one or more selected threads.",
   "e54720cac68f2adb": "All projects",
+  "3d452b69b89d669e": "{count, plural, one {{count} subagent running} other {{count} subagents running}}",
   "ac47f86df1c31a4a": "Failed to copy branch",
   "4e6305459e784fea": "Failed to copy thread ID",
   "5a79b7c910831c76": "Thread title cannot be empty",

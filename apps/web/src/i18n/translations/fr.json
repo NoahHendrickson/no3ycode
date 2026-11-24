@@ -2466,6 +2466,7 @@
   "d07ed4990bbb5323": "Action sur le fil indisponible",
   "82e555245a78f961": "Cette connexion ne peut pas modifier un ou plusieurs des fils sélectionnés.",
   "e54720cac68f2adb": "Tous les projets",
+  "3d452b69b89d669e": "{count, plural, one {{count} sous-agent en cours} other {{count} sous-agents en cours}}",
   "ac47f86df1c31a4a": "Échec de la copie de la branche",
   "4e6305459e784fea": "Échec de la copie de l’ID du fil",
   "5a79b7c910831c76": "Le titre du fil ne peut pas être vide",
