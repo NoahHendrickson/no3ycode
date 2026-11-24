@@ -872,9 +872,10 @@ describe("fork guard: fork-composer-shell", () => {
       expect(solid?.selector).toContain(marker);
     }
     expect(solid?.body).toContain("backdrop-filter: none");
-    // The fill is the popup frost flattened over the stage, and it is opaque.
-    expect(solid?.body).toMatch(/background:\s*color-mix\(\s*in srgb,\s*#e8e8e8 8%,/u);
-    expect(solid?.body).toContain("var(--popover) 45%, var(--fork-flat-glass-base)");
+    // The fill is the popup frost flattened over the stage: opaque, since the stage is.
+    expect(solid?.body.replace(/\s+/gu, " ")).toContain(
+      "background: color-mix( in srgb, #e8e8e8 8%, color-mix(in srgb, var(--popover) 45%, var(--fork-flat-glass-base)) );",
+    );
     // Off while a draft shows, and never over a Liquid Glass cutout.
     expect(solid?.selector.replace(/\s+/gu, "")).toContain(":not([data-fork-draft-hero-shown])");
     expect(solid?.selector).toContain(":not([data-fork-liquid-glass-popup])");
