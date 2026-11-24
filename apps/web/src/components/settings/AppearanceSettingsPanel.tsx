@@ -200,21 +200,27 @@ export function AppearanceSettingsPanel() {
     (settings.glassOpacity - MIN_GLASS_OPACITY) / (MAX_GLASS_OPACITY - MIN_GLASS_OPACITY);
   const glassOpacitySliderStyle = {
     "--settings-slider-progress": `${glassOpacityRatio * 100}%`,
-    "--settings-slider-fill-offset": `${0.5 - glassOpacityRatio}rem`,
+    // fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+    "--settings-slider-fill-offset": `${8 - glassOpacityRatio * 16}px`,
+    // fork:end fork-interface-size-text-only
   } as CSSProperties;
   const appearanceContrastRatio =
     (settings.appearanceContrast - MIN_APPEARANCE_CONTRAST) /
     (MAX_APPEARANCE_CONTRAST - MIN_APPEARANCE_CONTRAST);
   const appearanceContrastSliderStyle = {
     "--settings-slider-progress": `${appearanceContrastRatio * 100}%`,
-    "--settings-slider-fill-offset": `${0.5 - appearanceContrastRatio}rem`,
+    // fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+    "--settings-slider-fill-offset": `${8 - appearanceContrastRatio * 16}px`,
+    // fork:end fork-interface-size-text-only
   } as CSSProperties;
   const panelAnimationDurationRatio =
     (settings.panelAnimationDurationMs - MIN_PANEL_ANIMATION_DURATION_MS) /
     (MAX_PANEL_ANIMATION_DURATION_MS - MIN_PANEL_ANIMATION_DURATION_MS);
   const panelAnimationDurationSliderStyle = {
     "--settings-slider-progress": `${panelAnimationDurationRatio * 100}%`,
-    "--settings-slider-fill-offset": `${0.5 - panelAnimationDurationRatio}rem`,
+    // fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+    "--settings-slider-fill-offset": `${8 - panelAnimationDurationRatio * 16}px`,
+    // fork:end fork-interface-size-text-only
   } as CSSProperties;
 
   return (

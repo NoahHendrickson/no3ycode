@@ -166,6 +166,38 @@
   --command-shell-inset: 8px;
   --command-content-inset: 16px;
   --floating-content-inset: 12px;
+  --workspace-titlebar-control-size: 28px;
+  --workspace-titlebar-control-gap: 12px;
+}
+
+/* The Appearance sliders draw their track and thumb in stylesheet rem (index.css). */
+:root[data-fork="noahhendrickson-t3code"] .settings-slider {
+  --settings-slider-fill-offset: 8px;
+  height: 24px;
+
+  /* One rule per engine's pseudo-element: an unknown one in a list drops the whole rule. */
+  &::-webkit-slider-runnable-track {
+    height: 6px;
+  }
+
+  &::-moz-range-track {
+    height: 6px;
+  }
+
+  &::-moz-range-progress {
+    height: 6px;
+  }
+
+  &::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 /* ---------------------------------------------------------------------------

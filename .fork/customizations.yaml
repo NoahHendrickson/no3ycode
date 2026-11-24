@@ -2781,9 +2781,11 @@
     buttons, switches and padding shrank at 15px. The fork pins Tailwind's
     --spacing, the radius scale and the compact control geometry tokens to their
     16px values in px, so control geometry holds while the rem --text-* scale
-    (and anything sized in em) still follows the setting. Arbitrary rem values
-    written in classes still scale; geometry tokens the fork adds should be px or
-    built on --spacing, and text tokens rem.
+    (and anything sized in em) still follows the setting. The titlebar control
+    size and gap and the Appearance sliders' stylesheet rem are pinned the same
+    way, and the long-message fold measures against the pinned 176px. Arbitrary
+    rem values written in classes still scale; geometry tokens the fork adds
+    should be px or built on --spacing, and text tokens rem.
   tier: 2
   files:
     - apps/web/src/theme.custom.css
@@ -2792,6 +2794,10 @@
     # Root font size from Interface font size, and the rem tokens pinned here.
     - apps/web/src/appearanceFonts.ts
     - apps/web/src/index.css
+    # Fenced: the fold threshold uses the pinned 16px rem, matching `max-h-44`.
+    - apps/web/src/components/chat/useTallEnoughToFold.ts
+    # Fenced: the sliders' inline fill offsets in px, matching the pinned 16px thumb.
+    - apps/web/src/components/settings/AppearanceSettingsPanel.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
 

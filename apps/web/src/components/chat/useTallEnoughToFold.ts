@@ -17,7 +17,10 @@ export function useTallEnoughToFold(enabled = true) {
     const content = ref.current;
     if (!enabled || !content) return;
     const measure = () => {
-      const remPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+         The fork pins --spacing to 4px, so `max-h-44` is 176px whatever the root font size. */
+      const remPx = 16;
+      /* fork:end fork-interface-size-text-only */
       setTallEnough(content.offsetHeight >= FOLDED_HEIGHT_REM * 2 * remPx);
     };
     // Measured here too: waiting for the observer would paint one unfolded frame.

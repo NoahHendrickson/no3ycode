@@ -15,22 +15,26 @@ function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 }
 
-const PINNED = {
-  "--spacing": "4px",
-  "--radius": "8px",
-  "--radius-xs": "2px",
-  "--radius-4xl": "32px",
-  "--control-radius": "8px",
-  "--sidebar-content-inset": "8px",
-  "--sidebar-control-gap": "8px",
-  "--sidebar-row-content-inset": "10px",
-  "--command-shell-inset": "8px",
-  "--command-content-inset": "16px",
-  "--floating-content-inset": "12px",
+/** Token → [upstream's rem value in index.css, the fork's px pin]. */
+const PINNED: Record<string, readonly [string | null, string]> = {
+  "--spacing": [null, "4px"],
+  "--radius": ["0.5rem", "8px"],
+  "--radius-xs": [null, "2px"],
+  "--radius-4xl": [null, "32px"],
+  "--control-radius": ["0.5rem", "8px"],
+  "--sidebar-content-inset": ["0.5rem", "8px"],
+  "--sidebar-control-gap": ["0.5rem", "8px"],
+  "--sidebar-row-content-inset": ["0.625rem", "10px"],
+  "--command-shell-inset": ["0.5rem", "8px"],
+  "--command-content-inset": ["1rem", "16px"],
+  "--floating-content-inset": ["0.75rem", "12px"],
+  "--workspace-titlebar-control-size": ["1.75rem", "28px"],
+  "--workspace-titlebar-control-gap": ["0.75rem", "12px"],
 };
 
 describe("fork guard: interface size scales text only", () => {
   const sheet = readSibling("../theme.custom.css");
+  const index = readSibling("../index.css");
   const start = sheet.indexOf("Interface font size scales text only");
   const block = sheet.slice(sheet.indexOf("{", start), sheet.indexOf("}", start) + 1);
 
@@ -38,17 +42,23 @@ describe("fork guard: interface size scales text only", () => {
     expect(sheet.slice(start, sheet.indexOf("{", start))).toContain(
       ':root[data-fork="noahhendrickson-t3code"]',
     );
-    for (const [token, value] of Object.entries(PINNED)) {
-      expect(block).toContain(`${token}: ${value};`);
+    for (const [token, [upstream, pin]] of Object.entries(PINNED)) {
+      expect(block).toContain(`${token}: ${pin};`);
+      // A changed upstream default moves the 16px baseline, so the pin must be revisited.
+      if (upstream !== null) expect(index).toContain(`${token}: ${upstream};`);
     }
   });
 
-  it("still finds the rem values it pins, so an upstream change is noticed", () => {
-    const index = readSibling("../index.css");
-    expect(index).toContain("--radius: 0.5rem;");
-    expect(index).toContain("--control-radius: 0.5rem;");
-    expect(index).toContain("--command-content-inset: 1rem;");
-    expect(index).toContain("--floating-content-inset: 0.75rem;");
-    expect(readSibling("../appearanceFonts.ts")).toContain("root.style.fontSize = `${");
+  it("pins the Appearance sliders and the fold threshold", () => {
+    expect(index).toContain("--settings-slider-fill-offset: 0.5rem;");
+    expect(sheet).toContain(':root[data-fork="noahhendrickson-t3code"] .settings-slider {');
+    expect(sheet).toContain("--settings-slider-fill-offset: 8px;");
+    const fold = readSibling("../components/chat/useTallEnoughToFold.ts");
+    expect(fold).toContain("const remPx = 16;");
+    const panel = readSibling("../components/settings/AppearanceSettingsPanel.tsx");
+    expect(panel.match(/"--settings-slider-fill-offset": `\$\{8 - \w+ \* 16\}px`/gu)).toHaveLength(
+      3,
+    );
+    expect(panel).not.toContain("}rem`");
   });
 });
