@@ -785,6 +785,15 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
         declared(docked?.body, token),
       );
     }
+    // The floating toggle hovers with --accent, the docked one with --sidebar-row-hover.
+    const floatingToggle = glassRules.find(
+      (rule) =>
+        rule.selector.includes("[data-fork-has-thread-tabs]") &&
+        rule.selector.endsWith("[data-sidebar-control]"),
+    );
+    expect(declared(floatingToggle?.body, "--accent"), "the floating toggle's hover").toBe(
+      declared(docked?.body, "--sidebar-row-hover"),
+    );
   });
 
   it("stamps the marker from the resolved answer, not the request", async () => {
