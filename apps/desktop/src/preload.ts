@@ -21,7 +21,10 @@ import type {
 } from "./fork/ForkMusicClient.ts";
 /* fork:end fork-music-panel */
 /* fork:begin fork-cool-darker-sidebar-vibrancy — see .fork/customizations.yaml#fork-cool-darker-sidebar-vibrancy */
-import type { ForkDraftLiquidGlassState } from "./fork/ForkLiquidGlass.ts";
+import type {
+  ForkDraftLiquidGlassState,
+  ForkSidebarLiquidGlassFrame,
+} from "./fork/ForkLiquidGlass.ts";
 import type { ForkSidebarVibrancyMode } from "./fork/ForkSidebarVibrancy.ts";
 /* fork:end fork-cool-darker-sidebar-vibrancy */
 
@@ -599,12 +602,8 @@ contextBridge.exposeInMainWorld("forkDesktopBridge", {
   setSidebarVibrancy: (enabled: boolean): Promise<ForkSidebarVibrancyMode> =>
     ipcRenderer.invoke("fork:set-sidebar-vibrancy", { enabled }),
   sidebarLiquidGlass: {
-    setWidth: (width: number | null, backing?: number, height?: number): Promise<boolean> =>
-      ipcRenderer.invoke("fork:set-sidebar-liquid-glass-width", {
-        width,
-        ...(backing !== undefined ? { backing } : {}),
-        ...(height !== undefined ? { height } : {}),
-      }),
+    setFrame: (frame: ForkSidebarLiquidGlassFrame | null, backing: number): Promise<boolean> =>
+      ipcRenderer.invoke("fork:set-sidebar-liquid-glass-frame", { frame, backing }),
     setDraftGlass: (state: ForkDraftLiquidGlassState | null): Promise<boolean> =>
       ipcRenderer.invoke("fork:set-draft-liquid-glass", { state }),
   },

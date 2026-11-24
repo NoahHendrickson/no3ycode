@@ -20,8 +20,12 @@ const THREAD_TABS_STAMP = "data-fork-has-thread-tabs";
 
 export type ForkSidebarVibrancyMode = "off" | "vibrancy" | "liquid-glass";
 
+/** CSS px: the docked sidebar's column runs the window's full height; a `height` makes it a band
+    that tall along the window's top. Mirrors apps/desktop/src/fork/ForkLiquidGlass.ts. */
+type SidebarGlassFrame = { readonly width: number; readonly height?: number };
+
 type ForkSidebarLiquidGlassBridge = {
-  readonly setWidth: (width: number | null, backing?: number, height?: number) => Promise<boolean>;
+  readonly setFrame: (frame: SidebarGlassFrame | null, backing: number) => Promise<boolean>;
 };
 
 type ForkDesktopBridge = {
@@ -39,8 +43,8 @@ function readBridge(): ForkDesktopBridge | null {
 function readLiquidGlassBridge(bridge: ForkDesktopBridge): ForkSidebarLiquidGlassBridge | null {
   const candidate = bridge.sidebarLiquidGlass;
   if (typeof candidate !== "object" || candidate === null) return null;
-  const lg = candidate as { setWidth?: unknown };
-  return typeof lg.setWidth === "function" ? (candidate as ForkSidebarLiquidGlassBridge) : null;
+  const lg = candidate as { setFrame?: unknown };
+  return typeof lg.setFrame === "function" ? (candidate as ForkSidebarLiquidGlassBridge) : null;
 }
 
 function normalizeVibrancyMode(value: ForkSidebarVibrancyMode | boolean): ForkSidebarVibrancyMode {
@@ -89,9 +93,6 @@ function readDockedSidebarGlassWidth(
   const width = Math.round(gap.getBoundingClientRect().width);
   return width > 0 ? width : null;
 }
-
-/** Full height beside the docked sidebar, or a band of `height` at the window's top. */
-type SidebarGlassFrame = { readonly width: number; readonly height?: number };
 
 /** On Flat Glass the collapsed sidebar's tab row (fork-collapsed-thread-tabs) is the window's
     titlebar, so the glass is a band behind the row alone: full height, it would cover the new
@@ -160,7 +161,7 @@ function startLiquidGlassTracking(
   let bootstrapObserver: MutationObserver | null = null;
   let rafId: number | null = null;
 
-  const pushWidth = () => {
+  const pushFrame = () => {
     rafId = null;
     if (!active || isStale() || inFlight) return;
     const frame = readSidebarGlass(root);
@@ -169,7 +170,7 @@ function startLiquidGlassTracking(
     if (key === lastAppliedKey) return;
     inFlight = true;
     void liquidGlass
-      .setWidth(frame?.width ?? null, backing, frame?.height)
+      .setFrame(frame, backing)
       .then((applied) => {
         if (!active || isStale()) return;
         inFlight = false;
@@ -198,11 +199,11 @@ function startLiquidGlassTracking(
   const schedulePush = () => {
     if (!active || isStale()) return;
     if (typeof window.requestAnimationFrame !== "function") {
-      pushWidth();
+      pushFrame();
       return;
     }
     if (rafId !== null) return;
-    rafId = window.requestAnimationFrame(pushWidth);
+    rafId = window.requestAnimationFrame(pushFrame);
   };
 
   const syncObservedGap = () => {
@@ -258,7 +259,7 @@ function startLiquidGlassTracking(
   });
 
   window.addEventListener("resize", schedulePush);
-  pushWidth();
+  pushFrame();
 
   stopLiquidGlassTracking = () => {
     active = false;

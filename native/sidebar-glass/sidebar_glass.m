@@ -230,20 +230,16 @@ static bool hide_draft_glass_on_main(NSView *rootView) {
   return remove_holder(rootView, kDraftHolderAssocKey);
 }
 
-/* A band height pins the glass to the window's top edge (Flat Glass's tab row); 0 runs it the
-   full height beside the docked sidebar. */
-static NSRect sidebar_holder_frame(NSView *contentView, CGFloat width, CGFloat bandHeight) {
+/* bandHeight 0 runs the glass the full content height beside the docked sidebar; otherwise it is
+   a band that tall pinned to the window's top edge (Flat Glass's tab row). The holder's frame,
+   resizing and the macOS 26 pane's inset and corners are all decided here. */
+static void apply_sidebar_frame(T3SidebarGlassHolder *holder, NSView *contentView, CGFloat width,
+                                CGFloat bandHeight) {
+  bool band = bandHeight > 0;
   CGFloat contentHeight = contentView.bounds.size.height;
-  if (bandHeight <= 0) return NSMakeRect(0, 0, width, contentHeight);
-  CGFloat height = fmin(bandHeight, contentHeight);
-  return NSMakeRect(0, contentHeight - height, width, height);
-}
-
-static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentView,
-                                CGFloat width, CGFloat bandHeight) {
-  holder.frame = sidebar_holder_frame(contentView, width, bandHeight);
-  holder.autoresizingMask = bandHeight > 0 ? NSViewMinYMargin : NSViewHeightSizable;
-  CGFloat contentHeight = holder.frame.size.height;
+  CGFloat height = band ? fmin(bandHeight, contentHeight) : contentHeight;
+  holder.frame = NSMakeRect(0, contentHeight - height, width, height);
+  holder.autoresizingMask = band ? NSViewMinYMargin : NSViewHeightSizable;
   if (holder.usingSplitView) {
     if (holder.sidebarItem != nil) {
       if (width < holder.sidebarItem.minimumThickness) {
@@ -258,10 +254,16 @@ static void apply_sidebar_width(T3SidebarGlassHolder *holder, NSView *contentVie
       holder.splitVC.view.frame = holder.bounds;
     }
   } else if (holder.glassView != nil) {
-    CGFloat inset = 8.0;
-    CGFloat insetW = fmax(1.0, width - inset * 2.0);
-    CGFloat insetH = fmax(1.0, contentHeight - inset * 2.0);
-    holder.glassView.frame = NSMakeRect(inset, inset, insetW, insetH);
+    // The docked sidebar floats as an inset rounded pane; a band, only a tab row tall, fills
+    // its row edge to edge rather than shrinking to a pill.
+    CGFloat inset = band ? 0.0 : 8.0;
+    holder.glassView.frame = NSMakeRect(inset, inset, fmax(1.0, width - inset * 2.0),
+                                        fmax(1.0, height - inset * 2.0));
+    SEL setCornerRadius = sel_registerName("setCornerRadius:");
+    if ([holder.glassView respondsToSelector:setCornerRadius]) {
+      ((void (*)(id, SEL, CGFloat))objc_msgSend)(holder.glassView, setCornerRadius,
+                                                 band ? 0.0 : 14.0);
+    }
   }
 }
 
@@ -281,14 +283,11 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, CGFloat 
 
   T3SidebarGlassHolder *holder = objc_getAssociatedObject(contentView, kHolderAssocKey);
   if (holder == nil) {
-    NSRect holderFrame = sidebar_holder_frame(contentView, width, bandHeight);
-    CGFloat contentHeight = holderFrame.size.height;
-    holder = [[T3SidebarGlassHolder alloc] initWithFrame:holderFrame];
-    holder.autoresizingMask = bandHeight > 0 ? NSViewMinYMargin : NSViewHeightSizable;
+    holder = [[T3SidebarGlassHolder alloc] initWithFrame:NSZeroRect];
 
     if (macos_major_version() >= 27) {
       NSViewController *sidebarVC = [[NSViewController alloc] init];
-      sidebarVC.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, contentHeight)];
+      sidebarVC.view = [[NSView alloc] initWithFrame:NSZeroRect];
       NSSplitViewItem *item = [NSSplitViewItem sidebarWithViewController:sidebarVC];
       item.canCollapse = NO;
       item.springLoaded = NO;
@@ -297,7 +296,6 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, CGFloat 
 
       NSSplitViewController *splitVC = [[NSSplitViewController alloc] init];
       [splitVC addSplitViewItem:item];
-      splitVC.view.frame = holder.bounds;
       splitVC.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
       splitVC.view.accessibilityElement = NO;
       splitVC.view.accessibilityChildren = @[];
@@ -309,15 +307,8 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, CGFloat 
     } else {
       Class glassCls = NSClassFromString(@"NSGlassEffectView");
       if (glassCls == nil) return false;
-      CGFloat inset = 8.0;
-      NSRect glassFrame = NSMakeRect(inset, inset, fmax(1.0, width - inset * 2.0),
-                                     fmax(1.0, contentHeight - inset * 2.0));
-      NSView *glass = [[glassCls alloc] initWithFrame:glassFrame];
+      NSView *glass = [[glassCls alloc] initWithFrame:NSZeroRect];
       glass.autoresizingMask = NSViewHeightSizable;
-      SEL setCornerRadius = sel_registerName("setCornerRadius:");
-      if ([glass respondsToSelector:setCornerRadius]) {
-        ((void (*)(id, SEL, CGFloat))objc_msgSend)(glass, setCornerRadius, 14.0);
-      }
       // Private (no public variant setter on macOS 26); respondsToSelector keeps a
       // removal harmless, falling back to the default glass.
       SEL setVariant = sel_registerName("set_variant:");
@@ -331,9 +322,8 @@ static bool show_sidebar_glass_on_main(NSView *rootView, CGFloat width, CGFloat 
 
     [contentView addSubview:holder positioned:NSWindowBelow relativeTo:nil];
     objc_setAssociatedObject(contentView, kHolderAssocKey, holder, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-  } else {
-    apply_sidebar_width(holder, contentView, width, bandHeight);
   }
+  apply_sidebar_frame(holder, contentView, width, bandHeight);
 
   if (window != nil) {
     window.opaque = NO;
