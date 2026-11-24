@@ -125,6 +125,11 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     const declaration = /const (\w+) =/gu;
     const owners = [...sidebarV2.slice(0, unpin).matchAll(declaration)];
     expect(owners.at(-1)?.[1]).toBe("pinIndicator");
+    // Visible at rest, so on a touch-only screen its 44px coarse hit area would
+    // swallow taps meant to open the row.
+    expect(openingTags("Unpin thread")[0]).toContain(
+      "[@media(any-hover:none)]:pointer-events-none",
+    );
   });
 
   it("lets no action re-grow padding of its own", () => {

@@ -1817,11 +1817,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
      A pinned thread's marker is its unpin button, on the card's title line and
      the slim shelves alike; the hover cell only offers Pin. -m-1.5 keeps the
      24px target at the glyph's 12px footprint. Without pinning rights it stays
-     a passive mark. */
+     a passive mark. With no hovering pointer it takes no taps: its 44px coarse
+     hit area would cover the title and repo line, so a tap meant to open the
+     thread unpinned it. Touch unpins from the row menu. */
   const pinGlyph = <PinIcon weight="fill" className="size-3 text-foreground dark:text-white" />;
   const pinIndicator = props.isPinned ? (
     canPin ? (
-      <SidebarV2IconButton aria-label="Unpin thread" onClick={handleUnpinClick} className="-m-1.5">
+      <SidebarV2IconButton
+        aria-label="Unpin thread"
+        onClick={handleUnpinClick}
+        className="-m-1.5 [@media(any-hover:none)]:pointer-events-none"
+      >
         {pinGlyph}
       </SidebarV2IconButton>
     ) : (

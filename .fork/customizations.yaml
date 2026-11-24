@@ -1478,7 +1478,11 @@
     Unpin is the pinned marker itself (pinIndicator): a filled Pin02 in white
     (foreground in light) on the card's title line and the slim shelves, a
     24px button held to the glyph's 12px footprint, so the pin you see is the
-    pin you click. Without pinning rights it stays a passive mark. The white
+    pin you click. Without pinning rights it stays a passive mark. With no
+    hovering pointer it takes no taps (`any-hover:none` pointer-events-none,
+    like the slim-row actions): its 44px coarse hit area covered the title and
+    repo line, so a tap meant to open a pinned thread unpinned it. Touch
+    unpins from the row menu. The white
     is a literal (`dark:text-white`) on purpose: Noey asked for pure white,
     and no tone's foreground is pure white (dark tones are #e8e8e8), so a
     token would only alias white. Figma names the same ink Icon mode "Strong".
