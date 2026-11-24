@@ -3821,7 +3821,11 @@
     and the trash remove). Both titles read at text-sm/5 on the banner scale.
     Collapsed, it is a "Stash N" pill in the status-chip row like the queue's
     (custom/ComposerStashChip.tsx), rendered by ChatComposer so the new agent
-    screen shows it too; upstream's ComposerStashBadge shoulder tab is deleted.
+    screen shows it too, through ComposerShell's persistentChips slot, which
+    stays over the collapsed phone pill. Upstream's ComposerStashBadge shoulder
+    tab (components/chat/ComposerStashBadge.tsx) is deleted on purpose: resolve
+    a sync modify/delete on it as delete. Its stash-pulse-row keyframes in index.css stay unused, as
+    upstream's, to keep sync diffs small.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.

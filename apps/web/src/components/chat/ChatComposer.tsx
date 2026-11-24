@@ -4054,8 +4054,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         context={props.contextStrip}
         statusChips={props.statusChips}
         /* The queue pill's twin, here so the new agent screen gets it too. */
-        stashChip={
-          stashDrawerOpen ? null : (
+        persistentChips={
+          isStashMenuOpen ? null : (
             <ComposerStashChip
               count={stashQueue.length}
               pulseKey={stashPulseKey}

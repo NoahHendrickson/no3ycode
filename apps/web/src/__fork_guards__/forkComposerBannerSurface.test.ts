@@ -151,9 +151,9 @@ describe("fork guard: fork-composer-banner-surface", () => {
     expect(widened).toHaveLength(1);
     const [rule] = widened;
     expect(rule?.selector).toContain(`${MARKER}:is(.dark, [data-fork-theme="basic"])`);
-    // By descendant and with no tab carve-out: the dock reaches the tasks row
-    // only through its column, so a child match or a `:not` on the shoulder
-    // tab sends the tasks-only dock back under the prompt box.
+    // By descendant and with no carve-out: the dock reaches its cards only
+    // through its column, so a child match or a `:not` sends the dock back
+    // under the prompt box.
     expect(flat(rule?.selector ?? "")).toContain(`:has( ${CARD} )`);
     expect(rule?.selector).not.toContain(":not(");
     expect(rule?.body).toMatch(/max-width:\s*none/u);

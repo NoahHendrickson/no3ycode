@@ -19,9 +19,7 @@ export const ComposerStashChip = memo(function ComposerStashChip(props: {
     <ComposerControl
       size="xs"
       data-fork-composer-status-chip="stash"
-      data-prompt-stash-badge="true"
       aria-label={gt("Stashed prompts: {count}. Open stash.", { count: props.count })}
-      aria-expanded={false}
       onPointerDown={(event) => event.preventDefault()}
       onClick={props.onOpen}
     >
