@@ -3657,6 +3657,12 @@
     monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
+    The chip reads "Background task(s)" beside a static ElectricityStack glyph
+    for any mix of work. A live run's own subagents join it while that run is
+    live (custom/composerBackgroundWork.logic.ts matches each to its record
+    once); after it settles only the pending list counts. The Stop square is
+    drawn only when upstream's row would enable Stop (useThreadLifecycle's
+    canStopBackgroundWork), since mid-turn the composer owns Stop.
     Neither shows on the draft hero. On narrow composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
@@ -5307,8 +5313,7 @@
   intent: >
     Settings → Appearance → Theme → Working indicator picks which mark a
     running agent draws everywhere the fork shows one (Sidebar V2 rows, the
-    transcript working row, the background-work chip above the composer,
-    subagent members):
+    transcript working row, subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
     into beads and merges back). Until one is picked, Inlet and Basic draw the

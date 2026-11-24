@@ -62,6 +62,13 @@
   gap: 6px;
   padding-inline: 8px 6px;
   border-radius: 8px 0 0 8px;
+
+  /* No Stop square beside it: the label is the whole pill. An attribute, not :last-child,
+     since the open popover puts focus guards after the trigger. */
+  &[data-fork-status-chip-solo] {
+    padding-inline: 8px;
+    border-radius: 8px;
+  }
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-status-chip-stop] {

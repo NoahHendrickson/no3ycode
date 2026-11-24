@@ -639,6 +639,11 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
           onForceStop: () => void forceStop.forceStopThread(activeThread.id, runStop.runId),
         })
       : null;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+     The composer chip draws its Stop square only when upstream's row below would enable it
+     (a live run leaves Stop to the composer); it stays up, disabled, while stopping. */
+  const canStopBackgroundWork = !runIsLive && canOperateThread && activeBackgroundTasks.length > 0;
+  /* fork:end fork-composer-shell */
   const backgroundWorkNow = activeThread
     ? backgroundWorkNowItem(
         {
@@ -804,6 +809,7 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
     /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
     // ChatView builds the context-strip liveness pill from the same inputs as backgroundWorkNow.
     activeBackgroundTasks,
+    canStopBackgroundWork,
     isStoppingBackgroundWork,
     handleStopBackgroundWorkStable,
     /* fork:end fork-composer-shell */
