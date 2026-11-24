@@ -157,7 +157,8 @@ export function No3yQueuedRunsBanner(props: {
     <Animated.View
       entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
-      style={{ marginHorizontal: 16, marginBottom: 6, borderRadius: RADIUS }}
+      // The pills float 6pt above the panels; as the first panel, marginTop makes that gap 12pt.
+      style={{ marginHorizontal: 16, marginTop: 6, marginBottom: 6, borderRadius: RADIUS }}
     >
       <No3yGlassLayer radius={RADIUS} />
       <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
