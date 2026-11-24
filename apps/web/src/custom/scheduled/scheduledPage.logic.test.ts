@@ -4,6 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   draftTriggerLabel,
   formatDuration,
+  groupAutomations,
   matchesTaskQuery,
   overlayRunStatus,
   presentRunStatus,
@@ -39,6 +40,33 @@ describe("matchesTaskQuery", () => {
     expect(matchesTaskQuery(task, "review")).toBe(true);
     expect(matchesTaskQuery(task, "PULL REQUEST")).toBe(true);
     expect(matchesTaskQuery(task, "deploy")).toBe(false);
+  });
+});
+
+describe("groupAutomations", () => {
+  it("puts yours first, then each Petal by name, and counts a gone Petal's task as yours", () => {
+    const petals = new Map([
+      ["p-zinnia", "Zinnia"],
+      ["p-aster", "Aster"],
+    ]);
+    const tasks = [
+      { id: "a", threadId: "p-zinnia" },
+      { id: "b", threadId: null },
+      { id: "c", threadId: "p-aster" },
+      { id: "d", threadId: "p-zinnia" },
+      { id: "e", threadId: "plain-thread" },
+    ];
+    expect(
+      groupAutomations(tasks, "petal", petals).map((group) => [
+        group.label,
+        group.tasks.map((task) => task.id),
+      ]),
+    ).toEqual([
+      ["Yours", ["b", "e"]],
+      ["Aster", ["c"]],
+      ["Zinnia", ["a", "d"]],
+    ]);
+    expect(groupAutomations(tasks, "none", petals)).toEqual([{ key: "all", label: null, tasks }]);
   });
 });
 

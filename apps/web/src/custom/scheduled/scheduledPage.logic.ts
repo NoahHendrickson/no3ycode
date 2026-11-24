@@ -16,6 +16,7 @@ import {
 } from "@t3tools/contracts";
 
 import type { TimestampFormat } from "@t3tools/contracts/settings";
+import * as Schema from "effect/Schema";
 import { scheduleLabel } from "~/components/settings/scheduledTasksSettings.logic";
 import { formatRelativeTime } from "~/timestampFormat";
 
@@ -329,4 +330,43 @@ export function draftSignature(draft: {
   readonly maxDeliveryAgeMinutes: string;
 }): string {
   return JSON.stringify({ ...draft, weekdays: [...draft.weekdays].toSorted((a, b) => a - b) });
+}
+
+export const AutomationGrouping = Schema.Literals(["none", "petal"]);
+export type AutomationGrouping = typeof AutomationGrouping.Type;
+export const isAutomationGrouping = Schema.is(AutomationGrouping);
+
+export interface AutomationGroup<T> {
+  /** "all" ungrouped, "yours", or the Petal's thread id. */
+  readonly key: string;
+  /** The section header; null for the ungrouped list, which has none. */
+  readonly label: string | null;
+  readonly tasks: ReadonlyArray<T>;
+}
+
+/** Ungrouped, one headerless group. By Petal, yours first, then one group per Petal by name. A
+    Petal's automation is one that runs in the Petal's own thread; one whose Petal is gone or
+    archived counts as yours. */
+export function groupAutomations<T extends { readonly threadId: string | null }>(
+  tasks: ReadonlyArray<T>,
+  grouping: AutomationGrouping,
+  petalTitles: ReadonlyMap<string, string>,
+): ReadonlyArray<AutomationGroup<T>> {
+  if (grouping === "none") return [{ key: "all", label: null, tasks }];
+  const yours: T[] = [];
+  const byPetal = new Map<string, { label: string; tasks: T[] }>();
+  for (const task of tasks) {
+    const label = task.threadId === null ? undefined : petalTitles.get(task.threadId);
+    if (task.threadId === null || label === undefined) {
+      yours.push(task);
+      continue;
+    }
+    const group = byPetal.get(task.threadId) ?? { label, tasks: [] };
+    group.tasks.push(task);
+    byPetal.set(task.threadId, group);
+  }
+  const petals = [...byPetal]
+    .map(([key, group]) => ({ key, ...group }))
+    .toSorted((left, right) => left.label.localeCompare(right.label));
+  return [...(yours.length > 0 ? [{ key: "yours", label: "Yours", tasks: yours }] : []), ...petals];
 }

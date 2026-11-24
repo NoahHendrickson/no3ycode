@@ -3203,7 +3203,7 @@
   intent: >
     /scheduled is a workspace page, laid out like Cursor's Automations: a
     heading with New task and a filter row (environment chips when there is more than one, All
-    runs, search), and one table of every scheduled task across every
+    runs, a Group menu, search), and one table of every scheduled task across every
     connected environment with its project, trigger and next run,
     Active/Inactive, last run, and model. A row opens the task as its own
     page: the title is the heading, the on/off switch and the project sit
@@ -3235,9 +3235,14 @@
     clips its table so a hovered row never paints past its corners.
     That composer wears the chat composer's own context-row, vessel,
     surface and control-row stamps, so every palette paints it the same.
+    Grouped by Petal (a device-local choice, off by default), each environment's table
+    lists your automations under Yours first, then a section per listed Petal by name; an
+    automation is a Petal's when it runs in that Petal's own thread. The roster is read from
+    the complete shell list, so the tag filter never moves an automation between sections.
   tier: 4
   files:
     - apps/web/src/custom/scheduled/ScheduledPage.tsx
+    - apps/web/src/custom/scheduled/petalRoster.ts
     - apps/web/src/custom/scheduled/ScheduledTriggerTabs.tsx
     - apps/web/src/custom/SegmentedTabs.tsx
     - apps/web/src/custom/scheduled/ScheduledTaskDetail.tsx
