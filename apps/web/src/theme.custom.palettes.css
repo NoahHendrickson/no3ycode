@@ -2004,6 +2004,20 @@
   }
 }
 
+/* A still picture's draft in a split pane keeps the CSS blur fallback, where Figma's 16% black
+   reads as a white wash; under Liquid Glass it takes a wash as dark as the native cards it stands
+   in for (18% black over the dark glass material) and the native prompt well. Estimated. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-fork-split-pane]
+  [data-fork-opaque-backdrop]
+  ~ *
+  [data-chat-composer-overlay="true"][data-draft-hero] {
+  --fork-composer-vessel-bg: rgb(0 0 0 / 40%);
+  --fork-composer-bg: rgb(255 255 255 / 6%);
+  --fork-composer-border: rgb(255 255 255 / 10%);
+  --fork-composer-border-focus: rgb(255 255 255 / 18%);
+}
+
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   body
   .dropdown-glass[data-fork-draft-glass-popup="true"] {
