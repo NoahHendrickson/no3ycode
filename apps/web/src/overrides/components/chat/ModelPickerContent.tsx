@@ -198,16 +198,15 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
 
 const EMPTY_MODEL_JUMP_LABELS = new Map<string, string>();
 
-/** Every row shares one shape: 32px, 4px corners, 12px medium label. */
-const ROW_CLASS = "h-8 min-h-8 rounded-[4px] px-2 py-0 text-xs font-medium sm:min-h-8 sm:text-xs";
-/** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
-const HOVER_REVEAL_CLASS =
-  "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100";
+/** Every row shares one shape: 32px, 4px corners, 12px medium label (MenuItem size="xs"). */
+const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";
 
 /** Whose models the list shows when no query is typed: the selected tab. */
 type ModelPickerScope = ProviderInstanceId | "favorites";
 
-const TOOLTIP_CLASS = "max-w-64 text-balance font-normal leading-snug";
+const TOOLTIP_CLASS = "max-w-64";
+/** The tooltips' explanations: balanced lines at regular weight. */
+const TOOLTIP_TEXT_CLASS = "block text-balance font-normal";
 
 export const ModelPickerContent = memo(function ModelPickerContent(props: {
   environmentId: EnvironmentId | null;
@@ -736,6 +735,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               <p className="text-muted-foreground">{notice}</p>
               {providerUpdateChannelLags(entry.snapshot, searchQuery) ? null : (
                 <MenuItem
+                  size="xs"
                   className={cn(ROW_CLASS, "mt-1 -mx-2")}
                   onClick={() => {
                     props.onRequestClose?.();
@@ -798,6 +798,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         // The host closes the menu on a pick, or keeps it open for what it
         // renders below the list.
         closeOnClick={false}
+        size="xs"
         className={cn(ROW_CLASS, "group", disabledReason && "data-disabled:pointer-events-auto")}
         onClick={(event) => chooseModel(model, event.shiftKey)}
       >
@@ -807,7 +808,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               {label}
             </TooltipTrigger>
             <TooltipPopup side="left" align="center" className={TOOLTIP_CLASS}>
-              {disabledReason}
+              <span className={TOOLTIP_TEXT_CLASS}>{disabledReason}</span>
             </TooltipPopup>
           </Tooltip>
         ) : (
@@ -815,12 +816,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         )}
         <span className="flex shrink-0 items-center gap-1">
           {jumpLabel ? (
-            <Kbd
-              className={cn(
-                "h-4 min-w-0 rounded-sm bg-foreground/4 px-1.5 text-[10px]",
-                HOVER_REVEAL_CLASS,
-              )}
-            >
+            <Kbd variant="faint" size="xs" reveal="row" className="h-4 min-w-0">
               {jumpLabel}
             </Kbd>
           ) : null}
@@ -831,17 +827,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             size="icon-xs"
             tabIndex={-1}
             aria-label={isFavorite ? gt("Remove from favorites") : gt("Add to favorites")}
-            className={cn(
-              HOVER_REVEAL_CLASS,
-              // No hover on touch: the star stays shown, or tapping a row's
-              // right edge would toggle a favorite the user cannot see.
-              "pointer-coarse:opacity-100",
-              // Button's 44px coarse-pointer target would reach into the next row's star.
-              "pointer-coarse:after:hidden",
-              // Button fades a disabled button to 64%; this one stays hidden until its row is
-              // hovered, like any other row's star.
-              "disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
-            )}
+            // Shown on touch, where nothing hovers: tapping a row's right edge must not toggle
+            // a favorite the user cannot see.
+            reveal="row"
+            // Button's 44px coarse-pointer target would reach into the next row's star.
+            className="pointer-coarse:after:hidden"
             disabled={Boolean(disabledReason)}
             onPointerDown={(event) => event.stopPropagation()}
             onPointerUp={(event) => event.stopPropagation()}
@@ -912,7 +902,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           }
         />
         <TooltipPopup side="top" sideOffset={6} align="center" className={TOOLTIP_CLASS}>
-          {input.title}
+          <span className={TOOLTIP_TEXT_CLASS}>{input.title}</span>
         </TooltipPopup>
       </Tooltip>
     );
@@ -993,7 +983,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           closeOnClick={false}
           disabled={unavailable}
           aria-expanded={unavailable ? undefined : section.isExpanded}
-          className={cn(ROW_CLASS, "gap-2", unavailable && "data-disabled:pointer-events-auto")}
+          size="xs"
+          className={cn(ROW_CLASS, unavailable && "data-disabled:pointer-events-auto")}
           onClick={() => toggleSubProviderSection(section.key)}
         >
           {unavailable ? (
@@ -1002,7 +993,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 {label}
               </TooltipTrigger>
               <TooltipPopup side="left" align="center" className={TOOLTIP_CLASS}>
-                {section.unavailableReason}
+                <span className={TOOLTIP_TEXT_CLASS}>{section.unavailableReason}</span>
               </TooltipPopup>
             </Tooltip>
           ) : (
@@ -1048,7 +1039,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 closeOnClick={false}
                 aria-expanded={showLegacy}
                 data-model-picker-legacy-toggle="true"
-                className={cn(ROW_CLASS, "gap-2 text-muted-foreground")}
+                size="xs"
+                tone="muted"
+                className={ROW_CLASS}
                 onClick={() => setShowLegacy((shown) => !shown)}
               >
                 <span className="min-w-0 flex-1 truncate">Legacy models</span>
@@ -1070,6 +1063,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               {getProviderStatusMessage(entry.snapshot, messages)}
             </p>
             <MenuItem
+              size="xs"
               className={cn(ROW_CLASS, "mt-1 -mx-2")}
               onClick={() => {
                 props.onRequestClose?.();

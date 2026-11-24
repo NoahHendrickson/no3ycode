@@ -68,6 +68,13 @@ const buttonVariants = cva(
         "warning-outline":
           "border-warning/32 bg-warning-surface text-warning-foreground shadow-xs/5 [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:border-warning/40 [:hover,[data-pressed]]:bg-warning/16 dark:[:hover,[data-pressed]]:bg-warning/24",
       },
+      /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+      // Hidden until its `group` row is hovered or highlighted; shown on touch, where nothing hovers.
+      // A disabled one stays hidden at rest everywhere and fades in at the disabled 64%.
+      reveal: {
+        row: "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100 pointer-coarse:opacity-100 disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
+      },
+      /* fork:end fork-design-row-variants */
     },
   },
 );
@@ -78,15 +85,27 @@ type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
 interface ButtonProps extends useRender.ComponentProps<"button"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  reveal?: VariantProps<typeof buttonVariants>["reveal"];
+  /* fork:end fork-design-row-variants */
 }
 
-function Button({ className, variant, size, render, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant,
+  size,
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  reveal,
+  /* fork:end fork-design-row-variants */
+  render,
+  ...props
+}: ButtonProps) {
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
     : "button";
 
   const defaultProps = {
-    className: cn(buttonVariants({ className, size, variant })),
+    className: cn(buttonVariants({ className, size, variant, reveal })),
     "data-slot": "button",
     type: typeValue,
   };

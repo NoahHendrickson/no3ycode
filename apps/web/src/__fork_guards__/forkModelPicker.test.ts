@@ -222,21 +222,28 @@ describe("fork guard: fork-model-picker", () => {
   });
 
   it("renders models as 32px rows, star on hover, check on the selected one", () => {
-    expect(content).toMatch(
-      /const ROW_CLASS =\s*"h-8 min-h-8 rounded-\[4px\] [^"]*text-xs font-medium/u,
+    // 32px rows; MenuItem size="xs" is the 4px corners (base rounded-sm) and 12px medium label.
+    expect(content).toContain('const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";');
+    expect(content.split('size="xs"').length - 1).toBeGreaterThanOrEqual(4);
+    expect(readSibling("../components/ui/menu.tsx")).toContain(
+      'xs: "py-0 text-xs font-medium sm:text-xs"',
     );
     expect(content).toContain('<CheckIcon className="size-4 shrink-0 text-foreground"');
     // The star is hidden at rest even on favorited rows, and its click must
     // not also choose the row.
-    expect(content).toContain(
-      '"opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100"',
+    expect(content).toMatch(/<Button[^>]*?\breveal="row"/su);
+    expect(readSibling("../components/ui/button.tsx")).toContain(
+      'row: "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100 pointer-coarse:opacity-100',
     );
     expect(content).toMatch(
       /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*void toggleFavorite\(model\.instanceId, model\.slug\);/u,
     );
     // The jump badge's fill is foreground-relative; a white wash vanishes on a
     // light popup.
-    expect(content).toContain("bg-foreground/4");
+    expect(content).toContain('<Kbd variant="faint"');
+    expect(readSibling("../components/ui/kbd.tsx")).toContain(
+      'variant === "faint" && "bg-foreground/4"',
+    );
     expect(content).not.toMatch(/bg-white\//u);
   });
 

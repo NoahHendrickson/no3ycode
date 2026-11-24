@@ -9066,6 +9066,25 @@
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
 
+- id: fork-design-row-variants
+  intent: >
+    Primitive variants for dense rows, so fork code picks a look instead of
+    restyling the primitive with className (.fork/DESIGN-RULES.md B1). MenuItem
+    takes size "xs" (py-0, 12px medium label: the model picker's 32px rows) and
+    tone "muted". Button takes reveal "row": hidden until its group row is
+    hovered or highlighted, shown on touch, a disabled one hidden at rest and
+    64% on hover. Kbd takes variant "faint", size "xs" and reveal "row" (the
+    model picker's jump hints). Every default is upstream's look, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/button.tsx
+    - apps/web/src/components/ui/kbd.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkModelPicker.test.ts
+    - apps/web/src/__fork_guards__/forkTouchAffordances.test.ts
 - id: fork-design-lint
   intent: >
     Fork UI takes its values from tokens and its controls from components/ui,

@@ -131,16 +131,33 @@ function MenuGroup(props: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="menu-group" {...props} />;
 }
 
+/* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+// Dense rows (the model picker's 32px rows, 12px medium label) and a muted label.
+const forkMenuRowSizeClassName = {
+  default: "",
+  xs: "py-0 text-xs font-medium sm:text-xs",
+} as const;
+const forkMenuRowToneClassName = { default: "", muted: "text-muted-foreground" } as const;
+/* fork:end fork-design-row-variants */
+
 function MenuItem({
   className,
   inset,
   density = "default",
   variant = "default",
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  size = "default",
+  tone = "default",
+  /* fork:end fork-design-row-variants */
   ...props
 }: MenuPrimitive.Item.Props & {
   inset?: boolean;
   density?: "default" | "touch";
   variant?: "default" | "destructive" | "ghost";
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  size?: keyof typeof forkMenuRowSizeClassName;
+  tone?: keyof typeof forkMenuRowToneClassName;
+  /* fork:end fork-design-row-variants */
 }) {
   return (
     <MenuPrimitive.Item
@@ -153,6 +170,10 @@ function MenuItem({
             className: "h-auto min-h-7 w-full sm:text-xs",
           }),
         density === "touch" && "min-h-10 sm:min-h-10",
+        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        forkMenuRowSizeClassName[size],
+        forkMenuRowToneClassName[tone],
+        /* fork:end fork-design-row-variants */
         className,
       )}
       data-density={density}

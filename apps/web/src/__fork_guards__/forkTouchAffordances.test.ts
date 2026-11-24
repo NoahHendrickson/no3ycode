@@ -94,8 +94,12 @@ describe("fork guard: fork-touch-affordances", () => {
 
   it("stops invisible controls taking taps, and shows the ones touch needs", () => {
     expect(SIDEBAR_V2_SLIM_ROW_ACTION_CLASS).toContain(`${NO_HOVER}pointer-events-none`);
+    // The model picker's favorite star reveals on hover and stays shown on touch.
     expect(readSibling("../overrides/components/chat/ModelPickerContent.tsx")).toMatch(
-      /HOVER_REVEAL_CLASS,\s*(?:\/\/[^\n]*\n\s*)*"pointer-coarse:opacity-100"/u,
+      /<Button[^>]*?\breveal="row"/su,
+    );
+    expect(readSibling("../components/ui/button.tsx")).toMatch(
+      /row: "[^"]*\bpointer-coarse:opacity-100\b/u,
     );
     const scripts = readSibling("../components/ProjectScriptsControl.tsx");
     expect(scripts).toContain('"pointer-coarse:opacity-100 pointer-coarse:pointer-events-auto"');
