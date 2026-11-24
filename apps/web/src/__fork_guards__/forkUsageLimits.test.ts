@@ -50,7 +50,7 @@ describe("fork guard: fork-composer-usage-limits", () => {
     expect(composer).not.toContain("topVessel=");
     const readout = readSibling("../custom/ComposerUsageLimitsReadout.tsx");
     expect(readout).toContain("<UsageCircleMeter");
-    expect(readout).toContain("!isModelScopedWindow(window)");
+    expect(readout).toContain('windows.find((window) => window.id === "seven_day")');
     expect(readout).toContain("<PopoverTrigger");
     expect(readout).toContain(
       "<UsageLimitsPooled presentations={presentations} now={props.now} compact />",

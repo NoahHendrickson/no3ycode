@@ -1,11 +1,11 @@
 /**
- * The selected provider's session quota (or its weekly one, without a session limit) as a ring in
- * the composer's control row, opening every provider's limits as a menu. See
+ * The selected provider's session quota (or Claude's weekly one, without a session limit) as a
+ * ring in the composer's control row, opening every provider's limits as a menu. See
  * `.fork/customizations.yaml#fork-composer-usage-limits`.
  */
 import { useAtomValue } from "@effect/atom-react";
 import type { ServerProviderUsageLimits } from "@t3tools/contracts";
-import { isModelScopedWindow, remainingPercent } from "@t3tools/shared/usageLimits";
+import { remainingPercent } from "@t3tools/shared/usageLimits";
 import { useGT } from "gt-react";
 import { memo, useState } from "react";
 
@@ -29,10 +29,10 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
   // The menu's clock advances on open rather than ticking while it shows.
   const [openedAt, setOpenedAt] = useState(() => Date.now());
   const windows = props.usageLimits?.windows ?? [];
-  // Plans without a 5-hour limit fall back to the account-wide weekly window.
+  // Claude plans without a 5-hour limit fall back to Claude's account-wide weekly window.
   const ring =
     windows.find((window) => window.kind === "session") ??
-    windows.find((window) => window.kind === "weekly" && !isModelScopedWindow(window));
+    windows.find((window) => window.id === "seven_day");
   if (!ring) return null;
   const remaining = remainingPercent(ring);
   return (
