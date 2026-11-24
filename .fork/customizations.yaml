@@ -3618,7 +3618,9 @@
 - id: geist-typography
   intent: >
     The app's DEFAULT typefaces are Geist (UI) and Geist Mono (code), bundled
-    as Fontsource variable faces and imported from the fork's own theme layer —
+    as Fontsource variable faces and imported from the fork's own theme layer;
+    since cinnabar-sans-typeface the UI stack leads with Cinnabar Sans and Geist
+    is its fallback (and the Geist preset) —
     web and Electron renderer only; mobile and marketing keep upstream's fonts.
     Since upstream's v0.0.32 configurable-fonts work (Settings → Appearance:
     family, size, smoothing — applied as inline styles on the root by
@@ -3678,6 +3680,35 @@
     - apps/web/package.json
   verify:
     - apps/web/src/__fork_guards__/geistTypography.test.ts
+
+- id: cinnabar-sans-typeface
+  intent: >
+    The app's default interface face is Cinnabar Sans, a fork-owned typeface:
+    Geist reshaped toward Anthropic Sans proportions (rounder bowls, a
+    shorter-reading lowercase, lighter horizontals, a tailless u, a straight-tailed
+    y, flat-cut S/s/a terminals, Inter's R and a), licensed OFL as a Modified
+    Version of Geist and Inter (custom/fonts/cinnabar-sans/OFL.txt). It ships as
+    two variable woff2 files — upright and italic, each weight 100..900 — declared
+    with @font-face in theme.custom.css, so every weight and the italic are real
+    faces, never synthesized. --fork-font-sans leads with "Cinnabar Sans", with
+    geist-typography's Geist stack right behind it as the fallback; Geist and
+    Geist Mono stay bundled (Geist backs the Geist preset, Geist Mono is still the
+    code face). Settings → Appearance labels the empty preference Cinnabar Sans and
+    offers Geist as a preset (fork-typography-settings). The font's sources and
+    build pipeline live outside this repo; the woff2 files here are build outputs
+    and are replaced wholesale, never hand-edited.
+  tier: 4
+  files:
+    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-sans/OFL.txt
+    - apps/web/src/theme.custom.css
+    - apps/web/src/custom/forkTypographyScale.ts
+  shadows: []
+  watch:
+    - apps/web/src/index.css
+  verify:
+    - apps/web/src/__fork_guards__/cinnabarSansTypeface.test.ts
 
 - id: fork-lint-cleanliness
   intent: >
@@ -9127,9 +9158,10 @@
 - id: fork-typography-settings
   intent: >
     Settings → Appearance → Typography offers the interface font as presets:
-    Geist (the fork default, an empty preference that geist-typography's stack
-    fills, labelled Geist Variable, the bundled face), Inter (bundled by
-    upstream's main.tsx import) and System. Custom… opens upstream's
+    Cinnabar Sans (the fork default, an empty preference that the fork stack
+    fills, labelled with the bundled face — see cinnabar-sans-typeface), Geist
+    (Geist Variable, the bundled face), Inter (bundled by upstream's main.tsx
+    import) and System. Custom… opens upstream's
     any-installed-font field, and any value that matches no preset shows as
     Custom. Directly under the interface font (in the simple and the separate
     fonts layouts alike) sits Sidebar font size, 11–20px, and lower down Chat

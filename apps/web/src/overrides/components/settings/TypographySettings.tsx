@@ -72,7 +72,7 @@ function useFontDefaultFamilies() {
   const settings = useScopedSettings();
   const [defaults] = useState(resolveFontDefaultFamilies);
   /* fork:begin fork-typography-settings — see .fork/customizations.yaml#fork-typography-settings
-     An empty preference renders the fork's Geist stack, not upstream's system default. */
+     An empty preference renders the fork's Cinnabar Sans stack, not upstream's system default. */
   const sans = FORK_DEFAULT_SANS_FAMILY;
   /* fork:end fork-typography-settings */
   return {

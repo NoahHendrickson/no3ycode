@@ -43,11 +43,12 @@ export const { initialize: initializeForkChatTextScale, useValue: useForkChatTex
   });
 
 /** The family theme.custom.css puts first in --fork-font-sans, which an empty preference renders. */
-export const FORK_DEFAULT_SANS_FAMILY = "Geist Variable";
+export const FORK_DEFAULT_SANS_FAMILY = "Cinnabar Sans";
 
-/** Interface font presets. Empty is the fork default, Geist. */
+/** Interface font presets. Empty is the fork default, Cinnabar Sans; Geist stays one click away. */
 export const FORK_INTERFACE_FONT_PRESETS = [
-  { label: "Geist", value: "" },
+  { label: "Cinnabar Sans", value: "" },
+  { label: "Geist", value: "Geist Variable" },
   { label: "Inter", value: "Inter Variable" },
   { label: "System", value: "BlinkMacSystemFont, Segoe UI, system-ui" },
 ] as const;
