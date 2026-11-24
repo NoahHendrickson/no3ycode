@@ -64,7 +64,7 @@ export function ComposerBackgroundWorkChip(props: ComposerBackgroundWorkViewProp
           <span
             data-fork-liveness-mark
             aria-hidden
-            className="flex size-[14px] shrink-0 items-center justify-center"
+            className="flex size-3.5 shrink-0 items-center justify-center"
           >
             {props.presentation.waiting ? (
               <SidebarV2WorkingMark seed={props.seed} />

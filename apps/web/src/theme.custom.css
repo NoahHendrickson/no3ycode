@@ -781,38 +781,6 @@
   background: var(--fork-composer-vessel-bg);
 }
 
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-composer-top-vessel]:has(
-    [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
-  )
-  + [data-fork-composer-vessel] {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-
-/* The top corners square only while the usage drawer is out, so they follow its slide: square
-   as it starts up (it clears the corner within a frame), round in its last 40ms going down. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
-  transition:
-    border-top-left-radius 40ms linear 110ms,
-    border-top-right-radius 40ms linear 110ms;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-top-vessel]:has(
-    [data-fork-composer-usage-drawer]:not([hidden], [data-starting-style], [data-ending-style])
-  )
-  + [data-fork-composer-vessel] {
-  transition-delay: 0s;
-  transition-duration: 16ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-vessel] {
-    transition: none;
-  }
-}
-
 :root[data-fork="noahhendrickson-t3code"]
   :is(
     [data-fork-composer-usage-limits],
@@ -821,22 +789,8 @@
   --success: #38a169;
 }
 
-:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-usage-drawer] {
-  border-radius: var(--fork-composer-radius) var(--fork-composer-radius) 0 0;
-  background: var(--fork-composer-vessel-bg, var(--card));
-}
-
 :root[data-fork="noahhendrickson-t3code"] [data-fork-draft-launchpad-card] {
   background: var(--fork-composer-vessel-bg, var(--card));
-}
-
-:root[data-fork="noahhendrickson-t3code"]:not(.dark):not([data-fork-theme="basic"]):not(
-    [data-fork-theme="inlet"]
-  )
-  [data-fork-composer-usage-drawer] {
-  box-shadow:
-    inset 1px 1px 0 var(--border),
-    inset -1px 0 0 var(--border);
 }
 
 /* The frame div is upstream's 1px gradient-border trick: a p-px shim whose
@@ -2690,6 +2644,13 @@
   }
 }
 
+/* One action size for every card above the composer: notices, the question card and the
+   approval notice (whose rule is below, unscoped by theme). */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-notice-action-height: 32px;
+  --fork-notice-action-radius: 10px;
+}
+
 /* Primaries and Dismiss are stamped in ChatView / ComposerBannerStack —
    never selected by child position or :has(svg). The stamp survives
    Compact's TooltipTrigger <span> wrapper. */
@@ -2702,9 +2663,9 @@
     [data-fork-composer-notice-action="primary"],
     [data-fork-composer-notice-action="secondary"]
   ) {
-  height: 32px;
-  min-height: 32px;
-  border-radius: 10px;
+  height: var(--fork-notice-action-height);
+  min-height: var(--fork-notice-action-height);
+  border-radius: var(--fork-notice-action-radius);
   padding-inline: 12px;
   font-size: 13px;
   font-weight: 500;
@@ -3414,9 +3375,9 @@
 
 /* Approve, Decline and More sit under the request at the notice cards' action size. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="button"] {
-  height: 32px;
-  min-height: 32px;
-  border-radius: 10px;
+  height: var(--fork-notice-action-height);
+  min-height: var(--fork-notice-action-height);
+  border-radius: var(--fork-notice-action-radius);
   padding-inline: 12px;
   font-size: 13px;
   font-weight: 500;
@@ -3425,10 +3386,10 @@
 
 /* More is the row's menu trigger: a 32px square. Matched by its slot, not its (translated) label. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="menu-trigger"] {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
-  border-radius: 10px;
+  width: var(--fork-notice-action-height);
+  height: var(--fork-notice-action-height);
+  min-height: var(--fork-notice-action-height);
+  border-radius: var(--fork-notice-action-radius);
   padding: 0;
 }
 /* fork:end fork-composer-approval-notice */

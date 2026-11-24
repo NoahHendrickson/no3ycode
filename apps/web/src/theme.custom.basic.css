@@ -237,22 +237,6 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
-  + [data-fork-composer-vessel] {
-  box-shadow:
-    inset 1px 0 0 var(--fork-composer-border),
-    inset -1px 0 0 var(--fork-composer-border),
-    inset 0 -1px 0 var(--fork-composer-border);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-usage-drawer] {
-  box-shadow:
-    inset 1px 1px 0 var(--fork-composer-border),
-    inset -1px 0 0 var(--fork-composer-border);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
   border: 1px solid var(--basic-wash-2);

@@ -82,7 +82,7 @@ export function SidebarV2BotGridBody(props: {
         className={cn(
           // A fixed 12px line: room for descenders, and the taller rename field overhangs the padding
           // instead of growing the tile.
-          "flex h-3 w-full min-w-0 items-center justify-center text-center text-[0.625rem] leading-3 font-medium",
+          "flex h-3 w-full min-w-0 items-center justify-center text-center text-3xs leading-3 font-medium",
           props.regenerating && "opacity-55",
         )}
       >

@@ -1391,12 +1391,7 @@
   --fork-context-chip-bg: var(--fork-glass-picture-tint);
   --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
-  &
-    :is(
-      [data-fork-composer-vessel],
-      [data-fork-composer-usage-drawer],
-      [data-fork-draft-launchpad-card]
-    ) {
+  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
   }
@@ -1410,17 +1405,6 @@
     --contrast-accent-foreground: #fff;
     background: var(--fork-glass-picture-tint);
     border-color: var(--fork-composer-border);
-  }
-
-  & [data-fork-composer-usage-drawer] {
-    --contrast-border: var(--fork-composer-border);
-    --contrast-foreground: #fff;
-    --contrast-muted-foreground: rgb(255 255 255 / 85%);
-    --muted: rgb(255 255 255 / 22%);
-    --accent: var(--fork-composer-control-hover);
-    --contrast-accent-foreground: #fff;
-    -webkit-backdrop-filter: blur(48px);
-    backdrop-filter: blur(48px);
   }
 
   &
@@ -1911,15 +1895,6 @@
     }
   }
 
-  &
-    [data-fork-composer-top-vessel]:has([data-fork-composer-usage-drawer]:not([hidden]))
-    + [data-fork-composer-vessel]::after {
-    box-shadow:
-      inset 1px 0 0 rgb(255 255 255 / 16%),
-      inset -1px 0 0 rgb(255 255 255 / 16%),
-      inset 0 -1px 0 rgb(255 255 255 / 16%);
-  }
-
   & [data-fork-composer-box] .text-placeholder {
     color: #ffffff;
   }
@@ -1946,18 +1921,6 @@
     background: rgb(0 0 0 / 16%);
     border-color: rgb(255 255 255 / 16%);
   }
-
-  & [data-fork-composer-usage-drawer] {
-    --contrast-border: rgb(255 255 255 / 12%);
-    --contrast-foreground: #ffffff;
-    --contrast-muted-foreground: rgb(255 255 255 / 85%);
-    --muted: rgb(255 255 255 / 16%);
-    --accent: rgb(255 255 255 / 10%);
-    --contrast-accent-foreground: #ffffff;
-    box-shadow:
-      inset 1px 1px 0 rgb(255 255 255 / 16%),
-      inset -1px 0 0 rgb(255 255 255 / 16%);
-  }
 }
 
 /* On opaque stages (macOS Liquid Glass and web), real backdrop-filter blurs
@@ -1969,7 +1932,6 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-    [data-fork-composer-usage-drawer],
     [data-fork-draft-launchpad-card]
   ) {
   background: var(--fork-composer-vessel-bg);
@@ -2006,12 +1968,7 @@
   --fork-composer-border: rgb(255 255 255 / 10%);
   --fork-composer-border-focus: rgb(255 255 255 / 18%);
 
-  &
-    :is(
-      [data-fork-composer-vessel],
-      [data-fork-draft-launchpad-card],
-      [data-fork-composer-usage-drawer]
-    ) {
+  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
     background: transparent;
     border-color: transparent;
     box-shadow: none;
