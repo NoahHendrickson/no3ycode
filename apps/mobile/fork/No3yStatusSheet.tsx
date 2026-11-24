@@ -1,7 +1,7 @@
 /**
- * The half-height sheet the no3y thread status pill opens (`.fork/customizations.yaml#no3y-mobile-redesign`):
- * everything the pill counts, grouped by kind, with the upstream control's actions, read live
- * from no3yStatusSheetStore.ts.
+ * The Activity sheet the no3y thread status pill opens (`.fork/customizations.yaml#no3y-mobile-redesign`):
+ * everything the pill counts, one glass card per kind, with the upstream control's actions, read
+ * live from no3yStatusSheetStore.ts. It opens at half height and pulls up to full.
  */
 import ArrowRight01Icon from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import ComputerTerminal01Icon from "@hugeicons/core-free-icons/ComputerTerminal01Icon";
@@ -11,11 +11,9 @@ import PuzzleIcon from "@hugeicons/core-free-icons/PuzzleIcon";
 import Radar01Icon from "@hugeicons/core-free-icons/Radar01Icon";
 import Robot01Icon from "@hugeicons/core-free-icons/Robot01Icon";
 import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon";
-import { StackActions, useNavigation, type StaticScreenProps } from "@react-navigation/native";
-import type { ScopedThreadRef } from "@t3tools/contracts";
-import * as Haptics from "expo-haptics";
-import { Children, isValidElement, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useNavigation, type StaticScreenProps } from "@react-navigation/native";
+import type { ReactNode } from "react";
+import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -23,20 +21,25 @@ import { ScreenContent } from "../src/components/ui/ScreenContent";
 import { SheetHeader } from "../src/components/ui/SheetHeader";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import type { FloatingStatusAction } from "../src/features/threads/floating-working-status";
-import { useOpenThreadInspector } from "../src/features/threads/thread-inspector-navigation";
-import { useThreadTurnSubagents } from "../src/features/threads/ThreadAgentsSheet";
-import type { SubagentThreadTarget } from "../src/features/threads/threadAgentsPresentation";
-import { useOpenLinkedThreadRead } from "../src/features/threads/useOpenLinkedThread";
+import { useOpenSubagentThread } from "../src/features/threads/ThreadAgentsSheet";
+import { resolveSubagentRowPresentation } from "../src/features/threads/threadAgentsPresentation";
 import { useVisibleSecondClock } from "../src/features/threads/use-visible-second-clock";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import type { No3yPillStatus } from "./no3yPillStatus";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
-import { No3yAgentsSheetRow } from "./No3yAgentsSheetRow";
+import { No3yAgentsSheetRow, NO3Y_TRAILING_SLOT } from "./No3yAgentsSheetRow";
+import { no3yCardDivider, No3yGlassCard } from "./No3yGlassCard";
 import { no3ySheetBackground } from "./no3ySheet";
 import { No3yStatusGlyph } from "./No3yStatusPill";
 import { statusAccessibilityLabel, No3yStatusMark } from "./No3yStatusMark";
-import { no3yElapsedLabel } from "./no3yStatusSegments";
-import { useNo3yStatusSheetModel, type No3yStatusOpener } from "./no3yStatusSheetStore";
+import { no3yElapsedLabel, no3ySubagentMarkKind } from "./no3yStatusSegments";
+import {
+  useNo3yStatusSheetModel,
+  type No3yStatusOpener,
+  type No3yStatusSheetModel,
+} from "./no3yStatusSheetStore";
+
+type Leave = (open: () => void) => () => void;
 
 export function No3yStatusSheet({ route }: StaticScreenProps<{ readonly threadKey: string }>) {
   const navigation = useNavigation();
@@ -44,169 +47,31 @@ export function No3yStatusSheet({ route }: StaticScreenProps<{ readonly threadKe
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
   const model = useNo3yStatusSheetModel(route.params.threadKey);
-  const turnSubagents = useThreadTurnSubagents(model?.agents ?? null)?.subagents ?? [];
-  const openSubagent = useNo3yOpenSubagent(model?.agents ?? null);
   const close = () => navigation.goBack();
   // Navigating rows leave the sheet first so their screen opens over the thread.
-  const leaveThen = (open: () => void) => () => {
+  const leaveThen: Leave = (open) => () => {
     close();
     open();
   };
-  const sections: ReactNode[] = [];
-  if (model !== null) {
-    if (model.childInputs.length > 0) {
-      sections.push(
-        <Section key="needs" palette={palette} title="Needs you">
-          {model.childInputs.map((child) => (
-            <Row
-              key={child.id}
+  const sections =
+    model === null
+      ? []
+      : [
+          needsYouSection(model, palette, leaveThen),
+          model.subagents === null ? (
+            backgroundSubagentsSection(model, palette, leaveThen)
+          ) : (
+            <SubagentsSection
+              key="subagents"
+              subagents={model.subagents}
               palette={palette}
-              leading={<No3yStatusMark kind={child.needs} palette={palette} />}
-              title={child.title}
-              meta={statusAccessibilityLabel(child.needs)}
-              onPress={leaveThen(child.onOpen)}
-              chevron
+              leaveThen={leaveThen}
             />
-          ))}
-        </Section>,
-      );
-    }
-    const background = model.background;
-    const backgroundSubagents =
-      turnSubagents.length === 0
-        ? (background?.items.filter((item) => item.kind === "subagent") ?? [])
-        : [];
-    if (turnSubagents.length > 0 && model.agents !== null) {
-      const { environmentId } = model.agents;
-      sections.push(
-        <Section key="subagents" palette={palette} title="Subagents" count={turnSubagents.length}>
-          {turnSubagents.map((subagent) => (
-            <No3yAgentsSheetRow
-              key={subagent.id}
-              environmentId={environmentId}
-              subagent={subagent}
-              onOpen={openSubagent}
-              joined
-            />
-          ))}
-        </Section>,
-      );
-    } else if (background !== null && backgroundSubagents.length > 0) {
-      sections.push(
-        <Section
-          key="subagents"
-          palette={palette}
-          title="Subagents"
-          count={backgroundSubagents.length}
-        >
-          {backgroundSubagents.map((item) => (
-            <Row
-              key={item.taskId}
-              palette={palette}
-              leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
-              title={item.label}
-              trailing={<No3yStatusMark kind="working" palette={palette} />}
-              onPress={leaveThen(background.onOpenDetails)}
-              chevron
-            />
-          ))}
-        </Section>,
-      );
-    }
-    const backgroundItems = background?.items.filter((item) => item.kind !== "subagent") ?? [];
-    if (background !== null && backgroundItems.length > 0) {
-      sections.push(
-        <Section
-          key="background"
-          palette={palette}
-          title="Background"
-          count={backgroundItems.length}
-          action={
-            background.stop === null
-              ? undefined
-              : {
-                  ...background.stop,
-                  // Disabled carries the upstream "Stopping…" while the stop runs.
-                  label:
-                    backgroundItems.length === 1 || background.stop.disabled
-                      ? background.stop.label
-                      : "Stop all",
-                  destructive: true,
-                }
-          }
-        >
-          {backgroundItems.map((item) => (
-            <Row
-              key={item.taskId}
-              palette={palette}
-              leading={
-                <HugeIcon
-                  icon={item.kind === "monitor" ? Radar01Icon : ComputerTerminal01Icon}
-                  size={18}
-                  color={palette.foreground}
-                />
-              }
-              title={item.label}
-              titleLines={0}
-              meta={item.kind === "monitor" ? "Monitor" : "Process"}
-            />
-          ))}
-        </Section>,
-      );
-    }
-    const status = model.status;
-    if (status !== null && status.kind !== "background" && status.kind !== "child-input") {
-      sections.push(
-        <Section key="status" palette={palette} title="Status">
-          <StatusRow palette={palette} status={status} />
-        </Section>,
-      );
-    }
-    const others: ReactNode[] = [];
-    if (model.extension !== null) {
-      others.push(
-        <Row
-          key="extension"
-          palette={palette}
-          leading={<HugeIcon icon={PuzzleIcon} size={18} color={palette.foreground} />}
-          title={model.extension.label}
-          titleLines={3}
-          onPress={model.extension.onPress}
-          chevron
-        />,
-      );
-    }
-    const openers: ReadonlyArray<readonly [string, No3yStatusOpener | null, HugeIconData, string]> =
-      [
-        ["queue", model.queue, LeftToRightListNumberIcon, "queued"],
-        ["devices", model.devicePreview, SmartPhone01Icon, "device preview"],
-        ["browser", model.browserPreview, Globe02Icon, "browser tab"],
-      ];
-    for (const [key, opener, icon, noun] of openers) {
-      if (opener === null) continue;
-      others.push(
-        <Row
-          key={key}
-          palette={palette}
-          leading={<HugeIcon icon={icon} size={18} color={palette.foreground} />}
-          title={
-            key === "queue"
-              ? `${opener.count} queued`
-              : `${opener.count} ${noun}${opener.count === 1 ? "" : "s"}`
-          }
-          onPress={leaveThen(opener.onPress)}
-          chevron
-        />,
-      );
-    }
-    if (others.length > 0) {
-      sections.push(
-        <Section key="others" palette={palette} title="Also open">
-          {others}
-        </Section>,
-      );
-    }
-  }
+          ),
+          backgroundSection(model, palette, leaveThen),
+          statusSection(model, palette),
+          alsoOpenSection(model, palette, leaveThen),
+        ].filter((section) => section !== null);
   return (
     <View
       collapsable={false}
@@ -237,53 +102,207 @@ export function No3yStatusSheet({ route }: StaticScreenProps<{ readonly threadKe
   );
 }
 
-/** The Agents sheet's way into a subagent's thread: linked read, the inspector, or the thread. */
-function useNo3yOpenSubagent(parent: ScopedThreadRef | null) {
-  const navigation = useNavigation();
-  const openInspector = useOpenThreadInspector();
-  const openLinkedRead = useOpenLinkedThreadRead();
-  return (child: SubagentThreadTarget, title: string | null) => {
-    if (parent === null) return;
-    void Haptics.selectionAsync();
-    if (child.linked !== undefined) {
-      openLinkedRead(child, child.linked, title, { source: parent, replace: true });
-      return;
-    }
-    if (
-      openInspector(parent, {
-        type: "thread",
-        environmentId: child.environmentId,
-        threadId: child.threadId,
-      })
-    )
-      return;
-    navigation.dispatch(
-      StackActions.replace("Thread", {
-        environmentId: child.environmentId,
-        threadId: child.threadId,
-      }),
-    );
-  };
+function needsYouSection(model: No3yStatusSheetModel, palette: FlatGlassPalette, leaveThen: Leave) {
+  if (model.childInputs.length === 0) return null;
+  return (
+    <Section key="needs" palette={palette} title="Needs you">
+      {model.childInputs.map((child, index) => (
+        <Row
+          key={child.id}
+          palette={palette}
+          divider={index > 0}
+          leading={<No3yStatusMark kind={child.needs} palette={palette} />}
+          title={child.title}
+          meta={statusAccessibilityLabel(child.needs)}
+          onPress={leaveThen(child.onOpen)}
+          chevron
+        />
+      ))}
+    </Section>
+  );
 }
 
-type HeaderAction = Omit<FloatingStatusAction, "disabled"> & {
-  readonly disabled?: boolean;
-  readonly destructive?: boolean;
-};
+/** The turn's subagents as the Agents sheet's rows; a workflow opens that sheet's grouped view. */
+function SubagentsSection(props: {
+  readonly subagents: NonNullable<No3yStatusSheetModel["subagents"]>;
+  readonly palette: FlatGlassPalette;
+  readonly leaveThen: Leave;
+}) {
+  const { subagents, palette } = props;
+  const openSubagent = useOpenSubagentThread(subagents.thread);
+  return (
+    <Section palette={palette} title="Subagents" count={subagents.list.length}>
+      {subagents.list.map((subagent, index) =>
+        subagent.workflow === undefined ? (
+          <No3yAgentsSheetRow
+            key={subagent.id}
+            environmentId={subagents.thread.environmentId}
+            subagent={subagent}
+            onOpen={openSubagent}
+            divider={index > 0}
+          />
+        ) : (
+          <Row
+            key={subagent.id}
+            palette={palette}
+            divider={index > 0}
+            leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
+            title={resolveSubagentRowPresentation(subagent).title}
+            trailing={
+              <No3yStatusMark kind={no3ySubagentMarkKind(subagent.status)} palette={palette} />
+            }
+            onPress={props.leaveThen(subagents.onOpenAll)}
+            chevron
+          />
+        ),
+      )}
+    </Section>
+  );
+}
+
+/** Subagents the pill knows only as background work, when it has no turn list for them. */
+function backgroundSubagentsSection(
+  model: No3yStatusSheetModel,
+  palette: FlatGlassPalette,
+  leaveThen: Leave,
+) {
+  const background = model.background;
+  const items = background?.items.filter((item) => item.kind === "subagent") ?? [];
+  if (background === null || items.length === 0) return null;
+  const onlySubagents = items.length === background.items.length;
+  return (
+    <Section
+      key="subagents"
+      palette={palette}
+      title="Subagents"
+      count={items.length}
+      stop={onlySubagents ? background.stop : null}
+    >
+      {items.map((item, index) => (
+        <Row
+          key={item.taskId}
+          palette={palette}
+          divider={index > 0}
+          leading={<HugeIcon icon={Robot01Icon} size={18} color={palette.foreground} />}
+          title={item.label}
+          trailing={<No3yStatusMark kind="working" palette={palette} />}
+          onPress={leaveThen(background.onOpenDetails)}
+          chevron
+        />
+      ))}
+    </Section>
+  );
+}
+
+function backgroundSection(
+  model: No3yStatusSheetModel,
+  palette: FlatGlassPalette,
+  leaveThen: Leave,
+) {
+  const background = model.background;
+  const items = background?.items.filter((item) => item.kind !== "subagent") ?? [];
+  if (background === null || items.length === 0) return null;
+  return (
+    <Section
+      key="background"
+      palette={palette}
+      title="Background"
+      count={items.length}
+      stop={background.stop}
+    >
+      {items.map((item, index) => (
+        <Row
+          key={item.taskId}
+          palette={palette}
+          divider={index > 0}
+          leading={
+            <HugeIcon
+              icon={item.kind === "monitor" ? Radar01Icon : ComputerTerminal01Icon}
+              size={18}
+              color={palette.foreground}
+            />
+          }
+          title={item.label}
+          titleLines={0}
+          meta={item.kind === "monitor" ? "Monitor" : "Process"}
+          onPress={leaveThen(background.onOpenDetails)}
+          chevron
+        />
+      ))}
+    </Section>
+  );
+}
+
+function statusSection(model: No3yStatusSheetModel, palette: FlatGlassPalette) {
+  const { status } = model;
+  if (status === null || status.kind === "background" || status.kind === "child-input") {
+    return null;
+  }
+  return (
+    <Section key="status" palette={palette} title="Status">
+      <StatusRow palette={palette} status={status} />
+    </Section>
+  );
+}
+
+const OPENERS = [
+  ["queue", LeftToRightListNumberIcon, "queued"],
+  ["devicePreview", SmartPhone01Icon, "device preview"],
+  ["browserPreview", Globe02Icon, "browser tab"],
+] as const satisfies ReadonlyArray<readonly [keyof No3yStatusSheetModel, HugeIconData, string]>;
+
+function alsoOpenSection(model: No3yStatusSheetModel, palette: FlatGlassPalette, leaveThen: Leave) {
+  const openers = OPENERS.flatMap(([key, icon, noun]) => {
+    const opener: No3yStatusOpener | null = model[key];
+    return opener === null ? [] : [{ key, icon, noun, opener }];
+  });
+  if (model.extension === null && openers.length === 0) return null;
+  const extension = model.extension;
+  return (
+    <Section key="others" palette={palette} title="Also open">
+      {extension === null ? null : (
+        <Row
+          palette={palette}
+          leading={<HugeIcon icon={PuzzleIcon} size={18} color={palette.foreground} />}
+          title={extension.label}
+          titleLines={3}
+          onPress={extension.onPress}
+          chevron
+        />
+      )}
+      {openers.map(({ key, icon, noun, opener }, index) => (
+        <Row
+          key={key}
+          palette={palette}
+          divider={extension !== null || index > 0}
+          leading={<HugeIcon icon={icon} size={18} color={palette.foreground} />}
+          title={
+            key === "queue"
+              ? `${opener.count} queued`
+              : `${opener.count} ${noun}${opener.count === 1 ? "" : "s"}`
+          }
+          onPress={leaveThen(opener.onPress)}
+          chevron
+        />
+      ))}
+    </Section>
+  );
+}
 
 function Section(props: {
   readonly palette: FlatGlassPalette;
   readonly title: string;
   readonly count?: number;
-  readonly action?: HeaderAction;
+  /** Stops the background work the section lists. */
+  readonly stop?: FloatingStatusAction | null;
   readonly children: ReactNode;
 }) {
-  const { palette, action } = props;
+  const { palette } = props;
   return (
     <View>
       <View
         style={{
-          minHeight: PILL_HEIGHT,
+          minHeight: NO3Y_TRAILING_SLOT,
           flexDirection: "row",
           alignItems: "center",
           marginLeft: 4,
@@ -302,47 +321,18 @@ function Section(props: {
             </Text>
           )}
         </Text>
-        {action ? (
-          <ActionPill palette={palette} action={action} stopGlyph={action.destructive} />
-        ) : null}
+        {props.stop ? <ActionPill palette={palette} action={props.stop} destructive /> : null}
       </View>
-      <View
-        style={{
-          marginTop: 8,
-          borderRadius: 20,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: palette.controlBorder,
-          backgroundColor: palette.controlSurface,
-          overflow: "hidden",
-        }}
-      >
-        {Children.toArray(props.children).map((child, index) =>
-          index === 0 ? (
-            child
-          ) : (
-            <View
-              key={isValidElement(child) ? child.key : index}
-              style={{
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderColor: palette.controlBorder,
-              }}
-            >
-              {child}
-            </View>
-          ),
-        )}
-      </View>
+      <No3yGlassCard palette={palette}>{props.children}</No3yGlassCard>
     </View>
   );
 }
 
-const PILL_HEIGHT = 28;
-
 /** The sheet's buttons: a quiet pill like the subagent rows' stop button, with its glyph to stop. */
 function ActionPill(props: {
   readonly palette: FlatGlassPalette;
-  readonly action: HeaderAction;
-  readonly stopGlyph?: boolean;
+  readonly action: FloatingStatusAction;
+  readonly destructive?: boolean;
 }) {
   const { palette, action } = props;
   return (
@@ -354,18 +344,18 @@ function ActionPill(props: {
       hitSlop={8}
       onPress={action.onPress}
       style={({ pressed }) => ({
-        minHeight: PILL_HEIGHT,
-        borderRadius: PILL_HEIGHT / 2,
+        minHeight: NO3Y_TRAILING_SLOT,
+        borderRadius: NO3Y_TRAILING_SLOT / 2,
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        paddingLeft: props.stopGlyph ? 10 : 12,
+        paddingLeft: props.destructive ? 10 : 12,
         paddingRight: 12,
         backgroundColor: pressed ? palette.rowSelected : palette.circleFill,
         opacity: action.disabled ? 0.45 : 1,
       })}
     >
-      {props.stopGlyph ? (
+      {props.destructive ? (
         <View
           style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: palette.foreground }}
         />
@@ -387,6 +377,7 @@ function Row(props: {
   readonly leading?: ReactNode;
   readonly trailing?: ReactNode;
   readonly chevron?: boolean;
+  readonly divider?: boolean;
   readonly onPress?: () => void;
   readonly action?: FloatingStatusAction | null;
   readonly destructive?: boolean;
@@ -423,38 +414,52 @@ function Row(props: {
       </View>
       {props.trailing}
       {props.chevron ? (
-        <View style={{ width: PILL_HEIGHT, alignItems: "center" }}>
+        <View style={{ width: NO3Y_TRAILING_SLOT, alignItems: "center" }}>
           <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
         </View>
       ) : null}
     </>
   );
-  const rowStyle = {
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingLeft: 12,
-    paddingRight: props.chevron || action ? 8 : 12,
-    paddingVertical: 10,
-  } as const;
-  return props.onPress ? (
-    <Pressable
-      accessibilityRole="button"
-      onPress={props.onPress}
-      style={({ pressed }) => [
-        rowStyle,
-        { backgroundColor: pressed ? palette.rowSelected : "transparent" },
-      ]}
-    >
-      {body}
-    </Pressable>
+  const rowStyle = [
+    {
+      minHeight: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingLeft: 12,
+      paddingRight: props.chevron || action ? 8 : 12,
+      paddingVertical: 10,
+    } as const,
+    no3yCardDivider(palette, props.divider),
+  ];
+  if (props.onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={props.onPress}
+        style={({ pressed }) => [
+          rowStyle,
+          { backgroundColor: pressed ? palette.rowSelected : "transparent" },
+        ]}
+      >
+        {body}
+      </Pressable>
+    );
+  }
+  // The pill sits beside the accessible body, not inside it, so VoiceOver reaches both.
+  return action ? (
+    <View style={rowStyle}>
+      <View
+        accessible
+        style={{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 10 }}
+      >
+        {body}
+      </View>
+      <ActionPill palette={palette} action={action} destructive={props.destructive} />
+    </View>
   ) : (
     <View accessible style={rowStyle}>
       {body}
-      {action ? (
-        <ActionPill palette={palette} action={action} stopGlyph={props.destructive} />
-      ) : null}
     </View>
   );
 }

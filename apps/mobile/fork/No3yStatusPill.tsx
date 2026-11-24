@@ -183,7 +183,10 @@ function No3yStatusPill(props: UpstreamProps & No3yPillExtras) {
                 threadId: props.threadId,
               }),
           },
-    agents: turnSubagents.length > 0 ? props.detailRef : null,
+    subagents:
+      turnSubagents.length > 0 && props.detailRef !== null
+        ? { thread: props.detailRef, list: turnSubagents, onOpenAll: props.onOpenAgents }
+        : null,
     childInputs: childInputs.map((child) => ({
       id: child.id,
       title: child.title,

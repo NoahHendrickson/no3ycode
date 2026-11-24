@@ -4,7 +4,7 @@
  * take functions as params; the sheet reads it by thread key.
  */
 import type { PendingBackgroundWorkItem } from "@t3tools/client-runtime/state/thread-execution";
-import type { ScopedThreadRef } from "@t3tools/contracts";
+import type { OrchestrationV2Subagent, ScopedThreadRef } from "@t3tools/contracts";
 import { useSyncExternalStore } from "react";
 
 import type { FloatingStatusAction } from "../src/features/threads/floating-working-status";
@@ -24,8 +24,12 @@ export interface No3yStatusSheetModel {
     readonly stop: FloatingStatusAction | null;
     readonly onOpenDetails: () => void;
   } | null;
-  /** The thread whose turn subagents the sheet lists, read live from the Agents sheet's atom. */
-  readonly agents: ScopedThreadRef | null;
+  readonly subagents: {
+    readonly thread: ScopedThreadRef;
+    readonly list: ReadonlyArray<OrchestrationV2Subagent>;
+    /** The Agents sheet, which groups a workflow's members under it. */
+    readonly onOpenAll: () => void;
+  } | null;
   readonly childInputs: ReadonlyArray<{
     readonly id: string;
     readonly title: string;

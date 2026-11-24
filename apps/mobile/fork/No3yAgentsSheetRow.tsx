@@ -13,7 +13,7 @@ import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execu
 import type { EnvironmentId, OrchestrationV2Subagent } from "@t3tools/contracts";
 import { T, useGT, Var } from "gt-react-native";
 import { useState, type ReactElement } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import * as Dialog from "../src/components/ui/Dialog";
@@ -33,6 +33,7 @@ import { threadEnvironment } from "../src/state/threads";
 import { useAtomCommand } from "../src/state/use-atom-command";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { no3yCardDivider, No3yGlassCard } from "./No3yGlassCard";
 import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { Elapsed, No3ySubagentTile } from "./No3ySubagentCards";
 import { no3ySubagentSpec } from "./no3ySubagentCard";
@@ -42,20 +43,24 @@ interface RowProps {
   readonly environmentId: EnvironmentId;
   readonly subagent: OrchestrationV2Subagent;
   readonly onOpen: (child: SubagentThreadTarget, title: string | null) => void;
-  /** A row of a shared card (the Activity sheet), not a card of its own. */
-  readonly joined?: boolean;
+  /** Draws the hairline above this row when it follows another row in the card. */
+  readonly divider?: boolean;
 }
 
 /** Draws the no3y card in place of the upstream row it wraps while the redesign is on. */
 export function No3yAgentsSheetRowSwap(props: RowProps & { readonly children: ReactElement }) {
   const enabled = useNo3yBottomNavEnabled();
+  const { themeAppearance } = useAppearancePreferences();
+  const palette = flatGlassPalette(themeAppearance);
   if (!enabled) return props.children;
   return (
-    <No3yAgentsSheetRow
-      environmentId={props.environmentId}
-      subagent={props.subagent}
-      onOpen={props.onOpen}
-    />
+    <No3yGlassCard palette={palette}>
+      <No3yAgentsSheetRow
+        environmentId={props.environmentId}
+        subagent={props.subagent}
+        onOpen={props.onOpen}
+      />
+    </No3yGlassCard>
   );
 }
 
@@ -108,21 +113,7 @@ export function No3yAgentsSheetRow(props: RowProps) {
   // The stop button sits beside the link, not inside it, so VoiceOver reaches both. Elapsed time
   // and the stop button or arrow share the title's line; the trailing slot is one width either way.
   return (
-    <View
-      style={[
-        { flexDirection: "row" },
-        props.joined
-          ? null
-          : {
-              marginTop: 8,
-              borderRadius: 20,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: palette.controlBorder,
-              backgroundColor: palette.controlSurface,
-              overflow: "hidden",
-            },
-      ]}
-    >
+    <View style={[{ flexDirection: "row" }, no3yCardDivider(palette, props.divider)]}>
       <Pressable
         accessibilityRole={target === null ? undefined : "link"}
         accessibilityLabel={[
@@ -156,7 +147,7 @@ export function No3yAgentsSheetRow(props: RowProps) {
           gap: 10,
           paddingLeft: 12,
           paddingRight: stop === null ? 8 : 10,
-          paddingVertical: 12,
+          paddingVertical: ROW_PADDING_Y,
           backgroundColor: pressed ? palette.rowSelected : "transparent",
         })}
       >
@@ -187,7 +178,7 @@ export function No3yAgentsSheetRow(props: RowProps) {
             </Text>
             {subagent.startedAt ? <Elapsed agents={[subagent]} palette={palette} /> : null}
             {stop === null ? (
-              <View style={{ width: STOP_SIZE, alignItems: "center" }}>
+              <View style={{ width: NO3Y_TRAILING_SLOT, alignItems: "center" }}>
                 {target !== null ? (
                   <HugeIcon icon={ArrowRight01Icon} size={14} color={palette.faintInk} />
                 ) : null}
@@ -236,7 +227,12 @@ export function No3yAgentsSheetRow(props: RowProps) {
         </View>
       </Pressable>
       {stop !== null ? (
-        <View style={{ paddingTop: 12 + (TITLE_LINE - STOP_SIZE) / 2, paddingRight: 8 }}>
+        <View
+          style={{
+            paddingTop: ROW_PADDING_Y + (TITLE_LINE - NO3Y_TRAILING_SLOT) / 2,
+            paddingRight: 8,
+          }}
+        >
           <StopGlyphButton palette={palette} {...stop} />
         </View>
       ) : null}
@@ -244,8 +240,10 @@ export function No3yAgentsSheetRow(props: RowProps) {
   );
 }
 
+const ROW_PADDING_Y = 12;
 const TITLE_LINE = 20;
-const STOP_SIZE = 28;
+/** The stop button's size, and the arrow's slot, so elapsed times line up down a card. */
+export const NO3Y_TRAILING_SLOT = 28;
 
 /**
  * Upstream's SubagentStopButton behavior for a single agent, for a quiet round button in place of
@@ -306,9 +304,9 @@ function StopGlyphButton(props: StopGlyphButtonProps) {
       hitSlop={8}
       onPress={props.onPress}
       style={({ pressed }) => ({
-        width: STOP_SIZE,
-        height: STOP_SIZE,
-        borderRadius: STOP_SIZE / 2,
+        width: NO3Y_TRAILING_SLOT,
+        height: NO3Y_TRAILING_SLOT,
+        borderRadius: NO3Y_TRAILING_SLOT / 2,
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: pressed ? palette.rowSelected : palette.circleFill,
