@@ -2,9 +2,9 @@
 /**
  * Fork guard — see `.fork/customizations.yaml#no3y-media-attachment-no-chip`.
  *
- * Mobile media shows only as its strip thumbnail. Every reference-inserting
- * append in the attachment actions is counted, so a new upstream path that
- * chips media again turns this red.
+ * Mobile media shows only as its strip thumbnail. The draft store's behaviour is
+ * tested in apps/mobile/src/state/use-composer-drafts.test.ts; this pins the
+ * fenced call sites an upstream sync could silently revert.
  */
 
 import * as NodeFS from "node:fs";
@@ -14,22 +14,22 @@ import { describe, expect, it } from "vite-plus/test";
 const read = (path: string) =>
   NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(path, import.meta.url)), "utf8");
 
-const actions = read("../../../mobile/src/state/use-composer-attachment-actions.ts");
+const drafts = read("../../../mobile/src/state/use-composer-drafts.ts");
 const composer = read("../../../mobile/src/features/threads/ThreadComposer.tsx");
 const delivery = read("../../../mobile/src/state/threadOutboxDelivery.ts");
+const pendingTitles = [
+  read("../../../mobile/src/state/pending-thread-creation.ts"),
+  read("../../../mobile/src/state/pending-new-tasks-model.ts"),
+];
 
 describe("no3y-media-attachment-no-chip", () => {
-  it("appends strip media without an inline chip", () => {
-    expect(actions).toContain(
-      "const shown = new Set(composerStripAttachments(attachments, () => undefined));",
+  it("references only attachments the strip does not show", () => {
+    expect(drafts).toMatch(
+      /const records = accepted\s*\.filter\(\s*\(attachment\) =>\s*attachment\.type !== "image" &&\s*imageMimeType\(attachment\) === null &&\s*videoMimeType\(attachment\) === null,\s*\)\s*\.map\(\(attachment\) => attachmentContextRecord\(attachment\)\);/u,
     );
-    expect(actions).toContain("const rejectedMedia = appendComposerDraftAttachments(key, media);");
-    expect(actions).toMatch(
-      /appendComposerDraftAttachments\(key, chipped, \{\s*appendReference: true,\s*insertion,\s*\}\)/u,
+    expect(drafts).toContain(
+      "? draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion)",
     );
-    expect(actions.match(/appendReference: true/gu)).toHaveLength(1);
-    // A selection the media replaces is still cleared, as upstream's chip insertion did.
-    expect(actions).toContain('insertComposerDraftText(key, "", insertion);');
   });
 
   // With no chip in the text, a media-only send would otherwise reach the agent as "".
@@ -40,6 +40,14 @@ describe("no3y-media-attachment-no-chip", () => {
     expect(delivery).toMatch(
       /serializeComposerMessageForServer\(\s*\/\* fork:begin[^\n]*\*\/\s*restoreAttachmentOnlyBootstrapPrompt\(\s*queuedMessage\.text\.trim\(\),\s*prepared\.attachments\.length > 0,\s*\)/u,
     );
+  });
+
+  it("titles a pending media-only thread from its attachments", () => {
+    for (const source of pendingTitles) {
+      expect(source).toContain(
+        'deriveThreadTitleSeed({ text: "", attachments: message.attachments }, m)',
+      );
+    }
   });
 
   it("draws the thread composer's strip thumbnails at 88pt", () => {

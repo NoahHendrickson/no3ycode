@@ -835,15 +835,17 @@ describe("thread outbox recovery rollback", () => {
         saving.resolve();
         await resume.promise;
       });
+    /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+    // Media gets no chip, so a pasted document carries the reference recovery must keep.
     const attachment = {
       id: "late-paste",
-      type: "image" as const,
-      name: "pasted.png",
-      mimeType: "image/png",
+      type: "file" as const,
+      name: "pasted.txt",
+      mimeType: "text/plain",
       sizeBytes: 1,
-      dataUrl: "data:image/png;base64,AA==",
-      previewUri: "data:image/png;base64,AA==",
+      fileUri: "file:///pasted.txt",
     };
+    /* fork:end no3y-media-attachment-no-chip */
     try {
       const recovering = recoverFailedThreadDraft(message);
       await saving.promise;

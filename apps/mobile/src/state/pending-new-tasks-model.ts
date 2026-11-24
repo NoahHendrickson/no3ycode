@@ -3,6 +3,9 @@ import type { EnvironmentId, MessageId, ProjectId } from "@t3tools/contracts";
 
 import { msg } from "gt-react-native";
 import { m, type MessageResolver } from "../i18n/messages";
+/* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+import { deriveThreadTitleSeed } from "@t3tools/client-runtime/operations";
+/* fork:end no3y-media-attachment-no-chip */
 import { deriveThreadTitleFromPrompt } from "../lib/projectThreadStartTurn";
 import {
   isQueuedThreadCreationSendable,
@@ -145,7 +148,12 @@ export function buildPendingNewTasks(
       projectTitle: message.creation.projectTitle,
       projectCwd: message.creation.projectCwd,
       branch: message.creation.branch,
-      title: deriveThreadTitleFromPrompt(message.text),
+      /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+      // Media-only messages carry no chip text, so title them from the attachments as the server will.
+      title: message.text.trim()
+        ? deriveThreadTitleFromPrompt(message.text)
+        : deriveThreadTitleSeed({ text: "", attachments: message.attachments }, m),
+      /* fork:end no3y-media-attachment-no-chip */
       createdAt: message.createdAt,
       message,
       creation: message.creation,

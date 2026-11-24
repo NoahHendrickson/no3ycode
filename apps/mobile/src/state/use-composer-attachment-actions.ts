@@ -8,9 +8,6 @@ import { clampFileAttachmentUploadBytes } from "@t3tools/client-runtime/state/at
 import { nextPastedTextFileName } from "@t3tools/client-runtime/text-paste";
 import type { ComposerTextPaste } from "../components/ComposerEditor";
 import {
-  /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
-  composerStripAttachments,
-  /* fork:end no3y-media-attachment-no-chip */
   convertPastedImagesToAttachments,
   createPastedTextComposerAttachment,
   pickComposerFiles,
@@ -23,9 +20,6 @@ import {
   captureComposerDraftInsertion,
   countComposerDraftAttachmentsAfterSelection,
   getComposerDraftSnapshot,
-  /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
-  insertComposerDraftText,
-  /* fork:end no3y-media-attachment-no-chip */
   type ComposerDraftInsertion,
 } from "./use-composer-drafts";
 import { startComposerDraftOperation } from "./composerDraftOperations";
@@ -51,28 +45,7 @@ export function useComposerAttachmentActions(props: {
       );
       return 0;
     }
-    /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
-    // Photos and videos already show as strip thumbnails, so only the rest get a name chip.
-    const shown = new Set(composerStripAttachments(attachments, () => undefined));
-    const media = attachments.filter((attachment) => shown.has(attachment));
-    const chipped = attachments.filter((attachment) => !shown.has(attachment));
-    // Chipped files go first: replacing the selection can free slots for the media.
-    const rejected = appendComposerDraftAttachments(key, chipped, {
-      appendReference: true,
-      insertion,
-    });
-    const rejectedMedia = appendComposerDraftAttachments(key, media);
-    // Media pasted or picked over a selection clears it when no chip took its place.
-    const draft = getComposerDraftSnapshot(key);
-    if (
-      insertion.start !== insertion.end &&
-      draft.text === insertion.text &&
-      media.some((attachment) => draft.attachments.includes(attachment))
-    ) {
-      insertComposerDraftText(key, "", insertion);
-    }
-    return rejected + rejectedMedia;
-    /* fork:end no3y-media-attachment-no-chip */
+    return appendComposerDraftAttachments(key, attachments, { appendReference: true, insertion });
   };
   // A picker may finish after its draft was discarded or the composer moved off it.
   const withDraftOperation = async <T>(key: string, work: (signal: AbortSignal) => Promise<T>) => {

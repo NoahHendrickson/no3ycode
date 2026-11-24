@@ -424,6 +424,25 @@ function draftWithInsertedContext(
   return withReferencedContextFiles(draft, text, context);
 }
 
+/* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+// Media picked over a selection replaces it, as a chip would, but with no text of its own.
+function draftWithInsertionSelectionRemoved(
+  draftKey: string,
+  draft: ComposerDraft,
+  target: ComposerDraftInsertion,
+): ComposerDraft {
+  const { start, end } = contextInsertionRange(draftKey, draft, target);
+  if (start === end) return draft;
+  const text = draft.text.slice(0, start) + draft.text.slice(end);
+  rememberComposerDraftSelection(
+    draftKey,
+    text,
+    caretAfterInsertion(draftKey, draft.text, { start, end }, 0),
+  );
+  return withReferencedContextFiles(draft, text, referencedComposerContext(text, draft.context));
+}
+/* fork:end no3y-media-attachment-no-chip */
+
 export class ComposerDraftPersistenceError extends Schema.TaggedError<ComposerDraftPersistenceError>()(
   "ComposerDraftPersistenceError",
   {
@@ -1491,17 +1510,32 @@ export function appendComposerDraftAttachments(
     }
     let draft = { ...existing, attachments: [...existing.attachments, ...accepted] };
     if (options?.appendReference) {
-      const records = accepted.map((attachment) => attachmentContextRecord(attachment));
-      const inserted = draftWithInsertedContext(
-        draftKey,
-        draft,
-        {
-          text: records.map(formatComposerContextReference).join(" "),
-          context: { version: 1, records },
-        },
-        options.insertion,
-        options.restore ? Infinity : COMPOSER_CONTEXT_MAX_RECORDS,
-      );
+      /* fork:begin no3y-media-attachment-no-chip — see .fork/customizations.yaml#no3y-media-attachment-no-chip */
+      // Photos and videos show as strip thumbnails, so only the rest get an inline reference.
+      const records = accepted
+        .filter(
+          (attachment) =>
+            attachment.type !== "image" &&
+            imageMimeType(attachment) === null &&
+            videoMimeType(attachment) === null,
+        )
+        .map((attachment) => attachmentContextRecord(attachment));
+      const inserted =
+        records.length > 0
+          ? draftWithInsertedContext(
+              draftKey,
+              draft,
+              {
+                text: records.map(formatComposerContextReference).join(" "),
+                context: { version: 1, records },
+              },
+              options.insertion,
+              options.restore ? Infinity : COMPOSER_CONTEXT_MAX_RECORDS,
+            )
+          : options.insertion
+            ? draftWithInsertionSelectionRemoved(draftKey, draft, options.insertion)
+            : draft;
+      /* fork:end no3y-media-attachment-no-chip */
       if (!inserted) {
         rejected = attachments;
         return current;
