@@ -14,7 +14,7 @@ import {
 } from "@t3tools/client-runtime/fork-bot-digest";
 import type { MessageId } from "@t3tools/contracts";
 import { type AsyncResult, Atom } from "effect/reactivity";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { appAtomRegistry } from "../src/state/atom-registry";
 import { environmentThreadDetails } from "../src/state/threads";
@@ -74,6 +74,11 @@ const pendingAnswersAtom = Atom.family((key: string) =>
   ),
 );
 
+const unheldAnswers = (botKey: string, conversation: No3yBotDigestConversation) => {
+  const held = new Set(conversation.quotes.map((quote) => quote.messageId));
+  return [...appAtomRegistry.get(pendingAnswersAtom(botKey))].filter(([id]) => !held.has(id));
+};
+
 /** Marks `ask` answered by `messageId` until the conversation holds it. */
 export function markNo3yBotDigestAnswer(
   botKey: string,
@@ -81,10 +86,10 @@ export function markNo3yBotDigestAnswer(
   ask: string,
   conversation: No3yBotDigestConversation,
 ) {
-  const atom = pendingAnswersAtom(botKey);
-  const held = new Set(conversation.quotes.map((quote) => quote.messageId));
-  const kept = [...appAtomRegistry.get(atom)].filter(([id]) => !held.has(id));
-  appAtomRegistry.set(atom, new Map([...kept, [messageId, ask]]));
+  appAtomRegistry.set(
+    pendingAnswersAtom(botKey),
+    new Map([...unheldAnswers(botKey, conversation), [messageId, ask]]),
+  );
 }
 
 /** Brings back the ask a failed send marked. */
@@ -122,6 +127,13 @@ export function useNo3yAnsweredBotDigestAsks(
   result: AsyncResult.AsyncResult<unknown, unknown>,
 ): ReadonlySet<string> {
   const pending = useAtomValue(pendingAnswersAtom(botKey));
+  // Retired once the conversation holds the message, so its text decides from then on, even after
+  // an edit drops the quote or the message pages out of the loaded window.
+  useEffect(() => {
+    const unheld = unheldAnswers(botKey, conversation);
+    if (unheld.length !== pending.size)
+      appAtomRegistry.set(pendingAnswersAtom(botKey), new Map(unheld));
+  }, [botKey, conversation, pending]);
   const readAt = result._tag === "Success" ? result.timestamp : null;
   const [stored, setStored] = useState<BotDigestRead>(
     () =>

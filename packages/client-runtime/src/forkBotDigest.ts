@@ -253,15 +253,15 @@ export function botDigestRevision(runs: ReadonlyArray<Pick<OrchestrationV2Run, "
   return `${runs.length}:${begun}:${settled}:${runs.at(-1)?.status ?? "none"}`;
 }
 
-/** An owner message that quotes asks, and whether the run that reads it has settled. */
+/** An owner message, the asks it quotes, and whether the run that reads it has settled. */
 export interface BotDigestQuote {
   readonly messageId: MessageId;
   readonly asks: ReadonlyArray<string>;
   readonly settled: boolean;
 }
 
-/** The conversation's owner messages that quote an ask. One with no run (an imported message)
-    is left out, so it can never hide an ask for good. */
+/** The conversation's owner messages, quoting or not, so one edited out of its quote still counts
+    as held. One with no run (an imported message) is left out, so it can never hide an ask for good. */
 export function botDigestQuotes(projection: {
   readonly messages: ReadonlyArray<
     Pick<OrchestrationV2ConversationMessage, "id" | "role" | "runId" | "text">
@@ -276,7 +276,6 @@ export function botDigestQuotes(projection: {
       .split(/\r?\n/)
       .filter((line) => line.startsWith("> "))
       .map((line) => line.slice(2).trim());
-    if (asks.length === 0) continue;
     const status = runs.get(message.runId);
     quotes.push({
       messageId: message.id,

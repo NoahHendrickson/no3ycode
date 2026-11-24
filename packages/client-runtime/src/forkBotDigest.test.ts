@@ -227,7 +227,7 @@ const user = (id: string, runId: string | null, text: string) => ({
 });
 
 describe("botDigestQuotes", () => {
-  it("reads the asks each owner message quotes, and whether its run has settled", () => {
+  it("reads the asks each owner message quotes, if any, and whether its run has settled", () => {
     expect(
       botDigestQuotes({
         runs: [run("r1", "completed"), run("r2", "running"), run("r3", "cancelled")],
@@ -245,6 +245,7 @@ describe("botDigestQuotes", () => {
       { messageId: "m1", asks: ["Ship it?"], settled: true },
       { messageId: "m3", asks: ["Merge #412?"], settled: false },
       { messageId: "m4", asks: ["Cancelled before it ran?"], settled: true },
+      { messageId: "m6", asks: [], settled: false },
     ]);
   });
 
@@ -311,5 +312,11 @@ describe("nextBotDigestRead", () => {
     expect(answeredBotDigestAsks([quote("m2", true)], read("a", 2, ["m2"]), pending)).toEqual(
       new Set(),
     );
+    // Edited while queued: the id stays, the quote goes, so the ask is no longer answered.
+    const edited = botDigestQuotes({
+      runs: [run("r1", "running"), run("r2", "queued")],
+      messages: [user("m2", "r2", "do something else first")],
+    });
+    expect(answeredBotDigestAsks(edited, state, pending)).toEqual(new Set());
   });
 });

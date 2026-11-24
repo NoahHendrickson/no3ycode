@@ -28,12 +28,7 @@ import { resolveFilesystemReadAccess } from "@t3tools/client-runtime/state/files
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinksCopy";
-import {
-  type EnvironmentId,
-  MessageId,
-  type ProjectReadFileResult,
-  type ScopedThreadRef,
-} from "@t3tools/contracts";
+import { MessageId, type ProjectReadFileResult, type ScopedThreadRef } from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
 import { useMessages } from "gt-react-native";
 import { type ReactNode, useEffect, useState } from "react";
@@ -47,7 +42,7 @@ import { useOpenThreadLink } from "../src/features/threads/useOpenThreadLink";
 import { useNowMinuteMs } from "../src/lib/clock";
 import { useUniwindTheme } from "../src/lib/useUniwindTheme";
 import { makeQueuedMessageMetadata } from "../src/lib/commandMetadata";
-import { useOpenPullRequest } from "../src/native/useOpenPullRequest";
+import { useNavigateToPullRequest } from "../src/native/useOpenPullRequest";
 import { useQuietThreadShell } from "../src/state/entities";
 import { useEnvironmentPresentation } from "../src/state/presentation";
 import { projectEnvironment } from "../src/state/projects";
@@ -283,7 +278,7 @@ function BotDigestFor(props: {
                   {ask.detail}
                 </Text>
               )}
-              <DigestLinks palette={palette} links={links} environmentId={bot.environmentId} />
+              <DigestLinks palette={palette} links={links} bot={bot} />
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingTop: 6 }}>
                 {item.answers.map((choice) => (
                   <DigestButton
@@ -535,11 +530,11 @@ function AskTile(props: {
 function DigestLinks(props: {
   readonly palette: FlatGlassPalette;
   readonly links: BotDigestLinks;
-  readonly environmentId: EnvironmentId;
+  readonly bot: EnvironmentThreadShell;
 }) {
-  const { palette, links } = props;
-  const openThread = useOpenThreadLink(props.environmentId);
-  const openPullRequest = useOpenPullRequest();
+  const { palette, links, bot } = props;
+  const openThread = useOpenThreadLink(bot.environmentId);
+  const navigateToPullRequest = useNavigateToPullRequest();
   const messages = useMessages();
   const nowMs = useNowMinuteMs();
   if (links.threads.length === 0 && links.pullRequests.length === 0) return null;
@@ -550,7 +545,7 @@ function DigestLinks(props: {
       {links.threads.map(({ link, label, shell }) =>
         shell === undefined ? (
           <Text key={`${link.environmentId}/${link.threadId}`} numberOfLines={1} style={chipText}>
-            {label || unknownThreadLinkLabel(link, props.environmentId, messages)}
+            {label || unknownThreadLinkLabel(link, bot.environmentId, messages)}
           </Text>
         ) : (
           <Pressable
@@ -585,7 +580,15 @@ function DigestLinks(props: {
               <Pressable
                 accessibilityRole="link"
                 accessibilityLabel={`Pull request ${pullRequest.number}`}
-                onPress={() => void openPullRequest(pullRequest.url)}
+                // Opened where its thread lives, which may be another environment; a bare link
+                // opens from the Petal's.
+                onPress={() => {
+                  const owner = pullRequest.thread ?? bot;
+                  void navigateToPullRequest(pullRequest.url, {
+                    environmentId: owner.environmentId,
+                    projectId: owner.projectId,
+                  });
+                }}
                 style={({ pressed }) => ({
                   flexDirection: "row",
                   alignItems: "center",

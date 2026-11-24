@@ -1838,9 +1838,12 @@ function ThreadDetailBody(
                     {no3yBottomNav ? (
                       <No3yBotDigest
                         threadRef={props.selectedThreadDetailRef}
-                        // A queued message being edited owns the composer; Reply never writes into it.
+                        // A queued message being edited owns the composer, and a hidden composer
+                        // (an open question, a failed start) shows nothing: Reply writes into neither.
                         composerDraftKey={
-                          props.queuedRunEdit === null ? props.composerDraftKey : null
+                          props.queuedRunEdit === null && !composerSlotHidden
+                            ? props.composerDraftKey
+                            : null
                         }
                         canOperateThread={props.canOperateThread}
                       />
