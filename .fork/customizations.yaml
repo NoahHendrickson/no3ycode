@@ -3685,8 +3685,8 @@
     refs load and focusing the workspace radiogroup on Mod+Shift+X). Attach (+)
     leads the prompt row opposite Send, and the dictation mic sits beside Send.
     [data-fork-composer-control-row] in theme.custom.css is the single owner of
-    the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
-    control-row slots. Attach, send and stop are 32px squares at 8px radius
+    the ghost control geometry (text + 12px tall, 8px padding, 6px radius) and
+    hover/ink tokens across both control-row slots. Attach, send and stop are 32px squares at 8px radius
     (the kit's icon button) with 16px glyphs, inside a 16px-cornered vessel and
     prompt (--fork-composer-radius; Inlet adds its 4px inset); send uses
     Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
@@ -3696,7 +3696,10 @@
     hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
-    appearanceFonts.ts), and the control and context rows are 14px regular.
+    appearanceFonts.ts). The control row, context row and status chips read
+    --fork-composer-chip-text, a pixel under the interface size (calc(1rem -
+    1px)), so they follow Settings → Typography too; their heights add fixed
+    room around it.
     On Flat Glass and every Basic tone the thread composer (not a new agent's
     draft) is one recipe: it paints no vessel, the prompt is its one surface
     (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
@@ -5660,7 +5663,7 @@
     shows as the first chip in the composer's context row
     (custom/DraftProjectPill, which renders nothing while unassigned), ahead
     of the workspace and branch chips and dressed like them: the row's CSS
-    paints it as the same filled 24px chip and its label collapses with
+    paints it as the same filled chip, at the same type, and its label collapses with
     theirs when the strip overflows. Its menu, like the launchpad, offers a
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
