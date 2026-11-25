@@ -28,7 +28,9 @@ import {
 import { contextChipIconUri, modelChipIcon, modelChipIconUri } from "../lib/contextChipIconSource";
 import { useUniwindTheme } from "../lib/useUniwindTheme";
 import { createNativeComposerTheme } from "../lib/nativeComposerTheme";
-import { FONT_FAMILIES } from "../lib/fontFamilies";
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import { useFontFamilies } from "../lib/fontFamilies";
+/* fork:end no3y-mobile-interface-font */
 import { useComposerTextRole } from "../features/settings/appearance/useScaledTextRole";
 import {
   acknowledgeComposerNativeEvent,
@@ -182,7 +184,9 @@ export function ComposerEditor({
   }
   const bodyText = useComposerTextRole();
   const theme = useUniwindTheme();
-  const fontFamily = FONT_FAMILIES.regular;
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  const fontFamily = useFontFamilies().regular;
+  /* fork:end no3y-mobile-interface-font */
 
   const skillLabels = useMemo(() => composerSkillLabels(skills), [skills]);
   const { modelsBySource, modelTokens } = useComposerModelTokens(props.value, models);

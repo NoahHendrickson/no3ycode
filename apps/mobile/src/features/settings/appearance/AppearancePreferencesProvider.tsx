@@ -37,6 +37,15 @@ import {
 } from "../../../../fork/no3yPageColor";
 import { NO3Y_IPHONE } from "../../../../fork/no3yIphone";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import { BUILT_IN_THEME_IDS } from "@t3tools/shared/themePalettes";
+import {
+  no3yInterfaceFontVariables,
+  normalizeNo3yInterfaceFont,
+  publishNo3yInterfaceFont,
+  type No3yInterfaceFont,
+} from "../../../../fork/no3yInterfaceFont";
+/* fork:end no3y-mobile-interface-font */
 import {
   createMobileThemePairPatch,
   createMobileThemeSelectionPatch,
@@ -178,6 +187,26 @@ function applyThemeRuntime(next: MobileThemeRuntimeState) {
   appliedRuntimeState = next;
 }
 
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+const NO3Y_FONT_UNIWIND_THEMES = [
+  "light",
+  "dark",
+  ...BUILT_IN_THEME_IDS.flatMap((themeId) => [
+    `${themeId}-light` as const,
+    `${themeId}-dark` as const,
+  ]),
+] as const;
+
+/** Like the text variables, the font tokens are process-global; Settings applies ahead of its write. */
+export function applyNo3yInterfaceFont(font: No3yInterfaceFont) {
+  if (!publishNo3yInterfaceFont(font)) return;
+  const variables = no3yInterfaceFontVariables(font);
+  for (const themeName of NO3Y_FONT_UNIWIND_THEMES) {
+    Uniwind.updateCSSVariables(themeName, variables);
+  }
+}
+/* fork:end no3y-mobile-interface-font */
+
 function currentRuntimeState() {
   return appliedRuntimeState ?? appAtomRegistry.get(themeRuntimeStateAtom);
 }
@@ -199,9 +228,24 @@ export function installAppearanceRuntime(): () => void {
     }
   }
   /* fork:end no3y-mobile-redesign */
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  const unsubscribeFont = NO3Y_IPHONE
+    ? appAtomRegistry.subscribe(
+        mobilePreferencesAtom,
+        (result) =>
+          applyNo3yInterfaceFont(
+            normalizeNo3yInterfaceFont(storedPreferencesOf(result)?.interfaceFont),
+          ),
+        { immediate: true },
+      )
+    : () => {};
+  /* fork:end no3y-mobile-interface-font */
   return () => {
     unsubscribeRuntime();
     releasePalettes();
+    /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+    unsubscribeFont();
+    /* fork:end no3y-mobile-interface-font */
   };
 }
 

@@ -30,6 +30,9 @@ import { MobileStorageDecodeError, MobileStorageEncodeError } from "./mobile-sto
 /* fork:begin no3y-pr-project-multiselect — see .fork/customizations.yaml#no3y-pr-project-multiselect */
 import { withPullRequestProjectSet } from "../../fork/no3yPullRequestProjects";
 /* fork:end no3y-pr-project-multiselect */
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import type { No3yInterfaceFont } from "../../fork/no3yInterfaceFont";
+/* fork:end no3y-mobile-interface-font */
 
 const PREFERENCES_KEY = "t3code.preferences";
 const PREFERENCES_FALLBACK_KEY = "t3code.preferences.fallback";
@@ -163,6 +166,9 @@ export interface Preferences {
   readonly codeFontSize?: number | null;
   readonly codeWordBreak?: boolean;
   readonly mathRenderingEnabled?: boolean;
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  readonly interfaceFont?: No3yInterfaceFont;
+  /* fork:end no3y-mobile-interface-font */
   /** Unset means on: crash reports are sent unless the user turns them off. */
   readonly crashReportsEnabled?: boolean;
   readonly connectOnboardingOptOutAccounts?: ReadonlyArray<string>;
@@ -256,6 +262,9 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     codeFontSize?: number | null;
     codeWordBreak?: boolean;
     mathRenderingEnabled?: boolean;
+    /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+    interfaceFont?: No3yInterfaceFont;
+    /* fork:end no3y-mobile-interface-font */
     crashReportsEnabled?: boolean;
     connectOnboardingOptOutAccounts?: ReadonlyArray<string>;
     collapsedProjectGroups?: readonly string[];
@@ -353,6 +362,11 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   if (typeof parsed.codeWordBreak === "boolean") preferences.codeWordBreak = parsed.codeWordBreak;
   if (typeof parsed.mathRenderingEnabled === "boolean")
     preferences.mathRenderingEnabled = parsed.mathRenderingEnabled;
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  if (parsed.interfaceFont === "system" || parsed.interfaceFont === "cinnabar") {
+    preferences.interfaceFont = parsed.interfaceFont;
+  }
+  /* fork:end no3y-mobile-interface-font */
   if (typeof parsed.crashReportsEnabled === "boolean") {
     preferences.crashReportsEnabled = parsed.crashReportsEnabled;
   }

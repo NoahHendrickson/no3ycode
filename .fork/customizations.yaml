@@ -9825,3 +9825,42 @@
     - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
   verify:
     - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts
+
+- id: no3y-mobile-interface-font
+  intent: >
+    On the no3y iPhone (NO3Y_IPHONE), Settings → Appearance has a Font
+    section above Text: System (SF Pro, the default) or Cinnabar Interface,
+    the face the desktop ships (its Settings calls it Cinnabar Sans). The
+    pick is the local `interfaceFont` mobile preference and applies live:
+    the provider rewrites the global.css font tokens (--font-sans,
+    --font-medium, --font-bold) in every Uniwind theme, and the
+    native-styled text the classes can't reach (reply and file markdown,
+    link chips, the native composer) reads useFontFamilies.
+    Families are PostScript names, which RCTFont resolves to the family and
+    then the face nearest the requested weight, and the Swift composer's
+    UIFont(name:) needs. app.config.ts bundles six static faces of the same
+    Cinnabar Interface build the web ships (Regular, Italic, Medium,
+    MediumItalic, SemiBold, Bold — upright 800 falls to Bold); they come from
+    the cinnabar-sans repo's fonts/static and are replaced wholesale, never
+    hand-edited. A binary built before the faces were bundled draws the
+    system font when Cinnabar Interface is picked. iPad and Android keep DM Sans
+    and show no Font section.
+  tier: 4
+  files:
+    - apps/mobile/fork/no3yInterfaceFont.ts
+    - apps/mobile/fork/No3yInterfaceFontSection.tsx
+    - apps/mobile/fork/assets/fonts/cinnabar-interface/OFL.txt
+    - apps/web/src/__fork_guards__/no3yMobileInterfaceFont.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/app.config.ts
+    - apps/mobile/src/lib/fontFamilies.ts
+    - apps/mobile/src/persistence/mobile-preferences.ts
+    - apps/mobile/src/features/settings/appearance/AppearancePreferencesProvider.tsx
+    - apps/mobile/src/features/settings/SettingsAppearanceRouteScreen.tsx
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    - apps/mobile/src/features/files/FileMarkdownPreview.tsx
+    - apps/mobile/src/native/useEnrichedLinkVariants.ts
+    - apps/mobile/src/native/T3ComposerEditor.ios.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileInterfaceFont.test.ts
