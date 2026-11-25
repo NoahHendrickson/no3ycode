@@ -8898,8 +8898,10 @@
     last had (fork/No3yHomeDraftGate.tsx) so it never renders the other tab's
     draft. The model chip, model sheet, effort, access, +, the prompt stash and
     dictation are New agent's and what is picked starts the chat. A sent chat
-    or New agent thread is pushed over Home (back returns to the tab) while the
-    tab takes a fresh draft; chats opened from the list are pushed too.
+    or New agent thread is pushed over Home while the tab takes a fresh draft;
+    back returns to Chat, but a New agent send switches Home to Threads once
+    the thread covers it, so back lands there. Chats opened from the list are
+    pushed too.
     A chat is what the Mac calls one (fork/no3yChatRule.ts, parity-guarded
     against chatMode.ts isChatThread): tagged `chat`, or sent from this phone
     and still waiting for its tag; a No-project thread without the tag is code
